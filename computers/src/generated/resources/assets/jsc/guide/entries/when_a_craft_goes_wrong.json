@@ -1,0 +1,297 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_craft_goes_wrong.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.when_a_craft_goes_wrong.table1",
+      "heads": [
+        "jsc.guide.when_a_craft_goes_wrong.table1_head1",
+        "jsc.guide.when_a_craft_goes_wrong.table1_head2",
+        "jsc.guide.when_a_craft_goes_wrong.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.when_a_craft_goes_wrong.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.when_a_craft_goes_wrong.table2",
+      "heads": [
+        "jsc.guide.when_a_craft_goes_wrong.table2_head1",
+        "jsc.guide.when_a_craft_goes_wrong.table2_head2",
+        "jsc.guide.when_a_craft_goes_wrong.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table2_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.when_a_craft_goes_wrong.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_craft_goes_wrong.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_craft_goes_wrong.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.when_a_craft_goes_wrong.table3",
+      "heads": [
+        "jsc.guide.when_a_craft_goes_wrong.table3_head1",
+        "jsc.guide.when_a_craft_goes_wrong.table3_head2",
+        "jsc.guide.when_a_craft_goes_wrong.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_2_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_3_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table3_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.when_a_craft_goes_wrong.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_craft_goes_wrong.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_craft_goes_wrong.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_craft_goes_wrong.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.when_a_craft_goes_wrong.heading4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.when_a_craft_goes_wrong.table4",
+      "heads": [
+        "jsc.guide.when_a_craft_goes_wrong.table4_head1",
+        "jsc.guide.when_a_craft_goes_wrong.table4_head2",
+        "jsc.guide.when_a_craft_goes_wrong.table4_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table4_1_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table4_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table4_2_2"
+          },
+          {
+            "words": "jsc.guide.when_a_craft_goes_wrong.table4_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_craft_goes_wrong.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.when_a_craft_goes_wrong.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_craft_goes_wrong.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.when_a_craft_goes_wrong.fix1",
+          "problem": "jsc.guide.when_a_craft_goes_wrong.problem1"
+        },
+        {
+          "fix": "jsc.guide.when_a_craft_goes_wrong.fix2",
+          "problem": "jsc.guide.when_a_craft_goes_wrong.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:asking_for_a_craft",
+        "jsc:crafting_interfaces",
+        "jsc:input_routers_and_receiving_buses",
+        "jsc:craft_planner",
+        "jsc:operation_states",
+        "jsc:network_manager"
+      ]
+    }
+  ],
+  "id": "jsc:when_a_craft_goes_wrong",
+  "order": 112,
+  "section": "jsc:autocrafting",
+  "title": "jsc.guide.when_a_craft_goes_wrong.title"
+}

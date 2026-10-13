@@ -22,9 +22,11 @@ public interface IGuiTab {
             int contentX, int contentY, int contentWidth, int contentHeight,
             int mouseX, int mouseY, float partialTick);
 
+    /** Called when the tab becomes the active one, including the first tab as soon as it is added. */
     default void onSelected() {
     }
 
+    /** Called when another tab takes over from this one. */
     default void onDeselected() {
     }
 }

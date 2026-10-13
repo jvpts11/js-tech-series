@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,8 +40,8 @@ public interface ICliFiles {
 
     /**
      * The same prompt as the glass shows it, a run at a time, for a shell whose prompt is in more than one
-     * colour: a root prompt with the machine's name in red and where it stands in blue. By default it is all in
-     * the one colour a terminal gives a prompt.
+     * colour: a root prompt with the user and the machine in red and the rest in the prompt's own ink. By default
+     * it is all in the one colour a terminal gives a prompt.
      */
     default CliLine promptLine() {
         return new CliLine(prompt(), CliStyle.ACCENT);
@@ -190,6 +193,18 @@ public interface ICliFiles {
     }
 
     /**
+     * Moves a file or directory to {@code dest}: into it when it is an existing directory, otherwise to that
+     * full path, renaming on the way. Both are DOS paths relative to the current location (or absolute).
+     *
+     * @param src  the source path
+     * @param dest the destination directory, or the new full path
+     * @return a confirmation, or a failure message
+     */
+    default ICliComputer.FsResult moveTo(final String src, final String dest) {
+        return ICliComputer.FsResult.noOs();
+    }
+
+    /**
      * Renames a file or directory {@code src} to the new leaf name {@code newName} (kept in the same
      * parent directory). {@code src} is a DOS path relative to the current location (or absolute).
      *
@@ -201,7 +216,6 @@ public interface ICliFiles {
         return ICliComputer.FsResult.noOs();
     }
 
-    /** Every drive the shell can see (the system disk first), for {@code df}; empty when there is no OS. */
     /**
      * The names of what is in the folder the prompt stands in, for a word with a star in it to be opened out
      * against. A folder ends with a slash, as a listing shows it.
@@ -210,8 +224,39 @@ public interface ICliFiles {
         return List.of();
     }
 
+    /** The same for another folder, named the way the prompt would name it; empty when there is no such folder. */
+    default List<String> fileNames(final String folder) {
+        final ICliComputer.FsResult listing = listDisk(folder);
+        final List<String> names = new ArrayList<>();
+        if (listing.ok() && listing.entries() != null) {
+            for (final ICliComputer.FsEntry entry : listing.entries()) {
+                names.add(entry.isDir() ? entry.name() + "/" : entry.name());
+            }
+        }
+        return names;
+    }
+
+    /** Every drive the shell can see (the system disk first), for {@code df}; empty when there is no OS. */
     default List<ICliComputer.MountInfo> mounts() {
         return List.of();
+    }
+
+    /** The printers the machine prints on, with their queues; none on a machine with none, or no world. */
+    default List<ICliComputer.PrinterInfo> printers() {
+        return List.of();
+    }
+
+    /**
+     * Prints a text file of the machine's disks, on the printer whose queue goes by {@code printer}, or on the first
+     * when it is empty.
+     */
+    default ICliComputer.PrintAnswer printFile(final String path, final String printer, final int copies) {
+        return ICliComputer.PrintAnswer.NONE;
+    }
+
+    /** Puts PRINT's resident part in memory for this run of the machine; whether it was not there before. */
+    default boolean installPrint() {
+        return false;
     }
 
     /**
@@ -219,6 +264,16 @@ public interface ICliFiles {
      * storage on it. Refuses the drive the running system lives on.
      */
     default ICliComputer.OpResult formatDrive(final char letter) {
-        return ICliComputer.OpResult.fail("format: drive not found");
+        return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with("format", FileWords.NO_DRIVE));
+    }
+
+    /** What a computer with no drives answers. */
+    @TextHolder
+    final class FileWords {
+
+        static final TextKey NO_DRIVE = TextKey.of("jsc.cli.files.no_drive", "drive not found");
+
+        private FileWords() {
+        }
     }
 }

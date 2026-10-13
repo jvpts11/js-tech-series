@@ -8,26 +8,35 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
+import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.operation.payload.crash.MemoryKilledPayload;
+import dev.jstech.computers.operation.payload.program.ProgramKeyboard;
+import dev.jstech.computers.operation.payload.program.TerminalTools;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.vm.program.Numbers;
 import dev.jstech.computers.vm.program.UiWidgets;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.text.Text;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -53,6 +62,11 @@ final class ClientReplication {
      * before the rest when the next one comes and no window is left behind while others are served again.
      */
     private final Map<UUID, WindowId> resumeAt = new HashMap<>();
+    /**
+     * The question the program in front was last seen asking, with how much it had written by then, or null while
+     * it asks nothing: a terminal is told only when that changes.
+     */
+    private String asked;
 
     /**
      * What one machine sends one player in one tick before the rest of it waits for the next.
@@ -63,6 +77,8 @@ final class ClientReplication {
      * wait for ever.
      */
     private static final int MOST_BYTES_A_TICK = 8192;
+    /** What a shell says of the program in front of it that was killed: the signal's own name. */
+    private static final String KILLED = "Killed";
 
     ClientReplication(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -87,13 +103,26 @@ final class ClientReplication {
         final Map<WindowId, Values.Obj> open = openNow();
         final Map<WindowId, UiWindowPayload> made = new HashMap<>();
         for (final ServerPlayer viewer : viewers) {
-            if (!(viewer.containerMenu instanceof DesktopMenu)) {
+            // A desktop draws the windows as windows; a terminal of a machine that only has one draws them in text.
+            final boolean screen = viewer.containerMenu instanceof DesktopMenu
+                    || viewer.containerMenu instanceof CommandPromptMenu;
+            if (!screen) {
                 continue;
             }
             for (final UiWindowPayload payload : takeOwed(viewer, open, made)) {
                 PacketDistributor.sendToPlayer(viewer, payload);
             }
         }
+    }
+
+    /** Whether a player watching was sent windows, which may since have closed and so be owed the word. */
+    boolean holdsSentWindows() {
+        for (final Map<WindowId, Long> sent : this.sentByViewer.values()) {
+            if (!sent.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -273,6 +302,7 @@ final class ClientReplication {
     void pushOutput(final ServerLevel level) {
         final MachinePrograms programs = this.machine.programs();
         if (programs.held() == 0) {
+            this.asked = null;
             return;
         }
         final var one = programs.byId(programs.held());
@@ -282,13 +312,21 @@ final class ClientReplication {
         }
         final var state = one.process().state();
         final boolean over = !MachinePrograms.running(one.process());
-        final List<String> fresh = programs.unseen();
-        final String halt = over && state == ILanguageProcess.State.HALTED ? one.process().message() : null;
+        final List<Text> fresh = programs.unseen();
+        final Text halt = over && state == ILanguageProcess.State.HALTED ? one.process().message() : null;
+        /*
+         * A program waiting for a line asks with what it left open. The question is sent when it changes: when the
+         * program comes to ask, and again after every line typed, since each one is written down and so moves on.
+         */
+        final String asked = over || !one.process().waitingForInput() ? null
+                : one.process().written() + "\n" + one.process().openLine();
+        final boolean askedAnew = !Objects.equals(asked, this.asked);
+        this.asked = asked;
         if (over) {
             programs.release();
             this.machine.setChanged();
         }
-        if (fresh.isEmpty() && halt == null && !over) {
+        if (fresh.isEmpty() && halt == null && !over && !askedAnew) {
             return;
         }
         final List<ServerPlayer> viewers = this.machine.consoleViewers(level);
@@ -296,24 +334,95 @@ final class ClientReplication {
             return;
         }
         final List<WireLine> wire = new ArrayList<>();
-        for (final String line : fresh) {
+        for (final Text line : fresh) {
             wire.add(new WireLine(line, CliStyle.PLAIN.id()));
         }
         if (halt != null) {
             wire.add(new WireLine(halt, CliStyle.ERROR.id()));
         }
-        say(viewers, wire, over ? this.machine.shellPrompt() : "", !over);
+        if (over) {
+            say(viewers, wire, this.machine.shellPrompt(), false, TerminalKeyboard.PROMPT, TerminalKeyboard.PROMPT);
+        } else {
+            say(viewers, wire, "", true, ProgramKeyboard.onDesktop(one.process()),
+                    ProgramKeyboard.atTerminal(one.process()));
+        }
+    }
+
+    /**
+     * Prints what the kernel logged on the consoles watching the machine, as a kernel prints on its own console. A
+     * terminal window on a desktop is not the console and shows nothing of it, as on any real one; the keyboard stays
+     * with whatever had it.
+     */
+    void kernelSays(final ServerLevel level, final List<String> lines) {
+        final MachinePrograms programs = this.machine.programs();
+        final var held = programs.byId(programs.held());
+        kernelSays(this.machine.consoleViewers(level), held != null ? ProgramKeyboard.atTerminal(held.process())
+                : keyboardOf(this.machine.console()), lines);
+    }
+
+    /**
+     * Prints what a kernel said on the terminals among {@code viewers}, a console's own lines, which a desktop's
+     * windows do not show; whoever had the keyboard keeps it.
+     */
+    static void kernelSays(final List<ServerPlayer> viewers, final TerminalKeyboard keyboard,
+                           final List<String> lines) {
+        if (lines.isEmpty()) {
+            return;
+        }
+        final List<WireLine> wire = new ArrayList<>(lines.size());
+        for (final String line : lines) {
+            wire.add(new WireLine(Text.literal(line), CliStyle.PLAIN.id()));
+        }
+        final CommandOutputPayload said = new CommandOutputPayload("", wire, keyboard);
+        for (final ServerPlayer viewer : viewers) {
+            if (!(viewer.containerMenu instanceof DesktopMenu)) {
+                PacketDistributor.sendToPlayer(viewer, said);
+            }
+        }
+    }
+
+    /** Who has the keyboard of a terminal with no program in front: the tool it is running, or the prompt. */
+    static TerminalKeyboard keyboardOf(@Nullable final ComputerConsoleState console) {
+        return console != null && console.foreground().running() ? TerminalTools.keyboardOf(console)
+                : TerminalKeyboard.PROMPT;
+    }
+
+    /** The desktops among {@code viewers} showing the machine at {@code host} close the windows its kernel ended. */
+    static void windowsEnded(final List<ServerPlayer> viewers, final BlockPos host, final List<String> windows) {
+        if (windows.isEmpty()) {
+            return;
+        }
+        for (final ServerPlayer viewer : viewers) {
+            if (viewer.containerMenu instanceof DesktopMenu) {
+                PacketDistributor.sendToPlayer(viewer, new MemoryKilledPayload(host, windows));
+            }
+        }
+    }
+
+    /**
+     * The program in front of the terminal was ended from outside it: the shell says so in its own word, as a shell
+     * says it of a program killed under it, and gives the prompt back.
+     */
+    void frontKilled(final ServerLevel level) {
+        this.asked = null;
+        final List<ServerPlayer> viewers = this.machine.consoleViewers(level);
+        if (!viewers.isEmpty()) {
+            say(viewers, List.of(new WireLine(Text.literal(KILLED), CliStyle.PLAIN.id())),
+                    this.machine.shellPrompt(), false, TerminalKeyboard.PROMPT, TerminalKeyboard.PROMPT);
+        }
     }
 
     /**
      * The same said twice, once in each terminal's own words: a window on a desktop, and the prompt that is
      * the whole glass of a machine that has none. Both are watching this one console, so each viewer is sent
-     * the one its own screen speaks.
+     * the one its own screen speaks, with who has its keyboard.
      */
-    private void say(final List<ServerPlayer> viewers, final List<WireLine> wire,
-                     final String prompt, final boolean holdsTerminal) {
-        final var desktop = new DesktopShellOutputPayload(false, holdsTerminal, prompt, wire);
-        final var terminal = new CommandOutputPayload(false, prompt, wire);
+    private void say(final List<ServerPlayer> viewers, final List<WireLine> wire, final String prompt,
+                     final boolean holdsTerminal, final TerminalKeyboard onDesktop,
+                     final TerminalKeyboard atTerminal) {
+        final var desktop = new DesktopShellOutputPayload(false, holdsTerminal, prompt, wire, "", "", 0, false,
+                false, onDesktop);
+        final var terminal = new CommandOutputPayload(prompt, wire, atTerminal);
         for (final ServerPlayer viewer : viewers) {
             PacketDistributor.sendToPlayer(viewer,
                     viewer.containerMenu instanceof DesktopMenu ? desktop : terminal);

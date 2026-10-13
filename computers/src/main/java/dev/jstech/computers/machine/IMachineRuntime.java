@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import dev.jstech.computers.vm.program.IProgramRuntime;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +27,28 @@ public interface IMachineRuntime extends ILanguageProcess, IProgramRuntime {
     @Override
     String name();
 
-    /** What the program has written for a person to read, oldest kept line first. */
+    /**
+     * What the program has written, oldest kept line first, in English: what a program reading another's output reads,
+     * and what goes into a file.
+     */
     List<String> console();
+
+    /**
+     * The same lines as a terminal shows them: what the program printed as it printed it, and what its runtime said of
+     * it as a sentence in the player's language.
+     */
+    List<Text> consoleText();
 
     /** How many lines it has written since it started, the ones no longer kept included. */
     long written();
+
+    /**
+     * What it has printed since its last line ended, which a terminal shows before what is typed while it waits for a
+     * line; nothing for a runtime that only writes whole lines.
+     */
+    default String openLine() {
+        return "";
+    }
 
     /** How many bytes it may hold at once. */
     long heapBytes();

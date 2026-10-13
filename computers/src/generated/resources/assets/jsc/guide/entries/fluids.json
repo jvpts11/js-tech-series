@@ -1,0 +1,99 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.fluids.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.fluids.definition1",
+      "term": "jsc.guide.fluids.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.fluids.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.fluids.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.fluids.table1",
+      "heads": [
+        "jsc.guide.fluids.table1_head1",
+        "jsc.guide.fluids.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.fluids.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.fluids.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.fluids.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.fluids.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.fluids.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.fluids.heading1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.fluids.definition2",
+      "term": "jsc.guide.fluids.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.fluids.definition3",
+      "term": "jsc.guide.fluids.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.fluids.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.fluids.fix1",
+          "problem": "jsc.guide.fluids.problem1"
+        },
+        {
+          "fix": "jsc.guide.fluids.fix2",
+          "problem": "jsc.guide.fluids.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:items_as_data",
+        "jsc:external_storage_bus",
+        "jsc:mekanism"
+      ]
+    }
+  ],
+  "icon": "minecraft:water_bucket",
+  "id": "jsc:fluids",
+  "order": 83,
+  "section": "jsc:storage",
+  "title": "jsc.guide.fluids.title"
+}

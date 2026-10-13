@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:firmware_setup"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.press_del.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:motherboard_atx_transition_am3"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.press_del.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

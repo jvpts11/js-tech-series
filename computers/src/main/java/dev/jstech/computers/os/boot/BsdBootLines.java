@@ -14,7 +14,10 @@ import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -37,38 +40,54 @@ final class BsdBootLines {
     private BsdBootLines() {
     }
 
-    /** The kernel naming the machine, then the startup scripts bringing the system up. */
-    static BootSequence up(final IOsHost machine, final OsDef system, @Nullable final ServerLevel level) {
+    /** What the kernel itself prints as it comes up: itself, the processor, the memory, each disk, and its root. */
+    static List<String> kernel(final IOsHost machine, final OsDef system) {
         final HardwareEra era = machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD;
         final String arch = KernelNames.architecture(Platform.FREEBSD, machine.processorBits());
-        final BootSequence.Builder out = new BootSequence.Builder()
-                .title("Loading kernel...")
-                .subtitle("Booting...");
-        out.line(Branding.systemCopyright(system.displayName(), era));
-        out.line("FreeBSD " + KernelNames.FREEBSD_RELEASE + " GENERIC " + arch);
-        out.line("CPU: " + BootLines.cpuName(machine));
-        out.line("real memory  = " + machine.ramTotalMb() + " MB");
+        final List<String> out = new ArrayList<>();
+        out.add(Branding.systemCopyright(system.displayName(), era));
+        out.add("FreeBSD " + KernelNames.FREEBSD_RELEASE + " GENERIC " + arch);
+        out.add("CPU: " + BootLines.cpuName(machine));
+        out.add("real memory  = " + machine.ramTotalMb() + " MB");
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
             if (disk.getItem() instanceof DiskItem) {
-                out.line("ada" + drive++ + ": <" + disk.getHoverName().getString() + ">");
+                out.add(Installers.adaLabel(drive++) + ": <" + disk.getHoverName().getString() + ">");
             }
         }
-        out.line("Trying to mount root from ufs:/dev/ada0p2 [rw]...");
-        out.line("Setting hostname: " + Installers.hostName(machine) + ".");
+        out.add("Trying to mount root from ufs:/dev/ada0p2 [rw]...");
+        return out;
+    }
+
+    /** The kernel naming the machine, then the startup scripts bringing the system up. */
+    static BootSequence up(final IOsHost machine, final OsDef system, @Nullable final ServerLevel level) {
+        // The loader's, the kernel's and the startup scripts' lines are logs, which are data in every language.
+        final BootSequence.Builder out = new BootSequence.Builder()
+                .title(Text.literal("Loading kernel..."))
+                .subtitle(Text.literal("Booting..."));
+        for (final String line : kernel(machine, system)) {
+            out.line(Text.literal(line));
+        }
+        out.line(Text.literal("Setting hostname: " + Installers.hostName(machine) + "."));
         if (machine.networkAttached()) {
-            out.line("Starting Network: lo0 em0.");
+            out.line(Text.literal("Starting Network: lo0 em0."));
         }
         final String mirror = level == null ? "" : Installers.mirrorHost(machine, level);
         if (!mirror.isEmpty()) {
-            out.line("pkg: repository Mirror found on " + mirror + ".");
+            out.line(Text.literal("pkg: repository Mirror found on " + mirror + "."));
         }
-        out.line("Starting devd.");
-        out.line("Starting syslogd.");
-        final String desktop = desktopOf(machine);
+        out.line(Text.literal("Starting devd."));
+        out.line(Text.literal("Starting syslogd."));
+        if (machine.console() != null && machine.console().settings().cronEnabled()) {
+            out.line(Text.literal("Starting cron."));
+        }
+        if (machine.console() != null && machine.console().settings().remoteAllowed()) {
+            out.line(Text.literal("Starting sshd."));
+        }
+        final String desktop = BootLines.desktopOf(machine);
         if (!desktop.isEmpty()) {
-            out.line("Starting " + desktop + " display manager.");
+            out.line(Text.literal("Starting " + desktop + " display manager."));
         }
         return out.build();
     }
@@ -79,27 +98,27 @@ final class BsdBootLines {
      * @param restarting the machine is coming straight back up, which this system says in one word
      */
     static BootSequence down(final IOsHost machine, final boolean restarting) {
-        final BootSequence.Builder out = new BootSequence.Builder().title("").subtitle("");
-        final String desktop = desktopOf(machine);
+        final BootSequence.Builder out = new BootSequence.Builder().title(Text.EMPTY).subtitle(Text.EMPTY);
+        final String desktop = BootLines.desktopOf(machine);
         if (!desktop.isEmpty()) {
-            out.line("Stopping " + desktop + " display manager.");
+            out.line(Text.literal("Stopping " + desktop + " display manager."));
         }
-        out.line("Stopping syslogd.");
-        out.line("Stopping devd.");
+        if (machine.console() != null && machine.console().settings().cronEnabled()) {
+            out.line(Text.literal("Stopping cron."));
+        }
+        if (machine.console() != null && machine.console().settings().remoteAllowed()) {
+            out.line(Text.literal("Stopping sshd."));
+        }
+        out.line(Text.literal("Stopping syslogd."));
+        out.line(Text.literal("Stopping devd."));
         if (machine.networkAttached()) {
-            out.line("Stopping Network: em0.");
+            out.line(Text.literal("Stopping Network: em0."));
         }
-        out.line("Writing entropy file: .");
-        out.line("Terminated");
-        out.line("Syncing disks, vnodes remaining... 0 0 done");
-        out.line("All buffers synced.");
-        out.line(restarting ? "Rebooting..." : "The operating system has halted.");
+        out.line(Text.literal("Writing entropy file: ."));
+        out.line(Text.literal("Terminated"));
+        out.line(Text.literal("Syncing disks, vnodes remaining... 0 0 done"));
+        out.line(Text.literal("All buffers synced."));
+        out.line(Text.literal(restarting ? "Rebooting..." : "The operating system has halted."));
         return out.build();
-    }
-
-    /** The desktop installed on the machine as its startup names it, or nothing for a machine at a terminal. */
-    private static String desktopOf(final IOsHost machine) {
-        return machine.installedDesktopId() == null ? ""
-                : machine.installedDesktopId().getPath().replace('_', ' ');
     }
 }

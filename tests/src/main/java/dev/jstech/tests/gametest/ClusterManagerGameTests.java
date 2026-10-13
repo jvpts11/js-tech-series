@@ -8,6 +8,8 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.ClusterRef;
@@ -35,8 +37,12 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -46,8 +52,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.PipeBlock;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -113,16 +119,16 @@ public final class ClusterManagerGameTests {
                                                                        final ResourceLocation os) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(MAINFRAME);
-        helper.setBlock(CABLE_A, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(CABLE_B, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, CABLE_A, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, CABLE_B, ComputingModule.HBW_CABLE);
         helper.setBlock(MANAGER, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER.get());
         world.faceRearTowardCable(MANAGER);
         final ClusterManagementComputerBlockEntity manager = managerAt(helper);
         final ItemStackHandler hardware = manager.getHardware();
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.PSU_SLOT,
@@ -147,12 +153,19 @@ public final class ClusterManagerGameTests {
 
     /** A supercomputer on the backbone with two nodes seated (rows 0 and 2), each with a drive to install to. */
     private static ServerRackBlockEntity placeSupercomputer(final GameTestHelper helper) {
-        helper.setBlock(HUB, ComputingModule.HBW_INTERFACE.get());
-        helper.setBlock(FABRIC, ComputingModule.HPC_CABLE.get());
-        helper.setBlock(NODE_RACK, ComputingModule.SUPERCOMPUTER_RACK.get());
+        return placeSupercomputer(helper, ComputingModule.HBW_INTERFACE.get(), ComputingModule.HPC_CABLE,
+                ComputingModule.SUPERCOMPUTER_RACK.get());
+    }
+
+    /** The same, of the interface, the fabric cable and the cabinet given. */
+    private static ServerRackBlockEntity placeSupercomputer(final GameTestHelper helper, final Block hub,
+                                                            final CableEntry fabric, final Block cabinet) {
+        helper.setBlock(HUB, hub);
+        TestCables.lay(helper, FABRIC, fabric);
+        helper.setBlock(NODE_RACK, cabinet);
         final ServerRackBlockEntity rack = rackAt(helper, NODE_RACK);
         for (final int row : new int[] {0, 2}) {
-            rack.getServers().setStackInSlot(row, ComputingModule.defaultSupercomputerNode());
+            rack.getServers().setStackInSlot(row, ServerStacks.defaultSupercomputerNode());
             if (!rack.insertDrive(row, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)))) {
                 throw new IllegalStateException("the node in row " + row + " took no drive");
             }
@@ -164,7 +177,7 @@ public final class ClusterManagerGameTests {
     private static ServerRackBlockEntity placeDatacenter(final GameTestHelper helper, final int servers) {
         helper.setBlock(ROUTER, ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST)); // back (the uplink) meets the backbone
-        helper.setBlock(SECTION_CABLE, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, SECTION_CABLE, ComputingModule.HBW_CABLE);
         helper.setBlock(SERVER_RACK, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST)); // rear meets the section cable
         final ServerRackBlockEntity rack = rackAt(helper, SERVER_RACK);
@@ -186,7 +199,7 @@ public final class ClusterManagerGameTests {
             throw new IllegalStateException("no reader at " + readerPos);
         }
         final ClusterManagementComputerBlockEntity manager = managerAt(helper);
-        manager.peripheralEndpoints().add(helper.absolutePos(readerPos).asLong());
+        manager.onEndpointLinked(helper.absolutePos(readerPos).asLong(), PortKind.DEVICE);
         reader.onOwnerLinked(helper.absolutePos(MANAGER).asLong());
         final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
         MediaItem.setKind(disc, kind);
@@ -217,7 +230,7 @@ public final class ClusterManagerGameTests {
             parts.set(i, current.getStackInSlot(i).copy());
         }
         parts.set(ServerHardwareHandler.GPU_START, ItemStack.EMPTY);
-        node.set(ComputingModule.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(parts));
+        node.set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(parts));
         rack.setChanged();
     }
 
@@ -266,7 +279,8 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(!manager.reaches(RackChassis.RackType.SUPERCOMPUTER)
                                     && manager.powerAll(ref, false) == 0,
                             "without a card the bays are out of reach");
-                    helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).equals("no cluster interface card"),
+                    helper.assertTrue(
+                            manager.startJob(ref, JobKind.SYSTEM).english().equals("no cluster interface card"),
                             "a job needs the card first");
                 })
                 .thenSucceed();
@@ -331,6 +345,26 @@ public final class ClusterManagerGameTests {
                 .thenSucceed();
     }
 
+    /** The Advanced supercomputer, on the OSFP fabric behind its era's HBW Interface, is reached by the Fabric DPU. */
+    @GameTest(template = ARENA)
+    public static void manager_reachesTheAdvancedSupercomputerThroughTheFabricDpu(final GameTestHelper helper) {
+        final ClusterManagementComputerBlockEntity manager = placeBackbone(helper,
+                new ItemStack(ComputingModule.FABRIC_DPU.get()));
+        placeSupercomputer(helper, ComputingModule.ADVANCED_HBW_INTERFACE.get(), ComputingModule.OSFP_CABLE,
+                ComputingModule.ADVANCED_SUPERCOMPUTER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    helper.assertTrue(manager.managerReady() && manager.reaches(RackChassis.RackType.SUPERCOMPUTER),
+                            "the Fabric DPU reaches the supercomputers");
+                    final List<HbwInterfaceBlockEntity> hubs = manager.supercomputers();
+                    helper.assertTrue(hubs.size() == 1 && hubs.get(0).clusterOnline(),
+                            "the Advanced supercomputer is the network's one, online; got " + hubs.size());
+                    helper.assertTrue(manager.nodesOf(supercomputerRef(manager)).size() == 2,
+                            "its two nodes, found along the OSFP");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void manager_addressesTheDatacenterSectionAndItsBays(final GameTestHelper helper) {
         final ClusterManagementComputerBlockEntity manager = placeBackbone(helper, fabricHostAdapter());
@@ -363,9 +397,10 @@ public final class ClusterManagerGameTests {
                      */
                     helper.assertTrue(manager.nodesOf(ref).size() == 1,
                             "an off bay stays in the section's node list; got " + manager.nodesOf(ref).size());
-                    helper.assertTrue(manager.toggleNode(helper.absolutePos(SERVER_RACK), 0) && rack.bayPowerOn(0),
+                    helper.assertTrue(manager.toggleNode(ref, new NodeRef(helper.absolutePos(SERVER_RACK), 0))
+                                    && rack.bayPowerOn(0),
                             "a single node answers to its cabinet and row");
-                    helper.assertTrue(!manager.toggleNode(helper.absolutePos(SERVER_RACK), 5),
+                    helper.assertTrue(!manager.toggleNode(ref, new NodeRef(helper.absolutePos(SERVER_RACK), 5)),
                             "an empty row is not a node to switch");
                 })
                 .thenSucceed();
@@ -380,12 +415,12 @@ public final class ClusterManagerGameTests {
     public static void supercomputerRack_takesTheFabricNotTheDataCable(final GameTestHelper helper) {
         placeBackbone(helper, fabricHostAdapter());
         // A data cable run east of the backbone, ending at the rear of a supercomputer cabinet.
-        helper.setBlock(ROUTER, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(SECTION_CABLE, ComputingModule.HBW_CABLE.get());
+        TestCables.lay(helper, ROUTER, ComputingModule.HBW_CABLE);
+        TestCables.lay(helper, SECTION_CABLE, ComputingModule.HBW_CABLE);
         helper.setBlock(SERVER_RACK, ComputingModule.SUPERCOMPUTER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
         final ServerRackBlockEntity onData = rackAt(helper, SERVER_RACK);
-        onData.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
+        onData.getServers().setStackInSlot(0, ServerStacks.defaultSupercomputerNode());
         // And the real thing: a cabinet on the fabric behind an interface.
         final ServerRackBlockEntity onFabric = placeSupercomputer(helper);
         helper.startSequence()
@@ -393,14 +428,14 @@ public final class ClusterManagerGameTests {
                     if (!(helper.getBlockEntity(MAINFRAME) instanceof MainframeBlockEntity mainframe)) {
                         throw new IllegalStateException("no Mainframe at " + MAINFRAME);
                     }
-                    helper.assertTrue(!helper.getBlockState(SECTION_CABLE).getValue(PipeBlock.EAST),
+                    helper.assertTrue(!TestCables.cable(helper, SECTION_CABLE)
+                                    .crosses(ComputingModule.HBW_CABLE.get(), Direction.EAST),
                             "the data cable draws no connection into a compute cabinet");
                     helper.assertTrue(NetworkSystem.get(helper.getLevel()).serversOf(mainframe.networkUuid()).isEmpty(),
                             "a node in a cabinet on a data cable is not a server on the network");
-                    helper.assertTrue(onData.getDataAccess().get(ServerRackBlockEntity.DATA_LINKED) == 0,
+                    helper.assertTrue(!onData.linkedShown(),
                             "the data cable does not light the compute cabinet's link");
-                    helper.assertTrue(onFabric.getDataAccess().get(ServerRackBlockEntity.DATA_LINKED) == 1,
-                            "the fabric behind a networked interface does");
+                    helper.assertTrue(onFabric.linkedShown(), "the fabric behind a networked interface does");
                 })
                 .thenSucceed();
     }
@@ -464,7 +499,7 @@ public final class ClusterManagerGameTests {
                 })
                 .thenExecuteAfter(4, () -> {
                     final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
-                            ClusterManagerStatePayload.KIND_DATACENTER, 0, "");
+                            ClusterManagerStatePayload.KIND_DATACENTER, 0, Text.EMPTY);
                     final List<ClusterManagerStatePayload.WireNode> nodes = state.detail().nodes();
                     helper.assertTrue(nodes.size() == 2, "both servers are listed; got " + nodes.size());
                     helper.assertTrue(nodes.get(0).state() == ClusterManagerStatePayload.STATE_ONLINE,
@@ -475,7 +510,7 @@ public final class ClusterManagerGameTests {
                 })
                 .thenExecuteAfter(4, () -> {
                     final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
-                            ClusterManagerStatePayload.KIND_DATACENTER, 0, "");
+                            ClusterManagerStatePayload.KIND_DATACENTER, 0, Text.EMPTY);
                     helper.assertTrue(state.detail().nodes().get(1).state()
                                     == ClusterManagerStatePayload.STATE_NO_SYSTEM,
                             "switched back on with an empty disk it reads NO SYSTEM; got "
@@ -495,7 +530,7 @@ public final class ClusterManagerGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
-                            ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, "");
+                            ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, Text.EMPTY);
                     final List<ClusterManagerStatePayload.WireNode> nodes = state.detail().nodes();
                     helper.assertTrue(!nodes.isEmpty(), "the cluster lists its nodes");
                     helper.assertTrue(nodes.get(0).state() == ClusterManagerStatePayload.STATE_NO_SYSTEM,
@@ -505,7 +540,7 @@ public final class ClusterManagerGameTests {
                 })
                 .thenExecuteAfter(6, () -> {
                     final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
-                            ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, "");
+                            ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, Text.EMPTY);
                     helper.assertTrue(state.detail().nodes().get(0).state()
                                     == ClusterManagerStatePayload.STATE_NO_COPROCESSOR,
                             "without a coprocessor the node reads NO PHI; got "
@@ -527,10 +562,11 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(medium != null && medium.id().equals(DEBIAN) && medium.label().equals("Debian"),
                             "the manager reads the system disc from its linked reader");
                     final ClusterRef ref = supercomputerRef(manager);
-                    final String status = manager.startJob(ref, JobKind.SYSTEM);
+                    final String status = manager.startJob(ref, JobKind.SYSTEM).english();
                     helper.assertTrue(status.equals("installing Debian on 2 nodes"), "the job starts; got " + status);
                     helper.assertTrue(manager.job() != null && manager.job().total() == 2, "two nodes to write");
-                    helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).equals("a job is already running"),
+                    helper.assertTrue(
+                            manager.startJob(ref, JobKind.SYSTEM).english().equals("a job is already running"),
                             "one job at a time");
                 })
                 .thenExecuteAfter(2, () -> {
@@ -552,15 +588,15 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(DEBIAN.equals(rack.unitHost(0).installedOsId())
                                     && DEBIAN.equals(rack.unitHost(2).installedOsId()),
                             "each node's drive now carries the system");
-                    helper.assertTrue(manager.lastJobSummary().equals("done: Debian on 2 nodes"),
+                    helper.assertTrue(manager.lastJobSummary().english().equals("done: Debian on 2 nodes"),
                             "the summary counts both; got " + manager.lastJobSummary());
                     // A second pass brings the cluster to the system again: nodes already on it are left alone.
-                    helper.assertTrue(manager.startJob(supercomputerRef(manager), JobKind.SYSTEM)
+                    helper.assertTrue(manager.startJob(supercomputerRef(manager), JobKind.SYSTEM).english()
                             .startsWith("installing"), "a second pass starts");
                 })
                 .thenWaitUntil(() -> helper.assertTrue(manager.job() == null, "the second pass finishes"))
                 .thenExecute(() -> helper.assertTrue(
-                        manager.lastJobSummary().equals("done: Debian on 0 nodes, 2 skipped"),
+                        manager.lastJobSummary().english().equals("done: Debian on 0 nodes, 2 skipped"),
                         "nodes already running the system are skipped; got " + manager.lastJobSummary()))
                 .thenSucceed();
     }
@@ -578,7 +614,7 @@ public final class ClusterManagerGameTests {
                             "the program disc is read from the second linked reader");
                     // The system lands on one node by hand; the program must reach it and skip the bare one.
                     helper.assertTrue(rack.unitHost(0).installOs(DEBIAN), "the first node takes the system");
-                    final String status = manager.startJob(supercomputerRef(manager), JobKind.PROGRAM);
+                    final String status = manager.startJob(supercomputerRef(manager), JobKind.PROGRAM).english();
                     helper.assertTrue(status.equals("installing Minesweeper on 2 nodes"), "the job starts; got " + status);
                 })
                 .thenWaitUntil(() -> helper.assertTrue(manager.job() == null, "the job finishes"))
@@ -587,7 +623,8 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(first.console() != null && first.console().isInstalled(MINESWEEPER.toString()),
                             "the node with a system has the program");
                     helper.assertTrue(rack.unitHost(2).installedOsId() == null, "the bare node is untouched");
-                    helper.assertTrue(manager.lastJobSummary().equals("done: Minesweeper on 1 node, 1 skipped"),
+                    helper.assertTrue(
+                            manager.lastJobSummary().english().equals("done: Minesweeper on 1 node, 1 skipped"),
                             "one written, one skipped for having no system; got " + manager.lastJobSummary());
                 })
                 .thenSucceed();
@@ -602,13 +639,48 @@ public final class ClusterManagerGameTests {
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     final ClusterRef ref = sectionRef(helper);
                     helper.assertTrue(manager.powerAll(ref, false) == 1, "the server's bay goes off");
-                    final String status = manager.startJob(ref, JobKind.SYSTEM);
+                    final String status = manager.startJob(ref, JobKind.SYSTEM).english();
                     helper.assertTrue(status.equals("installing Debian on 1 node"), "the job starts; got " + status);
                 })
                 .thenExecuteAfter(2, () -> {
                     helper.assertTrue(manager.job() == null, "a node with its bay off is skipped at once");
-                    helper.assertTrue(manager.lastJobSummary().equals("done: Debian on 0 nodes, 1 skipped"),
+                    helper.assertTrue(manager.lastJobSummary().english().equals("done: Debian on 0 nodes, 1 skipped"),
                             "the summary says so; got " + manager.lastJobSummary());
+                })
+                .thenSucceed();
+    }
+
+    /** A row named from a player's screen is only installed on when it is one of the cluster's own. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void manager_installsOnlyOnRowsOfTheCluster(final GameTestHelper helper) {
+        final ClusterManagementComputerBlockEntity manager = placeBackbone(helper, fabricHostAdapter());
+        final ServerRackBlockEntity rack = placeDatacenter(helper, 1);
+        linkReaderWithDisc(helper, READER_EAST, MediaKind.OS_INSTALL, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 6, () -> {
+                    final ClusterRef ref = sectionRef(helper);
+                    final List<NodeRef> strangers = List.of(new NodeRef(rack.getBlockPos(), 99),
+                            new NodeRef(helper.absolutePos(MAINFRAME), 0));
+                    final String status = manager.startJob(ref, JobKind.SYSTEM, strangers).english();
+                    helper.assertTrue(status.equals("no nodes in that cluster"),
+                            "a row past the cabinet and a block that is no rack are refused; got " + status);
+                    helper.assertTrue(manager.job() == null, "and no job starts");
+                })
+                .thenSucceed();
+    }
+
+    /** The same for switching one node's bay. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void manager_togglesOnlyNodesOfTheCluster(final GameTestHelper helper) {
+        final ClusterManagementComputerBlockEntity manager = placeBackbone(helper, fabricHostAdapter());
+        final ServerRackBlockEntity rack = placeDatacenter(helper, 1);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 6, () -> {
+                    final ClusterRef ref = sectionRef(helper);
+                    helper.assertFalse(manager.toggleNode(ref, new NodeRef(rack.getBlockPos(), 99)),
+                            "a row the cabinet does not seat is not switched");
+                    final NodeRef node = manager.nodesOf(ref).get(0);
+                    helper.assertTrue(manager.toggleNode(ref, node), "while one of the cluster's own is");
                 })
                 .thenSucceed();
     }
@@ -630,7 +702,7 @@ public final class ClusterManagerGameTests {
                     final ClusterRef ref = sectionRef(helper);
                     helper.assertTrue(manager.nodesOf(ref).size() == lanes[0] + 1,
                             "every server registers in the section; got " + manager.nodesOf(ref).size());
-                    final String status = manager.startJob(ref, JobKind.SYSTEM);
+                    final String status = manager.startJob(ref, JobKind.SYSTEM).english();
                     helper.assertTrue(status.startsWith("installing Debian on " + (lanes[0] + 1)),
                             "the job starts; got " + status);
                 })
@@ -646,7 +718,7 @@ public final class ClusterManagerGameTests {
                 .thenExecute(() -> {
                     helper.assertTrue(nodesRunning(rack, lanes[0] + 1, DEBIAN) == lanes[0],
                             "the servers being written got the system; the queued one did not");
-                    helper.assertTrue(manager.lastJobSummary().equals("cancelled: Debian on " + lanes[0]
+                    helper.assertTrue(manager.lastJobSummary().english().equals("cancelled: Debian on " + lanes[0]
                                     + " node" + (lanes[0] == 1 ? "" : "s")),
                             "the summary says cancelled; got " + manager.lastJobSummary());
                     helper.assertTrue(!manager.cancelJob(), "nothing left to cancel");
@@ -663,8 +735,9 @@ public final class ClusterManagerGameTests {
     private static ClusterManagementComputerBlockEntity placeVintageManagerOnBackbone(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(MAINFRAME);
-        helper.setBlock(CABLE_A, ComputingModule.HBW_CABLE.get());
-        helper.setBlock(CABLE_B, ComputingModule.HBW_CABLE.get());
+        // A Vintage machine takes its own era's backbone, the thick coax, which the newer devices take too.
+        TestCables.lay(helper, CABLE_A, ComputingModule.THICK_COAX_CABLE);
+        TestCables.lay(helper, CABLE_B, ComputingModule.THICK_COAX_CABLE);
         helper.setBlock(MANAGER, ComputingModule.VINTAGE_CLUSTER_MANAGEMENT_COMPUTER.get());
         world.faceRearTowardCable(MANAGER);
         final ClusterManagementComputerBlockEntity manager = managerAt(helper);
@@ -676,7 +749,7 @@ public final class ClusterManagerGameTests {
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         hardware.setStackInSlot(ClusterManagementComputerBlockEntity.PCIE_SLOTS_START,
                 new ItemStack(ComputingModule.SERIAL_CONSOLE_CARD.get()));
         manager.togglePower();
@@ -701,9 +774,11 @@ public final class ClusterManagerGameTests {
                     final ClusterRef ref = supercomputerRef(manager);
                     helper.assertTrue(manager.powerAll(ref, false) == 0 && rack.bayPowerOn(0) && rack.bayPowerOn(2),
                             "out of the card's reach the bays stay untouched");
-                    helper.assertTrue(!manager.toggleNode(helper.absolutePos(NODE_RACK), 0) && rack.bayPowerOn(0),
+                    helper.assertTrue(!manager.toggleNode(ref, new NodeRef(helper.absolutePos(NODE_RACK), 0))
+                                    && rack.bayPowerOn(0),
                             "a single node out of reach does not answer either");
-                    helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).equals("this card does not reach that cluster"),
+                    helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).english()
+                                    .equals("this card does not reach that cluster"),
                             "a job on a cluster out of reach is refused up front");
                 })
                 .thenSucceed();

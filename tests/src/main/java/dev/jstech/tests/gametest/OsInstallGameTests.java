@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.MonitorBlock;
@@ -17,12 +18,15 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.operation.payload.firmware.InstallerPayloads;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -60,7 +64,7 @@ public final class OsInstallGameTests {
             throw new IllegalStateException("no Mainframe at " + pos);
         }
         final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT, new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT, new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
@@ -147,6 +151,49 @@ public final class OsInstallGameTests {
                     }
                     helper.assertTrue(job.ticksLeft() < job.ticksTotal(), "it moves whether or not anybody watches");
                     helper.assertTrue(!mainframe.hasOs(), "and still nothing is written part way through");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Choosing a faster disk before the copy starts really does shorten it: the job is resized to the faster
+     * disk's own total, with nothing of it done yet, and the install still ends with the system written.
+     */
+    @GameTest(template = ARENA)
+    public static void guidedInstall_choosingAFasterDiskShortensTheCopyAndStillFinishes(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithInstaller(helper, pos);
+        // A second disk, faster than the first: SSD over HDD, so picking it really does cut the quote.
+        mainframe.getInventory().setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START + 1,
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "the installer opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null, "the machine opened an installer");
+                    helper.assertTrue(flow.targetSlot() == 0,
+                            "the first disk it read is chosen before anybody picks a faster one");
+                    final int slowTotal = flow.ticksTotal();
+                    InstallerPayloads.selectDiskAndResize(mainframe, flow, 1);
+                    helper.assertTrue(flow.targetSlot() == 1, "the faster disk is now the target");
+                    helper.assertTrue(flow.ticksTotal() < slowTotal,
+                            "a faster disk really does shorten the copy; got " + flow.ticksTotal()
+                                    + " was " + slowTotal);
+                    answerEveryQuestion(helper, mainframe);
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null && job.ticksTotal() == flow.ticksTotal(),
+                            "the job was resized to the faster disk's own total before any of it ran");
+                    helper.assertTrue(job.targetSlot() == 1, "the job follows the disk that was chosen");
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(DEBIAN.equals(mainframe.installedOsId()),
+                            "the install still completes and writes the system");
+                    helper.assertTrue(mainframe.pendingInstallSlot() == 1,
+                            "on the disk it was retimed for, not the first one; got "
+                                    + mainframe.pendingInstallSlot());
                 })
                 .thenSucceed();
     }
@@ -252,7 +299,7 @@ public final class OsInstallGameTests {
                 new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, new ItemStack(HardwareItems.RAM_SIMM_4.get()));
-        hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300B.get()));
+        hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(HardwareItems.DISK_TRENCH_20M.get()));
         pc.togglePower();
@@ -271,7 +318,8 @@ public final class OsInstallGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     helper.assertTrue(pc.isRunning(), "the vintage machine powers on");
                     helper.assertTrue(!pc.linkedEndpoints().isEmpty(), "the reader links to the computer");
-                    final String failure = FirmwarePayloads.beginInstall(helper.getLevel(), pc, -1L, -1);
+                    final Text said = FirmwarePayloads.beginInstall(helper.getLevel(), pc, -1L, -1);
+                    final String failure = said == null ? null : said.english();
                     helper.assertTrue(failure != null && failure.contains("Legacy") && failure.contains("Vintage"),
                             "the refusal names the era the system needs and the machine's own, got: " + failure);
                     helper.assertTrue(!pc.hasOs(), "nothing was written to the disk");
@@ -356,7 +404,7 @@ public final class OsInstallGameTests {
                     helper.assertTrue(!unit.hasOs(), "and nothing is on its drive yet");
 
                     final CompoundTag onItem = rack.getServers().getStackInSlot(0)
-                            .get(ComputingModule.SERVER_CONSOLE.get());
+                            .get(ComputingComponents.SERVER_CONSOLE.get());
                     helper.assertTrue(onItem != null && onItem.contains("Installing"),
                             "the copy is flushed onto the Server item, so a save keeps it");
 
@@ -415,13 +463,15 @@ public final class OsInstallGameTests {
                     final IOsHost unit = rack.unitHost(0);
                     unit.setPendingInstallSlot(0);
                     helper.assertTrue(unit.pendingInstallSlot() == 0, "the unit remembers its pending reboot");
-                    final CompoundTag onItem = rack.getServers().getStackInSlot(0).get(ComputingModule.SERVER_CONSOLE.get());
+                    final CompoundTag onItem =
+                            rack.getServers().getStackInSlot(0).get(ComputingComponents.SERVER_CONSOLE.get());
                     helper.assertTrue(onItem != null && onItem.getInt("PendingInstall") == 0,
                             "the pending reboot is flushed onto the Server item with the rest of its session");
                     rack.toggleBayPower(0); // the bay switch is this machine's power button
                     helper.assertTrue(unit.pendingInstallSlot() == IOsHost.NO_PENDING_INSTALL,
                             "switching the bay off drops the installer session");
-                    final CompoundTag after = rack.getServers().getStackInSlot(0).get(ComputingModule.SERVER_CONSOLE.get());
+                    final CompoundTag after =
+                            rack.getServers().getStackInSlot(0).get(ComputingComponents.SERVER_CONSOLE.get());
                     helper.assertTrue(after == null || !after.contains("PendingInstall"),
                             "and the item no longer carries it");
                 })

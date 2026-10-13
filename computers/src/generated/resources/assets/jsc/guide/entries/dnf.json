@@ -1,0 +1,184 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dnf.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dnf.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dnf.table1",
+      "heads": [
+        "jsc.guide.dnf.table1_head1",
+        "jsc.guide.dnf.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "dnf install <package>"
+          },
+          {
+            "words": "jsc.guide.dnf.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "dnf remove <package>"
+          },
+          {
+            "words": "jsc.guide.dnf.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "dnf search [term]"
+          },
+          {
+            "words": "jsc.guide.dnf.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "dnf list"
+          },
+          {
+            "words": "jsc.guide.dnf.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "dnf update"
+          },
+          {
+            "words": "jsc.guide.dnf.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "dnf upgrade"
+          },
+          {
+            "words": "jsc.guide.dnf.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/dnf"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dnf.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dnf.table2",
+      "heads": [
+        "jsc.guide.dnf.table2_head1",
+        "jsc.guide.dnf.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Last metadata expiration check: <time> ago."
+          },
+          {
+            "words": "jsc.guide.dnf.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Dependencies resolved."
+          },
+          {
+            "words": "jsc.guide.dnf.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Installing:  <package>  x86_64  <version>  mirror  <MB> MB"
+          },
+          {
+            "words": "jsc.guide.dnf.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Downloading Packages:"
+          },
+          {
+            "words": "jsc.guide.dnf.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Running transaction"
+          },
+          {
+            "words": "jsc.guide.dnf.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Installed:"
+          },
+          {
+            "words": "jsc.guide.dnf.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Complete!"
+          },
+          {
+            "words": "jsc.guide.dnf.table2_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dnf.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dnf.fix1",
+          "problem": "jsc.guide.dnf.problem1"
+        },
+        {
+          "fix": "jsc.guide.dnf.fix2",
+          "problem": "jsc.guide.dnf.problem2"
+        },
+        {
+          "fix": "jsc.guide.dnf.fix3",
+          "problem": "jsc.guide.dnf.problem3"
+        },
+        {
+          "fix": "jsc.guide.dnf.fix4",
+          "problem": "jsc.guide.dnf.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:apt",
+        "jsc:mirror_and_packages"
+      ]
+    }
+  ],
+  "id": "jsc:dnf",
+  "order": 234,
+  "section": "jsc:linux_packages",
+  "title": "jsc.guide.dnf.title"
+}

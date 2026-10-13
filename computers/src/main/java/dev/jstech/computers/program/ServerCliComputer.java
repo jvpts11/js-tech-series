@@ -7,97 +7,68 @@
  */
 package dev.jstech.computers.program;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.machine.FileService;
-import dev.jstech.computers.machine.InstallService;
-import dev.jstech.computers.machine.IqlService;
-import dev.jstech.computers.machine.MachineConfigService;
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.machine.MachinePrograms;
-import dev.jstech.computers.machine.MainframeStatsService;
-import dev.jstech.computers.machine.NetworkPathResolver;
-import dev.jstech.computers.machine.NetworkReadService;
-import dev.jstech.computers.machine.OperationsService;
 import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.ProgramService;
-import dev.jstech.computers.machine.RemoteComputerService;
-import dev.jstech.computers.operation.MoveLabels;
-import dev.jstech.computers.operation.payload.files.FileAccess;
-import dev.jstech.computers.os.ConsoleIdentity;
-import dev.jstech.computers.os.DesktopEnvironmentDef;
-import dev.jstech.computers.os.FilesystemKind;
-import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.RamLedger;
-import dev.jstech.computers.program.job.JobWhen;
-import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.os.KernelDef;
-import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
-import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
-import dev.jstech.computers.os.UnixTree;
-import dev.jstech.computers.program.cli.CliLine;
-import dev.jstech.computers.program.cli.CliStyle;
-import dev.jstech.computers.program.cli.DosPath;
+import dev.jstech.computers.os.SystemProcesses;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPages;
+import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.program.cli.CliTexts;
+import dev.jstech.computers.program.cli.CommandScope;
+import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliMachine;
 import dev.jstech.computers.program.cli.PosixPath;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.install.LiveTurn;
-import dev.jstech.computers.program.iql.IIqlCondition;
-import dev.jstech.computers.program.iql.IqlOperation;
-import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.program.job.JobWhen;
+import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.operation.OperationPriority;
-import dev.jstech.core.peripheral.IPeripheralOwner;
-import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
-import dev.jstech.computers.config.ComputersServerConfig;
-import dev.jstech.core.util.ShortId;
-import dev.jstech.core.uuid.NetworkUuid;
-import dev.jstech.core.uuid.NodeUuid;
+import dev.jstech.core.JsCore;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Backs the Command Prompt's {@link ICliComputer} facade with a real computer and its network. Every command the shell
  * runs ultimately calls one of these methods on the server; effecting verbs route through the same Mainframe operation
  * dispatch the graphical terminal uses, so the CLI is a true alternative interface, not a parallel code path.
+ *
+ * <p>Laid out in layers, one per part of the machine a command reaches: the machine itself ({@link ServerCliShell}),
+ * its files ({@link ServerCliFiles}), its network and the work it asks of it ({@link ServerCliNetwork}), and here its
+ * software, its settings, its jobs and the programs it runs.
  */
-public final class ServerCliComputer implements ICliComputer {
+@TextHolder
+public final class ServerCliComputer extends ServerCliNetwork {
 
-    private final IComputerTerminalHost host;
-    private final BlockEntity hostBlock;
-    private final ServerLevel level;
+    /** The word the program runner is typed as, which is also what its complaints open with. */
+    private static final String SIGMA = "sigma";
 
-    /**
-     * Who is typing, when somebody is.
-     *
-     * <p>Most of what a machine does is the machine's own and has no one in front of it: a program, a service,
-     * a schedule. A few words are about the person at the keyboard, though, and those are exactly the words
-     * that cannot work from anywhere else: taking items into your own hands, or handing over what you are
-     * holding. A shell built with nobody typing simply has no one to hand anything to, which is what a session
-     * opened on another machine is, and it says so rather than reaching across the world for a player.
-     */
-    @Nullable
-    private final ServerPlayer typist;
+    private static final TextKey FORGOTTEN =TextKey.of("jsc.cli.variable.forgotten", "%s is forgotten");
+    private static final TextKey CANNOT_RUN =
+            TextKey.of("jsc.cli.sigma.cannot_run", "this machine cannot run programs");
+    private static final TextKey SERVICE_ENDED = TextKey.of("jsc.cli.kill.service_ended", "stopped %s");
+    /** What a process list says of a process the system started for itself: it runs as long as the system does. */
+    private static final String RUNNING = "running";
 
     public ServerCliComputer(final IComputerTerminalHost host, final ServerLevel level) {
         this(host, level, null);
@@ -106,274 +77,24 @@ public final class ServerCliComputer implements ICliComputer {
     /** The same, for a shell somebody is typing at, which is what the words about the player need. */
     public ServerCliComputer(final IComputerTerminalHost host, final ServerLevel level,
                              @Nullable final ServerPlayer typist) {
-        this.host = host;
-        this.hostBlock = (BlockEntity) host;
-        this.level = level;
-        this.typist = typist;
+        super(host, level, typist);
     }
 
-    @Override
-    public String name() {
-        // The Mainframe has no custom name; its kind is shown by type() instead.
-        if (hostBlock instanceof IOsHost computer) {
-            return computer.customName();
-        }
-        return "";
-    }
-
-    @Override
-    public String type() {
-        if (hostBlock instanceof MainframeBlockEntity) {
-            return "Mainframe";
-        }
-        if (hostBlock instanceof CraftingComputerBlockEntity) {
-            return "Crafting Computer";
-        }
-        if (hostBlock instanceof PersonalComputerBlockEntity) {
-            return "Personal Computer";
-        }
-        if (hostBlock instanceof ClusterManagementComputerBlockEntity) {
-            return "Cluster Management Computer";
-        }
-        return "Computer";
-    }
-
-    @Override
-    public Object hostBlock() {
-        return hostBlock;
-    }
-
-    @Override
-    public String nodeId() {
-        final NodeUuid node;
-        if (hostBlock instanceof IOsHost computer) {
-            node = computer.nodeUuid();
-        } else if (hostBlock instanceof MainframeBlockEntity mainframe) {
-            node = mainframe.nodeUuid();
-        } else {
-            node = null;
-        }
-        return node == null ? "------" : ShortId.of(node.asString());
-    }
-
-    @Override
-    public boolean running() {
-        return host.computerRunning();
-    }
-
-    @Override
-    public long cpuCapacity() {
-        return host.orchestrationCapacity();
-    }
-
-    @Override
-    public long ramBuffer() {
-        return host.computerRamBuffer();
-    }
-
-    @Override
-    public boolean onNetwork() {
-        return networkReads().online();
-    }
-
-    @Override
-    public String networkId() {
-        return networkReads().id();
-    }
-
-    @Override
-    public boolean isMainframe() {
-        return networkReads().isMainframe();
-    }
-
-    // Remote shells
-
-    /**
-     * Every machine on this network a remote shell can reach, keyed by host name: the Mainframe, the
-     * personal computers, and the servers in their racks. The local machine is left out, since you cannot
-     * ssh into the terminal you are already sitting at.
-     */
-    /** The reachable machines by host name, for callers outside the CLI (Remote Control's list). */
-    public Map<String, BlockEntity> remoteMachines() {
-        return remotes().machines();
-    }
-
-    @Override
-    public List<RemoteHost> reachableHosts() {
-        return remotes().hosts();
-    }
-
-    @Override
-    public OpResult sshConnect(final String hostname) {
-        return remotes().connect(hostname);
-    }
-
-    @Override
-    public OpResult sshDisconnect() {
-        return remotes().disconnect();
-    }
-
-    @Override
-    public String sshSession() {
-        return remotes().session();
-    }
-
-    @Override
-    public NetSummary network() {
-        return networkReads().summary();
-    }
-
-    @Override
-    public List<StoredItem> query(final IIqlCondition where,
-                                  final String server, final int limit) {
-        return networkReads().query(where, server, limit);
-    }
-
-    @Override
-    public List<StoredItem> queryObject(final String object,
-                                        final IIqlCondition where,
-                                        final String server, final int limit) {
-        return networkReads().queryObject(object, where, server, limit);
-    }
-
-    @Override
-    public List<ServerUse> servers() {
-        return networkReads().servers();
-    }
-
-    @Override
-    public ServerUse networkUse() {
-        return networkReads().use();
-    }
-
-    @Override
-    public List<Holding> find(final String item) {
-        return networkReads().find(item);
-    }
-
-    @Override
-    public List<ItemMatch> matching(final String text) {
-        return networkReads().matching(text);
-    }
-
-    @Override
-    public ItemDetail itemDetail(final String id) {
-        return networkReads().itemDetail(id);
-    }
-
-    @Override
-    public OpResult select(final String item, final long quantity) {
-        return select(item, quantity, MoveLabels.SHELL);
-    }
-
-    @Override
-    public OpResult select(final String item, final long quantity, final String origin) {
-        return operations().select(item, quantity, origin);
-    }
-
-    @Override
-    public OpResult takeToHand(final String item, final long quantity) {
-        return operations().takeToHand(typist, item, quantity, MoveLabels.SHELL);
-    }
-
-    @Override
-    public OpResult storeFromHand(final long quantity) {
-        return operations().storeFromHand(typist, quantity, MoveLabels.SHELL);
-    }
-
-    @Override
-    public OpResult fillHeld(final String item) {
-        return operations().fillHeld(typist, item, MoveLabels.SHELL);
-    }
-
-    @Override
-    public List<OperationStat> operationStats() {
-        return mainframeStats().work();
-    }
-
-    @Override
-    public int peakOperationsToday() {
-        return mainframeStats().peakToday();
-    }
-
-    @Override
-    public OpResult repriorityOperation(final String id, final String priority) {
-        return operations().reprioritise(id, priority);
-    }
-
-    public OpResult cancelOperation(final String id) {
-        return operations().cancel(id);
-    }
-
-    @Override
-    public OpResult insert(final String item, final long quantity) {
-        return insert(item, quantity, OperationPriority.DEFAULT, MoveLabels.SHELL);
-    }
-
-    @Override
-    public OpResult insert(final String item, final long quantity, final String origin) {
-        return insert(item, quantity, OperationPriority.DEFAULT, origin);
-    }
-
-    private OpResult insert(final String item, final long quantity,
-                            final OperationPriority priority,
-                            final String origin) {
-        return operations().insert(item, quantity, priority, origin);
-    }
-
-    @Override
-    public OpResult craft(final String item, final long quantity) {
-        return craft(item, quantity, OperationPriority.DEFAULT, MoveLabels.SHELL);
-    }
-
-    @Override
-    public OpResult craft(final String item, final long quantity, final String origin) {
-        return craft(item, quantity, OperationPriority.DEFAULT, origin);
-    }
-
-    private OpResult craft(final String item, final long quantity,
-                           final OperationPriority priority,
-                           final String origin) {
-        return operations().craft(item, quantity, priority, origin);
-    }
-
-    @Override
-    public OpResult lock(final String item, final long quantity) {
-        return operations().lock(item, quantity);
-    }
-
-    @Override
-    public OpResult unlock(final String item) {
-        return operations().unlock(item);
-    }
-
-    @Override
-    public List<StoredItem> locks() {
-        return operations().locks();
-    }
-
-    @Override
-    public List<ActiveOp> activeOps() {
-        return operations().list();
-    }
-
-    @Override
-    public OpResult maintenance(final String action) {
-        return operations().maintenance(action);
-    }
-
-    @Override
-    public List<String> peripherals() {
-        if (hostBlock instanceof IPeripheralOwnerSupport owner) {
-            final List<String> rows = new ArrayList<>();
-            for (final long endpoint : owner.peripheralEndpoints()) {
-                final BlockPos pos = BlockPos.of(endpoint);
-                rows.add(level.getBlockState(pos).getBlock().getName().getString()
-                        + " @ " + pos.getX() + "," + pos.getY() + "," + pos.getZ());
+    /** The shell family of the OS installed on {@code host} (DOS when it has no OS or is not a computer). */
+    public static ShellFamily shellFamilyOf(final Object host) {
+        if (host instanceof IOsHost computer) {
+            final OsDef os = computer.installedOs();
+            final KernelDef kernel = os == null ? null : OsRegistry.getKernel(os.kernelId());
+            if (kernel != null) {
+                return kernel.shellFamily();
             }
-            return rows;
         }
-        return List.of();
+        return ShellFamily.DOS;
+    }
+
+    /** The build every package the Mirror serves is currently at: the mod's own version. */
+    public static String modVersion() {
+        return PackageService.modVersion();
     }
 
     @Override
@@ -396,227 +117,8 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public OpResult engineControl(final String action) {
-        return iql().control(action);
-    }
-
-    @Override
-    public List<ServiceStatus> services() {
-        return packages().services();
-    }
-
-    @Override
-    public boolean iqlEngineInstalled() {
-        return iql().installed();
-    }
-
-    @Override
-    public OpResult execute(final IqlOperation op) {
-        return iql().execute(op);
-    }
-
-    // helpers
-
-    private MainframeBlockEntity mainframe(final NetworkUuid net) {
-        if (net == null) {
-            return null;
-        }
-        return NetworkSystem.get(level).mainframePositionOf(net)
-                .map(pos -> level.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
-                .orElse(null);
-    }
-
-
-    /** The shell family of the OS installed on {@code host} (DOS when it has no OS or is not a computer). */
-    public static ShellFamily shellFamilyOf(final Object host) {
-        if (host instanceof IOsHost computer) {
-            final OsDef os = computer.installedOs();
-            final KernelDef kernel = os == null ? null : OsRegistry.getKernel(os.kernelId());
-            if (kernel != null) {
-                return kernel.shellFamily();
-            }
-        }
-        return ShellFamily.DOS;
-    }
-
-    @Override
-    public ShellFamily shellFamily() {
-        return shellFamilyOf(hostBlock);
-    }
-
-    @Override
-    public Platform platform() {
-        final OsDef os = hostBlock instanceof IOsHost computer ? computer.installedOs() : null;
-        return os == null ? Platform.LINUX : os.platform();
-    }
-
-    @Override
-    public UnixTree tree() {
-        return UnixTree.of(platform());
-    }
-
-    @Override
-    public int osEdition() {
-        return hostBlock instanceof IOsHost computer ? OsRegistry.osVersionRank(computer.installedOsId()) : 0;
-    }
-
-    @Override
-    public boolean hostIs(final HostScope scope) {
-        return switch (scope) {
-            case ANY -> true;
-            case MAINFRAME -> hostBlock instanceof MainframeBlockEntity;
-            case CRAFTING_COMPUTER -> hostBlock instanceof CraftingComputerBlockEntity;
-            /* A rack answers as the server mounted in it, which is what a server-only command belongs to. */
-            case SERVER -> hostBlock instanceof ServerRackBlockEntity;
-            case CLUSTER_MANAGEMENT_COMPUTER -> hostBlock instanceof ClusterManagementComputerBlockEntity;
-        };
-    }
-
-    @Override
-    public boolean hasFiles() {
-        return hostBlock instanceof IOsHost computer
-                && FileAccess.filesystemKindOf(computer) != FilesystemKind.NONE;
-    }
-
-    @Override
-    public boolean hasPorts() {
-        return hostBlock instanceof IPeripheralOwner owner && owner.maxEndpoints() > 0;
-    }
-
-    @Override
-    public int processorBits() {
-        return hostBlock instanceof IOsHost computer ? computer.processorBits() : 64;
-    }
-
-    // Set by the reboot verb during a command run; the payload handler reads it once the shell returns.
-    private boolean firmwareReboot;
-    private boolean reboot;
-
-    @Override
-    public void requestFirmwareReboot() {
-        this.firmwareReboot = true;
-    }
-
-    @Override
-    public boolean firmwareRebootRequested() {
-        return firmwareReboot;
-    }
-
-    @Override
-    public void requestReboot() {
-        this.reboot = true;
-    }
-
-    @Override
-    public boolean rebootRequested() {
-        return reboot;
-    }
-
-    // packages: the Linux package managers over the network's Mirror service
-
-    @Override
-    public PackageManagerKind packageManager() {
-        return packages().manager();
-    }
-
-    @Override
-    public boolean mirrorReachable() {
-        return packages().reachable();
-    }
-
-    @Override
-    public List<String> drainNotices() {
-        return packages().notices();
-    }
-
-    @Override
-    public List<PackageInfo> packagesAvailable() {
-        return packages().available();
-    }
-
-    @Override
-    public OpResult publishPackage(final String path) {
-        return packages().publish(path);
-    }
-
-    @Override
-    public OpResult unpublishPackage(final String name) {
-        return packages().unpublish(name);
-    }
-
-
-    @Override
-    public Installing packageInstall(final String name, final boolean ask) {
-        return packages().install(name, ask);
-    }
-
-    /** The build every package the Mirror serves is currently at: the mod's own version. */
-    public static String modVersion() {
-        return PackageService.modVersion();
-    }
-
-    @Override
-    public OpResult packageUpdate() {
-        return packages().update();
-    }
-
-    @Override
-    public OpResult packageRemove(final String name) {
-        return packages().remove(name);
-    }
-
-    @Override
-    public OpResult formatDrive(final char letterRaw) {
-        return files().formatDrive(letterRaw);
-    }
-
-    @Override
     public boolean hasProgram(final ResourceLocation id) {
         return installs().has(id);
-    }
-
-    @Override
-    public SystemInfo systemInfo() {
-        if (!(hostBlock instanceof IOsHost computer) || computer.installedOs() == null) {
-            return null;
-        }
-        final OsDef os = computer.installedOs();
-        final ResourceLocation desktopId = computer.installedDesktopId();
-        final DesktopEnvironmentDef chrome =
-                desktopId == null ? null : OsRegistry.getDesktop(desktopId);
-        final ItemStack systemDisk = computer.systemDisk();
-        final long totalMb = systemDisk.getItem()
-                instanceof DiskItem disk
-                ? disk.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM : 0L;
-        final long freeMb = computer.systemDiskFreeMb();
-        final ComputerConsoleState console = host.console();
-        return new SystemInfo(
-                os.id().getPath(),
-                os.displayName(),
-                shellFamily() == ShellFamily.POSIX
-                        ? KernelNames.kernel(os.platform(), computer.processorBits())
-                        : "JSC " + os.id().getPath(),
-                hostname(),
-                os.shellId(),
-                chrome != null ? chrome.displayName()
-                        : "none (" + KernelNames.terminal(os.platform()) + ")",
-                computer.maxCpuMhz() + " MHz",
-                (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()),
-                Math.max(0L, totalMb - freeMb),
-                totalMb,
-                console == null ? 0 : console.installed().size(),
-                level.getGameTime());
-    }
-
-    @Override
-    public OpResult mirrorControl(final String action) {
-        return packages().control(action);
-    }
-
-    @Override
-    public String hostname() {
-        // The host resolves its own name so the shell, the provenance rows and the remote host list agree.
-        return host.hostname();
     }
 
     @Override
@@ -631,165 +133,68 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public String prompt() {
-        final LiveInstallState live = liveInstall();
-        if (live != null) {
-            return live.prompt();
-        }
-        /*
-         * A flat disk has no path to put in a prompt, so MC-NET's names the machine instead of a place. It
-         * is also why it carries no drive letter: there is one store and nowhere in it to stand.
-         */
-        if (shellFamily() == ShellFamily.NET) {
-            return "SYSTEM:>";
-        }
-        if (shellFamily() != ShellFamily.POSIX) {
-            return currentLocation().dosPath() + ">";
-        }
-        final String cwd = PosixPath.renderForPrompt(tree(), currentLocation());
-        final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
-        return ConsoleIdentity.promptOf(os == null ? "" : os.shellId(), hostname(), cwd);
-    }
-
-    /** A live medium's prompt is in its shell's own colours; every other prompt here is in one. */
-    @Override
-    public CliLine promptLine() {
-        final LiveInstallState live = liveInstall();
-        return live != null ? live.promptLine() : new CliLine(prompt(), CliStyle.ACCENT);
+    public PackageManagerKind packageManager() {
+        return packages().manager();
     }
 
     @Override
-    public List<MountInfo> mounts() {
-        return files().mounts();
+    public boolean mirrorReachable() {
+        return packages().mirror().reachable();
     }
 
     @Override
-    public List<String> fileNames() {
-        // Named the way a listing names the folder the prompt stands in: with nothing, which is "here".
-        return files().list("");
-    }
-
-    /** The terminal window's shell session this prompt speaks for, or 0 for the machine's own prompt. */
-    private int session;
-
-    /**
-     * Says which terminal window's shell this is.
-     *
-     * <p>A window that has moved with {@code cd} is where it went, whatever the other windows and the
-     * full-screen prompt are doing; one that has not is wherever the machine's prompt is.
-     */
-    public void useSession(final int session) {
-        this.session = session;
+    public OpResult mirrorControl(final String action) {
+        return packages().mirror().control(action);
     }
 
     @Override
-    public DosPath.Location currentLocation() {
-        final ComputerConsoleState console = host.console();
-        if (console == null) {
-            return DosPath.Location.root('C');
-        }
-        final ComputerConsoleState.ShellSpot spot =
-                session == 0 ? null : console.sessionLocation(session);
-        if (spot != null) {
-            final List<String> parts = spot.dir().isEmpty()
-                    ? List.of() : List.of(spot.dir().split("/"));
-            return new DosPath.Location(spot.drive(), parts);
-        }
-        /*
-         * A fresh POSIX session starts in the home directory (a DOS one at the drive root); once the player
-         * has changed directory the stored location wins, so "cd /" really lands on the root.
-         */
-        if (!console.hasTerminalLocation() && console.terminalDrive() == 'C'
-                && shellFamily() == ShellFamily.POSIX) {
-            return PosixPath.home(tree());
-        }
-        final String dir = console.terminalDir();
-        final List<String> segments = dir.isEmpty()
-                ? List.of() : List.of(dir.split("/"));
-        return new DosPath.Location(console.terminalDrive(), segments);
+    public List<String> drainNotices() {
+        return packages().notices();
     }
 
     @Override
-    public void setCurrentLocation(final DosPath.Location location) {
-        final ComputerConsoleState console = host.console();
-        if (console == null) {
-            return;
-        }
-        if (session != 0) {
-            console.setSessionLocation(session, location.drive(), location.storagePath());
-        } else {
-            console.setTerminalLocation(location.drive(), location.storagePath());
-        }
+    public List<PackageInfo> packagesAvailable() {
+        return packages().available();
     }
 
     @Override
-    public FsResult listDisk(final String dir) {
-        return files().listDisk(dir);
+    public OpResult publishPackage(final String path) {
+        return packages().mirror().publish(path);
     }
 
     @Override
-    public FsResult readFile(final String path) {
-        return files().readFile(path);
+    public OpResult unpublishPackage(final String name) {
+        return packages().mirror().unpublish(name);
     }
 
     @Override
-    public FsResult deleteFile(final String path) {
-        return files().deleteFile(path);
+    public Installing packageInstall(final String name, final boolean ask) {
+        return packages().install(name, ask);
     }
 
     @Override
-    public FsResult runScript(final String path) {
-        return iql().runFile(path);
+    public OpResult packageUpdate() {
+        return packages().update();
     }
 
     @Override
-    public FsResult writeFile(final String path, final String content) {
-        return files().writeFile(path, content);
+    public String installedVersion(final String programId) {
+        return host.console() == null ? "" : host.console().installedVersion(programId);
     }
 
     @Override
-    public FsResult appendFile(final String path, final String content) {
-        return files().appendFile(path, content);
+    public OpResult packageRemove(final String name) {
+        return packages().remove(name);
     }
 
     @Override
-    public FsResult changeDir(final String input) {
-        return files().changeDir(input, this::setCurrentLocation);
+    public Installing portsnap(final List<String> commands) {
+        return ports().snapshot(commands);
     }
 
     @Override
-    public FsResult changeDrive(final char drive) {
-        return files().changeDrive(drive, letter -> {
-            final ComputerConsoleState console = host.console();
-            if (console != null) {
-                console.setTerminalDrive(letter);
-            }
-        });
-    }
-
-    @Override
-    public FsResult makeDir(final String path) {
-        return files().makeDir(path);
-    }
-
-    @Override
-    public FsResult removeDir(final String path) {
-        return files().removeDir(path);
-    }
-
-    @Override
-    public FsResult copyPath(final String src, final String dest) {
-        return files().copyPath(src, dest);
-    }
-
-    @Override
-    public FsResult movePath(final String src, final String destDir) {
-        return files().movePath(src, destDir);
-    }
-
-    @Override
-    public FsResult renamePath(final String src, final String newName) {
-        return files().renamePath(src, newName);
+    public Installing makePort(final List<String> targets) {
+        return ports().make(currentLocation(), PosixPath.render(tree(), currentLocation()), targets);
     }
 
     @Override
@@ -808,24 +213,26 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public String worldTime() {
-        /*
-         * The world's own clock, read the way the game reads it: day one is the first day, and the hours run
-         * from six in the morning, which is when a day starts here.
-         */
-        final long time = level.getDayTime();
-        final long day = time / 24000L + 1L;
-        final long minutes = (time % 24000L) * 60L / 1000L + 6L * 60L;
-        return String.format(Locale.ROOT, "Day %d, %02d:%02d", day, minutes / 60L % 24L, minutes % 60L);
+    public List<String> favourites() {
+        return host.console() == null ? List.of() : host.console().settings().favourites();
     }
 
     @Override
-    public MemoryUse memory() {
-        if (!(hostBlock instanceof IOsHost computer)) {
-            return new MemoryUse(0, 0, 0L);
+    public Map<String, String> shellVariables() {
+        return host.console() == null ? Map.of() : host.console().settings().variables();
+    }
+
+    @Override
+    public OpResult setShellVariable(final String name, final String value) {
+        if (host.console() == null) {
+            return OpResult.fail(ICliMachine.MachineWords.NO_NAMES);
         }
-        final RamLedger ledger = computer.ramLedger();
-        return new MemoryUse(ledger.totalMb(), ledger.usedMb(), ledger.heldBytes());
+        host.console().settings().setVariable(name, value);
+        hostBlock.setChanged();
+        final String upper = name.toUpperCase(Locale.ROOT);
+        return value == null || value.isEmpty()
+                ? OpResult.ok(FORGOTTEN.with(upper))
+                : OpResult.ok(Text.literal(upper + "=" + value));
     }
 
     @Override
@@ -852,116 +259,6 @@ public final class ServerCliComputer implements ICliComputer {
         return true;
     }
 
-    @Override
-    public boolean listsEverything() {
-        return ComputersServerConfig.listCommands();
-    }
-
-    @Override
-    public List<String> favourites() {
-        return host.console() == null ? List.of() : host.console().settings().favourites();
-    }
-
-    @Override
-    public Map<String, String> shellVariables() {
-        return host.console() == null ? Map.of() : host.console().settings().variables();
-    }
-
-    @Override
-    public OpResult setShellVariable(final String name, final String value) {
-        if (host.console() == null) {
-            return OpResult.fail("this machine keeps no names");
-        }
-        host.console().settings().setVariable(name, value);
-        hostBlock.setChanged();
-        return OpResult.ok(value == null || value.isEmpty()
-                ? name.toUpperCase(Locale.ROOT) + " is forgotten"
-                : name.toUpperCase(Locale.ROOT) + "=" + value);
-    }
-
-    @Override
-    public List<NetworkShare> networkShares() {
-        return remotes().networkShares();
-    }
-
-    /** Where a path on another machine of the network leads, followed on that machine's own shell. */
-    private NetworkPathResolver networkPaths() {
-        return remotes().paths();
-    }
-
-    /** What this machine keeps about itself, as this shell reads and changes it. */
-    private MachineConfigService config() {
-        return new MachineConfigService(host, level, files());
-    }
-
-    /** The other computers of this machine's network, as this shell reaches them. */
-    private RemoteComputerService remotes() {
-        return new RemoteComputerService(host, level);
-    }
-
-    /** What is installed on this machine, and the installing itself, as this shell reaches it. */
-    private InstallService installs() {
-        return new InstallService(host, level, packages(), iql());
-    }
-
-    /** The packages this machine installs over its network's Mirror, as this shell reaches them. */
-    private PackageService packages() {
-        return new PackageService(host, level, files(), iql());
-    }
-
-    /** The network's own language, as this shell speaks it. */
-    private IqlService iql() {
-        return new IqlService(host, level, files(), operations(), networkReads());
-    }
-
-    /** What the Mainframe of this machine's network keeps about the work it has done. */
-    private MainframeStatsService mainframeStats() {
-        return new MainframeStatsService(host, level);
-    }
-
-    /** The work this machine asks of its network, as this shell asks for it. */
-    private OperationsService operations() {
-        return new OperationsService(host, level, this);
-    }
-
-    /** The data network this machine is on, as this shell reads it. */
-    private NetworkReadService networkReads() {
-        return new NetworkReadService(host, level, this, operations());
-    }
-
-    /** This machine's drives as this shell reaches them, from where this shell's window stands. */
-    private FileService files() {
-        return new FileService(hostBlock, level, networkPaths(), this::currentLocation);
-    }
-
-    /** The machine on this network that {@code name} picks out, as its own shell; null when none or several. */
-    @Nullable
-    public ServerCliComputer remoteShell(final String name) {
-        return remotes().find(name);
-    }
-
-
-    /** The block this shell runs on. */
-    public BlockEntity machine() {
-        return hostBlock;
-    }
-
-    /** The Mainframe of the network this machine is on, or null off any network. */
-    @Nullable
-    public MainframeBlockEntity mainframe() {
-        return mainframe(host.networkUuid());
-    }
-
-    /** Whether this machine takes programs and commands from the other computers on its network. */
-    public boolean remoteAllowed() {
-        final ComputerConsoleState console = host.console();
-        return console != null && console.settings().remoteAllowed();
-    }
-
-
-
-    // Script processes: the Σ# programs this machine is running.
-
     /**
      * The machine's programs when one of them has the terminal, or null when the prompt is free.
      *
@@ -982,14 +279,21 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public OpResult startSigma(final String path, final int heapMb, final List<String> arguments) {
         final ProgramService running = sigma();
-        return running == null ? OpResult.fail("sigma: this machine cannot run programs")
+        final OpResult started = running == null ? OpResult.fail(CliTexts.SAID_BY.with(SIGMA, CANNOT_RUN))
                 : running.startAtTerminal(path, heapMb, arguments);
+        if (started.ok()) {
+            report(JscEvents.SIGMA_RUN, "");
+            if (typist != null) {
+                ProgramTravels.ran(typist, FsPaths.fileName(path), hostBlock.getBlockPos().asLong());
+            }
+        }
+        return started;
     }
 
     @Override
     public OpResult stopSigma(final int id) {
         final ProgramService running = sigma();
-        return running == null ? OpResult.fail("sigma: this machine cannot run programs") : running.stop(id);
+        return running == null ? OpResult.fail(CliTexts.SAID_BY.with(SIGMA, CANNOT_RUN)) : running.stop(id);
     }
 
     @Override
@@ -999,14 +303,80 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     /**
-     * The programs running on this machine, as this shell reaches them; null when the machine runs none at all.
-     *
-     * <p>Named for the language rather than for programs, since this shell already answers {@code programs()} with
-     * what is installed, which is another thing entirely.
+     * A Unix machine's own processes: its init at number 1, holding the system's share, then each service it runs at
+     * the number that service keeps. A language's runtime is no process of its own: it is in each program it runs.
      */
+    @Override
+    public List<SigmaProcess> systemProcesses() {
+        final IOsHost machine = unixMachine();
+        if (machine == null || !machine.isRunning()) {
+            return List.of();
+        }
+        final OsDef system = machine.installedOs();
+        final RamLedger ledger = machine.ramLedger();
+        final long systemBytes = ledger.usedMb(RamLedger.Kind.SYSTEM) * RamLedger.BYTES_PER_MB;
+        final List<SigmaProcess> out = new ArrayList<>();
+        out.add(new SigmaProcess(SystemProcesses.INIT_PID,
+                SystemProcesses.initName(system.platform(), system.packageManager()), RUNNING, systemBytes,
+                systemBytes, SystemProcesses.INIT_FILE));
+        for (final RamLedger.Entry entry : ledger.entries()) {
+            final ProgramSpec service = runningService(entry);
+            if (service != null) {
+                out.add(new SigmaProcess(SystemProcesses.servicePid(OsRegistry.serviceIndex(service.id())),
+                        service.commandName(), RUNNING, entry.heldBytes(), entry.mb() * RamLedger.BYTES_PER_MB,
+                        SystemProcesses.serviceFile(service.commandName())));
+            }
+        }
+        return out;
+    }
+
+    /**
+     * On a Unix machine, a signal to its first process takes the system down, as the kernel panics with no init left
+     * to run; one to a service's process ends the service until the machine starts over; the rest go to the programs.
+     */
+    @Override
+    public OpResult signal(final int pid, final int signal, final String typed) {
+        final IOsHost machine = unixMachine();
+        if (machine == null) {
+            return stopSigma(pid);
+        }
+        if (pid == SystemProcesses.INIT_PID) {
+            // The page keeps the line that did it as the console showed it, at the prompt it was typed at.
+            final String line = SshTerminal.prompt(this, this) + " " + typed;
+            machine.crash(CrashCause.INIT_KILLED, CrashPages.Moment.initKilled(line, signal));
+            return OpResult.ok("");
+        }
+        final ProgramSpec named = OsRegistry.serviceAt(SystemProcesses.serviceIndex(pid));
+        for (final RamLedger.Entry entry : machine.ramLedger().entries()) {
+            final ProgramSpec service = runningService(entry);
+            if (service != null && service == named) {
+                machine.endService(service.id());
+                return OpResult.ok(SERVICE_ENDED.with(pid));
+            }
+        }
+        return stopSigma(pid);
+    }
+
+    /* This machine, when it is a computer or a server running a Unix system; null otherwise. */
     @Nullable
-    private ProgramService sigma() {
-        return hostBlock instanceof AbstractComputerBlockEntity computer
-                ? new ProgramService(computer, host, level, files(), remotes()) : null;
+    private IOsHost unixMachine() {
+        if (!(hostBlock instanceof IOsHost machine)) {
+            return null;
+        }
+        final OsDef system = machine.installedOs();
+        return system != null && CommandScope.UNIX_SYSTEMS.contains(system.platform()) ? machine : null;
+    }
+
+    /* The service a ledger entry is the running process of, or null for anything else or a language's runtime. */
+    @Nullable
+    private static ProgramSpec runningService(final RamLedger.Entry entry) {
+        if (entry.kind() != RamLedger.Kind.SERVICE) {
+            return null;
+        }
+        final ResourceLocation id = ResourceLocation.tryParse(entry.key());
+        if (id == null || JsCore.languages().get(id) != null || OsRegistry.serviceIndex(id) < 0) {
+            return null;
+        }
+        return OsRegistry.getProgram(id);
     }
 }

@@ -46,6 +46,11 @@ public final class ClientTestReport {
         return results.size();
     }
 
+    /** The outcome of every test run so far, in the order they ran. */
+    public List<Result> results() {
+        return List.copyOf(results);
+    }
+
     /** Writes the report; a write failure is logged, never thrown, so the client still shuts down cleanly. */
     public void write(final Path file, final int shard, final int shards) {
         final List<String> lines = new ArrayList<>();

@@ -27,6 +27,11 @@ public final class TransferState {
         this.latencyRemaining = latencyTicks;
     }
 
+    /**
+     * Plans one tick of the transfer. This advances the state: while read latency is pending it consumes one tick
+     * of it and plans nothing, so it must be called exactly once per tick and be followed by
+     * {@link #commit(long)} with what was really moved. Previewing a plan with it would eat latency.
+     */
     public long planTick(final long throughput) {
         if (moved >= total) {
             return 0L;

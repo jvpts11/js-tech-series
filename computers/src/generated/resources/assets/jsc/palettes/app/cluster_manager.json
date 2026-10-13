@@ -1,0 +1,7 @@
+{
+  "bad": "#FFC0392B",
+  "busy": "#FFB5781A",
+  "good": "#FF2A9D4A",
+  "warnBand": "#FFFCE3A1",
+  "warnInk": "#FF6B4E00"
+}

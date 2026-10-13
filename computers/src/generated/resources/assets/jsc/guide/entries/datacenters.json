@@ -1,0 +1,433 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.datacenters.definition1",
+      "term": "jsc.guide.datacenters.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.datacenters.definition2",
+      "term": "jsc.guide.datacenters.term2"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.datacenters.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 16,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.datacenters.balloon1"
+        },
+        {
+          "detail": "jsc.guide.datacenters.balloon2_detail",
+          "number": 2,
+          "part": {
+            "x": 16,
+            "y": 0,
+            "z": 17
+          },
+          "text": "jsc.guide.datacenters.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "x": 11,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.datacenters.balloon3"
+        },
+        {
+          "number": 4,
+          "part": {
+            "x": 21,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.datacenters.balloon4"
+        },
+        {
+          "number": 5,
+          "part": {
+            "x": 16,
+            "y": 1,
+            "z": 12
+          },
+          "text": "jsc.guide.datacenters.balloon5"
+        },
+        {
+          "number": 6,
+          "part": {
+            "x": 18,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.datacenters.balloon6"
+        },
+        {
+          "number": 7,
+          "part": {
+            "x": 16,
+            "y": 0,
+            "z": 18
+          },
+          "text": "jsc.guide.datacenters.balloon7"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "jsc:server_router[facing=north]",
+          "x": 16,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,3084,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 16,
+          "y": 0,
+          "z": 17
+        },
+        {
+          "state": "jsc:standard_router",
+          "x": 16,
+          "y": 0,
+          "z": 18
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,8240,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,48,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 14,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,4144,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 13,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "data": "{Units:[B;1b,1b,1b,1b,1b,1b,12b,11b],DisplayEra:3,BayPowerOff:0,ServicePanelOff:0b}",
+          "state": "jsc:server_rack[facing=west]",
+          "x": 11,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=false,front=false,compute=false]",
+          "x": 12,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=false,front=true,compute=false]",
+          "x": 11,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=false,front=false,compute=false]",
+          "x": 12,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=false,front=true,compute=false]",
+          "x": 11,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=false,front=false,compute=false]",
+          "x": 12,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=false,front=true,compute=false]",
+          "x": 11,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=false,front=false,compute=false]",
+          "x": 12,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=true,front=false,compute=false]",
+          "x": 11,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=true,front=false,compute=false]",
+          "x": 12,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=true,front=false,compute=false]",
+          "x": 11,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=west,top=true,front=false,compute=false]",
+          "x": 12,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,4144,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 17,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,48,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 18,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,8240,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 19,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "data": "{Units:[B;1b,10b,0b,4b,0b,1b,12b,11b],DisplayEra:3,BayPowerOff:0,ServicePanelOff:0b}",
+          "state": "jsc:server_rack[facing=east]",
+          "x": 21,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=false,front=false,compute=false]",
+          "x": 20,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=false,front=true,compute=false]",
+          "x": 21,
+          "y": 0,
+          "z": 17
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=false,front=false,compute=false]",
+          "x": 20,
+          "y": 0,
+          "z": 17
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=false,front=true,compute=false]",
+          "x": 21,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=false,front=false,compute=false]",
+          "x": 20,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=false,front=true,compute=false]",
+          "x": 21,
+          "y": 1,
+          "z": 17
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=false,front=false,compute=false]",
+          "x": 20,
+          "y": 1,
+          "z": 17
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=true,front=false,compute=false]",
+          "x": 21,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=true,front=false,compute=false]",
+          "x": 20,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=true,front=false,compute=false]",
+          "x": 21,
+          "y": 2,
+          "z": 17
+        },
+        {
+          "state": "jsc:server_rack_part[facing=east,top=true,front=false,compute=false]",
+          "x": 20,
+          "y": 2,
+          "z": 17
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,2060,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 16,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,1036,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 16,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "data": "{Units:[B;1b,1b,1b,1b,1b,1b,12b,11b],DisplayEra:3,BayPowerOff:0,ServicePanelOff:0b}",
+          "state": "jsc:server_rack[facing=north]",
+          "x": 16,
+          "y": 0,
+          "z": 12
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=false,front=false,compute=false]",
+          "x": 16,
+          "y": 0,
+          "z": 13
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=false,front=true,compute=false]",
+          "x": 17,
+          "y": 0,
+          "z": 12
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=false,front=false,compute=false]",
+          "x": 17,
+          "y": 0,
+          "z": 13
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=false,front=true,compute=false]",
+          "x": 16,
+          "y": 1,
+          "z": 12
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=false,front=false,compute=false]",
+          "x": 16,
+          "y": 1,
+          "z": 13
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=false,front=true,compute=false]",
+          "x": 17,
+          "y": 1,
+          "z": 12
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=false,front=false,compute=false]",
+          "x": 17,
+          "y": 1,
+          "z": 13
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=true,front=false,compute=false]",
+          "x": 16,
+          "y": 2,
+          "z": 12
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=true,front=false,compute=false]",
+          "x": 16,
+          "y": 2,
+          "z": 13
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=true,front=false,compute=false]",
+          "x": 17,
+          "y": 2,
+          "z": 12
+        },
+        {
+          "state": "jsc:server_rack_part[facing=north,top=true,front=false,compute=false]",
+          "x": 17,
+          "y": 2,
+          "z": 13
+        }
+      ],
+      "caption": "jsc.guide.datacenters.figure1",
+      "height": 130,
+      "view": {
+        "zoom": 1.35
+      }
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.datacenters.fix1",
+          "problem": "jsc.guide.datacenters.problem1"
+        },
+        {
+          "fix": "jsc.guide.datacenters.fix2",
+          "problem": "jsc.guide.datacenters.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_router",
+        "jsc:load_balancing"
+      ]
+    }
+  ],
+  "id": "jsc:datacenters",
+  "order": 37,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.datacenters.title"
+}

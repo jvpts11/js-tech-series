@@ -184,6 +184,29 @@ class SubsetLevelTest {
                 () -> "the foreach after it went unseen: " + String.join("\n", result.lines()));
     }
 
+    /** What a field starts as is code like any other, so what the subset lacks is refused there too. */
+    @Test
+    void subset_readsWhatAFieldStartsAs() {
+        assertOnlyInTheFullLanguage("class Box { string label = $\"box {1}\"; } class M { static void Main() { } }");
+    }
+
+    /** And so is what a constructor hands to the one it calls first. */
+    @Test
+    void subset_readsWhatAConstructorHandsOn() {
+        assertOnlyInTheFullLanguage("class Base { public Base(string s) { } } "
+                + "class Below : Base { public Below() : base($\"n is {1}\") { } } "
+                + "class M { static void Main() { } }");
+    }
+
+    /** And what an enum's names are numbered with. */
+    @Test
+    void subset_readsWhatAnEnumIsNumberedWith() {
+        final SigmaSemantics.Result result = subset(
+                "enum Size { Small = System.Utils.Random.Next(4) } class M { static void Main() { } }");
+        assertTrue(result.diagnostics().stream().anyMatch(d -> "S3052".equals(d.code())),
+                () -> "it went through: " + String.join("\n", result.lines()));
+    }
+
     /** One using opens the whole of the subset's library, and the same line opens it in the full language too. */
     @Test
     void subset_reachesItsLibraryWithTheOneUsing() {
@@ -195,6 +218,14 @@ class SubsetLevelTest {
     void subset_callsTheSameLibraryTheFullLanguageDoes() {
         final String source = "class M { static void Main() { Console.PrintLine(Convert.ToString(Math.Abs(-2))); } }";
         assertInBoth(source);
+    }
+
+    /** The earliest machines beeped and played tunes too, so the subset has the whole of the sound. */
+    @Test
+    void subset_beepsAndPlaysThroughItsLibrary() {
+        assertInBoth("class M { static void Main() { Sound.Beep(440, 100); bool played = Sound.Tones(\"C4 E4\"); "
+                + "Speaker desk = Speaker.Named(\"Desk\"); if (desk != null) { played = desk.Play(\"a.wav\"); } "
+                + "Sound.Stop(); } }");
     }
 
     @Test

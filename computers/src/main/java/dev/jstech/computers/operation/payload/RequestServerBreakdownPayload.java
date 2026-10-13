@@ -17,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * Client to server: the player clicked {@code key} in a Monitor terminal's Network tab and the request popup wants the per-Server breakdown for that exact data type (item or fluid, with components).
  */
-public record RequestServerBreakdownPayload(BlockPos monitorPos, BlockPos hostPos, StorageKey key)
+public record RequestServerBreakdownPayload(BlockPos hostPos, BlockPos monitorPos, StorageKey key)
         implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<RequestServerBreakdownPayload> TYPE =
@@ -26,8 +26,8 @@ public record RequestServerBreakdownPayload(BlockPos monitorPos, BlockPos hostPo
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RequestServerBreakdownPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    BlockPos.STREAM_CODEC, RequestServerBreakdownPayload::monitorPos,
                     BlockPos.STREAM_CODEC, RequestServerBreakdownPayload::hostPos,
+                    BlockPos.STREAM_CODEC, RequestServerBreakdownPayload::monitorPos,
                     StorageKey.STREAM_CODEC, RequestServerBreakdownPayload::key,
                     RequestServerBreakdownPayload::new);
 

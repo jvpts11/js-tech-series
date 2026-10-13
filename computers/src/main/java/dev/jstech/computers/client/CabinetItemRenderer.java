@@ -10,10 +10,10 @@ package dev.jstech.computers.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.jstech.computers.item.CabinetBlockItem;
+import dev.jstech.core.client.geo.LookGeoModel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.model.GeoModel;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
 /**
@@ -28,7 +28,9 @@ public final class CabinetItemRenderer extends GeoItemRenderer<CabinetBlockItem>
     private static final float FILL = 0.86F;
 
     public CabinetItemRenderer() {
-        super(new CabinetItemModel());
+        // Each item names the cabinet it places, so the model reads the files from the item drawn.
+        super(new LookGeoModel<>(CabinetBlockItem::modelResource, CabinetBlockItem::textureResource,
+                CabinetBlockItem::animationResource));
     }
 
     @Override
@@ -47,24 +49,17 @@ public final class CabinetItemRenderer extends GeoItemRenderer<CabinetBlockItem>
         final float scale = FILL * 16.0F / fit.span();
         poseStack.scale(scale, scale, scale);
         poseStack.translate(fit.offsetX(), fit.offsetY(), fit.offsetZ());
+        // The baked model is the world's too: the machine as it comes, whatever the last one drawn held.
+        for (final GeoBone bone : model.topLevelBones()) {
+            asItComes(item, bone);
+        }
     }
 
-    /** The model of the cabinet the item places, and the atlas painted for it. */
-    private static final class CabinetItemModel extends GeoModel<CabinetBlockItem> {
-
-        @Override
-        public ResourceLocation getModelResource(final CabinetBlockItem item) {
-            return item.modelResource();
-        }
-
-        @Override
-        public ResourceLocation getTextureResource(final CabinetBlockItem item) {
-            return item.textureResource();
-        }
-
-        @Override
-        public ResourceLocation getAnimationResource(final CabinetBlockItem item) {
-            return item.animationResource();
+    /* Shows the parts of the machine as it comes and hides the fitted and the lit ones, the whole tree down. */
+    private static void asItComes(final CabinetBlockItem item, final GeoBone bone) {
+        bone.setHidden(!item.shownInSlot(bone.getName()));
+        for (final GeoBone child : bone.getChildBones()) {
+            asItComes(item, child);
         }
     }
 }

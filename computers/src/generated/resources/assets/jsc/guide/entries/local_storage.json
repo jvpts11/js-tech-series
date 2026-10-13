@@ -1,0 +1,170 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.local_storage.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.local_storage.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.local_storage.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.local_storage.definition1",
+      "term": "jsc.guide.local_storage.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.local_storage.table1",
+      "heads": [
+        "jsc.guide.local_storage.table1_head1",
+        "jsc.guide.local_storage.table1_head2",
+        "jsc.guide.local_storage.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.local_storage.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.local_storage.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.local_storage.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.local_storage.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.local_storage.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.local_storage.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.local_storage.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.local_storage.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.local_storage.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.local_storage.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.local_storage.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.local_storage.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.local_storage.warning1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.local_storage.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.local_storage.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.local_storage.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.local_storage.definition2",
+      "term": "jsc.guide.local_storage.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.local_storage.table2",
+      "heads": [
+        "jsc.guide.local_storage.table2_head1",
+        "jsc.guide.local_storage.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "0"
+          },
+          {
+            "words": "jsc.guide.local_storage.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "500"
+          },
+          {
+            "words": "jsc.guide.local_storage.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "1000"
+          },
+          {
+            "words": "jsc.guide.local_storage.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.local_storage.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.local_storage.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.local_storage.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.local_storage.fix1",
+          "problem": "jsc.guide.local_storage.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:items_as_data",
+        "jsc:personal_computers",
+        "jsc:mainframes",
+        "jsc:disks"
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:local_storage",
+  "order": 80,
+  "section": "jsc:storage",
+  "title": "jsc.guide.local_storage.title"
+}

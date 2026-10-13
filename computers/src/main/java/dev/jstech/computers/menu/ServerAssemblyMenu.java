@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.gui.layout.ServerAssemblyLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.item.MotherboardItem;
@@ -15,22 +15,29 @@ import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Menu for assembling a Server: hardware slots (board, CPU, RAM, GPU, PSU, disks) over the held Server item's hardware, plus the player inventory.
+ * Menu for assembling a Server: hardware slots (board, CPU, RAM, GPU, PSU) over the held Server item's hardware,
+ * plus the player inventory.
  */
-public class ServerAssemblyMenu extends AbstractComputerMenu {
+public class ServerAssemblyMenu extends CoreMenu {
 
     private static final int HARDWARE_SLOTS = ServerHardwareHandler.SLOTS;
 
@@ -40,32 +47,37 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
 
     public ServerAssemblyMenu(final int containerId, final Inventory playerInventory,
                               final InteractionHand hand) {
-        super(ComputingModule.SERVER_ASSEMBLY_MENU.get(), containerId);
+        super(ComputingMenus.SERVER_ASSEMBLY_MENU.get(), containerId, playerInventory,
+                player -> player == playerInventory.player
+                        && playerInventory.player.getItemInHand(hand).getItem() instanceof ServerItem);
         this.owner = playerInventory.player;
         this.hand = hand;
         this.hw = new ServerHardwareHandler(owner, hand);
 
-        /*
-         * The spec readout (tiles + tracks + problems, in a smaller font) sits on top;
-         * the bays follow. Left column: board + PSU. No disk slots since the racks rework:
-         * a server's drives live in the rack's front-panel hotswap slots, not in the chassis.
-         */
-        addSlot(new SlotItemHandler(hw, ServerHardwareHandler.MOBO, 8, 96));
-        addSlot(new SlotItemHandler(hw, ServerHardwareHandler.PSU, 26, 96));
-        // Middle column: CPUs on a row, RAM in 2 rows, GPUs in 2 rows.
+        final GuiLayout layout = ServerAssemblyLayout.layout();
+        final List<Slot> hardwareSlots = new ArrayList<>();
+        hardwareSlots.add(slot(hw, ServerHardwareHandler.MOBO, layout.slotAt("mobo")));
+        hardwareSlots.add(slot(hw, ServerHardwareHandler.PSU, layout.slotAt("psu")));
         for (int i = 0; i < ServerHardwareHandler.CPU; i++) {
-            addSlot(new BoardSlot(hw, ServerHardwareHandler.CPU_START + i, 52 + i * 18, 96, i, this::boardCpuSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("cpu_" + i);
+            hardwareSlots.add(new BoardSlot(hw, ServerHardwareHandler.CPU_START + i, at.x(), at.y(), i,
+                    this::boardCpuSlots));
         }
         for (int i = 0; i < ServerHardwareHandler.RAM; i++) {
-            addSlot(new BoardSlot(hw, ServerHardwareHandler.RAM_START + i,
-                    52 + (i % 4) * 18, 126 + (i / 4) * 18, i, this::boardRamSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("ram_" + i);
+            hardwareSlots.add(new BoardSlot(hw, ServerHardwareHandler.RAM_START + i, at.x(), at.y(), i,
+                    this::boardRamSlots));
         }
         for (int i = 0; i < ServerHardwareHandler.GPU; i++) {
-            addSlot(new BoardSlot(hw, ServerHardwareHandler.GPU_START + i,
-                    52 + (i % 3) * 18, 174 + (i / 3) * 18, i, this::boardGpuSlots));
+            final GuiLayout.SlotPosition at = layout.slotAt("gpu_" + i);
+            hardwareSlots.add(new BoardSlot(hw, ServerHardwareHandler.GPU_START + i, at.x(), at.y(), i,
+                    this::boardGpuSlots));
         }
+        final SlotGroup hardware = slots(hardwareSlots.toArray(Slot[]::new));
 
-        addPlayerInventory(playerInventory, 8, 214);
+        final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(hardware, player.all());
+        shiftClick(player.all(), hardware);
     }
 
     private MotherboardSpec boardSpec() {
@@ -73,7 +85,14 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
                 ? board.spec() : null;
     }
 
-    private RackChassis chassis() {
+    /** Why {@code stack} stays out of {@code slot}, when it is one of the server's part slots; null otherwise. */
+    @Nullable
+    public Component refusal(final Slot slot, final ItemStack stack) {
+        return PartSlots.refusal(slot, hw, stack, hw::refusal);
+    }
+
+    /** The chassis of the server in the hand, which its screen is titled by. */
+    public RackChassis chassis() {
         final var chassis = ServerItem.chassisOf(owner.getItemInHand(hand));
         return chassis != null ? chassis : RackChassis.SERVER;
     }
@@ -96,7 +115,6 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
                 : Math.min(Math.min(ServerHardwareHandler.GPU, spec.pcieSlots()), chassis().maxPcie());
     }
 
-
     public static ServerAssemblyMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                  final RegistryFriendlyByteBuf buf) {
         return new ServerAssemblyMenu(containerId, playerInventory, buf.readEnum(InteractionHand.class));
@@ -111,17 +129,19 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
         return ServerItem.buildFrom(parts);
     }
 
+    /**
+     * The era the server's screen is drawn in: its chassis's, as a computer's screen takes its case's, so an
+     * Advanced server reads as Advanced before a board goes in, whatever board it holds.
+     */
     @Nullable
     public HardwareEra hardwareEra() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? null : build.motherboard().era();
+        return chassis().era();
     }
 
     @Nullable
     public UUID nodeUuid() {
         return ServerItem.nodeUuid(owner.getItemInHand(hand));
     }
-
 
     public String serverName() {
         return ServerItem.customName(owner.getItemInHand(hand));
@@ -135,16 +155,5 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
                             RenameServerPayload.MAX_LEN)
                         : capped);
         broadcastChanges();
-    }
-
-    @Override
-    public boolean stillValid(final Player player) {
-        // Valid only while the player is still holding a Server in that hand.
-        return owner == player && owner.getItemInHand(hand).getItem() instanceof ServerItem;
-    }
-
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMoveBetweenContainerAndPlayer(player, index, HARDWARE_SLOTS);
     }
 }

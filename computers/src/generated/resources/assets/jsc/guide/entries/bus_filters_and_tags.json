@@ -1,0 +1,144 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_filters_and_tags.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_filters_and_tags.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_filters_and_tags.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bus_filters_and_tags.table1",
+      "heads": [
+        "jsc.guide.bus_filters_and_tags.table1_head1",
+        "jsc.guide.bus_filters_and_tags.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.bus_filters_and_tags.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_filters_and_tags.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.bus_filters_and_tags.step1",
+        "jsc.guide.bus_filters_and_tags.step2",
+        "jsc.guide.bus_filters_and_tags.step3",
+        "jsc.guide.bus_filters_and_tags.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_filters_and_tags.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_filters_and_tags.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_filters_and_tags.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_filters_and_tags.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_filters_and_tags.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_filters_and_tags.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.bus_filters_and_tags.definition1",
+      "term": "jsc.guide.bus_filters_and_tags.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_filters_and_tags.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.bus_filters_and_tags.fix1",
+          "problem": "jsc.guide.bus_filters_and_tags.problem1"
+        },
+        {
+          "fix": "jsc.guide.bus_filters_and_tags.fix2",
+          "problem": "jsc.guide.bus_filters_and_tags.problem2"
+        },
+        {
+          "fix": "jsc.guide.bus_filters_and_tags.fix3",
+          "problem": "jsc.guide.bus_filters_and_tags.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:bus_keep_max_and_priority"
+      ]
+    }
+  ],
+  "icon": "jsc:export_bus",
+  "id": "jsc:bus_filters_and_tags",
+  "order": 87,
+  "section": "jsc:bus_settings",
+  "title": "jsc.guide.bus_filters_and_tags.title"
+}

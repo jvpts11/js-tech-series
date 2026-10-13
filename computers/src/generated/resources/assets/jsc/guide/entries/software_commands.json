@@ -1,0 +1,169 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.software_commands.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.software_commands.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.software_commands.table1",
+      "heads": [
+        "jsc.guide.software_commands.table1_head1",
+        "jsc.guide.software_commands.table1_head2",
+        "jsc.guide.software_commands.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.software_commands.table1_1_1"
+          },
+          {
+            "literal": "apt"
+          },
+          {
+            "words": "jsc.guide.software_commands.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.software_commands.table1_2_1"
+          },
+          {
+            "literal": "dnf"
+          },
+          {
+            "words": "jsc.guide.software_commands.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.software_commands.table1_3_1"
+          },
+          {
+            "literal": "pacman"
+          },
+          {
+            "words": "jsc.guide.software_commands.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.software_commands.table1_4_1"
+          },
+          {
+            "literal": "emerge"
+          },
+          {
+            "words": "jsc.guide.software_commands.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.software_commands.table1_5_1"
+          },
+          {
+            "literal": "pkg"
+          },
+          {
+            "words": "jsc.guide.software_commands.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.software_commands.table1_6_1"
+          },
+          {
+            "literal": "none"
+          },
+          {
+            "words": "jsc.guide.software_commands.table1_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.software_commands.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.software_commands.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.software_commands.step1",
+        "jsc.guide.software_commands.step2",
+        "jsc.guide.software_commands.step3",
+        "jsc.guide.software_commands.step4"
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/install"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/store"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/programs"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.software_commands.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.software_commands.definition1",
+      "term": "jsc.guide.software_commands.term1"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/screenfetch"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.software_commands.fix1",
+          "problem": "jsc.guide.software_commands.problem1"
+        },
+        {
+          "fix": "jsc.guide.software_commands.fix2",
+          "problem": "jsc.guide.software_commands.problem2"
+        },
+        {
+          "fix": "jsc.guide.software_commands.fix3",
+          "problem": "jsc.guide.software_commands.problem3"
+        },
+        {
+          "fix": "jsc.guide.software_commands.fix4",
+          "problem": "jsc.guide.software_commands.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:apt",
+        "jsc:dnf",
+        "jsc:arch_pacman_in_system",
+        "jsc:pkg"
+      ]
+    }
+  ],
+  "id": "jsc:software_commands",
+  "order": 201,
+  "section": "jsc:shell_software",
+  "title": "jsc.guide.software_commands.title"
+}

@@ -152,6 +152,61 @@ public final class PostGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A bay whose self-test found nothing to boot goes on by itself once a system is on its drive.
+     *
+     * <p>It stands at its failure asking now and then rather than every tick, because a rack of empty servers
+     * asking every tick was half of what an idle base cost; so what is checked here is that the asking still
+     * happens, and soon enough that a player who has just installed a system never notices the wait.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void post_ofABayWithNothingToBoot_goesOnOnceASystemArrives(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, ComputingModule.SERVER_RACK.get());
+        if (!(helper.getBlockEntity(pos) instanceof ServerRackBlockEntity rack)) {
+            helper.fail("no rack at " + pos);
+            return;
+        }
+        TestWorldBuilder.mountDefaultServer(rack, 0);
+        final IOsHost unit = rack.unitHost(0);
+        helper.startSequence()
+                .thenExecuteAfter(PAST_THE_POST, () -> {
+                    helper.assertTrue(unit.haltedAtPost(),
+                            "with nothing on its drives the bay stops at its failure");
+                    helper.assertTrue(unit.installOs(DEBIAN, 0),
+                            "and its drive takes a system while it stands there");
+                })
+                // A second to notice, and a couple of ticks to be sure.
+                .thenExecuteAfter(22, () -> {
+                    helper.assertFalse(unit.haltedAtPost(),
+                            "the bay stops standing at a failure that is not true any more");
+                    helper.assertTrue(unit.atBootMenu() || unit.booting(),
+                            "and goes on to the system it now has");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A machine switched off while it stood at a failed self-test comes back on owing a new one, not standing
+     * at the old failure: the failure belonged to the self-test that found it.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void post_aPowerCycleLeavesNoFailureBehind(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        helper.assertTrue(computer.formatDisk(0), "its disk is erased, so its self-test will find nothing");
+        helper.startSequence()
+                .thenExecuteAfter(PAST_THE_POST, () -> {
+                    helper.assertTrue(computer.haltedAtPost(), "the self-test stops at its failure");
+                    computer.setPowered(false);
+                    computer.setPowered(true);
+                    helper.assertFalse(computer.haltedAtPost(), "switching off and on again leaves no failure");
+                    helper.assertTrue(computer.needsPost(), "and the machine owes a self-test of its own");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void post_ofAnEarlierMachine_takesLonger(final GameTestHelper helper) {
         final PersonalComputerBlockEntity modern =
@@ -186,8 +241,8 @@ public final class PostGameTests {
         helper.assertFalse(machine.cpuName().isEmpty(), "the processor is named by its own model");
         helper.assertFalse(machine.boardName().isEmpty(), "the board is named");
         helper.assertFalse(machine.ramName().isEmpty(), "and the memory modules are named");
-        helper.assertTrue(machine.memoryModules().startsWith(machine.ramModules() + "x "),
-                "which the self-test reads out as a count of them: " + machine.memoryModules());
+        helper.assertTrue(machine.memoryModules().english().startsWith(machine.ramModules() + "x "),
+                "which the self-test reads out as a count of them: " + machine.memoryModules().english());
         helper.assertTrue(machine.ramMb() > 0, "with the memory counted over what is seated");
         helper.succeed();
     }
@@ -236,7 +291,7 @@ public final class PostGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         computer.togglePower();
         return computer;
     }

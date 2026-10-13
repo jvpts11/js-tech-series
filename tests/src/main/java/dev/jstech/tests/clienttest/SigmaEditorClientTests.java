@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.client.os.ShellApp;
@@ -44,8 +45,11 @@ public final class SigmaEditorClientTests {
 
     private static final int SETTLE = 4;
     private static final int SCREEN_WAIT = 80;
-    /** Long enough for a cold start's POST to play out on the monitor before the desktop shows. */
-    private static final int BOOT_WAIT = 400;
+    /**
+     * Long enough for a cold start's POST to play out on the monitor before the desktop shows, on a machine running
+     * the other shards beside this one, where a start that takes two hundred ticks alone has taken over four hundred.
+     */
+    private static final int BOOT_WAIT = 1_200;
 
     private static final BlockPos COMPUTER = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
@@ -123,10 +127,7 @@ public final class SigmaEditorClientTests {
                         "the compiler is happy with what was typed")
                 // Ctrl+S, the way anybody saves.
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_S, GLFW.GLFW_MOD_CONTROL))
-                .thenWaitUntilServer(level -> !dev.jstech.computers.os.fs.DiskFilesystem.read(
-                                TestWorldBuilder.at(level, ctx.origin())
-                                        .blockEntity(COMPUTER, CraftingComputerBlockEntity.class).systemDisk(),
-                                "progs/hello.sgs").orElse("").isEmpty(),
+                .thenWaitUntilServer(level -> onDisk(ctx, level, "progs/hello.sgs"),
                         SCREEN_WAIT, "the program to be on the machine's disk", level -> "")
                 .thenScreenshot(2, "editor-saved")
                 /*
@@ -157,7 +158,7 @@ public final class SigmaEditorClientTests {
     }
 
     /** Whether the machine's system disk holds a non-empty file at {@code path}. */
-    private static boolean onDisk(final ClientTestContext ctx, final net.minecraft.server.level.ServerLevel level,
+    private static boolean onDisk(final ClientTestContext ctx, final ServerLevel level,
                                   final String path) {
         return !diskText(ctx, level, path).isEmpty();
     }
@@ -233,7 +234,7 @@ public final class SigmaEditorClientTests {
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT)
                 // What the game being closed does to the client: nothing of the programs' insides survives.
-                .then(SETTLE, DesktopScreen::forgetClientState)
+                .then(SETTLE, ActiveDesktop::forgetClientState)
                 .thenRightClick(SETTLE, MONITOR)
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
                 .thenWaitUntil(() -> studio(ctx) != null && !studio(ctx).onStartWindow()
@@ -281,6 +282,55 @@ public final class SigmaEditorClientTests {
                 .thenWaitUntil(() -> studio(ctx).explorerLabels().contains("Barn.sgs"), SCREEN_WAIT,
                         "the tree to list the new item")
                 .thenScreenshot(2, "added-item");
+    }
+
+    /**
+     * A project is held to a version of its language from its Properties: Default follows the installed compiler,
+     * a version's button writes that version into the project file, and Default takes the line out again.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void virtualStudio_holdsAProjectToAVersionFromItsProperties(final ClientTestContext ctx) {
+        final String mark = LanguageLevel.SIGMA_SHARP.mark();
+        final String defaultLabel = "Default (" + mark + " 2)";
+        final String first = mark + " 1";
+        studioOnFarm(ctx)
+                .then(SETTLE, () -> ctx.rightClickDesktop(studio(ctx).explorerRowPoint("v Farm *")))
+                .thenWaitUntil(() -> studio(ctx).treeMenuOpen(), SCREEN_WAIT, "the project's menu to open")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).treeMenuPoint("Properties")))
+                .thenWaitUntil(() -> studio(ctx).propertiesOpen()
+                                && studio(ctx).versionButtonLabels().contains(defaultLabel),
+                        SCREEN_WAIT, "the Properties window to offer Default and every version")
+                .thenAssert(0, () -> studio(ctx).versionButtonLabels().equals(List.of(defaultLabel, first, mark + " 2")),
+                        "Default, then one button for each version, oldest first")
+                .thenAssert(0, () -> studio(ctx).versionHintLines().get(0).contains("sgsc 2.0"),
+                        "Default names the installed compiler it follows")
+                .thenAssert(0, () -> studio(ctx).versionHintLines().get(2).startsWith("Farm.sgs(4,5): error S3057"),
+                        "the example is the error a build of this project would print")
+                .thenScreenshot(2, "properties-default")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).versionButtonPoint(first)))
+                .thenWaitUntilServer(level -> diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj")
+                                .contains("langversion: 1"),
+                        SCREEN_WAIT, "the version to be written into the project file",
+                        level -> "project=" + diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj"))
+                .thenAssert(0, () -> studio(ctx).versionHintLines().get(3).contains("langversion: 1"),
+                        "the window says the line it wrote")
+                .thenScreenshot(2, "properties-held-to-one")
+                // The tree's Dependencies lists the language at the version the project is now held to.
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenWaitUntil(() -> !studio(ctx).propertiesOpen(), SCREEN_WAIT, "Escape to close the window")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).explorerRowPoint("> Dependencies")))
+                .thenWaitUntil(() -> studio(ctx).explorerLabels().contains(first), SCREEN_WAIT,
+                        "the project's dependencies to list the version it is held to")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).explorerRowPoint("Properties")))
+                .thenWaitUntil(() -> studio(ctx).propertiesOpen(), SCREEN_WAIT, "the Properties row to open it again")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).versionButtonPoint(defaultLabel)))
+                .thenWaitUntilServer(level -> !diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj")
+                                .contains("langversion"),
+                        SCREEN_WAIT, "Default to take the line back out of the project file",
+                        level -> "project=" + diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj"))
+                .thenAssert(0, () -> studio(ctx).explorerLabels().contains(mark + " 2")
+                                && !studio(ctx).explorerLabels().contains(first),
+                        "and back at the installed compiler's once the project follows it again");
     }
 
     /** The same program, run with F5: the editor builds it and runs it at its own terminal, in one key. */
@@ -429,6 +479,8 @@ public final class SigmaEditorClientTests {
                     for (final String id : new String[] {"virtual_studio", "sgsc", "scc", "sigma"}) {
                         computer.console().install(program(id).toString());
                     }
+                    // An scc of 1.0 knows Σ 1, which had no Sound and no Speaker: the editor follows the compiler.
+                    computer.console().setInstalledVersion(program("scc").toString(), "1.0");
                     world.placeMonitor(MONITOR, Direction.EAST);
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
@@ -471,11 +523,24 @@ public final class SigmaEditorClientTests {
                         ctx.key(GLFW.GLFW_KEY_BACKSPACE);
                     }
                 })
+                // The types this version of the language has, and none of those that came in the next one.
+                .then(SETTLE, () -> ctx.type("S"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_SPACE, GLFW.GLFW_MOD_CONTROL))
+                .thenWaitUntil(() -> studio(ctx).completionLabels().contains("Script"),
+                        SCREEN_WAIT, "the list to offer the types of Σ that start with S")
+                .thenAssert(0, () -> !studio(ctx).completionLabels().contains("Sound")
+                                && !studio(ctx).completionLabels().contains("Speaker"),
+                        "and not Sound or Speaker, which the installed scc 1.0 does not know")
+                .thenAssert(0, () -> !studio(ctx).completionLabels().contains("strlen")
+                                && !studio(ctx).completionLabels().contains("sqrt"),
+                        "nor the old names like strlen and sqrt, which came in Σ 2")
+                .thenScreenshot(2, "sigma-first-version-suggestions")
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_BACKSPACE))
                 .then(SETTLE, () -> studio(ctx).buildSolution())
                 .thenWaitUntil(() -> studio(ctx).outputLines().stream().anyMatch(l -> l.startsWith("Build succeeded")),
                         SCREEN_WAIT, "the build to succeed")
                 .thenWaitUntilServer(level -> diskText(ctx, level, "progs/Old/Old/build/Old.asm")
-                                .contains(".arch jsc:x86_16"), SCREEN_WAIT,
+                                .contains(".arch jsc:ia_16"), SCREEN_WAIT,
                         "the listing to say it was built for the oldest machines",
                         level -> diskText(ctx, level, "progs/Old/Old/build/Old.asm"))
                 .thenScreenshot(2, "sigma-built")

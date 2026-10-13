@@ -1,0 +1,77 @@
+{
+  "credit": "J's Computers",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "jsc:block/speaker_standard_side",
+    "front": "jsc:block/speaker_standard_front",
+    "back": "jsc:block/speaker_standard_back",
+    "side": "jsc:block/speaker_standard_side",
+    "top": "jsc:block/speaker_standard_top",
+    "lamp": "jsc:block/speaker/led_blue_off"
+  },
+  "elements": [
+    {
+      "name": "cabinet",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#front",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#side",
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "up": {
+          "texture": "#top",
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#top",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "power_light",
+      "from": [
+        2,
+        2,
+        -0.05
+      ],
+      "to": [
+        3,
+        3,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#lamp"
+        }
+      }
+    }
+  ]
+}

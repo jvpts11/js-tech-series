@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/orientable",
-  "textures": {
-    "front": "jsc:block/legacy_crafting_computer_front",
-    "side": "jsc:block/legacy_crafting_computer_side",
-    "top": "jsc:block/legacy_crafting_computer_top"
-  }
-}

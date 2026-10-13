@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.widget;
 
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.logic.RadialGeometry;
 
 import net.minecraft.client.Minecraft;
@@ -16,7 +17,6 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
-import java.util.OptionalInt;
 
 /**
  * A radial (pie) menu of labeled segments, highlighting the one under the cursor.
@@ -57,6 +57,12 @@ public final class RadialMenuWidget extends AbstractWidget {
         return getY() + height / 2;
     }
 
+    /** The segment under a cursor position, or -1 when it is outside the ring. Pure, so input handlers can ask. */
+    public int segmentAt(final double mouseX, final double mouseY) {
+        return RadialGeometry.segmentAt(mouseX - centerX(), mouseY - centerY(), segmentLabels.size(), innerRadius,
+                outerRadius).orElse(-1);
+    }
+
     public int selectedSegment() {
         return selectedSegment;
     }
@@ -68,11 +74,7 @@ public final class RadialMenuWidget extends AbstractWidget {
             final int mouseY,
             final float partialTick) {
         // Update selection from cursor position.
-        final double dx = mouseX - centerX();
-        final double dy = mouseY - centerY();
-        final OptionalInt seg = RadialGeometry.segmentAt(
-                dx, dy, segmentLabels.size(), innerRadius, outerRadius);
-        selectedSegment = seg.orElse(-1);
+        selectedSegment = segmentAt(mouseX, mouseY);
 
         /*
          * Draw each segment's label at the midpoint angle, radius =
@@ -85,11 +87,9 @@ public final class RadialMenuWidget extends AbstractWidget {
             // Convert back to screen coords: x = sin(a), y = -cos(a).
             final int lx = centerX() + (int) Math.round(Math.sin(midAngle) * labelRadius);
             final int ly = centerY() - (int) Math.round(Math.cos(midAngle) * labelRadius);
-            final int color = (i == selectedSegment) ? 0xFFFFFF00 : 0xFFFFFFFF;
-            graphics.drawCenteredString(
-                    Minecraft.getInstance().font,
-                    segmentLabels.get(i),
-                    lx, ly - 4, color);
+            final int color = (i == selectedSegment) ? WidgetPalette.get().radialChosen()
+                    : WidgetPalette.get().radialLabel();
+            Draw.textCentered(graphics, Minecraft.getInstance().font, segmentLabels.get(i), lx, ly - 4, color);
         }
     }
 

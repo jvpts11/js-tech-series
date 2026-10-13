@@ -9,11 +9,20 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.OsBootstrap;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.ReadyDisks;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.media.InstallMedia;
 import dev.jstech.computers.os.media.InstallerProjection;
+import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
@@ -29,6 +38,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -85,15 +95,15 @@ public final class InstallMediaGameTests {
     public static void installMedia_everyProgramShipsOnItsErasMedium(final GameTestHelper helper) {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final ProgramSpec nms = OsRegistry.getProgram(rl("nms"));
+                    final ProgramSpec isms = OsRegistry.getProgram(rl("isms"));
                     final ProgramSpec mirror = OsRegistry.getProgram(rl("mirror"));
                     final ProgramSpec craftmgr = OsRegistry.getProgram(rl("crafting_manager"));
                     final ProgramSpec mines = OsRegistry.getProgram(rl("minesweeper"));
                     final ProgramSpec cache = OsRegistry.getProgram(rl("predictive_cache"));
-                    helper.assertTrue(nms != null && mirror != null && craftmgr != null && mines != null && cache != null,
-                            "the built-in programs are registered");
-                    helper.assertTrue(nms.era() == HardwareEra.STANDARD
-                                    && InstallMedia.forProgram(nms.era(), nms.kind()) == MediaFormat.DVD,
+                    helper.assertTrue(isms != null && mirror != null && craftmgr != null && mines != null
+                                    && cache != null, "the built-in programs are registered");
+                    helper.assertTrue(isms.era() == HardwareEra.STANDARD
+                                    && InstallMedia.forProgram(isms.era(), isms.kind()) == MediaFormat.DVD,
                             "a Standard application ships on a DVD");
                     helper.assertTrue(mirror.era() == HardwareEra.STANDARD
                                     && InstallMedia.forProgram(mirror.era(), mirror.kind()) == MediaFormat.USB,
@@ -106,8 +116,8 @@ public final class InstallMediaGameTests {
                             "a Vintage program ships on a floppy");
                     helper.assertTrue(InstallMedia.forProgram(cache.era(), cache.kind()) == MediaFormat.USB,
                             "a small server daemon is no longer a floppy because it is small");
-                    helper.assertTrue(nms.minEra() == HardwareEra.VINTAGE,
-                            "the era never gates where a program installs: minEra is untouched");
+                    helper.assertTrue(isms.minEra() == HardwareEra.LEGACY,
+                            "the studio starts at the Legacy age: a Vintage network uses its engine from the prompt");
                     helper.assertTrue(InstallMedia.forSystem(OsRegistry.getOs(rl("frames_11")).minEra()) == MediaFormat.USB
                                     && InstallMedia.forSystem(OsRegistry.getOs(rl("frames_xp")).minEra()) == MediaFormat.CD
                                     && InstallMedia.forSystem(OsRegistry.getOs(rl("mc_dos")).minEra()) == MediaFormat.FLOPPY,
@@ -187,8 +197,29 @@ public final class InstallMediaGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * Each edition installs from the age it came in: Frames 7 from the Transition on its DVD, Frames 10 from the
+     * Standard on a stick, and Frames 11 only from the Advanced, so a Standard machine is offered Frames 10.
+     */
     @GameTest(template = ARENA)
-    public static void dockStation_holdsTheStickAndIsAHubNotACube(final GameTestHelper helper) {
+    public static void framesEditions_installFromTheirOwnEras(final GameTestHelper helper) {
+        final HardwareEra seven = OsRegistry.getOs(rl("frames_7")).minEra();
+        final HardwareEra ten = OsRegistry.getOs(rl("frames_10")).minEra();
+        final HardwareEra eleven = OsRegistry.getOs(rl("frames_11")).minEra();
+        helper.assertTrue(seven == HardwareEra.TRANSITION && ten == HardwareEra.STANDARD
+                && eleven == HardwareEra.ADVANCED, "the editions start at " + seven + ", " + ten + " and " + eleven);
+        helper.assertTrue(InstallMedia.forSystem(seven) == MediaFormat.DVD, "Frames 7 comes on a DVD");
+        helper.assertTrue(InstallMedia.forSystem(ten) == MediaFormat.USB, "Frames 10 comes on a stick");
+        helper.assertTrue(OsGating.canInstall(ten, HardwareEra.STANDARD), "a Standard machine takes Frames 10");
+        helper.assertFalse(OsGating.canInstall(eleven, HardwareEra.STANDARD),
+                "a Standard machine is too old for Frames 11");
+        helper.assertTrue(OsGating.canInstall(eleven, HardwareEra.ADVANCED), "an Advanced machine takes Frames 11");
+        helper.assertFalse(OsGating.canInstall(seven, HardwareEra.LEGACY), "a Legacy machine is too old for Frames 7");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void dockStation_holdsTheStickAndFillsItsBlock(final GameTestHelper helper) {
         final BlockPos dockPos = new BlockPos(2, 2, 2);
         final BlockPos dvdPos = new BlockPos(4, 2, 2);
         helper.setBlock(dockPos, ComputingModule.DOCK_STATION.get());
@@ -202,11 +233,11 @@ public final class InstallMediaGameTests {
                     final ItemStack stick = installer(ComputingModule.USB_FLASH_DRIVE.get(), MediaKind.OS_INSTALL, "frames_11");
                     helper.assertTrue(dock.acceptsMedia(stick), "the Dock Station takes a flash drive");
                     helper.assertTrue(!dvd.acceptsMedia(stick), "a DVD drive cannot read a flash drive: Frames 11 needs the dock");
-                    final net.minecraft.world.phys.AABB hub = helper.getBlockState(dockPos)
+                    final AABB box = helper.getBlockState(dockPos)
                             .getShape(helper.getLevel(), helper.absolutePos(dockPos)).bounds();
-                    helper.assertTrue(hub.maxY <= 0.5D && hub.getXsize() < 1.0D,
-                            "the dock is a low hub on the desk, not a full block: " + hub);
-                    final net.minecraft.world.phys.AABB drive = helper.getBlockState(dvdPos)
+                    helper.assertTrue(box.maxY >= 1.0D && box.getXsize() >= 1.0D,
+                            "the dock is a full block, as every device is: " + box);
+                    final AABB drive = helper.getBlockState(dvdPos)
                             .getShape(helper.getLevel(), helper.absolutePos(dvdPos)).bounds();
                     helper.assertTrue(drive.maxY >= 1.0D, "the disc drives stay full blocks");
                     helper.assertTrue(dock.insertMedia(stick.copyWithCount(1)).isEmpty(), "the stick docks");
@@ -215,5 +246,55 @@ public final class InstallMediaGameTests {
                         helper.getBlockState(dockPos).getValue(MediaReaderBlock.LOADED),
                         "a docked stick flips the block state that shows it standing in the port"))
                 .thenSucceed();
+    }
+
+    /**
+     * Every system has a disk of its own era with the system already on it, for a machine that should simply come
+     * up, and the machine it comes up in is called My Computer.
+     */
+    @GameTest(template = ARENA)
+    public static void readyDisks_carryEverySystemOnADiskOfItsEraNamedMyComputer(final GameTestHelper helper) {
+        for (final OsDef os : OsBootstrap.builtinOses()) {
+            final ItemStack disk = ReadyDisks.withSystem(os.id(), os.minEra());
+            helper.assertTrue(disk.getItem() instanceof DiskItem item && item.spec().era() == os.minEra(),
+                    os.id() + " comes on a disk of its own era; got " + disk);
+            helper.assertTrue(OsDisks.systemsOn(disk).has(os.id()), os.id() + " is on its disk");
+            final ComputerConsoleState console = new ComputerConsoleState();
+            console.load(disk.get(ComputingComponents.DISK_CONSOLE.get()));
+            helper.assertTrue("My Computer".equals(console.computerName()),
+                    os.id() + "'s machine is called My Computer; got " + console.computerName());
+        }
+        helper.succeed();
+    }
+
+    /**
+     * An installer asked for by the id of its system or program, as a modpack's recipe asks for one, is the stack the
+     * creative tab shows: the blank medium of its generation with the software written on it. A program every
+     * computer ships with, and an id nothing is registered under, have none.
+     */
+    @GameTest(template = ARENA)
+    public static void installersById_areTheStacksTheTabShows(final GameTestHelper helper) {
+        for (final OsDef os : OsBootstrap.builtinOses()) {
+            final ItemStack made = InstallerStacks.forSystem(os.id());
+            helper.assertTrue(made.is(InstallerStacks.blank(InstallMedia.forSystem(os.minEra())))
+                            && MediaItem.kind(made) == MediaKind.OS_INSTALL && os.id().equals(MediaItem.payload(made)),
+                    os.id() + "'s installer is its era's medium with the system on it; got " + made);
+        }
+        for (final ProgramSpec program : OsBootstrap.builtinPrograms()) {
+            final ItemStack made = InstallerStacks.forProgram(program.id());
+            if (program.installable()) {
+                helper.assertTrue(made.is(InstallerStacks.blank(InstallMedia.forProgram(program.era(), program.kind())))
+                                && MediaItem.kind(made) == MediaKind.PROGRAM_INSTALL
+                                && program.id().equals(MediaItem.payload(made)),
+                        program.id() + "'s installer is its medium with the program on it; got " + made);
+            } else {
+                helper.assertTrue(made.isEmpty(), program.id() + " ships with every computer and has no installer");
+            }
+        }
+        helper.assertTrue(InstallerStacks.forSystem(rl("no_such_system")).isEmpty(),
+                "an id no system is registered under has no installer");
+        helper.assertTrue(InstallerStacks.forProgram(rl("no_such_program")).isEmpty(),
+                "nor one no program is registered under");
+        helper.succeed();
     }
 }

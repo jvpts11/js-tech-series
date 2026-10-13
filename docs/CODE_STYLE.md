@@ -41,6 +41,61 @@ Computers or J's Industrial.
   `jsc.gui.operation.pending`.
 - Enum constants read as what they are: `OperationStatus.PENDING`, `OperationStatus.COMPLETED_PARTIAL`.
 
+## Text a player reads
+
+Every sentence a player reads is translatable, the terminals included, and is written once, beside the code that
+says it:
+
+- Declare it as a `static final TextKey` field, with its key and its English, in a class marked `@TextHolder`:
+  `private static final TextKey NO_SNAPSHOT = TextKey.of("jsc.ports.no_snapshot", "No snapshot available");`
+  The English language file is generated from these declarations by `runData`; there is no language provider to
+  edit. Every such class is loaded to be read, on a dedicated server too, so a class that exists only on a client
+  (a screen) keeps its sentences in a small class of constants beside it.
+- Put arguments in with `%s` (or `%1$s`, `%2$s`) and `key.with(...)`, which gives a `Text`. Words that are data
+  (a file name, a path, a number, what the player typed) go in as `Text.literal(...)`, which is never translated.
+- A `Text` is resolved where it is read: a screen in its player's language, the server in English, which is also
+  the language of anything a machine writes down (a file, a pipe).
+- Commands, flags, paths, code and brand names are not translated.
+
+The build holds this in place. A test counts the fixed words a player reads in every source file, and a file may
+never have more than it had: fixed prose added anywhere fails the build. Every translation must carry every key of
+the English file and nothing else, so a missing sentence in any language fails it too.
+
+## Blocks and items
+
+A block or an item is declared once, through its mod's content (the core's `ModContent`), with everything about
+it: what it is made from, its English name, how it and its item look, what it drops, the creative tab section that
+shows it, the block tags it belongs to (such as the tool that mines it). Its block entity is registered with every
+block that makes it. Nothing else lists it: the block state, the models, the English, the loot table and the tags are
+generated from the declaration by `runData`.
+
+A game test checks every declared block and item of every mod: that it was declared rather than registered by hand,
+has its block state and models (and that no model is left over for an item that is gone), a name, a place in a
+creative tab, the drop it declares, a tool that mines it when it needs one, and a block entity that accepts it.
+
+## Assets
+
+Every texture, model, animation and sound has an entry in [ASSET_REGISTRY.md](../ASSET_REGISTRY.md): where it is,
+what it is, where and how it is used, where it came from and who made it. Add, replace or remove an asset and its
+entry changes in the same commit. A test fails on an asset no entry covers, on one two entries both claim, on an
+entry without its origin or author, and on an entry whose assets are gone.
+
+## Colours
+
+A colour belongs to a palette, not to the code that paints with it.
+
+- A palette is a record whose every component is one colour, named for what it colours (`text`, `accent`, `edge`).
+- Declare it once with the core's `Palettes.declare(mod, path, colours)`, as a `static final` in a class marked
+  `@PaletteHolder`. The mod and the path say whose it is and what it colours, such as `jsc` and
+  `desktop/frames_xp`.
+- `runData` writes each palette to `assets/<mod>/palettes/<path>.json`, as `#AARRGGBB` per role. A resource pack
+  replaces that file to recolour the screens; a role its file leaves out keeps the declared colour.
+- Paint with `palette.get()` each time; never keep a copy of the colours, or a change of pack will not reach it.
+- A palette holder is loaded only on a client, so it can be a client class.
+
+The build holds this in place as it does text: a test counts the colours written into each source file as numbers
+(`0xAARRGGBB`, outside a palette declaration), and a file may never have more than it had.
+
 ## Imports and layout
 
 - No unused imports, no wildcard imports.

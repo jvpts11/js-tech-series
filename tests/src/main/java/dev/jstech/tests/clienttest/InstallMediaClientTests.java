@@ -15,9 +15,11 @@ import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.EditorApp;
 import dev.jstech.computers.client.os.FilesApp;
 import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,6 +52,8 @@ public final class InstallMediaClientTests {
     private static final BlockPos DRIVE = new BlockPos(5, 2, 3);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
     private static final BlockPos PLAYER_AT_MONITOR = new BlockPos(8, 2, 2);
+    /** The file manager's window by the program's own key, which every edition shares whatever it calls it. */
+    private static final String FILES = "jsc:files";
 
     private static ResourceLocation jsc(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
@@ -138,8 +142,8 @@ public final class InstallMediaClientTests {
                         "the program is not there before setup")
                 // What the disc's setup.exe and This PC's Install button both send.
                 .then(SETTLE, () -> PacketDistributor.sendToServer(new InstallFromMediaPayload(
-                        ctx.abs(COMPUTER), ctx.abs(DRIVE).asLong())))
-                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor("Setup") != null,
+                        ctx.abs(COMPUTER), ctx.abs(DRIVE).asLong(), MediaVolume.MEDIUM)))
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(WindowKeys.SETUP) != null,
                         SCREEN_WAIT, "the Setup window to open")
                 .thenScreenshot(2, "setup-copying")
                 .thenAssert(SETTLE, () -> !ctx.screen(DesktopScreen.class).launcherLabels().contains("Minesweeper"),
@@ -148,7 +152,7 @@ public final class InstallMediaClientTests {
                 .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains("Minesweeper"),
                         20 * 25, "the program to be installed when Setup finishes")
                 .thenScreenshot(2, "setup-done")
-                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor("Setup") == null,
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(WindowKeys.SETUP) == null,
                         20 * 5, "the Setup window to close on its own");
     }
 
@@ -160,8 +164,12 @@ public final class InstallMediaClientTests {
                     world.setBlock(DRIVE, disc.drive());
                     world.placeMonitor(MONITOR, Direction.EAST);
                 })
+                // The drive links on one of the server's next ticks, however many of the client's those take.
+                .thenWaitUntilServer(level -> ctx.abs(COMPUTER).equals(drive(ctx, level).ownerPos()), SCREEN_WAIT,
+                        "the drive to link to the computer beside it",
+                        level -> "linked to " + drive(ctx, level).ownerPos())
                 // The program's install disc, seated in the drive beside the computer.
-                .thenServer(SETTLE * 3, level -> {
+                .thenServer(SETTLE, level -> {
                     final ItemStack medium = new ItemStack(disc.medium());
                     MediaItem.setKind(medium, MediaKind.PROGRAM_INSTALL);
                     MediaItem.setPayload(medium, jsc(disc.program()));
@@ -175,7 +183,7 @@ public final class InstallMediaClientTests {
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
                 .then(SETTLE, () -> DesktopScreen.requestOpenFiles(mediaDir(ctx)))
                 .thenWaitUntil(() -> {
-                            final FilesApp files = app(ctx, "Files", FilesApp.class);
+                            final FilesApp files = app(ctx, FILES, FilesApp.class);
                             return files != null && files.names().contains(disc.readme());
                         }, SCREEN_WAIT, "the explorer to list the disc's readme")
                 .thenScreenshot(2, "disc-listed")
@@ -220,12 +228,12 @@ public final class InstallMediaClientTests {
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
                 .then(SETTLE, () -> DesktopScreen.requestOpenFiles(mediaDir(ctx)))
                 .thenWaitUntil(() -> {
-                            final FilesApp files = app(ctx, "Files", FilesApp.class);
+                            final FilesApp files = app(ctx, FILES, FilesApp.class);
                             return files != null && files.names().contains(setup);
                         }, SCREEN_WAIT, "the explorer to list the disc's setup program")
-                .then(SETTLE, () -> ctx.assertTrue(app(ctx, "Files", FilesApp.class).open(setup),
+                .then(SETTLE, () -> ctx.assertTrue(app(ctx, FILES, FilesApp.class).open(setup),
                         "the explorer opens the setup program the way a double click does"))
-                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor("Setup") != null,
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(WindowKeys.SETUP) != null,
                         SCREEN_WAIT, "the Setup window to open from the explorer")
                 .thenScreenshot(2, "setup-from-explorer");
     }

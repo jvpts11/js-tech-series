@@ -8,130 +8,65 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.menu.PersonalComputerMenu;
-import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
-import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.BlockDrops;
-import dev.jstech.core.util.BlockEntityTickers;
-import java.util.Set;
+import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board.
  */
-public class PersonalComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IRearFacingDataPort, IEraChassisBlock,
-        IPeripheralConnectable {
+public class PersonalComputerBlock extends AbstractSmallComputerBlock<PersonalComputerBlockEntity> {
 
-    @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
+    public static final MapCodec<PersonalComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(PersonalComputerBlock::era),
+            StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(PersonalComputerBlock::caseStyle)
+    ).apply(i, PersonalComputerBlock::new));
+
+    /* PCs are Ethernet-only, on their back, the access line of their era's cable and every earlier one's; they reach
+     * HBW through a Personal Router. */
+    public PersonalComputerBlock(final Properties properties, final HardwareEra era, final CaseStyle caseStyle) {
+        super(properties, era, caseStyle,
+                FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS))
+                        .port(FaceRule.EVERY, PeripheralLine.of(era)).build(),
+                PersonalComputerBlockEntity.class, ComputingModule.PERSONAL_COMPUTER_BE::get,
+                PersonalComputerBlockEntity::serverTick);
     }
 
     @Override
-    public HardwareEra chassisEra() {
-        return era();
+    public String machineName() {
+        return "personal_computer";
     }
 
-    public static final MapCodec<PersonalComputerBlock> CODEC = simpleCodec(PersonalComputerBlock::new);
-
-    public PersonalComputerBlock(final Properties properties) {
-        super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
-    }
-
-    /**
-     * The hardware era this Personal Computer belongs to. It selects the block's skin and gates which
-     * consumer board the machine accepts: only a board of this era (and of the era's form factor) installs.
-     * The base block is the Standard era; the Vintage and Legacy variants override this.
-     */
-    public HardwareEra era() {
-        return HardwareEra.STANDARD;
-    }
-
+    /** Where the machine's sound comes from, and its era. */
     @Override
-    protected MapCodec<? extends PersonalComputerBlock> codec() {
-        return CODEC;
-    }
-
-    @Override
-    public Set<DataTier> acceptedCableTiers() {
-        return Set.of(DataTier.T1_ETHERNET); // PCs are Ethernet-only; reach HBW via a Personal Router
-    }
-
-    @Override
-    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
-
-    @Override
-    public BlockState getStateForPlacement(final BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
-                                               final Player player, final BlockHitResult hit) {
-        /*
-         * The computer block is hardware only: clicking it always opens the hardware-assembly GUI.
-         * All software (firmware, OS) is used on a linked monitor, never on the computer block.
-         */
-        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof PersonalComputerBlockEntity computer) {
-            serverPlayer.openMenu(
-                    new SimpleMenuProvider(
-                            (id, inventory, p) -> new PersonalComputerMenu(
-                                    id, inventory, computer),
-                            getName()),
-                    buf -> buf.writeBlockPos(pos));
-        }
-        return InteractionResult.sidedSuccess(level.isClientSide());
-    }
-
-    @Override
-    protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
-                            final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level instanceof ServerLevel serverLevel
-                && level.getBlockEntity(pos) instanceof PersonalComputerBlockEntity computer) {
-            computer.onBroken(serverLevel); // drop this PC's network-node registration
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
-    public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
-                                        final Player player) {
-        // Spill the installed hardware so a broken PC never destroys its components.
-        if (level instanceof ServerLevel serverLevel
-                && !player.getAbilities().instabuild
-                && level.getBlockEntity(pos) instanceof PersonalComputerBlockEntity computer) {
-            BlockDrops.spill(serverLevel, pos, computer.getHardware());
-        }
-        return super.playerWillDestroy(level, pos, state, player);
+    public void appendHoverText(final ItemStack stack, final Item.TooltipContext context,
+                                final List<Component> tooltip, final TooltipFlag flag) {
+        SoundHardwareTexts.appendComputer(tooltip, era());
+        HardwareTooltip.appendEra(tooltip, era());
     }
 
     @Override
@@ -141,14 +76,28 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            final Level level, final BlockState state, final BlockEntityType<T> type) {
-        if (level.isClientSide()) {
-            return null;
-        }
-        return BlockEntityTickers.create(type, ComputingModule.PERSONAL_COMPUTER_BE.get(),
-                PersonalComputerBlockEntity::serverTick);
+    protected MapCodec<? extends PersonalComputerBlock> codec() {
+        return CODEC;
     }
 
+    @Override
+    protected AbstractContainerMenu createMenu(final int containerId, final Inventory inventory,
+                                               final PersonalComputerBlockEntity computer) {
+        return new PersonalComputerMenu(containerId, inventory, computer);
+    }
+
+    @Override
+    protected Component menuTitle() {
+        return getName();
+    }
+
+    @Override
+    protected void dropWhenRemoved(final ServerLevel level, final BlockPos pos,
+                                   final PersonalComputerBlockEntity computer) {
+        // What the personal-use cards held is the player's, so it falls out however the computer goes, as a
+        // furnace's contents do.
+        for (final ItemStack held : computer.workshopDrops()) {
+            Block.popResource(level, pos, held);
+        }
+    }
 }

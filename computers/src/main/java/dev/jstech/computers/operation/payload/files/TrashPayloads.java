@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.files;
 
 import dev.jstech.computers.client.os.TrashApp;
+import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
@@ -24,10 +25,12 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
+import dev.jstech.computers.os.fs.CopyTiming;
 import dev.jstech.computers.os.fs.DiskTrash;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.TrashFolder;
 import dev.jstech.computers.os.fs.TrashKind;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -95,6 +98,28 @@ public final class TrashPayloads {
         if (trash == null || disk.isEmpty() || path.startsWith("media:") || path.startsWith(FileAccess.NET_ROOT)) {
             return;
         }
+        if (trash.holds(path)) {
+            trashNow(level, payload.hostPos(), path, player);
+            return;
+        }
+        // Into the trash a file goes at its disk's pace, as Explorer's "Deleting..." showed a big one going.
+        final FileCopyJobs.Copy deletion = CopyPlans.deletion(computer, path);
+        FileCopyJobs.start(level, payload.hostPos(), player, deletion,
+                CopyTiming.ticks(deletion.sizeMb(), deletion.mbPerSecond()),
+                () -> trashNow(level, payload.hostPos(), path, player));
+    }
+
+    /* The file put in the trash, or out of it for good when it is in the trash already. */
+    private static void trashNow(final ServerLevel level, final BlockPos host, final String path,
+                                 final ServerPlayer player) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
+            return;
+        }
+        final TrashFolder trash = trashOf(computer);
+        final ItemStack disk = computer.systemDisk();
+        if (trash == null || disk.isEmpty()) {
+            return;
+        }
         final long now = level.getGameTime();
         if (trash.holds(path)) {
             if (DiskTrash.destroyWithin(disk, trash, path, now)) {
@@ -102,19 +127,14 @@ public final class TrashPayloads {
             }
             return;
         }
-        final String refusal = switch (DiskTrash.put(disk, trash, path, computer.systemDiskFreeWeight(), now)) {
-            case DONE -> {
-                computer.setChanged();
-                yield "";
-            }
-            case NO_ROOM -> "There is no room left on the disk to keep " + FsPaths.fileName(path) + ".";
-            case HOLDS_TRASH -> FsPaths.fileName(path) + " holds the " + trash.kind().title() + " itself.";
-            // Already gone, most likely by a second click on the same thing: nothing to say.
-            case MISSING -> "";
-        };
+        final DiskTrash.Outcome outcome = DiskTrash.put(disk, trash, path, computer.systemDiskFreeWeight(), now);
+        if (outcome == DiskTrash.Outcome.DONE) {
+            computer.setChanged();
+        }
+        final Text refusal = outcome.refusal(FsPaths.fileName(path), trash.kind().titleText());
         if (!refusal.isEmpty()) {
             PacketDistributor.sendToPlayer(player,
-                    new DesktopBalloonPayload(payload.hostPos(), trash.kind().title(), refusal, ""));
+                    new DesktopBalloonPayload(host, trash.kind().titleText(), refusal, ""));
         }
     }
 

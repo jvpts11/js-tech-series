@@ -7,10 +7,10 @@
  */
 package dev.jstech.computers.item;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PsuSpec;
@@ -18,7 +18,12 @@ import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -41,10 +46,19 @@ import java.util.UUID;
  * server's disks live in the rack's front-panel hotswap slots (its chassis decides how many it cables),
  * so storage moves with the bay, never with this item.
  */
+@TextHolder
 public class ServerItem extends Item
         implements IMountableRackUnit {
 
     private final RackChassis chassis;
+
+    private static final TextKey TOOLTIP = TextKey.of("item.jsc.server.tooltip", "Operates only inside a Server Rack");
+    private static final TextKey NODE_TOOLTIP = TextKey.of("item.jsc.supercomputer_node.tooltip",
+            "A full computer: assemble it, seat a Phi, wire it with High Compute Cable");
+    private static final TextKey ASSEMBLY = TextKey.of("menu.jsc.server_assembly", "Server Assembly");
+    private static final TextKey BAYS =
+            TextKey.of("item.jsc.server.bays", "%sU - %s drive bays in the rack");
+    private static final TextKey NODE = TextKey.of("item.jsc.server.node", "Node %s");
 
     @Override
     public int heightU() {
@@ -54,11 +68,6 @@ public class ServerItem extends Item
     @Override
     public int driveSlots() {
         return chassis.driveSlots();
-    }
-
-    @Override
-    public int gadgetSlots() {
-        return chassis.gadgetSlots();
     }
 
     public ServerItem(final Properties properties) {
@@ -90,7 +99,7 @@ public class ServerItem extends Item
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
             serverPlayer.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> new ServerAssemblyMenu(id, inv, hand),
-                    Component.translatable("menu.jsc.server_assembly")),
+                    GameText.component(ASSEMBLY)),
                     buf -> buf.writeEnum(hand));
         }
         return InteractionResultHolder.sidedSuccess(
@@ -98,23 +107,57 @@ public class ServerItem extends Item
     }
 
     public static ItemContainerContents hardware(final ItemStack stack) {
-        return stack.getOrDefault(ComputingModule.SERVER_HARDWARE.get(), ItemContainerContents.EMPTY);
+        return stack.getOrDefault(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.EMPTY);
     }
 
+    /** A copy of the first card of {@code kind} seated in the server in {@code stack}, or an empty stack. */
+    public static ItemStack card(final ItemStack stack, final ExpansionCardKind kind) {
+        for (final ItemStack part : hardware(stack).nonEmptyItems()) {
+            if (part.getItem() instanceof IExpansionCardItem item && item.cardSpec().kind() == kind) {
+                return part.copy();
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /**
+     * Puts {@code card} in the place of the first card of {@code kind} seated in the server in {@code stack}, so what
+     * is kept on a card (a RAID controller's array) is written back into the server: false when it holds no such card.
+     */
+    public static boolean replaceCard(final ItemStack stack, final ExpansionCardKind kind, final ItemStack card) {
+        final ItemContainerContents current = hardware(stack);
+        final NonNullList<ItemStack> parts = NonNullList.withSize(ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
+        int found = -1;
+        for (int slot = 0; slot < ServerHardwareHandler.SLOTS && slot < current.getSlots(); slot++) {
+            final ItemStack part = current.getStackInSlot(slot).copy();
+            parts.set(slot, part);
+            if (found < 0 && part.getItem() instanceof IExpansionCardItem item && item.cardSpec().kind() == kind) {
+                found = slot;
+            }
+        }
+        if (found < 0) {
+            return false;
+        }
+        parts.set(found, card.copy());
+        stack.set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(parts));
+        return true;
+    }
+
+    @Nullable
     public static UUID nodeUuid(final ItemStack stack) {
-        return stack.get(ComputingModule.SERVER_NODE_UUID.get());
+        return stack.get(ComputingComponents.SERVER_NODE_UUID.get());
     }
 
     public static String customName(final ItemStack stack) {
-        return stack.getOrDefault(ComputingModule.COMPUTER_NAME.get(), "");
+        return stack.getOrDefault(ComputingComponents.COMPUTER_NAME.get(), "");
     }
 
     public static void setCustomName(final ItemStack stack, final String name) {
         final String trimmed = name.strip();
         if (trimmed.isEmpty()) {
-            stack.remove(ComputingModule.COMPUTER_NAME.get());
+            stack.remove(ComputingComponents.COMPUTER_NAME.get());
         } else {
-            stack.set(ComputingModule.COMPUTER_NAME.get(), trimmed);
+            stack.set(ComputingComponents.COMPUTER_NAME.get(), trimmed);
         }
     }
 
@@ -155,16 +198,15 @@ public class ServerItem extends Item
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.jsc.server.tooltip")
+        tooltip.add(GameText.component(chassis.isSupercomputerNode() ? NODE_TOOLTIP : TOOLTIP)
                 .withStyle(ChatFormatting.GRAY));
         HardwareTooltip.appendEra(tooltip, chassis.era());
         // Drives (and therefore stored data) belong to the rack bay, not to this item.
-        tooltip.add(Component.literal(chassis.heightU() + "U - " + chassis.driveSlots()
-                + " drive + " + chassis.gadgetSlots() + " gadget bays in the rack")
+        tooltip.add(GameText.component(BAYS.with(chassis.heightU(), chassis.driveSlots()))
                 .withStyle(ChatFormatting.DARK_GRAY));
         final UUID uuid = nodeUuid(stack);
         if (uuid != null) {
-            tooltip.add(Component.literal("Node " + uuid.toString().substring(0, 8))
+            tooltip.add(GameText.component(NODE.with(uuid.toString().substring(0, 8)))
                     .withStyle(ChatFormatting.DARK_GRAY));
         }
     }

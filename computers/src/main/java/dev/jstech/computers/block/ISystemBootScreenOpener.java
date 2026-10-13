@@ -10,8 +10,8 @@ package dev.jstech.computers.block;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.computers.registry.ClientHook;
 import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Opens the client-only screen of a system coming up. Mirrors {@link IPostScreenOpener}: the payload handler lives
@@ -38,22 +38,19 @@ public interface ISystemBootScreenOpener {
 
     final class Holder {
 
+        private static final ClientHook<ISystemBootScreenOpener> HOOK = new ClientHook<>();
+
         private Holder() {
         }
 
-        @Nullable
-        private static ISystemBootScreenOpener instance;
-
         public static void set(final ISystemBootScreenOpener opener) {
-            instance = opener;
+            HOOK.set(opener);
         }
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final BootSequence sequence,
                                 final int remaining, final int total, final boolean endsDark,
                                 final BootSplash splash, final BootIdentity who) {
-            if (instance != null) {
-                instance.open(pos, monitorPos, sequence, remaining, total, endsDark, splash, who);
-            }
+            HOOK.ifPresent(target -> target.open(pos, monitorPos, sequence, remaining, total, endsDark, splash, who));
         }
     }
 }

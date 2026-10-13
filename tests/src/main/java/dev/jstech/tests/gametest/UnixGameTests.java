@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.PackageManagerKind;
@@ -22,12 +23,16 @@ import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.InstallerPage;
+import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -39,6 +44,8 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * UNIX System V is the oldest of the systems met at a Unix prompt, and keeps its own habits.
@@ -58,6 +65,7 @@ public final class UnixGameTests {
     private static final int SETTLE = 4;
 
     private static final ResourceLocation UNIX = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "unix");
+    private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
 
     private UnixGameTests() {
     }
@@ -200,9 +208,117 @@ public final class UnixGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * The System V installer asks the disk and the name together, on the same page, in its own style. It never
+     * names a disk {@code ada0}: that is bsdinstall's own way of naming one, not this one's.
+     */
+    @GameTest(template = ARENA)
+    public static void sysvInstaller_asksTheDiskAndTheNameOnOnePageInItsOwnStyle(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = vintageWithUnixInstallMedia(helper);
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    computer.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), computer, -1L, -1) == null,
+                            "the System V installer opens");
+                    final InstallerFlow flow = computer.installer();
+                    helper.assertTrue(flow != null && flow.style() == InstallerStyle.SYSTEM_V,
+                            "in its own style");
+                    helper.assertTrue(flow.page() == InstallerPage.SETTINGS,
+                            "the disk and the name are asked on one page, the way the first age's installers did");
+                    helper.assertFalse(flow.disks().isEmpty(), "the disk is offered");
+                    helper.assertFalse("ada0".equals(flow.disks().get(0).label()),
+                            "System V names a disk its own way, not bsdinstall's: " + flow.disks().get(0).label());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * The disk this installer offers already carries MC-DOS: by default the disk is kept
+     * and the two systems share it, and the inline choice can erase it instead, or be taken back before anything
+     * is written. The name the page asks for becomes the machine's, and the installer waits on its last page for
+     * the reboot once the copy ends.
+     */
+    @GameTest(template = ARENA)
+    public static void sysvInstaller_keepsOrErasesTheDiskItAlreadySharesAndKeepsTheNameGiven(
+            final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = vintage(helper, WHERE);
+        if (computer == null) {
+            return;
+        }
+        helper.assertTrue(computer.installOs(MC_DOS), "MC-DOS is on the machine's one disk already");
+        computer.setPowered(true); // installOs above does not power the machine on by itself
+        final BlockPos readerPos = WHERE.east();
+        helper.setBlock(readerPos, ComputingModule.FLOPPY_DRIVE.get());
+        if (!(helper.getBlockEntity(readerPos) instanceof MediaReaderBlockEntity reader)) {
+            helper.fail("no drive at " + readerPos);
+            return;
+        }
+        final ItemStack disc = new ItemStack(ComputingModule.FLOPPY_DISK.get());
+        MediaItem.setKind(disc, MediaKind.OS_INSTALL);
+        MediaItem.setPayload(disc, UNIX);
+        reader.mediaSlot().setStackInSlot(0, disc);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    computer.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), computer, -1L, -1) == null,
+                            "the System V installer opens on the machine that already runs MC-DOS");
+                    final InstallerFlow flow = computer.installer();
+                    helper.assertTrue(flow != null, "the machine opened an installer");
+                    final InstallerFlow.Disk disk = flow.target();
+                    helper.assertTrue(disk != null && disk.hasSystem() && "MC-DOS".equals(disk.holds()),
+                            "the disk already carries MC-DOS: " + disk);
+                    helper.assertTrue(flow.eraseSlot() == InstallerFlow.NO_DISK,
+                            "by default the disk is kept, the two systems sharing it");
+                    flow.askErase(disk.slot());
+                    flow.confirmErase();
+                    helper.assertTrue(flow.eraseSlot() == disk.slot(), "choosing 1 erases it on the spot");
+                    flow.cancelErase();
+                    helper.assertTrue(flow.eraseSlot() == InstallerFlow.NO_DISK,
+                            "and choosing 2 afterwards puts it back to sharing the disk");
+                    flow.setComputerName("DESK");
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = computer.installing();
+                    helper.assertTrue(job != null, "the copy started");
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        OsInstallRunner.tick(computer, helper.getLevel(), WHERE);
+                    }
+                    helper.assertTrue("DESK".equalsIgnoreCase(computer.console().computerName()),
+                            "the machine took the name it was given; got " + computer.console().computerName());
+                    final InstallerFlow after = computer.installer();
+                    helper.assertTrue(after != null && after.page() == InstallerPage.DONE,
+                            "and the installer waits on its last page for the reboot");
+                })
+                .thenSucceed();
+    }
+
+    /** A vintage machine with an empty disk and a floppy drive beside it holding the System V install medium. */
+    private static PersonalComputerBlockEntity vintageWithUnixInstallMedia(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = vintage(helper, WHERE);
+        if (computer == null) {
+            return null;
+        }
+        computer.setPowered(true);
+        final BlockPos readerPos = WHERE.east();
+        helper.setBlock(readerPos, ComputingModule.FLOPPY_DRIVE.get());
+        if (!(helper.getBlockEntity(readerPos) instanceof MediaReaderBlockEntity reader)) {
+            helper.fail("no drive at " + readerPos);
+            return null;
+        }
+        final ItemStack disc = new ItemStack(ComputingModule.FLOPPY_DISK.get());
+        MediaItem.setKind(disc, MediaKind.OS_INSTALL);
+        MediaItem.setPayload(disc, UNIX);
+        reader.mediaSlot().setStackInSlot(0, disc);
+        return computer;
+    }
+
     private static boolean has(final BootSequence sequence, final String label) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().equals(label)) {
+            if (line.label().english().equals(label)) {
                 return true;
             }
         }
@@ -210,21 +326,14 @@ public final class UnixGameTests {
     }
 
     private static String last(final BootSequence sequence) {
-        return sequence.lines().isEmpty() ? "" : sequence.lines().get(sequence.lines().size() - 1).label();
+        return sequence.lines().isEmpty() ? ""
+                : sequence.lines().get(sequence.lines().size() - 1).label().english();
     }
 
     private static String labels(final BootSequence sequence) {
         final StringBuilder out = new StringBuilder();
         for (final BootSequence.Line line : sequence.lines()) {
-            out.append(line.label()).append(" | ");
-        }
-        return out.toString();
-    }
-
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
+            out.append(line.label().english()).append(" | ");
         }
         return out.toString();
     }
@@ -242,7 +351,7 @@ public final class UnixGameTests {
                 new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
-        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300B.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         return computer;

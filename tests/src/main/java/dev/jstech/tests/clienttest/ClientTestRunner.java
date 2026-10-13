@@ -8,6 +8,8 @@
 package dev.jstech.tests.clienttest;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.tests.JsTests;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
@@ -35,8 +37,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -83,6 +87,8 @@ public final class ClientTestRunner {
     private int stepDelayLeft;
     private int testTicks;
     private CompletableFuture<Void> pendingMove;
+    /** The server's answer to whether the test area is loaded, asked on the server thread and polled here. */
+    private CompletableFuture<Boolean> areaProbe;
 
     private ClientTestRunner() {
     }
@@ -108,7 +114,10 @@ public final class ClientTestRunner {
                 case DONE -> { }
             }
         } catch (final RuntimeException e) {
-            if (state == State.RUNNING && current != null) {
+            if ((state == State.RUNNING || state == State.MOVE_TO_AREA) && current != null) {
+                // A test whose area never loads, or whose sequence fails to build, fails under its own name.
+                pendingMove = null;
+                areaProbe = null;
                 failCurrent(mc, e);
             } else {
                 LOGGER.error("[JSC-CT] harness failure in state {}", state, e);
@@ -142,24 +151,24 @@ public final class ClientTestRunner {
         if (!(mc.screen instanceof TitleScreen) || mc.getOverlay() != null) {
             return;
         }
-        tests = ClientTestSuite.shard(SHARD, SHARDS);
-        if (!ONLY.isEmpty()) {
-            final String needle = ONLY.toLowerCase(java.util.Locale.ROOT);
-            tests = tests.stream()
-                    .filter(t -> t.name().toLowerCase(java.util.Locale.ROOT).contains(needle))
-                    .toList();
-            /*
-             * A name that matches nothing is a mistake, not an empty suite: whoever typed it meant to run
-             * something. It used to leave the run with no tests at all and end on "ALL PASSED", which reads
-             * exactly like a suite that ran and was fine. The name is also matched after the suite has been
-             * split over its shards, so a name that matches only tests in another shard finds nothing here.
-             */
-            if (tests.isEmpty()) {
-                this.askedForNothing = true;
-                LOGGER.error("[JSC-CT] no test of shard {}/{} is named like \"{}\"; "
-                        + "the suite is split over its shards before the name is matched, "
-                        + "so -PclientShards=1 puts every test in this one", SHARD, SHARDS, ONLY);
-            }
+        final Map<String, Integer> durations = ClientTestDurations.read(runDirectory(mc));
+        // Several names, each a part of a test's name, separated by commas: a test named like any of them runs.
+        final List<String> needles = Arrays.stream(ONLY.toLowerCase(java.util.Locale.ROOT).split(","))
+                .map(String::trim).filter(n -> !n.isEmpty()).toList();
+        // The names are matched before the suite is split, so the tests asked for are shared out over the shards.
+        tests = ClientTestSuite.shard(SHARD, SHARDS, durations, t -> needles.isEmpty()
+                || needles.stream().anyMatch(t.name().toLowerCase(java.util.Locale.ROOT)::contains));
+        LOGGER.info("[JSC-CT] shard {}/{} split {}, expected to take {} ticks", SHARD, SHARDS,
+                durations.isEmpty() ? "round-robin" : "by the ticks each test took last time",
+                ClientTestSuite.expectedTicks(tests, durations));
+        /*
+         * A name that matches nothing is a mistake, not an empty suite: whoever typed it meant to run something. It
+         * used to leave the run with no tests at all and end on "ALL PASSED", which reads exactly like a suite that
+         * ran and was fine. With more shards than tests asked for, a shard can be left with none, which is no mistake.
+         */
+        if (!needles.isEmpty() && tests.isEmpty() && SHARD == 0) {
+            this.askedForNothing = true;
+            LOGGER.error("[JSC-CT] no test is named like \"{}\"", ONLY);
         }
         LOGGER.info("[JSC-CT] shard {}/{} runs {} tests", SHARD, SHARDS, tests.size());
         deleteOldWorld(mc);
@@ -251,6 +260,8 @@ public final class ClientTestRunner {
          */
         final BlockPos origin = new BlockPos(spawn.getX() + current.index() * AREA_SPACING, groundY - 2, spawn.getZ());
         context = new ClientTestContext(mc, current.name(), origin);
+        stepIndex = 0;
+        testTicks = 0;
         final MinecraftServer server = mc.getSingleplayerServer();
         if (server == null) {
             throw new IllegalStateException("integrated server vanished");
@@ -265,15 +276,36 @@ public final class ClientTestRunner {
         }
         pendingMove.join();
         final MinecraftServer server = mc.getSingleplayerServer();
-        final boolean loaded = server != null && server.overworld().isLoaded(context.abs(new BlockPos(3, 2, 3)))
-                && mc.level != null && mc.level.isLoaded(context.abs(new BlockPos(3, 2, 3)));
+        final BlockPos probe = context.abs(new BlockPos(3, 2, 3));
+        // The server level is read on the server thread; only the client level is read here.
+        if (areaProbe == null && server != null) {
+            areaProbe = server.submit(() -> {
+                return server.overworld().isLoaded(probe);
+            });
+        }
+        final boolean loaded = areaProbe != null && areaProbe.isDone() && areaProbe.join()
+                && mc.level != null && mc.level.isLoaded(probe);
+        if (areaProbe != null && areaProbe.isDone() && !loaded) {
+            areaProbe = null; // ask again next tick
+        }
         if (!loaded || stateTicks < 10) {
             if (stateTicks > 600) {
                 throw new ClientTestFailure("the test area never loaded");
             }
             return;
         }
+        areaProbe = null;
         pendingMove = null;
+        /*
+         * Every test starts from what a fresh game remembers. The Network Interactor keeps the view a player left it
+         * in, which is what it is for, and a search one test typed hid from the next one what it waited to see.
+         */
+        NetworkInteractorApp.forgetView();
+        /*
+         * And with motion reduced, as a player can ask for: a window that grows in for a quarter of a second would
+         * stand somewhere else at the moment a test clicks it. A test of the motion itself lets it move again.
+         */
+        MotionClock.setReduced(true);
         LOGGER.info("[JSC-CT] running {} at {}", current.name(), context.origin());
         try {
             current.method().invoke(null, context);
@@ -294,6 +326,7 @@ public final class ClientTestRunner {
         }
         final List<ClientTestContext.Queued> steps = context.steps();
         if (stepIndex >= steps.size()) {
+            context.runAfterTest();
             report.record(new ClientTestReport.Result(current.name(), true, "", context.screenshotsTaken(), testTicks));
             current = null;
             enter(State.NEXT_TEST);
@@ -322,6 +355,8 @@ public final class ClientTestRunner {
         } catch (final RuntimeException ignored) {
             // A screenshot is a courtesy; the failure itself is what matters.
         }
+        // Whatever the test changed outside its own area is put back, so a failure leaks nothing into later tests.
+        context.runAfterTest();
         final Throwable cause = e instanceof ClientTestFailure && e.getCause() != null ? e.getCause() : e;
         report.record(new ClientTestReport.Result(current.name(), false,
                 (e.getMessage() == null ? cause.toString() : e.getMessage()) + where,
@@ -341,6 +376,7 @@ public final class ClientTestRunner {
     private void finish(final Minecraft mc) {
         final Path file = mc.gameDirectory.toPath().resolve("clienttests").resolve("report.txt");
         report.write(file, SHARD, SHARDS);
+        ClientTestDurations.record(runDirectory(mc), report.results());
         enter(State.DONE);
         if (this.askedForNothing || report.failures() > 0) {
             LOGGER.error("[JSC-CT] this run failed: {} of {} tests failed{}",
@@ -354,5 +390,13 @@ public final class ClientTestRunner {
             System.exit(1);
         }
         mc.stop();
+    }
+
+    /**
+     * Where every shard's game directory is, and the durations the shards share. The game directory is "." in a
+     * run, so it is made whole before its parent is taken: the parent of "shard-0/." is the shard itself.
+     */
+    private static Path runDirectory(final Minecraft mc) {
+        return mc.gameDirectory.toPath().toAbsolutePath().normalize().getParent();
     }
 }

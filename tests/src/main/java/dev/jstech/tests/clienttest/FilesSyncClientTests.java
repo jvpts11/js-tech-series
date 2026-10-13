@@ -50,7 +50,7 @@ public final class FilesSyncClientTests {
 
     /** The explorers open on the desktop, in the order they were opened. */
     private static List<FilesApp> explorers(final ClientTestContext ctx) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+        final DesktopScreen desktop = ctx.openScreen(DesktopScreen.class);
         if (desktop == null) {
             return List.of();
         }

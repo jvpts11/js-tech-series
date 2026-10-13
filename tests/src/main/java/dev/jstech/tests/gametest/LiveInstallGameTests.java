@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -132,7 +133,7 @@ public final class LiveInstallGameTests {
                     "the machine keeps the name it was given: " + mainframe.console().computerName());
             helper.assertTrue("player@workshop ~ %".equals(term.prompt()),
                     "which is the name its own prompt now shows: " + term.prompt());
-            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingModule.FILESYSTEM.get());
+            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingComponents.FILESYSTEM.get());
             helper.assertTrue(disk != null && disk.files().get("/etc/fstab") != null
                             && disk.files().get("/etc/fstab").content().contains("# /dev/sda2"),
                     "and the table it wrote is on the disk it describes");
@@ -219,7 +220,7 @@ public final class LiveInstallGameTests {
             helper.assertTrue(osId("gentoo").equals(mainframe.installedOsId()),
                     "and the machine boots what was built: " + mainframe.installedOsId());
             // The build options are the system's and not the install's: every later build is built by them.
-            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingModule.FILESYSTEM.get());
+            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingComponents.FILESYSTEM.get());
             helper.assertTrue(disk != null && disk.files().get(MakeOpts.PATH) != null
                             && disk.files().get(MakeOpts.PATH).content().contains("-j64"),
                     "and the build options written on the way are on the disk it installed to");
@@ -285,7 +286,8 @@ public final class LiveInstallGameTests {
                 "which is not there yet, so it opens as a new one");
         helper.assertTrue(FilePayloads.readDiskFile(helper.getLevel(), computer, "live:/root/install.txt")
                 .orElse("").contains("emerge"), "while the medium's own guide opens with its text");
-        helper.assertTrue(LiveSessionFiles.write(computer, term.givenAwayOn(), "the table wants the root's UUID"),
+        helper.assertTrue(
+                LiveSessionFiles.write(computer, term.givenAwayOn(), "the table wants the root's UUID") == null,
                 "saving writes into the session");
         helper.assertTrue(term.type("cat /root/notes.txt").contains("the table wants the root's UUID"),
                 "and the shell reads back what the editor wrote");
@@ -392,7 +394,7 @@ public final class LiveInstallGameTests {
         }
         final ItemStackHandler parts = mainframe.getInventory();
         parts.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         parts.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
                 new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         parts.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
@@ -429,9 +431,9 @@ public final class LiveInstallGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,

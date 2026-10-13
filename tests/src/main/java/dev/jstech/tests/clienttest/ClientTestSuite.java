@@ -12,6 +12,8 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * The explicit list of client test classes. Tests are discovered by reflection from these classes only (
@@ -20,36 +22,138 @@ import java.util.List;
 public final class ClientTestSuite {
 
     private static final List<Class<?>> CLASSES = List.of(
+            AudioClientTests.class,
+            AutomationManagerClientTests.class,
+            BootSplashClientTests.class,
+            SoundMixerClientTests.class,
+            MachineSoundClientTests.class,
+            MainframeClientTests.class,
+            RackClientTests.class,
+            MediaClientTests.class,
+            MusicImportClientTests.class,
+            SoundfoundryClientTests.class,
+            SoundfoundryShareClientTests.class,
+            SoundfoundryStandardClientTests.class,
             SigmaEditorClientTests.class,
+            SigmaConsoleClientTests.class,
+            CabinetItemClientTests.class,
+            AssemblyScreensClientTests.class,
             CdeClientTests.class,
+            ComputerCaseClientTests.class,
+            CoreStateClientTests.class,
+            CrashPagesClientTests.class,
             CraftingChainClientTests.class,
             DesktopMenuClientTests.class,
+            DeviceManagerClientTests.class,
+            DeviceIconClientTests.class,
             ExposureClientTests.class,
             FilesSyncClientTests.class,
+            FramesSevenTenClientTests.class,
+            TransitionDesktopsClientTests.class,
+            CreativeTabsClientTests.class,
+            RecipeViewClientTests.class,
+            HudHologramClientTests.class,
+            WorldStabilityClientTests.class,
+            ManualClientTests.class,
+            SeriesManualsClientTests.class,
+            BookStylesClientTests.class,
+            GuideScenesClientTests.class,
+            BookPagesClientTests.class,
+            RenderTargetsClientTests.class,
+            HelpWindowClientTests.class,
+            HelpTerminalClientTests.class,
             FreeBsdClientTests.class,
             FullJourneyClientTests.class,
+            EraSystemsClientTests.class,
+            EraShellClientTests.class,
+            EraProgramsClientTests.class,
+            EraStorageClientTests.class,
+            EraInstallClientTests.class,
+            EraEverydayClientTests.class,
+            EraSystemProgramsClientTests.class,
+            EraInstalledProgramsClientTests.class,
+            EraNetworkedProgramsClientTests.class,
+            EraStorageFlowClientTests.class,
+            EraServiceInstallClientTests.class,
+            EraOperationsClientTests.class,
+            EraBuildClientTests.class,
+            EraSystemSetupClientTests.class,
+            EraOtherShellsClientTests.class,
+            EraNetworkClientTests.class,
+            EraProgrammingClientTests.class,
+            EraFabricationClientTests.class,
+            EraPeripheralsClientTests.class,
+            SupercomputerJourneyClientTests.class,
+            EraEndClientTests.class,
+            ExtremesClientTests.class,
             GatewayManagerClientTests.class,
+            GpuClientTests.class,
+            GridPainterClientTests.class,
+            TerminalFontClientTests.class,
+            GuidedInstallerClientTests.class,
+            IndustrialScreensClientTests.class,
+            InfoCenterClientTests.class,
             InstallMediaClientTests.class,
             InteracTuiClientTests.class,
             LeftoverProgramsClientTests.class,
             LiveInstallClientTests.class,
             McNetSpaceClientTests.class,
+            MotionClientTests.class,
+            MenuSwapCursorClientTests.class,
+            MediaDriveClientTests.class,
+            MemoryCrashClientTests.class,
+            OutOfMemoryClientTests.class,
+            RackCrashClientTests.class,
+            MonitorClientTests.class,
+            MsdClientTests.class,
+            MultipartModelClientTests.class,
+            CableBlockClientTests.class,
+            ItemStateClientTests.class,
+            DataRegistryClientTests.class,
+            KeyActionClientTests.class,
+            DiagnosticsClientTests.class,
+            FluidClientTests.class,
+            BigPayloadClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,
+            CableLineClientTests.class,
+            NetworkDeviceClientTests.class,
+            NetworkLinksClientTests.class,
+            BusWindowClientTests.class,
+            BusModelClientTests.class,
+            PeripheralCableClientTests.class,
+            RedstoneInterfaceClientTests.class,
             NetworkInteractorClientTests.class,
+            NetworkServicesClientTests.class,
             NetworkSharesClientTests.class,
+            OffscreenDesktopClientTests.class,
+            SystemMotionClientTests.class,
+            VintageShellsClientTests.class,
             OpenWithClientTests.class,
             PanelStylesClientTests.class,
+            PatternEncoderClientTests.class,
+            PrinterClientTests.class,
+            DockStationClientTests.class,
+            WorkshopClientTests.class,
+            UpdateClientTests.class,
+            IsmsClientTests.class,
+            NextgreClientTests.class,
+            ProphetClientTests.class,
+            SettingsPersonalizeClientTests.class,
+            SettingsScreenClientTests.class,
             SettingsSharingClientTests.class,
             SourceBuildClientTests.class,
             SystemUiClientTests.class,
+            SigmaWidgetsClientTests.class,
             TerminalSelectionClientTests.class,
             TerminalWidthClientTests.class,
             TrashClientTests.class,
             UiSweepClientTests.class,
+            VolumeClientTests.class,
             WreckedMachineClientTests.class,
-            UnixClientTests.class);
+            UnixClientTests.class,
+            UnixFreeBsdEditorsClientTests.class);
 
     private ClientTestSuite() {
     }
@@ -89,15 +193,57 @@ public final class ClientTestSuite {
         return entries;
     }
 
-    /** The slice of the suite that shard {@code shard} of {@code shards} runs (round-robin by index). */
-    public static List<Entry> shard(final int shard, final int shards) {
-        final List<Entry> all = all();
+    /**
+     * The slice of the suite that shard {@code shard} of {@code shards} runs. Knowing how many ticks each test took
+     * last time, the longest go first, each to the shard with the least to do so far, so the shards end together and
+     * no shard waits on the one that drew the long tests; a test never measured counts as the measured ones'
+     * average. Knowing nothing, round-robin by index. Every shard reads the same durations, so each takes its own
+     * slice of one split and no test runs twice or not at all.
+     */
+    public static List<Entry> shard(final int shard, final int shards, final Map<String, Integer> ticks) {
+        return shard(shard, shards, ticks, entry -> true);
+    }
+
+    /**
+     * The same, of only the tests {@code chosen} keeps: they are picked before the suite is split, so the few asked for
+     * are shared out over the shards as the whole suite is, rather than found in one shard and missing in the others.
+     */
+    public static List<Entry> shard(final int shard, final int shards, final Map<String, Integer> ticks,
+                                    final Predicate<Entry> chosen) {
+        final List<Entry> all = all().stream().filter(chosen).toList();
         final List<Entry> mine = new ArrayList<>();
-        for (int i = 0; i < all.size(); i++) {
-            if (i % shards == shard) {
-                mine.add(all.get(i));
+        if (ticks.isEmpty()) {
+            for (int i = 0; i < all.size(); i++) {
+                if (i % shards == shard) {
+                    mine.add(all.get(i));
+                }
+            }
+            return mine;
+        }
+        final int unknown = (int) ticks.values().stream().mapToInt(Integer::intValue).average().orElse(0);
+        final List<Entry> longestFirst = new ArrayList<>(all);
+        longestFirst.sort(Comparator.comparingInt((Entry e) -> -ticks.getOrDefault(e.name(), unknown))
+                .thenComparing(Entry::name));
+        final long[] load = new long[shards];
+        for (final Entry entry : longestFirst) {
+            int least = 0;
+            for (int other = 1; other < shards; other++) {
+                if (load[other] < load[least]) {
+                    least = other;
+                }
+            }
+            load[least] += ticks.getOrDefault(entry.name(), unknown);
+            if (least == shard) {
+                mine.add(entry);
             }
         }
+        mine.sort(Comparator.comparingInt(Entry::index));
         return mine;
+    }
+
+    /** The ticks a slice is expected to take, from the same durations its split was made with. */
+    public static long expectedTicks(final List<Entry> slice, final Map<String, Integer> ticks) {
+        final int unknown = (int) ticks.values().stream().mapToInt(Integer::intValue).average().orElse(0);
+        return slice.stream().mapToLong(entry -> ticks.getOrDefault(entry.name(), unknown)).sum();
     }
 }

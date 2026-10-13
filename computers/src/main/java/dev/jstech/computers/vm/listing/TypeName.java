@@ -7,8 +7,6 @@
  */
 package dev.jstech.computers.vm.listing;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -36,24 +34,6 @@ public record TypeName(String value) {
     /** The same, letting nothing through as nothing: a field of the type around it names no owner. */
     public static TypeName of(final String value) {
         return value == null ? null : new TypeName(value);
-    }
-
-    /** Several at once, for the types a method takes. */
-    public static List<TypeName> all(final List<String> values) {
-        final List<TypeName> names = new ArrayList<>(values.size());
-        for (final String value : values) {
-            names.add(new TypeName(value));
-        }
-        return names;
-    }
-
-    /** Back to plain text, for whoever compares names rather than carrying them. */
-    public static List<String> written(final List<TypeName> names) {
-        final List<String> values = new ArrayList<>(names.size());
-        for (final TypeName name : names) {
-            values.add(name.value());
-        }
-        return values;
     }
 
     @Override

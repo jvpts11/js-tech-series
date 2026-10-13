@@ -12,7 +12,8 @@ import dev.jstech.core.uuid.NetworkUuid;
 import java.util.Objects;
 
 /**
- * Cancellable event fired when a network UUID is about to propagate through a newly-placed cable into adjacent components.
+ * Cancellable event describing a network UUID about to propagate through a newly-placed cable into adjacent
+ * components. Nothing posts it yet: it is the event propagation will post once the cable code reports to listeners.
  */
 public final class NetworkPropagatingEvent implements ICoreEvent.ICancellable{
 

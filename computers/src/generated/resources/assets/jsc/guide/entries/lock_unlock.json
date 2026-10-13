@@ -1,0 +1,107 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.lock_unlock.text1"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "LOCK 64 iron_ingot",
+        "UNLOCK iron_ingot"
+      ],
+      "name": "hold.iql"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.lock_unlock.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.lock_unlock.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.lock_unlock.table1",
+      "heads": [
+        "jsc.guide.lock_unlock.table1_head1",
+        "jsc.guide.lock_unlock.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "LOCK held <quantity> <item> (concurrent operations will wait)"
+          },
+          {
+            "words": "jsc.guide.lock_unlock.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "<item> is already locked"
+          },
+          {
+            "words": "jsc.guide.lock_unlock.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to lock: the network holds no free <item>"
+          },
+          {
+            "words": "jsc.guide.lock_unlock.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "UNLOCK released <quantity> <item>"
+          },
+          {
+            "words": "jsc.guide.lock_unlock.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "<item> is not locked"
+          },
+          {
+            "words": "jsc.guide.lock_unlock.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.lock_unlock.fix1",
+          "problem": "jsc.guide.lock_unlock.problem1"
+        },
+        {
+          "fix": "jsc.guide.lock_unlock.fix2",
+          "problem": "jsc.guide.lock_unlock.problem2"
+        },
+        {
+          "fix": "jsc.guide.lock_unlock.fix3",
+          "problem": "jsc.guide.lock_unlock.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operation_states",
+        "jsc:states_and_queues"
+      ]
+    }
+  ],
+  "id": "jsc:lock_unlock",
+  "order": 295,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.lock_unlock.title"
+}

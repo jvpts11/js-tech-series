@@ -116,6 +116,28 @@ public final class AsyncPlanningGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void craftRequest_abandonedWhilePlanning_settlesAsDiscarded(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final byte[] seen = {-1};
+        final INetworkOperation[] request = new INetworkOperation[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.OAK_LOG, 2);
+                    net.cc().loadPattern(CraftFiles.oakPlanks());
+                })
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    request[0] = net.mainframe().submitCraftRequest(PLANKS, 8, false, "test",
+                            () -> seen[0] = request[0].toRecord().status());
+                    helper.assertTrue(request[0] != null, "the request is accepted");
+                    request[0].abandon();
+                    helper.assertTrue(seen[0] == OperationRecord.STATUS_DISCARDED,
+                            "the settle callback reads DISCARDED, not PENDING; got " + seen[0]);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void craftRequest_cancelledWhilePlanning_neverStarts(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);

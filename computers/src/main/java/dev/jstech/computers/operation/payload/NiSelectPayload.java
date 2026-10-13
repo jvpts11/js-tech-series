@@ -59,20 +59,21 @@ public record NiSelectPayload(BlockPos host, BlockPos monitorPos, StorageKey key
                             ByteBufCodecs.stringUtf8(KEY_LENGTH).encode(buf, p.serverKeys().get(i));
                         }
                         ByteBufCodecs.stringUtf8(KEY_LENGTH).encode(buf, p.destKey());
-                        NiGridClickPayload.PRIORITY_CODEC.encode(buf, p.priority());
+                        PayloadCodecs.PRIORITY.encode(buf, p.priority());
                     },
                     buf -> {
                         final BlockPos host = BlockPos.STREAM_CODEC.decode(buf);
                         final BlockPos monitor = BlockPos.STREAM_CODEC.decode(buf);
                         final StorageKey key = StorageKey.STREAM_CODEC.decode(buf);
                         final long quantity = buf.readVarLong();
-                        final int count = Math.min(buf.readVarInt(), MAX_SERVERS);
+                        // Bounded both ways: a count below none, which only a tampered client sends, reads as none.
+                        final int count = Math.max(0, Math.min(buf.readVarInt(), MAX_SERVERS));
                         final List<String> sources = new ArrayList<>(count);
                         for (int i = 0; i < count; i++) {
                             sources.add(ByteBufCodecs.stringUtf8(KEY_LENGTH).decode(buf));
                         }
                         final String destKey = ByteBufCodecs.stringUtf8(KEY_LENGTH).decode(buf);
-                        final OperationPriority priority = NiGridClickPayload.PRIORITY_CODEC.decode(buf);
+                        final OperationPriority priority = PayloadCodecs.PRIORITY.decode(buf);
                         return new NiSelectPayload(host, monitor, key, quantity, List.copyOf(sources), destKey,
                                 priority);
                     });

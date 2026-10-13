@@ -1,0 +1,15 @@
+{
+  "criteria": {
+    "done": {
+      "trigger": "jscore:event",
+      "conditions": {
+        "event": "jstests:poked"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

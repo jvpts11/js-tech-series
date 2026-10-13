@@ -18,17 +18,52 @@ import dev.jstech.core.tier.HardwareEra;
  */
 public enum RackChassis {
     /** The Standard 1U server. */
-    SERVER(1, 3, 1, 2, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.STANDARD),
-    /** The Legacy 1U server: fewer drives, one expansion slot (the card that lets a player sit at it). */
-    LEGACY_SERVER(1, 2, 1, 2, 1, RackType.SERVER, HardwareEra.LEGACY),
-    /** The Vintage 1U server: a single drive, no bay gadgets, one socket, one expansion slot. */
-    VINTAGE_SERVER(1, 1, 0, 1, 1, RackType.SERVER, HardwareEra.VINTAGE),
-    /** 2U, eight drive bays, storage first. */
-    STORAGE_SERVER(2, 8, 2, 1, 1, RackType.SERVER, HardwareEra.STANDARD),
+    SERVER(1, 4, 2, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.STANDARD),
+    /**
+     * The Legacy 1U server: fewer drives, two expansion slots, one for a graphics card, since its board has no video
+     * of its own, and one for a storage card.
+     */
+    LEGACY_SERVER(1, 3, 2, 2, RackType.SERVER, HardwareEra.LEGACY),
+    /** The Vintage 1U server: a single drive, one socket, one expansion slot. */
+    VINTAGE_SERVER(1, 1, 1, 1, RackType.SERVER, HardwareEra.VINTAGE),
+    /** 2U, ten drive bays, storage first. */
+    STORAGE_SERVER(2, 10, 1, 1, RackType.SERVER, HardwareEra.STANDARD),
     /** 2U, four sockets, compute first. */
-    COMPUTE_SERVER(2, 1, 1, 4, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.STANDARD),
+    COMPUTE_SERVER(2, 2, 4, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.STANDARD),
     /** 2U node of a supercomputer: one Phi and one GPU, seated only in a Supercomputer Rack. */
-    SUPERCOMPUTER_NODE(2, 1, 1, 2, 2, RackType.SUPERCOMPUTER, HardwareEra.STANDARD);
+    SUPERCOMPUTER_NODE(2, 2, 2, 2, RackType.SUPERCOMPUTER, HardwareEra.STANDARD),
+    /** The Transition 1U server: two sockets, five drives filling the unit's front, two cards. */
+    TRANSITION_SERVER(1, 5, 2, 2, RackType.SERVER, HardwareEra.TRANSITION),
+    /** The Advanced 1U server: two sockets, five drives filling the unit's front, any cards. */
+    ADVANCED_SERVER(1, 5, 2, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.ADVANCED),
+    /**
+     * The Advanced 2U node: four accelerator sleds (the Phi and three GPUs) and three NVMe carriers, seated only in a
+     * Supercomputer Rack of its era.
+     */
+    ADVANCED_SUPERCOMPUTER_NODE(2, 3, 2, 4, RackType.SUPERCOMPUTER, HardwareEra.ADVANCED),
+    /*
+     * The storage and compute servers of the other eras, 2U like the Standard's: each age's storage server fills
+     * more of its front with drives, and each age's compute server takes more processors and cards.
+     */
+    /** The Vintage 2U storage server: five full-height drives, one socket, one expansion slot. */
+    VINTAGE_STORAGE_SERVER(2, 5, 1, 1, RackType.SERVER, HardwareEra.VINTAGE),
+    /**
+     * The Legacy 2U storage server: seven drives, one socket, two expansion slots, one for the RAID controller and
+     * one for a graphics card, since its board has no video of its own.
+     */
+    LEGACY_STORAGE_SERVER(2, 7, 1, 2, RackType.SERVER, HardwareEra.LEGACY),
+    /** The Transition 2U storage server: eight drives, one socket, one expansion slot. */
+    TRANSITION_STORAGE_SERVER(2, 8, 1, 1, RackType.SERVER, HardwareEra.TRANSITION),
+    /** The Advanced 2U storage server: ten NVMe carriers, one socket, one expansion slot. */
+    ADVANCED_STORAGE_SERVER(2, 10, 1, 1, RackType.SERVER, HardwareEra.ADVANCED),
+    /** The Vintage 2U compute server: two sockets, one drive, one expansion slot. */
+    VINTAGE_COMPUTE_SERVER(2, 1, 2, 1, RackType.SERVER, HardwareEra.VINTAGE),
+    /** The Legacy 2U compute server: two sockets, two drives, two expansion slots. */
+    LEGACY_COMPUTE_SERVER(2, 2, 2, 2, RackType.SERVER, HardwareEra.LEGACY),
+    /** The Transition 2U compute server: four sockets, two drives, two expansion slots. */
+    TRANSITION_COMPUTE_SERVER(2, 2, 4, 2, RackType.SERVER, HardwareEra.TRANSITION),
+    /** The Advanced 2U compute server: four sockets, three drives, as many cards as its board takes. */
+    ADVANCED_COMPUTE_SERVER(2, 3, 4, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.ADVANCED);
 
     /** The kind of cabinet a chassis seats in. */
     public enum RackType {
@@ -39,17 +74,15 @@ public enum RackChassis {
 
     private final int heightU;
     private final int driveSlots;
-    private final int gadgetSlots;
     private final int maxCpus;
     private final int maxPcie;
     private final RackType rackType;
     private final HardwareEra era;
 
-    RackChassis(final int heightU, final int driveSlots, final int gadgetSlots, final int maxCpus,
-                final int maxPcie, final RackType rackType, final HardwareEra era) {
+    RackChassis(final int heightU, final int driveSlots, final int maxCpus, final int maxPcie,
+                final RackType rackType, final HardwareEra era) {
         this.heightU = heightU;
         this.driveSlots = driveSlots;
-        this.gadgetSlots = gadgetSlots;
         this.maxCpus = maxCpus;
         this.maxPcie = maxPcie;
         this.rackType = rackType;
@@ -58,6 +91,11 @@ public enum RackChassis {
 
     public RackType rackType() {
         return rackType;
+    }
+
+    /** Whether this is a supercomputer's node: the chassis the fabric surveys and the co-processor goes in. */
+    public boolean isSupercomputerNode() {
+        return rackType == RackType.SUPERCOMPUTER;
     }
 
     /** The era of the case: the boards it takes and the cabinets that seat it follow from this. */
@@ -71,10 +109,6 @@ public enum RackChassis {
 
     public int driveSlots() {
         return driveSlots;
-    }
-
-    public int gadgetSlots() {
-        return gadgetSlots;
     }
 
     public int maxCpus() {

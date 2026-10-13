@@ -1,0 +1,14 @@
+{
+  "buttonLight": "#33FFFFFF",
+  "drop": "#FF7A241C",
+  "dropHover": "#FFB23228",
+  "fragmented": "#FF7A3A14",
+  "hint": "#FFFFE0A0",
+  "ink": "#FFFFFFFF",
+  "rebuild": "#FF7A5A1E",
+  "rebuildHover": "#FFA8801F",
+  "stale": "#FF6E5A16",
+  "stripLight": "#55FFFFFF",
+  "tidy": "#FF1C6F86",
+  "tidyHover": "#FF2A93AE"
+}

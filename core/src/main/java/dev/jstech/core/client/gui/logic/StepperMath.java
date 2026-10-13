@@ -35,6 +35,6 @@ public final class StepperMath {
 
     /** Half the value, rounded down, never below the minimum. */
     public static long halved(final long value, final long min, final long max) {
-        return clamp(value / 2, min, max);
+        return clamp(Math.floorDiv(value, 2L), min, max);
     }
 }

@@ -1,0 +1,323 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_windows.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_windows.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_windows.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "using System.UI.*;",
+        "namespace Corpus;",
+        "class UiCorpus {",
+        "    static void Main() {",
+        "        Window window = new Window(\"Corpus\", 240, 150);",
+        "        window.Title = \"Corpus\";",
+        "        Row row = new Row();",
+        "        Column column = new Column();",
+        "        row.Spacing = 2;",
+        "        column.Spacing = 2;",
+        "",
+        "        Label label = new Label();",
+        "        Label named = new Label(\"name\");",
+        "        named.Text = \"name\";",
+        "        named.Visible = true;",
+        "        named.Enabled = true;",
+        "        named.Width = 40;",
+        "        named.Height = 10;",
+        "",
+        "        Button button = new Button();",
+        "        Button pressed = new Button(\"press\");",
+        "        pressed.Text = \"press\";",
+        "        pressed.OnClick += Clicked;",
+        "",
+        "        TextBox box = new TextBox();",
+        "        TextBox typed = new TextBox(\"x\");",
+        "        typed.Text = \"y\";",
+        "        typed.OnChange += Clicked;",
+        "        typed.OnSubmit += Clicked;",
+        "",
+        "        CheckBox check = new CheckBox();",
+        "        CheckBox labelled = new CheckBox(\"on\");",
+        "        CheckBox ticked = new CheckBox(\"on\", true);",
+        "        ticked.Text = \"on\";",
+        "        ticked.Checked = false;",
+        "        ticked.OnToggle += Clicked;",
+        "",
+        "        ProgressBar bar = new ProgressBar();",
+        "        ProgressBar ranged = new ProgressBar(0, 10);",
+        "        ranged.Value = 5;",
+        "        ranged.Least = 0;",
+        "        ranged.Most = 10;",
+        "",
+        "        ListBox listBox = new ListBox();",
+        "        listBox.Add(\"one\");",
+        "        listBox.Add(\"two\", \"second\");",
+        "        listBox.Selected = 0;",
+        "        listBox.OnSelect += Clicked;",
+        "",
+        "        Canvas canvas = new Canvas();",
+        "        Canvas sized = new Canvas(100, 50);",
+        "        sized.Clear(0);",
+        "        sized.FillRect(0, 0, 10, 10, 1);",
+        "        sized.DrawLine(0, 0, 10, 10, 2);",
+        "        sized.DrawText(\"hi\", 1, 1, 3);",
+        "        sized.SetPixel(2, 2, 4);",
+        "        sized.OnClick += Clicked;",
+        "",
+        "        row.Add(label);",
+        "        row.Add(named, 1);",
+        "        column.Add(row);",
+        "        column.Add(sized, 1);",
+        "        column.Add(box);",
+        "        column.Add(check);",
+        "        column.Add(labelled);",
+        "        column.Add(bar);",
+        "        column.Add(canvas);",
+        "        window.Content = column;",
+        "        window.Add(button, 0, 0, 20, 10);",
+        "        window.OnClose += Clicked;",
+        "        window.Show();",
+        "        Console.PrintLine(\"\" + window.Open + listBox.Count + sized.ClickX + sized.ClickY);",
+        "        row.Clear();",
+        "        column.Clear();",
+        "        listBox.Clear();",
+        "        window.Close();",
+        "        MessageBox.Show(\"title\", \"text\");",
+        "    }",
+        "",
+        "    static void Clicked() {",
+        "    }",
+        "}"
+      ],
+      "name": "Ui.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_windows.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_windows.table1",
+      "heads": [
+        "jsc.guide.sigma_example_windows.table1_head1",
+        "jsc.guide.sigma_example_windows.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "new Window(\"Corpus\", 240, 150)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "new Row(), new Column(), Spacing"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "new Label(\"name\"), Text, Width, Height"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "new Button(\"press\"), OnClick"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "new TextBox(\"x\"), OnChange, OnSubmit"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "new CheckBox(\"on\", true), Checked"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "new ProgressBar(0, 10), Value, Least, Most"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "ListBox: Add, Selected, OnSelect"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "new Canvas(100, 50), Clear, FillRect, DrawLine"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "DrawText, SetPixel, ClickX, ClickY"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "row.Add(named, 1)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "window.Content = column"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "window.Add(button, 0, 0, 20, 10)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "window.OnClose"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "window.Show()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "window.Open, window.Close()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "MessageBox.Show(\"title\", \"text\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_windows.table1_17_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_windows.definition1",
+      "term": "jsc.guide.sigma_example_windows.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_windows.definition2",
+      "term": "jsc.guide.sigma_example_windows.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_windows.definition3",
+      "term": "jsc.guide.sigma_example_windows.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_windows.definition4",
+      "term": "jsc.guide.sigma_example_windows.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_windows.definition5",
+      "term": "jsc.guide.sigma_example_windows.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_windows.definition6",
+      "term": "jsc.guide.sigma_example_windows.term6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_windows.fix1",
+          "problem": "jsc.guide.sigma_example_windows.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_windows.fix2",
+          "problem": "jsc.guide.sigma_example_windows.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_windows.fix3",
+          "problem": "jsc.guide.sigma_example_windows.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_windows.fix4",
+          "problem": "jsc.guide.sigma_example_windows.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_example_widgets",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_windows",
+  "order": 407,
+  "section": "jsc:examples_interface",
+  "title": "jsc.guide.sigma_example_windows.title"
+}

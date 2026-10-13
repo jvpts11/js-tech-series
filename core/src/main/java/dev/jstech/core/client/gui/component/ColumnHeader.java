@@ -69,7 +69,6 @@ public final class ColumnHeader extends UiComponent {
         return this;
     }
 
-    /** The column whose span holds {@code mx}: the last column that starts at or before it. */
     /**
      * How close to a column's left edge a press has to land to take hold of it. Wide enough to hit with
      * a mouse on a desktop drawn at three quarters, where a pixel here is less than one on the screen.
@@ -119,6 +118,7 @@ public final class ColumnHeader extends UiComponent {
         return was;
     }
 
+    /** The column whose span holds {@code mx}: the last column that starts at or before it. */
     public int columnAt(final double mx) {
         int column = 0;
         for (int i = 0; i < columnX.length && i < labels.size(); i++) {
@@ -131,7 +131,7 @@ public final class ColumnHeader extends UiComponent {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
-        g.fill(x(), y(), right(), bottom(), ctx.skin().listHover());
+        Grounds.fill(g, x(), y(), right(), bottom(), ctx.skin().listHover());
         g.fill(x(), bottom() - 1, right(), bottom(), ctx.skin().edge());
         final String arrow = ascending ? " ^" : " v";
         for (int i = 0; i < labels.size() && i < columnX.length; i++) {
@@ -139,8 +139,8 @@ public final class ColumnHeader extends UiComponent {
             if (i > 0) {
                 g.fill(columnX[i] - 3, y() + 1, columnX[i] - 2, bottom() - 1, ctx.skin().edge());
             }
-            g.drawString(ctx.font(), labels.get(i) + (sortable && i == sortColumn ? arrow : ""), columnX[i], y() + 1,
-                    ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), labels.get(i) + (sortable && i == sortColumn ? arrow : ""), columnX[i], y() + 1,
+                    ctx.skin().dim(), ctx.skin().listHover());
         }
     }
 

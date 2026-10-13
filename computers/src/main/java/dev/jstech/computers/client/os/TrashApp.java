@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TrashItem;
 import dev.jstech.computers.gui.layout.TrashLayout;
 import dev.jstech.computers.operation.payload.RequestTrashPayload;
@@ -16,11 +17,15 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.TrashKind;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.client.gui.Font;
@@ -48,6 +53,8 @@ public final class TrashApp implements IDesktopApp {
     private List<TrashItem> arrived = List.of();
     private List<TrashItem> items = List.of();
     private final Set<String> selected = new LinkedHashSet<>();
+    /** The picture each item name opens with, kept until the next listing so it is not worked out every frame. */
+    private final Map<String, ResourceLocation> icons = new HashMap<>();
     private int scroll;
     private Order order = Order.AS_DELETED;
     private OsSkin skin = OsSkin.fallback();
@@ -141,7 +148,8 @@ public final class TrashApp implements IDesktopApp {
     /** Dolphin names the folder it is on before itself; the other desktops title the window with the place alone. */
     @Override
     public String title() {
-        return this.style == PanelStyle.KDE ? "Trash - Dolphin" : kindOf(this.style).title();
+        final String place = kindOf(this.style).title();
+        return this.style == PanelStyle.KDE ? place + " - Dolphin" : place;
     }
 
     @Override
@@ -285,8 +293,9 @@ public final class TrashApp implements IDesktopApp {
         if (chosen.isEmpty()) {
             return;
         }
-        final String what = chosen.size() == 1 ? chosen.getFirst().name() : "these " + chosen.size() + " items";
-        DesktopScreen.ask("Confirm File Delete", "Delete " + what + " for good?\nThis cannot be undone.",
+        final Text question = chosen.size() == 1 ? TrashTexts.DELETE_ONE.with(chosen.getFirst().name())
+                : TrashTexts.DELETE_MANY.with(chosen.size());
+        ActiveDesktop.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question),
                 () -> act(TrashActionPayload.Action.SHRED, storedOf(chosen)));
     }
 
@@ -295,47 +304,57 @@ public final class TrashApp implements IDesktopApp {
         if (this.items.isEmpty()) {
             return;
         }
-        final String what = this.items.size() == 1 ? "the item" : "all " + this.items.size() + " items";
-        DesktopScreen.ask("Confirm File Delete", "Delete " + what + " in the " + title() + " for good?",
+        final Text trash = kindOf(this.style).titleText();
+        final Text question = this.items.size() == 1 ? TrashTexts.EMPTY_ONE.with(trash)
+                : TrashTexts.EMPTY_ALL.with(this.items.size(), trash);
+        ActiveDesktop.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question),
                 () -> act(TrashActionPayload.Action.EMPTY, List.of()));
     }
 
     /** Says what an item is: its name, where it came from and the room it takes. */
     void showProperties(final TrashItem item) {
-        DesktopScreen.tell(item.name() + " Properties", "Name: " + item.name() + "\nOriginal location: "
-                + item.place() + "\nSize: " + item.size());
+        ActiveDesktop.tell(GameText.resolve(TrashTexts.PROPERTIES_OF.with(item.name())),
+                GameText.resolve(TrashTexts.PROPERTIES_BODY.with(item.name(), item.place(), item.size())));
     }
 
     /** Opens a file manager at a place of the sidebar and puts this window away, as leaving the trash does. */
     void openPlace(final boolean desktopFolder) {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
-            desktop.openFolder(desktopFolder ? desktop.desktopDirectory() : desktop.homeDir());
-            DesktopScreen.closeWindowFor(this);
+            desktop.opener().openFolder(desktopFolder ? desktop.desktopDirectory() : desktop.homeDir());
+            ActiveDesktop.closeWindowFor(this);
         }
     }
 
     /** Closes the window, as its File menu's Close does. */
     void close() {
-        DesktopScreen.closeWindowFor(this);
+        ActiveDesktop.closeWindowFor(this);
     }
 
     /** The picture of the program that opens an item, which is how the desktops showed a file. */
     ResourceLocation iconOf(final TrashItem item) {
-        final String program = item.directory() ? "files"
-                : FileOpeners.defaultFor(item.name(), DesktopScreen.installedProgramIds());
-        return ResourceLocation.fromNamespaceAndPath("jsc", program.isEmpty() ? "generic" : program);
+        return this.icons.computeIfAbsent((item.directory() ? "/" : "") + item.name(), key -> {
+            final String program = item.directory() ? "files"
+                    : FileOpeners.defaultFor(item.name(), ActiveDesktop.installedProgramIds());
+            return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, program.isEmpty() ? "generic" : program);
+        });
     }
 
     /** The picture the trash itself wears on this desktop, empty or full. */
     ResourceLocation trashIcon() {
-        return ResourceLocation.fromNamespaceAndPath("jsc", this.items.isEmpty() ? "trash" : "trash_full");
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, this.items.isEmpty() ? "trash" : "trash_full");
     }
 
     /** The icon set of the desktop the window is on. */
     String iconSet() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         return desktop == null ? this.skin.iconSet() : desktop.icons();
+    }
+
+    /** Writes words of the trash in the player's language, with the shadow that suits what they are written on. */
+    static void write(final GuiGraphics g, final Font font, final Text text, final int x, final int y,
+                      final int color, final int ground, final float scale) {
+        write(g, font, GameText.resolve(text), x, y, color, ground, scale);
     }
 
     /** Writes text with the shadow that suits what it is written on, at {@code scale} of the font's size. */
@@ -369,6 +388,7 @@ public final class TrashApp implements IDesktopApp {
         }
         this.arrived = List.copyOf(built);
         this.items = ordered(this.arrived);
+        this.icons.clear();
         // A selection outlives a listing only as far as what it names is still there.
         this.selected.removeIf(stored -> this.items.stream().noneMatch(item -> item.stored().equals(stored)));
         this.scroll = Math.min(this.scroll, this.look.scrollLimit());

@@ -1,0 +1,280 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_lists.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.widgets_lists.definition1",
+      "term": "jsc.guide.widgets_lists.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.widgets_lists.definition2",
+      "term": "jsc.guide.widgets_lists.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.widgets_lists.table1",
+      "heads": [
+        "jsc.guide.widgets_lists.table1_head1",
+        "jsc.guide.widgets_lists.table1_head2",
+        "jsc.guide.widgets_lists.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ListBox"
+          },
+          {
+            "literal": "ListBox.new()"
+          },
+          {
+            "literal": "ListBox.Add(text), ListBox.Add(text, right text), ListBox.Clear, ListBox.Count, ListBox.Selected, ListBox.OnSelect"
+          }
+        ],
+        [
+          {
+            "literal": "RadioGroup"
+          },
+          {
+            "literal": "RadioGroup.new()"
+          },
+          {
+            "literal": "RadioGroup.Add, RadioGroup.Clear, RadioGroup.Count, RadioGroup.Selected, RadioGroup.Across, RadioGroup.OnSelect"
+          }
+        ],
+        [
+          {
+            "literal": "ComboBox"
+          },
+          {
+            "literal": "ComboBox.new()"
+          },
+          {
+            "literal": "ComboBox.Add, ComboBox.Clear, ComboBox.Count, ComboBox.Selected, ComboBox.OnSelect"
+          }
+        ],
+        [
+          {
+            "literal": "TabView"
+          },
+          {
+            "literal": "TabView.new()"
+          },
+          {
+            "literal": "TabView.Add(title, page), TabView.Clear, TabView.Count, TabView.Selected, TabView.OnSelect"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_lists.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.widgets_lists.table2",
+      "heads": [
+        "jsc.guide.widgets_lists.table2_head1",
+        "jsc.guide.widgets_lists.table2_head2",
+        "jsc.guide.widgets_lists.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Table"
+          },
+          {
+            "literal": "Table.new()"
+          },
+          {
+            "literal": "Table.AddColumn, Table.AddRow, Table.Clear, Table.Cell, Table.Count, Table.Selected, Table.OnSelect"
+          }
+        ],
+        [
+          {
+            "literal": "TreeView"
+          },
+          {
+            "literal": "TreeView.new()"
+          },
+          {
+            "literal": "TreeView.Add, TreeView.Clear, TreeView.NodeText, TreeView.Count, TreeView.Selected, TreeView.OnSelect"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_lists.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.widgets_lists.table3",
+      "heads": [
+        "jsc.guide.widgets_lists.table3_head1",
+        "jsc.guide.widgets_lists.table3_head2",
+        "jsc.guide.widgets_lists.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "MenuBar"
+          },
+          {
+            "literal": "MenuBar.new()"
+          },
+          {
+            "literal": "MenuBar.Add(menu, entry), MenuBar.Clear, MenuBar.Picked, MenuBar.PickedMenu, MenuBar.OnPick"
+          }
+        ],
+        [
+          {
+            "literal": "ContextMenu"
+          },
+          {
+            "literal": "ContextMenu.new(owner)"
+          },
+          {
+            "literal": "ContextMenu.Add, ContextMenu.Clear, ContextMenu.Picked, ContextMenu.OnPick"
+          }
+        ],
+        [
+          {
+            "literal": "StatusBar"
+          },
+          {
+            "literal": "StatusBar.new(), StatusBar.new(text)"
+          },
+          {
+            "literal": "StatusBar.Text, StatusBar.Add, StatusBar.Clear"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_lists.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.widgets_lists.table4",
+      "heads": [
+        "jsc.guide.widgets_lists.table4_head1",
+        "jsc.guide.widgets_lists.table4_head2",
+        "jsc.guide.widgets_lists.table4_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "TextArea"
+          },
+          {
+            "literal": "TextArea.new()"
+          },
+          {
+            "literal": "TextArea.Text, TextArea.OnChange"
+          }
+        ],
+        [
+          {
+            "literal": "NumberBox"
+          },
+          {
+            "literal": "NumberBox.new()"
+          },
+          {
+            "literal": "NumberBox.Value, NumberBox.Least, NumberBox.Most, NumberBox.Step, NumberBox.OnChange"
+          }
+        ],
+        [
+          {
+            "literal": "Slider"
+          },
+          {
+            "literal": "Slider.new()"
+          },
+          {
+            "literal": "Slider.Value, Slider.Least, Slider.Most, Slider.Step, Slider.OnChange"
+          }
+        ],
+        [
+          {
+            "literal": "GroupBox"
+          },
+          {
+            "literal": "GroupBox.new()"
+          },
+          {
+            "literal": "GroupBox.Text, GroupBox.Content"
+          }
+        ],
+        [
+          {
+            "literal": "ScrollView"
+          },
+          {
+            "literal": "ScrollView.new()"
+          },
+          {
+            "literal": "ScrollView.Content"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_lists.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.widgets_lists.fix1",
+          "problem": "jsc.guide.widgets_lists.problem1"
+        },
+        {
+          "fix": "jsc.guide.widgets_lists.fix2",
+          "problem": "jsc.guide.widgets_lists.problem2"
+        },
+        {
+          "fix": "jsc.guide.widgets_lists.fix3",
+          "problem": "jsc.guide.widgets_lists.problem3"
+        },
+        {
+          "fix": "jsc.guide.widgets_lists.fix4",
+          "problem": "jsc.guide.widgets_lists.problem4"
+        },
+        {
+          "fix": "jsc.guide.widgets_lists.fix5",
+          "problem": "jsc.guide.widgets_lists.problem5"
+        },
+        {
+          "fix": "jsc.guide.widgets_lists.fix6",
+          "problem": "jsc.guide.widgets_lists.problem6"
+        },
+        {
+          "fix": "jsc.guide.widgets_lists.fix7",
+          "problem": "jsc.guide.widgets_lists.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:widgets_basic",
+        "jsc:windows_and_layout"
+      ]
+    }
+  ],
+  "id": "jsc:widgets_lists",
+  "order": 371,
+  "section": "jsc:library_windows",
+  "title": "jsc.guide.widgets_lists.title"
+}

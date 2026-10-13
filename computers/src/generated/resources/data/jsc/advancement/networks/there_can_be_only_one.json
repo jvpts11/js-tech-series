@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:networks/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:mainframe_conflict"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.there_can_be_only_one.description"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "jsc:mainframe"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.there_can_be_only_one.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

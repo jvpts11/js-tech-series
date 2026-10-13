@@ -1,0 +1,283 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_syntax_errors.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_syntax_errors.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_syntax_errors.definition1",
+      "term": "jsc.guide.sigma_syntax_errors.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_syntax_errors.table1",
+      "heads": [
+        "jsc.guide.sigma_syntax_errors.table1_head1",
+        "jsc.guide.sigma_syntax_errors.table1_head2",
+        "jsc.guide.sigma_syntax_errors.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S1001"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1002"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1003"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1004"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1005"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1006"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table1_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_syntax_errors.table2",
+      "heads": [
+        "jsc.guide.sigma_syntax_errors.table2_head1",
+        "jsc.guide.sigma_syntax_errors.table2_head2",
+        "jsc.guide.sigma_syntax_errors.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S2001"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2002"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2003"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2004"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2005"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2006"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2007"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2008"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2009"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2010"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2011"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_11_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_11_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2013"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_12_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_12_3"
+          }
+        ],
+        [
+          {
+            "literal": "S2014"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_13_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_13_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_syntax_errors.fix1",
+          "problem": "jsc.guide.sigma_syntax_errors.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_syntax_errors.fix2",
+          "problem": "jsc.guide.sigma_syntax_errors.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_syntax_errors.fix3",
+          "problem": "jsc.guide.sigma_syntax_errors.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_syntax_errors.fix4",
+          "problem": "jsc.guide.sigma_syntax_errors.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_compile_errors"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_syntax_errors",
+  "order": 382,
+  "section": "jsc:errors_compile",
+  "title": "jsc.guide.sigma_syntax_errors.title"
+}

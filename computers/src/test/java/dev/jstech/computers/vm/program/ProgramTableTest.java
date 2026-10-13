@@ -137,6 +137,17 @@ class ProgramTableTest {
     }
 
     @Test
+    void takeId_numbersFromTheFirstItWasGivenAndWrapsBackToIt() {
+        final ProgramTable<Quiet> table = new ProgramTable<>(1000);
+        assertEquals(1000, table.takeId(), "the first number is the one it was given");
+        table.restart(5);
+        assertEquals(1000, table.takeId(), "a save from before the numbers moved numbers on from the first");
+        table.restart(Integer.MAX_VALUE);
+        assertEquals(Integer.MAX_VALUE, table.takeId());
+        assertEquals(1000, table.takeId(), "past the largest it wraps to the first, never below it");
+    }
+
+    @Test
     void remove_fromTheMiddleKeepsTheOthersInTheOrderTheyStarted() {
         final ProgramTable<Quiet> table = new ProgramTable<>();
         final ProgramEntry<Quiet> first = entry(table, "first", 1);

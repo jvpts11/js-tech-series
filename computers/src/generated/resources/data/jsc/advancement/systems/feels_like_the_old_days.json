@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/abort_retry_fail",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:mc_net"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.feels_like_the_old_days.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:ethernet_cable"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.feels_like_the_old_days.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

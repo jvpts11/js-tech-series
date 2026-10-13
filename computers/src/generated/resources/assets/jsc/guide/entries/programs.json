@@ -1,0 +1,282 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.programs.definition1",
+      "term": "jsc.guide.programs.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.programs.step1",
+        "jsc.guide.programs.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.programs.definition2",
+      "term": "jsc.guide.programs.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programs.table1",
+      "heads": [
+        "jsc.guide.programs.table1_head1",
+        "jsc.guide.programs.table1_head2",
+        "jsc.guide.programs.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.programs.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.programs.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.programs.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.programs.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.programs.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.programs.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.programs.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.programs.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.programs.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.programs.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.programs.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.programs.definition3",
+      "term": "jsc.guide.programs.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.programs.definition4",
+      "term": "jsc.guide.programs.term4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programs.table2",
+      "heads": [
+        "jsc.guide.programs.table2_head1",
+        "jsc.guide.programs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.programs.table2_1_1"
+          },
+          {
+            "literal": "apt"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table2_2_1"
+          },
+          {
+            "literal": "dnf"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table2_3_1"
+          },
+          {
+            "literal": "pacman"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table2_4_1"
+          },
+          {
+            "literal": "emerge"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table2_5_1"
+          },
+          {
+            "literal": "pkg"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table2_6_1"
+          },
+          {
+            "literal": "pckmgr"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programs.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.programs.table2_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text13"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text14"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.programs.fix1",
+          "problem": "jsc.guide.programs.problem1"
+        },
+        {
+          "fix": "jsc.guide.programs.fix2",
+          "problem": "jsc.guide.programs.problem2"
+        },
+        {
+          "fix": "jsc.guide.programs.fix3",
+          "problem": "jsc.guide.programs.problem3"
+        },
+        {
+          "fix": "jsc.guide.programs.fix4",
+          "problem": "jsc.guide.programs.problem4"
+        },
+        {
+          "fix": "jsc.guide.programs.fix5",
+          "problem": "jsc.guide.programs.problem5"
+        },
+        {
+          "fix": "jsc.guide.programs.fix6",
+          "problem": "jsc.guide.programs.problem6"
+        },
+        {
+          "fix": "jsc.guide.programs.fix7",
+          "problem": "jsc.guide.programs.problem7"
+        },
+        {
+          "fix": "jsc.guide.programs.fix8",
+          "problem": "jsc.guide.programs.problem8"
+        },
+        {
+          "fix": "jsc.guide.programs.fix9",
+          "problem": "jsc.guide.programs.problem9"
+        },
+        {
+          "fix": "jsc.guide.programs.fix10",
+          "problem": "jsc.guide.programs.problem10"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:the_systems",
+        "jsc:drives",
+        "jsc:mirror"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:programs",
+  "order": 49,
+  "section": "jsc:get_programs",
+  "title": "jsc.guide.programs.title"
+}

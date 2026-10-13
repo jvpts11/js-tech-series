@@ -1,0 +1,165 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_install.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_install.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_install.table1_1"
+          },
+          {
+            "words": "jsc.guide.dos_install.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_install.table1_2"
+          },
+          {
+            "words": "jsc.guide.dos_install.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_install.table1_3"
+          },
+          {
+            "words": "jsc.guide.dos_install.value1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_install.table1_4"
+          },
+          {
+            "words": "jsc.guide.dos_install.value1_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_install.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.dos_install.step1",
+        "jsc.guide.dos_install.step2",
+        "jsc.guide.dos_install.step3",
+        "jsc.guide.dos_install.step4",
+        "jsc.guide.dos_install.step5",
+        "jsc.guide.dos_install.step6"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_install.table2",
+      "heads": [
+        "jsc.guide.dos_install.table2_head1",
+        "jsc.guide.dos_install.table2_head2",
+        "jsc.guide.dos_install.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_install.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.dos_install.table2_1_2"
+          },
+          {
+            "literal": "ENTER=Continue  F3=Exit"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_install.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.dos_install.table2_2_2"
+          },
+          {
+            "literal": "ENTER=Continue  F3=Exit"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_install.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.dos_install.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.dos_install.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_install.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.dos_install.table2_4_2"
+          },
+          {
+            "literal": "ENTER=Restart"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_install.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_install.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_install.definition1",
+      "term": "jsc.guide.dos_install.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dos_install.fix1",
+          "problem": "jsc.guide.dos_install.problem1"
+        },
+        {
+          "fix": "jsc.guide.dos_install.fix2",
+          "problem": "jsc.guide.dos_install.problem2"
+        },
+        {
+          "fix": "jsc.guide.dos_install.fix3",
+          "problem": "jsc.guide.dos_install.problem3"
+        },
+        {
+          "fix": "jsc.guide.dos_install.fix4",
+          "problem": "jsc.guide.dos_install.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:dos_system_files",
+        "jsc:frames_which_machine"
+      ]
+    }
+  ],
+  "id": "jsc:dos_install",
+  "order": 148,
+  "section": "jsc:dos_basics",
+  "title": "jsc.guide.dos_install.title"
+}

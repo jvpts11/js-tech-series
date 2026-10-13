@@ -1,0 +1,254 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.editions_compared.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editions_compared.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editions_compared.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editions_compared.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.editions_compared.table1",
+      "heads": [
+        "jsc.guide.editions_compared.table1_head1",
+        "jsc.guide.editions_compared.table1_head2",
+        "jsc.guide.editions_compared.table1_head3",
+        "jsc.guide.editions_compared.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.editions_compared.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.editions_compared.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.editions_compared.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.editions_compared.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.editions_compared.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_5_3"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table1_5_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.editions_compared.table2",
+      "heads": [
+        "jsc.guide.editions_compared.table2_head1",
+        "jsc.guide.editions_compared.table2_head2",
+        "jsc.guide.editions_compared.table2_head3",
+        "jsc.guide.editions_compared.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.editions_compared.table2_1_1"
+          },
+          {
+            "amount": 48,
+            "unit": "MB"
+          },
+          {
+            "amount": 32,
+            "unit": "MB"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table2_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.editions_compared.table2_2_1"
+          },
+          {
+            "amount": 1536,
+            "unit": "MB"
+          },
+          {
+            "amount": 128,
+            "unit": "MB"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table2_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.editions_compared.table2_3_1"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          },
+          {
+            "amount": 1024,
+            "unit": "MB"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table2_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.editions_compared.table2_4_1"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          },
+          {
+            "amount": 3072,
+            "unit": "MB"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table2_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.editions_compared.table2_5_1"
+          },
+          {
+            "amount": 20480,
+            "unit": "MB"
+          },
+          {
+            "amount": 8192,
+            "unit": "MB"
+          },
+          {
+            "words": "jsc.guide.editions_compared.table2_5_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editions_compared.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editions_compared.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.editions_compared.definition1",
+      "term": "jsc.guide.editions_compared.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.editions_compared.definition2",
+      "term": "jsc.guide.editions_compared.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.editions_compared.definition3",
+      "term": "jsc.guide.editions_compared.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.editions_compared.fix1",
+          "problem": "jsc.guide.editions_compared.problem1"
+        },
+        {
+          "fix": "jsc.guide.editions_compared.fix2",
+          "problem": "jsc.guide.editions_compared.problem2"
+        },
+        {
+          "fix": "jsc.guide.editions_compared.fix3",
+          "problem": "jsc.guide.editions_compared.problem3"
+        },
+        {
+          "fix": "jsc.guide.editions_compared.fix4",
+          "problem": "jsc.guide.editions_compared.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:eras",
+        "jsc:midsoft_systems"
+      ]
+    }
+  ],
+  "id": "jsc:editions_compared",
+  "order": 171,
+  "section": "jsc:editions",
+  "title": "jsc.guide.editions_compared.title"
+}

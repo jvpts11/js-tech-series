@@ -7,8 +7,23 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_MENU;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_MENU_THIS_BOOT;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK_DEVICE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEYS_BLUE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEYS_DIALOG;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEYS_TUBE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.THIS_BOOT_ONLY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -25,6 +40,7 @@ import java.util.List;
  * box over the self-test, and the modern machines put up a dialog with a mark beside each entry. Drawing one
  * blue box for all three meant a green-phosphor monitor showing a colour it could not display.
  */
+@PaletteHolder
 public final class FirmwareBootMenus {
 
     /**
@@ -36,6 +52,11 @@ public final class FirmwareBootMenus {
      */
     public static final int ROWS = 8;
 
+    /** The menus' own colours, {@code jsc:firmware/boot_menu}; the tube's come from the self-test it sits on. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "firmware/boot_menu",
+            new Colours(0xFF000000, 0xFF0000A8, 0xFFB9B9B9, 0xFFD9D9D9, 0xFFFFFFFF, 0xFF6FB7FF, 0xFFFFE14D,
+                    0xFF2A2D3E, 0xFF3A4060, 0xFF23405A, 0xFF3A4060, 0xFF5FE07A, 0xFFF0B23A));
+
     private FirmwareBootMenus() {
     }
 
@@ -46,12 +67,18 @@ public final class FirmwareBootMenus {
 
         /** What a menu row calls the place this boots from: the disk by slot, or the drive by its kind. */
         public String where() {
-            return this.slot >= 0 ? "Disk " + this.slot : this.entry.device();
+            return this.slot >= 0 ? of(DISK.with(this.slot)) : GameText.resolve(this.entry.device());
         }
 
         /** How a modern dialog names it: the disk by slot and model, or the drive on its own. */
         public String device() {
-            return this.slot < 0 ? this.entry.device() : "Disk " + this.slot + " " + this.entry.device();
+            return this.slot < 0 ? GameText.resolve(this.entry.device())
+                    : of(DISK_DEVICE.with(this.slot, this.entry.device()));
+        }
+
+        /** What is on it, as the player reads it. */
+        public String label() {
+            return GameText.resolve(this.entry.label());
         }
     }
 
@@ -76,10 +103,10 @@ public final class FirmwareBootMenus {
         final int boxH = 28 + rows * TextWall.ROW + 12;
         final int bx = x + (w - boxW) / 2;
         final int by = y + (h - boxH) / 2;
-        g.fill(bx, by, bx + boxW, by + boxH, 0xFF000000);
+        g.fill(bx, by, bx + boxW, by + boxH, PALETTE.get().tubeBox());
         rule(g, bx, by, boxW, boxH, accent);
         rule(g, bx + 2, by + 2, boxW - 4, boxH - 4, accent);
-        TextWall.draw(g, font, "Boot Menu  (this boot only)", bx + 8, by + 8, accent);
+        TextWall.draw(g, font, of(BOOT_MENU_THIS_BOOT), bx + 8, by + 8, accent);
         int ly = by + 24;
         for (int i = from; i < from + rows; i++) {
             final Choice choice = choices.get(i);
@@ -87,19 +114,20 @@ public final class FirmwareBootMenus {
             TextWall.draw(g, font, TextWall.clip(font,
                             (on ? "> " : "  ") + (i + 1) + ". " + choice.where(), 78),
                     bx + 8, ly, on ? accent : text);
-            TextWall.draw(g, font, TextWall.clip(font, choice.entry().label(), boxW - 100), bx + 92, ly,
+            TextWall.draw(g, font, TextWall.clip(font, choice.label(), boxW - 100), bx + 92, ly,
                     on ? accent : text);
             ly += TextWall.ROW;
         }
-        TextWall.draw(g, font, "Up/Down  select     Enter  boot", bx + 8, by + boxH - 12, text);
+        TextWall.draw(g, font, of(KEYS_TUBE), bx + 8, by + boxH - 12, text);
     }
 
     /** The boards after them: the setup's own blue, a grey title bar, and the choice filled light. */
     private static void blue(final GuiGraphics g, final Font font, final List<Choice> choices, final int at,
                              final int x, final int y, final int w, final int h) {
-        final int ground = 0xFF0000A8;
-        final int frame = 0xFFB9B9B9;
-        final int chosen = 0xFFD9D9D9;
+        final Colours c = PALETTE.get();
+        final int ground = c.blueGround();
+        final int frame = c.blueFrame();
+        final int chosen = c.blueChosen();
         final int rows = shownRows(choices.size());
         final int from = firstShown(choices.size(), at);
         final int boxW = 212;
@@ -110,7 +138,7 @@ public final class FirmwareBootMenus {
         g.fill(bx, by, bx + boxW, by + boxH, ground);
         rule(g, bx, by, boxW, boxH, frame);
         g.fill(bx + 1, by + 1, bx + boxW - 1, by + 13, frame);
-        TextWall.centered(g, font, "Boot Menu", bx + boxW / 2, by + 4, ground);
+        TextWall.centered(g, font, of(BOOT_MENU), bx + boxW / 2, by + 4, ground);
         int ly = by + 16;
         for (int i = from; i < from + rows; i++) {
             final Choice choice = choices.get(i);
@@ -119,13 +147,13 @@ public final class FirmwareBootMenus {
                 g.fill(bx + 2, ly - 1, bx + boxW - 2, ly + rowH - 2, chosen);
             }
             TextWall.draw(g, font, TextWall.clip(font, choice.where(), 70), bx + 8, ly,
-                    on ? ground : 0xFFFFFFFF);
-            TextWall.draw(g, font, TextWall.clip(font, choice.entry().label(), boxW - 92), bx + 84, ly,
-                    on ? ground : 0xFFFFFFFF);
+                    on ? ground : c.blueInk());
+            TextWall.draw(g, font, TextWall.clip(font, choice.label(), boxW - 92), bx + 84, ly,
+                    on ? ground : c.blueInk());
             ly += rowH;
         }
-        g.fill(bx + 1, ly + 1, bx + boxW - 1, ly + 2, 0xFF6FB7FF);
-        TextWall.draw(g, font, "Up/Down: Select     Enter: Boot", bx + 8, ly + 6, 0xFFFFE14D);
+        g.fill(bx + 1, ly + 1, bx + boxW - 1, ly + 2, c.blueRule());
+        TextWall.draw(g, font, of(KEYS_BLUE), bx + 8, ly + 6, c.blueKeys());
     }
 
     /** The modern machines: a dialog over the dimmed splash, each entry marked by what it is. */
@@ -139,16 +167,17 @@ public final class FirmwareBootMenus {
         final int boxH = 16 + rows * (rowH + 3) + 16;
         final int bx = x + (w - boxW) / 2;
         final int by = y + (h - boxH) / 2;
-        g.fill(bx, by, bx + boxW, by + boxH, 0xFF2A2D3E);
-        g.fill(bx, by, bx + boxW, by + 14, 0xFF3A4060);
+        final Colours c = PALETTE.get();
+        g.fill(bx, by, bx + boxW, by + boxH, c.dialog());
+        g.fill(bx, by, bx + boxW, by + 14, c.dialogHead());
         g.fill(bx, by, bx + 2, by + 14, accent);
-        TextWall.draw(g, font, "Boot Menu", bx + 7, by + 4, text);
-        TextWall.right(g, font, "this boot only", bx + boxW - 7, by + 4, dim);
+        TextWall.draw(g, font, of(BOOT_MENU), bx + 7, by + 4, text);
+        TextWall.right(g, font, of(THIS_BOOT_ONLY), bx + boxW - 7, by + 4, dim);
         int ly = by + 17;
         for (int i = from; i < from + rows; i++) {
             final Choice choice = choices.get(i);
             final boolean on = i == at;
-            g.fill(bx + 5, ly, bx + boxW - 5, ly + rowH, on ? 0xFF23405A : 0xFF3A4060);
+            g.fill(bx + 5, ly, bx + boxW - 5, ly + rowH, on ? c.dialogChosen() : c.dialogRow());
             if (on) {
                 g.fill(bx + 5, ly, bx + 7, ly + rowH, accent);
             }
@@ -156,20 +185,20 @@ public final class FirmwareBootMenus {
              * Green for a disk that carries a system, amber for a medium: what a player wants to know at a
              * glance is which of these boots what is already installed and which one installs something new.
              */
-            g.fill(bx + 12, ly + 5, bx + 16, ly + 9, choice.slot() >= 0 ? 0xFF5FE07A : 0xFFF0B23A);
+            g.fill(bx + 12, ly + 5, bx + 16, ly + 9, choice.slot() >= 0 ? c.disk() : c.medium());
             /*
              * The system takes what it needs and the device takes what is left: a player choosing between two
              * systems is reading the names of the systems, and the drive beside each is how they tell two
              * installations of the same one apart.
              */
-            final String name = TextWall.clip(font, choice.entry().label(), (boxW - 30) / 2);
+            final String name = TextWall.clip(font, choice.label(), (boxW - 30) / 2);
             TextWall.draw(g, font, name, bx + 21, ly + 3, text);
             TextWall.right(g, font,
                     TextWall.clip(font, choice.device(), boxW - 30 - TextWall.width(font, name)),
                     bx + boxW - 9, ly + 3, dim);
             ly += rowH + 3;
         }
-        TextWall.draw(g, font, "Up/Down Select   Enter Boot", bx + 7, ly + 3, dim);
+        TextWall.draw(g, font, of(KEYS_DIALOG), bx + 7, ly + 3, dim);
     }
 
     /**
@@ -197,5 +226,15 @@ public final class FirmwareBootMenus {
         g.fill(x, y + h - 1, x + w, y + h, color);
         g.fill(x, y, x + 1, y + h, color);
         g.fill(x + w - 1, y, x + w, y + h, color);
+    }
+
+    /**
+     * The menus' colours: the tube's box behind its rules; the blue menu's ground, frame, chosen row, words, the
+     * rule over its keys and the keys; and the dialog's body, head, chosen and other rows, and the marks of a disk
+     * that carries a system and of a medium that installs one.
+     */
+    private record Colours(int tubeBox, int blueGround, int blueFrame, int blueChosen, int blueInk, int blueRule,
+                           int blueKeys, int dialog, int dialogHead, int dialogChosen, int dialogRow, int disk,
+                           int medium) {
     }
 }

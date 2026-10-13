@@ -7,22 +7,30 @@
  */
 package dev.jstech.core.config;
 
+import dev.jstech.core.audio.media.MediaBalance;
+import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
-
-import java.util.List;
+import dev.jstech.core.region.ChunkLoadingBalance;
+import dev.jstech.core.time.WorldCalendar;
 
 /**
- * The whitelist of server settings the series accepts, each with its default and the range it is clamped
- * into. A value outside its range is pulled to the nearest bound rather than refused, so a typo in the
- * file degrades a setting instead of breaking the world. The keys live under the {@code balance} table of
- * the server config.
+ * The series' balance, {@code jstech-balance.toml} beside the world: how the Operations engine waits and shares its
+ * work, how long the programs of the machines may run each tick, how much of the connection the recordings players
+ * hear and bring may take, and how long the world's seasons last. A value outside its range is pulled to the nearer
+ * end rather than refused, so a
+ * slip in the file costs one setting its value instead of breaking the world; each value read is passed straight into
+ * the balance it sets.
  */
 public final class CoreConfigKeys {
 
-    private static final CoreConfigRegistry REGISTRY = new CoreConfigRegistry();
-
     public static final String BALANCE = "balance";
+    /** The recordings players hear and bring: how much of the connection they take, and how big one may be. */
+    public static final String MEDIA = "media";
+    /** The world's calendar: how long its seasons last. */
+    public static final String CALENDAR = "calendar";
+    /** What the machines of the series may do to the world: how many chunks an owner keeps loaded. */
+    public static final String WORLD = "world";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -31,76 +39,152 @@ public final class CoreConfigKeys {
     private static final int MAX_MACHINE_MICROS = 1_000_000;
     private static final int MIN_SERVER_MICROS = 100;
     private static final int MAX_SERVER_MICROS = 10_000_000;
+    private static final int MIN_MEDIA_RATE = 16;
+    private static final int MAX_MEDIA_RATE = 65_536;
+    private static final int MAX_MEDIA_FILE_MEGABYTES = 1024;
+    private static final int MAX_MEDIA_QUOTA_MEGABYTES = 1_048_576;
+    private static final int MAX_CHUNKS_PER_OWNER = 4096;
 
     /** The seek latency of a hard disk drive, in ticks. */
-    public static final ConfigKey<Integer> HDD_LATENCY_TICKS = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "hdd_latency_ticks"), Integer.class, OperationBalance.DEFAULT_HDD_LATENCY_TICKS,
-            new ConfigKeyRange<>(0, MAX_LATENCY_TICKS)));
+    public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
+            BALANCE + ".hdd_latency_ticks", OperationBalance.DEFAULT_HDD_LATENCY_TICKS).range(0, MAX_LATENCY_TICKS)
+            .comment("How long a hard disk drive takes to find what it is asked for, in ticks.")
+            .named("Hard disk latency").unit("ticks");
 
     /** The seek latency of a solid-state drive, in ticks. */
-    public static final ConfigKey<Integer> SSD_LATENCY_TICKS = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "ssd_latency_ticks"), Integer.class, OperationBalance.DEFAULT_SSD_LATENCY_TICKS,
-            new ConfigKeyRange<>(0, MAX_LATENCY_TICKS)));
+    public static final ConfigKey<Integer> SSD_LATENCY_TICKS = ConfigKey.whole(
+            BALANCE + ".ssd_latency_ticks", OperationBalance.DEFAULT_SSD_LATENCY_TICKS).range(0, MAX_LATENCY_TICKS)
+            .comment("How long a solid-state drive takes to find what it is asked for, in ticks.")
+            .named("SSD latency").unit("ticks");
 
     /** The seek latency of an NVMe drive, in ticks. */
-    public static final ConfigKey<Integer> NVME_LATENCY_TICKS = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "nvme_latency_ticks"), Integer.class, OperationBalance.DEFAULT_NVME_LATENCY_TICKS,
-            new ConfigKeyRange<>(0, MAX_LATENCY_TICKS)));
+    public static final ConfigKey<Integer> NVME_LATENCY_TICKS = ConfigKey.whole(
+            BALANCE + ".nvme_latency_ticks", OperationBalance.DEFAULT_NVME_LATENCY_TICKS)
+            .range(0, MAX_LATENCY_TICKS)
+            .comment("How long an NVMe drive takes to find what it is asked for, in ticks.")
+            .named("NVMe latency").unit("ticks");
 
     /** How long an Operation waits on a LOCKed resource or a busy executor before it gives up, in ticks. */
-    public static final ConfigKey<Integer> OPERATION_WAITING_TIMEOUT_TICKS = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "operation_waiting_timeout_ticks"), Integer.class,
-            OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS, new ConfigKeyRange<>(20, MAX_TIMEOUT_TICKS)));
+    public static final ConfigKey<Integer> OPERATION_WAITING_TIMEOUT_TICKS = ConfigKey.whole(
+            BALANCE + ".operation_waiting_timeout_ticks", OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS)
+            .range(20, MAX_TIMEOUT_TICKS)
+            .comment("How long an Operation waits on a locked resource or a busy machine before it gives up, "
+                    + "in ticks.")
+            .named("Operation waiting time").unit("ticks");
 
     /** Ticks a queued Operation waits per level of priority it gains; 0 disables aging. */
-    public static final ConfigKey<Integer> OPERATION_PRIORITY_AGING_TICKS = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "operation_priority_aging_ticks"), Integer.class,
-            OperationBalance.DEFAULT_PRIORITY_AGING_TICKS, new ConfigKeyRange<>(0, MAX_TIMEOUT_TICKS)));
+    public static final ConfigKey<Integer> OPERATION_PRIORITY_AGING_TICKS = ConfigKey.whole(
+            BALANCE + ".operation_priority_aging_ticks", OperationBalance.DEFAULT_PRIORITY_AGING_TICKS)
+            .range(0, MAX_TIMEOUT_TICKS)
+            .comment("How many ticks a queued Operation waits for each level of priority it gains; 0 never raises "
+                    + "it.")
+            .named("Priority aging").unit("ticks");
 
     /** The share of a Subframe's own capacity it lends to the Mainframe orchestrating it. */
-    public static final ConfigKey<Double> SUBFRAME_EFFICIENCY_FACTOR = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "subframe_efficiency_factor"), Double.class,
-            OperationBalance.DEFAULT_SUBFRAME_EFFICIENCY_FACTOR, new ConfigKeyRange<>(0.0, 1.0)));
+    public static final ConfigKey<Double> SUBFRAME_EFFICIENCY_FACTOR = ConfigKey.number(
+            BALANCE + ".subframe_efficiency_factor", OperationBalance.DEFAULT_SUBFRAME_EFFICIENCY_FACTOR)
+            .range(0.0, 1.0)
+            .comment("The share of its own capacity a Subframe lends the Mainframe it works for.")
+            .named("Subframe share");
 
     /** Hours a persisted, never-resumed Operation may sit before it is discarded; 0 never expires. */
-    public static final ConfigKey<Integer> ORPHANED_OPERATIONS_EXPIRY_HOURS = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "orphaned_operations_expiry_hours"), Integer.class,
-            OperationBalance.DEFAULT_ORPHANED_OPERATIONS_EXPIRY_HOURS, new ConfigKeyRange<>(0, MAX_EXPIRY_HOURS)));
+    public static final ConfigKey<Integer> ORPHANED_OPERATIONS_EXPIRY_HOURS = ConfigKey.whole(
+            BALANCE + ".orphaned_operations_expiry_hours", OperationBalance.DEFAULT_ORPHANED_OPERATIONS_EXPIRY_HOURS)
+            .range(0, MAX_EXPIRY_HOURS)
+            .comment("How many hours a saved Operation nobody resumed waits before it is discarded; 0 keeps it for "
+                    + "ever.")
+            .named("Forgotten Operations last").unit("hours");
 
     /** Real time one machine may spend running its programs in a tick, in microseconds. */
-    public static final ConfigKey<Integer> PROGRAM_MACHINE_MICROS = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "program_machine_micros"), Integer.class,
-            ExecutionBalance.DEFAULT_MACHINE_MICROS, new ConfigKeyRange<>(MIN_MACHINE_MICROS, MAX_MACHINE_MICROS)));
+    public static final ConfigKey<Integer> PROGRAM_MACHINE_MICROS = ConfigKey.whole(
+            BALANCE + ".program_machine_micros", ExecutionBalance.DEFAULT_MACHINE_MICROS)
+            .range(MIN_MACHINE_MICROS, MAX_MACHINE_MICROS)
+            .comment("The real time one machine may spend running its programs in a tick, in microseconds.")
+            .named("Program time per machine").unit("µs");
 
     /** Real time every machine together may spend running programs in a tick, in microseconds. */
-    public static final ConfigKey<Integer> PROGRAM_SERVER_MICROS = REGISTRY.register(ConfigKey.ranged(
-            List.of(BALANCE, "program_server_micros"), Integer.class,
-            ExecutionBalance.DEFAULT_SERVER_MICROS, new ConfigKeyRange<>(MIN_SERVER_MICROS, MAX_SERVER_MICROS)));
+    public static final ConfigKey<Integer> PROGRAM_SERVER_MICROS = ConfigKey.whole(
+            BALANCE + ".program_server_micros", ExecutionBalance.DEFAULT_SERVER_MICROS)
+            .range(MIN_SERVER_MICROS, MAX_SERVER_MICROS)
+            .comment("The real time every machine together may spend running programs in a tick, in microseconds.")
+            .named("Program time per server").unit("µs");
+
+    /** Kilobytes a second the server sends each player of the recordings they are about to hear. */
+    public static final ConfigKey<Integer> MEDIA_DOWNLOAD_KILOBYTES_PER_SECOND = ConfigKey.whole(
+            MEDIA + ".download_kilobytes_per_second", MediaBalance.DEFAULT_DOWNLOAD_KILOBYTES_PER_SECOND)
+            .range(MIN_MEDIA_RATE, MAX_MEDIA_RATE)
+            .comment("How many kilobytes a second the server sends each player of the recordings they are about "
+                    + "to hear.")
+            .named("Download speed").unit("KB/s");
+
+    /** Kilobytes a second a player sends the server of a recording they bring. */
+    public static final ConfigKey<Integer> MEDIA_UPLOAD_KILOBYTES_PER_SECOND = ConfigKey.whole(
+            MEDIA + ".upload_kilobytes_per_second", MediaBalance.DEFAULT_UPLOAD_KILOBYTES_PER_SECOND)
+            .range(MIN_MEDIA_RATE, MAX_MEDIA_RATE)
+            .comment("How many kilobytes a second a player sends the server of a recording they bring.")
+            .named("Upload speed").unit("KB/s");
+
+    /** The biggest recording a player may bring, in megabytes; 0 takes none. */
+    public static final ConfigKey<Integer> MEDIA_MAX_FILE_MEGABYTES = ConfigKey.whole(
+            MEDIA + ".max_file_megabytes", MediaBalance.DEFAULT_MAX_FILE_MEGABYTES)
+            .range(0, MAX_MEDIA_FILE_MEGABYTES)
+            .comment("The biggest recording a player may bring, in megabytes; 0 takes none.")
+            .named("Largest recording").unit("MB");
+
+    /** How much of the store the recordings one player brought may take, in megabytes; 0 sets no limit. */
+    public static final ConfigKey<Integer> MEDIA_PLAYER_QUOTA_MEGABYTES = ConfigKey.whole(
+            MEDIA + ".player_quota_megabytes", MediaBalance.DEFAULT_PLAYER_QUOTA_MEGABYTES)
+            .range(0, MAX_MEDIA_QUOTA_MEGABYTES)
+            .comment("How much of the server's store the recordings one player brought may take, in megabytes; "
+                    + "0 sets no limit.")
+            .named("Recordings per player").unit("MB");
+
+    /** How many days a season of the world's year lasts. */
+    public static final ConfigKey<Integer> CALENDAR_DAYS_PER_SEASON = ConfigKey.whole(
+            CALENDAR + ".days_per_season", WorldCalendar.DEFAULT_DAYS_PER_SEASON)
+            .range(1, WorldCalendar.MOST_DAYS_PER_SEASON)
+            .comment("How many days a season of the world's year lasts; a year is four seasons.")
+            .named("Days per season").unit("days");
+
+    /** How many chunks one player or team may keep loaded through the series' machines, across the world. */
+    public static final ConfigKey<Integer> WORLD_CHUNKS_PER_OWNER = ConfigKey.whole(
+            WORLD + ".chunks_per_owner", ChunkLoadingBalance.DEFAULT_LIMIT)
+            .range(0, MAX_CHUNKS_PER_OWNER)
+            .comment("How many chunks one player or team may keep loaded through machines, across every dimension; "
+                    + "0 lets nobody keep any.")
+            .named("Loaded chunks per owner").unit("chunks");
+
+    /** The file, each setting passed into the balance it sets. */
+    public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
+            .comment("Balance of the Operations engine and of the programs machines run.",
+                    "Values outside their range are pulled to the nearer end when the file is read.")
+            .sectionComment(BALANCE,
+                    "How the Operations engine waits and shares its work, and how long programs run.")
+            .sectionComment(MEDIA, "The recordings players hear and bring: how much of the connection they take, "
+                    + "and how big one may be.")
+            .sectionComment(CALENDAR, "The world's calendar: how long its seasons last.")
+            .sectionComment(WORLD, "What machines may do to the world: how many chunks an owner keeps loaded.")
+            .sectionNamed(BALANCE, "Engine and programs")
+            .sectionNamed(MEDIA, "Recordings")
+            .sectionNamed(CALENDAR, "Calendar")
+            .sectionNamed(WORLD, "World")
+            .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
+            .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
+            .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
+            .key(OPERATION_WAITING_TIMEOUT_TICKS, OperationBalance::setWaitingTimeoutTicks)
+            .key(OPERATION_PRIORITY_AGING_TICKS, OperationBalance::setPriorityAgingTicks)
+            .key(SUBFRAME_EFFICIENCY_FACTOR, OperationBalance::setSubframeEfficiencyFactor)
+            .key(ORPHANED_OPERATIONS_EXPIRY_HOURS, OperationBalance::setOrphanedOperationsExpiryHours)
+            .key(PROGRAM_MACHINE_MICROS, ExecutionBalance::setMachineMicros)
+            .key(PROGRAM_SERVER_MICROS, ExecutionBalance::setServerMicros)
+            .key(MEDIA_DOWNLOAD_KILOBYTES_PER_SECOND, MediaBalance::setDownloadKilobytesPerSecond)
+            .key(MEDIA_UPLOAD_KILOBYTES_PER_SECOND, MediaBalance::setUploadKilobytesPerSecond)
+            .key(MEDIA_MAX_FILE_MEGABYTES, MediaBalance::setMaxFileMegabytes)
+            .key(MEDIA_PLAYER_QUOTA_MEGABYTES, MediaBalance::setPlayerQuotaMegabytes)
+            .key(CALENDAR_DAYS_PER_SEASON, WorldCalendar::setDaysPerSeason)
+            .key(WORLD_CHUNKS_PER_OWNER, ChunkLoadingBalance::setLimit)
+            .build();
 
     private CoreConfigKeys() {
-    }
-
-    public static CoreConfigRegistry registry() {
-        return REGISTRY;
-    }
-
-    /**
-     * Pushes one validated value into the runtime balance. Unknown paths are ignored: the registry is the
-     * whitelist, so a value only reaches here through one of the keys above.
-     */
-    public static void apply(final ConfigKey<?> key, final Object value) {
-        switch (key.dottedPath()) {
-            case "balance.hdd_latency_ticks" -> OperationBalance.setHddLatencyTicks((Integer) value);
-            case "balance.ssd_latency_ticks" -> OperationBalance.setSsdLatencyTicks((Integer) value);
-            case "balance.nvme_latency_ticks" -> OperationBalance.setNvmeLatencyTicks((Integer) value);
-            case "balance.operation_waiting_timeout_ticks" -> OperationBalance.setWaitingTimeoutTicks((Integer) value);
-            case "balance.operation_priority_aging_ticks" -> OperationBalance.setPriorityAgingTicks((Integer) value);
-            case "balance.subframe_efficiency_factor" -> OperationBalance.setSubframeEfficiencyFactor((Double) value);
-            case "balance.orphaned_operations_expiry_hours" ->
-                    OperationBalance.setOrphanedOperationsExpiryHours((Integer) value);
-            case "balance.program_machine_micros" -> ExecutionBalance.setMachineMicros((Integer) value);
-            case "balance.program_server_micros" -> ExecutionBalance.setServerMicros((Integer) value);
-            default -> { }
-        }
     }
 }

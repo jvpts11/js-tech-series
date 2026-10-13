@@ -1,0 +1,71 @@
+{
+  "parent": "jsc:hardware/standard_build",
+  "criteria": {
+    "advanced": {
+      "conditions": {
+        "detail": "advanced",
+        "event": "jsc:era_built"
+      },
+      "trigger": "jscore:event"
+    },
+    "legacy": {
+      "conditions": {
+        "detail": "legacy",
+        "event": "jsc:era_built"
+      },
+      "trigger": "jscore:event"
+    },
+    "standard": {
+      "conditions": {
+        "detail": "standard",
+        "event": "jsc:era_built"
+      },
+      "trigger": "jscore:event"
+    },
+    "transition": {
+      "conditions": {
+        "detail": "transition",
+        "event": "jsc:era_built"
+      },
+      "trigger": "jscore:event"
+    },
+    "vintage": {
+      "conditions": {
+        "detail": "vintage",
+        "event": "jsc:era_built"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.time_traveller.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:clock"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.time_traveller.title"
+    }
+  },
+  "requirements": [
+    [
+      "vintage"
+    ],
+    [
+      "legacy"
+    ],
+    [
+      "transition"
+    ],
+    [
+      "standard"
+    ],
+    [
+      "advanced"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

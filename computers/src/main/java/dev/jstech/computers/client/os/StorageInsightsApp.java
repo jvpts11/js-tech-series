@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.ItemDetailPayload;
 import dev.jstech.computers.operation.payload.ItemDetailPayload.BusRef;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
@@ -25,6 +26,10 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -38,17 +43,43 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import static dev.jstech.computers.client.os.StorageInsightsTexts.ALL_STOCKED;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.BACK;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.BUSES;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.BY_SERVER;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.LOADING;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.LOADING_ITEM;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.LOW_STOCK;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.LOW_TILE;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.NOTHING_ON_NETWORK;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.NOT_ON_A_BUS;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.NO_MATCH;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.READING;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.SEARCH_ITEM;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.STORED_IN;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.THRESHOLD;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.TOP_ITEMS;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.TOTAL;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.TOTAL_TILE;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.TYPES_TILE;
+import static dev.jstech.computers.client.os.StorageInsightsTexts.USED_TO_MAKE;
+
 /**
  * Storage Insights: a dashboard over the network's contents. It shows totals, the biggest types as a bar
  * chart (searchable, with pinned favourites first), the types running low against an adjustable threshold,
  * and how full each server is. Clicking a type opens a detail view: where it is stored, what it makes, and
  * which buses filter it. Data is computed server-side; the dashboard re-requests on a slow cadence.
  */
+@PaletteHolder
 public final class StorageInsightsApp implements IDesktopApp {
 
     private static final int REFRESH_FRAMES = 60;
-    private static final int C_CRIT = 0xFFD1495B;
-    private static final int C_PIN = 0xFFE0A020;
+    /**
+     * The window's own colours, {@code jsc:app/storage_insights}: what is critically low, a pinned entry, the wash
+     * behind a low entry's row, and the swatches that stand for a fluid and for a chemical.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/storage_insights",
+            new Colours(0xFFD1495B, 0xFFE0A020, 0x18D1495B, 0xFF3A78C8, 0xFF9A6BC9));
     private static final int TOP_ROW_H = 15;
     private static final int LOW_ROW_H = 13;
     private static final int SERVER_ROW_H = 11;
@@ -111,38 +142,42 @@ public final class StorageInsightsApp implements IDesktopApp {
         this.host = host;
         this.monitorPos = monitorPos;
 
-        loadingLabel = root.add(new Label("Reading network...", Label.Tone.DIM));
+        loadingLabel = root.add(new Label(GameText.resolve(READING), Label.Tone.DIM));
         search = root.add(new SearchField(SEARCH_MAX));
-        search.setPlaceholder("search item...");
-        typesTile = root.add(new Label(() -> "TYPES " + (data == null ? 0 : data.typeCount()), Label.Tone.DIM));
-        totalTile = root.add(new Label(() -> "TOTAL " + JsTechTheme.fmt(data == null ? 0 : data.totalItems()), Label.Tone.DIM));
-        lowTile = root.add(new Label(() -> "LOW " + lowBelowThreshold().size(), Label.Tone.DIM)
-                .setColor(() -> lowBelowThreshold().isEmpty() ? 0 : C_CRIT));
-        topHeader = root.add(new Label("TOP ITEMS", Label.Tone.DIM));
+        search.setPlaceholder(GameText.resolve(SEARCH_ITEM));
+        typesTile = root.add(new Label(() -> GameText.resolve(TYPES_TILE.with(data == null ? 0 : data.typeCount())),
+                Label.Tone.DIM));
+        totalTile = root.add(new Label(() -> GameText.resolve(TOTAL_TILE.with(
+                JsTechTheme.fmt(data == null ? 0 : data.totalItems()))), Label.Tone.DIM));
+        lowTile = root.add(new Label(() -> GameText.resolve(LOW_TILE.with(lowBelowThreshold().size())), Label.Tone.DIM)
+                .setColor(() -> lowBelowThreshold().isEmpty() ? 0 : PALETTE.get().critical()));
+        topHeader = root.add(new Label(GameText.resolve(TOP_ITEMS), Label.Tone.DIM));
         topList = root.add(new ListView<NetworkItemEntry>(this::displayItems, TOP_ROW_H, this::renderTopRow).setOnClick(this::topClicked));
-        topEmpty = root.add(new Label(() -> search.query().isEmpty() ? "loading..." : "no match", Label.Tone.DIM));
-        lowHeader = root.add(new Label("LOW STOCK", Label.Tone.DIM));
+        topEmpty = root.add(new Label(() -> GameText.resolve(search.query().isEmpty() ? LOADING : NO_MATCH),
+                Label.Tone.DIM));
+        lowHeader = root.add(new Label(GameText.resolve(LOW_STOCK), Label.Tone.DIM));
         lowList = root.add(new ListView<NetworkItemEntry>(this::lowBelowThreshold, LOW_ROW_H, this::renderLowRow).setOnClick(this::lowClicked));
-        lowEmpty = root.add(new Label("all stocked", Label.Tone.DIM));
-        thresholdLabel = root.add(new Label("Threshold", Label.Tone.DIM));
+        lowEmpty = root.add(new Label(GameText.resolve(ALL_STOCKED), Label.Tone.DIM));
+        thresholdLabel = root.add(new Label(GameText.resolve(THRESHOLD), Label.Tone.DIM));
         thresholdMinus = root.add(new Button("-", () -> threshold = Math.max(1, threshold - 16)));
         thresholdValue = root.add(new Label(() -> String.valueOf(threshold)).setAlign(Label.Align.CENTER));
         thresholdPlus = root.add(new Button("+", () -> threshold = Math.min(4096, threshold + 16)));
-        serverHeader = root.add(new Label("BY SERVER", Label.Tone.DIM));
+        serverHeader = root.add(new Label(GameText.resolve(BY_SERVER), Label.Tone.DIM));
         serverList = root.add(new ListView<StorageShare>(() -> data == null ? List.of() : data.servers(), SERVER_ROW_H, this::renderServerRow));
 
-        back = root.add(new Button("< Back", () -> {
+        back = root.add(new Button(GameText.resolve(BACK), () -> {
             detailMode = false;
             detail = null;
         }));
-        detailLoading = root.add(new Label("Loading item...", Label.Tone.DIM));
+        detailLoading = root.add(new Label(GameText.resolve(LOADING_ITEM), Label.Tone.DIM));
         detailName = root.add(new Label(() -> detail == null ? "" : detail.item().getHoverName().getString()));
-        detailTotal = root.add(new Label(() -> detail == null ? "" : JsTechTheme.fmt(detail.total()) + " total", Label.Tone.DIM)
+        detailTotal = root.add(new Label(() -> detail == null ? ""
+                : GameText.resolve(TOTAL.with(JsTechTheme.fmt(detail.total()))), Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
-        storedHeader = root.add(new Label("STORED IN", Label.Tone.DIM));
+        storedHeader = root.add(new Label(GameText.resolve(STORED_IN), Label.Tone.DIM));
         storedList = root.add(new ListView<StorageShare>(() -> detail == null ? List.of() : detail.storedIn(), DETAIL_ROW_H, this::renderStoredRow));
         storedEmpty = root.add(new Label("-", Label.Tone.DIM));
-        usesHeader = root.add(new Label("USED TO MAKE", Label.Tone.DIM));
+        usesHeader = root.add(new Label(GameText.resolve(USED_TO_MAKE), Label.Tone.DIM));
         usesGrid = root.add(new CellGrid(1, 1, 1, USE_CELL)
                 .setWells(false)
                 .setInset(2)
@@ -156,10 +191,10 @@ public final class StorageInsightsApp implements IDesktopApp {
                         openDetail(detail.usedToMake().get(index).copy());
                     }
                 }));
-        usesEmpty = root.add(new Label("nothing on the network", Label.Tone.DIM));
-        busesHeader = root.add(new Label("BUSES", Label.Tone.DIM));
+        usesEmpty = root.add(new Label(GameText.resolve(NOTHING_ON_NETWORK), Label.Tone.DIM));
+        busesHeader = root.add(new Label(GameText.resolve(BUSES), Label.Tone.DIM));
         busList = root.add(new ListView<BusRef>(() -> detail == null ? List.of() : detail.buses(), DETAIL_ROW_H, this::renderBusRow));
-        busesEmpty = root.add(new Label("not on any bus filter", Label.Tone.DIM));
+        busesEmpty = root.add(new Label(GameText.resolve(NOT_ON_A_BUS), Label.Tone.DIM));
 
         active = this;
         request();
@@ -177,6 +212,12 @@ public final class StorageInsightsApp implements IDesktopApp {
         }
     }
 
+    /** What the dashboard is showing: the network's totals, its biggest and smallest stocks and its servers. */
+    @Nullable
+    public StorageInsightsPayload shown() {
+        return data;
+    }
+
     private void request() {
         PacketDistributor.sendToServer(new RequestStorageInsightsPayload(host, monitorPos));
     }
@@ -189,7 +230,7 @@ public final class StorageInsightsApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Storage Insights";
+        return GameText.resolve(StorageInsightsTexts.TITLE);
     }
 
     @Override
@@ -365,16 +406,16 @@ public final class StorageInsightsApp implements IDesktopApp {
         }
         final long max = data == null || data.topItems().isEmpty() ? 1 : Math.max(1, data.topItems().get(0).total());
         final boolean pin = pinned.contains(e.key().toString());
-        g.drawString(font, pin ? "*" : "-", x, y + 2, pin ? C_PIN : ctx.skin().dim(), false);
+        Draw.text(g, font, pin ? "*" : "-", x, y + 2, pin ? PALETTE.get().pinned() : ctx.skin().dim());
         itemIcon(g, e.key(), x + 8, y, 12);
-        g.drawString(font, Texts.clip(font, e.key().displayName().getString(), 96 - 24), x + 22, y + 2, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, e.key().displayName().getString(), 96 - 24), x + 22, y + 2, ctx.skin().text());
         final int barX = x + 96;
         final int qtyW = 34;
         final int barW = Math.max(10, w - 96 - qtyW - 4);
         g.fill(barX, y + 4, barX + barW, y + 10, ctx.skin().fieldBg());
         g.fill(barX, y + 4, barX + (int) (barW * Math.min(1.0, (double) e.total() / max)), y + 10, ctx.skin().accent());
         final String q = JsTechTheme.fmt(e.total());
-        g.drawString(font, q, x + w - font.width(q), y + 2, ctx.skin().dim(), false);
+        Draw.text(g, font, q, x + w - font.width(q), y + 2, ctx.skin().dim());
     }
 
     private void topClicked(final int index, final int button, final double mx, final double my) {
@@ -393,11 +434,11 @@ public final class StorageInsightsApp implements IDesktopApp {
     private void renderLowRow(final GuiGraphics g, final UiContext ctx, final NetworkItemEntry e, final int index, final int x,
                               final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final Font font = ctx.font();
-        g.fill(x, y, x + w, y + h - 1, 0x18D1495B);
+        g.fill(x, y, x + w, y + h - 1, PALETTE.get().lowRow());
         itemIcon(g, e.key(), x + 1, y, 11);
-        g.drawString(font, Texts.clip(font, e.key().displayName().getString(), w - 56), x + 15, y + 2, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, e.key().displayName().getString(), w - 56), x + 15, y + 2, ctx.skin().text());
         final String s = e.total() + "/" + threshold;
-        g.drawString(font, s, x + w - font.width(s), y + 2, C_CRIT, false);
+        Draw.text(g, font, s, x + w - font.width(s), y + 2, PALETTE.get().critical());
     }
 
     private void lowClicked(final int index, final int button, final double mx, final double my) {
@@ -416,25 +457,27 @@ public final class StorageInsightsApp implements IDesktopApp {
                 smax = Math.max(smax, share.qty());
             }
         }
-        g.drawString(font, Texts.clip(font, s.label(), 44), x, y, ctx.skin().dim(), false);
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(s.label()), 44), x, y, ctx.skin().dim());
         final int bx = x + 46;
         final int bw = Math.max(8, w - 46 - 30);
         g.fill(bx, y, bx + bw, y + 6, ctx.skin().fieldBg());
         g.fill(bx, y, bx + (int) (bw * Math.min(1.0, (double) s.qty() / smax)), y + 6, ctx.skin().accent());
         final String q = JsTechTheme.fmt(s.qty());
-        g.drawString(font, q, x + w - font.width(q), y - 1, ctx.skin().dim(), false);
+        Draw.text(g, font, q, x + w - font.width(q), y - 1, ctx.skin().dim());
     }
 
     private void renderStoredRow(final GuiGraphics g, final UiContext ctx, final StorageShare s, final int index, final int x,
                                  final int y, final int w, final int h, final boolean hovered, final boolean selected) {
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), s.label() + "  " + JsTechTheme.fmt(s.qty()), w - 4), x, y, ctx.skin().text(), false);
+        final String line = GameText.resolve(s.label()) + "  " + JsTechTheme.fmt(s.qty());
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), line, w - 4), x, y, ctx.skin().text());
     }
 
     private void renderBusRow(final GuiGraphics g, final UiContext ctx, final BusRef b, final int index, final int x,
                               final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final Font font = ctx.font();
-        g.drawString(font, Texts.clip(font, b.name(), w - 60), x, y, ctx.skin().text(), false);
-        g.drawString(font, b.kind(), x + w - font.width(b.kind()), y, ctx.skin().accent(), false);
+        Draw.text(g, font, Texts.clip(font, b.name(), w - 60), x, y, ctx.skin().text());
+        final String kind = GameText.resolve(b.kind());
+        Draw.text(g, font, kind, x + w - font.width(kind), y, ctx.skin().accent());
     }
 
     // state
@@ -488,7 +531,7 @@ public final class StorageInsightsApp implements IDesktopApp {
         if (key.isItem()) {
             itemIcon(g, key.stack(1), x, y, size);
         } else {
-            final int c = key.isFluid() ? 0xFF3A78C8 : 0xFF9A6BC9;
+            final int c = key.isFluid() ? PALETTE.get().fluid() : PALETTE.get().chemical();
             g.fill(x + 1, y + 1, x + size - 1, y + size - 1, c);
             Draw.outline(g, x + 1, y + 1, size - 2, size - 2, skin.edge());
         }
@@ -532,5 +575,9 @@ public final class StorageInsightsApp implements IDesktopApp {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** The window's colours, as the palette above names them. */
+    private record Colours(int critical, int pinned, int lowRow, int fluid, int chemical) {
     }
 }

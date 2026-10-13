@@ -12,6 +12,7 @@ import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.ProgramTable;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.schedule.TickScheduler;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,7 +29,7 @@ import net.minecraft.nbt.CompoundTag;
  * <p>What the programs watch is looked up once a thing, and only on a tick where some program watches something, and
  * handed only to the programs that watch it; what the machine owes for work done outside its programs comes off the
  * top; a terminal program nothing can answer any more and a finished one nobody waits for are cleared away;
- * everything still going is stepped by the {@link Scheduler}.
+ * everything still going is stepped by the Core's {@link TickScheduler}, an instruction being its unit of work.
  */
 final class ProgramTicker {
 
@@ -38,7 +39,7 @@ final class ProgramTicker {
     private final TerminalFocus focus;
     /** How the machine tells whoever waits on a program that it has ended. */
     private final IntConsumer ended;
-    private final Scheduler scheduler = new Scheduler();
+    private final TickScheduler scheduler = new TickScheduler();
     /** What the machine still owes for work done on its behalf outside its programs. */
     private int owed;
     /** What is left of this tick's farewell budget, shared by the programs stopped in it. */
@@ -150,10 +151,19 @@ final class ProgramTicker {
         }
     }
 
-    /** Sorts the programs into those that get a share of this tick and those that leave the machine now. */
+    /**
+     * Sorts the programs into those that get a share of this tick and those that leave the machine now.
+     *
+     * <p>It goes through the programs as they stood when it began: a farewell, and a service's tick, run the program's
+     * own code, which can start or stop other programs, and the table they are kept in may not change under a walk.
+     */
     private void sort(final Predicate<IProgramParent.Remote> waiting, final List<ProgramEntry<IMachineRuntime>> ready,
                       final List<ProgramEntry<IMachineRuntime>> done) {
-        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+        for (final ProgramEntry<IMachineRuntime> one : List.copyOf(this.table.running())) {
+            if (this.table.byId(one.id()) != one) {
+                // Stopped by an earlier program's farewell in this same walk: it is gone already.
+                continue;
+            }
             final ILanguageProcess.State state = one.process().state();
             if (!one.process().isService() && !this.focus.holds(one.id()) && one.process().waitingForInput()) {
                 /*
@@ -204,7 +214,7 @@ final class ProgramTicker {
     }
 
     /** One program as the tick deals it out: what it runs and whether it may be passed over. */
-    private record Slot(ILanguageProcess process, boolean low) implements Scheduler.ISlot {
+    private record Slot(ILanguageProcess process, boolean low) implements TickScheduler.ITask {
 
         @Override
         public int step(final int budget) {

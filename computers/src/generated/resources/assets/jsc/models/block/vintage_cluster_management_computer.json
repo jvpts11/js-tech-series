@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/orientable",
-  "textures": {
-    "front": "jsc:block/vintage_cluster_management_computer_front",
-    "side": "jsc:block/vintage_cluster_management_computer_side",
-    "top": "jsc:block/vintage_cluster_management_computer_top"
-  }
-}

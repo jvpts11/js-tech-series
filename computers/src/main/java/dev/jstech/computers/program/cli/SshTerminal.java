@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public final class SshTerminal {
         if (verb.equals("ssh") || verb.equals("exit") || verb.equals("logout")) {
             return null;
         }
-        if (level.getBlockEntity(BlockPos.of(console.sshTarget())) instanceof IComputerTerminalHost remote
+        if (Loaded.blockEntity(level, BlockPos.of(console.sshTarget())) instanceof IComputerTerminalHost remote
                 && remote.computerRunning()) {
             return remote;
         }

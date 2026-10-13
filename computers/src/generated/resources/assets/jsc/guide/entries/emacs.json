@@ -1,0 +1,370 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.emacs.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.emacs.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.emacs.definition1",
+      "term": "jsc.guide.emacs.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.emacs.definition2",
+      "term": "jsc.guide.emacs.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.emacs.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.emacs.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.emacs.step1",
+        "jsc.guide.emacs.step2",
+        "jsc.guide.emacs.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.emacs.table1",
+      "heads": [
+        "jsc.guide.emacs.table1_head1",
+        "jsc.guide.emacs.table1_head2",
+        "jsc.guide.emacs.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "C-x C-s"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-x C-c"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-x u"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-g"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-b"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-f"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-p"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-n"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-a"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-e"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-d"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_11_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-k"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_12_3"
+          }
+        ],
+        [
+          {
+            "literal": "C-y"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_13_3"
+          }
+        ],
+        [
+          {
+            "literal": "M-<"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_14_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_14_3"
+          }
+        ],
+        [
+          {
+            "literal": "M->"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_15_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_15_3"
+          }
+        ],
+        [
+          {
+            "literal": "M-x compile"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_16_2"
+          },
+          {
+            "words": "jsc.guide.emacs.table1_16_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.emacs.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.emacs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.emacs.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.emacs.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.emacs.definition3",
+      "term": "jsc.guide.emacs.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.emacs.definition4",
+      "term": "jsc.guide.emacs.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.emacs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.emacs.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.emacs.text8"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.emacs.step4",
+        "jsc.guide.emacs.step5",
+        "jsc.guide.emacs.step6"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.emacs.table2",
+      "heads": [
+        "jsc.guide.emacs.table2_head1",
+        "jsc.guide.emacs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.emacs.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.emacs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.emacs.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.emacs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.emacs.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.emacs.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.emacs.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.emacs.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.emacs.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.emacs.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.emacs.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.emacs.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/emacs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.emacs.fix1",
+          "problem": "jsc.guide.emacs.problem1"
+        },
+        {
+          "fix": "jsc.guide.emacs.fix2",
+          "problem": "jsc.guide.emacs.problem2"
+        },
+        {
+          "fix": "jsc.guide.emacs.fix3",
+          "problem": "jsc.guide.emacs.problem3"
+        },
+        {
+          "fix": "jsc.guide.emacs.fix4",
+          "problem": "jsc.guide.emacs.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:vim",
+        "jsc:vi",
+        "jsc:ee"
+      ]
+    }
+  ],
+  "id": "jsc:emacs",
+  "order": 218,
+  "section": "jsc:the_editors",
+  "title": "jsc.guide.emacs.title"
+}

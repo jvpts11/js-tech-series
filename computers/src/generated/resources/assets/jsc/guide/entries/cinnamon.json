@@ -1,0 +1,96 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cinnamon.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cinnamon.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cinnamon.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cinnamon.table1",
+      "heads": [
+        "jsc.guide.cinnamon.table1_head1",
+        "jsc.guide.cinnamon.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cinnamon.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.cinnamon.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cinnamon.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.cinnamon.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cinnamon.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.cinnamon.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cinnamon.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.cinnamon.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cinnamon.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cinnamon.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cinnamon.fix1",
+          "problem": "jsc.guide.cinnamon.problem1"
+        },
+        {
+          "fix": "jsc.guide.cinnamon.fix2",
+          "problem": "jsc.guide.cinnamon.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:install_a_desktop",
+        "jsc:desktop_program_names",
+        "jsc:eras"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:cinnamon",
+  "order": 208,
+  "section": "jsc:desktop_environments",
+  "title": "jsc.guide.cinnamon.title"
+}

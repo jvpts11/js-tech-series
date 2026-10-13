@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.rack;
 
+import dev.jstech.core.tier.HardwareEra;
+
 /**
  * How hot a cabinet runs, and what that costs the machines in it.
  *
@@ -27,18 +29,26 @@ public final class RackThermals {
     /** What a cabinet sheds with no help, in watts. */
     public static final int PASSIVE_BUDGET_W = 1000;
 
-    /** What each Cooling Unit mounted in it sheds on top of that. */
-    public static final int COOLING_UNIT_BUDGET_W = 1500;
-
     /** However hot it gets, a machine keeps this share of its capacity. */
     public static final int MIN_THROTTLE_PERCENT = 25;
+
+    /**
+     * What a Cooling Unit mounted in a cabinet sheds on top of that, by its era from the Vintage's to the Advanced's:
+     * each age's fans and coolers move more heat than the last's. Balancing estimates.
+     */
+    private static final int[] COOLING_UNIT_W = {300, 600, 1_000, 1_500, 2_500};
 
     private RackThermals() {
     }
 
-    /** The heat a cabinet can shed with {@code coolingUnits} Cooling Units mounted in it. */
-    public static int budgetWatts(final int coolingUnits) {
-        return PASSIVE_BUDGET_W + Math.max(0, coolingUnits) * COOLING_UNIT_BUDGET_W;
+    /** What a Cooling Unit of {@code era} sheds; an era past the Advanced, the Advanced one's. */
+    public static int coolingUnitWatts(final HardwareEra era) {
+        return COOLING_UNIT_W[Math.min(era.level(), COOLING_UNIT_W.length - 1)];
+    }
+
+    /** The heat a cabinet can shed with Cooling Units mounted in it that shed {@code coolingWatts} in all. */
+    public static int budgetWatts(final int coolingWatts) {
+        return PASSIVE_BUDGET_W + Math.max(0, coolingWatts);
     }
 
     /**

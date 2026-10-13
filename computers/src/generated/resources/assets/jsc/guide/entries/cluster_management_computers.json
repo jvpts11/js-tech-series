@@ -1,0 +1,562 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_management_computers.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cluster_management_computers.definition1",
+      "term": "jsc.guide.cluster_management_computers.term1"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.cluster_management_computers.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 18,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.cluster_management_computers.balloon1"
+        },
+        {
+          "number": 2,
+          "part": {
+            "x": 16,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.cluster_management_computers.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "x": 13,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.cluster_management_computers.balloon3"
+        },
+        {
+          "detail": "jsc.guide.cluster_management_computers.balloon4_detail",
+          "number": 4,
+          "part": {
+            "x": 14,
+            "y": 2,
+            "z": 14
+          },
+          "text": "jsc.guide.cluster_management_computers.balloon4"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Units:[B;1b,10b,0b,4b,0b,1b,12b,11b],DisplayEra:3,BayPowerOff:0,ServicePanelOff:0b}",
+          "state": "jsc:server_rack[facing=south]",
+          "x": 16,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 16,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 15,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 16,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 16,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 15,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 15,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 16,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 16,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 15,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 15,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "data": "{Units:[B;1b,1b,1b,1b,1b,1b,12b,11b],DisplayEra:3,BayPowerOff:0,ServicePanelOff:0b}",
+          "state": "jsc:server_rack[facing=south]",
+          "x": 13,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 13,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 12,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 12,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 13,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 13,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 12,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 12,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 13,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 13,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 12,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 12,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "state": "jsc:cluster_management_computer[facing=south,optical=false]",
+          "x": 18,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,2088,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 12,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,2104,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 13,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,48,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 14,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,2104,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,2104,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 16,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,48,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 17,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,17,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 18,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,3,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 18,
+          "y": 1,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,2058,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 18,
+          "y": 0,
+          "z": 14
+        }
+      ],
+      "caption": "jsc.guide.cluster_management_computers.figure1",
+      "height": 130
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_management_computers.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cluster_management_computers.definition2",
+      "term": "jsc.guide.cluster_management_computers.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_management_computers.table1",
+      "heads": [
+        "jsc.guide.cluster_management_computers.table1_head1",
+        "jsc.guide.cluster_management_computers.table1_head2",
+        "jsc.guide.cluster_management_computers.table1_head3",
+        "jsc.guide.cluster_management_computers.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table1_4_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_management_computers.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_management_computers.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_management_computers.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_management_computers.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_management_computers.table2",
+      "heads": [
+        "jsc.guide.cluster_management_computers.table2_head1",
+        "jsc.guide.cluster_management_computers.table2_head2",
+        "jsc.guide.cluster_management_computers.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_8_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_9_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_9_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_10_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_10_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_10_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_11_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_11_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_12_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_12_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_12_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_13_1"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_13_2"
+          },
+          {
+            "words": "jsc.guide.cluster_management_computers.table2_13_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cluster_management_computers.fix1",
+          "problem": "jsc.guide.cluster_management_computers.problem1"
+        },
+        {
+          "fix": "jsc.guide.cluster_management_computers.fix2",
+          "problem": "jsc.guide.cluster_management_computers.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:expansion_cards",
+        "jsc:datacenters"
+      ]
+    }
+  ],
+  "icon": "jsc:cluster_management_computer",
+  "id": "jsc:cluster_management_computers",
+  "items": [
+    "jsc:cluster_management_computer",
+    "jsc:high_performance_cluster_management_computer",
+    "jsc:aesthetic_cluster_management_computer",
+    "jsc:vintage_cluster_management_computer",
+    "jsc:legacy_cluster_management_computer",
+    "jsc:transition_cluster_management_computer",
+    "jsc:advanced_cluster_management_computer",
+    "jsc:advanced_high_performance_cluster_management_computer",
+    "jsc:advanced_aesthetic_cluster_management_computer"
+  ],
+  "order": 34,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.cluster_management_computers.title"
+}

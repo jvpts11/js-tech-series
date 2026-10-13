@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.Text;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,7 @@ import org.junit.jupiter.api.Test;
 class ProblemReportTest {
 
     private static IProgrammingLanguage.Complaint at(final int line, final String message) {
-        return new IProgrammingLanguage.Complaint("f", line, 1, "CN0001", message);
+        return new IProgrammingLanguage.Complaint("f", line, 1, "CN0001", Text.literal(message));
     }
 
     private static List<String> names(final List<ProblemReport.Row> rows) {

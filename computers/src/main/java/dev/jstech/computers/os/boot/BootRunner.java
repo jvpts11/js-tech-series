@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -17,13 +20,19 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.core.audio.Audio;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Carries a machine up: the power-on self-test, the wait at a boot manager, and the system coming up.
@@ -38,6 +47,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * machine: it has the same phases, on the same clocks, and only differs in whether anybody can see them.
  * Nothing is pushed to a screen without asking the machine whether it is the one being looked at.
  */
+@TextHolder
 public final class BootRunner {
 
     /** How long a boot manager waits before booting its first entry: the five seconds those menus always gave. */
@@ -45,6 +55,16 @@ public final class BootRunner {
 
     /** Where in its family the one edition sits that greets with a notice instead of a window. */
     private static final int BALLOON_GREETER_RANK = 2;
+
+    /** How often a machine standing at its failure asks again whether it has somewhere to go: once a second. */
+    private static final int HALT_RECHECK_TICKS = 20;
+
+    /** The notice that one edition greets its owner with, and the words it uses for a machine with no name. */
+    private static final TextKey WELCOME_TO = TextKey.of("jsc.boot.boot_runner.welcome_to", "Welcome to %s");
+    private static final TextKey A_COMPUTER = TextKey.of("jsc.boot.boot_runner.a_computer", "this computer");
+    private static final TextKey THIS_COMPUTER = TextKey.of("jsc.boot.boot_runner.this_computer", "This computer");
+    private static final TextKey IS_READY = TextKey.of("jsc.boot.boot_runner.is_ready",
+            "%s is ready. Click here to see what is on this computer.");
 
     private BootRunner() {
     }
@@ -91,12 +111,11 @@ public final class BootRunner {
     }
 
     /**
-     * Carries a restart's closing-down along, and starts the self-test when the system has finished saying
-     * goodbye.
+     * Carries a closing-down along, and when the system has finished saying goodbye switches the machine off or
+     * starts its self-test, whichever the closing-down was for.
      *
-     * <p>A restart used to jump straight to the self-test, which meant the one screen a system of any age put
-     * up on its way down was the one screen a player could never see: switching a machine off showed it and
-     * restarting one did not, although restarting is the way anybody actually reboots a computer here.
+     * <p>A restart used to jump straight to the self-test, and a shut-down straight to the dark, which meant the
+     * one screen a system of any age put up on its way down was the one screen a player could never see.
      */
     private static void down(final IOsHost machine, final BootPhases phases, final ServerLevel level,
                              final BlockPos pos) {
@@ -110,7 +129,13 @@ public final class BootRunner {
         if (!phases.downDone(level.getGameTime())) {
             return;
         }
+        final boolean off = phases.poweringOff();
         phases.endDown();
+        if (off) {
+            // The goodbye was the last thing on the screen; the monitor goes dark on its own as the power goes.
+            machine.finishShutdown();
+            return;
+        }
         machine.setNeedsPost(true);
         /*
          * Timed here rather than on the next tick, so the screen put in front of whoever is watching joins a
@@ -148,6 +173,10 @@ public final class BootRunner {
             return;
         }
         machine.setNeedsPost(false);
+        JscEvents.awardOperatorAt(level, pos, JscEvents.POST_PASSED);
+        if (beepsAfterSelfTest(machine.installedEra())) {
+            Audio.at(level, pos, ComputingSounds.POST_BEEP);
+        }
         /*
          * The self-test is the moment the machine settles what it is running, which is what makes a desktop
          * installed a moment ago wait for a restart instead of turning up on the next look at the monitor.
@@ -198,13 +227,7 @@ public final class BootRunner {
              * The systems that bring a boot manager stop at it first, which is also how a player finds out that
              * the other disk has something on it.
              */
-            final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
-            if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
-                phases.beginMenu(now, MENU_TICKS);
-                showMenu(machine, level, pos);
-            } else {
-                phases.beginBoot();
-            }
+            enterMenuOrBoot(machine, phases, level, pos, now);
             return;
         }
         if (machine.onScreen()) {
@@ -229,30 +252,44 @@ public final class BootRunner {
             return;
         }
         /*
-         * A machine standing at a wrecked system stays there. What is on its disk is not whole, so there is
-         * nothing to go on to, and the test below cannot see that: a wrecked machine still has a system
-         * installed, which is the very reason it was found and refused. Putting a medium in is what gives it
-         * somewhere to go, and that is how such a machine is repaired.
+         * Nothing the answer below depends on changes by itself: a disk goes in, a medium goes into a drive the
+         * machine reaches, a player installs over the system. So a machine standing here asks once a second
+         * rather than every tick, which for a rack of servers with no system on them was half of what an idle
+         * base cost. Each machine asks on its own tick of the second, taken from where it stands, so a whole
+         * datacenter that halted together does not ask together again.
          */
-        if (!SystemIntegrity.check(machine).whole() && !machine.hasBootableMedium()) {
+        if (Math.floorMod(level.getGameTime() + Mth.getSeed(pos), HALT_RECHECK_TICKS) != 0) {
             return;
         }
-        if (!machine.hasOs() && !machine.hasBootableMedium()) {
+        /*
+         * Somewhere to go is a system that is there and whole, or a medium to start from instead. A machine
+         * standing at a wrecked system stays there: what is on its disk is not whole, although the disk still
+         * says a system is installed, which is the very reason it was found and refused. Putting a medium in is
+         * what gives it somewhere to go, and that is how such a machine is repaired. The system is asked about
+         * first because the medium means walking every drive the machine is cabled to.
+         */
+        if (!(machine.hasOs() && SystemIntegrity.check(machine).whole()) && !machine.hasBootableMedium()) {
             return;
         }
         phases.resume();
         if (machine.hasOs()) {
-            final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
-            if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
-                phases.beginMenu(level.getGameTime(), MENU_TICKS);
-                showMenu(machine, level, pos);
-            } else {
-                phases.beginBoot();
-            }
+            enterMenuOrBoot(machine, phases, level, pos, level.getGameTime());
             return;
         }
         if (machine.onScreen()) {
             ScreenSessions.bootWatchers(level, pos);
+        }
+    }
+
+    /** Stops at the boot manager when it has something to ask and the player wants it, and boots otherwise. */
+    private static void enterMenuOrBoot(final IOsHost machine, final BootPhases phases, final ServerLevel level,
+                                        final BlockPos pos, final long now) {
+        final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
+        if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
+            phases.beginMenu(now, MENU_TICKS);
+            showMenu(machine, level, pos);
+        } else {
+            phases.beginBoot();
         }
     }
 
@@ -304,6 +341,9 @@ public final class BootRunner {
             return;
         }
         phases.endBoot();
+        phases.systemUp(now);
+        machine.systemCameUp();
+        machine.systemSound(level, SystemSound.STARTUP);
         final boolean balloon = greet(machine);
         if (machine.onScreen()) {
             ScreenSessions.bootWatchers(level, pos);
@@ -326,12 +366,11 @@ public final class BootRunner {
      */
     private static void sayHello(final IOsHost machine, final ServerLevel level, final BlockPos pos) {
         final OsDef system = machine.installedOs();
-        final String name = machine.customName().isEmpty() ? "This computer" : machine.customName();
+        final Text name = machine.customName().isEmpty() ? THIS_COMPUTER.text() : Text.literal(machine.customName());
         ScreenSessions.eachWatcher(level, pos, (player, monitor) ->
                 PacketDistributor.sendToPlayer(player, new DesktopBalloonPayload(pos,
-                        "Welcome to " + (system == null ? "this computer" : system.displayName()),
-                        name + " is ready. Click here to see what is on this computer.",
-                        WelcomeFacts.WINDOW_KEY)));
+                        WELCOME_TO.with(system == null ? A_COMPUTER.text() : Text.literal(system.displayName())),
+                        IS_READY.with(name), WelcomeFacts.WINDOW_KEY)));
     }
 
     /** Puts the boot menu in front of whoever is watching. */
@@ -384,6 +423,15 @@ public final class BootRunner {
     /** How many devices the self-test has to find: everything seated that is not memory. */
     private static int postDevices(final IOsHost machine) {
         final ComputerBuild build = machine.currentBuild();
-        return build == null ? 0 : build.disks().size() + build.pcieCards().size();
+        return build == null ? 0 : build.allDisks().size() + build.pcieCards().size();
+    }
+
+    /**
+     * Whether the speaker inside the case beeps the self-test's outcome: one short beep when it passes, a pattern
+     * when it fails, on the machines of the ages whose firmware was a BIOS, up to the Transition; a machine of the
+     * Standard on, whose firmware is a UEFI, comes up without it.
+     */
+    public static boolean beepsAfterSelfTest(@Nullable final HardwareEra era) {
+        return era != null && era.isAtMost(HardwareEra.TRANSITION);
     }
 }

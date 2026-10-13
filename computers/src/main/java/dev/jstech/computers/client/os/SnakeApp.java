@@ -7,10 +7,16 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SnakeGame;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
@@ -28,22 +34,20 @@ import java.util.List;
  * has no tick of its own to hang off, and reading the clock keeps it moving at the same speed whatever the
  * frame rate is doing.
  */
+@PaletteHolder
 public final class SnakeApp implements IDesktopApp {
 
     private static final int CELL = 7;
     private static final int MARGIN = 4;
     private static final int TOOLBAR_H = 15;
     private static final int STATUS_H = 11;
-    private static final int GROUND = 0xFF12160F;
-    private static final int GROUND_ALT = 0xFF1A2015;
-    private static final int WALL = 0xFF2E3826;
-    private static final int BODY = 0xFF6FBF3F;
-    private static final int HEAD = 0xFFB7F07A;
-    private static final int FOOD = 0xFFE0553F;
-    private static final int OVER_INK = 0xFFF0B23A;
-    private static final int OVER_SHADE = 0xC0000000;
-    /** The band the starting hint sits on, so it reads over whatever the arena is showing. */
-    private static final int HINT_BAND = 0xD012160F;
+    /**
+     * The arena's own colours, which the installed skin does not touch: {@code jsc:game/snake}. The band the
+     * starting hint sits on is there so it reads over whatever the arena is showing.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "game/snake",
+            new Colours(0xFF12160F, 0xFF1A2015, 0xFF2E3826, 0xFF6FBF3F, 0xFFB7F07A, 0xFFE0553F, 0xFFF0B23A,
+                    0xC0000000, 0xFFFFFFFF, 0xFFB8C2CE, 0xD012160F, 0xFFDCEFE1));
     /** A game tick in milliseconds, which is what the engine's speeds are counted in. */
     private static final long TICK_MS = 50L;
 
@@ -66,7 +70,7 @@ public final class SnakeApp implements IDesktopApp {
     private final Button wallsButton;
 
     public SnakeApp() {
-        restart = root.add(new Button("New", this::newGame));
+        restart = root.add(new Button(GameText.resolve(SnakeTexts.NEW), this::newGame));
         int at = 0;
         for (final SnakeGame.Speed s : SPEEDS) {
             speedButtons[at++] = root.add(new Button(label(s), () -> setSpeed(s)));
@@ -75,11 +79,11 @@ public final class SnakeApp implements IDesktopApp {
     }
 
     private static String label(final SnakeGame.Speed s) {
-        return switch (s) {
-            case SLOW -> "Slow";
-            case NORMAL -> "Normal";
-            case FAST -> "Fast";
-        };
+        return GameText.resolve(switch (s) {
+            case SLOW -> SnakeTexts.SLOW;
+            case NORMAL -> SnakeTexts.NORMAL;
+            case FAST -> SnakeTexts.FAST;
+        });
     }
 
     /**
@@ -89,7 +93,7 @@ public final class SnakeApp implements IDesktopApp {
      * no room for that: the button was pushed left onto the last speed and the two drew over each other.
      */
     private String wallsLabel() {
-        return "Walls";
+        return GameText.resolve(SnakeTexts.WALLS);
     }
 
     private void setSpeed(final SnakeGame.Speed s) {
@@ -109,7 +113,7 @@ public final class SnakeApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Snake";
+        return ProgramClient.nameOf("snake");
     }
 
     /**
@@ -193,15 +197,17 @@ public final class SnakeApp implements IDesktopApp {
 
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         int bx = x + MARGIN;
-        restart.setBounds(bx, y + 2, 30, 12);
-        bx += 33;
+        // At least as wide as it always was, and wider for a language whose word for it is longer.
+        final int rw = Math.max(30, font.width(GameText.resolve(SnakeTexts.NEW)) + 8);
+        restart.setBounds(bx, y + 2, rw, 12);
+        bx += rw + 3;
         for (int i = 0; i < SPEEDS.size(); i++) {
             final int w = font.width(label(SPEEDS.get(i))) + 8;
             speedButtons[i].setBounds(bx, y + 2, w, 12);
             speedButtons[i].setPrimary(SPEEDS.get(i) == speed);
             bx += w + 2;
         }
-        final int ww = font.width("Walls") + 8;
+        final int ww = font.width(wallsLabel()) + 8;
         /*
          * Pinned to the right edge, and never left of where the speeds end: a narrow window would
          * otherwise slide it back over the last of them rather than simply running out of room.
@@ -212,19 +218,20 @@ public final class SnakeApp implements IDesktopApp {
 
     private void drawArena(final GuiGraphics g, final int ax, final int ay,
                            final int arenaW, final int arenaH) {
-        g.fill(ax - 1, ay - 1, ax + arenaW + 1, ay + arenaH + 1, WALL);
+        final Colours c = PALETTE.get();
+        g.fill(ax - 1, ay - 1, ax + arenaW + 1, ay + arenaH + 1, c.wall());
         for (int row = 0; row < SnakeGame.ROWS; row++) {
             for (int col = 0; col < SnakeGame.COLS; col++) {
                 final int cx = ax + col * CELL;
                 final int cy = ay + row * CELL;
                 // A faint check, so the arena reads as a grid the snake moves on rather than as a flat box.
-                g.fill(cx, cy, cx + CELL, cy + CELL, (col + row) % 2 == 0 ? GROUND : GROUND_ALT);
+                g.fill(cx, cy, cx + CELL, cy + CELL, (col + row) % 2 == 0 ? c.ground() : c.groundAlt());
                 if (game.isFood(col, row)) {
-                    g.fill(cx + 1, cy + 1, cx + CELL - 1, cy + CELL - 1, FOOD);
+                    g.fill(cx + 1, cy + 1, cx + CELL - 1, cy + CELL - 1, c.food());
                 } else if (game.isHead(col, row)) {
-                    g.fill(cx, cy, cx + CELL, cy + CELL, HEAD);
+                    g.fill(cx, cy, cx + CELL, cy + CELL, c.head());
                 } else if (game.isBody(col, row)) {
-                    g.fill(cx, cy, cx + CELL, cy + CELL, BODY);
+                    g.fill(cx, cy, cx + CELL, cy + CELL, c.body());
                 }
             }
         }
@@ -232,32 +239,34 @@ public final class SnakeApp implements IDesktopApp {
 
     private void drawOver(final GuiGraphics g, final Font font, final int ax, final int ay,
                           final int arenaW, final int arenaH) {
-        g.fill(ax, ay, ax + arenaW, ay + arenaH, OVER_SHADE);
-        centre(g, font, "Game over", ax, ay + arenaH / 2 - 10, arenaW, OVER_INK);
-        centre(g, font, "Score " + game.score(), ax, ay + arenaH / 2, arenaW, 0xFFFFFFFF);
-        centre(g, font, "New for another", ax, ay + arenaH / 2 + 10, arenaW, 0xFFB8C2CE);
+        final Colours c = PALETTE.get();
+        g.fill(ax, ay, ax + arenaW, ay + arenaH, c.overShade());
+        centre(g, font, GameText.resolve(SnakeTexts.GAME_OVER), ax, ay + arenaH / 2 - 10, arenaW, c.overInk());
+        centre(g, font, GameText.resolve(SnakeTexts.SCORE.with(game.score())), ax, ay + arenaH / 2, arenaW,
+                c.score());
+        centre(g, font, GameText.resolve(SnakeTexts.AGAIN), ax, ay + arenaH / 2 + 10, arenaW, c.again());
     }
 
     private void drawHint(final GuiGraphics g, final Font font, final int ax, final int ay,
                           final int arenaW, final int arenaH) {
         // On a band of its own, because the snake is lying right where the words go.
-        final String text = "Arrow keys to start";
+        final String text = GameText.resolve(SnakeTexts.START_HINT);
         final int ty = ay + arenaH / 2 - 5;
-        g.fill(ax, ty - 2, ax + arenaW, ty + 11, HINT_BAND);
-        centre(g, font, text, ax, ty + 1, arenaW, 0xFFDCEFE1);
+        g.fill(ax, ty - 2, ax + arenaW, ty + 11, PALETTE.get().hintBand());
+        centre(g, font, text, ax, ty + 1, arenaW, PALETTE.get().hint());
     }
 
     private static void centre(final GuiGraphics g, final Font font, final String text,
                                final int x, final int y, final int width, final int colour) {
-        g.drawString(font, text, x + (width - font.width(text)) / 2, y, colour, false);
+        Draw.text(g, font, text, x + (width - font.width(text)) / 2, y, colour);
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
-        final String left = "Score " + game.score() + "   Best " + best;
-        g.drawString(font, left, x + MARGIN, y + 2, skin.text(), false);
-        final String right = "Length " + game.length();
-        g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim(), false);
+        final String left = GameText.resolve(SnakeTexts.SCORE_AND_BEST.with(game.score(), best));
+        Draw.text(g, font, left, x + MARGIN, y + 2, skin.text());
+        final String right = GameText.resolve(SnakeTexts.LENGTH.with(game.length()));
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim());
     }
 
     /** Steps the game as many times as the clock says have come due since the last frame. */
@@ -315,9 +324,23 @@ public final class SnakeApp implements IDesktopApp {
         root.mouseClicked(mouseX, mouseY, button);
     }
 
+    /** The game as it stands, for a look at where the keys have taken the snake. */
+    public SnakeGame game() {
+        return game;
+    }
+
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY,
                               final int button) {
         root.mouseReleased(mouseX, mouseY, button);
+    }
+
+    /**
+     * The arena's colours: its checked ground, the wall round it, the snake's body and head, the food, the end of a
+     * game (the shade over the arena, its heading, the score and the line under it), and the starting hint's band
+     * and words.
+     */
+    private record Colours(int ground, int groundAlt, int wall, int body, int head, int food, int overInk,
+                           int overShade, int score, int again, int hintBand, int hint) {
     }
 }

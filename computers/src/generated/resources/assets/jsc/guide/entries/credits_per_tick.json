@@ -1,0 +1,185 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.credits_per_tick.table1",
+      "heads": [
+        "jsc.guide.credits_per_tick.table1_head1",
+        "jsc.guide.credits_per_tick.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.credits_per_tick.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.credits_per_tick.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.credits_per_tick.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.credits_per_tick.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.credits_per_tick.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.credits_per_tick.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.credits_per_tick.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.credits_per_tick.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.credits_per_tick.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.credits_per_tick.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.credits_per_tick.definition1",
+      "term": "jsc.guide.credits_per_tick.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.credits_per_tick.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.credits_per_tick.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.credits_per_tick.table2",
+      "heads": [
+        "jsc.guide.credits_per_tick.table2_head1",
+        "jsc.guide.credits_per_tick.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "low"
+          },
+          {
+            "words": "jsc.guide.credits_per_tick.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "medium"
+          },
+          {
+            "words": "jsc.guide.credits_per_tick.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "high"
+          },
+          {
+            "words": "jsc.guide.credits_per_tick.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.credits_per_tick.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.credits_per_tick.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.credits_per_tick.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.credits_per_tick.fix1",
+          "problem": "jsc.guide.credits_per_tick.problem1"
+        },
+        {
+          "fix": "jsc.guide.credits_per_tick.fix2",
+          "problem": "jsc.guide.credits_per_tick.problem2"
+        },
+        {
+          "fix": "jsc.guide.credits_per_tick.fix3",
+          "problem": "jsc.guide.credits_per_tick.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:call_costs",
+        "jsc:saved_with_world"
+      ]
+    }
+  ],
+  "id": "jsc:credits_per_tick",
+  "order": 375,
+  "section": "jsc:credits_and_costs",
+  "title": "jsc.guide.credits_per_tick.title"
+}

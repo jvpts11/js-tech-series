@@ -7,12 +7,28 @@
  */
 package dev.jstech.computers.blockentity;
 
+import com.mojang.serialization.Codec;
+import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.advancement.HardwareMilestones;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.audio.MachineVoices;
+import dev.jstech.computers.audio.MusicDownloads;
+import dev.jstech.computers.audio.MusicPlayer;
+import dev.jstech.computers.audio.ProgramCue;
+import dev.jstech.computers.audio.ProgramSounds;
+import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
+import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.MachinePorts;
+import dev.jstech.computers.hardware.PhiCoprocessorSpec;
+import dev.jstech.computers.hardware.SoundCardSpec;
+import dev.jstech.computers.hardware.WorkshopCardSpec;
+import dev.jstech.computers.item.BayDriveItem;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.IExpansionCardItem;
@@ -23,12 +39,17 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootRunner;
@@ -36,13 +57,16 @@ import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.boot.BootTiming;
 import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPage;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -50,33 +74,42 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.IDataNetworkConnectable;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.audio.IAudioHost;
+import dev.jstech.core.audio.LoopRequest;
+import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.blockentity.LongField;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.core.peripheral.PeripheralPorts;
+import dev.jstech.core.peripheral.PeripheralReconciler;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -92,13 +125,15 @@ import java.util.Set;
  * mod has always called, decides what THIS kind of computer accepts in a slot, which is the one thing each
  * kind settles for itself, and saves each part in turn.
  */
-public abstract class AbstractComputerBlockEntity extends BlockEntity
-        implements IPeripheralOwnerSupport, IOsHost, IWatchedConsole {
+public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
+        implements IPeripheralOwnerSupport, IOsHost, IKernelHost, IWatchedConsole {
 
     /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
     private final ComputerHardware hardware;
     /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
+    /** What its system does when it runs short: the page it goes down on, and what its kernel ends for memory. */
+    private final MachineKernel kernel = new MachineKernel(power.phases());
     /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
     private final NetworkAttachment attachment = new NetworkAttachment(this);
     /** What is on the far end of its peripheral cables. */
@@ -109,15 +144,32 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final DiskConsole diskConsole = new DiskConsole(this);
     /** The programs it is running and what they reach through it. */
     private final ProgramHost host = new ProgramHost(this);
+    /** The program tick, made once rather than on every tick it is run inside its operator's scope. */
+    private final Runnable sigmaTick = this::tickSigma;
     /** The players with this computer's console on screen. */
     private final Viewers viewers = new Viewers(this.worldPosition);
     /** What it sends them: the windows its programs have open, and what those programs print. */
     private final ClientReplication replication = new ClientReplication(this);
     /** What moves the tool in front of its terminal along, and sends what that tool prints. */
     private final TerminalFeed terminalFeed = TerminalFeed.of(this);
+    /** What it sounds like as a machine: its power button, its start-up, its hard drive. */
+    private final ComputerSounds sounds = new ComputerSounds(this);
+    /** What its system's sound plays through, and where it comes out. */
+    private final ComputerAudioHost audio = new ComputerAudioHost(this);
+    /** The voices of its sound hardware and the sounds holding them; before the music, which takes them. */
+    private final MachineVoices voices = new MachineVoices(this);
+    private final MusicPlayer music = new MusicPlayer(this);
+    /** The songs Soundfoundry is fetching over the network. */
+    private final MusicDownloads musicDownloads = new MusicDownloads(this);
+    /** What the programs running on it play: their tunes, their beeps and their recordings. */
+    private final ProgramSounds programSounds = new ProgramSounds(this);
 
-    /** The name a player gave this computer: the machine's own, and no part's. */
-    private String computerName = "";
+    /**
+     * The name a player gave this computer: the machine's own, and no part's; the players who see it are sent it.
+     * The system on the disk carries a copy, kept the same by {@link #setCustomName} and by the console as it is
+     * read off a disk.
+     */
+    private final ValueField<String> computerName;
 
     /*
      * The recipe drafts the Pattern Studio edits, kept out of the session deliberately: a power cut ends a
@@ -126,17 +178,92 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     private final PatternWorkbench studio =
             new PatternWorkbench();
+    /*
+     * The video memory the machine has, and what its lit monitors hold of it, sent to the players who see the machine
+     * so its desktop can weigh a graphics window against what is left before opening it.
+     */
+    private final LongField vramTotalKb = fields().longInteger("VramTotalKb", 0L).toClient();
+    private final LongField vramMonitorsKb = fields().longInteger("VramMonitorsKb", 0L).toClient();
+    /*
+     * The id of the system the machine boots, sent to the players who see it: the disks it is read from stay on the
+     * server, so without it the player's side never knows the system and a help program cannot open its book.
+     */
+    private final ValueField<String> clientOs = fields().value("ClientOs", Codec.STRING, "").toClient();
 
+    /** How often the system it boots is looked at again for the players who see it: once a second. */
+    private static final int OS_CHECK_TICKS = 20;
+
+    /*
+     * Each part is saved in turn, in the order declared here: the hardware first, because the console rides on the
+     * system disk and has to be pushed onto it before the disk stacks are written.
+     */
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                           final BlockState state, final ComputerHardwareLayout layout) {
         super(type, pos, state);
         this.hardware = new ComputerHardware(this, layout);
+        fields().part("Hardware", IFieldPart.of((tag, registries) -> {
+            diskConsole.flush();
+            hardware.save(tag, registries, hardwareNbtKey());
+        }, (tag, registries) -> {
+            hardware.load(tag, registries, hardwareNbtKey());
+            hardware.markDirty();
+            partsChanged();
+        })).save();
+        fields().part("Power", IFieldPart.of((tag, registries) -> power.save(tag),
+                (tag, registries) -> power.load(tag))).save();
+        fields().part("Session", IFieldPart.of((tag, registries) -> session.save(tag),
+                (tag, registries) -> session.load(tag))).save();
+        fields().part("OutOfMemory", IFieldPart.of((tag, registries) -> kernel.save(tag),
+                (tag, registries) -> kernel.load(tag))).save();
+        this.computerName = fields().value("ComputerName", Codec.STRING, "").save().toClient();
+        fields().part("Attachment", new AttachmentPart()).save().toClient();
+        fields().part("Peripherals", IFieldPart.of((tag, registries) -> peripherals.save(tag),
+                (tag, registries) -> peripherals.load(tag))).save();
+        fields().part("Studio", IFieldPart.of(this::saveStudio, this::loadStudio)).save();
+        fields().part("Programs", IFieldPart.of((tag, registries) -> host.save(tag),
+                (tag, registries) -> host.load(tag))).save();
+        // The console now rides on the disk; a machine saved before that still carries its own, read once here.
+        fields().part("LegacyConsole", IFieldPart.of((tag, registries) -> { },
+                (tag, registries) -> diskConsole.loadLegacy(tag))).save();
+        fields().part("Sounds", new SoundsPart()).save().toClient();
     }
 
     /* The parts installed have changed: the build is worked out again and the power reconsidered. */
     void hardwareChanged() {
         power.hardwareChanged(buildValid());
         setChanged();
+        HardwareMilestones.report(this);
+        partsChanged();
+    }
+
+    /** The parts in the machine have changed or been read from the save: a machine that shows them updates its look. */
+    protected void partsChanged() {
+    }
+
+    /**
+     * How many bays of the case's front a disk can slide into, which the system counts as disk slots after the
+     * layout's own: none unless the machine's case has a hot-swap bay to offer.
+     */
+    protected int frontDiskSlots() {
+        return 0;
+    }
+
+    /** The disk in front bay {@code bay}, or nothing when it holds none or is no hot-swap bay. */
+    protected ItemStack frontDisk(final int bay) {
+        return ItemStack.EMPTY;
+    }
+
+    /** Puts back the disk in front bay {@code bay} as the system changed it, writing a system or a file onto it. */
+    protected void putFrontDisk(final int bay, final ItemStack disk) {
+    }
+
+    /**
+     * A disk went into a bay of the case's front or came out of one: to the machine it is a part put in or taken out,
+     * so its build is worked out again, with all that follows from it, as for a part on the assembly screen.
+     */
+    void frontDisksChanged() {
+        hardware.markDirty();
+        hardwareChanged();
     }
 
     // Hardware assembly
@@ -205,6 +332,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(stack.getItem() instanceof IExpansionCardItem card)) {
             return false;
         }
+        if (card.cardSpec() instanceof WorkshopCardSpec && !takesWorkshopCards()) {
+            return false;
+        }
+        if (card.cardSpec() instanceof PhiCoprocessorSpec) {
+            // A co-processor adds crafts to a supercomputer's nodes alone, so only a node's server seats one.
+            return false;
+        }
         final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem motherboard)) {
             /*
@@ -213,7 +347,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
              */
             return true;
         }
-        return card.cardSpec().bus().compatibleWith(motherboard.spec().pcieGeneration());
+        if (card.cardSpec() instanceof SoundCardSpec sound && sound.era() != motherboard.spec().era()) {
+            // A sound card sits only on a board of its own age; no Standard card exists, the boards have it built in.
+            return false;
+        }
+        return motherboard.spec().takes(card.cardSpec());
+    }
+
+    /** Whether this computer seats the personal-use cards, which only a Personal Computer has a program for. */
+    protected boolean takesWorkshopCards() {
+        return false;
     }
 
     public boolean isValidForSlot(final int slot, final ItemStack stack) {
@@ -230,16 +373,114 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return isValidRam(stack);
         }
         if (layout().isPcie(slot)) {
-            return isValidPcieCard(stack);
+            return isValidPcieCard(stack) && !(isSoundCard(stack) && anotherSoundCardSeated(slot));
         }
         if (layout().isDisk(slot)) {
-            return stack.getItem() instanceof DiskItem;
+            return acceptsDisk(stack);
+        }
+        if (layout().isBay(slot)) {
+            // Any internal drive or the hot-swap bay, in a bay the case really has.
+            return stack.getItem() instanceof BayDriveItem && slot - layout().bayStart() < caseBays();
         }
         return false;
     }
 
+    /**
+     * Why {@code stack} stays out of {@code slot}, for the player holding it there: the rule of
+     * {@link #isValidForSlot} it breaks, read in the order that method reads them; null when it goes in.
+     */
+    @Nullable
+    public TextKey refusal(final int slot, final ItemStack stack) {
+        if (stack.isEmpty() || isValidForSlot(slot, stack)) {
+            return null;
+        }
+        final Item item = stack.getItem();
+        if (slot == layout().motherboardSlot()) {
+            return item instanceof MotherboardItem ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (layout().isCpu(slot)) {
+            return item instanceof CpuItem ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (layout().isRam(slot)) {
+            return item instanceof RamItem ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (layout().isPcie(slot)) {
+            return cardRefusal(stack, slot);
+        }
+        if (layout().isDisk(slot)) {
+            return item instanceof DiskItem ? PartRefusals.DISK_TOO_NEW : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (layout().isBay(slot)) {
+            return item instanceof BayDriveItem ? PartRefusals.NO_BAY : PartRefusals.NOT_THIS_SLOT;
+        }
+        return PartRefusals.NOT_THIS_SLOT;
+    }
+
+    /**
+     * Whether a disk fits this computer, in one of its disk slots or in a hot-swap bay on its front: a disk of the
+     * computer's era or of an older one. A disk made for a later machine has no way into an earlier one (an NVMe made
+     * for the Standard age has nothing to plug into in an AT tower), while an old disk still goes into a newer machine,
+     * as old disks did. A disk put in before this rule stays where it is.
+     */
+    public boolean acceptsDisk(final ItemStack stack) {
+        if (!(stack.getItem() instanceof DiskItem disk)) {
+            return false;
+        }
+        final HardwareEra era = displayEra();
+        return era == null || disk.spec().era().isAtMost(era);
+    }
+
     public ItemStackHandler getHardware() {
         return hardware.handler();
+    }
+
+    @Override
+    public List<ItemStack> hardwareStacks() {
+        final ItemStackHandler slots = hardware.handler();
+        final List<ItemStack> out = new ArrayList<>(slots.getSlots());
+        for (int i = 0; i < slots.getSlots(); i++) {
+            if (!slots.getStackInSlot(i).isEmpty()) {
+                out.add(slots.getStackInSlot(i));
+            }
+        }
+        return out;
+    }
+
+    static boolean isSoundCard(final ItemStack stack) {
+        return stack.getItem() instanceof IExpansionCardItem card && card.cardSpec() instanceof SoundCardSpec;
+    }
+
+    /* A machine plays its sound through one card: a second one would take a slot and power and play nothing. */
+    private boolean anotherSoundCardSeated(final int slot) {
+        final ItemStackHandler slots = getHardware();
+        for (int i = 0; i < slots.getSlots(); i++) {
+            if (i != slot && layout().isPcie(i) && isSoundCard(slots.getStackInSlot(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* Which rule keeps a card out of an expansion slot, read in the order isValidPcieCard and the sound rule read. */
+    private TextKey cardRefusal(final ItemStack stack, final int slot) {
+        if (!(stack.getItem() instanceof IExpansionCardItem card)) {
+            return PartRefusals.NOT_THIS_SLOT;
+        }
+        if (card.cardSpec() instanceof WorkshopCardSpec && !takesWorkshopCards()) {
+            return PartRefusals.WORKSHOP_CARD;
+        }
+        if (card.cardSpec() instanceof PhiCoprocessorSpec) {
+            return PartRefusals.PHI;
+        }
+        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
+        if (card.cardSpec() instanceof SoundCardSpec sound && boardStack.getItem() instanceof MotherboardItem board
+                && sound.era() != board.spec().era()) {
+            return PartRefusals.SOUND_ERA;
+        }
+        if (isValidPcieCard(stack) && isSoundCard(stack) && anotherSoundCardSeated(slot)) {
+            return PartRefusals.ONE_SOUND_CARD;
+        }
+        return PartRefusals.CARD_BUS;
     }
 
     /** Where this computer's slots are: which one takes the board, which ones take disks, and how many. */
@@ -289,19 +530,46 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     public void togglePower() {
         final boolean wasOn = isRunning();
+        if (level instanceof ServerLevel server) {
+            sounds.pressed(server);
+        }
         power.toggle();
         if (wasOn && !isRunning()) {
             showShutdown(false);
         }
+        testedInvalidBuild();
     }
 
     @Override
     public void setPowered(final boolean on) {
         final boolean wasOn = isRunning();
+        final boolean wasSwitchedOn = power.on();
         power.setPowered(on);
         if (wasOn && !on) {
             showShutdown(false);
         }
+        if (!wasSwitchedOn) {
+            testedInvalidBuild();
+        }
+    }
+
+    /** The machine used its disk: a turning hard drive is heard seeking for a moment. */
+    @Override
+    public void diskWorked(final ServerLevel level) {
+        sounds.diskWorked(level);
+    }
+
+    /** Whether the machine worked its disk a moment ago, on the server. */
+    boolean diskBusy() {
+        return level != null && sounds.diskBusy(level.getGameTime());
+    }
+
+    /**
+     * What else the machine keeps sounding while it does it, over its disk, heard from its block: nothing for most
+     * machines. Read on the client, from what the server sent it.
+     */
+    public List<LoopRequest> machineLoops() {
+        return List.of();
     }
 
     /**
@@ -327,6 +595,35 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /**
+     * Shuts the machine down from inside its system: the system says goodbye in front of whoever is watching, and
+     * the power goes when it has finished. A machine with nothing running, or with a system of an age that had no
+     * such screen, goes dark at once.
+     */
+    @Override
+    public void shutDown() {
+        if (!(level instanceof ServerLevel server) || !isRunning()) {
+            setPowered(false);
+            return;
+        }
+        final int ticks = showShutdown(false);
+        if (ticks <= 0) {
+            power.setPowered(false);
+            return;
+        }
+        power.beginDown(server.getGameTime(), ticks, true);
+    }
+
+    @Override
+    public boolean poweringOff() {
+        return power.poweringOff();
+    }
+
+    @Override
+    public void finishShutdown() {
+        power.setPowered(false);
+    }
+
+    /**
      * Puts the system's own goodbye in front of whoever is watching, and answers how long it runs for.
      *
      * <p>Only the two ways a machine really stops: switched off, or started over. A machine that went dark
@@ -346,6 +643,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final int ticks = BootTiming.shutdownTicks(
                 BootRunner.bootLength(this));
+        // A system that says goodbye on its screen says it out loud too.
+        systemSound(server, SystemSound.SHUTDOWN);
         ScreenSessions.eachWatcher(server, worldPosition, (player, monitor) -> {
             PacketDistributor.sendToPlayer(player,
                     new OpenSystemBootPayload(
@@ -366,8 +665,20 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         power.toggleAutoStart(buildValid());
     }
 
+    /* Switched on with parts that do not make a computer: the board tests itself all the same and beeps its failure. */
+    private void testedInvalidBuild() {
+        if (power.on() && !buildValid() && level instanceof ServerLevel server) {
+            sounds.postFailed(server);
+        }
+    }
+
     private void endSession() {
         session.drop();
+        kernel.runEnded();
+        // A run that ends takes what it was running with it: a restart closes every program, as on any machine.
+        if (!programs().isEmpty()) {
+            programs().stopAll();
+        }
         /*
          * The terminal's lines belong to the run of the machine that printed them, and this is where a run
          * ends: a restart, a power cut, a cold start. Counting the run up is what lets a terminal opened
@@ -409,6 +720,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     @Override
     public void markChanged() {
         setChanged();
+    }
+
+    @Override
+    public void markUnsaved() {
+        // The save part flushes the console itself, so the chunk only has to be told it has something to write.
+        if (level != null) {
+            level.blockEntityChanged(worldPosition);
+        }
     }
 
     /** The system being copied onto a disk right now, or nothing. */
@@ -463,6 +782,18 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     protected void tickBootPhases(final ServerLevel level) {
         BootRunner.tick(this, power.phases(), level, worldPosition);
+        kernel.tick(this, level);
+    }
+
+    /**
+     * What the machine's system holds is weighed against what it has, once a second and again at once when a desktop
+     * hands the machine its windows, for a kernel that lets every window open and makes the room after.
+     */
+    @Override
+    public void weighMemory() {
+        if (level instanceof ServerLevel server) {
+            kernel.weigh(this, server);
+        }
     }
 
     /** Whether the machine is stopped at its boot menu. */
@@ -531,6 +862,106 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return level == null ? 0 : power.downRemaining(level.getGameTime());
     }
 
+    /** The machine closes its programs for that long, as a crash does, and then starts over. */
+    @Override
+    public void goDown(final long now, final int ticks) {
+        power.beginDown(now, ticks);
+    }
+
+    @Override
+    public boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
+        return level instanceof ServerLevel server && kernel.crash(this, server, cause, moment);
+    }
+
+    @Override
+    public boolean memoryShort(final String program, final int needMb) {
+        return level instanceof ServerLevel server && kernel.memoryShort(this, server, program, needMb);
+    }
+
+    @Override
+    public boolean killsForMemory() {
+        return kernel.killsForMemory(this);
+    }
+
+    @Override
+    public List<String> memoryLog() {
+        return kernel.memoryLog();
+    }
+
+    @Override
+    public boolean serviceEnded(final ResourceLocation service) {
+        return kernel.serviceEnded(service);
+    }
+
+    @Override
+    public void endService(final ResourceLocation service) {
+        kernel.endService(service);
+        setChanged();
+    }
+
+    @Override
+    public void systemCameUp() {
+        kernel.cameUp(this);
+    }
+
+    /**
+     * The kernel ended things for their memory: the lines it logged go to the consoles watching, a program ended in
+     * front of a terminal gives the prompt back with the shell's word for it, and the desktops showing the machine
+     * close the windows that went.
+     */
+    @Override
+    public void memoryFreed(final ServerLevel level, final List<String> lines, final List<String> windows,
+                            final boolean frontKilled) {
+        replication.kernelSays(level, lines);
+        if (frontKilled) {
+            replication.frontKilled(level);
+        }
+        ClientReplication.windowsEnded(consoleViewers(level), worldPosition, windows);
+    }
+
+    /**
+     * A part came out of this machine while it ran: a stick of its memory, a card or the disk its system runs from
+     * leaves the system nothing to stand on, and it goes down on its red page. The rest (the processor, the board,
+     * the supply) take the machine with them at once, with no page, as a power cut does; a disk the system does not
+     * run from is only a disk gone, and a hot-swap bay is made to be emptied.
+     */
+    void partTaken(final int slot, final ItemStack part) {
+        final ComputerHardwareLayout layout = layout();
+        final OsDef up = kernel.upSystem();
+        final boolean systemDisk = layout.isDisk(slot) && up != null && OsDisks.systemsOn(part).has(up.id());
+        if (layout.isRam(slot) || layout.isPcie(slot) || systemDisk) {
+            crash(CrashCause.HARDWARE, CrashPages.Moment.hardware(part.getHoverName().getString()));
+        }
+    }
+
+    @Override
+    @Nullable
+    public CrashPage crashPage() {
+        return level == null ? null : kernel.page(level.getGameTime());
+    }
+
+    @Override
+    public int crashRemaining() {
+        return level == null ? 0 : kernel.remaining(level.getGameTime());
+    }
+
+    @Override
+    public boolean crashHeld() {
+        return level != null && kernel.held(level.getGameTime());
+    }
+
+    @Override
+    public boolean crashEndsDark() {
+        return kernel.endsDark();
+    }
+
+    @Override
+    public void crashKey() {
+        if (level instanceof ServerLevel server) {
+            kernel.key(this, server);
+        }
+    }
+
     /** What this machine's system shows while it comes up. */
     @Override
     public BootSequence bootSequence() {
@@ -540,18 +971,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */
     @Override
     public boolean hasBootableMedium() {
-        if (level == null) {
-            return false;
-        }
-        for (final long endpoint : linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint))
-                    instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.OS_INSTALL
-                    && reader.insertedPayload() != null) {
-                return true;
-            }
-        }
-        return false;
+        return level != null && MachineMedia.of(this, level).installing(MediaKind.OS_INSTALL) != null;
     }
 
     public void setNeedsPost(final boolean value) {
@@ -628,6 +1048,15 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return hardware.boardDiskSlots();
     }
 
+    /**
+     * How many 5.25-inch bays this computer's case has on its front, where an internal drive or the hot-swap bay goes:
+     * its era's case's, and none on a machine that has no such case.
+     */
+    public int caseBays() {
+        return getBlockState().getBlock() instanceof IEraChassisBlock chassis
+                ? hardware.caseBays(chassis.chassisEra()) : 0;
+    }
+
     /** The hardware era of the installed motherboard, or {@code null} when no board is present. */
     @Nullable
     public HardwareEra installedEra() {
@@ -696,7 +1125,17 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return boardPcieSlots();
     }
 
+    /**
+     * The disk slots the system sees: those the board wires, and after every disk slot of the layout the bays of the
+     * case's front a disk slides into, so a disk in one keeps its number whatever board goes in.
+     */
     public int diskSlots() {
+        final int front = frontDiskSlots();
+        return front == 0 ? boardDiskSlots() : layout().diskCount() + front;
+    }
+
+    /** The disk slots the board wires, which a terminal counts the machine's installed disks against. */
+    public int wiredDiskSlots() {
         return boardDiskSlots();
     }
 
@@ -746,7 +1185,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return null;
         }
         return NetworkSystem.get(serverLevel).mainframePositionOf(networkUuid())
-                .map(pos -> serverLevel.getBlockEntity(BlockPos.of(pos))
+                .map(pos -> Loaded.blockEntity(serverLevel, BlockPos.of(pos))
                         instanceof MainframeBlockEntity mainframe ? mainframe : null)
                 .orElse(null);
     }
@@ -756,20 +1195,36 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return attachment;
     }
 
-    public String customName() {
-        return computerName;
+    /** The data cables this computer is wired to the network by: for most, the one cable at its side. */
+    public Set<Long> networkCables(final ServerLevel level) {
+        final long cable = attachment.cable(level);
+        return cable == NetworkAttachment.NO_CABLE ? Set.of() : Set.of(cable);
     }
 
+    /**
+     * The slowest cable between this computer and that one, which is as fast as data can go between them, or
+     * empty when no cable joins them.
+     */
+    public Optional<DataLink> slowestCableTo(final ServerLevel level, final AbstractComputerBlockEntity other) {
+        return NetworkSystem.get(level).connectivity()
+                .slowestBetween(networkCables(level), other.networkCables(level));
+    }
+
+    public String customName() {
+        return computerName.get();
+    }
+
+    /**
+     * Names the machine, and its system with it.
+     *
+     * <p>The machine has one name, whichever side it was typed on: the assembly screen, the system's settings,
+     * the prompt or the installer all end here. The system keeps a copy on its disk, so a disk moved to a machine
+     * that has no name of its own brings the name along; a machine that has one keeps it over the disk's.
+     */
     public void setCustomName(final String name) {
         final String trimmed = name.strip();
-        final String capped = trimmed.length() > 32 ? trimmed.substring(0, 32) : trimmed;
-        if (!capped.equals(computerName)) {
-            computerName = capped;
-            setChanged();
-            if (level != null) {
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-            }
-        }
+        computerName.set(trimmed.length() > 32 ? trimmed.substring(0, 32) : trimmed);
+        console().setComputerName(computerName.get());
     }
 
     /*
@@ -798,9 +1253,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         session.setBootDiskSlot(slot);
     }
 
-    /**
-     * Returns {@code true} when a bootable system disk is present in the hardware inventory.
-     */
     /**
      * The desktop environment this computer boots into: the OS's bundled one (the Frames editions), else the
      * first desktop-environment package installed on it (a Linux distribution after {@code apt install gnome}),
@@ -839,6 +1291,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public ResourceLocation installedOsId() {
+        if (level != null && level.isClientSide()) {
+            return clientOs.get().isEmpty() ? null : ResourceLocation.tryParse(clientOs.get());
+        }
         return session.installedOsId();
     }
 
@@ -848,6 +1303,10 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public OsDef installedOs() {
+        if (level != null && level.isClientSide()) {
+            final ResourceLocation id = installedOsId();
+            return id == null ? null : OsRegistry.getOs(id);
+        }
         return session.installedOs();
     }
 
@@ -894,6 +1353,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** Moves whatever is running in front of this computer's terminal along, and tells whoever is watching. */
     public void tickTerminal(final ServerLevel level) {
         terminalFeed.tick(level);
+        PeripheralReconciler.reconcile(this, level, worldPosition.asLong());
+        // Whether its players still know the system it boots is checked once a second, a change sent at once.
+        if (level.getGameTime() % OS_CHECK_TICKS == 0) {
+            final ResourceLocation os = session.installedOsId();
+            clientOs.set(os == null ? "" : os.toString());
+        }
     }
 
     /**
@@ -953,15 +1418,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /**
-     * A disk carrying a system was just formatted: everything the software layer remembered lived on it,
-     * so the console's history, session location and installed-program set go with it. Subclasses hosting
-     * software services (the Mainframe) extend this to switch those off too.
+     * A disk carrying a system was just formatted. The console that lived on it has already been wiped by the
+     * caller, which still held it; asking for the console here would give the one of whatever system boots now,
+     * which on a dual-boot machine is another disk's. Subclasses hosting software services (the Mainframe)
+     * extend this to switch those off too.
      */
     protected void onSystemErased() {
-        final ComputerConsoleState console = console();
-        if (console != null) {
-            console.wipeSoftware();
-        }
     }
 
     /**
@@ -989,13 +1451,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /*
-     * Peripheral ownership: the endpoint set + standard owner methods come from
-     * IPeripheralOwnerSupport; only the capacity is hardware-dependent (4 monitors per GPU).
+     * Peripheral ownership: the links and the standard owner methods come from IPeripheralOwnerSupport; only how
+     * many ports of each kind the machine has depends on its hardware.
      */
 
     @Override
-    public Set<Long> peripheralEndpoints() {
-        return peripherals.all();
+    public PeripheralPorts peripheralPorts() {
+        return peripherals.ports();
     }
 
     @Override
@@ -1003,13 +1465,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         setChanged();
     }
 
+    /** Its board's device ports, its graphics cards' video outputs and its audio output; none without a build. */
     @Override
-    public int maxEndpoints() {
+    public int ports(final PortKind kind) {
         final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0;
-        }
-        return build.motherboard().peripheralPorts();
+        return build == null ? 0 : MachinePorts.of(build, kind);
     }
 
     /*
@@ -1024,14 +1484,132 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected void tickNode(final ServerLevel level) {
         tickTerminal(level);
         tickBootPhases(level);
+        tickSounds(level);
         OsInstallRunner.tick(this, level, worldPosition);
-        tickSigma();
+        // What the machine's programs and jobs ask the network for is the doing of whoever works it.
+        Acting.asOperatorOf(this, sigmaTick);
         SetupRunner.tick(this, level, worldPosition);
         attachment.tick(level);
+        final VramLedger video = VideoMemory.of(level, this).ledger();
+        vramTotalKb.set(video.totalKb());
+        vramMonitorsKb.set(video.usedKb(VramLedger.Kind.MONITOR));
+    }
+
+    /** The video memory this machine has, in kilobytes, as its players were last told. */
+    public long vramTotalKb() {
+        return vramTotalKb.get();
+    }
+
+    /** What its lit monitors hold of its video memory, in kilobytes, as its players were last told. */
+    public long vramMonitorsKb() {
+        return vramMonitorsKb.get();
     }
 
     public void onBroken(final ServerLevel level) {
         attachment.leave(level);
+    }
+
+    /**
+     * Hears the machine come on and go off, keeps its hard drive turning in between, and keeps Soundfoundry going:
+     * the song it plays and the songs it is fetching.
+     */
+    protected void tickSounds(final ServerLevel level) {
+        sounds.tick(level);
+        music.tick(level);
+        musicDownloads.tick(level);
+        programSounds.tick(level);
+        // A machine that is off plays nothing, so whatever held its voices has stopped.
+        if (!isRunning()) {
+            voices.silence(level);
+        }
+    }
+
+    /** Soundfoundry playing on this machine. */
+    public MusicPlayer musicPlayer() {
+        return music;
+    }
+
+    /** The voices of its sound hardware, and the sounds holding them. */
+    public MachineVoices voices() {
+        return voices;
+    }
+
+    /** What the programs running on it play. */
+    public ProgramSounds programSounds() {
+        return programSounds;
+    }
+
+    /** The songs Soundfoundry is fetching over this machine's network. */
+    public MusicDownloads musicDownloads() {
+        return musicDownloads;
+    }
+
+    /** What its system's sound plays through and where it comes out. */
+    public IAudioHost audioHost() {
+        return audio;
+    }
+
+    @Override
+    public void systemSound(final ServerLevel level, final SystemSound sound) {
+        audio.play(level, sound);
+    }
+
+    @Override
+    public void programSound(final ServerLevel level, final ProgramCue sound) {
+        audio.play(level, sound);
+    }
+
+    @Override
+    public void bell(final ServerLevel level) {
+        audio.bell(level);
+    }
+
+    /** How many speakers are linked to it. */
+    public int speakerCount() {
+        return audio.speakerCount();
+    }
+
+    /** Which side of a stereo recording the speaker at {@code speaker} plays for it. */
+    public StereoSide speakerSide(final BlockPos speaker) {
+        return audio.sideOf(speaker);
+    }
+
+    /** The speakers linked to it, in a fixed order. */
+    public List<SpeakerBlockEntity> linkedSpeakers() {
+        return audio.linkedSpeakers();
+    }
+
+    /** Whether a subwoofer stands against one of its Transition satellites, which then play the bass too. */
+    public boolean hasSubwoofer() {
+        return audio.hasSubwoofer();
+    }
+
+    /** Whether its speakers play, by the output its system chose and what is linked. */
+    public boolean speakersPlay() {
+        return audio.speakersPlay();
+    }
+
+    /** Whether its monitors play, by the output its system chose and what is linked. */
+    public boolean monitorsPlay() {
+        return audio.monitorsPlay();
+    }
+
+    /** What plays its system's sound, named for a screen: its sound card, the board's own sound, or the case's. */
+    public Text soundHardwareLabel() {
+        return audio.hardwareLabel();
+    }
+
+    /** Whether its system's sound plays recordings, rather than only the beeps of the speaker in its case. */
+    public boolean playsRecordings() {
+        return audio.audioDevice().samples();
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.track(sounds);
+        }
     }
 
     @Override
@@ -1044,12 +1622,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          */
         if (level instanceof ServerLevel serverLevel) {
             onBroken(serverLevel);
+            music.removed(serverLevel);
+            voices.silence(serverLevel);
+        } else if (level != null && level.isClientSide()) {
+            MachineSoundSources.untrack(sounds);
         }
-    }
-
-    protected boolean acceptsTier(final DataTier tier) {
-        return getBlockState().getBlock() instanceof IDataNetworkConnectable device
-                && device.acceptedCableTiers().contains(tier);
     }
 
     /** The Σ# programs this machine is running. */
@@ -1113,6 +1690,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             tickJobs(world);
         }
         if (!host.tick() || !(level instanceof ServerLevel server)) {
+            /*
+             * A machine whose last program has just ended runs nothing, and still owes whoever watches it the word
+             * that the program's windows are gone; without it they would stay on the screen.
+             */
+            if (level instanceof ServerLevel world && replication.holdsSentWindows()) {
+                replication.pushWindows(world);
+            }
             return;
         }
         replication.pushOutput(server);
@@ -1136,38 +1720,23 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (console == null || console.jobs().isEmpty() || !(this instanceof IComputerTerminalHost terminal)) {
             return;
         }
-        final List<MachineJobs.Job> due = console.jobs().due(server.getDayTime());
+        final List<MachineJobs.Job> due = console.jobs().due(server.getDayTime(), console.settings().cronEnabled());
         if (due.isEmpty()) {
             return;
         }
         final ServerCliComputer computer = new ServerCliComputer(terminal, server);
+        // A schedule kept by UNIX on the oldest machines there are: whoever set it up earns it when it runs.
+        final boolean clockwork = displayEra() == HardwareEra.VINTAGE && installedOs() != null
+                && installedOs().platform() == Platform.UNIX;
         for (final MachineJobs.Job job : due) {
             CliCommands.shellFor(computer, TermBuffer.MONITOR_COLUMNS).run(job.line(), computer);
+            if (clockwork && !job.when().once()) {
+                JscEvents.awardOperator(this, JscEvents.CLOCKWORK);
+            }
         }
         setChanged();
     }
 
-    /**
-     * Whether the program on another machine that started one of this machine's programs is still there
-     * to read what it left.
-     *
-     * <p>It is only asked about a program that has finished and was started from elsewhere, so an ordinary
-     * tick never looks. A machine whose chunk is not loaded is not known to be gone: its programs come back
-     * with it, so what was started for them is kept until it can be asked.
-     */
-
-    /**
-     * Tells the program on another machine that started one of this machine's programs that the program has ended, so
-     * a wait on it runs again at once. A machine that is not loaded is not told: its programs look again when they
-     * come back.
-     */
-
-    /**
-     * Hands the programs on this machine whatever the ComputerCraft computers said through its Gateways.
-     *
-     * <p>A message waits on the Gateway until this tick and no longer: whoever is listening hears it now,
-     * and a machine where no program listens simply lets it go.
-     */
     /** Says a Gateway linked to this machine has something waiting for its programs. */
     public void gatewayMailWaits() {
         host.gatewayMailWaits();
@@ -1193,7 +1762,18 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         super.setChanged();
     }
 
-    // Persistence (common fields; subclasses add their own via the hooks)
+    /**
+     * Marks the chunk as needing a save without writing the console back to the system disk. For state that
+     * changes every tick and lives outside the console (the progress of running operations), where the console
+     * flush would rebuild its whole tag for nothing.
+     */
+    public void markDirtyOnly() {
+        if (level != null) {
+            level.blockEntityChanged(worldPosition);
+        }
+    }
+
+    // Persistence: each part is declared in the constructor, and the players are sent what each part says
 
     /**
      * The NBT key the hardware {@link ItemStackHandler} is stored under. Overridable so a subclass with
@@ -1204,88 +1784,65 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return "Hardware";
     }
 
-    protected void saveExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
-    }
-
-    protected void loadExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        hardware.load(tag, registries, hardwareNbtKey());
-        power.load(tag);
-        session.load(tag);
-        computerName = tag.getString("ComputerName");
-        attachment.load(tag);
-        peripherals.load(tag);
-        if (tag.contains("Studio")) {
-            studio.load(tag.getCompound("Studio"), registries);
-        }
-        host.load(tag);
-        diskConsole.loadLegacy(tag);
-        loadExtra(tag, registries);
-        hardware.markDirty();
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        /*
-         * Push the software onto the disk first: the hardware handler below serializes the disk stacks,
-         * and a flush after that point would be written to a copy and lost.
-         */
-        diskConsole.flush();
-        hardware.save(tag, registries, hardwareNbtKey());
-        power.save(tag);
-        session.save(tag);
-        if (!computerName.isEmpty()) {
-            tag.putString("ComputerName", computerName);
-        }
-        attachment.save(tag);
+    private void saveStudio(final CompoundTag tag, final HolderLookup.Provider registries) {
         final CompoundTag studioTag = new CompoundTag();
         studio.save(studioTag, registries);
         tag.put("Studio", studioTag);
-        host.save(tag);
-        peripherals.save(tag);
-        /*
-         * The console rides on the system disk, so flush it there BEFORE the hardware handler is
-         * serialized above, or the write would land on a disk stack that was already copied.
-         */
-        saveExtra(tag, registries);
     }
 
-    @Override
-    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
-        final CompoundTag tag = super.getUpdateTag(registries);
-        if (!computerName.isEmpty()) {
-            tag.putString("ComputerName", computerName);
+    private void loadStudio(final CompoundTag tag, final HolderLookup.Provider registries) {
+        if (tag.contains("Studio")) {
+            studio.load(tag.getCompound("Studio"), registries);
         }
-        attachment.saveForClient(tag);
-        return tag;
     }
 
-    @Override
-    public Packet<ClientGamePacketListener>
-            getUpdatePacket() {
-        /*
-         * Without this, a mid-session rename (which calls sendBlockUpdated) never reaches the client, so
-         * reopening the assembly screen reads a stale, empty name from the client copy of this block entity.
-         */
-        return ClientboundBlockEntityDataPacket.create(this);
+    /** Where the machine stands on the network: saved whole, and whether it is on one sent to the players. */
+    private final class AttachmentPart implements IFieldPart {
+
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+            attachment.save(tag);
+        }
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            attachment.load(tag);
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            attachment.saveForClient(tag);
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            attachment.loadFromClient(tag);
+        }
     }
 
-    @Override
-    public void onDataPacket(final Connection connection,
-                             final ClientboundBlockEntityDataPacket packet,
-                             final HolderLookup.Provider registries) {
-        /*
-         * Apply only the display name from a live block update. The rest of the client state is kept in sync
-         * through the menu's ContainerData; running the full loadAdditional here would reset transient fields
-         * (power, autostart, linked monitors) to their defaults because the update tag is intentionally minimal.
-         */
-        final CompoundTag tag = packet.getTag();
-        computerName = tag != null ? tag.getString("ComputerName") : "";
-        attachment.loadFromClient(tag);
+    /**
+     * What the machine sounds like: nothing of it is saved, and a machine read back from a save listens afresh for
+     * whether it runs; the players are sent whether its disk is turning and seeking, which they hear.
+     */
+    private final class SoundsPart implements IFieldPart {
+
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+        }
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            sounds.loaded();
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            sounds.saveForClient(tag);
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            sounds.loadFromClient(tag);
+        }
     }
 }

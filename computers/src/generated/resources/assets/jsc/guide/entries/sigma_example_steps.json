@@ -1,0 +1,327 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_steps.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_steps.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_steps.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.Collections.*;",
+        "namespace Corpus;",
+        "class Counter {",
+        "    public int Value;",
+        "    public long Big;",
+        "    public float Small;",
+        "    public double Wide;",
+        "    public static int Shared;",
+        "}",
+        "class StepsCorpus {",
+        "    static int Total;",
+        "",
+        "    static void Main() {",
+        "        int local = 0;",
+        "        local++;",
+        "        local--;",
+        "        ++local;",
+        "        --local;",
+        "        int before = local++;",
+        "        int after = ++local;",
+        "        int down = local--;",
+        "        int up = --local;",
+        "        Console.PrintLine(\"\" + before + after + down + up);",
+        "",
+        "        long big = 0;",
+        "        float small = 0;",
+        "        double wide = 0;",
+        "        big++;",
+        "        small++;",
+        "        wide--;",
+        "        Console.PrintLine(\"\" + big + small + wide);",
+        "",
+        "        Total++;",
+        "        --Total;",
+        "        int shared = Total++;",
+        "        Counter.Shared++;",
+        "        int other = ++Counter.Shared;",
+        "        Console.PrintLine(\"\" + shared + other);",
+        "",
+        "        Counter counter = new Counter();",
+        "        counter.Value++;",
+        "        --counter.Value;",
+        "        int held = counter.Value++;",
+        "        int heldUp = ++counter.Value;",
+        "        counter.Big++;",
+        "        counter.Small--;",
+        "        counter.Wide++;",
+        "        Console.PrintLine(\"\" + held + heldUp + counter.Value + counter.Big);",
+        "",
+        "        int[] numbers = new int[4];",
+        "        numbers[0]++;",
+        "        --numbers[1];",
+        "        int inside = numbers[2]++;",
+        "        int insideUp = ++numbers[3];",
+        "        Console.PrintLine(\"\" + inside + insideUp + numbers[0]);",
+        "",
+        "        List<int> list = new List<int>();",
+        "        list.Add(1);",
+        "        list[0]++;",
+        "        int fromList = list[0]--;",
+        "        Console.PrintLine(\"\" + fromList + list[0]);",
+        "",
+        "        Map<string, int> map = new Map<string, int>();",
+        "        map.Put(\"a\", 1);",
+        "        map[\"a\"]++;",
+        "        int fromMap = ++map[\"a\"];",
+        "        Console.PrintLine(\"\" + fromMap);",
+        "",
+        "        int kept = 0;",
+        "        Action count = () => {",
+        "            kept++;",
+        "            int was = kept++;",
+        "            int now = ++kept;",
+        "            kept--;",
+        "            Console.PrintLine(\"\" + was + now);",
+        "        };",
+        "        count();",
+        "        Console.PrintLine(\"\" + kept);",
+        "",
+        "        int combined = 1;",
+        "        combined += 2;",
+        "        combined -= 1;",
+        "        combined *= 3;",
+        "        combined /= 2;",
+        "        combined %= 4;",
+        "        combined &= 6;",
+        "        combined |= 1;",
+        "        combined ^= 3;",
+        "        combined <<= 2;",
+        "        combined >>= 1;",
+        "        Console.PrintLine(\"\" + combined);",
+        "",
+        "        string text = \"a\";",
+        "        text += \"b\";",
+        "        text += combined;",
+        "        Console.PrintLine(text);",
+        "",
+        "        counter.Value += 5;",
+        "        Counter.Shared += 2;",
+        "        numbers[0] += 3;",
+        "        list[0] += 4;",
+        "        int answered = counter.Value += 1;",
+        "        int alsoAnswered = numbers[0] += 1;",
+        "        int plain = local = 7;",
+        "        Console.PrintLine(\"\" + answered + alsoAnswered + plain);",
+        "    }",
+        "}"
+      ],
+      "name": "Steps.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_steps.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_steps.table1",
+      "heads": [
+        "jsc.guide.sigma_example_steps.table1_head1",
+        "jsc.guide.sigma_example_steps.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "local++; local--; ++local; --local;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "int before = local++;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "int after = ++local;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "big++; small++; wide--;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Total++; Counter.Shared++;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "counter.Value++;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "numbers[0]++;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "list[0]++;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "map[\"a\"]++;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "kept++; kept--;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "combined += 2; ... combined >>= 1;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "text += combined;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "int answered = counter.Value += 1;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "int plain = local = 7;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_steps.table1_14_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_steps.definition1",
+      "term": "jsc.guide.sigma_example_steps.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_steps.definition2",
+      "term": "jsc.guide.sigma_example_steps.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_steps.definition3",
+      "term": "jsc.guide.sigma_example_steps.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_steps.definition4",
+      "term": "jsc.guide.sigma_example_steps.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_steps.definition5",
+      "term": "jsc.guide.sigma_example_steps.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_steps.definition6",
+      "term": "jsc.guide.sigma_example_steps.term6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_steps.fix1",
+          "problem": "jsc.guide.sigma_example_steps.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_steps.fix2",
+          "problem": "jsc.guide.sigma_example_steps.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_steps.fix3",
+          "problem": "jsc.guide.sigma_example_steps.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_steps.fix4",
+          "problem": "jsc.guide.sigma_example_steps.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_steps.fix5",
+          "problem": "jsc.guide.sigma_example_steps.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_types_variables",
+        "jsc:sigma_operators"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_steps",
+  "order": 404,
+  "section": "jsc:examples_language",
+  "title": "jsc.guide.sigma_example_steps.title"
+}

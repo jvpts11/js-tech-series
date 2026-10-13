@@ -26,8 +26,21 @@ public final class TextShadow {
      * second copy of the letter, and short enough of the ground that it is still there to be seen.
      */
     private static final double TOWARDS_THE_GROUND = 0.66;
+    /** The two ends of the grey scale: an unknown ground is taken to be one of them. */
+    private static final int BLACK = 0xFF000000;
+    private static final int WHITE = 0xFFFFFFFF;
 
     private TextShadow() {
+    }
+
+    /**
+     * What text is taken to be written on when nobody said: black under a letter that reads better on black, white
+     * under one that reads better on white. A letter is chosen to be read on its ground, so its ground lies on the far
+     * side of it, and the shadow comes out a dimmer tone of a light letter and a paler one of a dark letter, never a
+     * second copy of either.
+     */
+    public static int assumedGround(final int text) {
+        return ColorContrast.ratio(text, BLACK) >= ColorContrast.ratio(text, WHITE) ? BLACK : WHITE;
     }
 
     /**
@@ -40,7 +53,7 @@ public final class TextShadow {
         final int r = between((text >> 16) & 0xFF, (ground >> 16) & 0xFF);
         final int g = between((text >> 8) & 0xFF, (ground >> 8) & 0xFF);
         final int b = between(text & 0xFF, ground & 0xFF);
-        return (text & 0xFF000000) | (r << 16) | (g << 8) | b;
+        return text >>> 24 << 24 | (r << 16) | (g << 8) | b;
     }
 
     private static int between(final int letter, final int ground) {

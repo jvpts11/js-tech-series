@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.item;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.CabinetItemRenderer;
+import dev.jstech.core.content.GeoLook;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
@@ -19,10 +19,12 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * The item of a multiblock cabinet (a rack or a Mainframe) which shows the cabinet itself.
+ * The item of a machine drawn by its block entity (a rack, a Mainframe, a drive, a Pattern Encoder) which shows the
+ * machine itself, as it comes: empty and switched off.
  *
  * <p>A cabinet's block model is a GeckoLib model drawn by the block entity, so the block itself renders
  * nothing, and its item, having no block model to fall back on, showed a flat icon that looked like a
@@ -43,39 +45,52 @@ public class CabinetBlockItem extends BlockItem implements GeoItem {
     }
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    /** The texture folder this family's atlases live in, e.g. {@code rack}. */
-    private final String folder;
+    /** The family the cabinet is drawn as in the world: its models, their atlases and the animation they share. */
+    private final GeoLook<?> look;
     /** The model this cabinet is drawn with, e.g. {@code vintage_server_rack}. */
     private final String model;
-    /** The animation file the family shares, e.g. {@code rack}. */
-    private final String animation;
     private final Fit fit;
+    /**
+     * How the names of the parts the world shows only when they are fitted or lit begin (a CPU, a server in a row, a
+     * lamp). The slot shows the machine as it comes, empty and switched off, so those parts are hidden there and every
+     * other part is shown. The model is the one the world draws, whose renderer shows and hides parts on it by what
+     * each machine holds, so the item sets every part again on every frame it draws.
+     */
+    private final List<String> fittedParts;
 
-    public CabinetBlockItem(final Block block, final Properties properties, final String folder,
-                            final String model, final String animation, final Fit fit) {
+    public CabinetBlockItem(final Block block, final Properties properties, final GeoLook<?> look,
+                            final String model, final Fit fit, final List<String> fittedParts) {
         super(block, properties);
-        this.folder = folder;
+        this.look = look;
         this.model = model;
-        this.animation = animation;
         this.fit = fit;
+        this.fittedParts = List.copyOf(fittedParts);
     }
 
     public ResourceLocation modelResource() {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "geo/" + model + ".geo.json");
+        return look.modelFile(model);
     }
 
     public ResourceLocation textureResource() {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
-                "textures/block/" + folder + "/" + model + ".png");
+        return look.textureFile(model);
     }
 
     public ResourceLocation animationResource() {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
-                "animations/" + animation + ".animation.json");
+        return look.animationFile();
     }
 
     public Fit fit() {
         return fit;
+    }
+
+    /** Whether the slot shows this part of the model: every part but the fitted and the lit ones. */
+    public boolean shownInSlot(final String part) {
+        for (final String fitted : fittedParts) {
+            if (part.startsWith(fitted)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

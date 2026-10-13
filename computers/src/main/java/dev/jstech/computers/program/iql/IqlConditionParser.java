@@ -29,6 +29,17 @@ public final class IqlConditionParser {
 
     private final List<Token> tokens;
     private int pos;
+    /** How many NOTs and brackets the condition is inside now, and how many comparisons it has read. */
+    private int depth;
+    private int terms;
+
+    /*
+     * The deepest a condition nests and the most it compares. A condition comes from a player, a program or a file
+     * of any length, and is read and then tested one level of the machine's stack per level and per comparison, so
+     * thousands of brackets or of ANDs would run past the stack rather than be told no.
+     */
+    static final int MOST_DEPTH = 64;
+    static final int MOST_TERMS = 256;
 
     IqlConditionParser(final List<Token> tokens, final int start) {
         this.tokens = tokens;
@@ -46,7 +57,7 @@ public final class IqlConditionParser {
         final IqlConditionParser parser = new IqlConditionParser(tokens, 0);
         final IIqlCondition condition = parser.parseCondition();
         if (parser.pos != tokens.size()) {
-            throw new IllegalArgumentException("unexpected token: " + tokens.get(parser.pos).text());
+            throw IqlError.of(IqlError.UNEXPECTED_TOKEN, tokens.get(parser.pos).text());
         }
         return condition;
     }
@@ -76,7 +87,12 @@ public final class IqlConditionParser {
     private IIqlCondition parseNot() {
         if (peekKeyword("NOT")) {
             pos++;
-            return new IIqlCondition.Not(parseNot());
+            descend();
+            try {
+                return new IIqlCondition.Not(parseNot());
+            } finally {
+                depth--;
+            }
         }
         return parsePrimary();
     }
@@ -84,23 +100,37 @@ public final class IqlConditionParser {
     private IIqlCondition parsePrimary() {
         if (peekType(Type.LPAREN)) {
             pos++;
-            final IIqlCondition inner = parseCondition();
-            expectType(Type.RPAREN, "')'");
-            return inner;
+            descend();
+            try {
+                final IIqlCondition inner = parseCondition();
+                expectType(Type.RPAREN, "')'");
+                return inner;
+            } finally {
+                depth--;
+            }
         }
         return parseComparison();
     }
 
     private IIqlCondition parseComparison() {
-        final String field = expectType(Type.WORD, "a field name").text();
+        if (++terms > MOST_TERMS) {
+            throw IqlError.of(IqlError.CONDITION_TOO_LONG, MOST_TERMS);
+        }
+        final String field = expectType(Type.WORD, IqlError.A_FIELD).text();
         final Op op = parseOperator();
         final String value = parseValue();
         return new IIqlCondition.Comparison(field, op, value);
     }
 
+    private void descend() {
+        if (++depth > MOST_DEPTH) {
+            throw IqlError.of(IqlError.CONDITION_TOO_DEEP, MOST_DEPTH);
+        }
+    }
+
     private Op parseOperator() {
         if (pos >= tokens.size()) {
-            throw new IllegalArgumentException("expected a comparison operator");
+            throw IqlError.of(IqlError.EXPECTED, IqlError.AN_OPERATOR);
         }
         final Token token = tokens.get(pos);
         if (token.type() == Type.OPERATOR) {
@@ -114,7 +144,7 @@ public final class IqlConditionParser {
                 return word;
             }
         }
-        throw new IllegalArgumentException("expected a comparison operator, got: " + token.text());
+        throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.AN_OPERATOR, token.text());
     }
 
     private static Op symbolOperator(final String symbol) {
@@ -125,7 +155,7 @@ public final class IqlConditionParser {
             case ">" -> Op.GT;
             case "<=" -> Op.LTE;
             case ">=" -> Op.GTE;
-            default -> throw new IllegalArgumentException("unknown operator: " + symbol);
+            default -> throw IqlError.of(IqlError.UNKNOWN_OPERATOR, symbol);
         };
     }
 
@@ -140,14 +170,14 @@ public final class IqlConditionParser {
 
     private String parseValue() {
         if (pos >= tokens.size()) {
-            throw new IllegalArgumentException("expected a value");
+            throw IqlError.of(IqlError.EXPECTED, IqlError.A_VALUE);
         }
         final Token token = tokens.get(pos);
         if (token.type() == Type.WORD || token.type() == Type.NUMBER || token.type() == Type.STRING) {
             pos++;
             return token.text();
         }
-        throw new IllegalArgumentException("expected a value, got: " + token.text());
+        throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_VALUE, token.text());
     }
 
     private boolean peekKeyword(final String keyword) {
@@ -160,9 +190,9 @@ public final class IqlConditionParser {
         return pos < tokens.size() && tokens.get(pos).type() == type;
     }
 
-    private Token expectType(final Type type, final String what) {
+    private Token expectType(final Type type, final Object what) {
         if (pos >= tokens.size() || tokens.get(pos).type() != type) {
-            throw new IllegalArgumentException("expected " + what);
+            throw IqlError.of(IqlError.EXPECTED, what);
         }
         return tokens.get(pos++);
     }

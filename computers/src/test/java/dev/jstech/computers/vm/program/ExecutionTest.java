@@ -141,6 +141,48 @@ class ExecutionTest {
         assertEquals(List.of("2 second"), process.console(), () -> String.valueOf(process.message()));
     }
 
+    /**
+     * A switch section does not stop by itself: without a break or a return at its end the program goes on into the
+     * next section, as the manual says, and a break stops it there.
+     */
+    @Test
+    void switch_goesOnIntoTheNextSectionUntilABreak() {
+        final Process process = start(load("", """
+                int n = 1;
+                switch (n) {
+                    case 1:
+                        Console.PrintLine("one");
+                    case 2:
+                        Console.PrintLine("two");
+                        break;
+                    case 3:
+                        Console.PrintLine("three");
+                        break;
+                }
+                """), IHost.still());
+        process.step(PLENTY);
+        assertEquals(List.of("one", "two"), process.console(), () -> String.valueOf(process.message()));
+    }
+
+    /**
+     * A shift takes only the low bits of its count, as C# does, five for an int and six for a long, and is of the kind
+     * of its left side alone: an int shifted by a long count stays an int.
+     */
+    @Test
+    void shift_takesTheLowBitsOfItsCountAndKeepsTheKindOfItsLeftSide() {
+        final Process process = start(load("", """
+                int one = 1;
+                long far = 33;
+                Console.PrintLine((one << 32) + " " + (one << 33) + " " + (-8 >> 33));
+                Console.PrintLine((1L << 64) + " " + (1L << 40));
+                int kept = one << far;
+                Console.PrintLine("" + (kept + 1));
+                """), IHost.still());
+        process.step(PLENTY);
+        assertEquals(List.of("1 2 -4", "1 1099511627776", "3"), process.console(),
+                () -> String.valueOf(process.message()));
+    }
+
     @Test
     void current_isTheProgramAsTheMachineListsIt() {
         final Process process = start(load("", """

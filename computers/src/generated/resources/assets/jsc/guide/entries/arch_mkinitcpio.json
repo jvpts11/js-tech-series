@@ -1,0 +1,80 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_mkinitcpio.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_mkinitcpio.definition1",
+      "term": "jsc.guide.arch_mkinitcpio.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_mkinitcpio.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_mkinitcpio.step1",
+        "jsc.guide.arch_mkinitcpio.step2",
+        "jsc.guide.arch_mkinitcpio.step3"
+      ]
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "[root@archiso /]# ",
+          "text": "mkinitcpio -P",
+          "typed": true
+        },
+        {
+          "text": "==> Building image from preset: /etc/mkinitcpio.d/linux.preset: 'default'"
+        },
+        {
+          "text": "==> Using default configuration file: '/etc/mkinitcpio.conf'"
+        },
+        {
+          "text": "  -> -k /boot/vmlinuz-linux -g /boot/initramfs-linux.img"
+        },
+        {
+          "text": "==> Starting build: '6.11.5-arch1-1'"
+        }
+      ],
+      "look": "jsc:guide/terminal/zsh",
+      "title": "Arch Linux"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_mkinitcpio.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_mkinitcpio.definition2",
+      "term": "jsc.guide.arch_mkinitcpio.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_mkinitcpio.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_mkinitcpio.fix1",
+          "problem": "jsc.guide.arch_mkinitcpio.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_mkinitcpio",
+  "order": 251,
+  "section": "jsc:arch_system",
+  "title": "jsc.guide.arch_mkinitcpio.title"
+}

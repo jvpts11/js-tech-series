@@ -7,7 +7,121 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.gui.MonitorGlass;
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+import static dev.jstech.computers.client.InstallerScreenTexts.AND_EVERY_FILE;
+import static dev.jstech.computers.client.InstallerScreenTexts.ANSWER;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_COMPONENTS_INTRO_1;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_COMPONENTS_INTRO_2;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_COMPONENT_BASE;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_COMPONENT_KERNEL;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_COMPONENT_PORTS;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DESKTOP_INTRO_1;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DESKTOP_INTRO_2;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DESKTOP_NONE;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DISK_AUTO;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DISK_AUTO_ERASE;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DISK_AUTO_ERASE_FILES;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DISK_BESIDE;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DISK_EMPTY;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DISK_INTRO;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DISK_TABLE_ROW;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DONE_LINE_1;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_DONE_LINE_2;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_EXTRACTING;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_EXTRACT_DONE;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_EXTRACT_IN_PROGRESS;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_EXTRACT_WAITING;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_MIRROR_INTRO;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_OVERALL_PROGRESS;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_MIRROR_NONE;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_MIRROR_OPTION;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_NAME_BODY_1;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_NAME_BODY_2;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_SERVICES_INTRO_1;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_SERVICES_INTRO_2;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_SERVICE_CRON;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_SERVICE_SSHD;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_WELCOME_BODY_1;
+import static dev.jstech.computers.client.InstallerScreenTexts.BSD_WELCOME_BODY_2;
+import static dev.jstech.computers.client.InstallerScreenTexts.CANNOT_UNDO;
+import static dev.jstech.computers.client.InstallerScreenTexts.COLUMN_DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.COLUMN_FREE;
+import static dev.jstech.computers.client.InstallerScreenTexts.COLUMN_HOLDS;
+import static dev.jstech.computers.client.InstallerScreenTexts.COLUMN_SIZE;
+import static dev.jstech.computers.client.InstallerScreenTexts.COMPLETE;
+import static dev.jstech.computers.client.InstallerScreenTexts.COMPUTER_NAME;
+import static dev.jstech.computers.client.InstallerScreenTexts.COPYING;
+import static dev.jstech.computers.client.InstallerScreenTexts.DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.DISK_ANSWER;
+import static dev.jstech.computers.client.InstallerScreenTexts.DISK_NARROW;
+import static dev.jstech.computers.client.InstallerScreenTexts.DISK_WIDE;
+import static dev.jstech.computers.client.InstallerScreenTexts.DONE;
+import static dev.jstech.computers.client.InstallerScreenTexts.ERASED_FIRST;
+import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_ASK;
+import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_ASK_NAMED;
+import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_KEYS;
+import static dev.jstech.computers.client.InstallerScreenTexts.EVERY_FILE;
+import static dev.jstech.computers.client.InstallerScreenTexts.FOUND_DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.FRAME_RESTARTS_SEVERAL;
+import static dev.jstech.computers.client.InstallerScreenTexts.FREE;
+import static dev.jstech.computers.client.InstallerScreenTexts.GENERATION;
+import static dev.jstech.computers.client.InstallerScreenTexts.HOLDS_FREE;
+import static dev.jstech.computers.client.InstallerScreenTexts.HUB_FOOT;
+import static dev.jstech.computers.client.InstallerScreenTexts.INSTALLATION_MEDIUM;
+import static dev.jstech.computers.client.InstallerScreenTexts.INSTALLED;
+import static dev.jstech.computers.client.InstallerScreenTexts.INSTALLING_ON;
+import static dev.jstech.computers.client.InstallerScreenTexts.MEMORY;
+import static dev.jstech.computers.client.InstallerScreenTexts.MIRROR_FIRST;
+import static dev.jstech.computers.client.InstallerScreenTexts.MIRROR_SECOND;
+import static dev.jstech.computers.client.InstallerScreenTexts.NAME_HELP_FIRST;
+import static dev.jstech.computers.client.InstallerScreenTexts.NAME_HELP_SECOND;
+import static dev.jstech.computers.client.InstallerScreenTexts.NEEDS;
+import static dev.jstech.computers.client.InstallerScreenTexts.NEEDS_ON_DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.NOTHING;
+import static dev.jstech.computers.client.InstallerScreenTexts.NOT_SET;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_DISK_SELECTED;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_DISK_WITH_ROOM;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_MIRROR;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_ROOM_ANYWHERE;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_ROOM_HERE;
+import static dev.jstech.computers.client.InstallerScreenTexts.NO_SYSTEM;
+import static dev.jstech.computers.client.InstallerScreenTexts.OK;
+import static dev.jstech.computers.client.InstallerScreenTexts.PREPARES;
+import static dev.jstech.computers.client.InstallerScreenTexts.PROCESSOR;
+import static dev.jstech.computers.client.InstallerScreenTexts.READING;
+import static dev.jstech.computers.client.InstallerScreenTexts.READING_MEDIUM;
+import static dev.jstech.computers.client.InstallerScreenTexts.RESTARTS_WHEN_FINISHED;
+import static dev.jstech.computers.client.InstallerScreenTexts.RESTART_TO_START;
+import static dev.jstech.computers.client.InstallerScreenTexts.SECONDS_LEFT;
+import static dev.jstech.computers.client.InstallerScreenTexts.SECONDS_LEFT_MEDIUM;
+import static dev.jstech.computers.client.InstallerScreenTexts.SECONDS_LEFT_SENTENCE;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_BESIDE_OPTION;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_CHOOSE_DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_DONE_BOOT_ORDER;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_DONE_LINE_1;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_DONE_NAME;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_DONE_SPACE;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_ERASE_OPTION;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_HOLDS_QUESTION;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_INSTALLING;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_INSTALLING_BESIDE;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_MONITOR_NOTE;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_STATUS_COPYING;
+import static dev.jstech.computers.client.InstallerScreenTexts.SYSV_STATUS_WAITING;
+import static dev.jstech.computers.client.InstallerScreenTexts.TAKE_OUT_FIRST;
+import static dev.jstech.computers.client.InstallerScreenTexts.TAKE_OUT_SECOND;
+import static dev.jstech.computers.client.InstallerScreenTexts.TERMINAL_ONLY_ANSWER;
+import static dev.jstech.computers.client.InstallerScreenTexts.TERMINAL_ONLY_CHOICE;
+import static dev.jstech.computers.client.InstallerScreenTexts.THE_DRIVE;
+import static dev.jstech.computers.client.InstallerScreenTexts.THE_INSTALLATION_MEDIUM;
+import static dev.jstech.computers.client.InstallerScreenTexts.TO_QUIT;
+import static dev.jstech.computers.client.InstallerScreenTexts.TO_SET_UP;
+import static dev.jstech.computers.client.InstallerScreenTexts.WILL_BE_DELETED;
+
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.term.TermFace;
+import dev.jstech.computers.client.term.TermText;
+import dev.jstech.computers.gui.layout.InstallerLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
@@ -17,6 +131,11 @@ import dev.jstech.computers.os.install.InstallerChrome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -42,25 +161,13 @@ import java.util.List;
  *
  * <p>What the page looks like belongs to {@link InstallerFrames}; what it says belongs here.
  */
+@PaletteHolder
 public final class InstallerScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    private static final int W = MonitorGlass.WIDTH;
-    private static final int H = MonitorGlass.HEIGHT;
-
-    /** How far apart the rows of a list sit, which the mouse also has to know to find the one under it. */
-    private static final int ROW = 11;
-
-    /** Where the Size column ends, counted back from the right edge of the table. */
-    private static final int SIZE_COLUMN = 120;
-
-    /** The same for the Free column, which sits between Size and Holds. */
-    private static final int FREE_COLUMN = 60;
-
-    /** The clear space kept between a drive's name and whatever is written to the right of it. */
-    private static final int COLUMN_GAP = 6;
-
-    /** The wash laid over the button under the cursor: enough to read as lit, not enough to change its style. */
-    private static final int HOVER_WASH = 0x30FFFFFF;
+    /** The colours the pages draw inside their frame, {@code jsc:installer/page}. */
+    private static final Palette<PageColours> PAGE = Palettes.declare(JsComputers.MODID, "installer/page",
+            new PageColours(0x30FFFFFF, 0xFFE3E5EE, 0xFFFFFFFF, 0xFF202434, 0xFF000000, 0xFFE3E5EE,
+                    0x99000000, 0xFFFAFAFE, 0xFFC42B1C, 0xFFC0C4D2, 0xFF202434, 0xFF6B7488, 0xFF2E8B2E));
 
     /** How long the caret in a name field spends showing, and then hidden, in ticks. */
     private static final int CARET_TICKS = 10;
@@ -89,7 +196,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private int listWidth;
     private int listRows;
     /** How tall a row of the list drawn last was, so a click lands on the one the player is looking at. */
-    private int listRowHeight = ROW;
+    private int listRowHeight = InstallerLayout.ROW;
     private int[] nextButton;
     private int[] backButton;
     private int[] cancelButton;
@@ -98,19 +205,30 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** The page the machine last sent, kept until the session that shows it is built. */
     @Nullable
     private static OpenInstallerPayload pending;
+    /** What a screen being built to draw a monitor's face shows, with the parts it reads, taken at once. */
+    @Nullable
+    private static OpenInstallerPayload forFace;
+    @Nullable
+    private static FirmwareStatePayload forFaceState;
 
     /** The screen currently open, so the machine's own description of itself finds it. */
     private static InstallerScreen active;
 
     public InstallerScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
         super(session, inventory, title);
-        this.imageWidth = W;
-        this.imageHeight = H;
+        this.imageWidth = InstallerLayout.WIDTH;
+        this.imageHeight = InstallerLayout.HEIGHT;
         this.titleLabelX = OFF_SCREEN;
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        if (pending != null) {
+        if (forFace != null) {
+            // A face is handed the page and the parts the machine reads, since it asks the machine nothing itself.
+            this.accept(forFace);
+            this.state = forFaceState;
+            forFace = null;
+            forFaceState = null;
+        } else if (pending != null) {
             this.accept(pending);
         }
     }
@@ -118,6 +236,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** The page the machine has reached, said before the session that shows it is opened. */
     public static void expect(final OpenInstallerPayload payload) {
         pending = payload;
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, with the parts the machine reads. */
+    public static void faceWith(final OpenInstallerPayload payload, @Nullable final FirmwareStatePayload state) {
+        forFace = payload;
+        forFaceState = state;
     }
 
     /**
@@ -135,8 +259,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     @Override
     protected void init() {
         super.init();
-        active = this;
-        PacketDistributor.sendToServer(new RequestFirmwareStatePayload(this.computerPos));
+        if (!onFace()) {
+            active = this;
+        }
+        send(new RequestFirmwareStatePayload(this.computerPos));
     }
 
     @Override
@@ -171,15 +297,30 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         return this.flow == null ? "" : this.flow.page().name();
     }
 
-    /** The page the machine has moved to, with the work it has done behind it. */
+    /**
+     * The page the machine has moved to, with the work it has done behind it.
+     *
+     * <p>A reply for the SAME page the player is already looking at (the services page after a checkbox, the
+     * settings page after a keystroke) leaves the cursor and the name being typed where the player put them: it
+     * is confirming a change already made, not turning a fresh page whose own defaults ought to take over.
+     */
     public void accept(final OpenInstallerPayload payload) {
+        final InstallerPage was = this.flow == null ? null : this.flow.page();
         this.flow = payload.flow();
         this.ticksDone = payload.ticksDone();
-        this.typed = this.flow.computerName();
         this.erasePrompt = InstallerFlow.NO_DISK;
+        if (was == this.flow.page()) {
+            this.selection = Math.max(0, Math.min(this.selection, Math.max(0, this.rowCount() - 1)));
+            return;
+        }
+        this.typed = this.flow.computerName();
         this.selection = switch (this.flow.page()) {
-            case DISK, SETTINGS -> Math.max(0, this.indexOfSlot(this.flow.targetSlot()));
+            case DISK -> this.flow.style() == InstallerStyle.BSD_INSTALL
+                    ? this.indexOfBsdChoice(this.flow.targetSlot())
+                    : Math.max(0, this.indexOfSlot(this.flow.targetSlot()));
+            case SETTINGS -> Math.max(0, this.indexOfSlot(this.flow.targetSlot()));
             case DESKTOP -> this.flow.desktopIndex() + 1;
+            case MIRROR -> this.flow.mirrorAnswers() && !this.flow.useMirror() ? 1 : 0;
             default -> 0;
         };
     }
@@ -240,8 +381,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                  * Only where erasing is the thing E does. On a page with a name field E is a letter, and the
                  * one before this was reaching past it to the game's own inventory key, which closed the
                  * installer outright: a player naming a machine could not type an E without losing the page.
+                 * bsdinstall's own disk page has no separate E for this: the erase choice is baked into which
+                 * of its two rows is picked, confirmed through the OK button rather than a key beside it.
                  */
-                if (!this.naming() && this.offerErase()) {
+                if (!this.naming() && this.flow.style() != InstallerStyle.BSD_INSTALL && this.offerErase()) {
                     return true;
                 }
             }
@@ -250,6 +393,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                     // The one letter that starts the work on the installer that gathers its questions first.
                     this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
                             InstallerActionPayload.ACTION_NEXT));
+                    return true;
+                }
+            }
+            case GLFW.GLFW_KEY_SPACE -> {
+                // Ticks one of bsdinstall's checkboxes: the ports component, or one of the two services.
+                if (this.toggleCheckbox()) {
                     return true;
                 }
             }
@@ -264,6 +413,24 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                         InstallerActionPayload.ACTION_GO_TO, pages.get(row)));
             }
             return true;
+        }
+        /*
+         * UNIX System V's settings page draws its erase-or-beside choice inline rather than behind a separate
+         * question: 1 erases the disk on the spot (already confirmed by picking it, the way the page shows it as
+         * a choice and not a warning), 2 leaves it alone. Neither reaches the name field a few lines under it.
+         */
+        if (this.flow.page() == InstallerPage.SETTINGS && this.flow.style() == InstallerStyle.SYSTEM_V
+                && this.chosenDiskHasSystem()) {
+            if (key == GLFW.GLFW_KEY_1) {
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_ERASE, this.chosenDisk().slot()));
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_2) {
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_CANCEL_ERASE));
+                return true;
+            }
         }
         /*
          * A page with a name field swallows everything else. The game closes a container screen on its own
@@ -282,11 +449,21 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             return true;
         }
         if (this.naming() && letter >= ' ' && letter != 127
-                && this.typed.length() < InstallerFlow.MOST_NAME_LETTERS) {
+                && this.typed.length() < InstallerFlow.MOST_NAME_LETTERS
+                && !this.isInlineEraseKey(letter)) {
             this.typed = this.typed + letter;
             return true;
         }
         return super.charTyped(letter, modifiers);
+    }
+
+    /**
+     * Whether that character is one of the System V settings page's own erase-or-beside choice, which reaches the
+     * disk rather than the name field beneath it even though this page also takes typed letters.
+     */
+    private boolean isInlineEraseKey(final char letter) {
+        return (letter == '1' || letter == '2') && this.flow.page() == InstallerPage.SETTINGS
+                && this.flow.style() == InstallerStyle.SYSTEM_V && this.chosenDiskHasSystem();
     }
 
     @Override
@@ -304,11 +481,13 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.held = pressed;
             return true;
         }
-        if (this.listRows > 0 && mouseX >= this.listLeft && mouseX < this.listLeft + this.listWidth) {
+        if (this.listRows > 0 && mouseX >= this.listLeft && mouseX < this.listLeft + this.listWidth
+                && mouseY >= this.listTop) {
             final int row = (int) ((mouseY - this.listTop) / Math.max(1, this.listRowHeight));
             if (row >= 0 && row < this.listRows) {
                 this.selection = row;
                 this.chose();
+                this.toggleCheckbox();
                 return true;
             }
         }
@@ -319,11 +498,11 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
-        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
+        MonitorFrame.renderBody(g, x, y, InstallerLayout.WIDTH, InstallerLayout.HEIGHT, screenEra(), font);
 
         this.listRows = 0;
-        final InstallerFrames.Frame frame =
-                InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y, W, H, this.held);
+        final InstallerFrames.Frame frame = InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y,
+                InstallerLayout.WIDTH, InstallerLayout.HEIGHT, this.held, this.bsdChosenNeedsErase());
         this.nextButton = frame.next();
         this.backButton = frame.back();
         this.cancelButton = frame.cancel();
@@ -343,6 +522,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             case HUB -> this.drawHub(g, frame);
             case COPY -> this.drawWork(g, frame);
             case DONE -> this.drawDone(g, frame);
+            case COMPONENTS -> this.drawComponents(g, frame);
+            case MIRROR -> this.drawMirror(g, frame);
+            case SERVICES -> this.drawServices(g, frame);
             default -> this.drawWelcome(g, frame);
         }
         if (this.erasePrompt != InstallerFlow.NO_DISK) {
@@ -359,7 +541,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private void markHovered(final GuiGraphics g, final int mouseX, final int mouseY) {
         for (final int[] box : new int[][]{this.nextButton, this.backButton, this.cancelButton, this.eraseButton}) {
             if (hit(box, mouseX, mouseY)) {
-                g.fill(box[0], box[1], box[0] + box[2], box[1] + box[3], HOVER_WASH);
+                g.fill(box[0], box[1], box[0] + box[2], box[1] + box[3], PAGE.get().hoverWash());
                 return;
             }
         }
@@ -373,9 +555,14 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** How many rows the page under the cursor has, so the arrows and the mouse agree about them. */
     private int rowCount() {
         return switch (this.flow.page()) {
-            case DISK, SETTINGS -> this.flow.disks().size();
+            case DISK -> this.flow.style() == InstallerStyle.BSD_INSTALL
+                    ? this.bsdDiskChoices().size() : this.flow.disks().size();
+            case SETTINGS -> this.flow.disks().size();
             case DESKTOP -> this.flow.desktops().size() + 1;
             case HUB -> this.hubPages().size();
+            case MIRROR -> this.flow.mirrorAnswers() ? 2 : 1;
+            case SERVICES -> 2;
+            case COMPONENTS -> 1;
             default -> 0;
         };
     }
@@ -401,6 +588,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             }
             case DESKTOP -> this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
                     InstallerActionPayload.ACTION_DESKTOP, this.selection - 1));
+            case MIRROR -> {
+                // Row 0 is the Mirror when it answers; the last row is always none.
+                final boolean useMirror = this.flow.mirrorAnswers() && this.selection == 0;
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_MIRROR, useMirror ? 1 : 0));
+            }
             default -> {
             }
         }
@@ -425,8 +618,26 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             }
             return;
         }
+        if (this.bsdChosenNeedsErase()) {
+            // The Auto (UFS) row that takes over a whole disk asks the same way any other erase here does.
+            this.offerErase();
+            return;
+        }
         this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
                 InstallerActionPayload.ACTION_NEXT));
+    }
+
+    /**
+     * Whether OK on bsdinstall's disk page is about to erase a disk rather than simply move on: the row under
+     * the cursor is the Auto (UFS) fallback that takes over a disk with a system already on it, and that disk
+     * has not been erased yet this session.
+     */
+    private boolean bsdChosenNeedsErase() {
+        if (this.flow.page() != InstallerPage.DISK || this.flow.style() != InstallerStyle.BSD_INSTALL) {
+            return false;
+        }
+        final BsdDiskChoice choice = this.chosenBsdChoice();
+        return choice != null && choice.erasesIt() && this.flow.eraseSlot() != choice.disk().slot();
     }
 
     private void quit() {
@@ -455,8 +666,105 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     }
 
     private InstallerFlow.Disk chosenDisk() {
-        return this.selection >= 0 && this.selection < this.flow.disks().size()
-                ? this.flow.disks().get(this.selection) : null;
+        if (this.flow.page() == InstallerPage.DISK && this.flow.style() == InstallerStyle.BSD_INSTALL) {
+            final BsdDiskChoice choice = this.chosenBsdChoice();
+            return choice == null ? null : choice.disk();
+        }
+        final List<InstallerFlow.Disk> pool = this.flow.disks();
+        return this.selection >= 0 && this.selection < pool.size() ? pool.get(this.selection) : null;
+    }
+
+    /** The row of bsdinstall's own disk choices under the cursor, or null when it has none at all. */
+    private BsdDiskChoice chosenBsdChoice() {
+        final List<BsdDiskChoice> choices = this.bsdDiskChoices();
+        return this.selection >= 0 && this.selection < choices.size() ? choices.get(this.selection) : null;
+    }
+
+    /**
+     * bsdinstall's own rows: the first disk with nothing on it, offered whole, and the first that already carries
+     * a system with room beside it, offered to share. When no empty disk has room, real bsdinstall's Auto (UFS)
+     * still names a disk rather than leaving the player without one: the first disk big enough for the system,
+     * one that holds a system before one that holds only files, offered whole and erased, exactly as choosing
+     * to erase a disk anywhere else in this installer does. That row stands beside the Beside row, so a system
+     * can always be given a whole disk.
+     */
+    private List<BsdDiskChoice> bsdDiskChoices() {
+        InstallerFlow.Disk auto = null;
+        InstallerFlow.Disk beside = null;
+        InstallerFlow.Disk takeOver = null;
+        for (final InstallerFlow.Disk disk : this.flow.disks()) {
+            if (auto == null && !disk.hasSystem() && this.flow.roomOn(disk)) {
+                auto = disk;
+            }
+            if (beside == null && disk.hasSystem() && disk.freeMb() >= this.flow.footprintMb()) {
+                beside = disk;
+            }
+            final boolean bigEnough = disk.sizeMb() >= this.flow.footprintMb();
+            if (bigEnough && (takeOver == null || !takeOver.hasSystem() && disk.hasSystem())) {
+                takeOver = disk;
+            }
+        }
+        final List<BsdDiskChoice> choices = new ArrayList<>(2);
+        if (auto != null) {
+            choices.add(new BsdDiskChoice(auto, false));
+        } else if (takeOver != null) {
+            choices.add(new BsdDiskChoice(takeOver, true));
+        }
+        if (beside != null) {
+            choices.add(new BsdDiskChoice(beside, false));
+        }
+        return choices;
+    }
+
+    /**
+     * Where that disk sits among bsdinstall's own rows, or the first row when it is in none. A disk named by both
+     * the erasing Auto row and the Beside row lands on Beside, so the page never opens with the cursor on the one
+     * choice that deletes something.
+     */
+    private int indexOfBsdChoice(final int slot) {
+        final List<BsdDiskChoice> choices = this.bsdDiskChoices();
+        int found = -1;
+        for (int i = 0; i < choices.size(); i++) {
+            if (choices.get(i).disk().slot() == slot && (found < 0 || !choices.get(i).erasesIt())) {
+                found = i;
+            }
+        }
+        return Math.max(0, found);
+    }
+
+    /** One of bsdinstall's own disk rows: which disk, and whether choosing it erases what is already on it. */
+    private record BsdDiskChoice(InstallerFlow.Disk disk, boolean erasesIt) {
+    }
+
+    /** Whether the disk under the cursor already carries a system, which is what offers a choice about it. */
+    private boolean chosenDiskHasSystem() {
+        final InstallerFlow.Disk disk = this.chosenDisk();
+        return disk != null && disk.hasSystem();
+    }
+
+    /**
+     * Ticks or unticks whichever checkbox the cursor is on, on the one page bsdinstall draws a single one on and
+     * the one it draws two on; answers whether there was one there to tick.
+     */
+    private boolean toggleCheckbox() {
+        if (this.flow.page() == InstallerPage.COMPONENTS) {
+            this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                    InstallerActionPayload.ACTION_PORTS, this.flow.portsSelected() ? 0 : 1));
+            return true;
+        }
+        if (this.flow.page() == InstallerPage.SERVICES) {
+            if (this.selection == 0) {
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_CRON, this.flow.cronEnabled() ? 0 : 1));
+                return true;
+            }
+            if (this.selection == 1) {
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_SSHD, this.flow.sshdEnabled() ? 0 : 1));
+                return true;
+            }
+        }
+        return false;
     }
 
     private int indexOfSlot(final int slot) {
@@ -481,7 +789,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     }
 
     private void send(final InstallerActionPayload payload) {
-        PacketDistributor.sendToServer(payload);
+        // A face answers nothing for anybody: nobody is at it.
+        if (!onFace()) {
+            PacketDistributor.sendToServer(payload);
+        }
     }
 
     /**
@@ -550,12 +861,16 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 || this.flow.chrome() == InstallerChrome.BOXED_TEXT;
     }
 
-    /** Writes one line of a page in whichever size that page is written at. */
+    /**
+     * Writes one line of a page in whichever way that page is written: a text-mode page in the terminal font, one
+     * character to a cell, the others in the game's font.
+     */
     private void say(final GuiGraphics g, final String text, final int x, final int y, final int colour) {
         if (this.textMode()) {
-            wall(g, text, x, y, colour);
+            final TermFace.Fitted wall = InstallerFrames.wall();
+            TermText.draw(wall.face(), g, font, text, x, y, wall.scale(), colour);
         } else {
-            g.drawString(font, text, x, y, colour, false);
+            Draw.text(g, font, text, x, y, colour);
         }
     }
 
@@ -567,17 +882,25 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     /** How wide that line comes out in the size this page is written at. */
     private int width(final String text) {
-        return this.textMode() ? wallWidth(text) : font.width(text);
+        if (!this.textMode()) {
+            return font.width(text);
+        }
+        final TermFace.Fitted wall = InstallerFrames.wall();
+        return TermText.width(wall.face(), text, wall.scale());
     }
 
     /** How far apart this page's rows sit, which the mouse also has to know to find the one under it. */
     private int row() {
-        return this.textMode() ? WALL_ROW + 2 : ROW;
+        return this.textMode() ? WALL_ROW + InstallerLayout.TEXT_ROW_EXTRA : InstallerLayout.ROW;
     }
 
     /** A label cut to the room it has, measured in the size this page is written at. */
     private String fit(final String text, final int room) {
-        return InstallerFrames.clip(font, text, this.textMode() ? TextWall.room(room) : room);
+        if (!this.textMode()) {
+            return InstallerFrames.clip(font, text, room);
+        }
+        final TermFace.Fitted wall = InstallerFrames.wall();
+        return TermText.clip(wall.face(), text, room, wall.scale());
     }
 
     private void drawWelcome(final GuiGraphics g, final InstallerFrames.Frame f) {
@@ -590,27 +913,40 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.drawCheck(g, f);
             return;
         }
+        if (this.flow.style() == InstallerStyle.BSD_INSTALL) {
+            final InstallerFrames.Paint bsdPaint = f.paint();
+            final int bsdStep = this.row();
+            this.say(g, of(BSD_WELCOME_BODY_1.with(this.flow.systemName())), f.x(), f.y(), bsdPaint.text());
+            this.say(g, of(BSD_WELCOME_BODY_2.with(this.flow.systemName())), f.x(), f.y() + bsdStep,
+                    bsdPaint.text());
+            return;
+        }
         final InstallerFrames.Paint p = f.paint();
         final InstallerFlow.Disk disk = this.flow.target();
         final int step = this.row();
         int ty = f.y();
-        this.say(g, "Setup prepares " + this.flow.systemName() + " to run on this computer.",
-                f.x(), ty, p.text());
-        ty += step * 2;
-        this.say(g, "- To set up " + this.flow.systemName() + " now, press ENTER.", f.x(), ty, p.text());
-        ty += step;
-        this.say(g, "- To quit Setup without installing, press F3.", f.x(), ty, p.text());
-        ty += step * 2;
+        /*
+         * The later editions greet with their name and one big Install now, which the frame has drawn: what is left
+         * to say is only where it found room.
+         */
+        if (!InstallerFrames.brandsWelcome(this.flow.chrome())) {
+            this.say(g, of(PREPARES.with(this.flow.systemName())), f.x(), ty, p.text());
+            ty += step * 2;
+            this.say(g, of(TO_SET_UP.with(this.flow.systemName())), f.x(), ty, p.text());
+            ty += step;
+            this.say(g, of(TO_QUIT), f.x(), ty, p.text());
+            ty += step * 2;
+        }
         if (disk == null) {
-            this.say(g, "No disk in this machine has room for it.", f.x(), ty, p.accent());
+            this.say(g, of(NO_ROOM_ANYWHERE), f.x(), ty, p.accent());
             return;
         }
-        this.say(g, "Setup found a disk for " + this.flow.systemName() + ":", f.x(), ty, p.dim());
+        this.say(g, of(FOUND_DISK.with(this.flow.systemName())), f.x(), ty, p.dim());
         ty += step;
         // Cut to the page, since a drive names itself at whatever length its maker chose.
-        this.say(g, this.fit("Disk " + disk.slot() + "  " + disk.label(), f.w()), f.x() + 8, ty, p.bright());
+        this.say(g, this.fit(of(DISK_WIDE.with(disk.slot(), disk.label())), f.w()), f.x() + 8, ty, p.bright());
         ty += step;
-        this.say(g, holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free", f.x() + 8, ty, p.dim());
+        this.say(g, of(HOLDS_FREE.with(holds(disk), size(this.flow.freeOn(disk)))), f.x() + 8, ty, p.dim());
     }
 
     /**
@@ -624,35 +960,37 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final InstallerFrames.Paint p = f.paint();
         final FirmwareStatePayload.Machine machine = this.state == null ? null : this.state.machine();
         final InstallerFlow.Disk disk = this.flow.target();
-        final String unknown = "reading ...";
+        final String unknown = of(READING);
+        final String noRoom = of(NO_DISK_WITH_ROOM);
         final String[][] rows = {
-                {"Generation", machine == null || machine.eraLabel().isEmpty() ? unknown : machine.eraLabel()},
-                {"Processor", machine == null || machine.cpuName().isEmpty() ? unknown : machine.cpuName()},
-                {"Memory", machine == null ? unknown : size(machine.ramMb())},
-                {"Disk " + (disk == null ? "-" : Integer.toString(disk.slot())),
-                        disk == null ? "no disk with room" : size(this.flow.freeOn(disk)) + " free"},
-                {"Installation medium", this.flow.systemName()},
+                {of(GENERATION), machine == null || machine.eraLabel().isEmpty() ? unknown : of(machine.eraLabel())},
+                {of(PROCESSOR), machine == null || machine.cpuName().isEmpty() ? unknown : of(machine.cpuName())},
+                {of(MEMORY), machine == null ? unknown : size(machine.ramMb())},
+                {of(DISK.with(disk == null ? "-" : Integer.toString(disk.slot()))),
+                        disk == null ? noRoom : of(FREE.with(size(this.flow.freeOn(disk))))},
+                {of(INSTALLATION_MEDIUM), this.flow.systemName()},
         };
         final int step = this.row();
         int ty = f.y();
         for (final String[] line : rows) {
-            final boolean good = !unknown.equals(line[1]) && !"no disk with room".equals(line[1]);
+            // A row is ticked when it holds an answer: not the one still being read, not the refusal.
+            final boolean good = !unknown.equals(line[1]) && !noRoom.equals(line[1]);
             final String label = line[0] + " ";
             this.say(g, label, f.x(), ty, p.text());
             /*
              * The dots between the question and the answer, which is how a check of that age tied the two
              * together across a screen that had no columns to line them up in.
              */
-            final int answerAt = f.x() + f.w() - 20 - this.width(line[1]);
-            this.leader(g, f.x() + this.width(label), answerAt - 3, ty, p.dim());
+            final int answerAt = f.x() + f.w() - InstallerLayout.LEADER_RIGHT_MARGIN - this.width(line[1]);
+            this.leader(g, f.x() + this.width(label), answerAt - InstallerLayout.LEADER_GAP, ty, p.dim());
             this.say(g, line[1], answerAt, ty, p.text());
             if (good) {
-                this.sayRight(g, "OK", f.x() + f.w(), ty, p.accent());
+                this.sayRight(g, of(OK), f.x() + f.w(), ty, p.accent());
             }
             ty += step;
         }
         ty += step;
-        this.say(g, this.flow.systemName() + " needs " + size(this.flow.footprintMb()) + " on a disk.",
+        this.say(g, of(NEEDS_ON_DISK.with(this.flow.systemName(), size(this.flow.footprintMb()))),
                 f.x(), ty, p.dim());
     }
 
@@ -667,17 +1005,27 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     }
 
     private void drawDisks(final GuiGraphics g, final InstallerFrames.Frame f) {
+        if (this.flow.style() == InstallerStyle.BSD_INSTALL) {
+            this.drawBsdDisks(g, f);
+            return;
+        }
         final InstallerFrames.Paint p = f.paint();
-        final boolean table = this.flow.chrome() == InstallerChrome.CARD;
+        final boolean table = this.flow.chrome() == InstallerChrome.CARD
+                || InstallerFrames.brandsWelcome(this.flow.chrome());
         final int step = this.row();
         int ty = f.y();
+        if (this.flow.style() == InstallerStyle.SYSTEM_V) {
+            this.say(g, of(SYSV_CHOOSE_DISK.with(this.flow.systemName())), f.x(), ty, p.text());
+            ty += step * 2;
+        }
         if (table) {
-            g.drawString(font, "Disk", f.x() + 4, ty, p.dim(), false);
-            right(g, "Size", f.x() + f.w() - SIZE_COLUMN, ty, p.dim());
-            right(g, "Free", f.x() + f.w() - FREE_COLUMN, ty, p.dim());
-            right(g, "Holds", f.x() + f.w() - 4, ty, p.dim());
-            g.fill(f.x(), ty + 9, f.x() + f.w(), ty + 10, 0xFFE3E5EE);
-            ty += 13;
+            Draw.text(g, font, of(COLUMN_DISK), f.x() + InstallerLayout.TABLE_INSET, ty, p.dim());
+            right(g, of(COLUMN_SIZE), f.x() + f.w() - InstallerLayout.SIZE_COLUMN, ty, p.dim());
+            right(g, of(COLUMN_FREE), f.x() + f.w() - InstallerLayout.FREE_COLUMN, ty, p.dim());
+            right(g, of(COLUMN_HOLDS), f.x() + f.w() - InstallerLayout.TABLE_INSET, ty, p.dim());
+            g.fill(f.x(), ty + InstallerLayout.TABLE_HEADER_RULE_DY, f.x() + f.w(),
+                    ty + InstallerLayout.TABLE_HEADER_RULE_DY + 1, PAGE.get().columnRule());
+            ty += InstallerLayout.TABLE_HEADER_GAP;
         }
         this.listAt(f.x(), ty, f.w(), this.flow.disks().size());
         for (int i = 0; i < this.flow.disks().size(); i++) {
@@ -699,50 +1047,136 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
              */
             if (table) {
                 final String sizeText = size(disk.sizeMb());
-                final int sizeLeft = f.x() + f.w() - SIZE_COLUMN - font.width(sizeText);
-                g.drawString(font, InstallerFrames.clip(font, "Disk " + disk.slot() + " " + disk.label(),
-                        sizeLeft - COLUMN_GAP - (f.x() + 4)), f.x() + 4, ty, row, false);
-                right(g, sizeText, f.x() + f.w() - SIZE_COLUMN, ty, faint);
-                right(g, size(this.flow.freeOn(disk)), f.x() + f.w() - FREE_COLUMN, ty, faint);
-                right(g, disk.hasSystem() ? disk.holds() : "Nothing", f.x() + f.w() - 4, ty, faint);
+                final int sizeLeft = f.x() + f.w() - InstallerLayout.SIZE_COLUMN - font.width(sizeText);
+                Draw.text(g, font, InstallerFrames.clip(font, of(DISK_NARROW.with(disk.slot(), disk.label())),
+                        sizeLeft - InstallerLayout.COLUMN_GAP - (f.x() + InstallerLayout.TABLE_INSET)),
+                        f.x() + InstallerLayout.TABLE_INSET, ty, row);
+                right(g, sizeText, f.x() + f.w() - InstallerLayout.SIZE_COLUMN, ty, faint);
+                right(g, size(this.flow.freeOn(disk)), f.x() + f.w() - InstallerLayout.FREE_COLUMN, ty, faint);
+                right(g, disk.hasSystem() ? disk.holds() : of(NOTHING), f.x() + f.w() - InstallerLayout.TABLE_INSET,
+                        ty, faint);
             } else {
-                final String state = holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free";
-                this.say(g, this.fit("Disk " + disk.slot() + "  " + disk.label(),
-                        f.w() - this.width(state) - COLUMN_GAP), f.x(), ty, row);
+                final String state = of(HOLDS_FREE.with(holds(disk), size(this.flow.freeOn(disk))));
+                this.say(g, this.fit(of(DISK_WIDE.with(disk.slot(), disk.label())),
+                        f.w() - this.width(state) - InstallerLayout.COLUMN_GAP), f.x(), ty, row);
                 this.sayRight(g, state, f.x() + f.w(), ty, faint);
             }
             ty += step;
         }
         ty += step;
-        this.say(g, this.flow.systemName() + " needs " + size(this.flow.footprintMb()) + ".",
-                f.x(), ty, p.dim());
+        final boolean sysV = this.flow.style() == InstallerStyle.SYSTEM_V;
+        if (!sysV) {
+            this.say(g, of(NEEDS.with(this.flow.systemName(), size(this.flow.footprintMb()))), f.x(), ty, p.dim());
+        }
         final InstallerFlow.Disk disk = this.chosenDisk();
-        if (disk != null && !this.flow.roomOn(disk)) {
-            this.say(g, "No room here. Erase this disk, or choose another.", f.x(), ty + step, p.accent());
+        int nameY = ty + step * 2;
+        if (disk != null && disk.hasSystem() && sysV) {
+            /*
+             * The choice UNIX asks inline instead of behind a separate warning: which disk holds a system
+             * already, and whether to erase it or keep it and dual-boot. `1`/`2` answer it; the name field a
+             * few lines under it is deliberately kept clear of the choice's own rows. The erase choice is
+             * always the way on, so it is drawn whenever the disk holds a system, whether or not there is
+             * room to share it.
+             */
+            ty += step;
+            this.say(g, of(SYSV_HOLDS_QUESTION.with(disk.label(), disk.holds())), f.x(), ty, p.text());
+            ty += step * 2;
+            final boolean erasing = this.flow.eraseSlot() == disk.slot();
+            final boolean fits = disk.freeMb() >= this.flow.footprintMb();
+            this.say(g, (erasing ? "> " : "  ") + of(SYSV_ERASE_OPTION.with(disk.label(), this.flow.systemName())),
+                    f.x(), ty, erasing ? p.bright() : p.text());
+            ty += step;
+            final int besideInk = !fits ? p.dim() : erasing ? p.text() : p.bright();
+            this.say(g, (erasing || !fits ? "  " : "> ")
+                            + of(SYSV_BESIDE_OPTION.with(this.flow.systemName(), disk.holds())),
+                    f.x(), ty, besideInk);
+            nameY = ty + step * 2;
+        } else if (disk != null && !this.flow.roomOn(disk)) {
+            this.say(g, of(NO_ROOM_HERE), f.x(), ty + step, p.accent());
         } else if (disk != null && disk.hasSystem()) {
-            this.say(g, disk.holds() + " on this disk is erased first.", f.x(), ty + step, p.accent());
+            this.say(g, of(ERASED_FIRST.with(disk.holds())), f.x(), ty + step, p.accent());
         }
         if (this.flow.page() == InstallerPage.SETTINGS) {
-            final String label = "Computer name:  ";
+            final String label = of(COMPUTER_NAME) + "  ";
             final int room = f.w() - this.width(label);
-            this.say(g, label + this.tailThatFits(room) + this.caret(), f.x(), ty + step * 2, p.bright());
+            this.say(g, label + this.tailThatFits(room) + this.caret(), f.x(), nameY, p.bright());
+        }
+    }
+
+    /**
+     * bsdinstall's own two-row choice: Auto whole-disk or Beside an existing system, each naming the disk it
+     * would use, with the raw table of every disk underneath for reference.
+     */
+    private void drawBsdDisks(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
+        int ty = f.y();
+        this.say(g, of(BSD_DISK_INTRO.with(this.flow.systemName())), f.x(), ty, p.text());
+        ty += step * 2;
+        final List<BsdDiskChoice> choices = this.bsdDiskChoices();
+        this.listAt(f.x(), ty, f.w(), choices.size());
+        for (int i = 0; i < choices.size(); i++) {
+            final BsdDiskChoice choice = choices.get(i);
+            final InstallerFlow.Disk disk = choice.disk();
+            final boolean here = i == this.selection;
+            if (here) {
+                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step - 1, p.select());
+            }
+            final String label = choice.erasesIt()
+                    ? disk.hasSystem()
+                            ? of(BSD_DISK_AUTO_ERASE.with(disk.label(), size(disk.sizeMb()), disk.holds()))
+                            : of(BSD_DISK_AUTO_ERASE_FILES.with(disk.label(), size(disk.sizeMb())))
+                    : !disk.hasSystem()
+                            ? of(BSD_DISK_AUTO.with(disk.label(), size(disk.sizeMb())))
+                            : of(BSD_DISK_BESIDE.with(disk.label(), disk.holds(), size(disk.freeMb())));
+            this.say(g, this.fit(label, f.w() - 2), f.x() + 2, ty, here ? p.selectText() : p.text());
+            ty += step;
+        }
+        ty += step;
+        for (final InstallerFlow.Disk disk : this.flow.disks()) {
+            this.say(g, of(BSD_DISK_TABLE_ROW.with(disk.label(), size(disk.sizeMb()),
+                    disk.hasSystem() ? disk.holds() : of(BSD_DISK_EMPTY))), f.x(), ty, p.dim());
+            ty += step;
         }
     }
 
     private void drawName(final GuiGraphics g, final InstallerFrames.Frame f) {
+        if (this.flow.style() == InstallerStyle.BSD_INSTALL) {
+            this.drawBsdName(g, f);
+            return;
+        }
         final InstallerFrames.Paint p = f.paint();
         final int step = this.row();
         int ty = f.y();
-        this.say(g, "This name identifies the computer at the", f.x(), ty, p.dim());
-        this.say(g, "prompt and on the network.", f.x(), ty + step, p.dim());
+        this.say(g, of(NAME_HELP_FIRST), f.x(), ty, p.dim());
+        this.say(g, of(NAME_HELP_SECOND), f.x(), ty + step, p.dim());
         ty += step * 3;
-        this.say(g, "Computer name:", f.x(), ty, p.text());
+        this.say(g, of(COMPUTER_NAME), f.x(), ty, p.text());
         final int fx = f.x();
-        final int fy = ty + step + 2;
-        final int fw = Math.min(150, f.w());
-        g.fill(fx, fy, fx + fw, fy + 13, 0xFFFFFFFF);
-        g.fill(fx, fy + 12, fx + fw, fy + 13, p.accent());
-        this.say(g, this.tailThatFits(fw - 6) + this.caret(), fx + 3, fy + 3, 0xFF202434);
+        final int fy = ty + step + InstallerLayout.NAME_FIELD_DY;
+        final int fw = Math.min(InstallerLayout.NAME_FIELD_W, f.w());
+        final int inset = InstallerLayout.NAME_FIELD_TEXT_INSET;
+        g.fill(fx, fy, fx + fw, fy + InstallerLayout.NAME_FIELD_H, PAGE.get().field());
+        g.fill(fx, fy + InstallerLayout.NAME_FIELD_H - 1, fx + fw, fy + InstallerLayout.NAME_FIELD_H, p.accent());
+        this.say(g, this.tailThatFits(fw - 2 * inset) + this.caret(), fx + inset, fy + inset,
+                PAGE.get().fieldInk());
+    }
+
+    /** bsdinstall's own hostname page: its two lines and the navy field its real dialogs type into. */
+    private void drawBsdName(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
+        int ty = f.y();
+        this.say(g, of(BSD_NAME_BODY_1), f.x(), ty, p.text());
+        this.say(g, of(BSD_NAME_BODY_2), f.x(), ty + step, p.text());
+        ty += step * 3;
+        final int fx = f.x();
+        final int fy = ty;
+        final int fw = Math.min(InstallerLayout.NAME_FIELD_W, f.w());
+        final int inset = InstallerLayout.NAME_FIELD_TEXT_INSET;
+        g.fill(fx, fy, fx + fw, fy + InstallerLayout.NAME_FIELD_H, InstallerFrames.bsdField());
+        this.say(g, this.tailThatFits(fw - 2 * inset) + this.caret(), fx + inset, fy + inset,
+                InstallerFrames.bsdFieldText());
     }
 
     /**
@@ -769,14 +1203,16 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private void drawDesktops(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
         final int step = this.row();
+        final boolean bsd = this.flow.style() == InstallerStyle.BSD_INSTALL;
         int ty = f.y();
-        if (this.flow.mirrorAnswers()) {
-            this.say(g, "The Mirror on " + this.flow.mirrorHost() + " answers. Choose a desktop to install",
-                    f.x(), ty, p.dim());
-            this.say(g, "with " + this.flow.systemName() + ", or none to boot to the terminal.",
-                    f.x(), ty + step, p.dim());
+        if (bsd) {
+            this.say(g, of(BSD_DESKTOP_INTRO_1), f.x(), ty, p.text());
+            this.say(g, of(BSD_DESKTOP_INTRO_2), f.x(), ty + step, p.text());
+        } else if (this.flow.mirrorAnswers()) {
+            this.say(g, of(MIRROR_FIRST.with(this.flow.mirrorHost())), f.x(), ty, p.dim());
+            this.say(g, of(MIRROR_SECOND.with(this.flow.systemName())), f.x(), ty + step, p.dim());
         } else {
-            this.say(g, "No Mirror answers, so it comes up at its terminal.", f.x(), ty, p.dim());
+            this.say(g, of(NO_MIRROR), f.x(), ty, p.dim());
         }
         ty += step * 2 + 4;
         this.listAt(f.x(), ty, f.w(), this.flow.desktops().size() + 1);
@@ -788,16 +1224,82 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             final int row = here ? p.selectText() : p.text();
             /*
              * The mark of what is chosen, written out rather than drawn: these installers ran in text, and a
-             * filled bracket was the whole of what a chosen option looked like there.
+             * filled bracket or star was the whole of what a chosen option looked like there.
              */
-            final String mark = here ? "(X) " : "( ) ";
+            final String mark = here ? (bsd ? "(*) " : "(X) ") : "( ) ";
             if (i == 0) {
-                this.say(g, mark + "None, the terminal only", f.x() + 2, ty, row);
+                this.say(g, mark + (bsd ? of(BSD_DESKTOP_NONE) : of(TERMINAL_ONLY_CHOICE)), f.x() + 2, ty, row);
             } else {
                 final InstallerFlow.Desktop desktop = this.flow.desktops().get(i - 1);
                 this.say(g, mark + desktop.name(), f.x() + 2, ty, row);
-                this.sayRight(g, size(desktop.sizeMb()), f.x() + f.w(), ty, here ? p.selectText() : p.dim());
+                if (!bsd) {
+                    this.sayRight(g, size(desktop.sizeMb()), f.x() + f.w(), ty, here ? p.selectText() : p.dim());
+                }
             }
+            ty += step;
+        }
+    }
+
+    /** bsdinstall's one optional component: base and kernel always go, and a single checkbox for the ports tree. */
+    private void drawComponents(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
+        int ty = f.y();
+        this.say(g, of(BSD_COMPONENTS_INTRO_1), f.x(), ty, p.text());
+        this.say(g, of(BSD_COMPONENTS_INTRO_2), f.x(), ty + step, p.text());
+        ty += step * 3;
+        this.say(g, "[*] " + of(BSD_COMPONENT_BASE), f.x(), ty, p.text());
+        ty += step;
+        this.say(g, "[*] " + of(BSD_COMPONENT_KERNEL), f.x(), ty, p.text());
+        ty += step;
+        this.listAt(f.x(), ty, f.w(), 1);
+        final boolean here = this.selection == 0;
+        if (here) {
+            g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step - 1, p.select());
+        }
+        final String mark = this.flow.portsSelected() ? "[*] " : "[ ] ";
+        this.say(g, mark + of(BSD_COMPONENT_PORTS), f.x(), ty, here ? p.selectText() : p.text());
+    }
+
+    /** Where bsdinstall's own packages and ports come from: the network's Mirror, when one answers, or none. */
+    private void drawMirror(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
+        int ty = f.y();
+        this.say(g, of(BSD_MIRROR_INTRO), f.x(), ty, p.text());
+        ty += step * 2;
+        final boolean answers = this.flow.mirrorAnswers();
+        final int rows = answers ? 2 : 1;
+        this.listAt(f.x(), ty, f.w(), rows);
+        for (int i = 0; i < rows; i++) {
+            final boolean here = i == this.selection;
+            if (here) {
+                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step - 1, p.select());
+            }
+            final String label = answers && i == 0 ? of(BSD_MIRROR_OPTION) : of(BSD_MIRROR_NONE);
+            this.say(g, label, f.x(), ty, here ? p.selectText() : p.text());
+            ty += step;
+        }
+    }
+
+    /** The two services bsdinstall lets the player start at boot: {@code cron} and {@code sshd}. */
+    private void drawServices(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
+        int ty = f.y();
+        this.say(g, of(BSD_SERVICES_INTRO_1), f.x(), ty, p.text());
+        this.say(g, of(BSD_SERVICES_INTRO_2), f.x(), ty + step, p.text());
+        ty += step * 3;
+        this.listAt(f.x(), ty, f.w(), 2);
+        final String[] labels = {of(BSD_SERVICE_CRON), of(BSD_SERVICE_SSHD)};
+        final boolean[] on = {this.flow.cronEnabled(), this.flow.sshdEnabled()};
+        for (int i = 0; i < labels.length; i++) {
+            final boolean here = i == this.selection;
+            if (here) {
+                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step - 1, p.select());
+            }
+            final String mark = on[i] ? "[*] " : "[ ] ";
+            this.say(g, mark + labels[i], f.x(), ty, here ? p.selectText() : p.text());
             ty += step;
         }
     }
@@ -816,22 +1318,23 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step * 2 - 1, p.select());
             }
             this.say(g, (i + 1) + ") " + (wanted ? "[!]" : "[x]") + " "
-                            + this.flow.style().heading(page, this.flow.systemName()),
+                            + GameText.resolve(this.flow.style().heading(page, this.flow.systemName())),
                     f.x() + 2, ty, here ? p.selectText() : wanted ? p.accent() : p.text());
             this.say(g, this.answerFor(page), f.x() + 22, ty + step, here ? p.selectText() : p.dim());
             ty += step * 2 + 2;
         }
-        this.say(g, "A letter begins the installation once nothing is still wanted.", f.x(), ty + 4, p.dim());
+        this.say(g, of(HUB_FOOT), f.x(), ty + 4, p.dim());
     }
 
     /** What each question on the list has been answered with so far, in a few words. */
     private String answerFor(final InstallerPage page) {
         return switch (page) {
-            case DISK, SETTINGS -> this.flow.target() == null ? "(no disk selected)"
-                    : "(Disk " + this.flow.target().slot() + ", " + this.flow.target().label() + ")";
-            case NAME -> this.flow.computerName().isBlank() ? "(not set)" : "(" + this.flow.computerName() + ")";
-            case DESKTOP -> this.flow.desktop() == null ? "(the terminal only)"
-                    : "(" + this.flow.desktop().name() + ")";
+            case DISK, SETTINGS -> of(this.flow.target() == null ? NO_DISK_SELECTED.text()
+                    : DISK_ANSWER.with(this.flow.target().slot(), this.flow.target().label()));
+            case NAME -> of(this.flow.computerName().isBlank() ? NOT_SET.text()
+                    : ANSWER.with(this.flow.computerName()));
+            case DESKTOP -> of(this.flow.desktop() == null ? TERMINAL_ONLY_ANSWER.text()
+                    : ANSWER.with(this.flow.desktop().name()));
             default -> "";
         };
     }
@@ -854,9 +1357,112 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 }
             }
             case MC_DOS, FRAMES_95, DEBIAN -> this.drawWorkBar(g, f);
+            case FRAMES_7, FRAMES_10 -> this.drawWorkChecklist(g, f);
             case FRAMES_11 -> this.drawWorkSteps(g, f);
+            case BSD_INSTALL -> this.drawWorkBsd(g, f);
+            case SYSTEM_V -> this.drawWorkSysV(g, f);
             default -> this.drawWorkLog(g, f);
         }
+    }
+
+    /**
+     * bsdinstall's own archive extraction: each file's status in its own column, then the line naming what is
+     * running and the gauge that reads the whole copy's progress rather than one file's.
+     */
+    private void drawWorkBsd(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
+        final int running = this.flow.stepAt(this.ticksDone);
+        int ty = f.y();
+        for (int i = 0; i < this.flow.steps().size(); i++) {
+            final InstallerFlow.Step line = this.flow.steps().get(i);
+            final String status = i < running ? of(BSD_EXTRACT_DONE)
+                    : i == running ? of(BSD_EXTRACT_IN_PROGRESS) : of(BSD_EXTRACT_WAITING);
+            final String label = this.fit(GameText.resolve(line.label()),
+                    f.w() - this.width(status) - InstallerLayout.COLUMN_GAP);
+            this.say(g, label, f.x(), ty, i <= running ? p.text() : p.dim());
+            this.sayRight(g, status, f.x() + f.w(), ty, i < running ? p.dim() : i == running ? p.select() : p.dim());
+            ty += step;
+        }
+        ty += step;
+        this.say(g, of(BSD_EXTRACTING), f.x(), ty, p.text());
+        ty += step * 2;
+        this.say(g, of(BSD_OVERALL_PROGRESS), f.x(), ty, p.text());
+        ty += step + 2;
+        final int barH = InstallerLayout.WORK_BAR_H;
+        g.fill(f.x() - 1, ty - 1, f.x() + f.w() + 1, ty + barH + 1, p.dim());
+        g.fill(f.x(), ty, f.x() + f.w(), ty + barH, InstallerFrames.bsdGaugeTrough());
+        final int fillWidth = f.w() * this.flow.permille(this.ticksDone) / 1000;
+        final int fillEdge = f.x() + fillWidth;
+        g.fill(f.x(), ty, fillEdge, ty + barH, InstallerFrames.bsdGaugeFill());
+        final String percentText = (this.flow.permille(this.ticksDone) / 10) + "%";
+        final int textX = f.x() + (f.w() - font.width(percentText)) / 2;
+        /*
+         * Drawn twice: black over the whole gauge first, so it reads on the white trough, then again clipped
+         * to the filled part in white, so the same figure reads on the navy underneath it too.
+         */
+        Draw.text(g, font, percentText, textX, ty + 1, p.text());
+        if (fillEdge > f.x()) {
+            g.enableScissor(f.x(), ty, fillEdge, ty + barH);
+            Draw.text(g, font, percentText, textX, ty + 1, p.selectText());
+            g.disableScissor();
+        }
+    }
+
+    /**
+     * UNIX System V's own copy: the one heading naming the disk, done/copying/waiting beside each part, the
+     * hash bar every real installer of that age drew a percentage into, and the note that it keeps going
+     * unwatched.
+     */
+    private void drawWorkSysV(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
+        final InstallerFlow.Disk disk = this.flow.target();
+        final boolean beside = disk != null && disk.hasSystem() && this.flow.eraseSlot() != disk.slot();
+        int ty = f.y();
+        if (disk != null) {
+            final String heading = beside
+                    ? of(SYSV_INSTALLING_BESIDE.with(this.flow.systemName(), disk.label(), disk.holds()))
+                    : of(SYSV_INSTALLING.with(this.flow.systemName(), disk.label()));
+            this.say(g, this.fit(heading, f.w()), f.x(), ty, p.text());
+        }
+        ty += step * 2;
+        final int running = this.flow.stepAt(this.ticksDone);
+        for (int i = 0; i < this.flow.steps().size(); i++) {
+            final InstallerFlow.Step line = this.flow.steps().get(i);
+            final String status = i < running ? of(DONE) : i == running ? of(SYSV_STATUS_COPYING)
+                    : of(SYSV_STATUS_WAITING);
+            final int statusInk = i < running ? InstallerFrames.systemVDone() : i == running ? p.bright() : p.dim();
+            final String label = this.fit(GameText.resolve(line.label()),
+                    f.w() - this.width(status) - InstallerLayout.LEADER_GAP);
+            this.say(g, label, f.x(), ty, p.text());
+            final int answerAt = f.x() + f.w() - this.width(status);
+            this.leader(g, f.x() + this.width(label) + InstallerLayout.LEADER_GAP,
+                    answerAt - InstallerLayout.LEADER_GAP, ty, p.dim());
+            this.say(g, status, answerAt, ty, statusInk);
+            ty += step;
+        }
+        ty += step;
+        /*
+         * Each cell drawn at a fixed pitch rather than as one string: '#' and '.' are different widths in the
+         * proportional font this console is written in, so a bar built by concatenating them grew wider as it
+         * filled and pushed its own closing bracket and percentage across the glass.
+         */
+        final int cellPitch = Math.max(this.width("#"), this.width("."));
+        final String widestSuffix = "]  100%";
+        final int cells = Math.max(1, (f.w() - this.width("[") - this.width(widestSuffix)) / cellPitch);
+        final int filled = Math.max(0, Math.min(cells, cells * this.flow.permille(this.ticksDone) / 1000));
+        this.say(g, "[", f.x(), ty, p.text());
+        int cellX = f.x() + this.width("[");
+        for (int i = 0; i < cells; i++) {
+            this.say(g, i < filled ? "#" : ".", cellX, ty, p.text());
+            cellX += cellPitch;
+        }
+        this.say(g, "]  " + (this.flow.permille(this.ticksDone) / 10) + "%", cellX, ty, p.text());
+        ty += step * 2;
+        this.say(g, of(SECONDS_LEFT_SENTENCE.with(this.secondsLeft())), f.x(), ty, p.text());
+        ty += step * 2;
+        this.say(g, of(SYSV_MONITOR_NOTE), f.x(), ty, p.dim());
     }
 
     /**
@@ -872,23 +1478,23 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final int percent = this.flow.permille(this.ticksDone) / 10;
         int ty = f.y();
         if (disk != null) {
-            this.say(g, this.fit("Setup is copying " + this.flow.systemName() + " to Disk " + disk.slot()
-                    + ", " + disk.label() + ".", f.w()), f.x(), ty, p.text());
+            this.say(g, this.fit(of(COPYING.with(this.flow.systemName(), disk.slot(), disk.label())), f.w()),
+                    f.x(), ty, p.text());
             ty += step * 2;
         }
         final InstallerFlow.Step running = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
-        this.say(g, running.label(), f.x(), ty, p.bright());
+        this.say(g, GameText.resolve(running.label()), f.x(), ty, p.bright());
         ty += step + 4;
         /* The bar itself, sunk into the page the way those installers drew one. */
-        final int barH = 9;
+        final int barH = InstallerLayout.WORK_BAR_H;
         g.fill(f.x() - 1, ty - 1, f.x() + f.w() + 1, ty + barH + 1, p.dim());
-        g.fill(f.x(), ty, f.x() + f.w(), ty + barH, 0xFF000000);
+        g.fill(f.x(), ty, f.x() + f.w(), ty + barH, PAGE.get().barTrough());
         g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + barH, p.accent());
-        ty += barH + 6;
-        this.say(g, percent + "% complete", f.x(), ty, p.text());
-        this.sayRight(g, "About " + this.secondsLeft() + " seconds left", f.x() + f.w(), ty, p.dim());
+        ty += barH + InstallerLayout.WORK_BAR_GAP;
+        this.say(g, of(COMPLETE.with(percent)), f.x(), ty, p.text());
+        this.sayRight(g, of(SECONDS_LEFT.with(this.secondsLeft())), f.x() + f.w(), ty, p.dim());
         ty += step;
-        this.say(g, "Reading " + this.mediumName() + ". Leave it in.", f.x(), ty, p.dim());
+        this.say(g, of(READING_MEDIUM.with(this.mediumName())), f.x(), ty, p.dim());
     }
 
     /**
@@ -902,19 +1508,20 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         for (int i = 0; i < this.flow.steps().size(); i++) {
             final InstallerFlow.Step line = this.flow.steps().get(i);
             final boolean done = i < running;
-            final String answer = done ? "done" : i == running
+            final String answer = done ? of(DONE) : i == running
                     ? this.flow.stepPermille(this.ticksDone) / 10 + "%" : "";
-            final String label = this.fit(line.label(), f.w() - 60);
+            final String label = this.fit(GameText.resolve(line.label()), f.w() - 60);
             this.say(g, label, f.x(), ty, done || i == running ? p.text() : p.dim());
             if (!answer.isEmpty()) {
                 final int answerAt = f.x() + f.w() - this.width(answer);
-                this.leader(g, f.x() + this.width(label) + 3, answerAt - 3, ty, p.dim());
+                this.leader(g, f.x() + this.width(label) + InstallerLayout.LEADER_GAP,
+                        answerAt - InstallerLayout.LEADER_GAP, ty, p.dim());
                 this.say(g, answer, answerAt, ty, done ? p.dim() : p.accent());
             }
             ty += step;
         }
         ty += step;
-        this.say(g, "About " + this.secondsLeft() + " seconds left. Leave the medium in.", f.x(), ty, p.dim());
+        this.say(g, of(SECONDS_LEFT_MEDIUM.with(this.secondsLeft())), f.x(), ty, p.dim());
     }
 
     /** The steps with a figure against each and one bar under them, as the newest installer shows them. */
@@ -925,31 +1532,74 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         for (int i = 0; i < this.flow.steps().size(); i++) {
             final InstallerFlow.Step line = this.flow.steps().get(i);
             final boolean done = i < running;
-            g.drawString(font, InstallerFrames.clip(font, line.label(), f.w() - 40), f.x(), ty,
-                    done || i == running ? p.text() : p.dim(), false);
+            Draw.text(g, font, InstallerFrames.clip(font, GameText.resolve(line.label()), f.w() - 40), f.x(), ty,
+                    done || i == running ? p.text() : p.dim());
             if (done) {
                 right(g, "100%", f.x() + f.w(), ty, p.dim());
             } else if (i == running) {
                 right(g, this.flow.stepPermille(this.ticksDone) / 10 + "%", f.x() + f.w(), ty, p.accent());
             }
-            ty += ROW;
+            ty += InstallerLayout.ROW;
         }
-        ty += 8;
-        g.fill(f.x(), ty, f.x() + f.w(), ty + 6, 0xFFE3E5EE);
-        g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + 6, p.accent());
+        ty += InstallerLayout.CARD_BAR_GAP;
+        g.fill(f.x(), ty, f.x() + f.w(), ty + InstallerLayout.CARD_BAR_H, PAGE.get().cardTrack());
+        g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000,
+                ty + InstallerLayout.CARD_BAR_H, p.accent());
         /*
          * Two lines rather than one that runs off the card. The sentence is long, the card is not wide, and a
          * time that grows a digit made it longer still.
          */
-        g.drawString(font, "Your PC restarts when setup is finished.", f.x(), ty + 12, p.dim(), false);
-        g.drawString(font, "About " + this.secondsLeft() + " seconds left.", f.x(), ty + 22, p.dim(), false);
+        Draw.text(g, font, of(RESTARTS_WHEN_FINISHED), f.x(), ty + InstallerLayout.CARD_LINE1_DY, p.dim());
+        Draw.text(g, font, of(SECONDS_LEFT_SENTENCE.with(this.secondsLeft())), f.x(),
+                ty + InstallerLayout.CARD_LINE2_DY, p.dim());
+    }
+
+    /**
+     * The checklist of Frames 7 and 10: a tick in green against each step done, the running one in the heading's ink
+     * with its share done beside it, the rest greyed, and the warning that the machine restarts on its own.
+     */
+    private void drawWorkChecklist(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int running = this.flow.stepAt(this.ticksDone);
+        int ty = f.y();
+        for (int i = 0; i < this.flow.steps().size(); i++) {
+            final InstallerFlow.Step line = this.flow.steps().get(i);
+            final boolean done = i < running;
+            final boolean now = i == running;
+            String label = GameText.resolve(line.label());
+            if (now) {
+                label += "  " + this.flow.stepPermille(this.ticksDone) / 10 + "%";
+            }
+            if (done) {
+                tick(g, f.x(), ty + 1, PAGE.get().stepDone());
+            } else if (now) {
+                for (int k = 0; k < 3; k++) {
+                    g.fill(f.x() + 1 + k, ty + 1 + k, f.x() + 2 + k, ty + 6 - k, p.bright());
+                }
+            }
+            Draw.text(g, font, InstallerFrames.clip(font, label, f.w() - InstallerLayout.CHECK_INDENT),
+                    f.x() + InstallerLayout.CHECK_INDENT, ty, done ? PAGE.get().stepDone() : now ? p.bright()
+                            : p.dim());
+            ty += InstallerLayout.ROW;
+        }
+        ty += InstallerLayout.ROW / 2;
+        Draw.text(g, font, InstallerFrames.clip(font, of(FRAME_RESTARTS_SEVERAL), f.w()), f.x(), ty, p.dim());
+    }
+
+    /** A tick five pixels wide, the mark against a step that is done. */
+    private static void tick(final GuiGraphics g, final int x, final int y, final int colour) {
+        g.fill(x, y + 2, x + 1, y + 4, colour);
+        g.fill(x + 1, y + 3, x + 2, y + 5, colour);
+        g.fill(x + 2, y + 2, x + 3, y + 4, colour);
+        g.fill(x + 3, y + 1, x + 4, y + 3, colour);
+        g.fill(x + 4, y, x + 5, y + 2, colour);
     }
 
     /** The graphical phase, whose frame has already listed the steps down its own side. */
     private void drawWorkBeside(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
         final InstallerFlow.Step step = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
-        g.drawString(font, InstallerFrames.clip(font, step.label(), f.w()), f.x(), f.y(), p.text(), false);
+        Draw.text(g, font, InstallerFrames.clip(font, GameText.resolve(step.label()), f.w()), f.x(), f.y(), p.text());
         final InstallerFlow.Disk disk = this.flow.target();
         if (disk != null) {
             /*
@@ -957,9 +1607,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
              * and this line was drawn at full length whatever the room: on a long name it ran out past the
              * edge of the glass and off the monitor.
              */
-            g.drawString(font, InstallerFrames.clip(font,
-                            "Installing on Disk " + disk.slot() + ", " + disk.label(), f.w()),
-                    f.x(), f.y() + 12, p.dim(), false);
+            Draw.text(g, font, InstallerFrames.clip(font, of(INSTALLING_ON.with(disk.slot(), disk.label())), f.w()),
+                    f.x(), f.y() + 12, p.dim());
         }
     }
 
@@ -978,22 +1627,46 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         if (this.state != null) {
             for (final FirmwareStatePayload.Entry entry : this.state.entries()) {
                 if (entry.kind() == FirmwareStatePayload.KIND_MEDIA && !entry.osId().isEmpty()) {
-                    return "the " + entry.device();
+                    return of(THE_DRIVE.with(entry.device()));
                 }
             }
         }
-        return "the installation medium";
+        return of(THE_INSTALLATION_MEDIUM);
     }
 
     private void drawDone(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
         final int step = this.row();
         int ty = f.y();
-        this.say(g, this.flow.systemName() + " is installed.", f.x(), ty, p.bright());
+        if (this.flow.style() == InstallerStyle.BSD_INSTALL) {
+            final InstallerFlow.Disk disk = this.flow.target();
+            this.say(g, of(BSD_DONE_LINE_1.with(this.flow.systemName(), disk == null ? "" : disk.label())),
+                    f.x(), ty, p.bright());
+            this.say(g, of(BSD_DONE_LINE_2), f.x(), ty + step, p.text());
+            return;
+        }
+        if (this.flow.style() == InstallerStyle.SYSTEM_V) {
+            final InstallerFlow.Disk disk = this.flow.target();
+            this.say(g, of(SYSV_DONE_LINE_1.with(this.flow.systemName(), disk == null ? "" : disk.label())),
+                    f.x(), ty, p.bright());
+            ty += step * 2;
+            this.say(g, of(SYSV_DONE_NAME.with(this.flow.computerName())), f.x(), ty, p.text());
+            ty += step;
+            this.say(g, of(SYSV_DONE_SPACE.with(size(this.flow.footprintMb()),
+                    size(disk == null ? this.flow.footprintMb() : disk.sizeMb()))), f.x(), ty, p.text());
+            if (disk != null && disk.hasSystem() && this.flow.eraseSlot() != disk.slot()) {
+                ty += step;
+                this.say(g, of(SYSV_DONE_BOOT_ORDER.with(this.flow.systemName(), disk.holds())), f.x(), ty, p.text());
+            }
+            ty += step * 2;
+            this.say(g, GameText.resolve(this.flow.style().hint(InstallerPage.DONE)), f.x(), ty, p.dim());
+            return;
+        }
+        this.say(g, of(INSTALLED.with(this.flow.systemName())), f.x(), ty, p.bright());
         ty += step * 2;
-        this.say(g, "Take the installation medium out of the drive,", f.x(), ty, p.text());
-        this.say(g, "or the machine starts Setup again.", f.x(), ty + step, p.text());
-        this.say(g, "Restart to start " + this.flow.systemName() + ".", f.x(), ty + step * 3, p.accent());
+        this.say(g, of(TAKE_OUT_FIRST), f.x(), ty, p.text());
+        this.say(g, of(TAKE_OUT_SECOND), f.x(), ty + step, p.text());
+        this.say(g, of(RESTART_TO_START.with(this.flow.systemName())), f.x(), ty + step * 3, p.accent());
     }
 
     private void drawEraseAsk(final GuiGraphics g, final int x, final int y, final InstallerFrames.Frame f) {
@@ -1002,27 +1675,45 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.erasePrompt = InstallerFlow.NO_DISK;
             return;
         }
-        final int bw = 250;
-        final int bh = 74;
-        final int bx = x + (W - bw) / 2;
-        final int by = y + (H - bh) / 2;
-        g.fill(x, y, x + W, y + H, 0x99000000);
-        g.fill(bx, by, bx + bw, by + bh, 0xFFFAFAFE);
-        g.fill(bx, by, bx + bw, by + 1, 0xFFC42B1C);
-        g.fill(bx, by + bh - 1, bx + bw, by + bh, 0xFFC0C4D2);
-        g.fill(bx, by, bx + 1, by + bh, 0xFFC0C4D2);
-        g.fill(bx + bw - 1, by, bx + bw, by + bh, 0xFFC0C4D2);
-        g.drawString(font, "Erase Disk " + disk.slot() + "?", bx + 10, by + 10, 0xFF202434, false);
-        g.drawString(font, (disk.hasSystem() ? disk.holds() + " and every file on" : "Every file on"),
-                bx + 10, by + 26, 0xFF202434, false);
-        g.drawString(font, InstallerFrames.clip(font, disk.label(), bw - 20) + " will be deleted.",
-                bx + 10, by + 36, 0xFF202434, false);
-        g.drawString(font, "This cannot be undone.", bx + 10, by + 46, 0xFF6B7488, false);
-        g.drawString(font, "Y = erase        N = cancel", bx + 10, by + 60, 0xFFC42B1C, false);
+        final int bw = InstallerLayout.ERASE_DIALOG_W;
+        final int bh = InstallerLayout.ERASE_DIALOG_H;
+        final int bx = x + InstallerLayout.eraseDialogX();
+        final int by = y + InstallerLayout.eraseDialogY();
+        final PageColours c = PAGE.get();
+        g.fill(x, y, x + InstallerLayout.WIDTH, y + InstallerLayout.HEIGHT, c.veil());
+        g.fill(bx, by, bx + bw, by + bh, c.dialog());
+        g.fill(bx, by, bx + bw, by + 1, c.alarm());
+        g.fill(bx, by + bh - 1, bx + bw, by + bh, c.dialogEdge());
+        g.fill(bx, by, bx + 1, by + bh, c.dialogEdge());
+        g.fill(bx + bw - 1, by, bx + bw, by + bh, c.dialogEdge());
+        final String ask = this.flow.style() == InstallerStyle.BSD_INSTALL
+                ? of(ERASE_ASK_NAMED.with(disk.label())) : of(ERASE_ASK.with(disk.slot()));
+        Draw.text(g, font, ask, bx + InstallerLayout.ERASE_TEXT_X,
+                by + InstallerLayout.ERASE_LINE1_DY, c.dialogInk());
+        Draw.text(g, font, of(disk.hasSystem() ? AND_EVERY_FILE.with(disk.holds()) : EVERY_FILE.text()),
+                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE2_DY, c.dialogInk());
+        Draw.text(g, font, of(WILL_BE_DELETED.with(
+                InstallerFrames.clip(font, disk.label(), bw - 2 * InstallerLayout.ERASE_TEXT_X))),
+                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE3_DY, c.dialogInk());
+        Draw.text(g, font, of(CANNOT_UNDO), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE4_DY,
+                c.dialogDim());
+        Draw.text(g, font, of(ERASE_KEYS), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE5_DY,
+                c.alarm());
+    }
+
+    /**
+     * What the pages draw inside their frame: the wash over a hovered choice, the rule under the disk table's
+     * heads, the name field and its ink, the trough of a sunken bar and the track of a flat one, and the question
+     * before a disk is erased (the veil behind it, its paper, the alarm along its top and on its keys, its edge,
+     * its words and its quieter line), and the green of a step ticked off in a checklist.
+     */
+    private record PageColours(int hoverWash, int columnRule, int field, int fieldInk, int barTrough, int cardTrack,
+                               int veil, int dialog, int alarm, int dialogEdge, int dialogInk, int dialogDim,
+                               int stepDone) {
     }
 
     private void right(final GuiGraphics g, final String text, final int rightEdge, final int y, final int colour) {
-        g.drawString(font, text, rightEdge - font.width(text), y, colour, false);
+        Draw.text(g, font, text, rightEdge - font.width(text), y, colour);
     }
 
     private static boolean hit(final int[] rect, final double mouseX, final double mouseY) {
@@ -1032,7 +1723,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     /** The system on a disk, or the plain words for one that carries none. */
     private static String holds(final InstallerFlow.Disk disk) {
-        return disk.hasSystem() ? disk.holds() : "no system";
+        return disk.hasSystem() ? disk.holds() : of(NO_SYSTEM);
     }
 
     /** Megabytes as a person reads them: whole gigabytes where they are whole, megabytes otherwise. */

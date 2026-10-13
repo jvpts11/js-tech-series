@@ -1,0 +1,142 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_library.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_library.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_library.table1",
+      "heads": [
+        "jsc.guide.iql_library.table1_head1",
+        "jsc.guide.iql_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Iql.Run(statement)"
+          },
+          {
+            "words": "jsc.guide.iql_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Iql.Query(statement)"
+          },
+          {
+            "words": "jsc.guide.iql_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Iql.Exec(statement)"
+          },
+          {
+            "words": "jsc.guide.iql_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Iql.Exec(statement, values)"
+          },
+          {
+            "words": "jsc.guide.iql_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Iql.RunFile(path)"
+          },
+          {
+            "words": "jsc.guide.iql_library.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_library.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_library.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_library.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_library.table2",
+      "heads": [
+        "jsc.guide.iql_library.table2_head1",
+        "jsc.guide.iql_library.table2_head2",
+        "jsc.guide.iql_library.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "IqlResult"
+          },
+          {
+            "literal": "IqlResult.Ok, IqlResult.Message, IqlResult.Rows"
+          },
+          {
+            "words": "jsc.guide.iql_library.table2_1_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_library.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_library.definition1",
+      "term": "jsc.guide.iql_library.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_library.fix1",
+          "problem": "jsc.guide.iql_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_library.fix2",
+          "problem": "jsc.guide.iql_library.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql_library.fix3",
+          "problem": "jsc.guide.iql_library.problem3"
+        },
+        {
+          "fix": "jsc.guide.iql_library.fix4",
+          "problem": "jsc.guide.iql_library.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql",
+        "jsc:what_iql_is",
+        "jsc:mainframes"
+      ]
+    }
+  ],
+  "id": "jsc:iql_library",
+  "order": 360,
+  "section": "jsc:library_network",
+  "title": "jsc.guide.iql_library.title"
+}

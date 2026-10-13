@@ -9,6 +9,8 @@ package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -22,6 +24,7 @@ import java.util.Map;
  * program's arguments, the length of a text, what a widget shows) is read and written through what the program loaded
  * with, and what the machine keeps is asked of it.
  */
+@TextHolder
 final class FieldAccess {
 
     private final Process process;
@@ -29,6 +32,19 @@ final class FieldAccess {
     private final ProgramImage program;
     private final Map<String, Values.Obj> statics = new LinkedHashMap<>();
     private final Map<String, Values.Obj> view = Collections.unmodifiableMap(this.statics);
+
+    /*
+     * The three below are said the same way wherever a program reaches for a member that is not there, the values the
+     * process answers and the widgets included, so each is declared once here and shared across the package.
+     */
+    /** A type, or a thing of one, that has no member by that name. */
+    static final TextKey HAS_NO = TextKey.of("jsc.vm.field_access.has_no", "%s has no %s");
+    /** A value read from something that is not an object. */
+    static final TextKey NOTHING_TO_READ = TextKey.of("jsc.vm.field_access.nothing_to_read",
+            "there is no %s to read here");
+    /** A value written on something that is not an object. */
+    static final TextKey NOTHING_TO_WRITE_ON = TextKey.of("jsc.vm.field_access.nothing_to_write_on",
+            "there is no object to write %s on");
 
     FieldAccess(final Process process, final Heap heap, final ProgramImage program) {
         this.process = process;
@@ -51,7 +67,7 @@ final class FieldAccess {
             return;
         }
         if (!(target instanceof Values.Obj object)) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "there is no " + name + " to read here");
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOTHING_TO_READ.with(name));
         }
         if (site.own()) {
             frame.push(object.get(name));
@@ -76,7 +92,7 @@ final class FieldAccess {
             return;
         }
         if (!(target instanceof Values.Obj object)) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + name + " on");
+            throw new Halt(Halt.Reason.NO_OBJECT, line, NOTHING_TO_WRITE_ON.with(name));
         }
         object.set(name, value);
     }
@@ -96,7 +112,7 @@ final class FieldAccess {
         final TypeImage type = this.program.type(field.owner().value());
         if (type == null) {
             // A value of the world that the machine the program runs on does not answer.
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, field.owner() + " has no " + field.name());
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, HAS_NO.with(field.owner(), field.name()));
         }
         if (type.kind() == AsmType.Kind.ENUM) {
             frame.push(type.values().get(field.name()));

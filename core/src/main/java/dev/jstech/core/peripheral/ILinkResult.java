@@ -14,6 +14,7 @@ public sealed interface ILinkResult
         permits ILinkResult.Established,
         ILinkResult.AlreadyLinked,
         ILinkResult.OwnerAtCapacity,
+        ILinkResult.HubAtCapacity,
         ILinkResult.NoPathFound,
         ILinkResult.ExceedsMaxLength,
         ILinkResult.CableTypeMismatch {
@@ -33,10 +34,15 @@ public sealed interface ILinkResult
     }
 
     /**
-     * The owner has reached its hardware-bounded maximum number of linked endpoints (motherboard ports, PCIe slots, machine faces).
+     * Every port of the kind the endpoint takes on the owner is in use, or the owner has none of that kind: a
+     * screen with no video output free, say.
      */
-    record OwnerAtCapacity(long ownerPos, int currentCount, int maxAllowed)
+    record OwnerAtCapacity(long ownerPos, PortKind kind, int currentCount, int maxAllowed)
             implements ILinkResult {
+    }
+
+    /** The endpoint's way to its owner runs through a hub, and every port of that hub is in use. */
+    record HubAtCapacity(long hubPos, PortKind kind, int currentCount, int maxAllowed) implements ILinkResult {
     }
 
     /**

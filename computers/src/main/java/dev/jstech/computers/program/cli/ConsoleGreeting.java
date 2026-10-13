@@ -10,6 +10,9 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 import java.util.List;
 
@@ -23,7 +26,46 @@ import java.util.List;
  * its release on a line of its own after the login, and System V says the least of the three: the machine, the
  * login, and where its help is.
  */
+@TextHolder
 public final class ConsoleGreeting {
+
+    /** Who is logged in at a console that is no installer's. */
+    private static final String PLAYER = "player";
+
+    private static final TextKey CONSOLE_LOGIN = TextKey.of("jsc.cli.greeting.console_login", "%s Console Login:");
+    /* The help line of System V, split round the word "help", which is drawn in a colour of its own. */
+    private static final TextKey HELP_BEFORE = TextKey.of("jsc.cli.greeting.help_before", "Type ");
+    private static final TextKey HELP_AFTER =
+            TextKey.of("jsc.cli.greeting.help_after", " for the UNIX system on-line help.");
+    private static final TextKey LIVE_BANNER =
+            TextKey.of("jsc.cli.greeting.live_banner", "%s installation medium (tty1)");
+    private static final TextKey AUTO_LOGIN =
+            TextKey.of("jsc.cli.greeting.auto_login", "%s login: root (automatic login)");
+    private static final TextKey LIVE_HELP =
+            TextKey.of("jsc.cli.greeting.live_help", "Type 'help' for the installation walkthrough.");
+    private static final TextKey LOGIN_AS = TextKey.of("jsc.cli.greeting.login_as", "%s login: %s");
+    private static final TextKey LOGIN = TextKey.of("jsc.cli.greeting.login", "login:");
+    private static final TextKey PASSWORD = TextKey.of("jsc.cli.greeting.password", "Password:");
+    private static final TextKey WELCOME = TextKey.of("jsc.cli.greeting.welcome", "Welcome to %s (%s)");
+    private static final TextKey WELCOME_PLAYER =
+            TextKey.of("jsc.cli.greeting.welcome_player", "Welcome to %s, %s.");
+    /*
+     * FreeBSD has no help builtin, so its welcome names the three ways a newcomer finds a command instead,
+     * each label lined up on a column past the longest label any of the game's languages needs (the
+     * Portuguese label runs longer than every English one), leaving room for the gap before the command
+     * rather than falling back to a single cramped space.
+     */
+    private static final int DISCOVERY_COLUMN = 38;
+    private static final TextKey FIND_A_COMMAND_LABEL =
+            TextKey.of("jsc.cli.greeting.find_a_command_label", "Find a command by what it does:");
+    private static final TextKey LEARN_THE_SYSTEM_LABEL =
+            TextKey.of("jsc.cli.greeting.learn_the_system_label", "Learn the system:");
+    private static final TextKey SEE_EVERY_COMMAND_LABEL =
+            TextKey.of("jsc.cli.greeting.see_every_command_label", "See every command here:");
+    private static final TextKey APROPOS_WORD = TextKey.of("jsc.cli.greeting.apropos_word", " <word>");
+    private static final TextKey TAB_TWICE = TextKey.of("jsc.cli.greeting.tab_twice", ", twice");
+    private static final TextKey FREEBSD_TIP =
+            TextKey.of("jsc.cli.greeting.freebsd_tip", "Tip: pkg info lists every package installed here.");
 
     private ConsoleGreeting() {
     }
@@ -45,20 +87,20 @@ public final class ConsoleGreeting {
     /** System V: the machine's name before the login on one line, and where its own help is on the next. */
     private static List<CliLine> systemV(final ConsoleIdentity console) {
         return List.of(
-                CliLine.of(new CliSpan(console.hostname() + " Console Login: ", CliStyle.PLAIN),
-                        new CliSpan("player", CliStyle.BRIGHT)),
-                CliLine.of(new CliSpan("Type ", CliStyle.PLAIN), new CliSpan("help", CliStyle.CYAN),
-                        new CliSpan(" for the UNIX system on-line help.", CliStyle.PLAIN)),
+                CliLine.of(new CliSpan(CONSOLE_LOGIN.with(console.hostname()), CliStyle.PLAIN),
+                        new CliSpan(" ", CliStyle.PLAIN), new CliSpan(PLAYER, CliStyle.BRIGHT)),
+                CliLine.of(new CliSpan(HELP_BEFORE.text(), CliStyle.PLAIN), new CliSpan("help", CliStyle.CYAN),
+                        new CliSpan(HELP_AFTER.text(), CliStyle.PLAIN)),
                 CliLine.plain(""));
     }
 
     /** An installer medium: its own banner, and root already logged in, as such a medium comes up. */
     private static List<CliLine> live(final ConsoleIdentity console) {
         return List.of(
-                new CliLine(console.osLabel() + " installation medium (tty1)", CliStyle.ACCENT),
+                new CliLine(LIVE_BANNER.with(console.osLabel()), CliStyle.ACCENT),
                 CliLine.plain(""),
-                CliLine.plain(console.hostname() + " login: root (automatic login)"),
-                new CliLine("Type 'help' for the installation walkthrough.", CliStyle.DIM),
+                CliLine.plain(AUTO_LOGIN.with(console.hostname())),
+                new CliLine(LIVE_HELP.text(), CliStyle.DIM),
                 CliLine.plain(""));
     }
 
@@ -67,10 +109,10 @@ public final class ConsoleGreeting {
                 new CliLine(console.osLabel() + " " + console.hostname() + " "
                         + KernelNames.terminal(Platform.LINUX), CliStyle.ACCENT),
                 CliLine.plain(""),
-                CliLine.plain(console.hostname() + " login: player"),
-                CliLine.plain("Password:"),
-                new CliLine("Welcome to " + console.osLabel() + " ("
-                        + KernelNames.kernel(Platform.LINUX, console.bits()) + ")", CliStyle.DIM),
+                CliLine.plain(LOGIN_AS.with(console.hostname(), PLAYER)),
+                CliLine.plain(PASSWORD.text()),
+                new CliLine(WELCOME.with(console.osLabel(), KernelNames.kernel(Platform.LINUX, console.bits())),
+                        CliStyle.DIM),
                 CliLine.plain(""));
     }
 
@@ -79,10 +121,21 @@ public final class ConsoleGreeting {
                 CliLine.plain("FreeBSD/" + KernelNames.architecture(Platform.FREEBSD, console.bits())
                         + " (" + console.hostname() + ") (" + KernelNames.terminal(Platform.FREEBSD) + ")"),
                 CliLine.plain(""),
-                CliLine.of(new CliSpan("login: ", CliStyle.PLAIN), new CliSpan("player", CliStyle.BRIGHT)),
+                CliLine.of(new CliSpan(LOGIN.text(), CliStyle.PLAIN), new CliSpan(" ", CliStyle.PLAIN),
+                        new CliSpan(PLAYER, CliStyle.BRIGHT)),
                 CliLine.plain("FreeBSD " + KernelNames.FREEBSD_RELEASE + " (GENERIC)"),
                 CliLine.plain(""),
-                new CliLine("Welcome to FreeBSD, player.", CliStyle.BRIGHT),
+                new CliLine(WELCOME_PLAYER.with("FreeBSD", PLAYER), CliStyle.BRIGHT),
+                CliLine.of(CliSpan.pad(2), new CliSpan(FIND_A_COMMAND_LABEL.text(), CliStyle.PLAIN),
+                        CliSpan.pad(DISCOVERY_COLUMN), new CliSpan("apropos", CliStyle.CYAN),
+                        new CliSpan(APROPOS_WORD.text(), CliStyle.PLAIN)),
+                CliLine.of(CliSpan.pad(2), new CliSpan(LEARN_THE_SYSTEM_LABEL.text(), CliStyle.PLAIN),
+                        CliSpan.pad(DISCOVERY_COLUMN), new CliSpan(Text.literal("man intro"), CliStyle.CYAN)),
+                CliLine.of(CliSpan.pad(2), new CliSpan(SEE_EVERY_COMMAND_LABEL.text(), CliStyle.PLAIN),
+                        CliSpan.pad(DISCOVERY_COLUMN), new CliSpan("Tab", CliStyle.CYAN),
+                        new CliSpan(TAB_TWICE.text(), CliStyle.PLAIN)),
+                CliLine.plain(""),
+                new CliLine(FREEBSD_TIP.text(), CliStyle.DIM),
                 CliLine.plain(""));
     }
 }

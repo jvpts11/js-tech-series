@@ -165,4 +165,33 @@ class MultiblockPatternTest {
         assertEquals('C', p.charAt(1, 0, 0));
         assertEquals('C', p.charAt(0, 0, 1));
     }
+
+    @Test
+    void port_needsTheLetterToBeFittedToo() {
+        var builder = MultiblockPattern.builder("hatch")
+                .layer("#H")
+                .port('H', PortKind.FLUID_INPUT);
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Test
+    void port_isKeptByItsLetter() {
+        var p = MultiblockPattern.builder("hatch")
+                .layer("#H")
+                .where('H', BlockMatch.blocks("jsc:hatch"))
+                .port('H', PortKind.ENERGY_INPUT)
+                .build();
+        assertEquals(PortKind.ENERGY_INPUT, p.ports().get('H'));
+        assertTrue(p.ports().get('#') == null, "the controller is never a port");
+    }
+
+    @Test
+    void rows_giveTheLayerBackAsWritten() {
+        var p = MultiblockPattern.builder("two")
+                .layer("#C", "CC")
+                .where('C', IBlockMatcher.exact("jsc:casing"))
+                .build();
+        assertEquals("#C", p.rows(0)[0]);
+        assertEquals("CC", p.rows(0)[1]);
+    }
 }

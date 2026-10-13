@@ -1,0 +1,184 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_queries.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.studio_queries.step1",
+        "jsc.guide.studio_queries.step2",
+        "jsc.guide.studio_queries.step3",
+        "jsc.guide.studio_queries.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_queries.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_queries.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_queries.table1",
+      "heads": [
+        "jsc.guide.studio_queries.table1_head1",
+        "jsc.guide.studio_queries.table1_head2",
+        "jsc.guide.studio_queries.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.studio_queries.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.studio_queries.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.studio_queries.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_queries.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.studio_queries.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.studio_queries.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_queries.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.studio_queries.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.studio_queries.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_queries.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.studio_queries.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.studio_queries.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_queries.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_queries.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_queries.heading6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_queries.heading7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_queries.text10"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.studio_queries.fix1",
+          "problem": "jsc.guide.studio_queries.problem1"
+        },
+        {
+          "fix": "jsc.guide.studio_queries.fix2",
+          "problem": "jsc.guide.studio_queries.problem2"
+        },
+        {
+          "fix": "jsc.guide.studio_queries.fix3",
+          "problem": "jsc.guide.studio_queries.problem3"
+        },
+        {
+          "fix": "jsc.guide.studio_queries.fix4",
+          "problem": "jsc.guide.studio_queries.problem4"
+        },
+        {
+          "fix": "jsc.guide.studio_queries.fix5",
+          "problem": "jsc.guide.studio_queries.problem5"
+        },
+        {
+          "fix": "jsc.guide.studio_queries.fix6",
+          "problem": "jsc.guide.studio_queries.problem6"
+        },
+        {
+          "fix": "jsc.guide.studio_queries.fix7",
+          "problem": "jsc.guide.studio_queries.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:query_and_select",
+        "jsc:iql_limits"
+      ]
+    }
+  ],
+  "id": "jsc:studio_queries",
+  "order": 317,
+  "section": "jsc:isms_studio",
+  "title": "jsc.guide.studio_queries.title"
+}

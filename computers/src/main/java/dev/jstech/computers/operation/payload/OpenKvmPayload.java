@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.gui.layout.KvmChannelLayout;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -23,11 +26,15 @@ import java.util.List;
 public record OpenKvmPayload(BlockPos rackPos, BlockPos monitorPos, int activeChannel,
                              List<Channel> channels) implements CustomPacketPayload {
 
-    /** One addressable machine: its rack row, its name, and whether it is running. */
-    public record Channel(int slot, String name, boolean running) {
+    /**
+     * One addressable machine: its rack row, its name, and whether it is running. The name is the one the player gave
+     * the machine, or the bay's in the language of whoever reads it, which is why it travels as text and not words.
+     */
+    public record Channel(int slot, Text name, boolean running) {
     }
 
-    public static final int MAX_CHANNELS = 8;
+    /** As many channels as the bar carries; the KVM Switch screen's own layout is the one source for this cap. */
+    public static final int MAX_CHANNELS = KvmChannelLayout.MOST_CHANNELS;
 
     public static final CustomPacketPayload.Type<OpenKvmPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "open_kvm"));
@@ -35,7 +42,7 @@ public record OpenKvmPayload(BlockPos rackPos, BlockPos monitorPos, int activeCh
     private static final StreamCodec<RegistryFriendlyByteBuf, Channel> CHANNEL_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT, Channel::slot,
-                    ByteBufCodecs.STRING_UTF8, Channel::name,
+                    TextCodecs.STREAM_CODEC, Channel::name,
                     ByteBufCodecs.BOOL, Channel::running,
                     Channel::new);
 

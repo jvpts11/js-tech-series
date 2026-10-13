@@ -1,0 +1,473 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text2"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.supercomputers.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              6,
+              4,
+              13,
+              16,
+              14,
+              16
+            ],
+            "x": 13,
+            "y": 2,
+            "z": 16
+          },
+          "text": "jsc.guide.supercomputers.balloon1"
+        },
+        {
+          "number": 2,
+          "part": {
+            "x": 14,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.supercomputers.balloon2"
+        },
+        {
+          "detail": "jsc.guide.supercomputers.balloon3_detail",
+          "number": 3,
+          "part": {
+            "x": 12,
+            "y": 2,
+            "z": 14
+          },
+          "text": "jsc.guide.supercomputers.balloon3"
+        },
+        {
+          "detail": "jsc.guide.supercomputers.balloon4_detail",
+          "number": 4,
+          "part": {
+            "x": 16,
+            "y": 0,
+            "z": 14
+          },
+          "text": "jsc.guide.supercomputers.balloon4"
+        },
+        {
+          "number": 5,
+          "part": {
+            "x": 17,
+            "y": 0,
+            "z": 14
+          },
+          "text": "jsc.guide.supercomputers.balloon5"
+        },
+        {
+          "number": 6,
+          "part": {
+            "x": 18,
+            "y": 0,
+            "z": 14
+          },
+          "text": "jsc.guide.supercomputers.balloon6"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Units:[B;6b,0b,6b,0b,6b,0b,6b,0b],DisplayEra:3,BayPowerOff:0,ServicePanelOff:1b}",
+          "state": "jsc:supercomputer_rack[facing=south]",
+          "x": 14,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=true]",
+          "x": 14,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=true]",
+          "x": 13,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=true]",
+          "x": 13,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=true]",
+          "x": 14,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=true]",
+          "x": 14,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=true]",
+          "x": 13,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=true]",
+          "x": 13,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=true]",
+          "x": 14,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=true]",
+          "x": 14,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=true]",
+          "x": 13,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=true]",
+          "x": 13,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "data": "{Units:[B;6b,0b,6b,0b,6b,0b,6b,0b],DisplayEra:3,BayPowerOff:0,ServicePanelOff:1b}",
+          "state": "jsc:supercomputer_rack[facing=south]",
+          "x": 11,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=true]",
+          "x": 11,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=true]",
+          "x": 10,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=true]",
+          "x": 10,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=true]",
+          "x": 11,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=true]",
+          "x": 11,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=true]",
+          "x": 10,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=true]",
+          "x": 10,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=true]",
+          "x": 11,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=true]",
+          "x": 11,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=true]",
+          "x": 10,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=true]",
+          "x": 10,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:hpc_cable\"}],Links:[I;0,0,0,0,2088,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 10,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:hpc_cable\"}],Links:[I;0,0,0,0,2104,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 11,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:hpc_cable\"}],Links:[I;0,0,0,0,48,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 12,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:hpc_cable\"}],Links:[I;0,0,0,0,2104,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 13,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:hpc_cable\"}],Links:[I;0,0,0,0,2104,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 14,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:hpc_cable\"}],Links:[I;0,0,0,0,17,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 2,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:hpc_cable\"}],Links:[I;0,0,0,0,3,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 1,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:hpc_cable\"}],Links:[I;0,0,0,0,8226,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "state": "jsc:hbw_interface",
+          "x": 16,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:cx4_cable\"}],Links:[I;0,12336,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 17,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "state": "jsc:standard_router",
+          "x": 18,
+          "y": 0,
+          "z": 14
+        }
+      ],
+      "caption": "jsc.guide.supercomputers.figure1",
+      "height": 130,
+      "view": {
+        "zoom": 1.35
+      }
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.supercomputers.definition1",
+      "term": "jsc.guide.supercomputers.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.supercomputers.table1",
+      "heads": [
+        "jsc.guide.supercomputers.table1_head1",
+        "jsc.guide.supercomputers.table1_head2",
+        "jsc.guide.supercomputers.table1_head3",
+        "jsc.guide.supercomputers.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.supercomputers.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_4_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.supercomputers.table2",
+      "heads": [
+        "jsc.guide.supercomputers.table2_head1",
+        "jsc.guide.supercomputers.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.supercomputers.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.supercomputers.fix1",
+          "problem": "jsc.guide.supercomputers.problem1"
+        },
+        {
+          "fix": "jsc.guide.supercomputers.fix2",
+          "problem": "jsc.guide.supercomputers.problem2"
+        },
+        {
+          "fix": "jsc.guide.supercomputers.fix3",
+          "problem": "jsc.guide.supercomputers.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:hbw_interface"
+      ]
+    }
+  ],
+  "id": "jsc:supercomputers",
+  "order": 35,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.supercomputers.title"
+}

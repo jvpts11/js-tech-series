@@ -1,0 +1,7 @@
+{
+  "chapter": "jsindustrial",
+  "icon": "jsindustrial:coal_generator",
+  "id": "jsindustrial:power",
+  "order": 2,
+  "title": "jsindustrial.guide.section.power"
+}

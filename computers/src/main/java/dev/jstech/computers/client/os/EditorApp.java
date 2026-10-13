@@ -9,11 +9,16 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.fs.FileOpeners;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextArea;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -46,6 +51,8 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int MARGIN = 3;
     private static final int MAX_TABS = 8;
     private static final String UNTITLED = "untitled.txt";
+    /** The editor's own id, whose name on the desktop its printouts say they came from. */
+    private static final String PROGRAM = "jsc:editor";
 
     /** One file open in the window: what it is called, what is in it, and whether it has been changed. */
     private static final class Tab {
@@ -67,9 +74,14 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     private final FileDialog dialog;
     private final Panel root = new Panel();
     private final TextArea body = new TextArea();
+    /** The size shown in the status bar, kept until the text changes so it is not re-encoded every frame. */
+    private String bytesLabel = "";
+    private long bytesRevision = -1;
     private final Button openButton;
     private final Button saveButton;
     private final Button saveAsButton;
+    private final Button printButton;
+    private final PrintDialog printDialog;
     private final Button findButton;
     private final Button gotoButton;
     private final EditorFindBar find;
@@ -84,7 +96,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     private Tab closing;
 
     private OsSkin skin = OsSkin.fallback();
-    private String status = "Ctrl+S to save";
+    private String status = GameText.resolve(EditorTexts.CTRL_S_TO_SAVE);
     /** Where the tab strip was last drawn, so a click on it reads the same numbers. */
     private int tabStripY;
     private int tabStripX;
@@ -94,11 +106,15 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         this.host = host;
         this.dialog = new FileDialog(host, this);
         this.find = new EditorFindBar(body::document);
-        openButton = root.add(new Button("Open", this::chooseOpen));
-        saveButton = root.add(new Button("Save", this::save));
-        saveAsButton = root.add(new Button("Save As", this::chooseSaveAs));
-        findButton = root.add(new Button("Find", () -> toggleFind(EditorFindBar.Mode.FIND)));
-        gotoButton = root.add(new Button("Go to", () -> toggleFind(EditorFindBar.Mode.GO_TO_LINE)));
+        openButton = root.add(new Button(GameText.resolve(EditorTexts.OPEN), this::chooseOpen));
+        saveButton = root.add(new Button(GameText.resolve(EditorTexts.SAVE), this::save));
+        saveAsButton = root.add(new Button(GameText.resolve(EditorTexts.SAVE_AS), this::chooseSaveAs));
+        this.printDialog = new PrintDialog(host, this);
+        printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::print));
+        findButton = root.add(new Button(GameText.resolve(EditorTexts.FIND),
+                () -> toggleFind(EditorFindBar.Mode.FIND)));
+        gotoButton = root.add(new Button(GameText.resolve(EditorTexts.GO_TO),
+                () -> toggleFind(EditorFindBar.Mode.GO_TO_LINE)));
         root.add(body);
         body.setOnEdit(this::edited);
         tabs.add(new Tab("", UNTITLED));
@@ -126,7 +142,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         final Tab tab = current();
         body.setText(tab.text);
         body.document().setCursor(Math.min(tab.caretLine, Math.max(0, body.document().lineCount() - 1)), 0);
-        this.status = tab.path.isEmpty() ? "New file" : tab.path;
+        this.status = tab.path.isEmpty() ? GameText.resolve(EditorTexts.NEW_FILE) : tab.path;
         root.focus(body);
     }
 
@@ -140,7 +156,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     /** Opens another page; answers false when there is no room for one, so a caller can stop. */
     private boolean newTab(final String path, final String name) {
         if (tabs.size() >= MAX_TABS) {
-            this.status = "Only " + MAX_TABS + " files at once";
+            this.status = GameText.resolve(EditorTexts.ONLY_SO_MANY.with(MAX_TABS));
             return false;
         }
         stash();
@@ -162,7 +178,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         final Tab asked = tabs.get(index);
         if (asked.dirty && closing != asked) {
             this.closing = asked;
-            this.status = "Unsaved changes in " + asked.name + " - close again to discard";
+            this.status = GameText.resolve(EditorTexts.UNSAVED.with(asked.name));
             return;
         }
         this.closing = null;
@@ -197,8 +213,13 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /* Opening and saving */
 
+    /* The page being read, to the machine's printer, by way of the system's Print window. */
+    private void print() {
+        printDialog.show(PrintDialog.Document.text(current().name, ActiveDesktop.windowName(PROGRAM), body.text()));
+    }
+
     private void chooseOpen() {
-        dialog.openFile("Open", "", FileDialog.Filter.sources(), this::openFile);
+        dialog.openFile(EditorTexts.OPEN.text(), "", FileDialog.Filter.sources(), this::openFile);
     }
 
     @Override
@@ -236,13 +257,13 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
              */
             return;
         }
-        this.status = exists ? "Opened " + leaf(path) : "New file " + leaf(path);
+        this.status = GameText.resolve((exists ? EditorTexts.OPENED : EditorTexts.NEW_FILE_NAMED).with(leaf(path)));
         root.focus(body);
     }
 
     private void chooseSaveAs() {
         final Tab tab = current();
-        dialog.saveAs("Save As", "", tab.name.isEmpty() ? UNTITLED : tab.name,
+        dialog.saveAs(EditorTexts.SAVE_AS.text(), "", tab.name.isEmpty() ? UNTITLED : tab.name,
                 FileDialog.Filter.sources(), this::saveAs);
     }
 
@@ -258,15 +279,16 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void save() {
         final Tab tab = current();
-        final String target = tab.path.isEmpty() ? tab.name.trim() : tab.path;
-        if (target.isEmpty()) {
-            this.status = "Save As first";
+        // A page never saved has no file yet: Save asks where and under what name, as Save As does.
+        if (tab.path.isEmpty()) {
+            chooseSaveAs();
             return;
         }
+        final String target = tab.path;
         // A .dat is a read-only projection of stored items; it can never be created or written by hand.
-        if (target.toLowerCase(Locale.ROOT).endsWith(".dat")) {
-            this.status = "Cannot save a .dat file";
-            DesktopScreen.showDatLockedError();
+        if (FileType.of(FileOpeners.extensionOf(target)) == FileType.DAT) {
+            this.status = GameText.resolve(EditorTexts.CANNOT_SAVE_DAT);
+            ActiveDesktop.showDatLockedError();
             return;
         }
         final String text = body.text();
@@ -275,11 +297,10 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
          * is handed more, which would take the packet down instead of telling the player anything.
          */
         if (text.length() > SaveFilePayload.MAX_CONTENT) {
-            this.status = "Too long to save: " + text.length() + " of "
-                    + SaveFilePayload.MAX_CONTENT + " characters";
+            this.status = GameText.resolve(EditorTexts.TOO_LONG.with(text.length(), SaveFilePayload.MAX_CONTENT));
             return;
         }
-        this.status = "Saving...";
+        this.status = GameText.resolve(EditorTexts.SAVING);
         /*
          * Which page is being saved is held, not looked up again when the answer comes back: a player who
          * moves to another tab while the machine is writing would otherwise have that one marked saved and
@@ -299,12 +320,12 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
      */
     @Override
     public void onContentTooLarge(final String path) {
-        this.status = leaf(path) + " is too large to open here";
+        this.status = GameText.resolve(EditorTexts.TOO_LARGE.with(leaf(path)));
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
-        this.status = message;
+    public void onSaved(final boolean ok, final Text message) {
+        this.status = GameText.resolve(message);
         if (ok && saving != null && tabs.contains(saving)) {
             saving.dirty = false;
         }
@@ -330,7 +351,12 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public String title() {
         final Tab tab = current();
-        return (tab.dirty ? "*" : "") + tab.name + " - Editor";
+        return GameText.resolve(EditorAppTexts.TITLE.with((tab.dirty ? "*" : "") + tab.name));
+    }
+
+    /** The Print window this editor opens over itself. */
+    public PrintDialog printDialog() {
+        return printDialog;
     }
 
     /** The text in the buffer, which is what the player is reading or writing. */
@@ -341,6 +367,11 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     /** The file the buffer holds, or empty for one not saved yet. */
     public String openFile() {
         return current().path;
+    }
+
+    /** The system's file window this editor opens over itself to open a file or save one under a name. */
+    public FileDialog fileDialog() {
+        return dialog;
     }
 
     @Override
@@ -390,11 +421,12 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         int bx = x + MARGIN;
-        bx = place(openButton, font, "Open", bx, y);
-        bx = place(saveButton, font, "Save", bx, y);
-        bx = place(saveAsButton, font, "Save As", bx, y);
-        bx = place(findButton, font, "Find", bx, y);
-        final int gotoW = font.width("Go to") + 8;
+        bx = place(openButton, font, GameText.resolve(EditorTexts.OPEN), bx, y);
+        bx = place(saveButton, font, GameText.resolve(EditorTexts.SAVE), bx, y);
+        bx = place(saveAsButton, font, GameText.resolve(EditorTexts.SAVE_AS), bx, y);
+        bx = place(printButton, font, GameText.resolve(PrintTexts.PRINT), bx, y);
+        bx = place(findButton, font, GameText.resolve(EditorTexts.FIND), bx, y);
+        final int gotoW = font.width(GameText.resolve(EditorTexts.GO_TO)) + 8;
         // Pinned right, never back over the button before it; a narrow window clips rather than overlaps.
         gotoButton.setBounds(Math.max(bx, x + width - MARGIN - gotoW), y + 1, gotoW, 12);
         findButton.setPrimary(find.isOpen() && find.mode() == EditorFindBar.Mode.FIND);
@@ -424,10 +456,10 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
             final boolean on = i == active;
             g.fill(bx, y + 1, bx + w, y + TAB_H - (on ? 0 : 1), on ? skin.fieldBg() : skin.listHover());
             g.fill(bx, y + 1, bx + w, y + 2, on ? skin.accent() : skin.edge());
-            g.drawString(font, font.plainSubstrByWidth(label, w - 14), bx + 4, y + 3,
-                    on ? skin.text() : skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(label, w - 14), bx + 4, y + 3,
+                    on ? skin.text() : skin.dim());
             // The cross that closes it, drawn small so it is not mistaken for part of the name.
-            g.drawString(font, "x", bx + w - 7, y + 3, skin.dim(), false);
+            Draw.text(g, font, "x", bx + w - 7, y + 3, skin.dim());
             bx += w + 2;
             tabEnds.add(bx);
         }
@@ -449,8 +481,8 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         final int caret = doc.cursorLine();
         for (int i = 0; i < body.visibleLines() && first + i < doc.lineCount(); i++) {
             final String number = String.valueOf(first + i + 1);
-            g.drawString(font, number, x + gutter - 3 - font.width(number),
-                    body.textTop() + i * pitch + 1, first + i == caret ? skin.text() : skin.dim(), false);
+            Draw.text(g, font, number, x + gutter - 3 - font.width(number),
+                    body.textTop() + i * pitch + 1, first + i == caret ? skin.text() : skin.dim());
         }
     }
 
@@ -462,21 +494,32 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
         final TextDocument doc = body.document();
-        final String left = "Ln " + (doc.cursorLine() + 1) + ", Col " + (doc.cursorCol() + 1);
-        g.drawString(font, left, x + MARGIN, y + 1, skin.text(), false);
-        final String right = doc.lineCount() + (doc.lineCount() == 1 ? " line   " : " lines   ")
-                + bytes(body.text());
-        g.drawString(font, right, x + width - MARGIN - font.width(right), y + 1, skin.dim(), false);
+        final String left = GameText.resolve(EditorTexts.LINE_AND_COLUMN.with(doc.cursorLine() + 1,
+                doc.cursorCol() + 1));
+        Draw.text(g, font, left, x + MARGIN, y + 1, skin.text());
+        final String right = GameText.resolve(
+                (doc.lineCount() == 1 ? EditorTexts.ONE_LINE : EditorTexts.LINES).with(doc.lineCount()))
+                + "   " + bytesLabel(doc);
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 1, skin.dim());
         final int room = width - MARGIN * 2 - font.width(left) - font.width(right) - 12;
         if (room > 20) {
-            g.drawString(font, font.plainSubstrByWidth(status, room),
-                    x + MARGIN + font.width(left) + 6, y + 1, skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(status, room),
+                    x + MARGIN + font.width(left) + 6, y + 1, skin.dim());
         }
+    }
+
+    private String bytesLabel(final TextDocument doc) {
+        if (this.bytesRevision != doc.revision()) {
+            this.bytesLabel = bytes(body.text());
+            this.bytesRevision = doc.revision();
+        }
+        return this.bytesLabel;
     }
 
     private static String bytes(final String text) {
         final int size = text.getBytes(StandardCharsets.UTF_8).length;
-        return size < 1024 ? size + " B" : String.format(Locale.ROOT, "%.1f KB", size / 1024.0);
+        return GameText.resolve(size < 1024 ? ArchiverTexts.BYTES.with(size)
+                : ArchiverTexts.KILOBYTES.with(String.format(Locale.ROOT, "%.1f", size / 1024.0)));
     }
 
     private static String leaf(final String path) {
@@ -568,6 +611,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         switch (key) {
             case GLFW.GLFW_KEY_S -> save();
             case GLFW.GLFW_KEY_O -> chooseOpen();
+            case GLFW.GLFW_KEY_P -> print();
             case GLFW.GLFW_KEY_F -> toggleFind(EditorFindBar.Mode.FIND);
             case GLFW.GLFW_KEY_G -> toggleFind(EditorFindBar.Mode.GO_TO_LINE);
             case GLFW.GLFW_KEY_N -> newTab("", UNTITLED);

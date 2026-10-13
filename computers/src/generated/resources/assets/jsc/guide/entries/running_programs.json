@@ -1,0 +1,350 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.running_programs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.running_programs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.running_programs.table1",
+      "heads": [
+        "jsc.guide.running_programs.table1_head1",
+        "jsc.guide.running_programs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "sigma run <file>"
+          },
+          {
+            "words": "jsc.guide.running_programs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "sigma run <file> --heap 16M"
+          },
+          {
+            "words": "jsc.guide.running_programs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "sigma ps"
+          },
+          {
+            "words": "jsc.guide.running_programs.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "sigma stop <id>"
+          },
+          {
+            "words": "jsc.guide.running_programs.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.running_programs.step1",
+        "jsc.guide.running_programs.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.running_programs.table2",
+      "heads": [
+        "jsc.guide.running_programs.table2_head1",
+        "jsc.guide.running_programs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.running_programs.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.running_programs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.running_programs.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.running_programs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.running_programs.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.running_programs.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.running_programs.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.running_programs.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.running_programs.table3",
+      "heads": [
+        "jsc.guide.running_programs.table3_head1",
+        "jsc.guide.running_programs.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "input"
+          },
+          {
+            "words": "jsc.guide.running_programs.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "running"
+          },
+          {
+            "words": "jsc.guide.running_programs.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "parked"
+          },
+          {
+            "words": "jsc.guide.running_programs.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "finished"
+          },
+          {
+            "words": "jsc.guide.running_programs.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "halted"
+          },
+          {
+            "words": "jsc.guide.running_programs.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.running_programs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.running_programs.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text13"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.running_programs.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text14"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text15"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text16"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.running_programs.table4",
+      "heads": [
+        "jsc.guide.running_programs.table4_head1",
+        "jsc.guide.running_programs.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Thread.Start(action)"
+          },
+          {
+            "words": "jsc.guide.running_programs.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Sleep(ticks)"
+          },
+          {
+            "words": "jsc.guide.running_programs.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Yield()"
+          },
+          {
+            "words": "jsc.guide.running_programs.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Join()"
+          },
+          {
+            "words": "jsc.guide.running_programs.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Join(ticks)"
+          },
+          {
+            "words": "jsc.guide.running_programs.table4_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Stop()"
+          },
+          {
+            "words": "jsc.guide.running_programs.table4_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Id"
+          },
+          {
+            "words": "jsc.guide.running_programs.table4_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.running_programs.text17"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.running_programs.definition1",
+      "term": "jsc.guide.running_programs.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.running_programs.definition2",
+      "term": "jsc.guide.running_programs.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.running_programs.definition3",
+      "term": "jsc.guide.running_programs.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.running_programs.fix1",
+          "problem": "jsc.guide.running_programs.problem1"
+        },
+        {
+          "fix": "jsc.guide.running_programs.fix2",
+          "problem": "jsc.guide.running_programs.problem2"
+        },
+        {
+          "fix": "jsc.guide.running_programs.fix3",
+          "problem": "jsc.guide.running_programs.problem3"
+        },
+        {
+          "fix": "jsc.guide.running_programs.fix4",
+          "problem": "jsc.guide.running_programs.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_run",
+        "jsc:sigma_entry_points"
+      ]
+    }
+  ],
+  "id": "jsc:running_programs",
+  "order": 374,
+  "section": "jsc:running",
+  "title": "jsc.guide.running_programs.title"
+}

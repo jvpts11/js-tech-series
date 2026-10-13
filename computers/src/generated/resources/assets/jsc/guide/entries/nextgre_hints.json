@@ -1,0 +1,140 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_hints.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_hints.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.nextgre_hints.definition1",
+      "term": "jsc.guide.nextgre_hints.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.nextgre_hints.table1",
+      "heads": [
+        "jsc.guide.nextgre_hints.table1_head1",
+        "jsc.guide.nextgre_hints.table1_head2",
+        "jsc.guide.nextgre_hints.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "PREFER SOURCE 'server'"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "AVOID SOURCE 'server'"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "MAX PARALLEL n"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "PREFER MACHINE"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "PREFER BENCH"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.nextgre_hints.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_hints.text3"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CRAFT 64 iron_ingot PREFER SOURCE 'Storage B' MAX PARALLEL 2"
+      ],
+      "name": "hints_example.iql"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_hints.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_hints.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_hints.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.nextgre_hints.fix1",
+          "problem": "jsc.guide.nextgre_hints.problem1"
+        },
+        {
+          "fix": "jsc.guide.nextgre_hints.fix2",
+          "problem": "jsc.guide.nextgre_hints.problem2"
+        },
+        {
+          "fix": "jsc.guide.nextgre_hints.fix3",
+          "problem": "jsc.guide.nextgre_hints.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:nextgre_iql",
+        "jsc:engine_problems"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:nextgre_hints",
+  "order": 310,
+  "section": "jsc:engine_choice",
+  "title": "jsc.guide.nextgre_hints.title"
+}

@@ -10,6 +10,8 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Sizes;
 import dev.jstech.core.util.Utf8Text;
 import java.util.ArrayList;
@@ -25,8 +27,10 @@ import net.minecraft.world.item.ItemStack;
 /**
  * An ordered pipeline of stages, each either a bench {@link CraftingPattern} or a {@link ProcessingPattern}.
  * Stage N+1 starts only once stage N has produced its result; stage 1's inputs come from the network and each
- * later stage chains the previous one's output. If any stage times out, the already-inserted ingredients are
- * returned to the network and the whole craft fails visibly. Fluids are only valid inside processing stages.
+ * later stage chains the previous one's output. If any stage times out, the whole craft fails visibly: a bench
+ * stage gives back to the network what it had taken for its grid, while what a processing stage had already fed
+ * into its machine stays in that machine, in the world, where the player can collect it. Nothing is lost either
+ * way. Fluids are only valid inside processing stages.
  */
 public record MultiStagePattern(List<Stage> stages, String name, String note) {
 
@@ -83,12 +87,17 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
 
     /** What the pipeline is called where it is listed: its name, or its final result's when it has none. */
     public String displayName() {
+        return displayText().english();
+    }
+
+    /** The same, as text: a result's name reaches each player in their own language. */
+    public Text displayText() {
         if (!name.isEmpty()) {
-            return name;
+            return Text.literal(name);
         }
         final Stage last = finalStage();
         final StorageKey key = last == null ? null : outputKey(last);
-        return key == null ? "pipeline" : key.displayName().getString();
+        return key == null ? RecipeTexts.UNNAMED_PIPELINE.text() : GameText.of(key.displayName());
     }
 
     /** The same pipeline under a new name and note. */

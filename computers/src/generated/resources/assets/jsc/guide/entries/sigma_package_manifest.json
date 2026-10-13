@@ -1,0 +1,246 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_package_manifest.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_package_manifest.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_package_manifest.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_package_manifest.table1",
+      "heads": [
+        "jsc.guide.sigma_package_manifest.table1_head1",
+        "jsc.guide.sigma_package_manifest.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "name"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "version"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "house"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "entry"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "icon"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "ram"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "about"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "file"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_package_manifest.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_package_manifest.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_package_manifest.text5"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sigma_package_manifest.step1",
+        "jsc.guide.sigma_package_manifest.step2"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_package_manifest.table2",
+      "heads": [
+        "jsc.guide.sigma_package_manifest.table2_head1",
+        "jsc.guide.sigma_package_manifest.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "name"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "version"
+          },
+          {
+            "literal": "1.0.0"
+          }
+        ],
+        [
+          {
+            "literal": "house"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "entry"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "icon"
+          },
+          {
+            "literal": "gear"
+          }
+        ],
+        [
+          {
+            "literal": "ram"
+          },
+          {
+            "literal": "1"
+          }
+        ],
+        [
+          {
+            "literal": "file"
+          },
+          {
+            "words": "jsc.guide.sigma_package_manifest.table2_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_package_manifest.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_package_manifest.definition1",
+      "term": "jsc.guide.sigma_package_manifest.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_package_manifest.definition2",
+      "term": "jsc.guide.sigma_package_manifest.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_package_manifest.definition3",
+      "term": "jsc.guide.sigma_package_manifest.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_package_manifest.fix1",
+          "problem": "jsc.guide.sigma_package_manifest.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_package_manifest.fix2",
+          "problem": "jsc.guide.sigma_package_manifest.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_package_manifest.fix3",
+          "problem": "jsc.guide.sigma_package_manifest.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_package_manifest.fix4",
+          "problem": "jsc.guide.sigma_package_manifest.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_package_manifest.fix5",
+          "problem": "jsc.guide.sigma_package_manifest.problem5"
+        },
+        {
+          "fix": "jsc.guide.sigma_package_manifest.fix6",
+          "problem": "jsc.guide.sigma_package_manifest.problem6"
+        },
+        {
+          "fix": "jsc.guide.sigma_package_manifest.fix7",
+          "problem": "jsc.guide.sigma_package_manifest.problem7"
+        },
+        {
+          "fix": "jsc.guide.sigma_package_manifest.fix8",
+          "problem": "jsc.guide.sigma_package_manifest.problem8"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_build_package",
+        "jsc:sigma_sharing_errors"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_package_manifest",
+  "order": 387,
+  "section": "jsc:sharing_packages",
+  "title": "jsc.guide.sigma_package_manifest.title"
+}

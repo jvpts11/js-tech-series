@@ -1,0 +1,294 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_msd.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.dos_msd.step1",
+        "jsc.guide.dos_msd.step2",
+        "jsc.guide.dos_msd.step3",
+        "jsc.guide.dos_msd.step4"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_msd.table1",
+      "heads": [
+        "jsc.guide.dos_msd.table1_head1",
+        "jsc.guide.dos_msd.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_msd.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table1_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_msd.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_msd.table2",
+      "heads": [
+        "jsc.guide.dos_msd.table2_head1",
+        "jsc.guide.dos_msd.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_msd.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_msd.table3",
+      "heads": [
+        "jsc.guide.dos_msd.table3_head1",
+        "jsc.guide.dos_msd.table3_head2",
+        "jsc.guide.dos_msd.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_1_1"
+          },
+          {
+            "literal": "Arrows"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_2_1"
+          },
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_3_1"
+          },
+          {
+            "literal": "L"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_4_1"
+          },
+          {
+            "literal": "C"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_5_1"
+          },
+          {
+            "literal": "Esc or F3"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_6_1"
+          },
+          {
+            "literal": "Up and Down"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_7_1"
+          },
+          {
+            "literal": "E"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_8_1"
+          },
+          {
+            "literal": "D"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_msd.table3_9_1"
+          },
+          {
+            "literal": "Enter or Esc"
+          },
+          {
+            "words": "jsc.guide.dos_msd.table3_9_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_msd.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_msd.definition1",
+      "term": "jsc.guide.dos_msd.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_msd.definition2",
+      "term": "jsc.guide.dos_msd.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_msd.definition3",
+      "term": "jsc.guide.dos_msd.term3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/msd"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dos_msd.fix1",
+          "problem": "jsc.guide.dos_msd.problem1"
+        },
+        {
+          "fix": "jsc.guide.dos_msd.fix2",
+          "problem": "jsc.guide.dos_msd.problem2"
+        },
+        {
+          "fix": "jsc.guide.dos_msd.fix3",
+          "problem": "jsc.guide.dos_msd.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:printers",
+        "jsc:dos_help"
+      ]
+    }
+  ],
+  "id": "jsc:dos_msd",
+  "order": 151,
+  "section": "jsc:dos_programs",
+  "title": "jsc.guide.dos_msd.title"
+}

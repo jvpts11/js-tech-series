@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
@@ -15,22 +15,25 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.StorageProjection;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaItem;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -76,51 +79,46 @@ public final class FileAccess {
     public static ItemStack mediaStackFor(final ServerLevel level,
             final IOsHost computer,
             final String mediaPath) {
-        final String rest = mediaPath.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        final long readerPos;
-        try {
-            readerPos = Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
-        } catch (final NumberFormatException e) {
-            return ItemStack.EMPTY;
-        }
-        if (!computer.linkedEndpoints().contains(readerPos)
-                || !(level.getBlockEntity(BlockPos.of(readerPos))
-                        instanceof MediaReaderBlockEntity reader)) {
-            return ItemStack.EMPTY;
-        }
-        return reader.mediaSlot().getStackInSlot(0);
+        final IMediaDrive drive = driveOf(level, computer, mediaPath);
+        return drive == null ? ItemStack.EMPTY : drive.medium();
     }
 
-    /** Strips the {@code media:<readerPos>/} prefix from a media path, leaving the path within the medium. */
-    static String mediaSubPath(final String mediaPath) {
-        final String rest = mediaPath.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        return slash < 0 ? "" : rest.substring(slash + 1);
+    /**
+     * The volume a path lives on: the medium for a {@code media:} path (empty when it is not reachable), otherwise the
+     * computer's system disk.
+     */
+    public static ItemStack volumeOf(final ServerLevel level, final IOsHost computer, final String path) {
+        return path.startsWith("media:") ? mediaStackFor(level, computer, path) : computer.systemDisk();
     }
 
-    /** Re-syncs the reader holding {@code media:<readerPos>} after its medium's filesystem changed. */
-    static void commitMedia(final ServerLevel level,
+    /** The filesystem kind of the volume a path lives on: a medium is always hierarchical. */
+    public static FilesystemKind kindOf(final IOsHost computer, final String path) {
+        return path.startsWith("media:") ? FilesystemKind.HIERARCHICAL : filesystemKindOf(computer);
+    }
+
+    /** Strips the volume's key from a media path, leaving the path within the medium. */
+    public static String mediaSubPath(final String mediaPath) {
+        return MediaVolume.subPath(mediaPath);
+    }
+
+    /** Saves and shows the drive holding a media path's volume after its filesystem changed. */
+    public static void commitMedia(final ServerLevel level,
             final IOsHost computer,
             final String mediaPath) {
-        final String rest = mediaPath.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        final long readerPos;
-        try {
-            readerPos = Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
-        } catch (final NumberFormatException e) {
-            return;
-        }
-        if (level.getBlockEntity(BlockPos.of(readerPos))
-                instanceof MediaReaderBlockEntity reader) {
-            reader.setChanged();
-            level.sendBlockUpdated(BlockPos.of(readerPos),
-                    reader.getBlockState(), reader.getBlockState(), Block.UPDATE_CLIENTS);
+        final IMediaDrive drive = driveOf(level, computer, mediaPath);
+        if (drive != null) {
+            drive.commit();
         }
     }
 
-    /** Free space on a medium in mB-equivalents (capacity minus its stored files). */
+    /**
+     * Free space on a medium in mB-equivalents (capacity minus its stored files); a docked disk's as the computer's
+     * own disks count it.
+     */
     static long mediaFreeWeight(final ItemStack media) {
+        if (media.getItem() instanceof DiskItem) {
+            return DriveTable.freeWeightOf(media);
+        }
         final long cap = media.getItem()
                 instanceof FormattedMediaItem fm
                 ? fm.format().capacityItems() : 64L;
@@ -132,7 +130,7 @@ public final class FileAccess {
          * FILESYSTEM). Ignoring MEDIA_DATA let the player write files past the medium's real capacity.
          */
         final long dataUsed = media.getOrDefault(
-                        ComputingModule.MEDIA_DATA.get(),
+                        ComputingComponents.MEDIA_DATA.get(),
                         ServerStorageContents.EMPTY)
                 .usedWeight();
         return Math.max(0L, capWeight - fsUsed - dataUsed);
@@ -202,25 +200,31 @@ public final class FileAccess {
      */
     @Nullable
     public static StorageKey resolveDatKey(final ItemStack disk, final String datPath) {
+        return datIndexOf(disk).keys().get(datPath);
+    }
+
+    /**
+     * Every {@code .dat} path of a disk's storage with the key it projects, read once, so a listing with many
+     * {@code .dat} rows projects the storage a single time instead of once per row.
+     */
+    public static DatIndex datIndexOf(final ItemStack disk) {
         if (disk.isEmpty()) {
-            return null;
+            return DatIndex.EMPTY;
         }
-        final ServerStorageContents storage =
-                DriveVolumes.contents(disk);
+        final ServerStorageContents storage = DriveVolumes.contents(disk);
         /*
-         * The projection emits one entry per key in iteration order, with the same path each time; pair each
-         * emitted path with the storage key at the same position to invert the path back to its key.
+         * The projection emits one entry per key in iteration order, with a unique path each; pair each emitted
+         * path with the storage key at the same position to invert the path back to its key.
          */
-        final List<DiskFilesystem.FileEntry> entries =
-                StorageProjection.project(storage);
+        final List<DiskFilesystem.FileEntry> entries = StorageProjection.project(storage);
         final Iterator<StorageKey> keys = storage.items().keySet().iterator();
-        for (final var entry : entries) {
-            final StorageKey key = keys.hasNext() ? keys.next() : null;
-            if (key != null && entry.path().equals(datPath)) {
-                return key;
+        final Map<String, StorageKey> byPath = new HashMap<>();
+        for (final DiskFilesystem.FileEntry entry : entries) {
+            if (keys.hasNext()) {
+                byPath.putIfAbsent(entry.path(), keys.next());
             }
         }
-        return null;
+        return new DatIndex(storage, byPath);
     }
 
     /** The volume identity of a path: {@code ""} for the system disk, or the reader pos for a {@code media:} path. */
@@ -231,5 +235,18 @@ public final class FileAccess {
         final String rest = path.substring("media:".length());
         final int slash = rest.indexOf('/');
         return slash < 0 ? rest : rest.substring(0, slash);
+    }
+
+    /** The drive of this machine a media path's volume is in, or null when the machine has none there. */
+    @Nullable
+    private static IMediaDrive driveOf(final ServerLevel level, final IOsHost computer, final String mediaPath) {
+        final MediaVolume volume = MediaVolume.parse(mediaPath);
+        return volume == null ? null : MachineMedia.of(computer, level).find(volume);
+    }
+
+    /** The storage of a disk and the key behind each projected {@code .dat} path. */
+    public record DatIndex(ServerStorageContents storage, Map<String, StorageKey> keys) {
+
+        static final DatIndex EMPTY = new DatIndex(ServerStorageContents.EMPTY, Map.of());
     }
 }

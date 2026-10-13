@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.boot.SystemWelcome;
@@ -43,7 +43,7 @@ public final class OsDisks {
 
     /** The systems that disk carries; a disk nobody has installed anything onto carries none. */
     public static DiskSystems systemsOn(final ItemStack disk) {
-        return disk.getOrDefault(ComputingModule.DISK_SYSTEMS.get(), DiskSystems.NONE);
+        return disk.getOrDefault(ComputingComponents.DISK_SYSTEMS.get(), DiskSystems.NONE);
     }
 
     /**
@@ -82,7 +82,7 @@ public final class OsDisks {
     public static ItemStack remembering(final ItemStack disk, @Nullable final ResourceLocation osId,
                                         final SystemWelcome welcome) {
         final ItemStack updated = disk.copy();
-        updated.set(ComputingModule.DISK_SYSTEMS.get(), systemsOn(disk).remembering(osId, welcome));
+        updated.set(ComputingComponents.DISK_SYSTEMS.get(), systemsOn(disk).remembering(osId, welcome));
         return updated;
     }
 
@@ -115,19 +115,8 @@ public final class OsDisks {
      */
     public static ItemStack systemDisk(final int diskCount, final IntFunction<ItemStack> diskInSlot,
                                        final int preferredSlot) {
-        if (preferredSlot >= 0 && preferredSlot < diskCount) {
-            final ItemStack preferred = diskInSlot.apply(preferredSlot);
-            if (preferred.getItem() instanceof DiskItem && hasSystem(preferred)) {
-                return preferred;
-            }
-        }
-        for (int i = 0; i < diskCount; i++) {
-            final ItemStack stack = diskInSlot.apply(i);
-            if (stack.getItem() instanceof DiskItem && hasSystem(stack)) {
-                return stack;
-            }
-        }
-        return ItemStack.EMPTY;
+        final int slot = systemDiskSlot(diskCount, diskInSlot, preferredSlot);
+        return slot < 0 ? ItemStack.EMPTY : diskInSlot.apply(slot);
     }
 
     /**
@@ -152,13 +141,6 @@ public final class OsDisks {
     }
 
     /**
-     * Installs {@code osId} onto {@code preferredSlot}, or ({@code -1}) onto the default target: a
-     * slot already carrying this OS (an idempotent re-install), else the first disk without a
-     * system, else the first disk. The OS footprint must fit the chosen disk's free weight
-     * (capacity − stored items − files). On success the stamped disk is written back through
-     * {@code setDiskInSlot} so the owner's change hooks fire.
-     */
-    /**
      * Whether that system can go onto that disk at all: the same question {@link #installOs} answers on its way
      * to writing, asked on its own so a machine can refuse before it spends a minute copying rather than after.
      *
@@ -181,10 +163,13 @@ public final class OsDisks {
         if (systemsOn(disk).has(osId)) {
             return true;
         }
+        // A full list would drop the new entry off its end, leaving the install reported as done but not on the disk.
+        if (systemsOn(disk).count() >= DiskSystems.MOST_SYSTEMS) {
+            return false;
+        }
         final DiskItem target = (DiskItem) disk.getItem();
-        final long freeWeight = target.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM
-                - DriveVolumes.usedWeight(disk) - DiskFilesystem.filesWeight(disk);
-        return def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM <= freeWeight;
+        // The room left already accounts for the systems the disk carries, so a second one cannot overfill it.
+        return def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM <= systemDiskFreeWeight(disk);
     }
 
     /**
@@ -206,6 +191,13 @@ public final class OsDisks {
         return defaultInstallSlot(diskCount, diskInSlot);
     }
 
+    /**
+     * Installs {@code osId} onto {@code preferredSlot}, or ({@code -1}) onto the default target: a
+     * slot already carrying this OS (an idempotent re-install), else the first disk without a
+     * system, else the first disk. The OS footprint must fit the chosen disk's free weight
+     * (capacity − stored items − files). On success the stamped disk is written back through
+     * {@code setDiskInSlot} so the owner's change hooks fire.
+     */
     public static boolean installOs(final int diskCount, final IntFunction<ItemStack> diskInSlot,
                                     final ObjIntConsumer<ItemStack> setDiskInSlot,
                                     final ResourceLocation osId, final int preferredSlot) {
@@ -242,7 +234,7 @@ public final class OsDisks {
          * used to simply lose it here, with nothing anywhere saying so.
          */
         final ItemStack updated = disk.copy();
-        updated.set(ComputingModule.DISK_SYSTEMS.get(), systemsOn(disk).with(osId));
+        updated.set(ComputingComponents.DISK_SYSTEMS.get(), systemsOn(disk).with(osId));
         /*
          * A graphical desktop OS lays down the Windows-like system folder skeleton on first install
          * (Program Files, Windows, Users\Public\Desktop, ...). Terminal/network OSes get nothing.
@@ -250,11 +242,11 @@ public final class OsDisks {
         final List<String> systemDirs = SystemLayout.directoriesFor(def, OsRegistry.getKernel(def.kernelId()));
         if (!systemDirs.isEmpty()) {
             FilesystemContents fs = updated.getOrDefault(
-                    ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                    ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
             for (final String d : systemDirs) {
                 fs = fs.withDir(d);
             }
-            updated.set(ComputingModule.FILESYSTEM.get(), fs);
+            updated.set(ComputingComponents.FILESYSTEM.get(), fs);
         }
         writeLoader(updated, def);
         setDiskInSlot.accept(updated, targetSlot);
@@ -274,11 +266,11 @@ public final class OsDisks {
         if (loader.isEmpty()) {
             return;
         }
-        FilesystemContents fs = disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        FilesystemContents fs = disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         if (!folder.isEmpty()) {
             fs = fs.withDir(folder);
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), fs);
+        disk.set(ComputingComponents.FILESYSTEM.get(), fs);
         /*
          * Written in the kind of filesystem the system's own kernel gives it, not in the one every system
          * used to have. A flat disk keeps its loader at the root because it has no folder to keep it in.
@@ -309,10 +301,13 @@ public final class OsDisks {
          * Every system on it, and with them every greeting each of them remembered: installing again on this
          * disk is a first meeting again, which is what a format means.
          */
-        updated.remove(ComputingModule.DISK_SYSTEMS.get());
-        updated.remove(ComputingModule.FILESYSTEM.get());
+        updated.remove(ComputingComponents.DISK_SYSTEMS.get());
+        updated.remove(ComputingComponents.FILESYSTEM.get());
         DriveVolumes.erase(updated);
-        updated.remove(ComputingModule.DISK_PUBLIC_PERMILLE.get());
+        updated.remove(ComputingComponents.DISK_PUBLIC_PERMILLE.get());
+        // The console (history, installed programs, a setup half done) lived on the systems just erased; left on
+        // the disk it would come back when a system is installed here again.
+        updated.remove(ComputingComponents.DISK_CONSOLE.get());
         setDiskInSlot.accept(updated, slot);
         return hadSystem ? FormatResult.ERASED_SYSTEM : FormatResult.ERASED_DATA;
     }

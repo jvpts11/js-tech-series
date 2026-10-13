@@ -7,12 +7,20 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.fs.PixImage;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -33,22 +41,23 @@ import java.util.List;
  * <p>What earns it its place beside the games is the last button: a picture can become the desktop's
  * wallpaper, so something a player drew ends up on every screen of that machine.
  */
+@PaletteHolder
 public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** What the pointer does on the canvas, each carrying the two names it is drawn and read by. */
     private enum Tool {
-        PENCIL("P", "Pencil"),
-        ERASER("E", "Eraser"),
-        FILL("F", "Fill"),
-        DROPPER("D", "Dropper"),
-        LINE("L", "Line"),
-        RECTANGLE("R", "Rectangle"),
-        ELLIPSE("O", "Ellipse");
+        PENCIL("P", PaintTexts.PENCIL),
+        ERASER("E", PaintTexts.ERASER),
+        FILL("F", PaintTexts.FILL),
+        DROPPER("D", PaintTexts.DROPPER),
+        LINE("L", PaintTexts.LINE),
+        RECTANGLE("R", PaintTexts.RECTANGLE),
+        ELLIPSE("O", PaintTexts.ELLIPSE);
 
         private final String mark;
-        private final String label;
+        private final TextKey label;
 
-        Tool(final String mark, final String label) {
+        Tool(final String mark, final TextKey label) {
             this.mark = mark;
             this.label = label;
         }
@@ -59,7 +68,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         }
 
         /** What it is called, for the bar along the bottom. */
-        String label() {
+        TextKey label() {
             return label;
         }
     }
@@ -75,13 +84,16 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int SWATCH_ROWS = 2;
     /** How many rows the whole palette is, which is every colour a picture may hold. */
     private static final int PALETTE_ROWS = PixImage.COLOURS / SWATCH_COLS;
-    private static final int CHECKER_LIGHT = 0xFFBFBFBF;
-    private static final int CHECKER_DARK = 0xFFA0A0A0;
     /** How big one square of the chequer under the canvas is, in pixels of the screen. */
     private static final int CHECKER_SQUARE = 6;
-    private static final int CANVAS_EDGE = 0xFF2B2B2B;
     /** How many steps back the program remembers, which is what a drawing hand actually needs. */
     private static final int UNDO_DEPTH = 24;
+    /** What a picture not yet saved is called on its printout, and Paint's own id for where it came from. */
+    private static final String UNTITLED = "untitled.pix";
+    private static final String PROGRAM = "jsc:paint";
+    /** Paint's own colours, {@code jsc:app/paint}: the chequer under a transparent pixel, and the canvas edge. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/paint",
+            new Colours(0xFFBFBFBF, 0xFFA0A0A0, 0xFF2B2B2B));
 
     /** The tools in the order the column offers them, read the same way by the drawing and the click. */
     private static final List<Tool> TOOLS = List.of(Tool.values());
@@ -94,13 +106,15 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private final Button saveButton;
     private final Button undoButton;
     private final Button zoomButton;
+    private final Button printButton;
+    private final PrintDialog printDialog;
     private final Button wallpaperButton;
 
     private OsSkin skin = OsSkin.fallback();
     private PixImage image = new PixImage(64, 48);
     private final Deque<PixImage> undo = new ArrayDeque<>();
     private String path = "";
-    private String status = "New picture";
+    private Text status = PaintTexts.NEW_PICTURE.text();
     private boolean dirty;
 
     private Tool tool = Tool.PENCIL;
@@ -134,12 +148,20 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     public PaintApp(final BlockPos host) {
         this.host = host;
         this.dialog = new FileDialog(host, this);
-        newButton = root.add(new Button("New", this::newPicture));
-        openButton = root.add(new Button("Open", this::chooseOpen));
-        saveButton = root.add(new Button("Save", this::chooseSave));
-        undoButton = root.add(new Button("Undo", this::undo));
-        zoomButton = root.add(new Button(() -> zoom + "x", this::cycleZoom));
-        wallpaperButton = root.add(new Button("Wallpaper", this::setAsWallpaper));
+        newButton = root.add(new Button(GameText.resolve(PaintTexts.NEW), this::newPicture));
+        openButton = root.add(new Button(GameText.resolve(PaintTexts.OPEN), this::chooseOpen));
+        saveButton = root.add(new Button(GameText.resolve(PaintTexts.SAVE), this::chooseSave));
+        undoButton = root.add(new Button(GameText.resolve(PaintTexts.UNDO), this::undo));
+        zoomButton = root.add(new Button(() -> GameText.resolve(PaintTexts.ZOOM.with(zoom)), this::cycleZoom));
+        this.printDialog = new PrintDialog(host, this);
+        printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::print));
+        wallpaperButton = root.add(new Button(GameText.resolve(PaintTexts.WALLPAPER), this::setAsWallpaper));
+    }
+
+    /* The picture, one to a page and fitted to the sheet, to the printer, which puts it on paper its own way. */
+    private void print() {
+        final String name = path.isEmpty() ? UNTITLED : path.substring(path.lastIndexOf('/') + 1);
+        printDialog.show(PrintDialog.Document.picture(name, ActiveDesktop.windowName(PROGRAM), image.encode()));
     }
 
     /* What the picture is */
@@ -149,7 +171,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         this.image = new PixImage(64, 48);
         this.path = "";
         this.dirty = false;
-        this.status = "New picture";
+        this.status = PaintTexts.NEW_PICTURE.text();
     }
 
     private void cycleZoom() {
@@ -166,7 +188,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private void undo() {
         final PixImage last = undo.pollLast();
         if (last == null) {
-            this.status = "Nothing to undo";
+            this.status = PaintTexts.NOTHING_TO_UNDO.text();
             return;
         }
         this.image = last;
@@ -176,9 +198,44 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     /* Files */
 
     private void chooseOpen() {
-        dialog.openFile("Open picture", "",
-                List.of(FileDialog.Filter.of("Pictures", PixImage.EXTENSION), FileDialog.Filter.ALL),
+        dialog.openFile(PaintTexts.OPEN_PICTURE.text(), "",
+                List.of(FileDialog.Filter.of(PaintTexts.PICTURES, PixImage.EXTENSION), FileDialog.Filter.ALL),
                 this::openFile);
+    }
+
+    /** The Print window Paint opens over itself. */
+    public PrintDialog printDialog() {
+        return printDialog;
+    }
+
+    /** The system's file window Paint opens over itself to open a picture or save one under a name. */
+    public FileDialog fileDialog() {
+        return dialog;
+    }
+
+    /** The picture on the canvas, for a look at what a stroke put on it. */
+    public PixImage image() {
+        return image;
+    }
+
+    /** The desktop point in the middle of the picture's pixel at {@code px} and {@code py}, from the last frame. */
+    public int[] canvasPoint(final int px, final int py) {
+        return new int[] {canvasX + px * zoom + zoom / 2, canvasY + py * zoom + zoom / 2};
+    }
+
+    /** The desktop point in the middle of the toolbar's New button. */
+    public int[] newPoint() {
+        return newButton.center();
+    }
+
+    /** The desktop point in the middle of the toolbar's Open button. */
+    public int[] openPoint() {
+        return openButton.center();
+    }
+
+    /** The desktop point in the middle of the toolbar's Save button. */
+    public int[] savePoint() {
+        return saveButton.center();
     }
 
     @Override
@@ -193,24 +250,24 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public void onContent(final String target, final String content, final boolean exists) {
         if (!exists) {
-            this.status = "No such picture";
+            this.status = PaintTexts.NO_SUCH_PICTURE.text();
             return;
         }
         final PixImage loaded = PixImage.decode(content);
         if (loaded == null) {
-            this.status = target.substring(target.lastIndexOf('/') + 1) + " is not a picture";
+            this.status = PaintTexts.NOT_A_PICTURE.with(target.substring(target.lastIndexOf('/') + 1));
             return;
         }
         pushUndo();
         this.image = loaded;
         this.path = target;
         this.dirty = false;
-        this.status = "Opened " + name();
+        this.status = EditorTexts.OPENED.with(name());
     }
 
     private void chooseSave() {
-        dialog.saveAs("Save picture", "", path.isEmpty() ? "picture." + PixImage.EXTENSION : name(),
-                List.of(FileDialog.Filter.of("Pictures", PixImage.EXTENSION)), this::saveTo);
+        dialog.saveAs(PaintTexts.SAVE_PICTURE.text(), "", path.isEmpty() ? "picture." + PixImage.EXTENSION : name(),
+                List.of(FileDialog.Filter.of(PaintTexts.PICTURES, PixImage.EXTENSION)), this::saveTo);
     }
 
     private void saveTo(final String target) {
@@ -223,23 +280,23 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
          * check stays so that a larger canvas one day fails loudly here rather than at the network.
          */
         if (written.length() > SaveFilePayload.MAX_CONTENT) {
-            this.status = "Picture too large to save";
+            this.status = PaintTexts.TOO_LARGE_TO_SAVE.text();
             return;
         }
         this.path = target;
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new SaveFilePayload(host, target, written));
         FilesApps.diskChanged();
-        this.status = "Saving " + name();
+        this.status = PaintTexts.SAVING.with(name());
     }
 
     @Override
     public void onContentTooLarge(final String target) {
-        this.status = "That picture is too large to open here";
+        this.status = PaintTexts.TOO_LARGE_TO_OPEN.text();
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
+    public void onSaved(final boolean ok, final Text message) {
         this.status = message;
         if (ok) {
             this.dirty = false;
@@ -253,16 +310,12 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Hangs this picture on the desktop, which is what the program is for beyond the drawing of it. */
     private void setAsWallpaper() {
-        if (path.isEmpty()) {
-            this.status = "Save it first";
+        if (path.isEmpty() || dirty) {
+            this.status = PaintTexts.SAVE_FIRST.text();
             return;
         }
-        if (dirty) {
-            this.status = "Save it first";
-            return;
-        }
-        DesktopScreen.setWallpaperToPicture(path);
-        this.status = name() + " is now the wallpaper";
+        ActiveDesktop.setWallpaperToPicture(path);
+        this.status = PaintTexts.NOW_WALLPAPER.with(name());
     }
 
     private String name() {
@@ -322,12 +375,14 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         int bx = x + MARGIN;
-        bx = place(newButton, font, "New", bx, y);
-        bx = place(openButton, font, "Open", bx, y);
-        bx = place(saveButton, font, "Save", bx, y);
-        bx = place(undoButton, font, "Undo", bx, y);
-        bx = place(zoomButton, font, "0x", bx, y);
-        final int w = font.width("Wallpaper") + 8;
+        bx = place(newButton, font, newButton.label(), bx, y);
+        bx = place(openButton, font, openButton.label(), bx, y);
+        bx = place(saveButton, font, saveButton.label(), bx, y);
+        bx = place(undoButton, font, undoButton.label(), bx, y);
+        // Sized for one digit, so the button keeps its width as the zoom steps through them.
+        bx = place(zoomButton, font, GameText.resolve(PaintTexts.ZOOM.with(0)), bx, y);
+        bx = place(printButton, font, printButton.label(), bx, y);
+        final int w = font.width(wallpaperButton.label()) + 8;
         // Pinned right, never back over the button before it; a narrow window clips rather than overlaps.
         wallpaperButton.setBounds(Math.max(bx, x + width - MARGIN - w), y + 1, w, 12);
     }
@@ -351,9 +406,9 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
                     && mouseY >= ty && mouseY < ty + TOOL_SIZE;
             g.fill(toolsX, ty, toolsX + TOOL_SIZE, ty + TOOL_SIZE,
                     on ? skin.accent() : (hover ? skin.listHover() : skin.panelBg()));
-            g.drawString(font, each.mark(),
+            Draw.text(g, font, each.mark(),
                     toolsX + (TOOL_SIZE - font.width(each.mark())) / 2, ty + 3,
-                    on ? skin.windowBg() : skin.text(), false);
+                    on ? skin.windowBg() : skin.text());
         }
     }
 
@@ -363,7 +418,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         final int shownH = Math.min(image.height() * zoom, bottom - top);
         this.canvasX = left;
         this.canvasY = top;
-        g.fill(left - 1, top - 1, left + shownW + 1, top + shownH + 1, CANVAS_EDGE);
+        g.fill(left - 1, top - 1, left + shownW + 1, top + shownH + 1, PALETTE.get().canvasEdge());
         drawPicture(g, image, left, top, shownW, shownH);
         this.hoverX = (mouseX - left) / zoom;
         this.hoverY = (mouseY - top) / zoom;
@@ -389,13 +444,13 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
          * canvas is otherwise sixteen thousand alternating squares, which is the worst case of the very
          * thing this method exists to avoid.
          */
-        g.fill(left, top, left + shownW, top + shownH, CHECKER_LIGHT);
+        g.fill(left, top, left + shownW, top + shownH, PALETTE.get().checkerLight());
         for (int sy = 0; sy < shownH; sy += CHECKER_SQUARE) {
             for (int sx = (sy / CHECKER_SQUARE) % 2 == 0 ? CHECKER_SQUARE : 0;
                     sx < shownW; sx += CHECKER_SQUARE * 2) {
                 g.fill(left + sx, top + sy,
                         left + Math.min(sx + CHECKER_SQUARE, shownW),
-                        top + Math.min(sy + CHECKER_SQUARE, shownH), CHECKER_DARK);
+                        top + Math.min(sy + CHECKER_SQUARE, shownH), PALETTE.get().checkerDark());
             }
         }
         final int columns = Math.min(image.width(), (shownW + zoom - 1) / zoom);
@@ -455,9 +510,9 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawPalette(final GuiGraphics g, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + PALETTE_H, skin.windowBg());
         // The colour in hand, big enough to be read at a glance beside the strip it came from.
-        g.fill(x + MARGIN, y + 3, x + MARGIN + 18, y + 21, CANVAS_EDGE);
+        g.fill(x + MARGIN, y + 3, x + MARGIN + 18, y + 21, PALETTE.get().canvasEdge());
         if (PixImage.isTransparent(colour)) {
-            g.fill(x + MARGIN + 1, y + 4, x + MARGIN + 17, y + 20, CHECKER_LIGHT);
+            g.fill(x + MARGIN + 1, y + 4, x + MARGIN + 17, y + 20, PALETTE.get().checkerLight());
         } else {
             g.fill(x + MARGIN + 1, y + 4, x + MARGIN + 17, y + 20, PixImage.colourOf(colour));
         }
@@ -473,7 +528,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
                     continue;
                 }
                 if (PixImage.isTransparent(index)) {
-                    g.fill(sx, sy, sx + SWATCH - 1, sy + SWATCH - 1, CHECKER_LIGHT);
+                    g.fill(sx, sy, sx + SWATCH - 1, sy + SWATCH - 1, PALETTE.get().checkerLight());
                 } else {
                     g.fill(sx, sy, sx + SWATCH - 1, sy + SWATCH - 1, PixImage.colourOf(index));
                 }
@@ -509,14 +564,15 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
-        final String left = hoverX >= 0 ? "x " + hoverX + ", y " + hoverY : tool.label();
-        g.drawString(font, left, x + MARGIN, y + 2, skin.text(), false);
-        final String right = image.width() + " x " + image.height();
-        g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim(), false);
+        final String left = GameText.resolve(hoverX >= 0 ? PaintTexts.POSITION.with(hoverX, hoverY)
+                : tool.label().text());
+        Draw.text(g, font, left, x + MARGIN, y + 2, skin.text());
+        final String right = GameText.resolve(PaintTexts.SIZE.with(image.width(), image.height()));
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim());
         final int room = width - MARGIN * 2 - font.width(left) - font.width(right) - 10;
         if (room > 20) {
-            g.drawString(font, font.plainSubstrByWidth(status, room),
-                    x + MARGIN + font.width(left) + 6, y + 2, skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(status), room),
+                    x + MARGIN + font.width(left) + 6, y + 2, skin.dim());
         }
     }
 
@@ -686,6 +742,14 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
             chooseSave();
             return true;
         }
+        if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && key == GLFW.GLFW_KEY_P) {
+            print();
+            return true;
+        }
         return false;
+    }
+
+    /** The chequer under a transparent pixel, and the canvas edge. */
+    private record Colours(int checkerLight, int checkerDark, int canvasEdge) {
     }
 }

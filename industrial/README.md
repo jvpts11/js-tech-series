@@ -1,3 +1,5 @@
+<p align="center"><img src="../docs/brand/industrial.png" alt="J's Industrial" width="680"></p>
+
 # J's Industrial
 
 Energy, machines and the processing chains that feed the network and the other mods.
@@ -35,6 +37,10 @@ Four machines, each a block that faces the way you placed it, with a screen of i
   ingots once the dust is smelted.
 - The Compressor presses ingots into plates.
 - The Electric Furnace smelts with energy instead of fuel, using the vanilla smelting recipes.
+
+And the Energy Cable, which carries energy from the generators to the machines at any distance, losing none.
+Every machine, with its numbers and what can go wrong, is explained in [the machines](docs/MACHINES.md); recipes,
+tags and capabilities for other mods and data packs are in [for mod and pack authors](docs/FOR_MOD_AUTHORS.md).
 
 The dusts and plates themselves are the material items of J's Core, so every mod of the series shares
 them; this mod adds their recipes and tags them the common way (`c:dusts/iron`, `c:plates/copper`, and so

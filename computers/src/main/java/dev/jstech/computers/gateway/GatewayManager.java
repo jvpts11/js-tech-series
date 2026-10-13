@@ -24,6 +24,9 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -38,19 +41,84 @@ import org.jetbrains.annotations.Nullable;
  * What the Gateway Manager and the {@code gateway} command do on the server: gather the state of the
  * Gateways on a host computer's ports, and carry out an action on one of them. One implementation for
  * the program and the shell, so they never disagree.
+ *
+ * <p>What it says is declared here and travels as text, so the status line and the Gateway's log read in the
+ * language of whoever looks at them.
  */
+@TextHolder
 public final class GatewayManager {
 
     /** How many of the log's lines the Status tab shows under "recent". */
     public static final int RECENT = 4;
     private static final int CC_ID_NONE = -1;
 
+    private static final TextKey NO_PORTS =
+            TextKey.of("jsc.service.gateway.no_ports", "this computer has no peripheral ports");
+    private static final TextKey SELECT_FIRST =
+            TextKey.of("jsc.service.gateway.select_first", "select a gateway first");
+    private static final TextKey BLINKING = TextKey.of("jsc.service.gateway.blinking", "%s is blinking");
+    private static final TextKey READ_ALLOWED =
+            TextKey.of("jsc.service.gateway.read_allowed", "reading the network allowed");
+    private static final TextKey READ_DENIED =
+            TextKey.of("jsc.service.gateway.read_denied", "reading the network denied");
+    private static final TextKey OPERATIONS_ALLOWED =
+            TextKey.of("jsc.service.gateway.operations_allowed", "operations allowed");
+    private static final TextKey OPERATIONS_DENIED =
+            TextKey.of("jsc.service.gateway.operations_denied", "operations denied");
+    private static final TextKey CEILING = TextKey.of("jsc.service.gateway.ceiling", "priority ceiling %s");
+    private static final TextKey CALLS_A_TICK = TextKey.of("jsc.service.gateway.calls_a_tick", "%s calls a tick");
+    private static final TextKey TEST_SENT_ONE =
+            TextKey.of("jsc.service.gateway.test_sent_one", "jsc_test sent to %s computer");
+    private static final TextKey TEST_SENT_MANY =
+            TextKey.of("jsc.service.gateway.test_sent_many", "jsc_test sent to %s computers");
+    private static final TextKey NEEDS_AGENT = TextKey.of("jsc.service.gateway.needs_agent",
+            "that needs the agent on the ComputerCraft computer, which is not there yet");
+    private static final TextKey NO_MAINFRAME =
+            TextKey.of("jsc.service.gateway.no_mainframe", "no Mainframe on this network");
+    private static final TextKey BUFFER_EMPTY = TextKey.of("jsc.service.gateway.buffer_empty", "the buffer is empty");
+    private static final TextKey ON_THEIR_WAY =
+            TextKey.of("jsc.service.gateway.on_their_way", "%s items on their way to the network");
+    private static final TextKey SECONDS_AGO = TextKey.of("jsc.service.gateway.seconds_ago", "%s s ago");
+    private static final TextKey MINUTES_AGO = TextKey.of("jsc.service.gateway.minutes_ago", "%s min ago");
+    private static final TextKey HOURS_AGO = TextKey.of("jsc.service.gateway.hours_ago", "%s h ago");
+    private static final TextKey PLACE = TextKey.of("jsc.service.gateway.place", "at %s, %s, %s");
+
+    /* What the Gateway's log is told: what was done, and how it went. */
+    private static final TextKey LOG_SET_READ = TextKey.of("jsc.service.gateway.log.set_read", "set read %s");
+    private static final TextKey LOG_SET_OPERATIONS =
+            TextKey.of("jsc.service.gateway.log.set_operations", "set operations %s");
+    private static final TextKey LOG_SET_CEILING =
+            TextKey.of("jsc.service.gateway.log.set_ceiling", "set priority ceiling %s");
+    private static final TextKey LOG_SET_CAP = TextKey.of("jsc.service.gateway.log.set_cap", "set call cap %s");
+    private static final TextKey LOG_TEST_EVENT = TextKey.of("jsc.service.gateway.log.test_event", "send test event");
+    private static final TextKey LOG_REACHED = TextKey.of("jsc.service.gateway.log.reached", "%s reached");
+    private static final TextKey LOG_NEEDS_AGENT = TextKey.of("jsc.service.gateway.log.needs_agent", "needs the agent");
+    private static final TextKey LOG_CLEAR_BUFFER = TextKey.of("jsc.service.gateway.log.clear_buffer", "clear buffer");
+    private static final TextKey LOG_NO_MAINFRAME = TextKey.of("jsc.service.gateway.log.no_mainframe", "no mainframe");
+    private static final TextKey LOG_CLEAR_TO_NETWORK =
+            TextKey.of("jsc.service.gateway.log.clear_to_network", "clear buffer to network");
+    private static final TextKey LOG_NOTHING_TO_MOVE =
+            TextKey.of("jsc.service.gateway.log.nothing_to_move", "nothing to move");
+    private static final TextKey LOG_MOVED_ONE =
+            TextKey.of("jsc.service.gateway.log.moved_one", "%s items in %s operation");
+    private static final TextKey LOG_MOVED_MANY =
+            TextKey.of("jsc.service.gateway.log.moved_many", "%s items in %s operations");
+    private static final TextKey LOG_TURN_ON = TextKey.of("jsc.service.gateway.log.turn_on", "turn on");
+    private static final TextKey LOG_REBOOT = TextKey.of("jsc.service.gateway.log.reboot", "reboot");
+    private static final TextKey LOG_SHUTDOWN = TextKey.of("jsc.service.gateway.log.shutdown", "shutdown");
+    private static final TextKey LOG_ACTION = TextKey.of("jsc.service.gateway.log.action", "action %s");
+    private static final TextKey ON = TextKey.of("jsc.service.gateway.on", "on");
+    private static final TextKey OFF = TextKey.of("jsc.service.gateway.off", "off");
+
     private GatewayManager() {
     }
 
-    /** The Gateways on {@code host}'s ports; none when the block is not a computer with ports. */
+    /**
+     * The Gateways on {@code host}'s ports that it has not disabled; none when the block is not a computer with
+     * ports.
+     */
     public static List<NetworkGatewayBlockEntity> gatewaysOf(final ServerLevel level, @Nullable final BlockEntity host) {
-        return host instanceof IPeripheralOwner owner ? NetworkGateways.linkedTo(level, owner) : List.of();
+        return host instanceof IPeripheralOwner owner ? NetworkGateways.enabledOn(level, owner) : List.of();
     }
 
     /** The name a host signs the Gateway's log with. */
@@ -61,15 +129,15 @@ public final class GatewayManager {
         return "host";
     }
 
-    /** Where a Gateway stands and how it is linked, for the rail. */
-    public static String where(final NetworkGatewayBlockEntity gateway) {
+    /** Where a Gateway stands, for the rail. */
+    public static Text place(final NetworkGatewayBlockEntity gateway) {
         final BlockPos p = gateway.getBlockPos();
-        return "at " + p.getX() + ", " + p.getY() + ", " + p.getZ() + " · " + gateway.linkKind();
+        return PLACE.with(p.getX(), p.getY(), p.getZ());
     }
 
     /** The whole state, with {@code selected} (a Gateway's position) in detail and {@code status} to show. */
     public static GatewayManagerStatePayload state(final ServerLevel level, @Nullable final BlockEntity host,
-                                                   final long selected, final String status) {
+                                                   final long selected, final Text status) {
         final List<NetworkGatewayBlockEntity> gateways = gatewaysOf(level, host);
         final long now = level.getGameTime();
         final List<WireGateway> rail = new ArrayList<>(gateways.size());
@@ -80,7 +148,8 @@ public final class GatewayManager {
             if (rail.size() >= GatewayManagerStatePayload.MAX_GATEWAYS) {
                 break;
             }
-            rail.add(new WireGateway(g.getBlockPos().asLong(), g.name(), where(g), g.online(), g.ccOnline()));
+            rail.add(new WireGateway(g.getBlockPos().asLong(), g.name(), place(g), g.linkKind(), g.online(),
+                    g.ccOnline()));
             calls += g.stats().lastMinute(GatewayStats.Kind.CALL, now);
             if (g.ccOnline()) {
                 reachable++;
@@ -123,7 +192,7 @@ public final class GatewayManager {
             computers.add(new WireComputer(c.id(), "", true, false, ago(now, c.lastSeen())));
         }
         final GatewayPermissions perms = g.permissions();
-        return new Detail(g.getBlockPos().asLong(), g.name(), g.linkKind(),
+        return new Detail(g.getBlockPos().asLong(), g.name(), g.linkKind(), g.online(),
                 net == null ? 0 : net.indexedTypes(), net == null ? 0 : net.servers(),
                 mainframe != null && mainframe.isRunning(), g.budgetPermille(),
                 g.ccOnline(), bridge == null ? 0 : bridge.computersOnWire(), bridge == null ? 0 : bridge.devicesOnWire(),
@@ -135,30 +204,30 @@ public final class GatewayManager {
     }
 
     /** "2 s ago", "4 min ago", for the computers table. */
-    public static String ago(final long now, final long then) {
+    public static Text ago(final long now, final long then) {
         final long seconds = Math.max(0L, now - then) / 20L;
         if (seconds < 60L) {
-            return seconds + " s ago";
+            return SECONDS_AGO.with(seconds);
         }
         final long minutes = seconds / 60L;
-        return minutes < 60L ? minutes + " min ago" : (minutes / 60L) + " h ago";
+        return minutes < 60L ? MINUTES_AGO.with(minutes) : HOURS_AGO.with(minutes / 60L);
     }
 
     /**
      * Carries out one action on the Gateway at {@code gatewayPos}, which must be one of {@code host}'s, and
      * says what happened for the status line.
      */
-    public static String act(final ServerLevel level, @Nullable final BlockEntity host, final long gatewayPos,
-                             final int action, final int value, final String text) {
+    public static Text act(final ServerLevel level, @Nullable final BlockEntity host, final long gatewayPos,
+                           final int action, final int value, final String text) {
         if (action == GatewayManagerActionPayload.ACTION_REFRESH) {
-            return "";
+            return Text.EMPTY;
         }
         if (!(host instanceof IPeripheralOwner owner)) {
-            return "this computer has no peripheral ports";
+            return NO_PORTS.text();
         }
         final NetworkGatewayBlockEntity g = NetworkGateways.at(level, owner, gatewayPos);
         if (g == null) {
-            return "select a gateway first";
+            return SELECT_FIRST.text();
         }
         final String by = hostNameOf(host);
         final GatewayPermissions perms = g.permissions();
@@ -166,38 +235,41 @@ public final class GatewayManager {
             case GatewayManagerActionPayload.ACTION_RENAME -> g.rename(text, by);
             case GatewayManagerActionPayload.ACTION_IDENTIFY -> {
                 g.identify(by);
-                yield g.name() + " is blinking";
+                yield BLINKING.with(g.name());
             }
             case GatewayManagerActionPayload.ACTION_SET_READ -> {
-                g.setPermissions(perms.withRead(value != 0), by, "set read " + onOff(value != 0));
-                yield "reading the network " + (value != 0 ? "allowed" : "denied");
+                g.setPermissions(perms.withRead(value != 0), by, LOG_SET_READ.with(onOff(value != 0)));
+                yield (value != 0 ? READ_ALLOWED : READ_DENIED).text();
             }
             case GatewayManagerActionPayload.ACTION_SET_OPERATIONS -> {
-                g.setPermissions(perms.withOperations(value != 0), by, "set operations " + onOff(value != 0));
-                yield "operations " + (value != 0 ? "allowed" : "denied");
+                g.setPermissions(perms.withOperations(value != 0), by, LOG_SET_OPERATIONS.with(onOff(value != 0)));
+                yield (value != 0 ? OPERATIONS_ALLOWED : OPERATIONS_DENIED).text();
             }
             case GatewayManagerActionPayload.ACTION_SET_CEILING -> {
                 final GatewayPermissions changed = perms.withCeiling(GatewayPermissions.ceilingAt(value));
-                g.setPermissions(changed, by, "set priority ceiling " + changed.ceiling().name().toLowerCase(Locale.ROOT));
-                yield "priority ceiling " + changed.ceiling().name().toLowerCase(Locale.ROOT);
+                // The level goes by the keyword a program names it with, which reads the same in every language.
+                final String ceiling = changed.ceiling().name().toLowerCase(Locale.ROOT);
+                g.setPermissions(changed, by, LOG_SET_CEILING.with(ceiling));
+                yield CEILING.with(ceiling);
             }
             case GatewayManagerActionPayload.ACTION_SET_CAP -> {
                 final GatewayPermissions changed = perms.withCallCap(GatewayPermissions.capAt(value));
-                g.setPermissions(changed, by, "set call cap " + changed.callCap());
-                yield changed.callCap() + " calls a tick";
+                g.setPermissions(changed, by, LOG_SET_CAP.with(changed.callCap()));
+                yield CALLS_A_TICK.with(changed.callCap());
             }
             case GatewayManagerActionPayload.ACTION_CLEAR_BUFFER -> clearBuffer(level, host, g, by);
             case GatewayManagerActionPayload.ACTION_TEST_EVENT -> {
                 final int reached = g.bridge() == null ? 0 : g.bridge().sendEvent("jsc_test", g.name());
-                g.logged(by, "send test event", reached + " reached", reached > 0 ? GatewayLog.Tone.OK : GatewayLog.Tone.BUSY);
-                yield "jsc_test sent to " + reached + (reached == 1 ? " computer" : " computers");
+                g.logged(by, LOG_TEST_EVENT.text(), LOG_REACHED.with(reached),
+                        reached > 0 ? GatewayLog.Tone.OK : GatewayLog.Tone.BUSY);
+                yield (reached == 1 ? TEST_SENT_ONE : TEST_SENT_MANY).with(reached);
             }
             case GatewayManagerActionPayload.ACTION_TURN_ON, GatewayManagerActionPayload.ACTION_REBOOT,
                  GatewayManagerActionPayload.ACTION_SHUTDOWN -> {
-                g.logged(by, actionName(action), "needs the agent", GatewayLog.Tone.DENIED);
-                yield "that needs the agent on the ComputerCraft computer, which is not there yet";
+                g.logged(by, actionName(action), LOG_NEEDS_AGENT.text(), GatewayLog.Tone.DENIED);
+                yield NEEDS_AGENT.text();
             }
-            default -> "";
+            default -> Text.EMPTY;
         };
     }
 
@@ -205,14 +277,14 @@ public final class GatewayManager {
      * Empties the buffer into the network as INSERT operations, one per slot, signed by the host and the
      * Gateway. Whatever the network cannot hold comes back to the buffer when the operation settles.
      */
-    public static String clearBuffer(final ServerLevel level, final BlockEntity host,
-                                     final NetworkGatewayBlockEntity g, final String by) {
+    public static Text clearBuffer(final ServerLevel level, final BlockEntity host,
+                                   final NetworkGatewayBlockEntity g, final String by) {
         final ServerCliComputer shell = host instanceof IComputerTerminalHost terminal
                 ? new ServerCliComputer(terminal, level) : null;
         final MainframeBlockEntity mainframe = shell == null ? null : shell.mainframe();
         if (mainframe == null) {
-            g.logged(by, "clear buffer", "no mainframe", GatewayLog.Tone.DENIED);
-            return "no Mainframe on this network";
+            g.logged(by, LOG_CLEAR_BUFFER.text(), LOG_NO_MAINFRAME.text(), GatewayLog.Tone.DENIED);
+            return NO_MAINFRAME.text();
         }
         final ItemStackHandler slots = g.buffer();
         final String label = by + " (gateway " + g.name() + ")";
@@ -226,46 +298,37 @@ public final class GatewayManager {
             final StorageKey key = StorageKey.of(held);
             final int count = held.getCount();
             slots.setStackInSlot(i, ItemStack.EMPTY);
-            final NetworkInsertOperation op = mainframe.submitNetworkInsert(key, count, label);
+            final NetworkInsertOperation op = mainframe.networkOperations().push(key, count, label);
             if (op == null) {
                 slots.setStackInSlot(i, held);
                 continue;
             }
-            final ItemStackHandler back = slots;
             op.onSettle(() -> {
                 final long leftover = op.leftover();
                 if (leftover > 0L) {
-                    returnToBuffer(back, key.stack((int) Math.min(Integer.MAX_VALUE, leftover)));
+                    GatewayService.returnToBuffer(level, g, key, leftover, by);
                 }
             });
             moved++;
             items += count;
         }
         g.stats().count(GatewayStats.Kind.OPERATION, level.getGameTime());
-        g.logged(by, "clear buffer to network", moved == 0 ? "nothing to move"
-                        : items + " items in " + moved + (moved == 1 ? " operation" : " operations"),
+        g.logged(by, LOG_CLEAR_TO_NETWORK.text(), moved == 0 ? LOG_NOTHING_TO_MOVE.text()
+                        : (moved == 1 ? LOG_MOVED_ONE : LOG_MOVED_MANY).with(items, moved),
                 moved == 0 ? GatewayLog.Tone.BUSY : GatewayLog.Tone.OK);
-        return moved == 0 ? "the buffer is empty" : items + " items on their way to the network";
+        return moved == 0 ? BUFFER_EMPTY.text() : ON_THEIR_WAY.with(items);
     }
 
-    /** Puts what the network would not take back into the first slots with room. */
-    private static void returnToBuffer(final ItemStackHandler slots, final ItemStack stack) {
-        ItemStack rest = stack;
-        for (int i = 0; i < slots.getSlots() && !rest.isEmpty(); i++) {
-            rest = slots.insertItem(i, rest, false);
-        }
+    private static Text onOff(final boolean on) {
+        return (on ? ON : OFF).text();
     }
 
-    private static String onOff(final boolean on) {
-        return on ? "on" : "off";
-    }
-
-    private static String actionName(final int action) {
+    private static Text actionName(final int action) {
         return switch (action) {
-            case GatewayManagerActionPayload.ACTION_TURN_ON -> "turn on";
-            case GatewayManagerActionPayload.ACTION_REBOOT -> "reboot";
-            case GatewayManagerActionPayload.ACTION_SHUTDOWN -> "shutdown";
-            default -> "action " + action;
+            case GatewayManagerActionPayload.ACTION_TURN_ON -> LOG_TURN_ON.text();
+            case GatewayManagerActionPayload.ACTION_REBOOT -> LOG_REBOOT.text();
+            case GatewayManagerActionPayload.ACTION_SHUTDOWN -> LOG_SHUTDOWN.text();
+            default -> LOG_ACTION.with(action);
         };
     }
 }

@@ -30,6 +30,18 @@ class TextDocumentTest {
     }
 
     @Test
+    void backspace_afterAShiftEndThatWentNowhereLeavesNoSelectionPastTheLine() {
+        // Shift+End at the end of a line left an anchor on the caret, which outlived the backspace and cut past the
+        // line when the next key was typed.
+        type("abc");
+        doc.end(true);
+        doc.backspace();
+        doc.insert('x');
+        assertEquals("abx", doc.text());
+        assertFalse(doc.hasSelection());
+    }
+
+    @Test
     void insert_appendsAtTheCaretAndMovesIt() {
         type("abc");
         assertEquals("abc", doc.text());
@@ -299,5 +311,63 @@ class TextDocumentTest {
         assertEquals(0, doc.cursorCol());
         doc.end(true);
         assertEquals("    x = 1;", doc.selectedText());
+    }
+
+    @Test
+    void undo_aCaretMoveStartsANewStep() {
+        doc.setText("");
+        doc.insert('a');
+        doc.insert('b');
+        doc.left(false);
+        doc.insert('c');
+        assertEquals("acb", doc.text());
+        assertTrue(doc.undo());
+        assertEquals("ab", doc.text(), "only the letter typed after the move is taken back");
+    }
+
+    @Test
+    void toggleLinePrefix_leavesACaretInTheIndentWhereItIs() {
+        doc.setText("    x = 1;");
+        doc.setCursor(0, 2);
+        doc.toggleLinePrefix("// ");
+        assertEquals(2, doc.cursorCol());
+        doc.toggleLinePrefix("// ");
+        assertEquals("    x = 1;", doc.text());
+        assertEquals(2, doc.cursorCol());
+    }
+
+    @Test
+    void toggleLinePrefix_removalPutsACaretInsideTheMarkerAtItsStart() {
+        doc.setText("    // x = 1;");
+        doc.setCursor(0, 6);
+        doc.toggleLinePrefix("// ");
+        assertEquals("    x = 1;", doc.text());
+        assertEquals(4, doc.cursorCol());
+    }
+
+    @Test
+    void revision_movesOnEveryChangeToTheText() {
+        long seen = doc.revision();
+        type("a");
+        assertTrue(doc.revision() != seen);
+        seen = doc.revision();
+        doc.backspace();
+        assertTrue(doc.revision() != seen);
+        seen = doc.revision();
+        doc.setText("fresh");
+        assertTrue(doc.revision() != seen);
+        type("x");
+        seen = doc.revision();
+        doc.undo();
+        assertTrue(doc.revision() != seen);
+    }
+
+    @Test
+    void revision_staysPutWhenOnlyTheCaretMoves() {
+        doc.setText("abc");
+        final long seen = doc.revision();
+        doc.setCursor(0, 2);
+        doc.left();
+        assertEquals(seen, doc.revision());
     }
 }

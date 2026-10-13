@@ -1,0 +1,228 @@
+{
+  "blocks": [
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_jobs.definition1",
+      "term": "jsc.guide.iql_jobs.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_jobs.definition2",
+      "term": "jsc.guide.iql_jobs.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text2"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CREATE JOB restock AS SELECT 64 iron_ingot EVERY 30s",
+        "CREATE JOB low_gold AS SELECT 64 gold_ingot WHEN qty(gold_ingot) < 100"
+      ],
+      "name": "jobs.iql"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_jobs.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_jobs.table1",
+      "heads": [
+        "jsc.guide.iql_jobs.table1_head1",
+        "jsc.guide.iql_jobs.table1_head2",
+        "jsc.guide.iql_jobs.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "30"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "100t"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "30s"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "5m"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "1h"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_jobs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_jobs.table2",
+      "heads": [
+        "jsc.guide.iql_jobs.table2_head1",
+        "jsc.guide.iql_jobs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "job <name> dropped"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "no job named <name>"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "DROP JOB needs a name"
+          },
+          {
+            "words": "jsc.guide.iql_jobs.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_jobs.fix1",
+          "problem": "jsc.guide.iql_jobs.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix2",
+          "problem": "jsc.guide.iql_jobs.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix3",
+          "problem": "jsc.guide.iql_jobs.problem3"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix4",
+          "problem": "jsc.guide.iql_jobs.problem4"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix5",
+          "problem": "jsc.guide.iql_jobs.problem5"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix6",
+          "problem": "jsc.guide.iql_jobs.problem6"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix7",
+          "problem": "jsc.guide.iql_jobs.problem7"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix8",
+          "problem": "jsc.guide.iql_jobs.problem8"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix9",
+          "problem": "jsc.guide.iql_jobs.problem9"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix10",
+          "problem": "jsc.guide.iql_jobs.problem10"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix11",
+          "problem": "jsc.guide.iql_jobs.problem11"
+        },
+        {
+          "fix": "jsc.guide.iql_jobs.fix12",
+          "problem": "jsc.guide.iql_jobs.problem12"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:automation_engine",
+        "jsc:iql_procedures",
+        "jsc:set_bus"
+      ]
+    }
+  ],
+  "id": "jsc:iql_jobs",
+  "order": 303,
+  "section": "jsc:iql_saved_objects",
+  "title": "jsc.guide.iql_jobs.title"
+}

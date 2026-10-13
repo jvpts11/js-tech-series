@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.item;
 
+import dev.jstech.computers.ComputingLooks;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -19,6 +23,7 @@ import java.util.List;
 /**
  * Block item for the Mainframe: the cabinet's own model in the slot, plus the machine's tooltip.
  */
+@TextHolder
 public class MainframeBlockItem extends CabinetBlockItem {
 
     /**
@@ -27,16 +32,23 @@ public class MainframeBlockItem extends CabinetBlockItem {
      * the bottom front row, so only the height and the depth need re-centring.
      */
     private static final Fit MAINFRAME_FIT = new Fit(48.0F, 0.0F, -1.0F, -0.5F);
+    /**
+     * A Mainframe's parts shown only when fitted or lit: its CPUs, memory, GPUs, disks with their lamps and power
+     * supply, its run, network and fault lamps and its light bars.
+     */
+    private static final List<String> FITTED = List.of("cpu_", "ram_", "gpu_", "disk_", "psu", "lamp_", "lightbar_");
+
+    private static final TextKey TOOLTIP =
+            TextKey.of("item.jsc.mainframe.tooltip", "Forms a 3x2x2 structure when placed");
 
     public MainframeBlockItem(final Block block, final Item.Properties properties, final String model) {
-        super(block, properties, "mainframe", model, "mainframe", MAINFRAME_FIT);
+        super(block, properties, ComputingLooks.MAINFRAME, model, MAINFRAME_FIT, FITTED);
     }
 
     @Override
     public void appendHoverText(final ItemStack stack, final Item.TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.jsc.mainframe.tooltip")
-                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(GameText.component(TOOLTIP).withStyle(ChatFormatting.GRAY));
         super.appendHoverText(stack, context, tooltip, flag);
     }
 }

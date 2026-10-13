@@ -1,0 +1,293 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_listing_errors.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_listing_errors.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_listing_errors.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_listing_errors.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_listing_errors.definition1",
+      "term": "jsc.guide.sigma_listing_errors.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_listing_errors.definition2",
+      "term": "jsc.guide.sigma_listing_errors.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_listing_errors.definition3",
+      "term": "jsc.guide.sigma_listing_errors.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_listing_errors.definition4",
+      "term": "jsc.guide.sigma_listing_errors.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_listing_errors.definition5",
+      "term": "jsc.guide.sigma_listing_errors.term5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_listing_errors.table1",
+      "heads": [
+        "jsc.guide.sigma_listing_errors.table1_head1",
+        "jsc.guide.sigma_listing_errors.table1_head2",
+        "jsc.guide.sigma_listing_errors.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "A4001"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4002"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4003"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4004"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4005"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4006"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4007"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4008"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4009"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4010"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4012"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_11_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4016"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_12_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4017"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_13_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4018"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_14_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_14_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_listing_errors.table2",
+      "heads": [
+        "jsc.guide.sigma_listing_errors.table2_head1",
+        "jsc.guide.sigma_listing_errors.table2_head2",
+        "jsc.guide.sigma_listing_errors.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "A4013"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4014"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "A4015"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table2_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_listing_errors.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_listing_errors.fix1",
+          "problem": "jsc.guide.sigma_listing_errors.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_listing_errors.fix2",
+          "problem": "jsc.guide.sigma_listing_errors.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_listing_errors.fix3",
+          "problem": "jsc.guide.sigma_listing_errors.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_listing_errors.fix4",
+          "problem": "jsc.guide.sigma_listing_errors.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_runtime_stops"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_listing_errors",
+  "order": 385,
+  "section": "jsc:errors_listing",
+  "title": "jsc.guide.sigma_listing_errors.title"
+}

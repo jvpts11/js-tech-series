@@ -1,0 +1,14 @@
+{
+  "border": "#FF1F1F1F",
+  "categoriesRule": "#FF3A3A3A",
+  "category": "#FFBDBDBD",
+  "chosen": "#FFFFFFFF",
+  "fill": "#FF2F2F2F",
+  "hover": "#3369B03B",
+  "ink": "#FFE8E8E8",
+  "rail": "#FF262626",
+  "search": "#FF222222",
+  "searchEdge": "#FF444444",
+  "searchHint": "#FF9A9A9A",
+  "shadow": "#40000000"
+}

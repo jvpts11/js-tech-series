@@ -23,6 +23,7 @@ import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.computers.vm.system.SystemApi;
+import dev.jstech.core.text.Text;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -92,7 +93,8 @@ class CallDispatchTest {
                 case "Read" -> (call, target, arguments, line) -> {
                     final String held = this.files.get(String.valueOf(arguments[0]));
                     if (held == null) {
-                        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, arguments[0] + ": file not found");
+                        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
+                                Text.literal(arguments[0] + ": file not found"));
                     }
                     call.moved(held.getBytes(StandardCharsets.UTF_8).length);
                     return held;
@@ -314,7 +316,7 @@ class CallDispatchTest {
         final Process process = run(new Drive(), "        string s = File.Read(\"gone\");");
 
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("file not found"), process.message());
+        assertTrue(process.message().english().contains("file not found"), String.valueOf(process.message()));
     }
 
     @Test
@@ -322,6 +324,6 @@ class CallDispatchTest {
         final Process process = run(IHost.still(), "        File.Write(\"log\", \"x\");");
 
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("File"), process.message());
+        assertTrue(process.message().english().contains("File"), String.valueOf(process.message()));
     }
 }

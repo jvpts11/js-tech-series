@@ -8,6 +8,8 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,11 +23,10 @@ import java.util.List;
  * Interactor's details panel. {@code madeBy} lists every recipe whose result is the key, one line each (its
  * name, kind and machines); {@code usedIn} names the results of the patterns that consume it.
  */
-public record ItemRecipesPayload(StorageKey key, List<String> madeBy, List<String> usedIn)
+public record ItemRecipesPayload(StorageKey key, List<Text> madeBy, List<Text> usedIn)
         implements CustomPacketPayload {
 
     public static final int MAX_LINES = 16;
-    public static final int MAX_TEXT = 96;
 
     public static final CustomPacketPayload.Type<ItemRecipesPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "item_recipes"));
@@ -33,8 +34,8 @@ public record ItemRecipesPayload(StorageKey key, List<String> madeBy, List<Strin
     public static final StreamCodec<RegistryFriendlyByteBuf, ItemRecipesPayload> STREAM_CODEC =
             StreamCodec.composite(
                     StorageKey.STREAM_CODEC, ItemRecipesPayload::key,
-                    ByteBufCodecs.stringUtf8(MAX_TEXT).apply(ByteBufCodecs.list(MAX_LINES)), ItemRecipesPayload::madeBy,
-                    ByteBufCodecs.stringUtf8(MAX_TEXT).apply(ByteBufCodecs.list(MAX_LINES)), ItemRecipesPayload::usedIn,
+                    TextCodecs.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)), ItemRecipesPayload::madeBy,
+                    TextCodecs.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)), ItemRecipesPayload::usedIn,
                     ItemRecipesPayload::new);
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */

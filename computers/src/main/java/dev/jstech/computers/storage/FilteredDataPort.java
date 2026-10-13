@@ -10,27 +10,33 @@ package dev.jstech.computers.storage;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
- * A port restricted to a single kind of data. Wrapping a machine face with the filter its bus carries lets the
- * player pin what each face handles: a Chemical Infuser fed two chemicals from two sides routes each ingredient
- * to the correct face instead of relying on the machine to reject the wrong one. A {@code null} filter passes
- * everything, so an unfiltered bus behaves exactly like the raw face.
+ * A port restricted to the kinds of data a filter lists. Wrapping a machine face with the filter its bus carries lets
+ * the player pin what each face handles: a Chemical Infuser fed two chemicals from two sides routes each ingredient
+ * to the correct face instead of relying on the machine to reject the wrong one. An empty filter passes everything,
+ * so an unfiltered bus behaves exactly like the raw face.
  */
 public final class FilteredDataPort implements IDataPort {
 
     private final IDataPort delegate;
-    @Nullable
-    private final StorageKey filter;
+    private final List<StorageKey> filter;
 
+    /** A port passing only {@code filter}, or everything when it is null. */
     public FilteredDataPort(final IDataPort delegate, @Nullable final StorageKey filter) {
+        this(delegate, filter == null ? List.of() : List.of(filter));
+    }
+
+    /** A port passing only what {@code filter} lists, or everything when it lists nothing. */
+    public FilteredDataPort(final IDataPort delegate, final Collection<StorageKey> filter) {
         this.delegate = delegate;
-        this.filter = filter;
+        this.filter = List.copyOf(filter);
     }
 
     private boolean passes(final StorageKey key) {
-        return filter == null || filter.equals(key);
+        return filter.isEmpty() || filter.contains(key);
     }
 
     @Override
@@ -59,12 +65,12 @@ public final class FilteredDataPort implements IDataPort {
 
     @Override
     public List<StorageKey> available() {
-        if (filter == null) {
+        if (filter.isEmpty()) {
             return delegate.available();
         }
         final List<StorageKey> kept = new ArrayList<>();
         for (final StorageKey key : delegate.available()) {
-            if (filter.equals(key)) {
+            if (filter.contains(key)) {
                 kept.add(key);
             }
         }

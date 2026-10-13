@@ -15,21 +15,36 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Decides where an item amount is served from across the network, fastest tier first.
+ * Decides where an item amount is served from across the network, fastest tier first; and where an amount is written,
+ * the storage of the highest priority first and then the fastest.
  */
 public final class StorageAllocator {
+
+    private static final Comparator<ItemLocation> FASTEST = Comparator.comparingInt(ItemLocation::latencyTicks)
+            .thenComparing(Comparator.comparingLong(ItemLocation::quantity).reversed());
 
     private StorageAllocator() {
     }
 
+    /** Where {@code demand} is read from: the fastest first, and of those the fullest. */
     public static Allocation allocate(final List<ItemLocation> sources, final long demand) {
+        return allocate(sources, demand, FASTEST);
+    }
+
+    /** Where {@code demand} is written: the storage the network fills first, then the fastest and the roomiest. */
+    public static Allocation allocateByPriority(final List<ItemLocation> rooms, final long demand) {
+        return allocate(rooms, demand, Comparator.comparingInt(ItemLocation::priority).reversed().thenComparing(
+                FASTEST));
+    }
+
+    private static Allocation allocate(final List<ItemLocation> sources, final long demand,
+                                       final Comparator<ItemLocation> order) {
         if (demand <= 0L || sources.isEmpty()) {
             return new Allocation(Map.of(), 0L);
         }
         final List<ItemLocation> ordered = sources.stream()
                 .filter(location -> location.quantity() > 0L)
-                .sorted(Comparator.comparingInt(ItemLocation::latencyTicks)
-                        .thenComparing(Comparator.comparingLong(ItemLocation::quantity).reversed()))
+                .sorted(order)
                 .toList();
 
         final Map<NodeUuid, Long> plan = new LinkedHashMap<>();

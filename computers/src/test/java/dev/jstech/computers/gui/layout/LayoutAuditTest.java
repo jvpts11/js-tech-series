@@ -10,13 +10,17 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.bus.BusAbilities;
 import dev.jstech.computers.gui.CdeBackdrop;
-import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeScheme;
+import dev.jstech.computers.gui.EffectsPages;
 import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.help.HelpForm;
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.tier.HardwareEra;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
@@ -41,12 +45,20 @@ class LayoutAuditTest {
 
     /** Layout classes that produce a {@link GuiLayout} and are exercised by {@link #cases()}. */
     private static final Set<String> COVERED = Set.of(
-            "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "NmsLayout",
+            "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "IsmsLayout",
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
-            "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
+            "CraftingInterfaceLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
-            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout");
+            "CdeStyleLayout", "WorkstationInfoLayout", "WorkstationDevicesLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
+            "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout", "PowerStripLayout",
+            "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
+            "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
+            "SystemBootLayout", "CrashLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
+            "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
+            "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
+            "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
+            "EffectsPageLayout", "TransitionPanelLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -70,14 +82,128 @@ class LayoutAuditTest {
     /** Every layout, at the sizes/states worth auditing (worst cases for the parametrized ones). */
     private static List<AuditCase> cases() {
         final List<AuditCase> c = new ArrayList<>();
-        c.add(new AuditCase("BusLayout", BusLayout.layout(), true));
-        c.add(new AuditCase("CraftingSwitchLayout", CraftingSwitchLayout.layout(), true));
+        // Each era's window of each kind of bus, and the rows its Configure tab scrolls, laid out flat at their most.
+        for (final BusLayout.Window window : BusLayout.Window.values()) {
+            for (final HardwareEra era : HardwareEra.values()) {
+                final BusAbilities can = BusLayout.abilities(era, window);
+                c.add(new AuditCase("BusLayout(" + window + " " + era + ")", BusLayout.frame(can, window), true));
+                c.add(new AuditCase("BusLayout.rows(" + window + " " + era + ")",
+                        BusLayout.content(BusLayout.Shape.most(can, window)), false));
+            }
+        }
+        c.add(new AuditCase("SoundfoundryLayout", SoundfoundryLayout.layout(), true));
+        // The Workshop: a desktop window at the smallest it allows, and each station alone in its area.
+        c.add(new AuditCase("WorkshopLayout", WorkshopLayout.layout(WorkshopLayout.MIN_W,
+                WorkshopLayout.minContentHeight()), false));
+        final int station = WorkshopLayout.stationWidth(WorkshopLayout.MIN_W);
+        c.add(new AuditCase("WorkshopLayout.crafting", WorkshopLayout.crafting(station), false));
+        c.add(new AuditCase("WorkshopLayout.furnace", WorkshopLayout.furnace(station), false));
+        c.add(new AuditCase("WorkshopLayout.enchanting", WorkshopLayout.enchanting(station), false));
+        c.add(new AuditCase("WorkshopLayout.anvil", WorkshopLayout.anvil(station), false));
+        // The Network Interactor's Update window, and each of its tabs alone in the panel.
+        c.add(new AuditCase("UpdateWindowLayout", UpdateWindowLayout.layout(), true));
+        c.add(new AuditCase("UpdateWindowLayout.enchant", UpdateWindowLayout.enchant(), true));
+        c.add(new AuditCase("UpdateWindowLayout.repair", UpdateWindowLayout.repair(), true));
+        c.add(new AuditCase("UpdateWindowLayout.smelt", UpdateWindowLayout.smelt(), true));
+        // Virtual Studio's Properties at the most it holds: every instruction set and every version beside Default.
+        c.add(new AuditCase("StudioPropertiesLayout", StudioPropertiesLayout.layout(5, 4), true));
+        // A window on the desktop, not a panel over the game: held to its own frame, not to the panel budget.
+        c.add(new AuditCase("SoundfoundryShareLayout", SoundfoundryShareLayout.layout(
+                List.of("SEARCH", "DOWNLOADS (999)", "SHARED (9999)"), s -> s.length() * 6), false));
+        c.add(new AuditCase("SoundfoundryShareLayout.list", SoundfoundryShareLayout.listLayout(
+                List.of("SEARCH", "DOWNLOADS (999)", "SHARED (9999)"), s -> s.length() * 6), false));
+        // A desktop window drawn at any size it is given: the smallest it allows, the one it opens at, a whole desktop.
+        for (final int[] size : new int[][] {{SoundfoundryStandardLayout.MIN_W, SoundfoundryStandardLayout.MIN_H},
+                {SoundfoundryStandardLayout.DEFAULT_W, SoundfoundryStandardLayout.DEFAULT_H}, {960, 540}}) {
+            final String at = "(" + size[0] + "x" + size[1] + ")";
+            c.add(new AuditCase("SoundfoundryStandardLayout" + at,
+                    SoundfoundryStandardLayout.layout(size[0], size[1]), false));
+            c.add(new AuditCase("SoundfoundryStandardLayout.album" + at,
+                    SoundfoundryStandardLayout.albumLayout(size[0], size[1]), false));
+            c.add(new AuditCase("SoundfoundryStandardLayout.local" + at,
+                    SoundfoundryStandardLayout.localLayout(size[0], size[1], true), false));
+        }
+        // A Crafting Interface's window for every era's pattern count, its frame and its rows at their most.
+        for (final int capacity : new int[] {3, 6, 8, 9, 12}) {
+            final CraftingInterfaceLayout.Shape most = CraftingInterfaceLayout.Shape.most(capacity);
+            c.add(new AuditCase("CraftingInterfaceLayout(" + capacity + ")", CraftingInterfaceLayout.frame(most),
+                    true));
+            c.add(new AuditCase("CraftingInterfaceLayout.rows(" + capacity + ")",
+                    CraftingInterfaceLayout.content(most), false));
+        }
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));
         c.add(new AuditCase("OpenWithLayout", OpenWithLayout.layout(), true));
-        c.add(new AuditCase("ClusterManagementComputerLayout", ClusterManagementComputerLayout.layout(), true));
-        c.add(new AuditCase("CraftingComputerLayout", CraftingComputerLayout.layout(), true));
-        c.add(new AuditCase("NmsLayout", NmsLayout.layout(), true));
+        // The three towers wear their era's case, whose bays and supply stand differently in each era.
+        for (final HardwareEra era : HardwareEra.values()) {
+            c.add(new AuditCase("ClusterManagementComputerLayout(" + era + ")",
+                    ClusterManagementComputerLayout.layout(era), true));
+            c.add(new AuditCase("CraftingComputerLayout(" + era + ")", CraftingComputerLayout.layout(era), true));
+            c.add(new AuditCase("PersonalComputerLayout(" + era + ")", PersonalComputerLayout.layout(era), true));
+        }
+        c.add(new AuditCase("MainframeLayout", MainframeLayout.layout(), true));
+        c.add(new AuditCase("ServerAssemblyLayout", ServerAssemblyLayout.layout(), true));
+        // The KVM channel bar grows a row per channel; audit an empty bar and the most a switch reports.
+        c.add(new AuditCase("KvmChannelLayout(0)", KvmChannelLayout.layout(0), true));
+        c.add(new AuditCase("KvmChannelLayout(most)", KvmChannelLayout.layout(KvmChannelLayout.MOST_CHANNELS), true));
+        c.add(AuditCase.onTheGlass("SystemBootLayout", SystemBootLayout.layout()));
+        // The newer Frames' crash page with its code at the size the line it carries makes, and Frames 95's title.
+        c.add(AuditCase.onTheGlass("CrashLayout(stop code)", CrashLayout.layout(29)));
+        c.add(AuditCase.onTheGlass("CrashLayout(Frames 95)", CrashLayout.frames95(60)));
+        /*
+         * The Command Prompt window is resizable, so audit it at the full glass size and at a compact one
+         * that still leaves the console panel and the input strip room to draw; a bare terminal (MC-DOS, the
+         * Linux TTY, MC-NET with nothing installed) draws no chrome and is always the empty layout.
+         */
+        c.add(AuditCase.onTheGlass("CommandPromptLayout(384x256)", CommandPromptLayout.layout(384, 256, false)));
+        final int compactW = MonitorGlass.width(320);
+        final int compactH = MonitorGlass.height(240);
+        c.add(new AuditCase("CommandPromptLayout(" + compactW + "x" + compactH + ")",
+                CommandPromptLayout.layout(compactW, compactH, false), false));
+        c.add(new AuditCase("CommandPromptLayout(bare)", CommandPromptLayout.layout(384, 256, true), false));
+        // The OS install dialog never shows two of its three bodies together, so each is its own case.
+        c.add(new AuditCase("OsInstallLayout(working)", OsInstallLayout.workingLayout(), true));
+        c.add(new AuditCase("OsInstallLayout(done)", OsInstallLayout.doneLayout(), true));
+        c.add(new AuditCase("OsInstallLayout(failed)",
+                OsInstallLayout.failedLayout(OsInstallLayout.mostFailureLines()), true));
+        c.add(AuditCase.onTheGlass("InstallerLayout", InstallerLayout.layout()));
+        /*
+         * bsdinstall's own dialog, at its longest English heading and button word ("System Configuration",
+         * "Install"), padded a few letters longer to stand in for a translation running longer still, so this
+         * does not have to spell one out to be held to it.
+         */
+        c.add(AuditCase.onTheGlass("InstallerLayout.bsdDialog",
+                InstallerLayout.bsdDialogLayout("System Configuration....", "Install....")));
+        // The no-boot dialog takes the bar's place and is drawn over the title, so it is audited on its own.
+        c.add(AuditCase.onTheGlass("BootSequenceLayout", BootSequenceLayout.layout()));
+        c.add(AuditCase.onTheGlass("BootSequenceLayout.noBoot",
+                BootSequenceLayout.noBootLayout(BootSequenceLayout.MOST_LISTED_DEVICES)));
+        // The firmware setup never shows two of its three eras' shapes together.
+        c.add(AuditCase.onTheGlass("FirmwareLayout(cli)", FirmwareLayout.cliLayout()));
+        c.add(AuditCase.onTheGlass("FirmwareLayout(bios)", FirmwareLayout.biosLayout()));
+        c.add(AuditCase.onTheGlass("FirmwareLayout(uefi)", FirmwareLayout.uefiLayout()));
+        // The studio is a resizable window: its smallest, its default and a large size, then its dialogs.
+        c.add(new AuditCase("IsmsLayout(min)", IsmsLayout.layout(IsmsLayout.MIN_W, IsmsLayout.MIN_H,
+                IsmsLayout.EXPLORER_W, IsmsLayout.defaultEditorH(IsmsLayout.MIN_H)), false));
+        c.add(new AuditCase("IsmsLayout", IsmsLayout.layout(), false));
+        c.add(new AuditCase("IsmsLayout(large)", IsmsLayout.layout(600, 340, 400, 400), false));
+        c.add(new AuditCase("IsmsLayout.confirm", IsmsLayout.confirm(), true));
+        c.add(new AuditCase("IsmsLayout.template", IsmsLayout.template(IsmsLayout.MOST_TEMPLATE_ROWS + 2), true));
+        c.add(new AuditCase("IsmsLayout.options", IsmsLayout.options(), true));
+        c.add(new AuditCase("IsmsLayout.indexMaintenance", IsmsLayout.indexMaintenance(), true));
+        c.add(new AuditCase("IsmsLayout.note", IsmsLayout.note(), true));
+        c.add(new AuditCase("IsmsLayout.profiler", IsmsLayout.profiler(IsmsLayout.PROFILER_MIN_W,
+                IsmsLayout.PROFILER_MIN_H), false));
+        // The Nextgre Planner Studio is a resizable window: its smallest, its default and a large size.
+        c.add(new AuditCase("NextgreStudioLayout(min)", NextgreStudioLayout.layout(NextgreStudioLayout.MIN_W,
+                NextgreStudioLayout.MIN_H), false));
+        c.add(new AuditCase("NextgreStudioLayout", NextgreStudioLayout.layout(), false));
+        c.add(new AuditCase("NextgreStudioLayout(large)", NextgreStudioLayout.layout(640, 400), false));
+        // The Prophet Reactive Console is a resizable window too.
+        c.add(new AuditCase("ProphetConsoleLayout(min)", ProphetConsoleLayout.layout(ProphetConsoleLayout.MIN_W,
+                ProphetConsoleLayout.MIN_H), false));
+        c.add(new AuditCase("ProphetConsoleLayout", ProphetConsoleLayout.layout(), false));
+        c.add(new AuditCase("ProphetConsoleLayout(large)", ProphetConsoleLayout.layout(640, 420), false));
         c.add(new AuditCase("ServerRackLayout", ServerRackLayout.layout(), true));
         c.add(AuditCase.onTheGlass("ComputerTerminalLayout", ComputerTerminalLayout.layout()));
         /*
@@ -109,6 +235,62 @@ class LayoutAuditTest {
             }
             c.add(new AuditCase("ThisPcLayout.programGrid(" + size[0] + ")",
                     dev.jstech.computers.gui.layout.ThisPcLayout.programGrid(size[0], 7), false));
+        }
+        // This PC's About-style page on KDE, GNOME and Cinnamon: fixed size, one layout each.
+        c.add(new AuditCase("ThisPcLayout.KdeAbout", ThisPcLayout.KdeAbout.layout(), true));
+        c.add(new AuditCase("ThisPcLayout.GnomeAbout", ThisPcLayout.GnomeAbout.layout(), true));
+        c.add(new AuditCase("ThisPcLayout.CinnamonAbout", ThisPcLayout.CinnamonAbout.layout(), true));
+        // KDE's Info Center: the list of pages beside its "Devices by port" page.
+        c.add(new AuditCase("InfoCenterLayout", InfoCenterLayout.layout(), true));
+        // The power strip beside an opened monitor screen's frame: Power over Restart.
+        c.add(new AuditCase("PowerStripLayout", PowerStripLayout.layout(), true));
+        // A printer's window: the tray, the job and its page, the queue, the output, the buttons, the inventory.
+        c.add(new AuditCase("PrinterLayout", PrinterLayout.layout(), true));
+        // The Dock Station's window: each tray and the port with what it holds, the note, the inventory.
+        c.add(new AuditCase("DockLayout", DockLayout.layout(), true));
+        // A printed sheet being read, the widest: a fanfold page on its side, which the screen scales to fit.
+        c.add(new AuditCase("PrintedPaperLayout", PrintedPaperLayout.layout(PrintedPaperLayout.landscape(true),
+                PrintLayout.LANDSCAPE_COLUMNS, PrintLayout.LANDSCAPE_LINES), false));
+        /*
+         * The Personalize page scrolls rather than being held to a budget, so it is audited for being clean
+         * (no overlaps, nothing spilling past its own content height) at the worst case: the flat skin (every
+         * row this page draws) at the narrowest window with every wallpaper offered, and the plain bevel skin
+         * (the fewest rows) with none of the extra wallpapers offered.
+         */
+        c.add(new AuditCase("SettingsLayout(flat, min width, most wallpapers)",
+                SettingsLayout.layout(135, 10, true, true), false));
+        c.add(new AuditCase("SettingsLayout(bevel, one wallpaper)",
+                SettingsLayout.layout(135, 1, false, false), false));
+        // Each system's effects page in the Settings window's page area, at its smallest and as it opens, every
+        // row's words wrapped onto the most lines they may take.
+        for (final EffectsPages.Page page : EffectsPages.ALL) {
+            for (final int[] area : new int[][] {{135, 126}, {161, 190}}) {
+                c.add(new AuditCase("EffectsPageLayout(" + page.title().key() + " " + area[0] + "x" + area[1] + ")",
+                        EffectsPageLayout.layout(page, area[0], area[1], row -> EffectsPageLayout.MOST_LINES,
+                                page.title().english().length()),
+                        false));
+            }
+        }
+        // KDE 4's and GNOME 2's panels across the desktop as the glass draws it, at three quarters of its size.
+        c.add(new AuditCase("TransitionPanelLayout.kde4", TransitionPanelLayout.kde4(512, 402), false));
+        c.add(new AuditCase("TransitionPanelLayout.gnome2Foot", TransitionPanelLayout.gnome2Foot(512), false));
+        c.add(new AuditCase("TransitionPanelLayout.gnome2Top",
+                TransitionPanelLayout.gnome2Top(512, 60, 40, 40, 2, 220), false));
+        c.add(new AuditCase("SpeakerLayout", SpeakerLayout.layout(), true));
+        c.add(new AuditCase("RedstoneInterfaceLayout", RedstoneInterfaceLayout.layout(), true));
+        c.add(new AuditCase("DeviceManagerLayout(Frames 95)", DeviceManagerLayout.frames95(), true));
+        c.add(new AuditCase("DeviceManagerLayout(Frames XP)", DeviceManagerLayout.framesXp(), true));
+        c.add(new AuditCase("DeviceManagerLayout(Frames 11)", DeviceManagerLayout.frames11(), true));
+        c.add(new AuditCase("DeviceManagerLayout(Properties)", DeviceManagerLayout.properties(), true));
+        // Every volume control a panel opens, open and folded, with the English words at six pixels a letter.
+        final VolumePopupLayout.Labels volumeWords = new VolumePopupLayout.Labels("Audio Volume", "Mute output",
+                "Sound output", List.of("Monitor", "Speakers", "Monitor and speakers"), "Desk left, Desk right",
+                "Configure Audio Devices...");
+        for (final VolumePopupLayout.Look look : VolumePopupLayout.Look.values()) {
+            for (final boolean open : new boolean[] {true, false}) {
+                c.add(new AuditCase("VolumePopupLayout(" + look + (open ? ", open)" : ", folded)"),
+                        VolumePopupLayout.of(look, open, volumeWords, s -> s.length() * 6).toGuiLayout(), true));
+            }
         }
         // The Server Router tiles one section per output face; audit every count up to the maximum.
         for (int s = 0; s <= ServerRouterLayout.MAX_SECTIONS; s++) {
@@ -154,12 +336,28 @@ class LayoutAuditTest {
         c.add(new AuditCase("CdeAppManagerLayout(groups)", CdeAppManagerLayout.layout(4, false, 284, 62), true));
         c.add(new AuditCase("CdeAppManagerLayout(group)", CdeAppManagerLayout.layout(8, true, 292, 128), true));
         // CDE's Style Manager: the strip of pages, and each page with everything it lists.
-        c.add(new AuditCase("CdeStyleLayout(strip)", CdeStyleLayout.stripLayout(2), true));
-        c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdePalette.ALL.size()), true));
+        c.add(new AuditCase("CdeStyleLayout(strip)", CdeStyleLayout.stripLayout(3), true));
+        c.add(new AuditCase("CdeStyleLayout(audio)", CdeStyleLayout.audioLayout(), true));
+        c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdeScheme.ALL.size()), true));
         c.add(new AuditCase("CdeStyleLayout(backdrop)",
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
         c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
-        c.add(new AuditCase("HelpViewerLayout", HelpViewerLayout.layout(), true));
+        c.add(new AuditCase("WorkstationDevicesLayout", WorkstationDevicesLayout.layout(), true));
+        // Help in every form a desktop gives it.
+        for (final HelpForm form : HelpForm.values()) {
+            c.add(new AuditCase("HelpViewerLayout(" + form + ")", HelpViewerLayout.layout(form),
+                    true));
+        }
+        // The Network Manager's Services tab scrolls, so it is held to being clean at its widest and its narrowest.
+        c.add(new AuditCase("NetworkServicesLayout(default)", NetworkServicesLayout.layout(
+                NetworkServicesLayout.DEFAULT_CONTENT_W, 16, 32, true, 2, new int[] {84, 44, 72}, 64), false));
+        c.add(new AuditCase("NetworkServicesLayout(narrowest)", NetworkServicesLayout.layout(
+                NetworkServicesLayout.MIN_CONTENT_W, 3, 2, true, 2, new int[] {84, 44, 72}, 64), false));
+        c.add(new AuditCase("NetworkLinksLayout(default)", NetworkLinksLayout.devices(
+                NetworkServicesLayout.DEFAULT_W - NetworkServicesLayout.WINDOW_PAD, NetworkServicesLayout.DEFAULT_H - 38,
+                true), false));
+        c.add(new AuditCase("NetworkLinksLayout(narrowest)", NetworkLinksLayout.devices(
+                NetworkServicesLayout.MIN_W - NetworkServicesLayout.WINDOW_PAD, 150 - 38, true), false));
         // The trash window in each of its three looks, at its smallest and at its first size.
         for (final int[] size : new int[][]{
                 {TrashLayout.MIN_W - TrashLayout.FRAME_W, TrashLayout.MIN_H - TrashLayout.FRAME_H},

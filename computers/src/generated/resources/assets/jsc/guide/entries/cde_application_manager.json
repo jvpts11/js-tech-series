@@ -1,0 +1,87 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_application_manager.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cde_application_manager.table1",
+      "heads": [
+        "jsc.guide.cde_application_manager.table1_head1",
+        "jsc.guide.cde_application_manager.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cde_application_manager.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.cde_application_manager.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_application_manager.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.cde_application_manager.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_application_manager.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.cde_application_manager.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_application_manager.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.cde_application_manager.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_application_manager.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_application_manager.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cde_application_manager.fix1",
+          "problem": "jsc.guide.cde_application_manager.problem1"
+        },
+        {
+          "fix": "jsc.guide.cde_application_manager.fix2",
+          "problem": "jsc.guide.cde_application_manager.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cde",
+        "jsc:cde_front_panel"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:cde_application_manager",
+  "order": 213,
+  "section": "jsc:cde_desktop",
+  "title": "jsc.guide.cde_application_manager.title"
+}

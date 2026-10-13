@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.program.iql.IqlDefinition;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -31,7 +32,7 @@ public record JobActionPayload(BlockPos host, BlockPos monitorPos, String name, 
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, JobActionPayload::host,
                     BlockPos.STREAM_CODEC, JobActionPayload::monitorPos,
-                    ByteBufCodecs.stringUtf8(64), JobActionPayload::name,
+                    ByteBufCodecs.stringUtf8(IqlDefinition.MAX_NAME), JobActionPayload::name,
                     ByteBufCodecs.VAR_INT, JobActionPayload::action,
                     JobActionPayload::new);
 

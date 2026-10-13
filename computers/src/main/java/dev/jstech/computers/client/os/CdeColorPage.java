@@ -8,8 +8,11 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -41,8 +44,6 @@ final class CdeColorPage implements IDesktopApp {
     private int left;
     private int top;
 
-    private static final String TITLE = "Style Manager - Color";
-
     /** The palettes by name, in the order the Style Manager lists them. */
     private static final List<String> NAMES = names();
 
@@ -66,7 +67,7 @@ final class CdeColorPage implements IDesktopApp {
 
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(CdeStyleTitles.COLOR_PAGE);
     }
 
     @Override
@@ -102,17 +103,18 @@ final class CdeColorPage implements IDesktopApp {
         if (this.skin == null) {
             return;
         }
-        final CdePalette shown = CdePalette.named(this.picked);
+        final CdeScheme scheme = CdeScheme.named(this.picked);
+        final CdePalette shown = scheme.colours();
         CdeStylePages.list(g, font, this.skin, shown, x, y, true, NAMES, NAMES.indexOf(this.picked));
         final Rect name = CdeStyleLayout.colorName();
-        g.drawString(font, shown.name(), x + name.x(), y + name.y(), this.skin.text(), false);
+        Draw.text(g, font, scheme.label(), x + name.x(), y + name.y(), this.skin.text());
         final int[] colours = {shown.active(), shown.window(), shown.inset(), shown.light(), shown.shade(),
             shown.backdropA(), shown.backdropB(), shown.ink()};
         for (int i = 0; i < CdeStyleLayout.SWATCHES; i++) {
             final Rect s = CdeStyleLayout.swatch(i);
             MotifChrome.raised(g, x + s.x(), y + s.y(), s.w(), s.h(), colours[i], shown);
         }
-        CdeStylePages.buttons(g, font, this.skin, x, y, true, "OK", "Cancel", mouseX, mouseY);
+        CdeStylePages.buttons(g, font, this.skin, x, y, true, CdeTexts.OK, CdeTexts.CANCEL, mouseX, mouseY);
     }
 
     @Override
@@ -171,31 +173,31 @@ final class CdeColorPage implements IDesktopApp {
 
     private void keep() {
         this.answered = true;
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
-            desktop.keepCdeStyle(desktop.cdeStyle().withPalette(this.picked));
+            desktop.prefs().keepCdeStyle(desktop.prefs().cdeStyle().withPalette(this.picked));
         }
-        DesktopScreen.closeDialog(this);
+        ActiveDesktop.closeDialog(this);
     }
 
     private void putBack() {
         this.answered = true;
         wear(this.kept);
-        DesktopScreen.closeDialog(this);
+        ActiveDesktop.closeDialog(this);
     }
 
     /* Only the palette changes: the backdrops may have been set on the other page in the meantime. */
     private static void wear(final String palette) {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
-            desktop.wearCdeStyle(desktop.cdeStyle().withPalette(palette));
+            desktop.prefs().wearCdeStyle(desktop.prefs().cdeStyle().withPalette(palette));
         }
     }
 
     private static List<String> names() {
-        final List<String> out = new ArrayList<>(CdePalette.ALL.size());
-        for (final CdePalette each : CdePalette.ALL) {
-            out.add(each.name());
+        final List<String> out = new ArrayList<>(CdeScheme.ALL.size());
+        for (final CdeScheme each : CdeScheme.ALL) {
+            out.add(each.label());
         }
         return List.copyOf(out);
     }

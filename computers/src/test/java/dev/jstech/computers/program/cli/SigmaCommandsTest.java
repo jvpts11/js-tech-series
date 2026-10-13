@@ -11,6 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.os.Platform;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -97,6 +99,53 @@ class SigmaCommandsTest {
                 withoutTheTarget(this.computer.files.get("small.asm")));
     }
 
+    private static final String BEEPER = """
+            using System.IO.*;
+            using System.Sound.*;
+            namespace Tests;
+            class Beeper { static void Main() { Sound.Beep(880, 200); } }
+            """;
+
+    /** The compiler says which it is before anything else, by the version of the package installed. */
+    @Test
+    void sgsc_firstSaysWhichCompilerItIs() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Beeper.sgs", BEEPER);
+        assertTrue(this.run("sgsc Beeper.sgs").startsWith("Σ# Compiler 2.0\n"));
+        this.computer.versions.put(SigmaCommands.COMPILER, "1.0");
+        assertTrue(this.run("sgsc Beeper.sgs").startsWith("Σ# Compiler 1.0\n"));
+    }
+
+    /** --lang holds a build to an older version, which is refused what came later. */
+    @Test
+    void sgsc_langHoldsTheBuildToThatVersion() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Beeper.sgs", BEEPER);
+        final String said = this.run("sgsc --lang 1 Beeper.sgs");
+        assertTrue(said.contains("error S3057: 'Sound' needs Σ# 2; this project is Σ# 1"), said);
+        assertFalse(this.computer.files.containsKey("Beeper.asm"));
+        assertTrue(this.run("sgsc --lang 2 Beeper.sgs").contains("wrote Beeper.asm"));
+    }
+
+    /** An installed compiler is the ceiling: an older one builds at its own version and cannot be asked above it. */
+    @Test
+    void sgsc_atAnOlderPackage_buildsAtItsVersionAndRefusesANewerOne() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.versions.put(SigmaCommands.COMPILER, "1.0");
+        this.computer.files.put("Beeper.sgs", BEEPER);
+        assertTrue(this.run("sgsc Beeper.sgs").contains("'Sound' needs Σ# 2; this project is Σ# 1"));
+        assertTrue(this.run("sgsc --lang 2 Beeper.sgs")
+                .contains("sgsc: this compiler knows Σ# 1 at most; Σ# 2 needs a newer one"));
+    }
+
+    @Test
+    void sgsc_langOfNoVersionThereIs_isRefused() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Beeper.sgs", BEEPER);
+        assertTrue(errored("sgsc --lang 9 Beeper.sgs"));
+        assertTrue(this.run("sgsc --lang two Beeper.sgs").contains("'two' is not a version of Σ#; there are 1 to 2"));
+    }
+
     /** The listing with the line naming the machine it was built for taken out. */
     private static String withoutTheTarget(final String listing) {
         return listing == null ? null : listing.lines()
@@ -110,7 +159,7 @@ class SigmaCommandsTest {
         this.computer.add(SigmaCommands.SUBSET_COMPILER);
         this.computer.files.put("Watch.sg", SUBSET);
         this.run("scc Watch.sg");
-        assertTrue(this.computer.files.get("Watch.asm").contains(".arch jsc:x86_16"),
+        assertTrue(this.computer.files.get("Watch.asm").contains(".arch jsc:ia_16"),
                 this.computer.files.get("Watch.asm"));
     }
 
@@ -140,18 +189,18 @@ class SigmaCommandsTest {
 
     /** The oldest machines run the smaller language only, so the bigger one cannot be built for them. */
     @Test
-    void sgsc_willNotBuildForTheArchitectureThatRunsSigmaOnly() {
+    void sgsc_willNotBuildForTheIsaThatRunsSigmaOnly() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
-        assertTrue(this.run("sgsc Monitor.sgs --arch x86-16").contains("scc"));
+        assertTrue(this.run("sgsc Monitor.sgs --arch IA-16").contains("scc"));
         assertFalse(this.computer.files.containsKey("Monitor.asm"));
     }
 
     @Test
-    void scc_buildsForTheArchitectureThatRunsSigmaOnly() {
+    void scc_buildsForTheIsaThatRunsSigmaOnly() {
         this.computer.add(SigmaCommands.SUBSET_COMPILER);
         this.computer.files.put("Watch.sg", SUBSET);
-        assertTrue(this.run("scc Watch.sg --arch x86-16").contains("wrote Watch.asm"));
+        assertTrue(this.run("scc Watch.sg --arch IA-16").contains("wrote Watch.asm"));
     }
 
     @Test
@@ -252,7 +301,7 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void compile_leftAlone_buildsForTheOldestArchitectureThatRunsIt() {
+    void compile_leftAlone_buildsForTheOldestIsaThatRunsIt() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         this.run("sgsc Monitor.sgs");
@@ -262,7 +311,7 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void compile_withAnArchitectureAsked_buildsForThatOne() {
+    void compile_withAnIsaAsked_buildsForThatOne() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         this.run("sgsc Monitor.sgs --arch jsc:x86_64");
@@ -270,7 +319,7 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void compile_withAnArchitectureAskedByName_buildsForThatOne() {
+    void compile_withAnIsaAskedByName_buildsForThatOne() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         this.run("sgsc Monitor.sgs --arch x86-64");
@@ -278,11 +327,11 @@ class SigmaCommandsTest {
     }
 
     @Test
-    void compile_withAnArchitectureNothingAnswersTo_writesNothing() {
+    void compile_withAnIsaNothingAnswersTo_writesNothing() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         final String said = this.run("sgsc Monitor.sgs --arch risc");
-        assertTrue(said.contains("no architecture is called 'risc'"), said);
+        assertTrue(said.contains("no instruction set is called 'risc'"), said);
         assertTrue(said.contains("x86-64"), "it says what there is instead: " + said);
         assertFalse(this.computer.files.containsKey("Monitor.asm"), "and nothing was written");
     }
@@ -293,6 +342,49 @@ class SigmaCommandsTest {
         this.computer.files.put("Monitor.sgs", SCRIPT);
         assertTrue(this.run("sgsc Monitor.sgs").contains("run it with: sigma run Monitor.asm"));
         assertFalse(this.run("sgsc Missing.sgs").contains("run it with"));
+    }
+
+    /**
+     * A Vintage machine can never hold the runtime, so scc teaches the way that machine really runs what it
+     * wrote: by its own name, no extension, exactly as a program of that machine's day was started.
+     */
+    @Test
+    void compile_onAVintageDosMachine_saysToRunItByName() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.era = HardwareEra.VINTAGE;
+        this.computer.platform = Platform.MC_DOS;
+        this.computer.files.put("Watch.sg", SUBSET);
+        assertTrue(this.run("scc Watch.sg").contains("run it with: Watch"));
+        assertFalse(this.run("scc Watch.sg").contains("sigma run"));
+    }
+
+    /** The same machine on UNIX teaches the shell's own way instead: the current directory spelled out. */
+    @Test
+    void compile_onAVintageUnixMachine_saysToRunItFromTheCurrentDirectory() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.era = HardwareEra.VINTAGE;
+        this.computer.platform = Platform.UNIX;
+        this.computer.files.put("Watch.sg", SUBSET);
+        assertTrue(this.run("scc Watch.sg").contains("run it with: ./Watch"));
+    }
+
+    /** A target already inside a folder is run exactly as written, with no extra './' put in front of it. */
+    @Test
+    void compile_onAVintageUnixMachine_withATargetInAFolder_runsItAsWritten() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.era = HardwareEra.VINTAGE;
+        this.computer.platform = Platform.UNIX;
+        this.computer.files.put("disk/Watch.sg", SUBSET);
+        assertTrue(this.run("scc disk/Watch.sg").contains("run it with: disk/Watch"));
+    }
+
+    /** Off a Vintage machine, the runtime's own verb is the way, since the runtime can be installed there. */
+    @Test
+    void compile_offAVintageMachine_saysTheRuntimesVerb() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.platform = Platform.MC_DOS;
+        this.computer.files.put("Watch.sg", SUBSET);
+        assertTrue(this.run("scc Watch.sg").contains("run it with: sigma run Watch.asm"));
     }
 
     @Test
@@ -379,11 +471,14 @@ class SigmaCommandsTest {
     private static final class Fake implements ICliComputer {
 
         private final Map<String, String> files = new LinkedHashMap<>();
+        private final Map<String, String> versions = new LinkedHashMap<>();
         private final List<ProgramInfo> installed = new ArrayList<>();
         private final List<SigmaProcess> running = new ArrayList<>();
         private String started;
         private int startedHeap = -1;
         private int stopped = -1;
+        private Platform platform = Platform.LINUX;
+        private HardwareEra era = HardwareEra.STANDARD;
 
         void add(final String id) {
             this.installed.add(new ProgramInfo(id.substring(id.indexOf(':') + 1), id));
@@ -393,8 +488,20 @@ class SigmaCommandsTest {
             return "TEST-PC";
         }
 
+        @Override public Platform platform() {
+            return this.platform;
+        }
+
+        @Override public HardwareEra era() {
+            return this.era;
+        }
+
         @Override public List<ProgramInfo> programs() {
             return List.copyOf(this.installed);
+        }
+
+        @Override public String installedVersion(final String programId) {
+            return this.versions.getOrDefault(programId, "");
         }
 
         @Override public FsResult readFile(final String path) {

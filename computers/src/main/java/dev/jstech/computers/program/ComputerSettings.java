@@ -7,12 +7,17 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.audio.SoundOutput;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * The per-computer settings owned by the Settings app and the MC-DOS {@code config} command: the
@@ -27,6 +32,7 @@ import java.util.Map;
  * <p>All setters clamp to the documented range rather than rejecting, matching the config policy: an
  * out-of-range value is pinned to the nearest valid one, never accepted blindly.
  */
+@TextHolder
 public final class ComputerSettings {
 
     /** The most programs a panel keeps pinned; past that the panel has no room for its windows. */
@@ -39,11 +45,30 @@ public final class ComputerSettings {
     public static final int MAX_DEFAULT_APPS = 64;
     /** The most folders one machine opens to the others on its network. */
     public static final int MAX_SHARES = 16;
+    /** The most visual effects one machine keeps switched off, far more than any system has. */
+    public static final int MAX_EFFECTS_OFF = 32;
+    /** The effects' speed as the system made them, in percent of their own time. */
+    public static final int EFFECT_SPEED_NORMAL = 100;
+    /** The slowest the effects go, in percent of their own time: eight times as long, KDE's slowest step. */
+    public static final int EFFECT_SPEED_SLOWEST = 800;
 
     /** How many names the shell keeps on one machine, which is far more than anybody sets by hand. */
     public static final int MAX_VARIABLES = 64;
     /** What a fresh machine pins: its file explorer. */
     public static final String DEFAULT_PINNED = "files";
+
+    /*
+     * The words of the config listing around its keys and values, which are data a player types back. The listing
+     * is the machine's own output, so it is written in English, the language a machine keeps what it prints in.
+     */
+    private static final TextKey DEFAULT_VALUE = TextKey.of("jsc.config.default_value", "%s (default)");
+    private static final TextKey EFFECTS_ALL_ON = TextKey.of("jsc.config.effects_all_on", "all on");
+    private static final TextKey EFFECTS_OFF = TextKey.of("jsc.config.effects_off", "%s switched off");
+    private static final TextKey STARRED = TextKey.of("jsc.config.starred", "%s starred");
+    private static final TextKey READ_WRITE = TextKey.of("jsc.config.read_write", "%s (read and write)");
+    private static final TextKey READ_ONLY = TextKey.of("jsc.config.read_only", "%s (read only)");
+    private static final TextKey REMOTE_ON =
+            TextKey.of("jsc.config.remote_on", "%s (other computers may run programs here)");
 
     /**
      * One folder this machine opens to the others on its network.
@@ -71,6 +96,12 @@ public final class ComputerSettings {
     private int guiScale;
     /** Screen brightness 0..100. */
     private int brightness = 100;
+    /** How loud the system plays its sound, 0..100; the machine's own noises (its drives, its fans) are not its. */
+    private int volume = 100;
+    /** Whether the system's sound is muted, which keeps the volume for when it is turned back on. */
+    private boolean muted;
+    /** Where the system sends its sound. */
+    private SoundOutput soundOutput = SoundOutput.BOTH;
     /** The drive letter files save to by default. */
     private char defaultSaveDrive = 'C';
     /** Whether inserting removable media opens its folder automatically. */
@@ -79,13 +110,22 @@ public final class ComputerSettings {
     private String themePreset = "";
     /** Whether the taskbar app strip is centered (Frames 11 look) rather than left-aligned; default centered. */
     private boolean taskbarCentered = true;
-    /** Whether the desktop and its programs use the dark theme (Frames 11 only); default light. */
+    /** Whether the desktop and its programs use the dark theme (Frames 10 and 11 only); default light. */
     private boolean darkMode;
+    /**
+     * The system's own visual effects switched off on its settings page, by the names its motion profile gives them
+     * ({@code minimize}, {@code menus}); every effect is on until it is switched off here.
+     */
+    private final Set<String> effectsOff = new TreeSet<>();
+    /** How long the system's effects take against their own time, in percent: 100 as made, 0 at once. */
+    private int effectSpeed = EFFECT_SPEED_NORMAL;
     /**
      * The programs pinned to the panel, by program id path ({@code files}, {@code editor}), in the order
      * they were pinned. A fresh machine pins its file explorer, the way every desktop these imitate did.
      */
     private final List<String> pinned = new ArrayList<>(List.of(DEFAULT_PINNED));
+    /** The tiles of Frames 10's Start menu, in the player's order and sizes. */
+    private final StartTiles startTiles = StartTiles.defaults();
     /** Default program id per lowercase file extension (e.g. {@code "txt" -> "jsc:editor"}). */
     private final Map<String, String> defaultApps = new LinkedHashMap<>();
     /**
@@ -142,6 +182,35 @@ public final class ComputerSettings {
         this.brightness = clamp(value, 0, 100);
     }
 
+    public int volume() {
+        return volume;
+    }
+
+    public void setVolume(final int value) {
+        this.volume = clamp(value, 0, 100);
+    }
+
+    public boolean muted() {
+        return muted;
+    }
+
+    public void setMuted(final boolean value) {
+        this.muted = value;
+    }
+
+    public SoundOutput soundOutput() {
+        return soundOutput;
+    }
+
+    public void setSoundOutput(final SoundOutput output) {
+        this.soundOutput = output == null ? SoundOutput.BOTH : output;
+    }
+
+    /** How loud the system's sound plays, 0 to 1: nothing while it is muted. */
+    public float soundLevel() {
+        return muted ? 0.0F : volume / 100.0F;
+    }
+
     public char defaultSaveDrive() {
         return defaultSaveDrive;
     }
@@ -174,6 +243,21 @@ public final class ComputerSettings {
         this.remoteAllowed = value;
     }
 
+    /**
+     * Whether this machine's own scheduler runs the jobs a player put on it with a schedule of their own,
+     * FreeBSD's {@code cron_enable}. On by default, as the real service ships; a bsdinstall install lets the
+     * player turn it off on the services page.
+     */
+    private boolean cronEnabled = true;
+
+    public boolean cronEnabled() {
+        return cronEnabled;
+    }
+
+    public void setCronEnabled(final boolean value) {
+        this.cronEnabled = value;
+    }
+
     public String themePreset() {
         return themePreset;
     }
@@ -196,6 +280,41 @@ public final class ComputerSettings {
 
     public void setDarkMode(final boolean value) {
         this.darkMode = value;
+    }
+
+    /** The visual effects switched off on this machine, by name, in name order. */
+    public Set<String> effectsOff() {
+        return Collections.unmodifiableSet(effectsOff);
+    }
+
+    /** Switches one visual effect on or off; a name that is not a plain word is ignored. */
+    public void setEffect(final String name, final boolean on) {
+        final String effect = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
+        if (!effect.matches("[a-z0-9_]{1,24}")) {
+            return;
+        }
+        if (on) {
+            effectsOff.remove(effect);
+        } else if (effectsOff.size() < MAX_EFFECTS_OFF) {
+            effectsOff.add(effect);
+        }
+    }
+
+    /** Replaces the effects switched off (used on load), keeping only the names {@link #setEffect} takes. */
+    public void setEffectsOff(final Iterable<String> names) {
+        effectsOff.clear();
+        for (final String name : names) {
+            setEffect(name, false);
+        }
+    }
+
+    /** How long the effects take against their own time, in percent: 100 as made, 0 at once. */
+    public int effectSpeed() {
+        return effectSpeed;
+    }
+
+    public void setEffectSpeed(final int percent) {
+        this.effectSpeed = clamp(percent, 0, EFFECT_SPEED_SLOWEST);
     }
 
     /** The programs pinned to the panel, by program id path, in the order they were pinned. */
@@ -232,8 +351,13 @@ public final class ComputerSettings {
         return pinned.contains(normalizeId(id));
     }
 
+    /** The tiles of Frames 10's Start menu, which the Start menu arranges and the machine keeps. */
+    public StartTiles startTiles() {
+        return startTiles;
+    }
+
     /** A program id as the pinned list keeps it: its path, lower-case, without a {@code jsc:} namespace. */
-    private static String normalizeId(final String id) {
+    static String normalizeId(final String id) {
         if (id == null) {
             return "";
         }
@@ -294,7 +418,8 @@ public final class ComputerSettings {
     /**
      * Shares a folder under its own name; sharing it again changes whether it may be written to. The
      * name is the last part of the path, or the drive letter for a drive's root. False when there is
-     * no room for one more.
+     * no room for one more, or when a different folder is already shared under that name: share names are
+     * unique, so the first folder is never silently replaced.
      */
     public boolean share(final String path, final boolean writable) {
         final String where = path == null ? "" : path.trim();
@@ -305,6 +430,9 @@ public final class ComputerSettings {
         final Share made = new Share(name, where, writable);
         for (int i = 0; i < shares.size(); i++) {
             if (shares.get(i).name().equalsIgnoreCase(name)) {
+                if (!shares.get(i).path().equalsIgnoreCase(where)) {
+                    return false;
+                }
                 shares.set(i, made);
                 return true;
             }
@@ -463,199 +591,55 @@ public final class ComputerSettings {
 
     /**
      * Applies one {@code key=value} setting, clamping as needed. Returns {@code true} when the key is
-     * one this class owns and the value parsed; {@code false} for an unknown key or an unparseable
-     * value (so the caller can route the key elsewhere or report an error).
-     *
-     * <p>Keys handled here: {@code clock} ({@code 12h}/{@code 24h}), {@code theme}, {@code taskbar}
-     * ({@code center}/{@code left}), {@code darkmode} ({@code on}/{@code off}), {@code guiscale},
-     * {@code brightness}, {@code savedrive}, {@code autoopen} ({@code on}/{@code off}), {@code accent}
-     * (six hex digits), {@code pin}/{@code unpin} (a program id), and {@code defaultapp:<ext>}. The
-     * computer name, wallpaper, and network share are owned elsewhere and are not handled here.
+     * one this store takes and the value parsed; {@code false} for an unknown key or an unparseable
+     * value (so the caller can route the key elsewhere or report an error). The keys are {@link SettingKey}'s;
+     * the computer name, wallpaper, and network share are owned elsewhere and are not handled here.
      *
      * @param key   the setting key (case-insensitive)
      * @param value the raw value
-     * @return true if this class recognised and applied the key
+     * @return true if the key was one this store takes and it was applied
      */
     public boolean applySetting(final String key, final String value) {
-        if (key == null) {
-            return false;
-        }
-        final String k = key.toLowerCase(Locale.ROOT).trim();
-        final String v = value == null ? "" : value.trim();
-        if (k.startsWith("defaultapp:")) {
-            setDefaultApp(k.substring("defaultapp:".length()), v);
-            return true;
-        }
-        switch (k) {
-            case "clock" -> {
-                if (v.equalsIgnoreCase("12h") || v.equals("12")) {
-                    setClock12h(true);
-                } else if (v.equalsIgnoreCase("24h") || v.equals("24")) {
-                    setClock12h(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "theme" -> {
-                setThemePreset(v.equalsIgnoreCase("system") ? "" : v);
-                return true;
-            }
-            case "taskbar" -> {
-                if (v.equalsIgnoreCase("center") || v.equalsIgnoreCase("centre") || v.equalsIgnoreCase("centered")) {
-                    setTaskbarCentered(true);
-                } else if (v.equalsIgnoreCase("left")) {
-                    setTaskbarCentered(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "darkmode" -> {
-                if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true") || v.equalsIgnoreCase("dark")) {
-                    setDarkMode(true);
-                } else if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false") || v.equalsIgnoreCase("light")) {
-                    setDarkMode(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "guiscale" -> {
-                final Integer n = parseInt(v);
-                if (n == null) {
-                    return false;
-                }
-                setGuiScale(n);
-                return true;
-            }
-            case "brightness" -> {
-                final Integer n = parseInt(v);
-                if (n == null) {
-                    return false;
-                }
-                setBrightness(n);
-                return true;
-            }
-            case "savedrive" -> {
-                if (v.isEmpty() || !Character.isLetter(v.charAt(0))) {
-                    return false;
-                }
-                setDefaultSaveDrive(v.charAt(0));
-                return true;
-            }
-            case "autoopen" -> {
-                if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true")) {
-                    setRemovableAutoOpen(true);
-                } else if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false")) {
-                    setRemovableAutoOpen(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "remote" -> {
-                if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true")) {
-                    setRemoteAllowed(true);
-                } else if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false")) {
-                    setRemoteAllowed(false);
-                } else {
-                    return false;
-                }
-                return true;
-            }
-            case "accent" -> {
-                final Integer argb = parseAccent(v);
-                if (argb == null) {
-                    return false;
-                }
-                setAccent(argb);
-                return true;
-            }
-            case "pin" -> {
-                /*
-                 * Pinning what is pinned already is not a mistake worth refusing: the panel asks for the
-                 * state it wants, and either way the program ends up pinned.
-                 */
-                return !normalizeId(v).isEmpty() && (isPinned(v) || pin(v));
-            }
-            case "unpin" -> {
-                unpin(v);
-                return !normalizeId(v).isEmpty();
-            }
-            case "favourite" -> {
-                // Starring what is starred already asks for the state it wants, and either way it is starred.
-                return !v.isEmpty() && (isFavourite(v) || favourite(v));
-            }
-            case "unfavourite" -> {
-                unfavourite(v);
-                return !v.isEmpty();
-            }
-            case "recipe" -> {
-                // "<data id>=<index>": which recipe to open the craft of that item on; a negative index forgets.
-                final int eq = v.lastIndexOf('=');
-                if (eq <= 0) {
-                    return false;
-                }
-                final Integer index = parseInt(v.substring(eq + 1));
-                if (index == null) {
-                    return false;
-                }
-                setRecipeChoice(v.substring(0, eq), index);
-                return true;
-            }
-            default -> {
-                return false;
-            }
-        }
+        return SettingKey.apply(this, key, value);
     }
 
     /** Human-readable {@code key   value} lines for the {@code config} command's listing. */
     public List<String> summaryLines() {
         final List<String> lines = new ArrayList<>();
-        lines.add(pad("clock") + (clock12h ? "12h" : "24h"));
-        lines.add(pad("theme") + (themePreset.isEmpty() ? "system" : themePreset));
-        lines.add(pad("taskbar") + (taskbarCentered ? "center" : "left"));
-        lines.add(pad("darkmode") + (darkMode ? "on" : "off"));
-        lines.add(pad("guiscale") + (guiScale == 0 ? "75% (default)" : guiScale + "%"));
-        lines.add(pad("brightness") + brightness + "%");
-        lines.add(pad("savedrive") + defaultSaveDrive + ":");
-        lines.add(pad("autoopen") + (removableAutoOpen ? "on" : "off"));
-        lines.add(pad("accent") + (accent == 0 ? "default" : String.format(Locale.ROOT, "#%06X", accent & 0xFFFFFF)));
+        lines.add(pad(SettingKey.CLOCK) + (clock12h ? "12h" : "24h"));
+        lines.add(pad(SettingKey.THEME) + (themePreset.isEmpty() ? ThemePreset.SYSTEM.id() : themePreset));
+        lines.add(pad(SettingKey.TASKBAR) + (taskbarCentered ? "center" : "left"));
+        lines.add(pad(SettingKey.DARKMODE) + (darkMode ? "on" : "off"));
+        lines.add(pad(SettingKey.EFFECT) + (effectsOff.isEmpty() ? EFFECTS_ALL_ON.english()
+                : EFFECTS_OFF.with(String.join(", ", effectsOff)).english()));
+        lines.add(pad(SettingKey.EFFECTSPEED) + effectSpeed + "%");
+        lines.add(pad(SettingKey.GUISCALE) + (guiScale == 0 ? DEFAULT_VALUE.with("75%").english() : guiScale + "%"));
+        lines.add(pad(SettingKey.BRIGHTNESS) + brightness + "%");
+        lines.add(pad(SettingKey.VOLUME) + volume + "%");
+        lines.add(pad(SettingKey.MUTE) + (muted ? "on" : "off"));
+        lines.add(pad(SettingKey.OUTPUT) + soundOutput.id());
+        lines.add(pad(SettingKey.SAVEDRIVE) + defaultSaveDrive + ":");
+        lines.add(pad(SettingKey.AUTOOPEN) + (removableAutoOpen ? "on" : "off"));
+        lines.add(pad(SettingKey.ACCENT)
+                + (accent == 0 ? "default" : String.format(Locale.ROOT, "#%06X", accent & 0xFFFFFF)));
         lines.add(pad("pinned") + (pinned.isEmpty() ? "none" : String.join(", ", pinned)));
-        lines.add(pad("favourites") + (favourites.isEmpty() ? "none" : favourites.size() + " starred"));
+        lines.add(pad("favourites") + (favourites.isEmpty() ? "none" : STARRED.with(favourites.size()).english()));
         final List<String> shared = new ArrayList<>();
         for (final Share share : shares) {
-            shared.add(share.name() + (share.writable() ? " (read and write)" : " (read only)"));
+            shared.add((share.writable() ? READ_WRITE : READ_ONLY).with(share.name()).english());
         }
         lines.add(pad("shares") + (shared.isEmpty() ? "none" : String.join(", ", shared)));
-        lines.add(pad("remote") + (remoteAllowed ? "on (other computers may run programs here)" : "off"));
+        lines.add(pad(SettingKey.REMOTE) + (remoteAllowed ? REMOTE_ON.with("on").english() : "off"));
+        lines.add(pad(SettingKey.CRON) + (cronEnabled ? "on" : "off"));
         return lines;
+    }
+
+    private static String pad(final SettingKey key) {
+        return pad(key.key());
     }
 
     private static String pad(final String key) {
         return String.format(Locale.ROOT, "  %-12s", key);
-    }
-
-    private static Integer parseInt(final String v) {
-        try {
-            return Integer.parseInt(v.trim());
-        } catch (final NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /** Parses six hex digits (optionally {@code #}-prefixed) into an opaque ARGB int, or null. */
-    private static Integer parseAccent(final String v) {
-        String hex = v.startsWith("#") ? v.substring(1) : v;
-        if (hex.length() != 6) {
-            return null;
-        }
-        try {
-            return 0xFF000000 | Integer.parseInt(hex, 16);
-        } catch (final NumberFormatException e) {
-            return null;
-        }
     }
 
     private static int clamp(final int value, final int lo, final int hi) {

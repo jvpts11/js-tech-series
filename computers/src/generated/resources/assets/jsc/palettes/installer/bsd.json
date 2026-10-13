@@ -1,0 +1,19 @@
+{
+  "dark": "#FF3C3C3C",
+  "dim": "#FF3C3C3C",
+  "face": "#FFA8A8A8",
+  "faceText": "#FF000000",
+  "field": "#FF0000A8",
+  "fieldText": "#FFFFFFFF",
+  "gaugeFill": "#FF0000A8",
+  "gaugeTrough": "#FFFFFFFF",
+  "ground": "#FF0000A8",
+  "groundText": "#FFFFFFFF",
+  "hotkey": "#FFC00000",
+  "hotkeyOn": "#FFFFE14D",
+  "light": "#FFFFFFFF",
+  "select": "#FF0000A8",
+  "selectText": "#FFFFFFFF",
+  "shadow": "#FF000000",
+  "text": "#FF000000"
+}

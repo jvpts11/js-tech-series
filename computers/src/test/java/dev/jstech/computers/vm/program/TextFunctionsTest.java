@@ -30,6 +30,23 @@ class TextFunctionsTest {
         assertEquals(LINE, halt.line());
     }
 
+    private static Object format(final Object... arguments) {
+        final List<String> parameters = arguments.length == 2 ? List.of("string", "object")
+                : List.of("string", "object", "object");
+        return PureFunctions.REGISTRY.find("string", "Format", parameters).function()
+                .call(new Heap(64L * 1024), null, arguments, LINE);
+    }
+
+    @Test
+    void format_doesNotReadTextAnArgumentBroughtIn() {
+        assertEquals("{1}-x", format("{0}-{1}", "{1}", "x"));
+    }
+
+    @Test
+    void format_leavesPlaceholdersItHasNoArgumentForAsWritten() {
+        assertEquals("a-{1}-{x}-{-1}", format("{0}-{1}-{x}-{-1}", "a"));
+    }
+
     @Test
     void substring_takesTheCharactersItIsAskedFor() {
         assertEquals("cde", substring("abcdef", 2, 3));

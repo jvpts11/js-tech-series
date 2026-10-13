@@ -1,0 +1,147 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.network_services.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_services.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_services.table1",
+      "heads": [
+        "jsc.guide.network_services.table1_head1",
+        "jsc.guide.network_services.table1_head2",
+        "jsc.guide.network_services.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.network_services.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_services.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_services.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_services.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_services.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_services.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_services.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_services.definition1",
+      "term": "jsc.guide.network_services.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_services.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_services.definition2",
+      "term": "jsc.guide.network_services.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_services.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_services.definition3",
+      "term": "jsc.guide.network_services.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_services.fix1",
+          "problem": "jsc.guide.network_services.problem1"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_services.fix2",
+          "problem": "jsc.guide.network_services.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:server",
+  "id": "jsc:network_services",
+  "order": 72,
+  "section": "jsc:network_operation",
+  "title": "jsc.guide.network_services.title"
+}

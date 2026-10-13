@@ -9,6 +9,7 @@ package dev.jstech.computers.gateway;
 
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.text.Text;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -24,6 +25,9 @@ import java.util.Locale;
 public final class GatewayLog {
 
     public static final int CAPACITY = 40;
+
+    /** The longest name and request an entry keeps: a caller's words are cut to it before they are written down. */
+    public static final int TEXT_LENGTH = 96;
 
     /** How an entry ended, for the colour it is shown in. */
     public enum Tone implements IStableId {
@@ -54,12 +58,12 @@ public final class GatewayLog {
      * One thing the Gateway did.
      *
      * @param dayTime the world's time of day when it happened, for the clock the log shows
-     * @param who     who asked
-     * @param what    what was asked
-     * @param result  how it went
+     * @param who     who asked: a computer by its name or id, or a program
+     * @param what    what was asked, as it was asked, or what happened to the Gateway itself
+     * @param result  how it went, read in the language of whoever looks at the log
      * @param tone    the colour of the result
      */
-    public record Entry(long dayTime, String who, String what, String result, Tone tone) {
+    public record Entry(long dayTime, Text who, Text what, Text result, Tone tone) {
     }
 
     private final Deque<Entry> entries = new ArrayDeque<>();
@@ -72,7 +76,7 @@ public final class GatewayLog {
         }
     }
 
-    public void add(final long dayTime, final String who, final String what, final String result, final Tone tone) {
+    public void add(final long dayTime, final Text who, final Text what, final Text result, final Tone tone) {
         add(new Entry(dayTime, who, what, result, tone));
     }
 

@@ -1,0 +1,276 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text2"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.partitioning_with_fdisk.warning1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.partitioning_with_fdisk.table1",
+      "heads": [
+        "jsc.guide.partitioning_with_fdisk.table1_head1",
+        "jsc.guide.partitioning_with_fdisk.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "m"
+          },
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "g"
+          },
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "n"
+          },
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "t"
+          },
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "d"
+          },
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "p"
+          },
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "w"
+          },
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "q"
+          },
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.partitioning_with_fdisk.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.partitioning_with_fdisk.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.partitioning_with_fdisk.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.partitioning_with_fdisk.table2",
+      "heads": [
+        "jsc.guide.partitioning_with_fdisk.table2_head1",
+        "jsc.guide.partitioning_with_fdisk.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table2_1_1"
+          },
+          {
+            "literal": "1, uefi, efi, ef"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.partitioning_with_fdisk.table2_2_1"
+          },
+          {
+            "literal": "20, linux, 83"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.partitioning_with_fdisk.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text13"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitioning_with_fdisk.text14"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.partitioning_with_fdisk.heading5"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.partitioning_with_fdisk.step1",
+        "jsc.guide.partitioning_with_fdisk.step2",
+        "jsc.guide.partitioning_with_fdisk.step3",
+        "jsc.guide.partitioning_with_fdisk.step4",
+        "jsc.guide.partitioning_with_fdisk.step5",
+        "jsc.guide.partitioning_with_fdisk.step6"
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.partitioning_with_fdisk.definition1",
+      "term": "jsc.guide.partitioning_with_fdisk.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.partitioning_with_fdisk.definition2",
+      "term": "jsc.guide.partitioning_with_fdisk.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.partitioning_with_fdisk.definition3",
+      "term": "jsc.guide.partitioning_with_fdisk.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.partitioning_with_fdisk.definition4",
+      "term": "jsc.guide.partitioning_with_fdisk.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix1",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem1"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix2",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem2"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix3",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem3"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix4",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem4"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix5",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem5"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix6",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem6"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix7",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem7"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix8",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem8"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix9",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem9"
+        },
+        {
+          "fix": "jsc.guide.partitioning_with_fdisk.fix10",
+          "problem": "jsc.guide.partitioning_with_fdisk.problem10"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:eras",
+        "jsc:arch_bootloader"
+      ]
+    }
+  ],
+  "id": "jsc:partitioning_with_fdisk",
+  "order": 243,
+  "section": "jsc:disk_tools",
+  "title": "jsc.guide.partitioning_with_fdisk.title"
+}

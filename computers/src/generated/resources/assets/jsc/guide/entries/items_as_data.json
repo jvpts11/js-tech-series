@@ -1,0 +1,92 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.items_as_data.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.items_as_data.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.items_as_data.definition1",
+      "term": "jsc.guide.items_as_data.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.items_as_data.table1",
+      "heads": [
+        "jsc.guide.items_as_data.table1_head1",
+        "jsc.guide.items_as_data.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.items_as_data.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.items_as_data.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.items_as_data.text5"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:units_and_ticks",
+        "jsc:fluids"
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:items_as_data",
+  "order": 11,
+  "section": "jsc:how_things_are_counted",
+  "title": "jsc.guide.items_as_data.title"
+}

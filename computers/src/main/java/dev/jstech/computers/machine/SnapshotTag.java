@@ -9,6 +9,9 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.Snapshot;
 import dev.jstech.computers.vm.program.SnapshotException;
+import dev.jstech.core.text.LongText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextTags;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -63,6 +66,7 @@ public final class SnapshotTag {
     private static final String STATICS = "statics";
     private static final String SCRIPT = "script";
     private static final String CONSOLE = "console";
+    private static final String CONSOLE_OPEN = "console_open";
     private static final String WRITTEN = "written";
     private static final String RANDOM = "random";
     private static final String INPUT = "input";
@@ -108,7 +112,7 @@ public final class SnapshotTag {
     public static CompoundTag write(final Snapshot shot) {
         final CompoundTag tag = new CompoundTag();
         tag.putInt(FORMAT, shot.format());
-        tag.putString(LISTING, shot.listing());
+        LongText.put(tag, LISTING, shot.listing());
         tag.putLong(BUDGET, shot.heap().budget());
         final ListTag held = new ListTag();
         for (final Snapshot.IHeld one : shot.heap().held()) {
@@ -176,17 +180,15 @@ public final class SnapshotTag {
             watches.add(each);
         }
         tag.put(WATCHES, watches);
-        final ListTag console = new ListTag();
-        for (final String line : shot.console().lines()) {
-            console.add(StringTag.valueOf(line));
-        }
-        tag.put(CONSOLE, console);
+        // Lines kept as sentences, so what the runtime said of a halt reads in its player's words after a reload too.
+        tag.put(CONSOLE, TextTags.writeAll(shot.console().lines()));
+        LongText.put(tag, CONSOLE_OPEN, shot.console().open());
         tag.putLong(WRITTEN, shot.console().written());
         tag.putLong(RANDOM, shot.console().random());
         tag.put(INPUT, names(shot.input()));
         tag.putLong(DROPPED, shot.callbacks().dropped());
         tag.putString(STATE, identity.state());
-        tag.putString(MESSAGE, identity.message());
+        tag.put(MESSAGE, TextTags.write(identity.message()));
         tag.putLong(SPENT, identity.spent());
         if (!identity.name().isEmpty()) {
             tag.putString(PROGRAM_NAME, identity.name());
@@ -212,11 +214,7 @@ public final class SnapshotTag {
             final CompoundTag owner = owners.getCompound(i);
             statics.put(owner.getString(OWNER), readFields(owner.getList(FIELDS, Tag.TAG_COMPOUND)));
         }
-        final List<String> console = new ArrayList<>();
-        final ListTag lines = tag.getList(CONSOLE, Tag.TAG_STRING);
-        for (int i = 0; i < lines.size(); i++) {
-            console.add(lines.getString(i));
-        }
+        final List<Text> console = TextTags.readAll(tag.getList(CONSOLE, Tag.TAG_COMPOUND));
         final List<Snapshot.WatchShot> watches = new ArrayList<>();
         final ListTag watching = tag.getList(WATCHES, Tag.TAG_COMPOUND);
         for (int i = 0; i < watching.size(); i++) {
@@ -242,12 +240,14 @@ public final class SnapshotTag {
             monitors.add(new Snapshot.MonitorShot(readValue(each.getCompound(TARGET)), each.getInt(OWNER),
                     each.getInt(COUNT)));
         }
-        return new Snapshot(format, tag.getString(LISTING),
+        return new Snapshot(format, LongText.get(tag, LISTING),
                 new Snapshot.HeapShot(tag.getLong(BUDGET), held),
-                new Snapshot.IdentityShot(tag.getString(STATE), tag.getString(MESSAGE), tag.getLong(SPENT),
+                new Snapshot.IdentityShot(tag.getString(STATE), TextTags.read(tag.getCompound(MESSAGE)),
+                        tag.getLong(SPENT),
                         tag.getString(PROGRAM_NAME), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
                         tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE)),
-                new Snapshot.ConsoleShot(console, tag.getLong(WRITTEN), tag.getLong(RANDOM)),
+                new Snapshot.ConsoleShot(console, tag.getLong(WRITTEN), tag.getLong(RANDOM),
+                        LongText.get(tag, CONSOLE_OPEN)),
                 readNames(tag.getList(INPUT, Tag.TAG_STRING)),
                 new Snapshot.CallbacksShot(readFrames(tag.getList(WAITING, Tag.TAG_COMPOUND)),
                         tag.getLong(DROPPED)),
@@ -272,7 +272,7 @@ public final class SnapshotTag {
         switch (one) {
             case Snapshot.IHeld.Text text -> {
                 tag.putString(KIND, "text");
-                tag.putString(VALUE, text.value());
+                LongText.put(tag, VALUE, text.value());
             }
             case Snapshot.IHeld.Object object -> {
                 tag.putString(KIND, "object");
@@ -318,7 +318,7 @@ public final class SnapshotTag {
         final int line = tag.getInt(LINE);
         final boolean freed = tag.getBoolean(FREED);
         return switch (tag.getString(KIND)) {
-            case "text" -> new Snapshot.IHeld.Text(id, bytes, line, freed, tag.getString(VALUE));
+            case "text" -> new Snapshot.IHeld.Text(id, bytes, line, freed, LongText.get(tag, VALUE));
             case "object" -> new Snapshot.IHeld.Object(id, bytes, line, freed, tag.getString(TYPE),
                     readFields(tag.getList(FIELDS, Tag.TAG_COMPOUND)));
             case "array" -> new Snapshot.IHeld.Array(id, bytes, line, freed, tag.getString(TYPE),

@@ -7,26 +7,25 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SourceFile;
-import dev.jstech.computers.hardware.DiskSize;
-import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * A Σ# program reaching out of itself on a real machine.
@@ -66,28 +65,12 @@ public final class SigmaApiGameTests {
 
     /** A computer with enough hardware to run, an OS on it, and a drive to write to. */
     private static CraftingComputerBlockEntity computer(final GameTestHelper helper, final BlockPos at) {
-        helper.setBlock(at, ComputingModule.CRAFTING_COMPUTER.get());
-        if (!(helper.getBlockEntity(at) instanceof CraftingComputerBlockEntity computer)) {
-            helper.fail("no computer at " + at);
-            return null;
-        }
-        final ItemStackHandler hw = computer.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         /*
          * Frames XP, because that is the oldest system the language is allowed on and the oldest one
          * with drives a program can write to at all.
          */
-        computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
-        return computer;
+        return TestWorldBuilder.forGameTest(helper).placeCraftingComputer(at,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
     }
 
     @GameTest(template = ARENA)
@@ -290,16 +273,16 @@ public final class SigmaApiGameTests {
                     computer.programs().tick(100000);
                     final List<String> said = computer.programs().byId(started.id()).process().console();
                     /*
-                     * The socket holds a four-core Ascent X4 965 at 3400 on a Standard board, with 8 GB
-                     * in the slot and Frames XP on the disk: what the machine reports has to be that.
+                     * The socket holds a four-core Centro c7 4790K at 4000 on a Standard board, with 8 GB
+                     * in each of its four slots and Frames XP on the disk: what the machine reports has to be that.
                      */
                     helper.assertTrue(said.size() == 3, "it says its three lines; got " + said);
-                    helper.assertTrue(said.get(0).equals("4 at 3400 standard"),
+                    helper.assertTrue(said.get(0).equals("4 at 4000 standard"),
                             "the processor is the one in the socket; got " + said.get(0));
                     helper.assertTrue(said.get(1).equals("os Frames XP"),
                             "the system is the one on the disk; got " + said.get(1));
-                    helper.assertTrue(said.get(2).equals("ram 8192"),
-                            "the memory is what is in the slot; got " + said.get(2));
+                    helper.assertTrue(said.get(2).equals("ram 32768"),
+                            "the memory is what is in the slots; got " + said.get(2));
                 })
                 .thenSucceed();
     }
@@ -512,6 +495,57 @@ public final class SigmaApiGameTests {
                 .thenSucceed();
     }
 
+    /** A watch set by the item's short name, its handler a lambda, wakes the script when the total rises past it. */
+    @GameTest(template = ARENA)
+    public static void watch_aboveWakesAScriptThroughALambdaByTheItemsShortName(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork wired = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
+        final CraftingComputerBlockEntity computer = wired.cc();
+        final int[] id = new int[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms.Started started = computer.programs().start("high.asm", listing("""
+                            class High : IScript {
+                                Subscription seen;
+                                public void OnInit() {
+                                    seen = Network.WatchAbove("cobblestone", 10, e => Console.PrintLine("high"));
+                                }
+                                public void OnTick() { }
+                                public void OnDestroy() { }
+                            }
+                            """), 1, computer);
+                    helper.assertTrue(started.ok(), "the program starts: " + started.message());
+                    id[0] = started.id();
+                    computer.programs().tick(100000, computer::networkStock);
+                })
+                .thenExecuteAfter(2, () -> {
+                    wired.rack().getServerStorage(0).insert(Items.COBBLESTONE, 32);
+                    for (int i = 0; i < 4; i++) {
+                        computer.programs().tick(100000, computer::networkStock);
+                    }
+                    final List<String> said = computer.programs().byId(id[0]).process().console();
+                    helper.assertTrue(said.contains("high"), "the script is woken when the stone passes its mark; got "
+                            + said + ", the network holding " + computer.networkStock("cobblestone"));
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * What a Gateway spent on a machine's behalf is still owed after a save, program or no program. The save
+     * left the programs out when there were none, and the debt with them, while the tick went on paying it down.
+     */
+    @GameTest(template = ARENA)
+    public static void owed_isKeptThroughASaveWithNoProgramRunning(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.assertTrue(computer.programs().isEmpty(), "the machine runs no program");
+        computer.programs().owe(5_000);
+
+        final var registries = helper.getLevel().registryAccess();
+        final CompoundTag saved = computer.saveWithoutMetadata(registries);
+        helper.assertTrue(saved.contains("Σ#"), "the debt goes into the save although nothing is running");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void sgpack_publishesToTheMirrorAndTheNetworkOffersIt(final GameTestHelper helper) {
         final dev.jstech.tests.testkit.TestWorldBuilder.CraftingNetwork wired =
@@ -578,6 +612,10 @@ public final class SigmaApiGameTests {
                             "and the machine forgets it");
                     helper.assertFalse(shell.readFile("PROGRAMS/stockwatch/stockwatch.asm").ok(),
                             "taking its files with it");
+                    // Its folder went too, which used to stay behind and refuse the next install.
+                    final var again = shell.packageInstall("stockwatch", false);
+                    helper.assertTrue(again.ok(), "it installs again: " + again.message());
+                    helper.assertTrue(shell.packageRemove("stockwatch").ok(), "and comes off again");
 
                     helper.assertTrue(shell.unpublishPackage("stockwatch").ok(), "it comes back off");
                     helper.assertTrue(wired.mainframe().shelvedPackage("stockwatch") == null,

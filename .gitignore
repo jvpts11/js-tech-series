@@ -45,7 +45,10 @@ out/
 .classpath
 .project
 .settings/
-bin/
+# Anchored to the root and to each subproject, where the IDE writes its output: an unanchored "bin/" also
+# matches a resource folder of that name (the icons of binary files) and drops it without a word.
+/bin/
+/*/bin/
 .vscode/
 
 # ============================================================

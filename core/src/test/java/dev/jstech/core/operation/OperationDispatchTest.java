@@ -108,6 +108,45 @@ class OperationDispatchTest {
     }
 
     @Test
+    void throwingMainThreadStep_doesNotStopTheTick() {
+        dispatch = new OperationDispatch(1);
+        final UUID id = dispatch.submit(context -> {
+            context.onMainThread(() -> {
+                throw new IllegalStateException("boom");
+            });
+            return IOperationResult.success();
+        }, OperationPriority.MEDIUM);
+
+        tickUntilTerminal(id);
+
+        assertEquals(OperationStatus.COMPLETED, dispatch.statusOf(id));
+    }
+
+    @Test
+    void runOnMain_whenTheWorkThrows_failsWithTheRealExceptionType() {
+        dispatch = new OperationDispatch(1);
+        final UUID id = dispatch.submit(context -> context.runOnMain(() -> {
+            throw new IllegalStateException("boom");
+        }), OperationPriority.MEDIUM);
+
+        tickUntilTerminal(id);
+
+        assertEquals(OperationStatus.FAILED, dispatch.statusOf(id));
+        assertEquals("IllegalStateException", dispatch.failureOf(id).arguments().getFirst());
+    }
+
+    @Test
+    void afterTicks_onAClosedDispatcher_dropsTheCallback() {
+        dispatch = new OperationDispatch(1);
+        dispatch.close();
+        final AtomicInteger called = new AtomicInteger();
+
+        dispatch.afterTicks(1, called::incrementAndGet);
+
+        assertEquals(0, called.get());
+    }
+
+    @Test
     void higherPriority_runsFirst() {
         dispatch = new OperationDispatch(1); // single queue forces a strict order
         final List<String> order = new CopyOnWriteArrayList<>();

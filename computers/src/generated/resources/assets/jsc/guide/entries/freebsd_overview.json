@@ -1,0 +1,252 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_overview.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.freebsd_overview.definition1",
+      "term": "jsc.guide.freebsd_overview.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_overview.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.freebsd_overview.definition2",
+      "term": "jsc.guide.freebsd_overview.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.freebsd_overview.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table1_1"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table1_2"
+          },
+          {
+            "amount": 2048,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table1_3"
+          },
+          {
+            "amount": 16,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table1_4"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.value1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table1_5"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.value1_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table1_6"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.value1_6"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table1_7"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.value1_7"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.freebsd_overview.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_overview.text3"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "text": "FreeBSD/vel64 (<hostname>) (ttyv0)"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "login: <your name>"
+        },
+        {
+          "text": "FreeBSD 14.1-RELEASE (GENERIC)"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "Welcome to FreeBSD, <your name>."
+        },
+        {
+          "text": "  Find a command by what it does:"
+        },
+        {
+          "text": "    apropos <word>"
+        },
+        {
+          "text": "  Learn the system:"
+        },
+        {
+          "text": "    man intro"
+        },
+        {
+          "text": "  See every command here:"
+        },
+        {
+          "text": "    Tab, twice"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "Tip: pkg info lists every package installed here."
+        }
+      ],
+      "look": "jsc:guide/terminal/sh",
+      "title": "FreeBSD"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_overview.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.freebsd_overview.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_overview.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.freebsd_overview.definition3",
+      "term": "jsc.guide.freebsd_overview.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.freebsd_overview.table2",
+      "heads": [
+        "jsc.guide.freebsd_overview.table2_head1",
+        "jsc.guide.freebsd_overview.table2_head2",
+        "jsc.guide.freebsd_overview.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table2_1_1"
+          },
+          {
+            "literal": "kde-plasma"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table2_2_1"
+          },
+          {
+            "literal": "gnome"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table2_3_1"
+          },
+          {
+            "literal": "cde"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.freebsd_overview.table2_4_1"
+          },
+          {
+            "literal": "cinnamon"
+          },
+          {
+            "words": "jsc.guide.freebsd_overview.table2_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_overview.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.freebsd_overview.fix1",
+          "problem": "jsc.guide.freebsd_overview.problem1"
+        },
+        {
+          "fix": "jsc.guide.freebsd_overview.fix2",
+          "problem": "jsc.guide.freebsd_overview.problem2"
+        },
+        {
+          "fix": "jsc.guide.freebsd_overview.fix3",
+          "problem": "jsc.guide.freebsd_overview.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:the_systems",
+        "jsc:installing",
+        "jsc:bsdinstall"
+      ]
+    }
+  ],
+  "id": "jsc:freebsd_overview",
+  "order": 270,
+  "section": "jsc:freebsd_system",
+  "title": "jsc.guide.freebsd_overview.title"
+}

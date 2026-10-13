@@ -17,10 +17,7 @@ import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
-import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
-import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.ArrayList;
@@ -33,6 +30,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.fullShell;
+import static dev.jstech.tests.testkit.TestShell.says;
 
 /**
  * The Gateway Manager's server side and the {@code gateway} command: listing the host's Gateways,
@@ -57,13 +57,13 @@ public final class GatewayManagerGameTests {
     private static Fleet wire(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.placeSeededRack(new BlockPos(2, 2, 1));
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity host = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
         host.console().setComputerName("desk");
-        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity lab = world.placeRunningPersonalComputer(new BlockPos(5, 2, 3));
         lab.console().setComputerName("lab");
         // The Gateway stands east of the host, its back socket against it.
@@ -80,12 +80,14 @@ public final class GatewayManagerGameTests {
     }
 
     private static GatewayManagerStatePayload state(final GameTestHelper helper, final Fleet fleet) {
-        return GatewayManager.state(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), "");
+        return GatewayManager.state(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), Text.EMPTY);
     }
 
+    /** What the action said, in English. */
     private static String act(final GameTestHelper helper, final Fleet fleet, final int action, final int value,
                               final String text) {
-        return GatewayManager.act(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), action, value, text);
+        return GatewayManager.act(helper.getLevel(), fleet.host(), helper.absolutePos(GATEWAY).asLong(), action, value,
+                text).english();
     }
 
     @GameTest(template = ARENA)
@@ -97,7 +99,7 @@ public final class GatewayManagerGameTests {
                     helper.assertTrue(before.gateways().size() == 1 && before.gateways().get(0).name().equals("gateway-1"),
                             "the host lists its one Gateway; got " + before.gateways());
                     helper.assertTrue("desk".equals(before.head().hostName()), "under the host's name");
-                    helper.assertTrue(before.detail().present() && before.detail().link().equals("adjacent"),
+                    helper.assertTrue(before.detail().present() && before.detail().link().english().equals("adjacent"),
                             "with the selected one in detail; got " + before.detail().link());
                     helper.assertTrue(before.detail().servers() >= 1 && before.detail().mainframeOnline(),
                             "and the network it reaches; servers " + before.detail().servers());
@@ -120,11 +122,12 @@ public final class GatewayManagerGameTests {
                     helper.assertTrue(gateway(helper).identifying(), "Identify sets the lights blinking");
                     final List<String> whats = new ArrayList<>();
                     for (final GatewayManagerStatePayload.WireLog row : d.log()) {
-                        whats.add(row.what());
+                        whats.add(row.what().english());
                     }
                     helper.assertTrue(whats.contains("rename gateway-1 to cc-bridge") && whats.contains("identify"),
                             "the log has it all, signed by the host; got " + whats);
-                    helper.assertTrue(d.log().stream().allMatch(row -> row.who().equals("desk")), "signed by the host");
+                    helper.assertTrue(d.log().stream().allMatch(row -> row.who().english().equals("desk")),
+                            "signed by the host");
                     helper.assertTrue(d.recent().size() == GatewayManager.RECENT, "the status tab shows the last few");
                     final String missing = act(helper, fleet, GatewayManagerActionPayload.ACTION_RENAME, 0, "");
                     helper.assertTrue("gateway-1".equals(gateway(helper).name()), "an empty name goes back to the default; " + missing);
@@ -155,23 +158,11 @@ public final class GatewayManagerGameTests {
                     final String again = act(helper, fleet, GatewayManagerActionPayload.ACTION_CLEAR_BUFFER, 0, "");
                     helper.assertTrue(again.contains("empty"), "an empty buffer says so; got " + again);
                     helper.assertTrue(state(helper, fleet).detail().log().stream()
-                            .anyMatch(row -> row.what().equals("clear buffer to network") && row.result().contains("40 items")),
+                            .anyMatch(row -> row.what().english().equals("clear buffer to network")
+                                    && row.result().english().contains("40 items")),
                             "and the log keeps the move");
                 })
                 .thenSucceed();
-    }
-
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on, final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.newShell(80).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
-    }
-
-    private static boolean says(final List<String> lines, final String text) {
-        return lines.stream().anyMatch(line -> line.contains(text));
     }
 
     @GameTest(template = ARENA)
@@ -179,25 +170,25 @@ public final class GatewayManagerGameTests {
         final Fleet fleet = wire(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
-                    List<String> lines = shell(helper, fleet.host(), "gateway list");
+                    List<String> lines = fullShell(helper, fleet.host(), "gateway list");
                     helper.assertTrue(says(lines, "gateway-1") && says(lines, "up"), "list names the Gateway and its link; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway gateway-1 rename farm-link");
+                    lines = fullShell(helper, fleet.host(), "gateway gateway-1 rename farm-link");
                     helper.assertTrue(says(lines, "renamed gateway-1 to farm-link"), "rename answers; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link set operations off");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link set operations off");
                     helper.assertTrue(says(lines, "denied"), "set operations answers; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link set cap 16");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link set cap 16");
                     helper.assertTrue(says(lines, "16 calls"), "set cap answers; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link perms");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link perms");
                     helper.assertTrue(says(lines, "operations: off") && says(lines, "calls a tick: 16"),
                             "perms prints the knobs; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link status");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link status");
                     helper.assertTrue(says(lines, "linked to desk, adjacent") && says(lines, "jsc_gateway_farm_link"),
                             "status prints both sides; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link log");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link log");
                     helper.assertTrue(says(lines, "rename gateway-1 to farm-link"), "log prints what happened; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway nowhere");
+                    lines = fullShell(helper, fleet.host(), "gateway nowhere");
                     helper.assertTrue(says(lines, "no gateway named nowhere"), "an unknown name is refused; got " + lines);
-                    lines = shell(helper, fleet.lab(), "gateway list");
+                    lines = fullShell(helper, fleet.lab(), "gateway list");
                     helper.assertTrue(says(lines, "no gateways"), "a computer without one says so; got " + lines);
                 })
                 .thenSucceed();

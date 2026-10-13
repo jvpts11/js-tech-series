@@ -1,0 +1,289 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.windows_and_layout.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.windows_and_layout.definition1",
+      "term": "jsc.guide.windows_and_layout.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.windows_and_layout.definition2",
+      "term": "jsc.guide.windows_and_layout.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.windows_and_layout.table1",
+      "heads": [
+        "jsc.guide.windows_and_layout.table1_head1",
+        "jsc.guide.windows_and_layout.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Window.new(title, width, height)"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Window.Title"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Window.Content"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Window.Open"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Window.Show()"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Window.Close()"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Window.Add(widget, x, y, width, height)"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Window.OnClose"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.windows_and_layout.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.windows_and_layout.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.windows_and_layout.table2",
+      "heads": [
+        "jsc.guide.windows_and_layout.table2_head1",
+        "jsc.guide.windows_and_layout.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Row.new()"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Row.Add(widget)"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Row.Add(widget, weight)"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Row.Spacing"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Row.Clear()"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Column.Add"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Column.Spacing"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Column.Clear()"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table2_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.windows_and_layout.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.windows_and_layout.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.windows_and_layout.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.windows_and_layout.table3",
+      "heads": [
+        "jsc.guide.windows_and_layout.table3_head1",
+        "jsc.guide.windows_and_layout.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.windows_and_layout.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.windows_and_layout.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.windows_and_layout.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.windows_and_layout.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.windows_and_layout.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.windows_and_layout.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.windows_and_layout.fix1",
+          "problem": "jsc.guide.windows_and_layout.problem1"
+        },
+        {
+          "fix": "jsc.guide.windows_and_layout.fix2",
+          "problem": "jsc.guide.windows_and_layout.problem2"
+        },
+        {
+          "fix": "jsc.guide.windows_and_layout.fix3",
+          "problem": "jsc.guide.windows_and_layout.problem3"
+        },
+        {
+          "fix": "jsc.guide.windows_and_layout.fix4",
+          "problem": "jsc.guide.windows_and_layout.problem4"
+        },
+        {
+          "fix": "jsc.guide.windows_and_layout.fix5",
+          "problem": "jsc.guide.windows_and_layout.problem5"
+        },
+        {
+          "fix": "jsc.guide.windows_and_layout.fix6",
+          "problem": "jsc.guide.windows_and_layout.problem6"
+        },
+        {
+          "fix": "jsc.guide.windows_and_layout.fix7",
+          "problem": "jsc.guide.windows_and_layout.problem7"
+        },
+        {
+          "fix": "jsc.guide.windows_and_layout.fix8",
+          "problem": "jsc.guide.windows_and_layout.problem8"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:monitors",
+        "jsc:desktops",
+        "jsc:widgets_basic"
+      ]
+    }
+  ],
+  "id": "jsc:windows_and_layout",
+  "order": 369,
+  "section": "jsc:library_windows",
+  "title": "jsc.guide.windows_and_layout.title"
+}

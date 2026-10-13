@@ -1,0 +1,187 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cluster_manager.definition1",
+      "term": "jsc.guide.cluster_manager.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cluster_manager.definition2",
+      "term": "jsc.guide.cluster_manager.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cluster_manager.definition3",
+      "term": "jsc.guide.cluster_manager.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_manager.table1",
+      "heads": [
+        "jsc.guide.cluster_manager.table1_head1",
+        "jsc.guide.cluster_manager.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_manager.table2",
+      "heads": [
+        "jsc.guide.cluster_manager.table2_head1",
+        "jsc.guide.cluster_manager.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cluster_manager.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cluster_manager.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cluster_manager.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cluster_manager.fix1",
+          "problem": "jsc.guide.cluster_manager.problem1"
+        },
+        {
+          "fix": "jsc.guide.cluster_manager.fix2",
+          "problem": "jsc.guide.cluster_manager.problem2"
+        },
+        {
+          "fix": "jsc.guide.cluster_manager.fix3",
+          "problem": "jsc.guide.cluster_manager.problem3"
+        },
+        {
+          "fix": "jsc.guide.cluster_manager.fix4",
+          "problem": "jsc.guide.cluster_manager.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cluster_command",
+        "jsc:cluster_installs",
+        "jsc:supercomputers",
+        "jsc:datacenters",
+        "jsc:server_racks"
+      ]
+    }
+  ],
+  "icon": "jsc:cluster_management_computer",
+  "id": "jsc:cluster_manager",
+  "order": 116,
+  "section": "jsc:cluster_tools",
+  "title": "jsc.guide.cluster_manager.title"
+}

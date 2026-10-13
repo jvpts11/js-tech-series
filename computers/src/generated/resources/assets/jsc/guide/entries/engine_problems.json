@@ -1,0 +1,322 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_problems.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.engine_problems.table1",
+      "heads": [
+        "jsc.guide.engine_problems.table1_head1",
+        "jsc.guide.engine_problems.table1_head2",
+        "jsc.guide.engine_problems.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Network Operations Service unavailable"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "No Network Operations Engine is running"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "No engine is installed on this Mainframe. Install one from its disc to plan the network's work."
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "No compatible <engine name> was found on this network."
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "<program> needs an engine that offers <capability>."
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "No other engine is installed on this Mainframe. Install one from its disc to replace this one."
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "the Midsoft IQL Server is already installed"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "the network has no running Mainframe to host the Midsoft IQL Server"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "iqlengine needs its install disc in a linked drive"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table1_9_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_problems.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.engine_problems.table2",
+      "heads": [
+        "jsc.guide.engine_problems.table2_head1",
+        "jsc.guide.engine_problems.table2_head2",
+        "jsc.guide.engine_problems.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "EXPLAIN needs a statement to explain"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "EXPLAIN shows the plans of CRAFT and SELECT"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "hints change the plan of a CRAFT"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "MAX PARALLEL takes a whole number above nought"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "no server on the network is called <name>"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "no item is called <name>"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "the network could not start the craft of <item>"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "nothing on the network knows how to make <item>"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_8_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "every plan for <item> was set aside"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_9_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "the network's engine keeps no views, procedures or jobs"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_10_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "jobs are kept by the Automation Engine; install it on the Mainframe first"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_11_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_11_3"
+          }
+        ],
+        [
+          {
+            "literal": "syntax: <the parser's message>"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_12_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_12_3"
+          }
+        ],
+        [
+          {
+            "literal": "syntax: KEEP item >= n, or KEEP item BETWEEN a AND b"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_13_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_13_3"
+          }
+        ],
+        [
+          {
+            "literal": "syntax: WATCH item < n DO statement (the comparison one of <, <=, >, >=)"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_14_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_14_3"
+          }
+        ],
+        [
+          {
+            "literal": "syntax: FORGET item, or FORGET WATCH n"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_15_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_15_3"
+          }
+        ],
+        [
+          {
+            "literal": "<name> is not kept, or no watch is numbered <n>"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_16_2"
+          },
+          {
+            "words": "jsc.guide.engine_problems.table2_16_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:engine_services",
+        "jsc:nextgre_hints",
+        "jsc:prophet_youriql"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:engine_problems",
+  "order": 313,
+  "section": "jsc:engine_choice",
+  "title": "jsc.guide.engine_problems.title"
+}

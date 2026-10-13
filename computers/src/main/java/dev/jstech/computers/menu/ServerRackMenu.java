@@ -7,25 +7,42 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.StorageCardItem;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.menu.CoreMenu;
+import dev.jstech.core.menu.MenuOpening;
+import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.menu.SlotGroup;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
@@ -37,47 +54,62 @@ import org.jetbrains.annotations.Nullable;
  * cabled), plus the player inventory. Slot positions come from {@link ServerRackLayout}, the same
  * source the screen draws from.
  */
-public class ServerRackMenu extends AbstractComputerMenu {
-
-    private static final int RACK_SLOTS = ServerRackBlockEntity.CAPACITY_U;
-    private static final RackLayout LAYOUT = new RackLayout(RACK_SLOTS);
-    private static final int FRONT_SLOTS = RACK_SLOTS * RackLayout.SLOTS_PER_U;
-    private static final int CONTAINER_SLOTS = RACK_SLOTS + FRONT_SLOTS;
+@TextHolder
+public class ServerRackMenu extends CoreMenu {
 
     private final ServerRackBlockEntity rack;
-    private final ContainerLevelAccess access;
-    private final ContainerData data;
+
+    /** How a unit's drive array stands, which is what the rack's rows colour it by. */
+    public enum ArrayHealth { NONE, HEALTHY, DEGRADED, FAILED }
+
+    private static final TextKey RAID_DEGRADED = TextKey.of("jsc.rack.raid_degraded", "%s DEGRADED");
+    private static final TextKey RAID_FAILED = TextKey.of("jsc.rack.raid_failed", "%s FAILED");
+    /**
+     * How many of the menu's slots are the rack's own (the server bays); the front hotswap bays follow them,
+     * and the player inventory follows those.
+     */
+    public static final int RACK_SLOTS = ServerRackBlockEntity.CAPACITY_U;
+    /** How many of the menu's slots are the rack's front hotswap bays, right after the server slots. */
+    public static final int FRONT_SLOT_COUNT = RACK_SLOTS * RackLayout.SLOTS_PER_U;
+    private static final RackLayout LAYOUT = new RackLayout(RACK_SLOTS);
 
     public ServerRackMenu(final int containerId, final Inventory playerInventory,
                           final ServerRackBlockEntity be) {
-        super(ComputingModule.SERVER_RACK_MENU.get(), containerId);
+        super(ComputingMenus.SERVER_RACK_MENU.get(), containerId, playerInventory,
+                MenuValidity.block(be.getLevel(), be.getBlockPos(), ServerRackBlock.class));
         this.rack = be;
-        this.access = ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
-        this.data = be.getDataAccess();
 
+        final GuiLayout layout = ServerRackLayout.layout();
         /*
          * Server slot i = rack-unit row i; a taller chassis claims the rows below its slot (the
          * handler rejects them).
          */
         final IItemHandler servers = be.getServers();
+        final Slot[] serverSlots = new Slot[RACK_SLOTS];
         for (int i = 0; i < RACK_SLOTS; i++) {
-            addSlot(new SlotItemHandler(servers, i,
-                    ServerRackLayout.serverItemX(), ServerRackLayout.itemY(i)));
+            final GuiLayout.SlotPosition at = layout.slotAt("server" + i);
+            serverSlots[i] = new ServerBaySlot(servers, i, at.x(), at.y());
         }
+        final SlotGroup serverGroup = slots(serverSlots);
         // The rack's hotswap slots, row-major: index = row * 5 + column.
         final IItemHandler front = be.getFrontSlots();
-        for (int index = 0; index < FRONT_SLOTS; index++) {
+        final Slot[] frontSlots = new Slot[FRONT_SLOT_COUNT];
+        for (int index = 0; index < FRONT_SLOT_COUNT; index++) {
             final int row = index / RackLayout.SLOTS_PER_U;
             final int column = index % RackLayout.SLOTS_PER_U;
-            addSlot(new SlotItemHandler(front, index,
-                    ServerRackLayout.frontItemX(column), ServerRackLayout.itemY(row)));
+            final GuiLayout.SlotPosition at = layout.slotAt("front" + row + "_" + column);
+            frontSlots[index] = new FrontBaySlot(front, index, at.x(), at.y());
         }
-        addPlayerInventory(playerInventory, ServerRackLayout.INV_X, ServerRackLayout.INV_Y);
-        addDataSlots(data);
+        final SlotGroup frontGroup = slots(frontSlots);
+        final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
+        shiftClick(serverGroup, player.all());
+        shiftClick(frontGroup, player.all());
+        shiftClick(player.all(), serverGroup, frontGroup);
+        data(be.fields().menuData());
     }
 
     public boolean networkLinked() {
-        return data.get(ServerRackBlockEntity.DATA_LINKED) != 0;
+        return rack.linkedShown();
     }
 
     /** The cabinet's era, so its screen wears that decade's materials rather than one look for all three. */
@@ -91,19 +123,18 @@ public class ServerRackMenu extends AbstractComputerMenu {
     }
 
     public boolean bayPowerOn(final int slot) {
-        return (data.get(ServerRackBlockEntity.DATA_BAY_POWER) & (1 << slot)) != 0;
+        return (rack.bayPowerShown() & (1 << slot)) != 0;
     }
 
     /** The cabinet's thermal throttle in percent (100 = running free). */
     public int throttlePercent() {
-        final int percent = data.get(ServerRackBlockEntity.DATA_THROTTLE);
+        final int percent = rack.throttleShown();
         return percent <= 0 ? 100 : percent;
     }
 
     /** Rebuild progress of the unit's array in permille, or 0 when it is not rebuilding. */
     public int rebuildPermille(final int slot) {
-        return slot < 0 || slot >= RACK_SLOTS ? 0
-                : data.get(ServerRackBlockEntity.DATA_REBUILD_0 + slot);
+        return slot < 0 || slot >= RACK_SLOTS ? 0 : rack.rebuildShown(slot);
     }
 
     public ItemStack serverInBay(final int i) {
@@ -111,7 +142,7 @@ public class ServerRackMenu extends AbstractComputerMenu {
     }
 
     public ItemStack frontSlotStack(final int index) {
-        return index >= 0 && index < FRONT_SLOTS ? slots.get(RACK_SLOTS + index).getItem() : ItemStack.EMPTY;
+        return index >= 0 && index < FRONT_SLOT_COUNT ? slots.get(RACK_SLOTS + index).getItem() : ItemStack.EMPTY;
     }
 
     /**
@@ -124,18 +155,70 @@ public class ServerRackMenu extends AbstractComputerMenu {
                 mountedUnits());
     }
 
-    /** The mounted chassis, read from the synced server slots so the client agrees with the server. */
+    /**
+     * Why {@code stack} stays out of {@code slot}, when it is one of the rack's rows or front bays; null otherwise,
+     * and for a blocked bay, which the screen says in its own words.
+     */
+    @Nullable
+    public Component refusal(final Slot slot, final ItemStack stack) {
+        if (stack.isEmpty() || slot.mayPlace(stack) || !(slot instanceof SlotItemHandler part)) {
+            return null;
+        }
+        final TextKey why = part.getItemHandler() == rack.getServers() ? rack.rowRefusal(part.getSlotIndex(), stack)
+                : part.getItemHandler() == rack.getFrontSlots() ? rack.bayRefusal(part.getSlotIndex(), stack) : null;
+        return why == null ? null : GameText.component(why);
+    }
+
+    /**
+     * Everything mounted (servers and the rack's own units alike), read from the synced server slots so the client
+     * agrees with the server.
+     */
     public List<RackLayout.Unit> mountedUnits() {
         final List<RackLayout.Unit> mounted = new ArrayList<>();
         for (int i = 0; i < RACK_SLOTS; i++) {
-            final RackChassis chassis =
-                    ServerItem.chassisOf(serverInBay(i));
-            if (chassis != null) {
-                mounted.add(new RackLayout.Unit(i, chassis.heightU(),
-                        chassis.driveSlots(), chassis.gadgetSlots()));
+            final RackLayout.Unit unit = IMountableRackUnit.unitAt(serverInBay(i), i);
+            if (unit != null) {
+                mounted.add(unit);
             }
         }
         return mounted;
+    }
+
+    /** The top row of the unit occupying {@code row}, or -1 when nothing does. */
+    public int unitTopOf(final int row) {
+        final RackLayout.Unit unit = RackLayout.unitAt(row, mountedUnits());
+        return unit == null ? -1 : unit.topU();
+    }
+
+    /** How many rack units the unit topped at {@code topRow} takes, or 1 when nothing is mounted there. */
+    public int unitHeightAt(final int topRow) {
+        final IMountableRackUnit unit = IMountableRackUnit.of(serverInBay(topRow));
+        return unit == null ? 1 : unit.heightU();
+    }
+
+    /** The row whose machine a linked monitor shows, or -1 when it can show none. */
+    public int screenRow() {
+        return rack.screenShown();
+    }
+
+    /**
+     * The disk the machine topped at {@code topRow} boots from, counted among its drive bays from 0, or -1 when none
+     * of its disks carries a system: the one it prefers when that one carries a system, else the first that does.
+     */
+    public int bootDisk(final int topRow) {
+        final List<ItemStack> drives = driveStacks(topRow);
+        return OsDisks.systemDiskSlot(drives.size(), drives::get, preferredBootDisk(topRow));
+    }
+
+    /** The system the machine topped at {@code topRow} boots, or null when none of its disks carries one. */
+    @Nullable
+    public OsDef system(final int topRow) {
+        final int disk = bootDisk(topRow);
+        if (disk < 0) {
+            return null;
+        }
+        final ResourceLocation osId = OsDisks.systemOn(driveStacks(topRow).get(disk));
+        return osId == null ? null : OsRegistry.getOs(osId);
     }
 
     public BlockPos rackPos() {
@@ -163,16 +246,14 @@ public class ServerRackMenu extends AbstractComputerMenu {
         return out;
     }
 
-    /** The RAID mode the unit topped at {@code topRow} runs. */
+    /** The RAID mode the unit topped at {@code topRow} runs, as its RAID controller card keeps it. */
     public RaidMode raidModeAt(final int topRow) {
-        for (final int index : claimedSlots(topRow, RackLayout.SlotRole.GADGET)) {
-            final ItemStack stack = frontSlotStack(index);
-            if (RackGadgetItem.kindOf(stack)
-                    == RackGadgetItem.Kind.RAID_CONTROLLER) {
-                return RackGadgetItem.raidMode(stack);
-            }
-        }
-        return RaidMode.NONE;
+        return StorageCardItem.raidMode(controllerAt(topRow));
+    }
+
+    /* A copy of the RAID controller card in the server topped at {@code topRow}, or an empty stack. */
+    private ItemStack controllerAt(final int topRow) {
+        return ServerItem.card(serverInBay(topRow), ExpansionCardKind.RAID_CONTROLLER);
     }
 
     /**
@@ -180,18 +261,25 @@ public class ServerRackMenu extends AbstractComputerMenu {
      * {@code RAID0 FAILED}), or null when the unit runs no array.
      */
     @Nullable
-    public String raidLabel(final int topRow) {
+    public Text raidLabel(final int topRow) {
+        // The level goes by its name, which reads the same in every language.
+        final String mode = raidModeAt(topRow).name();
+        return switch (raidHealth(topRow)) {
+            case NONE -> null;
+            case HEALTHY -> Text.literal(mode);
+            case DEGRADED -> RAID_DEGRADED.with(mode);
+            case FAILED -> RAID_FAILED.with(mode);
+        };
+    }
+
+    /** How the unit's array stands: whole, short of a drive it can do without, or lost. */
+    public ArrayHealth raidHealth(final int topRow) {
         final RaidMode mode = raidModeAt(topRow);
         if (mode == RaidMode.NONE) {
-            return null;
+            return ArrayHealth.NONE;
         }
-        int members = 0;
-        for (final int index : claimedSlots(topRow, RackLayout.SlotRole.GADGET)) {
-            final Integer stored = frontSlotStack(index).get(ComputingModule.RAID_MEMBERS.get());
-            if (stored != null) {
-                members = stored;
-            }
-        }
+        final Integer stored = controllerAt(topRow).get(ComputingComponents.RAID_MEMBERS.get());
+        final int members = stored == null ? 0 : stored;
         int present = 0;
         for (final int index : claimedSlots(topRow, RackLayout.SlotRole.DRIVE)) {
             if (frontSlotStack(index).getItem()
@@ -200,37 +288,64 @@ public class ServerRackMenu extends AbstractComputerMenu {
             }
         }
         if (members > 0 && !mode.survives(members, present)) {
-            return mode.name() + " FAILED";
+            return ArrayHealth.FAILED;
         }
-        if (members > present) {
-            return mode.name() + " DEGRADED";
-        }
-        return mode.name();
+        return members > present ? ArrayHealth.DEGRADED : ArrayHealth.HEALTHY;
     }
 
-    @Nullable
     public static ServerRackMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                              final RegistryFriendlyByteBuf buf) {
-        if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
-                instanceof ServerRackBlockEntity be) {
-            return new ServerRackMenu(containerId, playerInventory, be);
+        return new ServerRackMenu(containerId, playerInventory,
+                MenuOpening.blockEntity(playerInventory, buf, ServerRackBlockEntity.class));
+    }
+
+    /* The stacks in the drive bays the unit topped at topRow cables, in bay order. */
+    private List<ItemStack> driveStacks(final int topRow) {
+        final List<ItemStack> out = new ArrayList<>();
+        for (final int index : claimedSlots(topRow, RackLayout.SlotRole.DRIVE)) {
+            out.add(frontSlotStack(index));
         }
-        return null;
+        return out;
     }
 
-    @Override
-    public boolean stillValid(final Player player) {
-        /*
-         * The FAMILY, not the one block: the Supercomputer Rack shares this menu, and checking the
-         * Server Rack alone would open its GUI for a single tick and then close it.
-         */
-        return access.evaluate((level, pos) -> level.getBlockState(pos).getBlock()
-                        instanceof ServerRackBlock
-                        && player.canInteractWithBlock(pos, 4.0), true);
+    /*
+     * The disk the machine's firmware was last told to boot from, as its Server item carries it; -1 for none chosen.
+     * The item is written back when the machine's session is, so this can lag a choice just made, and a stale or
+     * missing choice only means the first disk with a system answers, which is what the firmware does too.
+     */
+    private int preferredBootDisk(final int topRow) {
+        final CompoundTag console = serverInBay(topRow).get(ComputingComponents.SERVER_CONSOLE.get());
+        return console != null && console.contains("BootDiskSlot") ? console.getInt("BootDiskSlot") : -1;
     }
 
-    @Override
-    public ItemStack quickMoveStack(final Player player, final int index) {
-        return quickMoveBetweenContainerAndPlayer(player, index, CONTAINER_SLOTS);
+    /** A row's server slot: hidden while the unit mounted above takes its row, which leaves it nothing to hold. */
+    private final class ServerBaySlot extends SlotItemHandler {
+
+        ServerBaySlot(final IItemHandler handler, final int index, final int x, final int y) {
+            super(handler, index, x, y);
+        }
+
+        @Override
+        public boolean isActive() {
+            final int top = unitTopOf(getSlotIndex());
+            return hasItem() || top < 0 || top == getSlotIndex();
+        }
+    }
+
+    /**
+     * A front-panel slot: there only while a mounted unit cables it, or while it still holds what was put in it before
+     * its unit came out, so that can always be taken back.
+     */
+    private final class FrontBaySlot extends SlotItemHandler {
+
+        FrontBaySlot(final IItemHandler handler, final int index, final int x, final int y) {
+            super(handler, index, x, y);
+        }
+
+        @Override
+        public boolean isActive() {
+            final RackLayout.SlotRole role = frontSlotRole(getSlotIndex());
+            return hasItem() || role == RackLayout.SlotRole.DRIVE;
+        }
     }
 }

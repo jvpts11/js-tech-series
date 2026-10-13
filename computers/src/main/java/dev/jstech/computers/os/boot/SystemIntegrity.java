@@ -13,6 +13,9 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -27,8 +30,20 @@ import net.minecraft.world.item.ItemStack;
  * folder is gone, so there is no system to find at all; or the folder is there but what starts it is not, and
  * the machine can say which file it wanted. Each family says that last one in its own words, because each of
  * them really did.
+ *
+ * <p>The words are the family's, read in the player's language where that family's machines were sold in one;
+ * a file's name is data, and so is a kernel's panic, which no kernel ever printed in anything but its own words.
  */
+@TextHolder
 public final class SystemIntegrity {
+
+    private static final TextKey FILE_MISSING = TextKey.of("jsc.boot.system_integrity.file_missing", "%s is missing");
+    private static final TextKey NO_INTERPRETER =
+            TextKey.of("jsc.boot.system_integrity.no_interpreter", "Bad or missing command interpreter");
+    private static final TextKey REPAIR_FROM_SETUP = TextKey.of("jsc.boot.system_integrity.repair_from_setup",
+            "Put in an installation medium and press F10 to install over it.");
+    private static final TextKey REPAIR_BY_BOOTING = TextKey.of("jsc.boot.system_integrity.repair_by_booting",
+            "Boot an installation medium and install over it to repair.");
 
     private SystemIntegrity() {
     }
@@ -44,14 +59,14 @@ public final class SystemIntegrity {
     }
 
     /** What a check found, and what the machine says about it. */
-    public record Result(State state, String complaint, String missing) {
+    public record Result(State state, Text complaint, String missing) {
 
         public boolean whole() {
             return this.state == State.WHOLE;
         }
     }
 
-    private static final Result FINE = new Result(State.WHOLE, "", "");
+    private static final Result FINE = new Result(State.WHOLE, Text.EMPTY, "");
 
     /**
      * Looks at the disk under the installed system.
@@ -79,7 +94,7 @@ public final class SystemIntegrity {
         if (!folder.isEmpty()
                 && DiskFilesystem.listDirs(disk, "", kind).stream().noneMatch(folder::equalsIgnoreCase)
                 && !DiskFilesystem.exists(disk, loader)) {
-            return new Result(State.NO_SYSTEM, "", folder);
+            return new Result(State.NO_SYSTEM, Text.EMPTY, folder);
         }
         if (!loader.isEmpty() && !DiskFilesystem.exists(disk, loader)) {
             return new Result(State.NO_LOADER, complaintOf(os), loader);
@@ -117,19 +132,18 @@ public final class SystemIntegrity {
     }
 
     /** What the machine says when the loader is gone, in the words that family used. */
-    public static String complaintOf(final OsDef os) {
+    public static Text complaintOf(final OsDef os) {
         return switch (os.platform()) {
-            case FRAMES -> "kickmgr is missing";
-            case MC_DOS -> "Bad or missing command interpreter";
-            case LINUX, UNIX, FREEBSD -> "kernel panic - not syncing: no init found";
-            case MC_NET -> "netstart.sys is missing";
+            case FRAMES -> FILE_MISSING.with("kickmgr");
+            case MC_DOS -> NO_INTERPRETER.text();
+            case LINUX, UNIX, FREEBSD -> Text.literal("kernel panic - not syncing: no init found");
+            case MC_NET -> FILE_MISSING.with("netstart.sys");
         };
     }
 
     /** What to tell a player standing in front of a machine that will not start. */
-    public static String repairLine(final Platform platform) {
-        return platform == Platform.MC_DOS || platform == Platform.FRAMES
-                ? "Put in an installation medium and press F10 to install over it."
-                : "Boot an installation medium and install over it to repair.";
+    public static Text repairLine(final Platform platform) {
+        return (platform == Platform.MC_DOS || platform == Platform.FRAMES
+                ? REPAIR_FROM_SETUP : REPAIR_BY_BOOTING).text();
     }
 }

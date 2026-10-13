@@ -8,8 +8,8 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.registry.ClientHook;
 import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Opens the client-only installer screen at a copy already under way. Mirrors {@link IInstallDoneScreenOpener}:
@@ -35,22 +35,19 @@ public interface IInstallProgressScreenOpener {
 
     final class Holder {
 
+        private static final ClientHook<IInstallProgressScreenOpener> HOOK = new ClientHook<>();
+
         private Holder() {
         }
 
-        @Nullable
-        private static IInstallProgressScreenOpener instance;
-
         public static void set(final IInstallProgressScreenOpener opener) {
-            instance = opener;
+            HOOK.set(opener);
         }
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final FirmwareKind kind,
                                 final String osName, final String targetLabel, final int ticksLeft,
                                 final int ticksTotal) {
-            if (instance != null) {
-                instance.open(pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal);
-            }
+            HOOK.ifPresent(target -> target.open(pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal));
         }
     }
 }

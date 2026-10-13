@@ -1,0 +1,9 @@
+{
+  "graphGround": "#FF101010",
+  "radialChosen": "#FFFFFF00",
+  "radialLabel": "#FFFFFFFF",
+  "tableHeader": "#FF2A2A2A",
+  "tableHeaderText": "#FFFFFFFF",
+  "tableRowEven": "#FF1A1A1A",
+  "tableRowOdd": "#FF222222"
+}

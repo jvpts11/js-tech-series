@@ -14,7 +14,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 /**
- * Exposes the Computing module's block capabilities.
+ * Exposes the Computing module's block capabilities that differ by side; an inventory, energy store or tank offered
+ * on every side is declared as an exposed field of its block entity instead.
  */
 @EventBusSubscriber(modid = JsComputers.MODID)
 public final class ComputingCapabilities {
@@ -24,10 +25,6 @@ public final class ComputingCapabilities {
 
     @SubscribeEvent
     public static void register(final RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(
-                Capabilities.FluidHandler.BLOCK,
-                ComputingModule.TANK_BE.get(),
-                (be, side) -> be.fluidHandler());
         // The Gateway's buffer, for the chest, hopper or turtle on its sides, top or bottom.
         event.registerBlockEntity(
                 Capabilities.ItemHandler.BLOCK,

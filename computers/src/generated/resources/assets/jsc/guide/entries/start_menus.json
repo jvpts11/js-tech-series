@@ -1,0 +1,266 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.start_menus.table1",
+      "heads": [
+        "jsc.guide.start_menus.table1_head1",
+        "jsc.guide.start_menus.table1_head2",
+        "jsc.guide.start_menus.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.start_menus.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.start_menus.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.start_menus.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.start_menus.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.start_menus.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.start_menus.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.start_menus.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.start_menus.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.start_menus.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.start_menus.table2",
+      "heads": [
+        "jsc.guide.start_menus.table2_head1",
+        "jsc.guide.start_menus.table2_head2",
+        "jsc.guide.start_menus.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.start_menus.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.start_menus.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.start_menus.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.start_menus.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.start_menus.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.start_menus.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.start_menus.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.start_menus.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.start_menus.table2_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text13"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.start_menus.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text14"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.start_menus.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text15"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.start_menus.text16"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.start_menus.step1",
+        "jsc.guide.start_menus.step2",
+        "jsc.guide.start_menus.step3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.start_menus.fix1",
+          "problem": "jsc.guide.start_menus.problem1"
+        },
+        {
+          "fix": "jsc.guide.start_menus.fix2",
+          "problem": "jsc.guide.start_menus.problem2"
+        }
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.start_menus.definition1",
+      "term": "jsc.guide.start_menus.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.start_menus.definition2",
+      "term": "jsc.guide.start_menus.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.start_menus.definition3",
+      "term": "jsc.guide.start_menus.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.start_menus.definition4",
+      "term": "jsc.guide.start_menus.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.start_menus.definition5",
+      "term": "jsc.guide.start_menus.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.start_menus.definition6",
+      "term": "jsc.guide.start_menus.term6"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:taskbar",
+        "jsc:frames_windows",
+        "jsc:editions_compared"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:start_menus",
+  "order": 153,
+  "section": "jsc:desktop_working",
+  "title": "jsc.guide.start_menus.title"
+}

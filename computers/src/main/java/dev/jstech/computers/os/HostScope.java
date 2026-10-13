@@ -30,7 +30,10 @@ public enum HostScope implements IStableName {
     SERVER("server"),
 
     /** Only on a Cluster Management Computer (the master of the racks on its network). */
-    CLUSTER_MANAGEMENT_COMPUTER("cluster_management_computer");
+    CLUSTER_MANAGEMENT_COMPUTER("cluster_management_computer"),
+
+    /** Only on a Personal Computer, the player's own machine (where the personal-use cards are worked). */
+    PERSONAL_COMPUTER("personal_computer");
 
     private final String serializedName;
 

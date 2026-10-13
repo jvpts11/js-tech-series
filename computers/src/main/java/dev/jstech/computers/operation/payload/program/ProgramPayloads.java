@@ -10,45 +10,41 @@ package dev.jstech.computers.operation.payload.program;
 import dev.jstech.computers.block.IFirmwareScreenOpener;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.machine.ProgramLauncher;
-import dev.jstech.computers.menu.CommandPromptMenu;
+import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
-import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
 import dev.jstech.computers.operation.payload.WireLine;
-import dev.jstech.computers.operation.payload.OpenProgramPayload;
 import dev.jstech.computers.operation.payload.ProcessActionPayload;
 import dev.jstech.computers.operation.payload.ProcessListPayload;
 import dev.jstech.computers.operation.payload.RunProgramPayload;
+import dev.jstech.computers.client.os.SigmaTextWindows;
 import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.os.FirmwareKind;
-import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
-import dev.jstech.core.peripheral.IPeripheralOwner;
-import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.text.Text;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -56,7 +52,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dev.jstech.computers.operation.payload.files.FilePayloads.readDiskFile;
-import static dev.jstech.computers.operation.payload.program.ConsolePayloads.launchProgram;
 
 /**
  * The payloads that open and run programs on a computer, carry their windows and window events, list and act on its
@@ -75,33 +70,41 @@ public final class ProgramPayloads {
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleUiWindow));
         ComputerAccess.accept(registrar, UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
                 ComputerAccess.machine(UiEventPayload::hostPos), ProgramPayloads::handleUiEvent);
-        ComputerAccess.accept(registrar, OpenProgramPayload.TYPE, OpenProgramPayload.STREAM_CODEC,
-                ComputerAccess.machine(OpenProgramPayload::hostPos), ProgramPayloads::handleOpenProgram);
         registrar.playToClient(ProcessListPayload.TYPE, ProcessListPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleProcessList));
-        ComputerAccess.accept(registrar, ProcessActionPayload.TYPE, ProcessActionPayload.STREAM_CODEC,
-                ComputerAccess.machine(ProcessActionPayload::hostPos), ProgramPayloads::handleProcessAction);
+        ComputerAccess.onMenu(registrar, ProcessActionPayload.TYPE, ProcessActionPayload.STREAM_CODEC,
+                ComputerTerminalMenu.class, ComputerTerminalMenu::hostPos, ProcessActionPayload::hostPos,
+                ProgramPayloads::handleProcessAction);
         ComputerAccess.accept(registrar, UninstallProgramPayload.TYPE, UninstallProgramPayload.STREAM_CODEC,
                 ComputerAccess.machine(UninstallProgramPayload::hostPos), ProgramPayloads::handleUninstallProgram);
         registrar.playToClient(OpenComputerUiPayload.TYPE, OpenComputerUiPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleOpenComputerUi));
     }
 
-    /** The processes running on the host at {@code hostPos}: the IQL Engine and its jobs if it is a Mainframe with the Engine installed, else an empty list (a computer with no service). */
+    /**
+     * The processes running on the host at {@code hostPos}: on a Mainframe, the network's engine and the jobs the
+     * Automation Engine fires, else an empty list (a computer with no service).
+     */
     public static void dispatchProcesses(final ServerPlayer player, final BlockPos hostPos,
                                          final ServerLevel level) {
         final List<ProcessListPayload.ProcessLine> lines = new ArrayList<>();
-        if (level.getBlockEntity(hostPos) instanceof MainframeBlockEntity mainframe
-                && mainframe.isIqlEngineInstalled()) {
-            final boolean running = mainframe.isIqlEngineRunning();
-            lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, "IQL Engine",
-                    running ? "running" : "stopped",
-                    running ? "the network's query and job engine" : "stopped, start it to run jobs"));
+        if (level.getBlockEntity(hostPos) instanceof MainframeBlockEntity mainframe) {
+            if (mainframe.activeEngine() != null) {
+                final boolean running = mainframe.engineRunning();
+                final ProgramSpec engine = Programs.get(mainframe.activeEngine());
+                // A service goes by its program's name, which is data.
+                final String name = engine == null ? mainframe.activeEngine().toString() : engine.name().english();
+                lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, name,
+                        running ? ProcessListPayload.ProcessState.RUNNING : ProcessListPayload.ProcessState.STOPPED,
+                        (running ? ProcessListPayload.ENGINE_SERVING : ProcessListPayload.ENGINE_STOPPED).text()));
+            }
+            final boolean firing = mainframe.isAutomationEngineActive();
             for (final IqlSavedObject job
                     : mainframe.iqlCatalog().ofType(
                             IqlDefinition.ObjectType.JOB)) {
                 final boolean paused = mainframe.isJobPaused(job.name());
-                final String state = paused ? "paused" : running ? "active" : "idle";
+                final ProcessListPayload.ProcessState state = paused ? ProcessListPayload.ProcessState.PAUSED
+                        : firing ? ProcessListPayload.ProcessState.ACTIVE : ProcessListPayload.ProcessState.IDLE;
                 lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_JOB, job.name(),
                         state, jobDetail(job)));
             }
@@ -109,12 +112,13 @@ public final class ProgramPayloads {
         PacketDistributor.sendToPlayer(player, new ProcessListPayload(lines));
     }
 
-    private static String jobDetail(final IqlSavedObject job) {
-        return switch (job.triggerKind()) {
+    /* A job is described by its own trigger clause, which is the query language's words and not the game's. */
+    private static Text jobDetail(final IqlSavedObject job) {
+        return Text.literal(switch (job.triggerKind()) {
             case EVERY -> "every " + job.triggerSpec();
             case WHEN -> "when " + job.triggerSpec();
             case NONE -> job.body();
-        };
+        });
     }
 
     private static void handleProcessList(final ProcessListPayload payload, final Player player) {
@@ -123,20 +127,18 @@ public final class ProgramPayloads {
         }
     }
 
-    private static void handleProcessAction(final ProcessActionPayload payload, final ServerPlayer player,
-                                            final ServerLevel level) {
-        if (!(player.containerMenu instanceof ComputerTerminalMenu menu)
-                || !menu.hostPos().equals(payload.hostPos())
-                || !(level.getBlockEntity(payload.hostPos()) instanceof MainframeBlockEntity mainframe)) {
+    private static void handleProcessAction(final ProcessActionPayload payload, final ComputerTerminalMenu menu,
+                                            final ServerPlayer player, final ServerLevel level) {
+        if (!(level.getBlockEntity(menu.hostPos()) instanceof MainframeBlockEntity mainframe)) {
             return;
         }
         if (payload.kind() == ProcessListPayload.KIND_SERVICE) {
             switch (payload.action()) {
-                case ProcessActionPayload.ACTION_STOP -> mainframe.setIqlEngineRunning(false);
-                case ProcessActionPayload.ACTION_START -> mainframe.setIqlEngineRunning(true);
+                case ProcessActionPayload.ACTION_STOP -> mainframe.setEngineRunning(false);
+                case ProcessActionPayload.ACTION_START -> mainframe.setEngineRunning(true);
                 case ProcessActionPayload.ACTION_RESTART -> {
-                    mainframe.setIqlEngineRunning(false);
-                    mainframe.setIqlEngineRunning(true);
+                    mainframe.setEngineRunning(false);
+                    mainframe.setEngineRunning(true);
                 }
                 default -> { /* END has no meaning for a service */ }
             }
@@ -147,7 +149,7 @@ public final class ProgramPayloads {
                 default -> { /* a job has only End/Restart */ }
             }
         }
-        dispatchProcesses(player, payload.hostPos(), level);
+        dispatchProcesses(player, menu.hostPos(), level);
     }
 
     private static void handleOpenComputerUi(final OpenComputerUiPayload payload, final Player player) {
@@ -158,74 +160,22 @@ public final class ProgramPayloads {
                 payload.name());
     }
 
-    private static void handleOpenProgram(final OpenProgramPayload payload, final ServerPlayer player,
-                                          final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos())
-                instanceof IComputerTerminalHost terminalHost)) {
-            return;
-        }
-        /*
-         * Anti-spoof: either this host's terminal menu is open, or the player is within reach of the
-         * monitor they used (the desktop shell is a client-only screen with no server-side menu, so a
-         * program opened from it cannot be validated against an open container).
-         */
-        final boolean viaTerminal = player.containerMenu instanceof ComputerTerminalMenu terminal
-                && terminal.hostPos().equals(payload.hostPos());
-        /*
-         * The desktop path is only valid when the monitor is actually a linked peripheral of this host,
-         * so a player near any monitor cannot open a program bound to a foreign computer.
-         */
-        final boolean nearMonitor = player.distanceToSqr(
-                Vec3.atCenterOf(payload.monitorPos())) <= 64.0
-                && terminalHost instanceof IPeripheralOwner owner
-                && owner.linkedEndpoints().contains(payload.monitorPos().asLong());
-        if (!viaTerminal && !nearMonitor) {
-            return;
-        }
-        final String id = payload.programId();
-        if (id.equals(Programs.COMMAND_PROMPT.toString())
-                || id.equals("command_prompt")) {
-            final Component title =
-                    player.level().getBlockState(payload.hostPos()).getBlock().getName();
-            /*
-             * The host's board-derived era drives the prompt's GUI skin; capture it at open time. It is
-             * not re-synced afterwards because the board is only swapped in the computer's own assembly
-             * GUI, never from the running prompt.
-             */
-            final IOsHost opened = player.level().getBlockEntity(payload.hostPos())
-                    instanceof IOsHost host ? host : null;
-            final HardwareEra hostEra = opened == null ? null : opened.displayEra();
-            // Which run of the machine this terminal belongs to, so its lines are not another run's.
-            final long session = opened == null || opened.console() == null ? 0L : opened.console().session();
-            player.openMenu(new SimpleMenuProvider(
-                    (windowId, inv, p) -> new CommandPromptMenu(
-                            windowId, inv, payload.monitorPos(), payload.hostPos(), hostEra, session), title),
-                    buf -> CommandPromptMenu.writeOpenBuffer(
-                            buf, payload.monitorPos(), payload.hostPos(), hostEra, session));
-        } else {
-            /*
-             * The NMS and other windowed programs open through the shared launcher, which checks they
-             * are installed and (for the NMS) that the IQL Engine is running on the network's Mainframe.
-             */
-            launchProgram(player, terminalHost, payload.monitorPos(), payload.hostPos(), id);
-        }
-    }
-
     private static void handleUiWindow(final UiWindowPayload payload, final Player player) {
-        DesktopScreen.acceptWindow(payload);
+        // A terminal of a machine that draws its windows in text takes them; a desktop takes the rest.
+        if (!SigmaTextWindows.take(payload)) {
+            ActiveDesktop.acceptWindow(payload);
+        }
     }
 
     /**
      * What a player did to a widget of a program's window, handed to the program that owns it. Only what a
-     * keyboard and a mouse can do is taken, and only from a player at that machine's desktop.
+     * keyboard and a mouse can do is taken, and only from a player at that machine's screen: its desktop, or the
+     * terminal of a machine that draws its windows in text.
      */
     private static void handleUiEvent(final UiEventPayload payload, final ServerPlayer player,
                                       final ServerLevel level) {
-        if (!(player.containerMenu instanceof DesktopMenu desktop)
-                || !payload.hostPos().equals(desktop.hostPos())
-                || !UiEventPayload.KINDS.contains(payload.kind())
-                || !(level.getBlockEntity(payload.hostPos())
-                        instanceof AbstractComputerBlockEntity computer)) {
+        if (!UiEventPayload.KINDS.contains(payload.kind())
+                || !(level.getBlockEntity(payload.hostPos()) instanceof AbstractComputerBlockEntity computer)) {
             return;
         }
         computer.programs().deliverUiEvent(payload.program(), payload.window(), payload.widget(),
@@ -242,16 +192,16 @@ public final class ProgramPayloads {
         final List<WireLine> wire = new ArrayList<>();
         final Function<String, ICliComputer.FsResult> disk =
                 path -> readDiskFile(level, computer, path)
-                        .map(ICliComputer.FsResult::ok)
-                        .orElse(ICliComputer.FsResult.fail("file not found"));
+                        .map(ICliComputer.FsResult::content)
+                        .orElse(ICliComputer.FsResult.fail(CliTexts.FILE_NOT_FOUND.text()));
         final var launch = ProgramLauncher.launch(computer, payload.path(), disk,
                 List.of(), IProgramParent.NONE,
                 ProgramPriority.MEDIUM, 0);
         if (!launch.ok()) {
-            final String why = switch (launch.refusal()) {
-                case UNREADABLE -> name + ": " + launch.message();
-                case NO_MEMORY -> name + ": not enough memory to run it";
-                case NO_RUNNER, NOT_STARTED -> launch.message();
+            final Text why = switch (launch.refusal()) {
+                case UNREADABLE -> CliTexts.SAID_BY.with(name, launch.said());
+                case NO_MEMORY -> ProgramService.NO_ROOM.with(name, launch.roomMb(), launch.freeMb());
+                case NO_RUNNER, NOT_STARTED -> launch.said();
             };
             wire.add(new WireLine(why, CliStyle.ERROR.id()));
             PacketDistributor.sendToPlayer(player,
@@ -263,7 +213,7 @@ public final class ProgramPayloads {
         if (console) {
             computer.programs().hold(launch.id());
         } else {
-            wire.add(new WireLine(launch.message(),
+            wire.add(new WireLine(launch.said(),
                     CliStyle.OK.id()));
         }
         PacketDistributor.sendToPlayer(player,

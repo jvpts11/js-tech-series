@@ -45,7 +45,12 @@ public final class Parser {
     private final ExpressionParser expressions;
 
     public Parser(final List<Token> tokens, final DiagnosticBag diagnostics) {
-        this.cursor = new TokenCursor(tokens, diagnostics);
+        this(tokens, diagnostics, 0);
+    }
+
+    /** One that starts that deep already, for a piece read on its own inside a construct another is reading. */
+    Parser(final List<Token> tokens, final DiagnosticBag diagnostics, final int depth) {
+        this.cursor = new TokenCursor(tokens, diagnostics, depth);
         this.diagnostics = diagnostics;
         final TypeParser types = new TypeParser(this.cursor, diagnostics);
         this.expressions = new ExpressionParser(this.cursor, diagnostics, types);
@@ -151,7 +156,8 @@ public final class Parser {
         final StringBuilder name = new StringBuilder();
         final Token first = this.cursor.peek();
         if (first.kind() != TokenKind.IDENTIFIER) {
-            this.diagnostics.error(first.line(), first.column(), SigmaError.EXPECTED_TOKEN, "a name", first.describe());
+            this.diagnostics.error(first.line(), first.column(), SigmaError.EXPECTED_TOKEN,
+                    TokenKind.IDENTIFIER.describe(), first.describe());
             return "";
         }
         name.append(this.cursor.advance().text());

@@ -22,6 +22,7 @@ import java.util.Objects;
  * action runs at all). {@code orderBy} names a sort field with {@code orderByDescending} for its
  * direction, and {@code limit} caps the rows ({@link #NO_LIMIT} when uncapped). {@code priority} is the
  * scheduling level an action asks for ({@code PRIORITY HIGH}); the default when the clause is absent.
+ * {@code update} is what an UPDATE's {@code SET} asks the card to do, and null for every other verb.
  */
 public record IqlOperation(IqlVerb verb,
                            long quantity,
@@ -33,7 +34,8 @@ public record IqlOperation(IqlVerb verb,
                            String orderBy,
                            boolean orderByDescending,
                            int limit,
-                           OperationPriority priority) {
+                           OperationPriority priority,
+                           IqlUpdate update) {
 
     /** Quantity sentinel for {@code ALL}. */
     public static final long ALL = -1L;
@@ -74,7 +76,12 @@ public record IqlOperation(IqlVerb verb,
     /** A bare action: a verb, a quantity ({@link #ALL}/{@link #NONE} or a count), and an item. */
     public static IqlOperation action(final IqlVerb verb, final long quantity, final String item) {
         return new IqlOperation(verb, quantity, item, "", "", null, null, "", false, NO_LIMIT,
-                OperationPriority.DEFAULT);
+                OperationPriority.DEFAULT, null);
+    }
+
+    /** Whether this is an UPDATE, with what its {@code SET} asks for. */
+    public boolean hasUpdate() {
+        return update != null;
     }
 
     /** Whether the statement asked for a level other than the default. */

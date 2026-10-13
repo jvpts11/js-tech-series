@@ -13,6 +13,19 @@ authors = "${mod_authors}"
 description = '''
 ${mod_description}
 '''
+# The work of others the Core carries, shown on its page in the mods list; THIRD_PARTY_NOTICES.md has the notices.
+credits = "Fixed-width fonts: Misc Fixed 6x10, 9x15 and 10x20, from Markus Kuhn's ucs-fonts as the X.Org Foundation ships them, public domain. YAML: SnakeYAML, Apache License 2.0."
+# The mark the mods list shows at the head of this mod's page: its own logo over the series logo.
+logoFile = "${mod_id}_logo.png"
+logoBlur = true
+
+# The square icon, for mod-list screens that show one.
+[modproperties.${mod_id}]
+catalogueImageIcon = "${mod_id}_icon.png"
+
+# Mixin config: the mixins live under the dev.jstech.core.mixin package.
+[[mixins]]
+config = "${mod_id}.mixins.json"
 
 [[dependencies.${mod_id}]]
 modId = "neoforge"
@@ -25,5 +38,29 @@ side = "BOTH"
 modId = "minecraft"
 type = "required"
 versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# GeckoLib is optional for the Core: only a mod that draws with it, and requires it, loads the Core's model for it.
+[[dependencies.${mod_id}]]
+modId = "geckolib"
+type = "optional"
+versionRange = "[4.7,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Mekanism is optional: when it is present, its chemicals move and store like fluids through the Core.
+[[dependencies.${mod_id}]]
+modId = "mekanism"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "BOTH"
+
+# KubeJS is optional: when it is present, its scripts reach what the series' mods hand them, by the names they gave.
+[[dependencies.${mod_id}]]
+modId = "kubejs"
+type = "optional"
+versionRange = "[2101.7.2,)"
 ordering = "NONE"
 side = "BOTH"

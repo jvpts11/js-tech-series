@@ -8,13 +8,23 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.engine.EngineSwap;
+import dev.jstech.computers.gui.layout.NetworkLinksLayout;
+import dev.jstech.computers.gui.layout.NetworkServicesLayout;
 import dev.jstech.computers.operation.payload.CancelOperationPayload;
 import dev.jstech.computers.operation.payload.NetworkManagerPayload;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
+import dev.jstech.computers.operation.payload.NetworkServicesPayload;
+import dev.jstech.computers.operation.payload.NodeLink;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestNetworkManagerPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.SetOperationPriorityPayload;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.program.OperationPalette;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
@@ -28,13 +38,22 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.gui.component.WaitBar;
 import dev.jstech.core.gui.layout.DesktopZ;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,47 +67,51 @@ import java.util.function.Supplier;
 
 /**
  * The Network Manager desktop app, exclusive to the Mainframe (the node that holds the network index).
- * It is a windowed task manager for the whole data network, with five tabs: Devices (every node),
+ * It is a windowed task manager for the whole data network, with seven tabs: Devices (every node),
  * Processes (live Operations), Hardware (the network's compute and storage totals), Map (the topology),
- * and Log (the recent Operations feed). Nodes carry the computer's name and specs; a Map node shows a
- * full tooltip on hover, and a logged Operation opens a detail dialog with its sub-operations.
+ * Log (the recent Operations feed), Stats (the last hour by type) and Services (the engine that plans the
+ * network's work and the other software the Mainframe runs for it). Nodes carry the computer's name and specs;
+ * a Map node shows a full tooltip on hover, and a logged Operation opens a detail dialog with its sub-operations.
  *
  * <p>The tabs, the tables, the hardware readout, the scrollbars and the detail dialog are components; the
  * map is a canvas of its own, since its nodes are dragged, panned and zoomed rather than listed.
  */
+@PaletteHolder
 public final class NetworkManagerApp implements IDesktopApp {
 
-    private static final List<String> TABS = List.of("Devices", "Processes", "Hardware", "Map", "Log", "Stats");
+    /** The window's title in English, which is also the key a test opens it by. */
+    public static final String TITLE = NetworkManagerAppTexts.TITLE.english();
+
+    /** How wide the bar for the wait for the network runs at most. */
+    private static final int WAIT_W = 100;
     private static final int TAB_DEVICES = 0;
     private static final int TAB_PROCESSES = 1;
     private static final int TAB_HARDWARE = 2;
     private static final int TAB_MAP = 3;
     private static final int TAB_LOG = 4;
     private static final int TAB_STATS = 5;
+    private static final int TAB_SERVICES = 6;
     private static final int STAT_ROW_H = 12;
     private static final int STATS_REFRESH_FRAMES = 100;
 
     private static final int OPS_REFRESH_FRAMES = 40;
     private static final int DEV_ROW_H = 12;
-    private static final int PROC_ROW_H = 13;
     private static final int LOG_ROW_H = 12;
+    /** The row under the log its Print button stands in, and the button's width. */
+    private static final int PRINT_ROW_H = 14;
+    private static final int PRINT_W = 40;
+    /** The manager's own id, whose name on the desktop its printouts say they came from. */
+    private static final String PROGRAM = "jsc:network_manager";
     private static final int HW_ROW_H = 12;
     private static final int BAR_W = 3;
     private static final int DETAIL_W = 240;
     private static final int DETAIL_H = 150;
 
-    private static final int C_MAINFRAME = 0xFF3A6AE0;
-    private static final int C_SERVER = 0xFF12A26F;
-    private static final int C_SUBFRAME = 0xFF7B52C9;
-    private static final int C_PC = 0xFF1C9C9C;
-    private static final int C_CRAFTING = 0xFFD98A3A;
-    private static final int C_SUPERCOMPUTER = 0xFFC94FB0;
-    private static final int C_CLUSTER_MANAGEMENT = 0xFFA9B23C;
-
-    private static final int C_GREEN = 0xFF2EA043;
-    private static final int C_AMBER = 0xFFE0A020;
-    private static final int C_RED = 0xFFD1495B;
-    private static final int C_LINK = 0xFF9FB4E6;
+    /** Each kind of machine's colour on the map, the states' colours, and the hover card's: app/network_manager. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/network_manager",
+            new Colours(0xFF3A6AE0, 0xFF12A26F, 0xFF7B52C9, 0xFF1C9C9C, 0xFFD98A3A, 0xFFC94FB0, 0xFFA9B23C,
+                    0xFF2EA043, 0xFFE0A020, 0xFFD1495B, 0xFF9FB4E6, 0xB0000000, 0xF00E0E12, 0xFFFFFFFF,
+                    0xFFB7BCCB, 0x33E0A020));
 
     private static final double MAP_ZOOM_MIN = 0.4;
     private static final double MAP_ZOOM_MAX = 2.5;
@@ -99,8 +122,11 @@ public final class NetworkManagerApp implements IDesktopApp {
         }
     }
 
-    /** One line of the hardware readout: what it counts, and the count read live from the snapshot. */
-    private record HardwareRow(String key, Supplier<String> value) {
+    /**
+     * One line of the hardware readout: what it counts, and the count read live from the snapshot; a heading over the
+     * lines after it when it has no count.
+     */
+    private record HardwareRow(TextKey key, @Nullable Supplier<String> value) {
     }
 
     /** One line of the detail dialog: what the stage or the source was, and how much went through it. */
@@ -114,8 +140,6 @@ public final class NetworkManagerApp implements IDesktopApp {
     private NetworkManagerPayload data;
     private List<OperationRecord> activeOps = List.of();
     private List<OperationRecord> logNewestFirst = List.of();
-    private int scSlotsUsed;
-    private int scSlotsTotal;
     private int tab;
     private int frame;
     private int lastX;
@@ -129,6 +153,12 @@ public final class NetworkManagerApp implements IDesktopApp {
     @Nullable
     private OperationRecord detailOp;
     private List<DetailRow> detailRows = List.of();
+    /* The node whose lost link the line under the Devices list tells, and where that line is; none when all are up. */
+    @Nullable
+    private NetworkNodeInfo lostShown;
+    private int footerX;
+    private int footerY;
+    private int footerW;
 
     /*
      * Per-node drag offsets on the Map (kept only for this session, keyed by the node's short id), so the
@@ -152,21 +182,22 @@ public final class NetworkManagerApp implements IDesktopApp {
     private final Panel root = new Panel();
     private final TabStrip tabs;
     private final Label loadingLabel;
+    /** The bar for the wait until the network answers, under the line that says it is loading. */
+    private final WaitBar waiting;
     private final Label netLabel;
     private final ColumnHeader devColumns;
+    /* The column names when the list is too narrow for the TYPE column. */
+    private final ColumnHeader devColumnsNarrow;
     private final ListView<NetworkNodeInfo> devList;
-    private final Label slotsLabel;
-    private final Label liveLabel;
-    private final Label noProcLabel;
-    private final ListView<OperationRecord> procList;
-    private final ScrollBar procBar;
+    private final ProcessList processes;
     private final List<HardwareRow> hardwareRows = new ArrayList<>();
-    private final List<Label> hwKeys = new ArrayList<>();
-    private final List<Label> hwValues = new ArrayList<>();
-    private final Label nodesHeader;
+    private final ListView<HardwareRow> hwList;
+    private final ScrollBar hwBar;
     private final MapCanvas map;
     private final Label noLogLabel;
     private final ListView<OperationRecord> logList;
+    private final Button logPrint;
+    private final PrintDialog printDialog;
     private final ScrollBar logBar;
     private final Label statsHeader;
     private final Label noStatsLabel;
@@ -185,74 +216,98 @@ public final class NetworkManagerApp implements IDesktopApp {
     private final Label detailPrioValue;
     private final Button detailPrioUp;
     private final Button detailCancel;
+    private final NetworkServicesView services;
 
     public NetworkManagerApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
 
-        tabs = root.add(new TabStrip(TABS).fitToLabels(14).setOnSelect(this::selectTab));
-        loadingLabel = root.add(new Label("Loading network...", Label.Tone.DIM));
+        tabs = root.add(new TabStrip(words(NetworkManagerTexts.DEVICES, NetworkManagerTexts.PROCESSES,
+                NetworkManagerTexts.HARDWARE, NetworkManagerTexts.MAP, NetworkManagerTexts.LOG,
+                NetworkManagerTexts.STATS, NetworkServicesTexts.TAB)).fitToLabels(14).setOnSelect(this::selectTab));
+        services = new NetworkServicesView(host);
+        root.add(services.component());
+        loadingLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.LOADING), Label.Tone.DIM));
+        waiting = root.add(new WaitBar());
         netLabel = root.add(new Label(this::networkText, Label.Tone.DIM));
 
-        devColumns = root.add(new ColumnHeader(List.of("NODE", "TYPE", "STATUS")).setSortable(false));
+        devColumns = root.add(new ColumnHeader(words(NetworkManagerTexts.NODE_COLUMN, NetworkManagerTexts.TYPE_COLUMN,
+                NetworkLinkTexts.LINK_COLUMN, NetworkManagerTexts.STATUS_COLUMN)).setSortable(false));
+        devColumnsNarrow = root.add(new ColumnHeader(words(NetworkManagerTexts.NODE_COLUMN,
+                NetworkLinkTexts.LINK_COLUMN, NetworkManagerTexts.STATUS_COLUMN)).setSortable(false));
         devList = root.add(new ListView<NetworkNodeInfo>(this::nodes, DEV_ROW_H, this::renderDeviceRow));
 
-        slotsLabel = root.add(new Label(() -> "Craft slots  " + scSlotsUsed + " / " + scSlotsTotal, Label.Tone.DIM));
-        liveLabel = root.add(new Label(() -> activeOps.size() + " running", Label.Tone.DIM).setAlign(Label.Align.RIGHT));
-        noProcLabel = root.add(new Label("No Operations in flight.", Label.Tone.DIM));
-        procList = root.add(new ListView<OperationRecord>(() -> activeOps, PROC_ROW_H, this::renderProcessRow)
-                .setOnClick(this::processClicked));
-        procBar = root.add(new ScrollBar(() -> Math.max(0, activeOps.size() - procList.visibleRows()), procList::scroll,
-                v -> procList.setScroll(v)));
+        processes = root.add(new ProcessList().setOnPick(this::processPicked));
 
-        hardwareRows.add(new HardwareRow("Orchestration capacity", () -> JsTechTheme.fmt(hardware().capacity()) + " it/t"));
-        hardwareRows.add(new HardwareRow("Parallel queues", () -> String.valueOf(hardware().queues())));
-        hardwareRows.add(new HardwareRow("RAM buffer", () -> JsTechTheme.fmt(hardware().ramBuffer()) + " it"));
-        hardwareRows.add(new HardwareRow("Network storage", () -> JsTechTheme.fmt(hardware().storageItems()) + " items"));
-        hardwareRows.add(new HardwareRow("Mainframes", () -> countKind(NetworkNodeInfo.KIND_MAINFRAME)));
-        hardwareRows.add(new HardwareRow("Servers", () -> countKind(NetworkNodeInfo.KIND_SERVER)));
-        hardwareRows.add(new HardwareRow("Subframes", () -> countKind(NetworkNodeInfo.KIND_SUBFRAME)));
-        hardwareRows.add(new HardwareRow("Supercomputers", () -> countKind(NetworkNodeInfo.KIND_SUPERCOMPUTER)));
-        hardwareRows.add(new HardwareRow("Crafting computers", () -> countKind(NetworkNodeInfo.KIND_CRAFTING)));
-        hardwareRows.add(new HardwareRow("Personal computers", () -> countKind(NetworkNodeInfo.KIND_PC)));
-        hardwareRows.add(new HardwareRow("Cluster managers", () -> countKind(NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT)));
-        for (final HardwareRow row : hardwareRows) {
-            hwKeys.add(root.add(new Label(row.key())));
-            hwValues.add(root.add(new Label(row.value()).setAlign(Label.Align.RIGHT)));
-        }
-        nodesHeader = root.add(new Label("NODES", Label.Tone.DIM));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.ORCHESTRATION,
+                () -> GameText.resolve(NetworkManagerTexts.PER_TICK.with(JsTechTheme.fmt(hardware().capacity())))));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.QUEUES, () -> String.valueOf(hardware().queues())));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.RAM_BUFFER, () -> GameText.resolve(
+                NetworkManagerTexts.ITEM_EQUIVALENTS.with(JsTechTheme.fmt(hardware().ramBuffer())))));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.NETWORK_STORAGE, () -> GameText.resolve(
+                NetworkManagerTexts.ITEMS.with(JsTechTheme.fmt(hardware().storageItems())))));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.NODES, null));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.MAINFRAMES,
+                () -> countKind(NetworkNodeInfo.KIND_MAINFRAME)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.SERVERS, () -> countKind(NetworkNodeInfo.KIND_SERVER)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.SUBFRAMES,
+                () -> countKind(NetworkNodeInfo.KIND_SUBFRAME)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.SUPERCOMPUTERS,
+                () -> countKind(NetworkNodeInfo.KIND_SUPERCOMPUTER)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.CRAFTING_COMPUTERS,
+                () -> countKind(NetworkNodeInfo.KIND_CRAFTING)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.PERSONAL_COMPUTERS,
+                () -> countKind(NetworkNodeInfo.KIND_PC)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.CLUSTER_MANAGERS,
+                () -> countKind(NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT)));
+        hardwareRows.add(new HardwareRow(NetworkLinkTexts.LINKS, null));
+        hardwareRows.add(new HardwareRow(NetworkLinkTexts.OPTICAL_LINKS, () -> GameText.resolve(
+                NetworkLinkTexts.OPTICAL_VALUE.with(hardware().opticalUp() + hardware().opticalDown(),
+                        hardware().opticalUp(), hardware().opticalDown()))));
+        hardwareRows.add(new HardwareRow(NetworkLinkTexts.BACKBONE_ROW,
+                () -> NetworkLinkDrawing.hardwareValue(hardware().backbone(), "")));
+        hardwareRows.add(new HardwareRow(NetworkLinkTexts.SLOWEST,
+                () -> NetworkLinkDrawing.hardwareValue(hardware().slowest(), hardware().slowestNode())));
+        hwList = root.add(new ListView<HardwareRow>(() -> hardwareRows, HW_ROW_H, this::renderHardwareRow));
+        hwBar = root.add(new ScrollBar(() -> Math.max(0, hardwareRows.size() - hwList.visibleRows()), hwList::scroll,
+                v -> hwList.setScroll(v)));
 
         map = root.add(new MapCanvas());
 
-        noLogLabel = root.add(new Label("No Operations logged yet.", Label.Tone.DIM));
+        noLogLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_LOG), Label.Tone.DIM));
         logList = root.add(new ListView<OperationRecord>(() -> logNewestFirst, LOG_ROW_H, this::renderLogRow)
                 .setOnClick(this::logClicked));
         logBar = root.add(new ScrollBar(() -> Math.max(0, logNewestFirst.size() - logList.visibleRows()), logList::scroll,
                 v -> logList.setScroll(v)));
+        printDialog = new PrintDialog(host, this);
+        logPrint = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::printLog));
 
         statsHeader = root.add(new Label(this::statsHeaderText, Label.Tone.DIM));
-        noStatsLabel = root.add(new Label("No Operations settled in the last hour.", Label.Tone.DIM));
-        statsColumns = root.add(new ColumnHeader(List.of("TYPE", "OPS/H", "WAIT", "RUN", "FAIL")).setSortable(false));
+        noStatsLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_STATS), Label.Tone.DIM));
+        statsColumns = root.add(new ColumnHeader(words(NetworkManagerTexts.TYPE_COLUMN,
+                NetworkManagerTexts.OPS_PER_HOUR, NetworkManagerTexts.WAIT, NetworkManagerTexts.RUN,
+                NetworkManagerTexts.FAIL)).setSortable(false));
         statsList = root.add(new ListView<NetworkManagerPayload.TypeStat>(this::statRows, STAT_ROW_H, this::renderStatRow));
 
-        detailPopup = new Popup("", DETAIL_W, DETAIL_H).setDim(0xB0000000).setLayouter(this::layoutDetail);
+        detailPopup = new Popup("", DETAIL_W, DETAIL_H).setDim(colours().detailDim())
+                .setLayouter(this::layoutDetail);
         detailType = detailPopup.add(new Label(() -> detailOp == null ? "" : OperationPalette.labelFor(detailOp.type()))
                 .setColor(() -> detailOp == null ? 0 : OperationPalette.colorFor(detailOp.type())));
         detailName = detailPopup.add(new Label(() -> detailOp == null ? "" : detailOp.name().getString()));
         detailAmount = detailPopup.add(new Label(this::detailAmountText)
                 .setColor(() -> detailOp == null ? 0 : statusColor(detailOp.status())));
         detailSection = detailPopup.add(new Label(this::detailSectionText, Label.Tone.DIM)
-                .setColor(() -> detailOp != null && detailOp.cause().isPresent() ? C_RED : 0));
+                .setColor(() -> detailOp != null && detailOp.cause().isPresent() ? colours().bad() : 0));
         detailTiming = detailPopup.add(new Label(this::detailTimingText, Label.Tone.DIM).setAlign(Label.Align.RIGHT));
         detailList = detailPopup.add(new ListView<DetailRow>(() -> detailRows, 10, this::renderDetailRow));
-        detailClose = detailPopup.add(new Button("Close", detailPopup::close));
+        detailClose = detailPopup.add(new Button(GameText.resolve(NetworkManagerTexts.CLOSE), detailPopup::close));
         // A live Operation can be re-prioritised from its detail; a logged one only shows the level it ran at.
-        detailPrioLabel = detailPopup.add(new Label("PRIORITY", Label.Tone.DIM));
+        detailPrioLabel = detailPopup.add(new Label(GameText.resolve(NetworkManagerTexts.PRIORITY), Label.Tone.DIM));
         detailPrioDown = detailPopup.add(new Button("<", () -> stepDetailPriority(-1)));
-        detailPrioValue = detailPopup.add(new Label(() -> detailOp == null ? "" : detailOp.priority().label())
-                .setAlign(Label.Align.CENTER));
+        detailPrioValue = detailPopup.add(new Label(() -> detailOp == null ? ""
+                : GameText.resolve(detailOp.priority().text())).setAlign(Label.Align.CENTER));
         detailPrioUp = detailPopup.add(new Button(">", () -> stepDetailPriority(1)));
-        detailCancel = detailPopup.add(new Button("Cancel", this::cancelDetail));
+        detailCancel = detailPopup.add(new Button(GameText.resolve(NetworkManagerTexts.CANCEL), this::cancelDetail));
 
         active = this;
         PacketDistributor.sendToServer(new RequestNetworkManagerPayload(host));
@@ -266,12 +321,87 @@ public final class NetworkManagerApp implements IDesktopApp {
         }
     }
 
+    /** Routes what the Services tab shows to the open window. */
+    public static void acceptServices(final NetworkServicesPayload payload) {
+        if (active != null) {
+            active.services.accept(payload);
+        }
+    }
+
+    /** Whether the Services tab has heard from the Mainframe; for tests. */
+    public boolean servicesReady() {
+        return services.hasState();
+    }
+
+    /** The state of the engine on the Services tab's card, one of {@link NetworkServicesPayload}'s; for tests. */
+    public byte servicesEngineState() {
+        return services.engineState();
+    }
+
+    /** The step a replacement of the engine is on, or {@code null}; for tests. */
+    @Nullable
+    public EngineSwap.Step servicesReplacementStep() {
+        return services.replacementStep();
+    }
+
+    public boolean servicesChooserOpen() {
+        return services.chooserOpen();
+    }
+
+    public boolean servicesProgressOpen() {
+        return services.progressOpen();
+    }
+
+    /** The centre of the Services tab, where a test clicks to show it. */
+    public int[] servicesTabPoint() {
+        return tabs.tabCenter(TAB_SERVICES);
+    }
+
+    /** The centre of the Devices, Hardware or Map tab ({@code devices}, {@code hardware}, {@code map}); for tests. */
+    public int[] tabPoint(final String which) {
+        return tabs.tabCenter(switch (which) {
+            case "hardware" -> TAB_HARDWARE;
+            case "map" -> TAB_MAP;
+            default -> TAB_DEVICES;
+        });
+    }
+
+    /** The nodes as the window has them, with their links; for tests. */
+    public List<NetworkNodeInfo> nodesShown() {
+        return nodes();
+    }
+
+    /** The centre of a node's box on the Map as last drawn, by its short id, or null; for tests. */
+    @Nullable
+    public int[] mapNodePoint(final String id) {
+        for (final NodeRect r : mapNodes) {
+            if (r.node().id().equals(id)) {
+                return new int[] {r.x() + r.w() / 2, r.y() + r.h() / 2};
+            }
+        }
+        return null;
+    }
+
+    /** The centre of one of the card's buttons ({@code stop}, {@code start}, {@code replace}); for tests. */
+    public int[] servicesButtonPoint(final String which) {
+        return services.buttonPoint(which);
+    }
+
+    /** The centre of the dialog's line for an engine, by its package; for tests. */
+    public int[] servicesOptionPoint(final String program) {
+        return services.optionPoint(program);
+    }
+
+    /** The centre of the dialog's Replace or Start button; for tests. */
+    public int[] servicesConfirmPoint() {
+        return services.confirmPoint();
+    }
+
     /** Routes the live in-flight Operations (and craft-slot capacity) to the open window. */
     public static void acceptActiveOps(final List<OperationRecord> ops, final int slotsUsed, final int slotsTotal) {
         if (active != null) {
             active.activeOps = ops;
-            active.scSlotsUsed = slotsUsed;
-            active.scSlotsTotal = slotsTotal;
+            active.processes.show(ops, slotsUsed, slotsTotal);
             active.refreshLiveDetail();
         }
     }
@@ -311,22 +441,22 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Network Manager";
+        return GameText.resolve(NetworkManagerAppTexts.TITLE);
     }
 
     @Override
     public int defaultWidth() {
-        return 300;
+        return NetworkServicesLayout.DEFAULT_W;
     }
 
     @Override
     public int defaultHeight() {
-        return 196;
+        return NetworkServicesLayout.DEFAULT_H;
     }
 
     @Override
     public int minWidth() {
-        return 250;
+        return NetworkServicesLayout.MIN_W;
     }
 
     @Override
@@ -360,26 +490,71 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     private String statsHeaderText() {
         final NetworkManagerPayload.Statistics stats = statistics();
-        return "Last hour: " + JsTechTheme.fmt(stats.movedLastHour()) + " items moved   -   peak "
-                + stats.peakConcurrent() + " in flight today";
+        return GameText.resolve(NetworkManagerTexts.LAST_HOUR.with(JsTechTheme.fmt(stats.movedLastHour()),
+                stats.peakConcurrent()));
     }
 
     /** Ticks as a short duration: whole seconds past a minute's worth, else ticks. */
     private static String ticksLabel(final long ticks) {
-        return ticks >= 1200 ? (ticks / 20) + "s" : ticks + "t";
+        return GameText.resolve(ticks >= 1200 ? NetworkManagerTexts.SECONDS.with(ticks / 20)
+                : NetworkManagerTexts.TICKS.with(ticks));
     }
 
     private String networkText() {
         if (data == null) {
             return "";
         }
-        return "Network " + (data.networkId().isEmpty() ? "(none)" : data.networkId()) + "   -   " + data.nodes().size() + " node(s)";
+        return GameText.resolve(NetworkManagerTexts.NETWORK_LINE.with(data.networkId().isEmpty()
+                ? NetworkManagerTexts.NO_NETWORK.text() : Text.literal(data.networkId()),
+                data.nodes().size() - lostCount()));
     }
 
+    /* The words for those keys, in the player's language. */
+    private static List<String> words(final TextKey... keys) {
+        final List<String> out = new ArrayList<>(keys.length);
+        for (final TextKey key : keys) {
+            out.add(GameText.resolve(key));
+        }
+        return out;
+    }
+
+    /* The first node that lost its link, which the line under the Devices list tells of, or none. */
+    @Nullable
+    private NetworkNodeInfo firstLost() {
+        for (final NetworkNodeInfo node : nodes()) {
+            if (!node.link().up()) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    private int lostCount() {
+        int lost = 0;
+        for (final NetworkNodeInfo node : nodes()) {
+            if (!node.link().up()) {
+                lost++;
+            }
+        }
+        return lost;
+    }
+
+    /* The Mainframe's era, which a link of an earlier era's cable is drawn against in dashes; none before it is known. */
+    @Nullable
+    private HardwareEra networkEra() {
+        for (final NetworkNodeInfo node : nodes()) {
+            if (node.kind() == NetworkNodeInfo.KIND_MAINFRAME && node.link().dataLink() != null) {
+                return node.link().dataLink().era();
+            }
+        }
+        return null;
+    }
+
+    /* The nodes of a kind on the network; one that lost its link is not on it. */
     private String countKind(final int kind) {
         int n = 0;
         for (final NetworkNodeInfo node : nodes()) {
-            if (node.kind() == kind) {
+            if (node.kind() == kind && node.link().up()) {
                 n++;
             }
         }
@@ -389,15 +564,25 @@ public final class NetworkManagerApp implements IDesktopApp {
     private void selectTab(final int target) {
         tab = target;
         detailPopup.close();
+        services.closeDialogs();
         if (target == TAB_PROCESSES || target == TAB_LOG) {
             requestOps();
         }
         if (target == TAB_STATS) {
             PacketDistributor.sendToServer(new RequestNetworkManagerPayload(host));
         }
+        if (target == TAB_SERVICES) {
+            services.request();
+        }
     }
 
     // rendering
+
+    /** Until the network answers, the program can do nothing, which the pointer shows. */
+    @Override
+    public boolean waiting() {
+        return data == null;
+    }
 
     @Override
     public void renderContent(final GuiGraphics g, final Font font, final int x, final int y,
@@ -420,15 +605,63 @@ public final class NetworkManagerApp implements IDesktopApp {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         layout(x, y, width, height);
+        // The Services tab sits where every tab's content does: under the tabs and the network's line.
+        services.layout(x + 6, y + 34, width - NetworkServicesLayout.WINDOW_PAD, height - 38,
+                data != null && tab == TAB_SERVICES, skin, font);
         root.render(g, ctx);
         if (devList.visible()) {
             // Column separators, so each column reads as its own lane.
-            for (int i = 1; i < 3; i++) {
-                final int sx = devColumns.columnX(i) - 5;
-                g.fill(sx, devColumns.y(), sx + 1, devList.y() + Math.min(nodes().size(), devList.visibleRows()) * DEV_ROW_H,
-                        skin.edge());
+            final ColumnHeader columns = devColumns.visible() ? devColumns : devColumnsNarrow;
+            final int bottom = devList.y() + Math.min(nodes().size(), devList.visibleRows()) * DEV_ROW_H;
+            for (int i = 1; i < (columns == devColumns ? 4 : 3); i++) {
+                final int sx = columns.columnX(i) - 4;
+                g.fill(sx, columns.y(), sx + 1, bottom, skin.edge());
+            }
+            if (lostShown != null) {
+                renderLostLine(g, font, lostShown);
             }
         }
+    }
+
+    /* The line under the Devices list: why the first node that lost its link lost it, and how many more did. */
+    private void renderLostLine(final GuiGraphics g, final Font font, final NetworkNodeInfo lost) {
+        final int h = NetworkLinksLayout.FOOTER_H;
+        g.fill(footerX, footerY, footerX + footerW, footerY + h, skin.fieldBg());
+        Draw.outline(g, footerX, footerY, footerW, h, NetworkLinkDrawing.fibre());
+        NetworkLinkDrawing.cardSquare(g, footerX + 4, footerY + 5);
+        String why = NetworkLinkDrawing.reason(lost);
+        final int more = lostCount() - 1;
+        if (more > 0) {
+            why = why + "  " + GameText.resolve(NetworkLinkTexts.MORE.with(more));
+        }
+        final int textX = footerX + 4 + NetworkLinksLayout.CARD_ROOM;
+        int lineY = footerY + 3;
+        int lines = 0;
+        for (final FormattedText line : font.getSplitter().splitLines(why, footerW - (textX - footerX) - 4,
+                Style.EMPTY)) {
+            if (lines++ == NetworkLinksLayout.FOOTER_LINES) {
+                break;
+            }
+            Draw.text(g, font, line.getString(), textX, lineY, skin.text(), skin.fieldBg());
+            lineY += NetworkLinksLayout.LINE_H;
+        }
+    }
+
+    private void renderHardwareRow(final GuiGraphics g, final UiContext ctx, final HardwareRow row, final int index,
+                                   final int x, final int y, final int w, final int h, final boolean hovered,
+                                   final boolean selected) {
+        final Font font = ctx.font();
+        if (row.value() == null) {
+            // A heading, and a rule under it, split one group of counts from the next.
+            Draw.text(g, font, GameText.resolve(row.key()), x + 2, y + 2, ctx.skin().dim());
+            g.fill(x + 2, y + h - 2, x + w - 2, y + h - 1, ctx.skin().edge());
+            return;
+        }
+        final String value = Texts.clip(font, row.value().get(), w * 2 / 3);
+        final int valueW = font.width(value);
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(row.key()), w - valueW - 10), x + 2, y + 2,
+                ctx.skin().text());
+        Draw.text(g, font, value, x + w - 2 - valueW, y + 2, ctx.skin().text());
     }
 
     /** Places the tab's components from the content rectangle; the other tabs' components are hidden. */
@@ -442,52 +675,45 @@ public final class NetworkManagerApp implements IDesktopApp {
         final boolean ready = data != null;
         loadingLabel.setVisible(!ready);
         loadingLabel.setBounds(px, py + 4, pw, 8);
+        waiting.setVisible(!ready);
+        waiting.setBounds(px, py + 15, Math.min(pw, WAIT_W), 7);
         netLabel.setVisible(ready);
         netLabel.setBounds(px, py, pw, 8);
         final int top = py + 12;
         final int h = ph - 12;
 
         final boolean devices = ready && tab == TAB_DEVICES;
-        devColumns.setVisible(devices);
+        final boolean wide = NetworkLinksLayout.showsType(pw);
+        devColumns.setVisible(devices && wide);
+        devColumnsNarrow.setVisible(devices && !wide);
         devList.setVisible(devices);
+        lostShown = devices ? firstLost() : null;
         if (devices) {
-            final int typeX = px + (int) (pw * 0.52);
-            final int statusX = px + pw - 48;
             devColumns.setBounds(px, top - 1, pw, 12);
-            devColumns.setColumnX(px + 10, typeX, statusX);
-            devList.setBounds(px, top + 11, pw, Math.max(DEV_ROW_H, h - 11));
+            devColumns.setColumnX(px + NetworkLinksLayout.NAME_X, px + NetworkLinksLayout.typeX(pw),
+                    px + NetworkLinksLayout.linkX(pw), px + NetworkLinksLayout.statusX(pw));
+            devColumnsNarrow.setBounds(px, top - 1, pw, 12);
+            devColumnsNarrow.setColumnX(px + NetworkLinksLayout.NAME_X, px + NetworkLinksLayout.linkX(pw),
+                    px + NetworkLinksLayout.statusX(pw));
+            devList.setBounds(px, top + 11, pw,
+                    Math.max(DEV_ROW_H, NetworkLinksLayout.listH(h + 1, lostShown != null)));
+            footerX = px;
+            footerY = top - 1 + NetworkLinksLayout.footerY(h + 1);
+            footerW = pw;
         }
 
-        final boolean processes = ready && tab == TAB_PROCESSES;
-        slotsLabel.setVisible(processes);
-        liveLabel.setVisible(processes);
-        noProcLabel.setVisible(processes && activeOps.isEmpty());
-        procList.setVisible(processes && !activeOps.isEmpty());
-        procBar.setVisible(procList.visible() && activeOps.size() > procList.visibleRows());
-        if (processes) {
-            slotsLabel.setBounds(px + 2, top, pw / 2, 8);
-            liveLabel.setBounds(px + pw / 2, top, pw / 2, 8);
-            noProcLabel.setBounds(px + 2, top + 14, pw, 8);
-            final int listW = pw - BAR_W;
-            procList.setBounds(px, top + 12, listW, Math.max(PROC_ROW_H, h - 12));
-            procBar.setBounds(px + pw - BAR_W, top + 12, BAR_W, procList.visibleRows() * PROC_ROW_H);
+        final boolean processesShown = ready && tab == TAB_PROCESSES;
+        processes.setVisible(processesShown);
+        if (processesShown) {
+            processes.place(px, top, pw, h);
         }
 
         final boolean hardware = ready && tab == TAB_HARDWARE;
-        nodesHeader.setVisible(hardware);
-        int row = top + 2;
-        for (int i = 0; i < hardwareRows.size(); i++) {
-            if (i == 4) {
-                // A rule and a heading split the totals from the node counts.
-                row += 6;
-                nodesHeader.setBounds(px + 2, row + 7, pw, 8);
-                row += 19;
-            }
-            hwKeys.get(i).setVisible(hardware);
-            hwValues.get(i).setVisible(hardware);
-            hwKeys.get(i).setBounds(px + 2, row, pw / 2, 8);
-            hwValues.get(i).setBounds(px + pw / 2, row, pw / 2, 8);
-            row += HW_ROW_H;
+        hwList.setVisible(hardware);
+        hwBar.setVisible(hardware && hardwareRows.size() > hwList.visibleRows());
+        if (hardware) {
+            hwList.setBounds(px, top, pw - BAR_W - 2, Math.max(HW_ROW_H, h));
+            hwBar.setBounds(px + pw - BAR_W, top, BAR_W, hwList.visibleRows() * HW_ROW_H);
         }
 
         map.setVisible(ready && tab == TAB_MAP);
@@ -497,10 +723,14 @@ public final class NetworkManagerApp implements IDesktopApp {
         noLogLabel.setVisible(log && logNewestFirst.isEmpty());
         logList.setVisible(log && !logNewestFirst.isEmpty());
         logBar.setVisible(logList.visible() && logNewestFirst.size() > logList.visibleRows());
+        // The log prints from a button under it, as a list a program keeps has its Print beside it.
+        logPrint.setVisible(log && !logNewestFirst.isEmpty());
         if (log) {
+            final int listH = Math.max(LOG_ROW_H, h - PRINT_ROW_H);
             noLogLabel.setBounds(px + 2, top + 2, pw, 8);
-            logList.setBounds(px, top, pw - BAR_W, Math.max(LOG_ROW_H, h));
+            logList.setBounds(px, top, pw - BAR_W, listH);
             logBar.setBounds(px + pw - BAR_W, top, BAR_W, logList.visibleRows() * LOG_ROW_H);
+            logPrint.setBounds(px + pw - PRINT_W, top + h - PRINT_ROW_H + 2, PRINT_W, 11);
         }
 
         final boolean stats = ready && tab == TAB_STATS;
@@ -526,8 +756,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         final Font font = ctx.font();
         ctx.skin().listRow(g, x, y, w, h, hovered, false);
         final byte type = stat.type();
-        g.drawString(font, OperationPalette.labelFor(type), statsColumns.columnX(0), y + 2,
-                OperationPalette.colorFor(type), false);
+        Draw.text(g, font, OperationPalette.labelFor(type), statsColumns.columnX(0), y + 2,
+                OperationPalette.colorFor(type));
         final String[] figures = {
                 String.valueOf(stat.count()),
                 ticksLabel(stat.averageWait()),
@@ -536,8 +766,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         for (int i = 0; i < figures.length; i++) {
             // Each figure sits right-aligned in its lane, so the columns read as a table.
             final int laneRight = i == figures.length - 1 ? x + w - 4 : statsColumns.columnX(i + 2) - 6;
-            final int color = i == 3 && stat.shortfallPercent() > 0 ? C_AMBER : ctx.skin().text();
-            g.drawString(font, figures[i], laneRight - font.width(figures[i]), y + 2, color, false);
+            final int color = i == 3 && stat.shortfallPercent() > 0 ? colours().warn() : ctx.skin().text();
+            Draw.text(g, font, figures[i], laneRight - font.width(figures[i]), y + 2, color);
         }
     }
 
@@ -545,44 +775,39 @@ public final class NetworkManagerApp implements IDesktopApp {
                                  final int x, final int y, final int w, final int h, final boolean hovered,
                                  final boolean selected) {
         final Font font = ctx.font();
+        final NodeLink link = n.link();
         ctx.skin().listRow(g, x, y, w, h, hovered, false);
-        g.fill(x + 2, y + 4, x + 6, y + 8, kindColor(n.kind()));
-        final int nameX = devColumns.columnX(0);
-        final int typeX = devColumns.columnX(1);
-        final int statusX = devColumns.columnX(2);
-        final boolean named = !n.name().isEmpty();
-        final String nm = named ? n.name() : "unnamed";
-        final String nmClipped = Texts.clip(font, nm, typeX - 6 - nameX - font.width(n.id()) - 4);
-        g.drawString(font, nmClipped, nameX, y + 2, named ? ctx.skin().text() : ctx.skin().dim(), false);
-        g.drawString(font, n.id(), nameX + font.width(nmClipped) + 4, y + 2, ctx.skin().dim(), false);
-        g.drawString(font, Texts.clip(font, n.kindLabel(), statusX - 6 - typeX), typeX, y + 2, ctx.skin().dim(), false);
-        final String status = n.online() ? "online" : "offline";
-        g.drawString(font, status, x + w - font.width(status), y + 2, n.online() ? C_GREEN : ctx.skin().dim(), false);
-    }
-
-    private void renderProcessRow(final GuiGraphics g, final UiContext ctx, final OperationRecord op, final int index,
-                                  final int x, final int y, final int w, final int h, final boolean hovered,
-                                  final boolean selected) {
-        final Font font = ctx.font();
-        ctx.skin().listRow(g, x, y, w, h, hovered, false);
-        final String type = OperationPalette.labelFor(op.type());
-        g.drawString(font, type, x + 4, y + 3, OperationPalette.colorFor(op.type()), false);
-        int nameX = x + 4 + font.width(type) + 4;
-        // A level other than the default is worth a tag: raised in amber, lowered dimmed.
-        if (op.priority() != OperationPriority.DEFAULT) {
-            final String tag = op.priority().label();
-            g.drawString(font, tag, nameX, y + 3,
-                    op.priority().compareTo(OperationPriority.DEFAULT) > 0 ? C_AMBER : ctx.skin().dim(), false);
-            nameX += font.width(tag) + 4;
+        if (!link.up()) {
+            // A node that lost its link stands out from the list, and the line under the list says why.
+            g.fill(x, y, x + w, y + h, colours().lostRow());
         }
-        final int barX = x + w / 2 + 4;
-        g.drawString(font, Texts.clip(font, op.name().getString(), barX - nameX - 4), nameX, y + 3, ctx.skin().text(), false);
-        final int barLen = w / 2 - 40;
-        final double frac = op.requested() > 0 ? Math.min(1.0, (double) op.moved() / op.requested()) : 0.0;
-        g.fill(barX, y + 4, barX + barLen, y + h - 3, ctx.skin().fieldBg());
-        g.fill(barX, y + 4, barX + (int) (barLen * frac), y + h - 3, statusColor(op.status()));
-        final String st = statusLabel(op.status());
-        g.drawString(font, st, x + w - font.width(st), y + 3, statusColor(op.status()), false);
+        g.fill(x + 2, y + 4, x + 6, y + 8, kindColor(n.kind()));
+        final int nameX = x + NetworkLinksLayout.NAME_X;
+        final boolean named = !n.name().isEmpty();
+        final String nm = named ? n.name() : GameText.resolve(NetworkManagerTexts.UNNAMED);
+        // The short id follows the name where both fit; a name that needs the room keeps it.
+        final int room = NetworkLinksLayout.nameW(w);
+        final boolean withId = font.width(nm) + 4 + font.width(n.id()) <= room;
+        final String nmClipped = Texts.clip(font, nm, withId ? room - font.width(n.id()) - 4 : room);
+        Draw.text(g, font, nmClipped, nameX, y + 2, named ? ctx.skin().text() : ctx.skin().dim());
+        if (withId) {
+            Draw.text(g, font, n.id(), nameX + font.width(nmClipped) + 4, y + 2, ctx.skin().dim());
+        }
+        if (NetworkLinksLayout.showsType(w)) {
+            Draw.text(g, font, Texts.clip(font, GameText.resolve(n.kindLabel()), NetworkLinksLayout.TYPE_W),
+                    x + NetworkLinksLayout.typeX(w), y + 2, ctx.skin().dim());
+        }
+        final int linkX = x + NetworkLinksLayout.linkX(w);
+        if (link.optical()) {
+            NetworkLinkDrawing.cardSquare(g, linkX, y + 4);
+        }
+        Draw.text(g, font, Texts.clip(font, NetworkLinkDrawing.words(link),
+                NetworkLinksLayout.LINK_W - NetworkLinksLayout.CARD_ROOM), linkX + NetworkLinksLayout.CARD_ROOM, y + 2,
+                NetworkLinkDrawing.wordsColour(link));
+        final String status = GameText.resolve(!link.up() ? NetworkLinkTexts.NO_LINK
+                : n.online() ? NetworkManagerTexts.ONLINE : NetworkManagerTexts.OFFLINE);
+        Draw.text(g, font, status, x + w - font.width(status), y + 2,
+                !link.up() ? colours().warn() : n.online() ? colours().good() : ctx.skin().dim());
     }
 
     private void renderLogRow(final GuiGraphics g, final UiContext ctx, final OperationRecord op, final int index,
@@ -591,12 +816,22 @@ public final class NetworkManagerApp implements IDesktopApp {
         final Font font = ctx.font();
         ctx.skin().listRow(g, x, y, w, h, hovered, false);
         final String type = OperationPalette.labelFor(op.type());
-        g.drawString(font, type, x + 4, y + 2, OperationPalette.colorFor(op.type()), false);
+        Draw.text(g, font, type, x + 4, y + 2, OperationPalette.colorFor(op.type()));
         final int nameX = x + 4 + font.width(type) + 4;
         final String st = statusLabel(op.status());
-        g.drawString(font, Texts.clip(font, op.name().getString(), w - (nameX - x) - font.width(st) - 8), nameX, y + 2,
-                ctx.skin().text(), false);
-        g.drawString(font, st, x + w - font.width(st), y + 2, statusColor(op.status()), false);
+        Draw.text(g, font, Texts.clip(font, op.name().getString(), w - (nameX - x) - font.width(st) - 8), nameX, y + 2,
+                ctx.skin().text());
+        Draw.text(g, font, st, x + w - font.width(st), y + 2, statusColor(op.status()));
+    }
+
+    /* The log, newest first as it is shown, one Operation a line, to the machine's printer. */
+    private void printLog() {
+        final List<List<String>> table = new ArrayList<>();
+        for (final OperationRecord op : logNewestFirst) {
+            table.add(List.of(OperationPalette.labelFor(op.type()), op.name().getString(), statusLabel(op.status())));
+        }
+        printDialog.show(PrintDialog.Document.text(GameText.resolve(NetworkManagerTexts.LOG_TITLE),
+                ActiveDesktop.windowName(PROGRAM), PrintLayout.table(table, false)));
     }
 
     private void logClicked(final int index, final int button, final double mx, final double my) {
@@ -606,11 +841,10 @@ public final class NetworkManagerApp implements IDesktopApp {
         openDetail(logNewestFirst.get(index));
     }
 
-    private void processClicked(final int index, final int button, final double mx, final double my) {
-        if (button != 0 || index < 0 || index >= activeOps.size()) {
-            return;
+    private void processPicked(final OperationRecord operation, final int button) {
+        if (button == 0) {
+            openDetail(operation);
         }
-        openDetail(activeOps.get(index));
     }
 
     /** Whether the detail shows an Operation still in flight (its level can be changed). */
@@ -669,7 +903,7 @@ public final class NetworkManagerApp implements IDesktopApp {
             final int h = height();
             g.fill(x, y, x + w, y + h, ctx.skin().fieldBg());
             Draw.outline(g, x, y, w, h, ctx.skin().edge());
-            g.drawString(font, "drag nodes  -  middle-drag to pan  -  wheel to zoom", x + 4, y + h - 10, ctx.skin().dim(), false);
+            Draw.text(g, font, GameText.resolve(NetworkManagerTexts.MAP_HINT), x + 4, y + h - 10, ctx.skin().dim());
             final List<NetworkNodeInfo> nodes = nodes();
             int mainframe = -1;
             for (int i = 0; i < nodes.size(); i++) {
@@ -679,12 +913,18 @@ public final class NetworkManagerApp implements IDesktopApp {
                 }
             }
             /*
-             * The Mainframe sits at the centre; the rest ring around it. Adjacent nodes alternate between two
-             * radii so labels don't collide, the ring spread scales with the zoom, and pan plus per-node drag
-             * offsets (both in screen pixels) let the player explore and arrange a large network.
+             * The Mainframe sits at the centre of the room the legend leaves; the rest ring around it, wider than tall
+             * as the map is. Adjacent nodes alternate between two radii so labels don't collide, the ring spread
+             * scales with the zoom, and pan plus per-node drag offsets (both in screen pixels) let the player explore
+             * and arrange a large network.
              */
-            final int vcx = x + w / 2;
-            final int vcy = y + h / 2;
+            final HardwareEra era = networkEra();
+            final NetworkLinkDrawing.Legend legend = NetworkLinkDrawing.legend(font, nodes, era);
+            final int room = w - (legend.width() > 0 ? legend.width() + 4 : 0);
+            final int vcx = x + room / 2;
+            final int vcy = y + h / 2 - 4;
+            final int radiusX = Math.max(28, room / 2 - 40);
+            final int radiusY = Math.max(20, h / 2 - 22);
             int mcx = vcx + mapPanX;
             int mcy = vcy + mapPanY;
             if (mainframe >= 0) {
@@ -694,8 +934,8 @@ public final class NetworkManagerApp implements IDesktopApp {
                     mcy += off[1];
                 }
             }
-            final int baseRadius = Math.max(28, Math.min(w, h) / 2 - 30);
             final int others = nodes.size() - (mainframe >= 0 ? 1 : 0);
+            final int[][] at = new int[nodes.size()][];
             int placed = 0;
             for (int i = 0; i < nodes.size(); i++) {
                 if (i == mainframe) {
@@ -703,20 +943,102 @@ public final class NetworkManagerApp implements IDesktopApp {
                 }
                 final NetworkNodeInfo n = nodes.get(i);
                 final double a = others > 0 ? (2 * Math.PI * placed / others) - Math.PI / 2 : 0;
-                final int r = baseRadius - (placed % 2) * 14;
-                int nx = vcx + mapPanX + (int) (r * Math.cos(a) * mapZoom);
-                int ny = vcy + mapPanY + (int) (r * Math.sin(a) * mapZoom);
+                final int inset = (placed % 2) * 14;
+                int nx = vcx + mapPanX + (int) ((radiusX - inset) * Math.cos(a) * mapZoom);
+                int ny = vcy + mapPanY + (int) ((radiusY - inset / 2) * Math.sin(a) * mapZoom);
                 final int[] off = nodeOffsets.get(n.id());
                 if (off != null) {
                     nx += off[0];
                     ny += off[1];
                 }
-                drawLink(g, mcx, mcy, nx, ny);
-                node(g, font, ctx, nx, ny, n);
+                at[i] = new int[] {nx, ny};
                 placed++;
+            }
+            final Map<Long, int[]> routers = routersBetween(nodes, at, mcx, mcy);
+            for (int i = 0; i < nodes.size(); i++) {
+                if (at[i] != null) {
+                    linkTo(g, font, ctx, mcx, mcy, at[i][0], at[i][1], nodes.get(i).link(), routers, era);
+                }
+            }
+            for (final Map.Entry<Long, int[]> router : routers.entrySet()) {
+                NetworkLinkDrawing.router(g, router.getValue()[0], router.getValue()[1], ctx.skin().fieldBg());
+            }
+            for (int i = 0; i < nodes.size(); i++) {
+                if (at[i] != null) {
+                    node(g, font, ctx, at[i][0], at[i][1], nodes.get(i));
+                }
             }
             if (mainframe >= 0) {
                 node(g, font, ctx, mcx, mcy, nodes.get(mainframe));
+            }
+            NetworkLinkDrawing.drawLegend(g, font, legend, x + w - 4, y + 4, ctx.skin().windowBg(),
+                    ctx.skin().text(), ctx.skin().dim());
+        }
+
+        /*
+         * Where each optical router the nodes' fibre goes through is drawn: halfway from the Mainframe to the middle
+         * of the nodes behind it, so the fibre runs meet there and turn, as they do in the world.
+         */
+        private Map<Long, int[]> routersBetween(final List<NetworkNodeInfo> nodes, final int[][] at, final int mcx,
+                                                final int mcy) {
+            final Map<Long, int[]> sums = new LinkedHashMap<>();
+            for (int i = 0; i < nodes.size(); i++) {
+                final long router = nodes.get(i).link().router();
+                if (at[i] != null && router != NodeLink.NO_PLACE) {
+                    final int[] sum = sums.computeIfAbsent(router, k -> new int[3]);
+                    sum[0] += at[i][0];
+                    sum[1] += at[i][1];
+                    sum[2]++;
+                }
+            }
+            final Map<Long, int[]> routers = new LinkedHashMap<>();
+            for (final Map.Entry<Long, int[]> sum : sums.entrySet()) {
+                final int[] s = sum.getValue();
+                routers.put(sum.getKey(), new int[] {mcx + (s[0] / s[2] - mcx) / 2, mcy + (s[1] / s[2] - mcy) / 2});
+            }
+            return routers;
+        }
+
+        /*
+         * A node's link from the Mainframe, through its optical router when its fibre goes through one, drawn by its
+         * line, with its speed on it; a link down red and dashed, with where its fibre bends.
+         */
+        private void linkTo(final GuiGraphics g, final Font font, final UiContext ctx, final int mcx, final int mcy,
+                            final int nx, final int ny, final NodeLink link, final Map<Long, int[]> routers,
+                            @Nullable final HardwareEra era) {
+            final NetworkLinkDrawing.Style style = link.up() && link.dataLink() == null
+                    ? new NetworkLinkDrawing.Style(colours().link(), 1, false) : NetworkLinkDrawing.style(link, era);
+            final int[] router = routers.get(link.router());
+            int fromX = mcx;
+            int fromY = mcy;
+            if (router != null) {
+                NetworkLinkDrawing.draw(g, mcx, mcy, router[0], router[1], style);
+                fromX = router[0];
+                fromY = router[1];
+            }
+            NetworkLinkDrawing.draw(g, fromX, fromY, nx, ny, style);
+            final DataLink cable = link.dataLink();
+            final String words = !link.up() ? GameText.resolve(NetworkLinkTexts.MAP_DOWN) : cable == null ? ""
+                    : GameText.resolve(NetworkManagerTexts.PER_TICK.with(JsTechTheme.fmt(cable.throughput())));
+            if (words.isEmpty()) {
+                return;
+            }
+            /*
+             * The words go on the link's horizontal leg when they fit along it, else beside its vertical leg when that
+             * is long enough; where neither has room they are left out, as the Devices tab and the card tell them too.
+             */
+            final int ground = ctx.skin().fieldBg();
+            if (Math.abs(nx - fromX) >= font.width(words) + 6) {
+                final int wordsX = (fromX + nx) / 2 - font.width(words) / 2;
+                Draw.text(g, font, words, wordsX, fromY - 10, style.colour(), ground);
+                final String bends = link.reason() == NodeLink.REASON_BENDS ? GameText.resolve(
+                        NetworkLinkTexts.MAP_BENDS.with(NetworkLinkDrawing.place(link.where()))) : "";
+                if (!bends.isEmpty() && Math.abs(nx - fromX) >= font.width(bends) + 6) {
+                    Draw.text(g, font, bends, (fromX + nx) / 2 - font.width(bends) / 2, fromY + 3, style.colour(),
+                            ground);
+                }
+            } else if (Math.abs(ny - fromY) >= 16) {
+                Draw.text(g, font, words, nx + 3, (fromY + ny) / 2 - 4, style.colour(), ground);
             }
         }
 
@@ -728,14 +1050,12 @@ public final class NetworkManagerApp implements IDesktopApp {
             final int ny = cy - 6;
             g.fill(nx, ny, nx + tw, ny + 13, ctx.skin().windowBg());
             Draw.outline(g, nx, ny, tw, 13, kindColor(n.kind()));
-            g.drawString(font, label, nx + 4, ny + 3, ctx.skin().text(), false);
+            Draw.text(g, font, label, nx + 4, ny + 3, ctx.skin().text());
+            if (n.link().optical()) {
+                // The square of a fibre port, on the box's corner.
+                NetworkLinkDrawing.cardSquare(g, nx + tw - 3, ny - 1);
+            }
             mapNodes.add(new NodeRect(nx, ny, tw, 13, n));
-        }
-
-        /** A thin link drawn as a horizontal leg then a vertical leg (the rect drawer has no diagonals). */
-        private void drawLink(final GuiGraphics g, final int x1, final int y1, final int x2, final int y2) {
-            g.fill(Math.min(x1, x2), y1, Math.max(x1, x2), y1 + 1, C_LINK);
-            g.fill(x2, Math.min(y1, y2), x2 + 1, Math.max(y1, y2), C_LINK);
         }
 
         @Override
@@ -809,30 +1129,37 @@ public final class NetworkManagerApp implements IDesktopApp {
                                  final int mouseX, final int mouseY, final int cx, final int cy,
                                  final int cw, final int ch) {
         final List<String> lines = new ArrayList<>();
-        lines.add(n.name().isEmpty() ? "unnamed" : n.name());
-        lines.add(n.kindLabel() + "  -  " + (n.online() ? "online" : "offline"));
+        lines.add(n.name().isEmpty() ? GameText.resolve(NetworkManagerTexts.UNNAMED) : n.name());
+        lines.add(GameText.resolve(NetworkManagerTexts.KIND_AND_STATE.with(n.kindLabel(),
+                n.online() ? NetworkManagerTexts.ONLINE : NetworkManagerTexts.OFFLINE)));
         if (n.cpuMhz() > 0) {
-            lines.add("CPU " + cpuClock(n.cpuMhz()) + (n.vramMb() > 0 ? "   VRAM " + JsTechTheme.fmt(n.vramMb()) + " MB" : ""));
+            lines.add(GameText.resolve(n.vramMb() > 0
+                    ? NetworkManagerTexts.CPU_AND_VRAM.with(cpuClock(n.cpuMhz()), JsTechTheme.fmt(n.vramMb()))
+                    : NetworkManagerTexts.CPU.with(cpuClock(n.cpuMhz()))));
         }
         if (!n.osLabel().isEmpty()) {
-            lines.add("OS " + n.osLabel());
+            lines.add(GameText.resolve(NetworkManagerTexts.OS.with(n.osLabel())));
         }
         if (n.storageTotalMb() > 0) {
-            lines.add("Storage " + JsTechTheme.fmt(n.storageFreeMb()) + " / " + JsTechTheme.fmt(n.storageTotalMb()) + " MB free");
+            lines.add(GameText.resolve(NetworkManagerTexts.STORAGE_OF.with(JsTechTheme.fmt(n.storageFreeMb()),
+                    JsTechTheme.fmt(n.storageTotalMb()))));
         } else if (n.storageFreeMb() > 0) {
-            lines.add("Storage " + JsTechTheme.fmt(n.storageFreeMb()) + " MB free");
+            lines.add(GameText.resolve(NetworkManagerTexts.STORAGE_FREE.with(JsTechTheme.fmt(n.storageFreeMb()))));
         }
         if (n.publicPermille() >= 0) {
-            lines.add("Private " + (100 - n.publicPermille() / 10) + "%");
+            lines.add(GameText.resolve(NetworkManagerTexts.PRIVATE.with(100 - n.publicPermille() / 10)));
         }
-        lines.add("id " + n.id());
+        lines.add(GameText.resolve(NetworkManagerTexts.ID.with(n.id())));
+        // How the node is linked to the network, under a heading of its own.
+        final int network = lines.size();
+        lines.addAll(NetworkLinkDrawing.cardLines(n.link()));
 
         int tw = 0;
         for (final String l : lines) {
             tw = Math.max(tw, font.width(l));
         }
         final int boxW = tw + 8;
-        final int boxH = lines.size() * 10 + 4;
+        final int boxH = lines.size() * 10 + 4 + (lines.size() > network ? 2 : 0);
         int bx = mouseX + 10;
         int by = mouseY + 6;
         bx = Math.min(bx, cx + cw - boxW - 1);
@@ -845,12 +1172,25 @@ public final class NetworkManagerApp implements IDesktopApp {
          */
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.TOOLTIP);
-        g.fill(bx, by, bx + boxW, by + boxH, 0xF00E0E12);
+        g.fill(bx, by, bx + boxW, by + boxH, colours().card());
         Draw.outline(g, bx, by, boxW, boxH, kindColor(n.kind()));
         int ly = by + 3;
         for (int i = 0; i < lines.size(); i++) {
-            final int color = i == 0 ? 0xFFFFFFFF : (i == 1 ? kindColor(n.kind()) : 0xFFB7BCCB);
-            g.drawString(font, lines.get(i), bx + 4, ly, color, false);
+            if (i >= network) {
+                break;
+            }
+            final int color = i == 0 ? colours().cardTitle() : (i == 1 ? kindColor(n.kind()) : colours().cardText());
+            Draw.text(g, font, lines.get(i), bx + 4, ly, color);
+            ly += 10;
+        }
+        for (int i = network; i < lines.size(); i++) {
+            if (i == network) {
+                g.fill(bx + 4, ly - 1, bx + boxW - 4, ly, colours().cardText());
+            }
+            final boolean card = i == network + 1 && n.link().optical();
+            final int color = i == network ? colours().cardTitle() : card ? NetworkLinkDrawing.fibre()
+                    : colours().cardText();
+            Draw.text(g, font, lines.get(i), bx + 4, ly + 1, color, colours().card());
             ly += 10;
         }
         g.pose().popPose();
@@ -885,8 +1225,10 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (detailOp == null) {
             return "";
         }
-        final String reqLabel = detailOp.requested() >= 1_000_000_000L ? "all" : JsTechTheme.fmt(detailOp.requested());
-        return JsTechTheme.fmt(detailOp.moved()) + " of " + reqLabel + "   " + statusLabel(detailOp.status());
+        final Text requested = detailOp.requested() >= 1_000_000_000L ? NetworkManagerTexts.ALL.text()
+                : Text.literal(JsTechTheme.fmt(detailOp.requested()));
+        return GameText.resolve(NetworkManagerTexts.AMOUNT.with(JsTechTheme.fmt(detailOp.moved()), requested,
+                statusLabel(detailOp.status())));
     }
 
     /** How long the Operation waited and ran, on the section row's right; blank before its first tick. */
@@ -894,7 +1236,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (detailOp == null || detailOp.waitedTicks() + detailOp.ranTicks() == 0) {
             return "";
         }
-        return "waited " + ticksLabel(detailOp.waitedTicks()) + ", ran " + ticksLabel(detailOp.ranTicks());
+        return GameText.resolve(NetworkManagerTexts.TIMING.with(ticksLabel(detailOp.waitedTicks()),
+                ticksLabel(detailOp.ranTicks())));
     }
 
     /*
@@ -909,7 +1252,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (why.isPresent()) {
             return why.get().getString();
         }
-        return !detailOp.subs().isEmpty() ? "STAGES" : !detailOp.moves().isEmpty() ? "SOURCES" : "No sub-operations.";
+        return GameText.resolve(!detailOp.subs().isEmpty() ? NetworkManagerTexts.STAGES
+                : !detailOp.moves().isEmpty() ? NetworkManagerTexts.SOURCES : NetworkManagerTexts.NO_SUB_OPERATIONS);
     }
 
     private void layoutDetail(final Popup p) {
@@ -920,7 +1264,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         final boolean live = detailIsLive();
         final int prioRight = p.right() - 6;
         final int prioW = live ? 12 + 34 + 12 : 34;
-        final int prioLabelW = lastFont == null ? 40 : lastFont.width("PRIORITY") + 4;
+        final int prioLabelW = lastFont == null ? 40 : lastFont.width(detailPrioLabel.text()) + 4;
         detailAmount.setBounds(p.x() + 6, p.y() + 18, p.width() - 12 - prioW - prioLabelW - 4, 8);
         detailPrioLabel.setBounds(prioRight - prioW - prioLabelW, p.y() + 18, prioLabelW, 8);
         detailPrioDown.setBounds(prioRight - prioW, p.y() + 16, 12, 11);
@@ -931,9 +1275,9 @@ public final class NetworkManagerApp implements IDesktopApp {
         detailSection.setBounds(p.x() + 6, p.y() + 34, p.width() / 2, 8);
         detailTiming.setBounds(p.x() + p.width() / 2, p.y() + 34, p.width() / 2 - 6, 8);
         detailList.setBounds(p.x() + 8, p.y() + 45, p.width() - 14, Math.max(10, p.height() - 45 - 24));
-        final int cw = (lastFont == null ? 30 : lastFont.width("Close")) + 12;
+        final int cw = (lastFont == null ? 30 : lastFont.width(detailClose.label())) + 12;
         detailClose.setBounds(p.right() - cw - 4, p.bottom() - 15, cw, 13);
-        final int xw = (lastFont == null ? 36 : lastFont.width("Cancel")) + 12;
+        final int xw = (lastFont == null ? 36 : lastFont.width(detailCancel.label())) + 12;
         detailCancel.setBounds(p.x() + 6, p.bottom() - 15, xw, 13);
         detailCancel.setVisible(live);
     }
@@ -943,19 +1287,22 @@ public final class NetworkManagerApp implements IDesktopApp {
                                  final boolean selected) {
         final Font font = ctx.font();
         final int rightW = font.width(row.right());
-        g.drawString(font, Texts.clip(font, row.left(), w - rightW - 6), x, y, ctx.skin().text(), false);
-        g.drawString(font, row.right(), x + w - rightW, y, row.color(), false);
+        Draw.text(g, font, Texts.clip(font, row.left(), w - rightW - 6), x, y, ctx.skin().text());
+        Draw.text(g, font, row.right(), x + w - rightW, y, row.color());
     }
 
     @Override
     public boolean modalActive() {
-        return detailPopup.isOpen();
+        return detailPopup.isOpen() || services.modalOpen();
     }
 
     @Override
     public void renderModal(final GuiGraphics g, final Font font, final int x, final int y,
                             final int width, final int height, final int mouseX, final int mouseY) {
         if (!detailPopup.isOpen()) {
+            if (services.modalOpen()) {
+                services.renderModal(g, new UiContext(skin, font, mouseX, mouseY, 0f), x, y, width, height);
+            }
             return;
         }
         detailPopup.renderIn(g, new UiContext(skin, font, mouseX, mouseY, 0f), x, y, width, height);
@@ -965,8 +1312,8 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     private int subStateColor(final byte state) {
         return switch (state) {
-            case OperationRecord.SubRow.SUB_COMPLETED, OperationRecord.SubRow.SUB_STREAMING -> C_GREEN;
-            case OperationRecord.SubRow.SUB_READING -> C_AMBER;
+            case OperationRecord.SubRow.SUB_COMPLETED, OperationRecord.SubRow.SUB_STREAMING -> colours().good();
+            case OperationRecord.SubRow.SUB_READING -> colours().warn();
             default -> skin.dim();
         };
     }
@@ -976,37 +1323,22 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     private static String statusLabel(final byte status) {
-        return switch (status) {
-            case OperationRecord.STATUS_COMPLETED -> "done";
-            case OperationRecord.STATUS_PARTIAL -> "partial";
-            case OperationRecord.STATUS_FAILED -> "failed";
-            case OperationRecord.STATUS_PROCESSING -> "running";
-            case OperationRecord.STATUS_WAITING -> "waiting";
-            case OperationRecord.STATUS_RESOURCE_LOCKED -> "locked";
-            case OperationRecord.STATUS_PENDING -> "queued";
-            case OperationRecord.STATUS_DISCARDED -> "discarded";
-            default -> "";
-        };
+        return ProcessList.statusLabel(status);
     }
 
     private int statusColor(final byte status) {
-        return switch (status) {
-            case OperationRecord.STATUS_PROCESSING, OperationRecord.STATUS_COMPLETED -> C_GREEN;
-            case OperationRecord.STATUS_PARTIAL, OperationRecord.STATUS_WAITING, OperationRecord.STATUS_PENDING -> C_AMBER;
-            case OperationRecord.STATUS_FAILED, OperationRecord.STATUS_RESOURCE_LOCKED, OperationRecord.STATUS_DISCARDED -> C_RED;
-            default -> skin.text();
-        };
+        return ProcessList.statusColour(status, skin);
     }
 
     private static int kindColor(final int kind) {
         return switch (kind) {
-            case NetworkNodeInfo.KIND_SERVER -> C_SERVER;
-            case NetworkNodeInfo.KIND_SUBFRAME -> C_SUBFRAME;
-            case NetworkNodeInfo.KIND_PC -> C_PC;
-            case NetworkNodeInfo.KIND_CRAFTING -> C_CRAFTING;
-            case NetworkNodeInfo.KIND_SUPERCOMPUTER -> C_SUPERCOMPUTER;
-            case NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT -> C_CLUSTER_MANAGEMENT;
-            default -> C_MAINFRAME;
+            case NetworkNodeInfo.KIND_SERVER -> colours().server();
+            case NetworkNodeInfo.KIND_SUBFRAME -> colours().subframe();
+            case NetworkNodeInfo.KIND_PC -> colours().personalComputer();
+            case NetworkNodeInfo.KIND_CRAFTING -> colours().crafting();
+            case NetworkNodeInfo.KIND_SUPERCOMPUTER -> colours().supercomputer();
+            case NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT -> colours().clusterManagement();
+            default -> colours().mainframe();
         };
     }
 
@@ -1014,8 +1346,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
-        if (detailPopup.isOpen()) {
-            detailPopup.mouseClicked(mouseX, mouseY, button);
+        final Popup dialog = openDialog();
+        if (dialog != null) {
+            dialog.mouseClicked(mouseX, mouseY, button);
             return;
         }
         root.mouseClicked(mouseX, mouseY, button);
@@ -1023,8 +1356,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public void mouseDragged(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
-        if (detailPopup.isOpen()) {
-            detailPopup.mouseDragged(mouseX, mouseY, button);
+        final Popup dialog = openDialog();
+        if (dialog != null) {
+            dialog.mouseDragged(mouseX, mouseY, button);
         } else {
             root.mouseDragged(mouseX, mouseY, button);
         }
@@ -1032,8 +1366,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
-        if (detailPopup.isOpen()) {
-            detailPopup.mouseReleased(mouseX, mouseY, button);
+        final Popup dialog = openDialog();
+        if (dialog != null) {
+            dialog.mouseReleased(mouseX, mouseY, button);
         } else {
             root.mouseReleased(mouseX, mouseY, button);
         }
@@ -1041,8 +1376,9 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public boolean mouseScrolled(final double delta) {
-        if (detailPopup.isOpen()) {
-            return detailPopup.mouseScrolled(lastMouseX, lastMouseY, delta);
+        final Popup dialog = openDialog();
+        if (dialog != null) {
+            return dialog.mouseScrolled(lastMouseX, lastMouseY, delta);
         }
         if (root.mouseScrolled(lastMouseX, lastMouseY, delta)) {
             return true;
@@ -1054,7 +1390,11 @@ public final class NetworkManagerApp implements IDesktopApp {
             return true;
         }
         if (tab == TAB_PROCESSES) {
-            procList.setScroll(procList.scroll() + step);
+            processes.scrollBy(step);
+            return true;
+        }
+        if (tab == TAB_HARDWARE) {
+            hwList.setScroll(hwList.scroll() + step);
             return true;
         }
         return false;
@@ -1062,6 +1402,27 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
-        return detailPopup.isOpen() && detailPopup.keyPressed(key, scanCode, modifiers);
+        final Popup dialog = openDialog();
+        return dialog != null && dialog.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** The dialog that takes the window's clicks and keys while it is open: an Operation's detail or a service's. */
+    @Nullable
+    private Popup openDialog() {
+        return detailPopup.isOpen() ? detailPopup : services.openDialog();
+    }
+
+    private static Colours colours() {
+        return PALETTE.get();
+    }
+
+    /**
+     * The Network Manager's colours: each kind of machine on the map, what is fine, what wants the eye and what is
+     * wrong, a link between machines, what dims the window behind a machine's details, the card a hovered
+     * machine shows with its title and its lines, and the tint over the row of a node that lost its link.
+     */
+    private record Colours(int mainframe, int server, int subframe, int personalComputer, int crafting,
+                           int supercomputer, int clusterManagement, int good, int warn, int bad, int link,
+                           int detailDim, int card, int cardTitle, int cardText, int lostRow) {
     }
 }

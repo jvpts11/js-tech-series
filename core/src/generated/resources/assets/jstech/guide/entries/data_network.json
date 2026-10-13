@@ -1,0 +1,63 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.data_network.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.data_network.for"
+    },
+    {
+      "type": "define",
+      "definition": "jstech.guide.data_network.definition1",
+      "term": "jstech.guide.data_network.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.data_network.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstech.guide.data_network.use1",
+        "jstech.guide.data_network.use2",
+        "jstech.guide.data_network.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstech.guide.data_network.fix1",
+          "problem": "jstech.guide.data_network.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:redstone",
+  "id": "jstech:data_network",
+  "order": 2,
+  "section": "jstech:network",
+  "title": "jstech.guide.data_network.title"
+}

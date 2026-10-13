@@ -1,0 +1,174 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.make_conf.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.make_conf.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.make_conf.definition1",
+      "term": "jsc.guide.make_conf.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.make_conf.table1",
+      "heads": [
+        "jsc.guide.make_conf.table1_head1",
+        "jsc.guide.make_conf.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "COMMON_FLAGS=\"-O2 -pipe\""
+          },
+          {
+            "words": "jsc.guide.make_conf.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "LC_MESSAGES=POSIX.utf8"
+          },
+          {
+            "words": "jsc.guide.make_conf.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.make_conf.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.make_conf.definition2",
+      "term": "jsc.guide.make_conf.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.make_conf.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.make_conf.step1",
+        "jsc.guide.make_conf.step2",
+        "jsc.guide.make_conf.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.make_conf.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.make_conf.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.make_conf.table2",
+      "heads": [
+        "jsc.guide.make_conf.table2_head1",
+        "jsc.guide.make_conf.table2_head2",
+        "jsc.guide.make_conf.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.make_conf.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "MAKEOPTS=\"-j4\""
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "MAKEOPTS=\"-j16\""
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "MAKEOPTS=\"-j\""
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "MAKEOPTS=\"-j0\""
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.make_conf.table2_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.make_conf.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.make_conf.fix1",
+          "problem": "jsc.guide.make_conf.problem1"
+        },
+        {
+          "fix": "jsc.guide.make_conf.fix2",
+          "problem": "jsc.guide.make_conf.problem2"
+        },
+        {
+          "fix": "jsc.guide.make_conf.fix3",
+          "problem": "jsc.guide.make_conf.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:package_tree_and_world",
+        "jsc:building_from_source"
+      ]
+    }
+  ],
+  "id": "jsc:make_conf",
+  "order": 258,
+  "section": "jsc:gentoo_base",
+  "title": "jsc.guide.make_conf.title"
+}

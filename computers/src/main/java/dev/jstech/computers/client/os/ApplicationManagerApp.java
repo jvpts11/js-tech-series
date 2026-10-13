@@ -7,10 +7,17 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.CdeAppManagerLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.CdeAppGroup;
+import dev.jstech.computers.os.WindowKeys;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -26,11 +33,10 @@ import net.minecraft.client.gui.GuiGraphics;
  * is installed. What a window shows is read from the desktop each time it is drawn, so a program installed
  * while it is open appears in it without being asked for.
  */
+@PaletteHolder
 final class ApplicationManagerApp implements IDesktopApp {
 
-    /** What the first window is called, and what the name of a group's window begins with. */
-    static final String KEY = "Application Manager";
-
+    /** What comes between the Application Manager's name and a group's, on a group window's title. */
     private static final String GROUP_MARK = " - ";
 
     /** The group this window has open, or null for the window of the groups themselves. */
@@ -50,8 +56,9 @@ final class ApplicationManagerApp implements IDesktopApp {
     private int height;
 
     private static final long DOUBLE_CLICK_MS = 300L;
-    private static final int PICKED_FILL = 0xFF2E3A66;
-    private static final int PICKED_INK = 0xFFFFFFFF;
+    /** Its own colours, {@code jsc:app/application_manager}: a picked name, and the folders a group is drawn as. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/application_manager",
+            new Colours(0xFF2E3A66, 0xFFFFFFFF, 0xFFFFE9A8, 0xFFF4C842, 0xFFFFF3C4, 0xFF9A7B16));
 
     /*
      * The window keeps no desktop of its own. A program's window outlives the screen it was opened on, so it asks
@@ -63,19 +70,18 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     /** The key of the window that has {@code group} open, or of the first window for null. */
     static String keyOf(@Nullable final CdeAppGroup group) {
-        return group == null ? KEY : KEY + GROUP_MARK + group.label();
+        return WindowKeys.applicationManager(group);
     }
 
     /** Whether a window so keyed is one of the Application Manager's. */
     static boolean owns(final String key) {
-        return key.equals(KEY) || key.startsWith(KEY + GROUP_MARK);
+        return WindowKeys.isApplicationManager(key);
     }
 
     /** The group a window so keyed has open, or null for the first window. */
     @Nullable
     static CdeAppGroup groupOf(final String key) {
-        return key.startsWith(KEY + GROUP_MARK)
-                ? CdeAppGroup.labelled(key.substring((KEY + GROUP_MARK).length())) : null;
+        return WindowKeys.applicationManagerGroup(key);
     }
 
     /** The names under the icons this window shows, in the order it shows them, for a test to read. */
@@ -86,7 +92,7 @@ final class ApplicationManagerApp implements IDesktopApp {
                 out.add(each.label());
             }
         } else {
-            for (final DesktopScreen.Launcher launcher : programs()) {
+            for (final Launcher launcher : programs()) {
                 out.add(launcher.label());
             }
         }
@@ -106,7 +112,8 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return keyOf(this.group);
+        final String name = GameText.resolve(ApplicationManagerTexts.NAME);
+        return this.group == null ? name : name + GROUP_MARK + this.group.label();
     }
 
     @Override
@@ -149,8 +156,9 @@ final class ApplicationManagerApp implements IDesktopApp {
             final Rect head = CdeAppManagerLayout.head(w);
             this.skin.panel(g, x + head.x(), y + head.y(), head.w(), head.h());
             final int count = programs().size();
-            final String says = this.group.label() + ", " + count + (count == 1 ? " program" : " programs");
-            g.drawString(font, says, x + head.x() + 4, y + head.y() + 3, this.skin.text(), false);
+            final String says = GameText.resolve((count == 1 ? ApplicationManagerTexts.GROUP_ONE_PROGRAM
+                    : ApplicationManagerTexts.GROUP_PROGRAMS).with(this.group.label(), count));
+            Draw.text(g, font, says, x + head.x() + 4, y + head.y() + 3, this.skin.text());
         }
         final Rect well = CdeAppManagerLayout.well(headed, w, h);
         this.skin.panel(g, x + well.x(), y + well.y(), well.w(), well.h());
@@ -184,14 +192,14 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     /** A group opens in a window of its own; a program starts. */
     private void open(final int index) {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop == null) {
             return;
         }
         if (this.group == null) {
-            desktop.openApplicationManager(groups().get(index));
+            desktop.opener().openApplicationManager(groups().get(index));
         } else {
-            desktop.launch(programs().get(index));
+            desktop.start().choose(programs().get(index));
         }
     }
 
@@ -201,7 +209,7 @@ final class ApplicationManagerApp implements IDesktopApp {
         final Rect pic = CdeAppManagerLayout.picture(index, headed, this.width, this.height);
         final int px = this.left + pic.x();
         final int py = this.top + pic.y();
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.group == null) {
             folder(g, px, py);
         } else if (desktop != null) {
@@ -212,15 +220,16 @@ final class ApplicationManagerApp implements IDesktopApp {
         final int nameX = this.left + cell.x() + (cell.w() - nameW) / 2;
         final int nameY = this.top + cell.y() + CdeAppManagerLayout.ICON + 2;
         if (index == this.picked) {
-            g.fill(nameX - 2, nameY - 1, nameX + nameW + 2, nameY + CdeAppManagerLayout.NAME_H - 1, PICKED_FILL);
+            g.fill(nameX - 2, nameY - 1, nameX + nameW + 2, nameY + CdeAppManagerLayout.NAME_H - 1,
+                    PALETTE.get().pickedFill());
         }
-        Texts.small(g, font, shown, nameX, nameY, index == this.picked ? PICKED_INK : this.skin.text());
+        Texts.small(g, font, shown, nameX, nameY, index == this.picked ? PALETTE.get().pickedInk() : this.skin.text());
     }
 
     /** The groups that hold something on this machine, in the Application Manager's own order. */
     private List<CdeAppGroup> groups() {
         final boolean[] holds = new boolean[CdeAppGroup.values().length];
-        for (final DesktopScreen.Launcher launcher : launchers()) {
+        for (final Launcher launcher : launchers()) {
             holds[CdeAppGroup.of(launcher.programId().getPath()).place()] = true;
         }
         final List<CdeAppGroup> out = new ArrayList<>();
@@ -233,9 +242,9 @@ final class ApplicationManagerApp implements IDesktopApp {
     }
 
     /** The programs of this window's group, in the order the desktop lists them. */
-    private List<DesktopScreen.Launcher> programs() {
-        final List<DesktopScreen.Launcher> out = new ArrayList<>();
-        for (final DesktopScreen.Launcher launcher : launchers()) {
+    private List<Launcher> programs() {
+        final List<Launcher> out = new ArrayList<>();
+        for (final Launcher launcher : launchers()) {
             if (CdeAppGroup.of(launcher.programId().getPath()) == this.group) {
                 out.add(launcher);
             }
@@ -244,8 +253,8 @@ final class ApplicationManagerApp implements IDesktopApp {
     }
 
     /** Every program of the desktop that is up, or none while no desktop is. */
-    private static List<DesktopScreen.Launcher> launchers() {
-        final DesktopScreen desktop = DesktopScreen.current();
+    private static List<Launcher> launchers() {
+        final DesktopState desktop = DesktopScreen.current();
         return desktop == null ? List.of() : desktop.launcherList();
     }
 
@@ -260,12 +269,18 @@ final class ApplicationManagerApp implements IDesktopApp {
 
     /** A folder the way the desktop draws one: a tab, a body, a line of light along its head. */
     private static void folder(final GuiGraphics g, final int x, final int y) {
-        g.fill(x + 1, y + 1, x + 10, y + 4, 0xFFFFE9A8);
-        g.fill(x + 1, y + 4, x + 23, y + 20, 0xFFF4C842);
-        g.fill(x + 1, y + 4, x + 23, y + 6, 0xFFFFF3C4);
-        g.fill(x + 1, y + 1, x + 10, y + 2, 0xFF9A7B16);
-        g.fill(x + 1, y + 19, x + 23, y + 20, 0xFF9A7B16);
-        g.fill(x + 1, y + 1, x + 2, y + 20, 0xFF9A7B16);
-        g.fill(x + 22, y + 4, x + 23, y + 20, 0xFF9A7B16);
+        final Colours c = PALETTE.get();
+        g.fill(x + 1, y + 1, x + 10, y + 4, c.folderTab());
+        g.fill(x + 1, y + 4, x + 23, y + 20, c.folderBody());
+        g.fill(x + 1, y + 4, x + 23, y + 6, c.folderLight());
+        g.fill(x + 1, y + 1, x + 10, y + 2, c.folderEdge());
+        g.fill(x + 1, y + 19, x + 23, y + 20, c.folderEdge());
+        g.fill(x + 1, y + 1, x + 2, y + 20, c.folderEdge());
+        g.fill(x + 22, y + 4, x + 23, y + 20, c.folderEdge());
+    }
+
+    /** A picked name's fill and ink, and a folder's tab, body, the light along its head and its edge. */
+    private record Colours(int pickedFill, int pickedInk, int folderTab, int folderBody, int folderLight,
+                           int folderEdge) {
     }
 }

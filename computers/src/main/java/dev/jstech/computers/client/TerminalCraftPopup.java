@@ -7,14 +7,19 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.TerminalHit.inRect;
+
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
+import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
 import dev.jstech.computers.operation.payload.CraftSubmitPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +95,7 @@ final class TerminalCraftPopup {
 
     /** Enter commits the whole craft, and only when the network says the whole craft is possible. */
     void submitIfPossible() {
-        final var plan = menu.craftPlan();
+        final var plan = currentPlan();
         if (plan != null && plan.feasible()) {
             submit(false);
         }
@@ -112,22 +117,23 @@ final class TerminalCraftPopup {
         if (pattern == null) {
             return;
         }
-        final var plan = menu.craftPlan();
+        final var plan = currentPlan();
         g.pose().pushPose();
         g.pose().translate(0, 0, 350);
         final int left = screen.left();
         final int top = screen.top();
-        g.fill(left, top, left + ComputerTerminalLayout.WIDTH, top + ComputerTerminalLayout.HEIGHT, 0xE0070A0F);
+        g.fill(left, top, left + ComputerTerminalLayout.WIDTH, top + ComputerTerminalLayout.HEIGHT,
+                TerminalPopupPalette.get().veil());
         final int px = x();
         final int py = y();
-        g.fill(px - 2, py - 2, px + POPUP_W + 2, py + POPUP_H + 2, 0xFF0A1A1F);
+        g.fill(px - 2, py - 2, px + POPUP_W + 2, py + POPUP_H + 2, TerminalPopupPalette.get().rim());
         g.fill(px, py, px + POPUP_W, py + POPUP_H, JsTechTheme.panel());
         g.fill(px, py, px + POPUP_W, py + 1, JsTechTheme.accent());
 
         screen.drawDataIcon(g, StorageKey.of(pattern.result()), -1L, px + 6, py + 5);
-        g.drawString(screen.tabFont(), "CRAFT  "
-                        + trim(pattern.result().getHoverName().getString(), 18),
-                px + 28, py + 8, JsTechTheme.text(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.CRAFT_TITLE.with(
+                        trim(pattern.result().getHoverName().getString(), 18))),
+                px + 28, py + 8, JsTechTheme.text());
 
         /*
          * The quantity field is a widget the screen drew earlier, under this panel. It is drawn again here,
@@ -138,49 +144,52 @@ final class TerminalCraftPopup {
         for (int i = 0; i < STEP_LABELS.length; i++) {
             final int bx = px + 134 + i * 16;
             g.fill(bx, py + 30, bx + 15, py + 44,
-                    hover(mouseX, mouseY, bx, py + 30, 15, 14) ? JsTechTheme.hover() : JsTechTheme.screen());
-            g.drawCenteredString(screen.tabFont(), STEP_LABELS[i], bx + 8, py + 33, JsTechTheme.accent());
+                    inRect(mouseX, mouseY, bx, py + 30, 15, 14) ? JsTechTheme.hover() : JsTechTheme.screen());
+            Draw.textCentered(g,screen.tabFont(), STEP_LABELS[i], bx + 8, py + 33, JsTechTheme.accent());
         }
 
-        g.drawString(screen.tabFont(), "PLAN - raw ingredients", px + 6, py + 52, JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.PLAN_RAW), px + 6, py + 52, JsTechTheme.dim());
         int rowY = py + 63;
         if (plan == null) {
-            g.drawString(screen.tabFont(), "planning...", px + 6, rowY, JsTechTheme.dim(), false);
+            Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.PLANNING), px + 6, rowY, JsTechTheme.dim());
         } else {
             for (int i = 0; i < Math.min(PLAN_ROWS, plan.rows().size()); i++) {
                 final var row = plan.rows().get(i);
                 screen.drawDataIcon(g, StorageKey.of(row.item()), -1L, px + 6, rowY - 2);
-                g.drawString(screen.tabFont(), trim(row.item().getHoverName().getString(), 14),
-                        px + 26, rowY + 2, JsTechTheme.text(), false);
+                Draw.text(g, screen.tabFont(), trim(row.item().getHoverName().getString(), 14),
+                        px + 26, rowY + 2, JsTechTheme.text());
                 final String counts = ComputerTerminalScreen.fmt(row.have()) + " / "
                         + ComputerTerminalScreen.fmt(row.need());
-                g.drawString(screen.tabFont(), counts, px + POPUP_W - screen.tabFont().width(counts) - 8,
-                        rowY + 2, row.satisfied() ? JsTechTheme.green() : JsTechTheme.red(), false);
+                Draw.text(g, screen.tabFont(), counts, px + POPUP_W - screen.tabFont().width(counts) - 8,
+                        rowY + 2, row.satisfied() ? JsTechTheme.green() : JsTechTheme.red());
                 rowY += 14;
             }
             if (plan.rows().size() > PLAN_ROWS) {
-                g.drawString(screen.tabFont(), "+" + (plan.rows().size() - PLAN_ROWS) + " more",
-                        px + 26, rowY, JsTechTheme.dim(), false);
+                Draw.text(g, screen.tabFont(),
+                        GameText.resolve(TerminalTexts.MORE.with(plan.rows().size() - PLAN_ROWS)),
+                        px + 26, rowY, JsTechTheme.dim());
             }
-            final String est = plan.estimateTicks() > 0
-                    ? "EST ~" + Math.max(1, plan.estimateTicks() / 20) + "s" : "EST --";
-            g.drawString(screen.tabFont(), est, px + 6, py + 144, JsTechTheme.dim(), false);
+            final String est = GameText.resolve(plan.estimateTicks() > 0
+                    ? TerminalTexts.ESTIMATE.with(Math.max(1, plan.estimateTicks() / 20))
+                    : TerminalTexts.NO_ESTIMATE.text());
+            Draw.text(g, screen.tabFont(), est, px + 6, py + 144, JsTechTheme.dim());
             if (!plan.feasible()) {
-                g.drawString(screen.tabFont(), "max now: "
-                                + ComputerTerminalScreen.fmt(plan.maxFeasible()),
-                        px + 70, py + 144, JsTechTheme.amber(), false);
+                Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.MAX_NOW.with(
+                                ComputerTerminalScreen.fmt(plan.maxFeasible()))),
+                        px + 70, py + 144, JsTechTheme.amber());
             }
         }
 
         final boolean feasible = plan != null && plan.feasible();
         final boolean partialUseful = plan != null && !plan.feasible() && plan.maxFeasible() > 0;
-        button(g, px + 6, py + 156, 56, "CRAFT", feasible ? JsTechTheme.green() : JsTechTheme.dim(),
-                feasible && hover(mouseX, mouseY, px + 6, py + 156, 56, 14));
-        button(g, px + 66, py + 156, 84, "PARTIAL",
+        button(g, px + 6, py + 156, 56, GameText.resolve(TerminalTexts.CRAFT),
+                feasible ? JsTechTheme.green() : JsTechTheme.dim(),
+                feasible && inRect(mouseX, mouseY, px + 6, py + 156, 56, 14));
+        button(g, px + 66, py + 156, 84, GameText.resolve(TerminalTexts.PARTIAL_BUTTON),
                 partialUseful ? JsTechTheme.amber() : JsTechTheme.dim(),
-                partialUseful && hover(mouseX, mouseY, px + 66, py + 156, 84, 14));
-        button(g, px + 154, py + 156, 44, "CLOSE", JsTechTheme.dim(),
-                hover(mouseX, mouseY, px + 154, py + 156, 44, 14));
+                partialUseful && inRect(mouseX, mouseY, px + 66, py + 156, 84, 14));
+        button(g, px + 154, py + 156, 44, GameText.resolve(TerminalTexts.CLOSE), JsTechTheme.dim(),
+                inRect(mouseX, mouseY, px + 154, py + 156, 44, 14));
         g.pose().popPose();
     }
 
@@ -210,27 +219,37 @@ final class TerminalCraftPopup {
         }
         for (int i = 0; i < STEPS.length; i++) {
             final int bx = px + 134 + i * 16;
-            if (hover(mx, my, bx, py + 30, 15, 14)) {
+            if (inRect(mx, my, bx, py + 30, 15, 14)) {
                 setAmount(this.amount + STEPS[i]);
                 return true;
             }
         }
-        final var plan = menu.craftPlan();
+        final var plan = currentPlan();
         final boolean feasible = plan != null && plan.feasible();
         final boolean partialUseful = plan != null && !plan.feasible() && plan.maxFeasible() > 0;
-        if (feasible && hover(mx, my, px + 6, py + 156, 56, 14)) {
+        if (feasible && inRect(mx, my, px + 6, py + 156, 56, 14)) {
             submit(false);
             return true;
         }
-        if (partialUseful && hover(mx, my, px + 66, py + 156, 84, 14)) {
+        if (partialUseful && inRect(mx, my, px + 66, py + 156, 84, 14)) {
             submit(true);
             return true;
         }
-        if (hover(mx, my, px + 154, py + 156, 44, 14)) {
+        if (inRect(mx, my, px + 154, py + 156, 44, 14)) {
             close();
             return true;
         }
         return true;
+    }
+
+    /**
+     * The machine's plan, but only once it answers for the quantity now shown: a plan for another number says
+     * nothing about this one, so until the matching reply arrives the dialog shows that it is still planning.
+     */
+    @Nullable
+    private CraftPlanPayload currentPlan() {
+        final CraftPlanPayload plan = menu.craftPlan();
+        return plan != null && plan.quantity() == this.amount && this.planCountdown < 0 ? plan : null;
     }
 
     private void setAmount(final long value) {
@@ -271,12 +290,7 @@ final class TerminalCraftPopup {
                         final String label, final int color, final boolean hovered) {
         g.fill(x, y, x + w, y + 14, hovered ? JsTechTheme.hover() : JsTechTheme.screen());
         g.fill(x, y, x + w, y + 1, JsTechTheme.line());
-        g.drawCenteredString(screen.tabFont(), label, x + w / 2, y + 3, color);
-    }
-
-    private static boolean hover(final double mouseX, final double mouseY, final int x, final int y,
-                                 final int w, final int h) {
-        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
+        Draw.textCentered(g,screen.tabFont(), label, x + w / 2, y + 3, color);
     }
 
     private static String trim(final String s, final int max) {

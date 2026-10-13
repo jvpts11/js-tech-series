@@ -7,19 +7,27 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.ExtractArchivePayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.os.fs.Archive;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +42,7 @@ import java.util.Locale;
  * <p>The packing itself is the server's, because the space an archive saves has to be real. This window
  * chooses, asks, and shows what came back.
  */
+@PaletteHolder
 public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private static final int ROW_H = 11;
@@ -41,7 +50,9 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int HEADER_H = 12;
     private static final int STATUS_H = 11;
     private static final int MARGIN = 4;
-    private static final int SAVED_GOOD = 0xFF1C7A32;
+    /** 67ark's own colour, {@code jsc:app/archiver}: the status line when it reports a space saving. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/archiver",
+            new Colours(0xFF1C7A32));
 
     /** Which of the two jobs this window is doing. */
     private enum Mode { LIST, BUILD }
@@ -64,8 +75,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     /* The archive being looked at. */
     private String archivePath = "";
     private List<Archive.Entry> entries = List.of();
-    private int packedBytes;
-    private int originalBytes;
+    private long packedBytes;
+    private long originalBytes;
     private int selected = -1;
     private int scroll;
 
@@ -74,7 +85,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private boolean removeOriginals;
     private String pendingArchive = "";
 
-    private String status = "Open an archive, or make one";
+    private Text status = ArchiverTexts.OPEN_OR_MAKE.text();
     private boolean statusGood;
 
     /* Where the list was last drawn, so a click reads the same numbers the drawing did. */
@@ -84,18 +95,18 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     public ArchiverApp(final BlockPos host) {
         this.host = host;
         this.dialog = new FileDialog(host, this);
-        openButton = root.add(new Button("Open", this::chooseArchive));
-        newButton = root.add(new Button("New", this::startBuilding));
-        addButton = root.add(new Button("Add", this::chooseFile));
-        removeButton = root.add(new Button("Remove", this::removeChosen));
-        packButton = root.add(new Button("Pack", this::choosePackTarget));
-        extractButton = root.add(new Button("Extract", this::extractOne));
-        extractAllButton = root.add(new Button("Extract all", this::extractAll));
+        openButton = root.add(new Button(GameText.resolve(ArchiverTexts.OPEN), this::chooseArchive));
+        newButton = root.add(new Button(GameText.resolve(ArchiverTexts.NEW), this::startBuilding));
+        addButton = root.add(new Button(GameText.resolve(ArchiverTexts.ADD), this::chooseFile));
+        removeButton = root.add(new Button(GameText.resolve(ArchiverTexts.REMOVE), this::removeChosen));
+        packButton = root.add(new Button(GameText.resolve(ArchiverTexts.PACK), this::choosePackTarget));
+        extractButton = root.add(new Button(GameText.resolve(ArchiverTexts.EXTRACT), this::extractOne));
+        extractAllButton = root.add(new Button(GameText.resolve(ArchiverTexts.EXTRACT_ALL), this::extractAll));
         deleteOriginals = root.add(new Button(this::originalsLabel, this::toggleOriginals));
     }
 
     private String originalsLabel() {
-        return removeOriginals ? "Delete originals" : "Keep originals";
+        return GameText.resolve(removeOriginals ? ArchiverTexts.DELETE_ORIGINALS : ArchiverTexts.KEEP_ORIGINALS);
     }
 
     private void toggleOriginals() {
@@ -105,8 +116,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     /* Opening an archive */
 
     private void chooseArchive() {
-        dialog.openFile("Open archive", "",
-                List.of(FileDialog.Filter.of("Archives", Archive.EXTENSION), FileDialog.Filter.ALL),
+        dialog.openFile(ArchiverTexts.OPEN_ARCHIVE.text(), "",
+                List.of(FileDialog.Filter.of(ArchiverTexts.ARCHIVES, Archive.EXTENSION), FileDialog.Filter.ALL),
                 this::openFile);
     }
 
@@ -122,7 +133,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         this.originalBytes = 0;
         this.selected = -1;
         this.scroll = 0;
-        this.status = "Reading " + Archive.leaf(path);
+        this.status = ArchiverTexts.READING.with(Archive.leaf(path));
         this.statusGood = false;
         CodeFileReplies.expectContent(this, path);
         PacketDistributor.sendToServer(new RequestFileContentPayload(host, path));
@@ -134,20 +145,21 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         if (!exists) {
-            this.status = "No such file";
+            this.status = ArchiverTexts.NO_SUCH_FILE.text();
             this.statusGood = false;
             return;
         }
         if (!Archive.isArchive(content)) {
             this.entries = List.of();
-            this.status = Archive.leaf(path) + " is not an archive";
+            this.status = ArchiverTexts.NOT_AN_ARCHIVE.with(Archive.leaf(path));
             this.statusGood = false;
             return;
         }
         this.entries = Archive.entries(content);
-        this.packedBytes = content.getBytes(StandardCharsets.UTF_8).length;
+        this.packedBytes = StoredFile.bytesOf(FileType.ARK, content);
         this.originalBytes = Archive.originalBytes(content);
-        this.status = entries.size() + (entries.size() == 1 ? " file" : " files") + " inside";
+        this.status = (entries.size() == 1 ? ArchiverTexts.ONE_FILE_INSIDE : ArchiverTexts.FILES_INSIDE)
+                .with(entries.size());
         this.statusGood = false;
     }
 
@@ -159,7 +171,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         this.selected = -1;
         this.scroll = 0;
         this.pendingArchive = "";
-        this.status = "Add the files to pack";
+        this.status = ArchiverTexts.ADD_FILES.text();
         this.statusGood = false;
     }
 
@@ -167,7 +179,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         if (mode != Mode.BUILD) {
             startBuilding();
         }
-        dialog.openFile("Add to archive", "", List.of(FileDialog.Filter.ALL), this::addChosen);
+        dialog.openFile(ArchiverTexts.ADD_TO_ARCHIVE.text(), "", List.of(FileDialog.Filter.ALL), this::addChosen);
     }
 
     private void addChosen(final String path) {
@@ -175,7 +187,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         if (chosen.contains(path)) {
-            this.status = "That one is already in the list";
+            this.status = ArchiverTexts.ALREADY_LISTED.text();
             this.statusGood = false;
             return;
         }
@@ -186,18 +198,18 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         final String leaf = Archive.leaf(path);
         for (final String already : chosen) {
             if (Archive.leaf(already).equals(leaf)) {
-                this.status = "Another " + leaf + " is already in the list";
+                this.status = ArchiverTexts.ANOTHER_LISTED.with(leaf);
                 this.statusGood = false;
                 return;
             }
         }
         if (chosen.size() >= ArchiveFilesPayload.MAX_PATHS) {
-            this.status = "An archive holds at most " + ArchiveFilesPayload.MAX_PATHS;
+            this.status = ArchiverTexts.AT_MOST.with(ArchiveFilesPayload.MAX_PATHS);
             this.statusGood = false;
             return;
         }
         chosen.add(path);
-        this.status = chosen.size() + (chosen.size() == 1 ? " file" : " files") + " to pack";
+        this.status = (chosen.size() == 1 ? ArchiverTexts.ONE_TO_PACK : ArchiverTexts.TO_PACK).with(chosen.size());
         this.statusGood = false;
     }
 
@@ -211,12 +223,12 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void choosePackTarget() {
         if (mode != Mode.BUILD || chosen.isEmpty()) {
-            this.status = "Nothing to pack";
+            this.status = ArchiverTexts.NOTHING_TO_PACK.text();
             this.statusGood = false;
             return;
         }
-        dialog.saveAs("Pack into", "", "archive." + Archive.EXTENSION,
-                List.of(FileDialog.Filter.of("Archives", Archive.EXTENSION)), this::pack);
+        dialog.saveAs(ArchiverTexts.PACK_INTO.text(), "", "archive." + Archive.EXTENSION,
+                List.of(FileDialog.Filter.of(ArchiverTexts.ARCHIVES, Archive.EXTENSION)), this::pack);
     }
 
     private void pack(final String path) {
@@ -227,7 +239,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(
                 new ArchiveFilesPayload(host, path, List.copyOf(chosen), removeOriginals));
-        this.status = "Packing " + chosen.size();
+        this.status = ArchiverTexts.PACKING.with(chosen.size());
         this.statusGood = false;
     }
 
@@ -235,39 +247,39 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void extractOne() {
         if (mode != Mode.LIST || selected < 0 || selected >= entries.size()) {
-            this.status = "Pick a file in the archive first";
+            this.status = ArchiverTexts.PICK_FIRST.text();
             this.statusGood = false;
             return;
         }
         final String name = entries.get(selected).name();
-        dialog.openFolder("Take out into", "", dir -> send(name, dir));
+        dialog.openFolder(ArchiverTexts.TAKE_OUT_INTO.text(), "", dir -> send(name, dir));
     }
 
     private void extractAll() {
         if (mode != Mode.LIST || entries.isEmpty()) {
-            this.status = "Open an archive first";
+            this.status = ArchiverTexts.OPEN_FIRST.text();
             this.statusGood = false;
             return;
         }
-        dialog.openFolder("Take everything out into", "", dir -> send("", dir));
+        dialog.openFolder(ArchiverTexts.TAKE_ALL_OUT_INTO.text(), "", dir -> send("", dir));
     }
 
     private void send(final String entry, final String dir) {
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new ExtractArchivePayload(host, archivePath, entry,
                 dir == null ? "" : dir));
-        this.status = "Taking out";
+        this.status = ArchiverTexts.TAKING_OUT.text();
         this.statusGood = false;
     }
 
     @Override
     public void onContentTooLarge(final String path) {
-        this.status = Archive.leaf(path) + " is too large to open here";
+        this.status = EditorTexts.TOO_LARGE.with(Archive.leaf(path));
         this.statusGood = false;
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
+    public void onSaved(final boolean ok, final Text message) {
         this.status = message;
         this.statusGood = ok;
         if (ok && !pendingArchive.isEmpty()) {
@@ -348,13 +360,15 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         final boolean building = mode == Mode.BUILD;
         int bx = x + MARGIN;
-        bx = place(openButton, font, "Open", bx, y);
-        bx = place(newButton, font, "New", bx, y);
+        bx = place(openButton, font, bx, y);
+        bx = place(newButton, font, bx, y);
         if (building) {
-            bx = place(addButton, font, "Add", bx, y);
-            bx = place(removeButton, font, "Remove", bx, y);
-            bx = place(packButton, font, "Pack", bx, y);
-            final int w = font.width("Delete originals") + 8;
+            bx = place(addButton, font, bx, y);
+            bx = place(removeButton, font, bx, y);
+            bx = place(packButton, font, bx, y);
+            // As wide as the longer of its two words, so the button does not change size when it is pressed.
+            final int w = Math.max(font.width(GameText.resolve(ArchiverTexts.DELETE_ORIGINALS)),
+                    font.width(GameText.resolve(ArchiverTexts.KEEP_ORIGINALS))) + 8;
             /*
              * Pinned right, but never left of where the buttons before it end: a narrow window runs the
              * label off its own edge rather than drawing it over the button beside it.
@@ -362,8 +376,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
             deleteOriginals.setBounds(Math.max(bx, x + width - MARGIN - w), y + 2, w, 12);
             deleteOriginals.setPrimary(removeOriginals);
         } else {
-            bx = place(extractButton, font, "Extract", bx, y);
-            place(extractAllButton, font, "Extract all", bx, y);
+            bx = place(extractButton, font, bx, y);
+            place(extractAllButton, font, bx, y);
         }
         addButton.setVisible(building);
         removeButton.setVisible(building);
@@ -373,9 +387,9 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         extractAllButton.setVisible(!building);
     }
 
-    private static int place(final Button button, final Font font, final String label,
-                             final int bx, final int y) {
-        final int w = font.width(label) + 8;
+    /* A button as wide as the words it shows, in the player's language. */
+    private static int place(final Button button, final Font font, final int bx, final int y) {
+        final int w = font.width(button.label()) + 8;
         button.setBounds(bx, y + 2, w, 12);
         return bx + w + 2;
     }
@@ -383,20 +397,20 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawHeader(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x + MARGIN, y, x + width - MARGIN, y + HEADER_H, skin.listHover());
         final int[] cols = columns(x, width);
-        g.drawString(font, "Name", cols[0], y + 2, skin.text(), false);
+        Draw.text(g, font, GameText.resolve(ArchiverTexts.NAME_COLUMN), cols[0], y + 2, skin.text());
         if (mode == Mode.LIST) {
-            right(g, font, "Size", cols[1], y + 2, skin.text());
-            right(g, font, "Saved", cols[2], y + 2, skin.text());
+            right(g, font, GameText.resolve(ArchiverTexts.SIZE_COLUMN), cols[1], y + 2, skin.text());
+            right(g, font, GameText.resolve(ArchiverTexts.SAVED_COLUMN), cols[2], y + 2, skin.text());
         } else {
-            right(g, font, "Where", cols[2], y + 2, skin.text());
+            right(g, font, GameText.resolve(ArchiverTexts.WHERE_COLUMN), cols[2], y + 2, skin.text());
         }
     }
 
     private void drawArchive(final GuiGraphics g, final Font font, final int x, final int top,
                              final int width, final int bottom) {
         if (entries.isEmpty()) {
-            g.drawString(font, archivePath.isEmpty() ? "No archive open" : "Nothing in it",
-                    x + MARGIN + 4, top + 4, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(archivePath.isEmpty() ? ArchiverTexts.NO_ARCHIVE
+                    : ArchiverTexts.NOTHING_IN_IT), x + MARGIN + 4, top + 4, skin.dim());
             return;
         }
         final int[] cols = columns(x, width);
@@ -410,18 +424,18 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
                 g.fill(x + MARGIN, ry, x + width - MARGIN, ry + ROW_H, skin.listSelect());
             }
             final int ink = skin.listRowText(on);
-            g.drawString(font, font.plainSubstrByWidth(entry.name(), cols[1] - cols[0] - 6),
-                    cols[0], ry + 2, ink, false);
-            right(g, font, bytes(entry.originalBytes()), cols[1], ry + 2, ink);
-            right(g, font, entry.type().extension().isEmpty() ? "file" : entry.type().extension(),
-                    cols[2], ry + 2, on ? ink : skin.dim());
+            Draw.text(g, font, font.plainSubstrByWidth(entry.name(), cols[1] - cols[0] - 6),
+                    cols[0], ry + 2, ink);
+            right(g, font, bytes(entry.weighs()), cols[1], ry + 2, ink);
+            right(g, font, entry.type().extension().isEmpty() ? GameText.resolve(ArchiverTexts.FILE)
+                    : entry.type().extension(), cols[2], ry + 2, on ? ink : skin.dim());
         }
     }
 
     private void drawChosen(final GuiGraphics g, final Font font, final int x, final int top,
                             final int width, final int bottom) {
         if (chosen.isEmpty()) {
-            g.drawString(font, "Add the files to pack", x + MARGIN + 4, top + 4, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(ArchiverTexts.ADD_FILES), x + MARGIN + 4, top + 4, skin.dim());
             return;
         }
         final int[] cols = columns(x, width);
@@ -435,8 +449,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
                 g.fill(x + MARGIN, ry, x + width - MARGIN, ry + ROW_H, skin.listSelect());
             }
             final int ink = skin.listRowText(on);
-            g.drawString(font, font.plainSubstrByWidth(Archive.leaf(path), cols[1] - cols[0] - 6),
-                    cols[0], ry + 2, ink, false);
+            Draw.text(g, font, font.plainSubstrByWidth(Archive.leaf(path), cols[1] - cols[0] - 6),
+                    cols[0], ry + 2, ink);
             final String where = folderOf(path);
             right(g, font, font.plainSubstrByWidth(where, cols[2] - cols[1] - 6), cols[2], ry + 2,
                     on ? ink : skin.dim());
@@ -445,12 +459,13 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
-        g.drawString(font, font.plainSubstrByWidth(status, width - MARGIN * 2 - 70), x + MARGIN, y + 2,
-                statusGood ? SAVED_GOOD : skin.dim(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(status), width - MARGIN * 2 - 70), x + MARGIN,
+                y + 2, statusGood ? PALETTE.get().savedGood() : skin.dim());
         if (mode == Mode.LIST && originalBytes > 0) {
             // What the archive is for, said as one number: how much of the disk it handed back.
-            final long saved = 100L - Math.min(100L, (long) packedBytes * 100L / originalBytes);
-            right(g, font, saved + "% saved", x + width - MARGIN, y + 2, SAVED_GOOD);
+            final long saved = 100L - Math.min(100L, packedBytes * 100L / originalBytes);
+            right(g, font, GameText.resolve(ArchiverTexts.PERCENT_SAVED.with(saved)), x + width - MARGIN, y + 2,
+                    PALETTE.get().savedGood());
         }
     }
 
@@ -463,19 +478,23 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private static void right(final GuiGraphics g, final Font font, final String text,
                               final int rightEdge, final int y, final int colour) {
-        g.drawString(font, text, rightEdge - font.width(text), y, colour, false);
+        Draw.text(g, font, text, rightEdge - font.width(text), y, colour);
     }
 
-    private static String bytes(final int value) {
-        if (value < 1024) {
-            return value + " B";
+    private static String bytes(final long value) {
+        if (value < 1024L) {
+            return GameText.resolve(ArchiverTexts.BYTES.with(value));
         }
-        return String.format(Locale.ROOT, "%.1f KB", value / 1024.0);
+        if (value < 1024L * 1024L) {
+            return GameText.resolve(ArchiverTexts.KILOBYTES.with(String.format(Locale.ROOT, "%.1f", value / 1024.0)));
+        }
+        return GameText.resolve(ArchiverTexts.MEGABYTES.with(
+                String.format(Locale.ROOT, "%.1f", value / (1024.0 * 1024.0))));
     }
 
     private static String folderOf(final String path) {
         final int slash = path.lastIndexOf('/');
-        return slash <= 0 ? "root" : path.substring(0, slash);
+        return slash <= 0 ? GameText.resolve(ArchiverTexts.ROOT) : path.substring(0, slash);
     }
 
     private void clampScroll(final int size, final int rows) {
@@ -511,5 +530,9 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         this.scroll = Math.max(0, scroll - (int) Math.signum(delta));
         return true;
+    }
+
+    /** 67ark's colour: the status line's ink when it reports a space saving. */
+    private record Colours(int savedGood) {
     }
 }

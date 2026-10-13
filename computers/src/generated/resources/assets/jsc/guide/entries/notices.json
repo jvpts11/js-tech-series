@@ -1,0 +1,222 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.notices.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.notices.table1",
+      "heads": [
+        "jsc.guide.notices.table1_head1",
+        "jsc.guide.notices.table1_head2",
+        "jsc.guide.notices.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.notices.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.notices.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.notices.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.notices.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.notices.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.notices.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.notices.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.notices.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.notices.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.notices.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.notices.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.notices.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.notices.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.notices.table2",
+      "heads": [
+        "jsc.guide.notices.table2_head1",
+        "jsc.guide.notices.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.notices.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.notices.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.notices.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.notices.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.notices.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.notices.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.notices.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.notices.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.notices.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.notices.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.notices.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.notices.table3",
+      "heads": [
+        "jsc.guide.notices.table3_head1",
+        "jsc.guide.notices.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.notices.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.notices.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.notices.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.notices.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.notices.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.notices.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.notices.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.notices.table3_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.notices.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.notices.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.notices.fix1",
+          "problem": "jsc.guide.notices.problem1"
+        },
+        {
+          "fix": "jsc.guide.notices.fix2",
+          "problem": "jsc.guide.notices.problem2"
+        }
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.notices.definition1",
+      "term": "jsc.guide.notices.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.notices.definition2",
+      "term": "jsc.guide.notices.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.notices.definition3",
+      "term": "jsc.guide.notices.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.notices.definition4",
+      "term": "jsc.guide.notices.term4"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:taskbar",
+        "jsc:system_sounds",
+        "jsc:frames_settings"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:notices",
+  "order": 156,
+  "section": "jsc:desktop_working",
+  "title": "jsc.guide.notices.title"
+}

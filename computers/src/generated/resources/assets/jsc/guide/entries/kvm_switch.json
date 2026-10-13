@@ -1,0 +1,110 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.kvm_switch.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.kvm_switch.definition1",
+      "term": "jsc.guide.kvm_switch.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kvm_switch.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.kvm_switch.definition2",
+      "term": "jsc.guide.kvm_switch.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.kvm_switch.table1",
+      "heads": [
+        "jsc.guide.kvm_switch.table1_head1",
+        "jsc.guide.kvm_switch.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.kvm_switch.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.kvm_switch.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kvm_switch.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.kvm_switch.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kvm_switch.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.kvm_switch.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kvm_switch.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.kvm_switch.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kvm_switch.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.kvm_switch.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kvm_switch.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.kvm_switch.fix1",
+          "problem": "jsc.guide.kvm_switch.problem1"
+        },
+        {
+          "fix": "jsc.guide.kvm_switch.fix2",
+          "problem": "jsc.guide.kvm_switch.problem2"
+        },
+        {
+          "fix": "jsc.guide.kvm_switch.fix3",
+          "problem": "jsc.guide.kvm_switch.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:rack_equipment",
+        "jsc:monitors"
+      ]
+    }
+  ],
+  "icon": "jsc:kvm_switch",
+  "id": "jsc:kvm_switch",
+  "order": 47,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.kvm_switch.title"
+}

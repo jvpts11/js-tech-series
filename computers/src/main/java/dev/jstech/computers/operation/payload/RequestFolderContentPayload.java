@@ -32,7 +32,7 @@ public record RequestFolderContentPayload(BlockPos hostPos, String dir, String e
     public static final StreamCodec<RegistryFriendlyByteBuf, RequestFolderContentPayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, RequestFolderContentPayload::hostPos,
-                    ByteBufCodecs.stringUtf8(160), RequestFolderContentPayload::dir,
+                    PayloadCodecs.PATH, RequestFolderContentPayload::dir,
                     ByteBufCodecs.stringUtf8(16), RequestFolderContentPayload::extension,
                     RequestFolderContentPayload::new);
 

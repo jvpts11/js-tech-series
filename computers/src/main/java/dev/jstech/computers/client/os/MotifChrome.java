@@ -7,8 +7,11 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Grounds;
 import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.client.gui.GuiGraphics;
@@ -39,14 +42,14 @@ final class MotifChrome {
     /** A slab standing out of the grey, filled with {@code fill}. */
     static void raised(final GuiGraphics g, final int x, final int y, final int w, final int h, final int fill,
                        final CdePalette p) {
-        g.fill(x, y, x + w, y + h, fill);
+        Grounds.fill(g, x, y, x + w, y + h, fill);
         relief(g, x, y, w, h, p.light(), p.shade());
     }
 
     /** The same slab pushed in: a well, a pressed button, the workspace that is up. */
     static void sunken(final GuiGraphics g, final int x, final int y, final int w, final int h, final int fill,
                        final CdePalette p) {
-        g.fill(x, y, x + w, y + h, fill);
+        Grounds.fill(g, x, y, x + w, y + h, fill);
         relief(g, x, y, w, h, p.shade(), p.light());
     }
 
@@ -54,7 +57,7 @@ final class MotifChrome {
     static void windowFrame(final GuiGraphics g, final int x, final int y, final int w, final int h,
                             final CdePalette p) {
         raised(g, x - FRAME, y - FRAME, w + FRAME * 2, h + FRAME * 2, p.window(), p);
-        g.fill(x, y, x + w, y + h, p.window());
+        Grounds.fill(g, x, y, x + w, y + h, p.window());
     }
 
     /**
@@ -110,7 +113,7 @@ final class MotifChrome {
     /** The strip along the foot of a window: the frame's grey, with one line of shade over it. */
     static void statusBar(final GuiGraphics g, final int x, final int y, final int w, final int h,
                           final CdePalette p) {
-        g.fill(x, y, x + w, y + h, p.window());
+        Grounds.fill(g, x, y, x + w, y + h, p.window());
         g.fill(x, y, x + w, y + 1, p.shade());
         g.fill(x, y + 1, x + w, y + 2, p.light());
     }
@@ -131,7 +134,7 @@ final class MotifChrome {
         }
         final int tint = p.backdropB();
         g.setColor((tint >> 16 & 0xFF) / 255.0F, (tint >> 8 & 0xFF) / 255.0F, (tint & 0xFF) / 255.0F, 1.0F);
-        g.blit(mask, 0, 0, 0.0F, 0.0F, w, h, TILE, TILE);
+        Draw.blended(() -> g.blit(mask, 0, 0, 0.0F, 0.0F, w, h, TILE, TILE));
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
@@ -140,7 +143,7 @@ final class MotifChrome {
         final Map<CdeBackdrop, ResourceLocation> out = new EnumMap<>(CdeBackdrop.class);
         for (final CdeBackdrop pattern : CdeBackdrop.values()) {
             if (!pattern.mask().isEmpty()) {
-                out.put(pattern, ResourceLocation.fromNamespaceAndPath("jsc",
+                out.put(pattern, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                         "textures/gui/cde/backdrop_" + pattern.mask() + ".png"));
             }
         }

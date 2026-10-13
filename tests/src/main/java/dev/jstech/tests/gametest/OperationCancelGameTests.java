@@ -8,9 +8,8 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.part.InputBusPart;
-import dev.jstech.computers.block.part.ReceivingBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.tests.testkit.ServerStacks;
+import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -24,11 +23,15 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestMachineBlockEntity;
+import dev.jstech.tests.TestMachines;
+import dev.jstech.tests.testkit.CraftingRig;
+import dev.jstech.tests.testkit.StorageNetworkFixture;
+import dev.jstech.tests.testkit.TestCli;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -39,13 +42,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -63,25 +64,24 @@ public final class OperationCancelGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 4;
     private static final BlockPos MAINFRAME = new BlockPos(1, 2, 2);
-    private static final BlockPos FURNACE = new BlockPos(5, 2, 5);
 
     private static NetworkSelectOperation pull(final GameTestHelper helper, final MainframeBlockEntity mainframe,
                                                final ItemStackHandler dest, final long amount, final String label) {
         final NetworkSelectOperation op = mainframe.submitNetworkSelect(Items.COBBLESTONE, amount,
-                OperationSchedulingGameTests.port(dest), label);
+                StorageNetworkFixture.port(dest), label);
         helper.assertTrue(op != null, label + " dispatched");
         return op;
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void cancel_queuedSelectIsDiscardedAndFreesItsReservation(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
-        final ItemStackHandler fullDest = OperationSchedulingGameTests.fullHandler();
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
+        final ItemStackHandler fullDest = StorageNetworkFixture.fullHandler();
         final ItemStackHandler goodDest = new ItemStackHandler(9);
         final ItemStackHandler lateDest = new ItemStackHandler(9);
         final NetworkSelectOperation[] queued = new NetworkSelectOperation[1];
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     pull(helper, mainframe, fullDest, 30, "full"); // holds the queue, stalls on a full destination
@@ -104,47 +104,38 @@ public final class OperationCancelGameTests {
                     // Its reservation is gone: a pull that needs the freed items can be granted them now.
                     pull(helper, mainframe, lateDest, 60, "late");
                 })
-                .thenExecuteAfter(60, () -> helper.assertTrue(OperationSchedulingGameTests.count(lateDest) == 60,
-                        "the freed items served the later pull; got " + OperationSchedulingGameTests.count(lateDest)))
+                .thenExecuteAfter(60, () -> helper.assertTrue(StorageNetworkFixture.count(lateDest) == 60,
+                        "the freed items served the later pull; got " + StorageNetworkFixture.count(lateDest)))
                 .thenSucceed();
     }
 
-    /** The furnace rig: the crafting network plus a switch, a furnace and its input/receiving buses. */
-    private static TestWorldBuilder.CraftingNetwork furnaceRig(final GameTestHelper helper,
-                                                               final TestWorldBuilder world) {
+    /**
+     * The kiln rig: the crafting network plus a test kiln fed by a Crafting Interface that holds the iron recipe, with
+     * its Receiving Bus. The kiln is slow, so a run is still going when a test looks at it.
+     */
+    private static TestWorldBuilder.CraftingNetwork kilnRig(final TestWorldBuilder world) {
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
-        world.setBlock(new BlockPos(5, 2, 3), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 2, 4), ComputingModule.CRAFTING_SWITCH.get());
-        world.setBlock(FURNACE, Blocks.FURNACE);
-        world.setBlock(new BlockPos(5, 3, 5), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(new BlockPos(5, 1, 5), ComputingModule.CRAFTING_CABLE.get());
+        final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+        rig.hold(smeltIron());
+        final TestMachineBlockEntity kiln = rig.machine();
+        if (kiln == null) {
+            throw new IllegalStateException("no test kiln");
+        }
+        kiln.setTicksPerItem(20);
         return net;
     }
 
-    private static void wireFurnaceBuses(final TestWorldBuilder world) {
-        if (world.getBlockEntity(new BlockPos(5, 3, 5)) instanceof DataCableBlockEntity c) {
-            c.addPart(Direction.DOWN, new InputBusPart());
-        }
-        if (world.getBlockEntity(new BlockPos(5, 1, 5)) instanceof DataCableBlockEntity c) {
-            c.addPart(Direction.UP, new ReceivingBusPart());
-        }
-    }
-
     private static ProcessingPattern smeltIron() {
-        return new ProcessingPattern(
-                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1L)),
-                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(Items.IRON_INGOT), 1L, 100)),
-                "minecraft:furnace", 600);
+        return CraftingRig.pattern(Items.RAW_IRON, Items.IRON_INGOT, 600);
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void cancel_processingRunIsDiscarded(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final TestWorldBuilder.CraftingNetwork net = furnaceRig(helper, world);
+        final TestWorldBuilder.CraftingNetwork net = kilnRig(world);
         final NetworkProcessingOperation[] run = new NetworkProcessingOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    wireFurnaceBuses(world);
                     net.seed(Items.RAW_IRON, 32);
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -167,12 +158,6 @@ public final class OperationCancelGameTests {
                 .thenSucceed();
     }
 
-    private static boolean cliContains(final CliShell.Response response, final String needle) {
-        final String lower = needle.toLowerCase(Locale.ROOT);
-        return response.lines().stream()
-                .anyMatch(line -> line.text().toLowerCase(Locale.ROOT).contains(lower));
-    }
-
     @GameTest(template = ARENA)
     public static void cli_opsListsTheIdAndCancelStopsTheOperation(final GameTestHelper helper) {
         final BlockPos hbw = new BlockPos(2, 2, 2);
@@ -182,15 +167,15 @@ public final class OperationCancelGameTests {
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(MAINFRAME);
-        world.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        world.setBlock(hbw, ComputingModule.HBW_CABLE);
         world.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = world.placeRunningPersonalComputer(pc);
         world.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         final ServerRackBlockEntity rackBe = world.blockEntity(rack, ServerRackBlockEntity.class);
         // HDD drives: the ten-tick seek keeps the pull in flight long enough to list and cancel it.
-        rackBe.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rackBe.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         final String[] shortId = new String[1];
@@ -203,25 +188,28 @@ public final class OperationCancelGameTests {
                  */
                 .thenExecuteAfter(SETTLE + 6, () -> rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200))
                 .thenExecuteAfter(2, () -> {
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
                             "the pull queues");
                     final List<OperationRecord> live = mainframe.activeOperationRecords();
                     helper.assertTrue(live.size() == 1, "one op in flight; got " + live.size());
                     helper.assertTrue(live.get(0).status() != OperationRecord.STATUS_FAILED,
                             "the pull is live, not failed; got " + live.get(0).status());
                     shortId[0] = ShortId.of(live.get(0).id().toString());
-                    helper.assertTrue(cliContains(shell.run("interac ops", cli), shortId[0]),
+                    helper.assertTrue(TestCli.contains(shell.run("interac ops", cli), shortId[0]),
                             "ops lists the operation by its short id " + shortId[0]);
-                    helper.assertTrue(cliContains(shell.run("interac cancel nope", cli), "no operation"),
+                    helper.assertTrue(TestCli.contains(shell.run("interac cancel nope", cli), "no operation"),
                             "an unknown id is reported");
-                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "cancelled SELECT"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("interac cancel " + shortId[0], cli), "cancelled SELECT"),
                             "cancel by short id stops the pull");
                     // Settled but not yet logged: it leaves the in-flight list on the Mainframe's next tick.
-                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "already settled"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("interac cancel " + shortId[0], cli), "already settled"),
                             "a second cancel in the same tick finds it settled");
                 })
                 .thenExecuteAfter(2, () -> {
-                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "no operation"),
+                    helper.assertTrue(TestCli.contains(shell.run("interac cancel " + shortId[0], cli), "no operation"),
                             "the settled operation is no longer in flight");
                     final List<OperationRecord> log = mainframe.recentOperations();
                     helper.assertTrue(!log.isEmpty() && log.get(0).status() == OperationRecord.STATUS_DISCARDED,
@@ -232,19 +220,56 @@ public final class OperationCancelGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * An Operation saved with the Mainframe and resumed after the reload is still the one who asked for it: who asked
+     * is kept in its saved state, so what it earns when it settles is theirs and not the machine operator's.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void resume_aSavedOperationIsStillAskedForByWhoeverAskedForIt(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = kilnRig(world);
+        final CompoundTag[] snapshot = new CompoundTag[1];
+        final UUID[] runId = new UUID[1];
+        final UUID asker = UUID.randomUUID();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.RAW_IRON, 32);
+                })
+                .thenExecuteAfter(SETTLE + 2, () -> Acting.as(asker, () -> {
+                    final NetworkProcessingOperation run =
+                            net.mainframe().submitNetworkProcessing(smeltIron(), 16, "asked");
+                    helper.assertTrue(run != null, "the processing operation is accepted");
+                    runId[0] = run.operationId();
+                }))
+                .thenExecuteAfter(20, () -> {
+                    helper.assertTrue(asker.equals(net.mainframe().operationRequestedBy(runId[0]).orElse(null)),
+                            "the Mainframe knows who asked for it");
+                    snapshot[0] = net.mainframe().saveWithoutMetadata(helper.getLevel().registryAccess());
+                    world.setBlock(MAINFRAME, Blocks.AIR);
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    world.setBlock(MAINFRAME, ComputingModule.MAINFRAME.get());
+                    world.blockEntity(MAINFRAME, MainframeBlockEntity.class)
+                            .loadWithComponents(snapshot[0], helper.getLevel().registryAccess());
+                })
+                .thenWaitUntil(() -> helper.assertTrue(world.blockEntity(MAINFRAME, MainframeBlockEntity.class)
+                                .operationRequestedBy(runId[0]).isPresent(),
+                        "the saved operation has not resumed yet"))
+                .thenExecute(() -> helper.assertTrue(asker.equals(world.blockEntity(MAINFRAME,
+                                MainframeBlockEntity.class).operationRequestedBy(runId[0]).orElse(null)),
+                        "and resumed, it is still asked for by the same player"))
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void orphanExpiry_savedOperationsPastTheTtlAreDiscardedOnReload(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final TestWorldBuilder.CraftingNetwork net = furnaceRig(helper, world);
+        final TestWorldBuilder.CraftingNetwork net = kilnRig(world);
         final CompoundTag[] snapshot = new CompoundTag[1];
         final UUID[] runId = new UUID[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    wireFurnaceBuses(world);
                     net.seed(Items.RAW_IRON, 32);
-                    if (world.getBlockEntity(FURNACE) instanceof FurnaceBlockEntity furnace) {
-                        furnace.setItem(2, new ItemStack(Items.IRON_INGOT, 8));
-                    }
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final NetworkProcessingOperation run = net.mainframe().submitNetworkProcessing(smeltIron(), 16, "orphan");

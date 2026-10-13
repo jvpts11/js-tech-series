@@ -7,15 +7,19 @@
  */
 package dev.jstech.computers.os;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The single descriptor for a program known to the mod: its identity and CLI metadata, the OS platforms
@@ -33,6 +37,8 @@ import java.util.Set;
  * @param id           unique registry key (e.g. {@code jsc:nms})
  * @param commandName  the short word the Command Prompt's {@code run}/{@code programs} verbs use
  * @param displayName  the human name (English), the value datagen writes to {@link #titleKey()}
+ * @param description  what it does, in one line of English, the value datagen writes to {@link #descriptionKey()}:
+ *                     shown on its install disc, in the package manager and in the installed-programs list
  * @param preinstalled whether every compatible computer ships with it (no install step)
  * @param platforms    the OS platforms it supports (runs on any one of them)
  * @param minCpuMhz    minimum CPU clock in MHz (checked against the best installed CPU)
@@ -49,14 +55,16 @@ import java.util.Set;
  *                     banner, never a gate; a 2010s tool can still run on 2000s hardware if minEra allows
  * @param house        who wrote it, or {@link SoftwareHouse#BUNDLED} for a program credited to whichever
  *                     system or desktop ships it
- * @param ramMb        megabytes the program holds while it runs; 0 means "derive it": a bundled program
- *                     weighs a share of the system that ships it, anything else weighs by its generation
- *                     ({@link RamLedger#eraWeightMb})
+ * @param ramMb        megabytes the program holds while it runs on a Legacy machine, grown on later eras
+ *                     ({@link EraMemory}); 0 means what a program of its kind holds ({@link #legacyMb()})
+ * @param requires     what it needs of the network's engine, checked when it is opened
  */
+@ApiStatus.Experimental
 public record ProgramSpec(
         ResourceLocation id,
         String commandName,
         String displayName,
+        String description,
         boolean preinstalled,
         Set<Platform> platforms,
         int minCpuMhz,
@@ -69,13 +77,20 @@ public record ProgramSpec(
         HardwareEra minEra,
         HardwareEra era,
         SoftwareHouse house,
-        int ramMb
+        int ramMb,
+        ProgramRequirement requires
 ) {
 
+    /*
+     * A codec takes sixteen fields at most, so the name and the description travel as one pair of fields, and the
+     * memory and what the program requires as another, written side by side in the same object as the rest.
+     */
     public static final Codec<ProgramSpec> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(ProgramSpec::id),
             Codec.STRING.optionalFieldOf("command_name", "").forGetter(ProgramSpec::commandName),
-            Codec.STRING.optionalFieldOf("display_name", "").forGetter(ProgramSpec::displayName),
+            Codec.mapPair(Codec.STRING.optionalFieldOf("display_name", ""),
+                            Codec.STRING.optionalFieldOf("description", ""))
+                    .forGetter(spec -> Pair.of(spec.displayName(), spec.description())),
             Codec.BOOL.optionalFieldOf("preinstalled", false).forGetter(ProgramSpec::preinstalled),
             StableCodecs.byName(Platform.class).listOf().xmap(Set::copyOf, List::copyOf)
                     .fieldOf("platforms").forGetter(ProgramSpec::platforms),
@@ -95,8 +110,23 @@ public record ProgramSpec(
                     .optionalFieldOf("era", null)
                     .forGetter(ProgramSpec::era),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.BUNDLED).forGetter(ProgramSpec::house),
-            Codec.INT.optionalFieldOf("ram_mb", 0).forGetter(ProgramSpec::ramMb)
-    ).apply(inst, ProgramSpec::new));
+            Codec.mapPair(Codec.INT.optionalFieldOf("ram_mb", 0),
+                            ProgramRequirement.CODEC.optionalFieldOf("requires", ProgramRequirement.NONE))
+                    .forGetter(spec -> Pair.of(spec.ramMb(), spec.requires()))
+    ).apply(inst, (id, commandName, names, preinstalled, platforms, minCpuMhz, minVramMb, minDiskMb, kind,
+                   minOsRank, hostScope, iconId, minEra, era, house, needs) -> new ProgramSpec(id, commandName,
+            names.getFirst(), names.getSecond(), preinstalled, platforms, minCpuMhz, minVramMb, minDiskMb, kind,
+            minOsRank, hostScope, iconId, minEra, era, house, needs.getFirst(), needs.getSecond())));
+
+    /*
+     * What a program that declares no memory holds on a Legacy machine, by what it is: a program installed on top is
+     * the average one (about eight of them and the system fill a typical machine), a tool that ships with the system a
+     * third of that, a service half, and a whole desktop a little more than one program.
+     */
+    private static final int UNDECLARED_APP_MB = 48;
+    private static final int UNDECLARED_BUNDLED_MB = 16;
+    private static final int UNDECLARED_SERVICE_MB = 24;
+    private static final int UNDECLARED_DESKTOP_MB = 64;
 
     /**
      * Compact constructor: fills sensible defaults from the id (command name and display name from the
@@ -111,6 +141,9 @@ public record ProgramSpec(
         }
         if (displayName == null || displayName.isBlank()) {
             displayName = titleCase(id.getPath());
+        }
+        if (description == null) {
+            description = "";
         }
         if (kind == null) {
             kind = ProgramKind.APP;
@@ -133,17 +166,27 @@ public record ProgramSpec(
         if (ramMb < 0) {
             ramMb = 0;
         }
+        if (requires == null) {
+            requires = ProgramRequirement.NONE;
+        }
         platforms = Set.copyOf(platforms);
     }
 
     /**
      * The generation a program belongs to when nothing says otherwise, read off the Frames version it
-     * needs: only-on-11 is Standard, XP-or-later is Legacy, anything else is Vintage. The built-in
-     * registrations override this per program; the rule is only the default for a program that never said.
+     * needs: only-on-11 is Advanced, 10-or-later Standard, 7-or-later Transition, XP-or-later Legacy, anything
+     * else Vintage. The built-in registrations override this per program; the rule is only the default for a
+     * program that never said.
      */
     private static HardwareEra eraFromRank(final int minOsRank) {
-        if (minOsRank >= 3) {
+        if (minOsRank >= 5) {
+            return HardwareEra.ADVANCED;
+        }
+        if (minOsRank >= 4) {
             return HardwareEra.STANDARD;
+        }
+        if (minOsRank >= 3) {
+            return HardwareEra.TRANSITION;
         }
         if (minOsRank >= 2) {
             return HardwareEra.LEGACY;
@@ -153,14 +196,27 @@ public record ProgramSpec(
 
     /**
      * Convenience factory for the common case: no CPU/VRAM minimum and the icon derived from the id. Keeps
-     * the built-in registrations readable while the canonical constructor stays available for the rest.
+     * the built-in registrations readable while the canonical constructor stays available for the rest. The name
+     * and what the program does are said with {@link #named} and {@link #described}.
      */
-    public static ProgramSpec of(final ResourceLocation id, final String commandName, final String displayName,
-                                 final boolean preinstalled, final Set<Platform> platforms, final int minDiskMb,
-                                 final ProgramKind kind, final int minOsRank, final HostScope hostScope) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, 0, 0, minDiskMb,
+    public static ProgramSpec of(final ResourceLocation id, final String commandName, final boolean preinstalled,
+                                 final Set<Platform> platforms, final int minDiskMb, final ProgramKind kind,
+                                 final int minOsRank, final HostScope hostScope) {
+        return new ProgramSpec(id, commandName, "", "", preinstalled, platforms, 0, 0, minDiskMb,
                 kind, minOsRank, hostScope, id, HardwareEra.VINTAGE, null,
-                SoftwareHouse.BUNDLED, 0);
+                SoftwareHouse.BUNDLED, 0, ProgramRequirement.NONE);
+    }
+
+    /** The same program, called this in English. */
+    public ProgramSpec named(final String english) {
+        return new ProgramSpec(id, commandName, english, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb, requires);
+    }
+
+    /** The same program, saying what it does in one line of English. */
+    public ProgramSpec described(final String english) {
+        return new ProgramSpec(id, commandName, displayName, english, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb, requires);
     }
 
     /**
@@ -169,8 +225,8 @@ public record ProgramSpec(
      * running on a machine of the 1990s.
      */
     public ProgramSpec withMinEra(final HardwareEra oldest) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
-                minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb);
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb, requires);
     }
 
     /**
@@ -178,35 +234,63 @@ public record ProgramSpec(
      * the year on its banner; it never gates where it installs, which stays {@link #minEra()}'s job.
      */
     public ProgramSpec withEra(final HardwareEra generation) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
-                minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb);
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb,
+                requires);
     }
 
     /** The same program, credited to {@code maker}: the name on its disc, its banner and its about line. */
     public ProgramSpec withHouse(final SoftwareHouse maker) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
-                minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, maker, ramMb);
-    }
-
-    /** The same program, holding {@code megabytes} of RAM while it runs. */
-    public ProgramSpec withRam(final int megabytes) {
-        return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
-                minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, megabytes);
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, maker, ramMb, requires);
     }
 
     /**
-     * The megabytes this program holds while it runs under {@code system}: its declared size, else a share of
-     * the system's own when it ships with the system, else the weight of its generation. A bundled Files is
-     * a few megabytes on a nineties system and far more on a modern one; an installed tool weighs what it is.
+     * The same program, holding {@code megabytes} of RAM while it runs on a machine of the Legacy era; on the other
+     * eras it holds that much more or less, as {@link EraMemory} says.
      */
-    public int ramMbOn(final OsDef system) {
-        if (preinstalled) {
-            return RamLedger.bundledWeightMb(system.ramMb());
-        }
+    public ProgramSpec withRam(final int megabytes) {
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, megabytes, requires);
+    }
+
+    /**
+     * The same program, needing {@code requirement} of the network's engine: a house's tool names the engine it is
+     * written for, a portable one the capabilities it uses. It installs anywhere, and says what it did not find when
+     * it is opened on a network that cannot give it that.
+     */
+    public ProgramSpec requiring(final ProgramRequirement requirement) {
+        return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
+                minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, ramMb, requirement);
+    }
+
+    /**
+     * The megabytes this program holds on a machine of the Legacy era: what it declared, or for one that declared
+     * nothing what a program of its kind holds, a tool that ships with the system less than one installed on top.
+     */
+    public int legacyMb() {
         if (ramMb > 0) {
             return ramMb;
         }
-        return RamLedger.eraWeightMb(era, kind);
+        return switch (kind) {
+            case SERVICE, NETWORK_ENGINE -> UNDECLARED_SERVICE_MB;
+            case DESKTOP_ENVIRONMENT -> UNDECLARED_DESKTOP_MB;
+            default -> preinstalled ? UNDECLARED_BUNDLED_MB : UNDECLARED_APP_MB;
+        };
+    }
+
+    /**
+     * The megabytes this program holds while it runs on a machine of {@code era}: what it holds on a Legacy machine,
+     * grown or shrunk by how much more memory that era's machines have. The same Files is a few megabytes on a
+     * Vintage machine and gigabytes on an Advanced one, whichever system it ships with.
+     */
+    public int ramMbOn(@Nullable final HardwareEra era) {
+        return EraMemory.scaled(legacyMb(), era);
+    }
+
+    /** The same, for a copy the machine may have built from source, which holds a little less (SourceAdvantage). */
+    public int ramMbOn(@Nullable final HardwareEra era, final boolean builtHere) {
+        return SourceAdvantage.of(this.ramMbOn(era), builtHere);
     }
 
     /** Who to credit where the program is shown: its own house, or {@code shipper} when it is bundled. */
@@ -214,9 +298,22 @@ public record ProgramSpec(
         return house.or(shipper);
     }
 
+    /**
+     * The program's name as a sentence to translate, under {@link #titleKey()}: what a launcher, a title bar or a
+     * list shows in the player's language, with the English it is declared with.
+     */
+    public TextKey name() {
+        return TextKey.of(titleKey(), displayName);
+    }
+
     /** The translation key for this program's display name, in vanilla {@code program.<ns>.<path>} form. */
     public String titleKey() {
         return "program." + id.getNamespace() + "." + id.getPath();
+    }
+
+    /** The translation key for what this program does, beside its name's: {@code program.<ns>.<path>.desc}. */
+    public String descriptionKey() {
+        return titleKey() + ".desc";
     }
 
     /** Whether a player installs this program (true) or it ships with the computer (false). */

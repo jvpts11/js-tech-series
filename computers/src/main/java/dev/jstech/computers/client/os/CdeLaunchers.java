@@ -7,11 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -37,7 +40,7 @@ final class CdeLaunchers {
     private record Row(String label, @Nullable ResourceLocation icon, Runnable action) {
     }
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     /** The control whose subpanel is up, or null while none is. */
     @Nullable
@@ -52,9 +55,9 @@ final class CdeLaunchers {
 
     /** The Application Manager's picture, which is CDE's own and no program's. */
     private static final ResourceLocation APPLICATION_MANAGER =
-            ResourceLocation.fromNamespaceAndPath("jsc", "application_manager");
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "application_manager");
 
-    CdeLaunchers(final DesktopScreen desktop) {
+    CdeLaunchers(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -115,8 +118,8 @@ final class CdeLaunchers {
         final String heading = heading(this.open);
         MotifChrome.raised(g, box.x(), box.y(), box.w(), box.h(), p.window(), p);
         g.fill(box.x() + PAD, box.y() + PAD, box.x() + box.w() - PAD, box.y() + PAD + HEAD_H, p.active());
-        g.drawString(desktop.textFont(), heading,
-                box.x() + (box.w() - desktop.textFont().width(heading)) / 2, box.y() + PAD + 3, p.activeInk(), false);
+        Draw.text(g, desktop.textFont(), heading,
+                box.x() + (box.w() - desktop.textFont().width(heading)) / 2, box.y() + PAD + 3, p.activeInk());
         int y = box.y() + PAD + HEAD_H + 1;
         for (final Row row : rows) {
             if (desktop.hoverIn(box.x() + PAD, y, box.w() - PAD * 2, ROW_H)) {
@@ -125,8 +128,8 @@ final class CdeLaunchers {
             if (row.icon() != null) {
                 ProgramIcons.draw(g, box.x() + PAD + 2, y + 1, 14, 14, row.icon(), desktop.icons());
             }
-            g.drawString(desktop.textFont(), desktop.shorten(row.label(), LABEL_CHARS), box.x() + PAD + 20, y + 4,
-                    p.ink(), false);
+            Draw.text(g, desktop.textFont(), desktop.shorten(row.label(), LABEL_CHARS), box.x() + PAD + 20, y + 4,
+                    p.ink());
             y += ROW_H;
         }
     }
@@ -154,11 +157,11 @@ final class CdeLaunchers {
     }
 
     private static String heading(final Control control) {
-        return switch (control) {
-            case FILES -> "Files";
-            case EDITOR -> "Personal Applications";
-            default -> "Applications";
-        };
+        return GameText.resolve(switch (control) {
+            case FILES -> CdeLaunchersTexts.FILES_HEADING;
+            case EDITOR -> CdeLaunchersTexts.EDITOR_HEADING;
+            default -> CdeLaunchersTexts.APPLICATIONS_HEADING;
+        });
     }
 
     /** What the subpanel that is up lists; a program this machine does not have is left out. */
@@ -166,18 +169,21 @@ final class CdeLaunchers {
         final List<Row> out = new ArrayList<>();
         if (this.open == Control.FILES) {
             final ResourceLocation files = iconOf("files");
-            out.add(new Row("Home", files, () -> desktop.openFolder(desktop.homeDir())));
-            out.add(new Row("Desktop", files, () -> desktop.openFolder(desktop.desktopDirectory())));
+            out.add(new Row(GameText.resolve(CdeLaunchersTexts.HOME_ROW), files,
+                    () -> desktop.opener().openFolder(desktop.homeDir())));
+            out.add(new Row(GameText.resolve(CdeLaunchersTexts.DESKTOP_ROW), files,
+                    () -> desktop.opener().openFolder(desktop.desktopDirectory())));
             for (final DiskFilesPayload.WireVolume medium : desktop.media()) {
-                out.add(new Row(medium.label(), files, () -> desktop.openFolder(medium.key())));
+                out.add(new Row(GameText.resolve(medium.label()), files,
+                        () -> desktop.opener().openFolder(medium.key())));
             }
         } else if (this.open == Control.EDITOR) {
             program(out, "editor");
             program(out, "command_prompt");
             program(out, "calculator");
         } else if (this.open == Control.APPLICATIONS) {
-            out.add(new Row(ApplicationManagerApp.KEY, APPLICATION_MANAGER,
-                    () -> desktop.openApplicationManager(null)));
+            out.add(new Row(GameText.resolve(ApplicationManagerTexts.NAME), APPLICATION_MANAGER,
+                    () -> desktop.opener().openApplicationManager(null)));
             program(out, "system_monitor");
             program(out, "workstation_info");
         }
@@ -186,9 +192,9 @@ final class CdeLaunchers {
 
     /** Adds the program whose id has that path, under the name this desktop gives it, when the machine has it. */
     private void program(final List<Row> out, final String path) {
-        for (final DesktopScreen.Launcher launcher : desktop.launcherList()) {
+        for (final Launcher launcher : desktop.launcherList()) {
             if (launcher.programId() != null && launcher.programId().getPath().equals(path)) {
-                out.add(new Row(launcher.label(), launcher.programId(), () -> desktop.launch(launcher)));
+                out.add(new Row(launcher.label(), launcher.programId(), () -> desktop.start().choose(launcher)));
                 return;
             }
         }
@@ -196,7 +202,7 @@ final class CdeLaunchers {
 
     @Nullable
     private ResourceLocation iconOf(final String path) {
-        for (final DesktopScreen.Launcher launcher : desktop.launcherList()) {
+        for (final Launcher launcher : desktop.launcherList()) {
             if (launcher.programId() != null && launcher.programId().getPath().equals(path)) {
                 return launcher.programId();
             }

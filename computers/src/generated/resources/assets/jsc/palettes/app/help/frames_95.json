@@ -1,0 +1,20 @@
+{
+  "band": "#FFC0C0C0",
+  "bandInk": "#FF000000",
+  "book": "#FF7A2F86",
+  "bookOpen": "#FFC58AD0",
+  "faint": "#FF707070",
+  "ground": "#FFC0C0C0",
+  "heading": "#FF000000",
+  "ink": "#FF000000",
+  "link": "#FF2050D0",
+  "linkHover": "#FFC00000",
+  "page": "#FFFFFFFF",
+  "pane": "#FFFFFFFF",
+  "rule": "#FF808080",
+  "select": "#FF000080",
+  "selectInk": "#FFFFFFFF",
+  "shade": "#FFE8E8E8",
+  "title": "#FF000000",
+  "warning": "#FF800000"
+}

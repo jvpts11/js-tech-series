@@ -31,13 +31,40 @@ public final class Programs {
     public static final ResourceLocation TASK_MANAGER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "task_manager");
 
-    /** Network Management Studio: an SSMS-style operations console, installed by the player. */
-    public static final ResourceLocation NMS =
-            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
+    /** The file manager every desktop ships, under whatever name that desktop gives it. */
+    public static final ResourceLocation FILES =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "files");
 
-    /** The IQL Engine: a background service installed on the Mainframe (the network's "SQL Server"). */
+    /** Settings: the machine's own knobs, and the list of everything installed on it. */
+    public static final ResourceLocation SETTINGS =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "settings");
+
+    /** IQL Server Management Studio: the Midsoft IQL Server's console, installed by the player. */
+    public static final ResourceLocation ISMS =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "isms");
+
+    /**
+     * The Midsoft IQL Server: the Network Operations Engine every Mainframe ships with (the network's "SQL Server").
+     * The id is the one the package always had, which is also what the prompt's {@code iqlengine} command names.
+     */
     public static final ResourceLocation IQL_ENGINE =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "iqlengine");
+
+    /** NextgreIQL: the explicit engine, which shows how it plans and lets the player take part in it. */
+    public static final ResourceLocation NEXTGRE_IQL =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nextgreiql");
+
+    /** Prophet YourIQL: the engine told what state to keep, which reacts to what changes. */
+    public static final ResourceLocation YOURIQL =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "youriql");
+
+    /** Prophet Reactive Console: Prophet YourIQL's own tool, where its states are declared and watched. */
+    public static final ResourceLocation PROPHET_CONSOLE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "prophet_console");
+
+    /** Nextgre Planner Studio: NextgreIQL's own tool, where its plans are explained and its planner is tuned. */
+    public static final ResourceLocation NEXTGRE_STUDIO =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nextgre_studio");
 
     /**
      * The Crafting Manager: the desktop app that moves {@code .craft} recipe files between removable
@@ -49,6 +76,10 @@ public final class Programs {
 
     public static final ResourceLocation PATTERN_STUDIO =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "pattern_studio");
+
+    /** Workshop: the personal-use cards of a Personal Computer, worked with the player's own items. */
+    public static final ResourceLocation WORKSHOP =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "workshop");
 
     /** Cluster Manager: the Cluster Management Computer's front for every cluster on its network. */
     public static final ResourceLocation CLUSTER_MANAGER =
@@ -77,6 +108,38 @@ public final class Programs {
     /** The Automation Manager: the desktop front-end that creates and manages jobs for the Engine. */
     public static final ResourceLocation AUTOMATION_MANAGER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "automation_manager");
+
+    /** The Mirror: the Mainframe service every package manager on the network installs from. */
+    public static final ResourceLocation MIRROR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mirror");
+
+    /** The Messenger Service: keeps the network's conversations, on a server in a rack. */
+    public static final ResourceLocation MESSENGER_SERVICE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "messenger_service");
+
+    /** KnotHub: keeps the source a network is working on, revision by revision, on a server in a rack. */
+    public static final ResourceLocation KNOT_HUB =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "knothub");
+
+    /** Predictive Cache: a server service that keeps its bay's most-wanted items staged, so reads come back sooner. */
+    public static final ResourceLocation PREDICTIVE_CACHE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "predictive_cache");
+
+    /** Load Balancer: a server service that spreads writes over the bay's drives instead of filling them in turn. */
+    public static final ResourceLocation LOAD_BALANCER =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "load_balancer");
+
+    /** Integrity Monitor: a server service that re-reads its own bay after a drive is pulled while it runs. */
+    public static final ResourceLocation INTEGRITY_MONITOR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "integrity_monitor");
+
+    /** Soundfoundry: Voidsoft's music player. */
+    public static final ResourceLocation SOUNDFOUNDRY =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "soundfoundry");
+
+    /** Soundfoundry Server: streams the catalogue and the network's own songs, on a server in a rack. */
+    public static final ResourceLocation SOUNDFOUNDRY_SERVER =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "soundfoundry_server");
 
     private Programs() {
     }

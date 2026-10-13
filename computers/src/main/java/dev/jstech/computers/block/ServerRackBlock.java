@@ -8,25 +8,35 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
-import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
+import dev.jstech.core.connect.Connection;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.peripheral.PeripheralLine;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
-import java.util.EnumSet;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -53,22 +63,50 @@ import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Server Rack: a 2-wide, 3-tall, 2-deep multiblock cabinet that is logically a single rack.
+ * The Server Rack: a 2-wide, 3-tall, 2-deep multiblock cabinet that is logically a single rack, one block for every
+ * era, the era given where it is declared.
  */
+@TextHolder
 public class ServerRackBlock extends AbstractMultiblockControllerBlock
-        implements IRearFacingDataPort {
+        implements IFaceConnector {
 
-    public static final MapCodec<ServerRackBlock> CODEC = simpleCodec(ServerRackBlock::new);
+    private final HardwareEra era;
+    /* The backbone on its back, its era's cable and every earlier one's; the small computers reach it by a router. */
+    private final FacePorts ports;
+
+    public static final MapCodec<ServerRackBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(ServerRackBlock::era)
+    ).apply(i, ServerRackBlock::new));
 
     public static final IntegerProperty BAYS =
             IntegerProperty.create("bays", 0, 3);
 
-    public ServerRackBlock(final Properties properties) {
+    public static final TextKey WRONG_CHASSIS =
+            TextKey.of("block.jsc.rack.wrong_chassis", "This chassis belongs in a different rack");
+    public static final TextKey WRONG_UNIT =
+            TextKey.of("block.jsc.rack.wrong_unit", "This unit belongs in a newer rack, or in another kind of rack");
+    public static final TextKey ROW_TAKEN =
+            TextKey.of("block.jsc.rack.row_taken", "That rack unit is taken or too small for this");
+
+    public ServerRackBlock(final Properties properties, final HardwareEra era) {
+        this(properties, era, FacePorts.builder()
+                .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
+                .port(FaceRule.EVERY, PeripheralLine.of(era))
+                .build());
+    }
+
+    /* For a cabinet with a port set of its own, so the base never builds one that would go unused. */
+    protected ServerRackBlock(final Properties properties, final HardwareEra era, final FacePorts ports) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0));
+        this.era = era;
+        this.ports = ports;
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0)
+                .setValue(OpticalPort.FIBRE, FibreReach.NONE));
     }
 
     @Override
@@ -90,7 +128,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
      * takes everything and a Vintage rack takes only Vintage servers.
      */
     public HardwareEra era() {
-        return HardwareEra.STANDARD;
+        return era;
     }
 
     /**
@@ -102,26 +140,32 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
-    /**
-     * The item this cabinet drops when torn down and is picked as. A typed cabinet answers with its own,
-     * so dismantling a Supercomputer Rack never hands the player a Server Rack.
-     */
-    protected Item blockItem() {
-        return ComputingModule.SERVER_RACK_ITEM.get();
+    /* A Server Rack takes the network on its back, never the high-compute fabric, the supercomputer cabinet's alone. */
+    @Override
+    public FacePorts ports() {
+        return ports;
     }
 
+    /* The fibre only as far as the Fibre Optic Interface mounted in the cabinet reaches. */
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        /*
-         * A Server Rack takes any data cable tier but the high-compute fabric, which belongs to the
-         * supercomputer cabinet alone.
-         */
-        return EnumSet.complementOf(EnumSet.of(DataTier.HPC));
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return IFaceConnector.super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
     }
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, BAYS);
+        builder.add(FACING, BAYS, OpticalPort.FIBRE);
+    }
+
+    /** Says on the cabinet and every part of it how much of the fibre its Fibre Optic Interface lets in. */
+    public void setFibre(final Level level, final BlockPos controller, final FibreReach reach) {
+        final BlockState state = level.getBlockState(controller);
+        if (!(state.getBlock() instanceof ServerRackBlock)) {
+            return;
+        }
+        final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(controller, state.getValue(FACING)));
+        blocks.add(controller);
+        OpticalPort.set(level, blocks, OpticalPort.FIBRE, reach);
     }
 
     @Override
@@ -145,17 +189,22 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         return ComputingModule.SERVER_RACK_PART.get().defaultBlockState()
                 .setValue(ServerRackPartBlock.TOP, ServerRackStructure.isTopLayer(controller, part))
                 .setValue(ServerRackPartBlock.FACING, facing)
+                .setValue(ServerRackPartBlock.ERA, era().level())
                 .setValue(ServerRackPartBlock.COMPUTE,
                         rackType() == RackChassis.RackType.SUPERCOMPUTER)
                 .setValue(ServerRackPartBlock.FRONT,
-                        ServerRackStructure.isFrontBayBlock(controller, facing, part));
+                        ServerRackStructure.isFrontBayBlock(controller, facing, part))
+                .setValue(OpticalPort.FIBRE, controllerState.hasProperty(OpticalPort.FIBRE)
+                        ? controllerState.getValue(OpticalPort.FIBRE) : FibreReach.NONE);
     }
 
     @Override
     protected void dropContents(final ServerLevel level, final BlockPos controller) {
-        Block.popResource(level, controller, new ItemStack(blockItem()));
+        // Its own item, so a broken cabinet gives back its era, and a Supercomputer Rack never a Server Rack.
+        Block.popResource(level, controller, new ItemStack(asItem()));
         if (level.getBlockEntity(controller) instanceof ServerRackBlockEntity rack) {
-            BlockDrops.spill(level, controller, rack.getServers());
+            // The servers fall out with the cabinet rather than slide out of it, which is heard as the cabinet.
+            rack.quietly(() -> BlockDrops.spill(level, controller, rack.getServers()));
             // The hotswap drives belong to the rack, not to the servers, so they spill too.
             BlockDrops.spill(level, controller, rack.getFrontSlots());
         }
@@ -218,9 +267,9 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         if (IMountableRackUnit.of(stack) == null) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        // A chassis that belongs in another cabinet is refused with the reason, not ignored.
+        // A chassis or a unit that belongs in another cabinet is refused with the reason, not ignored.
         if (!rack.acceptsChassis(stack)) {
-            tell(player, "block.jsc.rack.wrong_chassis");
+            tell(player, stack.getItem() instanceof RackUnitItem ? WRONG_UNIT : WRONG_CHASSIS);
             return ItemInteractionResult.sidedSuccess(false);
         }
         final ItemStackHandler servers = rack.getServers();
@@ -232,18 +281,27 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
              */
             if (servers.getStackInSlot(aimed).isEmpty() && servers.isItemValid(aimed, stack)) {
                 servers.setStackInSlot(aimed, stack.split(1));
+                reportFull(rack, player);
             } else {
-                tell(player, "block.jsc.rack.row_taken");
+                tell(player, ROW_TAKEN);
             }
             return ItemInteractionResult.sidedSuccess(false);
         }
         for (int i = 0; i < servers.getSlots(); i++) {
             if (servers.getStackInSlot(i).isEmpty() && servers.isItemValid(i, stack)) {
                 servers.setStackInSlot(i, stack.split(1));
+                reportFull(rack, player);
                 return ItemInteractionResult.sidedSuccess(false);
             }
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    /* The unit that takes the cabinet's last free row fills the rack. */
+    private static void reportFull(final ServerRackBlockEntity rack, final Player player) {
+        if (RackLayout.usedU(rack.mountedUnits()) >= ServerRackBlockEntity.CAPACITY_U) {
+            JscEvents.award(player, JscEvents.RACK_FILLED);
+        }
     }
 
     /** The rack row under the crosshair when the hit lands on the cabinet's front face, else -1. */
@@ -302,13 +360,13 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     public ItemStack getCloneItemStack(final BlockState state, final HitResult target, final LevelReader level,
                                        final BlockPos pos, final Player player) {
         return level.getBlockEntity(pos) instanceof ServerRackBlockEntity rack
-                ? pickFrom(rack, pos, pos, target, blockItem())
+                ? pickFrom(rack, pos, pos, target, asItem())
                 : super.getCloneItemStack(state, target, level, pos, player);
     }
 
-    private static void tell(final Player player, final String key) {
+    private static void tell(final Player player, final TextKey sentence) {
         if (player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.displayClientMessage(Component.translatable(key), true);
+            serverPlayer.displayClientMessage(GameText.component(sentence), true);
         }
     }
 

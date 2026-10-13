@@ -9,6 +9,8 @@ package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,10 +24,23 @@ import java.util.List;
  * <p>A call to one of the program's methods is a new frame on the running thread, never a Java call, so a program
  * that calls deep costs frames, not the server's stack, and a thread's calls stop at {@link #DEEPEST}.
  */
+@TextHolder
 final class CallDispatch {
 
     /** The most calls one thread may have in progress at once; one call more halts the program. */
     static final int DEEPEST = 1_024;
+    /** The most places one thread's calls may hold together, about four megabytes of the server's memory. */
+    static final long STACK_PLACES = 1L << 20;
+
+    private static final TextKey NOT_ANSWERED = TextKey.of("jsc.vm.call_dispatch.not_answered",
+            "the runtime does not answer for %s");
+    private static final TextKey NO_HANDLER = TextKey.of("jsc.vm.call_dispatch.no_handler",
+            "there is no handler to call");
+    private static final TextKey NOTHING_TO_CALL = TextKey.of("jsc.vm.call_dispatch.nothing_to_call",
+            "there is no %s to call");
+    private static final TextKey NO_BODY = TextKey.of("jsc.vm.call_dispatch.no_body", "%s has no body to run");
+    private static final TextKey TOO_DEEP = TextKey.of("jsc.vm.call_dispatch.too_deep",
+            "calls went %s deep calling %s: a method may be calling itself without end");
 
     private final Process process;
     private final Heap heap;
@@ -40,6 +55,10 @@ final class CallDispatch {
     /** Makes a delegate of the method named, bound to the object on top of the stack. */
     void handler(final Frame frame, final IOperand.Method method, final int line) {
         final Object target = frame.pop();
+        // A static method or a lambda with no closure is bound to nothing, but a freed object is never bound.
+        if (target != null) {
+            this.heap.alive(target, line);
+        }
         final Values.Bound bound = new Values.Bound(target, method.owner().value(), method.name(),
                 method.parameters(), method.returns().value());
         final Values.DelegateValue made = new Values.DelegateValue(method.owner().value(), List.of(bound));
@@ -73,7 +92,7 @@ final class CallDispatch {
                 return;
             }
             // A call to the world that the machine the program runs on does not answer.
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "the runtime does not answer for " + named.owner());
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOT_ANSWERED.with(named.owner()));
         }
         final List<Object> arguments = take(frame, site.outs());
         final Object self = direct.isStatic() ? null : this.heap.alive(frame.pop(), line);
@@ -121,6 +140,12 @@ final class CallDispatch {
         final Object answer = handled.function().call(this.process, target, arguments, line);
         if (site.gives()) {
             frame.push(answer);
+        }
+        // What the call filled in comes back after its answer, as it does from a function of the language.
+        for (int i = 0; i < outs.length; i++) {
+            if (outs[i]) {
+                frame.push(arguments[i] == null ? site.defaults()[i] : arguments[i]);
+            }
         }
     }
 
@@ -176,7 +201,7 @@ final class CallDispatch {
     private void invoke(final Frame frame, final List<Object> arguments, final int line) {
         final Object value = this.heap.alive(frame.pop(), line);
         if (!(value instanceof Values.DelegateValue delegate) || delegate.chain().isEmpty()) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no handler to call");
+            throw new Halt(Halt.Reason.NO_OBJECT, line, NO_HANDLER.text());
         }
         final List<Values.Bound> chain = delegate.chain();
         for (int i = chain.size() - 1; i >= 0; i--) {
@@ -185,8 +210,7 @@ final class CallDispatch {
                     this.program.method(bound.owner(), bound.method(), bound.parameters());
             if (method == null || !method.hasCode()) {
                 if (i == chain.size() - 1) {
-                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                            "there is no " + bound.method() + " to call");
+                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOTHING_TO_CALL.with(bound.method()));
                 }
                 continue;
             }
@@ -200,7 +224,7 @@ final class CallDispatch {
     /** Starts a method of the program on the running thread, with those arguments in its first slots. */
     void enter(final MethodImage method, final Object self, final List<Object> arguments, final int line) {
         if (!method.hasCode()) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, method.describe() + " has no body to run");
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_BODY.with(method.describe()));
         }
         final Frame frame = new Frame(method, self);
         fill(frame, arguments);
@@ -211,13 +235,14 @@ final class CallDispatch {
      * Starts a call the running thread makes, unless its calls already go as deep as a thread's may.
      *
      * <p>A method that calls itself without end would otherwise keep adding calls, each held in the server's
-     * memory, for as long as the program runs; no program that ends is anywhere near this deep.
+     * memory, for as long as the program runs; no program that ends is anywhere near this deep. The places the calls
+     * hold are bounded too, reckoned as if every call held as many as this one: a method of tens of thousands of
+     * places calling itself a thousand deep would hold the server's memory long before its depth stopped it.
      */
     private void pushCall(final Frame frame, final int line) {
         final Deque<Frame> frames = this.process.current().frames;
-        if (frames.size() >= DEEPEST) {
-            throw new Halt(Halt.Reason.STACK_DEPTH, line, "calls went " + DEEPEST + " deep calling "
-                    + frame.method.describe() + ": a method may be calling itself without end");
+        if (frames.size() >= DEEPEST || (long) (frames.size() + 1) * frame.slots.length > STACK_PLACES) {
+            throw new Halt(Halt.Reason.STACK_DEPTH, line, TOO_DEEP.with(frames.size(), frame.method.describe()));
         }
         frames.push(frame);
     }
@@ -230,6 +255,10 @@ final class CallDispatch {
         final Deque<Frame> frames = this.process.current().frames;
         frames.pop();
         if (frames.isEmpty()) {
+            // A program's Main has nobody to give its answer to but the machine, which takes it as the exit code.
+            if (answer != null && this.process.isMain(frame.method)) {
+                this.process.mainGave(Numbers.toInt(answer));
+            }
             return;
         }
         if (frame.discard) {

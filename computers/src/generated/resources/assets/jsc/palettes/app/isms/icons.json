@@ -1,0 +1,16 @@
+{
+  "agent": "#FF5AA05A",
+  "column": "#FF808080",
+  "folder": "#FFF2CA4C",
+  "folderEdge": "#FFC79A1F",
+  "gear": "#FFC8C8C8",
+  "job": "#FFF0A64E",
+  "network": "#FF5077A8",
+  "networkEdge": "#FF41608A",
+  "procedure": "#FFE08A8A",
+  "server": "#FF9AB0C8",
+  "tableEdge": "#FFB08A00",
+  "tableFill": "#FFFFFFFF",
+  "tableTop": "#FFECC233",
+  "view": "#FFB07FD8"
+}

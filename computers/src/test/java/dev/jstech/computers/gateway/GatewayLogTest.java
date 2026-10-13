@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.gateway;
 
+import dev.jstech.core.text.Text;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 final class GatewayLogTest {
 
     private static GatewayLog.Entry entry(final int n) {
-        return new GatewayLog.Entry(n, "CC #" + n, "call " + n, "ok", GatewayLog.Tone.OK);
+        return new GatewayLog.Entry(n, Text.literal("CC #" + n), Text.literal("call " + n), Text.literal("ok"),
+                GatewayLog.Tone.OK);
     }
 
     @Test

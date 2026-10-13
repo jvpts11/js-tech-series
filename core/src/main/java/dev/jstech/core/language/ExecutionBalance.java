@@ -55,10 +55,4 @@ public final class ExecutionBalance {
     public static void setServerMicros(final int micros) {
         serverNanos = Math.max(0, micros) * NANOS_PER_MICRO;
     }
-
-    /** Back to the design estimates, for tests. */
-    public static void reset() {
-        setMachineMicros(DEFAULT_MACHINE_MICROS);
-        setServerMicros(DEFAULT_SERVER_MICROS);
-    }
 }

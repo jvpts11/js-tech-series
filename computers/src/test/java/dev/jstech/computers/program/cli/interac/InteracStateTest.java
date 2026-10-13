@@ -48,7 +48,7 @@ class InteracStateTest {
 
         assertEquals("Starred", last.tabName());
         assertEquals(0, last.selected(), "another tab is other rows, so nothing is picked yet");
-        assertEquals("Network", last.onTab(InteracState.TABS.length).tabName(), "and it walks round");
+        assertEquals("Network", last.onTab(InteracState.TABS.size()).tabName(), "and it walks round");
         assertEquals("Starred", last.onTab(-1).tabName(), "the other way too");
     }
 
@@ -65,5 +65,12 @@ class InteracStateTest {
     @Test
     void searchingFor_startsTheRowsAgainFromTheTop() {
         assertEquals(0, InteracState.OPENING.picking(9).searchingFor("stone").selected());
+    }
+
+    @Test
+    void constructor_holdsAHugeGlassToTheLargestOneDrawn() {
+        final InteracState state = new InteracState(0, 0, "", "", 0L, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        assertEquals(InteracState.MOST_COLUMNS, state.columns());
+        assertEquals(InteracState.MOST_ROWS, state.rows());
     }
 }

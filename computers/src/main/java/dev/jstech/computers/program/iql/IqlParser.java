@@ -9,7 +9,10 @@ package dev.jstech.computers.program.iql;
 
 import dev.jstech.computers.program.iql.IqlLexer.Token;
 import dev.jstech.computers.program.iql.IqlLexer.Type;
+import dev.jstech.computers.workshop.UpdateAction;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 
 import java.util.List;
 import java.util.Locale;
@@ -28,10 +31,12 @@ import java.util.Locale;
  *   <li><b>query</b>: {@code (QUERY|SHOW) object [WHERE cond] [ORDER BY ...] [LIMIT n]}: a read that
  *       names a schema object instead of an item, and has no FROM/TO/IF.</li>
  *   <li><b>maintenance</b>: {@code (ANALYZE|VACUUM|REINDEX) [object]}.</li>
+ *   <li><b>update</b>: {@code UPDATE [qty] item [FROM server] SET action [args] [WITH item] [WHERE cond]
+ *       [ORDER BY ...] [LIMIT n] [PRIORITY level]}, where the action is SMELT, ENCHANT [OFFER n], REPAIR,
+ *       COMBINE or NAME 'text', and only a REPAIR or a COMBINE takes WITH (a COMBINE must).</li>
  * </ul>
  *
- * <p>A parse error currently surfaces as an {@link IllegalArgumentException}; it will move to a richer
- * result type once the surfaces (Command Prompt, the studio) need positions for inline diagnostics.
+ * <p>A parse error surfaces as an {@link IqlError}, whose reason is read in the player's language.
  * Percentage quantities ({@code 50%}) are not modelled yet and are rejected with a clear message.
  */
 public final class IqlParser {
@@ -45,7 +50,7 @@ public final class IqlParser {
 
     public static IqlOperation parse(final String input) {
         if (input == null || input.isBlank()) {
-            throw new IllegalArgumentException("empty statement");
+            throw IqlError.of(IqlError.EMPTY_STATEMENT);
         }
         return new IqlParser(IqlLexer.lex(input)).parseStatement();
     }
@@ -56,7 +61,31 @@ public final class IqlParser {
      */
     public static IqlParseResult tryParse(final String input) {
         if (input == null || input.isBlank()) {
-            return IqlParseResult.error("empty statement", IqlParseResult.NO_POSITION);
+            return IqlParseResult.error(IqlError.EMPTY_STATEMENT.text(), IqlParseResult.NO_POSITION);
+        }
+        // A bus's settings are their own statement: SET BUS 'name' setting.
+        if (IqlBusStatement.isSetBus(input)) {
+            try {
+                return IqlParseResult.okBus(IqlBusStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
+        }
+        // And a Crafting Interface's or a Crafting Input Router's: SET INTERFACE 'name' setting, and the like.
+        if (IqlCraftingStatement.isCrafting(input)) {
+            try {
+                return IqlParseResult.okCrafting(IqlCraftingStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
+        }
+        // So is a Redstone Interface's mode: SET REDSTONE 'name' IN, or OUT and a strength.
+        if (IqlRedstoneStatement.isSetRedstone(input)) {
+            try {
+                return IqlParseResult.okRedstone(IqlRedstoneStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
         }
         /*
          * Layer 2 first: CREATE/DROP/EXEC of a saved object. tryParse returns null (and we fall through)
@@ -68,14 +97,19 @@ public final class IqlParser {
                 return IqlParseResult.okDefinition(definition);
             }
         } catch (final IllegalArgumentException e) {
-            return IqlParseResult.error(e.getMessage(), IqlParseResult.NO_POSITION);
+            return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
         }
         final IqlParser parser = new IqlParser(IqlLexer.lex(input));
         try {
             return IqlParseResult.ok(parser.parseStatement());
         } catch (final IllegalArgumentException e) {
-            return IqlParseResult.error(e.getMessage(), parser.errorPosition());
+            return IqlParseResult.error(reason(e), parser.errorPosition());
         }
+    }
+
+    /* Every refusal of the language's own is an IqlError; anything else that slipped through says what it said. */
+    private static Text reason(final IllegalArgumentException refused) {
+        return refused instanceof IqlError error ? error.text() : Text.literal(String.valueOf(refused.getMessage()));
     }
 
     /** The token the cursor reached, clamped to the last token, for error reporting. */
@@ -87,32 +121,110 @@ public final class IqlParser {
     }
 
     private IqlOperation parseStatement() {
-        final Token verbToken = expect(Type.WORD, "a verb");
+        final Token verbToken = expect(Type.WORD, IqlError.A_VERB);
         final IqlVerb verb = IqlVerb.fromKeyword(verbToken.text())
-                .orElseThrow(() -> new IllegalArgumentException("unknown verb: " + verbToken.text()));
+                .orElseThrow(() -> IqlError.of(IqlError.UNKNOWN_VERB, verbToken.text()));
         return switch (verb) {
             case QUERY -> parseQuery(verb);
             case ANALYZE, VACUUM, REINDEX -> parseMaintenance(verb);
+            case UPDATE -> parseUpdate(verb);
             default -> parseAction(verb);
         };
     }
 
     private IqlOperation parseAction(final IqlVerb verb) {
         final long quantity = parseOptionalQuantity();
-        final String item = expect(Type.WORD, "an item").text();
+        final String item = expect(Type.WORD, IqlError.AN_ITEM).text();
         final Clauses clauses = new Clauses();
         parseClauses(clauses, true);
         validateFlow(verb, clauses.from, clauses.to);
         return new IqlOperation(verb, quantity, item, clauses.from, clauses.to, clauses.where,
-                clauses.guard, clauses.orderBy, clauses.descending, clauses.limit, clauses.priority);
+                clauses.guard, clauses.orderBy, clauses.descending, clauses.limit, clauses.priority, null);
+    }
+
+    /*
+     * The SET comes straight after the item and its FROM, so what follows it reads as the action's own words; the
+     * clauses every action takes come after those.
+     */
+    private IqlOperation parseUpdate(final IqlVerb verb) {
+        final long quantity = parseOptionalQuantity();
+        final String item = expect(Type.WORD, IqlError.AN_ITEM).text();
+        String from = "";
+        if (peekKeyword("FROM")) {
+            pos++;
+            from = expect(Type.WORD, IqlError.A_SOURCE).text();
+        }
+        if (!peekKeyword("SET")) {
+            throw IqlError.of(IqlError.UPDATE_NEEDS_SET);
+        }
+        pos++;
+        final IqlUpdate update = parseSet();
+        final Clauses clauses = new Clauses();
+        parseClauses(clauses, true);
+        if (!clauses.to.isEmpty()) {
+            throw IqlError.of(IqlError.NO_TO, verb.name());
+        }
+        if (!clauses.from.isEmpty()) {
+            if (!from.isEmpty()) {
+                throw IqlError.of(IqlError.UNEXPECTED_TOKEN, "FROM");
+            }
+            from = clauses.from;
+        }
+        return new IqlOperation(verb, quantity, item, from, "", clauses.where, clauses.guard, clauses.orderBy,
+                clauses.descending, clauses.limit, clauses.priority, update);
+    }
+
+    /** What the card is to do: the action, what it needs said, and the second item when it takes one. */
+    private IqlUpdate parseSet() {
+        final Token word = expect(Type.WORD, IqlError.AN_ACTION);
+        final UpdateAction action = UpdateAction.fromKeyword(word.text())
+                .orElseThrow(() -> IqlError.of(IqlError.UNKNOWN_ACTION, word.text()));
+        int offer = IqlUpdate.NO_OFFER;
+        if (action == UpdateAction.ENCHANT && peekKeyword("OFFER")) {
+            pos++;
+            offer = parseOffer(expect(Type.NUMBER, IqlError.AN_OFFER).text());
+        }
+        String name = "";
+        if (action == UpdateAction.NAME) {
+            name = expect(Type.STRING, IqlError.A_NAME).text();
+            if (name.isBlank()) {
+                throw IqlError.of(IqlError.EXPECTED, IqlError.A_NAME);
+            }
+            if (name.length() > IqlUpdate.MAX_NAME) {
+                throw IqlError.of(IqlError.NAME_TOO_LONG, IqlUpdate.MAX_NAME);
+            }
+        }
+        String with = "";
+        if (peekKeyword("WITH")) {
+            if (!action.takesSecond()) {
+                throw IqlError.of(IqlError.NO_WITH, action.name());
+            }
+            pos++;
+            with = expect(Type.WORD, IqlError.AN_ITEM).text();
+        } else if (action == UpdateAction.COMBINE) {
+            throw IqlError.of(IqlError.COMBINE_NEEDS_WITH);
+        }
+        return new IqlUpdate(action, offer, name, with);
+    }
+
+    private static int parseOffer(final String token) {
+        try {
+            final int offer = Integer.parseInt(token);
+            if (offer >= 1 && offer <= IqlUpdate.OFFERS) {
+                return offer;
+            }
+        } catch (final NumberFormatException e) {
+            // Falls through to the refusal below, which says what an offer is.
+        }
+        throw IqlError.of(IqlError.OFFER_RANGE, token);
     }
 
     private IqlOperation parseQuery(final IqlVerb verb) {
-        final String object = expect(Type.WORD, "an object to query").text();
+        final String object = expect(Type.WORD, IqlError.AN_OBJECT).text();
         final Clauses clauses = new Clauses();
         parseClauses(clauses, false);
         return new IqlOperation(verb, IqlOperation.NONE, object, "", "", clauses.where, null,
-                clauses.orderBy, clauses.descending, clauses.limit, OperationPriority.DEFAULT);
+                clauses.orderBy, clauses.descending, clauses.limit, OperationPriority.DEFAULT, null);
     }
 
     private IqlOperation parseMaintenance(final IqlVerb verb) {
@@ -121,10 +233,10 @@ public final class IqlParser {
             object = tokens.get(pos++).text();
         }
         if (pos < tokens.size()) {
-            throw new IllegalArgumentException("unexpected token: " + tokens.get(pos).text());
+            throw unexpected(tokens.get(pos));
         }
         return new IqlOperation(verb, IqlOperation.NONE, object, "", "", null, null, "", false,
-                IqlOperation.NO_LIMIT, OperationPriority.DEFAULT);
+                IqlOperation.NO_LIMIT, OperationPriority.DEFAULT, null);
     }
 
     /** Reads {@code qty} when the next token is a number or {@code ALL}; otherwise leaves it unset. */
@@ -141,13 +253,19 @@ public final class IqlParser {
 
     private static long parseQuantity(final String token) {
         if (token.endsWith("%")) {
-            throw new IllegalArgumentException("percentage quantities are not supported yet: " + token);
+            throw IqlError.of(IqlError.PERCENTAGE, token);
         }
+        final long value;
         try {
-            return Long.parseLong(token);
+            value = Long.parseLong(token);
         } catch (final NumberFormatException e) {
-            throw new IllegalArgumentException("expected a quantity, got: " + token);
+            throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_QUANTITY, token);
         }
+        /* A typed number must never collide with the ALL sentinel or read as "everything" downstream. */
+        if (value < 0L) {
+            throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_QUANTITY, token);
+        }
+        return value;
     }
 
     /** Mutable accumulator for the optional clauses that follow the item/object. */
@@ -173,12 +291,12 @@ public final class IqlParser {
                 case "FROM" -> {
                     requireFlowClause(allowFlowClauses, token);
                     pos++;
-                    acc.from = expect(Type.WORD, "a location after FROM").text();
+                    acc.from = expect(Type.WORD, IqlError.A_SOURCE).text();
                 }
                 case "TO" -> {
                     requireFlowClause(allowFlowClauses, token);
                     pos++;
-                    acc.to = expect(Type.WORD, "a location after TO").text();
+                    acc.to = expect(Type.WORD, IqlError.A_DESTINATION).text();
                 }
                 case "IF" -> {
                     requireFlowClause(allowFlowClauses, token);
@@ -192,7 +310,7 @@ public final class IqlParser {
                 case "ORDER" -> {
                     pos++;
                     expectKeyword("BY");
-                    acc.orderBy = expect(Type.WORD, "a sort field after ORDER BY").text();
+                    acc.orderBy = expect(Type.WORD, IqlError.A_SORT_FIELD).text();
                     acc.descending = parseSortDirection();
                 }
                 case "LIMIT" -> {
@@ -211,10 +329,9 @@ public final class IqlParser {
     }
 
     private OperationPriority parsePriority() {
-        final Token token = expect(Type.WORD, "a level after PRIORITY (LOW, MEDIUM_LOW, MEDIUM, MEDIUM_HIGH, HIGH)");
-        return OperationPriority.fromKeyword(token.text()).orElseThrow(() -> new IllegalArgumentException(
-                "unknown priority level: " + token.text()
-                        + " (expected LOW, MEDIUM_LOW, MEDIUM, MEDIUM_HIGH or HIGH)"));
+        final Token token = expect(Type.WORD, IqlError.A_LEVEL);
+        return OperationPriority.fromKeyword(token.text())
+                .orElseThrow(() -> IqlError.of(IqlError.UNKNOWN_PRIORITY, token.text()));
     }
 
     private boolean parseSortDirection() {
@@ -229,14 +346,14 @@ public final class IqlParser {
     }
 
     private int parseLimit() {
-        final Token token = expect(Type.NUMBER, "a row count after LIMIT");
+        final Token token = expect(Type.NUMBER, IqlError.A_ROW_COUNT);
         if (token.text().endsWith("%")) {
-            throw new IllegalArgumentException("LIMIT takes a row count, not a percentage: " + token.text());
+            throw IqlError.of(IqlError.LIMIT_PERCENTAGE, token.text());
         }
         try {
             return Integer.parseInt(token.text());
         } catch (final NumberFormatException e) {
-            throw new IllegalArgumentException("expected a row count after LIMIT, got: " + token.text());
+            throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_ROW_COUNT, token.text());
         }
     }
 
@@ -255,18 +372,17 @@ public final class IqlParser {
         switch (verb) {
             case DELETE -> {
                 if (!hasTo) {
-                    throw new IllegalArgumentException(
-                            "DELETE exports out of the network and needs a TO destination");
+                    throw IqlError.of(IqlError.DELETE_NEEDS_TO);
                 }
             }
             case MOVE -> {
                 if (!hasFrom || !hasTo) {
-                    throw new IllegalArgumentException("MOVE is internal and needs both FROM and TO");
+                    throw IqlError.of(IqlError.MOVE_NEEDS_BOTH);
                 }
             }
             case SELECT, INSERT, DROP -> {
                 if (hasTo) {
-                    throw new IllegalArgumentException(verb + " has no TO destination");
+                    throw IqlError.of(IqlError.NO_TO, verb.name());
                 }
             }
             default -> {
@@ -277,17 +393,17 @@ public final class IqlParser {
 
     private static void requireFlowClause(final boolean allowed, final Token token) {
         if (!allowed) {
-            throw new IllegalArgumentException(token.text() + " is not valid on a read");
+            throw IqlError.of(IqlError.NOT_ON_READ, token.text());
         }
     }
 
-    private Token expect(final Type type, final String what) {
+    private Token expect(final Type type, final TextKey what) {
         if (pos >= tokens.size()) {
-            throw new IllegalArgumentException("expected " + what);
+            throw IqlError.of(IqlError.EXPECTED, what);
         }
         final Token token = tokens.get(pos);
         if (token.type() != type) {
-            throw new IllegalArgumentException("expected " + what + ", got: " + token.text());
+            throw IqlError.of(IqlError.EXPECTED_GOT, what, token.text());
         }
         pos++;
         return token;
@@ -295,7 +411,7 @@ public final class IqlParser {
 
     private void expectKeyword(final String keyword) {
         if (!peekKeyword(keyword)) {
-            throw new IllegalArgumentException("expected " + keyword);
+            throw IqlError.of(IqlError.EXPECTED, keyword);
         }
         pos++;
     }
@@ -308,7 +424,7 @@ public final class IqlParser {
         return pos < tokens.size() && tokens.get(pos).type() == type;
     }
 
-    private static IllegalArgumentException unexpected(final Token token) {
-        return new IllegalArgumentException("unexpected token: " + token.text());
+    private static IqlError unexpected(final Token token) {
+        return IqlError.of(IqlError.UNEXPECTED_TOKEN, token.text());
     }
 }

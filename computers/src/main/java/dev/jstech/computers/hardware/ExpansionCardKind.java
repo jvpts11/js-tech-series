@@ -19,5 +19,20 @@ public enum ExpansionCardKind {
     PHI,
 
     /** A cluster interface: what lets a Cluster Management Computer address racks over the network. */
-    CLUSTER_INTERFACE
+    CLUSTER_INTERFACE,
+
+    /** A sound card: what a Vintage or Legacy computer plays its sound through, beyond the beeps of its case. */
+    SOUND,
+
+    /** A network adapter: the Optical Network Card, what lets a Mainframe or a cluster manager take the fibre. */
+    NETWORK,
+
+    /** A personal-use card: the crafting table, furnace, enchanting table or anvil the Workshop program works. */
+    WORKSHOP,
+
+    /** A RAID controller, the Vaultis Array: joins the drives of the server it sits in into one volume. */
+    RAID_CONTROLLER,
+
+    /** A read cache, the Vaultis Cache: answers the reads of the drives of the server it sits in faster. */
+    READ_CACHE
 }

@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.interactor;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
@@ -31,6 +32,7 @@ import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -132,16 +134,16 @@ public final class NetworkInteractorPayloads {
         }
         final long qty = Math.min(payload.quantity(), Integer.MAX_VALUE);
         final var op = dest.move()
-                ? mainframe.submitNetworkMove(payload.key(), qty, dest.handler(), dest.label(), sources)
-                : mainframe.submitNetworkSelect(payload.key(), qty, dest.handler(), dest.label(), sources);
+                ? mainframe.networkOperations().move(payload.key(), qty, dest.handler(), dest.label(), sources)
+                : mainframe.networkOperations().pull(payload.key(), qty, dest.handler(), dest.label(), sources);
         if (op != null) {
             op.setPriority(payload.priority());
             if (!dest.move()) {
                 op.abortWhen(gone(host)); // the pull lands in this computer: stop once it is gone
             }
         }
-        if (op != null && host instanceof IOsHost computer) {
-            op.onSettle(() -> sendNetworkInteractor(player, level, computer));
+        if (op != null) {
+            op.onSettle(refresher(player, level, host));
         }
     }
 
@@ -164,12 +166,17 @@ public final class NetworkInteractorPayloads {
         // The whole network's items (Network Storage tab).
         final List<NetworkItemEntry> networkItems = new ArrayList<>();
         long usedItems = 0L;
-        if (network != null) {
+        // Built once: it serves both the item grid and the room figures below.
+        final NetworkStorage room = network == null ? null : NetworkStorage.of(level, network);
+        if (room != null) {
             final NetworkSystem system =
                     NetworkSystem.get(level);
-            final NetworkStorage storage =
-                    NetworkStorage.of(level, network);
+            final NetworkStorage storage = room;
             final Map<StorageKey, Long> totals = storage.query();
+            for (final long amount : totals.values()) {
+                // The gauge counts every type, even those past the entry cap below.
+                usedItems += amount;
+            }
             for (final var e : totals.entrySet()) {
                 if (networkItems.size() >= NetworkInteractorPayload.MAX_ENTRIES) {
                     break;
@@ -183,7 +190,6 @@ public final class NetworkInteractorPayloads {
                     shares.add(new NetworkItemEntry.StorageShare(serverLabel(system, s.getKey()), s.getValue()));
                 }
                 networkItems.add(new NetworkItemEntry(e.getKey(), e.getValue(), shares));
-                usedItems += e.getValue();
             }
         }
         // This computer's own disks (Local Storage tab).
@@ -202,24 +208,29 @@ public final class NetworkInteractorPayloads {
         final List<CraftCatalogPayload.Entry> crafts = buildCraftCatalog(level, network);
         final List<String> favourites = computer.console() == null ? List.of()
                 : computer.console().settings().favourites();
-        final NetworkStorage room = network == null ? null
-                : NetworkStorage.of(level, network);
         PacketDistributor.sendToPlayer(player, new NetworkInteractorPayload(
                 networkItems, localItems, online, usedItems, serverCount, crafts, favourites,
                 room == null ? 0L : room.capacity(),
                 room == null ? 0L : room.usedMb(), room == null ? 0L : room.capacityMb()));
     }
 
+    /** A task that resends the snapshot, or does nothing when the host is not an operating-system host. */
+    private static Runnable refresher(final ServerPlayer player, final ServerLevel level, final Object host) {
+        if (host instanceof IOsHost computer) {
+            return () -> sendNetworkInteractor(player, level, computer);
+        }
+        return () -> { };
+    }
+
     /** A human label for a storage node in the details panel's per-server breakdown, such as a server's rack position
      *  and slot, or a generic label for a published Personal Computer (which has no rack location). */
-    private static String serverLabel(final NetworkSystem system,
-                                      final NodeUuid node) {
+    static Text serverLabel(final NetworkSystem system, final NodeUuid node) {
         return system.locationOf(node)
                 .map(loc -> {
                     final BlockPos p = BlockPos.of(loc.rackPos());
-                    return "Server " + p.getX() + ", " + p.getY() + ", " + p.getZ() + " #" + (loc.slot() + 1);
+                    return InteractorTexts.SERVER_AT.with(p.getX(), p.getY(), p.getZ(), loc.slot() + 1);
                 })
-                .orElse("Published PC");
+                .orElse(InteractorTexts.PUBLISHED_PC.text());
     }
 
     private static void handleNiShiftInsert(final NiShiftInsertPayload payload, final ServerPlayer player,
@@ -235,13 +246,7 @@ public final class NetworkInteractorPayloads {
         // The whole stack as items, the way a chest takes a shift-click; a bucket goes in as a bucket.
         final DataHandoff.ISource source = DataHandoff.inventory(player, slot);
         final int amount = source.get().getCount();
-        final IOsHost computer =
-                host instanceof IOsHost c ? c : null;
-        final Runnable refresh = () -> {
-            if (computer != null) {
-                sendNetworkInteractor(player, level, computer);
-            }
-        };
+        final Runnable refresh = refresher(player, level, host);
         if (payload.target() == NiShiftInsertPayload.TARGET_STORAGE) {
             if (DataHandoff.intoLocalStore(host.localStore(), player, source, amount, false)
                     == DataHandoff.Outcome.DEPOSITED) {
@@ -264,26 +269,32 @@ public final class NetworkInteractorPayloads {
     private static void handleNiGridClick(final NiGridClickPayload payload, final ServerPlayer player,
                                           final ServerLevel level) {
         final var host = niHost(player, level, payload.host(), payload.monitorPos());
-        if (host == null || host.networkUuid() == null || payload.amount() <= 0L) {
+        if (host == null || payload.amount() <= 0L) {
             return;
         }
         // Clamp the client-supplied amount so a spoofed packet cannot ask the dispatcher for Long.MAX.
         final long safeAmount = Math.min(payload.amount(), Integer.MAX_VALUE);
         final StorageKey key = payload.key();
+        // Only the moves to and from the network need one; what a computer holds itself comes out without it.
+        final boolean toOrFromNetwork = payload.mode() == NiGridClickPayload.MODE_NET_TO_LOCAL
+                || payload.mode() == NiGridClickPayload.MODE_LOCAL_TO_NET;
+        if (toOrFromNetwork && host.networkUuid() == null) {
+            return;
+        }
         if (payload.mode() == NiGridClickPayload.MODE_NET_TO_LOCAL) {
             // Pull from the network into this computer's local storage, exactly like the terminal SELECT.
             final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
             if (mainframe == null) {
                 return;
             }
-            final var op = mainframe.submitNetworkSelect(key, safeAmount, host.localStorage(),
+            final var op = mainframe.networkOperations().pull(key, safeAmount, host.localStorage(),
                     host.originLabel(MoveLabels.INTERACTOR));
             if (op != null) {
                 op.setPriority(payload.priority());
                 op.abortWhen(gone(host));
             }
-            if (op != null && host instanceof IOsHost computer) {
-                op.onSettle(() -> sendNetworkInteractor(player, level, computer));
+            if (op != null) {
+                op.onSettle(refresher(player, level, host));
             }
         } else if (payload.mode() == NiGridClickPayload.MODE_LOCAL_TO_NET) {
             // Upload from this computer's local storage into the network (Storage popup "TO NETWORK").
@@ -296,7 +307,7 @@ public final class NetworkInteractorPayloads {
             if (taken <= 0L) {
                 return;
             }
-            final var op = mainframe.submitNetworkInsert(key, taken, host.originLabel(MoveLabels.INTERACTOR));
+            final var op = mainframe.networkOperations().push(key, taken, host.originLabel(MoveLabels.INTERACTOR));
             if (op == null) {
                 host.localStore().insert(key, taken); // no live dispatcher: put it straight back
                 return;
@@ -307,9 +318,7 @@ public final class NetworkInteractorPayloads {
                 if (leftover > 0L) {
                     host.localStore().insert(key, leftover);
                 }
-                if (host instanceof IOsHost computer) {
-                    sendNetworkInteractor(player, level, computer);
-                }
+                refresher(player, level, host).run();
             });
         } else if (!key.isItem()) {
             return; // a fluid or chemical cannot be held in the inventory
@@ -334,9 +343,7 @@ public final class NetworkInteractorPayloads {
                     host.localStore().insert(key, remaining);
                 }
             }
-            if (host instanceof IOsHost computer) {
-                sendNetworkInteractor(player, level, computer);
-            }
+            refresher(player, level, host).run();
         }
     }
 
@@ -360,13 +367,7 @@ public final class NetworkInteractorPayloads {
         final int amount = one ? 1 : source.get().getCount();
         final boolean fill = one && payload.entry().isPresent()
                 && DataContainers.canTake(source.get(), payload.entry().get());
-        final IOsHost computer =
-                host instanceof IOsHost c ? c : null;
-        final Runnable refresh = () -> {
-            if (computer != null) {
-                sendNetworkInteractor(player, level, computer);
-            }
-        };
+        final Runnable refresh = refresher(player, level, host);
         if (payload.target() == NiDepositPayload.TARGET_STORAGE) {
             final DataHandoff.Outcome outcome = fill
                     ? DataHandoff.fillFromLocalStore(host.localStore(), player, source, payload.entry().get())
@@ -406,19 +407,13 @@ public final class NetworkInteractorPayloads {
         }
         // Clamp the client-supplied quantity so a spoofed packet cannot ask the dispatcher for Long.MAX.
         final long safeAmount = Math.max(1L, Math.min(payload.amount(), Integer.MAX_VALUE));
-        final IOsHost computer =
-                host instanceof IOsHost c ? c : null;
-        final Runnable refreshNi = () -> {
-            if (computer != null) {
-                sendNetworkInteractor(player, level, computer);
-            }
-        };
+        final Runnable refreshNi = refresher(player, level, host);
         /*
          * The shared entry point runs a machine or multi-stage recipe directly, else plans a recursive
          * craft; refreshNi resends the Network Interactor now and again when the operation settles.
          */
-        mainframe.submitCraftRequest(StorageKey.of(payload.result()), safeAmount, true,
-                host.originLabel(MoveLabels.INTERACTOR), refreshNi);
+        mainframe.networkOperations().craft(CraftRequest.of(StorageKey.of(payload.result()), safeAmount, true,
+                host.originLabel(MoveLabels.INTERACTOR), refreshNi));
         refreshNi.run();
     }
 

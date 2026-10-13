@@ -1,0 +1,135 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.text_tools.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.text_tools.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.text_tools.definition1",
+      "term": "jsc.guide.text_tools.term1"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/grep"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/wc"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/head"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/tail"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/sort"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.text_tools.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.text_tools.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.text_tools.table1",
+      "heads": [
+        "jsc.guide.text_tools.table1_head1",
+        "jsc.guide.text_tools.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Space"
+          },
+          {
+            "words": "jsc.guide.text_tools.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "b"
+          },
+          {
+            "words": "jsc.guide.text_tools.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Arrow keys"
+          },
+          {
+            "words": "jsc.guide.text_tools.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "/"
+          },
+          {
+            "words": "jsc.guide.text_tools.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "n"
+          },
+          {
+            "words": "jsc.guide.text_tools.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "q"
+          },
+          {
+            "words": "jsc.guide.text_tools.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/less"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.text_tools.fix1",
+          "problem": "jsc.guide.text_tools.problem1"
+        },
+        {
+          "fix": "jsc.guide.text_tools.fix2",
+          "problem": "jsc.guide.text_tools.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:file_commands",
+        "jsc:pipes_and_variables"
+      ]
+    }
+  ],
+  "id": "jsc:text_tools",
+  "order": 195,
+  "section": "jsc:shell_commands",
+  "title": "jsc.guide.text_tools.title"
+}

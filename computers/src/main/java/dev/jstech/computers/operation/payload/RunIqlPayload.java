@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -15,11 +16,16 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Client to server: an IQL statement typed into the Network Management Studio for the computer at
- * {@code hostPos}, to be parsed and run against the network. The server replies with an
- * {@link IqlResultPayload}.
+ * Client to server: one IQL statement of a studio's query tab, for the computer at {@code hostPos}, to be parsed and
+ * run against the network. A script is sent a statement at a time, each no longer than {@link #MAX_LEN}. The server
+ * answers with an {@link IqlResultPayload} carrying the same {@code window}, {@code tab} and {@code seq}, so the
+ * answer reaches the tab that asked, in the window that asked, even with two studios open.
+ *
+ * @param window the studio window that asked, as it numbers itself
+ * @param tab    the query tab that asked
+ * @param seq    which statement of the run this is, from zero
  */
-public record RunIqlPayload(BlockPos monitorPos, BlockPos hostPos, String statement)
+public record RunIqlPayload(BlockPos hostPos, BlockPos monitorPos, int window, int tab, int seq, String statement)
         implements CustomPacketPayload {
 
     public static final int MAX_LEN = 512;
@@ -29,10 +35,17 @@ public record RunIqlPayload(BlockPos monitorPos, BlockPos hostPos, String statem
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RunIqlPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    BlockPos.STREAM_CODEC, RunIqlPayload::monitorPos,
                     BlockPos.STREAM_CODEC, RunIqlPayload::hostPos,
+                    BlockPos.STREAM_CODEC, RunIqlPayload::monitorPos,
+                    ByteBufCodecs.VAR_INT, RunIqlPayload::window,
+                    ByteBufCodecs.VAR_INT, RunIqlPayload::tab,
+                    ByteBufCodecs.VAR_INT, RunIqlPayload::seq,
                     ByteBufCodecs.stringUtf8(MAX_LEN), RunIqlPayload::statement,
                     RunIqlPayload::new);
+
+    public RunIqlPayload {
+        statement = TextBounds.clip(statement, MAX_LEN);
+    }
 
     @Override
     public CustomPacketPayload.Type<RunIqlPayload> type() {

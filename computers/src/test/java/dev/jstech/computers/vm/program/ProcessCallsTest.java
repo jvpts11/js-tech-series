@@ -39,8 +39,9 @@ class ProcessCallsTest {
             }
         }
         assertEquals(Set.of("Console.ReadLine()", "Console.ReadInt()", "Console.ReadLong()", "Console.ReadDouble()",
-                "Console.ReadBool()", "Thread.Join()", "Thread.Join(long)", "Process.Wait()", "Process.Wait(long)"),
-                waiting);
+                "Console.ReadBool()", "Console.Read()", "Console.Scan(out int)", "Console.Scan(out long)",
+                "Console.Scan(out double)", "Console.Scan(out string)", "Console.Scan(out char)", "Thread.Join()",
+                "Thread.Join(long)", "Process.Wait()", "Process.Wait(long)"), waiting);
     }
 
     @Test

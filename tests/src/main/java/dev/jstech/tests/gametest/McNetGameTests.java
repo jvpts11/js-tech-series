@@ -19,11 +19,8 @@ import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -31,6 +28,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.says;
+import static dev.jstech.tests.testkit.TestShell.shell;
 
 /**
  * MC-NET keeping files, which it never did.
@@ -52,7 +52,6 @@ public final class McNetGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 6;
-    private static final int WIDTH = 80;
 
     private static final ResourceLocation MC_NET =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
@@ -65,7 +64,6 @@ public final class McNetGameTests {
     private static PersonalComputerBlockEntity machine(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
-        computer.installOs(MC_NET);
         computer.installOs(MC_NET);
         return computer;
     }
@@ -160,8 +158,8 @@ public final class McNetGameTests {
                             "findtext finds the line");
 
                     final List<String> everything = shell(helper, computer, "showcommands");
-                    helper.assertTrue(says(everything, "FILES") && says(everything, "listfiles")
-                                    && says(everything, "MACHINE") && says(everything, "memory"),
+                    helper.assertTrue(says(everything, "Files") && says(everything, "listfiles")
+                                    && says(everything, "The Machine") && says(everything, "memory"),
                             "showcommands gathers what this machine can run; got " + everything);
                     /*
                      * This machine is on no cable, so the verbs that need a network are not among them. The
@@ -234,7 +232,7 @@ public final class McNetGameTests {
                     final SystemIntegrity.Result health = SystemIntegrity.check(computer);
                     helper.assertTrue(health.state() == SystemIntegrity.State.NO_LOADER,
                             "the system is found and will not start; got " + health);
-                    helper.assertTrue(health.complaint().equals("netstart.sys is missing"),
+                    helper.assertTrue(health.complaint().english().equals("netstart.sys is missing"),
                             "in this system's own words; got " + health.complaint());
                     helper.assertTrue(computer.hasOs(),
                             "and the disk still says a system is installed, which is why it is found");
@@ -367,19 +365,5 @@ public final class McNetGameTests {
         helper.assertTrue(spec.installable(),
                 "an addon's space replaces it, so this one has to be removable");
         helper.succeed();
-    }
-
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
-                                      final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.shellFor(computer, WIDTH).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
-    }
-
-    private static boolean says(final List<String> lines, final String text) {
-        return lines.stream().anyMatch(line -> line.contains(text));
     }
 }

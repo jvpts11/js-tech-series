@@ -7,12 +7,19 @@
  */
 package dev.jstech.core.client.gui.theme;
 
+import dev.jstech.core.gui.ColorContrast;
+import dev.jstech.core.gui.TextShadow;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Pure-logic checks for the era-to-theme selection and the frozen STANDARD palette. No Minecraft types are touched:
@@ -31,6 +38,14 @@ class EraThemeTest {
     private static final int STD_RED = 0xFFEF6A5A;
     private static final int STD_TEXT = 0xFFCDD6E2;
     private static final int STD_DIM = 0xFF7D8A9C;
+
+    /** The contrast body text needs to read, and the lower one labels, accents and status words need. */
+    private static final double BODY = 4.5;
+    private static final double SECONDARY = 3.0;
+
+    /** Every skin an era can wear. */
+    private static final EraTheme[] EVERY_SKIN = {
+            EraThemes.VINTAGE, EraThemes.LEGACY, EraThemes.TRANSITION, EraThemes.STANDARD, EraThemes.ADVANCED};
 
     @Test
     void of_standard_returnsTheStandardSingleton() {
@@ -59,14 +74,15 @@ class EraThemeTest {
 
     @Test
     void of_standard_hasNoOverlays() {
-        final EraStyle s = EraThemes.of(HardwareEra.STANDARD).style();
+        final EraTheme t = EraThemes.of(HardwareEra.STANDARD);
+        final EraStyle s = t.style();
         assertEquals(false, s.scanlines());
         assertEquals(false, s.doubleBevel());
         assertEquals(false, s.glowAccent());
-        assertEquals(0, s.scanlineColor());
-        assertEquals(0, s.bevelLight());
-        assertEquals(0, s.bevelDark());
-        assertEquals(0, s.glowColor());
+        assertEquals(0, t.palette().scanline());
+        assertEquals(0, t.palette().bevelLight());
+        assertEquals(0, t.palette().bevelDark());
+        assertEquals(0, t.palette().glow());
     }
 
     @Test
@@ -81,9 +97,96 @@ class EraThemeTest {
 
     @Test
     void of_vintage_enablesScanlinesWithAColor() {
-        final EraStyle s = EraThemes.of(HardwareEra.VINTAGE).style();
-        assertEquals(true, s.scanlines());
-        assertNotEquals(0, s.scanlineColor());
+        final EraTheme vintage = EraThemes.of(HardwareEra.VINTAGE);
+        assertEquals(true, vintage.style().scanlines());
+        assertNotEquals(0, vintage.palette().scanline());
+    }
+
+    @Test
+    void everySkin_isColouredByADeclaredPalette() {
+        // Reading a skin loads the class that declares the palettes, before the declared ones are asked for.
+        assertSame(EraThemes.STANDARD_COLOURS.get(), EraThemes.STANDARD.palette());
+        final Set<String> eras = Palettes.of("jscore").stream()
+                .map(Palette::id)
+                .filter(id -> id.startsWith("jscore:era/"))
+                .collect(Collectors.toSet());
+        assertEquals(Set.of("jscore:era/standard", "jscore:era/vintage", "jscore:era/legacy", "jscore:era/transition",
+                "jscore:era/advanced"), eras);
+    }
+
+    @Test
+    void of_transition_isNavyGlassInTwoBands() {
+        final EraTheme transition = EraThemes.of(HardwareEra.TRANSITION);
+        assertSame(EraThemes.TRANSITION, transition);
+        assertEquals(true, transition.style().glassBands());
+        assertEquals(true, transition.style().accentRule());
+        assertEquals(false, transition.style().doubleBevel());
+        assertNotEquals(0, transition.palette().sheen());
+        // The sheen is a light laid over the band, never a solid colour that would hide what is under it.
+        assertTrue((transition.palette().sheen() >>> 24) < 0x80);
+    }
+
+    @Test
+    void of_advanced_isLightAndFlatWithAnAccentLine() {
+        final EraTheme advanced = EraThemes.of(HardwareEra.ADVANCED);
+        assertSame(EraThemes.ADVANCED, advanced);
+        assertEquals(true, advanced.style().accentRule());
+        assertEquals(false, advanced.style().glassBands());
+        assertEquals(0, advanced.palette().sheen());
+        // A light era: dark text over a lighter screen.
+        assertTrue(ColorContrast.luminance(advanced.screen()) > ColorContrast.luminance(advanced.text()));
+    }
+
+    @Test
+    void everyEraSkin_textIsReadableOnEveryGround() {
+        for (final EraTheme skin : EVERY_SKIN) {
+            final EraPalette p = skin.palette();
+            assertReadable(p.text(), p.screen(), BODY);
+            assertReadable(p.text(), p.panel(), BODY);
+            assertReadable(p.text(), p.hover(), BODY);
+            assertReadable(p.tabLabelOn(), p.tabOn(), BODY);
+            assertReadable(p.dim(), p.panel(), SECONDARY);
+            assertReadable(p.dim(), p.screen(), SECONDARY);
+        }
+    }
+
+    @Test
+    void everyEraSkin_statusAndAccentColoursReadOnAPanel() {
+        for (final EraTheme skin : EVERY_SKIN) {
+            final EraPalette p = skin.palette();
+            assertReadable(p.accent(), p.panel(), SECONDARY);
+            assertReadable(p.accent2(), p.panel(), SECONDARY);
+            assertReadable(p.green(), p.panel(), SECONDARY);
+            assertReadable(p.amber(), p.panel(), SECONDARY);
+            assertReadable(p.red(), p.panel(), SECONDARY);
+        }
+    }
+
+    /**
+     * Text is shadowed by the ground its skin declares under it: on every ground of every skin the shadow is still
+     * there to be seen, and it never reads louder than the letter it is under.
+     */
+    @Test
+    void everyEraSkin_shadowShowsOnItsGroundAndStaysQuieterThanTheLetter() {
+        for (final EraTheme skin : EVERY_SKIN) {
+            final EraPalette p = skin.palette();
+            for (final int ground : new int[] {p.screen(), p.panel(), p.hover()}) {
+                for (final int letter : new int[] {p.text(), p.dim(), p.accent(), p.green(), p.amber(), p.red()}) {
+                    assertShadowed(letter, ground);
+                }
+            }
+            assertShadowed(p.tabLabelOn(), p.tabOn());
+        }
+    }
+
+    @Test
+    void transition_textStaysReadableOnTheLighterBand() {
+        // The upper band is the selected tab's colour with the sheen over it, the lightest ground the skin draws.
+        final EraPalette p = EraThemes.TRANSITION.palette();
+        final int band = over(p.tabOn(), p.sheen());
+        assertReadable(p.tabLabelOn(), band, BODY);
+        assertReadable(p.text(), over(p.panel(), p.sheen()), BODY);
+        assertReadable(p.text(), over(p.hover(), p.sheen()), BODY);
     }
 
     @Test
@@ -115,11 +218,10 @@ class EraThemeTest {
     }
 
     @Test
-    void of_futureEras_resolveToStandard() {
-        // The eras beyond Standard ship no content yet, so they have no distinct skin and fall back to STANDARD.
-        assertSame(EraThemes.STANDARD, EraThemes.of(HardwareEra.ADVANCED));
-        assertSame(EraThemes.STANDARD, EraThemes.of(HardwareEra.EXA));
-        assertSame(EraThemes.STANDARD, EraThemes.of(HardwareEra.SINGULARITY));
+    void of_erasWithNoContentYet_wearTheAdvancedSkin() {
+        // Exa and Singularity ship no content yet, so they wear the skin of the era nearest to them.
+        assertSame(EraThemes.ADVANCED, EraThemes.of(HardwareEra.EXA));
+        assertSame(EraThemes.ADVANCED, EraThemes.of(HardwareEra.SINGULARITY));
     }
 
     @Test
@@ -132,5 +234,31 @@ class EraThemeTest {
         for (final HardwareEra era : HardwareEra.values()) {
             assertSame(EraThemes.of(era), EraThemes.ofNullable(era));
         }
+    }
+
+    private static void assertReadable(final int fg, final int bg, final double min) {
+        final double ratio = ColorContrast.ratio(fg, bg);
+        assertTrue(ratio >= min, String.format("contrast %.2f below %.1f for fg=%06X bg=%06X",
+                ratio, min, fg & 0xFFFFFF, bg & 0xFFFFFF));
+    }
+
+    private static void assertShadowed(final int letter, final int ground) {
+        final int shadow = TextShadow.of(letter, ground);
+        final String pair = String.format("fg=%06X bg=%06X", letter & 0xFFFFFF, ground & 0xFFFFFF);
+        assertTrue(ColorContrast.ratio(shadow, ground) > 1.15, "the shadow is lost on its ground for " + pair);
+        assertTrue(ColorContrast.ratio(shadow, ground) < ColorContrast.ratio(letter, ground),
+                "the shadow reads louder than the letter for " + pair);
+    }
+
+    /** An opaque colour with a translucent one painted over it, the way the screen blends a fill. */
+    private static int over(final int base, final int layer) {
+        final double alpha = (layer >>> 24) / 255.0;
+        int out = 0xFF000000;
+        for (int shift = 0; shift <= 16; shift += 8) {
+            final int under = base >> shift & 0xFF;
+            final int top = layer >> shift & 0xFF;
+            out |= (int) Math.round(under + (top - under) * alpha) << shift;
+        }
+        return out;
     }
 }

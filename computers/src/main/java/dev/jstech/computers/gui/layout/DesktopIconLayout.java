@@ -45,7 +45,8 @@ public final class DesktopIconLayout {
      * Resolves the packed grid cell of each of {@code keys} (in order), given the icons pinned to a stored
      * cell in {@code pinned} and a column height of {@code perColumn} rows.
      *
-     * <p>A pinned icon keeps its cell, with the row clamped into {@code [0, perColumn)} and a negative column
+     * <p>A pinned icon keeps its cell (unless a pin before it holds that cell), with the row clamped into
+     * {@code [0, perColumn)} and a negative column
      * pulled back to 0, so a stale cell from a taller monitor still lands on the grid. Unpinned icons take the
      * first free cell in column-major order, skipping any cell a pinned icon occupies. The result is parallel
      * to {@code keys}.
@@ -67,9 +68,12 @@ public final class DesktopIconLayout {
                 final int c = Math.max(0, col(packed));
                 final int r = Math.max(0, Math.min(cols - 1, row(packed)));
                 final int cell = pack(c, r);
-                cells[i] = cell;
-                isPinned[i] = true;
-                taken.add(cell);
+                // A cell another pin already took (two stale rows clamped to the same one) sends this icon to
+                // the flow pass, so two icons never share a cell.
+                if (taken.add(cell)) {
+                    cells[i] = cell;
+                    isPinned[i] = true;
+                }
             }
         }
         int flow = 0;

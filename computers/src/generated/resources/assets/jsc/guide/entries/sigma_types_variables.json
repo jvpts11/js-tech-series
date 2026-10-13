@@ -1,0 +1,199 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_types_variables.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_types_variables.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_types_variables.table1",
+      "heads": [
+        "jsc.guide.sigma_types_variables.table1_head1",
+        "jsc.guide.sigma_types_variables.table1_head2",
+        "jsc.guide.sigma_types_variables.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "int"
+          },
+          {
+            "words": "jsc.guide.sigma_types_variables.table1_1_2"
+          },
+          {
+            "literal": "int count = 42;"
+          }
+        ],
+        [
+          {
+            "literal": "long"
+          },
+          {
+            "words": "jsc.guide.sigma_types_variables.table1_2_2"
+          },
+          {
+            "literal": "long big = 42L;"
+          }
+        ],
+        [
+          {
+            "literal": "float"
+          },
+          {
+            "words": "jsc.guide.sigma_types_variables.table1_3_2"
+          },
+          {
+            "literal": "float f = 1.5f;"
+          }
+        ],
+        [
+          {
+            "literal": "double"
+          },
+          {
+            "words": "jsc.guide.sigma_types_variables.table1_4_2"
+          },
+          {
+            "literal": "double half = 0.5;"
+          }
+        ],
+        [
+          {
+            "literal": "bool"
+          },
+          {
+            "words": "jsc.guide.sigma_types_variables.table1_5_2"
+          },
+          {
+            "literal": "bool ok = true;"
+          }
+        ],
+        [
+          {
+            "literal": "char"
+          },
+          {
+            "words": "jsc.guide.sigma_types_variables.table1_6_2"
+          },
+          {
+            "literal": "char letter = 'A';"
+          }
+        ],
+        [
+          {
+            "literal": "string"
+          },
+          {
+            "words": "jsc.guide.sigma_types_variables.table1_7_2"
+          },
+          {
+            "literal": "string text = \"hi\";"
+          }
+        ],
+        [
+          {
+            "literal": "object"
+          },
+          {
+            "words": "jsc.guide.sigma_types_variables.table1_8_2"
+          },
+          {
+            "literal": "object anything = 5;"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_types_variables.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_types_variables.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_types_variables.text5"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "int total = 0;",
+        "long big = total;          // widening: fine",
+        "int back = (int) big;      // narrowing needs the cast",
+        "double avg = total / 2.0;  // int divided by double gives a double"
+      ],
+      "name": "Converting.sg"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_types_variables.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_types_variables.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_types_variables.definition1",
+      "term": "jsc.guide.sigma_types_variables.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_types_variables.definition2",
+      "term": "jsc.guide.sigma_types_variables.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_types_variables.definition3",
+      "term": "jsc.guide.sigma_types_variables.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_types_variables.definition4",
+      "term": "jsc.guide.sigma_types_variables.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_types_variables.definition5",
+      "term": "jsc.guide.sigma_types_variables.term5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_types_variables.fix1",
+          "problem": "jsc.guide.sigma_types_variables.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_types_variables.fix2",
+          "problem": "jsc.guide.sigma_types_variables.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_types_variables.fix3",
+          "problem": "jsc.guide.sigma_types_variables.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_operators",
+        "jsc:sigma_classes"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_types_variables",
+  "order": 336,
+  "section": "jsc:sigma_basics",
+  "title": "jsc.guide.sigma_types_variables.title"
+}

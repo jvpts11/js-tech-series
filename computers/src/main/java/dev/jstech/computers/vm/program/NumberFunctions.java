@@ -11,9 +11,12 @@ import dev.jstech.computers.vm.system.IPureContext;
 import dev.jstech.computers.vm.system.IPureFunction;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicTypes;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 
 /** What the language does with numbers: the arithmetic of Math, reading a value out of text, and counting ticks. */
+@TextHolder
 final class NumberFunctions {
 
     private static final String MATH = "Math";
@@ -22,6 +25,12 @@ final class NumberFunctions {
     private static final String WHOLE = "int";
     private static final String REAL = "double";
     private static final String FLAG = "bool";
+    private static final TextKey NOT_A_NUMBER = TextKey.of("jsc.vm.number_functions.not_a_number",
+            "'%s' is not a number");
+    private static final TextKey NOT_A_TRUTH = TextKey.of("jsc.vm.number_functions.not_a_truth",
+            "'%s' is not true or false");
+    private static final TextKey NO_SUCH_BASE = TextKey.of("jsc.vm.number_functions.no_such_base",
+            "there is no base %s; a number is written in a base from 2 to 36");
 
     private NumberFunctions() {
     }
@@ -62,6 +71,17 @@ final class NumberFunctions {
                 truth(String.valueOf(arguments[0]), line), TEXT);
         registry.onType(CONVERT, "ToString", TEXT, (context, target, arguments, line) ->
                 context.text(String.valueOf(arguments[0]), line), "object");
+        registry.onType(CONVERT, "ToString", TEXT, (context, target, arguments, line) ->
+                context.text(inBase(Numbers.toInt(arguments[0]), Numbers.toInt(arguments[1]), line), line),
+                WHOLE, WHOLE);
+        // Text that is not a number gives the value handed to fall back on, rather than stopping the program.
+        registry.onType(CONVERT, "ToInt", WHOLE, (context, target, arguments, line) -> {
+            try {
+                return Integer.parseInt(String.valueOf(arguments[0]).trim());
+            } catch (final NumberFormatException notANumber) {
+                return Numbers.toInt(arguments[1]);
+            }
+        }, TEXT, WHOLE);
         /*
          * The value goes out sideways and the answer says whether it is worth anything: a program asking again is a
          * program that never stopped on a mistyped line.
@@ -86,11 +106,23 @@ final class NumberFunctions {
                 case "ToLong" -> Long.parseLong(text.trim());
                 case "ToFloat" -> Float.parseFloat(text.trim());
                 case "ToDouble" -> Double.parseDouble(text.trim());
-                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Convert has no " + name);
+                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, FieldAccess.HAS_NO.with(CONVERT, name));
             };
         } catch (final NumberFormatException notANumber) {
-            throw new Halt(Halt.Reason.BAD_CAST, line, "'" + text + "' is not a number");
+            throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_NUMBER.with(text));
         }
+    }
+
+    /**
+     * A whole number written in {@code base}, from 2 to 36 with the letters after the digits, as C's itoa writes it:
+     * signed in base ten, and in every other base the number's own 32 bits read as never below zero, so -1 in
+     * hexadecimal is ffffffff.
+     */
+    private static String inBase(final int value, final int base, final int line) {
+        if (base < Character.MIN_RADIX || base > Character.MAX_RADIX) {
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NO_SUCH_BASE.with(base));
+        }
+        return base == 10 ? Integer.toString(value) : Long.toString(Integer.toUnsignedLong(value), base);
     }
 
     /** What a line says when it is asked for yes or no: the usual spellings of either, or a halt. */
@@ -98,7 +130,7 @@ final class NumberFunctions {
         return switch (text.trim().toLowerCase(Locale.ROOT)) {
             case "true", "yes", "y", "on", "1" -> true;
             case "false", "no", "n", "off", "0" -> false;
-            default -> throw new Halt(Halt.Reason.BAD_CAST, line, "'" + text + "' is not true or false");
+            default -> throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_TRUTH.with(text));
         };
     }
 

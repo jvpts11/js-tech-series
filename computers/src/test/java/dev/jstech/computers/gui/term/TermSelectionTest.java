@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.program.cli.CliSpan;
+import dev.jstech.computers.program.cli.CliRun;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +24,7 @@ class TermSelectionTest {
             row("minecraft:oak_log stored    3,322"));
 
     private static TermRow row(final String text) {
-        return new TermRow(List.of(CliSpan.plain(text)));
+        return new TermRow(List.of(CliRun.plain(text)));
     }
 
     @Test
@@ -111,5 +111,12 @@ class TermSelectionTest {
     void lineAt_takesTheWholeRow() {
         assertEquals("Oak Log                     3,322", TermSelection.lineAt(GLASS, 1).textOf(GLASS));
         assertTrue(TermSelection.lineAt(GLASS, 9).isEmpty());
+    }
+
+    @Test
+    void textOf_keepsTheLineBreakAfterABlankFirstRow() {
+        final List<TermRow> rows = List.of(row(""), row("xyz"));
+
+        assertEquals("\nxyz", TermSelection.at(0, 0).reachingTo(1, 3).textOf(rows));
     }
 }

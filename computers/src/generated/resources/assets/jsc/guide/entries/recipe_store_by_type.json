@@ -1,0 +1,253 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_store_by_type.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_store_by_type.definition1",
+      "term": "jsc.guide.recipe_store_by_type.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_store_by_type.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_store_by_type.definition2",
+      "term": "jsc.guide.recipe_store_by_type.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_store_by_type.table1",
+      "heads": [
+        "jsc.guide.recipe_store_by_type.table1_head1",
+        "jsc.guide.recipe_store_by_type.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.recipe_store_by_type.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_store_by_type.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_store_by_type.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.recipe_store_by_type.step1",
+        "jsc.guide.recipe_store_by_type.step2",
+        "jsc.guide.recipe_store_by_type.step3",
+        "jsc.guide.recipe_store_by_type.step4"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_store_by_type.table2",
+      "heads": [
+        "jsc.guide.recipe_store_by_type.table2_head1",
+        "jsc.guide.recipe_store_by_type.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SET BUS 'Ore in' FILTER ONLY iron_ore, coal"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' FILTER ALL BUT dirt"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' FILTER NONE"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' FILTER TAG c:ores, c:logs"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' WHEN STOCK iron_ore < 512"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_store_by_type.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_store_by_type.definition3",
+      "term": "jsc.guide.recipe_store_by_type.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_store_by_type.table3",
+      "heads": [
+        "jsc.guide.recipe_store_by_type.table3_head1",
+        "jsc.guide.recipe_store_by_type.table3_head2",
+        "jsc.guide.recipe_store_by_type.table3_head3",
+        "jsc.guide.recipe_store_by_type.table3_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_1_3"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_2_2"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_2_3"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_3_2"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_3_3"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_4_2"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_4_3"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_5_2"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_5_3"
+          },
+          {
+            "words": "jsc.guide.recipe_store_by_type.table3_5_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_store_by_type.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_store_by_type.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.recipe_store_by_type.fix1",
+          "problem": "jsc.guide.recipe_store_by_type.problem1"
+        },
+        {
+          "fix": "jsc.guide.recipe_store_by_type.fix2",
+          "problem": "jsc.guide.recipe_store_by_type.problem2"
+        },
+        {
+          "fix": "jsc.guide.recipe_store_by_type.fix3",
+          "problem": "jsc.guide.recipe_store_by_type.problem3"
+        },
+        {
+          "fix": "jsc.guide.recipe_store_by_type.fix4",
+          "problem": "jsc.guide.recipe_store_by_type.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:buses",
+        "jsc:bus_filters_and_tags",
+        "jsc:bus_conditions",
+        "jsc:set_bus"
+      ]
+    }
+  ],
+  "icon": "jsc:import_bus",
+  "id": "jsc:recipe_store_by_type",
+  "order": 324,
+  "section": "jsc:iql_recipe_list",
+  "title": "jsc.guide.recipe_store_by_type.title"
+}

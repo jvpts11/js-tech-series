@@ -1,0 +1,70 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.devices_commands.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.devices_commands.definition1",
+      "term": "jsc.guide.devices_commands.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.devices_commands.definition2",
+      "term": "jsc.guide.devices_commands.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.devices_commands.text2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/lspci"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/lsusb"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/pciconf"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/usbconfig"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.devices_commands.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.devices_commands.fix1",
+          "problem": "jsc.guide.devices_commands.problem1"
+        },
+        {
+          "fix": "jsc.guide.devices_commands.fix2",
+          "problem": "jsc.guide.devices_commands.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:system_commands",
+        "jsc:file_commands"
+      ]
+    }
+  ],
+  "id": "jsc:devices_commands",
+  "order": 198,
+  "section": "jsc:shell_commands",
+  "title": "jsc.guide.devices_commands.title"
+}

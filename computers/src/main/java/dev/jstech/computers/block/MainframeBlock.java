@@ -8,28 +8,33 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
-import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IDataNetworkConnectable;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
-import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.connect.Connection;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
@@ -42,47 +47,51 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Mainframe, the network's orchestrator.
+ * The Mainframe, the network's orchestrator: one block for every era, the era given where it is declared.
  */
 public class MainframeBlock extends AbstractMultiblockControllerBlock
-        implements IDataNetworkConnectable,
-        IPeripheralConnectable, IEraChassisBlock {
+        implements IFaceConnector, IEraChassisBlock {
 
-    public static final MapCodec<MainframeBlock> CODEC = simpleCodec(MainframeBlock::new);
+    private final HardwareEra era;
+    /*
+     * The Mainframe sits on the backbone, on any face, its era's cable and every earlier one's, the fibre only with an
+     * Optical Network Card; it never takes the access line directly (a router joins that).
+     */
+    private final FacePorts ports;
 
-    @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
-    }
+    public static final MapCodec<MainframeBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(MainframeBlock::era)
+    ).apply(i, MainframeBlock::new));
+    /**
+     * The power button on the sill, at the cabinet's middle, which is the middle of this block's front: where the
+     * cabinet's model draws it, every era alike, its face on the face of the block.
+     */
+    public static final FrontArea POWER_BUTTON = new FrontArea(28, 42, 36, 50);
 
-    public MainframeBlock(final Properties properties) {
+    public MainframeBlock(final Properties properties, final HardwareEra era) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        this.era = era;
+        this.ports = FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE), PeripheralLine.of(era));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)
+                .setValue(OpticalPort.OPTICAL, false));
     }
 
     /**
-     * The hardware era this Mainframe belongs to. It selects the block's skin and gates which MTX board
-     * installs: only a board of this same era is accepted and counted in the build. The base is
-     * {@link HardwareEra#STANDARD}; the Vintage and Legacy variants override it.
+     * The hardware era this Mainframe belongs to. It selects the cabinet's model and skin and gates which MTX board
+     * installs: only a board of this same era is accepted and counted in the build.
      */
     public HardwareEra era() {
-        return HardwareEra.STANDARD;
+        return era;
     }
 
     @Override
     public HardwareEra chassisEra() {
         return era();
-    }
-
-    /**
-     * The item this Mainframe drops and is picked as: its own era variant. Overridden per era so a
-     * broken or pick-blocked Mainframe yields the matching era's item.
-     */
-    protected Item blockItem() {
-        return ComputingModule.MAINFRAME_ITEM.get();
     }
 
     @Override
@@ -91,17 +100,29 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        /*
-         * The Mainframe sits on the HBW backbone; it never takes an Ethernet
-         * access link directly (a Personal Router bridges that).
-         */
-        return Set.of(DataTier.T2_HBW);
+    public FacePorts ports() {
+        return ports;
+    }
+
+    @Override
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return IFaceConnector.super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
     }
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, OpticalPort.OPTICAL);
+    }
+
+    /** Says on the Mainframe and every part of it whether it holds an Optical Network Card. */
+    public void setOptical(final Level level, final BlockPos controller, final boolean optical) {
+        final BlockState state = level.getBlockState(controller);
+        if (!(state.getBlock() instanceof MainframeBlock)) {
+            return;
+        }
+        final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(controller, state.getValue(FACING)));
+        blocks.add(controller);
+        OpticalPort.set(level, blocks, OpticalPort.OPTICAL, optical);
     }
 
     @Override
@@ -131,12 +152,15 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
                 .setValue(FACING, facing)
                 .setValue(MainframePartBlock.CORE,
                         MainframeStructure.isCentralColumn(controller, facing, part))
-                .setValue(MainframePartBlock.ERA, era.level());
+                .setValue(MainframePartBlock.ERA, era.level())
+                .setValue(OpticalPort.OPTICAL, controllerState.hasProperty(OpticalPort.OPTICAL)
+                        && controllerState.getValue(OpticalPort.OPTICAL));
     }
 
     @Override
     protected void dropContents(final ServerLevel level, final BlockPos controller) {
-        Block.popResource(level, controller, new ItemStack(blockItem()));
+        // Its own item, so a broken Mainframe gives back the era it was.
+        Block.popResource(level, controller, new ItemStack(asItem()));
         if (level.getBlockEntity(controller) instanceof MainframeBlockEntity be) {
             BlockDrops.spill(level, controller, be.getInventory());
         }
@@ -167,11 +191,28 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     }
 
     @Override
+    protected ItemInteractionResult useItemOn(final ItemStack held, final BlockState state, final Level level,
+                                              final BlockPos pos, final Player player, final InteractionHand hand,
+                                              final BlockHitResult hit) {
+        // The power button on the sill answers whatever the hand holds, as the one on the assembly screen does.
+        final double[] at = DeviceFront.point(state.getValue(FACING), pos, hit, player.getEyePosition(), 0);
+        if (at == null || !POWER_BUTTON.contains(at[0], at[1])
+                || !(level.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (!level.isClientSide()) {
+            mainframe.togglePower();
+            mainframe.showPowerPressed();
+        }
+        return ItemInteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player, final BlockHitResult hit) {
         /*
-         * The Mainframe block is hardware only: clicking it always opens the hardware-assembly GUI
-         * (the same one its parts open). All software (firmware, OS) is used on a linked monitor.
+         * The Mainframe block is hardware only: clicking it opens the hardware-assembly GUI (the same one its parts
+         * open), anywhere but on its power button. All software (firmware, OS) is used on a linked monitor.
          */
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe) {

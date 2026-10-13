@@ -7,13 +7,25 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.audio.ProgramCue;
+import dev.jstech.computers.operation.payload.GameWonPayload;
+import dev.jstech.computers.operation.payload.MachineSoundPayload;
+import dev.jstech.computers.operation.payload.desktop.GamePayloads;
 import dev.jstech.computers.program.MinesweeperGame;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.EnumMap;
 import java.util.Locale;
@@ -25,22 +37,24 @@ import java.util.Map;
  * number colours). All rules live in the pure {@link MinesweeperGame}; the board component only draws it
  * and turns clicks into reveals and flags.
  */
+@PaletteHolder
 public final class MinesweeperApp implements IDesktopApp {
 
-    private static final int FACE = 0xFFC0C0C0;
-    private static final int BEVEL_LIGHT = 0xFFFFFFFF;
-    private static final int BEVEL_DARK = 0xFF808080;
-    private static final int GRID = 0xFF9A9A9A;
-    private static final int LED_BG = 0xFF200000;
-    private static final int LED_ON = 0xFFFF2B2B;
-    private static final int MINE = 0xFF101010;
-    private static final int FLAG_RED = 0xFFD01818;
-    private static final int[] NUMBER = {
-            0, 0xFF0000FF, 0xFF008000, 0xFFFF0000, 0xFF000080,
-            0xFF800000, 0xFF008080, 0xFF000000, 0xFF808080,
-    };
+    /** The game's own colours, the grey board and the numbers it always had: {@code jsc:game/minesweeper}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "game/minesweeper",
+            new Colours(0xFFC0C0C0, 0xFFFFFFFF, 0xFF808080, 0xFF9A9A9A, 0xFF200000, 0xFFFF2B2B, 0xFF101010,
+                    0xFFD01818, 0xFF0000FF, 0xFF008000, 0xFFFF0000, 0xFF000080, 0xFF800000, 0xFF008080,
+                    0xFF000000, 0xFF808080));
+    /**
+     * Frames 7's glass Minesweeper: the pale blue ground, a covered square's glass from its light top to its deep foot
+     * and its rim, an open square, and the box the counters are written in: {@code jsc:game/minesweeper_glass}.
+     */
+    private static final Palette<Glass> GLASS = Palettes.declare(JsComputers.MODID, "game/minesweeper_glass",
+            new Glass(0xFFE3EDF8, 0xFFCEDFF2, 0xFF8FC3F5, 0xFF2F6CBD, 0xFF245A9E, 0xFFE9EEF5, 0xFFC9D6E6,
+                    0xFFFFFFFF, 0xFF7F96B8, 0xFF1E3287, 0xFF3355CC, 0xFF2E8B2E));
     private static final int PANEL_H = 24;
 
+    private final BlockPos host;
     private OsSkin skin = OsSkin.fallback();
     private MinesweeperGame.Difficulty difficulty = MinesweeperGame.Difficulty.BEGINNER;
     private MinesweeperGame game = new MinesweeperGame(difficulty, System.nanoTime());
@@ -74,36 +88,79 @@ public final class MinesweeperApp implements IDesktopApp {
             final int cy = y() + r * cell;
             final boolean lost = game.state() == MinesweeperGame.State.LOST;
             final boolean showMine = lost && game.isMine(r, c);
+            if (glass()) {
+                drawGlassCell(g, font, r, c, cx, cy, showMine);
+                return;
+            }
             if (game.isRevealed(r, c) || showMine) {
-                g.fill(cx, cy, cx + cell, cy + cell, FACE);
-                g.fill(cx, cy, cx + cell, cy + 1, GRID);
-                g.fill(cx, cy, cx + 1, cy + cell, GRID);
+                g.fill(cx, cy, cx + cell, cy + cell, colours().face());
+                g.fill(cx, cy, cx + cell, cy + 1, colours().grid());
+                g.fill(cx, cy, cx + 1, cy + cell, colours().grid());
                 if (showMine) {
                     if (game.isRevealed(r, c)) {
-                        g.fill(cx + 1, cy + 1, cx + cell, cy + cell, FLAG_RED); // the mine that was triggered
+                        g.fill(cx + 1, cy + 1, cx + cell, cy + cell, colours().flag()); // the mine that was triggered
                     }
                     final int m = Math.max(2, cell / 3);
-                    g.fill(cx + (cell - m) / 2, cy + (cell - m) / 2, cx + (cell + m) / 2, cy + (cell + m) / 2, MINE);
+                    g.fill(cx + (cell - m) / 2, cy + (cell - m) / 2, cx + (cell + m) / 2, cy + (cell + m) / 2,
+                            colours().mine());
                 } else {
                     final int n = game.adjacent(r, c);
                     if (n > 0) {
                         final String s = String.valueOf(n);
-                        g.drawString(font, s, cx + (cell - font.width(s)) / 2 + 1, cy + (cell - 8) / 2 + 1, NUMBER[n], false);
+                        Draw.text(g, font, s, cx + (cell - font.width(s)) / 2 + 1, cy + (cell - 8) / 2 + 1,
+                                colours().number(n));
                     }
                 }
                 return;
             }
             // Unrevealed raised cell.
-            g.fill(cx, cy, cx + cell, cy + cell, FACE);
-            g.fill(cx, cy, cx + cell, cy + 1, BEVEL_LIGHT);
-            g.fill(cx, cy, cx + 1, cy + cell, BEVEL_LIGHT);
-            g.fill(cx, cy + cell - 1, cx + cell, cy + cell, BEVEL_DARK);
-            g.fill(cx + cell - 1, cy, cx + cell, cy + cell, BEVEL_DARK);
+            g.fill(cx, cy, cx + cell, cy + cell, colours().face());
+            g.fill(cx, cy, cx + cell, cy + 1, colours().bevelLight());
+            g.fill(cx, cy, cx + 1, cy + cell, colours().bevelLight());
+            g.fill(cx, cy + cell - 1, cx + cell, cy + cell, colours().bevelDark());
+            g.fill(cx + cell - 1, cy, cx + cell, cy + cell, colours().bevelDark());
             if (game.isFlagged(r, c)) {
                 final int fx = cx + cell / 2;
-                g.fill(fx, cy + 2, fx + 1, cy + cell - 3, MINE);              // pole
-                g.fill(fx - cell / 4, cy + 2, fx, cy + cell / 2, FLAG_RED);   // flag
-                g.fill(cx + cell / 2 - 3, cy + cell - 3, cx + cell / 2 + 3, cy + cell - 2, MINE); // base
+                g.fill(fx, cy + 2, fx + 1, cy + cell - 3, colours().mine());              // pole
+                g.fill(fx - cell / 4, cy + 2, fx, cy + cell / 2, colours().flag());   // flag
+                g.fill(cx + cell / 2 - 3, cy + cell - 3, cx + cell / 2 + 3, cy + cell - 2, colours().mine()); // base
+            }
+        }
+
+        /*
+         * Frames 7's squares: a covered one is a pane of blue glass with a gap round it, an open one a pale plate with
+         * its number in its own colour, the mines as they always were.
+         */
+        private void drawGlassCell(final GuiGraphics g, final Font font, final int r, final int c, final int cx,
+                                   final int cy, final boolean showMine) {
+            final Glass k = GLASS.get();
+            if (game.isRevealed(r, c) || showMine) {
+                g.fill(cx, cy, cx + cell - 1, cy + cell - 1, k.open());
+                g.fill(cx, cy + cell - 2, cx + cell - 1, cy + cell - 1, k.openEdge());
+                if (showMine) {
+                    if (game.isRevealed(r, c)) {
+                        g.fill(cx, cy, cx + cell - 1, cy + cell - 1, colours().flag());
+                    }
+                    final int m = Math.max(2, cell / 3);
+                    g.fill(cx + (cell - m) / 2, cy + (cell - m) / 2, cx + (cell + m) / 2, cy + (cell + m) / 2,
+                            colours().mine());
+                } else {
+                    final int n = game.adjacent(r, c);
+                    if (n > 0) {
+                        final String s = String.valueOf(n);
+                        final int ink = n == 1 ? k.one() : n == 2 ? k.two() : colours().number(n);
+                        Draw.text(g, font, s, cx + (cell - font.width(s)) / 2, cy + (cell - 8) / 2 + 1, ink);
+                    }
+                }
+                return;
+            }
+            g.fillGradient(cx, cy, cx + cell - 1, cy + cell - 1, k.paneTop(), k.paneBottom());
+            g.fill(cx + 1, cy, cx + cell - 2, cy + 1, k.paneLight());
+            g.fill(cx, cy + cell - 2, cx + cell - 1, cy + cell - 1, k.paneRim());
+            if (game.isFlagged(r, c)) {
+                final int fx = cx + cell / 2;
+                g.fill(fx, cy + 2, fx + 1, cy + cell - 3, colours().mine());
+                g.fill(fx - cell / 4, cy + 2, fx, cy + cell / 2, colours().flag());
             }
         }
 
@@ -126,14 +183,25 @@ public final class MinesweeperApp implements IDesktopApp {
             } else if (button == 1) {
                 game.toggleFlag(r, c);
             }
+            ProgramCue sound = ProgramCue.MINESWEEPER_CLICK;
             if (game.isFinished()) {
                 frozenSeconds = timing ? Math.min(999, (System.currentTimeMillis() - startMs) / 1000) : 0;
+                if (game.state() == MinesweeperGame.State.WON) {
+                    PacketDistributor.sendToServer(new GameWonPayload(host, GamePayloads.MINESWEEPER,
+                            difficulty.name().toLowerCase(Locale.ROOT)));
+                    sound = ProgramCue.MINESWEEPER_WIN;
+                } else {
+                    sound = ProgramCue.MINESWEEPER_EXPLODE;
+                }
             }
+            // The machine plays it, so whoever stands by the computer hears the game too.
+            PacketDistributor.sendToServer(new MachineSoundPayload(host, sound));
             return true;
         }
     }
 
-    public MinesweeperApp() {
+    public MinesweeperApp(final BlockPos host) {
+        this.host = host;
         for (final MinesweeperGame.Difficulty d : MinesweeperGame.Difficulty.values()) {
             difficultyButtons.put(d, root.add(new Button(shortLabel(d), () -> newGame(d))));
         }
@@ -142,11 +210,11 @@ public final class MinesweeperApp implements IDesktopApp {
     }
 
     private static String shortLabel(final MinesweeperGame.Difficulty d) {
-        return switch (d) {
-            case BEGINNER -> "Beg";
-            case INTERMEDIATE -> "Int";
-            case EXPERT -> "Exp";
-        };
+        return GameText.resolve(switch (d) {
+            case BEGINNER -> MinesweeperTexts.BEGINNER;
+            case INTERMEDIATE -> MinesweeperTexts.INTERMEDIATE;
+            case EXPERT -> MinesweeperTexts.EXPERT;
+        });
     }
 
     private String faceGlyph() {
@@ -166,7 +234,7 @@ public final class MinesweeperApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Minesweeper";
+        return ProgramClient.nameOf("minesweeper");
     }
 
     @Override
@@ -199,7 +267,11 @@ public final class MinesweeperApp implements IDesktopApp {
                               final int width, final int height, final int mouseX, final int mouseY,
                               final float partialTick) {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
-        g.fill(x, y, x + width, y + height, skin.windowBg());
+        if (glass()) {
+            g.fillGradient(x, y, x + width, y + height, GLASS.get().groundTop(), GLASS.get().groundBottom());
+        } else {
+            g.fill(x, y, x + width, y + height, skin.windowBg());
+        }
 
         // Difficulty selector row.
         int dx = x + 4;
@@ -213,9 +285,15 @@ public final class MinesweeperApp implements IDesktopApp {
 
         // Status panel: mine counter, reset face, timer, in a sunken frame.
         final int panelY = y + 19;
-        sunken(g, x + 4, panelY, width - 8, PANEL_H);
-        led(g, font, x + 8, panelY + 4, game.minesRemaining());
-        led(g, font, x + width - 8 - 26, panelY + 4, elapsedSeconds());
+        if (glass()) {
+            // Frames 7 wrote the time and the mines left in plain figures, each in a pale box.
+            counter(g, font, x + 8, panelY + 4, Integer.toString(game.minesRemaining()));
+            counter(g, font, x + width - 8 - 26, panelY + 4, Integer.toString(elapsedSeconds()));
+        } else {
+            sunken(g, x + 4, panelY, width - 8, PANEL_H);
+            led(g, font, x + 8, panelY + 4, game.minesRemaining());
+            led(g, font, x + width - 8 - 26, panelY + 4, elapsedSeconds());
+        }
         face.setBounds(x + width / 2 - 9, panelY + 3, 18, 18);
 
         // Board.
@@ -231,22 +309,35 @@ public final class MinesweeperApp implements IDesktopApp {
 
     /** A 3-glyph red LED readout for a value, clamped to what fits (negative values keep a leading minus). */
     private static void led(final GuiGraphics g, final Font font, final int x, final int y, final int value) {
-        g.fill(x, y, x + 26, y + 15, LED_BG);
+        g.fill(x, y, x + 26, y + 15, colours().ledGround());
         final String s;
         if (value < 0) {
             s = "-" + String.format(Locale.ROOT, "%02d", Math.min(99, -value));
         } else {
             s = String.format(Locale.ROOT, "%03d", Math.min(999, value));
         }
-        g.drawString(font, s, x + 3, y + 4, LED_ON, false);
+        Draw.text(g, font, s, x + 3, y + 4, colours().ledOn());
+    }
+
+    /** One of Frames 7's counters: a pale box with its figure centred in it. */
+    private static void counter(final GuiGraphics g, final Font font, final int x, final int y, final String value) {
+        final Glass k = GLASS.get();
+        g.fill(x, y, x + 26, y + 15, k.box());
+        Draw.outline(g, x, y, 26, 15, k.boxRim());
+        Draw.text(g, font, value, x + (26 - font.width(value)) / 2, y + 4, k.boxInk());
+    }
+
+    /** Whether this window is Frames 7's, whose board is glass. */
+    private boolean glass() {
+        return skin.form() == OsSkin.Form.AERO;
     }
 
     private static void sunken(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        g.fill(x, y, x + w, y + h, FACE);
-        g.fill(x, y, x + w, y + 1, BEVEL_DARK);
-        g.fill(x, y, x + 1, y + h, BEVEL_DARK);
-        g.fill(x, y + h - 1, x + w, y + h, BEVEL_LIGHT);
-        g.fill(x + w - 1, y, x + w, y + h, BEVEL_LIGHT);
+        g.fill(x, y, x + w, y + h, colours().face());
+        g.fill(x, y, x + w, y + 1, colours().bevelDark());
+        g.fill(x, y, x + 1, y + h, colours().bevelDark());
+        g.fill(x, y + h - 1, x + w, y + h, colours().bevelLight());
+        g.fill(x + w - 1, y, x + w, y + h, colours().bevelLight());
     }
 
     private int elapsedSeconds() {
@@ -264,8 +355,60 @@ public final class MinesweeperApp implements IDesktopApp {
         root.mouseClicked(mouseX, mouseY, button);
     }
 
+    /** The game as it stands, for a look at what a click on the board did. */
+    public MinesweeperGame game() {
+        return game;
+    }
+
+    /** The desktop point in the middle of the cell at {@code row} and {@code col}, from the last frame drawn. */
+    public int[] cellPoint(final int row, final int col) {
+        return new int[] {board.x() + col * board.cell + board.cell / 2, board.y() + row * board.cell + board.cell / 2};
+    }
+
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         root.mouseReleased(mouseX, mouseY, button);
+    }
+
+    private static Colours colours() {
+        return PALETTE.get();
+    }
+
+    /**
+     * The board's colours: its grey face, the two edges of a bevel, the grid, the counters' ground and digits, a
+     * mine, a flag, and the colour of each count from one to eight.
+     */
+    private record Colours(int face, int bevelLight, int bevelDark, int grid, int ledGround, int ledOn, int mine,
+                           int flag, int one, int two, int three, int four, int five, int six, int seven,
+                           int eight) {
+
+        /** The colour a count of that many neighbouring mines is written in; nought is never written. */
+        int number(final int n) {
+            return switch (n) {
+                case 1 -> one;
+                case 2 -> two;
+                case 3 -> three;
+                case 4 -> four;
+                case 5 -> five;
+                case 6 -> six;
+                case 7 -> seven;
+                case 8 -> eight;
+                default -> 0;
+            };
+        }
+    }
+
+    /**
+     * Frames 7's glass board: the ground's top and foot, a covered pane's top, foot and rim, an open plate and its
+     * lower edge, the light along a pane's top, the counters' box, its rim and its ink, and the blue of a one and the
+     * green of a two, which that board drew brighter than the grey one did.
+     */
+    private record Glass(int groundTop, int groundBottom, int paneTop, int paneBottom, int paneRim, int open,
+                         int openEdge, int paneLight, int boxRim, int boxInk, int one, int two) {
+
+        /** The counters' box, the same pale plate an open square is. */
+        int box() {
+            return this.open;
+        }
     }
 }

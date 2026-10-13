@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:systems/press_del",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:system_erased"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.format_c.description"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:lava_bucket"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.format_c.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

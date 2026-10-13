@@ -11,10 +11,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.vm.listing.Shape;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -150,6 +152,44 @@ class SigmaSemanticsTest {
         assertNull(result.model().entryPoint());
     }
 
+    /** From the second version a Main may give back the code the program ends with and be handed its arguments. */
+    @Test
+    void checkProgram_takesAMainThatGivesACodeOrIsHandedTheArguments() {
+        for (final String main : List.of("static int Main() { return 0; }",
+                "static void Main(string[] args) { Console.PrintLine(args[0]); }",
+                "static int Main(string[] args) { return args.Length; }")) {
+            final SigmaSemantics.Result result = SigmaSemantics.checkProgram(List.of(new SourceFile("Tool.sgs",
+                    PRELUDE + "class Tool { " + main + " }")));
+            assertClean(result);
+            assertEquals("Tool", result.model().entryPoint().name(), main);
+            assertEquals(Shape.CONSOLE, result.model().shape(), main);
+        }
+    }
+
+    /** An array answers to how many places it has, and only for reading: it is as long as it was made. */
+    @Test
+    void check_anArrayHasALengthThatIsOnlyRead() {
+        assertClean(SigmaSemantics.checkProgram(List.of(new SourceFile("Tool.sgs", PRELUDE
+                + "class Tool { static void Main() { int[] a = new int[3]; int n = a.Length; } }"))));
+        for (final String write : List.of("a.Length = 4;", "a.Length++;")) {
+            assertReports("S3016", SigmaSemantics.checkProgram(List.of(new SourceFile("Tool.sgs", PRELUDE
+                    + "class Tool { static void Main() { int[] a = new int[3]; " + write + " } }"))));
+        }
+    }
+
+    @Test
+    void checkProgram_atTheFirstVersion_refusesAMainOfTheNewShapesForTheVersionItNeeds() {
+        final SigmaSemantics.Result gives = SigmaSemantics.checkProgram(List.of(new SourceFile("Tool.sgs",
+                PRELUDE + "class Tool { static int Main() { return 0; } }")), LanguageLevel.SIGMA_SHARP, 1);
+        assertReports("S3057", gives);
+        assertTrue(gives.diagnostics().stream().anyMatch(d -> d.format().contains("'int Main()' needs Σ# 2")),
+                () -> String.valueOf(gives.diagnostics()));
+        final SigmaSemantics.Result handed = SigmaSemantics.checkProgram(List.of(new SourceFile("Tool.sgs",
+                PRELUDE + "class Tool { static void Main(string[] args) { } }")), LanguageLevel.SIGMA_SHARP, 1);
+        assertTrue(handed.diagnostics().stream().anyMatch(d -> d.format().contains("'Main(string[])' needs Σ# 2")),
+                () -> String.valueOf(handed.diagnostics()));
+    }
+
     @Test
     void check_readsTypesInWhateverOrderTheyWereWritten() {
         assertClean(check("""
@@ -270,6 +310,29 @@ class SigmaSemanticsTest {
     @Test
     void check_reportsABaseThatIsNotAClassOrAnInterface() {
         assertReports("S3031", check("enum Colour { RED }\nclass C : Colour { }"));
+    }
+
+    @Test
+    void check_reportsAClassThatStandsBehindItself() {
+        // Each of these went round its bases for ever; the check has to answer, and with the loop named.
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            assertReports("S3059", check("class A : A { }"));
+            assertReports("S3059", check("class A : B { }\nclass B : A { }"));
+            assertReports("S3059", check("class A : B { }\nclass B : C { }\nclass C : A { }"));
+        });
+    }
+
+    @Test
+    void check_reportsAnInterfaceThatCarriesItself() {
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            assertReports("S3059", check("interface IA : IB { }\ninterface IB : IA { }"));
+            assertReports("S3059", check("interface IA : IA { }"));
+        });
+    }
+
+    @Test
+    void check_acceptsAChainOfBasesThatEnds() {
+        assertClean(check("class A { }\nclass B : A { }\nclass C : B { }"));
     }
 
     @Test

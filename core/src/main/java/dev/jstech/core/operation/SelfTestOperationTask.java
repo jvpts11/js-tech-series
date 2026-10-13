@@ -9,8 +9,13 @@ package dev.jstech.core.operation;
 
 /**
  * A diagnostic Operation that does a bounded amount of deterministic CPU-bound work on its virtual thread and then succeeds.
+ * It is a dev-only load generator, so the loop does not poll {@link IOperationContext#isActive()}: a long run ends on
+ * its own even if the dispatcher shuts down meanwhile.
  */
 public record SelfTestOperationTask(int workUnits) implements IOperationTask {
+
+    /* Written once per run so the JIT cannot discard the loop as dead code. */
+    private static volatile long sink;
 
     public SelfTestOperationTask {
         if (workUnits < 0) {
@@ -28,9 +33,7 @@ public record SelfTestOperationTask(int workUnits) implements IOperationTask {
         for (int i = 1; i <= workUnits; i++) {
             accumulator += (long) (Math.sqrt(i) * 1024.0) ^ (long) i;
         }
-        // Reference the result so the loop cannot be optimized away.
-        return accumulator == Long.MIN_VALUE
-                ? IOperationResult.failure("jscore.operation.failure.self_test")
-                : IOperationResult.success();
+        sink = accumulator;
+        return IOperationResult.success();
     }
 }

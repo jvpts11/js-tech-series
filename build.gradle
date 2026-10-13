@@ -9,6 +9,9 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+// Each mod's changelog, written from the series' one.
+apply from: 'gradle/changelogs.gradle'
+
 // The version every artifact carries (the jar names and the mod metadata alike). A build from a tree that is
 // not the tagged release commit is a snapshot named after the commit it came from, "0.2.0a-SNAPSHOT.6a288a7":
 // the loader orders a snapshot below its release and above the previous one, so a development jar never
@@ -67,6 +70,46 @@ subprojects {
             name = 'Tterrag'
             url = 'https://maven.tterrag.com/'
         }
+        // FTB Teams and the libraries it stands on: the Core's teams come from it when it is installed.
+        maven {
+            name = 'FTB'
+            url = 'https://maven.ftb.dev/releases'
+            content { includeGroup 'dev.ftb.mods' }
+        }
+        maven {
+            name = 'Architectury'
+            url = 'https://maven.architectury.dev'
+            content { includeGroup 'dev.architectury' }
+        }
+        // EMI: the second recipe viewer the Core's recipe pages are shown in.
+        maven {
+            name = 'TerraformersMC'
+            url = 'https://maven.terraformersmc.com/releases'
+            content { includeGroup 'dev.emi' }
+        }
+        // Curios and Accessories: the two equipment-slot mods the Core reads worn items from.
+        maven {
+            name = 'TheIllusiveC4'
+            url = 'https://maven.theillusivec4.top'
+            content { includeGroup 'top.theillusivec4.curios' }
+        }
+        maven {
+            name = 'WispForest'
+            url = 'https://maven.wispforest.io/releases'
+            content { includeGroup 'io.wispforest' }
+        }
+        // KubeJS and Rhino: the scripting mod a modpack writes its recipes and loot in, with what the mods hand it.
+        maven {
+            name = 'LatvianDev'
+            url = 'https://maven.latvian.dev/releases'
+            content { includeGroup 'dev.latvian.mods' }
+        }
+        // Jade, through Modrinth's Maven: the block tooltip the Core's probe lines show in.
+        maven {
+            name = 'Modrinth'
+            url = 'https://api.modrinth.com/maven'
+            content { includeGroup 'maven.modrinth' }
+        }
         // GeckoLib: shipped dependency of the computing mod, for the large block models with bones and animation.
         maven {
             name = 'GeckoLib'
@@ -88,8 +131,19 @@ subprojects {
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 
+    /*
+     * The Core carries SnakeYAML inside its jar. Every development run loads the Core, and in one the game takes a
+     * library that is not a mod only from this configuration, so each run gets it, at the version the Core carries.
+     */
+    def snakeYaml = dependencies.create('org.yaml:snakeyaml:2.7')
+    configurations.matching { it.name == 'additionalRuntimeClasspath' }.configureEach {
+        it.dependencies.add(snakeYaml)
+    }
+
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
+        // Every error of a change that touches many files at once, not the first hundred.
+        options.compilerArgs += ['-Xmaxerrs', '10000']
     }
 
     tasks.named('test', Test).configure {

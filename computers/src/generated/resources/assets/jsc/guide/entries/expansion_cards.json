@@ -1,0 +1,354 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.expansion_cards.table1",
+      "heads": [
+        "jsc.guide.expansion_cards.table1_head1",
+        "jsc.guide.expansion_cards.table1_head2",
+        "jsc.guide.expansion_cards.table1_head3",
+        "jsc.guide.expansion_cards.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table1_4_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.expansion_cards.definition1",
+      "term": "jsc.guide.expansion_cards.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.expansion_cards.definition2",
+      "term": "jsc.guide.expansion_cards.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.expansion_cards.table2",
+      "heads": [
+        "jsc.guide.expansion_cards.table2_head1",
+        "jsc.guide.expansion_cards.table2_head2",
+        "jsc.guide.expansion_cards.table2_head3",
+        "jsc.guide.expansion_cards.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table2_4_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text9"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.expansion_cards.table3",
+      "heads": [
+        "jsc.guide.expansion_cards.table3_head1",
+        "jsc.guide.expansion_cards.table3_head2",
+        "jsc.guide.expansion_cards.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table3_1_2"
+          },
+          {
+            "amount": 10,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table3_2_2"
+          },
+          {
+            "amount": 25,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table3_3_2"
+          },
+          {
+            "amount": 75,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table3_4_2"
+          },
+          {
+            "amount": 100,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table3_5_2"
+          },
+          {
+            "amount": 110,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table3_6_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table3_6_2"
+          },
+          {
+            "amount": 125,
+            "unit": "W"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text10"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.expansion_cards.fix1",
+          "problem": "jsc.guide.expansion_cards.problem1"
+        },
+        {
+          "fix": "jsc.guide.expansion_cards.fix2",
+          "problem": "jsc.guide.expansion_cards.problem2"
+        },
+        {
+          "fix": "jsc.guide.expansion_cards.fix3",
+          "problem": "jsc.guide.expansion_cards.problem3"
+        },
+        {
+          "fix": "jsc.guide.expansion_cards.fix4",
+          "problem": "jsc.guide.expansion_cards.problem4"
+        },
+        {
+          "fix": "jsc.guide.expansion_cards.fix5",
+          "problem": "jsc.guide.expansion_cards.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:graphics_cards",
+        "jsc:sound_cards",
+        "jsc:build_refusals"
+      ]
+    }
+  ],
+  "icon": "jsc:furnace_card",
+  "id": "jsc:expansion_cards",
+  "items": [
+    "jsc:crafting_table_card",
+    "jsc:furnace_card",
+    "jsc:enchanting_card",
+    "jsc:anvil_card",
+    "jsc:serial_console_card",
+    "jsc:management_nic",
+    "jsc:fabric_host_adapter",
+    "jsc:fabric_dpu",
+    "jsc:optical_network_card",
+    "jsc:phi_5100",
+    "jsc:phi_7120",
+    "jsc:phi_7290",
+    "jsc:phi_9000"
+  ],
+  "order": 23,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.expansion_cards.title"
+}

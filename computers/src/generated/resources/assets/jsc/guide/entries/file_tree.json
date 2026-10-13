@@ -1,0 +1,158 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.file_tree.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_tree.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.file_tree.table1",
+      "heads": [
+        "jsc.guide.file_tree.table1_head1",
+        "jsc.guide.file_tree.table1_head2",
+        "jsc.guide.file_tree.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.file_tree.table1_1_1"
+          },
+          {
+            "literal": "/home/player"
+          },
+          {
+            "literal": "/usr/player"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.file_tree.table1_2_1"
+          },
+          {
+            "literal": "/home/player/Desktop"
+          },
+          {
+            "literal": "/usr/player/Desktop"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.file_tree.table1_3_1"
+          },
+          {
+            "literal": "/home/player/Documents"
+          },
+          {
+            "literal": "/usr/player/Documents"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.file_tree.table1_4_1"
+          },
+          {
+            "literal": "/media"
+          },
+          {
+            "literal": "/mnt"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_tree.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.file_tree.table2",
+      "heads": [
+        "jsc.guide.file_tree.table2_head1",
+        "jsc.guide.file_tree.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "/x/y"
+          },
+          {
+            "words": "jsc.guide.file_tree.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "x/y"
+          },
+          {
+            "words": "jsc.guide.file_tree.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "~"
+          },
+          {
+            "words": "jsc.guide.file_tree.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": ".."
+          },
+          {
+            "words": "jsc.guide.file_tree.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "/media/d/x"
+          },
+          {
+            "words": "jsc.guide.file_tree.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_tree.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.file_tree.definition1",
+      "term": "jsc.guide.file_tree.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.file_tree.fix1",
+          "problem": "jsc.guide.file_tree.problem1"
+        },
+        {
+          "fix": "jsc.guide.file_tree.fix2",
+          "problem": "jsc.guide.file_tree.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:shell_prompt",
+        "jsc:file_commands"
+      ]
+    }
+  ],
+  "id": "jsc:file_tree",
+  "order": 192,
+  "section": "jsc:shell_basics",
+  "title": "jsc.guide.file_tree.title"
+}

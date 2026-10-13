@@ -1,0 +1,351 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_installs.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_installs.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.cluster_installs.step1",
+        "jsc.guide.cluster_installs.step2",
+        "jsc.guide.cluster_installs.step3",
+        "jsc.guide.cluster_installs.step4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cluster_installs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_installs.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_installs.table1",
+      "heads": [
+        "jsc.guide.cluster_installs.table1_head1",
+        "jsc.guide.cluster_installs.table1_head2",
+        "jsc.guide.cluster_installs.table1_head3",
+        "jsc.guide.cluster_installs.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table1_4_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cluster_installs.definition1",
+      "term": "jsc.guide.cluster_installs.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_installs.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_installs.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cluster_installs.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_installs.table2",
+      "heads": [
+        "jsc.guide.cluster_installs.table2_head1",
+        "jsc.guide.cluster_installs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table2_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table2_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table2_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cluster_installs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_installs.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_installs.table3",
+      "heads": [
+        "jsc.guide.cluster_installs.table3_head1",
+        "jsc.guide.cluster_installs.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table3_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table3_6_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table3_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table3_7_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table3_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_installs.table3_8_1"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table3_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cluster_installs.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_installs.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_installs.table4",
+      "heads": [
+        "jsc.guide.cluster_installs.table4_head1",
+        "jsc.guide.cluster_installs.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "done: <what> on <nodes>"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "cancelled: <what> on <nodes>"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": ", <n> skipped"
+          },
+          {
+            "words": "jsc.guide.cluster_installs.table4_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_installs.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cluster_installs.fix1",
+          "problem": "jsc.guide.cluster_installs.problem1"
+        },
+        {
+          "fix": "jsc.guide.cluster_installs.fix2",
+          "problem": "jsc.guide.cluster_installs.problem2"
+        },
+        {
+          "fix": "jsc.guide.cluster_installs.fix3",
+          "problem": "jsc.guide.cluster_installs.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cluster_manager",
+        "jsc:cluster_command",
+        "jsc:cluster_management_computers",
+        "jsc:server_racks"
+      ]
+    }
+  ],
+  "icon": "jsc:cluster_management_computer",
+  "id": "jsc:cluster_installs",
+  "order": 118,
+  "section": "jsc:cluster_tools",
+  "title": "jsc.guide.cluster_installs.title"
+}

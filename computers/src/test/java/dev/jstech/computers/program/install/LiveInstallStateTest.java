@@ -529,6 +529,16 @@ class LiveInstallStateTest {
     }
 
     @Test
+    void fdisk_aSizePastAnyDisk_isOutOfRangeRatherThanAnError() {
+        // A long run of digits threw out of the tool, and a size in terabytes went round to below nothing.
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        step(st, "fdisk /dev/sda", env(true, true, false), "g", "n", "", "", "+99999999999", "n", "", "", "+3000T",
+                "q");
+        assertTrue(seen().contains("Value out of range."), seen());
+        assertFalse(seen().contains("Created a new partition"), "neither size makes a partition");
+    }
+
+    @Test
     void fdisk_aDiskTheMachineDoesNotHave_isNoSuchFile() {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
         assertTrue(step(st, "fdisk /dev/sdz").text().contains("No such file or directory"));
@@ -744,6 +754,23 @@ class LiveInstallStateTest {
         st.writeFileAt("make.conf", "MAKEOPTS=\"-j3\"");
         assertEquals(3, st.makeJobs());
         assertNull(st.fileAt("nothing-here"), "a file that is not there is not there");
+    }
+
+    @Test
+    void writeFileAt_pastWhatTheSessionHolds_writesNothing() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        assertTrue(st.writeFileAt("/root/notes.txt", "x".repeat(LiveFiles.MOST_CHARS)), "up to the ceiling it takes");
+        assertFalse(st.writeFileAt("/root/more.txt", "x"), "one letter past it, nothing");
+        assertNull(st.fileAt("/root/more.txt"));
+    }
+
+    @Test
+    void echo_intoAFullSession_saysThereIsNoSpaceLeft() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        st.writeFileAt("/root/notes.txt", "x".repeat(LiveFiles.MOST_CHARS));
+        final LiveTurn r = step(st, "echo more >> /root/notes.txt");
+        assertFalse(r.ok());
+        assertTrue(r.text().contains("No space left on device"), r.text());
     }
 
     @Test

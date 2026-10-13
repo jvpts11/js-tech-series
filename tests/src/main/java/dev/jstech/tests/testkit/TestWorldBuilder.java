@@ -8,7 +8,7 @@
 package dev.jstech.tests.testkit;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -17,6 +17,11 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.install.SetupTiming;
+import dev.jstech.core.cable.CableBlock;
+import dev.jstech.core.gametest.ScenarioBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -24,52 +29,47 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.UnaryOperator;
 
 /**
  * Builds the standard test scenarios (a booted Mainframe, running computers, a seeded Server Rack, the
  * crafting network) directly in a {@link ServerLevel}, so the same fixtures serve both the headless
  * GameTests and the client-driven tests. Positions handed to this builder are relative: a GameTest maps
- * them through its arena, a client test through the origin of the area it owns.
+ * them through its arena, a client test through the origin of the area it owns. What any mod's tests need
+ * (blocks, cables, placing as a player does) is the Core's {@link ScenarioBuilder}; this adds the series'
+ * machines.
  */
-public final class TestWorldBuilder {
+public final class TestWorldBuilder extends ScenarioBuilder {
 
     /** The Network OS id installed on every test Mainframe: the minimal OS that enables orchestration. */
     public static final ResourceLocation NETWORK_OS = ResourceLocation.fromNamespaceAndPath("jsc", "mc_net");
 
-    /** What the base's desktop machines run: a Standard-era system, the same a player would install. */
+    /**
+     * What the base's desktop machines run: Frames 11, put straight on the disk. Their boards are Standard ones, on
+     * which a player's installer offers Frames 10 and keeps 11 for an Advanced machine; the tests reach the newest
+     * desktop without going through the installer, which is tested on its own.
+     */
     public static final ResourceLocation DESKTOP_OS = ResourceLocation.fromNamespaceAndPath("jsc", "frames_11");
 
-    private final ServerLevel level;
-    private final UnaryOperator<BlockPos> toAbsolute;
+    /** The system a Standard machine's installer offers, for the tests that hold a machine to its own age. */
+    public static final ResourceLocation STANDARD_OS = ResourceLocation.fromNamespaceAndPath("jsc", "frames_10");
+
     /**
-     * Every block this builder wrote. A GameTest builds into an empty arena, but the same scenario built in
-     * a real world lands inside terrain: the caller needs to know exactly which blocks are the base's own so
-     * it can clear the rock from between them and leave a room a player can walk into.
+     * What a Legacy desktop machine runs: the newest Frames of its own age, since a later one holds more memory of
+     * itself than a machine of that age has.
      */
-    private final java.util.Set<Long> written = new java.util.HashSet<>();
-    private net.minecraft.world.level.levelgen.structure.BoundingBox box;
+    public static final ResourceLocation LEGACY_DESKTOP_OS = ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp");
 
     private TestWorldBuilder(final ServerLevel level, final UnaryOperator<BlockPos> toAbsolute) {
-        this.level = level;
-        this.toAbsolute = toAbsolute;
-    }
-
-    /** Whether this builder placed the block at the given absolute position. */
-    public boolean wrote(final BlockPos absolute) {
-        return written.contains(absolute.asLong());
-    }
-
-    /** The box every block written so far fits in, or {@code null} when nothing has been placed. */
-    @org.jetbrains.annotations.Nullable
-    public net.minecraft.world.level.levelgen.structure.BoundingBox writtenBox() {
-        return box;
+        super(level, toAbsolute);
     }
 
     /** A builder whose relative positions are the GameTest arena's, exactly like {@code helper.setBlock}. */
@@ -82,120 +82,67 @@ public final class TestWorldBuilder {
         return new TestWorldBuilder(level, origin::offset);
     }
 
-    public ServerLevel level() {
-        return level;
-    }
-
-    public BlockPos absolute(final BlockPos relative) {
-        return toAbsolute.apply(relative);
-    }
-
-    public void setBlock(final BlockPos relative, final Block block) {
-        setBlock(relative, block.defaultBlockState());
-    }
-
-    public void setBlock(final BlockPos relative, final BlockState state) {
-        // Flag 3 (update neighbours + send to clients) matches what GameTestHelper.setBlock does.
-        final BlockPos pos = absolute(relative);
-        level.setBlock(pos, state, 3);
-        note(pos);
-    }
-
-    /** Records a position as part of the base, growing the written box to hold it. */
-    public void note(final BlockPos absolute) {
-        written.add(absolute.asLong());
-        final net.minecraft.world.level.levelgen.structure.BoundingBox one =
-                new net.minecraft.world.level.levelgen.structure.BoundingBox(absolute);
-        box = box == null ? one : net.minecraft.world.level.levelgen.structure.BoundingBox.encapsulatingBoxes(
-                java.util.List.of(box, one)).orElse(box);
-    }
-
-    /**
-     * Clears the volume a multiblock is about to claim. In an empty arena this does nothing; in a world it
-     * is the difference between a cabinet forming and a bare controller block sitting in the rock, because
-     * a multiblock refuses to raise its parts into occupied space.
-     */
-    public void clearFor(final Iterable<BlockPos> relativePositions) {
-        for (final BlockPos relative : relativePositions) {
-            final BlockPos pos = absolute(relative);
-            if (!level.getBlockState(pos).isAir()) {
-                level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
-            }
-            note(pos);
-        }
-    }
-
-    /**
-     * Places a block the way a player placing its item does: the block entity receives the item's default
-     * data components. Third-party machines keep their factory settings (side configuration, upgrades, ...)
-     * in those components, so a raw {@link #setBlock} would leave them with every face disabled.
-     */
-    public BlockEntity placeFromItem(final BlockPos relative, final Block block) {
-        setBlock(relative, block.defaultBlockState());
-        final BlockEntity entity = level.getBlockEntity(absolute(relative));
-        if (entity != null) {
-            entity.applyComponentsFromItemStack(new ItemStack(block));
-            entity.setChanged();
-        }
-        return entity;
-    }
-
-    public BlockState getBlockState(final BlockPos relative) {
-        return level.getBlockState(absolute(relative));
-    }
-
-    public BlockEntity getBlockEntity(final BlockPos relative) {
-        return level.getBlockEntity(absolute(relative));
-    }
-
-    /** The block entity at {@code relative}, or an {@link IllegalStateException} naming what was expected. */
-    public <T extends BlockEntity> T blockEntity(final BlockPos relative, final Class<T> type) {
-        final BlockEntity be = getBlockEntity(relative);
-        if (type.isInstance(be)) {
-            return type.cast(be);
-        }
-        throw new IllegalStateException("no " + type.getSimpleName() + " at " + relative);
-    }
-
     // Hardware builds
 
-    /**
-     * Installs the minimal valid Mainframe build: board, CPU, RAM, PSU, a disk large enough for the Network
-     * OS footprint, and the Network OS itself so Operations get dispatched. A valid build never powers on by
-     * itself; callers toggle power when they want the machine running.
-     */
     /**
      * Runs whatever {@code host} is setting up to its end, tick by tick, the way waiting would.
      *
      * <p>A setup takes seconds of game time so a player sees it; a test that only cares what the
      * machine looks like afterwards ticks the job itself rather than sleeping through the bar.
      */
-    public static void finishSetup(final dev.jstech.computers.os.IOsHost host, final ServerLevel level,
+    public static void finishSetup(final IOsHost host, final ServerLevel level,
                                    final BlockPos pos) {
-        final int most = dev.jstech.computers.os.install.SetupTiming.MAX_SECONDS
-                * dev.jstech.computers.os.install.SetupTiming.TICKS_PER_SECOND + 1;
+        final int most = SetupTiming.MAX_SECONDS * SetupTiming.TICKS_PER_SECOND + 1;
         for (int i = 0; i < most && host.console() != null && host.console().setup() != null; i++) {
-            dev.jstech.computers.os.install.SetupRunner.tick(host, level, pos);
+            SetupRunner.tick(host, level, pos);
         }
     }
 
+    /**
+     * Installs the minimal valid Mainframe build: board, CPU, RAM, PSU, a disk large enough for the Network
+     * OS footprint, and the Network OS itself so Operations get dispatched. A valid build never powers on by
+     * itself; callers toggle power when they want the machine running.
+     */
     public static void installMainframeBuild(final MainframeBlockEntity be) {
+        /*
+         * The Network OS is 8 MB, one item of a 500 GB HDD's 2 000 at 256 MB the item. The disk must be in
+         * place before installOs() so the footprint check passes.
+         */
+        installMainframeBuild(be, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        be.installOs(NETWORK_OS);
+    }
+
+    /**
+     * Sets the parts of a working Mainframe into its inventory, with a 500 GB disk of {@code disk}'s kind and a
+     * graphics card when {@code withGpu} (which is what gives it the peripheral ports a monitor links to). No
+     * system is installed and the machine is not powered, so a caller can pick its own system first.
+     */
+    public static void installMainframeParts(final MainframeBlockEntity be, final StorageTier disk,
+                                             final boolean withGpu) {
+        installMainframeBuild(be, new ItemStack(ComputingModule.disk(disk, DiskSize.GB_500)));
+        if (withGpu) {
+            be.getInventory().setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
+                    new ItemStack(ComputingModule.GPU_HD_7970.get()));
+        }
+    }
+
+    /**
+     * The standard Mainframe hardware (board, CPU, RAM, power supply) with {@code disk} in the first disk slot, or
+     * no disk when it is null. No system is installed, so a test can put its own on the disk afterwards.
+     */
+    public static void installMainframeBuild(final MainframeBlockEntity be, final ItemStack disk) {
         final ItemStackHandler inv = be.getInventory();
         inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
                 new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
-        /*
-         * The Network OS is 8 MB, one item of a 500 GB HDD's 2 000 at 256 MB the item. The disk must be in
-         * place before installOs() so the footprint check passes.
-         */
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        be.installOs(NETWORK_OS);
+        if (disk != null) {
+            inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, disk);
+        }
     }
 
     /** Places a Mainframe controller, installs the valid build and powers it on. */
@@ -207,20 +154,39 @@ public final class TestWorldBuilder {
         return be;
     }
 
+    /** Places a Mainframe with the valid build and a 500 GB hard drive, powers it on and installs {@code os}. */
+    public MainframeBlockEntity placeMainframeWithSystem(final BlockPos relative, final ResourceLocation os) {
+        setBlock(relative, ComputingModule.MAINFRAME.get());
+        final MainframeBlockEntity be = blockEntity(relative, MainframeBlockEntity.class);
+        installMainframeBuild(be, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        be.togglePower();
+        if (!be.installOs(os)) {
+            throw new IllegalStateException("could not install " + os + " on the test Mainframe");
+        }
+        return be;
+    }
+
     /** Places a Personal Computer next to a cable (rear toward it), installs its hardware and powers it on. */
     public PersonalComputerBlockEntity placeRunningPersonalComputer(final BlockPos relative) {
+        return placeRunningPersonalComputer(relative, DESKTOP_OS);
+    }
+
+    /** The same, with that system on its disk rather than the default desktop one. */
+    public PersonalComputerBlockEntity placeRunningPersonalComputer(final BlockPos relative,
+                                                                    final ResourceLocation os) {
         setBlock(relative, ComputingModule.PERSONAL_COMPUTER.get());
         faceRearTowardCable(relative);
         final PersonalComputerBlockEntity be = blockEntity(relative, PersonalComputerBlockEntity.class);
         final ItemStackHandler hw = be.getHardware();
         hw.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
-        hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
+        fillRam(be, PersonalComputerBlockEntity.RAM_SLOTS_START, ComputingModule.RAM_DDR3_8192.get());
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
+        hw.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.GPU_HD_7970.get()));
         /*
          * A machine on a real base has a disk with a system on it. Without one the computer powers on into
          * its firmware with nothing to boot, which is not what the base is meant to demonstrate.
@@ -232,7 +198,7 @@ public final class TestWorldBuilder {
          */
         hw.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
-        be.installOs(DESKTOP_OS);
+        be.installOs(os);
         be.togglePower();
         return be;
     }
@@ -242,26 +208,12 @@ public final class TestWorldBuilder {
      * Crafting Card, and powers it on.
      */
     public CraftingComputerBlockEntity placeRunningCraftingComputer(final BlockPos relative) {
-        setBlock(relative, ComputingModule.CRAFTING_COMPUTER.get());
-        faceRearTowardCable(relative);
-        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
-        final ItemStackHandler hw = be.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
-                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        // Solid state for the same reason as the personal computer above: the disk decides how long it takes.
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
-        be.installOs(DESKTOP_OS);
-        be.togglePower();
-        return be;
+        return placeRunningCrafting(relative, new CraftingParts(ComputingModule.CRAFTING_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get(), HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get(),
+                ComputingModule.RAM_DDR3_8192.get(), ComputingModule.GPU_HD_7970.get(),
+                ComputingModule.PSU_650G.get(),
+                // Solid state for the same reason as the personal computer above: the disk decides how long it takes.
+                StorageTier.SSD), DESKTOP_OS);
     }
 
     /**
@@ -277,25 +229,22 @@ public final class TestWorldBuilder {
      * every caller so far wants a machine that can also do something.
      */
     public CraftingComputerBlockEntity placeRunningLegacyCraftingComputer(final BlockPos relative) {
-        setBlock(relative, ComputingModule.LEGACY_CRAFTING_COMPUTER.get());
-        faceRearTowardCable(relative);
-        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
-        final ItemStackHandler hw = be.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
-                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_500B.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
-        be.installOs(DESKTOP_OS);
-        be.togglePower();
-        return be;
+        return placeRunningCrafting(relative, new CraftingParts(ComputingModule.LEGACY_CRAFTING_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_PENTIX_4_560.get(),
+                HardwareItems.RAM_DDR_1024.get(), HardwareItems.GPU_VERTEX_6600_GT.get(),
+                HardwareItems.PSU_500B.get(), StorageTier.SSD), LEGACY_DESKTOP_OS);
+    }
+
+    /**
+     * A Transition-era crafting computer, switched on with {@code os} installed: what the Unix desktops wear their
+     * Transition faces on, KDE 4 and GNOME 2.
+     */
+    public CraftingComputerBlockEntity placeRunningTransitionCraftingComputer(final BlockPos relative,
+                                                                              final ResourceLocation os) {
+        return placeRunningCrafting(relative, new CraftingParts(ComputingModule.TRANSITION_CRAFTING_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get(), HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get(),
+                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.GPU_VERTEX_8600_GT.get(),
+                HardwareItems.PSU_450B.get(), StorageTier.HDD), os);
     }
 
     /** Seeds slot 0 of the rack at {@code relative} with the default server and its bay drives. */
@@ -311,7 +260,7 @@ public final class TestWorldBuilder {
      * fixture that needs network storage must populate the bay too.
      */
     public static void mountDefaultServer(final ServerRackBlockEntity rack, final int slot) {
-        rack.getServers().setStackInSlot(slot, ComputingModule.defaultServer());
+        rack.getServers().setStackInSlot(slot, ServerStacks.defaultServer());
         rack.insertDrive(slot, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
         rack.insertDrive(slot, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
     }
@@ -340,7 +289,7 @@ public final class TestWorldBuilder {
             return;
         }
         for (final Direction d : Direction.Plane.HORIZONTAL) {
-            if (getBlockState(relative.relative(d)).getBlock() instanceof DataCableBlock) {
+            if (getBlockState(relative.relative(d)).getBlock() instanceof CableBlock) {
                 setBlock(relative, state.setValue(HorizontalDirectionalBlock.FACING, d.getOpposite()));
                 return;
             }
@@ -363,9 +312,36 @@ public final class TestWorldBuilder {
         }
     }
 
+    /**
+     * Places an unpowered Crafting Computer with the plain hardware a program test needs (a standard board, a
+     * 4790K, 8 GB of DDR3, a 650 W supply and a 500 GB hard drive, no Crafting Card) and installs {@code os} on it.
+     */
+    public CraftingComputerBlockEntity placeCraftingComputer(final BlockPos relative, final ResourceLocation os) {
+        setBlock(relative, ComputingModule.CRAFTING_COMPUTER.get());
+        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
+        final ItemStackHandler hw = be.getHardware();
+        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
+                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
+        fillRam(be, CraftingComputerBlockEntity.RAM_SLOTS_START, ComputingModule.RAM_DDR3_8192.get());
+        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        if (!be.installOs(os)) {
+            throw new IllegalStateException("could not install " + os + " on the Crafting Computer");
+        }
+        return be;
+    }
+
     /** Places a Monitor facing {@code facing}; it links itself to an adjacent computer within a few ticks. */
     public void placeMonitor(final BlockPos relative, final Direction facing) {
-        BlockState state = ComputingModule.MONITOR.get().defaultBlockState();
+        placeMonitor(relative, facing, ComputingModule.MONITOR.get());
+    }
+
+    /** Places that monitor facing {@code facing}; it links itself to an adjacent computer within a few ticks. */
+    public void placeMonitor(final BlockPos relative, final Direction facing, final Block monitor) {
+        BlockState state = monitor.defaultBlockState();
         if (state.hasProperty(HorizontalDirectionalBlock.FACING)) {
             state = state.setValue(HorizontalDirectionalBlock.FACING, facing);
         }
@@ -398,11 +374,61 @@ public final class TestWorldBuilder {
      */
     public CraftingNetwork buildCraftingNetwork() {
         final MainframeBlockEntity mainframe = placeRunningMainframe(new BlockPos(1, 2, 2));
-        setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = placeSeededRack(new BlockPos(2, 2, 1));
         setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final CraftingComputerBlockEntity cc = placeRunningCraftingComputer(new BlockPos(5, 2, 2));
         return new CraftingNetwork(mainframe, rack, cc);
+    }
+
+    /**
+     * Stacks {@code count} more running Crafting Computers over the standard network's one, each at (5,2+i,2) with
+     * its rear on an Ethernet cable at (4,2+i,2) that climbs from the network's, for a test that needs more bench
+     * recipes than one computer's cards keep.
+     */
+    public List<CraftingComputerBlockEntity> stackCraftingComputers(final int count) {
+        final List<CraftingComputerBlockEntity> computers = new ArrayList<>();
+        for (int i = 1; i <= count; i++) {
+            setBlock(new BlockPos(4, 2 + i, 2), ComputingModule.ETHERNET_CABLE);
+            computers.add(placeRunningCraftingComputer(new BlockPos(5, 2 + i, 2)));
+        }
+        return computers;
+    }
+
+    /** Places a crafting computer of {@code parts} with a Crafting Card, installs {@code os} and powers it on. */
+    private CraftingComputerBlockEntity placeRunningCrafting(final BlockPos relative, final CraftingParts parts,
+                                                             final ResourceLocation os) {
+        setBlock(relative, parts.block());
+        faceRearTowardCable(relative);
+        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
+        final ItemStackHandler hw = be.getHardware();
+        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(parts.board()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT, new ItemStack(parts.cpu()));
+        fillRam(be, CraftingComputerBlockEntity.RAM_SLOTS_START, parts.ram());
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
+                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1, new ItemStack(parts.gpu()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(parts.psu()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(parts.disk(), DiskSize.GB_500)));
+        be.installOs(os);
+        be.togglePower();
+        return be;
+    }
+
+    /*
+     * Fills every memory slot the computer's board offers with {@code ram}, from {@code start}: the memory a player
+     * running a system of the board's own age puts in, so its programs have the room they have on a real one.
+     */
+    private static void fillRam(final AbstractComputerBlockEntity be, final int start, final ItemLike ram) {
+        for (int i = 0; i < be.boardRamSlots(); i++) {
+            be.getHardware().setStackInSlot(start + i, new ItemStack(ram));
+        }
+    }
+
+    /* What one crafting computer is built from, apart from the Crafting Card every one of them carries. */
+    private record CraftingParts(Block block, ItemLike board, ItemLike cpu, ItemLike ram, ItemLike gpu, ItemLike psu,
+                                 StorageTier disk) {
     }
 }

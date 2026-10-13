@@ -8,9 +8,12 @@
 package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
+import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.AbstractMachineAssemblyScreen;
 import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.CraftingComputerScreen;
 import dev.jstech.computers.client.FirmwareScreen;
@@ -23,9 +26,14 @@ import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.client.os.ThisPcApp;
-import dev.jstech.computers.gui.layout.CraftingComputerLayout;
+import dev.jstech.computers.crafting.CraftingFloor;
+import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.gui.layout.AssemblyGeometry;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
+import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.integration.jei.payload.SetProcessingPatternPayload;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -44,6 +52,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -106,11 +115,13 @@ public final class FullJourneyClientTests {
     private static final BlockPos CC_MONITOR = new BlockPos(8, 2, 2);
     private static final BlockPos CC_FLOPPY_DRIVE = new BlockPos(7, 2, 1);
     private static final BlockPos CRAFTING_CABLE = new BlockPos(7, 2, 3);
-    private static final BlockPos SWITCH = new BlockPos(7, 2, 4);
+    private static final BlockPos INTERFACE_CABLE = new BlockPos(7, 2, 4);
     private static final BlockPos CABLE_BELOW_FURNACE = new BlockPos(7, 2, 5);
-    private static final BlockPos CABLE_RUN_1 = new BlockPos(7, 2, 6);
-    private static final BlockPos CABLE_RUN_2 = new BlockPos(7, 3, 6);
-    private static final BlockPos CABLE_RUN_3 = new BlockPos(7, 4, 6);
+    // The interface's own cable, climbing east of the line to the furnace's top.
+    private static final BlockPos OWN_CABLE_1 = new BlockPos(8, 2, 4);
+    private static final BlockPos OWN_CABLE_2 = new BlockPos(8, 3, 4);
+    private static final BlockPos OWN_CABLE_3 = new BlockPos(8, 4, 4);
+    private static final BlockPos OWN_CABLE_4 = new BlockPos(8, 4, 5);
     private static final BlockPos CABLE_ABOVE_FURNACE = new BlockPos(7, 4, 5);
     private static final BlockPos FURNACE = new BlockPos(7, 3, 5);
     private static final BlockPos ENCODER = CC_CD_DRIVE;
@@ -119,34 +130,10 @@ public final class FullJourneyClientTests {
     /** The Crafting Computer runs Frames XP: the Pattern Studio needs XP or newer. */
     private static final ResourceLocation FRAMES_XP = ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp");
 
-    // Assembly GUI slot centres (window-relative): the Mainframe and Crafting Computer share the left column.
-    private static final int MOBO_X = 16;
-    private static final int MOBO_Y = 48;
-    private static final int PSU_X = 16;
-    private static final int PSU_Y = 81;
-    private static final int CPU_X = 52;
-    private static final int CPU_Y = 48;
-    private static final int RAM_X = 52;
-    private static final int RAM_Y = 81;
-    private static final int MF_GPU_X = 52;
-    private static final int MF_GPU_Y = 132;
-    private static final int MF_DISK_X = 16;
-    private static final int MF_DISK_Y = 132;
-    private static final int MF_HOTBAR_Y = 248;
-    private static final int CC_PCIE0_X = 52;
-    private static final int CC_PCIE1_X = 70;
-    private static final int CC_PCIE_Y = 114;
-    private static final int CC_DISK_X = 16;
-    private static final int CC_DISK_Y = 114;
-    private static final int CC_HOTBAR_Y = CraftingComputerLayout.INV_Y + 58 + 8;
-    private static final int CC_POWER_X = CraftingComputerLayout.POWER_X + CraftingComputerLayout.COL_R_W / 2;
-    private static final int CC_POWER_Y = CraftingComputerLayout.POWER_Y + CraftingComputerLayout.BTN_H / 2;
-    private static final int RACK_SLOT_X = dev.jstech.computers.gui.layout
-            .ServerRackLayout.SERVER_X + 8;
-    private static final int RACK_SLOT_Y = dev.jstech.computers.gui.layout
-            .ServerRackLayout.ROW_Y0 + 8;
-    private static final int RACK_HOTBAR_Y = dev.jstech.computers.gui.layout
-            .ServerRackLayout.HOTBAR_Y + 8;
+    // The rack's first server slot and its hotbar row, at their centres (window-relative).
+    private static final int RACK_SLOT_X = ServerRackLayout.serverItemX() + 8;
+    private static final int RACK_SLOT_Y = ServerRackLayout.itemY(0) + 8;
+    private static final int RACK_HOTBAR_Y = ServerRackLayout.HOTBAR_Y + 8;
     private static final int FURNACE_FUEL_X = 64;
     private static final int FURNACE_FUEL_Y = 61;
     private static final int FURNACE_HOTBAR_Y = 150;
@@ -176,8 +163,8 @@ public final class FullJourneyClientTests {
                 .thenPlace(1, MAINFRAME)
                 .thenWaitUntilServer(level -> level.getBlockEntity(abs(ctx, MAINFRAME)) instanceof MainframeBlockEntity,
                         SCREEN_WAIT, "the Mainframe to be placed", level -> "block=" + level.getBlockState(abs(ctx, MAINFRAME)))
-                .thenGive(0, new ItemStack(ComputingModule.HBW_CABLE.get(), 4), new ItemStack(ComputingModule.PERSONAL_ROUTER.get()),
-                        new ItemStack(ComputingModule.ETHERNET_CABLE.get(), 4))
+                .thenGive(0, ComputingModule.HBW_CABLE.stack(4), new ItemStack(ComputingModule.PERSONAL_ROUTER.get()),
+                        ComputingModule.ETHERNET_CABLE.stack(4))
                 .thenTeleport(SETTLE, new BlockPos(4, 2, 0), Direction.SOUTH)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, HBW_1)
@@ -191,7 +178,7 @@ public final class FullJourneyClientTests {
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, CRAFTING_COMPUTER)
-                .thenGive(2, new ItemStack(ComputingModule.SERVER_RACK_ITEM.get()))
+                .thenGive(2, new ItemStack(ComputingModule.SERVER_RACK.item()))
                 .thenTeleport(SETTLE, new BlockPos(4, 2, 7), Direction.NORTH)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, RACK)
@@ -202,19 +189,20 @@ public final class FullJourneyClientTests {
                 .thenScreenshot(2, "01-backbone");
 
         // 2. Assemble the Mainframe through its GUI and power it on.
-        ctx.thenGive(0, new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()), new ItemStack(ComputingModule.CPU_SERVO_2620.get()),
+        ctx.thenGive(0, new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()),
+                        new ItemStack(ComputingModule.CPU_SERVO_2620.get()),
                         new ItemStack(ComputingModule.RAM_DDR3_8192.get()), new ItemStack(ComputingModule.PSU_650G.get()),
                         new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)), new ItemStack(ComputingModule.GPU_HD_7970.get()))
                 .thenTeleport(SETTLE, new BlockPos(1, 2, 5), Direction.NORTH)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, MAINFRAME_PART_SOUTH)
                 .thenAwaitScreen(MainframeScreen.class, SCREEN_WAIT)
-                .then(2, () -> slotFromHotbar(ctx, 0, MF_HOTBAR_Y, MOBO_X, MOBO_Y))
-                .then(2, () -> slotFromHotbar(ctx, 1, MF_HOTBAR_Y, CPU_X, CPU_Y))
-                .then(2, () -> slotFromHotbar(ctx, 2, MF_HOTBAR_Y, RAM_X, RAM_Y))
-                .then(2, () -> slotFromHotbar(ctx, 3, MF_HOTBAR_Y, PSU_X, PSU_Y))
-                .then(2, () -> slotFromHotbar(ctx, 4, MF_HOTBAR_Y, MF_DISK_X, MF_DISK_Y))
-                .then(2, () -> slotFromHotbar(ctx, 5, MF_HOTBAR_Y, MF_GPU_X, MF_GPU_Y))
+                .then(2, () -> seatFromHotbar(ctx, MainframeScreen.class, 0, SeatKind.BOARD))
+                .then(2, () -> seatFromHotbar(ctx, MainframeScreen.class, 1, SeatKind.CPU))
+                .then(2, () -> seatFromHotbar(ctx, MainframeScreen.class, 2, SeatKind.RAM))
+                .then(2, () -> seatFromHotbar(ctx, MainframeScreen.class, 3, SeatKind.PSU))
+                .then(2, () -> seatFromHotbar(ctx, MainframeScreen.class, 4, SeatKind.DISK))
+                .then(2, () -> seatFromHotbar(ctx, MainframeScreen.class, 5, SeatKind.CARD))
                 .thenScreenshot(SETTLE, "02-mainframe-assembled")
                 .then(0, () -> ctx.clickGui(MainframeScreen.powerButtonX(), MainframeScreen.powerButtonY()))
                 .thenWaitUntilServer(level -> mainframe(ctx, level).isRunning(), SCREEN_WAIT,
@@ -276,7 +264,7 @@ public final class FullJourneyClientTests {
                 .thenAwaitNoScreen(SCREEN_WAIT);
 
         // 4. A server in the rack, through the rack GUI.
-        ctx.thenGive(0, ComputingModule.defaultServer())
+        ctx.thenGive(0, ServerStacks.defaultServer())
                 .thenTeleport(SETTLE, new BlockPos(4, 2, 7), Direction.NORTH)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, RACK)
@@ -299,7 +287,8 @@ public final class FullJourneyClientTests {
                 });
 
         // 5. Assemble the Crafting Computer (card + GPU) and power it on.
-        ctx.thenGive(0, new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()), new ItemStack(ComputingModule.CPU_ASCENT_965.get()),
+        ctx.thenGive(0, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()),
+                        new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()),
                         new ItemStack(ComputingModule.RAM_DDR3_8192.get()), new ItemStack(ComputingModule.PSU_650G.get()),
                         new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)), new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()),
                         new ItemStack(ComputingModule.GPU_HD_7970.get()))
@@ -307,15 +296,15 @@ public final class FullJourneyClientTests {
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CRAFTING_COMPUTER)
                 .thenAwaitScreen(CraftingComputerScreen.class, SCREEN_WAIT)
-                .then(2, () -> slotFromHotbar(ctx, 0, CC_HOTBAR_Y, MOBO_X, MOBO_Y))
-                .then(2, () -> slotFromHotbar(ctx, 1, CC_HOTBAR_Y, CPU_X, CPU_Y))
-                .then(2, () -> slotFromHotbar(ctx, 2, CC_HOTBAR_Y, RAM_X, RAM_Y))
-                .then(2, () -> slotFromHotbar(ctx, 3, CC_HOTBAR_Y, PSU_X, PSU_Y))
-                .then(2, () -> slotFromHotbar(ctx, 4, CC_HOTBAR_Y, CC_DISK_X, CC_DISK_Y))
-                .then(2, () -> slotFromHotbar(ctx, 5, CC_HOTBAR_Y, CC_PCIE0_X, CC_PCIE_Y))
-                .then(2, () -> slotFromHotbar(ctx, 6, CC_HOTBAR_Y, CC_PCIE1_X, CC_PCIE_Y))
+                .then(2, () -> seatFromHotbar(ctx, CraftingComputerScreen.class, 0, SeatKind.BOARD))
+                .then(2, () -> seatFromHotbar(ctx, CraftingComputerScreen.class, 1, SeatKind.CPU))
+                .then(2, () -> seatFromHotbar(ctx, CraftingComputerScreen.class, 2, SeatKind.RAM))
+                .then(2, () -> seatFromHotbar(ctx, CraftingComputerScreen.class, 3, SeatKind.PSU))
+                .then(2, () -> seatFromHotbar(ctx, CraftingComputerScreen.class, 4, SeatKind.DISK))
+                .then(2, () -> seatFromHotbar(ctx, CraftingComputerScreen.class, 5, SeatKind.CARD))
+                .then(2, () -> seatFromHotbar(ctx, CraftingComputerScreen.class, 6, SeatKind.CARD, 1))
                 .thenScreenshot(SETTLE, "05-crafting-computer-assembled")
-                .then(0, () -> ctx.clickGui(CC_POWER_X, CC_POWER_Y))
+                .then(0, () -> pressPower(ctx, CraftingComputerScreen.class))
                 .thenWaitUntilServer(level -> cc(ctx, level).isRunning(), SCREEN_WAIT,
                         "the Crafting Computer to power on from its GUI", level -> "running=" + cc(ctx, level).isRunning())
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
@@ -327,8 +316,13 @@ public final class FullJourneyClientTests {
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, CC_CD_DRIVE)
-                .then(2, () -> ctx.selectHotbar(2))
+                .then(2, () -> ctx.selectHotbar(2));
+        // A disc lies on the drive's tray: the tray comes out, takes the disc and goes back in with it.
+        DiscSteps.openTray(ctx,CC_CD_DRIVE)
                 .thenRightClick(SETTLE, CC_CD_DRIVE)
+                .thenWaitUntilServer(level -> !reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
+                        SCREEN_WAIT, "the Frames disc to lie on the CD drive's tray", level -> "");
+        DiscSteps.closeTray(ctx,CC_CD_DRIVE)
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(1))
                 .thenPlace(1, CC_MONITOR)
@@ -369,10 +363,10 @@ public final class FullJourneyClientTests {
                 .thenTeleport(SETTLE, new BlockPos(7, 2, 0), Direction.SOUTH)
                 .thenRightClick(SETTLE, CRAFTING_COMPUTER)
                 .thenAwaitScreen(CraftingComputerScreen.class, SCREEN_WAIT)
-                .then(2, () -> ctx.clickGui(CC_POWER_X, CC_POWER_Y))
+                .then(2, () -> pressPower(ctx, CraftingComputerScreen.class))
                 .thenWaitUntilServer(level -> !cc(ctx, level).isRunning(), SCREEN_WAIT, "the Crafting Computer to power off",
                         level -> "running=" + cc(ctx, level).isRunning())
-                .then(SETTLE, () -> ctx.clickGui(CC_POWER_X, CC_POWER_Y))
+                .then(SETTLE, () -> pressPower(ctx, CraftingComputerScreen.class))
                 .thenWaitUntilServer(level -> cc(ctx, level).isRunning(), SCREEN_WAIT, "the Crafting Computer to boot Frames 95",
                         level -> "running=" + cc(ctx, level).isRunning())
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
@@ -381,16 +375,18 @@ public final class FullJourneyClientTests {
         // 7. Swap the disc for the Crafting Manager installer and install it from This PC.
         ctx.thenGive(0, ItemStack.EMPTY)
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
-                .then(SETTLE, () -> ctx.selectHotbar(0))
+                .then(SETTLE, () -> ctx.selectHotbar(0));
+        DiscSteps.openTray(ctx,CC_CD_DRIVE)
                 .thenSneakClick(1, CC_CD_DRIVE, Direction.UP)
                 .thenWaitUntilServer(level -> reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
-                        SCREEN_WAIT, "sneak-clicking the CD drive to eject the disc",
+                        SCREEN_WAIT, "sneak-clicking the CD drive to lift the disc off its tray",
                         level -> "media=" + reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0))
                 .thenGive(0, installer(new ItemStack(ComputingModule.CD_ROM.get()), MediaKind.PROGRAM_INSTALL, Programs.CRAFTING_MANAGER))
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenRightClick(1, CC_CD_DRIVE)
                 .thenWaitUntilServer(level -> !reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
-                        SCREEN_WAIT, "the installer disc to sit in the CD drive", level -> "")
+                        SCREEN_WAIT, "the installer disc to sit in the CD drive", level -> "");
+        DiscSteps.closeTray(ctx,CC_CD_DRIVE)
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CC_MONITOR)
@@ -415,16 +411,18 @@ public final class FullJourneyClientTests {
         // 7b. The same again for the Pattern Studio: swap the disc, install it from This PC.
         ctx.thenGive(0, ItemStack.EMPTY)
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
-                .then(SETTLE, () -> ctx.selectHotbar(0))
+                .then(SETTLE, () -> ctx.selectHotbar(0));
+        DiscSteps.openTray(ctx,CC_CD_DRIVE)
                 .thenSneakClick(1, CC_CD_DRIVE, Direction.UP)
                 .thenWaitUntilServer(level -> reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
-                        SCREEN_WAIT, "sneak-clicking the CD drive to eject the Crafting Manager disc",
+                        SCREEN_WAIT, "sneak-clicking the CD drive to lift the Crafting Manager disc off its tray",
                         level -> "media=" + reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0))
                 .thenGive(0, installer(new ItemStack(ComputingModule.CD_ROM.get()), MediaKind.PROGRAM_INSTALL, Programs.PATTERN_STUDIO))
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenRightClick(1, CC_CD_DRIVE)
                 .thenWaitUntilServer(level -> !reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
-                        SCREEN_WAIT, "the Studio installer disc to sit in the CD drive", level -> "")
+                        SCREEN_WAIT, "the Studio installer disc to sit in the CD drive", level -> "");
+        DiscSteps.closeTray(ctx,CC_CD_DRIVE)
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CC_MONITOR)
@@ -448,21 +446,28 @@ public final class FullJourneyClientTests {
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
 
-        // 8. The machine: switch, crafting cables, a furnace hung off the run with both buses, and coal.
-        ctx.thenGive(0, new ItemStack(ComputingModule.CRAFTING_CABLE.get(), 8), new ItemStack(ComputingModule.CRAFTING_SWITCH.get()),
-                        new ItemStack(Items.FURNACE), new ItemStack(ComputingModule.INPUT_BUS_ITEM.get()),
+        /*
+         * 8. The machine: a crafting cable from the computer, a Crafting Interface on it facing east into a cable of
+         *    its own that climbs to the furnace's top, where a router feeds it, a Receiving Bus under the furnace,
+         *    and coal.
+         */
+        ctx.thenGive(0, ComputingModule.CRAFTING_CABLE.stack(8),
+                        new ItemStack(ComputingModule.CRAFTING_INTERFACE_ITEM.get()), new ItemStack(Items.FURNACE),
+                        new ItemStack(ComputingModule.CRAFTING_ROUTER_ITEM.get()),
                         new ItemStack(ComputingModule.RECEIVING_BUS_ITEM.get()), new ItemStack(Items.COAL, 8))
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 4), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, CRAFTING_CABLE)
+                .thenPlace(2, INTERFACE_CABLE)
+                .thenPlace(2, CABLE_BELOW_FURNACE)
                 .then(2, () -> ctx.selectHotbar(1))
-                .thenPlace(1, SWITCH)
+                .thenSneakClick(1, INTERFACE_CABLE, Direction.EAST)
                 .then(2, () -> ctx.selectHotbar(0))
-                .thenPlace(1, CABLE_BELOW_FURNACE)
-                .thenPlace(2, CABLE_RUN_1)
-                .thenPlace(2, CABLE_RUN_2)
-                .thenPlace(2, CABLE_RUN_3)
-                .thenPlaceAgainst(2, CABLE_ABOVE_FURNACE, Direction.NORTH)
+                .thenPlace(1, OWN_CABLE_1)
+                .thenPlace(2, OWN_CABLE_2)
+                .thenPlace(2, OWN_CABLE_3)
+                .thenPlaceAgainst(2, OWN_CABLE_4, Direction.SOUTH)
+                .thenPlaceAgainst(2, CABLE_ABOVE_FURNACE, Direction.WEST)
                 .then(2, () -> ctx.selectHotbar(2))
                 .thenPlace(1, FURNACE)
                 .then(2, () -> ctx.selectHotbar(3))
@@ -470,9 +475,9 @@ public final class FullJourneyClientTests {
                 .then(2, () -> ctx.selectHotbar(4))
                 .thenSneakClick(1, CABLE_BELOW_FURNACE, Direction.UP)
                 .thenScreenshot(SETTLE, "08-machine-run")
-                .thenWaitUntilServer(level -> switchDeclaresFurnace(ctx, level), SCREEN_WAIT,
-                        "the switch to discover the furnace over the cable run through its buses",
-                        level -> "declared=" + sw(ctx, level).declaredMachines() + " furnace=" + level.getBlockState(abs(ctx, FURNACE)))
+                .thenWaitUntilServer(level -> interfaceFeedsFurnace(ctx, level), SCREEN_WAIT,
+                        "the interface to feed the furnace through the router on its own cable",
+                        level -> "reach=" + reach(ctx, level) + " furnace=" + level.getBlockState(abs(ctx, FURNACE)))
                 .then(2, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, FURNACE)
                 .thenAwaitScreen(AbstractFurnaceScreen.class, SCREEN_WAIT)
@@ -490,7 +495,12 @@ public final class FullJourneyClientTests {
          */
         ctx.thenGive(0, new ItemStack(ComputingModule.PATTERN_ENCODER.get()), new ItemStack(ComputingModule.DVD_RW.get()))
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
-                .thenServer(SETTLE, level -> ctx.assertTrue(level.destroyBlock(abs(ctx, CC_CD_DRIVE), true),
+                /*
+                 * Without its drop: a CD drive left lying on the ground is picked up whenever the player walks
+                 * over it, into the first free hotbar slot, which then sends the disc ejected later somewhere
+                 * other than the slot the next steps hold.
+                 */
+                .thenServer(SETTLE, level -> ctx.assertTrue(level.destroyBlock(abs(ctx, CC_CD_DRIVE), false),
                         "the CD drive must come down; found " + level.getBlockState(abs(ctx, CC_CD_DRIVE))))
                 .thenWaitUntilServer(level -> !(level.getBlockEntity(abs(ctx, CC_CD_DRIVE)) instanceof MediaReaderBlockEntity),
                         SCREEN_WAIT, "the CD drive to come down",
@@ -501,10 +511,13 @@ public final class FullJourneyClientTests {
                 .thenWaitUntilServer(level -> encoder(ctx, level) != null && encoder(ctx, level).ownerPos() != null,
                         SCREEN_WAIT, "the encoder to link to the Crafting Computer",
                         level -> "encoder=" + level.getBlockState(abs(ctx, ENCODER)))
-                .then(2, () -> ctx.selectHotbar(1))
+                .then(2, () -> ctx.selectHotbar(1));
+        // The burner's tray takes the disc the way a drive's does, and the encoder writes only once it is back in.
+        DiscSteps.openTray(ctx,ENCODER)
                 .thenRightClick(1, ENCODER)
                 .thenWaitUntilServer(level -> encoder(ctx, level).hasMedia(), SCREEN_WAIT,
-                        "the DVD-RW to sit in the encoder's bay", level -> "")
+                        "the DVD-RW to lie on the encoder's tray", level -> "");
+        DiscSteps.closeTray(ctx,ENCODER)
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CC_MONITOR)
@@ -519,18 +532,19 @@ public final class FullJourneyClientTests {
                 .thenScreenshot(2, "09-studio")
                 /*
                  * Processing, transferred from the recipe viewer (the payload its transfer button sends): the raw
-                 * iron smelt, paired with the furnace the data maps.
+                 * iron smelt.
                  */
-                .then(0, () -> transferMachineRecipe(ctx, new ItemStack(Items.RAW_IRON), new ItemStack(Items.IRON_INGOT),
-                        "minecraft:smelting"))
-                .thenWaitUntilServer(level -> "minecraft:furnace".equals(cc(ctx, level).studio().machineType()), SCREEN_WAIT,
-                        "the smelt to land in the machine draft paired with the furnace",
-                        level -> "machine=" + cc(ctx, level).studio().machineType())
+                .then(0, () -> transferMachineRecipe(ctx, new ItemStack(Items.RAW_IRON),
+                        new ItemStack(Items.IRON_INGOT)))
+                .thenWaitUntilServer(level -> cc(ctx, level).studio().procInput(0) != null
+                                && cc(ctx, level).studio().procInput(0).key().equals(StorageKey.of(Items.RAW_IRON)),
+                        SCREEN_WAIT, "the smelt to land in the machine draft",
+                        level -> "input=" + cc(ctx, level).studio().procInput(0))
                 .then(2, () -> ctx.clickDesktop(studioPoint(ctx, studio(ctx).timeoutFieldCenter())))
+                // The click puts the caret where it lands, so the whole text is selected before it is replaced.
                 .then(1, () -> {
-                    for (int i = 0; i < 6; i++) {
-                        ctx.key(GLFW.GLFW_KEY_BACKSPACE);
-                    }
+                    ctx.key(GLFW.GLFW_KEY_A, GLFW.GLFW_MOD_CONTROL);
+                    ctx.key(GLFW.GLFW_KEY_BACKSPACE);
                     ctx.type("600");
                     ctx.key(GLFW.GLFW_KEY_ENTER);
                 })
@@ -574,17 +588,28 @@ public final class FullJourneyClientTests {
                 // Creative placement leaves the encoder item in slot 0; free it so the ejected disc lands there.
                 .thenGive(0, ItemStack.EMPTY)
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
-                .then(SETTLE, () -> ctx.selectHotbar(8))
+                .then(SETTLE, () -> ctx.selectHotbar(8));
+        DiscSteps.openTray(ctx,ENCODER)
                 .thenSneakClick(1, ENCODER, Direction.EAST)
                 .thenWaitUntilServer(level -> !encoder(ctx, level).hasMedia(), SCREEN_WAIT,
-                        "sneak-clicking the encoder to eject the disc", level -> "")
+                        "sneak-clicking the encoder to lift the disc off its tray", level -> "")
                 .thenTeleport(SETTLE, new BlockPos(7, 2, -1), Direction.SOUTH)
-                .then(SETTLE, () -> ctx.selectHotbar(0))
+                .then(SETTLE, () -> ctx.selectHotbar(0));
+        DiscSteps.openTray(ctx,CC_FLOPPY_DRIVE)
                 .thenRightClick(SETTLE, CC_FLOPPY_DRIVE)
+                .thenWaitUntilServer(level -> !reader(ctx, level, CC_FLOPPY_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
+                        SCREEN_WAIT, "the patterns disc to lie on the DVD drive's tray", level -> "");
+        DiscSteps.closeTray(ctx,CC_FLOPPY_DRIVE)
                 .thenWaitUntilServer(level -> reader(ctx, level, CC_FLOPPY_DRIVE).ownerPos() != null
                                 && !reader(ctx, level, CC_FLOPPY_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "the floppy with the patterns to sit in a drive linked to the Crafting Computer",
                         level -> "owner=" + reader(ctx, level, CC_FLOPPY_DRIVE).ownerPos())
+                // The Crafting Manager lists the media of the drives the computer reads, once, when it opens.
+                .thenWaitUntilServer(level -> cc(ctx, level).enabledEndpoints()
+                                .contains(abs(ctx, CC_FLOPPY_DRIVE).asLong()),
+                        SCREEN_WAIT, "the Crafting Computer to read the drive with the patterns",
+                        level -> "enabled=" + cc(ctx, level).enabledEndpoints() + " linked="
+                                + cc(ctx, level).linkedEndpoints() + " drive=" + abs(ctx, CC_FLOPPY_DRIVE).asLong())
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CC_MONITOR)
@@ -594,7 +619,10 @@ public final class FullJourneyClientTests {
                 .then(0, () -> launch(ctx, "Crafting Manager"))
                 .thenWaitUntil(() -> app(ctx, "Crafting Manager", CraftingManagerApp.class) != null
                                 && app(ctx, "Crafting Manager", CraftingManagerApp.class).mediaFiles().size() == 3,
-                        SCREEN_WAIT, "the Crafting Manager to list the three files")
+                        SCREEN_WAIT, "the Crafting Manager to list the three files",
+                        () -> "files=" + (app(ctx, "Crafting Manager", CraftingManagerApp.class) == null ? "no app"
+                                : app(ctx, "Crafting Manager", CraftingManagerApp.class).mediaFiles())
+                                + " server=" + ctx.server().submit(() -> drivesOf(ctx, ctx.serverLevel())).join())
                 .then(0, () -> {
                     final CraftingManagerApp app = app(ctx, "Crafting Manager", CraftingManagerApp.class);
                     final List<String> files = app.mediaFiles();
@@ -610,7 +638,7 @@ public final class FullJourneyClientTests {
                 })
                 .then(2, () -> ctx.clickDesktop(app(ctx, "Crafting Manager", CraftingManagerApp.class).actionButtonCenter(0)))
                 .thenWaitUntil(() -> app(ctx, "Crafting Manager", CraftingManagerApp.class).romNames().size() == 2, SCREEN_WAIT,
-                        "the processing and multi-stage recipes to appear in the ROM")
+                        "the processing and multi-stage recipes to go into the interface")
                 .thenScreenshot(2, "10-crafting-manager-loaded")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
@@ -635,8 +663,10 @@ public final class FullJourneyClientTests {
                 .thenWaitUntil(() -> app(ctx, "Network", NetworkInteractorApp.class).craftableNames().contains("Iron Ingot"), SCREEN_WAIT,
                         "the furnace recipe in the Crafting tab")
                 .then(0, () -> requestCraft(ctx, "Iron Ingot", 1))
-                .thenWaitUntilServer(level -> level.getBlockEntity(abs(ctx, FURNACE)) instanceof FurnaceBlockEntity f && f.getItem(0).is(Items.RAW_IRON),
-                        200, "the Input Bus to feed raw iron into the furnace", level -> "ops=" + mainframe(ctx, level).activeOperationRecords())
+                .thenWaitUntilServer(level -> level.getBlockEntity(abs(ctx, FURNACE)) instanceof FurnaceBlockEntity f
+                                && f.getItem(0).is(Items.RAW_IRON),
+                        200, "the router to feed raw iron into the furnace",
+                        level -> "ops=" + mainframe(ctx, level).activeOperationRecords())
                 .thenScreenshot(2, "11-smelting")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT)
@@ -679,20 +709,35 @@ public final class FullJourneyClientTests {
         ctx.clickGui(x, y);
     }
 
+    /** The same into the first seat of that kind on the open assembly screen, wherever its machine's case puts it. */
+    private static void seatFromHotbar(final ClientTestContext ctx,
+                                       final Class<? extends AbstractMachineAssemblyScreen<?>> screen, final int slot,
+                                       final SeatKind kind) {
+        seatFromHotbar(ctx, screen, slot, kind, 0);
+    }
+
+    /** The same into seat {@code index} of that kind. */
+    private static void seatFromHotbar(final ClientTestContext ctx,
+                                       final Class<? extends AbstractMachineAssemblyScreen<?>> screen, final int slot,
+                                       final SeatKind kind, final int index) {
+        final AssemblyGeometry geo = ctx.screen(screen).geometry();
+        final AssemblyGeometry.Seat seat = geo.seats(kind).get(index);
+        slotFromHotbar(ctx, slot, geo.inventoryY() + 58 + 8, seat.x() + 8, seat.y() + 8);
+    }
+
+    /** Presses the power button of the open assembly screen, as the player does. */
+    private static void pressPower(final ClientTestContext ctx,
+                                   final Class<? extends AbstractMachineAssemblyScreen<?>> screen) {
+        final AssemblyGeometry.Box power = ctx.screen(screen).geometry().power();
+        ctx.clickGui(power.x() + power.w() / 2, power.y() + power.h() / 2);
+    }
+
     private static void launch(final ClientTestContext ctx, final String label) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        ctx.click(desktop.startButtonX(), desktop.startButtonY());
-        final int item = desktop.launcherLabels().indexOf(label);
-        ctx.assertTrue(item >= 0, "the Start menu must list " + label + "; got " + desktop.launcherLabels());
-        ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+        DesktopSteps.launch(ctx, label);
     }
 
     private static <T> T app(final ClientTestContext ctx, final String label, final Class<T> type) {
-        if (!(ctx.mc().screen instanceof DesktopScreen desktop)) {
-            return null;
-        }
-        final DesktopWindow window = desktop.windowFor(label);
-        return window != null && type.isInstance(window.app()) ? type.cast(window.app()) : null;
+        return DesktopSteps.app(ctx, label, type);
     }
 
     /** Converts an app content-local point into desktop coordinates. */
@@ -701,7 +746,7 @@ public final class FullJourneyClientTests {
         if (window == null) {
             throw new ClientTestFailure("the " + label + " window is gone");
         }
-        return new int[]{window.x() + 4 + local[0], window.y() + 18 + local[1]};
+        return DesktopSteps.contentPoint(window, local);
     }
 
     private static int firstInstallable(final ThisPcApp app) {
@@ -722,14 +767,12 @@ public final class FullJourneyClientTests {
     }
 
     /** Sends a machine recipe to the Studio's machine draft: the payload the viewer's transfer button sends. */
-    private static void transferMachineRecipe(final ClientTestContext ctx, final ItemStack input, final ItemStack output,
-                                              final String recipeType) {
+    private static void transferMachineRecipe(final ClientTestContext ctx, final ItemStack input,
+                                              final ItemStack output) {
         final PatternStudioApp app = studio(ctx);
-        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                new dev.jstech.computers.integration.jei.payload.SetProcessingPatternPayload(app.host(), app.monitorPos(),
-                        List.of(dev.jstech.computers.crafting.PatternWorkbench.DataCell.fromStack(input)),
-                        List.of(dev.jstech.computers.crafting.PatternWorkbench.DataCell.fromStack(output)),
-                        recipeType));
+        PacketDistributor.sendToServer(new SetProcessingPatternPayload(app.host(), app.monitorPos(),
+                List.of(PatternWorkbench.DataCell.fromStack(input)),
+                List.of(PatternWorkbench.DataCell.fromStack(output))));
     }
 
     /** Sends a bench recipe to the Studio's bench: the payload the viewer's transfer button sends. */
@@ -776,6 +819,19 @@ public final class FullJourneyClientTests {
         return TestWorldBuilder.at(level, ctx.origin()).blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class);
     }
 
+    /* What the Crafting Computer reads, each place it links with the block there and the medium in it, if any. */
+    private static String drivesOf(final ClientTestContext ctx, final ServerLevel level) {
+        final StringBuilder out = new StringBuilder("enabled=" + cc(ctx, level).enabledEndpoints() + " linked=");
+        for (final long endpoint : cc(ctx, level).linkedEndpoints()) {
+            final BlockPos at = BlockPos.of(endpoint);
+            out.append(' ').append(at.toShortString()).append('=').append(level.getBlockState(at).getBlock());
+            if (level.getBlockEntity(at) instanceof MediaReaderBlockEntity drive) {
+                out.append('[').append(drive.mediaSlot().getStackInSlot(0)).append(']');
+            }
+        }
+        return out.toString();
+    }
+
     private static ServerRackBlockEntity rack(final ClientTestContext ctx, final ServerLevel level) {
         return level.getBlockEntity(abs(ctx, RACK)) instanceof ServerRackBlockEntity r ? r : null;
     }
@@ -784,16 +840,15 @@ public final class FullJourneyClientTests {
         return TestWorldBuilder.at(level, ctx.origin()).blockEntity(at, MediaReaderBlockEntity.class);
     }
 
-    private static dev.jstech.computers.blockentity.CraftingSwitchBlockEntity sw(
-            final ClientTestContext ctx, final ServerLevel level) {
-        return TestWorldBuilder.at(level, ctx.origin()).blockEntity(SWITCH,
-                dev.jstech.computers.blockentity.CraftingSwitchBlockEntity.class);
+    /* What the interface the player put on the crafting cable feeds. */
+    private static CraftingFloor.Reach reach(final ClientTestContext ctx, final ServerLevel level) {
+        final CraftingFloor.Site site = new CraftingFloor.Site(abs(ctx, INTERFACE_CABLE), Direction.EAST);
+        return CraftingFloor.through(level, site.cable()).reach(site);
     }
 
-    private static boolean switchDeclaresFurnace(final ClientTestContext ctx, final ServerLevel level) {
-        return level.getBlockEntity(abs(ctx, SWITCH)) instanceof dev.jstech.computers.blockentity
-                .CraftingSwitchBlockEntity s
-                && s.declaredMachines().stream().anyMatch(m -> m.machineType().equals("minecraft:furnace"));
+    private static boolean interfaceFeedsFurnace(final ClientTestContext ctx, final ServerLevel level) {
+        final CraftingFloor.Reach reach = reach(ctx, level);
+        return reach.mode() == CraftingFloor.Mode.CABLE && abs(ctx, FURNACE).equals(reach.machine());
     }
 
     private static int craftFiles(final ClientTestContext ctx, final ServerLevel level) {

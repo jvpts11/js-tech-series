@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.media.MediaVolume;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -21,20 +21,35 @@ import net.minecraft.resources.ResourceLocation;
  * @param monitorPos the monitor the firmware was opened from (the booted OS opens on it)
  * @param action     one of the {@code ACTION_*} constants
  * @param ref        the entry reference: a disk slot index (boot / boot order) or a media reader's packed
- *                   position (install / boot media); {@code -1} = any linked installer medium
+ *                   position (install / boot media), the computer's own for a drive on its front; {@code -1} = any
+ *                   installer medium the machine has
  * @param target     the disk slot to install onto, or {@code -1} for the firmware's default target
  * @param osId       the system this action is about, for the actions that are about one; empty otherwise
+ * @param bay        for an action on a medium, which of the reader's volumes it is on, as {@link MediaVolume#bay()}
+ *                   counts them; {@link MediaVolume#MEDIUM} otherwise
  */
 public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int action, long ref, int target,
-                                    String osId) implements CustomPacketPayload {
+                                    String osId, int bay) implements CustomPacketPayload {
 
     /** The longest a system's id may be on the wire; longer than any the registry holds. */
     public static final int MAX_ID = 64;
+
+    /** An action about a particular system, on a disk or on a reader's own medium. */
+    public FirmwareActionPayload(final BlockPos hostPos, final BlockPos monitorPos, final int action, final long ref,
+                                 final int target, final String osId) {
+        this(hostPos, monitorPos, action, ref, target, osId, MediaVolume.MEDIUM);
+    }
 
     /** An action that is not about a particular system. */
     public static FirmwareActionPayload of(final BlockPos hostPos, final BlockPos monitorPos, final int action,
                                            final long ref, final int target) {
         return new FirmwareActionPayload(hostPos, monitorPos, action, ref, target, "");
+    }
+
+    /** An action on the medium of a boot entry, which names its reader and the volume of the reader it is on. */
+    public static FirmwareActionPayload onMedium(final BlockPos hostPos, final BlockPos monitorPos, final int action,
+                                                 final FirmwareStatePayload.Entry entry, final int target) {
+        return new FirmwareActionPayload(hostPos, monitorPos, action, entry.ref(), target, "", entry.bay());
     }
 
     /** Boot the OS on disk slot {@code ref} (also makes it the preferred boot disk). */
@@ -75,15 +90,18 @@ public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int a
     public static final CustomPacketPayload.Type<FirmwareActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "firmware_action"));
 
+    // Written by hand: composite() tops out at six pairs, and an action carries seven fields.
     public static final StreamCodec<RegistryFriendlyByteBuf, FirmwareActionPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    BlockPos.STREAM_CODEC, FirmwareActionPayload::hostPos,
-                    BlockPos.STREAM_CODEC, FirmwareActionPayload::monitorPos,
-                    ByteBufCodecs.VAR_INT, FirmwareActionPayload::action,
-                    ByteBufCodecs.VAR_LONG, FirmwareActionPayload::ref,
-                    ByteBufCodecs.VAR_INT, FirmwareActionPayload::target,
-                    ByteBufCodecs.stringUtf8(MAX_ID), FirmwareActionPayload::osId,
-                    FirmwareActionPayload::new);
+            StreamCodec.of((buf, p) -> {
+                buf.writeBlockPos(p.hostPos());
+                buf.writeBlockPos(p.monitorPos());
+                buf.writeVarInt(p.action());
+                buf.writeVarLong(p.ref());
+                buf.writeVarInt(p.target());
+                buf.writeUtf(p.osId(), MAX_ID);
+                buf.writeInt(p.bay());
+            }, buf -> new FirmwareActionPayload(buf.readBlockPos(), buf.readBlockPos(), buf.readVarInt(),
+                    buf.readVarLong(), buf.readVarInt(), buf.readUtf(MAX_ID), buf.readInt()));
 
     @Override
     public CustomPacketPayload.Type<FirmwareActionPayload> type() {

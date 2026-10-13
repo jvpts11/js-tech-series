@@ -31,4 +31,22 @@ public interface IDataChannel {
 
     /** Every key of this kind the block currently holds, without duplicates. */
     List<StorageKey> available();
+
+    /** How many places the block keeps this kind in: its slots or its tanks; none when it cannot tell. */
+    default int places() {
+        return 0;
+    }
+
+    /** How many of those places hold something. */
+    default int placesUsed() {
+        return 0;
+    }
+
+    /**
+     * How much more of this kind the block has room for, by weight ({@link StorageKey#weight}): an item a thousand,
+     * a millibucket one. What fits depends on what is put in, so it is told as if each empty place took a stack.
+     */
+    default long room() {
+        return 0L;
+    }
 }

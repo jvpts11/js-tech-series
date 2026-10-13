@@ -7,8 +7,12 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.block.DataCableBlock;
-import dev.jstech.core.network.IDataNetworkConnectable;
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.audio.SystemSound;
+import dev.jstech.computers.block.DataWires;
+import dev.jstech.core.cable.Cables;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.connect.Neighbours;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -17,8 +21,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -123,15 +125,27 @@ final class NetworkAttachment {
             this.machine.registerNode(system, resolved);
             this.registered = resolved;
         }
+        if (!wasAttached && resolved != null && system.mainframeOf(resolved).isPresent()) {
+            JscEvents.awardOperator(this.machine, JscEvents.COMPUTER_JOINED);
+        } else if (wasAttached && resolved == null && this.machine.isRunning()) {
+            // A running machine that just lost its last way to the Mainframe: somebody pulled the cable.
+            JscEvents.awardOperator(this.machine, JscEvents.MAINFRAME_CUT);
+        }
         if (wasAttached != (resolved != null)) {
             /*
              * The desktop's notification area shows whether this machine is on a network, so a cable cut or
              * laid has to reach the client rather than wait for the next time the monitor is opened.
              */
             this.machine.setChanged();
-            final BlockPos pos = this.machine.getBlockPos();
-            final BlockState state = this.machine.getBlockState();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            this.machine.fields().syncToClients();
+            /*
+             * A system up at its desktop hears its network come and go as it hears a device, which is the sound the
+             * desktops that had one gave it. A machine coming on joins before its system is up, so that is silent.
+             */
+            if (this.machine.isRunning() && this.machine.bootedDesktopId() != null) {
+                this.machine.systemSound(level,
+                        resolved != null ? SystemSound.DEVICE_CONNECT : SystemSound.DEVICE_DISCONNECT);
+            }
         }
     }
 
@@ -168,13 +182,14 @@ final class NetworkAttachment {
     }
 
     /**
-     * The cable this computer reads its network off, or {@link #NO_CABLE} when it touches none.
+     * The data wire this computer reads its network off, as the number its grid knows it by, or {@link #NO_CABLE}
+     * when it touches none.
      *
      * <p>The one it found last time is asked after first, which is a single block to look at rather than six;
      * only when that one has gone, or when there was none, is every face looked at again.
      */
-    private long cable(final ServerLevel level) {
-        if (this.cable != NO_CABLE && cableAt(level, BlockPos.of(this.cable))) {
+    long cable(final ServerLevel level) {
+        if (this.cable != NO_CABLE && stillReaches(level, this.cable)) {
             return this.cable;
         }
         this.cable = adjacentCable(level);
@@ -182,31 +197,28 @@ final class NetworkAttachment {
     }
 
     /**
-     * Looks round every face this computer would take a data cable on, which the block's
-     * {@link IDataNetworkConnectable#connectsOnFace} decides, so the device's attachment and the cable's
-     * rendered connection always agree. A standalone computer offers only its rear; the Mainframe (a separate
-     * block entity) and the cluster nodes offer every face.
+     * Looks round every face for a data wire that crosses into this computer, which the cable decides from what the
+     * block's {@link IFaceConnector#accepts} takes on that face, so the device's attachment and the cable's drawn
+     * connection always agree. A standalone computer takes its network cable on its rear only; the Mainframe (a
+     * separate block entity) and the cluster nodes on every face. The crafting cable is never the machine's network
+     * link.
      */
     private long adjacentCable(final ServerLevel level) {
         final BlockPos pos = this.machine.getBlockPos();
-        final BlockState state = this.machine.getBlockState();
-        final IDataNetworkConnectable device =
-                state.getBlock() instanceof IDataNetworkConnectable connectable ? connectable : null;
         for (final Direction direction : FACES) {
-            if (device != null && !device.connectsOnFace(state, direction)) {
-                continue;
-            }
-            final BlockPos neighbor = pos.relative(direction);
-            if (cableAt(level, neighbor)) {
-                return neighbor.asLong();
+            final List<Long> numbers = DataWires.numbersReaching(level, pos, direction, DataWires::isNetwork);
+            if (!numbers.isEmpty()) {
+                return numbers.getFirst();
             }
         }
         return NO_CABLE;
     }
 
-    /** Whether that block is a data cable of a kind this computer takes. */
-    private boolean cableAt(final ServerLevel level, final BlockPos pos) {
-        return level.getBlockState(pos).getBlock() instanceof DataCableBlock cable
-                && this.machine.acceptsTier(cable.tier());
+    /* Whether the wire {@code number} stands for still lies beside this computer and still crosses into it. */
+    private boolean stillReaches(final ServerLevel level, final long number) {
+        final BlockPos at = Cables.blockOf(level, number);
+        final BlockPos pos = this.machine.getBlockPos();
+        final Direction face = at == null ? null : Neighbours.faceTowards(pos, at);
+        return face != null && DataWires.numbersReaching(level, pos, face, DataWires::isNetwork).contains(number);
     }
 }

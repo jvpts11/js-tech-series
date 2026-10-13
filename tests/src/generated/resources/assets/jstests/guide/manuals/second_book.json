@@ -1,0 +1,18 @@
+{
+  "about": [
+    "jstests.guide.manual.second_book.about1"
+  ],
+  "chapters": [
+    "jstests:shared",
+    "jstests"
+  ],
+  "cover": [
+    "jstests.guide.manual.second_book.cover1",
+    "jstests.guide.manual.second_book.cover2"
+  ],
+  "edition": "jstests.guide.manual.second_book.edition",
+  "id": "jstests:second_book",
+  "priority": -2,
+  "style": "jscore:binder",
+  "title": "jstests.guide.manual.second_book.title"
+}

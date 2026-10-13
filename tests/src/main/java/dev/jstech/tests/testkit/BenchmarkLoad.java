@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +101,8 @@ public final class BenchmarkLoad {
 
         /** Submits this tick's operations; returns false once the run is over. */
         public boolean tick() {
-            if (ticks >= ticksToRun) {
+            // A base that was carved over by a newer build is gone; there is nothing left to load.
+            if (ticks >= ticksToRun || mainframe.isRemoved()) {
                 return false;
             }
             for (final Runnable hook : workload.tickHooks()) {
@@ -184,6 +186,13 @@ public final class BenchmarkLoad {
     @Nullable
     public static Session active() {
         return active;
+    }
+
+    /** Drops the run and the remembered base with the world they belong to, so neither outlives it. */
+    @SubscribeEvent
+    public static void onServerStopping(final ServerStoppingEvent event) {
+        active = null;
+        lastBuilt = null;
     }
 
     @SubscribeEvent

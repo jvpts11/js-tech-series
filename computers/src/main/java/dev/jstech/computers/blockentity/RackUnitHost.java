@@ -12,11 +12,16 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPage;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -25,6 +30,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 
 /**
@@ -50,8 +56,13 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
-    public void serviceUninstalled(final String programPath) {
-        rack.serviceUninstalled(row, programPath);
+    public void serviceUninstalled(final ResourceLocation program) {
+        rack.serviceUninstalled(row, program);
+    }
+
+    @Override
+    public int serviceLoadMb(final ProgramSpec service) {
+        return rack.asUnit(row, () -> rack.serviceLoadMb(service));
     }
 
     @Override
@@ -191,9 +202,107 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public boolean goingDown() {
+        return rack.asUnit(row, rack::goingDown);
+    }
+
+    @Override
+    public int downTotal() {
+        return rack.asUnit(row, rack::downTotal);
+    }
+
+    @Override
+    public int downRemaining() {
+        return rack.asUnit(row, rack::downRemaining);
+    }
+
+    @Override
+    public void systemCameUp() {
+        rack.asUnit(row, () -> {
+            rack.systemCameUp();
+            return null;
+        });
+    }
+
+    @Override
+    @Nullable
+    public CrashPage crashPage() {
+        return rack.asUnit(row, rack::crashPage);
+    }
+
+    @Override
+    public int crashRemaining() {
+        return rack.asUnit(row, rack::crashRemaining);
+    }
+
+    @Override
+    public boolean crashHeld() {
+        return rack.asUnit(row, rack::crashHeld);
+    }
+
+    @Override
+    public boolean crashEndsDark() {
+        return rack.asUnit(row, rack::crashEndsDark);
+    }
+
+    @Override
+    public void crashKey() {
+        rack.asUnit(row, () -> {
+            rack.crashKey();
+            return null;
+        });
+    }
+
+    @Override
+    public boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
+        return rack.asUnit(row, () -> rack.crash(cause, moment));
+    }
+
+    @Override
+    public boolean memoryShort(final String program, final int needMb) {
+        return rack.asUnit(row, () -> rack.memoryShort(program, needMb));
+    }
+
+    @Override
+    public boolean killsForMemory() {
+        return rack.asUnit(row, rack::killsForMemory);
+    }
+
+    @Override
+    public void weighMemory() {
+        rack.asUnit(row, () -> {
+            rack.weighMemory();
+            return null;
+        });
+    }
+
+    @Override
+    public List<String> memoryLog() {
+        return rack.asUnit(row, rack::memoryLog);
+    }
+
+    @Override
+    public boolean serviceEnded(final ResourceLocation service) {
+        return rack.asUnit(row, () -> rack.serviceEnded(service));
+    }
+
+    @Override
+    public void endService(final ResourceLocation service) {
+        rack.asUnit(row, () -> {
+            rack.endService(service);
+            return null;
+        });
+    }
+
+    @Override
     @Nullable
     public ComputerBuild currentBuild() {
         return rack.asUnit(row, rack::currentBuild);
+    }
+
+    @Override
+    public List<ItemStack> hardwareStacks() {
+        return rack.asUnit(row, rack::hardwareStacks);
     }
 
     @Override
@@ -204,6 +313,13 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public void markChanged() {
         rack.setChanged();
+    }
+
+    @Override
+    public void markUnsaved() {
+        if (rack.getLevel() != null) {
+            rack.getLevel().blockEntityChanged(rack.getBlockPos());
+        }
     }
 
     @Override
@@ -439,13 +555,58 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
-    public int maxEndpoints() {
-        return rack.asUnit(row, rack::maxEndpoints);
+    public List<Long> enabledEndpoints() {
+        return rack.enabledEndpoints();
     }
 
     @Override
-    public void onEndpointLinked(final long endpointPos) {
-        rack.onEndpointLinked(endpointPos);
+    public PortKind kindOf(final long endpointPos) {
+        return rack.kindOf(endpointPos);
+    }
+
+    @Override
+    public boolean isDisabled(final long endpointPos) {
+        return rack.isDisabled(endpointPos);
+    }
+
+    @Override
+    public boolean setDisabled(final long endpointPos, final boolean disabled) {
+        return rack.setDisabled(endpointPos, disabled);
+    }
+
+    @Override
+    public int ports(final PortKind kind) {
+        return rack.asUnit(row, () -> rack.ports(kind));
+    }
+
+    @Override
+    public int portsInUse(final PortKind kind) {
+        return rack.portsInUse(kind);
+    }
+
+    @Override
+    public boolean holdsPort(final long endpointPos) {
+        return rack.holdsPort(endpointPos);
+    }
+
+    @Override
+    public void onEndpointLinked(final long endpointPos, final PortKind kind) {
+        rack.onEndpointLinked(endpointPos, kind);
+    }
+
+    @Override
+    public void onEndpointLinkedThrough(final long endpointPos, final PortKind kind, final long hubPos) {
+        rack.onEndpointLinkedThrough(endpointPos, kind, hubPos);
+    }
+
+    @Override
+    public int portsInUseThrough(final long hubPos) {
+        return rack.portsInUseThrough(hubPos);
+    }
+
+    @Override
+    public OptionalLong hubOf(final long endpointPos) {
+        return rack.hubOf(endpointPos);
     }
 
     @Override

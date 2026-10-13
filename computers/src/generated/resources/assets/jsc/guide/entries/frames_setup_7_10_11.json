@@ -1,0 +1,244 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_7_10_11.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_7_10_11.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_setup_7_10_11.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_7_10_11.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.frames_setup_7_10_11.step1",
+        "jsc.guide.frames_setup_7_10_11.step2",
+        "jsc.guide.frames_setup_7_10_11.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_setup_7_10_11.table1",
+      "heads": [
+        "jsc.guide.frames_setup_7_10_11.table1_head1",
+        "jsc.guide.frames_setup_7_10_11.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_setup_7_10_11.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_7_10_11.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_setup_7_10_11.table2",
+      "heads": [
+        "jsc.guide.frames_setup_7_10_11.table2_head1",
+        "jsc.guide.frames_setup_7_10_11.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_setup_7_10_11.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_7_10_11.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_setup_7_10_11.table3",
+      "heads": [
+        "jsc.guide.frames_setup_7_10_11.table3_head1",
+        "jsc.guide.frames_setup_7_10_11.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_7_10_11.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_setup_7_10_11.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_7_10_11.text6"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.frames_setup_7_10_11.step4",
+        "jsc.guide.frames_setup_7_10_11.step5",
+        "jsc.guide.frames_setup_7_10_11.step6"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_setup_7_10_11.fix1",
+          "problem": "jsc.guide.frames_setup_7_10_11.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_setup_7_10_11.fix2",
+          "problem": "jsc.guide.frames_setup_7_10_11.problem2"
+        },
+        {
+          "fix": "jsc.guide.frames_setup_7_10_11.fix3",
+          "problem": "jsc.guide.frames_setup_7_10_11.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_setup_95_xp",
+        "jsc:dock_station",
+        "jsc:drives"
+      ]
+    }
+  ],
+  "icon": "jsc:dvd_rom",
+  "id": "jsc:frames_setup_7_10_11",
+  "order": 143,
+  "section": "jsc:midsoft_installs",
+  "title": "jsc.guide.frames_setup_7_10_11.title"
+}

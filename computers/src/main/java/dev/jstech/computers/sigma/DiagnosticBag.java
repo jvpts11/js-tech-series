@@ -7,7 +7,11 @@
  */
 package dev.jstech.computers.sigma;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -19,10 +23,15 @@ import java.util.List;
  * <p>A cap keeps a file of nonsense from producing thousands of messages. Once it is reached the bag
  * stops recording and says so once, which is what makes the console readable after a paste gone wrong.
  */
+@TextHolder
 public final class DiagnosticBag {
 
     /** Past this many, further messages are almost always the same mistake echoing. */
     public static final int MAX_DIAGNOSTICS = 100;
+
+    /** The one line that says the cap was reached, after the messages that made it in. */
+    public static final TextKey TOO_MANY = TextKey.of("jsc.sigma.diagnostic_bag.too_many",
+            "too many errors; the rest were not reported");
 
     private final List<Diagnostic> diagnostics = new ArrayList<>();
     private String file;
@@ -58,8 +67,26 @@ public final class DiagnosticBag {
             this.capped = true;
             return;
         }
-        this.diagnostics.add(new Diagnostic(this.file, line, column, severity,
-                error.code(), error.message(arguments)));
+        // A phrase handed in as a sentence is kept in English among the arguments, which a tool reads as data.
+        this.diagnostics.add(new Diagnostic(this.file, line, column, severity, error.code(), error.message(arguments),
+                Arrays.stream(arguments).map(argument -> Text.of(argument).english()).toList()));
+    }
+
+    /** Whether none of these is an error, which is when what they came from can go on to the next stage. */
+    public static boolean noErrors(final List<Diagnostic> diagnostics) {
+        return diagnostics.stream().noneMatch(Diagnostic::isError);
+    }
+
+    /** The messages one per line, plus a note if any were dropped, in English. */
+    public static List<String> lines(final List<Diagnostic> diagnostics, final boolean truncated) {
+        final List<String> lines = new ArrayList<>();
+        for (final Diagnostic diagnostic : diagnostics) {
+            lines.add(diagnostic.format());
+        }
+        if (truncated) {
+            lines.add(TOO_MANY.text().english());
+        }
+        return lines;
     }
 
     /** Whether anything recorded here stops the compilation. */

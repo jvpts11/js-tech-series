@@ -1,0 +1,121 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_at_the_prompt.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_at_the_prompt.table1",
+      "heads": [
+        "jsc.guide.sigma_at_the_prompt.table1_head1",
+        "jsc.guide.sigma_at_the_prompt.table1_head2",
+        "jsc.guide.sigma_at_the_prompt.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "scc"
+          },
+          {
+            "literal": "scc"
+          },
+          {
+            "words": "jsc.guide.sigma_at_the_prompt.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "sgsc"
+          },
+          {
+            "literal": "sgsc"
+          },
+          {
+            "words": "jsc.guide.sigma_at_the_prompt.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "sigma"
+          },
+          {
+            "literal": "sigma"
+          },
+          {
+            "words": "jsc.guide.sigma_at_the_prompt.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "sgpack"
+          },
+          {
+            "literal": "sigma"
+          },
+          {
+            "words": "jsc.guide.sigma_at_the_prompt.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_at_the_prompt.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sigma_at_the_prompt.step1",
+        "jsc.guide.sigma_at_the_prompt.step2",
+        "jsc.guide.sigma_at_the_prompt.step3",
+        "jsc.guide.sigma_at_the_prompt.step4"
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/scc"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/sgsc"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/sigma"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/sgpack"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_at_the_prompt.fix1",
+          "problem": "jsc.guide.sigma_at_the_prompt.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_at_the_prompt.fix2",
+          "problem": "jsc.guide.sigma_at_the_prompt.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_installing",
+        "jsc:sigma_compile",
+        "jsc:sigma_run"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_at_the_prompt",
+  "order": 203,
+  "section": "jsc:shell_software",
+  "title": "jsc.guide.sigma_at_the_prompt.title"
+}

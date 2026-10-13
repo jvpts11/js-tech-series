@@ -7,11 +7,11 @@
  */
 package dev.jstech.computers.os.media;
 
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.install.LiveInstallState;
-import java.util.List;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Whether a machine can still see the medium it was started from.
@@ -48,28 +48,23 @@ public final class LiveMedium {
     /**
      * Whether any drive the machine reaches still holds the live medium of that distribution.
      *
-     * @param level     the world the machine is in, or null before it has one
-     * @param endpoints the drives the machine is cabled to, as packed positions
-     * @param distro    the distribution whose medium the machine was started from
+     * @param level   the world the machine is in, or null before it has one
+     * @param machine the machine
+     * @param distro  the distribution whose medium the machine was started from
      */
-    public static Answer holding(final Level level, final List<Long> endpoints,
+    public static Answer holding(@Nullable final Level level, final IOsHost machine,
                                  final LiveInstallState.Distro distro) {
         if (level == null) {
             return Answer.UNKNOWN;
         }
-        boolean certain = true;
-        for (final long endpoint : endpoints) {
-            final BlockPos pos = BlockPos.of(endpoint);
-            if (!level.isLoaded(pos)) {
-                /* Cabled to something nobody can see right now, which is not the same as cabled to nothing. */
-                certain = false;
-                continue;
-            }
-            if (level.getBlockEntity(pos) instanceof MediaReaderBlockEntity reader && holds(reader, distro)) {
+        final MachineMedia media = MachineMedia.of(machine, level);
+        for (final IMediaDrive drive : media.drives()) {
+            if (holds(drive, distro)) {
                 return Answer.PRESENT;
             }
         }
-        return certain ? Answer.GONE : Answer.UNKNOWN;
+        /* Cabled to something nobody can see right now, which is not the same as cabled to nothing. */
+        return media.complete() ? Answer.GONE : Answer.UNKNOWN;
     }
 
     /** The distribution a live medium is of, or nothing when it is not a live medium at all. */
@@ -86,14 +81,12 @@ public final class LiveMedium {
     }
 
     /** Whether that drive holds the live medium of that distribution. */
-    private static boolean holds(final MediaReaderBlockEntity reader, final LiveInstallState.Distro distro) {
-        return reader.insertedKind() == MediaKind.OS_INSTALL
-                && reader.insertedPayload() != null
-                && mediumName(distro).equals(reader.insertedPayload().getPath());
+    private static boolean holds(final IMediaDrive drive, final LiveInstallState.Distro distro) {
+        return drive.installs(MediaKind.OS_INSTALL) && mediumName(distro).equals(drive.payload().getPath());
     }
 
     /** What that distribution's medium is called, which is the distribution's own name. */
     private static String mediumName(final LiveInstallState.Distro distro) {
-        return distro == LiveInstallState.Distro.ARCH ? "arch" : "gentoo";
+        return distro.serializedName();
     }
 }

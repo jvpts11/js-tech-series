@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.operation.payload.RunProgramPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -15,6 +16,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayDeque;
 import java.util.List;
 import net.minecraft.client.gui.Font;
@@ -38,6 +40,9 @@ public final class ShellApp implements IDesktopApp {
     /** What a window's frame takes round its content: the border, and the title bar above. */
     private static final int FRAME_W = 8;
     private static final int FRAME_H = DesktopWindow.TITLE_H + 8;
+
+    /** The rows a terminal opens with. */
+    private static final int ROWS = 24;
 
     private final ShellView view;
     private OsSkin skin = OsSkin.fallback();
@@ -67,11 +72,8 @@ public final class ShellApp implements IDesktopApp {
          * Frames 11 ships its own modern shell ("Megashell"); every other desktop names the window after its
          * native terminal (Konsole on KDE, Terminal on GNOME/Cinnamon, Command Prompt on the older Frames).
          */
-        if (chrome != null && chrome.panelStyle() == PanelStyle.FRAMES_11) {
-            this.title = "Megashell";
-        } else {
-            this.title = chrome != null && promptSpec != null ? chrome.nameOf(promptSpec) : "Command Prompt";
-        }
+        this.title = chrome != null && promptSpec != null ? GameText.resolve(chrome.launcherLabel(promptSpec))
+                : GameText.resolve(ShellAppTexts.TITLE);
         this.host = host;
         /*
          * A shell greets the player with the system it belongs to. On this family the desktop and the system are
@@ -135,6 +137,11 @@ public final class ShellApp implements IDesktopApp {
         return this.view.scrollbackText();
     }
 
+    /** What stands in front of what is typed right now: the prompt, or the question of the program in front. */
+    public String promptShown() {
+        return this.view.promptShown();
+    }
+
     private void typeNext() {
         final String next = this.lines.poll();
         if (next != null) {
@@ -147,14 +154,15 @@ public final class ShellApp implements IDesktopApp {
         return this.title;
     }
 
+    /* A terminal opens eighty columns by twenty-four rows, as terminals do; a desktop too small for that shrinks it. */
     @Override
     public int defaultWidth() {
-        return 286;
+        return ShellView.widthFor(TermBuffer.MONITOR_COLUMNS) + FRAME_W;
     }
 
     @Override
     public int defaultHeight() {
-        return 176;
+        return ShellView.heightFor(ROWS) + FRAME_H;
     }
 
     @Override

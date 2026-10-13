@@ -1,0 +1,228 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.blockentity;
+
+import dev.jstech.computers.block.IEraChassisBlock;
+import dev.jstech.computers.hardware.BayDriveSpec;
+import dev.jstech.computers.hardware.CasePorts;
+import dev.jstech.computers.os.media.DiscTray;
+import dev.jstech.core.blockentity.BoolField;
+import dev.jstech.core.blockentity.DerivedInt;
+import dev.jstech.core.blockentity.ValueField;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
+
+/**
+ * A small computer, one block: the Personal Computer, the Crafting Computer and the Cluster Management Computer. Its
+ * case is drawn by its block entity, from the model its block names: the tower of its age, or in the later ages the
+ * one of three cases it comes in; with the parts put in it, its lamps lit as it runs and works its disk, and its
+ * fans turning while it runs.
+ */
+public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerBlockEntity implements GeoBlockEntity {
+
+    private final AnimatableInstanceCache geckoCache = GeckoLibUtil.createInstanceCache(this);
+    /** The left side taken off the case, showing what the player put inside; the world and the screen both show it. */
+    private final BoolField sidePanelOff = fields().flag("SidePanelOff", false).save().toClient().toMenu();
+    /**
+     * The item in each hardware slot, air where there is none, told to the players who see the machine so they see
+     * each part inside it. It is the hardware's own record, worked out again whenever the hardware changes or is read.
+     */
+    private final ValueField<List<ResourceLocation>> installed =
+            fields().value("Installed", ResourceLocation.CODEC.listOf(), List.of()).toClient();
+    /** The lamps on the front, worked out on the server: the power lamp's and the disk lamp's. */
+    private final DerivedInt lamps =
+            fields().derived("Lamps", () -> (isRunning() ? POWER_LAMP : 0) | (diskBusy() ? DISK_LAMP : 0)).toClient();
+    /** What the case's bays and front ports hold, and the trays of the drives in its bays. */
+    private final CaseFront front = new CaseFront(this, fields());
+
+    private static final int POWER_LAMP = 1;
+    private static final int DISK_LAMP = 2;
+    private static final RawAnimation WORK = RawAnimation.begin().thenLoop("animation.computer.work");
+    /** The controller the power button's press plays on, and the press. */
+    private static final String POWER = "power";
+    private static final String PRESS = "press_power";
+    private static final RawAnimation PRESS_POWER = RawAnimation.begin().thenPlay("animation.computer.press_power");
+
+    protected AbstractSmallComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
+                                               final BlockState state, final ComputerHardwareLayout layout) {
+        super(type, pos, state, layout);
+    }
+
+    /** The front of the case: its bays, its USB ports and what they hold. */
+    public CaseFront front() {
+        return front;
+    }
+
+    /** How many USB ports the case has on its front: its era's. */
+    public int casePorts() {
+        return getBlockState().getBlock() instanceof IEraChassisBlock chassis ? CasePorts.of(chassis.chassisEra()) : 0;
+    }
+
+    /** Spills what the case's bays and ports hold, as the case breaks. */
+    public void spillFront(final ServerLevel level, final BlockPos pos) {
+        front.spill(level, pos);
+    }
+
+    /** The power button pressed on the front: the button goes in for whoever sees the case. */
+    public void showPowerPressed() {
+        triggerAnim(POWER, PRESS);
+    }
+
+    /** Whether the left side is off the case. */
+    public boolean sidePanelOff() {
+        return sidePanelOff.get();
+    }
+
+    /** Takes the left side off the case, or puts it back. */
+    public void toggleSidePanel() {
+        sidePanelOff.set(!sidePanelOff.get());
+    }
+
+    /** Which hardware slot takes which part: the board's, the processor's, the memory's, and on. */
+    public ComputerHardwareLayout hardwareLayout() {
+        return layout();
+    }
+
+    /** The id of the item in hardware slot {@code slot}, as the players who see the machine know it, or null. */
+    public @Nullable ResourceLocation installedPart(final int slot) {
+        final List<ResourceLocation> parts = installed.get();
+        if (slot < 0 || slot >= parts.size()) {
+            return null;
+        }
+        final ResourceLocation part = parts.get(slot);
+        return part.equals(BuiltInRegistries.ITEM.getKey(Items.AIR)) ? null : part;
+    }
+
+    /** Whether the machine runs, as its power lamp shows it on every side. */
+    public boolean visualRunning() {
+        return (lamps.getAsInt() & POWER_LAMP) != 0;
+    }
+
+    /** Whether the machine worked its disk a moment ago, as its disk lamp shows it, blinking, on every side. */
+    public boolean visualDiskBusy() {
+        return (lamps.getAsInt() & DISK_LAMP) != 0;
+    }
+
+    @Override
+    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
+        // The case's fans turn while the machine runs; its lamps and the parts inside are the renderer's to draw.
+        controllers.add(new AnimationController<>(this, "work", 0,
+                state -> visualRunning() ? state.setAndContinue(WORK) : PlayState.STOP));
+        // The power button goes in when pressed, a clip the server sets off for whoever sees the case.
+        controllers.add(new AnimationController<>(this, POWER, 0, state -> PlayState.STOP)
+                .triggerableAnim(PRESS, PRESS_POWER));
+        // Each bay's tray rides out and in with the clips of the drive in it.
+        for (int bay = 0; bay < CaseFront.BAYS; bay++) {
+            final int which = bay;
+            controllers.add(front.tray(bay).controller(this, "tray_" + bay, () -> front.trayClips(which)));
+            controllers.add(new AnimationController<>(this, "caddy_" + bay, 0, state -> caddy(state, which)));
+        }
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return geckoCache;
+    }
+
+    /*
+     * Every bay up to the last hot-swap one counts, a hot-swap bay or not, so a bay's disk slot keeps its number
+     * whatever sits in the bays before it; a case with none adds no slot at all, and a bay past the last hot-swap
+     * one (or one the case does not have) adds none either, so no slot shows that could never hold a disk.
+     */
+    @Override
+    protected int frontDiskSlots() {
+        for (int bay = CaseFront.BAYS - 1; bay >= 0; bay--) {
+            if (front.kind(bay) == BayDriveSpec.Kind.HOT_SWAP) {
+                return bay + 1;
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    protected ItemStack frontDisk(final int bay) {
+        return front.hotSwapDisk(bay);
+    }
+
+    /**
+     * The disks the machine keeps its items on: those in its own disk slots, then those in its case's hot-swap bays,
+     * empty where a slot holds none, so a disk's place in the list is its place in the machine.
+     */
+    protected List<ItemStack> storeDisks() {
+        final ComputerHardwareLayout layout = hardwareLayout();
+        final int front = frontDiskSlots();
+        final List<ItemStack> disks = new ArrayList<>(layout.diskCount() + front);
+        for (int i = 0; i < layout.diskCount(); i++) {
+            disks.add(getHardware().getStackInSlot(layout.diskStart() + i));
+        }
+        for (int bay = 0; bay < front; bay++) {
+            disks.add(frontDisk(bay));
+        }
+        return disks;
+    }
+
+    @Override
+    protected void putFrontDisk(final int bay, final ItemStack disk) {
+        front.putHotSwapDisk(bay, disk);
+    }
+
+    @Override
+    protected void beforeClientUpdate() {
+        super.beforeClientUpdate();
+        front.beforeClientUpdate();
+    }
+
+    @Override
+    protected void afterClientUpdate() {
+        super.afterClientUpdate();
+        front.afterClientUpdate();
+    }
+
+    @Override
+    protected void partsChanged() {
+        final ItemStackHandler slots = getHardware();
+        final List<ResourceLocation> parts = new ArrayList<>(slots.getSlots());
+        for (int slot = 0; slot < slots.getSlots(); slot++) {
+            parts.add(BuiltInRegistries.ITEM.getKey(slots.getStackInSlot(slot).getItem()));
+        }
+        final List<ResourceLocation> before = installed.get();
+        installed.set(List.copyOf(parts));
+        // A part taken out of a bay, or swapped for another, lets fall what it held.
+        front.partsChanged(before, installed.get());
+    }
+
+    /*
+     * The hot-swap bay's caddy: riding in as its disk goes in, riding out as the disk comes out, and at rest in the bay
+     * otherwise, where the model draws it.
+     */
+    private PlayState caddy(final AnimationState<AbstractSmallComputerBlockEntity> state, final int bay) {
+        final DiscTray.Clips clips = front.caddyClips(bay);
+        if (clips == null || !front.caddyMoving(bay, getLevel())) {
+            return PlayState.STOP;
+        }
+        return state.setAndContinue(front.caddyWentIn(bay) ? clips.closing() : clips.opening());
+    }
+}

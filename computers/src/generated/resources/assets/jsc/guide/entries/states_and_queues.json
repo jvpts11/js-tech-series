@@ -1,0 +1,93 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.states_and_queues.definition1",
+      "term": "jsc.guide.states_and_queues.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.states_and_queues.definition2",
+      "term": "jsc.guide.states_and_queues.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.states_and_queues.table1",
+      "heads": [
+        "jsc.guide.states_and_queues.table1_head1",
+        "jsc.guide.states_and_queues.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.states_and_queues.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.states_and_queues.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.states_and_queues.fix1",
+          "problem": "jsc.guide.states_and_queues.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operation_states",
+        "jsc:priorities"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:states_and_queues",
+  "order": 96,
+  "section": "jsc:operations",
+  "title": "jsc.guide.states_and_queues.title"
+}

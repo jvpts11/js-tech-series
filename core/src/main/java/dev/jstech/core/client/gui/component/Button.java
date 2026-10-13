@@ -22,6 +22,8 @@ public final class Button extends UiComponent {
     private boolean primary;
     private boolean pressed;
     private float labelScale = 1f;
+    /* Room kept clear at the right end, for a mark drawn there (a drop-down's caret); the label centres in the rest. */
+    private int labelInsetRight;
 
     public Button(final String label, final Runnable onPress) {
         this(() -> label, onPress);
@@ -63,18 +65,27 @@ public final class Button extends UiComponent {
         return this;
     }
 
+    /**
+     * Keeps {@code pixels} at the button's right end clear of the label, for a mark drawn there, such as the caret of a
+     * button that opens a list: the label centres in what is left, so the two never meet.
+     */
+    public Button setLabelInsetRight(final int pixels) {
+        labelInsetRight = Math.max(0, pixels);
+        return this;
+    }
+
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         final String text = label.get();
-        if (labelScale == 1f) {
+        if (labelScale == 1f && labelInsetRight == 0) {
             ctx.skin().button(g, ctx.font(), x(), y(), width(), height(), text, hovered(ctx), pressed, primary);
         } else {
-            // The skin draws the face; the scaled label is centred on it by hand.
+            // The skin draws the face; the label is centred on what the inset leaves of it, by hand.
             ctx.skin().button(g, ctx.font(), x(), y(), width(), height(), "", hovered(ctx), pressed, primary);
             final int tw = Math.round(ctx.font().width(text) * labelScale);
             final int th = Math.round(7 * labelScale);
-            Texts.scaled(g, ctx.font(), text, x() + (width() - tw) / 2, y() + (height() - th) / 2 + (pressed ? 1 : 0),
-                    labelScale, ctx.skin().text());
+            Draw.textScaled(g, ctx.font(), text, x() + (width() - labelInsetRight - tw) / 2,
+                    y() + (height() - th) / 2 + (pressed ? 1 : 0), ctx.skin().text(), labelScale);
         }
         if (!enabled()) {
             Draw.disabled(g, x(), y(), width(), height());

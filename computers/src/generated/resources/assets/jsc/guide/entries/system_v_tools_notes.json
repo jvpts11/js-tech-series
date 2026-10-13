@@ -1,0 +1,95 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_tools_notes.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_v_tools_notes.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_tools_notes.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_v_tools_notes.table1",
+      "heads": [
+        "jsc.guide.system_v_tools_notes.table1_head1",
+        "jsc.guide.system_v_tools_notes.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "\"<name>\" [New file]"
+          },
+          {
+            "words": "jsc.guide.system_v_tools_notes.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "\"<name>\" <lines> lines, <characters> characters"
+          },
+          {
+            "words": "jsc.guide.system_v_tools_notes.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_v_tools_notes.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_tools_notes.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_v_tools_notes.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_tools_notes.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_v_tools_notes.fix1",
+          "problem": "jsc.guide.system_v_tools_notes.problem1"
+        },
+        {
+          "fix": "jsc.guide.system_v_tools_notes.fix2",
+          "problem": "jsc.guide.system_v_tools_notes.problem2"
+        },
+        {
+          "fix": "jsc.guide.system_v_tools_notes.fix3",
+          "problem": "jsc.guide.system_v_tools_notes.problem3"
+        },
+        {
+          "fix": "jsc.guide.system_v_tools_notes.fix4",
+          "problem": "jsc.guide.system_v_tools_notes.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:vi",
+        "jsc:printing",
+        "jsc:man_pages"
+      ]
+    }
+  ],
+  "id": "jsc:system_v_tools_notes",
+  "order": 285,
+  "section": "jsc:system_v_tools",
+  "title": "jsc.guide.system_v_tools_notes.title"
+}

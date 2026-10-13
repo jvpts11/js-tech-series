@@ -1,0 +1,223 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_text_tools.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_text_tools.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_text_tools.definition1",
+      "term": "jsc.guide.dos_text_tools.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_text_tools.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_text_tools.definition2",
+      "term": "jsc.guide.dos_text_tools.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_text_tools.table1",
+      "heads": [
+        "jsc.guide.dos_text_tools.table1_head1",
+        "jsc.guide.dos_text_tools.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "|"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": ">"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": ">>"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "<"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_text_tools.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.dos_text_tools.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_text_tools.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/find"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.dos_text_tools.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_text_tools.text6"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/sort"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.dos_text_tools.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_text_tools.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_text_tools.definition3",
+      "term": "jsc.guide.dos_text_tools.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_text_tools.table2",
+      "heads": [
+        "jsc.guide.dos_text_tools.table2_head1",
+        "jsc.guide.dos_text_tools.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Space"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Page Down"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "b"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Page Up"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_text_tools.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "/"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "n"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "q"
+          },
+          {
+            "words": "jsc.guide.dos_text_tools.table2_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/more"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dos_text_tools.fix1",
+          "problem": "jsc.guide.dos_text_tools.problem1"
+        },
+        {
+          "fix": "jsc.guide.dos_text_tools.fix2",
+          "problem": "jsc.guide.dos_text_tools.problem2"
+        },
+        {
+          "fix": "jsc.guide.dos_text_tools.fix3",
+          "problem": "jsc.guide.dos_text_tools.problem3"
+        },
+        {
+          "fix": "jsc.guide.dos_text_tools.fix4",
+          "problem": "jsc.guide.dos_text_tools.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:pipes_and_variables",
+        "jsc:text_tools"
+      ]
+    }
+  ],
+  "id": "jsc:dos_text_tools",
+  "order": 182,
+  "section": "jsc:prompt_files",
+  "title": "jsc.guide.dos_text_tools.title"
+}

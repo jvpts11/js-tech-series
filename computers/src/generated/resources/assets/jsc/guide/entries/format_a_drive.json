@@ -1,0 +1,146 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.format_a_drive.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.format_a_drive.definition1",
+      "term": "jsc.guide.format_a_drive.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.format_a_drive.definition2",
+      "term": "jsc.guide.format_a_drive.term2"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.format_a_drive.warning1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.format_a_drive.step1",
+        "jsc.guide.format_a_drive.step2",
+        "jsc.guide.format_a_drive.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.format_a_drive.text2"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "C:\\> ",
+          "text": "format D:",
+          "typed": true
+        },
+        {
+          "text": "WARNING: ALL DATA ON DRIVE D: WILL BE LOST!"
+        },
+        {
+          "text": "Run 'format D: /y' to proceed."
+        }
+      ],
+      "look": "jsc:guide/terminal/dos",
+      "title": "MC-DOS"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.format_a_drive.table1",
+      "heads": [
+        "jsc.guide.format_a_drive.table1_head1",
+        "jsc.guide.format_a_drive.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.format_a_drive.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.format_a_drive.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.format_a_drive.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.format_a_drive.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.format_a_drive.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.format_a_drive.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.format_a_drive.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.format_a_drive.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.format_a_drive.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.format_a_drive.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.format_a_drive.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.format_a_drive.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/format"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.format_a_drive.fix1",
+          "problem": "jsc.guide.format_a_drive.problem1"
+        },
+        {
+          "fix": "jsc.guide.format_a_drive.fix2",
+          "problem": "jsc.guide.format_a_drive.problem2"
+        },
+        {
+          "fix": "jsc.guide.format_a_drive.fix3",
+          "problem": "jsc.guide.format_a_drive.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:drives"
+      ]
+    }
+  ],
+  "id": "jsc:format_a_drive",
+  "order": 181,
+  "section": "jsc:prompt_files",
+  "title": "jsc.guide.format_a_drive.title"
+}

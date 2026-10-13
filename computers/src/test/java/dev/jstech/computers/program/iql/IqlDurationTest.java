@@ -41,4 +41,9 @@ class IqlDurationTest {
     void toTicks_rejectsUnknownUnit() {
         assertThrows(IllegalArgumentException.class, () -> IqlDuration.toTicks("30x"));
     }
+
+    @Test
+    void toTicks_refusesAValueThatOverflowsTheTickCount() {
+        assertThrows(IllegalArgumentException.class, () -> IqlDuration.toTicks("1000000000000000h"));
+    }
 }

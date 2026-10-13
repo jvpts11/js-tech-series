@@ -1,0 +1,165 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.iql.table1_1"
+          },
+          {
+            "literal": "SELECT 64 iron_ingot"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table1_2"
+          },
+          {
+            "literal": "CRAFT 64 torch"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table1_3"
+          },
+          {
+            "literal": "QUERY items WHERE qty > 100"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table1_4"
+          },
+          {
+            "literal": "QUERY items ORDER BY name LIMIT 2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table1_5"
+          },
+          {
+            "literal": "QUERY disks"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql.table2",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.iql.table2_1"
+          },
+          {
+            "literal": "VERB [quantity] item"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table2_2"
+          },
+          {
+            "literal": "[FROM place] [TO place] [WHERE condition] [IF condition] [ORDER BY field] [LIMIT n] [PRIORITY level]"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.iql.step1",
+        "jsc.guide.iql.step2",
+        "jsc.guide.iql.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text6"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.iql.warning1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql.fix1",
+          "problem": "jsc.guide.iql.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql.fix2",
+          "problem": "jsc.guide.iql.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql.fix3",
+          "problem": "jsc.guide.iql.problem3"
+        },
+        {
+          "fix": "jsc.guide.iql.fix4",
+          "problem": "jsc.guide.iql.problem4"
+        },
+        {
+          "fix": "jsc.guide.iql.fix5",
+          "problem": "jsc.guide.iql.problem5"
+        },
+        {
+          "fix": "jsc.guide.iql.fix6",
+          "problem": "jsc.guide.iql.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:what_iql_is",
+        "jsc:iql_errors"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:iql",
+  "order": 99,
+  "section": "jsc:operations",
+  "title": "jsc.guide.iql.title"
+}

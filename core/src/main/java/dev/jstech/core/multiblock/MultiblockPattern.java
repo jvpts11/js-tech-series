@@ -27,6 +27,8 @@ public final class MultiblockPattern {
     private final String name;
     private final char[][][] layers; // layers[y][z][x]
     private final Map<Character, IBlockMatcher> mapping;
+    /** The chars whose slots are ports, with what each opens onto. */
+    private final Map<Character, PortKind> ports;
     private final int controllerX;
     private final int controllerY;
     private final int controllerZ;
@@ -35,6 +37,7 @@ public final class MultiblockPattern {
             String name,
             char[][][] layers,
             Map<Character, IBlockMatcher> mapping,
+            Map<Character, PortKind> ports,
             int controllerX,
             int controllerY,
             int controllerZ
@@ -42,6 +45,7 @@ public final class MultiblockPattern {
         this.name = name;
         this.layers = layers;
         this.mapping = mapping;
+        this.ports = ports;
         this.controllerX = controllerX;
         this.controllerY = controllerY;
         this.controllerZ = controllerZ;
@@ -58,6 +62,20 @@ public final class MultiblockPattern {
 
     public Map<Character, IBlockMatcher> mapping() {
         return Collections.unmodifiableMap(mapping);
+    }
+
+    /** The chars whose slots are ports, with what each opens onto. */
+    public Map<Character, PortKind> ports() {
+        return ports;
+    }
+
+    /** The rows of layer {@code y}, north to south, each west to east: the pattern as it was written. */
+    public String[] rows(int y) {
+        final String[] rows = new String[sizeZ()];
+        for (int z = 0; z < sizeZ(); z++) {
+            rows[z] = new String(layers[y][z]);
+        }
+        return rows;
     }
 
     public int controllerX() { return controllerX; }
@@ -79,6 +97,7 @@ public final class MultiblockPattern {
         private final String name;
         private final List<String[]> layers = new ArrayList<>();
         private final Map<Character, IBlockMatcher> mapping = new HashMap<>();
+        private final Map<Character, PortKind> ports = new HashMap<>();
 
         private Builder(String name) {
             this.name = Objects.requireNonNull(name, "name must not be null");
@@ -122,6 +141,19 @@ public final class MultiblockPattern {
                                 + "and must not be mapped");
             }
             mapping.put(c, matcher);
+            return this;
+        }
+
+        /**
+         * Makes every slot of {@code c} a port of that kind: the block standing there still has to fit the slot, and
+         * the formed machine is reached through it.
+         */
+        public Builder port(char c, PortKind kind) {
+            Objects.requireNonNull(kind, "kind must not be null");
+            if (c == CONTROLLER_CHAR || c == IGNORE_CHAR) {
+                throw new IllegalArgumentException("Char '" + c + "' is reserved and cannot be a port");
+            }
+            ports.put(c, kind);
             return this;
         }
 
@@ -172,9 +204,14 @@ public final class MultiblockPattern {
                         "Pattern contains unmapped chars: " + unmappedChars
                                 + ". Call .where(c, matcher) for each");
             }
+            for (final char port : ports.keySet()) {
+                if (!mapping.containsKey(port)) {
+                    throw new IllegalStateException("Port char '" + port + "' has no matcher; call .where for it");
+                }
+            }
 
             return new MultiblockPattern(
-                    name, grid, Map.copyOf(mapping),
+                    name, grid, Map.copyOf(mapping), Map.copyOf(ports),
                     controllerX, controllerY, controllerZ
             );
         }

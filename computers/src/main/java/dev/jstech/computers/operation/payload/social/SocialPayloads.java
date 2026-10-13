@@ -23,8 +23,12 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -53,10 +57,6 @@ public final class SocialPayloads {
     /** The longest line of a comparison that travels, which is what the payload's own cap allows. */
     private static final int MAX_DIFF_LINE = 240;
 
-    /** The services these two windows talk to, by the path each is installed under. */
-    private static final String MESSENGER_SERVICE = "messenger_service";
-    private static final String KNOT_SERVICE = "knothub";
-
     private SocialPayloads() {
     }
 
@@ -77,7 +77,7 @@ public final class SocialPayloads {
     private static void handleMessenger(final MessengerActionPayload payload, final ServerPlayer player,
                                         final ServerLevel level) {
         final ServerServices.Host host = serviceFor(player, level,
-                payload.hostPos(), payload.monitorPos(), MESSENGER_SERVICE);
+                payload.hostPos(), payload.monitorPos(), Programs.MESSENGER_SERVICE);
         if (host == null) {
             /*
              * No server on this network is running it. The window is told so rather than left waiting, and
@@ -94,7 +94,9 @@ public final class SocialPayloads {
             return;
         }
         final String who = player.getGameProfile().getName();
-        final String room = payload.room().isBlank() ? MessengerLog.LOBBY : payload.room();
+        // A private room asked for by somebody who is not one of its two is the lobby for them.
+        final String asked = payload.room().isBlank() ? MessengerLog.LOBBY : payload.room();
+        final String room = MessengerLog.mayEnter(asked, who) ? asked : MessengerLog.LOBBY;
         final long now = level.getGameTime();
         // Anybody who has gone quiet is let go of first, so the weight below is of who is really there.
         log.forgetIdle(now);
@@ -117,7 +119,7 @@ public final class SocialPayloads {
             host.changed(); // what was said rides on the Server item, so it is written down at once
             tellEveryone(level, host, log);
         } else {
-            PacketDistributor.sendToPlayer(player, stateOf(host, room, log));
+            PacketDistributor.sendToPlayer(player, stateOf(host, room, log, who));
         }
     }
 
@@ -139,25 +141,25 @@ public final class SocialPayloads {
             if (other == null) {
                 log.disconnect(who);
             } else {
-                PacketDistributor.sendToPlayer(other, stateOf(host, log.roomOf(who), log));
+                PacketDistributor.sendToPlayer(other, stateOf(host, log.roomOf(who), log, who));
             }
         }
     }
 
-    private static MessengerStatePayload stateOf(final ServerServices.Host host,
-                                                 final String room, final MessengerLog log) {
+    private static MessengerStatePayload stateOf(final ServerServices.Host host, final String room,
+                                                 final MessengerLog log, final String viewer) {
         final List<MessengerStatePayload.Line> lines = new ArrayList<>();
         final List<String> connected = log.connected();
         for (final MessengerLog.Message message : log.room(room, MessengerStatePayload.MAX_LINES)) {
             lines.add(new MessengerStatePayload.Line(message.from(), message.text(), message.nudge(),
                     connected.contains(message.from())));
         }
-        final List<String> rooms = log.rooms();
+        final List<String> rooms = log.roomsFor(viewer);
         return new MessengerStatePayload(
                 new MessengerStatePayload.Service(true,
-                        cut(host.name(), MessengerStatePayload.Service.MAX_HOST),
+                        TextBounds.clip(host.name(), MessengerStatePayload.Service.MAX_HOST),
                         log.historyBytes(), log.ramMb()),
-                names(connected), names(rooms), cut(room, MessengerStatePayload.MAX_NAME_LETTERS), lines);
+                names(connected), names(rooms), TextBounds.clip(room, MessengerStatePayload.MAX_NAME_LETTERS), lines);
     }
 
     /** As many names as the packet lists, each as long as it carries one. */
@@ -167,7 +169,7 @@ public final class SocialPayloads {
             if (out.size() >= MessengerStatePayload.MAX_NAMES) {
                 break;
             }
-            out.add(cut(value, MessengerStatePayload.MAX_NAME_LETTERS));
+            out.add(TextBounds.clip(value, MessengerStatePayload.MAX_NAME_LETTERS));
         }
         return out;
     }
@@ -181,17 +183,17 @@ public final class SocialPayloads {
     private static void handleKnot(final KnotActionPayload payload, final ServerPlayer player,
                                    final ServerLevel level) {
         final ServerServices.Host host = serviceFor(player, level,
-                payload.hostPos(), payload.monitorPos(), KNOT_SERVICE);
+                payload.hostPos(), payload.monitorPos(), Programs.KNOT_HUB);
         final KnotRepository repository = host == null ? null : host.rack().knotAt(host.slot());
         if (repository == null) {
             PacketDistributor.sendToPlayer(player, new KnotStatePayload(
                     new KnotStatePayload.Service(false, "", 0L), List.of(), List.of(), 0, List.of()));
             return;
         }
-        final String note = switch (payload.action()) {
+        final Text note = switch (payload.action()) {
             case KnotActionPayload.PUSH -> push(payload, player, level, host, repository);
             case KnotActionPayload.PULL -> pull(payload, level, repository);
-            default -> "";
+            default -> Text.EMPTY;
         };
         PacketDistributor.sendToPlayer(player,
                 knotStateOf(host, repository, payload.revision(), note));
@@ -203,57 +205,57 @@ public final class SocialPayloads {
      * <p>Answers what to tell them, because every one of these can fail for a reason they can act on and a
      * button that does nothing at all is the worst of the possible answers.
      */
-    private static String push(final KnotActionPayload payload, final ServerPlayer player,
-                               final ServerLevel level, final ServerServices.Host host,
-                               final KnotRepository repository) {
+    private static Text push(final KnotActionPayload payload, final ServerPlayer player,
+                             final ServerLevel level, final ServerServices.Host host,
+                             final KnotRepository repository) {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
-            return "No computer";
+            return KnotStatePayload.NO_COMPUTER.text();
         }
         final ItemStack disk = computer.systemDisk();
         if (disk.isEmpty()) {
-            return "No system disk";
+            return KnotStatePayload.NO_SYSTEM_DISK.text();
         }
         final String content = DiskFilesystem.read(disk, payload.file()).orElse(null);
         if (content == null) {
-            return "No " + payload.file() + " on this machine";
+            return KnotStatePayload.NO_SUCH_FILE.with(payload.file());
         }
         if (repository.commit(payload.file(), player.getGameProfile().getName(),
                 payload.message(), content, level.getGameTime()) == null) {
-            return "Nothing changed since the last revision";
+            return KnotStatePayload.NOTHING_CHANGED.text();
         }
         host.changed();
-        return "Pushed " + payload.file();
+        return KnotStatePayload.PUSHED.with(payload.file());
     }
 
     /** Writes a revision back onto the machine's disk, where the editor can open it. */
-    private static String pull(final KnotActionPayload payload, final ServerLevel level,
-                               final KnotRepository repository) {
+    private static Text pull(final KnotActionPayload payload, final ServerLevel level,
+                             final KnotRepository repository) {
         final KnotRepository.Revision revision = repository.revision(payload.revision());
         final String file = repository.fileOf(payload.revision());
         if (revision == null || file == null) {
-            return "No such revision";
+            return KnotStatePayload.NO_SUCH_REVISION.text();
         }
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
-            return "No computer";
+            return KnotStatePayload.NO_COMPUTER.text();
         }
         final ItemStack disk = computer.systemDisk();
         final FilesystemKind kind = FileAccess.filesystemKindOf(computer);
         if (disk.isEmpty() || kind == FilesystemKind.NONE) {
-            return "No system disk";
+            return KnotStatePayload.NO_SYSTEM_DISK.text();
         }
         final DiskFilesystem.WriteResult result = DiskFilesystem.write(disk, file, typeOf(file),
                 revision.content(), computer.systemDiskFreeWeight(), kind, level.getGameTime());
         if (result != DiskFilesystem.WriteResult.OK) {
             return result == DiskFilesystem.WriteResult.DISK_FULL
-                    ? "Not enough free space" : "Could not write " + file;
+                    ? KnotStatePayload.NO_ROOM.text() : KnotStatePayload.COULD_NOT_WRITE.with(file);
         }
         computer.setChanged();
-        return "Wrote r" + revision.number() + " to " + file;
+        return KnotStatePayload.WROTE.with(revision.number(), file);
     }
 
     private static KnotStatePayload knotStateOf(final ServerServices.Host host,
                                                 final KnotRepository repository, final int shown,
-                                                final String note) {
+                                                final Text note) {
         final List<KnotStatePayload.Revision> revisions = new ArrayList<>();
         for (final KnotRepository.Revision revision
                 : repository.recent(KnotStatePayload.MAX_REVISIONS)) {
@@ -262,8 +264,8 @@ public final class SocialPayloads {
                     revision.message(), file == null ? "" : file));
         }
         return new KnotStatePayload(
-                new KnotStatePayload.Service(true, cut(host.name(), KnotStatePayload.Service.MAX_HOST),
-                        repository.bytes(), cut(note, KnotStatePayload.Service.MAX_NOTE)),
+                new KnotStatePayload.Service(true, TextBounds.clip(host.name(), KnotStatePayload.Service.MAX_HOST),
+                        repository.bytes(), note),
                 clip(repository.files(), KnotStatePayload.MAX_FILES),
                 revisions, shown, diffOf(repository, shown));
     }
@@ -306,7 +308,7 @@ public final class SocialPayloads {
     /* Shared */
 
     /**
-     * The server on the player's network that is running {@code programPath}, or null when none is.
+     * The server on the player's network that is running {@code program}, or null when none is.
      *
      * <p>The service runs somewhere else than the computer in front of the player, which is what makes it
      * worth having: two players at two different machines reach the same one. Null is a complete answer,
@@ -315,10 +317,10 @@ public final class SocialPayloads {
     @Nullable
     private static ServerServices.Host serviceFor(final ServerPlayer player, final ServerLevel level,
                                                   final BlockPos hostPos, final BlockPos monitorPos,
-                                                  final String programPath) {
+                                                  final ResourceLocation program) {
         final IComputerTerminalHost terminal = niHost(player, level, hostPos, monitorPos);
         return terminal == null ? null
-                : ServerServices.find(level, terminal.networkUuid(), programPath);
+                : ServerServices.find(level, terminal.networkUuid(), program);
     }
 
     private static FileType typeOf(final String path) {
@@ -339,17 +341,6 @@ public final class SocialPayloads {
      * than being shown short.
      */
     private static String clipLine(final String text) {
-        return cut(text, MAX_DIFF_LINE);
-    }
-
-    /**
-     * Cuts a string to what its field carries.
-     *
-     * <p>Every one of these fields refuses what it is handed by throwing rather than by shortening it, so a
-     * machine named at length, or a note built out of a long file name, would take the whole window down
-     * instead of simply reading short. Cut where the answer is built, once, for each field that can grow.
-     */
-    private static String cut(final String text, final int most) {
-        return text.length() > most ? text.substring(0, most) : text;
+        return TextBounds.clip(text, MAX_DIFF_LINE);
     }
 }

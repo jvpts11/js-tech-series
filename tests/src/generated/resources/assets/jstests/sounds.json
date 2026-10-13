@@ -1,0 +1,32 @@
+{
+  "test/click": {
+    "sounds": [
+      "random/click"
+    ],
+    "subtitle": "subtitles.jstests.test.click"
+  },
+  "test/hum": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "block/beacon/ambient"
+      }
+    ],
+    "subtitle": "subtitles.jstests.test.hum"
+  },
+  "test/room": {
+    "sounds": [
+      {
+        "attenuation_distance": 24,
+        "name": "block/conduit/ambient"
+      }
+    ],
+    "subtitle": "subtitles.jstests.test.room"
+  },
+  "test/whir": {
+    "sounds": [
+      "block/beacon/ambient"
+    ],
+    "subtitle": "subtitles.jstests.test.whir"
+  }
+}

@@ -9,7 +9,6 @@ package dev.jstech.computers.os;
 
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
-import dev.jstech.core.tier.HardwareEra;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,9 @@ public final class RamLedger {
         DESKTOP("desktop"),
         SERVICE("service"),
         WINDOW("window"),
-        PROCESS("process");
+        PROCESS("process"),
+        /** The system's memory lent to graphics on the processor's die, as video memory, for what it is showing. */
+        GRAPHICS("graphics");
 
         private static final StableNames<Kind> NAMES = StableNames.of(Kind.class);
 
@@ -73,12 +74,13 @@ public final class RamLedger {
      * holds all of what it was given, so for those the two are the same number.
      *
      * <p>Only a script process has a number: two of them can be started from the same file, so the name
-     * alone cannot say which is which when one of them is to be ended.
+     * alone cannot say which is which when one of them is to be ended. A service and a window have a key instead, the
+     * program a service is and the key a window goes by, which is what ends one of them.
      */
-    public record Entry(String name, int mb, long heldBytes, Kind kind, int id) {
+    public record Entry(String name, int mb, long heldBytes, Kind kind, int id, String key) {
 
         public Entry(final String name, final int mb, final Kind kind) {
-            this(name, mb, mb * BYTES_PER_MB, kind, 0);
+            this(name, mb, mb * BYTES_PER_MB, kind, 0, "");
         }
     }
 
@@ -99,13 +101,21 @@ public final class RamLedger {
         return add(name, mb, Math.max(0, mb) * BYTES_PER_MB, kind, id);
     }
 
+    /** The same, for a service or a window, which answers to the key of the program or of the window. */
+    public RamLedger add(final String name, final int mb, final Kind kind, final String key) {
+        if (mb > 0) {
+            entries.add(new Entry(name, mb, mb * BYTES_PER_MB, kind, 0, key));
+        }
+        return this;
+    }
+
     /**
      * The same, for a running program, which was given {@code mb} and is holding {@code heldBytes} of them this
      * moment. It is listed by the room it was given, since that is what the machine promised it.
      */
     public RamLedger add(final String name, final int mb, final long heldBytes, final Kind kind, final int id) {
         if (mb > 0) {
-            entries.add(new Entry(name, mb, Math.max(0, heldBytes), kind, id));
+            entries.add(new Entry(name, mb, Math.max(0, heldBytes), kind, id, ""));
         }
         return this;
     }
@@ -169,35 +179,6 @@ public final class RamLedger {
         }
         final long tenths = bytes * 10L / BYTES_PER_MB;
         return tenths / 10L + "." + tenths % 10L + " MB";
-    }
-
-    /**
-     * The megabytes a program of {@code kind} written in {@code era} holds when it declared no size of its own.
-     * Newer software is heavier: a Vintage tool is a megabyte, a Standard one nearly a hundred. A service is
-     * half of an application of its generation; a desktop environment twice one.
-     */
-    public static int eraWeightMb(final HardwareEra era, final ProgramKind kind) {
-        final int base = switch (era) {
-            case VINTAGE -> 1;
-            case LEGACY -> 16;
-            case STANDARD -> 96;
-            case ADVANCED -> 256;
-            case EXA -> 512;
-            case SINGULARITY -> 1024;
-        };
-        return switch (kind) {
-            case SERVICE -> Math.max(1, base / 2);
-            case DESKTOP_ENVIRONMENT -> base * 2;
-            default -> base;
-        };
-    }
-
-    /**
-     * The megabytes a program bundled with a system holds: a quarter of the system's own share, never less
-     * than one. The same Files is a few megabytes on a nineties system and a couple of hundred on a modern one.
-     */
-    public static int bundledWeightMb(final int systemRamMb) {
-        return Math.max(1, systemRamMb / 4);
     }
 
     /**

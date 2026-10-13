@@ -59,7 +59,19 @@ final class TypeParser {
         return this.parseTypeRef();
     }
 
+    /* Type arguments read themselves a level down, so a type nested in type arguments counts against the limit. */
     TypeRef parseTypeRef() {
+        if (!this.cursor.descend()) {
+            return null;
+        }
+        try {
+            return this.typeRef();
+        } finally {
+            this.cursor.ascend();
+        }
+    }
+
+    private TypeRef typeRef() {
         final Token start = this.cursor.peek();
         if (!this.isTypeStart(start.kind())) {
             this.diagnostics.error(start.line(), start.column(), SigmaError.EXPECTED_TYPE, start.describe());
@@ -92,6 +104,14 @@ final class TypeParser {
             arrayRank++;
         }
         return new TypeRef(name.toString(), arguments, arrayRank, start.line(), start.column());
+    }
+
+    /** Whether a type is written at the cursor and a name follows it: what a declaration or a typed parameter is. */
+    boolean typedNameAhead() {
+        final int after = this.scanType(this.cursor.at());
+        // A word kept for a later version where the name goes is still a declaration, refused at that word.
+        return after > this.cursor.at() && (this.cursor.kindAt(after) == TokenKind.IDENTIFIER
+                || LanguageGaps.reserved(this.cursor.kindAt(after)));
     }
 
     /*

@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.program.ComputerConsoleState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -56,7 +56,7 @@ final class DiskConsole {
         }
         final CompoundTag tag = new CompoundTag();
         this.console.save(tag);
-        this.disk.set(ComputingModule.DISK_CONSOLE.get(), tag);
+        this.disk.set(ComputingComponents.DISK_CONSOLE.get(), tag);
     }
 
     /**
@@ -79,9 +79,20 @@ final class DiskConsole {
     private void readFrom(final ItemStack disk) {
         this.disk = disk; // set first: nothing below may recurse back into state()
         this.console.clear();
-        final CompoundTag saved = disk.isEmpty() ? null : disk.get(ComputingModule.DISK_CONSOLE.get());
+        final CompoundTag saved = disk.isEmpty() ? null : disk.get(ComputingComponents.DISK_CONSOLE.get());
         if (saved != null) {
             this.console.load(saved);
+        }
+        /*
+         * One name for the machine and its system. The machine's own wins, and a disk that comes from another
+         * machine, or was sold with a system on it, names a machine that has none yet. Written onto the console
+         * only: it reaches the disk with the next flush, as everything else on the console does.
+         */
+        final String machineName = this.machine.customName();
+        if (!machineName.isEmpty()) {
+            this.console.setComputerName(machineName);
+        } else if (!this.console.computerName().isEmpty()) {
+            this.machine.setCustomName(this.console.computerName());
         }
     }
 }

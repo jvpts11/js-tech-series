@@ -1,0 +1,10 @@
+{
+  "bad": "#FFFF5555",
+  "dim": "#FF808080",
+  "good": "#FF55FF55",
+  "ground": "#FF000000",
+  "pickedBar": "#FFC0C0C0",
+  "pickedText": "#FF000000",
+  "plain": "#FFC0C0C0",
+  "title": "#FFFFFFFF"
+}

@@ -1,0 +1,11 @@
+{
+  "bar": "#CCFFFFFF",
+  "dim": "#FFA6A6A6",
+  "dirt": "#FF6B4A2C",
+  "grass": "#FF7FC26B",
+  "ground": "#F21F1F1F",
+  "groundSolid": "#FF1F1F1F",
+  "hover": "#1FFFFFFF",
+  "ink": "#FFFFFFFF",
+  "tileRim": "#8CFFFFFF"
+}

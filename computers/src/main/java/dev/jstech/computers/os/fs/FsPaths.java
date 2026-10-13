@@ -42,7 +42,7 @@ public final class FsPaths {
      * @param era   the era of the disk the file sits on
      * @return the ceiling of {@code bytes / era.bytesPerMbEq()}
      */
-    public static long sizeMbEq(final int bytes, final HardwareEra era) {
+    public static long sizeMbEq(final long bytes, final HardwareEra era) {
         if (bytes <= 0) {
             return 0L;
         }

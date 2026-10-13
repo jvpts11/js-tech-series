@@ -1,0 +1,180 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.rc_services.definition1",
+      "term": "jsc.guide.rc_services.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.rc_services.definition2",
+      "term": "jsc.guide.rc_services.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.rc_services.table1",
+      "heads": [
+        "jsc.guide.rc_services.table1_head1",
+        "jsc.guide.rc_services.table1_head2",
+        "jsc.guide.rc_services.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "cron"
+          },
+          {
+            "literal": "cron"
+          },
+          {
+            "words": "jsc.guide.rc_services.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "sshd"
+          },
+          {
+            "literal": "remote"
+          },
+          {
+            "words": "jsc.guide.rc_services.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.rc_services.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.rc_services.step1",
+        "jsc.guide.rc_services.step2",
+        "jsc.guide.rc_services.step3",
+        "jsc.guide.rc_services.step4",
+        "jsc.guide.rc_services.step5"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.rc_services.table2",
+      "heads": [
+        "jsc.guide.rc_services.table2_head1",
+        "jsc.guide.rc_services.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "remote  on (other computers may run programs here)"
+          },
+          {
+            "words": "jsc.guide.rc_services.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "cron  on"
+          },
+          {
+            "words": "jsc.guide.rc_services.table2_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.rc_services.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text7"
+    },
+    {
+      "type": "listing",
+      "language": "conf",
+      "lines": [
+        "hostname=\"<hostname>\"",
+        "ifconfig_em0=\"DHCP\"",
+        "cron_enable=\"YES\"",
+        "sshd_enable=\"NO\"",
+        "dumpdev=\"AUTO\""
+      ],
+      "name": "rc.conf"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.rc_services.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rc_services.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.rc_services.fix1",
+          "problem": "jsc.guide.rc_services.problem1"
+        },
+        {
+          "fix": "jsc.guide.rc_services.fix2",
+          "problem": "jsc.guide.rc_services.problem2"
+        },
+        {
+          "fix": "jsc.guide.rc_services.fix3",
+          "problem": "jsc.guide.rc_services.problem3"
+        },
+        {
+          "fix": "jsc.guide.rc_services.fix4",
+          "problem": "jsc.guide.rc_services.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:processes_and_jobs",
+        "jsc:system_commands",
+        "jsc:bsdinstall"
+      ]
+    }
+  ],
+  "id": "jsc:rc_services",
+  "order": 273,
+  "section": "jsc:freebsd_system",
+  "title": "jsc.guide.rc_services.title"
+}

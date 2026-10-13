@@ -16,6 +16,17 @@ import java.util.Optional;
 /**
  * The kinds of Operation the network can be asked to carry out, by id, from every mod of the series.
  *
+ * <p>A mod adds its own kinds once, while the game loads, by listening for {@code CoreRegisterEvent} on its mod
+ * bus; the same registry is reachable afterwards from {@code JsCore.operations()} for anything that wants to look a
+ * kind up:
+ *
+ * <pre>{@code
+ * @SubscribeEvent
+ * static void register(CoreRegisterEvent event) {
+ *     event.operations().register(COUNT_ITEMS);
+ * }
+ * }</pre>
+ *
  * <p>Two of the same id is refused rather than one replacing the other: an Operation's id is written into
  * saved worlds and sent over the wire, so which of two answered for it cannot be allowed to depend on the
  * order the mods loaded in.
@@ -66,10 +77,12 @@ public final class OperationTypeRegistry {
         return this.frozen;
     }
 
+    /** The kind registered under that id, such as {@code jsc:select}, or nothing when no mod declared one. */
     public Optional<OperationType<?>> get(final String id) {
         return Optional.ofNullable(this.registry.get(id));
     }
 
+    /** Whether some mod declared a kind under that id. */
     public boolean contains(final String id) {
         return this.registry.containsKey(id);
     }
@@ -79,6 +92,7 @@ public final class OperationTypeRegistry {
         return Collections.unmodifiableCollection(this.registry.values());
     }
 
+    /** How many kinds there are. */
     public int size() {
         return this.registry.size();
     }

@@ -20,6 +20,9 @@ import static dev.jstech.core.tier.HardwareEra.STANDARD;
 import static dev.jstech.core.tier.HardwareEra.VINTAGE;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.engine.nextgre.NextgreEngine;
+import dev.jstech.computers.engine.prophet.ProphetEngine;
 import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.Optional;
@@ -48,11 +51,16 @@ public final class OsBootstrap {
         registerDesktops();
         registerSpaces();
         registerPrograms();
+        // The engine every Mainframe ships with, whose package is the Midsoft IQL Server program above.
+        JsComputersApi.registerEngine(NetworkEngines.MIDSOFT_IQL_SERVER);
+        // NextgreIQL, which plans with a planner of its own, and Prophet YourIQL, which holds declared states.
+        NetworkEngines.register(new NextgreEngine());
+        NetworkEngines.register(new ProphetEngine());
     }
 
     /**
      * The built-in kernels. A static list (built eagerly) so both the runtime registration and datagen read
-     * from one source. dos = MS-DOS 2.0+ (real directories); win9x = cooperative; nt = preemptive (XP + 11);
+     * from one source. dos = MS-DOS 2.0+ (real directories); win9x = cooperative; nt = preemptive (XP to 11);
      * net_min = the minimal network kernel with no scheduler or filesystem.
      */
     private static final List<KernelDef> BUILTIN_KERNELS = List.of(
@@ -90,14 +98,15 @@ public final class OsBootstrap {
     /*
      * A system's size is in megabytes, the way its box would print it; what it costs in items depends on the
      * disk it lands on (1 MB an item at 16 bits, 16 MB at 32, 256 MB at 64). MC-DOS fills a fifth of a
-     * 20 MB vintage drive; Frames 11 is 80 items of a standard disk and will not fit a vintage one at all.
+     * 20 MB vintage drive; Frames 11 is 80 items of a 64-bit disk and will not fit a vintage one at all.
      */
     private static final List<OsDef> BUILTIN_OSES = List.of(
             /*
              * MC-DOS: terminal-only CLI shell from the Vintage era.
              * Each system also says the RAM it holds for itself while running (withRam): a fifth of a
              * vintage machine's few megabytes for the DOS family, most of a small Legacy machine for XP,
-             * a good part of a gigabyte for Frames 11. Its bundled programs weigh a quarter of that each.
+             * more with each Frames after it, up to a good part of a gigabyte for Frames 11. Its bundled programs
+             * weigh a quarter of that each.
              */
             OsDef.mediaInstalled(rl("mc_dos"), OsCapability.TERMINAL_ONLY, HardwareEra.VINTAGE, rl("dos"), 4,
                     Platform.MC_DOS, "MC-DOS", Optional.empty(), SoftwareHouse.MIDSOFT).withRam(1)
@@ -109,17 +118,26 @@ public final class OsBootstrap {
             /*
              * The Frames editions bundle their own desktop environment (the id doubles as the DE id), and they
              * are the one family here with an order to it: each says where it sits (withRank), so a program can
-             * ask for XP or newer without anything but these three lines knowing which is newer than which.
+             * ask for XP or newer without anything but these lines knowing which is newer than which. Each comes
+             * from the age it was made for: 95 and XP from Legacy, 7 from Transition, 10 from Standard and 11 from
+             * Advanced, and each runs on every machine after its own. What each holds of itself grew with its age:
+             * on a typical machine of its era (two sticks of the middle size) it leaves room for about eight programs.
              */
             OsDef.mediaInstalled(rl("frames_95"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("win9x"), 48,
-                    Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(16)
+                    Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(32)
                     .withInstaller(InstallerStyle.FRAMES_95).withRank(1),
             OsDef.mediaInstalled(rl("frames_xp"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("nt"), 1_536,
-                    Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(64)
+                    Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(128)
                     .withInstaller(InstallerStyle.FRAMES_XP).withRank(2),
-            OsDef.mediaInstalled(rl("frames_11"), OsCapability.FULL_DESKTOP, HardwareEra.STANDARD, rl("nt"), 20_480,
-                    Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(768)
-                    .withInstaller(InstallerStyle.FRAMES_11).withRank(3),
+            OsDef.mediaInstalled(rl("frames_7"), OsCapability.FULL_DESKTOP, HardwareEra.TRANSITION, rl("nt"),
+                    16_384, Platform.FRAMES, "Frames 7", Optional.of(rl("frames_7")), SoftwareHouse.MIDSOFT)
+                    .withRam(1_024).withInstaller(InstallerStyle.FRAMES_7).withRank(3),
+            OsDef.mediaInstalled(rl("frames_10"), OsCapability.FULL_DESKTOP, HardwareEra.STANDARD, rl("nt"),
+                    16_384, Platform.FRAMES, "Frames 10", Optional.of(rl("frames_10")), SoftwareHouse.MIDSOFT)
+                    .withRam(3_072).withInstaller(InstallerStyle.FRAMES_10).withRank(4),
+            OsDef.mediaInstalled(rl("frames_11"), OsCapability.FULL_DESKTOP, HardwareEra.ADVANCED, rl("nt"), 20_480,
+                    Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(8_192)
+                    .withInstaller(InstallerStyle.FRAMES_11).withRank(5),
 
             /*
              * Linux distributions: all on the Linux kernel, all boot to a bash TTY until a desktop environment
@@ -129,32 +147,34 @@ public final class OsBootstrap {
              * A distribution's own share is its base system at the TTY; the desktop package it installs
              * weighs on top of it (the desktop environments below say how much).
              */
-            OsDef.linuxDistro(rl("ubuntu"), 8_192, "Ubuntu", "bash", PackageManagerKind.APT, InstallMode.GUIDED,
-                    SoftwareHouse.AXIOMATIC).withRam(48).withInstaller(InstallerStyle.UBUNTU),
-            OsDef.linuxDistro(rl("debian"), 4_096, "Debian", "bash", PackageManagerKind.APT, InstallMode.GUIDED,
-                    SoftwareHouse.DEBIAN_CIRCLE).withRam(24).withInstaller(InstallerStyle.DEBIAN),
-            OsDef.linuxDistro(rl("fedora"), 8_192, "Fedora", "bash", PackageManagerKind.DNF, InstallMode.GUIDED,
-                    SoftwareHouse.RED_CAP).withRam(48).withInstaller(InstallerStyle.FEDORA),
-            OsDef.linuxDistro(rl("arch"), 2_048, "Arch Linux", "zsh", PackageManagerKind.PACMAN, InstallMode.LIVE_MANUAL,
-                    SoftwareHouse.ARCH_COLLECTIVE).withRam(12),
-            OsDef.linuxDistro(rl("gentoo"), 4_096, "Gentoo", "bash", PackageManagerKind.EMERGE, InstallMode.SOURCE,
-                    SoftwareHouse.GENTOO_FOUNDRY).withRam(12),
+            OsDef.linuxDistro(rl("ubuntu"), 8_192, "Ubuntu", ShellKind.BASH, PackageManagerKind.APT,
+                    InstallMode.GUIDED, SoftwareHouse.AXIOMATIC).withRam(48).withInstaller(InstallerStyle.UBUNTU),
+            OsDef.linuxDistro(rl("debian"), 4_096, "Debian", ShellKind.BASH, PackageManagerKind.APT,
+                    InstallMode.GUIDED, SoftwareHouse.DEBIAN_CIRCLE).withRam(24).withInstaller(InstallerStyle.DEBIAN),
+            OsDef.linuxDistro(rl("fedora"), 8_192, "Fedora", ShellKind.BASH, PackageManagerKind.DNF,
+                    InstallMode.GUIDED, SoftwareHouse.RED_CAP).withRam(48).withInstaller(InstallerStyle.FEDORA),
+            OsDef.linuxDistro(rl("arch"), 2_048, "Arch Linux", ShellKind.ZSH, PackageManagerKind.PACMAN,
+                    InstallMode.LIVE_MANUAL, SoftwareHouse.ARCH_COLLECTIVE).withRam(12),
+            OsDef.linuxDistro(rl("gentoo"), 4_096, "Gentoo", ShellKind.BASH, PackageManagerKind.EMERGE,
+                    InstallMode.SOURCE, SoftwareHouse.GENTOO_FOUNDRY).withRam(12),
             /*
              * FreeBSD: the solid server and the lean daily driver. It asks for a machine of the Legacy age at
              * least and runs on every one after, it takes less memory than any distribution so the same
              * machine keeps more for its programs, and it comes up at a terminal until a desktop is installed.
              */
             OsDef.terminalSystem(rl("freebsd"), rl("freebsd"), Platform.FREEBSD, HardwareEra.LEGACY, 2_048,
-                    "FreeBSD", "sh", PackageManagerKind.PKG, InstallMode.GUIDED, SoftwareHouse.DAEMON_FOUNDATION)
-                    .withRam(16),
+                    "FreeBSD", ShellKind.SH, PackageManagerKind.PKG, InstallMode.GUIDED,
+                    SoftwareHouse.DAEMON_FOUNDATION)
+                    .withRam(16).withInstaller(InstallerStyle.BSD_INSTALL),
             /*
              * UNIX System V: the one system of the first age that runs several programs at once, in ten
              * megabytes of disk and two of memory. It has no Mirror to install from, only media, which is the
              * price of what it can do on a machine that small.
              */
             OsDef.terminalSystem(rl("unix"), rl("unix"), Platform.UNIX, HardwareEra.VINTAGE, 10,
-                    "UNIX System V", "sh", PackageManagerKind.NONE, InstallMode.GUIDED, SoftwareHouse.BELLWETHER_LABS)
-                    .withRam(2)
+                    "UNIX System V", ShellKind.SH, PackageManagerKind.NONE, InstallMode.GUIDED,
+                    SoftwareHouse.BELLWETHER_LABS)
+                    .withRam(2).withInstaller(InstallerStyle.SYSTEM_V)
             /*
              * OS case (c): PDA/Tablet/Smartphone portables ship with a factory mobile OS. Those item/block
              * types do not exist yet; register the mobile OS here once they do.
@@ -206,16 +226,30 @@ public final class OsBootstrap {
      */
     private static final Set<Platform> LINUX_AND_FREEBSD = Set.of(Platform.LINUX, Platform.FREEBSD);
     private static final Set<Platform> FRAMES_ONLY = Set.of(Platform.FRAMES);
+    /** Where screenfetch installs: the systems at a Unix prompt that take packages, and Frames. */
+    private static final Set<Platform> SCREENFETCH_SYSTEMS = Set.of(Platform.LINUX, Platform.FREEBSD, Platform.FRAMES);
+    /**
+     * Where "This PC" runs: the Frames editions, and FreeBSD and a Linux distribution once one of KDE Plasma,
+     * GNOME or Cinnamon is on it (the desktop that bundles it). Not UNIX, whose only desktop is CDE and whose
+     * own answer to the question is Workstation Info.
+     */
+    private static final Set<Platform> THIS_PC_SYSTEMS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
 
-    /** The nine built-in desktop apps every desktop environment can bundle, in rail order. */
+    /** The ten built-in desktop apps every desktop environment can bundle, in rail order. */
     private static final List<ResourceLocation> BUILTIN_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
-            rl("system_monitor"), rl("calculator"), rl("network_manager"));
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("help_viewer"));
+
+    /** What the Frames editions bundle: the same, and their Device Manager. */
+    private static final List<ResourceLocation> FRAMES_APPS = List.of(
+            rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("device_manager"), rl("help_viewer"));
 
     /** What CDE bundles: the same, and its Workstation Info, which no other desktop has. */
     private static final List<ResourceLocation> CDE_APPS = List.of(
             rl("network"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
-            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("workstation_info"));
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("workstation_info"),
+            rl("help_viewer"));
 
     /**
      * The built-in desktop environments. The Frames editions bundle their own (the id equals the OS id, so the
@@ -223,33 +257,54 @@ public final class OsBootstrap {
      * with its chrome and the native names its bundled apps show.
      */
     private static final List<DesktopEnvironmentDef> BUILTIN_DESKTOPS = List.of(
-            new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, BUILTIN_APPS, Map.of(),
+            /*
+             * Frames 95 keeps its Device Manager in System Properties, which its Control Panel calls System, and
+             * its help is plain Help on the Start menu.
+             */
+            new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, FRAMES_APPS,
+                    Map.of(rl("device_manager"), DesktopNames.FRAMES_95_SYSTEM, rl("help_viewer"),
+                            DesktopNames.FRAMES_95_HELP), SoftwareHouse.MIDSOFT),
+            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, FRAMES_APPS, Map.of(
+                    rl("help_viewer"), DesktopNames.FRAMES_XP_HELP), SoftwareHouse.MIDSOFT),
+            // Frames 7 calls the machine Computer, and keeps its settings in a Control Panel of categories.
+            new DesktopEnvironmentDef(rl("frames_7"), "Frames 7", PanelStyle.FRAMES_7, FRAMES_APPS, Map.of(
+                    rl("this_pc"), DesktopNames.FRAMES_7_COMPUTER, rl("settings"), DesktopNames.FRAMES_7_CONTROL_PANEL,
+                    rl("help_viewer"), DesktopNames.FRAMES_7_HELP), SoftwareHouse.MIDSOFT),
+            // Frames 10 named its file manager after what it explores, and the machine This PC, as 11 still does.
+            new DesktopEnvironmentDef(rl("frames_10"), "Frames 10", PanelStyle.FRAMES_10, FRAMES_APPS, Map.of(
+                    rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP),
                     SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, BUILTIN_APPS, Map.of(),
-                    SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, BUILTIN_APPS, Map.of(),
+            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, FRAMES_APPS, Map.of(
+                    rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP),
                     SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(
-                    rl("files"), "Dolphin", rl("editor"), "Kate", rl("command_prompt"), "Konsole",
-                    rl("calculator"), "KCalc", rl("system_monitor"), "System Monitor",
-                    rl("settings"), "System Settings", rl("this_pc"), "Info Center"), SoftwareHouse.KDE_GUILD),
+                    rl("files"), DesktopNames.KDE_FILES, rl("editor"), DesktopNames.KDE_EDITOR,
+                    rl("command_prompt"), DesktopNames.KDE_TERMINAL, rl("calculator"), DesktopNames.KDE_CALCULATOR,
+                    rl("system_monitor"), DesktopNames.KDE_MONITOR, rl("settings"), DesktopNames.KDE_SETTINGS,
+                    rl("this_pc"), DesktopNames.KDE_THIS_PC, rl("help_viewer"), DesktopNames.KDE_HELP),
+                    SoftwareHouse.KDE_GUILD),
             new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, Map.of(
-                    rl("files"), "Files", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
-                    rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
-                    rl("settings"), "Settings", rl("this_pc"), "About"), SoftwareHouse.GNOME_TRUST),
+                    rl("files"), DesktopNames.GNOME_FILES, rl("editor"), DesktopNames.GNOME_EDITOR,
+                    rl("command_prompt"), DesktopNames.GNOME_TERMINAL, rl("calculator"), DesktopNames.GNOME_CALCULATOR,
+                    rl("system_monitor"), DesktopNames.GNOME_MONITOR, rl("settings"), DesktopNames.GNOME_SETTINGS,
+                    rl("this_pc"), DesktopNames.GNOME_THIS_PC), SoftwareHouse.GNOME_TRUST),
             new DesktopEnvironmentDef(rl("cinnamon"), "Cinnamon", PanelStyle.CINNAMON, BUILTIN_APPS, Map.of(
-                    rl("files"), "Nemo", rl("editor"), "xed", rl("command_prompt"), "Terminal",
-                    rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
-                    rl("settings"), "System Settings", rl("this_pc"), "System Info"), SoftwareHouse.SPEARMINT),
+                    rl("files"), DesktopNames.CINNAMON_FILES, rl("editor"), DesktopNames.CINNAMON_EDITOR,
+                    rl("command_prompt"), DesktopNames.CINNAMON_TERMINAL,
+                    rl("calculator"), DesktopNames.CINNAMON_CALCULATOR,
+                    rl("system_monitor"), DesktopNames.CINNAMON_MONITOR,
+                    rl("settings"), DesktopNames.CINNAMON_SETTINGS, rl("this_pc"), DesktopNames.CINNAMON_THIS_PC),
+                    SoftwareHouse.SPEARMINT),
             /*
              * CDE keeps its own names for what it bundles, which are plainer than anybody else's: it called a
-             * file manager the File Manager. Its settings are the Style Manager, as they were.
+             * file manager the File Manager. Its settings are the Style Manager, as they were, and its help the
+             * Help Viewer.
              */
             new DesktopEnvironmentDef(rl("cde"), "CDE", PanelStyle.CDE, CDE_APPS, Map.of(
-                    rl("files"), "File Manager", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
-                    rl("calculator"), "Calculator", rl("system_monitor"), "Performance Meter",
-                    rl("settings"), "Style Manager"),
-                    SoftwareHouse.OPEN_DESK_CONSORTIUM)
+                    rl("files"), DesktopNames.CDE_FILES, rl("editor"), DesktopNames.CDE_EDITOR,
+                    rl("command_prompt"), DesktopNames.CDE_TERMINAL, rl("calculator"), DesktopNames.CDE_CALCULATOR,
+                    rl("system_monitor"), DesktopNames.CDE_MONITOR, rl("settings"), DesktopNames.CDE_SETTINGS,
+                    rl("help_viewer"), DesktopNames.CDE_HELP), SoftwareHouse.OPEN_DESK_CONSORTIUM)
     );
 
     /** The built-in desktop environments, so tooling reads them from one source. */
@@ -295,6 +350,12 @@ public final class OsBootstrap {
     private static final Set<Platform> PROMPT_PLATFORMS = Set.of(Platform.MC_DOS, Platform.FRAMES,
             Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
 
+    /** Where {@code vi} comes bundled: the two systems that have their own, and nowhere else. */
+    private static final Set<Platform> FREEBSD_AND_UNIX = Set.of(Platform.FREEBSD, Platform.UNIX);
+
+    /** Where {@code ee} comes bundled: FreeBSD alone. */
+    private static final Set<Platform> FREEBSD_ONLY = Set.of(Platform.FREEBSD);
+
     /**
      * The built-in program descriptors, in desktop launcher order (the built-in apps first, then the
      * installables). Built eagerly as a static list so both the runtime registration and datagen (which does
@@ -308,52 +369,77 @@ public final class OsBootstrap {
              * The built-in apps carry no house of their own: Files is Midsoft's on Frames and the KDE Guild's on
              * Plasma. The network tools are the exception: they are the hardware house's wherever they run.
              */
-            ProgramSpec.of(rl("network"), "network", "Network", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("network"), "network", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Network").described("Browse the storage and machines on this computer's network.")
                     .withHouse(SoftwareHouse.JSC),
             /*
-             * "This PC" is a Frames idea and stays one. Linux has no single such place: its volumes
-             * live in the file manager's device list and the detail in a disks utility, which is what
-             * the Disks program below is.
+             * "This PC" is a Frames idea: the machine itself, its disks and what fills them. KDE Plasma,
+             * GNOME and Cinnamon bundle it too, under their own names (Info Center, About, System Info),
+             * where it shows a plainer page instead: the system and the hardware it runs on, nothing to
+             * browse. Linux keeps its device list in the file manager and the detail in a disks utility,
+             * which is what the Disks program below is.
              */
-            ProgramSpec.of(rl("this_pc"), "thispc", "This PC", true, FRAMES_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY),
-            ProgramSpec.of(rl("disks"), "disks", "Disks", true, LINUX_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY),
+            ProgramSpec.of(rl("this_pc"), "thispc", true, THIS_PC_SYSTEMS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("This PC").described("The machine itself: its hardware, its disks and what fills them."),
+            ProgramSpec.of(rl("disks"), "disks", true, LINUX_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Disks").described("The volumes attached to this machine, and what occupies each one."),
             /*
              * CDE's own answer to "what is this machine": who is at it, the system and the hardware. Only CDE
              * bundles it, on every system CDE stands on; the command is named the way CDE named its tools.
              */
-            ProgramSpec.of(rl("workstation_info"), "dtwsinfo", "Workstation Info", true, CDE_SYSTEMS, 0,
-                    ProgramKind.APP, 0, HostScope.ANY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
+            ProgramSpec.of(rl("workstation_info"), "dtwsinfo", true, CDE_SYSTEMS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Workstation Info")
+                    .described("Who is at this workstation, the system it runs and the hardware it runs on.")
+                    .withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
             /*
-             * The Help Viewer, which is CDE's own and is named the way CDE named it. What it shows is the
-             * machine's manual pages, so it ships with the desktop rather than being installed.
+             * Help, which every desktop has in its own form and under its own name: Frames 95's Help Topics, the
+             * Help and Support of XP and 7, Get Help on 10 and 11, KDE's Help Center, GNOME's and Cinnamon's Help,
+             * and CDE's Help Viewer. What it shows is the manuals of the series and the machine's own manual
+             * pages beside them, so it ships with the desktop rather than being installed.
              */
-            ProgramSpec.of(rl("help_viewer"), "dthelpview", "Help Viewer", true, CDE_SYSTEMS, 0,
-                    ProgramKind.APP, 0, HostScope.ANY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
-            ProgramSpec.of(rl("settings"), "settings", "Settings", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
-            ProgramSpec.of(rl("files"), "files", "Files", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
-            ProgramSpec.of(rl("editor"), "editor", "Editor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
+            ProgramSpec.of(rl("help_viewer"), "helpview", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Help")
+                    .described("The manuals of the series and this machine's own manual pages, read in a window."),
+            ProgramSpec.of(rl("settings"), "settings", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Settings").described("Change how this computer looks and behaves."),
+            ProgramSpec.of(rl("files"), "files", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Files").described("Browse, open and organise the files on this computer's disks."),
+            ProgramSpec.of(rl("editor"), "editor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Editor").described("Write and edit text files."),
             /*
              * The Command Prompt ships with every computer that has somewhere to put it: a terminal on MC-DOS,
              * a window on a desktop. Not on a network system, whose interface is the whole screen and whose
              * prompt is a heading inside it: a window opened there would be the machine drawing a window onto
              * itself, which is the one thing that interface does not do.
              */
-            ProgramSpec.of(rl("command_prompt"), "cmd", "Command Prompt", true, PROMPT_PLATFORMS, 0, ProgramKind.APP, 0, HostScope.ANY),
-            ProgramSpec.of(rl("system_monitor"), "sysmon", "System Monitor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
-            ProgramSpec.of(rl("calculator"), "calc", "Calculator", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
+            ProgramSpec.of(rl("command_prompt"), "cmd", true, PROMPT_PLATFORMS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Command Prompt").described("A shell: everything the machine can do, typed."),
+            ProgramSpec.of(rl("system_monitor"), "sysmon", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("System Monitor").described("Live load, memory and running work on this machine."),
+            ProgramSpec.of(rl("calculator"), "calc", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Calculator").described("A calculator."),
             // The Network Manager is pre-installed but exclusive to the Mainframe, and needs Frames XP or newer.
-            ProgramSpec.of(rl("network_manager"), "netmgr", "Network Manager", true, DESKTOPS, 0, ProgramKind.APP, 2, HostScope.MAINFRAME)
+            ProgramSpec.of(rl("network_manager"), "netmgr", true, DESKTOPS, 0, ProgramKind.APP, 2, HostScope.MAINFRAME)
+                    .named("Network Manager")
+                    .described("The Mainframe's control room: nodes, storage and operations across the network.")
                     .withHouse(SoftwareHouse.JSC),
             /*
              * The Task Manager ships with every desktop but keeps off the desktop and the Start menu: it is
              * reached by right-clicking the panel, the way it always was, so it is not in the bundled list.
              */
-            ProgramSpec.of(rl("task_manager"), "taskmgr", "Task Manager", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
+            ProgramSpec.of(rl("task_manager"), "taskmgr", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Task Manager")
+                    .described("What this machine is running, what it is spending, and how to end it."),
+            // The Frames editions' Device Manager: the machine's hardware and its ports, and a device disabled.
+            ProgramSpec.of(rl("device_manager"), "devmgmt", true, FRAMES_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Device Manager")
+                    .described("The machine's hardware and every port it has: what is plugged into each, what is"
+                            + " free, and a device disabled or enabled again."),
 
             /*
              * Installables. The OS rank only gates the Frames editions (a Linux distribution ranks 0, so any
              * desktop program the Mirror serves installs on it once a desktop environment is present).
-             * Network Management Studio: a professional network tool -> Frames XP or newer (rank 2).
+             * IQL Server Management Studio: a professional network tool -> Frames XP or newer (rank 2).
              * Every installable also says the generation it was WRITTEN in (withEra): that decides the
              * medium it ships on and the year on its banner, and never where it may install. The OS rank
              * stays the gate. A modern tool that still runs on XP is Standard-era software on a DVD.
@@ -361,43 +447,122 @@ public final class OsBootstrap {
              * And each says the RAM it holds while it runs (withRam): the balancing estimates follow the
              * generation the tool was written in, so a modern tool is the heavier one.
              */
-            ProgramSpec.of(rl("nms"), "nms", "Network Management Studio", false, DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
-                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(128),
             /*
-             * The IQL Engine is a headless Mainframe service (the NMS is its client): every platform, lives on
-             * the Mainframe, follows the NMS OS version (Frames XP or newer).
+             * The Midsoft IQL Server's studio: it opens on a network running that engine, from its 2000 version on.
+             * A Vintage machine has no studio; its Midsoft is worked from the prompt's iql, as the command line of
+             * the time was.
              */
-            ProgramSpec.of(rl("iqlengine"), "iqlengine", "IQL Engine", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 2, HostScope.MAINFRAME)
+            ProgramSpec.of(rl("isms"), "isms", false, DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("IQL Server Management Studio")
+                    .described("Query the network in IQL, trace its work, look after the index and the locks, and"
+                            + " run its jobs from one console.")
+                    .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(128)
+                    .requiring(ProgramRequirement.engine(rl("iqlengine"), "2000")),
+            /*
+             * The Midsoft IQL Server is the Network Operations Engine every Mainframe ships with (the ISMS is its
+             * studio): every platform and every system, lives on the Mainframe, in a version for each age.
+             */
+            ProgramSpec.of(rl("iqlengine"), "iqlengine", false, ALL_PLATFORMS, 32, ProgramKind.NETWORK_ENGINE, 0,
+                            HostScope.MAINFRAME)
+                    .named("Midsoft IQL Server")
+                    .described("The engine that plans the network's work and answers it in IQL. The ISMS is its"
+                            + " studio.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.MIDSOFT).withRam(24),
+            /*
+             * NextgreIQL, the explicit engine, from the Legacy on: it keeps more of what it measured than the Midsoft
+             * IQL Server does, and weighs more plans, so it asks for more memory. Its studio needs it running.
+             */
+            ProgramSpec.of(rl("nextgreiql"), "nextgreiql", false, ALL_PLATFORMS, 32, ProgramKind.NETWORK_ENGINE, 0,
+                            HostScope.MAINFRAME)
+                    .named("NextgreIQL")
+                    .described("The engine that shows how it plans the network's work, and lets you take part in"
+                            + " the planning.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.NEXTGRE).withRam(48),
+            /*
+             * Prophet YourIQL, the state-oriented engine, from the Legacy on: what it holds is a few states and what
+             * it last saw of them, so it asks for less memory than an engine that keeps statistics. Its console
+             * needs it running.
+             */
+            ProgramSpec.of(rl("youriql"), "youriql", false, ALL_PLATFORMS, 32, ProgramKind.NETWORK_ENGINE, 0,
+                            HostScope.MAINFRAME)
+                    .named("Prophet YourIQL")
+                    .described("The engine you tell what state the network is to keep, which works out how to"
+                            + " get there and stay there.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.PROPHET).withRam(32),
+            ProgramSpec.of(rl("prophet_console"), "prophet", false, DESKTOPS, 96, ProgramKind.APP, 2,
+                            HostScope.ANY)
+                    .named("Prophet Reactive Console")
+                    .described("Declare the states your network keeps, watch how it holds them and what it does"
+                            + " for them.")
+                    .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.PROPHET).withRam(64)
+                    .requiring(ProgramRequirement.engine(rl("youriql"), "3.23")),
+            ProgramSpec.of(rl("nextgre_studio"), "nextgre", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Nextgre Planner Studio")
+                    .described("Explain NextgreIQL's plans, watch what each step takes, and tune its planner.")
+                    .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.NEXTGRE).withRam(96)
+                    .requiring(ProgramRequirement.engine(rl("nextgreiql"), "7.0")),
             // The Crafting Manager installs only on a Crafting Computer -> Frames XP or newer.
-            ProgramSpec.of(rl("crafting_manager"), "craftmgr", "Crafting Manager", false, DESKTOPS, 128, ProgramKind.APP, 2, HostScope.CRAFTING_COMPUTER)
+            ProgramSpec.of(rl("crafting_manager"), "craftmgr", false, DESKTOPS, 128, ProgramKind.APP, 2,
+                            HostScope.CRAFTING_COMPUTER)
+                    .named("Crafting Manager")
+                    .described("Load crafting patterns and watch the jobs the network is working through.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.AUTODECK).withRam(32),
             // The Pattern Studio authors recipe files on any desktop and hands them to a linked encoder.
-            ProgramSpec.of(rl("pattern_studio"), "studio", "Pattern Studio", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("pattern_studio"), "studio", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Pattern Studio")
+                    .described("Author bench, machine and multi-stage recipes, then burn them onto media at a"
+                            + " linked encoder.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.AUTODECK).withRam(24),
+            /*
+             * The Workshop works the personal-use cards with the player's own items: every windowed system from the
+             * Legacy on but Frames 95 (Frames XP or newer), on a Personal Computer only.
+             */
+            ProgramSpec.of(rl("workshop"), "workshop", false, DESKTOPS, 64, ProgramKind.APP, 2,
+                            HostScope.PERSONAL_COMPUTER)
+                    .named("Workshop")
+                    .described("Craft, smelt, enchant and repair with the personal-use cards in this computer.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.AUTODECK).withRam(16),
             // The Cluster Manager installs only on a Cluster Management Computer -> Frames XP or newer.
-            ProgramSpec.of(rl("cluster_manager"), "clustermgr", "Cluster Manager", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.CLUSTER_MANAGEMENT_COMPUTER)
+            ProgramSpec.of(rl("cluster_manager"), "clustermgr", false, DESKTOPS, 96, ProgramKind.APP, 2,
+                            HostScope.CLUSTER_MANAGEMENT_COMPUTER)
+                    .named("Cluster Manager")
+                    .described("Run every supercomputer and datacenter section on the network as one machine.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.JSC).withRam(96),
             // The Gateway Manager runs on whichever computer has Network Gateways on its ports -> Frames XP or newer.
-            ProgramSpec.of(rl("gateway_manager"), "gatewaymgr", "Gateway Manager", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("gateway_manager"), "gatewaymgr", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Gateway Manager")
+                    .described("Manage the Network Gateways on this computer's ports, and what ComputerCraft may"
+                            + " do through them.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.JSC).withRam(32),
             // Minesweeper: a small game available on any desktop (rank 0 = Frames 95 and newer).
-            ProgramSpec.of(rl("minesweeper"), "mines", "Minesweeper", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("minesweeper"), "mines", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Minesweeper").described("Minesweeper.")
                     .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
             // Solitaire: the other game every one of these desktops shipped with, and as light as that one.
-            ProgramSpec.of(rl("solitaire"), "solitaire", "Solitaire", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("solitaire"), "solitaire", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Solitaire").described("Klondike solitaire, drawing one card at a time.")
                     .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
             // Snake: the game a machine with almost nothing in it could still run.
-            ProgramSpec.of(rl("snake"), "snake", "Snake", false, DESKTOPS, 8, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("snake"), "snake", false, DESKTOPS, 8, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Snake").described("Snake. Eat, grow, and do not run into yourself.")
                     .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
             // 67ark: packs files into one that weighs less, which is how a small disk is made to stretch.
-            ProgramSpec.of(rl("ark"), "ark", "67ark", false, DESKTOPS, 24, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("ark"), "ark", false, DESKTOPS, 24, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("67ark").described("Pack many files into one that weighs less, and take them back out.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.VAULTIS).withRam(16),
             // Paint: a real picture in an indexed palette, which also becomes the desktop's wallpaper.
-            ProgramSpec.of(rl("paint"), "paint", "Paint", false, DESKTOPS, 48, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("paint"), "paint", false, DESKTOPS, 48, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Paint").described("Draw a picture, and hang it on the desktop.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.BELLWETHER_LABS).withRam(32),
+            // Soundfoundry: the music player, in a skin of its own that looks the same on any desktop of its age.
+            ProgramSpec.of(rl("soundfoundry"), "soundfoundry", false, LATER_DESKTOPS, 4, ProgramKind.APP, 0,
+                            HostScope.ANY)
+                    .named("Soundfoundry")
+                    .described("Play the songs on this computer, and bring more from your own.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.VOIDSOFT).withRam(16),
             // Exceed: a sheet whose cells can ask the network what it is holding.
-            ProgramSpec.of(rl("exceed"), "exceed", "Exceed", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("exceed"), "exceed", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Exceed").described("A sheet of cells that can ask the network what it is holding.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(64),
             /*
              * The Messenger: a service on a server in a rack and a client on every computer. Its declared
@@ -406,79 +571,134 @@ public final class OsBootstrap {
              * server rather than on the Mainframe because that is what a server is for: the Mainframe
              * orchestrates the network, the servers run the things it serves.
              */
-            ProgramSpec.of(rl("messenger_service"), "msgsvc", "Messenger Service", false,
-                            ALL_PLATFORMS, 48, ProgramKind.SERVICE, 2, HostScope.SERVER)
+            ProgramSpec.of(rl("messenger_service"), "msgsvc", false, ALL_PLATFORMS, 48, ProgramKind.SERVICE, 2,
+                            HostScope.SERVER)
+                    .named("Messenger Service")
+                    .described("Keeps the network's conversations. It grows on the disk as it keeps them, and in"
+                            + " memory as more people have the messenger open.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(8),
-            ProgramSpec.of(rl("messenger"), "messenger", "Midsoft Messenger", false, DESKTOPS, 48,
-                            ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("messenger"), "messenger", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Midsoft Messenger").described("Talk to whoever else is on this network.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(32),
             // KnotHub keeps the source a network is still arguing over; Knot is what a computer reads it with.
-            ProgramSpec.of(rl("knothub"), "knothub", "KnotHub", false, ALL_PLATFORMS, 64,
-                            ProgramKind.SERVICE, 2, HostScope.SERVER)
+            ProgramSpec.of(rl("knothub"), "knothub", false, ALL_PLATFORMS, 64, ProgramKind.SERVICE, 2, HostScope.SERVER)
+                    .named("KnotHub")
+                    .described("Keeps the source this network is still working on, revision by revision.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(16),
-            ProgramSpec.of(rl("knot"), "knot", "Knot", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("knot"), "knot", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Knot").described("Push a file to the network's repository, and see who changed what.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(32),
+            /*
+             * Soundfoundry Server: what a Standard Soundfoundry streams from. Its library is the songs in the
+             * server's own music folder, so its disk grows with what the network sends it; its memory grows with
+             * the computers listening to it, past the floor declared here.
+             */
+            ProgramSpec.of(rl("soundfoundry_server"), "sfserver", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,
+                            HostScope.SERVER)
+                    .named("Soundfoundry Server")
+                    .described("Streams the music catalogue and the songs this network sends it to every"
+                            + " Soundfoundry on the network.")
+                    .withEra(STANDARD).withHouse(SoftwareHouse.VOIDSOFT).withRam(16),
             // Storage Insights: a network dashboard -> Frames XP or newer.
-            ProgramSpec.of(rl("storage_insights"), "insights", "Storage Insights", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("storage_insights"), "insights", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Storage Insights")
+                    .described("Where the network's storage went: biggest types, what is running low, how full"
+                            + " each server is.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.VAULTIS).withRam(64),
             // Craft Planner: a network planning tool -> Frames XP or newer.
-            ProgramSpec.of(rl("craft_planner"), "planner", "Craft Planner", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("craft_planner"), "planner", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Craft Planner")
+                    .described("Plan a craft before committing it: what it needs, what is missing and what it will"
+                            + " cost.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.AUTODECK).withRam(64),
-            // The Automation Engine is a headless Mainframe service; it needs the modern OS (Frames 11, rank 3).
-            ProgramSpec.of(rl("automation_engine"), "autoeng", "Automation Engine", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 3, HostScope.MAINFRAME)
-                    .withEra(STANDARD).withHouse(SoftwareHouse.RED_CAP).withRam(64),
-            // The Automation Manager is a modern automation front-end -> Frames 11 (rank 3).
-            ProgramSpec.of(rl("automation_manager"), "automgr", "Automation Manager", false, LATER_DESKTOPS, 64, ProgramKind.APP, 3, HostScope.ANY)
-                    .withEra(STANDARD).withHouse(SoftwareHouse.RED_CAP).withRam(96),
+            /*
+             * The Automation Engine is a headless Mainframe service, and the only one that keeps and fires the jobs;
+             * it reaches back to Frames XP (rank 2), so a Legacy network keeps its jobs.
+             */
+            ProgramSpec.of(rl("automation_engine"), "autoeng", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 2,
+                            HostScope.MAINFRAME)
+                    .named("Automation Engine")
+                    .described("The service that keeps the network's jobs and fires them on time.")
+                    .withEra(LEGACY).withHouse(SoftwareHouse.RED_CAP).withRam(64),
+            // The Automation Manager is the Automation Engine's front-end -> Frames XP or newer (rank 2).
+            ProgramSpec.of(rl("automation_manager"), "automgr", false, LATER_DESKTOPS, 64, ProgramKind.APP, 2,
+                            HostScope.ANY)
+                    .named("Automation Manager").described("Write and supervise the jobs the Automation Engine runs.")
+                    .withEra(LEGACY).withHouse(SoftwareHouse.RED_CAP).withRam(96),
             /*
              * Server services: headless daemons that only make sense on a machine mounted in a rack,
              * which is what gives a server its ROLE: hardware decides capacity, software decides job.
              * Predictive Cache keeps the hot items staged, so queries this bay serves come back sooner.
              */
-            ProgramSpec.of(rl("predictive_cache"), "predcache", "Predictive Cache", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0, HostScope.SERVER)
+            ProgramSpec.of(rl("predictive_cache"), "predcache", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,
+                            HostScope.SERVER)
+                    .named("Predictive Cache")
+                    .described("Keeps this bay's most-wanted items staged in memory, cutting read latency by 15%."
+                            + " Stacks with a read cache card.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.VAULTIS).withRam(128),
             // Load Balancer spreads writes across the bay's drives instead of filling them in order.
-            ProgramSpec.of(rl("load_balancer"), "loadbal", "Load Balancer", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0, HostScope.SERVER)
+            ProgramSpec.of(rl("load_balancer"), "loadbal", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,
+                            HostScope.SERVER)
+                    .named("Load Balancer")
+                    .described("Spreads writes across the bay's drives instead of filling them one after another.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.JSC).withRam(16),
             /*
              * Integrity Monitor re-reads what a hot event left in doubt, so light index maintenance
              * stops being a chore (a fragmented index still wants a vacuum by hand).
              */
-            ProgramSpec.of(rl("integrity_monitor"), "integrity", "Integrity Monitor", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0, HostScope.SERVER)
+            ProgramSpec.of(rl("integrity_monitor"), "integrity", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,
+                            HostScope.SERVER)
+                    .named("Integrity Monitor")
+                    .described("Re-reads this bay after a hot swap, so the network index never has to doubt it.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.VAULTIS).withRam(32),
             /*
              * Remote Control: the graphical way into the network's other machines (a headless rack server
              * above all). Any desktop, Frames XP or newer, the point-and-click twin of ssh.
              */
-            ProgramSpec.of(rl("remote_control"), "remotectl", "Remote Control", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("remote_control"), "remotectl", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Remote Control")
+                    .described("Take over another machine on the network and use it on this screen.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(48),
             /*
              * The Mirror: the package repository service every Linux computer on the network installs from
              * (apt/dnf/pacman/emerge resolve against it). A headless Mainframe service on any platform.
              */
-            ProgramSpec.of(rl("mirror"), "mirror", "Mirror", false, ALL_PLATFORMS, 64, ProgramKind.SERVICE, 0, HostScope.MAINFRAME)
+            ProgramSpec.of(rl("mirror"), "mirror", false, ALL_PLATFORMS, 64, ProgramKind.SERVICE, 0,
+                            HostScope.MAINFRAME)
+                    .named("Mirror")
+                    .described("The network's package repository. Every package manager installs from it.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.JSC).withRam(32),
             /*
-             * screenfetch: the little system-identity tool, a package the Mirror serves to any Linux (its
-             * absence teaching the package manager: 'command not found' until you apt/dnf/pacman/emerge it).
+             * screenfetch: the little system-identity tool, a package the Mirror serves to any Linux, to FreeBSD
+             * and to Frames, where it runs at the Command Prompt (its absence teaching the package manager:
+             * 'command not found' until it is installed).
              */
-            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, LINUX_AND_FREEBSD, 4, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("screenfetch"), "screenfetch", false, SCREENFETCH_SYSTEMS, 4, ProgramKind.APP, 0,
+                            HostScope.ANY)
+                    .named("screenfetch").described("Prints the system's identity, with its distribution's logo.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.ARCH_COLLECTIVE).withRam(1),
             /*
              * The Σ# toolchain: the compiler and the runtime, two packages the Mirror serves to any
              * machine of the Legacy generation or later running Frames XP or a Linux. Neither has a window
              * of its own; both are verbs at the prompt, which is where a program is written and run from.
              */
-            ProgramSpec.of(rl("sgsc"), "sgsc", "Σ# Compiler", false, ALL_PLATFORMS, 8, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("sgsc"), "sgsc", false, ALL_PLATFORMS, 8, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Σ# Compiler").described("Compiles a Σ# program into the assembly the runtime reads.")
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(16),
             /*
              * The Sigma Compiler Collection, which is the whole toolchain of the earliest machines: it writes the
              * assembly the machine already runs, so there is no runtime to install beside it. Small enough to sit
              * on a Vintage disk, and useful long past that, since a program built with it runs everywhere.
              */
-            ProgramSpec.of(rl("scc"), "scc", "Σ Compiler", false, ALL_PLATFORMS, 4, ProgramKind.APP, 1, HostScope.ANY)
+            ProgramSpec.of(rl("scc"), "scc", false, ALL_PLATFORMS, 4, ProgramKind.APP, 1, HostScope.ANY)
+                    .named("Σ Compiler")
+                    .described("Compiles a Σ program into the assembly a machine runs. Small enough for the oldest"
+                            + " of them, and the whole toolchain there, since nothing else has to be installed to"
+                            + " run what it writes.")
                     .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(2),
-            ProgramSpec.of(rl("sigma"), "sigma", "Sigma Runtime", false, ALL_PLATFORMS, 12, ProgramKind.SERVICE, 2, HostScope.ANY)
+            ProgramSpec.of(rl("sigma"), "sigma", false, ALL_PLATFORMS, 12, ProgramKind.SERVICE, 2, HostScope.ANY)
+                    .named("Sigma Runtime")
+                    .described("Runs compiled Σ# programs, and brings the 'sigma' command to the prompt.")
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(24),
             /*
              * Virtual Studio: the whole workshop in one window, and the only editor that says what a call
@@ -486,66 +706,111 @@ public final class OsBootstrap {
              * prove it: a quarter of a gigabyte held while it is open, which is what a program of the
              * generation after this one weighs.
              */
-            ProgramSpec.of(rl("virtual_studio"), "virtualstudio", "Virtual Studio", false, FRAMES_ONLY, 512, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("virtual_studio"), "virtualstudio", false, FRAMES_ONLY, 512, ProgramKind.APP, 2,
+                            HostScope.ANY)
+                    .named("Virtual Studio")
+                    .described("The whole Σ# workshop in one window, and the one editor that says what a call will"
+                            + " cost before it is written.")
                     .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(256),
             /*
              * Virtual Studio Code: the light editor for Σ#, with the machine's programs down the side
              * and its console welded into the bottom of the window, so a program is written, compiled and
              * run without leaving it. Frames XP or newer, and any Linux desktop.
              */
-            ProgramSpec.of(rl("virtual_studio_code"), "virtualcode", "Virtual Studio Code", false, LATER_DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("virtual_studio_code"), "virtualcode", false, LATER_DESKTOPS, 128, ProgramKind.APP, 2,
+                            HostScope.ANY)
+                    .named("Virtual Studio Code")
+                    .described("A light editor for Σ# with the console built in: write, compile and run without"
+                            + " leaving it.")
                     .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(48),
             /*
              * Exposure: the editor that compiles every program on the disk instead of the one in front
              * of you, so changing something shared shows which of the others stopped building. It offers
              * nothing as you type, which is the trade.
              */
-            ProgramSpec.of(rl("exposure"), "exposure", "Exposure", false, LATER_DESKTOPS, 192, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("exposure"), "exposure", false, LATER_DESKTOPS, 192, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Exposure")
+                    .described("An editor that compiles every program on the disk at once, so a change shows what"
+                            + " else it broke.")
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(64),
             /*
              * Vim takes over the terminal it was started from instead of opening a window of its own,
              * which is the only reason a rack server with no graphics can be programmed at all, and why
              * it runs on every platform there is a prompt on. Four megabytes, and it shows.
              */
-            ProgramSpec.of(rl("vim"), "vim", "Vim", false, ALL_PLATFORMS, 8, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("vim"), "vim", false, ALL_PLATFORMS, 8, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Vim")
+                    .described("A text editor that takes over the terminal it was started from, so it works where"
+                            + " there is no desktop.")
                     .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.BUNDLED).withRam(4),
             /*
              * Emacs is also a terminal editor and also the answer to a different question: it splits the
              * glass, so the source and what the compiler said about it are readable at once. Three times
              * the memory of Vim, which is the trade.
              */
-            ProgramSpec.of(rl("emacs"), "emacs", "Emacs", false, ALL_PLATFORMS, 24, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("emacs"), "emacs", false, ALL_PLATFORMS, 24, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Emacs")
+                    .described("A text editor that splits the terminal, so the source and what the compiler said"
+                            + " about it are read together.")
                     .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.BUNDLED).withRam(12),
+            /*
+             * vi comes bundled with both systems that have their own, so it is never installed and never
+             * takes a drive: FreeBSD's is nvi, UNIX System V's is the original, one engine behind both.
+             */
+            ProgramSpec.of(rl("vi"), "vi", true, FREEBSD_AND_UNIX, 2, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("vi")
+                    .described("The text editor that comes with the system: no colour, no ruler, just the file.")
+                    .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.BUNDLED).withRam(2),
+            /*
+             * ee is FreeBSD's own gift to newcomers: its shortcuts are written on the glass, so nobody has
+             * to have met a terminal editor before to leave it again.
+             */
+            ProgramSpec.of(rl("ee"), "ee", true, FREEBSD_ONLY, 2, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("ee")
+                    .described("The easy editor: its keys are written on the screen, so nothing has to be learned"
+                            + " before it can be left again.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.DAEMON_FOUNDATION).withRam(2),
             /*
              * The Linux desktop environments: packages that turn a TTY distribution into a graphical desktop.
              * Footprints are balancing estimates (Plasma is the heaviest, Cinnamon the lightest), and so is
-             * the RAM each holds once it is up, on top of the distribution's own share.
+             * the RAM each holds once it is up, on top of the distribution's own share: on a Legacy machine a little
+             * more than one program, grown on the later eras as every program's is.
              * Each one requires the hardware generation it belongs to. KDE and GNOME are old enough to
              * run on Legacy machines; Cinnamon is a much later desktop and needs Standard hardware. A
              * Vintage computer therefore has no graphical desktop at all and lives at the TTY.
              */
-            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", "KDE Plasma", false, LINUX_AND_FREEBSD, 256, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.KDE_GUILD).withRam(224),
-            ProgramSpec.of(rl("gnome"), "gnome", "GNOME", false, LINUX_AND_FREEBSD, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.GNOME_TRUST).withRam(256),
-            ProgramSpec.of(rl("cinnamon"), "cinnamon", "Cinnamon", false, LINUX_AND_FREEBSD, 160, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
-                    .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(160),
+            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", false, LINUX_AND_FREEBSD, 256,
+                            ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+                    .named("KDE Plasma").described("The KDE Plasma desktop environment.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.KDE_GUILD).withRam(80),
+            ProgramSpec.of(rl("gnome"), "gnome", false, LINUX_AND_FREEBSD, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0,
+                            HostScope.ANY)
+                    .named("GNOME").described("The GNOME desktop environment.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.GNOME_TRUST).withRam(72),
+            ProgramSpec.of(rl("cinnamon"), "cinnamon", false, LINUX_AND_FREEBSD, 160, ProgramKind.DESKTOP_ENVIRONMENT,
+                            0, HostScope.ANY)
+                    .named("Cinnamon").described("The Cinnamon desktop environment.")
+                    .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(56),
             /*
              * CDE: the desktop of the Unix workstations, and the only one UNIX has. A fraction of what the
              * later desktops weigh, which is how a Legacy machine with a few megabytes to spare runs one. UNIX
              * takes it from a medium like everything else it installs; FreeBSD takes it from its packages, and
              * a Linux distribution from the Mirror by its own package manager, as one still can.
              */
-            ProgramSpec.of(rl("cde"), "cde", "CDE", false, CDE_SYSTEMS, 32, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(16),
+            ProgramSpec.of(rl("cde"), "cde", false, CDE_SYSTEMS, 32, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+                    .named("CDE").described("The Common Desktop Environment.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(8),
             /*
              * The operating space MC-NET ships with, and what makes the machine more than a prompt. It goes on
              * with the system rather than being bought from the Mirror, but it is a package like any other, so
              * a player who wants nothing but the prompt takes it off and a machine that has lost it puts it
              * back. Two megabytes and a Vintage minimum, because the system it belongs to is a Vintage system.
              */
-            ProgramSpec.of(rl("interactor"), "interactor", "Interactor", false, NET_ONLY, 2,
-                            ProgramKind.OPERATING_SPACE, 0, HostScope.ANY)
+            ProgramSpec.of(rl("interactor"), "interactor", false, NET_ONLY, 2, ProgramKind.OPERATING_SPACE, 0,
+                            HostScope.ANY)
+                    .named("Interactor")
+                    .described("The operating space a network system draws: its store, its work and its prompt, on"
+                            + " the whole screen. Take it off and the machine is a prompt and nothing else.")
                     .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.NOUVELL).withRam(1)
     );
 
@@ -558,6 +823,8 @@ public final class OsBootstrap {
         for (final ProgramSpec program : BUILTIN_PROGRAMS) {
             JsComputersApi.registerProgram(program);
         }
+        // Paint draws a picture and holds video memory while its window is open.
+        GraphicsPrograms.register(rl("paint"));
     }
 
     private static ResourceLocation rl(String path) {

@@ -10,6 +10,8 @@ package dev.jstech.computers.datacenter;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.Direction;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +24,12 @@ public record DatacenterSection(
         List<NodeUuid> servers,
         long totalStorageItems
 ) {
+
+    /** Copies the collections so the section stays the snapshot it was built as; the rack order is kept. */
+    public DatacenterSection {
+        rackPositions = Collections.unmodifiableSet(new LinkedHashSet<>(rackPositions));
+        servers = List.copyOf(servers);
+    }
 
     public int rackCount() {
         return rackPositions.size();

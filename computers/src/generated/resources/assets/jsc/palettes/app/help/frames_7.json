@@ -1,0 +1,20 @@
+{
+  "band": "#FFE4EAF2",
+  "bandInk": "#FF1E1E1E",
+  "book": "#FF7A2F86",
+  "bookOpen": "#FFC58AD0",
+  "faint": "#FF6D6D6D",
+  "ground": "#FFF0F0F0",
+  "heading": "#FF1F5BA8",
+  "ink": "#FF1E1E1E",
+  "link": "#FF2266CC",
+  "linkHover": "#FF0F3E9E",
+  "page": "#FFFFFFFF",
+  "pane": "#FFFFFFFF",
+  "rule": "#FFB4B4B4",
+  "select": "#FF1E3A6E",
+  "selectInk": "#FFFFFFFF",
+  "shade": "#FFF4F4F4",
+  "title": "#FF1F3E79",
+  "warning": "#FFA01010"
+}

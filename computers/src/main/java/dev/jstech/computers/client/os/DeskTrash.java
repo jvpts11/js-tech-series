@@ -12,9 +12,12 @@ import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.TrashActionPayload;
 import dev.jstech.computers.operation.payload.TrashFilePayload;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.TrashKind;
 import dev.jstech.core.client.gui.component.ContextMenu;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -31,14 +34,18 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 final class DeskTrash {
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     /** Whether anything is in the trash, as the machine last said, which is the picture its icon wears. */
     private boolean full;
 
-    private static final String CONFIRM = "Confirm File Delete";
+    /** The trash's two pictures, which are also what its icon on the wallpaper is known by. */
+    private static final ResourceLocation EMPTY_ICON =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "trash");
+    private static final ResourceLocation FULL_ICON =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "trash_full");
 
-    DeskTrash(final DesktopScreen desktop) {
+    DeskTrash(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -63,17 +70,17 @@ final class DeskTrash {
         if (forGood.isEmpty()) {
             return;
         }
-        final String where = forGood.getFirst().startsWith("media:") ? "a removable disc" : "another machine's share";
-        final String what = forGood.size() == 1 ? nameOf(forGood.getFirst()) + " is on " + where + ", so it"
-                : "These " + forGood.size() + " items are on " + where + ", so they";
-        final String them = forGood.size() == 1 ? "it" : "them";
-        DesktopScreen.ask(CONFIRM, what + " cannot go to the " + titleHere() + ".\nDelete " + them + " for good?",
-                () -> {
-                    for (final String path : forGood) {
-                        PacketDistributor.sendToServer(new DeleteFilePayload(host, path));
-                    }
-                    FilesApps.diskChanged();
-                });
+        final boolean disc = forGood.getFirst().startsWith("media:");
+        final Text question = forGood.size() == 1
+                ? (disc ? TrashTexts.ONE_ON_DISC : TrashTexts.ONE_ON_SHARE).with(nameOf(forGood.getFirst()),
+                        titleTextHere())
+                : (disc ? TrashTexts.MANY_ON_DISC : TrashTexts.MANY_ON_SHARE).with(forGood.size(), titleTextHere());
+        ActiveDesktop.ask(GameText.resolve(TrashTexts.CONFIRM), GameText.resolve(question), () -> {
+            for (final String path : forGood) {
+                PacketDistributor.sendToServer(new DeleteFilePayload(host, path));
+            }
+            FilesApps.diskChanged();
+        });
     }
 
     /** Whether a path is somewhere a trash cannot reach: a medium in a drive, or another machine's share. */
@@ -81,10 +88,10 @@ final class DeskTrash {
         return path.startsWith("media:") || path.startsWith("net:");
     }
 
-    /** What the desktop that is up calls its trash. */
-    static String titleHere() {
-        final DesktopScreen shown = DesktopScreen.current();
-        return shown == null ? TrashKind.RECYCLER.title() : TrashApp.kindOf(shown.panelStyle()).title();
+    /** What the desktop that is up calls its trash, as the player reads it. */
+    static Text titleTextHere() {
+        final DesktopState shown = DesktopScreen.current();
+        return (shown == null ? TrashKind.RECYCLER : TrashApp.kindOf(shown.panelStyle())).titleText();
     }
 
     /** Takes whether the trash holds anything, answering whether that changed its picture. */
@@ -98,7 +105,7 @@ final class DeskTrash {
         return this.full;
     }
 
-    /** What this desktop calls its trash, which is also the key its window goes by. */
+    /** What this desktop calls its trash; its window goes by {@link WindowKeys#TRASH} on every desktop. */
     String title() {
         return TrashApp.kindOf(this.desktop.panelStyle()).title();
     }
@@ -110,17 +117,17 @@ final class DeskTrash {
 
     /** The trash's picture, full or empty. */
     ResourceLocation icon() {
-        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, this.full ? "trash_full" : "trash");
+        return this.full ? FULL_ICON : EMPTY_ICON;
     }
 
     /** The trash as an icon on the wallpaper. */
-    DesktopScreen.Launcher launcher() {
-        return new DesktopScreen.Launcher(title(), icon(), this::window);
+    Launcher launcher() {
+        return new Launcher(WindowKeys.TRASH, title(), icon(), this::window);
     }
 
     /** Whether a launcher is the trash's own. */
-    boolean is(final DesktopScreen.Launcher launcher) {
-        return launcher.label().equals(title()) && launcher.programId().getPath().startsWith("trash");
+    boolean is(final Launcher launcher) {
+        return WindowKeys.TRASH.equals(launcher.key());
     }
 
     /** A new trash window for this desktop. */
@@ -130,20 +137,23 @@ final class DeskTrash {
 
     /** Opens the trash, or brings its window forward when it is already up: one trash window a desktop. */
     void open() {
-        this.desktop.openOnce(title(), this::window);
+        this.desktop.opener().openOnce(WindowKeys.TRASH, this::window);
     }
 
     /** The menu of the trash's own icon: open it, or empty it without opening it. */
     List<ContextMenu.Item> menu() {
-        return List.of(new ContextMenu.Item("Open", true, this::open),
+        final Text trash = TrashApp.kindOf(this.desktop.panelStyle()).titleText();
+        return List.of(new ContextMenu.Item(GameText.resolve(TrashTexts.OPEN), true, this::open),
                 ContextMenu.Item.separator(),
-                new ContextMenu.Item("Empty " + title(), this.full, this::empty));
+                new ContextMenu.Item(GameText.resolve(TrashTexts.EMPTY_NAMED.with(trash)), this.full, this::empty));
     }
 
     /** Empties the trash from its icon, once the player says yes. */
     private void empty() {
         final BlockPos host = this.desktop.hostPos();
-        DesktopScreen.ask(CONFIRM, "Delete everything in the " + title() + " for good?", () -> {
+        final Text trash = TrashApp.kindOf(this.desktop.panelStyle()).titleText();
+        ActiveDesktop.ask(GameText.resolve(TrashTexts.CONFIRM),
+                GameText.resolve(TrashTexts.EMPTY_EVERYTHING.with(trash)), () -> {
             PacketDistributor.sendToServer(new TrashActionPayload(host, TrashActionPayload.Action.EMPTY, List.of()));
             FilesApps.diskChanged();
         });

@@ -1,0 +1,518 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.pattern_encoders.step1",
+        "jsc.guide.pattern_encoders.step2",
+        "jsc.guide.pattern_encoders.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pattern_encoders.table1",
+      "heads": [
+        "jsc.guide.pattern_encoders.table1_head1",
+        "jsc.guide.pattern_encoders.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pattern_encoders.table2",
+      "heads": [
+        "jsc.guide.pattern_encoders.table2_head1",
+        "jsc.guide.pattern_encoders.table2_head2",
+        "jsc.guide.pattern_encoders.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_8_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table2_8_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text4"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "number": 1,
+          "part": {
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.pattern_encoders.balloon1"
+        },
+        {
+          "detail": "jsc.guide.pattern_encoders.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              2,
+              11,
+              12,
+              12,
+              13,
+              16
+            ],
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.pattern_encoders.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "box": [
+              12,
+              9,
+              15,
+              14,
+              11,
+              16
+            ],
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.pattern_encoders.balloon3"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Media:{Size:1,Items:[{Slot:0,id:\"jsc:dvd_rw\",count:1}]},TrayOpen:1b}",
+          "state": "jsc:pattern_encoder[facing=south]",
+          "x": 1,
+          "y": 0,
+          "z": 1
+        }
+      ],
+      "caption": "jsc.guide.pattern_encoders.figure1",
+      "height": 110,
+      "view": {
+        "pitch": 20.0,
+        "yaw": -25.0,
+        "zoom": 1.2
+      }
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pattern_encoders.table3",
+      "heads": [
+        "jsc.guide.pattern_encoders.table3_head1",
+        "jsc.guide.pattern_encoders.table3_head2",
+        "jsc.guide.pattern_encoders.table3_head3",
+        "jsc.guide.pattern_encoders.table3_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_1_3"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_2_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_2_3"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_3_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_3_3"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_4_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_4_3"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_5_2"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_5_3"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table3_5_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text8"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pattern_encoders.table4",
+      "heads": [
+        "jsc.guide.pattern_encoders.table4_head1",
+        "jsc.guide.pattern_encoders.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_5_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_6_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_7_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_8_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table4_9_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table4_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pattern_encoders.table5",
+      "heads": [
+        "jsc.guide.pattern_encoders.table5_head1",
+        "jsc.guide.pattern_encoders.table5_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table5_1_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table5_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table5_2_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table5_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_encoders.table5_3_1"
+          },
+          {
+            "words": "jsc.guide.pattern_encoders.table5_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.pattern_encoders.fix1",
+          "problem": "jsc.guide.pattern_encoders.problem1"
+        },
+        {
+          "fix": "jsc.guide.pattern_encoders.fix2",
+          "problem": "jsc.guide.pattern_encoders.problem2"
+        },
+        {
+          "fix": "jsc.guide.pattern_encoders.fix3",
+          "problem": "jsc.guide.pattern_encoders.problem3"
+        },
+        {
+          "fix": "jsc.guide.pattern_encoders.fix4",
+          "problem": "jsc.guide.pattern_encoders.problem4"
+        },
+        {
+          "fix": "jsc.guide.pattern_encoders.fix5",
+          "problem": "jsc.guide.pattern_encoders.problem5"
+        },
+        {
+          "fix": "jsc.guide.pattern_encoders.fix6",
+          "problem": "jsc.guide.pattern_encoders.problem6"
+        },
+        {
+          "fix": "jsc.guide.pattern_encoders.fix7",
+          "problem": "jsc.guide.pattern_encoders.problem7"
+        },
+        {
+          "fix": "jsc.guide.pattern_encoders.fix8",
+          "problem": "jsc.guide.pattern_encoders.problem8"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:peripheral_cables",
+        "jsc:drives",
+        "jsc:pattern_studio",
+        "jsc:crafting_manager"
+      ]
+    }
+  ],
+  "icon": "jsc:pattern_encoder",
+  "id": "jsc:pattern_encoders",
+  "items": [
+    "jsc:advanced_pattern_encoder",
+    "jsc:transition_pattern_encoder",
+    "jsc:pattern_encoder",
+    "jsc:legacy_pattern_encoder",
+    "jsc:vintage_pattern_encoder"
+  ],
+  "order": 105,
+  "section": "jsc:autocrafting",
+  "title": "jsc.guide.pattern_encoders.title"
+}

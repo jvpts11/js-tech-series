@@ -10,7 +10,7 @@ package dev.jstech.computers.operation.payload.program;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.client.os.ShellViews;
 import dev.jstech.computers.machine.MachinePrograms;
-import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -84,9 +84,10 @@ public final class DesktopShellPayloads {
             final var running = computer.foreground();
             if (running != null) {
                 busy = drainForeground(running, payload.line(), wire);
+                final var held = ProgramKeyboard.heldBy(running);
                 PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, busy,
-                        SshTerminal.prompt(computer, computer),
-                        wire, payload.session()));
+                        SshTerminal.prompt(computer, computer), wire, "", "", payload.session(), false, false,
+                        busy && held != null ? ProgramKeyboard.onDesktop(held) : TerminalKeyboard.PROMPT));
                 return;
             }
             /*
@@ -113,10 +114,8 @@ public final class DesktopShellPayloads {
                             wire, payload.session()));
                     return;
                 }
-                wire.add(new WireLine(
-                        (setup.removing() ? "Removing " : "Setting up ") + setup.name() + "  "
-                                + (setup.permille() / 10) + "%  (Ctrl+C to cancel)",
-                        CliStyle.DIM.id()));
+                wire.add(new WireLine((setup.removing() ? ConsoleTexts.REMOVING : ConsoleTexts.SETTING_UP)
+                        .with(setup.name(), setup.permille() / 10), CliStyle.DIM.id()));
                 PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, true,
                         SshTerminal.prompt(computer, computer),
                         wire, payload.session()));
@@ -162,40 +161,13 @@ public final class DesktopShellPayloads {
                 busy = busy || keyboard.busy();
             }
             /*
-             * The reboot verbs work from the desktop's terminal window too: the desktop closes and the
-             * monitor either replays the POST (plain reboot) or enters the firmware setup.
+             * The reboot verbs work from a shell window on any screen this machine shows, the desktop's terminal
+             * and the computer terminal's Console tab alike: the desktop (or terminal) closes and the monitor
+             * either replays the POST (plain reboot) or enters the firmware setup. The machine() gate that admits
+             * this payload only shows it to a desktop, a prompt or a terminal, and all three are IMonitorMenu.
              */
-            final BlockPos monitorPos = player.containerMenu
-                    instanceof DesktopMenu desktop
-                    ? desktop.monitorPos() : null;
-            if (monitorPos != null && computer.firmwareRebootRequested()) {
-                player.closeContainer();
-                MonitorBlock.openFirmware(
-                        player, level, monitorPos, payload.hostPos());
-                return;
-            }
-            if (monitorPos != null && computer.rebootRequested()) {
-                /*
-                 * The system closes down in front of whoever is watching and the self-test follows when it has
-                 * finished; one with nothing to show on its way down starts over at once, and then the POST is
-                 * opened here as it always was.
-                 */
-                if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
-                    be.restart();
-                    /*
-                     * Whoever asked for it is at the desktop, not at a monitor session, so the machine's own
-                     * goodbye never reached them: the closing-down went on behind the desktop they were still
-                     * sitting in, and nothing moved until they left and came back.
-                     */
-                    if (be.goingDown()) {
-                        player.closeContainer();
-                        MonitorBlock.openSystemDown(player, level, monitorPos, payload.hostPos(), be);
-                        return;
-                    }
-                }
-                player.closeContainer();
-                MonitorBlock.openPost(
-                        player, level, monitorPos, payload.hostPos());
+            final BlockPos monitorPos = ((IMonitorMenu) player.containerMenu).monitorPos();
+            if (handleReboot(player, level, monitorPos, payload.hostPos(), computer)) {
                 return;
             }
         }
@@ -205,17 +177,61 @@ public final class DesktopShellPayloads {
     }
 
     /**
+     * Carries out a reboot the typed command asked for, from a desktop or a terminal alike: the screen closes
+     * and the monitor either enters the firmware setup ({@code reboot --firmware}) or replays the POST after the
+     * system has closed down. Returns whether a reboot was requested, in which case the container is already
+     * closed and the caller sends no reply.
+     */
+    static boolean handleReboot(final ServerPlayer player, final ServerLevel level, final BlockPos monitorPos,
+            final BlockPos hostPos, final ServerCliComputer computer) {
+        if (computer.firmwareRebootRequested()) {
+            player.closeContainer();
+            MonitorBlock.openFirmware(player, level, monitorPos, hostPos);
+            return true;
+        }
+        if (!computer.rebootRequested()) {
+            return false;
+        }
+        /*
+         * The system closes down in front of whoever is watching and the self-test follows when it has
+         * finished; one with nothing to show on its way down starts over at once, and then the POST is opened
+         * here instead.
+         */
+        if (level.getBlockEntity(hostPos) instanceof IOsHost be) {
+            be.restart();
+            /*
+             * Whoever asked for it is at a desktop or a terminal, not at a monitor session, so the machine's
+             * own goodbye never reached them: the closing-down would go on behind the window they were still
+             * sitting in, and nothing would move until they left and came back.
+             */
+            if (be.goingDown()) {
+                player.closeContainer();
+                MonitorBlock.openSystemDown(player, level, monitorPos, hostPos, be);
+                return true;
+            }
+        }
+        player.closeContainer();
+        MonitorBlock.openPost(player, level, monitorPos, hostPos);
+        return true;
+    }
+
+    /**
      * Answers a line typed while a program has the terminal, and says whether it still has it.
      *
      * <p>What a program prints reaches the terminal from the machine's own tick, so nothing is
      * collected here: this is only the keyboard. While a program is in front, a line typed is the
      * program's to read, and the interrupt is the one thing that means something to the terminal itself.
+     * Nothing at all is a window asking where things stand, which is answered and hands the program nothing;
+     * a line typed empty comes as the Enter key alone.
      */
-    private static boolean drainForeground(
+    static boolean drainForeground(
             final MachinePrograms processes, final String typed,
             final List<WireLine> wire) {
+        if (typed.isEmpty()) {
+            return true;
+        }
         if (!INTERRUPT.equals(typed)) {
-            processes.offerInput(typed);
+            processes.offerInput(TerminalTools.ENTER.equals(typed) ? "" : typed);
             return true;
         }
         final int id = processes.held();

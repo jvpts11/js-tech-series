@@ -1,0 +1,7 @@
+{
+  "chapter": "jsc:automation",
+  "icon": "jsc:cluster_management_computer",
+  "id": "jsc:cluster_tools",
+  "order": 27,
+  "title": "jsc.guide.section.cluster_tools"
+}

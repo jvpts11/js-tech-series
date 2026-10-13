@@ -7,12 +7,18 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.KnotActionPayload;
 import dev.jstech.computers.operation.payload.KnotStatePayload;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -32,6 +38,7 @@ import java.util.Locale;
  * <p>Pushing reads the file off this machine's own disk rather than sending its text, so what the network
  * keeps is what the machine really holds.
  */
+@PaletteHolder
 public final class KnotApp implements IDesktopApp {
 
     private static final int TOOLBAR_H = 15;
@@ -40,11 +47,12 @@ public final class KnotApp implements IDesktopApp {
     private static final int STATUS_H = 11;
     private static final int MARGIN = 3;
     private static final int HISTORY_ROWS = 4;
-    private static final int ADDED_BG = 0xFFDCF5DE;
-    private static final int ADDED_INK = 0xFF16621F;
-    private static final int REMOVED_BG = 0xFFFBDDDB;
-    private static final int REMOVED_INK = 0xFF8A1F18;
-    private static final int OFFLINE_INK = 0xFFB4231F;
+    /**
+     * Knot's own colours, {@code jsc:app/knot}: an added line's band and ink, a removed line's band and ink, and a
+     * repository whose server is away.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/knot",
+            new Colours(0xFFDCF5DE, 0xFF16621F, 0xFFFBDDDB, 0xFF8A1F18, 0xFFB4231F));
 
     /** The one window the network's answers belong to. */
     @Nullable
@@ -72,13 +80,14 @@ public final class KnotApp implements IDesktopApp {
 
     /* Where the history was last drawn, so a click reads the same numbers. */
     private int historyTop;
+    private int lastMouseY;
 
     public KnotApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
-        pushButton = root.add(new Button("Push", this::push));
-        pullButton = root.add(new Button("Pull", this::pull));
-        refreshButton = root.add(new Button("Refresh", this::look));
+        pushButton = root.add(new Button(GameText.resolve(SocialTexts.PUSH), this::push));
+        pullButton = root.add(new Button(GameText.resolve(SocialTexts.PULL), this::pull));
+        refreshButton = root.add(new Button(GameText.resolve(SocialTexts.REFRESH), this::look));
         root.add(file);
         root.add(message);
         file.set("plant.sgs");
@@ -159,7 +168,7 @@ public final class KnotApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Knot";
+        return ProgramClient.nameOf("knot");
     }
 
     @Override
@@ -196,6 +205,7 @@ public final class KnotApp implements IDesktopApp {
          * the one that hears back rather than whichever was made last.
          */
         open = this;
+        this.lastMouseY = mouseY;
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         layoutToolbar(font, x, y, width);
@@ -210,13 +220,13 @@ public final class KnotApp implements IDesktopApp {
 
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         int bx = x + MARGIN;
-        final int pushW = font.width("Push") + 8;
+        final int pushW = font.width(GameText.resolve(SocialTexts.PUSH)) + 8;
         pushButton.setBounds(bx, y + 1, pushW, 12);
         bx += pushW + 2;
-        final int pullW = font.width("Pull") + 8;
+        final int pullW = font.width(GameText.resolve(SocialTexts.PULL)) + 8;
         pullButton.setBounds(bx, y + 1, pullW, 12);
         bx += pullW + 2;
-        final int refreshW = font.width("Refresh") + 8;
+        final int refreshW = font.width(GameText.resolve(SocialTexts.REFRESH)) + 8;
         refreshButton.setBounds(bx, y + 1, refreshW, 12);
         bx += refreshW + 4;
         message.setBounds(bx, y + 1, Math.max(20, x + width - MARGIN - bx), 12);
@@ -225,21 +235,22 @@ public final class KnotApp implements IDesktopApp {
     }
 
     private void layoutPicker(final Font font, final int x, final int y, final int width) {
-        file.setBounds(x + MARGIN + font.width("File") + 4, y + 1,
+        file.setBounds(x + MARGIN + font.width(GameText.resolve(SocialTexts.FILE)) + 4, y + 1,
                 Math.max(40, width / 2 - MARGIN * 2), 12);
     }
 
     private void drawHistory(final GuiGraphics g, final Font font, final int x, final int y,
                              final int width) {
-        g.drawString(font, "File", x + MARGIN, y - PICK_H + 3, skin.dim(), false);
+        Draw.text(g, font, GameText.resolve(SocialTexts.FILE), x + MARGIN, y - PICK_H + 3, skin.dim());
         this.historyTop = y;
         g.fill(x + MARGIN, y, x + width - MARGIN, y + HISTORY_ROWS * ROW_H, skin.fieldBg());
         final List<KnotStatePayload.Revision> revisions = state.revisions();
         this.historyScroll = Math.max(0,
                 Math.min(historyScroll, Math.max(0, revisions.size() - HISTORY_ROWS)));
         if (revisions.isEmpty()) {
-            g.drawString(font, state.service().online() ? "Nothing pushed yet" : "No KnotHub on this network",
-                    x + MARGIN + 3, y + 2, state.service().online() ? skin.dim() : OFFLINE_INK, false);
+            Draw.text(g, font,
+                    GameText.resolve(state.service().online() ? SocialTexts.NOTHING_PUSHED : SocialTexts.NO_KNOTHUB),
+                    x + MARGIN + 3, y + 2, state.service().online() ? skin.dim() : PALETTE.get().offline());
             return;
         }
         for (int i = 0; i < HISTORY_ROWS && historyScroll + i < revisions.size(); i++) {
@@ -250,14 +261,14 @@ public final class KnotApp implements IDesktopApp {
                 g.fill(x + MARGIN, ry, x + width - MARGIN, ry + ROW_H, skin.listSelect());
             }
             final int ink = skin.listRowText(on);
-            g.drawString(font, "r" + revision.number(), x + MARGIN + 3, ry + 1, ink, false);
+            Draw.text(g, font, "r" + revision.number(), x + MARGIN + 3, ry + 1, ink);
             final String text = revision.author() + ": " + revision.message();
-            g.drawString(font, font.plainSubstrByWidth(text, width - 80), x + MARGIN + 26, ry + 1,
-                    ink, false);
+            Draw.text(g, font, font.plainSubstrByWidth(text, width - 80), x + MARGIN + 26, ry + 1,
+                    ink);
             final String named = revision.file();
-            g.drawString(font, font.plainSubstrByWidth(named, 48),
+            Draw.text(g, font, font.plainSubstrByWidth(named, 48),
                     x + width - MARGIN - 3 - Math.min(48, font.width(named)), ry + 1,
-                    on ? ink : skin.dim(), false);
+                    on ? ink : skin.dim());
         }
     }
 
@@ -268,24 +279,25 @@ public final class KnotApp implements IDesktopApp {
         final int rows = Math.max(1, (bottom - y) / ROW_H);
         this.diffScroll = Math.max(0, Math.min(diffScroll, Math.max(0, lines.size() - rows)));
         if (lines.isEmpty()) {
-            g.drawString(font, picked > 0 ? "No change in r" + picked : "Pick a revision",
-                    x + MARGIN + 3, y + 2, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(picked > 0 ? SocialTexts.NO_CHANGE.with(picked)
+                            : SocialTexts.PICK_A_REVISION.text()),
+                    x + MARGIN + 3, y + 2, skin.dim());
             return;
         }
         for (int i = 0; i < rows && diffScroll + i < lines.size(); i++) {
             final KnotStatePayload.DiffLine line = lines.get(diffScroll + i);
             final int ry = y + i * ROW_H;
             final int background = switch (line.kind()) {
-                case KnotStatePayload.DiffLine.ADDED -> ADDED_BG;
-                case KnotStatePayload.DiffLine.REMOVED -> REMOVED_BG;
+                case KnotStatePayload.DiffLine.ADDED -> PALETTE.get().added();
+                case KnotStatePayload.DiffLine.REMOVED -> PALETTE.get().removed();
                 default -> 0;
             };
             if (background != 0) {
                 g.fill(x + MARGIN, ry, x + width - MARGIN, ry + ROW_H, background);
             }
             final int ink = switch (line.kind()) {
-                case KnotStatePayload.DiffLine.ADDED -> ADDED_INK;
-                case KnotStatePayload.DiffLine.REMOVED -> REMOVED_INK;
+                case KnotStatePayload.DiffLine.ADDED -> PALETTE.get().addedInk();
+                case KnotStatePayload.DiffLine.REMOVED -> PALETTE.get().removedInk();
                 default -> skin.dim();
             };
             final String mark = switch (line.kind()) {
@@ -293,9 +305,9 @@ public final class KnotApp implements IDesktopApp {
                 case KnotStatePayload.DiffLine.REMOVED -> "-";
                 default -> " ";
             };
-            g.drawString(font, mark, x + MARGIN + 3, ry + 1, ink, false);
-            g.drawString(font, font.plainSubstrByWidth(line.text(), width - MARGIN * 2 - 14),
-                    x + MARGIN + 11, ry + 1, ink, false);
+            Draw.text(g, font, mark, x + MARGIN + 3, ry + 1, ink);
+            Draw.text(g, font, font.plainSubstrByWidth(line.text(), width - MARGIN * 2 - 14),
+                    x + MARGIN + 11, ry + 1, ink);
         }
     }
 
@@ -307,15 +319,17 @@ public final class KnotApp implements IDesktopApp {
          * What the machine had to say about the last thing asked of it comes first, because a player who
          * pressed Push wants to know what came of it rather than how many revisions there are.
          */
-        final String left = !service.note().isEmpty() ? service.note()
+        final String left = GameText.resolve(!service.note().isEmpty() ? service.note()
                 : service.online()
-                        ? "on " + (service.host().isBlank() ? "the network" : service.host())
-                        : "no service";
+                        ? SocialTexts.ON_HOST.with(service.host().isBlank() ? SocialTexts.THE_NETWORK.text()
+                                : service.host())
+                        : SocialTexts.NO_SERVICE.text());
         final int count = state.revisions().size();
-        final String right = count + (count == 1 ? " revision   " : " revisions   ") + bytes(service.bytes());
-        g.drawString(font, font.plainSubstrByWidth(left, width - MARGIN * 2 - font.width(right) - 8),
-                x + MARGIN, y + 2, service.online() ? skin.text() : OFFLINE_INK, false);
-        g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim(), false);
+        final String right = GameText.resolve((count == 1 ? SocialTexts.ONE_REVISION : SocialTexts.REVISIONS)
+                .with(count)) + "   " + bytes(service.bytes());
+        Draw.text(g, font, font.plainSubstrByWidth(left, width - MARGIN * 2 - font.width(right) - 8),
+                x + MARGIN, y + 2, service.online() ? skin.text() : PALETTE.get().offline());
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim());
     }
 
     private static String bytes(final long value) {
@@ -355,6 +369,12 @@ public final class KnotApp implements IDesktopApp {
 
     @Override
     public boolean mouseScrolled(final double delta) {
+        if (lastMouseY >= historyTop && lastMouseY < historyTop + HISTORY_ROWS * ROW_H) {
+            // Over the revision rows the wheel walks the history, so revisions past the fourth can be reached.
+            final int last = Math.max(0, state.revisions().size() - HISTORY_ROWS);
+            this.historyScroll = Math.max(0, Math.min(last, historyScroll - (int) Math.signum(delta)));
+            return true;
+        }
         this.diffScroll = Math.max(0, diffScroll - (int) Math.signum(delta));
         return true;
     }
@@ -372,5 +392,29 @@ public final class KnotApp implements IDesktopApp {
     /** Which revision is being looked at, for a test to read. */
     public int shownRevision() {
         return picked;
+    }
+
+    /** How many revisions of the file the history lists, for a test to read. */
+    public int revisionCount() {
+        return state.revisions().size();
+    }
+
+    /** Whether the network's KnotHub answered, which is what lets anything be pushed. */
+    public boolean online() {
+        return state.service().online();
+    }
+
+    /** The desktop point in the middle of the box the push's message is typed in, from the last frame drawn. */
+    public int[] messagePoint() {
+        return message.center();
+    }
+
+    /** The desktop point in the middle of the Push button, from the last frame drawn. */
+    public int[] pushPoint() {
+        return pushButton.center();
+    }
+
+    /** Knot's colours, as the palette above names them. */
+    private record Colours(int added, int addedInk, int removed, int removedInk, int offline) {
     }
 }

@@ -1,0 +1,80 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_operations_are.definition1",
+      "term": "jsc.guide.what_operations_are.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_operations_are.definition2",
+      "term": "jsc.guide.what_operations_are.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_operations_are.definition3",
+      "term": "jsc.guide.what_operations_are.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.what_operations_are.fix1",
+          "problem": "jsc.guide.what_operations_are.problem1"
+        },
+        {
+          "fix": "jsc.guide.what_operations_are.fix2",
+          "problem": "jsc.guide.what_operations_are.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operations_catalogue",
+        "jsc:iql"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:what_operations_are",
+  "order": 93,
+  "section": "jsc:operations",
+  "title": "jsc.guide.what_operations_are.title"
+}

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.core.text.Text;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ final class ProgramIdentity {
     private boolean exited;
     private int exitCode;
     private boolean halted;
-    private String message;
+    private Text message = Text.EMPTY;
 
     /** The number the machine lists the program under, or 0 off any machine. */
     int machineId() {
@@ -89,20 +90,30 @@ final class ProgramIdentity {
         this.exitCode = code;
     }
 
+    /**
+     * Takes the code a Main gave back as the one the program ends with. A program that already ended itself keeps
+     * the code it ended with, as its Main never got to give one.
+     */
+    void gave(final int code) {
+        if (!this.exited) {
+            this.exitCode = code;
+        }
+    }
+
     /** Whether the program was halted. */
     boolean halted() {
         return this.halted;
     }
 
-    /** What the program was told when it was halted, or null while it has not been. */
-    String message() {
+    /** What the program was told when it was halted, or nothing while it has not been. */
+    Text message() {
         return this.message;
     }
 
     /** Takes the halt that ended the program. */
-    void halt(final String told) {
+    void halt(final Text told) {
         this.halted = true;
-        this.message = told;
+        this.message = told == null ? Text.EMPTY : told;
     }
 
     /** Whether the program is over, by its own exit or a halt, so nothing more is handed to it. */
@@ -112,13 +123,13 @@ final class ProgramIdentity {
 
     /** Puts back everything but the name, as a snapshot wrote it. */
     void restore(final List<String> arguments, final int id, final long instructions, final boolean ended,
-                 final int code, final boolean stopped, final String told) {
+                 final int code, final boolean stopped, final Text told) {
         this.startWith(arguments);
         this.machineId = id;
         this.spent = instructions;
         this.exited = ended;
         this.exitCode = code;
         this.halted = stopped;
-        this.message = told;
+        this.message = told == null ? Text.EMPTY : told;
     }
 }

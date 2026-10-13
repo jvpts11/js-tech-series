@@ -156,4 +156,10 @@ class ScrollStateTest {
         assertEquals(90, new ScrollState(100, 10, 9999).offset());
         assertEquals(0, new ScrollState(100, 10, -50).offset());
     }
+
+    @Test
+    void scrolledBy_hugeDeltaStopsAtTheEndInsteadOfWrapping() {
+        ScrollState s = new ScrollState(100, 10, 5).scrolledBy(Integer.MAX_VALUE);
+        assertEquals(90, s.offset());
+    }
 }

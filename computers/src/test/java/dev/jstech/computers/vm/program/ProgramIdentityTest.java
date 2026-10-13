@@ -9,9 +9,9 @@ package dev.jstech.computers.vm.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -46,10 +46,10 @@ class ProgramIdentityTest {
         assertTrue(identity.exited());
         assertTrue(identity.over());
         assertEquals(3, identity.exitCode());
-        identity.halt("out of memory");
+        identity.halt(Text.literal("out of memory"));
         assertEquals(1, identity.exitCode());
         assertEquals(3, identity.givenExitCode());
-        assertEquals("out of memory", identity.message());
+        assertEquals("out of memory", identity.message().english());
     }
 
     @Test
@@ -58,7 +58,7 @@ class ProgramIdentityTest {
         identity.spend(64);
         identity.spend(1);
         assertEquals(65, identity.spent());
-        assertNull(identity.message());
+        assertTrue(identity.message().isEmpty());
     }
 
     @Test

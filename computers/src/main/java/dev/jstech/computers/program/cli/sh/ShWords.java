@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.program.cli.sh;
 
+import dev.jstech.core.text.Glob;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -46,7 +46,7 @@ public final class ShWords {
      * none of them says there is no such file instead of listing everything, which is what a person means.
      */
     public static List<String> glob(final String word, final List<String> names) {
-        if (word == null || (word.indexOf('*') < 0 && word.indexOf('?') < 0)) {
+        if (word == null || !Glob.isPattern(word, true)) {
             return List.of(word == null ? "" : word);
         }
         final List<String> matched = new ArrayList<>();
@@ -61,33 +61,11 @@ public final class ShWords {
     /**
      * Whether a name answers to a pattern of stars and question marks.
      *
-     * <p>Walked rather than turned into a regular expression: a name a player typed can hold anything at all,
-     * and a pattern that costs nothing to walk cannot be written to cost a server anything either.
+     * <p>Matched in a single pass rather than turned into a regular expression or tried every way a star could
+     * split: a player can type any number of stars, and neither of those has a cost that stays small then.
      */
     public static boolean matches(final String pattern, final String name) {
-        return walk(pattern.toLowerCase(Locale.ROOT), 0, name.toLowerCase(Locale.ROOT), 0);
-    }
-
-    private static boolean walk(final String pattern, final int p, final String name, final int n) {
-        if (p == pattern.length()) {
-            return n == name.length();
-        }
-        final char ch = pattern.charAt(p);
-        if (ch == '*') {
-            for (int i = n; i <= name.length(); i++) {
-                if (walk(pattern, p + 1, name, i)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        if (n == name.length()) {
-            return false;
-        }
-        if (ch == '?' || ch == name.charAt(n)) {
-            return walk(pattern, p + 1, name, n + 1);
-        }
-        return false;
+        return Glob.matches(pattern, name, true);
     }
 
     private static String expandDollar(final String word, final Map<String, String> named) {

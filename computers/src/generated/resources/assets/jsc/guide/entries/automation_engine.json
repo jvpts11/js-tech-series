@@ -1,0 +1,271 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.automation_engine.definition1",
+      "term": "jsc.guide.automation_engine.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.automation_engine.definition2",
+      "term": "jsc.guide.automation_engine.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.automation_engine.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.automation_engine.definition3",
+      "term": "jsc.guide.automation_engine.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.automation_engine.definition4",
+      "term": "jsc.guide.automation_engine.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.automation_engine.table1",
+      "heads": [
+        "jsc.guide.automation_engine.table1_head1",
+        "jsc.guide.automation_engine.table1_head2",
+        "jsc.guide.automation_engine.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "30s"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "5m"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "1h"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "100t"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "30"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.automation_engine.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.automation_engine.step1",
+        "jsc.guide.automation_engine.step2",
+        "jsc.guide.automation_engine.step3",
+        "jsc.guide.automation_engine.step4"
+      ]
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CREATE JOB keep_iron AS CRAFT 64 iron_ingot EVERY 5m"
+      ],
+      "name": "keep_iron.iql"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.automation_engine.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.automation_engine.table2",
+      "heads": [
+        "jsc.guide.automation_engine.table2_head1",
+        "jsc.guide.automation_engine.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ACTIVE"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "IDLE"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "PAUSED"
+          },
+          {
+            "words": "jsc.guide.automation_engine.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.automation_engine.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text12"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.automation_engine.fix1",
+          "problem": "jsc.guide.automation_engine.problem1"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix2",
+          "problem": "jsc.guide.automation_engine.problem2"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix3",
+          "problem": "jsc.guide.automation_engine.problem3"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix4",
+          "problem": "jsc.guide.automation_engine.problem4"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix5",
+          "problem": "jsc.guide.automation_engine.problem5"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix6",
+          "problem": "jsc.guide.automation_engine.problem6"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix7",
+          "problem": "jsc.guide.automation_engine.problem7"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix8",
+          "problem": "jsc.guide.automation_engine.problem8"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix9",
+          "problem": "jsc.guide.automation_engine.problem9"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix10",
+          "problem": "jsc.guide.automation_engine.problem10"
+        },
+        {
+          "fix": "jsc.guide.automation_engine.fix11",
+          "problem": "jsc.guide.automation_engine.problem11"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:automation_manager",
+        "jsc:engines",
+        "jsc:operations"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:automation_engine",
+  "order": 113,
+  "section": "jsc:automation_jobs",
+  "title": "jsc.guide.automation_engine.title"
+}

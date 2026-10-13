@@ -211,6 +211,66 @@ class EmitterTest {
     }
 
     @Test
+    void emit_startsACapturedStructLocalAsAnEmptyStruct() {
+        final String listing = compile("delegate int Count(string t);\nstruct Vec { public int X; }\n", """
+                    void Use(Count c) { }
+                    void M() { Vec v; Use((t) => v.X); }
+                """);
+        assertTrue(bodyOf(listing, "M").stream().anyMatch(line -> line.startsWith("newobj Tests.Vec")), listing);
+    }
+
+    @Test
+    void emit_putsTheObjectUnderAnOutValueStoredToAnInstanceField() {
+        final String listing = compile("""
+                    int stored;
+                    bool Find(out int value) { value = 0; return true; }
+                    void M() { Find(out stored); }
+                """);
+        final List<String> body = bodyOf(listing, "M");
+        assertEquals(2, body.stream().filter("ldthis"::equals).count(), listing);
+        assertTrue(body.stream().anyMatch(line -> line.startsWith("stfld")), listing);
+    }
+
+    @Test
+    void emit_chainsToTheConstructorWhoseTypesFitNotJustTheFirstOfThatSize() {
+        final String listing = compile("""
+                class Foo {
+                    public Foo(int a) { }
+                    public Foo(string s) { }
+                    public Foo() : this("x") { }
+                }
+                """, "");
+        final List<String> body = bodyOf(listing, ".ctor");
+        assertTrue(body.contains("call Tests.Foo..ctor(string) -> void"), listing);
+        assertFalse(body.contains("call Tests.Foo..ctor(int) -> void"), listing);
+    }
+
+    @Test
+    void emit_keepsAVariableALambdaReadsOnlyInsideAStringHole() {
+        // Read only through ${...}, the variable was left in a slot of the lambda's own frame, which holds nothing.
+        final String listing = compile("delegate string Label(string t);\n", """
+                    void Use(Label l) { }
+                    void M() { int count = 3; Use((t) => $"{t}: {count}"); }
+                """);
+        assertTrue(listing.contains(".class 0closure1"), listing);
+        assertTrue(listing.contains(".field int count"), listing);
+        assertTrue(bodyOf(listing, "0lambda1").contains("ldfld 0closure1.count"), listing);
+    }
+
+    @Test
+    void emit_disposingAFieldClearsTheFieldOfTheObjectThatHoldsIt() {
+        final String listing = compile("class Box { }\n", """
+                    Box held = new Box();
+                    void M() { dispose held; }
+                """);
+        // What the null is stored into is this object, not the box the field held.
+        final List<String> body = bodyOf(listing, "M");
+        final int store = body.indexOf("stfld held");
+        assertTrue(store >= 2 && body.get(store - 1).equals("ldnull") && body.get(store - 2).equals("ldthis"),
+                "the holder goes on the stack, then the null, then the store; got " + body);
+    }
+
+    @Test
     void emit_letsALambdaReachBothWhatItKeptAndTheObjectItWasWrittenIn() {
         final String listing = compile("delegate int Count(string t);\n", """
                     int threshold = 5;
@@ -308,6 +368,23 @@ class EmitterTest {
         final int entered = broken.indexOf("monitor.enter");
         assertEquals(List.of("monitor.enter", "ldloc 1", "monitor.exit"), broken.subList(entered, entered + 3));
         assertTrue(broken.get(entered + 3).startsWith("br "), broken.get(entered + 3));
+    }
+
+    @Test
+    void emit_aBreakOutOfASwitchLetsGoOfNoLockTheSwitchIsInside() {
+        /*
+         * The break leaves the switch, not the loop, so the lock taken between the two is still held after it
+         * and is let go of once, where the lock ends. Counting from the loop let go of it at the break as well,
+         * and the second letting go halted the program.
+         */
+        final List<String> broken = bodyOf(compile("    void M() { object o = null; int x = 1;"
+                + " while (true) { lock (o) { switch (x) { case 1: break; } } } }\n"), "M");
+        assertEquals(1, broken.stream().filter("monitor.exit"::equals).count(), String.join("\n", broken));
+
+        // A continue does leave the lock, on its way back to the loop, and so lets go of it on that way out too.
+        final List<String> continued = bodyOf(compile("    void M() { object o = null; int x = 1;"
+                + " while (true) { lock (o) { switch (x) { case 1: continue; } } } }\n"), "M");
+        assertEquals(2, continued.stream().filter("monitor.exit"::equals).count(), String.join("\n", continued));
     }
 
     /** How many times the listing calls that method anywhere in it. */

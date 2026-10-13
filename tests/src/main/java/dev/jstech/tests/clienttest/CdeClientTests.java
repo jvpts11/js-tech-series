@@ -11,22 +11,24 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.SystemBootScreen;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.ShellApp;
+import dev.jstech.computers.client.os.WorkstationDevicesApp;
+import dev.jstech.computers.client.os.WorkstationInfoApp;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
-import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * CDE as a player meets it on a UNIX machine: the Front Panel where the others have a bar, windows in Motif
@@ -136,8 +138,8 @@ public final class CdeClientTests {
     public static void comingUp_showsCdesOwnPlateBeforeTheDesktop(final ClientTestContext ctx) {
         switchedOn(ctx)
                 .thenAwaitScreen(SystemBootScreen.class, BOOT_WAIT)
-                .thenWaitUntil(() -> ctx.screen(SystemBootScreen.class) != null
-                        && ctx.screen(SystemBootScreen.class).desktopSplashUp(), BOOT_WAIT,
+                .thenWaitUntil(() -> ctx.openScreen(SystemBootScreen.class) != null
+                        && ctx.openScreen(SystemBootScreen.class).desktopSplashUp(), BOOT_WAIT,
                         "CDE's plate to take the glass from the system's lines")
                 .thenScreenshot(2, "cde-coming-up")
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT);
@@ -179,19 +181,8 @@ public final class CdeClientTests {
         return ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
-                    final ItemStackHandler inv = machine.getInventory();
-                    inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                            new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                            new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                            new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
                     // A graphics card gives the machine peripheral ports, which is what the monitor links to.
-                    inv.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
-                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                            new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+                    TestWorldBuilder.installMainframeParts(machine, StorageTier.SSD, true);
                     machine.installOs(jsc(system));
                     machine.console().install(jsc("cde").toString());
                     machine.togglePower();
@@ -302,7 +293,7 @@ public final class CdeClientTests {
                 .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
                         "the File Manager to open")
                 .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitPoint()))
-                .thenWaitUntil(() -> desktop(ctx).powerDialogOpen(), SCREEN_WAIT, "EXIT to ask")
+                .thenWaitUntil(() -> desktop(ctx).powerDialogShown(), SCREEN_WAIT, "EXIT to ask")
                 .thenScreenshot(SETTLE, "cde-exit")
                 .then(SETTLE, () -> clickAt(ctx, aboveTheExitButtons(ctx)))
                 .thenAssert(SETTLE, () -> desktop(ctx).powerDialogOpen(),
@@ -311,6 +302,26 @@ public final class CdeClientTests {
                 .thenWaitUntil(() -> !desktop(ctx).powerDialogOpen(), SCREEN_WAIT, "Cancel to put the dialog away")
                 .thenAssert(1, () -> desktop(ctx).shownWindowLabels().contains("File Manager"),
                         "and the File Manager is still open");
+    }
+
+    /**
+     * Shut Down on the Exit dialog closes the desktop onto the system's goodbye, and the machine goes dark only when
+     * it has finished. It used to cut the power at once, dropping the player out of the computer with no screen.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void exit_shutDownSaysGoodbyeBeforeTheMachineGoesDark(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitPoint()))
+                .thenWaitUntil(() -> desktop(ctx).powerDialogShown(), SCREEN_WAIT, "EXIT to ask")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitDialogPoint(CdeExitLayout.SHUT_DOWN)))
+                .thenAwaitScreen(SystemBootScreen.class, SCREEN_WAIT)
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m
+                                && m.isRunning() && m.poweringOff(), SCREEN_WAIT,
+                        "the machine stays on while its system says goodbye", level -> "not on its way off")
+                .thenScreenshot(SETTLE, "cde-shutting-down")
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m
+                                && !m.isRunning(), BOOT_WAIT,
+                        "and switches off when the goodbye has ended", level -> "still running");
     }
 
     /**
@@ -333,7 +344,7 @@ public final class CdeClientTests {
                         "a UNIX terminal says nothing of the desktop, of Midsoft or of HELP when it opens")
                 .then(SETTLE, () -> terminal(ctx).typeLines(List.of("uname -sr", "ls /", "nosuch")))
                 .thenWaitUntil(() -> terminal(ctx).scrollbackText().contains("UNIX 3.2")
-                        && terminal(ctx).scrollbackText().contains("not found: nosuch"), SCREEN_WAIT * 3,
+                        && terminal(ctx).scrollbackText().contains("nosuch: not found"), SCREEN_WAIT * 3,
                         "the shell to answer on the paper of the terminal window")
                 .thenScreenshot(SETTLE, "cde-terminal");
     }
@@ -369,7 +380,7 @@ public final class CdeClientTests {
                         "the Color page to open again")
                 .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageRowPoint("Neptune")))
                 .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageButtonPoint(true, 0)))
-                .then(SETTLE * 2, DesktopScreen::refreshActive)
+                .then(SETTLE * 2, ActiveDesktop::refreshActive)
                 .thenAssert(SETTLE * 5, () -> desktop(ctx).wornCdeStyle().startsWith("Neptune;"),
                         "OK has the machine keep it, so the desktop wears it after asking the machine again");
     }
@@ -411,6 +422,42 @@ public final class CdeClientTests {
                                 "Host Name=unix", "Operating System=UNIX System V 3.2")),
                         "it says who is at the workstation, its host name and its system")
                 .thenScreenshot(SETTLE, "cde-workstation-info");
+    }
+
+    /**
+     * Workstation Info's Devices... opens the workstation's devices in a dialog that lists every port with what is on
+     * it, and Disable there disables the device selected on the machine, which Enable gives back.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void workstationInfo_devicesDialogDisablesTheDeviceSelected(final ClientTestContext ctx) {
+        final String drive = "USB 1=CD Drive";
+        atCde(ctx)
+                .thenBuild(SETTLE, world -> world.setBlock(DRIVE, ComputingModule.CD_DRIVE.get()))
+                // The dialog asks the machine for its devices once, as it opens: the drive must be linked by then.
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m
+                                && m.holdsPort(ctx.abs(DRIVE).asLong()), SCREEN_WAIT,
+                        "the drive to link to the machine", level -> "not linked yet")
+                .then(SETTLE * 2, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.APPLICATIONS)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().contains("Workstation Info"), SCREEN_WAIT,
+                        "the Applications subpanel to list Workstation Info")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).subpanelPoint("Workstation Info")))
+                .thenWaitUntil(() -> workstationInfo(ctx) != null, SCREEN_WAIT * 2, "Workstation Info to open")
+                .then(SETTLE, () -> ctx.clickDesktop(workstationInfo(ctx).devicesCentre()))
+                .thenWaitUntil(() -> devices(ctx) != null && devices(ctx).shownDevices().contains(drive),
+                        SCREEN_WAIT * 2, "Devices... to open the dialog with the drive on its port")
+                .thenScreenshot(SETTLE, "cde-workstation-devices")
+                .then(SETTLE, () -> ctx.clickDesktop(devices(ctx).deviceCentre(drive)))
+                .then(SETTLE, () -> ctx.clickDesktop(devices(ctx).disableCentre()))
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m
+                                && m.isDisabled(ctx.abs(DRIVE).asLong()), SCREEN_WAIT,
+                        "the machine to disable the drive", level -> "still enabled")
+                .thenWaitUntil(() -> devices(ctx).deviceDisabled(drive), SCREEN_WAIT,
+                        "the dialog to cross the drive out")
+                .thenScreenshot(SETTLE, "cde-workstation-devices-disabled")
+                .then(SETTLE, () -> ctx.clickDesktop(devices(ctx).enableCentre()))
+                .thenWaitUntil(() -> !devices(ctx).deviceDisabled(drive), SCREEN_WAIT,
+                        "Enable to give the drive back");
     }
 
     /**
@@ -488,7 +535,17 @@ public final class CdeClientTests {
     }
 
     private static DesktopScreen desktop(final ClientTestContext ctx) {
-        return ctx.screen(DesktopScreen.class);
+        return ctx.openScreen(DesktopScreen.class);
+    }
+
+    private static WorkstationInfoApp workstationInfo(final ClientTestContext ctx) {
+        final DesktopWindow window = desktop(ctx) == null ? null : desktop(ctx).windowFor("Workstation Info");
+        return window != null && window.app() instanceof WorkstationInfoApp app ? app : null;
+    }
+
+    private static WorkstationDevicesApp devices(final ClientTestContext ctx) {
+        final DesktopWindow window = desktop(ctx) == null ? null : desktop(ctx).windowFor(WorkstationDevicesApp.KEY);
+        return window != null && window.app() instanceof WorkstationDevicesApp app ? app : null;
     }
 
     private static ResourceLocation jsc(final String path) {

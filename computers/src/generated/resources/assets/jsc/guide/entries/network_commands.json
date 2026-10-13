@@ -1,0 +1,98 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.network_commands.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_commands.text2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/net"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/iql"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_commands.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_commands.table1",
+      "heads": [
+        "jsc.guide.network_commands.table1_head1",
+        "jsc.guide.network_commands.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "--to"
+          },
+          {
+            "words": "jsc.guide.network_commands.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "--sort name"
+          },
+          {
+            "words": "jsc.guide.network_commands.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/interac"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_commands.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/ssh"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/exit"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_commands.fix1",
+          "problem": "jsc.guide.network_commands.problem1"
+        },
+        {
+          "fix": "jsc.guide.network_commands.fix2",
+          "problem": "jsc.guide.network_commands.problem2"
+        },
+        {
+          "fix": "jsc.guide.network_commands.fix3",
+          "problem": "jsc.guide.network_commands.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:file_commands",
+        "jsc:devices_commands"
+      ]
+    }
+  ],
+  "id": "jsc:network_commands",
+  "order": 200,
+  "section": "jsc:shell_commands",
+  "title": "jsc.guide.network_commands.title"
+}

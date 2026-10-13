@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:sigma/erm_what_the_sigma",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:sigma_operation"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.sigma.automate_the_boring_stuff.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:piston"
+    },
+    "title": {
+      "translate": "advancements.jsc.sigma.automate_the_boring_stuff.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

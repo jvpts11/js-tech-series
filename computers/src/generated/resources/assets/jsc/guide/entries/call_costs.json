@@ -1,0 +1,473 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.call_costs.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.call_costs.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.call_costs.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.call_costs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.call_costs.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.call_costs.table1",
+      "heads": [
+        "jsc.guide.call_costs.table1_head1",
+        "jsc.guide.call_costs.table1_head2",
+        "jsc.guide.call_costs.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_10_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_11_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_12_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_12_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_13_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_13_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.call_costs.table1_14_1"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_14_2"
+          },
+          {
+            "words": "jsc.guide.call_costs.table1_14_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.call_costs.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.call_costs.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.call_costs.table2",
+      "heads": [
+        "jsc.guide.call_costs.table2_head1",
+        "jsc.guide.call_costs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Program.SetName(name)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Name, Program.Args, Program.Current"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Exit(code)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.OnMessage(handler)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Start(path)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Shell(line)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Id, Process.Name, Process.Host"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Running"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.ExitCode"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Wait()"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Kill()"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Output()"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Send(number, text)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Start(action)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Sleep, Thread.Yield, Thread.Join, Thread.Stop"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Id, Thread.Current"
+          },
+          {
+            "words": "jsc.guide.call_costs.table2_16_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.call_costs.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.call_costs.table3",
+      "heads": [
+        "jsc.guide.call_costs.table3_head1",
+        "jsc.guide.call_costs.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Computer.Name, Cpu, Os, RamMb, FreeRamMb, Online"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Disks, Programs, Processes"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Online, Network.Current, Network.Computer(name)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Capacity, Network.Used, Network.Total(name)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Computers, Network.Find(name), Network.Servers"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Start(path)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Shell(line)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Send(number, text)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Processes()"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Computers"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Send(number, text)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.OnMessage(handler)"
+          },
+          {
+            "words": "jsc.guide.call_costs.table3_12_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.call_costs.fix1",
+          "problem": "jsc.guide.call_costs.problem1"
+        },
+        {
+          "fix": "jsc.guide.call_costs.fix2",
+          "problem": "jsc.guide.call_costs.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:credits_per_tick",
+        "jsc:what_operations_are"
+      ]
+    }
+  ],
+  "id": "jsc:call_costs",
+  "order": 376,
+  "section": "jsc:credits_and_costs",
+  "title": "jsc.guide.call_costs.title"
+}

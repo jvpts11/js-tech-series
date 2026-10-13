@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.hardware.CaseBays;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -26,6 +27,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,14 +51,25 @@ final class ComputerHardware {
      */
     private boolean powered;
     private boolean dirty = true;
+    /** The part each slot held when it last changed, so the one that comes out can be named after it has gone. */
+    private final ItemStack[] seated;
 
     ComputerHardware(final AbstractComputerBlockEntity machine, final ComputerHardwareLayout layout) {
         this.machine = machine;
         this.layout = layout;
+        this.seated = new ItemStack[layout.totalSlots()];
+        Arrays.fill(this.seated, ItemStack.EMPTY);
         this.handler = new ItemStackHandler(layout.totalSlots()) {
             @Override
             protected void onContentsChanged(final int slot) {
                 ComputerHardware.this.dirty = true;
+                final ItemStack before = ComputerHardware.this.seated[slot];
+                final ItemStack now = getStackInSlot(slot);
+                ComputerHardware.this.seated[slot] = now.copy();
+                // A part out of its slot, or swapped for another, is a part taken out of the machine.
+                if (!before.isEmpty() && (now.isEmpty() || !ItemStack.isSameItem(before, now))) {
+                    ComputerHardware.this.machine.partTaken(slot, before);
+                }
                 ComputerHardware.this.machine.hardwareChanged();
             }
 
@@ -109,8 +122,23 @@ final class ComputerHardware {
 
     void load(final CompoundTag tag, final HolderLookup.Provider registries, final String key) {
         if (tag.contains(key)) {
-            this.handler.deserializeNBT(registries, tag.getCompound(key));
+            /*
+             * The handler takes its size from what was saved, and a machine saved before its layout grew (the bays
+             * came after the disks) would come back short of the new slots. Each part keeps its own slot number, so
+             * reading the old parts into a handler of today's size puts every one back where it was.
+             */
+            final CompoundTag saved = tag.getCompound(key).copy();
+            saved.putInt("Size", this.layout.totalSlots());
+            this.handler.deserializeNBT(registries, saved);
+            for (int slot = 0; slot < this.seated.length; slot++) {
+                this.seated[slot] = this.handler.getStackInSlot(slot).copy();
+            }
         }
+    }
+
+    /** How many of the layout's 5.25-inch bays the case really has, by the era of the case. */
+    int caseBays(final HardwareEra caseEra) {
+        return Math.min(this.layout.bayCount(), CaseBays.of(caseEra));
     }
 
     /** What the whole machine can hold, in mB-equivalent, or nothing when the parts do not make a computer. */
@@ -253,6 +281,13 @@ final class ComputerHardware {
                 disks.add(disk.spec());
             }
         }
-        return new ComputerBuild(motherboard.spec(), cpus, pcieCards, rams, psu.spec(), disks);
+        // The disks in the case's hot-swap bays, which hold, draw and run as the board's do.
+        final List<DiskSpec> frontDisks = new ArrayList<>();
+        for (int bay = 0; bay < this.machine.frontDiskSlots(); bay++) {
+            if (this.machine.frontDisk(bay).getItem() instanceof DiskItem disk) {
+                frontDisks.add(disk.spec());
+            }
+        }
+        return new ComputerBuild(motherboard.spec(), cpus, pcieCards, rams, psu.spec(), disks, frontDisks);
     }
 }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.operation;
 
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Utf8Text;
 import java.util.Arrays;
 import java.util.List;
@@ -58,6 +59,11 @@ public record OperationFailure(String key, List<String> arguments) {
     /** A reason under that key, with the things that fill its holes. */
     public static OperationFailure of(final String key, final String... arguments) {
         return new OperationFailure(key, Arrays.asList(arguments));
+    }
+
+    /** A reason said by that sentence, with the things that fill its holes. */
+    public static OperationFailure of(final TextKey sentence, final String... arguments) {
+        return of(sentence.key(), arguments);
     }
 
     /** Whether there is a reason to show at all. */

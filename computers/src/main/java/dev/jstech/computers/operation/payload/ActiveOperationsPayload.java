@@ -35,10 +35,11 @@ public record ActiveOperationsPayload(List<OperationRecord> operations, int scSl
 
     /*
      * Copied, because this is built from the machine's own live list of what it is running and then written to
-     * the network while the machine goes on running it. What it hands the client cannot change afterwards.
+     * the network while the machine goes on running it. What it hands the client cannot change afterwards. Cut to
+     * the first MAX, oldest first: a list longer than its cap is not cut on the way but drops the player watching.
      */
     public ActiveOperationsPayload {
-        operations = List.copyOf(operations);
+        operations = List.copyOf(operations.size() > MAX ? operations.subList(0, MAX) : operations);
     }
 
     @Override

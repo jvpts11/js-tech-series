@@ -6,6 +6,8 @@
  * This file is part of J's Core.
  */
 /**
- * Configuration system: whitelist-based, range-validated, server-authoritative.
+ * Settings files: a {@code ConfigFile} declares one, with each setting a {@code ConfigKey} written through a codec
+ * and held to a range or a list of words, and {@code ConfigFiles} puts it where its side reads it. The formats are in
+ * the {@code format} package: TOML, JSON, JSON5, YAML and NBT.
  */
 package dev.jstech.core.config;

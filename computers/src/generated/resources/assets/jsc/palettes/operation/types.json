@@ -1,0 +1,7 @@
+{
+  "destroy": "#FFD1495B",
+  "move": "#FF2EA043",
+  "read": "#FF3A6AE0",
+  "upkeep": "#FF9098A8",
+  "write": "#FFE0A020"
+}

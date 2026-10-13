@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.client.os.CodeFileReplies;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -19,11 +21,10 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
-import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
-import java.nio.charset.StandardCharsets;
-import java.util.Locale;
+import dev.jstech.core.text.Text;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -33,12 +34,12 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.NET_ROOT;
 import static dev.jstech.computers.operation.payload.files.FileAccess.commitMedia;
-import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
+import static dev.jstech.computers.operation.payload.files.FileAccess.kindOf;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaFreeWeight;
-import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaSubPath;
 import static dev.jstech.computers.operation.payload.files.FileAccess.netDos;
 import static dev.jstech.computers.operation.payload.files.FileAccess.netShell;
+import static dev.jstech.computers.operation.payload.files.FileAccess.volumeOf;
 
 /**
  * The payloads that save, delete and rename files and create folders.
@@ -65,14 +66,14 @@ public final class FileEditPayloads {
     private static void handleSaveFile(final SaveFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
         boolean ok = false;
-        String msg = "No computer";
+        Text msg = FileSavedPayload.NO_COMPUTER.text();
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             final String path = payload.path();
             if (LiveSessionFiles.names(path)) {
                 // A file of a by-hand install: what is written is what the steps after it read.
-                final boolean written = LiveSessionFiles.write(computer, path, payload.content());
-                PacketDistributor.sendToPlayer(player,
-                        new FileSavedPayload(written, written ? "Saved " + path : "No live medium is booted"));
+                final Text refused = LiveSessionFiles.write(computer, path, payload.content());
+                PacketDistributor.sendToPlayer(player, new FileSavedPayload(refused == null,
+                        refused == null ? FileSavedPayload.SAVED.with(path) : refused));
                 return;
             }
             if (path.startsWith(NET_ROOT)) {
@@ -81,32 +82,22 @@ public final class FileEditPayloads {
                 final ICliComputer.FsResult written =
                         shell == null ? null : shell.writeFile(netDos(path), payload.content());
                 PacketDistributor.sendToPlayer(player, new FileSavedPayload(written != null && written.ok(),
-                        written == null ? "No shell" : written.ok() ? "Saved " + path : written.message()));
+                        written == null ? FileSavedPayload.NO_SHELL.text()
+                                : written.ok() ? FileSavedPayload.SAVED.with(path) : written.message()));
                 return;
             }
             final boolean media = path.startsWith("media:");
-            final ItemStack vol =
-                    media ? mediaStackFor(level, computer, path) : computer.systemDisk();
+            final ItemStack vol = volumeOf(level, computer, path);
             final String real = media ? mediaSubPath(path) : path;
-            final FilesystemKind kind = media
-                    ? FilesystemKind.HIERARCHICAL
-                    : filesystemKindOf(computer);
-            final int dot = real.lastIndexOf('.');
-            final String ext = dot >= 0 && dot < real.length() - 1
-                    ? real.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-            final FileType type = FileType.of(ext);
+            final FilesystemKind kind = kindOf(computer, path);
+            final FileType type = FileType.ofPath(real);
             if (vol.isEmpty()
                     || kind == FilesystemKind.NONE) {
-                msg = media ? "No medium" : "No system disk";
-            } else if (!type.userEditable()) {
-                msg = "." + type.extension() + " is read-only";
+                msg = (media ? FileSavedPayload.NO_MEDIUM : FileSavedPayload.NO_SYSTEM_DISK).text();
+            } else if (!type.userEditable() && !type.writtenByPrograms()) {
+                msg = FileSavedPayload.TYPE_READ_ONLY.with(type.extension());
             } else {
-                final long oldWeight = DiskFilesystem
-                        .read(vol, real)
-                        .map(c -> FsPaths.sizeMbEq(
-                                c.getBytes(StandardCharsets.UTF_8).length,
-                                DiskFilesystem.eraOf(vol)))
-                        .orElse(0L);
+                final long oldWeight = DiskFilesystem.weightOf(vol, real);
                 final long free = media ? mediaFreeWeight(vol) + oldWeight
                         : computer.systemDiskFreeWeight() + oldWeight;
                 final var result = DiskFilesystem.write(
@@ -114,16 +105,20 @@ public final class FileEditPayloads {
                 switch (result) {
                     case OK -> {
                         if (media) {
+                            if (vol.is(ComputingModule.FLOPPY_DISK.get())) {
+                                JscEvents.award(player, JscEvents.FLOPPY_SAVED);
+                            }
                             commitMedia(level, computer, path);
                         } else {
                             computer.setChanged();
                         }
                         ok = true;
-                        msg = "Saved " + path;
+                        msg = FileSavedPayload.SAVED.with(path);
                     }
-                    case INVALID_PATH -> msg = "Invalid file name";
-                    case DISK_FULL -> msg = "Not enough free space";
-                    case READ_ONLY -> msg = "Read-only";
+                    case INVALID_PATH -> msg = FileSavedPayload.INVALID_NAME.text();
+                    case DISK_FULL -> msg = FileSavedPayload.NO_ROOM.text();
+                    case TOO_LARGE -> msg = FileSavedPayload.TOO_LARGE.with(StoredFile.MOST_CHARS);
+                    case READ_ONLY -> msg = FileSavedPayload.READ_ONLY.text();
                 }
             }
         }
@@ -149,15 +144,12 @@ public final class FileEditPayloads {
             return;
         }
         final boolean media = path.startsWith("media:");
-        final ItemStack vol =
-                media ? mediaStackFor(level, computer, path) : computer.systemDisk();
+        final ItemStack vol = volumeOf(level, computer, path);
         if (vol.isEmpty()) {
             return;
         }
         final String real = media ? mediaSubPath(path) : path;
-        final FilesystemKind kind = media
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
+        final FilesystemKind kind = kindOf(computer, path);
         // Try removing a real file first; if the path is a folder, remove it recursively.
         if (DiskFilesystem.delete(vol, real)
                 || DiskFilesystem.rmdir(vol, real, kind)) {
@@ -182,15 +174,12 @@ public final class FileEditPayloads {
             return;
         }
         final boolean media = path.startsWith("media:");
-        final ItemStack vol =
-                media ? mediaStackFor(level, computer, path) : computer.systemDisk();
+        final ItemStack vol = volumeOf(level, computer, path);
         if (vol.isEmpty()) {
             return;
         }
         final String real = media ? mediaSubPath(path) : path;
-        final FilesystemKind kind = media
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
+        final FilesystemKind kind = kindOf(computer, path);
         if (DiskFilesystem.mkdir(vol, real, kind)) {
             if (media) {
                 commitMedia(level, computer, path);
@@ -212,14 +201,15 @@ public final class FileEditPayloads {
             return;
         }
         final boolean media = oldPath.startsWith("media:");
-        final ItemStack vol =
-                media ? mediaStackFor(level, computer, oldPath) : computer.systemDisk();
+        // A name is changed within its own place: a file on a medium keeps to that medium, a disk's file to the disk.
+        if (media != newPath.startsWith("media:")) {
+            return;
+        }
+        final ItemStack vol = volumeOf(level, computer, oldPath);
         if (vol.isEmpty()) {
             return;
         }
-        final FilesystemKind kind = media
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
+        final FilesystemKind kind = kindOf(computer, oldPath);
         // rename() re-keys a real file or directory in place (rejecting .dat projections).
         if (DiskFilesystem.rename(vol,
                 media ? mediaSubPath(oldPath) : oldPath,

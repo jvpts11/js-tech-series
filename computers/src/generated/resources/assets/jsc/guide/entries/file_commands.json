@@ -1,0 +1,139 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.file_commands.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_commands.text2"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "player@ubuntu:~$ ",
+          "text": "cat",
+          "typed": true
+        },
+        {
+          "text": "cat: usage: cat <file>"
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Ubuntu"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_commands.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.file_commands.step1",
+        "jsc.guide.file_commands.step2",
+        "jsc.guide.file_commands.step3"
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/ls"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/cd"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/pwd"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/cat"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/mkdir"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/touch"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/write"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/cp"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/mv"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/rm"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/rmdir"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/run"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/du"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/df"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_commands.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/mkfs.ext4"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.file_commands.warning1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.file_commands.fix1",
+          "problem": "jsc.guide.file_commands.problem1"
+        },
+        {
+          "fix": "jsc.guide.file_commands.fix2",
+          "problem": "jsc.guide.file_commands.problem2"
+        },
+        {
+          "fix": "jsc.guide.file_commands.fix3",
+          "problem": "jsc.guide.file_commands.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:file_tree",
+        "jsc:text_tools"
+      ]
+    }
+  ],
+  "id": "jsc:file_commands",
+  "order": 194,
+  "section": "jsc:shell_commands",
+  "title": "jsc.guide.file_commands.title"
+}

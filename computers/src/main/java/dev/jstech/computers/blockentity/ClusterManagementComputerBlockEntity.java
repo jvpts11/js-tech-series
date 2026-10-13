@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
+import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -25,24 +26,29 @@ import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerRouterElement;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -63,7 +69,8 @@ import java.util.Set;
  * goes through the same per-node hosts a player reaches rack by rack, with the same gates: a shortcut,
  * never a loophole. A cluster works without one.
  */
-public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockEntity implements IComputerTerminalHost {
+public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerBlockEntity
+        implements IComputerTerminalHost, IAssemblyComputer {
 
     // The same consumer/workstation slot layout as a Personal Computer.
     public static final int MOTHERBOARD_SLOT = 0;
@@ -75,12 +82,16 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
     public static final int PSU_SLOT = 10;
     public static final int DISK_SLOTS_START = 11;
     public static final int DISK_SLOTS = 2;
-    public static final int HARDWARE_SLOTS = 13;
+    /** The 5.25-inch bays, as many as the most any era's case has; the case says how many it really has. */
+    public static final int BAY_SLOTS_START = 13;
+    public static final int BAY_SLOTS = 2;
+    public static final int HARDWARE_SLOTS = 15;
     public static final int STORAGE_SLOTS = 18;
 
     private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
             MOTHERBOARD_SLOT, CPU_SLOT, 1, RAM_SLOTS_START, RAM_SLOTS,
-            PCIE_SLOTS_START, PCIE_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, HARDWARE_SLOTS);
+            PCIE_SLOTS_START, PCIE_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, BAY_SLOTS_START, BAY_SLOTS,
+            HARDWARE_SLOTS);
 
     /** How long writing a system to a node takes on a 2 GHz node; scaled by the node's own CPU. */
     private static final int INSTALL_TICKS_AT_2GHZ = 280;
@@ -124,6 +135,15 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         return super.isValidForSlot(slot, stack);
     }
 
+    @Override
+    @Nullable
+    public TextKey refusal(final int slot, final ItemStack stack) {
+        final TextKey why = super.refusal(slot, stack);
+        // The card itself fits; what keeps it out is the one already seated.
+        return why == PartRefusals.CARD_BUS && stack.getItem() instanceof ClusterInterfaceCardItem
+                && isValidPcieCard(stack) ? PartRefusals.ONE_CLUSTER_CARD : why;
+    }
+
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final ClusterManagementComputerBlockEntity be) {
         if (level instanceof ServerLevel serverLevel) {
@@ -142,6 +162,15 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
     @Override
     protected void unregisterNode(final NetworkSystem system, final NetworkUuid network) {
         system.unregisterPersonalComputer(network, nodeUuid());
+    }
+
+    /* An Optical Network Card put in or taken out opens or closes the machine's fibre port. */
+    @Override
+    protected void partsChanged() {
+        super.partsChanged();
+        if (level != null && !level.isClientSide()) {
+            OpticalPort.set(level, List.of(worldPosition), OpticalPort.OPTICAL, OpticalPort.holdsCard(currentBuild()));
+        }
     }
 
     // the card
@@ -183,7 +212,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         }
         double factor = 1.0;
         if (getHardware().getStackInSlot(MOTHERBOARD_SLOT).getItem() instanceof MotherboardItem board) {
-            final PcieGeneration slot = board.spec().pcieGeneration();
+            final PcieGeneration slot = board.spec().slotFor(card.bus());
             factor = card.bus().bandwidthFactorIn(slot);
         }
         return Math.max(1, (int) Math.floor(card.parallelNodes() * factor));
@@ -207,7 +236,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
             return hubs;
         }
         for (final NetworkSystem.SupercomputerNode node : NetworkSystem.get(serverLevel).supercomputersOf(networkUuid())) {
-            if (serverLevel.getBlockEntity(BlockPos.of(node.pos())) instanceof HbwInterfaceBlockEntity hub) {
+            if (Loaded.blockEntity(serverLevel, BlockPos.of(node.pos())) instanceof HbwInterfaceBlockEntity hub) {
                 hubs.add(hub);
             }
         }
@@ -216,7 +245,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     /** The name a supercomputer goes by: the player's, or its number in registry order (SC-1, SC-2 ...). */
     public static String supercomputerName(final HbwInterfaceBlockEntity hub, final int index) {
-        return hub.customName().isEmpty() ? "SC-" + (index + 1) : hub.customName();
+        return hub.customName().isEmpty()
+                ? GameText.resolve(ClusterJobTexts.SUPERCOMPUTER_NAME.with(index + 1)) : hub.customName();
     }
 
     /** A datacenter section the machine can address, with the label the router gives it. */
@@ -242,11 +272,13 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         final boolean refresh = now != routersRefreshedAt;
         routersRefreshedAt = now;
         for (final ServerRouterElement router : system.routersOf(networkUuid())) {
-            if (serverLevel.getBlockEntity(BlockPos.of(router.pos())) instanceof ServerRouterBlockEntity routerBe) {
+            if (Loaded.blockEntity(serverLevel, BlockPos.of(router.pos()))
+                    instanceof ServerRouterBlockEntity routerBe) {
                 if (refresh) {
                     routerBe.recomputeNow();
                 }
-                final String routerName = routerBe.customName().isEmpty() ? "Router" : routerBe.customName();
+                final String routerName = routerBe.customName().isEmpty()
+                        ? GameText.resolve(ClusterJobTexts.ROUTER_NAME) : routerBe.customName();
                 for (final DatacenterSection section : routerBe.sections()) {
                     final String custom = routerBe.sectionName(section.face());
                     refs.add(new SectionRef(BlockPos.of(router.pos()), section.face(), custom.isEmpty()
@@ -259,7 +291,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     @Nullable
     public HbwInterfaceBlockEntity supercomputerAt(final BlockPos anchor) {
-        return level != null && level.getBlockEntity(anchor) instanceof HbwInterfaceBlockEntity hub ? hub : null;
+        return level != null && Loaded.blockEntity(level, anchor) instanceof HbwInterfaceBlockEntity hub ? hub : null;
     }
 
     @Nullable
@@ -294,7 +326,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
              * off has left the network, and must still be listed so the manager can power it back on.
              */
             for (final long rackPos : section.section().rackPositions()) {
-                if (serverLevel.getBlockEntity(BlockPos.of(rackPos)) instanceof ServerRackBlockEntity rack) {
+                if (Loaded.blockEntity(serverLevel, BlockPos.of(rackPos)) instanceof ServerRackBlockEntity rack) {
                     for (final int row : rack.computerSlots()) {
                         nodes.add(new NodeRef(rack.getBlockPos(), row));
                     }
@@ -308,7 +340,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
     public Map<NodeRef, IOsHost> hostsOf(final ClusterRef ref) {
         final Map<NodeRef, IOsHost> hosts = new LinkedHashMap<>();
         for (final NodeRef node : nodesOf(ref)) {
-            if (level != null && level.getBlockEntity(node.rack()) instanceof ServerRackBlockEntity rack) {
+            if (level != null && Loaded.blockEntity(level, node.rack()) instanceof ServerRackBlockEntity rack) {
                 hosts.put(node, rack.unitHost(node.row()));
             }
         }
@@ -317,7 +349,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     @Nullable
     private ServerRackBlockEntity rackAt(final BlockPos pos) {
-        return level != null && level.getBlockEntity(pos) instanceof ServerRackBlockEntity rack ? rack : null;
+        return level != null && Loaded.blockEntity(level, pos) instanceof ServerRackBlockEntity rack ? rack : null;
     }
 
     // install media: the discs in the readers linked to this machine
@@ -327,17 +359,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     @Nullable
     public Medium medium(final MediaKind kind) {
-        if (level == null) {
-            return null;
-        }
-        for (final long endpoint : linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == kind && reader.insertedPayload() != null) {
-                final ResourceLocation id = reader.insertedPayload();
-                return new Medium(id, labelFor(kind, id));
-            }
-        }
-        return null;
+        final IMediaDrive drive = level == null ? null : MachineMedia.of(this, level).installing(kind);
+        return drive == null ? null : new Medium(drive.payload(), labelFor(kind, drive.payload()));
     }
 
     private static String labelFor(final MediaKind kind, final ResourceLocation id) {
@@ -367,13 +390,14 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         return changed;
     }
 
-    /** Flips one node's bay; the node must be a computer in a cabinet the card reaches. */
-    public boolean toggleNode(final BlockPos rackPos, final int row) {
-        final ServerRackBlockEntity rack = rackAt(rackPos);
-        if (rack == null || !reaches(rack.rackType()) || !rack.computerSlots().contains(row)) {
+    /** Flips one node's bay; the node must be one of the cluster's, a computer in a cabinet the card reaches. */
+    public boolean toggleNode(final ClusterRef ref, final NodeRef node) {
+        final ServerRackBlockEntity rack = rackAt(node.rack());
+        if (rack == null || !reaches(rack.rackType()) || !rack.computerSlots().contains(node.row())
+                || !nodesOf(ref).contains(node)) {
             return false;
         }
-        rack.toggleBayPower(row);
+        rack.toggleBayPower(node.row());
         return true;
     }
 
@@ -409,7 +433,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         final ClusterRef cluster;
         final List<NodeRef> queue;
         final List<Lane> lanes = new ArrayList<>();
-        final List<String> skippedNames = new ArrayList<>();
+        final List<Text> skippedNames = new ArrayList<>();
         int done;
         int total;
         boolean cancelled;
@@ -470,7 +494,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     @Nullable
     private InstallJob job;
-    private String lastJobSummary = "";
+    private Text lastJobSummary = Text.EMPTY;
 
     @Nullable
     public InstallJob job() {
@@ -478,7 +502,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
     }
 
     /** The one-line outcome of the last job, for the status bar and the shell. */
-    public String lastJobSummary() {
+    public Text lastJobSummary() {
         return lastJobSummary;
     }
 
@@ -486,7 +510,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
      * Starts a bulk install on a cluster from the medium in a linked reader. Returns a status line:
      * the job started, or why it did not.
      */
-    public String startJob(final ClusterRef ref, final JobKind kind) {
+    public Text startJob(final ClusterRef ref, final JobKind kind) {
         return startJob(ref, kind, null);
     }
 
@@ -494,38 +518,45 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
      * Starts a bulk install on the given rows of a cluster (every row when {@code only} is null).
      * Returns a status line: the job started, or why it did not.
      */
-    public String startJob(final ClusterRef ref, final JobKind kind, @Nullable final List<NodeRef> only) {
+    public Text startJob(final ClusterRef ref, final JobKind kind, @Nullable final List<NodeRef> only) {
         if (!managerReady()) {
-            return "no cluster interface card";
+            return ClusterJobTexts.NO_CARD.text();
         }
         if (job != null) {
-            return "a job is already running";
+            return ClusterJobTexts.ALREADY_RUNNING.text();
         }
         if (!reaches(ref.kind())) {
-            return "this card does not reach that cluster";
+            return ClusterJobTexts.OUT_OF_REACH.text();
         }
         final Medium medium = medium(kind == JobKind.SYSTEM ? MediaKind.OS_INSTALL : MediaKind.PROGRAM_INSTALL);
         if (medium == null) {
-            return kind == JobKind.SYSTEM ? "no system disc in a linked reader" : "no program disc in a linked reader";
+            return (kind == JobKind.SYSTEM ? ClusterJobTexts.NO_SYSTEM_DISC : ClusterJobTexts.NO_PROGRAM_DISC).text();
         }
         if (kind == JobKind.SYSTEM) {
             final OsDef os = OsRegistry.getOs(medium.id());
             if (os == null || os.installMode() != InstallMode.GUIDED) {
-                return "that system installs by hand from its own shell";
+                return ClusterJobTexts.INSTALLS_BY_HAND.text();
             }
         } else {
             final ProgramSpec program = OsRegistry.getProgram(medium.id());
             if (program == null || program.preinstalled()) {
-                return "that disc carries nothing to install";
+                return ClusterJobTexts.NOTHING_TO_INSTALL.text();
             }
         }
-        final List<NodeRef> targets = only != null ? only : nodesOf(ref);
+        // Rows named one by one come from the player's screen, so only those that are the cluster's own are taken.
+        final List<NodeRef> members = nodesOf(ref);
+        final List<NodeRef> targets = only == null ? members : only.stream().filter(members::contains).toList();
         if (targets.isEmpty()) {
-            return "no nodes in that cluster";
+            return ClusterJobTexts.NO_NODES.text();
         }
         job = new InstallJob(kind, medium, ref, targets);
         setChanged();
-        return "installing " + medium.label() + " on " + targets.size() + " node" + (targets.size() == 1 ? "" : "s");
+        return ClusterJobTexts.INSTALLING.with(medium.label(), nodes(targets.size()));
+    }
+
+    /* A count of nodes, said as one or as many. */
+    private static Text nodes(final int count) {
+        return (count == 1 ? ClusterJobTexts.ONE_NODE : ClusterJobTexts.NODES).with(count);
     }
 
     /** Stops the job after the nodes being written right now; nothing queued is touched. */
@@ -548,15 +579,16 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         while (j.lanes.size() < parallelLanes() && !j.queue.isEmpty()) {
             final NodeRef node = j.queue.remove(0);
             final ServerRackBlockEntity rack = rackAt(node.rack());
-            if (rack == null) {
-                j.skippedNames.add("missing rack");
+            // A job read back from a save names its rows as they were; a row the cabinet no longer seats is skipped.
+            if (rack == null || !rack.computerSlots().contains(node.row())) {
+                j.skippedNames.add(ClusterJobTexts.MISSING_RACK.text());
                 continue;
             }
             final IOsHost host = rack.unitHost(node.row());
             final String name = nodeName(rack, node.row());
-            final String skip = skipReason(j, host, rack, node.row());
+            final TextKey skip = skipReason(j, host, rack, node.row());
             if (skip != null) {
-                j.skippedNames.add(name + " (" + skip + ")");
+                j.skippedNames.add(ClusterJobTexts.SKIPPED.with(name, skip));
                 continue;
             }
             j.lanes.add(new Lane(node, name, installTicks(host), installTicks(host)));
@@ -574,44 +606,46 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
             if (rack != null && apply(j, rack.unitHost(lane.node().row()))) {
                 j.done++;
             } else {
-                j.skippedNames.add(lane.name() + " (changed while writing)");
+                j.skippedNames.add(ClusterJobTexts.SKIPPED.with(lane.name(), ClusterJobTexts.CHANGED));
             }
         }
         if (j.finished()) {
-            lastJobSummary = (j.cancelled ? "cancelled: " : "done: ") + j.medium.label() + " on " + j.done
-                    + " node" + (j.done == 1 ? "" : "s") + (j.skipped() > 0 ? ", " + j.skipped() + " skipped" : "");
+            final Text summary = (j.cancelled ? ClusterJobTexts.CANCELLED_ON : ClusterJobTexts.DONE_ON)
+                    .with(j.medium.label(), nodes(j.done));
+            lastJobSummary = j.skipped() > 0 ? ClusterJobTexts.WITH_SKIPPED.with(summary, j.skipped()) : summary;
             job = null;
         }
-        setChanged();
+        // Nothing to mark: an install job and its summary are transient and never saved.
     }
 
     /** Why a node is left out of a job, or null when it takes the install. */
     @Nullable
-    private static String skipReason(final InstallJob j, final IOsHost host, final ServerRackBlockEntity rack, final int row) {
+    private static TextKey skipReason(final InstallJob j, final IOsHost host, final ServerRackBlockEntity rack,
+                                      final int row) {
         if (!rack.bayPowerOn(row)) {
-            return "bay off";
+            return ClusterJobTexts.BAY_OFF;
         }
         if (j.kind == JobKind.SYSTEM) {
             // "To all" means bring every node to this system: one already running it is left alone.
-            return j.medium.id().equals(host.installedOsId()) ? "already installed" : null;
+            return j.medium.id().equals(host.installedOsId()) ? ClusterJobTexts.ALREADY_INSTALLED : null;
         }
         final ProgramSpec program = OsRegistry.getProgram(j.medium.id());
         if (program == null) {
-            return "unknown program";
+            return ClusterJobTexts.UNKNOWN_PROGRAM;
         }
         if (host.installedOsId() == null || host.console() == null) {
-            return "no system";
+            return ClusterJobTexts.NO_SYSTEM;
         }
         if (host.console().isInstalled(program.id().toString())) {
-            return "already installed";
+            return ClusterJobTexts.ALREADY_INSTALLED;
         }
         if (!OsRegistry.canInstallProgram(host.installedOsId(), program.id(), host.maxCpuMhz(),
                 host.totalVramMb(), host.systemDiskFreeMb())) {
-            return "does not meet the program's requirements";
+            return ClusterJobTexts.REQUIREMENTS;
         }
         final HardwareEra era = host.displayEra();
         if (program.minEra() != HardwareEra.VINTAGE && (era == null || !OsGating.canInstall(program.minEra(), era))) {
-            return "too old for the program";
+            return ClusterJobTexts.TOO_OLD;
         }
         return null;
     }
@@ -650,18 +684,15 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
             return custom;
         }
         final RackChassis chassis = ServerItem.chassisOf(stack);
-        return chassis == RackChassis.SUPERCOMPUTER_NODE ? "node" : "server";
+        return GameText.resolve(chassis != null && chassis.isSupercomputerNode()
+                ? ClusterJobTexts.NODE_KIND : ClusterJobTexts.SERVER_KIND);
     }
 
     // local storage, like a PC: what is on the installed disks
 
     @Override
     public LocalStore localStore() {
-        final List<ItemStack> disks = new ArrayList<>(DISK_SLOTS);
-        for (int i = 0; i < DISK_SLOTS; i++) {
-            disks.add(getHardware().getStackInSlot(DISK_SLOTS_START + i));
-        }
-        return new LocalStore(disks, this::setChanged);
+        return new LocalStore(storeDisks(), this::setChanged);
     }
 
     private long netStorageItems() {
@@ -735,65 +766,73 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         return NetworkSystem.get(serverLevel).serversOf(networkUuid()).size();
     }
 
-    // screen sync
+    /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */
+    private final DerivedInt assemblyRunning = fields().derived("AssemblyRunning", this::isRunning).toMenu();
+    private final DerivedInt assemblyBuildValid = fields().derived("AssemblyBuildValid", this::buildValid).toMenu();
+    private final DerivedInt assemblyCapacity = fields().derived("AssemblyCapacity",
+            () -> (int) Math.min(Integer.MAX_VALUE, capacity())).toMenu();
+    private final DerivedInt assemblyRamBuffer = fields().derived("AssemblyRamBuffer",
+            () -> (int) Math.min(Integer.MAX_VALUE, ramBuffer())).toMenu();
+    private final DerivedInt assemblyAutoStart = fields().derived("AssemblyAutoStart", this::isAutoStart).toMenu();
+    private final DerivedInt assemblyOnNetwork = fields().derived("AssemblyOnNetwork",
+            () -> networkUuid() != null).toMenu();
+    private final DerivedInt assemblyHasCard = fields().derived("AssemblyHasCard",
+            () -> clusterCard() != null).toMenu();
+    private final DerivedInt assemblySupercomputers = fields().derived("AssemblySupercomputers",
+            () -> supercomputers().size()).toMenu();
+    private final DerivedInt assemblyDatacenters = fields().derived("AssemblyDatacenters",
+            () -> datacenterSections().size()).toMenu();
+    private final DerivedInt assemblyLanes = fields().derived("AssemblyLanes", this::parallelLanes).toMenu();
+    private final DerivedInt assemblyManagerInstalled = fields().derived("AssemblyManagerInstalled",
+            () -> console() != null && console().isInstalled(Programs.CLUSTER_MANAGER.toString())).toMenu();
 
-    public static final int DATA_RUNNING = 0;
-    public static final int DATA_BUILD_VALID = 1;
-    public static final int DATA_CAPACITY = 2;
-    public static final int DATA_RAM_BUFFER = 3;
-    public static final int DATA_AUTOSTART = 4;
-    public static final int DATA_ON_NETWORK = 5;
-    public static final int DATA_HAS_CARD = 6;
-    public static final int DATA_SUPERCOMPUTERS = 7;
-    public static final int DATA_DATACENTERS = 8;
-    public static final int DATA_LANES = 9;
-    public static final int DATA_MANAGER_INSTALLED = 10;
-    public static final int DATA_COUNT = DATA_MANAGER_INSTALLED + 1;
-
-    private final int[] clientData = new int[DATA_COUNT];
-
-    private int computeData(final int index) {
-        return switch (index) {
-            case DATA_RUNNING -> isRunning() ? 1 : 0;
-            case DATA_BUILD_VALID -> buildValid() ? 1 : 0;
-            case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
-            case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
-            case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_ON_NETWORK -> networkUuid() != null ? 1 : 0;
-            case DATA_HAS_CARD -> clusterCard() != null ? 1 : 0;
-            case DATA_SUPERCOMPUTERS -> supercomputers().size();
-            case DATA_DATACENTERS -> datacenterSections().size();
-            case DATA_LANES -> parallelLanes();
-            case DATA_MANAGER_INSTALLED -> console() != null
-                    && console().isInstalled(Programs.CLUSTER_MANAGER.toString())
-                    ? 1 : 0;
-            default -> 0;
-        };
+    @Override
+    public boolean assemblyRunning() {
+        return assemblyRunning.isSet();
     }
 
-    private final ContainerData dataAccess = new ContainerData() {
-        @Override
-        public int get(final int index) {
-            if (level != null && level.isClientSide()) {
-                return index >= 0 && index < clientData.length ? clientData[index] : 0;
-            }
-            return computeData(index);
-        }
+    @Override
+    public boolean assemblyBuildValid() {
+        return assemblyBuildValid.isSet();
+    }
 
-        @Override
-        public void set(final int index, final int value) {
-            if (index >= 0 && index < clientData.length) {
-                clientData[index] = value;
-            }
-        }
+    @Override
+    public long assemblyCapacity() {
+        return assemblyCapacity.getAsInt();
+    }
 
-        @Override
-        public int getCount() {
-            return DATA_COUNT;
-        }
-    };
+    @Override
+    public long assemblyRamBuffer() {
+        return assemblyRamBuffer.getAsInt();
+    }
 
-    public ContainerData getDataAccess() {
-        return dataAccess;
+    @Override
+    public boolean assemblyAutoStart() {
+        return assemblyAutoStart.isSet();
+    }
+
+    @Override
+    public boolean assemblyOnNetwork() {
+        return assemblyOnNetwork.isSet();
+    }
+
+    public boolean assemblyHasCard() {
+        return assemblyHasCard.isSet();
+    }
+
+    public int assemblySupercomputers() {
+        return assemblySupercomputers.getAsInt();
+    }
+
+    public int assemblyDatacenters() {
+        return assemblyDatacenters.getAsInt();
+    }
+
+    public int assemblyLanes() {
+        return assemblyLanes.getAsInt();
+    }
+
+    public boolean assemblyManagerInstalled() {
+        return assemblyManagerInstalled.isSet();
     }
 }

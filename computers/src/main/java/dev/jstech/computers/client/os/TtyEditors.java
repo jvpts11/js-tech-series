@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.os.edit.ViDialect;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -39,6 +40,27 @@ public final class TtyEditors {
          * changes is the network.
          */
         register("interac", InteracTuiKeys::new);
+        // The Vintage systems' diagnostics take it for the same reason: buttons and a list worked with the keys.
+        register("msd", MsdKeys::new);
+        // MC-DOS's menu shell and System V's PACE, which take the glass to draw screens of their own.
+        register("dosshell", DosShellKeys::new);
+        register("pace", PaceKeys::new);
+        /*
+         * vi is the same engine as vim, wearing a system's own voice: FreeBSD's nvi and UNIX System V's
+         * original. Which of these a hand-over names is the machine's choice, made from the platform it runs
+         * on, not the player's; the verb itself is typed the same on both.
+         */
+        register("vi-freebsd", () -> new VimKeys(ViDialect.NVI));
+        register("vi-unix", () -> new VimKeys(ViDialect.SYSTEM_V));
+        register("ee", EeKeys::new);
+        /*
+         * The help readers that take the glass to show the manuals of the player's game beside the machine's
+         * commands: the DOS family's HELP in its sixteen colours, Linux's info, and man reading a manual's entry on
+         * UNIX and FreeBSD, as their pager.
+         */
+        register("help", DosHelpKeys::new);
+        register("info", InfoKeys::new);
+        register("man", ManualPageKeys::new);
     }
 
     private TtyEditors() {

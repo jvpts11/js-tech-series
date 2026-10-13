@@ -28,6 +28,15 @@ public final class CraftPlanning {
     }
 
     /**
+     * A plan and the way it is to be carried out, as an engine with a planner of its own decides both.
+     *
+     * @param planned the plan, or null when there is none to run
+     * @param routing where its raw materials come from and how much of it runs at once
+     */
+    public record Routed(@Nullable Planned planned, CraftRouting routing) {
+    }
+
+    /**
      * Plans {@code demand} of {@code key}. Returns null when nothing on the network makes it, or when the
      * full quantity cannot be made and {@code partial} is off (or nothing at all can be made).
      */

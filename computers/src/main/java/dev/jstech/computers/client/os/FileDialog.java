@@ -7,23 +7,27 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
+import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
-import dev.jstech.computers.os.DesktopEnvironmentDef;
-import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
+import dev.jstech.core.client.gui.component.ContextMenu;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +36,6 @@ import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
@@ -57,30 +60,40 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     public enum Mode { OPEN_FILE, OPEN_FOLDER, SAVE }
 
     /**
-     * One entry of the kind list: what it says and the extensions it shows, lower-case and without the
-     * dot; none means every file.
+     * One entry of the kind list: what the kind is called and the extensions it shows, lower-case and
+     * without the dot; none means every file.
      */
-    public record Filter(String label, List<String> extensions) {
+    public record Filter(Text name, List<String> extensions) {
 
         public Filter {
             extensions = List.copyOf(extensions);
         }
 
         /** Every file, whatever it is. */
-        public static final Filter ALL = new Filter("All files (*.*)", List.of());
+        public static final Filter ALL = new Filter(FileDialogTexts.ALL_FILES.text(), List.of());
 
         /** Whether a file with {@code ext} is shown under this filter. */
         public boolean admits(final String ext) {
             return this.extensions.isEmpty() || this.extensions.contains(ext.toLowerCase(Locale.ROOT));
         }
 
-        /** A filter for the extensions given, labelled with them: {@code Text (*.txt)}. */
-        public static Filter of(final String name, final String... extensions) {
-            final StringBuilder label = new StringBuilder(name).append(" (");
-            for (int i = 0; i < extensions.length; i++) {
-                label.append(i > 0 ? ", " : "").append("*.").append(extensions[i]);
+        /** What the kind list says: the name with the patterns it shows, {@code Text (*.txt)}. */
+        public Text label() {
+            final StringBuilder patterns = new StringBuilder();
+            for (int i = 0; i < this.extensions.size(); i++) {
+                patterns.append(i > 0 ? ", " : "").append("*.").append(this.extensions.get(i));
             }
-            return new Filter(label.append(')').toString(), List.of(extensions));
+            return FileDialogTexts.FILTER.with(this.name, patterns.isEmpty() ? "*.*" : patterns.toString());
+        }
+
+        /** A filter for the extensions given, labelled with them. */
+        public static Filter of(final Text name, final String... extensions) {
+            return new Filter(name, List.of(extensions));
+        }
+
+        /** A filter for the extensions given, called by a sentence of the program that asks. */
+        public static Filter of(final TextKey name, final String... extensions) {
+            return of(name.text(), extensions);
         }
 
         /** One filter per language the machine knows, its sources by their extensions, then every file. */
@@ -89,7 +102,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             for (final IProgrammingLanguage language : JsCore.languages().all()) {
                 final List<String> extensions = new ArrayList<>(language.sourceExtensions());
                 Collections.sort(extensions);
-                out.add(of(language.displayName(), extensions.toArray(new String[0])));
+                out.add(of(Text.literal(language.displayName()), extensions.toArray(new String[0])));
             }
             out.add(ALL);
             return out;
@@ -109,14 +122,21 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
      * than the windows of the programs that open it, so the program still shows around it.
      */
     private static final int W = 280;
-    private static final int H = 160;
-    private static final int ROW_H = 11;
+    private static final int H = 190;
+    /** A row holds a 16-pixel icon with a pixel to spare, and its words sit in the middle of it. */
+    private static final int ROW_H = 17;
+    private static final int TEXT_DY = 5;
+    /** Where a row's name starts, clear of the icon in front of it. */
+    private static final int NAME_DX = FileIcons.SIZE + 5;
     private static final int PLACES_W = 82;
     private static final int TYPE_W = 78;
     private static final int SIZE_W = 30;
     /** The width of the labels in front of the name and the kind: "File name:" has to fit. */
     private static final int LABEL_W = 54;
     private static final int HISTORY_MAX = 32;
+    /** The right button's menu over the list: as wide and its rows as tall as the file manager's. */
+    private static final int MENU_W = 96;
+    private static final int MENU_ITEM_H = 11;
 
     private final BlockPos host;
     /** The program that opened this window, whose window it sits over and holds. */
@@ -141,7 +161,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     private OsSkin skin = OsSkin.fallback();
     private Mode mode = Mode.OPEN_FILE;
-    private String title = "Open";
+    private Text title = FileDialogTexts.OPEN.text();
     private List<Filter> filters = List.of(Filter.ALL);
     private int filter;
     private Consumer<String> onPick = path -> { };
@@ -155,11 +175,24 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     private final List<DiskFilesPayload.WireVolume> volumes = new ArrayList<>();
     private final List<String> backStack = new ArrayList<>();
     private final List<String> forwardStack = new ArrayList<>();
-    private String message = "";
+    private Text message = Text.EMPTY;
     /** The path Save was pressed on once and would replace, so a second press is the answer. */
     private String replacing = "";
     private long lastClickAt;
     private int lastClickRow = -1;
+    /** The menu the right button opens over the list: a new folder here, and a new name for the row under it. */
+    private final ContextMenu menu = new ContextMenu(MENU_W, MENU_ITEM_H);
+    /** The box a row's new name is typed into, laid over the row's name while it is renamed. */
+    private final TextField renameField;
+    /** The path of the row being renamed, or empty while none is. */
+    private String renaming = "";
+    /** A folder just made here, whose name is taken in hand as soon as the listing shows it. */
+    private String pendingRename = "";
+    /** Where the content was last drawn, which the menu keeps inside. */
+    private int contentX;
+    private int contentY;
+    private int contentW;
+    private int contentH;
 
     public FileDialog(final BlockPos host, final IDesktopApp owner) {
         this.host = host;
@@ -171,46 +204,55 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.addressEdit = this.root.add(new TextField(200).setOnCommit(this::goTyped).setRevertOnEscape(true)
                 .setOnBlur(this::stopAddressEdit));
         this.addressEdit.setVisible(false);
-        this.places = this.root.add(new ListView<>(this::places, ROW_H - 1, this::drawPlace).setOnClick(this::onPlace));
-        this.header = this.root.add(new ColumnHeader(List.of("Name", "Type", "Size")).setSortable(false));
+        this.places = this.root.add(new ListView<>(this::places, ROW_H, this::drawPlace).setOnClick(this::onPlace));
+        this.header = this.root.add(new ColumnHeader(List.of(GameText.resolve(FileDialogTexts.NAME_COLUMN),
+                GameText.resolve(FileDialogTexts.TYPE_COLUMN), GameText.resolve(FileDialogTexts.SIZE_COLUMN)))
+                .setSortable(false));
         this.rows = this.root.add(new ListView<>(this::entries, ROW_H, this::drawEntry).setOnClick(this::onRow));
-        this.nameLabel = this.root.add(new Label(() -> this.mode == Mode.OPEN_FOLDER ? "Folder:" : "File name:", Label.Tone.DIM));
+        this.renameField = this.root.add(new TextField(64).setOnCommit(this::commitRename).setRevertOnEscape(true)
+                .setOnBlur(this::endRename));
+        this.renameField.setVisible(false);
+        this.nameLabel = this.root.add(new Label(() -> GameText.resolve(this.mode == Mode.OPEN_FOLDER
+                ? FileDialogTexts.FOLDER_LABEL : FileDialogTexts.FILE_NAME_LABEL), Label.Tone.DIM));
         this.name = this.root.add(new TextField(120).setOnCommit(value -> confirm()));
-        this.kindLabel = this.root.add(new Label(() -> this.mode == Mode.SAVE ? "Save as:" : "Type:", Label.Tone.DIM));
-        this.kind = this.root.add(new Button(() -> this.filters.get(this.filter).label(), this::cycleFilter).setLabelScale(0.85f));
-        this.newFolder = this.root.add(new Button("New folder", this::makeFolder).setLabelScale(0.85f));
-        this.primary = this.root.add(new Button(this::primaryLabel, this::confirm).setPrimary(true));
-        this.cancel = this.root.add(new Button("Cancel", this::close));
-        this.status = this.root.add(new Label(this::statusText, Label.Tone.DIM));
+        this.kindLabel = this.root.add(new Label(() -> GameText.resolve(this.mode == Mode.SAVE
+                ? FileDialogTexts.SAVE_AS_LABEL : FileDialogTexts.TYPE_LABEL), Label.Tone.DIM));
+        this.kind = this.root.add(new Button(this::filterLabel, this::cycleFilter).setLabelScale(0.85f));
+        this.newFolder = this.root.add(new Button(GameText.resolve(FileDialogTexts.NEW_FOLDER), this::makeFolder)
+                .setLabelScale(0.85f));
+        this.primary = this.root.add(new Button(() -> GameText.resolve(primaryLabel()), this::confirm)
+                .setPrimary(true));
+        this.cancel = this.root.add(new Button(GameText.resolve(FileDialogTexts.CANCEL), this::close));
+        this.status = this.root.add(new Label(() -> GameText.resolve(statusText()), Label.Tone.DIM));
     }
 
     /* Opening it */
 
     /** Opens on {@code start} to pick a file of one of the {@code filters}' kinds; the path chosen goes to {@code onPick}. */
-    public void openFile(final String windowTitle, final String start, final List<Filter> filters,
+    public void openFile(final Text windowTitle, final String start, final List<Filter> filters,
                          final Consumer<String> onPick) {
         show(Mode.OPEN_FILE, windowTitle, start, filters, "", onPick);
     }
 
     /** Opens on {@code start} to pick a folder; the folder chosen goes to {@code onPick}. */
-    public void openFolder(final String windowTitle, final String start, final Consumer<String> onPick) {
+    public void openFolder(final Text windowTitle, final String start, final Consumer<String> onPick) {
         show(Mode.OPEN_FOLDER, windowTitle, start, List.of(Filter.ALL), "", onPick);
     }
 
     /** Opens on {@code start} to pick where to save, with {@code initialName} in the field; the path goes to {@code onPick}. */
-    public void saveAs(final String windowTitle, final String start, final String initialName,
+    public void saveAs(final Text windowTitle, final String start, final String initialName,
                        final List<Filter> filters, final Consumer<String> onPick) {
         show(Mode.SAVE, windowTitle, start, filters, initialName, onPick);
     }
 
-    private void show(final Mode what, final String windowTitle, final String start, final List<Filter> kinds,
+    private void show(final Mode what, final Text windowTitle, final String start, final List<Filter> kinds,
                       final String initialName, final Consumer<String> pick) {
         this.mode = what;
         this.title = windowTitle;
         this.filters = kinds == null || kinds.isEmpty() ? List.of(Filter.ALL) : List.copyOf(kinds);
-        this.filter = 0;
+        this.filter = filterFor(initialName);
         this.onPick = pick;
-        this.message = "";
+        this.message = Text.EMPTY;
         this.replacing = "";
         this.backStack.clear();
         this.forwardStack.clear();
@@ -220,7 +262,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.newFolder.setVisible(what != Mode.OPEN_FILE);
         if (!this.open) {
             this.open = true;
-            DesktopScreen.openDialogFor(this.owner, this);
+            ActiveDesktop.openDialogFor(this.owner, this);
         }
         request(start == null ? "" : start);
         this.root.focus(what == Mode.SAVE ? this.name : this.rows);
@@ -236,7 +278,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         this.open = false;
-        DesktopScreen.closeDialog(this);
+        ActiveDesktop.closeDialog(this);
     }
 
     /** The folder the window is on, as the machine names it. */
@@ -247,6 +289,11 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     /* Where it is */
 
     private void request(final String target) {
+        // A longer path than a disk holds could not even be sent: writing it would drop the player from the game.
+        if (target.length() > FsPaths.MAX_PATH_LENGTH) {
+            this.message = FileDialogTexts.PATH_TOO_LONG.with(FsPaths.MAX_PATH_LENGTH);
+            return;
+        }
         this.dir = target;
         this.listed.clear();
         this.rows.setSelected(-1);
@@ -316,6 +363,17 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.volumes.clear();
         this.volumes.addAll(listing.volumes());
         this.rows.setScroll(0);
+        // A folder made a moment ago is named at once, the way the file manager does it.
+        if (!this.pendingRename.isEmpty()) {
+            final List<Entry> shown = entries();
+            for (int i = 0; i < shown.size(); i++) {
+                if (!shown.get(i).up() && shown.get(i).name().equalsIgnoreCase(this.pendingRename)) {
+                    startRename(i);
+                    break;
+                }
+            }
+            this.pendingRename = "";
+        }
     }
 
     /* The places on the left */
@@ -323,68 +381,59 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     private List<Place> places() {
         final List<Place> out = new ArrayList<>();
         if (this.posix) {
-            out.add(new Place("PLACES", FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(FileDialogTexts.PLACES), FileIcons.Kind.HOME, "", true));
             // Where this system keeps its people, which is not the same place on every Unix.
             final String desktopDir = FilesApp.desktopDirAt(this.host, false);
-            out.add(new Place("Home", FileIcons.Kind.HOME, parentOf(desktopDir), false));
-            out.add(new Place("Desktop", FileIcons.Kind.FOLDER, desktopDir, false));
-            out.add(new Place("progs", FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
-            out.add(new Place("DEVICES", FileIcons.Kind.HOME, "", true));
-            out.add(new Place("Root", FileIcons.Kind.BIN, "", false));
+            out.add(new Place(GameText.resolve(FileDialogTexts.HOME), FileIcons.Kind.HOME, parentOf(desktopDir),
+                    false));
+            out.add(new Place(GameText.resolve(FileDialogTexts.DESKTOP), FileIcons.Kind.FOLDER, desktopDir, false));
+            out.add(new Place(CodeWorkspace.HOME, FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
+            out.add(new Place(GameText.resolve(FileDialogTexts.DEVICES_HEADING), FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(FileDialogTexts.ROOT), FileIcons.Kind.BIN, "", false));
         } else {
-            out.add(new Place("QUICK ACCESS", FileIcons.Kind.HOME, "", true));
-            out.add(new Place("Desktop", FileIcons.Kind.FOLDER, SystemLayout.DESKTOP_DIR, false));
-            out.add(new Place("progs", FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
-            out.add(new Place("THIS PC", FileIcons.Kind.HOME, "", true));
-            out.add(new Place("Local Disk (C:)", FileIcons.Kind.BIN, "", false));
+            final boolean seven = this.skin.form() == OsSkin.Form.AERO;
+            out.add(new Place(GameText.resolve(seven ? FileDialogTexts.FAVORITES : FileDialogTexts.QUICK_ACCESS),
+                    FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(FileDialogTexts.DESKTOP), FileIcons.Kind.FOLDER,
+                    SystemLayout.DESKTOP_DIR, false));
+            out.add(new Place(CodeWorkspace.HOME, FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
+            out.add(new Place(GameText.resolve(seven ? FileDialogTexts.COMPUTER_HEADING
+                    : FileDialogTexts.THIS_PC_HEADING), FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(FileDialogTexts.LOCAL_DISK), FileIcons.Kind.BIN, "", false));
         }
         for (final DiskFilesPayload.WireVolume volume : this.volumes) {
             if (volume.removable()) {
-                final String letter = letterOf(volume.key());
-                out.add(new Place(volume.label() + (letter.isEmpty() ? "" : " (" + letter + ")"),
-                        FileIcons.Kind.BIN, volume.key(), false));
+                out.add(new Place(onDrive(GameText.resolve(volume.label()), letterOf(volume.key())), FileIcons.Kind.BIN,
+                        volume.key(), false));
             }
         }
         return out;
     }
 
-    private static String parentOf(final String path) {
-        final int slash = path.lastIndexOf('/');
-        return slash >= 0 ? path.substring(0, slash) : "";
+    private static String onDrive(final String label, final String letter) {
+        return DrivePaths.onDrive(label, letter);
     }
 
-    /** The drive letter of a volume: the system disk is C:, then the media in the order the tree lists them. */
+    private static String parentOf(final String path) {
+        return DrivePaths.parentOf(path);
+    }
+
     private String letterOf(final String key) {
-        if (this.posix) {
-            return "";
-        }
-        if (key.isEmpty()) {
-            return "C:";
-        }
-        int n = 0;
-        for (final DiskFilesPayload.WireVolume volume : this.volumes) {
-            if (volume.removable()) {
-                n++;
-                if (volume.key().equals(key)) {
-                    return (char) ('C' + n) + ":";
-                }
-            }
-        }
-        return "";
+        return DrivePaths.letterOf(this.posix, this.volumes, key);
     }
 
     private void drawPlace(final GuiGraphics g, final UiContext ctx, final Place place, final int index,
                            final int x, final int y, final int width, final int height,
                            final boolean hovered, final boolean selected) {
         if (place.heading()) {
-            g.drawString(ctx.font(), place.label(), x + 2, y + 1, ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), place.label(), x + 2, y + TEXT_DY, ctx.skin().dim());
             return;
         }
         final boolean here = place.target().equals(onMedia() ? mediaRoot() : this.dir);
         ctx.skin().listRow(g, x, y, width, height, hovered, here);
-        FileIcons.draw(g, x + 3, y, place.icon());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(place.label(), width - 18), x + 16, y + 1,
-                ctx.skin().listRowText(here), false);
+        FileIcons.draw(g, x + 2, y, place.icon(), this.skin.iconSet());
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(place.label(), width - NAME_DX - 3), x + NAME_DX,
+                y + TEXT_DY, ctx.skin().listRowText(here));
     }
 
     private void onPlace(final int index, final int button, final double mx, final double my) {
@@ -400,15 +449,15 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final List<Breadcrumbs.Crumb> out = new ArrayList<>();
         if (onMedia()) {
             final String root = mediaRoot();
-            out.add(new Breadcrumbs.Crumb(this.posix ? "Devices" : "This PC", ""));
-            final String letter = letterOf(root);
-            String label = "Removable Drive";
+            out.add(new Breadcrumbs.Crumb(GameText.resolve(this.posix ? FileDialogTexts.DEVICES
+                    : FileDialogTexts.THIS_PC), ""));
+            String label = GameText.resolve(DiskFilesPayload.REMOVABLE_DRIVE);
             for (final DiskFilesPayload.WireVolume volume : this.volumes) {
                 if (volume.key().equals(root)) {
-                    label = volume.label();
+                    label = GameText.resolve(volume.label());
                 }
             }
-            out.add(new Breadcrumbs.Crumb(label + (letter.isEmpty() ? "" : " (" + letter + ")"), root));
+            out.add(new Breadcrumbs.Crumb(onDrive(label, letterOf(root)), root));
             String acc = root;
             for (final String seg : mediaRest().split("/")) {
                 if (!seg.isEmpty()) {
@@ -418,7 +467,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             }
             return out;
         }
-        out.add(new Breadcrumbs.Crumb(this.posix ? "/" : "Local Disk (C:)", ""));
+        out.add(new Breadcrumbs.Crumb(this.posix ? "/" : GameText.resolve(FileDialogTexts.LOCAL_DISK), ""));
         String acc = "";
         for (final String seg : this.dir.split("/")) {
             if (!seg.isEmpty()) {
@@ -488,7 +537,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         stopAddressEdit();
         final String key = keyOf(typed);
         if (key == null) {
-            this.message = "No such drive: " + typed.trim();
+            this.message = FileDialogTexts.NO_SUCH_DRIVE.with(typed.trim());
             return;
         }
         go(key);
@@ -530,22 +579,30 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final int nameX = this.header.columnX(0);
         final int typeX = this.header.columnX(1);
         final int sizeX = this.header.columnX(2);
-        FileIcons.draw(g, nameX - 13, y + 1, entry.up() ? FileIcons.Kind.UP
-                : FileIcons.kindOfPath(entry.file().path(), entry.file().directory()));
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(entry.name(), typeX - nameX - 4), nameX, y + 2,
-                ctx.skin().listRowText(selected), false);
-        final String type = entry.up() ? "Up one level" : entry.file().directory() ? "Folder" : FilesApp.typeLabel(entry.file());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(type, sizeX - typeX - 4), typeX, y + 2,
-                selected ? ctx.skin().listRowText(true) : ctx.skin().dim(), false);
+        FileIcons.draw(g, nameX - NAME_DX + 2, y, entry.up() ? FileIcons.Kind.UP
+                : FileIcons.kindOfPath(entry.file().path(), entry.file().directory()), this.skin.iconSet());
+        final int textY = y + TEXT_DY;
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(entry.name(), typeX - nameX - 4), nameX, textY,
+                ctx.skin().listRowText(selected));
+        final String type = entry.up() ? GameText.resolve(FileDialogTexts.UP_ONE_LEVEL)
+                : entry.file().directory() ? GameText.resolve(FileDialogTexts.FOLDER)
+                : FilesApp.typeLabel(entry.file());
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(type, sizeX - typeX - 4), typeX, textY,
+                selected ? ctx.skin().listRowText(true) : ctx.skin().dim());
         if (!entry.up() && !entry.file().directory()) {
-            g.drawString(ctx.font(), entry.file().weight() + " mB", sizeX, y + 2,
-                    selected ? ctx.skin().listRowText(true) : ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), GameText.resolve(FileDialogTexts.SIZE.with(entry.file().weight())), sizeX, textY,
+                    selected ? ctx.skin().listRowText(true) : ctx.skin().dim());
         }
     }
 
     /** A click picks the row; a second click on it within a moment goes into a folder or takes a file. */
     private void onRow(final int index, final int button, final double mx, final double my) {
         final List<Entry> list = entries();
+        // The right button opens the list's menu, on a row or on the empty part under the rows.
+        if (button == 1) {
+            openMenu(index >= 0 && index < list.size() ? index : -1, mx, my);
+            return;
+        }
         if (index < 0 || index >= list.size()) {
             return;
         }
@@ -572,28 +629,29 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     /* The bottom row */
 
-    private String primaryLabel() {
+    private TextKey primaryLabel() {
         return switch (this.mode) {
-            case OPEN_FILE -> "Open";
-            case OPEN_FOLDER -> "Select Folder";
-            case SAVE -> this.replacing.isEmpty() ? "Save" : "Replace";
+            case OPEN_FILE -> FileDialogTexts.OPEN;
+            case OPEN_FOLDER -> FileDialogTexts.SELECT_FOLDER;
+            case SAVE -> this.replacing.isEmpty() ? FileDialogTexts.SAVE : FileDialogTexts.REPLACE;
         };
     }
 
-    private String statusText() {
+    private Text statusText() {
         if (!this.message.isEmpty()) {
             return this.message;
         }
         final int count = entries().size() - (this.dir.isEmpty() ? 0 : 1);
         if (this.mode == Mode.OPEN_FOLDER) {
             final Entry picked = selectedEntry();
-            return picked != null && picked.file() != null ? "Select Folder picks " + picked.name()
-                    : "Select Folder picks this folder";
+            return picked != null && picked.file() != null ? FileDialogTexts.PICKS.with(picked.name())
+                    : FileDialogTexts.PICKS_THIS.text();
         }
         if (this.mode == Mode.SAVE) {
-            return this.name.edit().isBlank() ? "Type a name" : "Will be written to " + shown(join(this.dir, this.name.edit().trim()));
+            return this.name.edit().isBlank() ? FileDialogTexts.TYPE_A_NAME.text()
+                    : FileDialogTexts.WILL_BE_WRITTEN.with(shown(join(this.dir, this.name.edit().trim())));
         }
-        return count + (count == 1 ? " item" : " items");
+        return (count == 1 ? FileDialogTexts.ONE_ITEM : FileDialogTexts.ITEMS).with(count);
     }
 
     private Entry selectedEntry() {
@@ -607,17 +665,87 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.rows.setSelected(-1);
     }
 
-    /** Makes a folder here with the next free name and goes into it, so Select Folder picks the new one. */
+    /**
+     * Makes a folder here with the next free name and takes its name in hand, as the file manager does: the window
+     * stays where it is, so the folder can be named, then picked or gone into.
+     */
     private void makeFolder() {
-        String made = "New Folder";
+        String made = GameText.resolve(DesktopTexts.NEW_FOLDER);
         int n = 2;
         while (has(made)) {
-            made = "New Folder (" + n++ + ")";
+            made = GameText.resolve(DesktopTexts.NEW_FOLDER_NUMBERED.with(n++));
         }
-        final String path = join(this.dir, made);
-        PacketDistributor.sendToServer(new MkdirPayload(this.host, path));
+        PacketDistributor.sendToServer(new MkdirPayload(this.host, join(this.dir, made)));
         FilesApps.diskChanged();
-        go(path);
+        this.pendingRename = made;
+        request(this.dir);
+    }
+
+    /* The list's menu at the pointer: a new folder here, and the row's new name when it was opened on a row. */
+    private void openMenu(final int index, final double mx, final double my) {
+        final List<ContextMenu.Item> items = new ArrayList<>();
+        final List<Entry> list = entries();
+        if (index >= 0 && !list.get(index).up()) {
+            this.rows.setSelected(index);
+            items.add(new ContextMenu.Item(GameText.resolve(DesktopTexts.RENAME), true, () -> startRename(index)));
+        }
+        items.add(new ContextMenu.Item(GameText.resolve(FileDialogTexts.NEW_FOLDER), true, this::makeFolder));
+        this.menu.open(items, (int) mx, (int) my, this.contentX, this.contentY, this.contentW, this.contentH);
+    }
+
+    /* Lays the name box over the row's name and gives it the keyboard, the caret before the kind of file. */
+    private void startRename(final int index) {
+        final List<Entry> list = entries();
+        if (index < 0 || index >= list.size() || list.get(index).up()) {
+            return;
+        }
+        final Entry entry = list.get(index);
+        this.rows.setSelected(index);
+        this.renaming = entry.file().path();
+        this.renameField.set(entry.name());
+        final int dot = entry.name().lastIndexOf('.');
+        this.renameField.setCaret(dot > 0 && !entry.file().directory() ? dot : entry.name().length());
+        this.renameField.setVisible(true);
+        this.root.focus(this.renameField);
+    }
+
+    /* The name box committing: the row takes the new name, in the same folder. */
+    private void commitRename(final String typed) {
+        final String newName = typed.trim();
+        if (this.renaming.isEmpty() || newName.isEmpty()) {
+            return;
+        }
+        final String newPath = join(parentOf(this.renaming), newName);
+        if (tooLong(newName, newPath)) {
+            return;
+        }
+        if (!newPath.equals(this.renaming)) {
+            PacketDistributor.sendToServer(new RenameFilePayload(this.host, this.renaming, newPath));
+            FilesApps.diskChanged();
+            request(this.dir);
+        }
+    }
+
+    /* The name box gave up the keyboard, kept or not: it goes away. */
+    private void endRename() {
+        this.renaming = "";
+        this.renameField.setVisible(false);
+    }
+
+    /* The name box over the name of the row being renamed, as the list stands this frame. */
+    private void placeRenameField() {
+        if (this.renaming.isEmpty()) {
+            return;
+        }
+        final List<Entry> list = entries();
+        for (int i = 0; i < list.size(); i++) {
+            if (!list.get(i).up() && list.get(i).file().path().equals(this.renaming)) {
+                final int[] row = this.rows.rowRect(i);
+                final int nameX = this.header.columnX(0);
+                this.renameField.setBounds(nameX - 2, row[1] + 2, this.header.columnX(1) - nameX - 2, ROW_H - 4);
+                return;
+            }
+        }
     }
 
     private boolean has(final String fileName) {
@@ -631,6 +759,23 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     private static String join(final String dir, final String fileName) {
         return dir.isEmpty() ? fileName : dir + "/" + fileName;
+    }
+
+    /*
+     * Whether a name or the path it makes is longer than a disk holds, saying so on the window when it is. The disk
+     * would refuse it anyway; the point is that it is never sent, since a message longer than its cap is not cut on
+     * the way but drops the player from the game.
+     */
+    private boolean tooLong(final String fileName, final String path) {
+        if (fileName.length() > FsPaths.MAX_NAME_LENGTH) {
+            this.message = FileDialogTexts.NAME_TOO_LONG.with(FsPaths.MAX_NAME_LENGTH);
+            return true;
+        }
+        if (path.length() > FsPaths.MAX_PATH_LENGTH) {
+            this.message = FileDialogTexts.PATH_TOO_LONG.with(FsPaths.MAX_PATH_LENGTH);
+            return true;
+        }
+        return false;
     }
 
     /** The path the way the desktop shows it, for the status line. */
@@ -652,17 +797,19 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             final Entry picked = selectedEntry();
             final String chosen = picked != null && picked.file() != null && picked.file().directory()
                     ? picked.file().path() : (typed.isEmpty() ? this.dir : join(this.dir, typed));
-            finish(chosen);
+            if (!tooLong(leaf(chosen), chosen)) {
+                finish(chosen);
+            }
             return;
         }
         if (typed.isEmpty()) {
-            this.message = "Type a name, or pick one from the list";
+            this.message = FileDialogTexts.TYPE_OR_PICK.text();
             return;
         }
         if (typed.contains("/") || typed.contains("\\") || typed.contains(":")) {
             final String key = keyOf(typed);
             if (key == null) {
-                this.message = "No such drive: " + typed;
+                this.message = FileDialogTexts.NO_SUCH_DRIVE.with(typed);
                 return;
             }
             final int slash = key.lastIndexOf('/');
@@ -674,18 +821,22 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
                 return;
             }
         }
-        final String fileName = leaf(typed.replace('\\', '/'));
+        final String leaf = leaf(typed.replace('\\', '/'));
         for (final DiskFilesPayload.WireFile file : this.listed) {
-            if (file.directory() && leaf(file.path()).equalsIgnoreCase(fileName)) {
+            if (file.directory() && leaf(file.path()).equalsIgnoreCase(leaf)) {
                 this.name.set("");
                 go(file.path());
                 return;
             }
         }
+        final String fileName = this.mode == Mode.SAVE ? withKind(leaf) : leaf;
         final String path = join(this.dir, fileName);
+        if (tooLong(fileName, path)) {
+            return;
+        }
         if (this.mode == Mode.OPEN_FILE) {
             if (!has(fileName)) {
-                this.message = "Not found: " + fileName;
+                this.message = FileDialogTexts.NOT_FOUND.with(fileName);
                 return;
             }
             finish(path);
@@ -693,7 +844,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         }
         if (has(fileName) && !path.equals(this.replacing)) {
             this.replacing = path;
-            this.message = fileName + " exists. Replace it?";
+            this.message = FileDialogTexts.EXISTS.with(fileName);
             return;
         }
         finish(path);
@@ -702,6 +853,47 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     private void finish(final String path) {
         close();
         this.onPick.accept(path);
+    }
+
+    /*
+     * The kind the window starts on: the first that shows the kind of the name the program offers, else every file,
+     * as a save window opens on the type of the document it saves. Starting on the first kind regardless saved the
+     * Editor's untitled.txt as untitled.txt.sgs, the first language's sources being the first kind listed.
+     */
+    private int filterFor(final String offered) {
+        final int dot = offered == null ? -1 : offered.lastIndexOf('.');
+        if (dot <= 0) {
+            return 0;
+        }
+        final String kind = offered.substring(dot + 1);
+        for (int i = 0; i < this.filters.size(); i++) {
+            if (!this.filters.get(i).extensions().isEmpty() && this.filters.get(i).admits(kind)) {
+                return i;
+            }
+        }
+        for (int i = 0; i < this.filters.size(); i++) {
+            if (this.filters.get(i).extensions().isEmpty()) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    /*
+     * The name a file is saved under: as typed when it ends in a kind the chosen filter shows, else with the filter's
+     * first kind after it, as every save dialog does; a picture saved as "house" is "house.pix". Without it the file had
+     * no kind, so no program would open it and Open with offered the Editor alone.
+     */
+    private String withKind(final String typed) {
+        final Filter chosen = this.filters.get(this.filter);
+        if (chosen.extensions().isEmpty()) {
+            return typed;
+        }
+        final int dot = typed.lastIndexOf('.');
+        if (dot > 0 && chosen.admits(typed.substring(dot + 1))) {
+            return typed;
+        }
+        return typed + "." + chosen.extensions().getFirst();
     }
 
     /* The window */
@@ -716,14 +908,26 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.address.setBounds(x + 40, y, w - 40, 11);
         this.addressEdit.setBounds(x + 40, y, w - 40, 11);
         y += 14;
+        final boolean makes = this.mode != Mode.OPEN_FILE;
+        /*
+         * Frames 7 and 10 keep New folder on a command bar of its own under the address, the way their explorer
+         * does; the other desktops keep it beside the kind of file.
+         */
+        final boolean commandBar = makes && (this.skin.form() == OsSkin.Form.AERO
+                || this.skin.form() == OsSkin.Form.METRO);
+        if (commandBar) {
+            this.newFolder.setBounds(x, y, 56, 11);
+            y += 13;
+        }
         final int bottom = cy + ch - 1;
         final int listH = bottom - y - 42;
         this.places.setBounds(x, y, PLACES_W, listH);
         final int lx = x + PLACES_W + 3;
         final int lw = w - PLACES_W - 3;
         this.header.setBounds(lx, y, lw, 10);
-        this.header.setColumnX(lx + 16, lx + lw - SIZE_W - TYPE_W, lx + lw - SIZE_W);
+        this.header.setColumnX(lx + NAME_DX, lx + lw - SIZE_W - TYPE_W, lx + lw - SIZE_W);
         this.rows.setBounds(lx, y + 10, lw, listH - 10);
+        placeRenameField();
         y += listH + 3;
         final int primaryW = this.mode == Mode.OPEN_FOLDER ? 64 : 38;
         final int buttonsW = primaryW + 4 + 38;
@@ -737,12 +941,13 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
          * The kind takes the whole second row: its label is the longest thing here. A window that can
          * make a folder keeps that button at the row's right end instead.
          */
-        final boolean makes = this.mode != Mode.OPEN_FILE;
         this.kindLabel.setBounds(x, y + 2, LABEL_W, 9);
         this.kindLabel.setVisible(this.mode != Mode.OPEN_FOLDER);
-        this.kind.setBounds(x + LABEL_W, y, w - LABEL_W - (makes ? 56 : 0), 11);
+        this.kind.setBounds(x + LABEL_W, y, w - LABEL_W - (makes && !commandBar ? 56 : 0), 11);
         this.kind.setVisible(this.mode != Mode.OPEN_FOLDER);
-        this.newFolder.setBounds(this.mode == Mode.OPEN_FOLDER ? x + LABEL_W : right - 52, y, 52, 11);
+        if (!commandBar) {
+            this.newFolder.setBounds(this.mode == Mode.OPEN_FOLDER ? x + LABEL_W : right - 52, y, 52, 11);
+        }
         this.newFolder.setVisible(makes);
         y += 13;
         this.status.setBounds(x, y, w, 9);
@@ -750,7 +955,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     @Override
     public String title() {
-        return this.title;
+        return GameText.resolve(this.title);
     }
 
     @Override
@@ -780,9 +985,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
          * The desktop says which family it stands on. This used to be read off the look of the skin, which only
          * the two period desktops wear, so every other Unix desktop showed drive letters and a Local Disk.
          */
-        final DesktopEnvironmentDef desktop =
-                OsRegistry.getDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, value.osPath()));
-        this.posix = desktop != null && desktop.panelStyle().unixLike();
+        this.posix = value.unixLike();
     }
 
     @Override
@@ -792,8 +995,14 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         layout(x, y, width, height);
         this.lastMouseX = mouseX;
         this.lastMouseY = mouseY;
+        this.contentX = x;
+        this.contentY = y;
+        this.contentW = width;
+        this.contentH = height;
         g.fill(x, y, x + width, y + height, this.skin.windowBg());
-        this.root.render(g, new UiContext(this.skin, font, mouseX, mouseY, partialTick));
+        final UiContext ctx = new UiContext(this.skin, font, mouseX, mouseY, partialTick);
+        this.root.render(g, ctx);
+        this.menu.render(g, ctx);
     }
 
     /** Where the cursor was last drawn, so the wheel scrolls the list under it. */
@@ -808,6 +1017,11 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     @Override
     public void mouseClicked(final DesktopWindow window, final double mx, final double my, final int button) {
+        // The list's menu takes the next click: on it, it does what it says; anywhere else it goes away.
+        if (this.menu.isOpen()) {
+            this.menu.mouseClicked(mx, my, button);
+            return;
+        }
         /*
          * A click on the address past its last crumb turns it into text; answered here rather than by
          * the trail, because the panel would then move the keyboard to what was clicked and take it
@@ -818,7 +1032,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             startAddressEdit();
             return;
         }
-        this.message = "";
+        this.message = Text.EMPTY;
         this.root.mouseClicked(mx, my, button);
     }
 
@@ -839,6 +1053,15 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        if (this.menu.isOpen()) {
+            this.menu.keyPressed(key, scanCode, modifiers);
+            return true;
+        }
+        // A name being typed into a row takes Enter, Escape and Backspace for itself.
+        if (this.renameField.isFocused()) {
+            this.root.keyPressed(key, scanCode, modifiers);
+            return true;
+        }
         if (key == GLFW.GLFW_KEY_ESCAPE && !this.addressEdit.isFocused()) {
             close();
             return true;
@@ -922,11 +1145,11 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     /** The window's kind filter as shown. */
     public String filterLabel() {
-        return this.filters.get(this.filter).label();
+        return GameText.resolve(this.filters.get(this.filter).label());
     }
 
     /** The bottom line's text, for a test to read what the window says. */
     public String statusLine() {
-        return statusText();
+        return GameText.resolve(statusText());
     }
 }

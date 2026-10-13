@@ -1,0 +1,250 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.motherboards.definition1",
+      "term": "jsc.guide.motherboards.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.motherboards.table1",
+      "heads": [
+        "jsc.guide.motherboards.table1_head1",
+        "jsc.guide.motherboards.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "<form factor> form factor"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "<n>x <socket>  |  <n> RAM (<kinds>)  |  <n>x <bus>"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "On-board audio"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Seats parts of its own era only"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.motherboards.table2",
+      "heads": [
+        "jsc.guide.motherboards.table2_head1",
+        "jsc.guide.motherboards.table2_head2",
+        "jsc.guide.motherboards.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_7_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.motherboards.fix1",
+          "problem": "jsc.guide.motherboards.problem1"
+        },
+        {
+          "fix": "jsc.guide.motherboards.fix2",
+          "problem": "jsc.guide.motherboards.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:eras",
+        "jsc:processors",
+        "jsc:memory"
+      ]
+    }
+  ],
+  "icon": "jsc:motherboard_atx_standard_lga1150",
+  "id": "jsc:motherboards",
+  "items": [
+    "jsc:motherboard_mtx_s_2011",
+    "jsc:motherboard_eeb_s_2011",
+    "jsc:motherboard_babyat_vintage",
+    "jsc:motherboard_at_vintage",
+    "jsc:motherboard_at_vintage_slot1",
+    "jsc:motherboard_mtx_vintage",
+    "jsc:motherboard_eeb_vintage",
+    "jsc:motherboard_atx_legacy_s370",
+    "jsc:motherboard_atx_legacy_ska",
+    "jsc:motherboard_atx_legacy_478",
+    "jsc:motherboard_atx_legacy_754",
+    "jsc:motherboard_atx_legacy_lga775",
+    "jsc:motherboard_atx_legacy_939",
+    "jsc:motherboard_eatx_legacy_604",
+    "jsc:motherboard_eatx_legacy_s940",
+    "jsc:motherboard_mtx_legacy",
+    "jsc:motherboard_atx_transition_775",
+    "jsc:motherboard_atx_transition_am2",
+    "jsc:motherboard_atx_transition_am3",
+    "jsc:motherboard_atx_transition_1156",
+    "jsc:motherboard_eatx_transition_1366",
+    "jsc:motherboard_transition_771",
+    "jsc:motherboard_eeb_t_1366",
+    "jsc:motherboard_eeb_t_f",
+    "jsc:motherboard_mtx_t",
+    "jsc:motherboard_atx_standard_1155",
+    "jsc:motherboard_atx_standard_lga1150",
+    "jsc:motherboard_atx_standard_am3p",
+    "jsc:motherboard_atx_standard_fm2p",
+    "jsc:motherboard_eatx_standard_2011",
+    "jsc:motherboard_eeb_s_g34",
+    "jsc:motherboard_mtx_s_g34",
+    "jsc:motherboard_atx_advanced_am4",
+    "jsc:motherboard_atx_advanced_am5",
+    "jsc:motherboard_atx_advanced_1151",
+    "jsc:motherboard_atx_advanced_1200",
+    "jsc:motherboard_atx_advanced_1700",
+    "jsc:motherboard_atx_advanced_1851",
+    "jsc:motherboard_eatx_advanced_2066",
+    "jsc:motherboard_eatx_advanced_str4",
+    "jsc:motherboard_eatx_advanced_str5",
+    "jsc:motherboard_eatx_advanced_4677",
+    "jsc:motherboard_eeb_a_sp3",
+    "jsc:motherboard_eeb_a_sp5",
+    "jsc:motherboard_eeb_a_3647",
+    "jsc:motherboard_eeb_a_4189",
+    "jsc:motherboard_eeb_a_4677",
+    "jsc:motherboard_mtx_a_sp3",
+    "jsc:motherboard_mtx_a_sp5",
+    "jsc:motherboard_mtx_a_3647",
+    "jsc:motherboard_mtx_a_4189"
+  ],
+  "order": 16,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.motherboards.title"
+}

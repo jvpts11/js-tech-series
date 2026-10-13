@@ -1,0 +1,68 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_install_community.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_install_community.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_install_community.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sigma_install_community.step1",
+        "jsc.guide.sigma_install_community.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_install_community.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_install_community.fix1",
+          "problem": "jsc.guide.sigma_install_community.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_install_community.fix2",
+          "problem": "jsc.guide.sigma_install_community.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_install_community.fix3",
+          "problem": "jsc.guide.sigma_install_community.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_install_community.fix4",
+          "problem": "jsc.guide.sigma_install_community.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_install_community.fix5",
+          "problem": "jsc.guide.sigma_install_community.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:software_commands",
+        "jsc:sigma_installing",
+        "jsc:sigma_sharing_errors"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_install_community",
+  "order": 391,
+  "section": "jsc:sharing_packages",
+  "title": "jsc.guide.sigma_install_community.title"
+}

@@ -1,0 +1,221 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.library_overview.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library_overview.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library_overview.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.library_overview.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.library_overview.step1",
+        "jsc.guide.library_overview.step2",
+        "jsc.guide.library_overview.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.library_overview.table1",
+      "heads": [
+        "jsc.guide.library_overview.table1_head1",
+        "jsc.guide.library_overview.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.library_overview.table1_1_1"
+          },
+          {
+            "literal": "static void Main()"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library_overview.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.library_overview.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library_overview.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.library_overview.table2",
+      "heads": [
+        "jsc.guide.library_overview.table2_head1",
+        "jsc.guide.library_overview.table2_head2",
+        "jsc.guide.library_overview.table2_head3",
+        "jsc.guide.library_overview.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.library_overview.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.library_overview.table2_1_2"
+          },
+          {
+            "literal": "scc"
+          },
+          {
+            "literal": ".sg"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library_overview.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.library_overview.table2_2_2"
+          },
+          {
+            "literal": "sgsc"
+          },
+          {
+            "literal": ".sgs"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library_overview.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library_overview.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.library_overview.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library_overview.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.library_overview.table3",
+      "heads": [
+        "jsc.guide.library_overview.table3_head1",
+        "jsc.guide.library_overview.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "List"
+          },
+          {
+            "words": "jsc.guide.library_overview.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Map"
+          },
+          {
+            "words": "jsc.guide.library_overview.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread"
+          },
+          {
+            "words": "jsc.guide.library_overview.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library_overview.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.library_overview.definition1",
+      "term": "jsc.guide.library_overview.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.library_overview.definition2",
+      "term": "jsc.guide.library_overview.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.library_overview.definition3",
+      "term": "jsc.guide.library_overview.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.library_overview.definition4",
+      "term": "jsc.guide.library_overview.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.library_overview.definition5",
+      "term": "jsc.guide.library_overview.term5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.library_overview.fix1",
+          "problem": "jsc.guide.library_overview.problem1"
+        },
+        {
+          "fix": "jsc.guide.library_overview.fix2",
+          "problem": "jsc.guide.library_overview.problem2"
+        },
+        {
+          "fix": "jsc.guide.library_overview.fix3",
+          "problem": "jsc.guide.library_overview.problem3"
+        },
+        {
+          "fix": "jsc.guide.library_overview.fix4",
+          "problem": "jsc.guide.library_overview.problem4"
+        },
+        {
+          "fix": "jsc.guide.library_overview.fix5",
+          "problem": "jsc.guide.library_overview.problem5"
+        },
+        {
+          "fix": "jsc.guide.library_overview.fix6",
+          "problem": "jsc.guide.library_overview.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_first_program",
+        "jsc:sigma_reading_an_error"
+      ]
+    }
+  ],
+  "id": "jsc:library_overview",
+  "order": 351,
+  "section": "jsc:library_basics",
+  "title": "jsc.guide.library_overview.title"
+}

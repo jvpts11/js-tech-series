@@ -38,8 +38,20 @@ public final class MakeOpts {
         int jobs = 1;
         final Matcher found = JOBS.matcher(conf);
         while (found.find()) {
-            jobs = Math.max(1, Integer.parseInt(found.group(1)));
+            jobs = Math.max(1, count(found.group(1)));
         }
         return jobs;
+    }
+
+    /**
+     * A job count written as digits. One too long to be a number is read as the largest there is, since asking
+     * for more jobs than any machine has cores is how a build is told to use them all.
+     */
+    public static int count(final String digits) {
+        try {
+            return Integer.parseInt(digits);
+        } catch (final NumberFormatException tooLarge) {
+            return Integer.MAX_VALUE;
+        }
     }
 }

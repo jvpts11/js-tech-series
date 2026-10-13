@@ -21,19 +21,19 @@ public final class MonitorGlass {
     public static final int HEIGHT = 256;
 
     /** What is kept clear beside the glass and above and below it, for the monitor's own shell. */
-    private static final int BESIDE = 44;
-    private static final int ABOVE_AND_BELOW = 60;
+    public static final int BESIDE = 44;
+    public static final int ABOVE_AND_BELOW = 60;
 
     private MonitorGlass() {
     }
 
     /** How wide the glass is in a window that wide: all of it, or what the window leaves. */
     public static int width(final int windowWidth) {
-        return Math.min(windowWidth - BESIDE, WIDTH);
+        return Math.max(0, Math.min(windowWidth - BESIDE, WIDTH));
     }
 
     /** How tall the glass is in a window that tall. */
     public static int height(final int windowHeight) {
-        return Math.min(windowHeight - ABOVE_AND_BELOW, HEIGHT);
+        return Math.max(0, Math.min(windowHeight - ABOVE_AND_BELOW, HEIGHT));
     }
 }

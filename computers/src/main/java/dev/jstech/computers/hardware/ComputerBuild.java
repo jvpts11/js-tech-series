@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -15,13 +18,48 @@ import java.util.Objects;
 
 /**
  * An assembly of components on a motherboard, with a PSU.
+ *
+ * @param disks      the disks in the slots the board wires, which its disk slots are counted against
+ * @param frontDisks the disks slid into the case's hot-swap bays, which hold, draw and run as the others do but take
+ *                   none of the board's disk slots
  */
+@TextHolder
 public record ComputerBuild(MotherboardSpec motherboard,
                             List<CpuSpec> cpus,
                             List<IExpansionCardSpec> pcieCards,
                             List<RamSpec> rams,
                             PsuSpec psu,
-                            List<DiskSpec> disks) {
+                            List<DiskSpec> disks,
+                            List<DiskSpec> frontDisks) {
+
+    /* What keeps a build from being a working computer. */
+    /** What one of a graphics card's threads adds to what a server sends out, in items per tick. */
+    public static final double SERVER_GPU_BONUS_PER_THREAD = 0.05;
+
+    private static final TextKey NO_CPU = TextKey.of("jsc.build.no_cpu", "no CPU installed");
+    private static final TextKey NO_RAM = TextKey.of("jsc.build.no_ram", "no RAM installed");
+    private static final TextKey TOO_MANY_CPUS =
+            TextKey.of("jsc.build.too_many_cpus", "too many CPUs: %s installed, %s sockets");
+    private static final TextKey WRONG_SOCKET =
+            TextKey.of("jsc.build.wrong_socket", "CPU socket %s does not fit board socket %s");
+    private static final TextKey MIXED_ISAS = TextKey.of("jsc.build.mixed_isas",
+            "CPU instruction set %s does not match the %s of the other processors");
+    private static final TextKey TOO_MANY_CARDS =
+            TextKey.of("jsc.build.too_many_cards", "too many PCI-e cards: %s installed, %s PCI-e slots");
+    private static final TextKey WRONG_BUS = TextKey.of("jsc.build.wrong_bus",
+            "expansion card bus family %s is not compatible with board bus %s");
+    private static final TextKey SOUND_CARD_ERA = TextKey.of("jsc.build.sound_card_era",
+            "a sound card of the %s era does not sit on a board of the %s era");
+    private static final TextKey TOO_MANY_SOUND_CARDS = TextKey.of("jsc.build.too_many_sound_cards",
+            "one sound card per machine: %s installed");
+    private static final TextKey TOO_MANY_RAM =
+            TextKey.of("jsc.build.too_many_ram", "too many RAM modules: %s installed, %s slots");
+    private static final TextKey WRONG_RAM =
+            TextKey.of("jsc.build.wrong_ram", "RAM generation %s not accepted by board");
+    private static final TextKey TOO_MANY_DISKS =
+            TextKey.of("jsc.build.too_many_disks", "too many disks: %s installed, %s disk slots");
+    private static final TextKey PSU_INSUFFICIENT =
+            TextKey.of("jsc.build.psu_insufficient", "PSU insufficient: draw %sW exceeds %sW");
 
     public ComputerBuild {
         Objects.requireNonNull(motherboard, "motherboard must not be null");
@@ -30,6 +68,14 @@ public record ComputerBuild(MotherboardSpec motherboard,
         pcieCards = List.copyOf(pcieCards);
         rams = List.copyOf(rams);
         disks = List.copyOf(disks);
+        frontDisks = List.copyOf(frontDisks);
+    }
+
+    /** A build whose disks are all in the slots the board wires. */
+    public ComputerBuild(final MotherboardSpec motherboard, final List<CpuSpec> cpus,
+                         final List<IExpansionCardSpec> pcieCards, final List<RamSpec> rams,
+                         final PsuSpec psu, final List<DiskSpec> disks) {
+        this(motherboard, cpus, pcieCards, rams, psu, disks, List.of());
     }
 
     public ComputerBuild(final MotherboardSpec motherboard, final List<CpuSpec> cpus,
@@ -38,14 +84,24 @@ public record ComputerBuild(MotherboardSpec motherboard,
         this(motherboard, cpus, pcieCards, rams, psu, List.of());
     }
 
+    /** Every disk the build runs: those in the board's slots, then those in the case's hot-swap bays. */
+    public List<DiskSpec> allDisks() {
+        if (frontDisks.isEmpty()) {
+            return disks;
+        }
+        final List<DiskSpec> all = new ArrayList<>(disks);
+        all.addAll(frontDisks);
+        return List.copyOf(all);
+    }
+
     /**
-     * The architecture this machine runs, which is its processors'. A build with no processor has none, and
+     * The instruction set this machine runs, which is its processors'. A build with no processor has none, and
      * {@link #validate()} says so; past validation every processor here answers the same, because a build whose
      * processors disagree is refused there as well.
      */
     @Nullable
-    public ArchitectureSpec architecture() {
-        return this.cpus.isEmpty() ? null : this.cpus.get(0).architecture();
+    public IsaSpec isa() {
+        return this.cpus.isEmpty() ? null : this.cpus.get(0).isa();
     }
 
     public List<GpuSpec> gpus() {
@@ -68,7 +124,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
     public int effectiveVramMb() {
         double sum = 0;
         for (final GpuSpec gpu : gpus()) {
-            sum += gpu.vramMb() * gpu.bus().bandwidthFactorIn(motherboard.pcieGeneration());
+            sum += gpu.vramMb() * gpu.bus().bandwidthFactorIn(motherboard.slotFor(gpu.bus()));
         }
         return (int) Math.round(sum);
     }
@@ -76,7 +132,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
     /** Whether any card is seated in a slot older than itself, and so held below its rated speed. */
     public boolean hasBandwidthLimitedCard() {
         for (final IExpansionCardSpec card : pcieCards) {
-            if (card.bus().bandwidthFactorIn(motherboard.pcieGeneration()) < 1.0) {
+            if (card.bus().bandwidthFactorIn(motherboard.slotFor(card.bus())) < 1.0) {
                 return true;
             }
         }
@@ -101,6 +157,25 @@ public record ComputerBuild(MotherboardSpec motherboard,
         return sum;
     }
 
+    /**
+     * What a server's graphics cards add to what it sends out, in items per tick: each card's threads times
+     * {@value #SERVER_GPU_BONUS_PER_THREAD}. It adds to the processor's capacity and never rules it: a card's threads
+     * are many, and each is worth a twentieth of an item.
+     */
+    public long serverGpuBonus() {
+        double sum = 0.0;
+        for (final GpuSpec gpu : gpus()) {
+            sum += gpu.threads() * SERVER_GPU_BONUS_PER_THREAD;
+        }
+        return Math.round(sum);
+    }
+
+    /** The share of the processor's capacity a server's cards add, in whole percent, for its assembly to show. */
+    public int serverGpuBonusPercent() {
+        final long cpu = totalCapacity();
+        return cpu <= 0 ? 0 : (int) Math.round(serverGpuBonus() * 100.0 / cpu);
+    }
+
     public int parallelQueues() {
         /*
          * One base CPU queue plus one extra parallel queue per installed GPU. GPUs are detected
@@ -119,7 +194,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
 
     public StorageTier fastestDiskTier() {
         StorageTier best = StorageTier.HDD;
-        for (final DiskSpec disk : disks) {
+        for (final DiskSpec disk : allDisks()) {
             best = best.faster(disk.tier());
         }
         return best;
@@ -140,7 +215,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
 
     public long totalStorageItems() {
         long sum = 0L;
-        for (final DiskSpec disk : disks) {
+        for (final DiskSpec disk : allDisks()) {
             sum += disk.capacityItems();
         }
         return sum;
@@ -148,7 +223,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
 
     public long storageMb() {
         long sum = 0L;
-        for (final DiskSpec disk : disks) {
+        for (final DiskSpec disk : allDisks()) {
             sum += disk.capacityMb();
         }
         return sum;
@@ -165,33 +240,31 @@ public record ComputerBuild(MotherboardSpec motherboard,
         for (final RamSpec ram : rams) {
             draw += ram.tdpWatts();
         }
-        for (final DiskSpec disk : disks) {
+        for (final DiskSpec disk : allDisks()) {
             draw += disk.tdpWatts();
         }
         return draw;
     }
 
     public BuildValidation validate() {
-        final List<String> problems = new ArrayList<>();
+        final List<Text> problems = new ArrayList<>();
 
         if (cpus.isEmpty()) {
-            problems.add("no CPU installed");
+            problems.add(NO_CPU.text());
         }
         /*
          * Every computer needs RAM to do work: with a zero buffer the CPU has nothing to stage
          * through and can move nothing. A box without RAM is not a working computer.
          */
         if (rams.isEmpty()) {
-            problems.add("no RAM installed");
+            problems.add(NO_RAM.text());
         }
         if (cpus.size() > motherboard.cpuSlots()) {
-            problems.add("too many CPUs: " + cpus.size() + " installed, "
-                    + motherboard.cpuSlots() + " sockets");
+            problems.add(TOO_MANY_CPUS.with(cpus.size(), motherboard.cpuSlots()));
         }
         for (final CpuSpec cpu : cpus) {
             if (!cpu.socket().equals(motherboard.socket())) {
-                problems.add("CPU socket " + cpu.socket().display() + " does not fit board socket "
-                        + motherboard.socket().display());
+                problems.add(WRONG_SOCKET.with(cpu.socket().display(), motherboard.socket().display()));
             }
         }
         /*
@@ -199,40 +272,44 @@ public record ComputerBuild(MotherboardSpec motherboard,
          * instructions, and a program cannot run on half a machine, so a build that mixes them is not a computer.
          */
         if (!cpus.isEmpty()) {
-            final ArchitectureSpec first = cpus.get(0).architecture();
+            final IsaSpec first = cpus.get(0).isa();
             for (final CpuSpec cpu : cpus) {
-                if (!cpu.architecture().equals(first)) {
-                    problems.add("CPU architecture " + cpu.architecture().name() + " does not match the "
-                            + first.name() + " of the other processors");
+                if (!cpu.isa().equals(first)) {
+                    problems.add(MIXED_ISAS.with(cpu.isa().name(), first.name()));
                     break;
                 }
             }
         }
 
         if (pcieCards.size() > motherboard.pcieSlots()) {
-            problems.add("too many PCIe cards: " + pcieCards.size() + " installed, "
-                    + motherboard.pcieSlots() + " PCIe slots");
+            problems.add(TOO_MANY_CARDS.with(pcieCards.size(), motherboard.pcieSlots()));
         }
         for (final IExpansionCardSpec card : pcieCards) {
-            if (!card.bus().compatibleWith(motherboard.pcieGeneration())) {
-                problems.add("expansion card bus family " + card.bus().busFamily()
-                        + " is not compatible with board bus " + motherboard.pcieGeneration().busFamily());
+            if (!motherboard.takes(card)) {
+                problems.add(WRONG_BUS.with(card.bus().busFamily().label(),
+                        motherboard.pcieGeneration().busFamily().label()));
             }
+            if (card instanceof SoundCardSpec sound && sound.era() != motherboard.era()) {
+                problems.add(SOUND_CARD_ERA.with(sound.era().named(), motherboard.era().named()));
+            }
+        }
+        final int soundCards = cardsOfKind(ExpansionCardKind.SOUND).size();
+        if (soundCards > 1) {
+            problems.add(TOO_MANY_SOUND_CARDS.with(soundCards));
         }
 
         if (rams.size() > motherboard.ramSlots()) {
-            problems.add("too many RAM modules: " + rams.size() + " installed, "
-                    + motherboard.ramSlots() + " slots");
+            problems.add(TOO_MANY_RAM.with(rams.size(), motherboard.ramSlots()));
         }
         for (final RamSpec ram : rams) {
             if (!motherboard.acceptedRam().contains(ram.generation())) {
-                problems.add("RAM generation " + ram.generation() + " not accepted by board");
+                problems.add(WRONG_RAM.with(ram.generation().label()));
             }
         }
 
+        // Only the disks in the board's slots take one: a hot-swap bay's disk takes none.
         if (disks.size() > motherboard.diskSlots()) {
-            problems.add("too many disks: " + disks.size() + " installed, "
-                    + motherboard.diskSlots() + " disk slots");
+            problems.add(TOO_MANY_DISKS.with(disks.size(), motherboard.diskSlots()));
         }
 
         /*
@@ -242,7 +319,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
         if (!psu.autoScaling()) {
             final int draw = powerDraw();
             if (draw > psu.wattage()) {
-                problems.add("PSU insufficient: draw " + draw + "W exceeds " + psu.wattage() + "W");
+                problems.add(PSU_INSUFFICIENT.with(draw, psu.wattage()));
             }
         }
 

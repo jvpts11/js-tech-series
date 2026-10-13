@@ -1,0 +1,305 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.server_racks.definition1",
+      "term": "jsc.guide.server_racks.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.server_racks.definition2",
+      "term": "jsc.guide.server_racks.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.server_racks.definition3",
+      "term": "jsc.guide.server_racks.term3"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.server_racks.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              6,
+              9,
+              14,
+              16,
+              14,
+              16
+            ],
+            "x": 15,
+            "y": 2,
+            "z": 16
+          },
+          "text": "jsc.guide.server_racks.balloon1"
+        },
+        {
+          "detail": "jsc.guide.server_racks.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              6,
+              4,
+              14,
+              16,
+              8,
+              16
+            ],
+            "x": 15,
+            "y": 2,
+            "z": 16
+          },
+          "text": "jsc.guide.server_racks.balloon2"
+        },
+        {
+          "detail": "jsc.guide.server_racks.balloon3_detail",
+          "number": 3,
+          "part": {
+            "box": [
+              6,
+              4,
+              14,
+              16,
+              13,
+              16
+            ],
+            "x": 15,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.server_racks.balloon3"
+        },
+        {
+          "detail": "jsc.guide.server_racks.balloon4_detail",
+          "number": 4,
+          "part": {
+            "box": [
+              6,
+              8,
+              14,
+              16,
+              13,
+              16
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.server_racks.balloon4"
+        },
+        {
+          "number": 5,
+          "part": {
+            "box": [
+              6,
+              3,
+              14,
+              16,
+              7,
+              16
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.server_racks.balloon5"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Units:[B;1b,10b,0b,4b,0b,1b,12b,11b],DisplayEra:3,BayPowerOff:0,ServicePanelOff:0b}",
+          "state": "jsc:server_rack[facing=south]",
+          "x": 16,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 16,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 15,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 16,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 16,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true,compute=false]",
+          "x": 15,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false,compute=false]",
+          "x": 15,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 16,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 16,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 15,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false,compute=false]",
+          "x": 15,
+          "y": 2,
+          "z": 15
+        }
+      ],
+      "caption": "jsc.guide.server_racks.figure1",
+      "height": 130
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.server_racks.definition4",
+      "term": "jsc.guide.server_racks.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.server_racks.fix1",
+          "problem": "jsc.guide.server_racks.problem1"
+        },
+        {
+          "fix": "jsc.guide.server_racks.fix2",
+          "problem": "jsc.guide.server_racks.problem2"
+        },
+        {
+          "fix": "jsc.guide.server_racks.fix3",
+          "problem": "jsc.guide.server_racks.problem3"
+        },
+        {
+          "fix": "jsc.guide.server_racks.fix4",
+          "problem": "jsc.guide.server_racks.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:rack_drive_bays",
+        "jsc:data_cables"
+      ]
+    }
+  ],
+  "icon": "jsc:server_rack",
+  "id": "jsc:server_racks",
+  "items": [
+    "jsc:vintage_server_rack",
+    "jsc:legacy_server_rack",
+    "jsc:transition_server_rack",
+    "jsc:server_rack",
+    "jsc:advanced_server_rack",
+    "jsc:supercomputer_rack",
+    "jsc:advanced_supercomputer_rack",
+    "jsc:vintage_server_case",
+    "jsc:vintage_server",
+    "jsc:legacy_server_case",
+    "jsc:legacy_server",
+    "jsc:transition_server_case",
+    "jsc:transition_server",
+    "jsc:server_case",
+    "jsc:server",
+    "jsc:advanced_server_case",
+    "jsc:advanced_server",
+    "jsc:vintage_storage_server_case",
+    "jsc:vintage_storage_server",
+    "jsc:legacy_storage_server_case",
+    "jsc:legacy_storage_server",
+    "jsc:transition_storage_server_case",
+    "jsc:transition_storage_server",
+    "jsc:storage_server_case",
+    "jsc:storage_server",
+    "jsc:advanced_storage_server_case",
+    "jsc:advanced_storage_server",
+    "jsc:vintage_compute_server_case",
+    "jsc:vintage_compute_server",
+    "jsc:legacy_compute_server_case",
+    "jsc:legacy_compute_server",
+    "jsc:transition_compute_server_case",
+    "jsc:transition_compute_server",
+    "jsc:compute_server_case",
+    "jsc:compute_server",
+    "jsc:advanced_compute_server_case",
+    "jsc:advanced_compute_server",
+    "jsc:supercomputer_node",
+    "jsc:advanced_supercomputer_node"
+  ],
+  "order": 27,
+  "section": "jsc:racks",
+  "title": "jsc.guide.server_racks.title"
+}

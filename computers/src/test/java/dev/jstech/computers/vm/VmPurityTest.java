@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -29,7 +30,9 @@ import org.junit.jupiter.api.Test;
  * no network library, none of the machines that host it and none of the language that compiles for it. These read
  * every source under {@code vm} and hold that line: an import comes from the JDK, from the Core's stable ids or from
  * the vm itself, and no other package of the series, of the game or of a library the game brings along is named
- * anywhere in the text.
+ * anywhere in the text. The one exception is the Core's sentence, its key and the mark on a class that declares
+ * them, by class and not by package: what a halted program is told is read in the player's language, and those three
+ * are plain Java.
  *
  * <p>The whole text is read, comments and strings included: a class named in a string can still be loaded by
  * reflection, and a comment that has to name the machine or the language describes something the vm should not know.
@@ -41,6 +44,13 @@ class VmPurityTest {
 
     /** The packages of the series the text may name, each with everything under it. */
     private static final List<String> NAMEABLE = List.of("dev.jstech.core.id", "dev.jstech.computers.vm");
+
+    /**
+     * The classes of the Core's text package the vm may use, each by its whole name: the rest of that package speaks
+     * to the game.
+     */
+    private static final Set<String> SENTENCES = Set.of("dev.jstech.core.text.Text", "dev.jstech.core.text.TextKey",
+            "dev.jstech.core.text.TextHolder");
 
     private static final Pattern IMPORT =
             Pattern.compile("(?m)^[ \\t]*import\\s+(?:static\\s+)?([\\w.]+?)(?:\\.\\*)?\\s*;");
@@ -60,6 +70,7 @@ class VmPurityTest {
 
             import dev.jstech.computers.sigma.SigmaError;
             import dev.jstech.core.network.NetworkUuid;
+            import dev.jstech.core.text.GameText;
             import it.unimi.dsi.fastutil.ints.IntList;
 
             final class Sample {
@@ -90,6 +101,7 @@ class VmPurityTest {
 
             import dev.jstech.computers.vm.listing.Opcode;
             import dev.jstech.core.id.IStableName;
+            import dev.jstech.core.text.TextKey;
             import java.util.List;
 
             /** Runs a {@link dev.jstech.computers.vm.program.Process} with no Minecraft, NeoForge or ComputerCraft around it. */
@@ -127,7 +139,7 @@ class VmPurityTest {
     @Test
     void rules_findEveryReachOutOfTheVm() {
         final Map<String, String> sample = Map.of("sample/Sample.java", FORBIDDEN);
-        assertEquals(4, outsideImports(sample).size(), () -> "imports: " + outsideImports(sample));
+        assertEquals(5, outsideImports(sample).size(), () -> "imports: " + outsideImports(sample));
         assertEquals(6, outsideNames(sample).size(), () -> "names: " + outsideNames(sample));
     }
 
@@ -144,7 +156,7 @@ class VmPurityTest {
             final Matcher imported = IMPORT.matcher(file.getValue());
             while (imported.find()) {
                 final String name = imported.group(1);
-                if (IMPORTABLE.stream().noneMatch(name::startsWith)) {
+                if (IMPORTABLE.stream().noneMatch(name::startsWith) && !SENTENCES.contains(name)) {
                     found.add(where(file.getKey(), file.getValue(), imported.start()) + " " + name);
                 }
             }
@@ -168,7 +180,8 @@ class VmPurityTest {
             final Matcher series = SERIES_PACKAGE.matcher(text);
             while (series.find()) {
                 final String name = series.group();
-                if (NAMEABLE.stream().noneMatch(root -> name.equals(root) || name.startsWith(root + "."))) {
+                if (NAMEABLE.stream().noneMatch(root -> name.equals(root) || name.startsWith(root + "."))
+                        && !SENTENCES.contains(name)) {
                     found.add(where(file.getKey(), text, series.start()) + " " + name);
                 }
             }

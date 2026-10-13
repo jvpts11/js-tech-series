@@ -8,11 +8,14 @@
 package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.IWorldFunction;
+import dev.jstech.computers.vm.program.ProgramMilestone;
 import dev.jstech.computers.vm.system.MemberId;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -84,8 +87,33 @@ public final class MachineServices implements IHost {
     @Nullable
     private GatewayBridgeService gateways;
 
+    @Nullable
+    private SoundService sound;
+
+    @Nullable
+    private BusService buses;
+
+    @Nullable
+    private RedstoneService redstone;
+
+    @Nullable
+    private CraftingService crafting;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
+    }
+
+    /* What a program did, as the advancement it earns whoever works this machine. */
+    @Override
+    public void reached(final ProgramMilestone milestone) {
+        switch (milestone) {
+            case STACK_OVERFLOW -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_HALTED, JscEvents.HALT_STACK);
+            case DIVIDE_BY_ZERO ->
+                    JscEvents.awardOperator(this.machine, JscEvents.SIGMA_HALTED, JscEvents.HALT_DIVIDE);
+            case THREAD_STARTED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_THREAD);
+            case WINDOW_OPENED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_WINDOW);
+            case WATCH_FIRED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_WATCH);
+        }
     }
 
     @Override
@@ -121,6 +149,19 @@ public final class MachineServices implements IHost {
     public boolean hasDesktop() {
         final ComputerInfoService info = this.computer();
         return info != null && info.hasDesktop();
+    }
+
+    /** Whether the machine boots to its terminal alone, and so draws a program's windows there in text. */
+    @Override
+    public boolean textMode() {
+        final ComputerInfoService info = this.computer();
+        return info != null && info.textMode();
+    }
+
+    /** Whether this server's settings let a program use components that reach outside the game. */
+    @Override
+    public boolean outsideComponents() {
+        return ComputersServerConfig.outsideComponents();
     }
 
     /** Whether a program this machine, or a computer of its network, lists under that number is still going. */
@@ -288,6 +329,51 @@ public final class MachineServices implements IHost {
         return this.gateways;
     }
 
+    /**
+     * The machine's sound, through which its programs beep, play tunes and play recordings.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public SoundService sound() {
+        this.follow();
+        return this.sound;
+    }
+
+    /**
+     * The buses of the machine's network, which its programs find by name and set.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public BusService buses() {
+        this.follow();
+        return this.buses;
+    }
+
+    /**
+     * The Redstone Interfaces linked to the machine, which its programs find by name, read and set.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public RedstoneService redstone() {
+        this.follow();
+        return this.redstone;
+    }
+
+    /**
+     * The Crafting Interfaces and Crafting Input Routers of the machine's crafting network, which its programs find by
+     * name and set.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public CraftingService crafting() {
+        this.follow();
+        return this.crafting;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -308,10 +394,14 @@ public final class MachineServices implements IHost {
             this.iql = new IqlService(terminal, server, this.files, this.operations, this.network);
             // The packages come after the language: the Mirror's list of services carries the engine's row.
             this.packages = new PackageService(terminal, server, this.files, this.iql);
-            this.installs = new InstallService(terminal, server, this.packages, this.iql);
+            this.installs = new InstallService(terminal, server, this.packages);
             this.config = new MachineConfigService(terminal, server, this.files);
             this.programs = new ProgramService(this.machine, terminal, server, this.files, this.remotes);
             this.gateways = new GatewayBridgeService(this.machine, server);
+            this.sound = new SoundService(this.machine, server);
+            this.buses = new BusService(terminal, server);
+            this.redstone = new RedstoneService(this.machine, server);
+            this.crafting = new CraftingService(terminal, server);
         } else {
             this.shell = null;
             this.files = null;
@@ -326,6 +416,10 @@ public final class MachineServices implements IHost {
             this.programs = null;
             this.remotes = null;
             this.gateways = null;
+            this.sound = null;
+            this.buses = null;
+            this.redstone = null;
+            this.crafting = null;
         }
     }
 }

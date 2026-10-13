@@ -1,0 +1,240 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.data_cables.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.data_cables.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.data_cables.table1_1"
+          },
+          {
+            "words": "jsc.guide.data_cables.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.data_cables.table1_2"
+          },
+          {
+            "words": "jsc.guide.data_cables.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.data_cables.table1_3"
+          },
+          {
+            "words": "jsc.guide.data_cables.value1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.data_cables.table1_4"
+          },
+          {
+            "words": "jsc.guide.data_cables.value1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.data_cables.table1_5"
+          },
+          {
+            "words": "jsc.guide.data_cables.value1_5"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.data_cables.table2",
+      "heads": [
+        "jsc.guide.data_cables.table2_head1",
+        "jsc.guide.data_cables.table2_head2",
+        "jsc.guide.data_cables.table2_head3",
+        "jsc.guide.data_cables.table2_head4",
+        "jsc.guide.data_cables.table2_head5"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.data_cables.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_1_4"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_1_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.data_cables.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_2_4"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_2_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.data_cables.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_3_4"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_3_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.data_cables.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_4_4"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_4_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.data_cables.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_5_3"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_5_4"
+          },
+          {
+            "words": "jsc.guide.data_cables.table2_5_5"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.data_cables.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.data_cables.table3",
+      "heads": [
+        "jsc.guide.data_cables.table3_head1",
+        "jsc.guide.data_cables.table3_head2",
+        "jsc.guide.data_cables.table3_head3",
+        "jsc.guide.data_cables.table3_head4",
+        "jsc.guide.data_cables.table3_head5",
+        "jsc.guide.data_cables.table3_head6"
+      ],
+      "source": "jsc:line_reach"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.data_cables.table4",
+      "heads": [
+        "jsc.guide.data_cables.table4_head1",
+        "jsc.guide.data_cables.table4_head2",
+        "jsc.guide.data_cables.table4_head3",
+        "jsc.guide.data_cables.table4_head4",
+        "jsc.guide.data_cables.table4_head5",
+        "jsc.guide.data_cables.table4_head6"
+      ],
+      "source": "jsc:line_speed"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.data_cables.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.data_cables.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.data_cables.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.data_cables.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.data_cables.fix1",
+          "problem": "jsc.guide.data_cables.problem1"
+        },
+        {
+          "fix": "jsc.guide.data_cables.fix2",
+          "problem": "jsc.guide.data_cables.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:ethernet_cable",
+  "id": "jsc:data_cables",
+  "items": [
+    "jsc:thin_coax_cable",
+    "jsc:ethernet_cable",
+    "jsc:cat5e_cable",
+    "jsc:gigabit_cable",
+    "jsc:cat6a_cable",
+    "jsc:thick_coax_cable",
+    "jsc:hbw_cable",
+    "jsc:cx4_cable",
+    "jsc:fibre_cable",
+    "jsc:om5_cable",
+    "jsc:telephone_line",
+    "jsc:leased_line",
+    "jsc:t3_line",
+    "jsc:vldc_cable",
+    "jsc:dark_fibre_cable",
+    "jsc:infiniband_cable",
+    "jsc:hpc_cable",
+    "jsc:osfp_cable"
+  ],
+  "order": 65,
+  "section": "jsc:network_basics",
+  "title": "jsc.guide.data_cables.title"
+}

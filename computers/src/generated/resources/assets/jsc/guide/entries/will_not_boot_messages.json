@@ -1,0 +1,104 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.will_not_boot_messages.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.will_not_boot_messages.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.will_not_boot_messages.table1",
+      "heads": [
+        "jsc.guide.will_not_boot_messages.table1_head1",
+        "jsc.guide.will_not_boot_messages.table1_head2",
+        "jsc.guide.will_not_boot_messages.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "reboot: you are inside the new system. exit first."
+          },
+          {
+            "words": "jsc.guide.will_not_boot_messages.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.will_not_boot_messages.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "The new system will not boot:"
+          },
+          {
+            "words": "jsc.guide.will_not_boot_messages.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.will_not_boot_messages.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "Rebooting into the new system ..."
+          },
+          {
+            "words": "jsc.guide.will_not_boot_messages.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.will_not_boot_messages.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "The installation could not be written to the disk (no space or no disk)."
+          },
+          {
+            "words": "jsc.guide.will_not_boot_messages.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.will_not_boot_messages.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.will_not_boot_messages.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.will_not_boot_messages.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.will_not_boot_messages.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.will_not_boot_messages.fix1",
+          "problem": "jsc.guide.will_not_boot_messages.problem1"
+        },
+        {
+          "fix": "jsc.guide.will_not_boot_messages.fix2",
+          "problem": "jsc.guide.will_not_boot_messages.problem2"
+        },
+        {
+          "fix": "jsc.guide.will_not_boot_messages.fix3",
+          "problem": "jsc.guide.will_not_boot_messages.problem3"
+        }
+      ]
+    }
+  ],
+  "id": "jsc:will_not_boot_messages",
+  "order": 267,
+  "section": "jsc:before_the_reboot",
+  "title": "jsc.guide.will_not_boot_messages.title"
+}

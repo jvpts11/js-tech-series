@@ -16,9 +16,15 @@ import dev.jstech.computers.sigma.edit.CompletionContext;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.SemanticModel;
 import dev.jstech.core.client.gui.component.ContextMenu;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -34,12 +40,16 @@ import net.minecraft.client.gui.GuiGraphics;
  * <p>The list itself is the toolkit's menu, so it looks like every other menu on the system and is
  * driven the same way: the arrows walk it, Enter or Tab takes what is on, Escape leaves.
  */
+@PaletteHolder
 public final class CodeCompletions {
 
     /** Wide enough for a whole signature, which is the point of showing one. */
     private static final int WIDTH = 168;
     private static final int ROW_H = 10;
     private static final int MAX_ITEMS = 8;
+    /** The outline behind the cost strip under the completions list, {@code jsc:editor/completions}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/completions",
+            new Colours(0xFF000000));
 
     private final ContextMenu menu = new ContextMenu(WIDTH, ROW_H);
     private final BuiltIns builtIns = new BuiltIns();
@@ -86,11 +96,21 @@ public final class CodeCompletions {
      */
     public void offer(final CodeArea area, final String path,
                       final List<IProgrammingLanguage.SourceText> others, final int[] bounds) {
+        offer(area, path, others, bounds, 0);
+    }
+
+    /**
+     * The same, for a file whose project holds it to {@code projectVersion} of its language, 0 for none: only what
+     * that version has is offered, and never more than the machine's compiler knows.
+     */
+    public void offer(final CodeArea area, final String path, final List<IProgrammingLanguage.SourceText> others,
+                      final int[] bounds, final int projectVersion) {
         close();
         final LanguageLevel level = LanguageLevel.ofSource(path);
         if (level == null) {
             return;
         }
+        final int version = InstalledCompilers.held(level, projectVersion);
         final TextDocument doc = area.document();
         final CompletionContext.Where where =
                 CompletionContext.at(doc.line(doc.cursorLine()), doc.cursorCol());
@@ -99,7 +119,8 @@ public final class CodeCompletions {
             return;
         }
         // Read the same way for both languages, then cut down to what the one this file is written in has.
-        final List<SigmaCompletions.Item> found = SigmaCompletions.within(level, find(path, doc, others, where));
+        final List<SigmaCompletions.Item> found =
+                SigmaCompletions.within(level, version, find(path, doc, others, where));
         if (found.isEmpty()) {
             return;
         }
@@ -107,7 +128,7 @@ public final class CodeCompletions {
         this.offered.clear();
         this.labels.clear();
         for (final SigmaCompletions.Item item : found.subList(0, Math.min(found.size(), MAX_ITEMS))) {
-            entries.add(new ContextMenu.Item(item.signature(), true,
+            entries.add(new ContextMenu.Item(GameText.resolve(item.shown()), true,
                     () -> take(doc, where, item.label())));
             this.offered.add(item);
             this.labels.add(item.label());
@@ -189,15 +210,16 @@ public final class CodeCompletions {
         if (at < 0 || at >= this.offered.size()) {
             return;
         }
-        final String text = SigmaCompletions.costOf(this.offered.get(at));
-        if (text == null) {
+        final Text cost = SigmaCompletions.costOf(this.offered.get(at));
+        if (cost == null) {
             return;
         }
+        final String text = GameText.resolve(cost);
         final int y = this.menu.bottom();
-        g.fill(this.menu.x() - 1, y, this.menu.right() + 1, y + ROW_H + 1, 0xFF000000);
+        g.fill(this.menu.x() - 1, y, this.menu.right() + 1, y + ROW_H + 1, PALETTE.get().outline());
         g.fill(this.menu.x(), y, this.menu.right(), y + ROW_H, ctx.skin().fieldBg());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(text, this.menu.width() - 6),
-                this.menu.x() + 3, y + 1, ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(text, this.menu.width() - 6),
+                this.menu.x() + 3, y + 1, ctx.skin().dim());
     }
 
     /** Gives the keys to the list while it is up; false when it wants none of them. */
@@ -208,5 +230,9 @@ public final class CodeCompletions {
     /** Gives a click to the list while it is up. */
     public boolean mouseClicked(final double mx, final double my, final int button) {
         return this.menu.isOpen() && this.menu.mouseClicked(mx, my, button);
+    }
+
+    /** The outline drawn behind the cost strip. */
+    private record Colours(int outline) {
     }
 }

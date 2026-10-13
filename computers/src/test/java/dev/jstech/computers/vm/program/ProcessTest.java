@@ -158,6 +158,35 @@ class ProcessTest {
     }
 
     @Test
+    void beginMain_handsTheArgumentsToAMainThatTakesThemAndTakesTheCodeItGives() {
+        final ProgramImage program = loadSource("class Tool { static int Main(string[] args) { "
+                + "Console.PrintLine(args.Length + \" \" + args[0] + args[1]); return 7; } }");
+        final Process process = new Process(program, ROOM, IHost.still());
+        process.setArgs(List.of("x", "y"));
+        process.beginMain(program.entryPoint());
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("2 xy"), process.console());
+        assertEquals(7, process.exitCode(), "what Main gave back is the code it ends with");
+        assertFalse(process.exited(), "it ended by returning, not by Program.Exit");
+    }
+
+    @Test
+    void beginMain_aProgramThatExitsKeepsItsOwnCodeAndOneThatGivesNothingEndsWithZero() {
+        final ProgramImage exits = loadSource("class Tool { static int Main() { Program.Exit(3); return 9; } }");
+        final Process exiting = new Process(exits, ROOM, IHost.still());
+        exiting.beginMain(exits.entryPoint());
+        exiting.step(PLENTY);
+        assertEquals(3, exiting.exitCode());
+        final ProgramImage plain = loadSource("class Tool { static void Main() { Console.PrintLine(\"hi\"); } }");
+        final Process quiet = new Process(plain, ROOM, IHost.still());
+        quiet.beginMain(plain.entryPoint());
+        quiet.step(PLENTY);
+        assertFinished(quiet);
+        assertEquals(0, quiet.exitCode());
+    }
+
+    @Test
     void step_tellsTheHostNothingWhileAScriptStaysUp() {
         final ProgramImage program = load("", "        Console.PrintLine(\"tick\");");
         final List<Integer> told = new ArrayList<>();
@@ -200,10 +229,71 @@ class ProcessTest {
         assertEquals(List.of(), process.console(), "nothing is printed before the line comes");
         process.offerInput("Ada");
         assertEquals(Process.State.RUNNING, process.state(), "a typed line lets the read go on");
+        assertEquals(List.of("Ada"), process.console(), "the line typed is echoed as it is typed");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("got Ada"), process.console());
+        assertEquals(List.of("Ada", "got Ada"), process.console());
         assertFalse(process.waitingForInput());
+    }
+
+    /** A question printed without ending the line is what the program asks with, and the answer goes after it. */
+    @Test
+    void readLine_theAnswerGoesOnTheLineTheQuestionLeftOpen() {
+        final Process process = run("        Console.Print(\"How many? \"); "
+                + "Console.PrintLine(\"got \" + Console.ReadLine());");
+        assertTrue(process.waitingForInput());
+        assertEquals("How many? ", process.openLine(), "the question stands open while the program waits");
+        assertEquals(List.of(), process.console(), "an open line is not a line yet");
+        process.offerInput("16");
+        assertEquals(List.of("How many? 16"), process.console());
+        assertEquals("", process.openLine());
+        process.step(PLENTY);
+        assertEquals(List.of("How many? 16", "got 16"), process.console());
+    }
+
+    /** Less than a line: a character at a time, then a value, then what is left of the line. */
+    @Test
+    void read_andScanTakeLessThanALineAndLeaveTheRestForTheNextRead() {
+        final Process process = run("""
+                        int first = Console.Read();
+                        int n;
+                        int got = Console.Scan(out n);
+                        string word;
+                        Console.Scan(out word);
+                        Console.PrintLine((char) first + "|" + got + "|" + n + "|" + word + "|" + Console.ReadLine());
+                        int bad;
+                        Console.PrintLine("" + Console.Scan(out bad) + bad + Console.ReadLine());
+                """);
+        assertTrue(process.waitingForInput());
+        process.offerInput("x 42 ingots of iron");
+        process.step(PLENTY);
+        assertTrue(process.waitingForInput(), "the second scan waits for a line of its own");
+        process.offerInput("lots");
+        process.offerInput("after");
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("x 42 ingots of iron", "x|1|42|ingots| of iron", "lots", "after", "00after"),
+                process.console());
+    }
+
+    /** A line left open when a program ends is a line of its own, and so is one open when it is halted. */
+    @Test
+    void end_ofAProgramEndsTheLineItLeftOpen() {
+        final ProgramImage finished = loadSource("class Tool { static void Main() { "
+                + "Console.Print(\"a\"); Console.Print('b'); } }");
+        final Process process = new Process(finished, ROOM, IHost.still());
+        process.beginMain(finished.entryPoint());
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("ab"), process.console());
+        final ProgramImage halted = loadSource("class Tool { static void Main() { "
+                + "Console.Print(\"half\"); int zero = 0; int n = 1 / zero; } }");
+        final Process stopped = new Process(halted, ROOM, IHost.still());
+        stopped.beginMain(halted.entryPoint());
+        stopped.step(PLENTY);
+        assertEquals(Process.State.HALTED, stopped.state());
+        assertEquals("half", stopped.console().getFirst(), "what was open, then what stopped it");
+        assertEquals(2, stopped.console().size());
     }
 
     @Test
@@ -214,7 +304,7 @@ class ProcessTest {
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("got early"), process.console());
+        assertEquals(List.of("early", "got early"), process.console(), "echoed when typed, read later");
     }
 
     @Test
@@ -229,7 +319,7 @@ class ProcessTest {
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("yes", "one", "no"), process.console());
+        assertEquals(List.of("one", "yes", "one", "no"), process.console());
     }
 
     @Test
@@ -259,7 +349,7 @@ class ProcessTest {
         process.offerInput(" 21 ");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("twice 42"), process.console());
+        assertEquals(List.of(" 21 ", "twice 42"), process.console());
     }
 
     @Test
@@ -268,7 +358,8 @@ class ProcessTest {
         process.offerInput("twelve");
         process.step(PLENTY);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("'twelve' is not a number"), process.message());
+        assertTrue(process.message().english().contains("'twelve' is not a number"),
+                String.valueOf(process.message()));
     }
 
     @Test
@@ -286,7 +377,7 @@ class ProcessTest {
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
         assertFinished(process);
-        assertEquals(List.of("yes", "no", "41.5"), process.console());
+        assertEquals(List.of("Yes", "off", "1.5", "40", "yes", "no", "41.5"), process.console());
     }
 
     @Test
@@ -535,7 +626,7 @@ class ProcessTest {
                         int bad = 1 / zero;
                 """);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("divided by zero"), process.message());
+        assertTrue(process.message().english().contains("divided by zero"), String.valueOf(process.message()));
         assertEquals("before", process.console().getFirst());
     }
 
@@ -546,8 +637,9 @@ class ProcessTest {
                         deep.Down(0);
                 """, ROOM);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("calls went 1024 deep"), process.message());
-        assertTrue(process.message().contains("Down"), "it names the method being called: " + process.message());
+        assertTrue(process.message().english().contains("calls went 1024 deep"), String.valueOf(process.message()));
+        assertTrue(process.message().english().contains("Down"),
+                "it names the method being called: " + process.message());
     }
 
     @Test
@@ -574,7 +666,7 @@ class ProcessTest {
                         also.Add("late");
                 """);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("disposed"), process.message());
+        assertTrue(process.message().english().contains("disposed"), String.valueOf(process.message()));
     }
 
     @Test
@@ -585,7 +677,7 @@ class ProcessTest {
                         names.Add("late");
                 """);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("nothing here"), process.message());
+        assertTrue(process.message().english().contains("nothing here"), String.valueOf(process.message()));
     }
 
     @Test
@@ -603,8 +695,8 @@ class ProcessTest {
     void run_stopsWhenItAsksForMoreThanItHas() {
         final Process process = run("", "        int[] big = new int[10000];", 1024);
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().contains("out of memory"), process.message());
-        assertTrue(process.message().contains("line "), process.message());
+        assertTrue(process.message().english().contains("out of memory"), String.valueOf(process.message()));
+        assertTrue(process.message().english().contains("line "), String.valueOf(process.message()));
     }
 
     @Test
@@ -895,8 +987,9 @@ class ProcessTest {
         process.step(PLENTY);
 
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().startsWith("the runtime could not carry this out"), process.message());
-        assertEquals(List.of(process.message()), process.console());
+        assertTrue(process.message().english().startsWith("the runtime could not carry this out"),
+                String.valueOf(process.message()));
+        assertEquals(List.of(process.message().english()), process.console());
     }
 
     @Test
@@ -908,7 +1001,8 @@ class ProcessTest {
         process.step(PLENTY);
 
         assertEquals(Process.State.HALTED, process.state());
-        assertTrue(process.message().startsWith("the runtime could not carry this out"), process.message());
+        assertTrue(process.message().english().startsWith("the runtime could not carry this out"),
+                String.valueOf(process.message()));
         assertFalse(process.console().contains("never"));
     }
 }

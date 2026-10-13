@@ -11,12 +11,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.text.Text;
 import org.junit.jupiter.api.Test;
 
 class SetupJobTest {
 
     private static SetupJob job(final int ticks, final boolean removing) {
-        return new SetupJob("jsc:virtual_studio", "Virtual Studio", "Midsoft", 512, "DVD", removing, ticks);
+        return new SetupJob("jsc:virtual_studio", "Virtual Studio", "Midsoft", 512, Text.literal("DVD"), removing,
+                ticks);
     }
 
     @Test
@@ -52,36 +54,36 @@ class SetupJobTest {
     @Test
     void phase_changesAsTheBarMoves() {
         final SetupJob job = job(100, false);
-        assertEquals("Preparing to install", job.phase());
+        assertEquals("Preparing to install", job.phase().english());
         for (int i = 0; i < 50; i++) {
             job.tick();
         }
-        assertEquals("Copying files", job.phase());
+        assertEquals("Copying files", job.phase().english());
         for (int i = 0; i < 40; i++) {
             job.tick();
         }
-        assertEquals("Registering Virtual Studio", job.phase());
+        assertEquals("Registering Virtual Studio", job.phase().english());
         for (int i = 0; i < 10; i++) {
             job.tick();
         }
-        assertEquals("Finishing", job.phase());
+        assertEquals("Finishing", job.phase().english());
     }
 
     @Test
     void phase_saysRemovingWhenRemoving() {
         final SetupJob job = job(10, true);
-        assertEquals("Removing files", job.phase());
+        assertEquals("Removing files", job.phase().english());
         for (int i = 0; i < 6; i++) {
             job.tick();
         }
-        assertEquals("Cleaning up", job.phase());
+        assertEquals("Cleaning up", job.phase().english());
     }
 
     @Test
     void constructor_keepsTheCountWithinTheTotal() {
-        final SetupJob job = new SetupJob("jsc:x", "X", "Nobody", 1, "CD", false, 10, 50);
+        final SetupJob job = new SetupJob("jsc:x", "X", "Nobody", 1, Text.literal("CD"), false, 10, 50);
         assertEquals(10, job.ticksLeft());
-        final SetupJob none = new SetupJob("jsc:x", "X", "Nobody", 1, "CD", false, 0);
+        final SetupJob none = new SetupJob("jsc:x", "X", "Nobody", 1, Text.literal("CD"), false, 0);
         assertTrue(none.ticksTotal() >= 1, "a job of no ticks still has a whole to be a share of");
     }
 }

@@ -8,8 +8,8 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.computers.registry.ClientHook;
 import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Opens the client-only boot manager menu. Mirrors {@link IPostScreenOpener}: the payload handler lives in common
@@ -31,21 +31,18 @@ public interface IBootMenuScreenOpener {
 
     final class Holder {
 
+        private static final ClientHook<IBootMenuScreenOpener> HOOK = new ClientHook<>();
+
         private Holder() {
         }
 
-        @Nullable
-        private static IBootMenuScreenOpener instance;
-
         public static void set(final IBootMenuScreenOpener opener) {
-            instance = opener;
+            HOOK.set(opener);
         }
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final BootMenu menu,
                                 final int remaining) {
-            if (instance != null) {
-                instance.open(pos, monitorPos, menu, remaining);
-            }
+            HOOK.ifPresent(target -> target.open(pos, monitorPos, menu, remaining));
         }
     }
 }

@@ -1,0 +1,12 @@
+{
+  "active": "#FF2E2E2E",
+  "activeLine": "#FFA6D2F4",
+  "bar": "#E6101010",
+  "barSolid": "#FF101010",
+  "hover": "#FF1F1F1F",
+  "ink": "#FFFFFFFF",
+  "openLine": "#FF76B9ED",
+  "search": "#FFF3F3F3",
+  "searchInk": "#FF6B6B6B",
+  "startLit": "#FF4A9EE8"
+}

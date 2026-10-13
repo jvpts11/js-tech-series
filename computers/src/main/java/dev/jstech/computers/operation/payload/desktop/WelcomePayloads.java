@@ -19,6 +19,11 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.boot.WelcomeFacts;
 import dev.jstech.computers.os.install.Installers;
+import dev.jstech.core.live.LiveRate;
+import dev.jstech.core.peripheral.PeripheralLine;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -34,13 +39,22 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  */
 public final class WelcomePayloads {
 
+    /**
+     * How far from the machine its welcome may be asked after by a player who sees it only on a monitor's face in the
+     * world: as far as a face is drawn, from a monitor as far off as a peripheral cable reaches. The welcome says only
+     * what the face shows anybody in sight of it.
+     */
+    private static final double FACE_REACH = LiveRate.SEEN + PeripheralLine.range(HardwareEra.ADVANCED);
+
     private WelcomePayloads() {
     }
 
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
         ComputerAccess.accept(registrar, RequestWelcomePayload.TYPE, RequestWelcomePayload.STREAM_CODEC,
-                ComputerAccess.machine(RequestWelcomePayload::hostPos), WelcomePayloads::handleRequest);
+                ComputerAccess.anyOf(ComputerAccess.machine(RequestWelcomePayload::hostPos),
+                        ComputerAccess.inSightOf(RequestWelcomePayload::hostPos, FACE_REACH)),
+                WelcomePayloads::handleRequest);
         registrar.playToClient(WelcomePayload.TYPE, WelcomePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         WelcomeApp.accept(payload)));
@@ -69,7 +83,7 @@ public final class WelcomePayloads {
         final OsDef system = computer.installedOs();
         final String mirror = Installers.mirrorHost(computer, level);
         final String network = Installers.networkHost(computer, level);
-        return new WelcomePayload(payload.hostPos(), Installers.machineName(computer), cpuName(computer),
+        return new WelcomePayload(payload.hostPos(), Installers.machineName(computer), cpuText(computer),
                 (int) Math.min(Integer.MAX_VALUE, computer.ramTotalMb()),
                 system == null ? "" : system.displayName(), WelcomeFacts.bootedSlot(computer),
                 WelcomeFacts.bootedDisk(computer), WelcomeFacts.others(computer), network, mirror,
@@ -77,18 +91,27 @@ public final class WelcomePayloads {
                 WelcomeFacts.tips(computer, mirror, !network.isEmpty()));
     }
 
-    /** The processor really in the machine, by its own model, not the clock it happens to run at. */
-    static String cpuName(final IOsHost computer) {
+    /**
+     * The processor really in the machine, by its own model, not the clock it happens to run at, as text each player
+     * reads in their own language.
+     */
+    static Text cpuText(final IOsHost computer) {
+        final ItemStack chip = cpuStack(computer);
+        return chip.isEmpty() ? Text.EMPTY : GameText.of(chip.getHoverName());
+    }
+
+    /* The first processor seated in the machine, or nothing. */
+    private static ItemStack cpuStack(final IOsHost computer) {
         if (!(computer instanceof AbstractComputerBlockEntity machine)) {
-            return "";
+            return ItemStack.EMPTY;
         }
         final ItemStackHandler hardware = machine.getHardware();
         for (int i = 0; i < hardware.getSlots(); i++) {
             final ItemStack part = hardware.getStackInSlot(i);
             if (!part.isEmpty() && part.getItem() instanceof CpuItem) {
-                return part.getHoverName().getString();
+                return part;
             }
         }
-        return "";
+        return ItemStack.EMPTY;
     }
 }

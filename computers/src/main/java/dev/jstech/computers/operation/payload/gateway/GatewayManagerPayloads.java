@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
 import dev.jstech.computers.operation.payload.RequestGatewayManagerPayload;
+import dev.jstech.core.text.Text;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -48,7 +49,7 @@ public final class GatewayManagerPayloads {
             return;
         }
         PacketDistributor.sendToPlayer(player,
-                GatewayManager.state(level, host, payload.selected(), ""));
+                GatewayManager.state(level, host, payload.selected(), Text.EMPTY));
     }
 
     private static void handleGatewayManagerAction(final GatewayManagerActionPayload payload,
@@ -57,7 +58,7 @@ public final class GatewayManagerPayloads {
         if (host == null) {
             return;
         }
-        final String status = GatewayManager.act(level, host, payload.gatewayPos(),
+        final Text status = GatewayManager.act(level, host, payload.gatewayPos(),
                 payload.action(), payload.value(), payload.text());
         PacketDistributor.sendToPlayer(player,
                 GatewayManager.state(level, host, payload.gatewayPos(), status));

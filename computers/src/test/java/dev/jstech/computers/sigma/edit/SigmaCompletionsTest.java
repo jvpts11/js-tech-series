@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.sigma.edit;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -247,6 +248,25 @@ class SigmaCompletionsTest {
         assertEquals("int", target.type().describe());
     }
 
+    /** An array offers how many places it has, the one thing it answers to. */
+    @Test
+    void members_ofAnArrayOffersItsLength() {
+        final String text = PRELUDE + """
+                class Tool {
+                    static int Main(string[] args) {
+                        args.
+                    }
+                }
+                """;
+        final Read read = readAt(text, 3);
+        final SigmaCompletions.Target target =
+                SigmaCompletions.resolve(this.builtIns, read.model(), read.scope(), List.of("args"));
+        assertEquals("string[]", target.type().describe());
+        assertEquals(List.of("Length : int"),
+                SigmaCompletions.members(target, "le").stream().map(SigmaCompletions.Item::signature).toList());
+        assertTrue(SigmaCompletions.members(target, "x").isEmpty());
+    }
+
     @Test
     void resolve_readsThisAndThenAChainThroughIt() {
         final Read read = readAt(FARM, BROKEN_LINE);
@@ -321,6 +341,18 @@ class SigmaCompletionsTest {
                 List.of("Depth")).type().describe());
     }
 
+    /** A branch typed as far as its condition, its body not yet begun, is read without anything going wrong. */
+    @Test
+    void checkTolerant_readsABranchWhoseBodyIsNotTypedYet() {
+        assertDoesNotThrow(() -> SigmaSemantics.checkTolerant(List.of(new SourceFile("Keep.sgs", PRELUDE + """
+                class Keep {
+                    static void Main() {
+                        if (1 < 8)
+                    }
+                }
+                """))));
+    }
+
     @Test
     void resolve_readsATypeDeclaredInAnotherFileOfTheProgram() {
         final SigmaSemantics.Result result = SigmaSemantics.checkTolerant(List.of(
@@ -364,11 +396,118 @@ class SigmaCompletionsTest {
     void within_theSmallerLanguage_onlyTheTypesOfItsLibraryAreOffered() {
         final List<SigmaCompletions.Item> types = SigmaCompletions.within(LanguageLevel.SIGMA,
                 SigmaCompletions.types(this.builtIns, null, ""));
-        assertEquals(List.of("Computer", "Console", "Convert", "File", "Math", "Program", "Script", "Time"),
+        assertEquals(List.of("Bus", "BusItem", "Computer", "Console", "Convert", "CraftInterface", "CraftRouter",
+                "FILE", "File", "Math", "Program", "Random", "Redstone", "Script", "Sound", "Speaker", "Time"),
                 labels(types));
         assertEquals("Standard", named(types, "Console").owner());
         assertTrue(labels(SigmaCompletions.types(this.builtIns, null, "")).contains("Network"),
                 "which the full language still has");
+    }
+
+    /** A version of the language offers none of the library's types that came after it, in either language. */
+    @Test
+    void within_theFirstVersion_offersNoTypeThatCameLater() {
+        final List<String> first = labels(SigmaCompletions.within(LanguageLevel.SIGMA, 1,
+                SigmaCompletions.types(this.builtIns, null, "")));
+        assertFalse(first.contains("Sound") || first.contains("Speaker"), () -> "Σ 1 offered " + first);
+        assertTrue(first.contains("Console"));
+        final List<String> sharp = labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1,
+                SigmaCompletions.types(this.builtIns, null, "")));
+        assertFalse(sharp.contains("Sound"), () -> "Σ# 1 offered " + sharp);
+        assertTrue(labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 2,
+                SigmaCompletions.types(this.builtIns, null, ""))).contains("Sound"), "Σ# 2 has it");
+    }
+
+    /** Random came to the smaller language's library in the second version; the full one always had it. */
+    @Test
+    void within_theFirstVersion_offersRandomOnlyToTheFullLanguage() {
+        final List<SigmaCompletions.Item> types = SigmaCompletions.types(this.builtIns, null, "Ran");
+        assertEquals(List.of(), labels(SigmaCompletions.within(LanguageLevel.SIGMA, 1, types)));
+        assertEquals(List.of("Random"), labels(SigmaCompletions.within(LanguageLevel.SIGMA, 2, types)));
+        assertEquals(List.of("Random"), labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1, types)));
+    }
+
+    /** A member added to a type the first version had is not offered there, nor a type that came later. */
+    @Test
+    void within_theFirstVersion_offersNoMemberThatCameLaterOnAnOlderType() {
+        final List<SigmaCompletions.Item> compare =
+                SigmaCompletions.members(this.builtIns, null, "string", "Comp", true);
+        assertEquals(List.of("Compare"), labels(compare));
+        assertTrue(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1, compare).isEmpty());
+        assertEquals(compare, SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 2, compare));
+        final List<String> toString = SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1,
+                SigmaCompletions.members(this.builtIns, null, "Convert", "ToString", true)).stream()
+                .map(SigmaCompletions.Item::signature).toList();
+        assertEquals(List.of("ToString(object) : string"), toString);
+        assertFalse(labels(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1,
+                SigmaCompletions.types(this.builtIns, null, "ch"))).contains("char"));
+    }
+
+    /** The calls written with no type in front of them are offered from their table, each way each is written. */
+    @Test
+    void names_offersTheCallsWrittenWithNoTypeInFrontOfThem() {
+        final List<String> signatures = SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE,
+                "p").stream().map(SigmaCompletions.Item::signature).toList();
+        assertTrue(signatures.containsAll(List.of("printf(string format, ...) : void", "puts(string text) : void",
+                "pow(double x, double y) : double")), () -> "got " + signatures);
+        final List<SigmaCompletions.Item> abs =
+                SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "abs");
+        assertEquals(List.of("abs(int n) : int", "abs(double x) : double"),
+                abs.stream().map(SigmaCompletions.Item::signature).toList());
+    }
+
+    /** The old names came in the second version; printf has been there since the first. */
+    @Test
+    void within_theFirstVersion_offersPrintfAndNoneOfTheOldNames() {
+        final List<SigmaCompletions.Item> offered =
+                SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "p");
+        final List<String> first = labels(SigmaCompletions.within(LanguageLevel.SIGMA, 1, offered));
+        assertTrue(first.contains("printf"), () -> "Σ 1 offered " + first);
+        assertFalse(first.contains("puts") || first.contains("pow"), () -> "Σ 1 offered " + first);
+        assertTrue(labels(SigmaCompletions.within(LanguageLevel.SIGMA, 2, offered)).contains("puts"));
+    }
+
+    /** A method of the program's own under one of those names is the one offered, as it is the one called. */
+    @Test
+    void names_aMethodOfTheProgramsOwnHidesTheOldNameItShares() {
+        final String text = PRELUDE + """
+                class Farm : IScript {
+                    public void puts(int n) { }
+                    public void OnInit() {
+                        pu
+                    }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """;
+        final Read read = readAt(text, 4);
+        final List<String> puts = SigmaCompletions.names(this.builtIns, read.model(), read.scope(), "pu").stream()
+                .filter(item -> item.label().equals("puts")).map(SigmaCompletions.Item::signature).toList();
+        assertEquals(List.of("puts(int) : void"), puts);
+    }
+
+    /** One costs what the library's call it stands for costs; one that stands for a value of text costs nothing. */
+    @Test
+    void costOf_pricesAnOldNameAsTheCallItStandsFor() {
+        for (final SigmaCompletions.Item abs
+                : SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "abs")) {
+            assertEquals("costs free", SigmaCompletions.costOf(abs).english(), abs.signature());
+        }
+        final SigmaCompletions.Item puts =
+                named(SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "puts"), "puts");
+        assertEquals("costs free", SigmaCompletions.costOf(puts).english());
+        final SigmaCompletions.Item strlen =
+                named(SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "strlen"), "strlen");
+        assertNull(SigmaCompletions.costOf(strlen));
+    }
+
+    /** Nor what such a type has, reached through its name. */
+    @Test
+    void within_theFirstVersion_offersNothingOfATypeThatCameLater() {
+        final List<SigmaCompletions.Item> sound = SigmaCompletions.members(this.builtIns, null, "Sound", "", true);
+        assertFalse(sound.isEmpty());
+        assertTrue(SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 1, sound).isEmpty());
+        assertEquals(sound, SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, 2, sound));
     }
 
     /** A type of the library offers what the smaller version of it has, and nothing the compiler would refuse. */
@@ -376,7 +515,7 @@ class SigmaCompletionsTest {
     void within_theSmallerLanguage_aTypeOffersOnlyTheMembersItKept() {
         final List<SigmaCompletions.Item> all = SigmaCompletions.members(this.builtIns, null, "Console", "", true);
         final List<String> kept = labels(SigmaCompletions.within(LanguageLevel.SIGMA, all));
-        assertEquals(List.of("Clear", "Print", "PrintLine", "ReadBool", "ReadInt", "ReadLine"),
+        assertEquals(List.of("Clear", "Print", "PrintLine", "Read", "ReadBool", "ReadInt", "ReadLine", "Scan"),
                 kept.stream().distinct().toList());
         assertTrue(all.size() > kept.size(), "the full language's Console has more than that");
         assertEquals(all, SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, all), "and the full one loses none");
@@ -404,7 +543,10 @@ class SigmaCompletionsTest {
         assertTrue(under.contains("Collections"), () -> "and System.Collections; got " + under);
         assertTrue(under.contains("*"), () -> "with the star that opens the whole of it; got " + under);
         // The types in that namespace belong on a using too, since a using may name one.
-        assertTrue(under.contains("Console"), () -> "and the types it holds; got " + under);
+        assertTrue(under.contains("IScript"), () -> "and the types it holds; got " + under);
+        assertFalse(under.contains("Console"), () -> "but not the ones that live deeper; got " + under);
+        final List<String> io = labels(SigmaCompletions.namespaces(this.builtIns, null, "System.IO", ""));
+        assertTrue(io.contains("Console"), () -> "Console is under System.IO; got " + io);
     }
 
     @Test
@@ -423,21 +565,21 @@ class SigmaCompletionsTest {
         final SigmaCompletions.Item handingOne = calls.stream()
                 .filter(item -> item.signature().equals("Call(string, string, object) : object"))
                 .findFirst().orElseThrow();
-        assertEquals("costs 105", SigmaCompletions.costOf(handingOne));
+        assertEquals("costs 105", SigmaCompletions.costOf(handingOne).english());
     }
 
     @Test
     void costOf_saysWhatWritingAWidgetsValueCosts() {
         final SigmaCompletions.Item text =
                 named(SigmaCompletions.members(this.builtIns, null, "Button", "Text", false), "Text");
-        assertEquals("costs free to read and 50 to write", SigmaCompletions.costOf(text));
+        assertEquals("costs free to read and 50 to write", SigmaCompletions.costOf(text).english());
     }
 
     @Test
     void costOf_pricesTheFreeCallsTooAndLeavesTheLanguagesOwnMembersUnpriced() {
         final SigmaCompletions.Item floor =
                 named(SigmaCompletions.members(this.builtIns, null, "Math", "Floor", true), "Floor");
-        assertEquals("costs free", SigmaCompletions.costOf(floor));
+        assertEquals("costs free", SigmaCompletions.costOf(floor).english());
         final SigmaCompletions.Item length =
                 named(SigmaCompletions.members(this.builtIns, null, "string", "Length", false), "Length");
         assertNull(SigmaCompletions.costOf(length));

@@ -1,0 +1,147 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_10.definition1",
+      "term": "jsc.guide.frames_10.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_10.definition2",
+      "term": "jsc.guide.frames_10.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_10.definition3",
+      "term": "jsc.guide.frames_10.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_10.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_10.table1_1"
+          },
+          {
+            "words": "jsc.guide.frames_10.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_10.table1_2"
+          },
+          {
+            "words": "jsc.guide.frames_10.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_10.table1_3"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_10.table1_4"
+          },
+          {
+            "amount": 3072,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_10.table1_5"
+          },
+          {
+            "words": "jsc.guide.frames_10.value1_5"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_10.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.frames_10.step1",
+        "jsc.guide.frames_10.step2",
+        "jsc.guide.frames_10.step3",
+        "jsc.guide.frames_10.step4",
+        "jsc.guide.frames_10.step5",
+        "jsc.guide.frames_10.step6"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_10.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_10.fix1",
+          "problem": "jsc.guide.frames_10.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_10.fix2",
+          "problem": "jsc.guide.frames_10.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_7",
+        "jsc:frames_11",
+        "jsc:dock_station"
+      ]
+    }
+  ],
+  "id": "jsc:frames_10",
+  "order": 175,
+  "section": "jsc:editions",
+  "title": "jsc.guide.frames_10.title"
+}

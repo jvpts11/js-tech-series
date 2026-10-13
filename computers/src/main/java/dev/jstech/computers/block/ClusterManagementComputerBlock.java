@@ -8,38 +8,28 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
-import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
-import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.connect.Connection;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.BlockDrops;
-import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 /**
  * The Cluster Management Computer: a full computer whose job is the racks. It sits on the data network
@@ -48,85 +38,39 @@ import java.util.Set;
  * nodes, switching bays, watching queues. Without the card it is an ordinary computer. A cluster
  * works without one; the computer makes it one machine to run.
  */
-public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IRearFacingDataPort, IPeripheralConnectable, IEraChassisBlock {
+public class ClusterManagementComputerBlock extends AbstractSmallComputerBlock<ClusterManagementComputerBlockEntity> {
 
-    public static final MapCodec<ClusterManagementComputerBlock> CODEC = simpleCodec(ClusterManagementComputerBlock::new);
+    public static final MapCodec<ClusterManagementComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            propertiesCodec(),
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(ClusterManagementComputerBlock::era),
+            StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(ClusterManagementComputerBlock::caseStyle)
+    ).apply(i, ClusterManagementComputerBlock::new));
 
-    public ClusterManagementComputerBlock(final Properties properties) {
-        super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
-    }
-
-    public HardwareEra era() {
-        return HardwareEra.STANDARD;
-    }
-
-    @Override
-    public HardwareEra chassisEra() {
-        return era();
-    }
-
-    @Override
-    protected MapCodec<? extends ClusterManagementComputerBlock> codec() {
-        return CODEC;
-    }
-
-    @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
+    /*
+     * A management machine lives on the network, on its back: its era's access line through a router, or the
+     * backbone directly, the fibre only with an Optical Network Card. Never the compute fabric; the racks are reached
+     * over the network.
+     */
+    public ClusterManagementComputerBlock(final Properties properties, final HardwareEra era,
+                                          final CaseStyle caseStyle) {
+        super(properties, era, caseStyle,
+                FacePorts.builder()
+                        .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS, DataLine.BACKBONE))
+                        .port(FaceRule.EVERY, PeripheralLine.of(era))
+                        .build(),
+                ClusterManagementComputerBlockEntity.class, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE::get,
+                ClusterManagementComputerBlockEntity::serverTick);
+        registerDefaultState(defaultBlockState().setValue(OpticalPort.OPTICAL, false));
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        /*
-         * A management machine lives on the backbone: Ethernet through a router, or the bandwidth
-         * and fibre cables directly. Never the compute fabric; the racks are reached over the network.
-         */
-        return Set.of(DataTier.T1_ETHERNET, DataTier.T2_HBW, DataTier.T3_FIBER);
+    public String machineName() {
+        return "cluster_management_computer";
     }
 
     @Override
-    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
-
-    @Override
-    public BlockState getStateForPlacement(final BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
-                                               final Player player, final BlockHitResult hit) {
-        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof ClusterManagementComputerBlockEntity computer) {
-            serverPlayer.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new ClusterManagementComputerMenu(id, inventory, computer),
-                    Component.translatable("block.jsc.cluster_management_computer")),
-                    buf -> buf.writeBlockPos(pos));
-        }
-        return InteractionResult.sidedSuccess(level.isClientSide());
-    }
-
-    @Override
-    protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
-                            final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel
-                && level.getBlockEntity(pos) instanceof ClusterManagementComputerBlockEntity computer) {
-            computer.onBroken(serverLevel);
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
-    public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
-                                        final Player player) {
-        if (level instanceof ServerLevel serverLevel && !player.getAbilities().instabuild
-                && level.getBlockEntity(pos) instanceof ClusterManagementComputerBlockEntity computer) {
-            BlockDrops.spill(serverLevel, pos, computer.getHardware());
-        }
-        return super.playerWillDestroy(level, pos, state, player);
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
     }
 
     @Override
@@ -136,10 +80,23 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(final Level level, final BlockState state,
-                                                                  final BlockEntityType<T> type) {
-        return BlockEntityTickers.create(type, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(),
-                ClusterManagementComputerBlockEntity::serverTick);
+    protected MapCodec<? extends ClusterManagementComputerBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, OpticalPort.OPTICAL);
+    }
+
+    @Override
+    protected AbstractContainerMenu createMenu(final int containerId, final Inventory inventory,
+                                               final ClusterManagementComputerBlockEntity computer) {
+        return new ClusterManagementComputerMenu(containerId, inventory, computer);
+    }
+
+    @Override
+    protected Component menuTitle() {
+        return Component.translatable("block.jsc.cluster_management_computer");
     }
 }

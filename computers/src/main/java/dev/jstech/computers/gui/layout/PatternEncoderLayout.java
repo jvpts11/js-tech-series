@@ -64,7 +64,7 @@ public final class PatternEncoderLayout {
     public static GuiLayout layout() {
         final GuiLayout layout = new GuiLayout(WIDTH, HEIGHT);
         layout.text("title", TITLE_X, TITLE_Y, 15, 1.0f);
-        layout.box("media", MEDIA_X, MEDIA_Y, SLOT, SLOT);
+        layout.slot("media", MEDIA_X + 1, MEDIA_Y + 1);
         layout.text("link", INFO_X, INFO_Y, INFO_CHARS, INFO_SCALE);
         layout.text("era", INFO_X, INFO_Y + LINE_H, INFO_CHARS, INFO_SCALE);
         layout.text("medium", INFO_X, INFO_Y + LINE_H * 2, INFO_CHARS, INFO_SCALE);

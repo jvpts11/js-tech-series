@@ -1,0 +1,351 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.files_and_file_handles.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.files_and_file_handles.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.files_and_file_handles.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.files_and_file_handles.table1",
+      "heads": [
+        "jsc.guide.files_and_file_handles.table1_head1",
+        "jsc.guide.files_and_file_handles.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "File.Exists(path)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Read(path)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.TryRead(path, out text)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Write(path, text)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Append(path, text)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Delete(path)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.MkDir(path)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.List(path)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Open(path, mode)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Move(from, to)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.files_and_file_handles.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.files_and_file_handles.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.files_and_file_handles.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.files_and_file_handles.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.files_and_file_handles.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.files_and_file_handles.table2",
+      "heads": [
+        "jsc.guide.files_and_file_handles.table2_head1",
+        "jsc.guide.files_and_file_handles.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "FILE.Close()"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "FILE.ReadLine(out line)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "FILE.Read()"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "FILE.Scan(out value)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "FILE.Write(text)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "FILE.Write(char)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "FILE.Seek(place)"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "FILE.Position"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "FILE.AtEnd"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table2_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.files_and_file_handles.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.files_and_file_handles.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.files_and_file_handles.table3",
+      "heads": [
+        "jsc.guide.files_and_file_handles.table3_head1",
+        "jsc.guide.files_and_file_handles.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "r"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "w"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "a"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "r+"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "w+"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "a+"
+          },
+          {
+            "words": "jsc.guide.files_and_file_handles.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.files_and_file_handles.warning1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.files_and_file_handles.definition1",
+      "term": "jsc.guide.files_and_file_handles.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix1",
+          "problem": "jsc.guide.files_and_file_handles.problem1"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix2",
+          "problem": "jsc.guide.files_and_file_handles.problem2"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix3",
+          "problem": "jsc.guide.files_and_file_handles.problem3"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix4",
+          "problem": "jsc.guide.files_and_file_handles.problem4"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix5",
+          "problem": "jsc.guide.files_and_file_handles.problem5"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix6",
+          "problem": "jsc.guide.files_and_file_handles.problem6"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix7",
+          "problem": "jsc.guide.files_and_file_handles.problem7"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix8",
+          "problem": "jsc.guide.files_and_file_handles.problem8"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix9",
+          "problem": "jsc.guide.files_and_file_handles.problem9"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix10",
+          "problem": "jsc.guide.files_and_file_handles.problem10"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix11",
+          "problem": "jsc.guide.files_and_file_handles.problem11"
+        },
+        {
+          "fix": "jsc.guide.files_and_file_handles.fix12",
+          "problem": "jsc.guide.files_and_file_handles.problem12"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:drives"
+      ]
+    }
+  ],
+  "id": "jsc:files_and_file_handles",
+  "order": 354,
+  "section": "jsc:library_basics",
+  "title": "jsc.guide.files_and_file_handles.title"
+}

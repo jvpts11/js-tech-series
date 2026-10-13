@@ -11,11 +11,19 @@ import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RequestSheetFactsPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.operation.payload.SheetFactsPayload;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.program.Spreadsheet;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -42,6 +50,7 @@ import java.util.Map;
  * <p>It reads and writes the comma separated files the mod already has, so a sheet is a file any other
  * program on the machine can open.
  */
+@PaletteHolder
 public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private static final int TOOLBAR_H = 15;
@@ -52,10 +61,13 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int COL_W = 46;
     private static final int STATUS_H = 11;
     private static final int MARGIN = 3;
-    private static final int LIVE_INK = 0xFF1C4FA8;
-    private static final int ERROR_INK = 0xFFB4231F;
+    /** A cell's ink when it is live (asked of the network) and when its formula errored, {@code jsc:app/exceed}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/exceed",
+            new Colours(0xFF1C4FA8, 0xFFB4231F));
     /** How long the sheet waits before asking the machine again, so typing does not send a packet a key. */
     private static final long ASK_EVERY_MS = 3000L;
+    /** Exceed's own id, whose name on the desktop its printouts say they came from. */
+    private static final String PROGRAM = "jsc:exceed";
     /** The longest name a cell may ask about, which is what the request payload carries. */
     private static final int MAX_ITEM_NAME = 120;
 
@@ -71,6 +83,8 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     private final Button openButton;
     private final Button saveButton;
     private final Button saveAsButton;
+    private final Button printButton;
+    private final PrintDialog printDialog;
     private final Button refreshButton;
 
     private final Spreadsheet sheet = new Spreadsheet();
@@ -78,7 +92,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private OsSkin skin = OsSkin.fallback();
     private String path = "";
-    private String status = "";
+    private Text status = Text.EMPTY;
     private boolean dirty;
     private int cursorRow;
     private int cursorColumn;
@@ -120,10 +134,12 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         this.host = host;
         this.monitorPos = monitorPos;
         this.dialog = new FileDialog(host, this);
-        openButton = root.add(new Button("Open", this::chooseOpen));
-        saveButton = root.add(new Button("Save", this::save));
-        saveAsButton = root.add(new Button("Save As", this::chooseSaveAs));
-        refreshButton = root.add(new Button("Refresh", this::ask));
+        openButton = root.add(new Button(GameText.resolve(ExceedTexts.OPEN), this::chooseOpen));
+        saveButton = root.add(new Button(GameText.resolve(ExceedTexts.SAVE), this::save));
+        saveAsButton = root.add(new Button(GameText.resolve(ExceedTexts.SAVE_AS), this::chooseSaveAs));
+        this.printDialog = new PrintDialog(host, this);
+        printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::print));
+        refreshButton = root.add(new Button(GameText.resolve(ExceedTexts.REFRESH), this::ask));
         root.add(formula);
         sheet.setFacts(facts);
         open = this;
@@ -143,7 +159,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         showing.facts.servers = payload.servers();
         // The facts are changed in place, so the sheet has to be told its answers may have moved.
         showing.sheet.forget();
-        showing.status = showing.sheet.liveCells() + " live cells";
+        showing.status = liveCells(showing.sheet.liveCells());
     }
 
     /* Asking the machine */
@@ -204,8 +220,8 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     /* Files */
 
     private void chooseOpen() {
-        dialog.openFile("Open sheet", "",
-                List.of(FileDialog.Filter.of("Sheets", "csv"), FileDialog.Filter.ALL), this::openFile);
+        dialog.openFile(ExceedTexts.OPEN_SHEET.text(), "",
+                List.of(FileDialog.Filter.of(ExceedTexts.SHEETS, "csv"), FileDialog.Filter.ALL), this::openFile);
     }
 
     @Override
@@ -213,6 +229,16 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         if (target == null || target.isEmpty()) {
             return;
         }
+        // Opening replaces the whole sheet, so cells not yet saved are only thrown away when the player says so.
+        if (this.dirty) {
+            ActiveDesktop.ask(GameText.resolve(ExceedTexts.OPEN_SHEET),
+                    GameText.resolve(ExceedTexts.DISCARD_CHANGES.with(leaf(target))), () -> request(target));
+            return;
+        }
+        request(target);
+    }
+
+    private void request(final String target) {
         CodeFileReplies.expectContent(this, target);
         PacketDistributor.sendToServer(new RequestFileContentPayload(host, target));
     }
@@ -222,16 +248,52 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         sheet.fromCsv(exists ? content : "");
         this.path = target;
         this.dirty = false;
-        this.status = exists ? "Opened " + leaf(target) : "New sheet";
+        this.status = exists ? EditorTexts.OPENED.with(leaf(target)) : ExceedTexts.NEW_SHEET.text();
         ask();
     }
 
     private void chooseSaveAs() {
-        dialog.saveAs("Save sheet", "", path.isEmpty() ? "sheet.csv" : leaf(path),
-                List.of(FileDialog.Filter.of("Sheets", "csv")), target -> {
+        dialog.saveAs(ExceedTexts.SAVE_SHEET.text(), "", path.isEmpty() ? "sheet.csv" : leaf(path),
+                List.of(FileDialog.Filter.of(ExceedTexts.SHEETS, "csv")), target -> {
                     this.path = target;
                     save();
                 });
+    }
+
+    /*
+     * The cells in use as a table, the column letters over them and the row numbers beside, worked out as the sheet
+     * shows them, to the machine's printer by way of the system's Print window.
+     */
+    private void print() {
+        commit();
+        int lastRow = -1;
+        int lastColumn = -1;
+        for (int r = 0; r < Spreadsheet.ROWS; r++) {
+            for (int c = 0; c < Spreadsheet.COLUMNS; c++) {
+                if (!sheet.display(r, c).isEmpty()) {
+                    lastRow = Math.max(lastRow, r);
+                    lastColumn = Math.max(lastColumn, c);
+                }
+            }
+        }
+        final List<List<String>> rows = new ArrayList<>();
+        final List<String> head = new ArrayList<>();
+        head.add("");
+        for (int c = 0; c <= lastColumn; c++) {
+            head.add(Spreadsheet.columnName(c));
+        }
+        rows.add(head);
+        for (int r = 0; r <= lastRow; r++) {
+            final List<String> row = new ArrayList<>();
+            row.add(String.valueOf(r + 1));
+            for (int c = 0; c <= lastColumn; c++) {
+                row.add(sheet.display(r, c));
+            }
+            rows.add(row);
+        }
+        final String title = path.isEmpty() ? "untitled.csv" : leaf(path);
+        printDialog.show(PrintDialog.Document.text(title, ActiveDesktop.windowName(PROGRAM),
+                lastRow < 0 ? "" : PrintLayout.table(rows, true)));
     }
 
     private void save() {
@@ -244,22 +306,22 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         final String csv = sheet.toCsv();
         // The cap on a save throws when handed more than it takes, so a sheet past it is refused here.
         if (csv.length() > SaveFilePayload.MAX_CONTENT) {
-            this.status = "Sheet too large to save";
+            this.status = ExceedTexts.TOO_LARGE_TO_SAVE.text();
             return;
         }
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new SaveFilePayload(host, path, csv));
         FilesApps.diskChanged();
-        this.status = "Saving";
+        this.status = ExceedTexts.SAVING.text();
     }
 
     @Override
     public void onContentTooLarge(final String target) {
-        this.status = leaf(target) + " is too large to open here";
+        this.status = EditorTexts.TOO_LARGE.with(leaf(target));
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
+    public void onSaved(final boolean ok, final Text message) {
         this.status = message;
         if (ok) {
             this.dirty = false;
@@ -347,17 +409,18 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void layoutToolbar(final Font font, final int x, final int y, final int width) {
         int bx = x + MARGIN;
-        bx = place(openButton, font, "Open", bx, y);
-        bx = place(saveButton, font, "Save", bx, y);
-        bx = place(saveAsButton, font, "Save As", bx, y);
-        final int w = font.width("Refresh") + 8;
+        bx = place(openButton, font, bx, y);
+        bx = place(saveButton, font, bx, y);
+        bx = place(saveAsButton, font, bx, y);
+        bx = place(printButton, font, bx, y);
+        final int w = font.width(refreshButton.label()) + 8;
         // Pinned right, never back over the button before it; a narrow window clips rather than overlaps.
         refreshButton.setBounds(Math.max(bx, x + width - MARGIN - w), y + 1, w, 12);
     }
 
-    private static int place(final Button button, final Font font, final String label,
-                             final int bx, final int y) {
-        final int w = font.width(label) + 8;
+    /* A button as wide as the words it shows, in the player's language. */
+    private static int place(final Button button, final Font font, final int bx, final int y) {
+        final int w = font.width(button.label()) + 8;
         button.setBounds(bx, y + 1, w, 12);
         return bx + w + 2;
     }
@@ -366,8 +429,8 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
                                 final int width) {
         final String name = Spreadsheet.cellName(cursorRow, cursorColumn);
         g.fill(x + MARGIN, y + 1, x + MARGIN + 28, y + FORMULA_H - 1, skin.fieldBg());
-        g.drawString(font, name, x + MARGIN + (28 - font.width(name)) / 2, y + 3, skin.text(), false);
-        g.drawString(font, "fx", x + MARGIN + 31, y + 3, skin.dim(), false);
+        Draw.text(g, font, name, x + MARGIN + (28 - font.width(name)) / 2, y + 3, skin.text());
+        Draw.text(g, font, GameText.resolve(ExceedAppTexts.FORMULA_MARK), x + MARGIN + 31, y + 3, skin.dim());
         formula.setBounds(x + MARGIN + 43, y + 1, Math.max(20, width - MARGIN * 2 - 43), FORMULA_H - 2);
     }
 
@@ -385,14 +448,14 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         for (int c = 0; c < shownColumns; c++) {
             final int cx = gridX + ROW_HEAD_W + c * COL_W;
             final String label = Spreadsheet.columnName(scrollColumn + c);
-            g.drawString(font, label, cx + (COL_W - font.width(label)) / 2, gridY + 1, skin.text(), false);
+            Draw.text(g, font, label, cx + (COL_W - font.width(label)) / 2, gridY + 1, skin.text());
         }
         for (int r = 0; r < shownRows; r++) {
             final int ry = gridY + HEAD_H + r * ROW_H;
             g.fill(gridX, ry, gridX + ROW_HEAD_W, ry + ROW_H, skin.listHover());
             final String label = String.valueOf(scrollRow + r + 1);
-            g.drawString(font, label, gridX + ROW_HEAD_W - 2 - font.width(label), ry + 1,
-                    skin.text(), false);
+            Draw.text(g, font, label, gridX + ROW_HEAD_W - 2 - font.width(label), ry + 1,
+                    skin.text());
         }
 
         for (int r = 0; r < shownRows; r++) {
@@ -414,7 +477,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         if (!shown.isEmpty()) {
             final boolean live = sheet.isLive(row, column);
             final boolean bad = shown.startsWith("#");
-            final int ink = bad ? ERROR_INK : live ? LIVE_INK : skin.text();
+            final int ink = bad ? PALETTE.get().errorInk() : live ? PALETTE.get().liveInk() : skin.text();
             /*
              * Numbers are read against each other down a column, so they are set to the right; words are
              * read one at a time and start where the eye does, which is the left.
@@ -423,7 +486,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
             final boolean numeric = !shown.isEmpty()
                     && (Character.isDigit(shown.charAt(0)) || shown.charAt(0) == '-' || bad);
             final int tx = numeric ? cx + COL_W - 3 - font.width(clipped) : cx + 2;
-            g.drawString(font, clipped, tx, cy + 1, ink, false);
+            Draw.text(g, font, clipped, tx, cy + 1, ink);
         }
         if (row == cursorRow && column == cursorColumn) {
             final int accent = skin.accent();
@@ -437,12 +500,17 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
         final int live = sheet.liveCells();
-        final String left = live == 0 ? "Ready" : live + (live == 1 ? " live cell" : " live cells");
-        g.drawString(font, left, x + MARGIN, y + 2, skin.text(), false);
+        final String left = GameText.resolve(live == 0 ? ExceedTexts.READY.text() : liveCells(live));
+        Draw.text(g, font, left, x + MARGIN, y + 2, skin.text());
         if (!status.isEmpty()) {
-            final String clipped = font.plainSubstrByWidth(status, width - MARGIN * 2 - font.width(left) - 8);
-            g.drawString(font, clipped, x + width - MARGIN - font.width(clipped), y + 2, skin.dim(), false);
+            final String clipped = font.plainSubstrByWidth(GameText.resolve(status),
+                    width - MARGIN * 2 - font.width(left) - 8);
+            Draw.text(g, font, clipped, x + width - MARGIN - font.width(clipped), y + 2, skin.dim());
         }
+    }
+
+    private static Text liveCells(final int count) {
+        return (count == 1 ? ExceedTexts.ONE_LIVE_CELL : ExceedTexts.LIVE_CELLS).with(count);
     }
 
     private void clampScroll() {
@@ -507,6 +575,22 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         return root.charTyped(c);
     }
 
+    /** What the cell at {@code row} and {@code column} shows: its value, worked out from its formula. */
+    public String shown(final int row, final int column) {
+        return sheet.display(row, column);
+    }
+
+    /** The desktop point in the middle of the cell at {@code row} and {@code column}, from the last frame drawn. */
+    public int[] cellPoint(final int row, final int column) {
+        return new int[] {gridX + ROW_HEAD_W + (column - scrollColumn) * COL_W + COL_W / 2,
+                gridY + HEAD_H + (row - scrollRow) * ROW_H + ROW_H / 2};
+    }
+
+    /** The system's file window the sheet opens over itself to open a sheet or save one under a name. */
+    public FileDialog fileDialog() {
+        return dialog;
+    }
+
     /** Writes what is in the bar into the cell it belongs to, which is what leaving that cell does. */
     private void commit() {
         final String typed = formula.edit();
@@ -524,6 +608,10 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && key == GLFW.GLFW_KEY_S) {
             save();
+            return true;
+        }
+        if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && key == GLFW.GLFW_KEY_P) {
+            print();
             return true;
         }
         final int dr = switch (key) {
@@ -544,5 +632,9 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
             return true;
         }
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** A cell's ink when it is live (asked of the network) and when its formula errored. */
+    private record Colours(int liveInk, int errorInk) {
     }
 }

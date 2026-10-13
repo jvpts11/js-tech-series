@@ -37,7 +37,7 @@ class PatternMatcherTest {
                 { 12_345_678, 100, -12_345_678 },
                 { -1, -1, -1 },
                 { 0, -64, 0 },
-                { 33_554_431, 0, -33_554_432 },  // limites de 26-bit signed
+                { 33_554_431, 0, -33_554_432 },  // the limits of a signed 26-bit field
         }) {
             long encoded = PatternMatcher.encodePosition(coord[0], coord[1], coord[2]);
             int[] decoded = PatternMatcher.decodePosition(encoded);
@@ -261,5 +261,50 @@ class PatternMatcherTest {
         var success = assertInstanceOf(IMatchResult.Success.class, result);
         // Controller pos must not be in the slaves list.
         assertTrue(success.slavePositions().stream().noneMatch(p -> p == pos(0, 0, 0)));
+    }
+
+    @Test
+    void match_reportsEachPortAtItsPlaceInTheWorld() {
+        var pattern = MultiblockPattern.builder("furnace")
+                .layer("I#O")
+                .where('I', IBlockMatcher.exact("jsc:hatch"))
+                .where('O', IBlockMatcher.exact("jsc:hatch"))
+                .port('I', PortKind.ITEM_INPUT)
+                .port('O', PortKind.ITEM_OUTPUT)
+                .build();
+        Map<Long, String> world = new HashMap<>();
+        world.put(pos(-1, 0, 0), "jsc:hatch");
+        world.put(pos(1, 0, 0), "jsc:hatch");
+        var success = assertInstanceOf(IMatchResult.Success.class,
+                PatternMatcher.match(pattern, providerFrom(world), pos(0, 0, 0)));
+        assertSame(Rotation.NORTH, success.rotation());
+        assertEquals(PortKind.ITEM_INPUT, success.ports().get(pos(-1, 0, 0)));
+        assertEquals(PortKind.ITEM_OUTPUT, success.ports().get(pos(1, 0, 0)));
+    }
+
+    @Test
+    void match_fitsATagSlotThroughTheWorldsTags() {
+        var pattern = MultiblockPattern.builder("logs")
+                .layer("L#L")
+                .where('L', BlockMatch.tag("minecraft:logs"))
+                .build();
+        Map<Long, String> world = new HashMap<>();
+        world.put(pos(-1, 0, 0), "minecraft:oak_log");
+        world.put(pos(1, 0, 0), "minecraft:birch_log");
+        IBlockProvider withTags = new IBlockProvider() {
+            @Override
+            public String blockAt(final long encodedPos) {
+                return world.getOrDefault(encodedPos, "minecraft:air");
+            }
+
+            @Override
+            public boolean hasTag(final long encodedPos, final String tag) {
+                return tag.equals("minecraft:logs") && blockAt(encodedPos).endsWith("_log");
+            }
+        };
+        assertInstanceOf(IMatchResult.Success.class, PatternMatcher.match(pattern, withTags, pos(0, 0, 0)));
+        assertInstanceOf(IMatchResult.Failure.class,
+                PatternMatcher.match(pattern, providerFrom(world), pos(0, 0, 0)),
+                "a provider that knows no tags fits no tag slot");
     }
 }

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.vm.listing;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,10 +27,14 @@ import java.util.Set;
  * in an editor says everything that is wrong with it at once. The problems are the listing's own, so
  * reading one needs nothing from the language that wrote it.
  */
+@TextHolder
 public final class AsmReader {
 
     /** Past this many, further problems are almost always the same mistake echoing. */
     public static final int MAX_PROBLEMS = 100;
+
+    /* What a number in the listing has to be, said in the reader's language inside the problem that quotes it. */
+    private static final TextKey WHOLE_NUMBER = TextKey.of("jsc.vm.asm_reader.whole_number", "a whole number");
 
     private final String[] lines;
     private final List<ListingProblem> problems = new ArrayList<>();
@@ -114,7 +120,7 @@ public final class AsmReader {
                     this.report(line, ListingError.MALFORMED_OPERAND, rest, ".arch");
                     return;
                 }
-                program.setArchitecture(rest, line);
+                program.setIsa(rest, line);
             }
             case "start" -> {
                 /*
@@ -225,6 +231,11 @@ public final class AsmReader {
         final int slotsAt = body.lastIndexOf(" slots ");
         if (slotsAt >= 0) {
             slots = this.number(body.substring(slotsAt + " slots ".length()).trim(), line, 0);
+            if (slots < 0 || slots > AsmMethod.MOST_SLOTS) {
+                // Reported rather than built: a method may not need fewer than none, nor more than a frame can hold.
+                this.report(line, ListingError.MALFORMED_OPERAND, rest, ".method");
+                return;
+            }
             body = body.substring(0, slotsAt).trim();
             hasBody = true;
         }
@@ -243,6 +254,11 @@ public final class AsmReader {
     private void readInstruction(final String text, final String comment, final int line) {
         if (this.method == null) {
             this.report(line, ListingError.INSTRUCTION_OUTSIDE_METHOD);
+            return;
+        }
+        if (!this.method.hasBody()) {
+            // Instructions under a header with no slots line would be dropped when the method is built.
+            this.report(line, ListingError.NO_BODY_TO_HOLD);
             return;
         }
         String rest = text;
@@ -282,13 +298,13 @@ public final class AsmReader {
             return switch (opcode.shape()) {
                 case I4, SLOT -> {
                     final int value = Integer.parseInt(text);
-                    yield opcode.shape() == Opcode.Shape.SLOT
+                    yield opcode.shape() == Opcode.OperandShape.SLOT
                             ? new IOperand.Slot(value) : new IOperand.I4(value);
                 }
                 case I8 -> new IOperand.I8(Long.parseLong(text));
                 case R4 -> new IOperand.R4(Float.parseFloat(text));
                 case R8 -> new IOperand.R8(Double.parseDouble(text));
-                case TEXT -> new IOperand.Text(unquote(text));
+                case TEXT -> this.readText(text, line, opcode);
                 case LABEL -> new IOperand.Label(text);
                 case FIELD -> {
                     final int dot = text.lastIndexOf('.');
@@ -299,10 +315,19 @@ public final class AsmReader {
                 case CONSTRUCTOR -> this.readConstructorOperand(text, line);
                 default -> new IOperand.Type(text);
             };
-        } catch (final NumberFormatException notANumber) {
+        } catch (final IllegalArgumentException notReadable) {
+            // Covers a bad number and a type name left blank, such as an owner missing before a dot.
             this.report(line, ListingError.MALFORMED_OPERAND, text, opcode.text());
             return null;
         }
+    }
+
+    private IOperand readText(final String text, final int line, final Opcode opcode) {
+        if (!quoted(text)) {
+            this.report(line, ListingError.MALFORMED_OPERAND, text, opcode.text());
+            return null;
+        }
+        return new IOperand.Text(unquote(text));
     }
 
     private IOperand readMethodOperand(final String text, final int line) {
@@ -360,13 +385,19 @@ public final class AsmReader {
      */
     private void checkLabels(final AsmMethod.Builder built) {
         final Set<String> marked = new HashSet<>();
-        for (final Instruction instruction : built.instructions()) {
-            if (instruction.label() != null) {
-                marked.add(instruction.label());
-            }
-        }
         final List<Instruction> instructions = built.instructions();
         for (int i = 0; i < instructions.size(); i++) {
+            final String label = instructions.get(i).label();
+            // Branches resolve by name, so a second line with the same label would silently take them all.
+            if (label != null && !marked.add(label)) {
+                this.report(built.lineOf(i), ListingError.DUPLICATE_LABEL, label);
+            }
+        }
+        for (int i = 0; i < instructions.size(); i++) {
+            if (instructions.get(i).operand() instanceof IOperand.Slot slot
+                    && (slot.index() < 0 || slot.index() >= built.placeCount())) {
+                this.report(built.lineOf(i), ListingError.SLOT_OUT_OF_RANGE, slot.index(), built.placeCount());
+            }
             if (instructions.get(i).operand() instanceof IOperand.Label target
                     && !marked.contains(target.name())) {
                 this.report(built.lineOf(i), ListingError.UNKNOWN_LABEL, target.name());
@@ -378,7 +409,7 @@ public final class AsmReader {
         try {
             return Integer.parseInt(text.trim());
         } catch (final NumberFormatException notANumber) {
-            this.report(line, ListingError.MALFORMED_OPERAND, text, "a whole number");
+            this.report(line, ListingError.MALFORMED_OPERAND, text, WHOLE_NUMBER);
             return fallback;
         }
     }
@@ -449,10 +480,19 @@ public final class AsmReader {
         return at + 1;
     }
 
-    private static String unquote(final String text) {
+    // A closing quote preceded by an odd run of backslashes is escaped, so it closes nothing.
+    private static boolean quoted(final String text) {
         if (text.length() < 2 || text.charAt(0) != '"' || text.charAt(text.length() - 1) != '"') {
-            return text;
+            return false;
         }
+        int backslashes = 0;
+        for (int i = text.length() - 2; i > 0 && text.charAt(i) == '\\'; i--) {
+            backslashes++;
+        }
+        return backslashes % 2 == 0;
+    }
+
+    private static String unquote(final String text) {
         final StringBuilder value = new StringBuilder();
         for (int i = 1; i < text.length() - 1; i++) {
             final char c = text.charAt(i);

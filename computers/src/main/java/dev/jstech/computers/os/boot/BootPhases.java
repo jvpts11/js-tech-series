@@ -46,19 +46,29 @@ public final class BootPhases {
     private long menuEndsAt;
 
     /*
-     * The machine closing its programs on its way to starting over. A restart is not a power cut: the system
-     * that is running gets to say goodbye first, and only when it has finished does the self-test begin. The
-     * clock is its own because nothing else about the machine is happening while it runs.
+     * The machine closing its programs on its way to starting over or to switching off. Neither is a power cut:
+     * the system that is running gets to say goodbye first, and only when it has finished does the self-test
+     * begin or the power go. The clock is its own because nothing else about the machine is happening while it
+     * runs.
      */
     private boolean goingDown;
     private long downEndsAt;
     private int downTicksTotal;
+    /** Whether the closing-down ends with the machine switched off rather than testing itself again. */
+    private boolean poweringOff;
+    /**
+     * Whether a key has stopped the closing-down's clock: a kernel that offers to keep its panic on the console waits
+     * there, with no end in sight, until another key lets it go.
+     */
+    private boolean downHeld;
 
     /* The system coming up, after the self-test and before the desktop or the prompt. */
     private boolean booting;
     private long bootEndsAt;
     /** How long this coming-up takes in all, so a bar drawn half way through knows how far along it is. */
     private int bootTicksTotal;
+    /** The game time the system finished coming up, for how long it has been up; zero until it has. */
+    private long upSince;
 
     /** Whether the machine owes a power-on self-test or is in the middle of one. */
     public boolean needsPost() {
@@ -76,15 +86,21 @@ public final class BootPhases {
         this.postEndsAt = 0L;
         if (value) {
             this.halted = false;
+            this.upSince = 0L;
             endDown();
             endMenu();
             endBoot();
         }
     }
 
-    /** Whether the machine is closing down before starting over. */
+    /** Whether the machine is closing down before starting over or switching off. */
     public boolean goingDown() {
         return this.goingDown;
+    }
+
+    /** Whether the closing-down under way ends with the machine switched off. */
+    public boolean poweringOff() {
+        return this.goingDown && this.poweringOff;
     }
 
     /**
@@ -93,17 +109,49 @@ public final class BootPhases {
      * <p>Whatever it was standing at or bringing up is over: a machine on its way down is not on its way up.
      */
     public void beginDown(final long now, final int ticks) {
+        beginDown(now, ticks, false);
+    }
+
+    /** The same, ending with the machine switched off when {@code off}, and in a self-test otherwise. */
+    public void beginDown(final long now, final int ticks, final boolean off) {
         this.halted = false;
         endMenu();
         endBoot();
         this.goingDown = true;
+        this.poweringOff = off;
         this.downTicksTotal = Math.max(1, ticks);
         this.downEndsAt = now + this.downTicksTotal;
     }
 
-    /** Whether the machine has finished closing down and it is time to test itself again. */
+    /** Whether the machine has finished closing down and it is time to test itself again or to switch off. */
     public boolean downDone(final long now) {
-        return this.goingDown && now >= this.downEndsAt;
+        return this.goingDown && !this.downHeld && now >= this.downEndsAt;
+    }
+
+    /** Stops the closing-down's clock where it stands, until {@link #releaseDown} lets it go. */
+    public void holdDown() {
+        this.downHeld = this.goingDown;
+    }
+
+    /** Lets a held closing-down go, ending it at once. */
+    public void releaseDown(final long now) {
+        this.downHeld = false;
+        this.downEndsAt = now;
+    }
+
+    /** Whether a key has stopped the closing-down's clock. */
+    public boolean downHeld() {
+        return this.downHeld;
+    }
+
+    /** The system has finished coming up, now. */
+    public void systemUp(final long now) {
+        this.upSince = now;
+    }
+
+    /** How long the system has been up, in ticks; zero for one that has not come up since the power came on. */
+    public long upFor(final long now) {
+        return this.upSince == 0L ? 0L : Math.max(0L, now - this.upSince);
     }
 
     /** How long this closing-down takes in all, so a screen joining it knows how far along it is. */
@@ -119,6 +167,8 @@ public final class BootPhases {
     /** Leaves the closing-down, whichever way it was left. */
     public void endDown() {
         this.goingDown = false;
+        this.poweringOff = false;
+        this.downHeld = false;
         this.downEndsAt = 0L;
         this.downTicksTotal = 0;
     }
@@ -244,6 +294,12 @@ public final class BootPhases {
      * and a machine coming on owes a self-test before anything else.
      */
     public void powered(final boolean on) {
+        /*
+         * Standing at a failure is part of what was under way too. Kept across a power cycle, it outlived the
+         * self-test that found it and could send a machine that was just switched on past its new one.
+         */
+        this.halted = false;
+        this.upSince = 0L;
         endDown();
         endMenu();
         endBoot();

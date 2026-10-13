@@ -1,0 +1,21 @@
+{
+  "bandFrom": "#FF3B7BD4",
+  "bandInk": "#FFFFFFFF",
+  "bandTo": "#FF1E4E9E",
+  "border": "#FF13315F",
+  "chevron": "#FF2F9A33",
+  "faceFallback": "#FF2F6FD6",
+  "faceFrame": "#FFFFFFFF",
+  "footerHover": "#33FFFFFF",
+  "leftBody": "#FFFFFFFF",
+  "logOffMark": "#FFE0A020",
+  "markStem": "#FFFFFFFF",
+  "orange": "#FFF4A11E",
+  "orangeTop": "#FFFFD268",
+  "rightBody": "#FFDCE7F6",
+  "rightInk": "#FF1A3A70",
+  "rowHover": "#333B7BD4",
+  "rule": "#FF9FBBE6",
+  "split": "#FFB6C6E0",
+  "turnOffMark": "#FFE24C4C"
+}

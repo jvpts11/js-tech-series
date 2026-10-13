@@ -1,0 +1,419 @@
+{
+  "computer/hard_drive_idle": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:computer/hard_drive_idle"
+      }
+    ],
+    "subtitle": "subtitles.jsc.computer.hard_drive_idle"
+  },
+  "computer/hard_drive_seek": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:computer/hard_drive_seek"
+      }
+    ],
+    "subtitle": "subtitles.jsc.computer.hard_drive_seek"
+  },
+  "computer/hard_drive_spin_down": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:computer/hard_drive_spin_down"
+      }
+    ],
+    "subtitle": "subtitles.jsc.computer.hard_drive_spin_down"
+  },
+  "computer/hard_drive_spin_up": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:computer/hard_drive_spin_up"
+      }
+    ],
+    "subtitle": "subtitles.jsc.computer.hard_drive_spin_up"
+  },
+  "computer/post_beep": {
+    "sounds": [
+      "jsc:computer/post_beep"
+    ],
+    "subtitle": "subtitles.jsc.computer.post_beep"
+  },
+  "computer/post_fail": {
+    "sounds": [
+      "jsc:computer/post_fail"
+    ],
+    "subtitle": "subtitles.jsc.computer.post_fail"
+  },
+  "computer/power_button": {
+    "sounds": [
+      "jsc:computer/power_button"
+    ],
+    "subtitle": "subtitles.jsc.computer.power_button"
+  },
+  "computer/vintage_startup": {
+    "sounds": [
+      "jsc:computer/vintage_startup"
+    ],
+    "subtitle": "subtitles.jsc.computer.vintage_startup"
+  },
+  "mainframe/tape": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:mainframe/tape"
+      }
+    ],
+    "subtitle": "subtitles.jsc.mainframe.tape"
+  },
+  "media/disc_tray": {
+    "sounds": [
+      "jsc:media/disc_tray"
+    ],
+    "subtitle": "subtitles.jsc.media.disc_tray"
+  },
+  "media/floppy_eject": {
+    "sounds": [
+      "jsc:media/floppy_eject"
+    ],
+    "subtitle": "subtitles.jsc.media.floppy_eject"
+  },
+  "media/floppy_insert": {
+    "sounds": [
+      "jsc:media/floppy_insert"
+    ],
+    "subtitle": "subtitles.jsc.media.floppy_insert"
+  },
+  "media/floppy_read": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:media/floppy_read"
+      }
+    ],
+    "subtitle": "subtitles.jsc.media.floppy_read"
+  },
+  "media/optical_read": {
+    "sounds": [
+      {
+        "attenuation_distance": 8,
+        "name": "jsc:media/optical_read"
+      }
+    ],
+    "subtitle": "subtitles.jsc.media.optical_read"
+  },
+  "media/usb_insert": {
+    "sounds": [
+      "jsc:media/usb_insert"
+    ],
+    "subtitle": "subtitles.jsc.media.usb_insert"
+  },
+  "media/usb_remove": {
+    "sounds": [
+      "jsc:media/usb_remove"
+    ],
+    "subtitle": "subtitles.jsc.media.usb_remove"
+  },
+  "monitor/power_off": {
+    "sounds": [
+      "jsc:monitor/power_off"
+    ],
+    "subtitle": "subtitles.jsc.monitor.power_off"
+  },
+  "monitor/power_on": {
+    "sounds": [
+      "jsc:monitor/power_on"
+    ],
+    "subtitle": "subtitles.jsc.monitor.power_on"
+  },
+  "os/frames/beep": {
+    "sounds": [
+      "jsc:os/frames/beep"
+    ],
+    "subtitle": "subtitles.jsc.os.frames.beep"
+  },
+  "os/frames/device_connect": {
+    "sounds": [
+      "jsc:os/frames/device_connect"
+    ],
+    "subtitle": "subtitles.jsc.os.frames.device_connect"
+  },
+  "os/frames/device_disconnect": {
+    "sounds": [
+      "jsc:os/frames/device_disconnect"
+    ],
+    "subtitle": "subtitles.jsc.os.frames.device_disconnect"
+  },
+  "os/frames/notify": {
+    "sounds": [
+      "jsc:os/frames/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.frames.notify"
+  },
+  "os/frames_10/startup": {
+    "sounds": [
+      "jsc:os/frames_10/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_10.startup"
+  },
+  "os/frames_11/error": {
+    "sounds": [
+      "jsc:os/frames_11/error"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_11.error"
+  },
+  "os/frames_11/startup": {
+    "sounds": [
+      "jsc:os/frames_11/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_11.startup"
+  },
+  "os/frames_7/startup": {
+    "sounds": [
+      "jsc:os/frames_7/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_7.startup"
+  },
+  "os/frames_95/error": {
+    "sounds": [
+      "jsc:os/frames_95/error"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_95.error"
+  },
+  "os/frames_95/startup": {
+    "sounds": [
+      "jsc:os/frames_95/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_95.startup"
+  },
+  "os/frames_xp/error": {
+    "sounds": [
+      "jsc:os/frames_xp/error"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_xp.error"
+  },
+  "os/frames_xp/startup": {
+    "sounds": [
+      "jsc:os/frames_xp/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_xp.startup"
+  },
+  "os/gnome/bell": {
+    "sounds": [
+      "jsc:os/gnome/bell"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.bell"
+  },
+  "os/gnome/device_connect": {
+    "sounds": [
+      "jsc:os/gnome/device_connect"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.device_connect"
+  },
+  "os/gnome/device_disconnect": {
+    "sounds": [
+      "jsc:os/gnome/device_disconnect"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.device_disconnect"
+  },
+  "os/gnome/error": {
+    "sounds": [
+      "jsc:os/gnome/error"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.error"
+  },
+  "os/gnome/notify": {
+    "sounds": [
+      "jsc:os/gnome/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome.notify"
+  },
+  "os/gnome_legacy/error": {
+    "sounds": [
+      "jsc:os/gnome_legacy/error"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome_legacy.error"
+  },
+  "os/gnome_legacy/notify": {
+    "sounds": [
+      "jsc:os/gnome_legacy/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome_legacy.notify"
+  },
+  "os/gnome_legacy/shutdown": {
+    "sounds": [
+      "jsc:os/gnome_legacy/shutdown"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome_legacy.shutdown"
+  },
+  "os/gnome_legacy/startup": {
+    "sounds": [
+      "jsc:os/gnome_legacy/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.gnome_legacy.startup"
+  },
+  "os/kde_plasma/bell": {
+    "sounds": [
+      "jsc:os/kde_plasma/bell"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.bell"
+  },
+  "os/kde_plasma/device_connect": {
+    "sounds": [
+      "jsc:os/kde_plasma/device_connect"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.device_connect"
+  },
+  "os/kde_plasma/device_disconnect": {
+    "sounds": [
+      "jsc:os/kde_plasma/device_disconnect"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.device_disconnect"
+  },
+  "os/kde_plasma/error": {
+    "sounds": [
+      "jsc:os/kde_plasma/error"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.error"
+  },
+  "os/kde_plasma/notify": {
+    "sounds": [
+      "jsc:os/kde_plasma/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.notify"
+  },
+  "os/kde_plasma/shutdown": {
+    "sounds": [
+      "jsc:os/kde_plasma/shutdown"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.shutdown"
+  },
+  "os/kde_plasma/startup": {
+    "sounds": [
+      "jsc:os/kde_plasma/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma.startup"
+  },
+  "os/kde_plasma_legacy/bell": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/bell"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.bell"
+  },
+  "os/kde_plasma_legacy/error": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/error"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.error"
+  },
+  "os/kde_plasma_legacy/notify": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/notify"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.notify"
+  },
+  "os/kde_plasma_legacy/shutdown": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/shutdown"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.shutdown"
+  },
+  "os/kde_plasma_legacy/startup": {
+    "sounds": [
+      "jsc:os/kde_plasma_legacy/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.kde_plasma_legacy.startup"
+  },
+  "printer/epsilon_ecotonk_et_2720": {
+    "sounds": [
+      {
+        "attenuation_distance": 10,
+        "name": "jsc:printer/epsilon_ecotonk_et_2720"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.epsilon_ecotonk_et_2720"
+  },
+  "printer/epsilon_fx_80": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:printer/epsilon_fx_80"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.epsilon_fx_80"
+  },
+  "printer/pakard_deskjot_940": {
+    "sounds": [
+      {
+        "attenuation_distance": 10,
+        "name": "jsc:printer/pakard_deskjot_940"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.pakard_deskjot_940"
+  },
+  "printer/pakard_fotosmart_c4280": {
+    "sounds": [
+      {
+        "attenuation_distance": 10,
+        "name": "jsc:printer/pakard_fotosmart_c4280"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.pakard_fotosmart_c4280"
+  },
+  "printer/pakard_laserjot_1102": {
+    "sounds": [
+      {
+        "attenuation_distance": 10,
+        "name": "jsc:printer/pakard_laserjot_1102"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.pakard_laserjot_1102"
+  },
+  "program/minesweeper_click": {
+    "sounds": [
+      "jsc:program/minesweeper_click"
+    ],
+    "subtitle": "subtitles.jsc.program.minesweeper_click"
+  },
+  "program/minesweeper_explode": {
+    "sounds": [
+      "jsc:program/minesweeper_explode"
+    ],
+    "subtitle": "subtitles.jsc.program.minesweeper_explode"
+  },
+  "program/minesweeper_win": {
+    "sounds": [
+      "jsc:program/minesweeper_win"
+    ],
+    "subtitle": "subtitles.jsc.program.minesweeper_win"
+  },
+  "rack/slide_in": {
+    "sounds": [
+      "jsc:rack/slide_in"
+    ],
+    "subtitle": "subtitles.jsc.rack.slide_in"
+  },
+  "rack/slide_out": {
+    "sounds": [
+      "jsc:rack/slide_out"
+    ],
+    "subtitle": "subtitles.jsc.rack.slide_out"
+  },
+  "server/fan": {
+    "sounds": [
+      "jsc:server/fan"
+    ],
+    "subtitle": "subtitles.jsc.server.fan"
+  },
+  "server/room": {
+    "sounds": [
+      {
+        "attenuation_distance": 24,
+        "name": "jsc:server/room"
+      }
+    ],
+    "subtitle": "subtitles.jsc.server.room"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "parent": "jsc:block/monitor/body",
+  "textures": {
+    "particle": "jsc:block/monitor/transition_side",
+    "front": "jsc:block/monitor/transition_front",
+    "side": "jsc:block/monitor/transition_side",
+    "top": "jsc:block/monitor/transition_top",
+    "back": "jsc:block/monitor/transition_back"
+  }
+}

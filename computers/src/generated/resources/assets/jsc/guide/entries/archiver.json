@@ -1,0 +1,103 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.archiver.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.archiver.definition1",
+      "term": "jsc.guide.archiver.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.archiver.definition2",
+      "term": "jsc.guide.archiver.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.archiver.definition3",
+      "term": "jsc.guide.archiver.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.archiver.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.archiver.table1",
+      "heads": [
+        "jsc.guide.archiver.table1_head1",
+        "jsc.guide.archiver.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.archiver.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.archiver.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.archiver.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.archiver.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.archiver.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.archiver.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.archiver.step1",
+        "jsc.guide.archiver.step2",
+        "jsc.guide.archiver.step3",
+        "jsc.guide.archiver.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.archiver.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.archiver.fix1",
+          "problem": "jsc.guide.archiver.problem1"
+        },
+        {
+          "fix": "jsc.guide.archiver.fix2",
+          "problem": "jsc.guide.archiver.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:this_pc_and_desktop_tools"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:archiver",
+  "order": 53,
+  "section": "jsc:desktop_apps",
+  "title": "jsc.guide.archiver.title"
+}

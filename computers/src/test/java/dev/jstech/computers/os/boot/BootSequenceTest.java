@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.core.text.Text;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -20,12 +21,12 @@ class BootSequenceTest {
 
     private static BootSequence fourSteps() {
         return new BootSequence.Builder()
-                .title("MC-NET 1.0")
-                .subtitle("(C) 1992 Nouvell Networks Inc.")
-                .line("network link", "done")
-                .line("mainframe", "CORE")
-                .line("index", "1,204 item types")
-                .line("services", "IQL Engine")
+                .title(Text.literal("MC-NET 1.0"))
+                .subtitle(Text.literal("(C) 1992 Nouvell Networks Inc."))
+                .line(Text.literal("network link"), Text.literal("done"))
+                .line(Text.literal("mainframe"), Text.literal("CORE"))
+                .line(Text.literal("index"), Text.literal("1,204 item types"))
+                .line(Text.literal("services"), Text.literal("IQL Engine"))
                 .build();
     }
 
@@ -61,25 +62,26 @@ class BootSequenceTest {
 
     @Test
     void aLineWithNothingBesideIt_readsAsOneLabel() {
-        final BootSequence.Line line = BootSequence.Line.of("Starting MC-DOS...");
-        assertEquals("Starting MC-DOS...", line.label());
-        assertEquals("", line.value());
+        final BootSequence.Line line = BootSequence.Line.of(Text.literal("Starting MC-DOS..."));
+        assertEquals("Starting MC-DOS...", line.label().english());
+        assertEquals("", line.value().english());
     }
 
     @Test
     void moreStepsThanASequenceHolds_areCutToWhatItHolds() {
         final List<BootSequence.Line> many = new ArrayList<>();
         for (int i = 0; i < BootSequence.MOST_LINES + 8; i++) {
-            many.add(BootSequence.Line.of("step " + i));
+            many.add(BootSequence.Line.of(Text.literal("step " + i)));
         }
-        assertEquals(BootSequence.MOST_LINES, new BootSequence("t", "s", many).lines().size());
+        assertEquals(BootSequence.MOST_LINES,
+                new BootSequence(Text.literal("t"), Text.literal("s"), many).lines().size());
     }
 
     @Test
     void nothingHandedIn_readsAsEmptyRatherThanNothingAtAll() {
         final BootSequence sequence = new BootSequence(null, null, null);
-        assertEquals("", sequence.title());
-        assertEquals("", sequence.subtitle());
+        assertEquals("", sequence.title().english());
+        assertEquals("", sequence.subtitle().english());
         assertTrue(sequence.lines().isEmpty());
     }
 }

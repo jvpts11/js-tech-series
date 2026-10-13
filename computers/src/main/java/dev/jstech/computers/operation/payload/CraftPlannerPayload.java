@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -33,10 +35,10 @@ public record CraftPlannerPayload(ItemStack result, long quantity, boolean craft
     public static final int MAX_TREE = 96;
 
     /** One ordered step of the plan: what it makes, whether a machine runs it, and how many runs. */
-    public record Stage(String name, boolean machine, long runs, long produced) {
+    public record Stage(Text name, boolean machine, long runs, long produced) {
         public static final StreamCodec<RegistryFriendlyByteBuf, Stage> STREAM_CODEC =
                 StreamCodec.composite(
-                        ByteBufCodecs.STRING_UTF8, Stage::name,
+                        TextCodecs.STREAM_CODEC, Stage::name,
                         ByteBufCodecs.BOOL, Stage::machine,
                         ByteBufCodecs.VAR_LONG, Stage::runs,
                         ByteBufCodecs.VAR_LONG, Stage::produced,

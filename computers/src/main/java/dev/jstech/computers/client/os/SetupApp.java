@@ -7,13 +7,20 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CancelSetupPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.ProgressBar;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -29,10 +36,18 @@ import org.jetbrains.annotations.Nullable;
  * desktop it opens on, the way a setup did in each decade: a blue strip beside the text on Frames 95, a
  * white wizard page on XP, a flat card on Frames 11 and the Linux desktops.
  */
+@PaletteHolder
 public final class SetupApp implements IDesktopApp {
 
     /** The window key, one per desktop: a machine sets one thing up at a time. */
-    public static final String KEY = "Setup";
+    public static final String KEY = WindowKeys.SETUP;
+
+    /** Setup's own colours, {@code jsc:app/setup}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/setup",
+            new Colours(0xFF000080, 0xFF1084D0, 0xFFFFFFFF, 0xFFA9B4CC, 0xFF4E5C78, 0xFF8891A2));
+
+    /** The box with a disc coming out of it that every setup window wears, whatever it installs. */
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "setup");
 
     private static final int STRIP_W = 42;
     private static final int HEADER_H = 24;
@@ -67,9 +82,10 @@ public final class SetupApp implements IDesktopApp {
         this.detail = this.root.add(new Label(this::detailText, Label.Tone.DIM));
         this.bar = this.root.add(new ProgressBar(() -> this.state == null ? 0 : this.state.permille() / 10));
         this.percent = this.root.add(new Label(this::percentText, Label.Tone.DIM));
-        this.cancel = this.root.add(new Button("Cancel", () ->
+        this.cancel = this.root.add(new Button(GameText.resolve(SetupTexts.CANCEL), () ->
                 PacketDistributor.sendToServer(new CancelSetupPayload(this.host))));
-        this.close = this.root.add(new Button("Close", () -> DesktopScreen.requestClose(KEY)).setPrimary(true));
+        this.close = this.root.add(new Button(GameText.resolve(SetupTexts.CLOSE), () -> ActiveDesktop.requestClose(KEY))
+                .setPrimary(true));
         this.close.setVisible(false);
     }
 
@@ -88,21 +104,20 @@ public final class SetupApp implements IDesktopApp {
 
     /* What the labels say */
 
-    private String verb() {
-        return this.state != null && this.state.removing() ? "Removing" : "Installing";
-    }
-
     private String headlineText() {
         if (this.state == null) {
-            return "Setup";
+            return GameText.resolve(SetupTexts.SETUP);
         }
+        final boolean removing = this.state.removing();
+        final String name = this.state.name();
         return switch (this.state.state()) {
-            case SetupProgressPayload.STATE_DONE -> this.state.name()
-                    + (this.state.removing() ? " was removed." : " is installed.");
-            case SetupProgressPayload.STATE_REFUSED -> "Setup cannot " + (this.state.removing() ? "remove " : "install ")
-                    + this.state.name() + ".";
-            case SetupProgressPayload.STATE_CANCELLED -> "Setup was cancelled.";
-            default -> this.skin.form() == OsSkin.Form.LUNA ? verb() + " " + this.state.name() : this.state.name();
+            case SetupProgressPayload.STATE_DONE ->
+                    GameText.resolve((removing ? SetupTexts.WAS_REMOVED : SetupTexts.IS_INSTALLED).with(name));
+            case SetupProgressPayload.STATE_REFUSED ->
+                    GameText.resolve((removing ? SetupTexts.CANNOT_REMOVE : SetupTexts.CANNOT_INSTALL).with(name));
+            case SetupProgressPayload.STATE_CANCELLED -> GameText.resolve(SetupTexts.CANCELLED);
+            default -> this.skin.glossForm()
+                    ? GameText.resolve((removing ? SetupTexts.REMOVING : SetupTexts.INSTALLING).with(name)) : name;
         };
     }
 
@@ -110,14 +125,15 @@ public final class SetupApp implements IDesktopApp {
         if (this.state == null) {
             return "";
         }
+        final boolean removing = this.state.removing();
         return switch (this.state.state()) {
-            case SetupProgressPayload.STATE_DONE -> this.state.removing()
-                    ? "Its files are gone from the disk." : "You will find it in the Start menu.";
-            case SetupProgressPayload.STATE_REFUSED -> this.state.message();
-            case SetupProgressPayload.STATE_CANCELLED -> "Nothing was " + (this.state.removing() ? "removed." : "installed.");
-            default -> this.state.removing()
-                    ? "Removing " + this.state.name() + " from your computer."
-                    : "Copying files to your computer.";
+            case SetupProgressPayload.STATE_DONE ->
+                    GameText.resolve(removing ? SetupTexts.FILES_GONE : SetupTexts.IN_START_MENU);
+            case SetupProgressPayload.STATE_REFUSED -> GameText.resolve(this.state.message());
+            case SetupProgressPayload.STATE_CANCELLED ->
+                    GameText.resolve(removing ? SetupTexts.NOTHING_REMOVED : SetupTexts.NOTHING_INSTALLED);
+            default -> GameText.resolve(removing ? SetupTexts.REMOVING_FROM.with(this.state.name())
+                    : SetupTexts.COPYING.text());
         };
     }
 
@@ -125,19 +141,20 @@ public final class SetupApp implements IDesktopApp {
         if (this.state == null || this.state.over()) {
             return "";
         }
-        return this.state.phase() + "...";
+        return GameText.resolve(SetupTexts.PHASE.with(this.state.phase()));
     }
 
     private String percentText() {
-        return this.state == null ? "" : (this.state.permille() / 10) + "%";
+        return this.state == null ? "" : GameText.resolve(SetupTexts.PERCENT.with(this.state.permille() / 10));
     }
 
     private String subtitle() {
         if (this.state == null) {
             return "";
         }
-        final String size = this.state.sizeMb() > 0 ? this.state.sizeMb() + " MB" : "";
-        final String from = this.state.source().isEmpty() ? "" : "from " + this.state.source();
+        final String size = this.state.sizeMb() > 0 ? GameText.resolve(SetupTexts.SIZE.with(this.state.sizeMb())) : "";
+        final String from = this.state.source().isEmpty() ? ""
+                : GameText.resolve(SetupTexts.FROM.with(this.state.source()));
         final StringBuilder out = new StringBuilder(this.state.house());
         for (final String part : new String[] {size, from}) {
             if (!part.isEmpty()) {
@@ -151,7 +168,13 @@ public final class SetupApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return this.state == null ? "Setup" : this.state.name() + " Setup";
+        return GameText.resolve(this.state == null ? SetupTexts.SETUP.text()
+                : SetupTexts.SETUP_OF.with(this.state.name()));
+    }
+
+    @Override
+    public ResourceLocation iconId() {
+        return ICON;
     }
 
     @Override
@@ -185,29 +208,29 @@ public final class SetupApp implements IDesktopApp {
                               final float partialTick) {
         if (this.state != null && this.state.state() == SetupProgressPayload.STATE_DONE
                 && System.currentTimeMillis() - this.overSince > LINGER_MS) {
-            DesktopScreen.requestClose(KEY);
+            ActiveDesktop.requestClose(KEY);
         }
         this.skin.panel(g, x, y, width, height);
         final int textX;
         int rowY;
         final ResourceLocation icon = this.state == null ? null
-                : ResourceLocation.fromNamespaceAndPath("jsc", this.state.programId().contains(":")
+                : ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, this.state.programId().contains(":")
                         ? this.state.programId().substring(this.state.programId().indexOf(':') + 1)
                         : this.state.programId());
         switch (this.skin.form()) {
             case BEVEL, GNOME1 -> {
                 // The blue strip a setup of the nineties kept beside its text, darker at the top.
-                g.fillGradient(x, y, x + STRIP_W, y + height, 0xFF000080, 0xFF1084D0);
+                g.fillGradient(x, y, x + STRIP_W, y + height, PALETTE.get().stripTop(), PALETTE.get().stripBottom());
                 if (icon != null) {
                     ProgramIcons.draw(g, x + (STRIP_W - 16) / 2, y + 8, 16, 16, icon, this.os);
                 }
                 textX = x + STRIP_W + 6;
                 rowY = y + 6;
             }
-            case LUNA -> {
+            case LUNA, AERO -> {
                 // The white header band of a wizard page, the icon at its left and the name beside it.
-                g.fill(x, y, x + width, y + HEADER_H, 0xFFFFFFFF);
-                g.fill(x, y + HEADER_H, x + width, y + HEADER_H + 1, 0xFFA9B4CC);
+                g.fill(x, y, x + width, y + HEADER_H, PALETTE.get().header());
+                g.fill(x, y + HEADER_H, x + width, y + HEADER_H + 1, PALETTE.get().headerRule());
                 if (icon != null) {
                     ProgramIcons.draw(g, x + 5, y + 4, 16, 16, icon, this.os);
                 }
@@ -224,17 +247,18 @@ public final class SetupApp implements IDesktopApp {
         }
         final int right = x + width - 6;
         final int textW = right - textX;
-        if (this.skin.form() == OsSkin.Form.LUNA) {
+        if (this.skin.glossForm()) {
             // The header carries the headline and the publisher; the body starts below it.
             this.headline.setBounds(x + 26, y + 4, width - 32, 10);
-            g.drawString(font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 14, 0xFF4E5C78, false);
+            Draw.text(g, font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 14,
+                    PALETTE.get().publisher());
         } else if (this.skin.form() == OsSkin.Form.BEVEL || this.skin.form() == OsSkin.Form.GNOME1) {
             this.headline.setBounds(textX, rowY, textW, 10);
             rowY += 12;
         } else {
             this.headline.setBounds(x + 26, y + 6, width - 32, 10);
-            g.drawString(font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 15, this.skin.isDark()
-                    ? 0xFF8891A2 : 0xFF4E5C78, false);
+            Draw.text(g, font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 15, this.skin.isDark()
+                    ? PALETTE.get().publisherOnDark() : PALETTE.get().publisher());
         }
         this.line.setBounds(textX, rowY, textW, 10);
         rowY += 11;
@@ -253,5 +277,13 @@ public final class SetupApp implements IDesktopApp {
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         this.root.mouseClicked(mouseX, mouseY, button);
+    }
+
+    /**
+     * Setup's own colours: the blue strip of the oldest setups from top to bottom, the white header band of a
+     * wizard page and the rule under it, and the publisher's line on a light window and on a dark one.
+     */
+    private record Colours(int stripTop, int stripBottom, int header, int headerRule, int publisher,
+                           int publisherOnDark) {
     }
 }

@@ -1,0 +1,126 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_base_system.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_base_system.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_base_system.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_base_system.definition1",
+      "term": "jsc.guide.arch_base_system.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_base_system.definition2",
+      "term": "jsc.guide.arch_base_system.term2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_base_system.step1",
+        "jsc.guide.arch_base_system.step2",
+        "jsc.guide.arch_base_system.step3"
+      ]
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "root@archiso ~ # ",
+          "text": "pacstrap -K /mnt base linux linux-firmware",
+          "typed": true
+        },
+        {
+          "text": "==> Creating install root at /mnt"
+        },
+        {
+          "text": "==> Installing packages to /mnt"
+        }
+      ],
+      "look": "jsc:guide/terminal/zsh",
+      "title": "Arch Linux"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_base_system.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.arch_base_system.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.arch_base_system.table1_1"
+          },
+          {
+            "words": "jsc.guide.arch_base_system.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.arch_base_system.table1_2"
+          },
+          {
+            "words": "jsc.guide.arch_base_system.value1_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_base_system.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_base_system.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_base_system.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_base_system.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_base_system.fix1",
+          "problem": "jsc.guide.arch_base_system.problem1"
+        },
+        {
+          "fix": "jsc.guide.arch_base_system.fix2",
+          "problem": "jsc.guide.arch_base_system.problem2"
+        },
+        {
+          "fix": "jsc.guide.arch_base_system.fix3",
+          "problem": "jsc.guide.arch_base_system.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_fstab"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_base_system",
+  "order": 247,
+  "section": "jsc:arch_base",
+  "title": "jsc.guide.arch_base_system.title"
+}

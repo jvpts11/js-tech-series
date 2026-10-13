@@ -1,0 +1,8 @@
+{
+  "caret_blink": {
+    "duration": 200,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blink"
+  }
+}

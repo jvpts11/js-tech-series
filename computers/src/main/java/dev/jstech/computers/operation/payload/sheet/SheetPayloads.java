@@ -74,8 +74,10 @@ public final class SheetPayloads {
          */
         final Map<StorageKey, Long> totals = NetworkStorage.of(level, net).query();
         final Map<String, Long> byName = new HashMap<>(totals.size());
+        long used = 0L;
         for (final Map.Entry<StorageKey, Long> entry : totals.entrySet()) {
             byName.merge(entry.getKey().id(), entry.getValue(), Long::sum);
+            used += entry.getValue();
         }
         for (final String name : names) {
             final Long held = byName.get(normalise(name));
@@ -87,10 +89,6 @@ public final class SheetPayloads {
         for (final var server : system.serversOf(net)) {
             servers++;
             free += server.storageItems();
-        }
-        long used = 0L;
-        for (final long value : totals.values()) {
-            used += value;
         }
         PacketDistributor.sendToPlayer(player,
                 new SheetFactsPayload(names, counts, Math.max(0L, free - used), servers));

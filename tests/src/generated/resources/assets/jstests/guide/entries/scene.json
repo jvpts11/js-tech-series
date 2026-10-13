@@ -1,0 +1,133 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.scene.what"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jstests.guide.scene.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              0,
+              0,
+              15,
+              16,
+              16,
+              16
+            ],
+            "x": 0,
+            "y": 1,
+            "z": 0
+          },
+          "text": "jstests.guide.scene.balloon1"
+        },
+        {
+          "number": 2,
+          "part": {
+            "x": 1,
+            "y": 1,
+            "z": 0
+          },
+          "text": "jstests.guide.scene.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "text": "jstests.guide.scene.balloon3"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "minecraft:grass_block",
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "state": "minecraft:grass_block",
+          "x": 1,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "state": "minecraft:furnace[facing=south,lit=true]",
+          "x": 0,
+          "y": 1,
+          "z": 0
+        },
+        {
+          "data": "{Items:[{Slot:0b,id:\"minecraft:diamond\",count:1}]}",
+          "state": "minecraft:chest[facing=south]",
+          "x": 1,
+          "y": 1,
+          "z": 0
+        }
+      ],
+      "caption": "jstests.guide.scene.figure1",
+      "height": 90,
+      "layers": true,
+      "view": {
+        "yaw": -30.0
+      }
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.scene.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.scene.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.scene.use1",
+        "jstests.guide.scene.use2",
+        "jstests.guide.scene.use3",
+        "jstests.guide.scene.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.scene.fix1",
+          "problem": "jstests.guide.scene.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:furnace",
+  "id": "jstests:scene",
+  "order": 5,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.scene.title"
+}

@@ -20,19 +20,19 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.ProgramFilesProjection;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.InstallerProjection;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>A table is made for one operation and let go of: a disk can be pulled or a medium swapped between any two, and
  * making one costs a short list and a look at each linked reader.
  */
+@TextHolder
 public final class DriveTable {
 
     /**
@@ -59,6 +60,11 @@ public final class DriveTable {
     }
 
     private static final DriveTable NONE = new DriveTable(List.of());
+
+    private static final TextKey DRIVE_MISSING =
+            TextKey.of("jsc.service.drive.missing", "%s:\\ The system cannot find the drive specified.");
+    private static final TextKey NOT_READY =
+            TextKey.of("jsc.service.drive.not_ready", "%s:\\ The device is not ready.");
 
     private final List<Drive> drives;
 
@@ -90,18 +96,12 @@ public final class DriveTable {
             table.add(new Drive(letter, disk, FilesystemKind.HIERARCHICAL, computer::setChanged));
             letter++;
         }
-        // Linked media readers, in ascending packed-position order for a stable letter assignment.
-        final List<Long> readers = new ArrayList<>(computer.linkedEndpoints());
-        Collections.sort(readers);
-        for (final long pos : readers) {
+        // Then the removable drives, in the order the machine keeps them, so a letter stays with its drive.
+        for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
             if (letter > 'Z') {
                 break;
             }
-            if (!(level.getBlockEntity(BlockPos.of(pos)) instanceof MediaReaderBlockEntity reader)) {
-                continue;
-            }
-            final ItemStack media = reader.mediaSlot().getStackInSlot(0);
-            table.add(new Drive(letter, media, FilesystemKind.HIERARCHICAL, () -> syncReader(reader)));
+            table.add(new Drive(letter, drive.medium(), FilesystemKind.HIERARCHICAL, drive::commit));
             letter++;
         }
         return new DriveTable(table);
@@ -156,13 +156,12 @@ public final class DriveTable {
         if (Character.toUpperCase(drive) == 'C') {
             return ICliComputer.FsResult.noOs();
         }
-        return ICliComputer.FsResult.fail(
-                Character.toUpperCase(drive) + ":\\ The system cannot find the drive specified.");
+        return ICliComputer.FsResult.fail(DRIVE_MISSING.with(String.valueOf(Character.toUpperCase(drive))));
     }
 
     /** What a drive with nothing in it answers: a media reader with no medium inserted. */
     public static ICliComputer.FsResult notReady(final char drive) {
-        return ICliComputer.FsResult.fail(Character.toUpperCase(drive) + ":\\ The device is not ready.");
+        return ICliComputer.FsResult.fail(NOT_READY.with(String.valueOf(Character.toUpperCase(drive))));
     }
 
     /** Free space in mB-equivalents on a disk or medium: its capacity less the items, files and system it holds. */
@@ -183,14 +182,5 @@ public final class DriveTable {
         final long osReserved = os != null
                 ? os.footprintItemsOn(DiskFilesystem.eraOf(stack)) * StorageKey.MB_EQ_PER_ITEM : 0L;
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
-    }
-
-    /** Pushes a block update so players see a medium whose filesystem was just changed. */
-    private static void syncReader(final MediaReaderBlockEntity reader) {
-        reader.setChanged();
-        if (reader.getLevel() != null) {
-            reader.getLevel().sendBlockUpdated(reader.getBlockPos(), reader.getBlockState(),
-                    reader.getBlockState(), Block.UPDATE_CLIENTS);
-        }
     }
 }

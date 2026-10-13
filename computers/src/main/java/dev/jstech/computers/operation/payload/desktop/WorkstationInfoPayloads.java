@@ -8,7 +8,6 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.client.os.WorkstationInfoApp;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.RequestWorkstationInfoPayload;
@@ -56,12 +55,12 @@ public final class WorkstationInfoPayloads {
         final Platform platform = system == null ? Platform.UNIX : system.platform();
         final NetworkUuid network = computer.networkUuid();
         final ItemStack disk = computer.systemDisk();
-        final long diskMb = disk.getItem() instanceof DiskItem item ? item.spec().capacityMb() : 0L;
+        final long diskMb = DiskShares.capacityMbOf(disk);
         return new WorkstationFacts(UnixTree.of(platform).home().getLast(), Installers.hostName(computer),
                 network == null ? "" : network.value().toString(), systemOf(system),
                 KernelNames.architecture(platform, computer.processorBits()), windowSystemOf(computer),
-                WelcomePayloads.cpuName(computer), computer.maxCpuMhz(), computer.ramTotalMb(),
-                computer.ramLedger().usedMb(), computer.totalVramMb(), diskMb, DesktopPayloads.usedMb(disk));
+                WelcomePayloads.cpuText(computer), computer.maxCpuMhz(), computer.ramTotalMb(),
+                computer.ramLedger().usedMb(), computer.totalVramMb(), diskMb, SettingsSnapshots.usedMb(disk));
     }
 
     private static void handle(final RequestWorkstationInfoPayload payload, final ServerPlayer player,
@@ -74,8 +73,10 @@ public final class WorkstationInfoPayloads {
     /**
      * The system by name with its release: a Linux names its distribution and then the kernel under it, which is
      * where its release belongs, and the others put their release after their name, as their own report does.
+     * Package-visible so This PC's About page (KDE, GNOME, Cinnamon) reads the same line rather than another
+     * copy of it.
      */
-    private static String systemOf(final OsDef system) {
+    static String systemOf(final OsDef system) {
         if (system == null) {
             return "";
         }
@@ -86,10 +87,19 @@ public final class WorkstationInfoPayloads {
                 : system.displayName() + " " + release;
     }
 
-    /** The desktop the machine booted with, by name and version, or empty when it came up at a prompt. */
-    private static String windowSystemOf(final IOsHost computer) {
+    /**
+     * The desktop the machine booted with, its own plain name with no version ("KDE Plasma", not "KDE Plasma
+     * 5.27"), or empty when it came up at a prompt. Package-visible for the same reason as {@link #systemOf}.
+     */
+    static String desktopName(final IOsHost computer) {
         final ResourceLocation id = computer.bootedDesktopId();
         final DesktopEnvironmentDef desktop = id == null ? null : OsRegistry.getDesktop(id);
-        return desktop == null ? "" : desktop.displayName() + " " + ProgramVersions.of(id);
+        return desktop == null ? "" : desktop.displayName();
+    }
+
+    /** The desktop the machine booted with, by name and version, or empty when it came up at a prompt. */
+    private static String windowSystemOf(final IOsHost computer) {
+        final String name = desktopName(computer);
+        return name.isEmpty() ? "" : name + " " + ProgramVersions.of(computer.bootedDesktopId());
     }
 }

@@ -8,8 +8,11 @@
 package dev.jstech.computers.crafting;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Utf8Text;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -62,8 +65,13 @@ public record CraftingPattern(List<ItemStack> grid, ItemStack result, List<Strin
         this(grid, result, List.of(), "", "");
     }
 
+    /*
+     * A grid of any other size is an error the reader is told of, as any other bad field is, rather than the
+     * constructor's exception: a save or a file with eight cells is refused, not the world that holds it.
+     */
     public static final Codec<CraftingPattern> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ItemStack.OPTIONAL_CODEC.listOf().fieldOf("grid").forGetter(CraftingPattern::grid),
+            ItemStack.OPTIONAL_CODEC.listOf().validate(CraftingPattern::nineCells).fieldOf("grid")
+                    .forGetter(CraftingPattern::grid),
             ItemStack.CODEC.fieldOf("result").forGetter(CraftingPattern::result),
             Codec.STRING.listOf().optionalFieldOf("any", List.of()).forGetter(CraftingPattern::tagsForCodec),
             Codec.STRING.optionalFieldOf("name", "").forGetter(CraftingPattern::name),
@@ -78,6 +86,11 @@ public record CraftingPattern(List<ItemStack> grid, ItemStack result, List<Strin
                     ByteBufCodecs.stringUtf8(MAX_NAME), CraftingPattern::name,
                     ByteBufCodecs.stringUtf8(MAX_NOTE), CraftingPattern::note,
                     CraftingPattern::new);
+
+    private static DataResult<List<ItemStack>> nineCells(final List<ItemStack> grid) {
+        return grid.size() == GRID_SIZE ? DataResult.success(grid)
+                : DataResult.error(() -> "a pattern grid has " + GRID_SIZE + " cells, not " + grid.size());
+    }
 
     /** The tags as written to a file: nothing at all when every cell is exact, so old readers see old files. */
     private List<String> tagsForCodec() {
@@ -110,7 +123,12 @@ public record CraftingPattern(List<ItemStack> grid, ItemStack result, List<Strin
 
     /** What the pattern is called where it is listed: its name, or its result's name when it has none. */
     public String displayName() {
-        return name.isEmpty() ? result.getHoverName().getString() : name;
+        return displayText().english();
+    }
+
+    /** The same, as text: a result's name reaches each player in their own language. */
+    public Text displayText() {
+        return name.isEmpty() ? GameText.of(result.getHoverName()) : Text.literal(name);
     }
 
     /** The same recipe under a new name and note. */

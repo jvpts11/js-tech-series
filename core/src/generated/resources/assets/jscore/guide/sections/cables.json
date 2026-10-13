@@ -1,0 +1,7 @@
+{
+  "chapter": "jscore",
+  "icon": "minecraft:string",
+  "id": "jscore:cables",
+  "order": 2,
+  "title": "jscore.guide.section.cables"
+}

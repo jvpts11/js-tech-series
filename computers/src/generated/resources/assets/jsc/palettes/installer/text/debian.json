@@ -1,0 +1,13 @@
+{
+  "accent": "#FFA80000",
+  "back": "#FF0000A8",
+  "bar": "#FF0000A8",
+  "barText": "#FFFFFFFF",
+  "bright": "#FF000000",
+  "dim": "#FF5A5A5A",
+  "panel": "#FFC0C0C0",
+  "panelText": "#FF000000",
+  "select": "#FFA80000",
+  "selectText": "#FFFFFFFF",
+  "text": "#FF000000"
+}

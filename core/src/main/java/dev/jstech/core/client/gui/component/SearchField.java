@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.component;
 
+import dev.jstech.core.text.GameText;
 import java.util.Locale;
 
 /**
@@ -17,7 +18,7 @@ public final class SearchField extends TextField {
 
     public SearchField(final int maxLength) {
         super(maxLength);
-        setPlaceholder("Search");
+        setPlaceholder(GameText.resolve(ComponentTexts.SEARCH));
         // Escape only puts the keyboard down; the filter typed so far stays.
         setRevertOnEscape(false);
     }

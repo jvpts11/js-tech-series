@@ -1,0 +1,131 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.install_fedora.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_fedora.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.install_fedora.table1",
+      "heads": [
+        "jsc.guide.install_fedora.table1_head1",
+        "jsc.guide.install_fedora.table1_head2",
+        "jsc.guide.install_fedora.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.install_fedora.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_fedora.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_fedora.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_fedora.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_fedora.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_fedora.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.install_fedora.table1_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_fedora.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.install_fedora.step1",
+        "jsc.guide.install_fedora.step2",
+        "jsc.guide.install_fedora.step3",
+        "jsc.guide.install_fedora.step4",
+        "jsc.guide.install_fedora.step5"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.install_fedora.fix1",
+          "problem": "jsc.guide.install_fedora.problem1"
+        },
+        {
+          "fix": "jsc.guide.install_fedora.fix2",
+          "problem": "jsc.guide.install_fedora.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing_linux_keys",
+        "jsc:dnf"
+      ]
+    }
+  ],
+  "id": "jsc:install_fedora",
+  "order": 230,
+  "section": "jsc:installing_linux",
+  "title": "jsc.guide.install_fedora.title"
+}

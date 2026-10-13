@@ -7,6 +7,19 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.BY_HAND;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.EMPTY_DRIVE;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.ERA_OR_NEWER;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.INSTALLER;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.LIVE;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NEEDS_ERA;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_DISK;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_MEDIUM;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_ROOM;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_SYSTEM;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.UNKNOWN_SYSTEM;
+
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.IBootMenuScreenOpener;
@@ -16,7 +29,6 @@ import dev.jstech.computers.block.IPostScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.FirmwareScreen;
@@ -25,7 +37,6 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.GpuItem;
-import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -57,13 +68,17 @@ import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupTiming;
+import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.LiveMedium;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -93,10 +108,12 @@ public final class FirmwarePayloads {
     public static void register(final PayloadRegistrar registrar) {
         /*
          * The firmware boot manager: state request/reply, boot/install/boot-order actions, restart into setup.
-         * The setup, the installer and the self-test are plain screens, so they answer to the screen gate.
+         * The setup, the installer and the self-test are the monitor's own sessions, so each answers to the screen
+         * gate, in the phases whose screens send it.
          */
         ComputerAccess.accept(registrar, RequestFirmwareStatePayload.TYPE, RequestFirmwareStatePayload.STREAM_CODEC,
-                ComputerAccess.screen(RequestFirmwareStatePayload::hostPos),
+                ComputerAccess.screen(RequestFirmwareStatePayload::hostPos, MonitorSessionMenu.Phase.POST,
+                        MonitorSessionMenu.Phase.FIRMWARE, MonitorSessionMenu.Phase.INSTALLER),
                 FirmwarePayloads::handleRequestFirmwareState);
         registrar.playToClient(FirmwareStatePayload.TYPE, FirmwareStatePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) -> {
@@ -109,11 +126,16 @@ public final class FirmwarePayloads {
                     InstallerScreen.accept(payload);
                 }));
         ComputerAccess.accept(registrar, FirmwareActionPayload.TYPE, FirmwareActionPayload.STREAM_CODEC,
-                ComputerAccess.screen(FirmwareActionPayload::hostPos), FirmwarePayloads::handleFirmwareAction);
-        // Setup is asked for from a running system's settings as well as from the installer.
+                ComputerAccess.screenAt(FirmwareActionPayload::hostPos, FirmwareActionPayload::monitorPos,
+                        MonitorSessionMenu.Phase.POST, MonitorSessionMenu.Phase.BOOT_MENU,
+                        MonitorSessionMenu.Phase.FIRMWARE, MonitorSessionMenu.Phase.INSTALL_PROGRESS),
+                FirmwarePayloads::handleFirmwareAction);
+        // Setup is asked for from a running system's settings as well as from the copy's last page.
         ComputerAccess.accept(registrar, RequestFirmwarePayload.TYPE, RequestFirmwarePayload.STREAM_CODEC,
-                ComputerAccess.anyOf(ComputerAccess.machine(RequestFirmwarePayload::hostPos),
-                        ComputerAccess.screen(RequestFirmwarePayload::hostPos)),
+                ComputerAccess.anyOf(
+                        ComputerAccess.machineAt(RequestFirmwarePayload::hostPos, RequestFirmwarePayload::monitorPos),
+                        ComputerAccess.screenAt(RequestFirmwarePayload::hostPos, RequestFirmwarePayload::monitorPos,
+                                MonitorSessionMenu.Phase.INSTALL_PROGRESS)),
                 FirmwarePayloads::handleRequestFirmware);
         /*
          * The power-on self-test: the server asks the monitor to play what is left of it. The machine ends it
@@ -125,14 +147,15 @@ public final class FirmwarePayloads {
                                 payload.host(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
                                 payload.name(), payload.remainingTicks(), payload.halted(),
-                                payload.complaint())));
+                                GameText.resolve(payload.complaint()))));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         IInstallDoneScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
-                                payload.osName(), payload.targetLabel(), payload.targetSlot(), payload.failure())));
+                                payload.osName(), GameText.resolve(payload.targetLabel()), payload.targetSlot(),
+                                GameText.resolve(payload.failure()))));
         // The boot manager: the monitor joins the machine where it stands, with what is left of its wait.
         registrar.playToClient(OpenBootMenuPayload.TYPE, OpenBootMenuPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
@@ -152,10 +175,12 @@ public final class FirmwarePayloads {
                         IInstallProgressScreenOpener.Holder.open(
                                 payload.hostPos(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
-                                payload.osName(), payload.targetLabel(), payload.ticksLeft(),
+                                payload.osName(), GameText.resolve(payload.targetLabel()), payload.ticksLeft(),
                                 payload.ticksTotal())));
         ComputerAccess.accept(registrar, PostCompletePayload.TYPE, PostCompletePayload.STREAM_CODEC,
-                ComputerAccess.screen(PostCompletePayload::hostPos), FirmwarePayloads::handlePostComplete);
+                ComputerAccess.screenAt(PostCompletePayload::hostPos, PostCompletePayload::monitorPos,
+                        MonitorSessionMenu.Phase.POST),
+                FirmwarePayloads::handlePostComplete);
     }
 
     private static void handleRequestFirmwareState(final RequestFirmwareStatePayload payload, final ServerPlayer player,
@@ -187,36 +212,40 @@ public final class FirmwarePayloads {
             final DiskSpec spec = ((DiskItem) disk.getItem()).spec();
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
                     os == null ? "" : os.id().toString(),
-                    os == null ? "no system" : os.displayName(),
-                    disk.getHoverName().getString(),
+                    os == null ? NO_SYSTEM.text() : Text.literal(os.displayName()),
+                    GameText.of(disk.getHoverName()),
                     spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb()),
-                    "", os != null, -1));
+                    Text.EMPTY, os != null, -1));
         }
-        for (final long endpoint : computer.linkedEndpoints()) {
-            if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
+        /*
+         * The drives a machine can start a system from: its readers and the drives and ports on its own front, a
+         * dock's docked disks being no installers. Each is named by its reader and the volume of it the medium is on.
+         */
+        for (final IMediaDrive reader : MachineMedia.of(computer, level).drives()) {
+            if (reader.volume().docked()) {
                 continue;
             }
-            final String drive = reader.driveType().driveName();
-            final ItemStack media = reader.mediaSlot().getStackInSlot(0);
+            final long endpoint = reader.volume().readerPos();
+            final int bay = reader.volume().bay();
+            final Text drive = reader.type().driveName();
+            final ItemStack media = reader.medium();
             if (media.isEmpty()) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
-                        "empty", drive, "", "", false, -1));
+                        EMPTY_DRIVE.text(), drive, "", Text.EMPTY, false, -1, bay));
                 continue;
             }
-            final OsDef os = reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null
-                    ? OsRegistry.getOs(reader.insertedPayload()) : null;
+            final OsDef os = reader.installs(MediaKind.OS_INSTALL) ? OsRegistry.getOs(reader.payload()) : null;
             if (os == null) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
-                        media.getHoverName().getString(), drive, "", "", false, -1));
+                        GameText.of(media.getHoverName()), drive, "", Text.EMPTY, false, -1, bay));
                 continue;
             }
             final boolean eraOk = OsGating.canInstall(os.minEra(), era);
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint,
                     os.id().toString(),
-                    os.displayName() + (os.installMode() == InstallMode.GUIDED
-                            ? " installer" : " (live)"),
-                    drive, "", eraOk ? "" : eraName(os.minEra()) + " era or newer", eraOk,
-                    os.installMode().id()));
+                    (os.installMode() == InstallMode.GUIDED ? INSTALLER : LIVE).with(os.displayName()),
+                    drive, "", eraOk ? Text.EMPTY : ERA_OR_NEWER.with(os.minEra().text()), eraOk,
+                    os.installMode().id(), bay));
         }
         return new FirmwareStatePayload(pos, era.id(), machineOf(level, computer, pos), computer.bootDiskSlot(),
                 computer.defaultInstallSlot(), entries, raidInfoOf(level, computer));
@@ -226,7 +255,7 @@ public final class FirmwarePayloads {
      * What the firmware found when it powered the machine on, read off the parts rather than off the block.
      *
      * <p>A self-test reads out what is in the machine, so it has to be asked of the machine: the processor by its
-     * own model with its cores and its architecture, the memory counted over the modules, the board, the video
+     * own model with its cores and its instruction set, the memory counted over the modules, the board, the video
      * card, and the monitors that are really linked rather than a "connected" that was always true.
      */
     private static FirmwareStatePayload.Machine machineOf(final ServerLevel level, final IOsHost computer,
@@ -237,41 +266,38 @@ public final class FirmwarePayloads {
         final HardwareEra era = computer.displayEra();
         final ComputerBuild build = machine.currentBuild();
         final CpuSpec cpu = build == null || build.cpus().isEmpty() ? null : build.cpus().getFirst();
-        String cpuName = "";
-        String boardName = "";
-        String gpuName = "";
-        String ramName = "";
+        Text cpuName = Text.EMPTY;
+        Text boardName = Text.EMPTY;
+        Text gpuName = Text.EMPTY;
+        Text ramName = Text.EMPTY;
         final ItemStackHandler hardware = machine.getHardware();
         for (int i = 0; i < hardware.getSlots(); i++) {
             final ItemStack part = hardware.getStackInSlot(i);
             if (part.isEmpty()) {
                 continue;
             }
+            // A part is named by its item, which each player reads in their own language.
             if (part.getItem() instanceof CpuItem && cpuName.isEmpty()) {
-                cpuName = part.getHoverName().getString();
+                cpuName = GameText.of(part.getHoverName());
             } else if (part.getItem() instanceof MotherboardItem) {
-                boardName = part.getHoverName().getString();
+                boardName = GameText.of(part.getHoverName());
             } else if (part.getItem() instanceof GpuItem && gpuName.isEmpty()) {
-                gpuName = part.getHoverName().getString();
+                gpuName = GameText.of(part.getHoverName());
             } else if (part.getItem() instanceof RamItem && ramName.isEmpty()) {
-                ramName = part.getHoverName().getString();
+                ramName = GameText.of(part.getHoverName());
             }
         }
-        int monitors = 0;
-        for (final long endpoint : computer.linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint))
-                    instanceof MonitorBlockEntity) {
-                monitors++;
-            }
-        }
-        final String name = computer.customName().isEmpty()
-                ? level.getBlockState(pos).getBlock().getName().getString() : computer.customName();
+        // The monitors linked, each on a video output, against the outputs the machine's cards give it.
+        final int monitors = machine.portsInUse(PortKind.VIDEO);
+        // What the player called it is theirs; what kind of machine it is, the game names.
+        final Text name = computer.customName().isEmpty()
+                ? GameText.of(level.getBlockState(pos).getBlock().getName()) : Text.literal(computer.customName());
         return new FirmwareStatePayload.Machine(name, cpuName, cpu == null ? 0 : cpu.cores(),
                 cpu == null ? 0 : cpu.freqMhz(),
-                cpu == null ? "" : cpu.architecture().name(), cpu == null ? 0 : cpu.architecture().bits(),
+                cpu == null ? "" : cpu.isa().name(), cpu == null ? 0 : cpu.isa().bits(),
                 boardName, (int) Math.min(Integer.MAX_VALUE, computer.ramTotalMb()),
                 build == null ? 0 : build.rams().size(), machine.boardRamSlots(), ramName, gpuName, monitors,
-                machine.maxEndpoints(), era == null ? "" : HardwareTooltip.label(era));
+                machine.ports(PortKind.VIDEO), era == null ? Text.EMPTY : era.text());
     }
 
     /**
@@ -285,7 +311,7 @@ public final class FirmwarePayloads {
             return FirmwareStatePayload.RaidInfo.ABSENT;
         }
         final int slot = rack.soleComputerSlot();
-        if (slot < 0 || rack.raidControllerSlot(slot) < 0) {
+        if (slot < 0 || !rack.hasRaidController(slot)) {
             return FirmwareStatePayload.RaidInfo.ABSENT;
         }
         final List<Long> sizes = new ArrayList<>();
@@ -363,6 +389,10 @@ public final class FirmwarePayloads {
                      */
                     machine.setBootOnce((int) payload.ref(),
                             ResourceLocation.tryParse(payload.osId()));
+                    // Picking one of the systems that share a disk, rather than one disk over another.
+                    if (OsDisks.systemsOn(machine.diskInSlot((int) payload.ref())).ids().size() >= 2) {
+                        JscEvents.award(player, JscEvents.DUAL_BOOT);
+                    }
                     /*
                      * Chosen at the boot manager, the system still has to come up: the machine leaves the menu and
                      * starts loading, and puts the player in front of that. Chosen anywhere else there is nothing
@@ -384,7 +414,13 @@ public final class FirmwarePayloads {
                     rack.setRaidMode(rack.soleComputerSlot(), mode);
                 }
             }
-            case FirmwareActionPayload.ACTION_FORMAT -> computer.formatDisk((int) payload.ref());
+            case FirmwareActionPayload.ACTION_FORMAT -> {
+                final boolean heldSystem = !OsDisks.systemsOn(computer.diskInSlot((int) payload.ref())).ids()
+                        .isEmpty();
+                if (computer.formatDisk((int) payload.ref()) && heldSystem) {
+                    JscEvents.award(player, JscEvents.SYSTEM_ERASED);
+                }
+            }
             case FirmwareActionPayload.ACTION_INSTALL -> {
                 /*
                  * The setup does not run an installation; it restarts the machine into one. A computer put
@@ -397,7 +433,7 @@ public final class FirmwarePayloads {
                  * the machine the self-test hands over to.
                  */
                 computer.setNeedsPost(true);
-                final String failure = beginInstall(level, computer, payload.ref(), payload.target());
+                final Text failure = beginInstall(level, computer, payload.ref(), payload.bay(), payload.target());
                 if (failure != null) {
                     // Refused before a minute of copying: say so instead of restarting into nothing.
                     final HardwareEra era = computer.displayEra();
@@ -406,8 +442,7 @@ public final class FirmwarePayloads {
                     final int slot = payload.target();
                     computer.setNeedsPost(false);
                     PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
-                            payload.monitorPos(), kind, "",
-                            slot < 0 ? "the default disk" : "Disk " + slot, slot, failure));
+                            payload.monitorPos(), kind, "", OsInstallRunner.targetLabel(slot), slot, failure));
                     MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos(), computer,
                             MonitorSessionMenu.Phase.INSTALL_PROGRESS);
                     return;
@@ -415,9 +450,11 @@ public final class FirmwarePayloads {
                 MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
             }
             case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
-                if (level.getBlockEntity(BlockPos.of(payload.ref())) instanceof MediaReaderBlockEntity reader
-                        && reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null) {
-                    final OsDef os = OsRegistry.getOs(reader.insertedPayload());
+                // The reader comes from the player's screen, so it is only one of the machine's own drives.
+                final IMediaDrive reader = MachineMedia.of(computer, level)
+                        .find(new MediaVolume(payload.ref(), payload.bay()));
+                if (reader != null && reader.installs(MediaKind.OS_INSTALL)) {
+                    final OsDef os = OsRegistry.getOs(reader.payload());
                     /*
                      * Which distribution's medium this is, asked of the medium rather than worked out from
                      * the one name that is not the other. A system that is installed by hand and is neither
@@ -426,7 +463,10 @@ public final class FirmwarePayloads {
                      */
                     final LiveInstallState.Distro distro =
                             LiveMedium.distroOf(os == null ? null : os.id());
-                    if (os != null && distro != null && os.installMode() != InstallMode.GUIDED) {
+                    final HardwareEra hostEra =
+                            computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
+                    if (os != null && distro != null && os.installMode() != InstallMode.GUIDED
+                            && OsGating.canInstall(os.minEra(), hostEra)) {
                         /*
                          * A live medium: the machine starts from it, which means it restarts. The self-test
                          * runs again and the medium's shell is what comes up after it, exactly as starting
@@ -441,8 +481,15 @@ public final class FirmwarePayloads {
                         return;
                     } else {
                         final int target = payload.target() >= 0 ? payload.target() : computer.defaultInstallSlot();
-                        if (installOsFromReader(level, computer, payload.ref(), target)) {
-                            computer.setBootDiskSlot(target);
+                        if (beginInstall(level, computer, payload.ref(), payload.bay(), target) == null) {
+                            /*
+                             * A machine that keeps its installations is only copying now, and the installer lets
+                             * the player pick another disk or quit, so the boot disk is set when the install
+                             * finishes. Only a host that wrote the system on the spot boots from the target.
+                             */
+                            if (!computer.keepsInstalls()) {
+                                computer.setBootDiskSlot(target);
+                            }
                             // Whatever the machine is doing now, which on a machine that keeps its installations
                             // is the installer it just began rather than the boot target it had before.
                             MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
@@ -460,7 +507,8 @@ public final class FirmwarePayloads {
     /**
      * Installs the OS from the medium in the reader at {@code readerPos} (or from any linked installer medium
      * when {@code -1}) onto disk slot {@code targetSlot} ({@code -1} = the default target). Unlike the legacy
-     * no-OS path this allows a second system beside an installed one (dual boot). Returns whether it installed.
+     * no-OS path this allows a second system beside an installed one (dual boot). Returns whether the install
+     * started: on a machine that keeps its installations the copy is only queued, and finishes later.
      */
     public static boolean installOsFromReader(final ServerLevel level, final IOsHost computer,
                                               final long readerPos, final int targetSlot) {
@@ -477,32 +525,40 @@ public final class FirmwarePayloads {
      * to the machine, and {@link OsInstallRunner} carries it.
      */
     @Nullable
-    public static String beginInstall(final ServerLevel level, final IOsHost computer,
-                                      final long readerPos, final int targetSlot) {
+    public static Text beginInstall(final ServerLevel level, final IOsHost computer,
+                                    final long readerPos, final int targetSlot) {
+        return beginInstall(level, computer, readerPos, MediaVolume.MEDIUM, targetSlot);
+    }
+
+    /**
+     * The same, from the medium on the volume {@code readerPos} and {@code bay} name: a reader's own medium, or a
+     * drive or a port on the computer's own front, which all stand at the computer and are told apart by the bay.
+     */
+    @Nullable
+    public static Text beginInstall(final ServerLevel level, final IOsHost computer,
+                                    final long readerPos, final int bay, final int targetSlot) {
         final HardwareEra hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
-        String failure = null;
-        for (final long endpoint : computer.linkedEndpoints()) {
+        Text failure = null;
+        for (final IMediaDrive reader : MachineMedia.of(computer, level).drives()) {
+            final MediaVolume volume = reader.volume();
             /*
              * -1 is the word for "any drive with an installer in it"; anything else names one drive by its packed
              * position. Asking whether that position is positive is not the same question: a drive west or north
              * of the world's origin packs into a negative long, so on those bases naming a drive was read as
              * naming none of them, and the machine installed from whichever it found first.
              */
-            if (readerPos != ANY_READER && endpoint != readerPos) {
+            final boolean named = readerPos == ANY_READER
+                    || volume.readerPos() == readerPos && volume.bay() == bay;
+            if (!named || !reader.installs(MediaKind.OS_INSTALL)) {
                 continue;
             }
-            if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)
-                    || reader.insertedKind() != MediaKind.OS_INSTALL || reader.insertedPayload() == null) {
-                continue;
-            }
-            final OsDef def = OsRegistry.getOs(reader.insertedPayload());
+            final OsDef def = OsRegistry.getOs(reader.payload());
             if (def == null) {
-                failure = "The system on the medium is not known to this machine.";
+                failure = UNKNOWN_SYSTEM.text();
                 continue;
             }
             if (!OsGating.canInstall(def.minEra(), hostEra)) {
-                failure = def.displayName() + " needs " + eraName(def.minEra()) + " era hardware or newer; this machine is "
-                        + eraName(hostEra) + " era.";
+                failure = NEEDS_ERA.with(def.displayName(), def.minEra().text(), hostEra.text());
                 continue;
             }
             /*
@@ -510,13 +566,12 @@ public final class FirmwarePayloads {
              * system put on the disk by hand through its shell. Only guided installers land here.
              */
             if (def.installMode() != InstallMode.GUIDED) {
-                failure = def.displayName() + " is put on the disk by hand from its own shell: boot the medium instead.";
+                failure = BY_HAND.with(def.displayName());
                 continue;
             }
-            final String noRoom = computer.defaultInstallSlot() < 0
-                    ? "No disk is installed to put " + def.displayName() + " on."
-                    : "The target disk has no room for " + def.displayName() + " ("
-                            + def.footprintMb() + " MB needed).";
+            final Text noRoom = computer.defaultInstallSlot() < 0
+                    ? NO_DISK.with(def.displayName())
+                    : NO_ROOM.with(def.displayName(), def.footprintMb());
             /*
              * A machine that holds a copy of its own takes as long over it as the system is big and the medium
              * is slow, and goes on with it whether or not anybody is watching. A host with nowhere to keep the
@@ -541,7 +596,7 @@ public final class FirmwarePayloads {
              * installer once the player has chosen one. A machine of an age used to take exactly as long as
              * every other machine of that age, so nothing a player put in it ever showed.
              */
-            final double baseRate = SetupTiming.installRate(reader.insertedFormat(), 1,
+            final double baseRate = SetupTiming.installRate(reader.format(), 1,
                     machine.cpuCores(), machine.maxCpuMhz());
             final InstallerFlow flow =
                     Installers.beginning(machine, level, def, baseRate);
@@ -551,16 +606,10 @@ public final class FirmwarePayloads {
             flow.select(targetSlot);
             machine.setInstaller(flow);
             machine.setInstalling(new OsInstallJob(def.id().toString(),
-                    flow.targetSlot(), endpoint, flow.ticksTotal(), flow.ticksTotal()));
+                    flow.targetSlot(), volume.readerPos(), volume.bay(), flow.ticksTotal(), flow.ticksTotal()));
             return null;
         }
-        return failure != null ? failure : "No installation medium is in a drive linked to this machine.";
-    }
-
-    /** The era as the firmware names it to the player: "Vintage", "Legacy", "Standard" ... */
-    private static String eraName(final HardwareEra era) {
-        final String lower = era.name().toLowerCase(Locale.ROOT);
-        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+        return failure != null ? failure : NO_MEDIUM.text();
     }
 
     private static void handleRequestFirmware(final RequestFirmwarePayload payload, final ServerPlayer player,
@@ -600,71 +649,6 @@ public final class FirmwarePayloads {
         } else {
             MonitorBlock.openBootTarget(
                     player, level, payload.monitorPos(), payload.hostPos());
-        }
-    }
-
-    /**
-     * Scans the computer's linked peripheral endpoints for a {@link MediaReaderBlockEntity}
-     * holding an OS installer medium. Takes the first match whose OS passes the era gate and
-     * whose footprint fits the computer's free storage, then calls
-     * {@link IOsHost#installOs(ResourceLocation)}.
-     *
-     * <p>The reader must be linked to the computer over the COMPUTING peripheral cable system
-     * (same way a monitor links). Only readers that are already auto-linked endpoints are
-     * considered; a reader placed in the world but not yet linked on the peripheral system
-     * will not be found here.
-     *
-     * <p>All gating conditions must be satisfied in order:
-     * <ol>
-     *   <li>The computer block entity must be an {@link IOsHost} with no OS yet.</li>
-     *   <li>A linked endpoint must resolve to a {@link MediaReaderBlockEntity} holding a medium
-     *       of kind {@link MediaKind#OS_INSTALL} whose payload names a registered {@link OsDef}.</li>
-     *   <li>{@link OsGating#canInstall} must accept the OS on the computer's hardware era.</li>
-     * </ol>
-     * A silent no-op is the correct outcome when any condition is unmet; the firmware screen will
-     * remain open and the player can fix the configuration before trying again.
-     *
-     * @param level       the server level the computer lives in
-     * @param computerPos the position of the computer to install the OS onto
-     */
-    public static void installOsFromLinkedReader(final ServerLevel level, final BlockPos computerPos) {
-        if (!(level.getBlockEntity(computerPos) instanceof IOsHost computer)) {
-            return;
-        }
-        if (computer.hasOs()) {
-            return; // already installed; nothing to do
-        }
-        final HardwareEra hostEra = computer.installedEra() != null
-                ? computer.installedEra()
-                : HardwareEra.STANDARD;
-
-        // Walk every linked peripheral endpoint and look for a media reader with an OS installer.
-        for (final long endpointLong : computer.linkedEndpoints()) {
-            final BlockPos endpointPos = BlockPos.of(endpointLong);
-            if (!(level.getBlockEntity(endpointPos) instanceof MediaReaderBlockEntity reader)) {
-                continue;
-            }
-            if (reader.insertedKind() != MediaKind.OS_INSTALL) {
-                continue;
-            }
-            final ResourceLocation osId = reader.insertedPayload();
-            if (osId == null) {
-                continue;
-            }
-            final OsDef def = OsRegistry.getOs(osId);
-            if (def == null) {
-                continue;
-            }
-            if (!OsGating.canInstall(def.minEra(), hostEra)) {
-                continue;
-            }
-            // Live/source media (Arch, Gentoo) install only by hand through their booted shell.
-            if (def.installMode() != InstallMode.GUIDED) {
-                continue;
-            }
-            // installOs checks the footprint against free storage; false means it did not fit.
-            computer.installOs(osId);
-            return; // first valid linked reader wins
         }
     }
 }

@@ -1,0 +1,222 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.bsdinstall.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.bsdinstall.definition1",
+      "term": "jsc.guide.bsdinstall.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bsdinstall.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.bsdinstall.definition2",
+      "term": "jsc.guide.bsdinstall.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bsdinstall.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bsdinstall.table1",
+      "heads": [
+        "jsc.guide.bsdinstall.table1_head1",
+        "jsc.guide.bsdinstall.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table1_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bsdinstall.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bsdinstall.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bsdinstall.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bsdinstall.table2",
+      "heads": [
+        "jsc.guide.bsdinstall.table2_head1",
+        "jsc.guide.bsdinstall.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bsdinstall.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.bsdinstall.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.bsdinstall.definition3",
+      "term": "jsc.guide.bsdinstall.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bsdinstall.text5"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.bsdinstall.warning1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bsdinstall.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bsdinstall.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bsdinstall.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bsdinstall.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.bsdinstall.definition4",
+      "term": "jsc.guide.bsdinstall.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.bsdinstall.fix1",
+          "problem": "jsc.guide.bsdinstall.problem1"
+        },
+        {
+          "fix": "jsc.guide.bsdinstall.fix2",
+          "problem": "jsc.guide.bsdinstall.problem2"
+        },
+        {
+          "fix": "jsc.guide.bsdinstall.fix3",
+          "problem": "jsc.guide.bsdinstall.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:installing",
+        "jsc:rc_services",
+        "jsc:mirror"
+      ]
+    }
+  ],
+  "id": "jsc:bsdinstall",
+  "order": 271,
+  "section": "jsc:freebsd_system",
+  "title": "jsc.guide.bsdinstall.title"
+}

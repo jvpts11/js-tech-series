@@ -13,6 +13,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -50,12 +51,12 @@ public final class EditorFindBar {
 
     public EditorFindBar(final Supplier<TextDocument> document) {
         this.document = document;
-        findCaption = root.add(new Label(() -> mode == Mode.FIND ? "Find" : "Line", Label.Tone.DIM));
+        findCaption = root.add(new Label(this::caption, Label.Tone.DIM));
         root.add(needle);
-        replaceCaption = root.add(new Label("Replace", Label.Tone.DIM));
+        replaceCaption = root.add(new Label(GameText.resolve(EditorTexts.REPLACE), Label.Tone.DIM));
         root.add(replacement);
-        next = root.add(new Button(() -> mode == Mode.FIND ? "Next" : "Go", this::go));
-        replaceAll = root.add(new Button("Replace all", this::replaceAll));
+        next = root.add(new Button(this::nextLabel, this::go));
+        replaceAll = root.add(new Button(GameText.resolve(EditorTexts.REPLACE_ALL), this::replaceAll));
         hits = root.add(new Label(() -> found, Label.Tone.DIM));
     }
 
@@ -95,24 +96,24 @@ public final class EditorFindBar {
         }
         final boolean find = mode == Mode.FIND;
         int bx = x + 3;
-        final int capW = font.width(find ? "Find" : "Line") + 2;
+        final int capW = font.width(caption()) + 2;
         findCaption.setBounds(bx, y + 4, capW, 8);
         bx += capW + 2;
         final int fieldW = find ? Math.max(40, (width - 170) / 2) : 46;
         needle.setBounds(bx, y + 2, fieldW, 12);
         bx += fieldW + 4;
         if (find) {
-            final int repW = font.width("Replace") + 2;
+            final int repW = font.width(GameText.resolve(EditorTexts.REPLACE)) + 2;
             replaceCaption.setBounds(bx, y + 4, repW, 8);
             bx += repW + 2;
             replacement.setBounds(bx, y + 2, fieldW, 12);
             bx += fieldW + 4;
         }
-        final int nextW = font.width(find ? "Next" : "Go") + 8;
+        final int nextW = font.width(nextLabel()) + 8;
         next.setBounds(bx, y + 2, nextW, 12);
         bx += nextW + 2;
         if (find) {
-            final int allW = font.width("Replace all") + 8;
+            final int allW = font.width(GameText.resolve(EditorTexts.REPLACE_ALL)) + 8;
             replaceAll.setBounds(bx, y + 2, allW, 12);
             bx += allW + 4;
         }
@@ -160,7 +161,7 @@ public final class EditorFindBar {
          * The document's own search carries on from the caret and wraps, so the count beside the field is
          * how many there are in all rather than how many are left, which is the number a player wants.
          */
-        this.found = doc.find(what) ? count(doc, what) : "none";
+        this.found = doc.find(what) ? count(doc, what) : GameText.resolve(EditorTexts.NONE_FOUND);
     }
 
     private void goToLine(final TextDocument doc) {
@@ -173,7 +174,7 @@ public final class EditorFindBar {
         }
         final int target = Math.max(1, Math.min(doc.lineCount(), line));
         doc.setCursor(target - 1, 0);
-        this.found = "line " + target;
+        this.found = GameText.resolve(EditorTexts.AT_LINE.with(target));
     }
 
     private void replaceAll() {
@@ -185,7 +186,7 @@ public final class EditorFindBar {
         final String before = doc.text();
         final String after = before.replace(what, replacement.edit());
         if (after.equals(before)) {
-            this.found = "none";
+            this.found = GameText.resolve(EditorTexts.NONE_FOUND);
             return;
         }
         /*
@@ -201,7 +202,16 @@ public final class EditorFindBar {
         final int line = doc.cursorLine();
         doc.setText(after);
         doc.setCursor(Math.min(line, Math.max(0, doc.lineCount() - 1)), 0);
-        this.found = changed + " replaced";
+        this.found = GameText.resolve(EditorTexts.REPLACED.with(changed));
+    }
+
+    /* What the field is for, which is what the strip is doing. */
+    private String caption() {
+        return GameText.resolve(mode == Mode.FIND ? EditorTexts.FIND : EditorTexts.LINE);
+    }
+
+    private String nextLabel() {
+        return GameText.resolve(mode == Mode.FIND ? EditorTexts.NEXT : EditorTexts.GO);
     }
 
     private static String count(final TextDocument doc, final String what) {
@@ -212,6 +222,6 @@ public final class EditorFindBar {
             total++;
             at = text.indexOf(what, at + what.length());
         }
-        return total + (total == 1 ? " match" : " matches");
+        return GameText.resolve((total == 1 ? EditorTexts.ONE_MATCH : EditorTexts.MATCHES).with(total));
     }
 }

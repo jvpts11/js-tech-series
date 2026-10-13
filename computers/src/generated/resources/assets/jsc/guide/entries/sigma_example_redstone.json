@@ -1,0 +1,144 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_redstone.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_redstone.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_redstone.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "using System.Machine.*;",
+        "namespace Corpus;",
+        "class RedstoneCorpus {",
+        "    static void Main() {",
+        "        Redstone gate = redstone(\"Gate\");",
+        "        if (gate != null) {",
+        "            gate.In().Out(15);",
+        "            Console.PrintLine(gate.Name + Convert.ToString(gate.Level()));",
+        "        }",
+        "        Redstone lever = Redstone.Named(\"Lever\");",
+        "        if (lever != null) {",
+        "            Console.PrintLine(lever.Name);",
+        "        }",
+        "    }",
+        "}"
+      ],
+      "name": "Redstone.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_redstone.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_redstone.table1",
+      "heads": [
+        "jsc.guide.sigma_example_redstone.table1_head1",
+        "jsc.guide.sigma_example_redstone.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "redstone(\"Gate\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_redstone.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "gate.In()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_redstone.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "gate.Out(15)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_redstone.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "gate.Level()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_redstone.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "gate.Name"
+          },
+          {
+            "words": "jsc.guide.sigma_example_redstone.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Redstone.Named(\"Lever\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_redstone.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_redstone.definition1",
+      "term": "jsc.guide.sigma_example_redstone.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_redstone.definition2",
+      "term": "jsc.guide.sigma_example_redstone.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_redstone.fix1",
+          "problem": "jsc.guide.sigma_example_redstone.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_redstone.fix2",
+          "problem": "jsc.guide.sigma_example_redstone.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_redstone.fix3",
+          "problem": "jsc.guide.sigma_example_redstone.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:redstone_interfaces",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_redstone",
+  "order": 400,
+  "section": "jsc:examples_devices",
+  "title": "jsc.guide.sigma_example_redstone.title"
+}

@@ -1,0 +1,103 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.achievements.table1",
+      "heads": [
+        "jsc.guide.achievements.table1_head1",
+        "jsc.guide.achievements.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.achievements.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.achievements.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.achievements.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.achievements.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.achievements.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.achievements.fix1",
+          "problem": "jsc.guide.achievements.problem1"
+        },
+        {
+          "fix": "jsc.guide.achievements.fix2",
+          "problem": "jsc.guide.achievements.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:achievements_hardware",
+        "jsc:achievements_systems",
+        "jsc:achievements_networks",
+        "jsc:achievements_sigma"
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.achievements.definition1",
+      "term": "jsc.guide.achievements.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.achievements.definition2",
+      "term": "jsc.guide.achievements.term2"
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:achievements",
+  "order": 129,
+  "section": "jsc:the_achievements",
+  "title": "jsc.guide.achievements.title"
+}

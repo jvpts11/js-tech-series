@@ -9,6 +9,7 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.ProgramConsole;
 import dev.jstech.core.language.IMachineView;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -67,8 +68,8 @@ final class HostedView implements IMachineView {
     }
 
     /** What the program has written, oldest kept line first. */
-    List<String> lines() {
-        return this.console.lines();
+    List<Text> lines() {
+        return this.console.texts();
     }
 
     /** How many lines it has written, the ones no longer kept included. */

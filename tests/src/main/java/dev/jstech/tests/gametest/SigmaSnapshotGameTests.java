@@ -21,6 +21,7 @@ import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Snapshot;
 import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
@@ -170,8 +171,9 @@ public final class SigmaSnapshotGameTests {
                         new Snapshot.IHeld.Handler(5, 32, 8, false, "Note",
                                 List.of(new Snapshot.BoundShot(new Snapshot.IValue.Ref(1), "Monitor",
                                         "First", List.of("int"), "void"))))),
-                new Snapshot.IdentityShot("running", "", 91, "Sorter", List.of("a", "b"), 7, false, 0),
-                new Snapshot.ConsoleShot(List.of("first", "second"), 7, 0x2545F4914F6CDD1DL),
+                new Snapshot.IdentityShot("running", Text.EMPTY, 91, "Sorter", List.of("a", "b"), 7, false, 0),
+                new Snapshot.ConsoleShot(List.of(Text.literal("first"), Text.literal("second")), 7,
+                        0x2545F4914F6CDD1DL),
                 List.of("typed ahead"),
                 new Snapshot.CallbacksShot(List.of(new Snapshot.FrameShot("Counter", "Counter", List.of(), 0,
                         new Snapshot.IValue.Nothing(), List.of(), List.of(), true)), 3L),

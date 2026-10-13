@@ -7,22 +7,30 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * CDE's Style Manager: a strip of pages, and a click on one opens it. There are two, the two that mean something
- * here: Color, which the whole desktop is drawn from, and Backdrop, which each workspace wears.
+ * CDE's Style Manager: a strip of pages, and a click on one opens it. There are three, the ones that mean something
+ * here: Color, which the whole desktop is drawn from, Backdrop, which each workspace wears, and Audio, the system's
+ * volume and where its sound goes, which the other desktops keep on their panel.
  *
  * <p>This is what a CDE desktop has where the others have their settings. Everything else a machine keeps about
  * itself is still set at its prompt with {@code config}.
  */
+@PaletteHolder
 final class StyleManagerApp implements IDesktopApp {
 
     /** The page of each kind that is open, so a second click brings it forward rather than opening another. */
@@ -30,23 +38,40 @@ final class StyleManagerApp implements IDesktopApp {
     private CdeColorPage color;
     @Nullable
     private CdeBackdropPage backdrop;
+    @Nullable
+    private CdeAudioPage audio;
 
     private OsSkin skin;
     private int left;
     private int top;
 
-    private static final String TITLE = "Style Manager";
-    private static final List<String> PAGES = List.of("Color", "Backdrop");
+    private static final List<TextKey> PAGE_KEYS =
+            List.of(StyleManagerTexts.COLOR_PAGE, StyleManagerTexts.BACKDROP_PAGE, StyleManagerTexts.AUDIO_PAGE);
     private static final int COLOR = 0;
+    private static final int BACKDROP = 1;
+    /** The speaker on the Audio page's picture, drawn twice its size. */
+    private static final int SPEAKER_SCALE = 2;
+    private static final int SPEAKER_SIZE = 9;
 
     /** The four colours the Color page's picture is made of, the way the real one showed a palette. */
-    private static final int[] PAINTS = {0xFFD8332C, 0xFF3B6FD8, 0xFF3FA34D, 0xFFE2C36B};
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/style_manager",
+            new Colours(0xFFD8332C, 0xFF3B6FD8, 0xFF3FA34D, 0xFFE2C36B));
 
     /** The middle of the page so named on the strip, in desktop pixels, or null when the strip has none. */
     @Nullable
     int[] pageCentre(final String page) {
-        final int index = PAGES.indexOf(page);
+        final int index = pageIndex(page);
         return index < 0 ? null : CdeStylePages.centre(CdeStyleLayout.page(index), this.left, this.top);
+    }
+
+    /** The index of the page whose name resolves to {@code page}, or -1 when none does. */
+    private static int pageIndex(final String page) {
+        for (int i = 0; i < PAGE_KEYS.size(); i++) {
+            if (GameText.resolve(PAGE_KEYS.get(i)).equals(page)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /** The Color page, while it is open. */
@@ -61,9 +86,15 @@ final class StyleManagerApp implements IDesktopApp {
         return this.backdrop;
     }
 
+    /** The Audio page, while it is open. */
+    @Nullable
+    CdeAudioPage audioPage() {
+        return this.audio;
+    }
+
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(StyleManagerTexts.TITLE);
     }
 
     @Override
@@ -96,13 +127,13 @@ final class StyleManagerApp implements IDesktopApp {
                               final int h, final int mouseX, final int mouseY, final float partialTick) {
         this.left = x;
         this.top = y;
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.skin == null || desktop == null) {
             return;
         }
-        final CdePalette p = desktop.cdePalette();
+        final CdePalette p = desktop.prefs().cdePalette();
         this.skin.panel(g, x, y, CdeStyleLayout.STRIP_W, CdeStyleLayout.STRIP_H);
-        for (int i = 0; i < PAGES.size(); i++) {
+        for (int i = 0; i < PAGE_KEYS.size(); i++) {
             final Rect page = CdeStyleLayout.page(i);
             final int px = x + page.x();
             final int py = y + page.y();
@@ -114,15 +145,23 @@ final class StyleManagerApp implements IDesktopApp {
             final int iy = py + 4;
             if (i == COLOR) {
                 paints(g, ix, iy);
-            } else {
+            } else if (i == BACKDROP) {
                 MotifChrome.sunken(g, ix, iy, CdeStyleLayout.PAGE_ICON, CdeStyleLayout.PAGE_ICON, p.backdropA(), p);
                 g.pose().pushPose();
                 g.pose().translate(ix + 1, iy + 1, 0);
                 MotifChrome.backdrop(g, CdeStyleLayout.PAGE_ICON - 2, CdeStyleLayout.PAGE_ICON - 2, p,
-                        desktop.cdeStyle().backdrop(desktop.workspace()));
+                        desktop.prefs().cdeStyle().backdrop(desktop.workspace()));
+                g.pose().popPose();
+            } else {
+                MotifChrome.sunken(g, ix, iy, CdeStyleLayout.PAGE_ICON, CdeStyleLayout.PAGE_ICON, p.inset(), p);
+                final int inset = (CdeStyleLayout.PAGE_ICON - SPEAKER_SIZE * SPEAKER_SCALE) / 2;
+                g.pose().pushPose();
+                g.pose().translate(ix + inset, iy + inset, 0);
+                g.pose().scale(SPEAKER_SCALE, SPEAKER_SCALE, 1.0F);
+                PanelTray.speaker(g, 0, 0, this.skin.text(), desktop.soundMuted());
                 g.pose().popPose();
             }
-            final String name = PAGES.get(i);
+            final String name = GameText.resolve(PAGE_KEYS.get(i));
             Texts.small(g, font, name, px + (page.w() - Texts.smallWidth(font, name)) / 2,
                     iy + CdeStyleLayout.PAGE_ICON + 4, this.skin.text());
         }
@@ -132,7 +171,7 @@ final class StyleManagerApp implements IDesktopApp {
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY,
                              final int button) {
         if (button == 0) {
-            final int page = CdeStyleLayout.pageAt(mouseX - this.left, mouseY - this.top, PAGES.size());
+            final int page = CdeStyleLayout.pageAt(mouseX - this.left, mouseY - this.top, PAGE_KEYS.size());
             if (page >= 0) {
                 openPage(page);
             }
@@ -141,38 +180,54 @@ final class StyleManagerApp implements IDesktopApp {
 
     /** Opens a page over the strip, or brings it forward when it is already open. */
     private void openPage(final int page) {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop == null) {
             return;
         }
         final IDesktopApp opening;
         if (page == COLOR) {
             if (this.color == null) {
-                this.color = new CdeColorPage(desktop.cdeStyle().palette(), () -> this.color = null);
+                this.color = new CdeColorPage(desktop.prefs().cdeStyle().palette(), () -> this.color = null);
             }
             opening = this.color;
-        } else {
+        } else if (page == BACKDROP) {
             if (this.backdrop == null) {
-                this.backdrop = new CdeBackdropPage(desktop.cdeStyle().backdrop(desktop.workspace()),
+                this.backdrop = new CdeBackdropPage(desktop.prefs().cdeStyle().backdrop(desktop.workspace()),
                         () -> this.backdrop = null);
             }
             opening = this.backdrop;
+        } else {
+            if (this.audio == null) {
+                this.audio = new CdeAudioPage(desktop.volume().volume(), desktop.soundMuted(), desktop.soundOutput(),
+                        () -> this.audio = null);
+            }
+            opening = this.audio;
         }
         opening.applySkin(this.skin);
-        DesktopScreen.openDialogFor(this, opening);
+        ActiveDesktop.openDialogFor(this, opening);
     }
 
     private boolean open(final int page) {
-        return page == COLOR ? this.color != null : this.backdrop != null;
+        return switch (page) {
+            case COLOR -> this.color != null;
+            case BACKDROP -> this.backdrop != null;
+            default -> this.audio != null;
+        };
     }
 
     /** The Color page's picture: four paints in a square, one to each corner. */
     private static void paints(final GuiGraphics g, final int x, final int y) {
         final int half = CdeStyleLayout.PAGE_ICON / 2;
-        for (int i = 0; i < PAINTS.length; i++) {
+        final Colours c = PALETTE.get();
+        final int[] paints = {c.topLeft(), c.topRight(), c.bottomLeft(), c.bottomRight()};
+        for (int i = 0; i < paints.length; i++) {
             final int px = x + (i % 2) * half;
             final int py = y + (i / 2) * half;
-            g.fill(px, py, px + half, py + half, PAINTS[i]);
+            g.fill(px, py, px + half, py + half, paints[i]);
         }
+    }
+
+    /** The Color page's picture: the four paints, one to each corner. */
+    private record Colours(int topLeft, int topRight, int bottomLeft, int bottomRight) {
     }
 }

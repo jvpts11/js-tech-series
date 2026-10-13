@@ -8,56 +8,75 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.CraftingComputerBlock;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
+import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.ExpansionCardKind;
-import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.item.CraftingCardItem;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * The Crafting Computer: a Category-C computer that executes crafting recipes for the network.
+ * The Crafting Computer: a Category-C computer that executes crafting recipes for the network. Its Crafting Cards keep
+ * the bench recipes it crafts, each card its own few, and drive the Crafting Interfaces on its crafting cable, which
+ * hold the processing recipes and feed the machines; what it can make is what its cards and its interfaces hold.
  */
-public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
-        implements IComputerTerminalHost {
+public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntity
+        implements IComputerTerminalHost, IAssemblyComputer {
+
+    /* The craft it runs right now: one at a time without a Supercomputer. */
+    @Nullable
+    private UUID activeCraftId;
+    /* The crafting network as last read, and when; read again once it is older than FLOOR_FRESH_TICKS. */
+    @Nullable
+    private CraftingFloor floor;
+    private long floorReadAt = Long.MIN_VALUE;
+
+    /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */
+    private final DerivedInt assemblyRunning = fields().derived("AssemblyRunning", this::isRunning).toMenu();
+    private final DerivedInt assemblyBuildValid = fields().derived("AssemblyBuildValid", this::buildValid).toMenu();
+    private final DerivedInt assemblyCapacity = fields().derived("AssemblyCapacity",
+            () -> (int) Math.min(Integer.MAX_VALUE, capacity())).toMenu();
+    private final DerivedInt assemblyRamBuffer = fields().derived("AssemblyRamBuffer",
+            () -> (int) Math.min(Integer.MAX_VALUE, ramBuffer())).toMenu();
+    private final DerivedInt assemblyAutoStart = fields().derived("AssemblyAutoStart", this::isAutoStart).toMenu();
+    private final DerivedInt assemblyOnNetwork = fields().derived("AssemblyOnNetwork",
+            () -> networkUuid() != null).toMenu();
+    private final DerivedInt assemblyCraftFactorX100 = fields().derived("AssemblyCraftFactorX100",
+            () -> (int) Math.round(craftingCardFactor() * 100.0)).toMenu();
+    private final DerivedInt assemblyCraftThroughput = fields().derived("AssemblyCraftThroughput",
+            () -> (int) Math.min(Integer.MAX_VALUE, craftingThroughput())).toMenu();
+    private final DerivedInt assemblyRomUsed = fields().derived("AssemblyRomUsed", this::romUsed).toMenu();
+    private final DerivedInt assemblyRomSize = fields().derived("AssemblyRomSize", this::romSize).toMenu();
+    private final DerivedInt assemblyCraftThreads = fields().derived("AssemblyCraftThreads",
+            this::craftingThreads).toMenu();
+    private final DerivedInt assemblyInterfaces = fields().derived("AssemblyInterfaces",
+            this::interfaceBudget).toMenu();
 
     /*
-     * Slot layout for an ATX board: one CPU, four RAM, four PCIe (GPU and/or Crafting Card), one PSU,
+     * Slot layout for an ATX board: one CPU, four RAM, four expansion slots (GPU and/or Crafting Card), one PSU,
      * two disks. Kept public so the assembly Menu and Screen address slots by name.
      */
     public static final int MOTHERBOARD_SLOT = 0;
@@ -69,48 +88,21 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
     public static final int PSU_SLOT = 10;
     public static final int DISK_SLOTS_START = 11;
     public static final int DISK_SLOTS = 2;
-    public static final int HARDWARE_SLOTS = 13;
+    /** The 5.25-inch bays, as many as the most any era's case has; the case says how many it really has. */
+    public static final int BAY_SLOTS_START = 13;
+    public static final int BAY_SLOTS = 2;
+    public static final int HARDWARE_SLOTS = 15;
 
-    public static final int RECIPE_ROM_LIMIT = 50;
+    /** How long, in ticks, the crafting network this computer reads stays as it was last read. */
+    public static final int FLOOR_FRESH_TICKS = 20;
 
     private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
             MOTHERBOARD_SLOT, CPU_SLOT, 1, RAM_SLOTS_START, RAM_SLOTS,
-            PCIE_SLOTS_START, PCIE_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, HARDWARE_SLOTS);
+            PCIE_SLOTS_START, PCIE_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, BAY_SLOTS_START, BAY_SLOTS,
+            HARDWARE_SLOTS);
 
     public CraftingComputerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.CRAFTING_COMPUTER_BE.get(), pos, state, LAYOUT);
-    }
-
-    @Override
-    protected Set<FormFactor> acceptedFormFactors() {
-        /*
-         * A Crafting Computer is a PC-class machine: each era takes its own consumer form factor:
-         * Vintage on Baby-AT/AT, Legacy and Standard on ATX.
-         */
-        return switch (blockEra()) {
-            case VINTAGE -> Set.of(FormFactor.BABY_AT, FormFactor.AT);
-            default -> Set.of(FormFactor.ATX);
-        };
-    }
-
-    @Override
-    protected HardwareEra requiredBoardEra() {
-        /*
-         * A Crafting Computer accepts only a board of its own era, so a Legacy and a Standard ATX board
-         * are not interchangeable: each installs in its matching machine alone.
-         */
-        return blockEra();
-    }
-
-    /**
-     * The era this Crafting Computer belongs to, read from its block. Defaults to Standard for any block that
-     * is not a {@link CraftingComputerBlock} (never happens in practice, but keeps the read total).
-     */
-    private HardwareEra blockEra() {
-        return getBlockState().getBlock()
-                instanceof CraftingComputerBlock cc
-                ? cc.era()
-                : HardwareEra.STANDARD;
     }
 
     public static void serverTick(final Level level, final BlockPos pos,
@@ -120,35 +112,26 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
         }
     }
 
-    @Override
-    protected void registerNode(final NetworkSystem system, final NetworkUuid network) {
-        system.registerCraftingComputer(new NetworkSystem.CraftingComputerNode(
-                nodeUuid(), network, capacity(), worldPosition.asLong()));
-    }
-
-    @Override
-    protected void unregisterNode(final NetworkSystem system, final NetworkUuid network) {
-        system.unregisterCraftingComputer(network, nodeUuid());
-    }
-
     // Crafting hardware
 
     public double craftingCardFactor() {
-        final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0.0;
-        }
         double factor = 0.0;
-        for (final IExpansionCardSpec card : build.cardsOfKind(ExpansionCardKind.CRAFTING)) {
-            if (card instanceof CraftingCardSpec craftingCard) {
-                factor += craftingCard.cpuFactor();
-            }
+        for (final CraftingCardSpec card : craftingCards()) {
+            factor += card.cpuFactor();
         }
         return factor;
     }
 
     public long craftingThroughput() {
-        return (long) (capacity() * craftingCardFactor());
+        return (long) craftingRate();
+    }
+
+    /**
+     * The bench work this computer does a tick, fractions and all: an old machine with an old card does less than one
+     * run a tick, and makes one over several.
+     */
+    public double craftingRate() {
+        return capacity() * craftingCardFactor();
     }
 
     /**
@@ -158,17 +141,23 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
      * crafting card is installed (the computer cannot craft at all).
      */
     public int craftingThreads() {
-        final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0;
-        }
         int threads = 0;
-        for (final IExpansionCardSpec card : build.cardsOfKind(ExpansionCardKind.CRAFTING)) {
-            if (card instanceof CraftingCardSpec craftingCard) {
-                threads += craftingCard.threads();
-            }
+        for (final CraftingCardSpec card : craftingCards()) {
+            threads += card.threads();
         }
         return threads;
+    }
+
+    /** How many Crafting Interfaces this computer drives, its cards' together; none while it is off. */
+    public int interfaceBudget() {
+        if (!isRunning()) {
+            return 0;
+        }
+        int budget = 0;
+        for (final CraftingCardSpec card : craftingCards()) {
+            budget += card.interfaces();
+        }
+        return budget;
     }
 
     public boolean canCraft() {
@@ -176,8 +165,6 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
     }
 
     // Craft execution claim: one craft at a time without a Supercomputer
-
-    private UUID activeCraftId;
 
     public boolean craftBusy() {
         return activeCraftId != null;
@@ -197,133 +184,51 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
         }
     }
 
-    // Recipe ROM: the computer's pattern store, hard-capped at 50
+    // The bench recipes, kept in the ROM of each Crafting Card
 
-    private final List<CraftingPattern> rom =
-            new ArrayList<>();
-
-    /*
-     * Machine recipes (processing / multi-stage) share the ROM's slot budget but live in their own list, so the
-     * bench-craft path stays untouched. Both count toward RECIPE_ROM_LIMIT.
-     */
-    private final List<NetworkRecipe> machineRecipes =
-            new ArrayList<>();
-
-    public int romUsed() {
-        return rom.size() + machineRecipes.size();
-    }
-
-    public List<NetworkRecipe> machineRecipes() {
-        return Collections.unmodifiableList(machineRecipes);
-    }
-
-    public boolean loadMachineRecipe(final NetworkRecipe recipe) {
-        if (romUsed() >= RECIPE_ROM_LIMIT) {
-            return false;
-        }
-        for (final var existing : machineRecipes) {
-            if (existing.sameRecipe(recipe)) {
-                return false;
+    /** The expansion slots that hold a Crafting Card, in slot order. */
+    public List<Integer> cardSlots() {
+        final List<Integer> slots = new ArrayList<>();
+        for (int i = 0; i < PCIE_SLOTS; i++) {
+            if (getHardware().getStackInSlot(PCIE_SLOTS_START + i).getItem() instanceof CraftingCardItem) {
+                slots.add(PCIE_SLOTS_START + i);
             }
         }
-        machineRecipes.add(recipe);
-        setChanged();
-        return true;
+        return slots;
     }
 
-    public void removeMachineRecipe(final int index) {
-        if (index >= 0 && index < machineRecipes.size()) {
-            machineRecipes.remove(index);
-            setChanged();
-        }
+    /** The card in hardware slot {@code slot}, or an empty stack. */
+    public ItemStack cardIn(final int slot) {
+        final ItemStack stack = slot >= PCIE_SLOTS_START && slot < PCIE_SLOTS_START + PCIE_SLOTS
+                ? getHardware().getStackInSlot(slot) : ItemStack.EMPTY;
+        return stack.getItem() instanceof CraftingCardItem ? stack : ItemStack.EMPTY;
     }
 
-    /**
-     * Per-machine concurrency settings the Machines tab edits and the engine honors: how many processing jobs
-     * may run on a machine at once, whether it is paused, and whether to fill it rather than feed one lot.
-     */
-    public record MachineConfig(int maxJobs, boolean locked, boolean feedMax) {
-        /*
-         * maxJobs is an OPTIONAL per-type ceiling on concurrent jobs; 0 means "auto", which uses every machine of the
-         * type that exists (the dispatcher gives each job a distinct physical machine, so concurrency already
-         * scales with the machines present). A positive value caps below that.
-         */
-        public static final MachineConfig DEFAULT = new MachineConfig(0, false, false);
-
-        public MachineConfig {
-            maxJobs = Math.max(0, maxJobs);
-        }
-    }
-
-    /*
-     * Config lives in one map under two kinds of key: a machine TYPE (e.g. "mekanism:...factory") holds that
-     * type's Max Jobs ceiling; a per-PHYSICAL-machine key (see machineStateKey, prefixed "@") holds that one
-     * machine's Paused/Feed state. So Max Jobs is set once per type, while a machine can be paused on its own.
-     */
-    private final Map<String, MachineConfig> machineConfigs = new HashMap<>();
-
-    /** The config key for one physical machine's per-machine state (Paused/Feed), by its world position. */
-    public static String machineStateKey(final BlockPos pos) {
-        return "@" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
-    }
-
-    public MachineConfig machineConfig(final String machineKey) {
-        return machineConfigs.getOrDefault(machineKey, MachineConfig.DEFAULT);
-    }
-
-    public void setMachineConfig(final String machineKey, final MachineConfig config) {
-        if (machineKey == null || machineKey.isBlank() || config == null) {
-            return;
-        }
-        machineConfigs.put(machineKey, config);
-        setChanged();
-    }
-
-    /**
-     * Machines offered by the Crafting Switches wired to this computer over crafting cable, discovered by a BFS
-     * through that cable (the mirror of how a switch finds its computer). The engine routes a processing
-     * pattern's machine type/name to one of these to deliver inputs and collect outputs.
-     */
-    public List<CraftingSwitchBlockEntity.DeclaredMachine> availableMachines() {
-        final List<CraftingSwitchBlockEntity.DeclaredMachine> out = new ArrayList<>();
-        if (!(level instanceof ServerLevel)) {
-            return out;
-        }
-        final Set<BlockPos> visited = new HashSet<>();
-        final Deque<BlockPos> queue = new ArrayDeque<>();
-        for (final Direction d : Direction.values()) {
-            final BlockPos n = worldPosition.relative(d);
-            if (visited.add(n)) {
-                queue.add(n);
-            }
-        }
-        int steps = 0;
-        while (!queue.isEmpty() && steps++ < 128) {
-            final BlockPos current = queue.poll();
-            if (level.getBlockEntity(current) instanceof CraftingSwitchBlockEntity sw) {
-                out.addAll(sw.declaredMachines());
-                continue; // a switch terminates the search; do not cross it
-            }
-            if (level.getBlockState(current).getBlock()
-                    instanceof DataCableBlock cable
-                    && cable.tier() == DataTier.CRAFTING) {
-                for (final Direction d : Direction.values()) {
-                    final BlockPos nb = current.relative(d);
-                    if (visited.add(nb)) {
-                        queue.add(nb);
-                    }
-                }
-            }
-        }
-        return out;
-    }
-
+    /** Every bench recipe the cards keep, card by card in slot order. */
     public List<CraftingPattern> romPatterns() {
-        return Collections.unmodifiableList(rom);
+        final List<CraftingPattern> all = new ArrayList<>();
+        for (final int slot : cardSlots()) {
+            all.addAll(CraftingCardItem.rom(getHardware().getStackInSlot(slot)));
+        }
+        return all;
+    }
+
+    /** How many bench recipes the cards keep together. */
+    public int romUsed() {
+        return romPatterns().size();
+    }
+
+    /** How many bench recipes the cards keep at most together. */
+    public int romSize() {
+        int size = 0;
+        for (final int slot : cardSlots()) {
+            size += CraftingCardItem.romSize(getHardware().getStackInSlot(slot));
+        }
+        return size;
     }
 
     public boolean romContains(final CraftingPattern pattern) {
-        for (final CraftingPattern existing : rom) {
+        for (final CraftingPattern existing : romPatterns()) {
             if (existing.sameRecipe(pattern)) {
                 return true;
             }
@@ -331,136 +236,174 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
         return false;
     }
 
+    /** Writes {@code pattern} into the first card with room; false when every card is full or one keeps it. */
     public boolean loadPattern(final CraftingPattern pattern) {
-        // romUsed(), not rom.size(): bench and machine recipes share the one ROM budget.
-        if (romUsed() >= RECIPE_ROM_LIMIT || romContains(pattern)) {
+        if (romContains(pattern)) {
             return false;
         }
-        rom.add(pattern);
+        for (final int slot : cardSlots()) {
+            if (loadPatternInto(slot, pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Writes {@code pattern} into the card in hardware slot {@code slot}; false when it is full or none is there. */
+    public boolean loadPatternInto(final int slot, final CraftingPattern pattern) {
+        final ItemStack card = cardIn(slot);
+        if (card.isEmpty() || romContains(pattern) || !CraftingCardItem.load(card, pattern)) {
+            return false;
+        }
         setChanged();
         return true;
     }
 
+    /** Erases the bench recipe at {@code index} of {@link #romPatterns()}. */
     public void removePattern(final int index) {
-        if (index >= 0 && index < rom.size()) {
-            rom.remove(index);
-            setChanged();
+        int at = index;
+        for (final int slot : cardSlots()) {
+            final ItemStack card = getHardware().getStackInSlot(slot);
+            final int held = CraftingCardItem.rom(card).size();
+            if (at < held) {
+                if (CraftingCardItem.remove(card, at)) {
+                    setChanged();
+                }
+                return;
+            }
+            at -= held;
         }
+    }
+
+    // The processing recipes, held by the interfaces this computer drives
+
+    /**
+     * The crafting network on this computer's crafting cable, read at most once every {@link #FLOOR_FRESH_TICKS}, or
+     * null on a player's game.
+     */
+    @Nullable
+    public CraftingFloor floor() {
+        if (!(level instanceof ServerLevel server)) {
+            return null;
+        }
+        final long now = server.getGameTime();
+        if (floor == null || now - floorReadAt >= FLOOR_FRESH_TICKS || now < floorReadAt) {
+            floor = CraftingFloor.around(server, worldPosition);
+            floorReadAt = now;
+        }
+        return floor;
+    }
+
+    /** Reads the crafting network again at once: a part was placed, taken off or set. */
+    public void forgetFloor() {
+        floor = null;
+    }
+
+    /** The interfaces this computer drives, in the order they are driven. */
+    public List<CraftingFloor.Site> drivenInterfaces() {
+        final CraftingFloor here = floor();
+        if (here == null) {
+            return List.of();
+        }
+        final List<CraftingFloor.Site> mine = new ArrayList<>();
+        for (final CraftingFloor.Site site : here.driven()) {
+            if (worldPosition.equals(here.drivenBy(site))) {
+                mine.add(site);
+            }
+        }
+        return mine;
+    }
+
+    /** Every processing and pipeline recipe the interfaces this computer drives hold, each once. */
+    public List<NetworkRecipe> machineRecipes() {
+        final List<NetworkRecipe> out = new ArrayList<>();
+        if (!(level instanceof ServerLevel server)) {
+            return out;
+        }
+        for (final CraftingFloor.Site site : drivenInterfaces()) {
+            final CraftingInterfacePart part = site.part(server, CraftingInterfacePart.class);
+            if (part == null) {
+                continue;
+            }
+            for (final CraftingInterfacePart.HeldPattern held : part.patterns()) {
+                if (out.stream().noneMatch(r -> r.sameRecipe(held.recipe()))) {
+                    out.add(held.recipe());
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Places {@code recipe} in the first interface this computer drives that has room for it and does not hold it;
+     * the interface it went into, or null when none took it.
+     */
+    @Nullable
+    public CraftingInterfacePart loadMachineRecipe(final NetworkRecipe recipe) {
+        if (!(level instanceof ServerLevel server)) {
+            return null;
+        }
+        for (final CraftingFloor.Site site : drivenInterfaces()) {
+            final CraftingInterfacePart part = site.part(server, CraftingInterfacePart.class);
+            if (part != null && part.place(recipe)) {
+                return part;
+            }
+        }
+        return null;
     }
 
     @Override
-    protected void saveExtra(final CompoundTag tag,
-                             final HolderLookup.Provider registries) {
-        if (!rom.isEmpty()) {
-            final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            SavedValue.written(CraftingPattern.CODEC.listOf().encodeStart(ops, rom),
-                            JsComputers.LOGGER, "this computer's recipes")
-                    .ifPresent(encoded -> tag.put("RecipeRom", encoded));
-        }
-        if (!machineRecipes.isEmpty()) {
-            final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            SavedValue.written(NetworkRecipe.CODEC.listOf().encodeStart(ops, machineRecipes),
-                            JsComputers.LOGGER, "this computer's machine recipes")
-                    .ifPresent(encoded -> tag.put("MachineRom", encoded));
-        }
-        if (!machineConfigs.isEmpty()) {
-            final CompoundTag configs = new CompoundTag();
-            machineConfigs.forEach((key, cfg) -> {
-                final CompoundTag c = new CompoundTag();
-                c.putInt("MaxJobs", cfg.maxJobs());
-                c.putBoolean("Locked", cfg.locked());
-                c.putBoolean("FeedMax", cfg.feedMax());
-                configs.put(key, c);
-            });
-            tag.put("MachineConfigs", configs);
-        }
+    public boolean assemblyRunning() {
+        return assemblyRunning.isSet();
     }
 
     @Override
-    protected void loadExtra(final CompoundTag tag,
-                             final HolderLookup.Provider registries) {
-        rom.clear();
-        if (tag.contains("RecipeRom")) {
-            final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            SavedValue.read(CraftingPattern.CODEC.listOf().parse(ops, tag.get("RecipeRom")),
-                            JsComputers.LOGGER, "this computer's recipes")
-                    .ifPresent(rom::addAll);
-        }
-        machineRecipes.clear();
-        if (tag.contains("MachineRom")) {
-            final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            SavedValue.read(NetworkRecipe.CODEC.listOf().parse(ops, tag.get("MachineRom")),
-                            JsComputers.LOGGER, "this computer's machine recipes")
-                    .ifPresent(machineRecipes::addAll);
-        }
-        machineConfigs.clear();
-        if (tag.contains("MachineConfigs")) {
-            final CompoundTag configs = tag.getCompound("MachineConfigs");
-            for (final String key : configs.getAllKeys()) {
-                final CompoundTag c = configs.getCompound(key);
-                machineConfigs.put(key, new MachineConfig(
-                        c.getInt("MaxJobs"), c.getBoolean("Locked"), c.getBoolean("FeedMax")));
-            }
-        }
+    public boolean assemblyBuildValid() {
+        return assemblyBuildValid.isSet();
     }
 
-    // Screen sync (ContainerData wire layout, single source of truth shared with the Menu)
-
-    public static final int DATA_RUNNING = 0;
-    public static final int DATA_BUILD_VALID = 1;
-    public static final int DATA_CAPACITY = 2;
-    public static final int DATA_RAM_BUFFER = 3;
-    public static final int DATA_AUTOSTART = 4;
-    public static final int DATA_ON_NETWORK = 5;
-    public static final int DATA_CRAFT_FACTOR_X100 = 6;
-    public static final int DATA_CRAFT_THROUGHPUT = 7;
-    public static final int DATA_ROM_USED = 8;
-    public static final int DATA_CRAFT_THREADS = 9;
-    public static final int DATA_COUNT = DATA_CRAFT_THREADS + 1;
-
-    private final int[] clientData = new int[DATA_COUNT];
-
-    private int computeData(final int index) {
-        return switch (index) {
-            case DATA_RUNNING -> isRunning() ? 1 : 0;
-            case DATA_BUILD_VALID -> buildValid() ? 1 : 0;
-            case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
-            case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
-            case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_ON_NETWORK -> networkUuid() != null ? 1 : 0;
-            case DATA_CRAFT_FACTOR_X100 -> (int) Math.round(craftingCardFactor() * 100.0);
-            case DATA_CRAFT_THROUGHPUT -> (int) Math.min(Integer.MAX_VALUE, craftingThroughput());
-            case DATA_ROM_USED -> romUsed();
-            case DATA_CRAFT_THREADS -> craftingThreads();
-            default -> 0;
-        };
+    @Override
+    public long assemblyCapacity() {
+        return assemblyCapacity.getAsInt();
     }
 
-    private final ContainerData dataAccess =
-            new ContainerData() {
-        @Override
-        public int get(final int index) {
-            if (level != null && level.isClientSide) {
-                return index >= 0 && index < clientData.length ? clientData[index] : 0;
-            }
-            return computeData(index);
-        }
+    @Override
+    public long assemblyRamBuffer() {
+        return assemblyRamBuffer.getAsInt();
+    }
 
-        @Override
-        public void set(final int index, final int value) {
-            if (index >= 0 && index < clientData.length) {
-                clientData[index] = value;
-            }
-        }
+    @Override
+    public boolean assemblyAutoStart() {
+        return assemblyAutoStart.isSet();
+    }
 
-        @Override
-        public int getCount() {
-            return DATA_COUNT;
-        }
-    };
+    @Override
+    public boolean assemblyOnNetwork() {
+        return assemblyOnNetwork.isSet();
+    }
 
-    public ContainerData getDataAccess() {
-        return dataAccess;
+    public int assemblyCraftFactorX100() {
+        return assemblyCraftFactorX100.getAsInt();
+    }
+
+    public long assemblyCraftThroughput() {
+        return assemblyCraftThroughput.getAsInt();
+    }
+
+    public int assemblyRomUsed() {
+        return assemblyRomUsed.getAsInt();
+    }
+
+    public int assemblyRomSize() {
+        return assemblyRomSize.getAsInt();
+    }
+
+    public int assemblyCraftThreads() {
+        return assemblyCraftThreads.getAsInt();
+    }
+
+    public int assemblyInterfaces() {
+        return assemblyInterfaces.getAsInt();
     }
 
     /*
@@ -513,17 +456,7 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public LocalStore localStore() {
-        final List<ItemStack> disks = new ArrayList<>(DISK_SLOTS);
-        for (int i = 0; i < DISK_SLOTS; i++) {
-            disks.add(getHardware().getStackInSlot(DISK_SLOTS_START + i));
-        }
-        return new LocalStore(disks, this::setChanged);
-    }
-
-    /** Net local-storage capacity in item-equivalents, after the installed OS footprint. */
-    private long netStorageItems() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0L : Math.max(0L, build.totalStorageItems() - reservedByOs());
+        return new LocalStore(storeDisks(), this::setChanged);
     }
 
     @Override
@@ -545,5 +478,69 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
     @Override
     public IDataSink localStorage() {
         return new StoreSink(localStore());
+    }
+
+    @Override
+    protected Set<FormFactor> acceptedFormFactors() {
+        /*
+         * A Crafting Computer is a PC-class machine: each era takes its own consumer form factor:
+         * Vintage on Baby-AT/AT, the later eras on ATX.
+         */
+        return switch (blockEra()) {
+            case VINTAGE -> Set.of(FormFactor.BABY_AT, FormFactor.AT);
+            default -> Set.of(FormFactor.ATX);
+        };
+    }
+
+    @Override
+    protected HardwareEra requiredBoardEra() {
+        /*
+         * A Crafting Computer accepts only a board of its own era, so a Legacy and a Standard ATX board
+         * are not interchangeable: each installs in its matching machine alone.
+         */
+        return blockEra();
+    }
+
+    @Override
+    protected void registerNode(final NetworkSystem system, final NetworkUuid network) {
+        system.registerCraftingComputer(new NetworkSystem.CraftingComputerNode(
+                nodeUuid(), network, capacity(), worldPosition.asLong()));
+    }
+
+    @Override
+    protected void unregisterNode(final NetworkSystem system, final NetworkUuid network) {
+        system.unregisterCraftingComputer(network, nodeUuid());
+    }
+
+    /* The Crafting Cards in the computer's build, in the build's order; none without a valid build. */
+    private List<CraftingCardSpec> craftingCards() {
+        final ComputerBuild build = currentBuild();
+        if (build == null) {
+            return List.of();
+        }
+        final List<CraftingCardSpec> cards = new ArrayList<>();
+        for (final IExpansionCardSpec card : build.cardsOfKind(ExpansionCardKind.CRAFTING)) {
+            if (card instanceof CraftingCardSpec craftingCard) {
+                cards.add(craftingCard);
+            }
+        }
+        return cards;
+    }
+
+    /**
+     * The era this Crafting Computer belongs to, read from its block. Defaults to Standard for any block that
+     * is not a {@link CraftingComputerBlock} (never happens in practice, but keeps the read total).
+     */
+    private HardwareEra blockEra() {
+        return getBlockState().getBlock()
+                instanceof CraftingComputerBlock cc
+                ? cc.era()
+                : HardwareEra.STANDARD;
+    }
+
+    /** Net local-storage capacity in item-equivalents, after the installed OS footprint. */
+    private long netStorageItems() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? 0L : Math.max(0L, build.totalStorageItems() - reservedByOs());
     }
 }

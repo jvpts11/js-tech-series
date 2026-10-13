@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.component;
 
+import dev.jstech.core.client.gui.component.Draw;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -27,7 +28,7 @@ public final class Texts {
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1f);
-        g.drawString(font, text, 0, 0, color, false);
+        Draw.text(g, font, text, 0, 0, color);
         g.pose().popPose();
     }
 

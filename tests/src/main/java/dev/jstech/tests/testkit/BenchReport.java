@@ -58,6 +58,10 @@ public final class BenchReport {
     }
 
     public BenchReport put(final String key, final double value) {
+        // Rounding would turn NaN into 0.0, which as a first run becomes a baseline every real timing then beats.
+        if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException(key + " is not a finite measurement: " + value);
+        }
         values.put(key, Math.round(value * 1000.0) / 1000.0);
         return this;
     }

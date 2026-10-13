@@ -8,7 +8,9 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableNames;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The OS platform (family) a computer runs, and the axis a program is gated on.
@@ -50,9 +52,16 @@ public enum Platform implements IStableName {
     private final String serializedName;
     private final String label;
 
+    private static final StableNames<Platform> NAMES = StableNames.of(Platform.class);
+
     Platform(final String serializedName, final String label) {
         this.serializedName = serializedName;
         this.label = label;
+    }
+
+    /** The family named {@code name}, or null when no family is. */
+    public static @Nullable Platform byName(final @Nullable String name) {
+        return NAMES.find(name);
     }
 
     @Override

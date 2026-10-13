@@ -1,0 +1,471 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition1",
+      "term": "jsc.guide.mainframes.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframes.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_1"
+          },
+          {
+            "literal": "1 MTX"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_2"
+          },
+          {
+            "literal": "up to 4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_3"
+          },
+          {
+            "literal": "up to 8"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_4"
+          },
+          {
+            "literal": "up to 6"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_5"
+          },
+          {
+            "literal": "up to 4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_6"
+          },
+          {
+            "literal": "1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_7"
+          },
+          {
+            "literal": "up to 27"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition2",
+      "term": "jsc.guide.mainframes.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition3",
+      "term": "jsc.guide.mainframes.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframes.table2",
+      "heads": [
+        "jsc.guide.mainframes.table2_head1",
+        "jsc.guide.mainframes.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text8"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.mainframes.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              4,
+              6,
+              5,
+              16,
+              8,
+              11
+            ],
+            "x": 15,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.mainframes.balloon1"
+        },
+        {
+          "detail": "jsc.guide.mainframes.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              4,
+              1,
+              5,
+              15,
+              5,
+              11
+            ],
+            "x": 15,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.mainframes.balloon2"
+        },
+        {
+          "detail": "jsc.guide.mainframes.balloon3_detail",
+          "number": 3,
+          "part": {
+            "box": [
+              4,
+              11,
+              5,
+              12,
+              16,
+              11
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.mainframes.balloon3"
+        },
+        {
+          "number": 4,
+          "part": {
+            "box": [
+              4,
+              6,
+              5,
+              11,
+              11,
+              11
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.mainframes.balloon4"
+        },
+        {
+          "number": 5,
+          "part": {
+            "box": [
+              0,
+              7,
+              4,
+              12,
+              14,
+              11
+            ],
+            "x": 17,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.mainframes.balloon5"
+        },
+        {
+          "detail": "jsc.guide.mainframes.balloon6_detail",
+          "number": 6,
+          "part": {
+            "box": [
+              7,
+              3,
+              14,
+              9,
+              6,
+              16
+            ],
+            "x": 16,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.mainframes.balloon6"
+        },
+        {
+          "detail": "jsc.guide.mainframes.balloon7_detail",
+          "number": 7,
+          "part": {
+            "box": [
+              0,
+              9,
+              14,
+              11,
+              11,
+              16
+            ],
+            "x": 17,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.mainframes.balloon7"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{VisualHardware:3695079,VisualSystems:0,VisualFlags:15}",
+          "state": "jsc:mainframe[facing=south,optical=false]",
+          "x": 16,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=false,era=3,optical=false]",
+          "x": 15,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=false,era=3,optical=false]",
+          "x": 17,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=false,era=3,optical=false]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=true,era=3,optical=false]",
+          "x": 16,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=false,era=3,optical=false]",
+          "x": 17,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=false,era=3,optical=false]",
+          "x": 15,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=true,era=3,optical=false]",
+          "x": 16,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=false,era=3,optical=false]",
+          "x": 17,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=false,era=3,optical=false]",
+          "x": 15,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=true,era=3,optical=false]",
+          "x": 16,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:mainframe_part[facing=south,core=false,era=3,optical=false]",
+          "x": 17,
+          "y": 1,
+          "z": 15
+        }
+      ],
+      "caption": "jsc.guide.mainframes.figure1",
+      "height": 130
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text10"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition4",
+      "term": "jsc.guide.mainframes.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition5",
+      "term": "jsc.guide.mainframes.term5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text12"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mainframes.fix1",
+          "problem": "jsc.guide.mainframes.problem1"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix2",
+          "problem": "jsc.guide.mainframes.problem2"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix3",
+          "problem": "jsc.guide.mainframes.problem3"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix4",
+          "problem": "jsc.guide.mainframes.problem4"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix5",
+          "problem": "jsc.guide.mainframes.problem5"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix6",
+          "problem": "jsc.guide.mainframes.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:states_and_queues",
+        "jsc:failover"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:mainframes",
+  "items": [
+    "jsc:mainframe",
+    "jsc:vintage_mainframe",
+    "jsc:legacy_mainframe",
+    "jsc:transition_mainframe",
+    "jsc:advanced_mainframe"
+  ],
+  "order": 26,
+  "section": "jsc:computers",
+  "title": "jsc.guide.mainframes.title"
+}

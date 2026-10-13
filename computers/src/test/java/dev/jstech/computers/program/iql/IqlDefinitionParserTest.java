@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class IqlDefinitionParserTest {
@@ -89,6 +90,19 @@ class IqlDefinitionParserTest {
     }
 
     @Test
+    void parse_createWithANameLongerThanTheCap_throws() {
+        final String name = "j".repeat(IqlDefinition.MAX_NAME + 1);
+        assertThrows(IllegalArgumentException.class,
+                () -> IqlDefinitionParser.tryParse("CREATE JOB " + name + " AS restock EVERY 30s"));
+    }
+
+    @Test
+    void parse_createWithANameAtTheCap_keepsItWhole() {
+        final String name = "j".repeat(IqlDefinition.MAX_NAME);
+        assertEquals(name, IqlDefinitionParser.tryParse("CREATE JOB " + name + " AS restock EVERY 30s").name());
+    }
+
+    @Test
     void parse_jobWithoutTrigger_throws() {
         assertThrows(IllegalArgumentException.class,
                 () -> IqlDefinitionParser.tryParse("CREATE JOB j AS restock"));
@@ -122,5 +136,20 @@ class IqlDefinitionParserTest {
         assertTrue(drop.ok());
         assertFalse(drop.isDefinition());
         assertEquals(IqlVerb.DROP, drop.operation().verb());
+    }
+
+    @Test
+    void splitBody_keepsASemicolonInsideQuotesInOneStatement() {
+        assertEquals(List.of("UPDATE 1 stone SET NAME 'Hot; cold'", "QUERY items"),
+                IqlDefinitionParser.splitBody("{ UPDATE 1 stone SET NAME 'Hot; cold'; QUERY items }"));
+    }
+
+    @Test
+    void tryParse_jobTriggerKeywordInsideAQuotedNameIsPartOfTheBody() {
+        final IqlDefinition def = IqlDefinitionParser.tryParse("CREATE JOB j AS SET BUS 'When Bus' OFF EVERY 5m");
+
+        assertEquals("SET BUS 'When Bus' OFF", def.body());
+        assertEquals(IqlDefinition.TriggerKind.EVERY, def.triggerKind());
+        assertEquals("5m", def.triggerSpec());
     }
 }

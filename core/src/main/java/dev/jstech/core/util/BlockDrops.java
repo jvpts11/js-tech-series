@@ -14,7 +14,10 @@ import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * Spills a block entity's stored items into the world when its block is removed, so a machine's input/output, a computer's installed hardware, or a rack's servers are never destroyed on break. Call it from a block's {@code playerWillDestroy} (guarded by the survival check) the way the multiblock controllers already do, so every content-holding block conserves its contents the same way.
+ * Spills a block entity's stored items into the world when its block is removed, so a machine's input and output, a
+ * computer's installed hardware or a rack's servers are never destroyed with it. A spilled slot is emptied, so a block
+ * that spills on a player's break in {@code playerWillDestroy} can spill again in {@code onRemove}, for any other
+ * removal, without giving anything twice.
  */
 public final class BlockDrops {
 

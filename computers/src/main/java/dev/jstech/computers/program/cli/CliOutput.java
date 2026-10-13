@@ -8,6 +8,8 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.tty.ITtyProcess;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +57,17 @@ public final class CliOutput {
         return this.started;
     }
 
+    /** A line of words that are data: a name, a path, a number, what was typed, a file's contents. */
     public void line(final String text) {
         lines.add(new CliLine(text, CliStyle.PLAIN));
+    }
+
+    public void line(final Text text) {
+        lines.add(new CliLine(text, CliStyle.PLAIN));
+    }
+
+    public void line(final TextKey key) {
+        line(key.text());
     }
 
     /** A line already put together, which is how one coloured in parts is written. */
@@ -68,32 +79,92 @@ public final class CliOutput {
         lines.add(new CliLine(text, style));
     }
 
+    public void styled(final Text text, final CliStyle style) {
+        lines.add(new CliLine(text, style));
+    }
+
     public void ok(final String text) {
         styled(text, CliStyle.OK);
+    }
+
+    public void ok(final Text text) {
+        styled(text, CliStyle.OK);
+    }
+
+    public void ok(final TextKey key) {
+        styled(key.text(), CliStyle.OK);
     }
 
     public void error(final String text) {
         styled(text, CliStyle.ERROR);
     }
 
+    public void error(final Text text) {
+        styled(text, CliStyle.ERROR);
+    }
+
+    public void error(final TextKey key) {
+        styled(key.text(), CliStyle.ERROR);
+    }
+
     public void warn(final String text) {
         styled(text, CliStyle.WARN);
+    }
+
+    public void warn(final Text text) {
+        styled(text, CliStyle.WARN);
+    }
+
+    public void warn(final TextKey key) {
+        styled(key.text(), CliStyle.WARN);
     }
 
     public void info(final String text) {
         styled(text, CliStyle.INFO);
     }
 
+    public void info(final Text text) {
+        styled(text, CliStyle.INFO);
+    }
+
+    public void info(final TextKey key) {
+        styled(key.text(), CliStyle.INFO);
+    }
+
     public void dim(final String text) {
         styled(text, CliStyle.DIM);
+    }
+
+    public void dim(final Text text) {
+        styled(text, CliStyle.DIM);
+    }
+
+    public void dim(final TextKey key) {
+        styled(key.text(), CliStyle.DIM);
     }
 
     public void accent(final String text) {
         styled(text, CliStyle.ACCENT);
     }
 
+    public void accent(final Text text) {
+        styled(text, CliStyle.ACCENT);
+    }
+
+    public void accent(final TextKey key) {
+        styled(key.text(), CliStyle.ACCENT);
+    }
+
     public void header(final String text) {
         styled(text, CliStyle.HEADER);
+    }
+
+    public void header(final Text text) {
+        styled(text, CliStyle.HEADER);
+    }
+
+    public void header(final TextKey key) {
+        styled(key.text(), CliStyle.HEADER);
     }
 
     public void blank() {
@@ -103,19 +174,20 @@ public final class CliOutput {
     /**
      * A left label and a right value packed onto one line, the value pushed to the console's right
      * edge with dots filling the gap, so columns in a listing line up without a real table widget.
+     *
+     * <p>The dots are counted where the line is read, once the label is in that reader's language, so a label
+     * that is longer in another language still leaves the value against the edge.
      */
+    public void row(final Text label, final Text value) {
+        line(CliLine.of(CliSpan.plain(label), CliSpan.fill(width, true), CliSpan.plain(value)));
+    }
+
+    public void row(final TextKey label, final String value) {
+        row(label.text(), Text.literal(value));
+    }
+
     public void row(final String label, final String value) {
-        final int gap = width - label.length() - value.length();
-        final StringBuilder sb = new StringBuilder(label);
-        if (gap >= 2) {
-            sb.append(' ');
-            sb.append(".".repeat(gap - 2));
-            sb.append(' ');
-        } else {
-            sb.append("  ");
-        }
-        sb.append(value);
-        line(sb.toString());
+        row(Text.literal(label), Text.literal(value));
     }
 
     /**
@@ -127,18 +199,20 @@ public final class CliOutput {
      * description leaves no room for dots at all, so some lines get them and some do not, and each
      * description starts somewhere different. Lining the descriptions up is the whole job here.
      */
+    public void entry(final Text name, final Text description, final int column) {
+        line(CliLine.of(CliSpan.plain(name), CliSpan.fill(column, false), CliSpan.plain(description)));
+    }
+
+    public void entry(final String name, final Text description, final int column) {
+        entry(Text.literal(name), description, column);
+    }
+
+    public void entry(final String name, final TextKey description, final int column) {
+        entry(Text.literal(name), description.text(), column);
+    }
+
     public void entry(final String name, final String description, final int column) {
-        final StringBuilder text = new StringBuilder(name);
-        if (name.length() + 2 <= column) {
-            text.append(' ');
-            text.append(".".repeat(column - name.length() - 2));
-            text.append(' ');
-        } else {
-            // A name past the column keeps a single space, so it reads as one entry rather than two words.
-            text.append(' ');
-        }
-        text.append(description);
-        line(text.toString());
+        entry(Text.literal(name), Text.literal(description), column);
     }
 
     public List<CliLine> lines() {

@@ -1,0 +1,74 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.swatch.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.swatch.for"
+    },
+    {
+      "type": "custom",
+      "data": {
+        "colour": "#FFD04040"
+      },
+      "height": 24,
+      "kind": "jstests:swatch"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.swatch.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.swatch.use1"
+      ]
+    },
+    {
+      "type": "warning",
+      "text": "jstests.guide.swatch.warning1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.swatch.fix1",
+          "problem": "jstests.guide.swatch.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jstests:press"
+      ]
+    }
+  ],
+  "icon": "minecraft:red_dye",
+  "id": "jstests:swatch",
+  "order": 1,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.swatch.title"
+}

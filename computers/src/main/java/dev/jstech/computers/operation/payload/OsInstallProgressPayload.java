@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -19,9 +21,11 @@ import net.minecraft.resources.ResourceLocation;
  * <p>Sent when the copy starts and again whenever a monitor is opened on a machine in the middle of one, so a
  * player who walked away and came back sees how far it has got rather than a machine that looks idle. The copy
  * itself belongs to the machine: this only says where it is.
+ *
+ * @param targetLabel the disk it is going onto, read in the player's language
  */
 public record OsInstallProgressPayload(BlockPos hostPos, BlockPos monitorPos, int firmwareKind, String osName,
-                                       String targetLabel, int ticksLeft,
+                                       Text targetLabel, int ticksLeft,
                                        int ticksTotal) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<OsInstallProgressPayload> TYPE =
@@ -34,11 +38,11 @@ public record OsInstallProgressPayload(BlockPos hostPos, BlockPos monitorPos, in
                 buf.writeBlockPos(p.monitorPos());
                 buf.writeVarInt(p.firmwareKind());
                 buf.writeUtf(p.osName(), 64);
-                buf.writeUtf(p.targetLabel(), 64);
+                TextCodecs.STREAM_CODEC.encode(buf, p.targetLabel());
                 buf.writeVarInt(p.ticksLeft());
                 buf.writeVarInt(p.ticksTotal());
             }, buf -> new OsInstallProgressPayload(buf.readBlockPos(), buf.readBlockPos(), buf.readVarInt(),
-                    buf.readUtf(64), buf.readUtf(64), buf.readVarInt(), buf.readVarInt()));
+                    buf.readUtf(64), TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt()));
 
     @Override
     public CustomPacketPayload.Type<OsInstallProgressPayload> type() {

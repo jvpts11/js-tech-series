@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -37,7 +38,7 @@ public final class NetworkLookup {
         if (pos.isEmpty()) {
             return null;
         }
-        return level.getBlockEntity(BlockPos.of(pos.get())) instanceof MainframeBlockEntity mf
+        return Loaded.blockEntity(level, BlockPos.of(pos.get())) instanceof MainframeBlockEntity mf
                 ? mf : null;
     }
 
@@ -48,7 +49,7 @@ public final class NetworkLookup {
     public static String serverLabel(final ServerLevel level, final NodeUuid node) {
         final String fallback = "SRV-" + ShortId.of(node.asString());
         return NetworkSystem.get(level).locationOf(node)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
                         instanceof ServerRackBlockEntity rack
                         ? rack.getServers().getStackInSlot(loc.slot()) : ItemStack.EMPTY)
                 .map(ServerItem::customName)

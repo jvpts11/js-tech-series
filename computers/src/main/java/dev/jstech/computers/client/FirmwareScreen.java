@@ -7,7 +7,91 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.FirmwareScreenTexts.APPLIES_MODE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ARCH_BITS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ARRAY_MODE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.AUTOMATIC;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BESIDE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_DEVICE_PRIORITY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_DEVICE_PRIORITY_LIST;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_HELP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_MANAGER;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_MENU;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_MENU_LIST;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOT_SELECTED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CAPACITY_ITEMS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CORES_AT;
+import static dev.jstech.computers.client.FirmwareScreenTexts.COUNT_OF;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DEGRADED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DETECTING;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DETECTING_DEVICES;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DETECTING_DRIVES_OLD;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK_NAMED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DRIVE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.EXIT;
+import static dev.jstech.computers.client.FirmwareScreenTexts.FIRST;
+import static dev.jstech.computers.client.FirmwareScreenTexts.FIRST_TAG;
+import static dev.jstech.computers.client.FirmwareScreenTexts.FORMAT_ARMED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.HARDWARE_HELP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.HEALTHY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.INSTALL_OS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.INSTALL_SYSTEM;
+import static dev.jstech.computers.client.FirmwareScreenTexts.INSTALL_TO_DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ITEM_HELP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_ARRAY_STATE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_BOARD;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_BOOT_DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_CONTROLLER;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_CORES;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_GRAPHICS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_HARDWARE_ERA;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_INSTALL_TARGET;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_ISA;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MEMBER_DRIVES;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MEMORY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MONITORS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_PROCESSOR;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_VIDEO;
+import static dev.jstech.computers.client.FirmwareScreenTexts.MONITORS_PORTS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.MORE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.MOUNT_CONTROLLER;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NEEDS_DRIVES;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NEEDS_HARDWARE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NONE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NONE_INDEPENDENT;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_BOOTABLE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_BOOTABLE_FOUND_SENTENCE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_CONTROLLER;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_INSTALLABLE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_INSTALLER_ON_MEDIUM;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ORDER_HELP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PAGE_BOOT_NAME;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PAGE_BOOT_ORDER;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PAGE_HARDWARE_NAME;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PAGE_STORAGE_NAME;
+import static dev.jstech.computers.client.FirmwareScreenTexts.RAID0_STRENGTH;
+import static dev.jstech.computers.client.FirmwareScreenTexts.RAID1_STRENGTH;
+import static dev.jstech.computers.client.FirmwareScreenTexts.RAID5_STRENGTH;
+import static dev.jstech.computers.client.FirmwareScreenTexts.RAID_CONTROLLER;
+import static dev.jstech.computers.client.FirmwareScreenTexts.RAM_SLOTS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.SCANNING_DEVICES;
+import static dev.jstech.computers.client.FirmwareScreenTexts.SETUP_KEYS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.SETUP_UTILITY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.SET_AS_FIRST;
+import static dev.jstech.computers.client.FirmwareScreenTexts.SET_FIRST;
+import static dev.jstech.computers.client.FirmwareScreenTexts.STORAGE_CONTROLLER;
+import static dev.jstech.computers.client.FirmwareScreenTexts.STORAGE_HELP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.SYSTEM_INFORMATION;
+import static dev.jstech.computers.client.FirmwareScreenTexts.UNCONFIGURED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.WHERE_BUT;
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.layout.FirmwareLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -15,14 +99,23 @@ import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.InstallMode;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -44,39 +137,27 @@ import java.util.List;
  * medium onto the default disk, then close), which the client journey tests drive through
  * {@link #installButtonCenter()}.
  */
+@PaletteHolder
 public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = MonitorGlass.WIDTH;
     private static final int H = MonitorGlass.HEIGHT;
 
-    // Vintage: green phosphor CLI BIOS
-    private static final int CLI_BG     = 0xFF021207;
-    private static final int CLI_TEXT   = 0xFF35D158;
-    private static final int CLI_BRIGHT = 0xFF87FFAC;
-    private static final int CLI_DIM    = 0xFF1A7C39;
-
-    // Legacy: classic blue BIOS
-    private static final int BLUE_BG     = 0xFF0000A8;
-    private static final int BLUE_TITLE  = 0xFFB9B9B9;
-    private static final int BLUE_BORDER = 0xFF6FB7FF;
-    private static final int BLUE_TEXT   = 0xFFFFFFFF;
-    private static final int BLUE_VALUE  = 0xFF39D6C4;
-    private static final int BLUE_AMBER  = 0xFFFFE14D;
-    private static final int BLUE_DIM    = 0xFFB9C4D6;
-    private static final int BLUE_SELBG  = 0xFFD9D9D9;
-
-    // Standard: modern UEFI
-    private static final int UEFI_BG     = 0xFF1E2030;
-    private static final int UEFI_HEAD   = 0xFF11131F;
-    private static final int UEFI_PANEL  = 0xFF2A2D3E;
-    private static final int UEFI_PH     = 0xFF3A4060;
-    private static final int UEFI_TEXT   = 0xFFE6ECF6;
-    private static final int UEFI_KEY    = 0xFFA8B2C6;
-    private static final int UEFI_ACCENT = 0xFF5FA8D3;
-    private static final int UEFI_AMBER  = 0xFFF0B23A;
-    private static final int UEFI_OK     = 0xFF5FE07A;
-    private static final int UEFI_DIM    = 0xFF8090A8;
-    private static final int UEFI_SEL    = 0xFF23405A;
+    /*
+     * The three looks' colours: Vintage's in the greys its tube lights (green on a green tube, amber on an amber one),
+     * Legacy's classic blue, Standard's modern UEFI.
+     */
+    private static final Palette<Cli> CLI = Palettes.declare(JsComputers.MODID, "firmware/cli",
+            new Cli(0xFF121212, 0xFFD1D1D1, 0xFFFFFFFF, 0xFF7C7C7C));
+    private static final Palette<Bios> BIOS = Palettes.declare(JsComputers.MODID, "firmware/bios",
+            new Bios(0xFF0000A8, 0xFFB9B9B9, 0xFF6FB7FF, 0xFFFFFFFF, 0xFF39D6C4, 0xFFFFE14D, 0xFFB9C4D6,
+                    0xFFD9D9D9));
+    private static final Palette<Uefi> UEFI = Palettes.declare(JsComputers.MODID, "firmware/uefi",
+            new Uefi(0xFF1E2030, 0xFF11131F, 0xFF2A2D3E, 0xFF3A4060, 0xFFE6ECF6, 0xFFA8B2C6, 0xFF5FA8D3,
+                    0xFFF0B23A, 0xFF5FE07A, 0xFF8090A8, 0xFF23405A, 0xFF0B1018));
+    /** The storage controller's page, whatever look it is in: a degraded array, and the mode in force. */
+    private static final Palette<Storage> STORAGE = Palettes.declare(JsComputers.MODID, "firmware/storage",
+            new Storage(0xFFF0B23A, 0xFF39D6C4));
 
     private static final int PAGE_BOOT = 0;
     private static final int PAGE_ORDER = 1;
@@ -88,8 +169,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     private RaidMode storageSel = RaidMode.NONE;
     private int storageRowY;
     private int storageRowH = 10;
-    private static final String[] PAGES = {"Boot", "Boot Order", "Hardware", "Storage"};
-    private static final int ROW_H = 12;
+    private static final TextKey[] PAGES = {PAGE_BOOT_NAME, PAGE_BOOT_ORDER, PAGE_HARDWARE_NAME, PAGE_STORAGE_NAME};
 
     /** How often the setup asks the machine what it holds, in ticks: often enough to see a disc swapped. */
     private static final int ASK_EVERY = 10;
@@ -100,6 +180,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     /** The setup the machine last described, kept until the session that shows it is built. */
     @Nullable
     private static Setup pending;
+    /** What a screen being built to draw a monitor's face shows, with the parts it lists, taken at once. */
+    @Nullable
+    private static Setup forFace;
+    @Nullable
+    private static FirmwareStatePayload forFaceState;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -117,6 +202,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     private final int[][] tabHits = new int[PAGES.length][];
     private int[] bootHit;
     private int[] installHit;
+    /* Exit, drawn as a word beside the tabs or under the menu, which leaves the setup as Escape does. */
+    private int[] exitHit;
 
     // A refusal shown in the footer for a few seconds, where every firmware look draws its key hints.
     private String notice = "";
@@ -130,16 +217,27 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        final Setup setup = pending != null ? pending
+        final Setup setup = forFace != null ? forFace : pending != null ? pending
                 : new Setup(FirmwareKind.forEra(
                         session.hardwareEra() == null ? HardwareEra.STANDARD : session.hardwareEra()), "");
         this.kind = setup.kind();
         this.machineName = setup.machineName();
+        // A face is handed the parts the machine reads, since it asks the machine nothing itself.
+        this.state = forFace != null ? forFaceState : null;
+        forFace = null;
+        forFaceState = null;
     }
 
     /** Which firmware this machine wears and what it is called, said before its setup is opened. */
     public static void expect(final FirmwareKind kind, final String machineName) {
         pending = new Setup(kind, machineName);
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, with the parts the machine reads. */
+    public static void faceWith(final FirmwareKind kind, final String machineName,
+                                @Nullable final FirmwareStatePayload state) {
+        forFace = new Setup(kind, machineName);
+        forFaceState = state;
     }
 
     /** One machine's setup: the look its board's age gives it, and the name written across the top. */
@@ -153,8 +251,10 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     @Override
     protected void init() {
         super.init();
-        active = this;
-        PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+        if (!onFace()) {
+            active = this;
+        }
+        send(new RequestFirmwareStatePayload(computerPos));
     }
 
     /**
@@ -171,7 +271,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         this.sinceAsked++;
         if (this.sinceAsked >= ASK_EVERY) {
             this.sinceAsked = 0;
-            PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+            send(new RequestFirmwareStatePayload(computerPos));
         }
     }
 
@@ -235,7 +335,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         if (page == PAGE_STORAGE) {
             if (state != null && state.raid().present()
                     && (storageSel == RaidMode.NONE || state.raid().drives() >= storageSel.minDrives())) {
-                PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+                send(FirmwareActionPayload.of(computerPos, monitorPos,
                         FirmwareActionPayload.ACTION_RAID_MODE, storageSel.id(), -1));
             }
             return;
@@ -246,7 +346,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         if (page == PAGE_ORDER) {
             if (e.kind() == FirmwareStatePayload.KIND_DISK) {
-                PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+                send(FirmwareActionPayload.of(computerPos, monitorPos,
                         FirmwareActionPayload.ACTION_SET_BOOT, e.ref(), -1));
             }
             return;
@@ -260,12 +360,13 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
          * (Arch, Gentoo) really does just boot, and its system is put on the disk by hand afterwards.
          */
         if (e.kind() == FirmwareStatePayload.KIND_MEDIA && e.installMode() == InstallMode.GUIDED.id()) {
-            openInstaller(e.label(), e.ref());
+            openInstaller(e);
             return;
         }
-        final int action = e.kind() == FirmwareStatePayload.KIND_DISK
-                ? FirmwareActionPayload.ACTION_BOOT_DISK : FirmwareActionPayload.ACTION_BOOT_MEDIA;
-        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos, action, e.ref(), -1));
+        send(e.kind() == FirmwareStatePayload.KIND_DISK
+                ? FirmwareActionPayload.of(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_DISK, e.ref(), -1)
+                : FirmwareActionPayload.onMedium(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_MEDIA, e,
+                        -1));
         /*
          * And nothing else: the machine puts the next screen up, and this one goes when that one arrives.
          * Closing here as well sent the server a close right behind the request, and the server handles them
@@ -290,8 +391,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                  * it) is refused here, in words. Falling through to "whatever is linked" used to open the
                  * installer anyway, which then played a write the server refused without saying so.
                  */
-                notice(e.installMode() < 0 ? "There is no installer on that medium."
-                        : systemNameOf(e.label()) + " needs " + e.note() + " hardware.");
+                notice(e.installMode() < 0 ? NO_INSTALLER_ON_MEDIUM.text()
+                        : NEEDS_HARDWARE.with(systemNameOf(e), e.note()));
                 return;
             }
             /*
@@ -302,25 +403,29 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 activateSelected();
                 return;
             }
-            openInstaller(e.label(), e.ref());
+            openInstaller(e);
             return;
         }
         // The primary action with a disk or nothing selected: install from whatever linked medium fits.
         if (!hasInstaller()) {
-            notice("No installable system in a linked drive.");
+            notice(NO_INSTALLABLE.text());
             return;
         }
-        openInstaller("", -1L);
+        // A reference of -1 asks for any installer medium the machine has.
+        final int target = state == null ? -1 : state.installTargetSlot();
+        send(FirmwareActionPayload.of(computerPos, monitorPos, FirmwareActionPayload.ACTION_INSTALL, -1L, target));
     }
 
-    private void notice(final String text) {
-        notice = text;
+    private void notice(final Text text) {
+        notice = of(text);
         noticeUntil = System.currentTimeMillis() + 5000L;
     }
 
-    /** "Frames 95 installer" / "Arch (live)" as the row shows it, down to the system's own name. */
-    private static String systemNameOf(final String label) {
-        return label.replace(" installer", "").replace(" (live)", "");
+    /** The system a medium carries, by its own name, asked of the registry rather than read out of the row. */
+    private static String systemNameOf(final FirmwareStatePayload.Entry e) {
+        final ResourceLocation id = ResourceLocation.tryParse(e.osId());
+        final OsDef os = id == null ? null : OsRegistry.getOs(id);
+        return os != null ? os.displayName() : e.osId();
     }
 
     /**
@@ -331,15 +436,15 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      */
     private String bootDiskLine() {
         if (state == null || state.bootSlot() < 0) {
-            return "automatic";
+            return of(AUTOMATIC);
         }
-        final String slot = "Disk " + state.bootSlot();
+        final Text slot = DISK.with(state.bootSlot());
         for (final FirmwareStatePayload.Entry e : state.entries()) {
             if (e.kind() == FirmwareStatePayload.KIND_DISK && e.ref() == state.bootSlot()) {
-                return slot + "  (" + e.label() + ")";
+                return of(BESIDE.with(slot, e.label()));
             }
         }
-        return slot;
+        return of(slot);
     }
 
     /**
@@ -347,9 +452,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      * kind of drive it is, with whatever stands in the way of booting it said after.
      */
     private static String entryWhere(final FirmwareStatePayload.Entry e) {
-        final String where = e.kind() == FirmwareStatePayload.KIND_DISK
-                ? "Disk " + e.ref() + " · " + e.device() : e.device();
-        return e.note().isEmpty() ? where : where + " - " + e.note();
+        final Text where = e.kind() == FirmwareStatePayload.KIND_DISK
+                ? DISK_NAMED.with(e.ref(), e.device()) : e.device();
+        return of(e.note().isEmpty() ? where : WHERE_BUT.with(where, e.note()));
     }
 
     /**
@@ -366,10 +471,23 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      * every install wore the same box whatever system it was, and the installers each system was drawn for
      * were never reached from this button.
      */
-    private void openInstaller(final String osLabel, final long readerRef) {
+    private void openInstaller(final FirmwareStatePayload.Entry medium) {
         final int target = state == null ? -1 : state.installTargetSlot();
-        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
-                FirmwareActionPayload.ACTION_INSTALL, readerRef, target));
+        send(FirmwareActionPayload.onMedium(computerPos, monitorPos, FirmwareActionPayload.ACTION_INSTALL, medium,
+                target));
+    }
+
+    /** The rows of the boot page that list a disk, in order, from the first (client tests pick one by its key). */
+    public List<Integer> diskRows() {
+        final List<Integer> out = new ArrayList<>();
+        if (state != null) {
+            for (int row = 0; row < state.entries().size(); row++) {
+                if (state.entries().get(row).kind() == FirmwareStatePayload.KIND_DISK) {
+                    out.add(row);
+                }
+            }
+        }
+        return out;
     }
 
     /** Screen centre of the primary install action drawn on the last frame (client tests click it). */
@@ -385,6 +503,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         rowHits.clear();
         bootHit = null;
         installHit = null;
+        exitHit = null;
         final int x = this.leftPos;
         final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, W, H, era(), font);
@@ -424,274 +543,345 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private String eraLabel() {
         final HardwareEra era = state == null ? null : HardwareEra.find(state.eraId());
-        return era == null ? "-" : switch (era) {
-            case VINTAGE -> "Vintage";
-            case LEGACY -> "Legacy";
-            case STANDARD -> "Standard";
-            case ADVANCED -> "Advanced";
-            case EXA -> "Exa";
-            case SINGULARITY -> "Singularity";
-        };
+        return era == null ? "-" : of(era.text());
     }
 
     // Vintage: green phosphor CLI BIOS
 
     private void renderCliBios(final GuiGraphics g, final int x, final int y, final int mouseX, final int mouseY) {
-        g.fill(x, y, x + W, y + H, CLI_BG);
-        border(g, x, y, CLI_DIM);
-        final int tx = x + 14;
-        int ty = y + 10;
+        g.fill(x, y, x + W, y + H, CLI.get().ground());
+        border(g, x, y, CLI.get().dim());
+        final int tx = x + FirmwareLayout.CLI_MARGIN;
+        int ty = y + FirmwareLayout.CLI_TITLE_Y;
         final String title = Branding.biosBanner(era());
-        g.drawString(font, title, tx, ty, CLI_BRIGHT, false);
+        Draw.text(g, font, title, tx, ty, CLI.get().bright());
         // The machine's name takes what is left of the line, cut short rather than drawn over the title.
-        final int nameRoom = x + W - 14 - (tx + font.width(title) + 10);
+        final int nameRoom = x + W - FirmwareLayout.CLI_MARGIN - (tx + font.width(title) + 10);
         final String name = font.width(machineName) > nameRoom ? trimTo(machineName, nameRoom) : machineName;
-        g.drawString(font, name, x + W - font.width(name) - 14, ty, CLI_DIM, false);
-        ty += 11;
+        Draw.text(g, font, name, x + W - font.width(name) - FirmwareLayout.CLI_MARGIN, ty, CLI.get().dim());
+        ty += FirmwareLayout.CLI_TABS_DY;
         // Page "tabs" as a bracketed menu line.
         int px = tx;
         for (int i = 0; i < PAGES.length; i++) {
-            final String label = (i == page ? "[" : " ") + PAGES[i] + (i == page ? "]" : " ");
-            tabHits[i] = new int[]{px, ty, font.width(label), 10};
-            g.drawString(font, label, px, ty, i == page ? CLI_BRIGHT : CLI_DIM, false);
-            px += font.width(label) + 8;
+            final String label = (i == page ? "[" : " ") + of(PAGES[i]) + (i == page ? "]" : " ");
+            tabHits[i] = new int[]{px, ty, font.width(label), FirmwareLayout.CLI_TAB_H};
+            Draw.text(g, font, label, px, ty, i == page ? CLI.get().bright() : CLI.get().dim());
+            px += font.width(label) + FirmwareLayout.CLI_TAB_GAP;
         }
-        ty += 14;
+        ty += FirmwareLayout.CLI_CONTENT_DY;
         if (page == PAGE_HARDWARE) {
-            renderHardwareLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM, W - 28);
+            renderHardwareLines(g, tx, ty, FirmwareLayout.CLI_LINE_STEP, CLI.get().text(), CLI.get().bright(),
+                    CLI.get().dim(), W - FirmwareLayout.CLI_CONTENT_WIDTH_MARGIN);
         } else if (page == PAGE_STORAGE) {
-            renderStorageLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM, W - 28);
+            renderStorageLines(g, tx, ty, FirmwareLayout.CLI_LINE_STEP, CLI.get().text(), CLI.get().bright(),
+                    CLI.get().dim(), W - FirmwareLayout.CLI_CONTENT_WIDTH_MARGIN);
         } else {
-            g.drawString(font, page == PAGE_ORDER ? "Boot Device Priority:" : "Boot Menu:", tx, ty, CLI_TEXT, false);
-            ty += 12;
+            Draw.text(g, font, of(page == PAGE_ORDER ? BOOT_DEVICE_PRIORITY_LIST : BOOT_MENU_LIST), tx, ty,
+                    CLI.get().text());
+            ty += FirmwareLayout.CLI_LIST_HEADER_DY;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, "  Detecting drives ...", tx, ty, CLI_DIM, false);
+                Draw.text(g, font, "  " + of(DETECTING_DRIVES_OLD), tx, ty, CLI.get().dim());
             } else if (rows.isEmpty()) {
-                g.drawString(font, "  No bootable device found.", tx, ty, CLI_DIM, false);
+                Draw.text(g, font, "  " + of(NO_BOOTABLE_FOUND_SENTENCE), tx, ty, CLI.get().dim());
             }
             for (int i = 0; i < rows.size(); i++) {
                 final FirmwareStatePayload.Entry e = rows.get(i);
                 final boolean sel = i == selected;
                 final String mark = page == PAGE_ORDER && state.bootSlot() == e.ref()
                         && e.kind() == FirmwareStatePayload.KIND_DISK ? "*" : " ";
-                final String line = (sel ? ">" : " ") + mark + (i + 1) + ". " + e.label()
-                        + "  (" + entryWhere(e) + ")";
-                rowHits.add(new int[]{tx, ty, W - 28, ROW_H});
-                g.drawString(font, line, tx, ty, e.bootable() || page == PAGE_ORDER ? (sel ? CLI_BRIGHT : CLI_TEXT) : CLI_DIM, false);
-                ty += ROW_H;
+                final String line = (sel ? ">" : " ") + mark + (i + 1) + ". "
+                        + of(BESIDE.with(e.label(), entryWhere(e)));
+                rowHits.add(new int[]{tx, ty, W - FirmwareLayout.CLI_CONTENT_WIDTH_MARGIN, FirmwareLayout.ROW_H});
+                Draw.text(g, font, line, tx, ty, e.bootable() || page == PAGE_ORDER
+                        ? (sel ? CLI.get().bright() : CLI.get().text()) : CLI.get().dim());
+                ty += FirmwareLayout.ROW_H;
             }
-            ty += 4;
-            final String boot = page == PAGE_ORDER ? " SET FIRST " : " BOOT ";
-            bootHit = new int[]{tx, ty, font.width(boot) + 4, 13};
+            ty += FirmwareLayout.CLI_BOOT_GAP_DY;
+            final String boot = " " + of(page == PAGE_ORDER ? SET_FIRST : BOOT) + " ";
+            bootHit = new int[]{tx, ty, font.width(boot) + 4, FirmwareLayout.CLI_BUTTON_H};
             g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3],
-                    in(bootHit, mouseX, mouseY) ? CLI_TEXT : CLI_BRIGHT);
-            g.drawString(font, boot, bootHit[0] + 2, bootHit[1] + 3, CLI_BG, false);
-            final String inst = " INSTALL OS ";
-            installHit = new int[]{bootHit[0] + bootHit[2] + 8, ty, font.width(inst) + 4, 13};
+                    in(bootHit, mouseX, mouseY) ? CLI.get().text() : CLI.get().bright());
+            Draw.text(g, font, boot, bootHit[0] + 2, bootHit[1] + 3, CLI.get().ground());
+            final String inst = " " + of(INSTALL_OS) + " ";
+            installHit = new int[]{bootHit[0] + bootHit[2] + FirmwareLayout.CLI_BUTTON_GAP, ty,
+                    font.width(inst) + 4, FirmwareLayout.CLI_BUTTON_H};
             g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3],
-                    in(installHit, mouseX, mouseY) ? CLI_TEXT : (hasInstaller() ? CLI_BRIGHT : CLI_DIM));
-            g.drawString(font, inst, installHit[0] + 2, installHit[1] + 3, CLI_BG, false);
+                    in(installHit, mouseX, mouseY) ? CLI.get().text()
+                            : (hasInstaller() ? CLI.get().bright() : CLI.get().dim()));
+            Draw.text(g, font, inst, installHit[0] + 2, installHit[1] + 3, CLI.get().ground());
         }
-        g.drawString(font, hintText(), tx, y + H - 14, CLI_DIM, false);
+        Draw.text(g, font, hintText(), tx, y + H - FirmwareLayout.CLI_HINT_BOTTOM_MARGIN, CLI.get().dim());
     }
 
     // Legacy: classic blue BIOS setup utility
 
     private void renderBlueBios(final GuiGraphics g, final int x, final int y, final int mouseX, final int mouseY) {
-        g.fill(x, y, x + W, y + H, BLUE_BG);
-        border(g, x, y, BLUE_BORDER);
-        g.fill(x, y, x + W, y + 14, BLUE_TITLE);
+        g.fill(x, y, x + W, y + H, BIOS.get().ground());
+        border(g, x, y, BIOS.get().border());
+        g.fill(x, y, x + W, y + FirmwareLayout.BIOS_TITLE_BAR_H, BIOS.get().title());
         // The house that made the board, not the mod: no screen inside the fiction names the mod.
-        drawCentered(g, Branding.HARDWARE_HOUSE + " BIOS Setup Utility", x + W / 2, y + 3, BLUE_BG);
-        int px = x + 8;
+        drawCentered(g, of(SETUP_UTILITY.with(Branding.HARDWARE_HOUSE)), x + W / 2,
+                y + FirmwareLayout.BIOS_TITLE_TEXT_Y, BIOS.get().ground());
+        int px = x + FirmwareLayout.BIOS_TAB_X;
         for (int i = 0; i < PAGES.length; i++) {
-            tabHits[i] = new int[]{px - 3, y + 16, font.width(PAGES[i]) + 6, 12};
+            final String name = of(PAGES[i]);
+            tabHits[i] = new int[]{px - 3, y + FirmwareLayout.BIOS_TAB_Y, font.width(name) + 6,
+                    FirmwareLayout.BIOS_TAB_H};
             if (i == page) {
-                g.fill(tabHits[i][0], tabHits[i][1], tabHits[i][0] + tabHits[i][2], tabHits[i][1] + tabHits[i][3], BLUE_TITLE);
+                g.fill(tabHits[i][0], tabHits[i][1], tabHits[i][0] + tabHits[i][2], tabHits[i][1] + tabHits[i][3],
+                        BIOS.get().title());
             }
-            g.drawString(font, PAGES[i], px, y + 18, i == page ? BLUE_BG : BLUE_DIM, false);
-            px += font.width(PAGES[i]) + 14;
+            Draw.text(g, font, name, px, y + FirmwareLayout.BIOS_TAB_TEXT_DY, i == page ? BIOS.get().ground()
+                    : BIOS.get().dim());
+            px += font.width(name) + FirmwareLayout.BIOS_TAB_GAP;
         }
-        g.drawString(font, "Exit", x + W - font.width("Exit") - 8, y + 18, BLUE_DIM, false);
-        g.fill(x, y + 28, x + W, y + 29, BLUE_BORDER);
+        final String exit = of(EXIT);
+        exitHit = new int[]{x + W - font.width(exit) - FirmwareLayout.BIOS_EXIT_MARGIN - 3,
+                y + FirmwareLayout.BIOS_TAB_Y, font.width(exit) + 6, tabHits[0][3]};
+        Draw.text(g, font, exit, x + W - font.width(exit) - FirmwareLayout.BIOS_EXIT_MARGIN,
+                y + FirmwareLayout.BIOS_TAB_TEXT_DY, in(exitHit, mouseX, mouseY) ? BIOS.get().title()
+                        : BIOS.get().dim());
+        g.fill(x, y + FirmwareLayout.BIOS_RULE_Y, x + W, y + FirmwareLayout.BIOS_RULE_Y + 1, BIOS.get().border());
 
-        final int top = y + 34;
-        final int boxW = 206;
-        final int boxX = x + 8;
-        final int helpX = boxX + boxW + 8;
-        final int helpW = W - boxW - 24;
-        final int boxH = H - (top - y) - 24;
+        final int top = y + FirmwareLayout.BIOS_CONTENT_TOP;
+        final int boxW = FirmwareLayout.BIOS_BOX_W;
+        final int boxX = x + FirmwareLayout.BIOS_BOX_X;
+        final int helpX = x + FirmwareLayout.biosHelpX();
+        final int helpW = FirmwareLayout.biosHelpW();
+        final int boxH = FirmwareLayout.biosContentH();
+        final int insetX = FirmwareLayout.BIOS_CONTENT_INSET_X;
+        final int insetY = FirmwareLayout.BIOS_CONTENT_INSET_Y;
         final String help;
         if (page == PAGE_HARDWARE) {
-            drawBox(g, boxX, top, boxW, boxH, "System Information");
-            renderHardwareLines(g, boxX + 8, top + 18, 13, BLUE_TEXT, BLUE_VALUE, BLUE_DIM, boxW - 16);
-            help = "The hardware this firmware detected at power-on.";
+            drawBox(g, boxX, top, boxW, boxH, of(SYSTEM_INFORMATION));
+            renderHardwareLines(g, boxX + insetX, top + insetY, FirmwareLayout.BIOS_LINE_STEP, BIOS.get().text(),
+                    BIOS.get().value(), BIOS.get().dim(), boxW - 2 * FirmwareLayout.BIOS_CONTENT_INSET_X);
+            help = of(HARDWARE_HELP);
         } else if (page == PAGE_STORAGE) {
-            drawBox(g, boxX, top, boxW, boxH, "Storage Controller");
-            renderStorageLines(g, boxX + 8, top + 18, 13, BLUE_TEXT, BLUE_VALUE, BLUE_DIM, boxW - 16);
-            help = "Up/Down chooses an array mode, Enter applies it.";
+            drawBox(g, boxX, top, boxW, boxH, of(STORAGE_CONTROLLER));
+            renderStorageLines(g, boxX + insetX, top + insetY, FirmwareLayout.BIOS_LINE_STEP, BIOS.get().text(),
+                    BIOS.get().value(), BIOS.get().dim(), boxW - 2 * FirmwareLayout.BIOS_CONTENT_INSET_X);
+            help = of(STORAGE_HELP);
         } else {
-            drawBox(g, boxX, top, boxW, boxH, page == PAGE_ORDER ? "Boot Device Priority" : "Boot Menu");
-            int ry = top + 18;
+            drawBox(g, boxX, top, boxW, boxH, of(page == PAGE_ORDER ? BOOT_DEVICE_PRIORITY : BOOT_MENU));
+            int ry = top + FirmwareLayout.BIOS_CONTENT_INSET_Y;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, "Detecting devices ...", boxX + 8, ry, BLUE_DIM, false);
-                ry += ROW_H; // the message occupies a row; the actions below must not land on it
+                Draw.text(g, font, of(DETECTING_DEVICES), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
+                        BIOS.get().dim());
+                ry += FirmwareLayout.ROW_H; // the message occupies a row; the actions below must not land on it
             } else if (rows.isEmpty()) {
-                g.drawString(font, "No bootable device", boxX + 8, ry, BLUE_AMBER, false);
-                ry += ROW_H;
+                Draw.text(g, font, of(NO_BOOTABLE), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry, BIOS.get().amber());
+                ry += FirmwareLayout.ROW_H;
             }
             for (int i = 0; i < rows.size(); i++) {
                 final FirmwareStatePayload.Entry e = rows.get(i);
                 final boolean sel = i == selected;
-                rowHits.add(new int[]{boxX + 2, ry - 2, boxW - 4, ROW_H});
+                rowHits.add(new int[]{boxX + FirmwareLayout.BIOS_ROW_INSET, ry - FirmwareLayout.BIOS_ROW_INSET,
+                        boxW - 2 * FirmwareLayout.BIOS_ROW_INSET, FirmwareLayout.ROW_H});
                 if (sel) {
-                    g.fill(boxX + 2, ry - 2, boxX + boxW - 2, ry + ROW_H - 2, BLUE_SELBG);
+                    g.fill(boxX + FirmwareLayout.BIOS_ROW_INSET, ry - FirmwareLayout.BIOS_ROW_INSET,
+                            boxX + boxW - FirmwareLayout.BIOS_ROW_INSET,
+                            ry + FirmwareLayout.ROW_H - FirmwareLayout.BIOS_ROW_INSET, BIOS.get().selection());
                 }
                 final String order = page == PAGE_ORDER
-                        ? (state.bootSlot() == e.ref() && e.kind() == FirmwareStatePayload.KIND_DISK ? "1st " : "    ")
+                        ? (state.bootSlot() == e.ref() && e.kind() == FirmwareStatePayload.KIND_DISK
+                                ? of(FIRST) + " " : "    ")
                         : "";
-                g.drawString(font, order + e.label(), boxX + 8, ry, sel ? BLUE_BG : (e.bootable() ? BLUE_TEXT : BLUE_DIM), false);
-                final String right = e.kind() == FirmwareStatePayload.KIND_DISK ? "Disk " + e.ref() : "Drive";
-                g.drawString(font, right, boxX + boxW - font.width(right) - 8, ry, sel ? BLUE_BG : BLUE_VALUE, false);
-                ry += ROW_H;
+                Draw.text(g, font, order + of(e.label()), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
+                        sel ? BIOS.get().ground() : (e.bootable() ? BIOS.get().text() : BIOS.get().dim()));
+                final String right = of(e.kind() == FirmwareStatePayload.KIND_DISK ? DISK.with(e.ref()) : DRIVE.text());
+                Draw.text(g, font, right, boxX + boxW - font.width(right) - FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
+                        sel ? BIOS.get().ground() : BIOS.get().value());
+                ry += FirmwareLayout.ROW_H;
             }
-            ry += 6;
-            final String bootLabel = page == PAGE_ORDER ? "> Set as First Boot Device" : "> Boot Selected Device";
-            bootHit = new int[]{boxX + 2, ry - 3, boxW - 4, 13};
+            ry += FirmwareLayout.BIOS_BOOT_GAP_DY;
+            final String bootLabel = "> " + of(page == PAGE_ORDER ? SET_AS_FIRST : BOOT_SELECTED);
+            bootHit = new int[]{boxX + FirmwareLayout.BIOS_ROW_INSET, ry - FirmwareLayout.BIOS_BUTTON_Y_OFFSET,
+                    boxW - 2 * FirmwareLayout.BIOS_ROW_INSET, FirmwareLayout.BIOS_BUTTON_H};
             if (in(bootHit, mouseX, mouseY)) {
-                g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3], BLUE_SELBG);
+                g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3],
+                        BIOS.get().selection());
             }
-            g.drawString(font, bootLabel, bootHit[0] + 6, bootHit[1] + 3, in(bootHit, mouseX, mouseY) ? BLUE_BG : BLUE_AMBER, false);
-            ry += 13;
-            installHit = new int[]{boxX + 2, ry - 3, boxW - 4, 13};
+            Draw.text(g, font, bootLabel, bootHit[0] + 6, bootHit[1] + 3,
+                    in(bootHit, mouseX, mouseY) ? BIOS.get().ground() : BIOS.get().amber());
+            ry += FirmwareLayout.BIOS_BUTTON_ROW_GAP;
+            installHit = new int[]{boxX + FirmwareLayout.BIOS_ROW_INSET, ry - FirmwareLayout.BIOS_BUTTON_Y_OFFSET,
+                    boxW - 2 * FirmwareLayout.BIOS_ROW_INSET, FirmwareLayout.BIOS_BUTTON_H};
             if (in(installHit, mouseX, mouseY)) {
-                g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3], BLUE_SELBG);
+                g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3],
+                        BIOS.get().selection());
             }
-            g.drawString(font, "> Install Operating System", installHit[0] + 6, installHit[1] + 3,
-                    in(installHit, mouseX, mouseY) ? BLUE_BG : (hasInstaller() ? BLUE_AMBER : BLUE_DIM), false);
-            help = page == PAGE_ORDER
-                    ? "Select the disk that boots first. The choice is saved, so two installed systems dual-boot."
-                    : "Select a device and press Enter to boot it. Installer media in a linked drive install onto disk "
-                    + (state == null ? "-" : Integer.toString(state.installTargetSlot())) + ".";
+            Draw.text(g, font, "> " + of(INSTALL_SYSTEM), installHit[0] + 6, installHit[1] + 3,
+                    in(installHit, mouseX, mouseY) ? BIOS.get().ground()
+                            : (hasInstaller() ? BIOS.get().amber() : BIOS.get().dim()));
+            help = of(page == PAGE_ORDER ? ORDER_HELP.text()
+                    : BOOT_HELP.with(state == null ? "-" : Integer.toString(state.installTargetSlot())));
         }
-        drawBox(g, helpX, top, helpW, boxH, "Item Help");
-        drawWrapped(g, help, helpX + 6, top + 18, helpW - 12, BLUE_DIM);
-        g.fill(x, y + H - 16, x + W, y + H, BLUE_TITLE);
-        g.drawString(font, hintText(), x + 8, y + H - 12, BLUE_BG, false);
+        drawBox(g, helpX, top, helpW, boxH, of(ITEM_HELP));
+        drawWrapped(g, help, helpX + FirmwareLayout.BIOS_HELP_TEXT_X_INSET, top + FirmwareLayout.BIOS_CONTENT_INSET_Y,
+                helpW - FirmwareLayout.BIOS_HELP_TEXT_WIDTH_MARGIN, BIOS.get().dim());
+        g.fill(x, y + H - FirmwareLayout.BIOS_FOOT_H, x + W, y + H, BIOS.get().title());
+        Draw.text(g, font, hintText(), x + FirmwareLayout.BIOS_CONTENT_INSET_X,
+                y + H - FirmwareLayout.BIOS_FOOT_TEXT_DY, BIOS.get().ground());
     }
 
     private void drawBox(final GuiGraphics g, final int x, final int y, final int w, final int h, final String header) {
-        g.fill(x, y, x + w, y + 1, BLUE_BORDER);
-        g.fill(x, y + h - 1, x + w, y + h, BLUE_BORDER);
-        g.fill(x, y, x + 1, y + h, BLUE_BORDER);
-        g.fill(x + w - 1, y, x + w, y + h, BLUE_BORDER);
-        g.fill(x + 1, y + 1, x + w - 1, y + 12, BLUE_BORDER);
-        g.drawString(font, header, x + 6, y + 3, BLUE_BG, false);
+        g.fill(x, y, x + w, y + 1, BIOS.get().border());
+        g.fill(x, y + h - 1, x + w, y + h, BIOS.get().border());
+        g.fill(x, y, x + 1, y + h, BIOS.get().border());
+        g.fill(x + w - 1, y, x + w, y + h, BIOS.get().border());
+        g.fill(x + 1, y + 1, x + w - 1, y + FirmwareLayout.BIOS_BOX_HEADER_H, BIOS.get().border());
+        Draw.text(g, font, header, x + FirmwareLayout.BIOS_BOX_HEADER_TEXT_X, y + FirmwareLayout.BIOS_BOX_HEADER_TEXT_Y,
+                BIOS.get().ground());
     }
 
     // Standard: modern UEFI boot manager
 
     private void renderUefi(final GuiGraphics g, final int x, final int y, final int mouseX, final int mouseY) {
-        g.fill(x, y, x + W, y + H, UEFI_BG);
-        border(g, x, y, UEFI_PH);
-        g.fill(x, y, x + W, y + 20, UEFI_HEAD);
-        g.fill(x, y + 20, x + W, y + 22, UEFI_ACCENT);
-        g.drawString(font, Branding.HARDWARE_HOUSE, x + 10, y + 6, UEFI_TEXT, false);
+        g.fill(x, y, x + W, y + H, UEFI.get().ground());
+        border(g, x, y, UEFI.get().placeholder());
+        g.fill(x, y, x + W, y + FirmwareLayout.UEFI_HEAD_H, UEFI.get().head());
+        g.fill(x, y + FirmwareLayout.UEFI_HEAD_H, x + W, y + FirmwareLayout.UEFI_HEAD_H + FirmwareLayout.UEFI_ACCENT_H,
+                UEFI.get().accent());
+        Draw.text(g, font, Branding.HARDWARE_HOUSE, x + FirmwareLayout.UEFI_HEADER_TEXT_X,
+                y + FirmwareLayout.UEFI_HEADER_TEXT_Y, UEFI.get().text());
         /*
          * The firmware's own version, from the one place that decides it, so this header and the self-test
          * that ran before it cannot disagree about which firmware the player is looking at.
          */
         final String version = "UEFI " + Branding.biosVersion(era());
-        g.drawString(font, version, x + W - font.width(version) - 10, y + 6, UEFI_DIM, false);
+        Draw.text(g, font, version, x + W - font.width(version) - FirmwareLayout.UEFI_HEADER_TEXT_X,
+                y + FirmwareLayout.UEFI_HEADER_TEXT_Y, UEFI.get().dim());
 
-        final int top = y + 30;
-        final int navX = x + 10;
-        final int navW = 92;
-        final int mainX = navX + navW + 8;
-        final int mainW = W - navW - 28;
-        final int panelH = H - (top - y) - 24;
-        g.fill(navX, top, navX + navW, top + panelH, UEFI_HEAD);
-        int ny = top + 6;
-        final String[] navLabels = {"Boot Manager", "Boot Order", "Hardware"};
+        final int top = y + FirmwareLayout.UEFI_CONTENT_TOP;
+        final int navX = x + FirmwareLayout.UEFI_NAV_X;
+        final int navW = FirmwareLayout.UEFI_NAV_W;
+        final int mainX = x + FirmwareLayout.uefiMainX();
+        final int mainW = FirmwareLayout.uefiMainW();
+        final int panelH = FirmwareLayout.uefiPanelH();
+        g.fill(navX, top, navX + navW, top + panelH, UEFI.get().head());
+        int ny = top + FirmwareLayout.UEFI_NAV_ROW_DY;
+        final TextKey[] navLabels = {BOOT_MANAGER, PAGE_BOOT_ORDER, PAGE_HARDWARE_NAME};
         for (int i = 0; i < navLabels.length; i++) {
-            tabHits[i] = new int[]{navX, ny - 2, navW, 14};
+            final int itemTop = ny - FirmwareLayout.UEFI_NAV_ITEM_RISE;
+            tabHits[i] = new int[]{navX, itemTop, navW, FirmwareLayout.UEFI_NAV_ITEM_H};
             if (i == page) {
-                g.fill(navX, ny - 2, navX + navW, ny + 12, UEFI_ACCENT);
+                g.fill(navX, itemTop, navX + navW, itemTop + FirmwareLayout.UEFI_NAV_ITEM_H, UEFI.get().accent());
             }
-            g.drawString(font, navLabels[i], navX + 8, ny + 1, i == page ? 0xFF0B1018 : UEFI_KEY, false);
-            ny += 16;
+            Draw.text(g, font, of(navLabels[i]), navX + FirmwareLayout.UEFI_NAV_TEXT_X,
+                    ny + FirmwareLayout.UEFI_NAV_TEXT_DY, i == page ? UEFI.get().onAccent() : UEFI.get().key());
+            ny += FirmwareLayout.UEFI_NAV_ROW_PITCH;
         }
-        g.drawString(font, "Exit", navX + 8, top + panelH - 12, UEFI_DIM, false);
+        final int exitY = top + panelH - FirmwareLayout.UEFI_EXIT_BOTTOM_MARGIN;
+        exitHit = new int[]{navX, exitY - FirmwareLayout.UEFI_NAV_TEXT_DY - FirmwareLayout.UEFI_NAV_ITEM_RISE, navW,
+                FirmwareLayout.UEFI_NAV_ITEM_H};
+        final boolean overExit = in(exitHit, mouseX, mouseY);
+        if (overExit) {
+            g.fill(exitHit[0], exitHit[1], exitHit[0] + exitHit[2], exitHit[1] + exitHit[3], UEFI.get().accent());
+        }
+        Draw.text(g, font, of(EXIT), navX + FirmwareLayout.UEFI_NAV_TEXT_X, exitY,
+                overExit ? UEFI.get().onAccent() : UEFI.get().dim());
 
+        final int uefiInsetX = FirmwareLayout.UEFI_CONTENT_INSET_X;
+        final int uefiInsetY = FirmwareLayout.UEFI_CONTENT_INSET_Y;
         if (page == PAGE_HARDWARE) {
-            panel(g, mainX, top, mainW, panelH, "System Information");
-            renderHardwareLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM, mainW - 16);
+            panel(g, mainX, top, mainW, panelH, of(SYSTEM_INFORMATION));
+            renderHardwareLines(g, mainX + uefiInsetX, top + uefiInsetY, FirmwareLayout.UEFI_LINE_STEP,
+                    UEFI.get().key(), UEFI.get().text(), UEFI.get().dim(),
+                    mainW - FirmwareLayout.UEFI_CONTENT_WIDTH_MARGIN);
         } else if (page == PAGE_STORAGE) {
-            panel(g, mainX, top, mainW, panelH, "Storage Controller");
-            renderStorageLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM, mainW - 16);
+            panel(g, mainX, top, mainW, panelH, of(STORAGE_CONTROLLER));
+            renderStorageLines(g, mainX + uefiInsetX, top + uefiInsetY, FirmwareLayout.UEFI_LINE_STEP,
+                    UEFI.get().key(), UEFI.get().text(), UEFI.get().dim(),
+                    mainW - FirmwareLayout.UEFI_CONTENT_WIDTH_MARGIN);
         } else {
-            panel(g, mainX, top, mainW, panelH, page == PAGE_ORDER ? "Boot Order" : "Boot Manager");
-            int ry = top + 20;
+            panel(g, mainX, top, mainW, panelH, of(page == PAGE_ORDER ? PAGE_BOOT_ORDER : BOOT_MANAGER));
+            int ry = top + FirmwareLayout.UEFI_LIST_TOP_DY;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, "Scanning devices ...", mainX + 8, ry + 2, UEFI_DIM, false);
+                Draw.text(g, font, of(SCANNING_DEVICES), mainX + FirmwareLayout.UEFI_CONTENT_INSET_X,
+                        ry + FirmwareLayout.UEFI_LIST_MSG_DY, UEFI.get().dim());
             } else if (rows.isEmpty()) {
-                g.drawString(font, "No bootable device", mainX + 8, ry + 2, UEFI_AMBER, false);
+                Draw.text(g, font, of(NO_BOOTABLE), mainX + FirmwareLayout.UEFI_CONTENT_INSET_X,
+                        ry + FirmwareLayout.UEFI_LIST_MSG_DY, UEFI.get().amber());
             }
             /*
              * The action buttons sit at a fixed height at the foot of the panel, so the list has to stop
              * above them. Drawing past this point put BOOT and INSTALL TO DISK on top of real rows.
              */
-            final int listBottom = top + panelH - 26 - 4;
+            final int listBottom = top + panelH - FirmwareLayout.UEFI_LIST_BOTTOM_MARGIN
+                    - FirmwareLayout.UEFI_LIST_BOTTOM_GAP;
             for (int i = 0; i < rows.size(); i++) {
-                if (ry + ROW_H + 2 > listBottom) {
+                if (ry + FirmwareLayout.ROW_H + 2 > listBottom) {
                     // Say that the list is cut off; a device silently missing reads as a missing device.
-                    final String more = "+" + (rows.size() - i) + " more";
-                    g.drawString(font, more, mainX + 20, listBottom - 9, UEFI_DIM, false);
+                    final String more = of(MORE.with(rows.size() - i));
+                    Draw.text(g, font, more, mainX + FirmwareLayout.UEFI_MORE_X,
+                            listBottom - FirmwareLayout.UEFI_MORE_ABOVE, UEFI.get().dim());
                     break;
                 }
                 final FirmwareStatePayload.Entry e = rows.get(i);
                 final boolean sel = i == selected;
-                rowHits.add(new int[]{mainX + 4, ry, mainW - 8, ROW_H + 2});
-                g.fill(mainX + 4, ry, mainX + mainW - 4, ry + ROW_H + 2, sel ? UEFI_SEL : UEFI_PH);
+                rowHits.add(new int[]{mainX + FirmwareLayout.UEFI_ROW_INSET, ry,
+                        mainW - 2 * FirmwareLayout.UEFI_ROW_INSET,
+                        FirmwareLayout.ROW_H + FirmwareLayout.UEFI_ROW_H_BONUS});
+                g.fill(mainX + FirmwareLayout.UEFI_ROW_INSET, ry, mainX + mainW - FirmwareLayout.UEFI_ROW_INSET,
+                        ry + FirmwareLayout.ROW_H + FirmwareLayout.UEFI_ROW_H_BONUS,
+                        sel ? UEFI.get().selection() : UEFI.get().placeholder());
                 if (sel) {
-                    g.fill(mainX + 4, ry, mainX + 6, ry + ROW_H + 2, UEFI_ACCENT);
+                    g.fill(mainX + FirmwareLayout.UEFI_ROW_INSET, ry,
+                            mainX + FirmwareLayout.UEFI_ROW_INSET + FirmwareLayout.UEFI_ROW_ACCENT_W,
+                            ry + FirmwareLayout.ROW_H + FirmwareLayout.UEFI_ROW_H_BONUS, UEFI.get().accent());
                 }
-                final int dot = e.kind() == FirmwareStatePayload.KIND_DISK ? (e.bootable() ? UEFI_OK : UEFI_DIM)
-                        : (e.bootable() ? UEFI_AMBER : UEFI_DIM);
-                g.fill(mainX + 10, ry + 4, mainX + 15, ry + 9, dot);
+                final int dot = e.kind() == FirmwareStatePayload.KIND_DISK
+                        ? (e.bootable() ? UEFI.get().ok() : UEFI.get().dim())
+                        : (e.bootable() ? UEFI.get().amber() : UEFI.get().dim());
+                g.fill(mainX + FirmwareLayout.UEFI_DOT_X, ry + FirmwareLayout.UEFI_DOT_DY,
+                        mainX + FirmwareLayout.UEFI_DOT_X + FirmwareLayout.UEFI_DOT_W,
+                        ry + FirmwareLayout.UEFI_DOT_DY + FirmwareLayout.UEFI_DOT_H, dot);
                 final String first = page == PAGE_ORDER && state.bootSlot() == e.ref()
-                        && e.kind() == FirmwareStatePayload.KIND_DISK ? "  [first]" : "";
-                g.drawString(font, e.label() + first, mainX + 20, ry + 3, e.bootable() || page == PAGE_ORDER ? UEFI_TEXT : UEFI_DIM, false);
+                        && e.kind() == FirmwareStatePayload.KIND_DISK ? "  " + of(FIRST_TAG) : "";
+                Draw.text(g, font, of(e.label()) + first, mainX + FirmwareLayout.UEFI_LABEL_X,
+                        ry + FirmwareLayout.UEFI_LABEL_DY,
+                        e.bootable() || page == PAGE_ORDER ? UEFI.get().text() : UEFI.get().dim());
                 final String detail = entryWhere(e);
-                final String shown = font.width(detail) > mainW - 130 ? trimTo(detail, mainW - 130) : detail;
-                g.drawString(font, shown, mainX + mainW - font.width(shown) - 8, ry + 3, UEFI_DIM, false);
-                ry += ROW_H + 4;
+                final String shown = font.width(detail) > mainW - FirmwareLayout.UEFI_DETAIL_WIDTH_MARGIN
+                        ? trimTo(detail, mainW - FirmwareLayout.UEFI_DETAIL_WIDTH_MARGIN) : detail;
+                Draw.text(g, font, shown, mainX + mainW - font.width(shown) - FirmwareLayout.UEFI_DETAIL_RIGHT_MARGIN,
+                        ry + FirmwareLayout.UEFI_LABEL_DY, UEFI.get().dim());
+                ry += FirmwareLayout.ROW_H + FirmwareLayout.UEFI_ROW_PITCH_GAP;
             }
-            final int by = top + panelH - 26;
-            final String bootLabel = page == PAGE_ORDER ? "SET FIRST" : "BOOT";
-            bootHit = new int[]{mainX + 8, by, 64, 18};
+            final int by = top + panelH - FirmwareLayout.UEFI_ACTION_BOTTOM_MARGIN;
+            final String bootLabel = of(page == PAGE_ORDER ? SET_FIRST : BOOT);
+            bootHit = new int[]{mainX + FirmwareLayout.UEFI_BOOT_BTN_X, by, FirmwareLayout.UEFI_BOOT_BTN_W,
+                    FirmwareLayout.UEFI_ACTION_BTN_H};
             g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3],
-                    in(bootHit, mouseX, mouseY) ? UEFI_TEXT : UEFI_ACCENT);
-            drawCentered(g, bootLabel, bootHit[0] + bootHit[2] / 2, by + 5, 0xFF0B1018);
-            installHit = new int[]{mainX + 80, by, 100, 18};
+                    in(bootHit, mouseX, mouseY) ? UEFI.get().text() : UEFI.get().accent());
+            drawCentered(g, bootLabel, bootHit[0] + bootHit[2] / 2, by + FirmwareLayout.UEFI_ACTION_LABEL_DY,
+                    UEFI.get().onAccent());
+            installHit = new int[]{mainX + FirmwareLayout.UEFI_INSTALL_BTN_X, by, FirmwareLayout.UEFI_INSTALL_BTN_W,
+                    FirmwareLayout.UEFI_ACTION_BTN_H};
             g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3],
-                    in(installHit, mouseX, mouseY) ? UEFI_TEXT : (hasInstaller() ? UEFI_ACCENT : UEFI_PH));
-            drawCentered(g, "INSTALL TO DISK", installHit[0] + installHit[2] / 2, by + 5,
-                    hasInstaller() || in(installHit, mouseX, mouseY) ? 0xFF0B1018 : UEFI_DIM);
+                    in(installHit, mouseX, mouseY) ? UEFI.get().text()
+                            : (hasInstaller() ? UEFI.get().accent() : UEFI.get().placeholder()));
+            drawCentered(g, of(INSTALL_TO_DISK), installHit[0] + installHit[2] / 2,
+                    by + FirmwareLayout.UEFI_ACTION_LABEL_DY,
+                    hasInstaller() || in(installHit, mouseX, mouseY) ? UEFI.get().onAccent() : UEFI.get().dim());
         }
-        g.fill(x, y + H - 16, x + W, y + H, UEFI_HEAD);
+        g.fill(x, y + H - FirmwareLayout.UEFI_FOOT_H, x + W, y + H, UEFI.get().head());
         final String hint = hintText();
-        g.drawString(font, hint, x + W - font.width(hint) - 10, y + H - 12, UEFI_DIM, false);
+        Draw.text(g, font, hint, x + W - font.width(hint) - FirmwareLayout.UEFI_HEADER_TEXT_X,
+                y + H - FirmwareLayout.UEFI_FOOT_TEXT_DY, UEFI.get().dim());
     }
 
     private void panel(final GuiGraphics g, final int x, final int y, final int w, final int h, final String header) {
-        g.fill(x, y, x + w, y + h, UEFI_PANEL);
-        g.fill(x, y, x + w, y + 14, UEFI_PH);
-        g.fill(x, y, x + 3, y + 14, UEFI_ACCENT);
-        g.drawString(font, header, x + 7, y + 3, UEFI_TEXT, false);
+        final int headerH = FirmwareLayout.UEFI_PANEL_HEADER_H;
+        g.fill(x, y, x + w, y + h, UEFI.get().panel());
+        g.fill(x, y, x + w, y + headerH, UEFI.get().placeholder());
+        g.fill(x, y, x + FirmwareLayout.UEFI_PANEL_ACCENT_W, y + headerH, UEFI.get().accent());
+        Draw.text(g, font, header, x + FirmwareLayout.UEFI_PANEL_HEADER_TEXT_X,
+                y + FirmwareLayout.UEFI_PANEL_HEADER_TEXT_Y, UEFI.get().text());
     }
 
     // Shared helpers
@@ -702,47 +892,49 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                                      final int width) {
         int ty = y;
         final FirmwareStatePayload.Machine machine = state == null ? null : state.machine();
-        final String detecting = "detecting ...";
+        final String detecting = of(DETECTING);
         /*
-         * What the firmware found, in its own words: the processor by model with its architecture beside it,
+         * What the firmware found, in its own words: the processor by model with its instruction set beside it,
          * memory in megabytes with the slots it fills, the board, the video card, and the monitors really
          * linked out of the board's ports. This page used to say "connected" whether one was or not.
          */
-        final String cpu = machine == null || machine.cpuName().isEmpty() ? detecting : machine.cpuName();
+        final String cpu = machine == null || machine.cpuName().isEmpty() ? detecting : of(machine.cpuName());
         final String arch = machine == null || !machine.hasCpu() ? detecting
-                : machine.cpuArch() + "  (" + machine.cpuBits() + "-bit)";
+                : of(ARCH_BITS.with(machine.cpuArch(), machine.cpuBits()));
         final String cores = machine == null || !machine.hasCpu() ? detecting
-                : machine.cores() + " @ " + machine.cpuMhz() + " MHz";
+                : of(CORES_AT.with(machine.cores(), machine.cpuMhz()));
         final String ram = machine == null ? detecting
-                : machine.ramMb() + " MB  (" + machine.ramModules() + " of " + machine.ramSlots() + " slots)";
-        final String video = machine == null || machine.gpuName().isEmpty() ? "none" : machine.gpuName();
-        final String board = machine == null || machine.boardName().isEmpty() ? detecting : machine.boardName();
+                : of(RAM_SLOTS.with(machine.ramMb(), machine.ramModules(), machine.ramSlots()));
+        final String video = machine == null || machine.gpuName().isEmpty() ? of(NONE) : of(machine.gpuName());
+        final String board = machine == null || machine.boardName().isEmpty() ? detecting : of(machine.boardName());
         final String monitors = machine == null ? detecting
-                : machine.monitors() + " of " + machine.ports() + " ports linked";
+                : of(MONITORS_PORTS.with(machine.monitors(), machine.ports()));
+        final String target = of(state == null || state.installTargetSlot() < 0 ? NO_DISK.text()
+                : DISK.with(state.installTargetSlot()));
         final String[][] kv = {
-                {"Processor", cpu},
-                {"Architecture", arch},
-                {"Cores", cores},
-                {"Memory", ram},
+                {of(LABEL_PROCESSOR), cpu},
+                {of(LABEL_ISA), arch},
+                {of(LABEL_CORES), cores},
+                {of(LABEL_MEMORY), ram},
                 /* The newest firmware calls the card graphics; the boards before it called it the video adapter. */
-                {kind == FirmwareKind.UEFI ? "Graphics" : "Video", video},
-                {"Board", board},
-                {"Monitors", monitors},
-                {"Hardware Era", eraLabel()},
-                {"Boot Disk", bootDiskLine()},
-                {"Install Target", state == null || state.installTargetSlot() < 0 ? "no disk" : "Disk " + state.installTargetSlot()},
+                {of(kind == FirmwareKind.UEFI ? LABEL_GRAPHICS : LABEL_VIDEO), video},
+                {of(LABEL_BOARD), board},
+                {of(LABEL_MONITORS), monitors},
+                {of(LABEL_HARDWARE_ERA), eraLabel()},
+                {of(LABEL_BOOT_DISK), bootDiskLine()},
+                {of(LABEL_INSTALL_TARGET), target},
         };
         /*
          * The values start at a column and end where the page does. A board and a graphics card are named by
          * whoever made them, at whatever length they chose, and drawn at full length they ran out of the page
          * and across the help panel beside it.
          */
-        final int valueAt = Math.min(110, width / 2);
+        final int valueAt = Math.min(FirmwareLayout.VALUE_COLUMN, width / 2);
         final int room = Math.max(20, width - valueAt);
         for (final String[] pair : kv) {
-            g.drawString(font, InstallerFrames.clip(font, pair[0], valueAt - 6), x, ty, keyColor, false);
-            g.drawString(font, InstallerFrames.clip(font, pair[1], room), x + valueAt, ty,
-                    pair[1].startsWith("detecting") ? dimColor : valueColor, false);
+            Draw.text(g, font, InstallerFrames.clip(font, pair[0], valueAt - 6), x, ty, keyColor);
+            Draw.text(g, font, InstallerFrames.clip(font, pair[1], room), x + valueAt, ty,
+                    detecting.equals(pair[1]) ? dimColor : valueColor);
             ty += lh;
         }
     }
@@ -758,33 +950,32 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final FirmwareStatePayload.RaidInfo raid = state == null ? null : state.raid();
         int ty = y;
         if (raid == null || !raid.present()) {
-            g.drawString(font, "No storage controller fitted.", x, ty, dimColor, false);
+            Draw.text(g, font, of(NO_CONTROLLER), x, ty, dimColor);
             /*
              * Wrapped to the panel: this sentence is longer than the box, and drawn as one line it ran
              * straight through the border and over the help panel beside it.
              */
             ty += lh;
-            for (final FormattedCharSequence line : font.split(
-                    Component.literal(
-                            "Mount a RAID Controller in this machine's gadget bay."), maxWidth)) {
-                g.drawString(font, line, x, ty, dimColor, false);
+            for (final FormattedCharSequence line : font.split(GameText.component(MOUNT_CONTROLLER), maxWidth)) {
+                Draw.text(g, font, line, x, ty, dimColor);
                 ty += lh;
             }
             return;
         }
-        final String health = raid.members() == 0 ? "unconfigured"
-                : raid.drives() < raid.members() ? "degraded" : "healthy";
-        g.drawString(font, "Controller", x, ty, keyColor, false);
-        g.drawString(font, "RAID Controller", x + 110, ty, valueColor, false);
+        final boolean degraded = raid.members() > 0 && raid.drives() < raid.members();
+        final String health = of(raid.members() == 0 ? UNCONFIGURED : degraded ? DEGRADED : HEALTHY);
+        Draw.text(g, font, of(LABEL_CONTROLLER), x, ty, keyColor);
+        Draw.text(g, font, of(RAID_CONTROLLER), x + FirmwareLayout.VALUE_COLUMN, ty, valueColor);
         ty += lh;
-        g.drawString(font, "Member drives", x, ty, keyColor, false);
-        g.drawString(font, raid.drives() + (raid.members() > 0 ? " of " + raid.members() : ""),
-                x + 110, ty, valueColor, false);
+        Draw.text(g, font, of(LABEL_MEMBER_DRIVES), x, ty, keyColor);
+        Draw.text(g, font, raid.members() > 0 ? of(COUNT_OF.with(raid.drives(), raid.members()))
+                        : Integer.toString(raid.drives()), x + FirmwareLayout.VALUE_COLUMN, ty, valueColor);
         ty += lh;
-        g.drawString(font, "Array state", x, ty, keyColor, false);
-        g.drawString(font, health, x + 110, ty, "degraded".equals(health) ? 0xFFF0B23A : valueColor, false);
+        Draw.text(g, font, of(LABEL_ARRAY_STATE), x, ty, keyColor);
+        Draw.text(g, font, health, x + FirmwareLayout.VALUE_COLUMN, ty,
+                degraded ? STORAGE.get().degraded() : valueColor);
         ty += lh + 4;
-        g.drawString(font, "ARRAY MODE", x, ty, dimColor, false);
+        Draw.text(g, font, of(ARRAY_MODE), x, ty, dimColor);
         ty += lh;
         storageRowY = ty;
         storageRowH = lh;
@@ -795,21 +986,21 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             final boolean usable = mode == RaidMode.NONE || raid.drives() >= mode.minDrives();
             final long capacity = row < raid.capacities().size() ? raid.capacities().get(row) : 0L;
             final String label = (storageSel == mode ? "> " : "  ")
-                    + (mode == RaidMode.NONE ? "NONE (independent)" : mode.name());
+                    + (mode == RaidMode.NONE ? of(NONE_INDEPENDENT) : mode.name());
             final String strength = switch (mode) {
                 case NONE -> "";
-                case RAID0 -> "  +25% throughput";
-                case RAID1 -> "  survives to 1 drive";
-                case RAID5 -> "  survives 1 loss";
+                case RAID0 -> "  " + of(RAID0_STRENGTH);
+                case RAID1 -> "  " + of(RAID1_STRENGTH);
+                case RAID5 -> "  " + of(RAID5_STRENGTH);
             };
-            final String detail = !usable ? "needs " + mode.minDrives() + " drives" : capacity + " items" + strength;
-            g.drawString(font, label, x, ty, current ? 0xFF39D6C4 : usable ? valueColor : dimColor, false);
-            g.drawString(font, detail, x + 130, ty, dimColor, false);
+            final String detail = !usable ? of(NEEDS_DRIVES.with(mode.minDrives()))
+                    : of(CAPACITY_ITEMS.with(capacity)) + strength;
+            Draw.text(g, font, label, x, ty, current ? STORAGE.get().current() : usable ? valueColor : dimColor);
+            Draw.text(g, font, detail, x + FirmwareLayout.DETAIL_COLUMN, ty, dimColor);
             ty += lh;
             row++;
         }
-        g.drawString(font, "Enter applies the mode. Changing it erases the array.", x, ty + 4,
-                dimColor, false);
+        Draw.text(g, font, of(APPLIES_MODE), x, ty + 4, dimColor);
     }
 
     private String trimTo(final String s, final int maxW) {
@@ -828,7 +1019,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     }
 
     private void drawCentered(final GuiGraphics g, final String s, final int cx, final int y, final int color) {
-        g.drawString(font, s, cx - font.width(s) / 2, y, color, false);
+        Draw.text(g, font, s, cx - font.width(s) / 2, y, color);
     }
 
     private void drawWrapped(final GuiGraphics g, final String text, final int x, final int y,
@@ -838,7 +1029,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         for (final String word : text.split(" ")) {
             final String trial = lineBuf.isEmpty() ? word : lineBuf + " " + word;
             if (font.width(trial) > maxW && !lineBuf.isEmpty()) {
-                g.drawString(font, lineBuf.toString(), x, ly, color, false);
+                Draw.text(g, font, lineBuf.toString(), x, ly, color);
                 ly += 10;
                 lineBuf.setLength(0);
                 lineBuf.append(word);
@@ -848,7 +1039,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             }
         }
         if (!lineBuf.isEmpty()) {
-            g.drawString(font, lineBuf.toString(), x, ly, color, false);
+            Draw.text(g, font, lineBuf.toString(), x, ly, color);
         }
     }
 
@@ -863,6 +1054,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             if (in(tabHits[i], mouseX, mouseY)) {
                 page = i;
                 selected = 0;
+                confirmFormatRef = Long.MIN_VALUE;
                 return true;
             }
         }
@@ -882,6 +1074,10 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         if (in(installHit, mouseX, mouseY)) {
             install();
+            return true;
+        }
+        if (in(exitHit, mouseX, mouseY)) {
+            onClose();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -944,7 +1140,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private void formatSelected() {
         final FirmwareStatePayload.Entry e = selectedEntry();
-        if (e == null || e.kind() != FirmwareStatePayload.KIND_DISK || page == PAGE_HARDWARE) {
+        if (e == null || e.kind() != FirmwareStatePayload.KIND_DISK
+                || (page != PAGE_BOOT && page != PAGE_ORDER)) {
             return;
         }
         if (confirmFormatRef != e.ref()) {
@@ -952,7 +1149,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             return;
         }
         confirmFormatRef = Long.MIN_VALUE;
-        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+        send(FirmwareActionPayload.of(computerPos, monitorPos,
                 FirmwareActionPayload.ACTION_FORMAT, e.ref(), -1));
     }
 
@@ -963,13 +1160,37 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         final FirmwareStatePayload.Entry e = selectedEntry();
         if (e != null && e.kind() == FirmwareStatePayload.KIND_DISK && confirmFormatRef == e.ref()) {
-            return "F again: FORMAT DISK (erases everything)   ESC: Exit";
+            return of(FORMAT_ARMED);
         }
-        return "Enter: Boot   Tab: Page   F: Format   ESC: Exit";
+        return of(SETUP_KEYS);
     }
 
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    /** Vintage's look, in greys the monitor's tube lights: the ground, its text, the bright lines and the dim ones. */
+    private record Cli(int ground, int text, int bright, int dim) {
+    }
+
+    /**
+     * Legacy's classic blue setup: the ground, the title bar, the frame, the text, a value, what wants the eye, the
+     * quiet lines, and the bar of the chosen line.
+     */
+    private record Bios(int ground, int title, int border, int text, int value, int amber, int dim, int selection) {
+    }
+
+    /**
+     * Standard's graphical boot manager: the ground, the head bar, a panel, a placeholder, the text, the keys, the
+     * accent, what wants the eye, what is fine, the quiet lines, the chosen row, and the words written on the
+     * accent.
+     */
+    private record Uefi(int ground, int head, int panel, int placeholder, int text, int key, int accent, int amber,
+                        int ok, int dim, int selection, int onAccent) {
+    }
+
+    /** The storage controller's page in any look: an array that has lost a drive, and the mode in force. */
+    private record Storage(int degraded, int current) {
     }
 }

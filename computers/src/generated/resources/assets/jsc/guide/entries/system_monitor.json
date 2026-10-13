@@ -1,0 +1,62 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_monitor.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.system_monitor.definition1",
+      "term": "jsc.guide.system_monitor.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.system_monitor.definition2",
+      "term": "jsc.guide.system_monitor.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_monitor.fix1",
+          "problem": "jsc.guide.system_monitor.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:task_manager",
+        "jsc:this_pc"
+      ]
+    }
+  ],
+  "id": "jsc:system_monitor",
+  "order": 168,
+  "section": "jsc:frames_machine_tools",
+  "title": "jsc.guide.system_monitor.title"
+}

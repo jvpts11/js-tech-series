@@ -13,12 +13,18 @@ import java.util.List;
  * Everything a command receives when it runs: the arguments after the command word, the computer to act on, the output buffer to write into, and the shell itself (so {@code help} can list its peers). Pure data (no Minecraft types) so a command is exercised in a unit test with a fake computer.
  */
 public record CliContext(List<String> args, ICliComputer computer, CliOutput out, CliShell shell,
-                         List<String> input) {
+                         List<String> input, String typed) {
 
     /** A command run on its own, with nothing feeding it, which is most of them. */
     public CliContext(final List<String> args, final ICliComputer computer, final CliOutput out,
                       final CliShell shell) {
         this(args, computer, out, shell, List.of());
+    }
+
+    /** A command fed by what came before it, whose words are all there is of what was typed after it. */
+    public CliContext(final List<String> args, final ICliComputer computer, final CliOutput out,
+                      final CliShell shell, final List<String> input) {
+        this(args, computer, out, shell, input, String.join(" ", args));
     }
 
     /**
@@ -69,5 +75,29 @@ public record CliContext(List<String> args, ICliComputer computer, CliOutput out
             return "";
         }
         return String.join(" ", args.subList(index, args.size()));
+    }
+
+    /**
+     * What was typed after the command word, past its first {@code words} words, exactly as it was typed: its quotes
+     * and its spacing kept. A word in quotes counts as one however many spaces it holds.
+     */
+    public String typedAfter(final int words) {
+        int at = 0;
+        for (int skipped = 0; skipped < words; skipped++) {
+            while (at < typed.length() && Character.isWhitespace(typed.charAt(at))) {
+                at++;
+            }
+            char quote = 0;
+            while (at < typed.length() && (quote != 0 || !Character.isWhitespace(typed.charAt(at)))) {
+                final char c = typed.charAt(at);
+                if (quote != 0 && c == quote) {
+                    quote = 0;
+                } else if (quote == 0 && (c == '"' || c == '\'')) {
+                    quote = c;
+                }
+                at++;
+            }
+        }
+        return typed.substring(at).strip();
     }
 }

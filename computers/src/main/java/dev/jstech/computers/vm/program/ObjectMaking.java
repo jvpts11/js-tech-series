@@ -9,6 +9,9 @@ package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,12 +19,17 @@ import java.util.Map;
  * Making a program's objects: an instance of one of its types, whose constructor then waits its turn, one the runtime
  * brings with it, an array, and the copy a struct makes of itself; and reaching into an array's places.
  */
+@TextHolder
 final class ObjectMaking {
 
     private final Process process;
     private final Heap heap;
     private final ProgramImage program;
     private final CallDispatch calls;
+
+    private static final TextKey NEGATIVE_LENGTH = TextKey.of("jsc.vm.object_making.negative_length",
+            "an array cannot have %s places");
+    private static final TextKey NO_ARRAY = TextKey.of("jsc.vm.object_making.no_array", "there is no array here");
 
     ObjectMaking(final Process process, final Heap heap, final ProgramImage program, final CallDispatch calls) {
         this.process = process;
@@ -47,19 +55,7 @@ final class ObjectMaking {
      * that is not a struct, null included, is handed back as it is, since there is nothing to copy.
      */
     Object copyOf(final Object value, final int line) {
-        if (!(value instanceof Values.Obj original)) {
-            return value;
-        }
-        final TypeImage known = this.program.type(original.type());
-        if (known == null || known.kind() != AsmType.Kind.STRUCT) {
-            return value;
-        }
-        final Values.Obj made = new Values.Obj(original.type());
-        this.heap.allocate(made, known.instanceSize(), line);
-        for (final Map.Entry<String, Object> field : original.all().entrySet()) {
-            made.set(field.getKey(), this.copyOf(field.getValue(), line));
-        }
-        return made;
+        return this.copyOf(value, line, new IdentityHashMap<>());
     }
 
     /**
@@ -101,10 +97,14 @@ final class ObjectMaking {
     void newArray(final Frame frame, final IOperand.Type element, final int line) {
         final int length = Numbers.toInt(frame.pop());
         if (length < 0) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, "an array cannot have " + length + " places");
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NEGATIVE_LENGTH.with(length));
         }
+        final long bytes = Heap.HEADER + (long) Heap.sizeOf(element.name().value()) * length;
+        // The budget is asked first: an array of two billion places would be made in the game's own memory before
+        // the budget had a word, and running out of that is no halt the program can be told about.
+        this.heap.reserve(bytes, line);
         final Values.Arr made = new Values.Arr(element.name().value(), length);
-        this.heap.allocate(made, Heap.HEADER + (long) Heap.sizeOf(element.name().value()) * length, line);
+        this.heap.allocate(made, bytes, line);
         frame.push(made);
     }
 
@@ -126,6 +126,32 @@ final class ObjectMaking {
         if (this.heap.alive(value, line) instanceof Values.Arr array) {
             return array;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no array here");
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_ARRAY.text());
+    }
+
+    /*
+     * The copy of a struct, keeping the copies already made: a struct met a second time, through a field that points
+     * back at one being copied or at one copied before, is the copy made of it, so a cycle ends and what two fields
+     * shared they still share.
+     */
+    private Object copyOf(final Object value, final int line, final Map<Values.Obj, Values.Obj> copies) {
+        if (!(value instanceof Values.Obj original)) {
+            return value;
+        }
+        final TypeImage known = this.program.type(original.type());
+        if (known == null || known.kind() != AsmType.Kind.STRUCT) {
+            return value;
+        }
+        final Values.Obj already = copies.get(original);
+        if (already != null) {
+            return already;
+        }
+        final Values.Obj made = new Values.Obj(original.type());
+        this.heap.allocate(made, known.instanceSize(), line);
+        copies.put(original, made);
+        for (final Map.Entry<String, Object> field : original.all().entrySet()) {
+            made.set(field.getKey(), this.copyOf(field.getValue(), line, copies));
+        }
+        return made;
     }
 }

@@ -14,10 +14,8 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -25,6 +23,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.says;
+import static dev.jstech.tests.testkit.TestShell.shell;
 
 /**
  * A whole line, the way a shell reads one: commands handing their lines to the next, a file feeding the first,
@@ -164,17 +165,75 @@ public final class ShellPipelineGameTests {
                 .thenSucceed();
     }
 
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
-                                      final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.shellFor(computer, WIDTH).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
+    /**
+     * A command that takes the whole terminal is refused on a line that pipes or redirects, instead of printing
+     * nothing and leaving the file it was sent to empty; and a line that ends in clearing the screen clears it.
+     */
+    @GameTest(template = ARENA)
+    public static void aLine_refusesATerminalTakerAndStillClearsTheScreen(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    file(helper, computer, "kept.txt", "worth keeping");
+
+                    final List<String> refused = shell(helper, computer, "less notes.txt > kept.txt");
+                    helper.assertTrue(says(refused, "cannot be piped or redirected"),
+                            "a pager given a file takes the terminal, so the line is refused; got " + refused);
+                    helper.assertTrue(says(shell(helper, computer, "cat kept.txt"), "worth keeping"),
+                            "and the file the line named is left as it was");
+
+                    final List<String> paged = shell(helper, computer, "cat notes.txt | less");
+                    helper.assertTrue(says(paged, "oak log"), "fed by a pipe the pager still prints; got " + paged);
+
+                    final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
+                    helper.assertTrue(CliCommands.shellFor(cli, WIDTH).run("cat notes.txt | clear", cli)
+                            .clearScreen(), "a line ending in clear clears the screen");
+                })
+                .thenSucceed();
     }
 
-    private static boolean says(final List<String> lines, final String text) {
-        return lines.stream().anyMatch(line -> line.contains(text));
+    /** touch makes a file that is not there and leaves one that is as it was, where it used to empty it. */
+    @GameTest(template = ARENA)
+    public static void touch_leavesWhatAFileHoldsAlone(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    shell(helper, computer, "touch notes.txt");
+                    final List<String> kept = shell(helper, computer, "cat notes.txt");
+                    helper.assertTrue(says(kept, "oak log"), "the file still holds what it did; got " + kept);
+                    shell(helper, computer, "touch fresh.txt");
+                    helper.assertTrue(says(shell(helper, computer, "ls"), "fresh.txt"), "and a new one is made");
+                })
+                .thenSucceed();
+    }
+
+    /** A file named from the root is read by the text tools, where a slash read as a DOS switch dropped it. */
+    @GameTest(template = ARENA)
+    public static void grep_readsAFileNamedFromTheRoot(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    final String here = shell(helper, computer, "pwd").get(0).strip();
+                    final List<String> found = shell(helper, computer, "grep oak " + here + "/notes.txt");
+                    helper.assertTrue(says(found, "oak log"), "grep read the file by its whole path; got " + found);
+                })
+                .thenSucceed();
+    }
+
+    /** An arrow in quotes is something to look for, not somewhere to write. */
+    @GameTest(template = ARENA)
+    public static void aQuotedArrow_isAWordForTheCommand(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    shell(helper, computer, "grep \">\" notes.txt");
+                    final List<String> kept = shell(helper, computer, "cat notes.txt");
+                    helper.assertTrue(says(kept, "oak log"), "notes.txt was searched, not written over; got " + kept);
+                })
+                .thenSucceed();
     }
 }

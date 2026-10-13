@@ -7,16 +7,25 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.EndProcessPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.DiskUse;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.RamUse;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -37,10 +46,16 @@ import java.util.Random;
  * desktop the system monitor its own package brings. They all read the same machine: the memory ledger the
  * notification area draws from, the disks, the processor, and the network link.
  */
+@PaletteHolder
 public final class TaskManagerApp implements IDesktopApp {
 
     /** The shape this window takes, decided by the desktop it opened on. */
     private enum Form { CLOSE_BOX, LUNA, MODERN, PLASMA, GNOME }
+
+    /** The meters' and graphs' own colours, {@code jsc:app/task_manager}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/task_manager",
+            new Colours(0xFF2EA043, 0xFF001400, 0xFF1F8B1F, 0xFF39D639, 0xFF0F3D0F, 0xFFFFFFFF, 0xFFD1495B,
+                    0xFFE0A020, 0xFF2EA043));
 
     private static final int REFRESH_FRAMES = 40;
     private static final long SAMPLE_MS = 1000L;
@@ -49,6 +64,8 @@ public final class TaskManagerApp implements IDesktopApp {
     private static final int ROW_H = 10;
     private static final int MENU_H = 11;
     private static final int STATUS_H = 11;
+    /** A box of three facts under the performance page's graphs. */
+    private static final int FACTS_H = 3 * 9 + 4;
 
     private final BlockPos host;
     private final Form form;
@@ -70,6 +87,9 @@ public final class TaskManagerApp implements IDesktopApp {
     private final Load load = new Load();
     private final int[] cpuHistory = new int[HISTORY];
     private final int[] memHistory = new int[HISTORY];
+    /* The video memory held, in megabytes, and how busy the card was, a sample a second. */
+    private final int[] vramHistory = new int[HISTORY];
+    private final int[] gpuHistory = new int[HISTORY];
     private int samples;
     private long lastSampleAt;
 
@@ -82,14 +102,19 @@ public final class TaskManagerApp implements IDesktopApp {
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
     }
 
+    /** The shape the window takes on that desktop, by the family of chrome the desktop declares. */
     private static Form formOf(@Nullable final ResourceLocation desktopId) {
-        final String path = desktopId == null ? "" : desktopId.getPath();
-        return switch (path) {
-            case "frames_95" -> Form.CLOSE_BOX;
-            case "frames_11" -> Form.MODERN;
-            case "kde_plasma" -> Form.PLASMA;
-            case "gnome", "cinnamon" -> Form.GNOME;
-            default -> Form.LUNA;
+        final DesktopEnvironmentDef desktop = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
+        if (desktop == null) {
+            return Form.LUNA;
+        }
+        return switch (desktop.panelStyle()) {
+            case FRAMES_95 -> Form.CLOSE_BOX;
+            // Frames 10's Task Manager was already the one 11 kept, with its graphs; 7's was still XP's tabs.
+            case FRAMES_10, FRAMES_11 -> Form.MODERN;
+            case KDE -> Form.PLASMA;
+            case GNOME, CINNAMON -> Form.GNOME;
+            case FRAMES_XP, FRAMES_7, CDE -> Form.LUNA;
         };
     }
 
@@ -98,6 +123,80 @@ public final class TaskManagerApp implements IDesktopApp {
         if (active != null && active.host.equals(payload.hostPos())) {
             active.data = payload;
         }
+    }
+
+    /**
+     * The desktop-local centre of the page picker's entry for {@code index} as the last frame drew it (a tab, a row of
+     * the rail, a segment), the place a player clicks to turn to that page; null before the first frame.
+     */
+    @Nullable
+    public int[] pageCentre(final int index) {
+        final String[] names = pages();
+        if (cw <= 0 || index < 0 || index >= names.length) {
+            return null;
+        }
+        return switch (form) {
+            case LUNA -> {
+                int tx = cx + 3;
+                for (int i = 0; i < index; i++) {
+                    tx += Texts.smallWidth(font(), names[i]) + 9;
+                }
+                yield new int[] {tx + (Texts.smallWidth(font(), names[index]) + 8) / 2, cy + MENU_H + 6};
+            }
+            case MODERN, PLASMA -> new int[] {cx + 20, cy + 4 + index * 13 + 6};
+            case GNOME -> {
+                int segW = 0;
+                for (final String name : names) {
+                    segW += Texts.smallWidth(font(), name) + 10;
+                }
+                int sx = cx + (cw - segW) / 2;
+                for (int i = 0; i < index; i++) {
+                    sx += Texts.smallWidth(font(), names[i]) + 10;
+                }
+                yield new int[] {sx + (Texts.smallWidth(font(), names[index]) + 10) / 2, cy + 6};
+            }
+            case CLOSE_BOX -> null;
+        };
+    }
+
+    /** The page in front, counted from the first of the picker. */
+    public int page() {
+        return page;
+    }
+
+    /** Whether the last snapshot gave the window any graphics to show. */
+    public boolean showsGraphics() {
+        return gpu().present();
+    }
+
+    /** What the list of the page in front reads, top to bottom: the windows, programs and services it shows. */
+    public List<String> rowLabels() {
+        final List<String> out = new ArrayList<>();
+        for (final RamUse use : rows()) {
+            out.add(shownName(use));
+        }
+        return out;
+    }
+
+    /**
+     * The desktop-local point on the row of that name as the last frame drew it, the place a player clicks to pick
+     * it; null when the page has no list, nothing listed has that name, or it is scrolled out of sight.
+     */
+    @Nullable
+    public int[] rowPoint(final String label) {
+        final int[] list = cw <= 0 ? null : listRect(cx, cy, cw, ch);
+        final int index = rowLabels().indexOf(label) - scroll;
+        if (list == null || index < 0 || (index + 1) * ROW_H > list[3]) {
+            return null;
+        }
+        return new int[] {list[0] + 20, list[1] + index * ROW_H + ROW_H / 2};
+    }
+
+    /** The desktop-local centre of the End button of the page in front, or null when it has none. */
+    @Nullable
+    public int[] endPoint() {
+        final int[] end = cw <= 0 ? null : endButtonRect(cx, cy, cw, ch);
+        return end == null ? null : new int[] {end[0] + end[2] / 2, end[1] + end[3] / 2};
     }
 
     // the machine, as this window reads it
@@ -161,7 +260,7 @@ public final class TaskManagerApp implements IDesktopApp {
         }
         final RamLedger.Kind kind = kindOf(use);
         if (kind == RamLedger.Kind.WINDOW) {
-            DesktopScreen.requestClose(use.label());
+            ActiveDesktop.requestClose(use.label());
         } else if (kind == RamLedger.Kind.PROCESS) {
             /*
              * A script is ended by its number: two of them can have come from the same file, and the
@@ -246,7 +345,19 @@ public final class TaskManagerApp implements IDesktopApp {
         cpuHistory[at] = load.percent();
         // The graph follows what is held, so a program filling memory draws a rising line.
         memHistory[at] = heldMb();
+        vramHistory[at] = (int) (gpu().usedKb() / VramLedger.KB_PER_MB);
+        gpuHistory[at] = gpu().load();
         samples++;
+    }
+
+    /** The machine's graphics as the last snapshot gave them; none before the first. */
+    private SettingsSnapshotPayload.Gpu gpu() {
+        return data == null ? SettingsSnapshotPayload.Gpu.NONE : data.gpu();
+    }
+
+    /** The video memory in whole megabytes, the scale the graphs are drawn against. */
+    private int vramTotalMb() {
+        return (int) Math.max(1L, gpu().totalKb() / VramLedger.KB_PER_MB);
     }
 
     // window
@@ -254,9 +365,9 @@ public final class TaskManagerApp implements IDesktopApp {
     @Override
     public String title() {
         return switch (form) {
-            case CLOSE_BOX -> "Close Program";
-            case PLASMA, GNOME -> "System Monitor";
-            default -> "Task Manager";
+            case CLOSE_BOX -> GameText.resolve(TaskManagerTexts.TITLE_CLOSE_PROGRAM);
+            case PLASMA, GNOME -> GameText.resolve(TaskManagerTexts.TITLE_SYSTEM_MONITOR);
+            default -> GameText.resolve(TaskManagerTexts.TITLE);
         };
     }
 
@@ -286,15 +397,29 @@ public final class TaskManagerApp implements IDesktopApp {
         active = this;
     }
 
-    /** The page names of the rail or the tab strip this form carries. */
+    /** The page names of the rail or the tab strip this form carries, in the player's language. */
     private String[] pages() {
-        return switch (form) {
-            case LUNA -> new String[] {"Applications", "Processes", "Performance", "Networking"};
-            case MODERN -> new String[] {"Processes", "Performance", "Services", "Storage", "Network"};
-            case PLASMA -> new String[] {"Overview", "Applications", "Processes", "History"};
-            case GNOME -> new String[] {"Processes", "Resources", "File Systems"};
-            case CLOSE_BOX -> new String[0];
+        final TextKey[] keys = switch (form) {
+            case LUNA -> new TextKey[] {TaskManagerTexts.APPLICATIONS, TaskManagerTexts.PROCESSES,
+                TaskManagerTexts.PERFORMANCE, TaskManagerTexts.NETWORKING};
+            case MODERN -> new TextKey[] {TaskManagerTexts.PROCESSES, TaskManagerTexts.PERFORMANCE,
+                TaskManagerTexts.SERVICES, TaskManagerTexts.STORAGE, TaskManagerTexts.NETWORK, TaskManagerTexts.GPU};
+            case PLASMA -> new TextKey[] {TaskManagerTexts.OVERVIEW, TaskManagerTexts.APPLICATIONS,
+                TaskManagerTexts.PROCESSES, TaskManagerTexts.HISTORY};
+            case GNOME -> new TextKey[] {TaskManagerTexts.PROCESSES, TaskManagerTexts.RESOURCES,
+                TaskManagerTexts.FILE_SYSTEMS};
+            case CLOSE_BOX -> new TextKey[0];
         };
+        return words(keys);
+    }
+
+    /* The words for those keys, in the player's language. */
+    private static String[] words(final TextKey... keys) {
+        final String[] out = new String[keys.length];
+        for (int i = 0; i < keys.length; i++) {
+            out[i] = GameText.resolve(keys[i]);
+        }
+        return out;
     }
 
     @Override
@@ -314,7 +439,7 @@ public final class TaskManagerApp implements IDesktopApp {
         ch = height;
         g.fill(x, y, x + width, y + height, skin.windowBg());
         if (data == null) {
-            g.drawString(font, "Reading machine...", x + 6, y + 8, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(TaskManagerTexts.READING), x + 6, y + 8, skin.dim());
             return;
         }
         switch (form) {
@@ -338,13 +463,13 @@ public final class TaskManagerApp implements IDesktopApp {
         skin.field(g, lx, y + pad, lw, listH, false);
         drawRows(g, font, tasks(), lx + 2, y + pad + 2, lw - 4, listH - 4, false);
         final int textY = y + pad + listH + 3;
-        Texts.small(g, font, "Ending a program may lose unsaved work.", lx, textY, skin.dim());
-        Texts.small(g, font, "Ending the system restarts the machine.", lx, textY + 8, skin.dim());
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MAY_LOSE_WORK), lx, textY, skin.dim());
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.RESTARTS), lx, textY + 8, skin.dim());
         final int by = y + height - pad - btnH;
         final int bw = (lw - 8) / 3;
-        button(g, font, lx, by, bw, btnH, "End Task", canEnd());
-        button(g, font, lx + bw + 4, by, bw, btnH, "Shut Down", true);
-        button(g, font, lx + 2 * (bw + 4), by, bw, btnH, "Cancel", true);
+        button(g, font, lx, by, bw, btnH, TaskManagerTexts.END_TASK, canEnd());
+        button(g, font, lx + bw + 4, by, bw, btnH, TaskManagerTexts.SHUT_DOWN, true);
+        button(g, font, lx + 2 * (bw + 4), by, bw, btnH, TaskManagerTexts.CANCEL, true);
     }
 
     // Frames XP: the four-tab manager
@@ -352,7 +477,8 @@ public final class TaskManagerApp implements IDesktopApp {
     private void renderLuna(final GuiGraphics g, final Font font, final int x, final int y,
                             final int width, final int height) {
         // Menu bar, tab strip, the page, then the status bar along the foot.
-        final String[] menus = {"File", "Options", "View", "Windows", "Shut Down", "Help"};
+        final String[] menus = words(TaskManagerTexts.FILE, TaskManagerTexts.OPTIONS, TaskManagerTexts.VIEW,
+                TaskManagerTexts.WINDOWS, TaskManagerTexts.SHUT_DOWN, TaskManagerTexts.HELP);
         int mx = x + 4;
         for (final String menu : menus) {
             Texts.small(g, font, menu, mx, y + 2, skin.text());
@@ -369,22 +495,24 @@ public final class TaskManagerApp implements IDesktopApp {
             case 0 -> {
                 final int listH = ph - 17;
                 skin.field(g, px, py, pw, listH, false);
-                columns(g, font, px + 2, py + 1, pw - 4, new String[] {"Task", "Status"}, new int[] {0, pw - 52});
+                columns(g, font, px + 2, py + 1, pw - 4, words(TaskManagerTexts.TASK, TaskManagerTexts.STATUS),
+                        new int[] {0, pw - 52});
                 drawRows(g, font, tasks(), px + 2, py + 10, pw - 4, listH - 11, false);
                 final int by = py + listH + 3;
                 final int bw = (pw - 8) / 3;
-                button(g, font, px + pw - 3 * bw - 8, by, bw, 13, "End Task", canEnd());
-                button(g, font, px + pw - 2 * bw - 4, by, bw, 13, "Switch To", canEnd());
-                button(g, font, px + pw - bw, by, bw, 13, "New Task", true);
+                button(g, font, px + pw - 3 * bw - 8, by, bw, 13, TaskManagerTexts.END_TASK, canEnd());
+                button(g, font, px + pw - 2 * bw - 4, by, bw, 13, TaskManagerTexts.SWITCH_TO, canEnd());
+                button(g, font, px + pw - bw, by, bw, 13, TaskManagerTexts.NEW_TASK, true);
             }
             case 1 -> {
                 final int listH = ph - 17;
                 skin.field(g, px, py, pw, listH, false);
                 columns(g, font, px + 2, py + 1, pw - 4,
-                        new String[] {"Image Name", "Kind", "CPU", "Mem Usage"},
+                        words(TaskManagerTexts.IMAGE_NAME, TaskManagerTexts.KIND, TaskManagerTexts.CPU,
+                                TaskManagerTexts.MEM_USAGE),
                         new int[] {0, pw - 118, pw - 74, pw - 48});
                 drawRows(g, font, processes(), px + 2, py + 10, pw - 4, listH - 11, true);
-                button(g, font, px + pw - 60, py + listH + 3, 60, 13, "End Process", canEnd());
+                button(g, font, px + pw - 60, py + listH + 3, 60, 13, TaskManagerTexts.END_PROCESS, canEnd());
             }
             case 2 -> renderPerformance(g, font, px, py, pw, ph);
             default -> renderNetworking(g, font, px, py, pw, ph);
@@ -392,48 +520,126 @@ public final class TaskManagerApp implements IDesktopApp {
         final int sy = y + height - STATUS_H;
         g.fill(x, sy, x + width, sy + 1, skin.edge());
         final int third = width / 3;
-        Texts.small(g, font, "Processes: " + processes().size(), x + 4, sy + 2, skin.text());
-        Texts.small(g, font, "CPU Usage: " + load.percent() + "%", x + third + 4, sy + 2, skin.text());
-        Texts.small(g, font, "Commit: " + usedMb() + "M / " + totalMb() + "M",
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.PROCESS_COUNT.with(processes().size())), x + 4, sy + 2,
+                skin.text());
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_USAGE_IS.with(load.percent())), x + third + 4,
+                sy + 2, skin.text());
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.COMMIT.with(usedMb(), totalMb())),
                 x + 2 * third + 4, sy + 2, skin.text());
     }
 
-    /** The XP performance page: the two meters on the left, their histories on the right, facts underneath. */
+    /**
+     * The XP performance page: the meters on the left, their histories on the right, facts underneath; a machine with
+     * graphics gets a third row, its video memory, and a third box of facts about it.
+     */
     private void renderPerformance(final GuiGraphics g, final Font font, final int x, final int y,
                                    final int w, final int h) {
+        final SettingsSnapshotPayload.Gpu gpu = gpu();
+        final int rows = gpu.present() ? 3 : 2;
         final int meterW = 68;
-        final int graphH = (h - 34) / 2;
-        gauge(g, font, x + 2, y + 8, meterW, graphH - 10, load.percent() + " %");
-        Texts.small(g, font, "CPU Usage", x + 2, y, skin.dim());
-        gauge(g, font, x + 2, y + graphH + 16, meterW, graphH - 10, heldMb() + " MB");
-        Texts.small(g, font, "Memory Usage", x + 2, y + graphH + 8, skin.dim());
+        final int pitch = (h - FACTS_H - 4) / rows;
+        final int graphH = pitch - 8;
         final int gx = x + meterW + 8;
         final int gw = w - meterW - 10;
-        Texts.small(g, font, "CPU Usage History", gx, y, skin.dim());
-        history(g, gx, y + 8, gw, graphH - 10, cpuHistory, 100);
-        Texts.small(g, font, "Memory Usage History", gx, y + graphH + 8, skin.dim());
-        history(g, gx, y + graphH + 16, gw, graphH - 10, memHistory, totalMb());
-        final int fy = y + 2 * graphH + 12;
-        final int half = w / 2;
-        facts(g, font, x + 2, fy, half - 4, new String[][] {
-            {"Processes", String.valueOf(processes().size())},
-            {"Programs", String.valueOf(tasks().size())},
-            {"Services", String.valueOf(services().size())}});
-        facts(g, font, x + half + 2, fy, half - 4, new String[][] {
-            {"In use", RamLedger.heldLabel(heldBytes())},
-            {"Free MB", JsTechTheme.fmt(Math.max(0, totalMb() - usedMb()))},
-            {"Processor", clock()}});
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_USAGE), x + 2, y, skin.dim());
+        gauge(g, font, x + 2, y + 8, meterW, graphH - 2,
+                GameText.resolve(TaskManagerTexts.PERCENT.with(load.percent())), load.percent() / 100.0);
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_HISTORY), gx, y, skin.dim());
+        history(g, gx, y + 8, gw, graphH - 2, cpuHistory, 100);
+        final int my = y + pitch;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_USAGE), x + 2, my, skin.dim());
+        gauge(g, font, x + 2, my + 8, meterW, graphH - 2, GameText.resolve(TaskManagerTexts.MEGABYTES.with(heldMb())),
+                (double) heldMb() / totalMb());
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_HISTORY), gx, my, skin.dim());
+        history(g, gx, my + 8, gw, graphH - 2, memHistory, totalMb());
+        if (gpu.present()) {
+            final int vy = y + 2 * pitch;
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.VIDEO_MEMORY), x + 2, vy, skin.dim());
+            gauge(g, font, x + 2, vy + 8, meterW, graphH - 2, VramLedger.label(gpu.usedKb()),
+                    (double) gpu.usedKb() / Math.max(1L, gpu.totalKb()));
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.VIDEO_MEMORY_HISTORY), gx, vy, skin.dim());
+            history(g, gx, vy + 8, gw, graphH - 2, vramHistory, vramTotalMb());
+        }
+        final int fy = y + rows * pitch;
+        final int box = w / rows;
+        facts(g, font, x + 2, fy, box - 4, new String[][] {
+            {GameText.resolve(TaskManagerTexts.PROCESSES), String.valueOf(processes().size())},
+            {GameText.resolve(TaskManagerTexts.PROGRAMS), String.valueOf(tasks().size())},
+            {GameText.resolve(TaskManagerTexts.SERVICES), String.valueOf(services().size())}});
+        facts(g, font, x + box + 2, fy, box - 4, new String[][] {
+            {GameText.resolve(TaskManagerTexts.IN_USE), RamLedger.heldLabel(heldBytes())},
+            {GameText.resolve(TaskManagerTexts.FREE_MB), JsTechTheme.fmt(Math.max(0, totalMb() - usedMb()))},
+            {GameText.resolve(TaskManagerTexts.PROCESSOR), clock()}});
+        if (gpu.present()) {
+            facts(g, font, x + 2 * box + 2, fy, box - 4, new String[][] {
+                {GameText.resolve(TaskManagerTexts.VIDEO_TOTAL), VramLedger.label(gpu.totalKb())},
+                {GameText.resolve(TaskManagerTexts.VIDEO_MONITORS), VramLedger.label(gpu.monitorsKb())},
+                {GameText.resolve(TaskManagerTexts.VIDEO_FREE),
+                    VramLedger.label(Math.max(0L, gpu.totalKb() - gpu.usedKb()))}});
+        }
+    }
+
+    /**
+     * Frames 11's GPU page: the card, how busy it is and how full its memory, its figures, and what holds its memory,
+     * each monitor and graphics window with its share.
+     */
+    private void renderGpu(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h) {
+        final SettingsSnapshotPayload.Gpu gpu = gpu();
+        if (!gpu.present()) {
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.NO_GPU), x, y + 2, skin.dim());
+            return;
+        }
+        Draw.text(g, font, GameText.resolve(TaskManagerTexts.GPU), x, y, skin.text(), skin.windowBg());
+        final String card = Texts.clip(font, GameText.resolve(gpu.card()), w - 30);
+        Texts.small(g, font, card, x + w - Texts.smallWidth(font, card), y + 1, skin.dim());
+        final int graphH = 22;
+        int row = y + 11;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.GPU_3D), x, row, skin.dim());
+        history(g, x, row + 8, w, graphH, gpuHistory, 100);
+        row += graphH + 10;
+        Texts.small(g, font, GameText.resolve(gpu.shared() ? TaskManagerTexts.SHARED_MEMORY_USAGE
+                : TaskManagerTexts.DEDICATED_MEMORY_USAGE), x, row, skin.dim());
+        history(g, x, row + 8, w, graphH, vramHistory, vramTotalMb());
+        row += graphH + 11;
+        final String memory = VramLedger.label(gpu.usedKb()) + "/" + VramLedger.label(gpu.totalKb());
+        final String cores = GameText.resolve(TaskManagerTexts.CORES_AT.with(gpu.cores(), mhzLabel(gpu.mhz())));
+        final String slot = gpu.slot().isEmpty() ? GameText.resolve(TaskManagerTexts.ON_THE_PROCESSOR) : gpu.slot();
+        // The card's figures, each on a line of its own across the page, so a long slot name never meets its label.
+        facts(g, font, x, row, w, new String[][] {
+            {GameText.resolve(TaskManagerTexts.UTILIZATION), GameText.resolve(TaskManagerTexts.PERCENT
+                    .with(gpu.load()))},
+            {GameText.resolve(gpu.shared() ? TaskManagerTexts.SHARED_MEMORY : TaskManagerTexts.DEDICATED_MEMORY),
+                memory},
+            {GameText.resolve(TaskManagerTexts.CORES), cores},
+            {GameText.resolve(TaskManagerTexts.SLOT), Texts.clip(font, slot, w - 50)}});
+        row += 4 * 9 + 8;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.USED_BY), x, row, skin.dim());
+        row += 9;
+        for (final SettingsSnapshotPayload.VramRow use : gpu.usedBy()) {
+            if (row + 8 > y + h) {
+                break;
+            }
+            final String size = VramLedger.label(use.kb());
+            Texts.small(g, font, Texts.clip(font, GameText.resolve(use.name()), w - 40), x + 2, row, skin.text());
+            Texts.small(g, font, size, x + w - Texts.smallWidth(font, size), row, skin.dim());
+            row += 9;
+        }
+    }
+
+    /* A clock as a person reads it: megahertz below a gigahertz, gigahertz with a decimal above. */
+    private static String mhzLabel(final int mhz) {
+        return mhz >= 1000 ? String.format(Locale.ROOT, "%.1f GHz", mhz / 1000.0) : mhz + " MHz";
     }
 
     /** The XP networking page: the link, and what the network is doing through it. */
     private void renderNetworking(final GuiGraphics g, final Font font, final int x, final int y,
                                   final int w, final int h) {
-        final boolean up = DesktopScreen.hostNetworked(host);
-        Texts.small(g, font, "Network", x + 2, y + 2, skin.dim());
-        g.drawString(font, up ? "Connected" : "Not connected", x + 2, y + 11,
-                up ? 0xFF2EA043 : skin.dim(), false);
+        final boolean up = DesktopState.hostNetworked(host);
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.NETWORK), x + 2, y + 2, skin.dim());
+        Draw.text(g, font, GameText.resolve(up ? TaskManagerTexts.CONNECTED : TaskManagerTexts.NOT_CONNECTED), x + 2,
+                y + 11, up ? PALETTE.get().connected() : skin.dim());
         history(g, x + 2, y + 24, w - 4, h - 30, cpuHistory, 100);
-        Texts.small(g, font, "Link activity over the last minute", x + 2, y + h - 8, skin.dim());
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.LINK_ACTIVITY), x + 2, y + h - 8, skin.dim());
     }
 
     // Frames 11: the rail and the wide table
@@ -448,10 +654,10 @@ public final class TaskManagerApp implements IDesktopApp {
             case 1 -> renderPerformance(g, font, px, y + 4, pw, height - 8);
             case 3 -> renderDisks(g, font, px, y + 4, pw, height - 8);
             case 4 -> renderNetworking(g, font, px, y + 4, pw, height - 8);
+            case 5 -> renderGpu(g, font, px, y + 4, pw, height - 8);
             default -> {
-                button(g, font, x + width - 48, y + 3, 44, 12, "End task", canEnd());
-                columns(g, font, px, y + 18, pw,
-                        new String[] {"Name", "Kind", "CPU", "Memory"},
+                button(g, font, x + width - 48, y + 3, 44, 12, TaskManagerTexts.END_TASK_LOWER, canEnd());
+                columns(g, font, px, y + 18, pw, listColumns(TaskManagerTexts.NAME),
                         new int[] {0, pw - 104, pw - 62, pw - 40});
                 drawRows(g, font, rows(), px, y + 27, pw, height - 31, true);
             }
@@ -489,13 +695,23 @@ public final class TaskManagerApp implements IDesktopApp {
         }
         final int cardH = 22;
         if (page == 0) {
-            card(g, font, px, y + 4, pw / 2 - 2, cardH, "Memory", heldMb() + " / " + totalMb() + " MB");
-            card(g, font, px + pw / 2 + 2, y + 4, pw / 2 - 2, cardH, "Processor",
-                    load.percent() + "%  " + clock());
+            // A machine with graphics shows a third card: its video memory, as the Plasma monitor's GPU tile does.
+            final SettingsSnapshotPayload.Gpu gpu = gpu();
+            final int cards = gpu.present() ? 3 : 2;
+            final int cw = pw / cards;
+            card(g, font, px, y + 4, cw - 2, cardH, GameText.resolve(TaskManagerTexts.MEMORY),
+                    GameText.resolve(TaskManagerTexts.MEMORY_OF.with(heldMb(), totalMb())));
+            card(g, font, px + cw + 2, y + 4, cw - 2, cardH, GameText.resolve(TaskManagerTexts.PROCESSOR),
+                    GameText.resolve(TaskManagerTexts.LOAD_AND_CLOCK.with(load.percent(), clock())));
+            if (gpu.present()) {
+                card(g, font, px + 2 * cw + 4, y + 4, cw - 4, cardH, GameText.resolve(TaskManagerTexts.GPU),
+                        GameText.resolve(TaskManagerTexts.VIDEO_OF.with(VramLedger.label(gpu.usedKb()),
+                                VramLedger.label(gpu.totalKb()))));
+            }
         }
         final int ty = page == 0 ? y + cardH + 8 : y + 4;
-        button(g, font, x + width - 46, ty - 1, 42, 11, "End", canEnd());
-        columns(g, font, px, ty + 12, pw, new String[] {"Name", "Kind", "CPU", "Memory"},
+        button(g, font, x + width - 46, ty - 1, 42, 11, TaskManagerTexts.END, canEnd());
+        columns(g, font, px, ty + 12, pw, listColumns(TaskManagerTexts.NAME),
                 new int[] {0, pw - 104, pw - 62, pw - 40});
         drawRows(g, font, rows(), px, ty + 21, pw, y + height - (ty + 25), true);
     }
@@ -520,13 +736,13 @@ public final class TaskManagerApp implements IDesktopApp {
             Texts.small(g, font, names[i], sx + 5, y + 4, i == page ? skin.text() : skin.dim());
             sx += w;
         }
-        button(g, font, x + width - 42, y + 2, 40, 11, "End", canEnd());
+        button(g, font, x + width - 42, y + 2, 40, 11, TaskManagerTexts.END, canEnd());
         final int py = y + barH + 2;
         switch (page) {
             case 1 -> renderPerformance(g, font, x + 4, py + 2, width - 8, height - barH - 8);
             case 2 -> renderDisks(g, font, x + 4, py + 2, width - 8, height - barH - 8);
             default -> {
-                columns(g, font, x + 4, py, width - 8, new String[] {"Process Name", "Kind", "CPU", "Memory"},
+                columns(g, font, x + 4, py, width - 8, listColumns(TaskManagerTexts.PROCESS_NAME),
                         new int[] {0, width - 112, width - 70, width - 48});
                 drawRows(g, font, rows(), x + 4, py + 9, width - 8, y + height - (py + 12), true);
             }
@@ -543,7 +759,8 @@ public final class TaskManagerApp implements IDesktopApp {
             if (row + 18 > y + h) {
                 break;
             }
-            final String tag = disk.label() + (disk.system() ? " (system)" : "");
+            final String tag = GameText.resolve(disk.system() ? TaskManagerTexts.SYSTEM_DISK.with(disk.label())
+                    : disk.label());
             Texts.small(g, font, Texts.clip(font, tag, w - 70), x, row, skin.text());
             final String use = DiskSpec.sizeLabel(disk.usedMb())
                     + " / " + DiskSpec.sizeLabel(disk.capMb());
@@ -562,7 +779,7 @@ public final class TaskManagerApp implements IDesktopApp {
         g.fill(x, y, x + w, y + h, skin.fieldBg());
         Draw.outline(g, x, y, w, h, skin.edge());
         Texts.small(g, font, name, x + 4, y + 3, skin.dim());
-        g.drawString(font, Texts.clip(font, value, w - 8), x + 4, y + 11, skin.text(), false);
+        Draw.text(g, font, Texts.clip(font, value, w - 8), x + 4, y + 11, skin.text());
     }
 
     /** A boxed pair-list, as the XP performance page groups its totals. */
@@ -577,21 +794,25 @@ public final class TaskManagerApp implements IDesktopApp {
         }
     }
 
-    /** One of the boxed meters: a dark face with the figure over a filled foot, as those managers drew them. */
+    /**
+     * One of the boxed meters: a dark face with the figure over a foot filled to {@code fraction}, as those managers
+     * drew them.
+     */
     private void gauge(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                       final int h, final String figure) {
-        g.fill(x, y, x + w, y + h, 0xFF001400);
+                       final int h, final String figure, final double fraction) {
+        final Colours c = PALETTE.get();
+        g.fill(x, y, x + w, y + h, c.meterFace());
         Draw.outline(g, x, y, w, h, skin.edge());
         grid(g, x, y, w, h);
-        final int fill = (int) ((h - 2) * Math.min(1.0, load.percent() / 100.0));
-        g.fill(x + 1, y + h - 1 - fill, x + w - 1, y + h - 1, 0xFF1F8B1F);
-        Texts.small(g, font, figure, x + (w - Texts.smallWidth(font, figure)) / 2, y + h / 2 - 4, 0xFF39D639);
+        final int fill = (int) ((h - 2) * Math.max(0.0, Math.min(1.0, fraction)));
+        g.fill(x + 1, y + h - 1 - fill, x + w - 1, y + h - 1, c.meterFill());
+        Texts.small(g, font, figure, x + (w - Texts.smallWidth(font, figure)) / 2, y + h / 2 - 4, c.trace());
     }
 
     /** A history graph: the same green grid and line those managers all drew, over the last minute. */
     private void history(final GuiGraphics g, final int x, final int y, final int w, final int h,
                          final int[] series, final int max) {
-        g.fill(x, y, x + w, y + h, 0xFF001400);
+        g.fill(x, y, x + w, y + h, PALETTE.get().meterFace());
         Draw.outline(g, x, y, w, h, skin.edge());
         grid(g, x, y, w, h);
         if (samples < 2) {
@@ -615,11 +836,12 @@ public final class TaskManagerApp implements IDesktopApp {
     }
 
     private static void grid(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        final int grid = PALETTE.get().grid();
         for (int gy = y + h / 4; gy < y + h; gy += Math.max(4, h / 4)) {
-            g.fill(x + 1, gy, x + w - 1, gy + 1, 0xFF0F3D0F);
+            g.fill(x + 1, gy, x + w - 1, gy + 1, grid);
         }
         for (int gx = x + w / 6; gx < x + w; gx += Math.max(6, w / 6)) {
-            g.fill(gx, y + 1, gx + 1, y + h - 1, 0xFF0F3D0F);
+            g.fill(gx, y + 1, gx + 1, y + h - 1, grid);
         }
     }
 
@@ -631,7 +853,7 @@ public final class TaskManagerApp implements IDesktopApp {
         for (int i = 0; i <= steps; i++) {
             final int px = x1 + dx * i / steps;
             final int py = y1 + dy * i / steps;
-            g.fill(px, py, px + 1, py + 1, 0xFF39D639);
+            g.fill(px, py, px + 1, py + 1, PALETTE.get().trace());
         }
     }
 
@@ -646,6 +868,11 @@ public final class TaskManagerApp implements IDesktopApp {
             tx += tw + 1;
         }
         g.fill(x, y + 11, x + w, y + 12, skin.edge());
+    }
+
+    /* The columns of the detailed lists: the name, as each desktop heads it, then kind, load and memory. */
+    private static String[] listColumns(final TextKey name) {
+        return words(name, TaskManagerTexts.KIND, TaskManagerTexts.CPU, TaskManagerTexts.MEMORY);
     }
 
     /** A column header row, each name at its own offset from the left of the list. */
@@ -674,8 +901,8 @@ public final class TaskManagerApp implements IDesktopApp {
             } else if (lastMouseY >= ry && lastMouseY < ry + ROW_H && lastMouseX >= x && lastMouseX < x + w) {
                 g.fill(x, ry, x + w, ry + ROW_H, skin.listHover());
             }
-            final int text = index == selected ? 0xFFFFFFFF : skin.text();
-            final int dim = index == selected ? 0xFFFFFFFF : skin.dim();
+            final int text = index == selected ? PALETTE.get().selectedInk() : skin.text();
+            final int dim = index == selected ? PALETTE.get().selectedInk() : skin.dim();
             if (detailed) {
                 // What it is holding, not what it was promised: the number that moves while a program runs.
                 final String mb = RamLedger.heldLabel(use.heldBytes());
@@ -683,24 +910,25 @@ public final class TaskManagerApp implements IDesktopApp {
                 final String cpu = cpuOf(use) + "%";
                 final int cpuW = Texts.smallWidth(font, cpu);
                 final String kind = kindLabel(use.kind());
-                Texts.small(g, font, Texts.clip(font, use.label(), w - mbW - cpuW - 62), x + 1, ry + 2, text);
+                Texts.small(g, font, Texts.clip(font, shownName(use), w - mbW - cpuW - 62), x + 1, ry + 2, text);
                 Texts.small(g, font, kind, x + w - mbW - cpuW - 52, ry + 2, dim);
                 Texts.small(g, font, cpu, x + w - mbW - cpuW - 6, ry + 2, dim);
                 Texts.small(g, font, mb, x + w - mbW - 1, ry + 2, dim);
             } else {
                 // The task list has only the two columns its own manager had, at the header's own offsets.
-                Texts.small(g, font, Texts.clip(font, use.label(), w - 54), x + 1, ry + 2, text);
-                Texts.small(g, font, "Running", x + w - 48, ry + 2, dim);
+                Texts.small(g, font, Texts.clip(font, shownName(use), w - 54), x + 1, ry + 2, text);
+                Texts.small(g, font, GameText.resolve(TaskManagerTexts.RUNNING), x + w - 48, ry + 2, dim);
             }
         }
     }
 
     /** A button in the skin's own shape, greyed when the action behind it cannot run. */
     private void button(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                        final int h, final String label, final boolean enabled) {
+                        final int h, final TextKey key, final boolean enabled) {
         final boolean hot = enabled && lastMouseX >= x && lastMouseX < x + w
                 && lastMouseY >= y && lastMouseY < y + h;
         skin.button(g, font, x, y, w, h, "", hot, false, false);
+        final String label = GameText.resolve(key);
         final int tw = Texts.smallWidth(font, label);
         Texts.small(g, font, label, x + (w - tw) / 2, y + (h - 7) / 2, enabled ? skin.text() : skin.dim());
     }
@@ -711,15 +939,28 @@ public final class TaskManagerApp implements IDesktopApp {
         return RamLedger.Kind.find(use.kind());
     }
 
+    /**
+     * What a row reads as: a window by the name the desktop gives its program, the graphics' share by what it is,
+     * anything else as the ledger has it.
+     */
+    private static String shownName(final RamUse use) {
+        final RamLedger.Kind kind = kindOf(use);
+        if (kind == RamLedger.Kind.WINDOW) {
+            return ActiveDesktop.windowName(use.label());
+        }
+        return kind == RamLedger.Kind.GRAPHICS ? GameText.resolve(TaskManagerTexts.SHARED_GRAPHICS) : use.label();
+    }
+
     private static String kindLabel(final String kind) {
         final RamLedger.Kind known = RamLedger.Kind.find(kind);
-        return known == null ? kind.toLowerCase(Locale.ROOT) : switch (known) {
-            case SYSTEM -> "system";
-            case DESKTOP -> "desktop";
-            case SERVICE -> "service";
-            case WINDOW -> "program";
-            case PROCESS -> "script";
-        };
+        return known == null ? kind.toLowerCase(Locale.ROOT) : GameText.resolve(switch (known) {
+            case SYSTEM -> TaskManagerTexts.KIND_SYSTEM;
+            case DESKTOP -> TaskManagerTexts.KIND_DESKTOP;
+            case SERVICE -> TaskManagerTexts.KIND_SERVICE;
+            case WINDOW -> TaskManagerTexts.KIND_PROGRAM;
+            case PROCESS -> TaskManagerTexts.KIND_SCRIPT;
+            case GRAPHICS -> TaskManagerTexts.KIND_GRAPHICS;
+        });
     }
 
     private String clock() {
@@ -731,13 +972,14 @@ public final class TaskManagerApp implements IDesktopApp {
     }
 
     private static int usageColor(final double frac) {
+        final Colours c = PALETTE.get();
         if (frac >= 0.9) {
-            return 0xFFD1495B;
+            return c.high();
         }
         if (frac >= 0.7) {
-            return 0xFFE0A020;
+            return c.busy();
         }
-        return 0xFF2EA043;
+        return c.calm();
     }
 
     // input
@@ -822,33 +1064,40 @@ public final class TaskManagerApp implements IDesktopApp {
         return Minecraft.getInstance().font;
     }
 
-    /** Where the End button sits on the page in front, or null when this page has none. */
+    /** Whether a click at the point lands on the End button of the page in front. */
     private boolean endButtonHit(final double mx, final double my, final int x, final int y,
                                  final int w, final int h) {
+        final int[] end = endButtonRect(x, y, w, h);
+        return end != null && mx >= end[0] && mx < end[0] + end[2] && my >= end[1] && my < end[1] + end[3];
+    }
+
+    /*
+     * Where the End button of the page in front answers a click, as x, y, width and height, or null when the page
+     * has none: the one place both the click and a test read it from, so they never disagree.
+     */
+    @Nullable
+    private int[] endButtonRect(final int x, final int y, final int w, final int h) {
         return switch (form) {
             case CLOSE_BOX -> {
                 final int btnH = 13;
                 final int bw = (w - 12 - 8) / 3;
-                final int by = y + h - 6 - btnH;
-                yield my >= by && my < by + btnH && mx >= x + 6 && mx < x + 6 + bw;
+                yield new int[] {x + 6, y + h - 6 - btnH, bw, btnH};
             }
             case LUNA -> {
                 if (page > 1) {
-                    yield false;
+                    yield null;
                 }
                 final int py = y + MENU_H + 14;
                 final int ph = y + h - STATUS_H - py - 4;
                 final int by = py + ph - 17 + 3;
-                if (my < by || my >= by + 13) {
-                    yield false;
-                }
                 final int pw = w - 10;
-                yield page == 1 ? mx >= x + 5 + pw - 60
-                        : mx >= x + 5 + pw - 3 * ((pw - 8) / 3) - 8 && mx < x + 5 + pw - 2 * ((pw - 8) / 3) - 4;
+                final int bw = (pw - 8) / 3;
+                yield page == 1 ? new int[] {x + 5 + pw - 60, by, 60, 13}
+                        : new int[] {x + 5 + pw - 3 * bw - 8, by, bw + 4, 13};
             }
-            case MODERN -> page == 0 && my >= y + 3 && my < y + 15 && mx >= x + w - 48;
-            case PLASMA -> my >= y + (page == 0 ? 29 : 3) && my < y + (page == 0 ? 40 : 14) && mx >= x + w - 46;
-            case GNOME -> page == 0 && my >= y + 2 && my < y + 13 && mx >= x + w - 42;
+            case MODERN -> page == 0 ? new int[] {x + w - 48, y + 3, 48, 12} : null;
+            case PLASMA -> new int[] {x + w - 46, y + (page == 0 ? 29 : 3), 46, 11};
+            case GNOME -> page == 0 ? new int[] {x + w - 42, y + 2, 42, 11} : null;
         };
     }
 
@@ -871,5 +1120,14 @@ public final class TaskManagerApp implements IDesktopApp {
     public boolean mouseScrolled(final double delta) {
         scroll = Math.max(0, scroll - (int) Math.signum(delta));
         return true;
+    }
+
+    /**
+     * The Task Manager's colours: a link that is up, the meters' dark face, their fill, the green of their figures
+     * and of the graphs' line, the graphs' grid, the words on a chosen row, and how full something is (nearly,
+     * fairly, or not).
+     */
+    private record Colours(int connected, int meterFace, int meterFill, int trace, int grid, int selectedInk,
+                           int high, int busy, int calm) {
     }
 }

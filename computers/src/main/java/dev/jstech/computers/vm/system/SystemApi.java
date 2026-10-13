@@ -30,6 +30,7 @@ public final class SystemApi {
     private static final String NETWORK = "System.Network";
     private static final String OPERATIONS = "System.Operations";
     private static final String UI = "System.UI";
+    private static final String SOUND = "System.Sound";
 
     private static final String VOID = "void";
     private static final String INT = "int";
@@ -42,13 +43,26 @@ public final class SystemApi {
     private static final String STRINGS = "List<string>";
     private static final String ROWS = "List<Map<string, object>>";
     private static final String WIDGET = "Widget";
+    /** A file a program opened, named as C names it. */
+    private static final String OPEN_FILE = "FILE";
+
+    /* What Scan can read into, which has to match what the reader of a typed or stored line can produce. */
+    private static final List<String> SCAN_KINDS = List.of(INT, LONG, DOUBLE, STRING, "char");
+
+    /* Writing a file and closing one it was opened to write cost the same, a block at a time. */
+    private static final CallCost FILE_WRITE = CallCost.perBlock(SigmaCosts.WRITE, SigmaCosts.WRITE_PER_BLOCK);
 
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
-            processMessage(), thread(), time(), random(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
+            processMessage(), thread(), time(), random(), openFile(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
-            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox());
+            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), textArea(),
+            ranged("NumberBox"), ranged("Slider"), choices("RadioGroup"), choices("ComboBox"), tabView(),
+            groupBox(), scrollView(), table(), treeView(), menuBar(), contextMenu(), statusBar(), image(), chart(),
+            logView(), fileDialog("OpenFileDialog"), fileDialog("SaveFileDialog"), itemSlot(), itemPicker(),
+            operationView(), componentAction(), genericComponent(), sound(), speaker(), bus(), busItem(), redstone(),
+            craftInterface(), craftRouter());
 
     private static final Map<String, TypeSpec> BY_TYPE = new HashMap<>();
     /** Every way of writing a call, under its owner and name, so a lookup does not walk the whole system. */
@@ -118,6 +132,9 @@ public final class SystemApi {
         convert.pure(DOUBLE, "ToDouble", STRING);
         convert.pure(BOOL, "ToBool", STRING);
         convert.pure(STRING, "ToString", OBJECT);
+        // The second version's: a whole number in any base from 2 to 36, and text read with a value to fall back on.
+        convert.pure(STRING, "ToString", INT, INT);
+        convert.pure(INT, "ToInt", STRING, INT);
         /*
          * The Try forms answer whether the text was a value and hand the value out sideways, for a program that would
          * rather ask again than stop on a line somebody mistyped.
@@ -132,6 +149,7 @@ public final class SystemApi {
     private static TypeSpec console() {
         final Members console = new Members("Console");
         console.onType(VOID, "Print", MemberKind.PROCESS, CallCost.FREE, STRING);
+        console.onType(VOID, "Print", MemberKind.PROCESS, CallCost.FREE, "char");
         console.onType(VOID, "PrintLine", MemberKind.PROCESS, CallCost.FREE, STRING);
         console.onType(VOID, "Clear", MemberKind.PROCESS, CallCost.FREE);
         /*
@@ -140,6 +158,15 @@ public final class SystemApi {
          */
         console.onType(STRING, "ReadLine", MemberKind.PROCESS, CallCost.FREE);
         console.onType(BOOL, "HasLine", MemberKind.PROCESS, CallCost.FREE);
+        /*
+         * Less than a line, as the second version reads it: the next character typed, the line break at its end
+         * included, as C's getchar; and the next value typed, of the kind of the variable it goes into, as C's scanf,
+         * answering 1 when there was one and 0 when what was typed was not one. What is left of the line waits.
+         */
+        console.onType(INT, "Read", MemberKind.PROCESS, CallCost.FREE);
+        for (final String kind : SCAN_KINDS) {
+            console.onType(INT, "Scan", MemberKind.PROCESS, CallCost.FREE, "out " + kind);
+        }
         /*
          * The same wait, with the line read as a value: a program asking for a number gets one, and a line that is
          * not one stops the program with the text it could not read, as Convert would.
@@ -262,16 +289,43 @@ public final class SystemApi {
     private static TypeSpec file() {
         final Members file = new Members("File");
         final CallCost read = CallCost.perBlock(SigmaCosts.READ, SigmaCosts.READ_PER_BLOCK);
-        final CallCost write = CallCost.perBlock(SigmaCosts.WRITE, SigmaCosts.WRITE_PER_BLOCK);
         file.onType(BOOL, "Exists", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
         file.onType(STRING, "Read", MemberKind.WORLD, read, STRING);
         file.onType(BOOL, "TryRead", MemberKind.WORLD, read, STRING, "out " + STRING);
-        file.onType(BOOL, "Write", MemberKind.WORLD, write, STRING, STRING);
-        file.onType(BOOL, "Append", MemberKind.WORLD, write, STRING, STRING);
+        file.onType(BOOL, "Write", MemberKind.WORLD, FILE_WRITE, STRING, STRING);
+        file.onType(BOOL, "Append", MemberKind.WORLD, FILE_WRITE, STRING, STRING);
         file.onType(BOOL, "Delete", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
         file.onType(BOOL, "MkDir", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
-        file.onType(STRINGS, "List", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        file.onType(STRINGS, "List", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ), STRING);
+        /*
+         * The second version's: a file opened to be worked on a piece at a time, as C's fopen opens one, which costs
+         * the read of what it holds; and a file moved or renamed, as C's rename does.
+         */
+        file.onType(OPEN_FILE, "Open", MemberKind.WORLD, read, STRING, STRING);
+        file.onType(BOOL, "Move", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
         return new TypeSpec(IO, "File", file.members);
+    }
+
+    /**
+     * A file a program opened, as C's FILE is: what it holds, kept with the program while it works on it a line, a
+     * value or a character at a time, and where it is up to in it, counted in characters. Working on it is the
+     * program's own and costs nothing; what was written reaches the disk when the file is closed, which costs the
+     * write, or when the program ends with it still open.
+     */
+    private static TypeSpec openFile() {
+        final Members open = new Members(OPEN_FILE);
+        open.onObject(VOID, "Close", MemberKind.WORLD, FILE_WRITE);
+        open.onObject(BOOL, "ReadLine", MemberKind.PROCESS, CallCost.FREE, "out " + STRING);
+        open.onObject(INT, "Read", MemberKind.PROCESS, CallCost.FREE);
+        for (final String kind : SCAN_KINDS) {
+            open.onObject(INT, "Scan", MemberKind.PROCESS, CallCost.FREE, "out " + kind);
+        }
+        open.onObject(VOID, "Write", MemberKind.PROCESS, CallCost.FREE, STRING);
+        open.onObject(VOID, "Write", MemberKind.PROCESS, CallCost.FREE, "char");
+        open.onObject(VOID, "Seek", MemberKind.PROCESS, CallCost.FREE, INT);
+        open.valueOnObject(INT, "Position", MemberKind.PROCESS, CallCost.FREE);
+        open.valueOnObject(BOOL, "AtEnd", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(IO, OPEN_FILE, open.members);
     }
 
     /*
@@ -503,6 +557,9 @@ public final class SystemApi {
          */
         operations.onType("AskResult", "Reprioritise", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING,
                 STRING);
+        // The item, the action as the network's language writes it after SET, and how many.
+        operations.onType("AskResult", "Update", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, STRING,
+                LONG);
         operations.onType("OperationInfo", "Get", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
         operations.onType("List<OperationInfo>", "List", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
         return new TypeSpec(OPERATIONS, "Operations", operations.members);
@@ -697,6 +754,380 @@ public final class SystemApi {
         return new TypeSpec(UI, "MessageBox", messageBox.members);
     }
 
+    /*
+     * The widgets the second version brought. A machine with only its terminal draws them in letters, but a picture,
+     * a chart, an item and a component that draws itself have no letters to be drawn in, and making one there stops
+     * the program saying so.
+     */
+
+    /** A box of several lines, which tells its handler at every change as a one-line box does. */
+    private static TypeSpec textArea() {
+        final Members area = new Members("TextArea");
+        area.made();
+        area.made(STRING);
+        area.drawnValue(STRING, "Text");
+        area.told("OnChange");
+        return new TypeSpec(UI, "TextArea", WIDGET, area.members);
+    }
+
+    /** A number box or a slider: a whole number between a least and a most, moved a step at a time. */
+    private static TypeSpec ranged(final String name) {
+        final Members ranged = new Members(name);
+        ranged.made();
+        ranged.made(INT, INT);
+        ranged.drawnValue(INT, "Value");
+        ranged.drawnValue(INT, "Least");
+        ranged.drawnValue(INT, "Most");
+        ranged.drawnValue(INT, "Step");
+        ranged.told("OnChange");
+        return new TypeSpec(UI, name, WIDGET, ranged.members);
+    }
+
+    /** A radio group or a combo box: choices added one by one, the picked one counted from one, none being zero. */
+    private static TypeSpec choices(final String name) {
+        final Members choices = new Members(name);
+        choices.made();
+        choices.drawn("Add", STRING);
+        choices.drawn("Clear");
+        choices.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        choices.drawnValue(INT, "Selected");
+        if ("RadioGroup".equals(name)) {
+            choices.drawnValue(BOOL, "Across");
+        }
+        choices.told("OnSelect");
+        return new TypeSpec(UI, name, WIDGET, choices.members);
+    }
+
+    /** Pages behind tabs, each a widget under the title of its tab; the first one added is the one showing. */
+    private static TypeSpec tabView() {
+        final Members tabs = new Members("TabView");
+        tabs.made();
+        tabs.drawn("Add", STRING, WIDGET);
+        tabs.drawn("Clear");
+        tabs.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        tabs.drawnValue(INT, "Selected");
+        tabs.told("OnSelect");
+        return new TypeSpec(UI, "TabView", WIDGET, tabs.members);
+    }
+
+    /** A frame with a caption round one widget. */
+    private static TypeSpec groupBox() {
+        final Members group = new Members("GroupBox");
+        group.made();
+        group.made(STRING);
+        group.drawnValue(STRING, "Text");
+        group.drawnValue(WIDGET, "Content");
+        return new TypeSpec(UI, "GroupBox", WIDGET, group.members);
+    }
+
+    /** A widget taller than the room it is given, scrolled by the player. */
+    private static TypeSpec scrollView() {
+        final Members scroll = new Members("ScrollView");
+        scroll.made();
+        scroll.drawnValue(WIDGET, "Content");
+        return new TypeSpec(UI, "ScrollView", WIDGET, scroll.members);
+    }
+
+    /** Rows under column headers; a row is given its cells one text each or as a list. */
+    private static TypeSpec table() {
+        final Members table = new Members("Table");
+        table.made();
+        table.drawn("AddColumn", STRING);
+        table.drawn("AddRow", STRINGS);
+        table.drawn("AddRow", STRING);
+        table.drawn("AddRow", STRING, STRING);
+        table.drawn("AddRow", STRING, STRING, STRING);
+        table.drawn("AddRow", STRING, STRING, STRING, STRING);
+        table.drawn("Clear");
+        table.onObject(STRING, "Cell", MemberKind.PROCESS, CallCost.FREE, INT, INT);
+        table.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        table.drawnValue(INT, "Selected");
+        table.told("OnSelect");
+        return new TypeSpec(UI, "Table", WIDGET, table.members);
+    }
+
+    /** Nodes under nodes; adding one hands back its number, which is what a node is hung from. */
+    private static TypeSpec treeView() {
+        final Members tree = new Members("TreeView");
+        tree.made();
+        tree.onObject(INT, "Add", MemberKind.PROCESS, CallCost.of(SigmaCosts.DRAW), STRING);
+        tree.onObject(INT, "Add", MemberKind.PROCESS, CallCost.of(SigmaCosts.DRAW), STRING, INT);
+        tree.drawn("Clear");
+        tree.onObject(STRING, "NodeText", MemberKind.PROCESS, CallCost.FREE, INT);
+        tree.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        tree.drawnValue(INT, "Selected");
+        tree.told("OnSelect");
+        return new TypeSpec(UI, "TreeView", WIDGET, tree.members);
+    }
+
+    /** The menus along the top of a window, each entry added under the menu it belongs to. */
+    private static TypeSpec menuBar() {
+        final Members bar = new Members("MenuBar");
+        bar.made();
+        bar.drawn("Add", STRING, STRING);
+        bar.drawn("Clear");
+        bar.valueOnObject(STRING, "Picked", MemberKind.PROCESS, CallCost.FREE);
+        bar.valueOnObject(STRING, "PickedMenu", MemberKind.PROCESS, CallCost.FREE);
+        bar.told("OnPick");
+        return new TypeSpec(UI, "MenuBar", WIDGET, bar.members);
+    }
+
+    /** The menu a widget opens when it is clicked with the other button, made for that widget. */
+    private static TypeSpec contextMenu() {
+        final Members menu = new Members("ContextMenu");
+        menu.made(WIDGET);
+        menu.drawn("Add", STRING);
+        menu.drawn("Clear");
+        menu.valueOnObject(STRING, "Picked", MemberKind.PROCESS, CallCost.FREE);
+        menu.told("OnPick");
+        return new TypeSpec(UI, "ContextMenu", WIDGET, menu.members);
+    }
+
+    /** The bar along the bottom of a window: a line, and a few sections at its right. */
+    private static TypeSpec statusBar() {
+        final Members bar = new Members("StatusBar");
+        bar.made();
+        bar.made(STRING);
+        bar.drawnValue(STRING, "Text");
+        bar.drawn("Add", STRING);
+        bar.drawn("Clear");
+        return new TypeSpec(UI, "StatusBar", WIDGET, bar.members);
+    }
+
+    /** A picture read from the machine's disk, a Pix image as the paint program saves them. */
+    private static TypeSpec image() {
+        final Members image = new Members("Image");
+        image.made();
+        image.made(STRING);
+        image.drawnValue(STRING, "Path");
+        return new TypeSpec(UI, "Image", WIDGET, image.members);
+    }
+
+    /** A line drawn through the numbers added to it, the newest at the right, between a least and a most. */
+    private static TypeSpec chart() {
+        final Members chart = new Members("Chart");
+        chart.made();
+        chart.made(INT, INT);
+        chart.drawnValue(STRING, "Text");
+        chart.drawnValue(INT, "Least");
+        chart.drawnValue(INT, "Most");
+        chart.drawn("Add", DOUBLE);
+        chart.drawn("Clear");
+        chart.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(UI, "Chart", WIDGET, chart.members);
+    }
+
+    /** Lines one under another, the newest at the bottom, a line saying WARN or ERROR picked out as such. */
+    private static TypeSpec logView() {
+        final Members log = new Members("LogView");
+        log.made();
+        log.drawn("Add", STRING);
+        log.drawn("Clear");
+        log.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(UI, "LogView", WIDGET, log.members);
+    }
+
+    /** The system's own dialog for picking a file to open, or a place and a name to save one under. */
+    private static TypeSpec fileDialog(final String name) {
+        final Members dialog = new Members(name);
+        dialog.made();
+        dialog.made(STRING);
+        dialog.drawnValue(STRING, "Title");
+        dialog.drawnValue(STRING, "Path");
+        dialog.drawnValue(STRING, "Filter");
+        if ("SaveFileDialog".equals(name)) {
+            dialog.drawnValue(STRING, "Name");
+        }
+        dialog.onObject(VOID, "Show", MemberKind.PROCESS, CallCost.of(SigmaCosts.WRITE), "Window");
+        dialog.told("OnChoose");
+        dialog.told("OnCancel");
+        return new TypeSpec(UI, name, WIDGET, dialog.members);
+    }
+
+    /** One slot holding an item, shown as the game shows it, by the item's id and how many. */
+    private static TypeSpec itemSlot() {
+        final Members slot = new Members("ItemSlot");
+        slot.made();
+        slot.made(STRING);
+        slot.made(STRING, INT);
+        slot.drawnValue(STRING, "Item");
+        slot.drawnValue(INT, "Amount");
+        slot.told("OnClick");
+        return new TypeSpec(UI, "ItemSlot", WIDGET, slot.members);
+    }
+
+    /** A grid of items with a search line above it, the player picking one. */
+    private static TypeSpec itemPicker() {
+        final Members picker = new Members("ItemPicker");
+        picker.made();
+        picker.drawn("Add", STRING);
+        picker.drawn("Clear");
+        picker.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        picker.drawnValue(INT, "Selected");
+        picker.valueOnObject(STRING, "Picked", MemberKind.PROCESS, CallCost.FREE);
+        picker.told("OnSelect");
+        return new TypeSpec(UI, "ItemPicker", WIDGET, picker.members);
+    }
+
+    /** One operation of the network as it stands: what was asked, how it stands, how far it has gone and where. */
+    private static TypeSpec operationView() {
+        final Members view = new Members("OperationView");
+        view.made();
+        view.drawn("Show", "OperationInfo");
+        view.drawnValue(STRING, "Text");
+        view.drawnValue(STRING, "State");
+        view.drawnValue(LONG, "Done");
+        view.drawnValue(LONG, "Total");
+        view.drawnValue(STRING, "Computer");
+        return new TypeSpec(UI, "OperationView", WIDGET, view.members);
+    }
+
+    private static TypeSpec componentAction() {
+        final Members action = new Members("ComponentAction");
+        action.recordValue(STRING, "Name");
+        action.recordValue(OBJECT, "Value");
+        return new TypeSpec(UI, "ComponentAction", action.members);
+    }
+
+    /**
+     * A component of a kind a mod adds, named by its id: it holds any value the program hands it, as a copy, and
+     * tells the program what a player did to it as a name and a value. Handing it a value costs a draw and more for
+     * every kilobyte of it, since every viewer of the window is sent it.
+     */
+    private static TypeSpec genericComponent() {
+        final Members component = new Members("GenericComponent");
+        component.made(STRING);
+        component.valueOnObject(STRING, "Kind", MemberKind.PROCESS, CallCost.FREE);
+        component.dataValue(OBJECT, "Data");
+        component.onObject(VOID, "OnAction", MemberKind.PROCESS, CallCost.FREE, "Action<ComponentAction>");
+        return new TypeSpec(UI, "GenericComponent", WIDGET, component.members);
+    }
+
+    /**
+     * The machine's sound. A beep comes out of the speaker inside the case and cuts the one before it off; a tune plays
+     * through the sound card in the card's own voice, a note of a chord to each of its voices, or from the case on a
+     * machine with none; a recording from the machine's disks comes out of its monitors and speakers as its system
+     * says. Everything takes voices of the hardware, and a sound that finds none free takes the oldest sound's.
+     *
+     * <p>A tune is written as notes one after another, each by its name or its pitch in hertz, or R for a rest, several
+     * played together joined by a plus, each lasting as many milliseconds as written after a colon:
+     * {@code "C4:250 E4 G4 C4+E4+G4:500"}. A tune that holds something that is no note stops the program, naming it.
+     * Playing makes the machine read the song from its disk, which is why it costs a read.
+     */
+    private static TypeSpec sound() {
+        final Members sound = new Members("Sound");
+        sound.onType(VOID, "Beep", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), INT, INT);
+        sound.onType(BOOL, "Tones", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        sound.onType(BOOL, "Play", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        sound.onType(VOID, "Stop", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(SOUND, "Sound", sound.members);
+    }
+
+    /**
+     * One of the speakers linked to the machine, found by the name its owner gave it, or null when none is called so. A
+     * recording played on it comes out of it alone, whatever the system chose to play through.
+     */
+    private static TypeSpec speaker() {
+        final Members speaker = new Members("Speaker");
+        speaker.onType("Speaker", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        speaker.recordValue(STRING, "Name");
+        speaker.onObject(BOOL, "Play", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        return new TypeSpec(SOUND, "Speaker", speaker.members);
+    }
+
+    /**
+     * One of the Redstone Interfaces linked to the machine, found by the name it answers to, or null when none does.
+     * {@code In()} makes it read and {@code Out(n)} makes it emit {@code n}, from 0 to 15, each marked on it with the
+     * program that set it and handing it back; {@code Level()} is the strength it reads while it reads and emits while
+     * it emits, and 0 while nothing powers it: {@code redstone("Gate").Out(15);}.
+     */
+    private static TypeSpec redstone() {
+        final Members redstone = new Members("Redstone");
+        redstone.onType("Redstone", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        redstone.recordValue(STRING, "Name");
+        redstone.onObject("Redstone", "In", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        redstone.onObject("Redstone", "Out", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), INT);
+        redstone.onObject(INT, "Level", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(MACHINE, "Redstone", redstone.members);
+    }
+
+    /**
+     * A bus of the machine's network, found by the name its owner gave it, or null when none is called so. Each setting
+     * is set as its window sets it, refused where the bus's era cannot be set to it, and marked on the bus with the
+     * program that set it; each hands the bus back, so they are written one after another:
+     * {@code bus("Ore in").Keep(16).Max(64);}. A filter of several items is one text, the items parted by commas.
+     */
+    private static TypeSpec bus() {
+        final Members bus = new Members("Bus");
+        bus.onType("Bus", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        bus.recordValue(STRING, "Name");
+        final CallCost set = CallCost.of(SigmaCosts.GLANCE_NETWORK);
+        for (final String toggle : List.of("On", "Off", "Continuous", "OnDemand", "ReadWrite", "ReadOnly",
+                "WriteOnly")) {
+            bus.onObject("Bus", toggle, MemberKind.WORLD, set);
+        }
+        for (final String listed : List.of("Only", "AllBut", "Tag")) {
+            bus.onObject("Bus", listed, MemberKind.WORLD, set, STRING);
+        }
+        for (final String count : List.of("Keep", "Max", "Priority")) {
+            bus.onObject("Bus", count, MemberKind.WORLD, set, INT);
+        }
+        bus.onObject("Bus", "Fuzzy", MemberKind.WORLD, set, BOOL);
+        bus.onObject("Bus", "WhenStock", MemberKind.WORLD, set, STRING, INT);
+        bus.onObject("Bus", "WhenStockTag", MemberKind.WORLD, set, STRING, INT);
+        bus.onObject("Bus", "Between", MemberKind.WORLD, set, INT, INT);
+        bus.onObject("Bus", "After", MemberKind.WORLD, set, "Bus");
+        bus.onObject("BusItem", "Item", MemberKind.WORLD, set, STRING);
+        return new TypeSpec(NETWORK, "Bus", bus.members);
+    }
+
+    /** One item a Transition bus lists, whose own keep and max are set as the bus's are. */
+    private static TypeSpec busItem() {
+        final Members item = new Members("BusItem");
+        item.recordValue(STRING, "Bus");
+        item.recordValue(STRING, "Item");
+        item.onObject("BusItem", "Keep", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), INT);
+        item.onObject("BusItem", "Max", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), INT);
+        return new TypeSpec(NETWORK, "BusItem", item.members);
+    }
+
+    /**
+     * A Crafting Interface of the machine's crafting network, found by the name its window gives it, or null when none
+     * is called so. Each setting is set as its window sets it, marked on it with the program that set it, and hands it
+     * back: {@code craftInterface("Kiln A").Exclusive(true).MaxJobs(4);}. {@code Route} sends one input of a pattern it
+     * holds through one router of its own cable, named by the pattern and the input; a null router routes that input by
+     * the routers' filters again.
+     */
+    private static TypeSpec craftInterface() {
+        final Members part = new Members("CraftInterface");
+        part.onType("CraftInterface", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        part.recordValue(STRING, "Name");
+        final CallCost set = CallCost.of(SigmaCosts.GLANCE_NETWORK);
+        part.onObject("CraftInterface", "Exclusive", MemberKind.WORLD, set, BOOL);
+        part.onObject("CraftInterface", "MaxJobs", MemberKind.WORLD, set, INT);
+        part.onObject("CraftInterface", "Pause", MemberKind.WORLD, set);
+        part.onObject("CraftInterface", "Resume", MemberKind.WORLD, set);
+        part.onObject("CraftInterface", "Route", MemberKind.WORLD, set, STRING, STRING, "CraftRouter");
+        return new TypeSpec(NETWORK, "CraftInterface", part.members);
+    }
+
+    /**
+     * A Crafting Input Router of the machine's crafting network, by its name, or null: its filter set as a bus's is,
+     * which decides the inputs it carries, an empty one taking anything: {@code craftRouter("North").Only("gravel");}.
+     */
+    private static TypeSpec craftRouter() {
+        final Members router = new Members("CraftRouter");
+        router.onType("CraftRouter", "Named", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        router.recordValue(STRING, "Name");
+        final CallCost set = CallCost.of(SigmaCosts.GLANCE_NETWORK);
+        for (final String listed : List.of("Only", "AllBut", "Tag")) {
+            router.onObject("CraftRouter", listed, MemberKind.WORLD, set, STRING);
+        }
+        router.onObject("CraftRouter", "Any", MemberKind.WORLD, set);
+        router.onObject("CraftRouter", "Fuzzy", MemberKind.WORLD, set, BOOL);
+        return new TypeSpec(NETWORK, "CraftRouter", router.members);
+    }
+
     /** Gathers the members of one type, in the order they are declared. */
     private static final class Members {
 
@@ -743,6 +1174,12 @@ public final class SystemApi {
         void drawnValue(final String type, final String name) {
             this.members.add(new PropertySpec(this.id(name), type, false, true, MemberKind.PROCESS, CallCost.FREE,
                     CallCost.of(SigmaCosts.DRAW)));
+        }
+
+        /** A value a generic component holds, written at a draw and more for every started block of it. */
+        void dataValue(final String type, final String name) {
+            this.members.add(new PropertySpec(this.id(name), type, false, true, MemberKind.PROCESS, CallCost.FREE,
+                    SigmaCosts.DRAW_DATA));
         }
 
         /** A call on a widget, which changes what it shows and so costs drawing it again. */

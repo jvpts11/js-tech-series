@@ -1,0 +1,311 @@
+{
+  "code_font": "jscore:fixed_5x8",
+  "cover": {
+    "kind": "book",
+    "label": false,
+    "parts": [
+      {
+        "colour": "#FFFFFFFF",
+        "height": 218,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "height": 1,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "height": 218,
+        "kind": "fill",
+        "width": 1
+      },
+      {
+        "colour": "#FFCFC8DA",
+        "height": 1,
+        "kind": "fill",
+        "width": 180,
+        "y": 217
+      },
+      {
+        "colour": "#FFCFC8DA",
+        "height": 218,
+        "kind": "fill",
+        "width": 1,
+        "x": 179
+      },
+      {
+        "colour": "cover",
+        "height": 140,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 60,
+        "x": 20,
+        "y": 16
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 80,
+        "y": 16
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 116,
+        "y": 16
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 60,
+        "x": 20,
+        "y": 28
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 80,
+        "y": 28
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 116,
+        "y": 28
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 60,
+        "x": 20,
+        "y": 40
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 80,
+        "y": 40
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 116,
+        "y": 40
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 60,
+        "x": 20,
+        "y": 52
+      },
+      {
+        "colour": "#FFF0B23A",
+        "height": 11,
+        "kind": "fill",
+        "width": 58,
+        "x": 21,
+        "y": 53
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 80,
+        "y": 52
+      },
+      {
+        "colour": "#FFF0B23A",
+        "height": 11,
+        "kind": "fill",
+        "width": 34,
+        "x": 81,
+        "y": 53
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 116,
+        "y": 52
+      },
+      {
+        "colour": "#FFF0B23A",
+        "height": 11,
+        "kind": "fill",
+        "width": 34,
+        "x": 117,
+        "y": 53
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 60,
+        "x": 20,
+        "y": 64
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 80,
+        "y": 64
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 116,
+        "y": 64
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 60,
+        "x": 20,
+        "y": 76
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 80,
+        "y": 76
+      },
+      {
+        "colour": "#FF82719C",
+        "height": 13,
+        "kind": "frame",
+        "width": 36,
+        "x": 116,
+        "y": 76
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "kind": "bold",
+        "line": 1,
+        "scale": 1.5,
+        "width": 156,
+        "x": 20,
+        "y": 96
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "kind": "bold",
+        "line": 2,
+        "scale": 2.0,
+        "width": 156,
+        "x": 20,
+        "y": 114
+      },
+      {
+        "colour": "ink",
+        "kind": "small",
+        "line": 3,
+        "width": 156,
+        "x": 20,
+        "y": 148
+      },
+      {
+        "colour": "ink",
+        "kind": "small",
+        "line": 4,
+        "width": 156,
+        "x": 20,
+        "y": 156
+      },
+      {
+        "height": 12,
+        "image": "jsc:gui/program/iqlengine/frames_xp",
+        "kind": "image",
+        "width": 12,
+        "x": 20,
+        "y": 168
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 5,
+        "width": 140,
+        "x": 36,
+        "y": 171
+      },
+      {
+        "height": 12,
+        "image": "jsc:gui/program/nextgreiql/frames_xp",
+        "kind": "image",
+        "width": 12,
+        "x": 20,
+        "y": 182
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 6,
+        "width": 140,
+        "x": 36,
+        "y": 185
+      },
+      {
+        "height": 12,
+        "image": "jsc:gui/program/youriql/frames_xp",
+        "kind": "image",
+        "width": 12,
+        "x": 20,
+        "y": 196
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 7,
+        "width": 140,
+        "x": 36,
+        "y": 199
+      }
+    ]
+  },
+  "hold_bar": "blocks",
+  "make": {
+    "binding": "glued",
+    "colours": [
+      "heading",
+      "band"
+    ],
+    "marks": "thumb"
+  },
+  "pages": {
+    "height": 201,
+    "width": 166
+  },
+  "palette": "jsc:guide/learning_iql"
+}

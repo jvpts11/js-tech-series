@@ -12,12 +12,9 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.fs.DiskFilesystem;
-import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -25,6 +22,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.shell;
 
 /**
  * Wrecking your own computer, and what it costs you.
@@ -99,7 +98,7 @@ public final class WreckedMachineGameTests {
                     final SystemIntegrity.Result health = SystemIntegrity.check(computer);
                     helper.assertTrue(health.state() == SystemIntegrity.State.NO_LOADER,
                             "the system is found and will not start; got " + health);
-                    helper.assertTrue(health.complaint().equals("kickmgr is missing"),
+                    helper.assertTrue(health.complaint().english().equals("kickmgr is missing"),
                             "in this family's own words; got " + health.complaint());
                     helper.assertTrue(computer.hasOs(),
                             "the disk still says a system is installed, which is why it is found at all");
@@ -133,7 +132,7 @@ public final class WreckedMachineGameTests {
                     DiskFilesystem.delete(computer.systemDisk(),
                             SystemIntegrity.loaderOf(computer.installedOs()));
                     final SystemIntegrity.Result health = SystemIntegrity.check(computer);
-                    helper.assertTrue(health.complaint().contains("kernel panic"),
+                    helper.assertTrue(health.complaint().english().contains("kernel panic"),
                             "a Linux panics; got " + health.complaint());
                 })
                 .thenSucceed();
@@ -166,7 +165,7 @@ public final class WreckedMachineGameTests {
 
                     final SystemIntegrity.Result health = SystemIntegrity.check(computer);
                     helper.assertTrue(health.state() == SystemIntegrity.State.NO_LOADER
-                                    && health.complaint().equals("kickmgr is missing"),
+                                    && health.complaint().english().equals("kickmgr is missing"),
                             "and the machine knows what it is missing; got " + health);
                 })
                 .thenSucceed();
@@ -220,16 +219,6 @@ public final class WreckedMachineGameTests {
         return "C:\\" + path.replace('/', '\\');
     }
 
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
-                                      final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.shellFor(computer, 80).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
-    }
-
     /** Installing over it writes the loader back, which is how a wrecked machine is repaired. */
     @GameTest(template = ARENA)
     public static void installingOverIt_putsTheSystemBack(final GameTestHelper helper) {
@@ -237,7 +226,7 @@ public final class WreckedMachineGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     DiskFilesystem.write(computer.systemDisk(), "Users/Public/Desktop/notes.txt",
-                            dev.jstech.computers.os.fs.FileType.TXT, "the player's own", Long.MAX_VALUE,
+                            FileType.TXT, "the player's own", Long.MAX_VALUE,
                             FilesystemKind.HIERARCHICAL);
                     DiskFilesystem.delete(computer.systemDisk(),
                             SystemIntegrity.loaderOf(computer.installedOs()));

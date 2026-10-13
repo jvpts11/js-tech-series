@@ -91,7 +91,7 @@ public record TermSelection(int fromRow, int fromColumn, int toRow, int toColumn
             final String text = rows.get(row).text();
             final int from = row == startRow() ? Math.min(startColumn(), text.length()) : 0;
             final int to = row == endRow() ? Math.min(endColumn(), text.length()) : text.length();
-            if (!out.isEmpty()) {
+            if (row > Math.max(0, startRow())) {
                 out.append('\n');
             }
             if (from < to) {

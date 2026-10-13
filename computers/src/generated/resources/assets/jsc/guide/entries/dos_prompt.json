@@ -1,0 +1,192 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_prompt.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_prompt.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_prompt.table1",
+      "heads": [
+        "jsc.guide.dos_prompt.table1_head1",
+        "jsc.guide.dos_prompt.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "C:"
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_prompt.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_prompt.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "A: and B:"
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_prompt.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_prompt.table2",
+      "heads": [
+        "jsc.guide.dos_prompt.table2_head1",
+        "jsc.guide.dos_prompt.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "D:"
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "D:DIR"
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "\\"
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "\\DIR"
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": ".."
+          },
+          {
+            "words": "jsc.guide.dos_prompt.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_prompt.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_prompt.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_prompt.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_prompt.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_prompt.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_prompt.definition1",
+      "term": "jsc.guide.dos_prompt.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_prompt.definition2",
+      "term": "jsc.guide.dos_prompt.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_prompt.definition3",
+      "term": "jsc.guide.dos_prompt.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_prompt.definition4",
+      "term": "jsc.guide.dos_prompt.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dos_prompt.fix1",
+          "problem": "jsc.guide.dos_prompt.problem1"
+        },
+        {
+          "fix": "jsc.guide.dos_prompt.fix2",
+          "problem": "jsc.guide.dos_prompt.problem2"
+        },
+        {
+          "fix": "jsc.guide.dos_prompt.fix3",
+          "problem": "jsc.guide.dos_prompt.problem3"
+        },
+        {
+          "fix": "jsc.guide.dos_prompt.fix4",
+          "problem": "jsc.guide.dos_prompt.problem4"
+        },
+        {
+          "fix": "jsc.guide.dos_prompt.fix5",
+          "problem": "jsc.guide.dos_prompt.problem5"
+        },
+        {
+          "fix": "jsc.guide.dos_prompt.fix6",
+          "problem": "jsc.guide.dos_prompt.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:working_with_files",
+        "jsc:paths_and_drives"
+      ]
+    }
+  ],
+  "id": "jsc:dos_prompt",
+  "order": 147,
+  "section": "jsc:dos_basics",
+  "title": "jsc.guide.dos_prompt.title"
+}

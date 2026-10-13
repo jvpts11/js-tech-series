@@ -1,0 +1,136 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_cards.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sound_cards.definition1",
+      "term": "jsc.guide.sound_cards.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_cards.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sound_cards.table1",
+      "heads": [
+        "jsc.guide.sound_cards.table1_head1",
+        "jsc.guide.sound_cards.table1_head2",
+        "jsc.guide.sound_cards.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sound_cards.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sound_cards.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sound_cards.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sound_cards.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sound_cards.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sound_cards.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_cards.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_cards.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_cards.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sound_cards.fix1",
+          "problem": "jsc.guide.sound_cards.problem1"
+        },
+        {
+          "fix": "jsc.guide.sound_cards.fix2",
+          "problem": "jsc.guide.sound_cards.problem2"
+        },
+        {
+          "fix": "jsc.guide.sound_cards.fix3",
+          "problem": "jsc.guide.sound_cards.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:speakers",
+        "jsc:monitors",
+        "jsc:motherboards"
+      ]
+    }
+  ],
+  "icon": "jsc:sound_card_tone_blaster",
+  "id": "jsc:sound_cards",
+  "items": [
+    "jsc:sound_card_tone_blaster",
+    "jsc:sound_card_tone_blaster_128",
+    "jsc:sound_card_tone_blaster_live",
+    "jsc:sound_card_tone_blaster_audigy",
+    "jsc:sound_card_tone_blaster_hi_fi"
+  ],
+  "order": 22,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.sound_cards.title"
+}

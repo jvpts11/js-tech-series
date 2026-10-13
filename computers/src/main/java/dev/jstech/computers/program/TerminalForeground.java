@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.program.tty.ITtySink;
 import java.util.ArrayList;
@@ -93,8 +94,16 @@ public final class TerminalForeground {
         if (this.tool == null || this.tool.asking() == null) {
             return false;
         }
+        try {
+            this.tool.answer(typed, now, out);
+        } catch (final RuntimeException broken) {
+            // A tool that cannot take an answer lets go of the terminal rather than take the machine's tick with it,
+            // and the answer is not kept, so it is not played to the tool again when the world is loaded.
+            JsComputers.LOGGER.warn("A terminal tool failed on an answer and was stopped: {}", broken.toString());
+            this.clear();
+            return true;
+        }
         this.answers.add(new Answer(now, unseen ? "" : typed));
-        this.tool.answer(typed, now, out);
         return this.settle();
     }
 
@@ -127,12 +136,19 @@ public final class TerminalForeground {
             this.clear();
             return;
         }
-        again.begin(this.startedAt);
-        for (final Answer answer : this.answers) {
-            again.advance(answer.tick(), null);
-            again.answer(answer.text(), answer.tick(), null);
+        try {
+            again.begin(this.startedAt);
+            for (final Answer answer : this.answers) {
+                again.advance(answer.tick(), null);
+                again.answer(answer.text(), answer.tick(), null);
+            }
+            again.advance(now, null);
+        } catch (final RuntimeException broken) {
+            // Played again on every load, a failure would fail every load; the tool is let go of instead.
+            JsComputers.LOGGER.warn("A terminal tool could not be found again and was stopped: {}", broken.toString());
+            this.clear();
+            return;
         }
-        again.advance(now, null);
         this.tool = again;
         this.settle();
     }

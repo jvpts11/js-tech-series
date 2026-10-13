@@ -21,6 +21,18 @@ class CalcEngineTest {
     }
 
     @Test
+    void evaluate_aNestingPastItsDepthIsAnErrorNotAStackOverflow() {
+        // Thousands of brackets or signs in a row overflowed the game's stack, which no catch of the app took.
+        assertThrows(CalcEngine.CalcException.class, () -> eval("(".repeat(5000) + "1" + ")".repeat(5000)));
+        assertThrows(CalcEngine.CalcException.class, () -> eval("-".repeat(20000) + "1"));
+    }
+
+    @Test
+    void evaluate_aDeepButReasonableNestingStillWorks() {
+        assertEquals(3.0, eval("(".repeat(100) + "1+2" + ")".repeat(100)), EPS);
+    }
+
+    @Test
     void evaluate_addsAndSubtractsLeftToRight() {
         assertEquals(6.0, eval("1 + 2 + 3"), EPS);
         assertEquals(0.0, eval("10 - 4 - 6"), EPS);

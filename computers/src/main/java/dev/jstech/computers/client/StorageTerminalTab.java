@@ -7,9 +7,17 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.FormattedCharSequence;
 
 /**
  * The Storage heading: what this machine's own disks hold, with the public/private slider for each disk
@@ -18,8 +26,15 @@ import net.minecraft.client.gui.GuiGraphics;
  * <p>The sliders used to be a band above the grid, which cost the grid a row on the one heading that most
  * wants them. They live where the detail of what is picked out lives on the other headings, because that
  * is what they are: the detail of the store this heading is showing.
+ *
+ * <p>Its own colour beside the shared theme is the palette {@code jsc:terminal/storage}.
  */
+@PaletteHolder
 final class StorageTerminalTab extends AbstractTerminalTab {
+
+    /** The slider handle while it is being dragged, over its usual accent. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "terminal/storage",
+            new Colours(0xFFFFFFFF));
 
     private static final int GRID_ROWS = ComputerTerminalLayout.GRID_ROWS;
     private static final int TOOLBAR_Y = ComputerTerminalLayout.TOOLBAR_Y;
@@ -58,15 +73,18 @@ final class StorageTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int shown = visibleItems().size();
-        final String t = shown + (shown == 1 ? " type" : " types");
-        g.drawString(font(), t, cx + cw - font().width(t), TOOLBAR_Y + 3, DIM(), false);
-        g.drawCenteredString(font(), screen.sortByQuantity ? "Qty" : "Name",
+        final String t = GameText.resolve(
+                (shown == 1 ? TerminalGridTexts.ONE_TYPE : TerminalGridTexts.TYPES).with(shown));
+        Draw.text(g, font(), t, cx + cw - font().width(t), TOOLBAR_Y + 3, DIM());
+        Draw.textCentered(g,font(),
+                GameText.resolve(screen.sortByQuantity ? TerminalGridTexts.QUANTITY : TerminalGridTexts.NAME),
                 SORT_X + SORT_W / 2, TOOLBAR_Y + 3, ACCENT());
         final String mod = screen.modFilter();
-        g.drawCenteredString(font(), mod.isEmpty() ? "Mod" : font().plainSubstrByWidth(mod, MOD_W - 6),
+        Draw.textCentered(g,font(),
+                mod.isEmpty() ? GameText.resolve(TerminalGridTexts.MOD) : font().plainSubstrByWidth(mod, MOD_W - 6),
                 MOD_X + MOD_W / 2, TOOLBAR_Y + 3, mod.isEmpty() ? DIM() : ACCENT());
         final boolean holding = !menu.getCarried().isEmpty();
-        g.drawCenteredString(font(), "Store all",
+        Draw.textCentered(g,font(), GameText.resolve(TerminalGridTexts.STORE_ALL),
                 DEPOSIT_X + DEPOSIT_W / 2 + 4, DEPOSIT_Y + 2, holding ? ACCENT() : DIM());
         sliderBandLabels(g);
     }
@@ -109,7 +127,7 @@ final class StorageTerminalTab extends AbstractTerminalTab {
             final int tickX = tx + Math.round(span * (i / 4.0f)) + SLIDER_HANDLE_W / 2;
             g.fill(tickX, ty + SLIDER_TRACK_H, tickX + 1, ty + SLIDER_TRACK_H + 1, LINE());
         }
-        final int handleColor = screen.draggingSliderDisk == disk ? 0xFFFFFFFF : ACCENT();
+        final int handleColor = screen.draggingSliderDisk == disk ? PALETTE.get().draggingHandle() : ACCENT();
         g.fill(handleX, ty - ComputerTerminalLayout.SLIDER_HANDLE_OVERHANG, handleX + SLIDER_HANDLE_W,
                 ty + SLIDER_TRACK_H + ComputerTerminalLayout.SLIDER_HANDLE_OVERHANG, handleColor);
     }
@@ -117,33 +135,46 @@ final class StorageTerminalTab extends AbstractTerminalTab {
     private void sliderBandLabels(final GuiGraphics g) {
         final int px = PANE_X + 6;
         final int right = PANE_X + PANE_W - 6;
-        g.drawString(font(), "This machine's disks", px, PANE_Y + 6, ACCENT(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalGridTexts.THIS_MACHINES_DISKS), px, PANE_Y + 6, ACCENT());
         if (!menu.storageHasSlider()) {
-            g.drawString(font(), "Every byte of it is the", px, PANE_Y + 22, TEXT(), false);
-            g.drawString(font(), "network's, and none of it", px, PANE_Y + 32, TEXT(), false);
-            g.drawString(font(), "is kept back.", px, PANE_Y + 42, TEXT(), false);
-            final String store = menu.storageCapacity() <= 0 ? "no disk"
+            final int below = lines(g, TerminalGridTexts.ALL_OFFERED, px, PANE_Y + 22, TEXT());
+            final String store = menu.storageCapacity() <= 0 ? GameText.resolve(TerminalGridTexts.NO_DISK)
                     : fmt(menu.storageUsed()) + " / " + fmt(menu.storageCapacity());
-            g.drawString(font(), store, px, PANE_Y + 60, GREEN(), false);
+            Draw.text(g, font(), store, px, below + 8, GREEN());
             return;
         }
         for (int d = 0; d < shownDisks(); d++) {
             final int ty = PANE_Y + SLIDER_TRACK0_DY + d * SLIDER_ROW_PITCH;
-            g.drawString(font(), "Disk " + (char) ('A' + d), px, ty - SLIDER_LABEL_DY, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalGridTexts.DISK_LETTER.with(String.valueOf((char) ('A' + d)))),
+                    px, ty - SLIDER_LABEL_DY, DIM());
             if (menu.diskCapacityWeight(d) <= 0L) {
-                g.drawString(font(), "empty", right - font().width("empty"), ty - SLIDER_LABEL_DY, DIM(), false);
+                final String empty = GameText.resolve(TerminalGridTexts.EMPTY);
+                Draw.text(g, font(), empty, right - font().width(empty), ty - SLIDER_LABEL_DY, DIM());
                 continue;
             }
-            final String readout = (sliderValue(d) / 10) + "% offered";
-            g.drawString(font(), readout, right - font().width(readout), ty - SLIDER_LABEL_DY, GREEN(), false);
+            final String readout = GameText.resolve(TerminalGridTexts.OFFERED.with(sliderValue(d) / 10));
+            Draw.text(g, font(), readout, right - font().width(readout), ty - SLIDER_LABEL_DY, GREEN());
         }
-        // The word about dragging only where there is room left for it under the last track.
+        // The word about dragging only where there is room left for all of it under the last track.
         final int footY = PANE_Y + SLIDER_TRACK0_DY + shownDisks() * SLIDER_ROW_PITCH + 6;
-        if (footY + 30 > PANE_Y + ComputerTerminalLayout.PANE_H) {
+        final int rows = font().split(GameText.component(TerminalGridTexts.DRAG_HINT), PANE_W - 12).size();
+        if (footY + rows * 10 > PANE_Y + ComputerTerminalLayout.PANE_H) {
             return;
         }
-        g.drawString(font(), "Drag to say how much of a", px, footY, DIM(), false);
-        g.drawString(font(), "disk the network may have.", px, footY + 10, DIM(), false);
-        g.drawString(font(), "Hold Shift for fine steps.", px, footY + 20, DIM(), false);
+        lines(g, TerminalGridTexts.DRAG_HINT, px, footY, DIM());
+    }
+
+    /** Writes a sentence wrapped to the panel's width, and says where the line under it would go. */
+    private int lines(final GuiGraphics g, final TextKey sentence, final int x, final int y, final int color) {
+        int at = y;
+        for (final FormattedCharSequence line : font().split(GameText.component(sentence), PANE_W - 12)) {
+            Draw.text(g, font(), line, x, at, color);
+            at += 10;
+        }
+        return at;
+    }
+
+    /** The slider handle's colour while a player is dragging it. */
+    private record Colours(int draggingHandle) {
     }
 }

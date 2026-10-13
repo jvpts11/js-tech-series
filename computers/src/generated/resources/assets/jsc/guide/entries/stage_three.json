@@ -1,0 +1,116 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.stage_three.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.stage_three.definition1",
+      "term": "jsc.guide.stage_three.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.stage_three.definition2",
+      "term": "jsc.guide.stage_three.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.stage_three.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.stage_three.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.stage_three.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.stage_three.step1",
+        "jsc.guide.stage_three.step2",
+        "jsc.guide.stage_three.step3",
+        "jsc.guide.stage_three.step4"
+      ]
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "livecd /mnt/gentoo # ",
+          "text": "wget mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz",
+          "typed": true
+        },
+        {
+          "text": "--<date>--  mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz"
+        },
+        {
+          "text": "Resolving mainframe... done."
+        },
+        {
+          "text": "Connecting to mainframe... connected."
+        },
+        {
+          "text": "Mirror request sent, awaiting response... 200 OK"
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Gentoo"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.stage_three.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.stage_three.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.stage_three.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.stage_three.fix1",
+          "problem": "jsc.guide.stage_three.problem1"
+        },
+        {
+          "fix": "jsc.guide.stage_three.fix2",
+          "problem": "jsc.guide.stage_three.problem2"
+        },
+        {
+          "fix": "jsc.guide.stage_three.fix3",
+          "problem": "jsc.guide.stage_three.problem3"
+        },
+        {
+          "fix": "jsc.guide.stage_three.fix4",
+          "problem": "jsc.guide.stage_three.problem4"
+        },
+        {
+          "fix": "jsc.guide.stage_three.fix5",
+          "problem": "jsc.guide.stage_three.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:mounts_and_chroot",
+        "jsc:make_conf",
+        "jsc:installing"
+      ]
+    }
+  ],
+  "id": "jsc:stage_three",
+  "order": 257,
+  "section": "jsc:gentoo_base",
+  "title": "jsc.guide.stage_three.title"
+}

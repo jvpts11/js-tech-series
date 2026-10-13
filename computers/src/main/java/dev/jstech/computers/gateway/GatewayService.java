@@ -10,6 +10,9 @@ package dev.jstech.computers.gateway;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
+import dev.jstech.computers.engine.CraftRequest;
+import dev.jstech.computers.engine.EngineVerb;
+import dev.jstech.computers.engine.NetworkOperationsService;
 import dev.jstech.computers.machine.ProgramLauncher;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
@@ -19,6 +22,7 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -28,6 +32,10 @@ import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
@@ -36,9 +44,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -56,7 +66,12 @@ import org.jetbrains.annotations.Nullable;
  * <p>Names follow ComputerCraft's habit: an item is its registry id ({@code minecraft:iron_ingot}, the
  * namespace optional for vanilla), a fluid is {@code fluid/} and its id, a chemical {@code chemical/} and
  * its id. An operation is named by its id; a prefix of the id is enough where it is unambiguous.
+ *
+ * <p>Why a request was refused is declared here and handed on in English, the machine's language: the other side
+ * is another machine that reads it as data. The Gateway's log keeps it as text, read in the language of whoever
+ * looks at the log.
  */
+@TextHolder
 public final class GatewayService {
 
     /** Queued on a computer that watches a name when its total changes: name, total, previous. */
@@ -66,14 +81,69 @@ public final class GatewayService {
 
     private static final String FLUID_PREFIX = "fluid/";
     private static final String CHEMICAL_PREFIX = "chemical/";
-    private static final int WHAT_LENGTH = 96;
-
-    /** The file calls that change what is on a disk rather than only reading it. */
-    private static final List<String> WRITES_FILES =
-            List.of("Write", "Append", "Delete", "MkDir", "Put", "MakeDir", "Remove");
+    private static final int WHAT_LENGTH = GatewayLog.TEXT_LENGTH;
 
     /** A list the other side asks for, priced as a program's read is, by how many rows it brings back. */
     private static final CallCost ROWS = CallCost.perRow(SigmaCosts.READ);
+
+    private static final TextKey COULD_NOT_START =
+            TextKey.of("jsc.service.gateway.could_not_start", "could not start the %s");
+    private static final TextKey BUFFER_HOLDS_NONE =
+            TextKey.of("jsc.service.gateway.buffer_holds_none", "the buffer holds no %s");
+    private static final TextKey NO_PATTERN = TextKey.of("jsc.service.gateway.no_pattern", "no pattern crafts %s");
+    private static final TextKey WOULD_NOT_STOP = TextKey.of("jsc.service.gateway.would_not_stop", "would not stop");
+    private static final TextKey NOT_RUNNING = TextKey.of("jsc.service.gateway.not_running", "not running");
+    private static final TextKey AMBIGUOUS_ID = TextKey.of("jsc.service.gateway.ambiguous_id",
+            "more than one operation starts with %s; give more of the id");
+    private static final TextKey LOG_RETURN_TO_BUFFER =
+            TextKey.of("jsc.service.gateway.log.return_to_buffer", "return to buffer");
+    private static final TextKey LOG_DROPPED =
+            TextKey.of("jsc.service.gateway.log.dropped", "buffer full, %s dropped at the Gateway");
+    /* How a request went, as the Gateway's log shows it. */
+    private static final TextKey LOG_STOPPED = TextKey.of("jsc.service.gateway.log.stopped", "stopped");
+    private static final TextKey LOG_PROCESS = TextKey.of("jsc.service.gateway.log.process", "process %s");
+    private static final TextKey LOG_OK = TextKey.of("jsc.service.gateway.log.ok", "ok");
+    private static final TextKey LOG_STARTED = TextKey.of("jsc.service.gateway.log.started", "started");
+    private static final TextKey LOG_DONE = TextKey.of("jsc.service.gateway.log.done", "done");
+    private static final TextKey LOG_PARTIAL = TextKey.of("jsc.service.gateway.log.partial", "partial");
+    private static final TextKey LOG_FAILED = TextKey.of("jsc.service.gateway.log.failed", "failed");
+    private static final TextKey LOG_RUNNING = TextKey.of("jsc.service.gateway.log.running", "running");
+    private static final TextKey LOG_WAITING = TextKey.of("jsc.service.gateway.log.waiting", "waiting");
+    private static final TextKey LOG_LOCKED = TextKey.of("jsc.service.gateway.log.locked", "locked");
+    private static final TextKey LOG_PENDING = TextKey.of("jsc.service.gateway.log.pending", "pending");
+    private static final TextKey LOG_DISCARDED = TextKey.of("jsc.service.gateway.log.discarded", "discarded");
+    private static final TextKey LOG_UNKNOWN = TextKey.of("jsc.service.gateway.log.unknown", "unknown");
+    private static final TextKey NO_SUCH_COMPUTER =
+            TextKey.of("jsc.service.gateway.no_such_computer", "%s: no such computer on this network");
+    private static final TextKey POWERED_OFF = TextKey.of("jsc.service.gateway.powered_off", "%s is powered off");
+    private static final TextKey NO_REMOTE_PROGRAMS = TextKey.of("jsc.service.gateway.no_remote_programs",
+            "%s does not take programs from other computers");
+    private static final TextKey CANNOT_RUN =
+            TextKey.of("jsc.service.gateway.cannot_run", "%s cannot run programs");
+    private static final TextKey NO_RUNNER =
+            TextKey.of("jsc.service.gateway.no_runner", "%s: nothing installed runs a program of this kind");
+    private static final TextKey NO_MEMORY =
+            TextKey.of("jsc.service.gateway.no_memory", "%s: %s MB will not fit in %s MB of free memory");
+    private static final TextKey BUSY = TextKey.of("jsc.service.gateway.busy", "busy: %s calls a tick");
+    private static final TextKey READING_OFF =
+            TextKey.of("jsc.service.gateway.reading_off", "denied: reading the network is off");
+    private static final TextKey OPERATIONS_OFF =
+            TextKey.of("jsc.service.gateway.operations_off", "denied: operations are off");
+    private static final TextKey NOT_IN_WORLD =
+            TextKey.of("jsc.service.gateway.not_in_world", "the Gateway is not in a world");
+    private static final TextKey NOT_LINKED =
+            TextKey.of("jsc.service.gateway.not_linked", "the Gateway is not linked to a computer");
+    private static final TextKey DISABLED =
+            TextKey.of("jsc.service.gateway.disabled", "the Gateway is disabled on its computer");
+    private static final TextKey WHICH_ITEM = TextKey.of("jsc.service.gateway.which_item", "which item?");
+    private static final TextKey UNKNOWN_FLUID = TextKey.of("jsc.service.gateway.unknown_fluid", "unknown fluid: %s");
+    private static final TextKey UNKNOWN_CHEMICAL =
+            TextKey.of("jsc.service.gateway.unknown_chemical", "unknown chemical: %s");
+    private static final TextKey UNKNOWN_ITEM = TextKey.of("jsc.service.gateway.unknown_item", "unknown item: %s");
+    private static final TextKey NOT_ON_NETWORK =
+            TextKey.of("jsc.service.gateway.not_on_network", "the computer is not on a network");
+    private static final TextKey NO_MAINFRAME =
+            TextKey.of("jsc.service.gateway.no_running_mainframe", "the network has no running Mainframe");
 
     /** Who is asking, from the other side: a ComputerCraft computer by its id. */
     public record Caller(int id) {
@@ -96,14 +166,20 @@ public final class GatewayService {
         this.shell = new ServerCliComputer(terminal, level);
     }
 
-    /** The service for a linked Gateway; refused while the Gateway has no computer to answer for it. */
+    /**
+     * The service for a linked Gateway; refused while the Gateway has no computer to answer for it, or its computer
+     * disabled it.
+     */
     public static GatewayService of(final NetworkGatewayBlockEntity gateway) throws GatewayRefusedException {
         if (!(gateway.getLevel() instanceof ServerLevel level)) {
-            throw new GatewayRefusedException("the Gateway is not in a world");
+            throw new GatewayRefusedException(NOT_IN_WORLD.text());
         }
         final IPeripheralOwner owner = gateway.owner();
         if (!(owner instanceof IComputerTerminalHost terminal) || !(owner instanceof BlockEntity)) {
-            throw new GatewayRefusedException("the Gateway is not linked to a computer");
+            throw new GatewayRefusedException(NOT_LINKED.text());
+        }
+        if (owner.isDisabled(gateway.getBlockPos().asLong())) {
+            throw new GatewayRefusedException(DISABLED.text());
         }
         return new GatewayService(gateway, level, terminal);
     }
@@ -113,28 +189,28 @@ public final class GatewayService {
     /** The key a name on the other side stands for. */
     public static StorageKey resolve(final String name) throws GatewayRefusedException {
         if (name == null || name.isBlank()) {
-            throw new GatewayRefusedException("which item?");
+            throw new GatewayRefusedException(WHICH_ITEM.text());
         }
         final String given = name.trim().toLowerCase(Locale.ROOT);
         if (given.startsWith(FLUID_PREFIX)) {
             final ResourceLocation id = ResourceLocation.tryParse(given.substring(FLUID_PREFIX.length()));
             final Fluid fluid = id == null ? null : BuiltInRegistries.FLUID.getOptional(id).orElse(null);
             if (fluid == null) {
-                throw new GatewayRefusedException("unknown fluid: " + name);
+                throw new GatewayRefusedException(UNKNOWN_FLUID.with(name));
             }
             return StorageKey.of(new FluidStack(fluid, 1));
         }
         if (given.startsWith(CHEMICAL_PREFIX)) {
             final ResourceLocation id = ResourceLocation.tryParse(given.substring(CHEMICAL_PREFIX.length()));
             if (id == null) {
-                throw new GatewayRefusedException("unknown chemical: " + name);
+                throw new GatewayRefusedException(UNKNOWN_CHEMICAL.with(name));
             }
             return StorageKey.chemical(id);
         }
         final ResourceLocation id = ResourceLocation.tryParse(given.contains(":") ? given : "minecraft:" + given);
         final Item item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
         if (item == null) {
-            throw new GatewayRefusedException("unknown item: " + name);
+            throw new GatewayRefusedException(UNKNOWN_ITEM.with(name));
         }
         return StorageKey.of(item);
     }
@@ -200,7 +276,8 @@ public final class GatewayService {
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final Map.Entry<NodeUuid, Long> entry : storage().breakdown(resolve(name)).entrySet()) {
             if (entry.getValue() > 0L) {
-                rows.add(row("server", NetworkLookup.serverLabel(level, entry.getKey()), "quantity", entry.getValue()));
+                rows.add(luaTable("server", NetworkLookup.serverLabel(level, entry.getKey()),
+                        "quantity", entry.getValue()));
             }
         }
         charge(ROWS.at(rows.size(), 0));
@@ -211,7 +288,8 @@ public final class GatewayService {
         read(caller, "servers");
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final ICliComputer.ServerUse server : shell.servers()) {
-            rows.add(row("name", server.name(), "used", server.stored(), "capacity", server.capacity(), "online", true));
+            rows.add(luaTable("name", server.name(), "used", server.stored(), "capacity", server.capacity(),
+                    "online", true));
         }
         charge(ROWS.at(rows.size(), 0));
         return rows;
@@ -226,7 +304,7 @@ public final class GatewayService {
         }
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final ICliComputer.RemoteHost host : shell.reachableHosts()) {
-            rows.add(row("name", host.hostname(), "label", host.name(), "os", host.os(), "type", host.type(),
+            rows.add(luaTable("name", host.hostname(), "label", host.name(), "os", host.os(), "type", host.type(),
                     "online", host.running(), "shares", sharesByHost.getOrDefault(host.hostname(), List.of())));
         }
         charge(ROWS.at(rows.size(), 0));
@@ -241,10 +319,10 @@ public final class GatewayService {
         final String what = "pull " + count(quantity) + " " + name;
         operations(caller, what);
         final StorageKey key = resolve(name);
-        final NetworkSelectOperation op = mainframe().submitNetworkSelect(key, demand(quantity),
+        final NetworkSelectOperation op = mainframe().networkOperations().pull(key, demand(quantity),
                 new BufferSink(gateway.buffer()), label(caller));
         if (op == null) {
-            throw denied(caller, what, "could not start the SELECT");
+            throw denied(caller, what, COULD_NOT_START.with("SELECT"));
         }
         op.setPriority(priorityOf(priority));
         op.abortWhen(gateway::isRemoved);
@@ -269,16 +347,16 @@ public final class GatewayService {
             }
         }
         if (taken == 0L) {
-            throw denied(caller, what, "the buffer holds no " + name);
+            throw denied(caller, what, BUFFER_HOLDS_NONE.with(name));
         }
-        final NetworkInsertOperation op = mainframe().submitNetworkInsert(key, taken, label(caller));
+        final NetworkInsertOperation op = mainframe().networkOperations().push(key, taken, label(caller));
         if (op == null) {
-            returnToBuffer(key, taken);
-            throw denied(caller, what, "could not start the INSERT");
+            returnToBuffer(key, taken, caller.label());
+            throw denied(caller, what, COULD_NOT_START.with("INSERT"));
         }
         op.setPriority(priorityOf(priority));
         op.onSettle(() -> {
-            returnToBuffer(key, op.leftover());
+            returnToBuffer(key, op.leftover(), caller.label());
             settled(caller, op);
         });
         return started(caller, what, op, SigmaCosts.SUBMIT);
@@ -290,14 +368,19 @@ public final class GatewayService {
         final String what = "craft " + count(quantity) + " " + name;
         operations(caller, what);
         final StorageKey key = resolve(name);
+        final NetworkOperationsService network = mainframe().networkOperations();
+        final Text unavailable = network.refusal(EngineVerb.CRAFT);
+        if (unavailable != null) {
+            throw denied(caller, what, unavailable);
+        }
         final INetworkOperation[] made = new INetworkOperation[1];
-        final INetworkOperation op = mainframe().submitCraftRequest(key, demand(quantity), true, label(caller), () -> {
+        final INetworkOperation op = network.craft(CraftRequest.of(key, demand(quantity), true, label(caller), () -> {
             if (made[0] != null) {
                 settled(caller, made[0]);
             }
-        });
+        }));
         if (op == null) {
-            throw denied(caller, what, "no pattern crafts " + name);
+            throw denied(caller, what, NO_PATTERN.with(name));
         }
         made[0] = op;
         op.setPriority(priorityOf(priority));
@@ -310,17 +393,20 @@ public final class GatewayService {
         read(caller, "operation " + id);
         charge(SigmaCosts.READ);
         final MainframeBlockEntity mainframe = mainframe();
-        for (final INetworkOperation live : mainframe.liveOperations()) {
-            if (matches(live.operationId(), id)) {
-                return row(live.liveRecord());
-            }
-        }
+        final List<INetworkOperation> lives = liveMatching(mainframe, id);
+        final List<OperationRecord> records = new ArrayList<>();
         for (final OperationRecord record : mainframe.recentOperations()) {
             if (matches(record.id(), id)) {
-                return row(record);
+                records.add(record);
             }
         }
-        return null;
+        if (lives.size() + records.size() > 1) {
+            throw denied(caller, "operation " + id, AMBIGUOUS_ID.with(id));
+        }
+        if (!lives.isEmpty()) {
+            return luaTable(lives.get(0).liveRecord());
+        }
+        return records.isEmpty() ? null : luaTable(records.get(0));
     }
 
     /** Every operation in flight on the network. */
@@ -328,7 +414,7 @@ public final class GatewayService {
         read(caller, "operations");
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final OperationRecord record : mainframe().activeOperationRecords()) {
-            rows.add(row(record));
+            rows.add(luaTable(record));
         }
         charge(ROWS.at(rows.size(), 0));
         return rows;
@@ -340,15 +426,18 @@ public final class GatewayService {
         operations(caller, what);
         charge(SigmaCosts.SUBMIT);
         final MainframeBlockEntity mainframe = mainframe();
-        for (final INetworkOperation live : mainframe.liveOperations()) {
-            if (matches(live.operationId(), id)) {
-                final boolean stopped = mainframe.cancelOperation(live.operationId());
-                gateway.logged(caller.label(), what, stopped ? "stopped" : "would not stop",
-                        stopped ? GatewayLog.Tone.OK : GatewayLog.Tone.BUSY);
-                return stopped;
-            }
+        final List<INetworkOperation> lives = liveMatching(mainframe, id);
+        if (lives.size() > 1) {
+            throw denied(caller, what, AMBIGUOUS_ID.with(id));
         }
-        gateway.logged(caller.label(), what, "not running", GatewayLog.Tone.BUSY);
+        if (!lives.isEmpty()) {
+            final UUID live = lives.get(0).operationId();
+            final boolean stopped = mainframe.cancelOperation(live);
+            gateway.logged(caller.label(), what, (stopped ? LOG_STOPPED : WOULD_NOT_STOP).text(),
+                    stopped ? GatewayLog.Tone.OK : GatewayLog.Tone.BUSY);
+            return stopped;
+        }
+        gateway.logged(caller.label(), what, NOT_RUNNING.text(), GatewayLog.Tone.BUSY);
         return false;
     }
 
@@ -359,29 +448,28 @@ public final class GatewayService {
         operations(caller, what);
         final ServerCliComputer remote = shell.remoteShell(computer);
         if (remote == null) {
-            throw denied(caller, what, computer + ": no such computer on this network");
+            throw denied(caller, what, NO_SUCH_COMPUTER.with(computer));
         }
         if (!remote.running()) {
-            throw denied(caller, what, computer + " is powered off");
+            throw denied(caller, what, POWERED_OFF.with(computer));
         }
         if (!remote.remoteAllowed()) {
-            throw denied(caller, what, computer + " does not take programs from other computers");
+            throw denied(caller, what, NO_REMOTE_PROGRAMS.with(computer));
         }
         if (!(remote.machine() instanceof AbstractComputerBlockEntity machine)) {
-            throw denied(caller, what, computer + " cannot run programs");
+            throw denied(caller, what, CANNOT_RUN.with(computer));
         }
         final ProgramLauncher.Launch launch = ProgramLauncher.launch(machine, program, remote::readFile,
                 new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority), 0);
         if (!launch.ok()) {
             throw denied(caller, what, switch (launch.refusal()) {
-                case NO_RUNNER -> program + ": nothing installed runs a program of this kind";
-                case NO_MEMORY -> computer + ": " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
-                        + " MB of free memory";
-                case UNREADABLE, NOT_STARTED -> computer + ": " + launch.message();
+                case NO_RUNNER -> NO_RUNNER.with(program);
+                case NO_MEMORY -> NO_MEMORY.with(computer, launch.roomMb(), launch.freeMb());
+                case UNREADABLE, NOT_STARTED -> CliTexts.SAID_BY.with(computer, launch.message());
             });
         }
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
-        gateway.logged(caller.label(), what, "process " + launch.id(), GatewayLog.Tone.OK);
+        gateway.logged(caller.label(), what, LOG_PROCESS.with(launch.id()), GatewayLog.Tone.OK);
         charge(SigmaCosts.SUBMIT);
         return launch.id();
     }
@@ -394,7 +482,7 @@ public final class GatewayService {
         final StorageKey key = resolve(name);
         final long total = storage().count(key);
         gateway.watch(caller.id(), nameOf(key), total);
-        gateway.logged(caller.label(), "watch " + nameOf(key), "ok", GatewayLog.Tone.OK);
+        gateway.logged(caller.label(), "watch " + nameOf(key), LOG_OK.text(), GatewayLog.Tone.OK);
         charge(SigmaCosts.READ);
         return total;
     }
@@ -410,11 +498,12 @@ public final class GatewayService {
     /** Writes a line into the Gateway's log, signed by the caller: {@code error}, {@code warn} or anything else. */
     public void log(final Caller caller, final String levelName, final String text) throws GatewayRefusedException {
         admit(caller, "log");
-        final String kind = levelName == null ? "" : levelName.toLowerCase(Locale.ROOT);
+        final String kind = TextBounds.clip(levelName, WHAT_LENGTH).toLowerCase(Locale.ROOT);
         final GatewayLog.Tone tone = kind.startsWith("err") ? GatewayLog.Tone.DENIED
                 : kind.startsWith("warn") ? GatewayLog.Tone.BUSY : GatewayLog.Tone.OK;
-        final String line = text == null ? "" : text.length() > WHAT_LENGTH ? text.substring(0, WHAT_LENGTH) : text;
-        gateway.logged(caller.label(), line, kind.isEmpty() ? "info" : kind, tone);
+        final String line = TextBounds.clip(text, WHAT_LENGTH);
+        // The level is the caller's own word for it, written down as it was given.
+        gateway.logged(caller.label(), line, Text.literal(kind.isEmpty() ? "info" : kind), tone);
         charge(SigmaCosts.GLANCE_NETWORK);
     }
 
@@ -423,25 +512,25 @@ public final class GatewayService {
     /** Counts the call against the cap; refused once the tick's calls are spent. */
     private void admit(final Caller caller, final String what) throws GatewayRefusedException {
         if (!gateway.admit()) {
-            throw denied(caller, what, "busy: " + gateway.permissions().callCap() + " calls a tick");
+            throw denied(caller, what, BUSY.with(gateway.permissions().callCap()));
         }
     }
 
     private void read(final Caller caller, final String what) throws GatewayRefusedException {
         admit(caller, what);
         if (!gateway.permissions().read()) {
-            throw denied(caller, what, "denied: reading the network is off");
+            throw denied(caller, what, READING_OFF.text());
         }
     }
 
     private void operations(final Caller caller, final String what) throws GatewayRefusedException {
         admit(caller, what);
         if (!gateway.permissions().operations()) {
-            throw denied(caller, what, "denied: operations are off");
+            throw denied(caller, what, OPERATIONS_OFF.text());
         }
     }
 
-    private GatewayRefusedException denied(final Caller caller, final String what, final String why) {
+    private GatewayRefusedException denied(final Caller caller, final String what, final Text why) {
         gateway.logged(caller.label(), what, why, GatewayLog.Tone.DENIED);
         return new GatewayRefusedException(why);
     }
@@ -457,7 +546,7 @@ public final class GatewayService {
     private NetworkStorage storage() throws GatewayRefusedException {
         final NetworkUuid net = terminal.networkUuid();
         if (net == null) {
-            throw new GatewayRefusedException("the computer is not on a network");
+            throw new GatewayRefusedException(NOT_ON_NETWORK.text());
         }
         return NetworkStorage.of(level, net);
     }
@@ -465,7 +554,7 @@ public final class GatewayService {
     private MainframeBlockEntity mainframe() throws GatewayRefusedException {
         final MainframeBlockEntity mainframe = shell.mainframe();
         if (mainframe == null || !mainframe.isRunning()) {
-            throw new GatewayRefusedException("the network has no running Mainframe");
+            throw new GatewayRefusedException(NO_MAINFRAME.text());
         }
         return mainframe;
     }
@@ -483,7 +572,7 @@ public final class GatewayService {
 
     private String started(final Caller caller, final String what, final INetworkOperation op, final int cost) {
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
-        gateway.logged(caller.label(), what, "started", GatewayLog.Tone.BUSY);
+        gateway.logged(caller.label(), what, LOG_STARTED.text(), GatewayLog.Tone.BUSY);
         charge(cost);
         return op.operationId().toString();
     }
@@ -491,20 +580,61 @@ public final class GatewayService {
     /** An operation the caller started has settled: the log and the computer both hear how it went. */
     private void settled(final Caller caller, final INetworkOperation op) {
         final OperationRecord record = op.toRecord();
-        final String status = status(record.status());
         gateway.logged(caller.label(), typeName(record.type()) + " " + record.moved() + " " + nameOf(record.key()),
-                status, record.status() == OperationRecord.STATUS_COMPLETED ? GatewayLog.Tone.OK
+                statusText(record.status()), record.status() == OperationRecord.STATUS_COMPLETED ? GatewayLog.Tone.OK
                         : record.status() == OperationRecord.STATUS_PARTIAL ? GatewayLog.Tone.BUSY : GatewayLog.Tone.DENIED);
-        gateway.eventTo(caller.id(), EVENT_OPERATION, op.operationId().toString(), status);
+        gateway.eventTo(caller.id(), EVENT_OPERATION, op.operationId().toString(), status(record.status()));
     }
 
-    private void returnToBuffer(final StorageKey key, final long amount) {
-        long left = amount;
-        final ItemStackHandler buffer = gateway.buffer();
-        for (int slot = 0; slot < buffer.getSlots() && left > 0L; slot++) {
-            final int batch = (int) Math.min(left, key.prototype().getMaxStackSize());
-            left -= batch - buffer.insertItem(slot, key.stack(batch), false).getCount();
+    /** The same state as the Gateway's log shows it, in the language of whoever reads the log. */
+    private static Text statusText(final byte status) {
+        return (switch (status) {
+            case OperationRecord.STATUS_COMPLETED -> LOG_DONE;
+            case OperationRecord.STATUS_PARTIAL -> LOG_PARTIAL;
+            case OperationRecord.STATUS_FAILED -> LOG_FAILED;
+            case OperationRecord.STATUS_PROCESSING -> LOG_RUNNING;
+            case OperationRecord.STATUS_WAITING -> LOG_WAITING;
+            case OperationRecord.STATUS_RESOURCE_LOCKED -> LOG_LOCKED;
+            case OperationRecord.STATUS_PENDING -> LOG_PENDING;
+            case OperationRecord.STATUS_DISCARDED -> LOG_DISCARDED;
+            default -> LOG_UNKNOWN;
+        }).text();
+    }
+
+    /**
+     * Puts items that left the buffer for the network back into it. The buffer may have refilled while they were
+     * away, so whatever no longer fits is dropped at the Gateway and logged rather than lost.
+     */
+    public static void returnToBuffer(final ServerLevel level, final NetworkGatewayBlockEntity gateway,
+                               final StorageKey key, final long amount, final String by) {
+        long left = amount - new BufferSink(gateway.buffer()).insert(key, amount, false);
+        if (left <= 0L) {
+            return;
         }
+        final long dropped = left;
+        final BlockPos at = gateway.getBlockPos();
+        final int max = Math.max(1, key.prototype().getMaxStackSize());
+        while (left > 0L) {
+            final int batch = (int) Math.min(left, max);
+            Containers.dropItemStack(level, at.getX() + 0.5D, at.getY() + 1.0D, at.getZ() + 0.5D, key.stack(batch));
+            left -= batch;
+        }
+        gateway.logged(by, LOG_RETURN_TO_BUFFER.text(), LOG_DROPPED.with(dropped), GatewayLog.Tone.BUSY);
+    }
+
+    private void returnToBuffer(final StorageKey key, final long amount, final String by) {
+        returnToBuffer(level, gateway, key, amount, by);
+    }
+
+    /** The live operations an id or a prefix of one names; one entry when it is unambiguous. */
+    private List<INetworkOperation> liveMatching(final MainframeBlockEntity mainframe, final String id) {
+        final List<INetworkOperation> found = new ArrayList<>();
+        for (final INetworkOperation live : mainframe.liveOperations()) {
+            if (matches(live.operationId(), id)) {
+                found.add(live);
+            }
+        }
+        return found;
     }
 
     private static boolean matches(final UUID id, final String asked) {
@@ -520,13 +650,15 @@ public final class GatewayService {
         return quantity <= 0L ? "all" : Long.toString(quantity);
     }
 
-    private static Map<String, Object> row(final OperationRecord record) {
-        return row("id", record.id().toString(), "type", typeName(record.type()), "status", status(record.status()),
-                "item", record.key() == null ? "" : nameOf(record.key()), "requested", record.requested(),
-                "moved", record.moved(), "priority", record.priority().serializedName());
+    private static Map<String, Object> luaTable(final OperationRecord record) {
+        return luaTable("id", record.id().toString(), "type", typeName(record.type()),
+                "status", status(record.status()), "item", record.key() == null ? "" : nameOf(record.key()),
+                "requested", record.requested(), "moved", record.moved(),
+                "priority", record.priority().serializedName());
     }
 
-    private static Map<String, Object> row(final Object... pairs) {
+    /** A table for the other side, its field names first and their values after each: names a program reads by. */
+    private static Map<String, Object> luaTable(final Object... pairs) {
         final Map<String, Object> made = new LinkedHashMap<>();
         for (int i = 0; i + 1 < pairs.length; i += 2) {
             made.put(String.valueOf(pairs[i]), pairs[i + 1]);
@@ -560,6 +692,7 @@ public final class GatewayService {
             case OperationRecord.TYPE_REINDEX -> "reindex";
             case OperationRecord.TYPE_VACUUM -> "vacuum";
             case OperationRecord.TYPE_DROP -> "drop";
+            case OperationRecord.TYPE_UPDATE -> "update";
             default -> "operation";
         };
     }

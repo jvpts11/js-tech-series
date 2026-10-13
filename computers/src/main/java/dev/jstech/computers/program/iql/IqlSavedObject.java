@@ -20,10 +20,6 @@ public record IqlSavedObject(IqlDefinition.ObjectType type, String name, String 
                 definition.triggerKind(), definition.triggerSpec());
     }
 
-    public boolean isJob() {
-        return type == IqlDefinition.ObjectType.JOB;
-    }
-
     public boolean hasTrigger() {
         return triggerKind != IqlDefinition.TriggerKind.NONE;
     }

@@ -1,0 +1,182 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.finding_help_overview.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.finding_help_overview.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.finding_help_overview.table1",
+      "heads": [
+        "jsc.guide.finding_help_overview.table1_head1",
+        "jsc.guide.finding_help_overview.table1_head2",
+        "jsc.guide.finding_help_overview.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "help"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "man"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "whatis"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "apropos"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "info"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "listcmd"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table1_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.finding_help_overview.table2",
+      "heads": [
+        "jsc.guide.finding_help_overview.table2_head1",
+        "jsc.guide.finding_help_overview.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.finding_help_overview.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.finding_help_overview.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.finding_help_overview.table2_2_1"
+          },
+          {
+            "literal": "whatis <command>"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.finding_help_overview.table2_3_1"
+          },
+          {
+            "literal": "apropos <word>"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.finding_help_overview.table2_4_1"
+          },
+          {
+            "literal": "info"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.finding_help_overview.table2_5_1"
+          },
+          {
+            "literal": "listcmd"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.finding_help_overview.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.finding_help_overview.definition1",
+      "term": "jsc.guide.finding_help_overview.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.finding_help_overview.definition2",
+      "term": "jsc.guide.finding_help_overview.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.finding_help_overview.fix1",
+          "problem": "jsc.guide.finding_help_overview.problem1"
+        },
+        {
+          "fix": "jsc.guide.finding_help_overview.fix2",
+          "problem": "jsc.guide.finding_help_overview.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:help_on_a_computer",
+        "jsc:shell"
+      ]
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:finding_help_overview",
+  "order": 221,
+  "section": "jsc:help_at_the_prompt",
+  "title": "jsc.guide.finding_help_overview.title"
+}

@@ -8,8 +8,8 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.registry.ClientHook;
 import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Reopens the client-only system installer at its "installation complete, reboot" beat. Mirrors
@@ -36,22 +36,19 @@ public interface IInstallDoneScreenOpener {
 
     final class Holder {
 
+        private static final ClientHook<IInstallDoneScreenOpener> HOOK = new ClientHook<>();
+
         private Holder() {
         }
 
-        @Nullable
-        private static IInstallDoneScreenOpener instance;
-
         public static void set(final IInstallDoneScreenOpener opener) {
-            instance = opener;
+            HOOK.set(opener);
         }
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final FirmwareKind kind,
                                 final String osName, final String targetLabel, final int targetSlot,
                                 final String failure) {
-            if (instance != null) {
-                instance.open(pos, monitorPos, kind, osName, targetLabel, targetSlot, failure);
-            }
+            HOOK.ifPresent(target -> target.open(pos, monitorPos, kind, osName, targetLabel, targetSlot, failure));
         }
     }
 }

@@ -126,9 +126,15 @@ public class TextField extends UiComponent {
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         final boolean focused = isFocused();
+        // Recorded unfocused too, so the click that gives the field the keyboard can place the caret.
+        this.font = ctx.font();
+        if (!focused) {
+            this.offset = 0;
+        }
         ctx.skin().field(g, x(), y(), width(), height(), focused);
         final String shown = focused ? state.edit() : state.value();
         final int textY = y() + (height() - 7) / 2;
+        final int ground = ctx.skin().fieldBg();
         if (focused) {
             /*
              * The caret has to stay in view: when the text is wider than the field, what is shown is
@@ -141,7 +147,6 @@ public class TextField extends UiComponent {
             while (offset < caret && ctx.font().width(shown.substring(offset, caret)) > avail) {
                 offset++;
             }
-            this.font = ctx.font();
             this.offset = offset;
             final String visible = Texts.clip(ctx.font(), shown.substring(offset), avail);
             if (state.hasSelection()) {
@@ -151,23 +156,24 @@ public class TextField extends UiComponent {
                 if (to > from) {
                     final int sx = x() + 3 + ctx.font().width(shown.substring(offset, from));
                     final int ex = x() + 3 + ctx.font().width(shown.substring(offset, to));
-                    g.fill(sx, textY - 1, ex, textY + 8, SELECTION);
+                    g.fill(sx, textY - 1, ex, textY + 8, ComponentPalette.get().selection());
                 }
             }
-            g.drawString(ctx.font(), visible, x() + 3, textY, ctx.skin().text(), false);
+            Draw.text(g, ctx.font(), visible, x() + 3, textY, ctx.skin().text(), ground);
             final int caretX = x() + 3 + ctx.font().width(shown.substring(offset, caret));
             g.fill(caretX, textY - 1, caretX + 1, textY + 8, ctx.skin().text());
             if (!tail.isEmpty()) {
-                g.drawString(ctx.font(), tail, x() + 3 + ctx.font().width(visible) + 1, textY, ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), tail, x() + 3 + ctx.font().width(visible) + 1, textY, ctx.skin().dim(),
+                        ground);
             }
             return;
         }
         if (shown.isEmpty()) {
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), placeholder.get(), width() - 6), x() + 3, textY,
-                    ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), placeholder.get(), width() - 6), x() + 3, textY,
+                    ctx.skin().dim(), ground);
         } else {
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), shown, width() - 6), x() + 3, textY,
-                    ctx.skin().text(), false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), shown, width() - 6), x() + 3, textY,
+                    ctx.skin().text(), ground);
         }
     }
 
@@ -193,8 +199,6 @@ public class TextField extends UiComponent {
         return state.selectedText();
     }
 
-    /** The colour the selection is drawn in, the same as the code editors use. */
-    private static final int SELECTION = 0x663A72B0;
     /** The font the field was last drawn with, which is what a click is measured against. */
     @Nullable
     private Font font;
@@ -207,7 +211,7 @@ public class TextField extends UiComponent {
      */
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
-        if (button == 0 && this.font != null && isFocused()) {
+        if (button == 0 && this.font != null) {
             state.moveTo(indexAt(mx), Screen.hasShiftDown());
         }
         return true;

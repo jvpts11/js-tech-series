@@ -8,13 +8,18 @@
 package dev.jstech.computers.program.iql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.program.iql.IIqlCondition.And;
 import dev.jstech.computers.program.iql.IIqlCondition.Comparison;
 import dev.jstech.computers.program.iql.IIqlCondition.Op;
 import dev.jstech.computers.program.iql.IIqlCondition.Or;
+import java.time.Duration;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
 class IqlConditionParserTest {
@@ -90,5 +95,42 @@ class IqlConditionParserTest {
         assertThrows(IllegalArgumentException.class, () -> IqlConditionParser.parse("qty <"));
         assertThrows(IllegalArgumentException.class, () -> IqlConditionParser.parse("< 100"));
         assertThrows(IllegalArgumentException.class, () -> IqlConditionParser.parse("(qty < 1"));
+    }
+
+    @Test
+    void parse_refusesAConditionNestedPastTheLimit() {
+        // Each of these ran the reading past the end of its stack; they are told no instead.
+        final int deep = 20_000;
+        assertThrows(IllegalArgumentException.class,
+                () -> IqlConditionParser.parse("NOT ".repeat(deep) + "qty < 1"));
+        assertThrows(IllegalArgumentException.class,
+                () -> IqlConditionParser.parse("(".repeat(deep) + "qty < 1" + ")".repeat(deep)));
+    }
+
+    @Test
+    void parse_takesAConditionAtTheLimit() {
+        final int deep = IqlConditionParser.MOST_DEPTH;
+        assertInstanceOf(Comparison.class,
+                IqlConditionParser.parse("(".repeat(deep) + "qty < 1" + ")".repeat(deep)));
+    }
+
+    @Test
+    void parse_refusesAConditionComparingPastTheLimit() {
+        final String many = String.join(" AND ", Collections.nCopies(IqlConditionParser.MOST_TERMS + 1, "qty < 1"));
+        assertThrows(IllegalArgumentException.class, () -> IqlConditionParser.parse(many));
+    }
+
+    @Test
+    void like_answersQuicklyAPatternOfManyStarsThatFails() {
+        final IIqlCondition condition = IqlConditionParser.parse("name like '" + "*a".repeat(30) + "b'");
+        final String longName = "a".repeat(200);
+        assertTimeoutPreemptively(Duration.ofSeconds(1),
+                () -> assertFalse(condition.matches(field -> longName)));
+    }
+
+    @Test
+    void like_matchesWithoutRegardToCase() {
+        assertTrue(IqlConditionParser.parse("name like '*ingot'").matches(field -> "Iron Ingot"));
+        assertFalse(IqlConditionParser.parse("name like '*ingot'").matches(field -> "Iron Ingot Block"));
     }
 }

@@ -23,6 +23,12 @@ import dev.jstech.core.id.StableIds;
 public record IqlDefinition(Verb verb, ObjectType objectType, String name, String body,
                             TriggerKind triggerKind, String triggerSpec) {
 
+    /**
+     * The longest name a saved object is given: what the lists that show it carry, and so what an action on it
+     * from one of those lists names it by.
+     */
+    public static final int MAX_NAME = 64;
+
     /** What the statement does to the catalog. */
     public enum Verb { CREATE, DROP, EXEC }
 

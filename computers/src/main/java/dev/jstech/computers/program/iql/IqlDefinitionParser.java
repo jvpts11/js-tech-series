@@ -39,11 +39,9 @@ public final class IqlDefinitionParser {
             inner = inner.substring(1, inner.length() - 1);
         }
         final List<String> statements = new ArrayList<>();
-        for (final String part : inner.split(";")) {
-            final String statement = part.strip();
-            if (!statement.isEmpty()) {
-                statements.add(statement);
-            }
+        /* The same quote- and brace-aware split as a script, so a semicolon inside a name ends nothing. */
+        for (final IqlScript.Statement statement : IqlScript.split(inner)) {
+            statements.add(statement.text());
         }
         return statements;
     }
@@ -65,26 +63,29 @@ public final class IqlDefinitionParser {
         final String[] typeAndRest = rest.split("\\s+", 2);
         final IqlDefinition.ObjectType type = objectType(typeAndRest[0]);
         if (type == null) {
-            throw new IllegalArgumentException("CREATE expects VIEW, PROCEDURE, or JOB");
+            throw IqlError.of(IqlError.CREATE_WHAT);
         }
         if (typeAndRest.length < 2) {
-            throw new IllegalArgumentException("CREATE " + name(type) + " needs a name and an AS body");
+            throw IqlError.of(IqlError.NEEDS_NAME_AND_BODY, name(type));
         }
         final String[] nameAndRest = typeAndRest[1].strip().split("\\s+", 2);
         final String objectName = nameAndRest[0];
         if (objectName.isEmpty() || nameAndRest.length < 2) {
-            throw new IllegalArgumentException("CREATE " + name(type) + " needs a name and an AS body");
+            throw IqlError.of(IqlError.NEEDS_NAME_AND_BODY, name(type));
+        }
+        if (objectName.length() > IqlDefinition.MAX_NAME) {
+            throw IqlError.of(IqlError.NAME_TOO_LONG, IqlDefinition.MAX_NAME);
         }
         final String afterName = nameAndRest[1].strip();
         if (!startsWithKeyword(afterName, "AS")) {
-            throw new IllegalArgumentException("expected AS after the " + name(type) + " name");
+            throw IqlError.of(IqlError.EXPECTED_AS, name(type));
         }
         final String body = afterName.substring(2).strip();
         if (type == IqlDefinition.ObjectType.JOB) {
             return parseJob(objectName, body);
         }
         if (body.isEmpty()) {
-            throw new IllegalArgumentException("CREATE " + name(type) + " needs a body after AS");
+            throw IqlError.of(IqlError.NEEDS_BODY, name(type));
         }
         return IqlDefinition.create(type, objectName, body, IqlDefinition.TriggerKind.NONE, "");
     }
@@ -93,19 +94,18 @@ public final class IqlDefinitionParser {
         final int every = keywordIndex(afterAs, "EVERY");
         final int when = keywordIndex(afterAs, "WHEN");
         if (every < 0 && when < 0) {
-            throw new IllegalArgumentException(
-                    "CREATE JOB needs a trigger: EVERY <duration> or WHEN <condition>");
+            throw IqlError.of(IqlError.JOB_NEEDS_TRIGGER);
         }
-        final boolean useEvery = every >= 0 && (when < 0 || every < when);
+        final boolean useEvery = every > when;
         final int at = useEvery ? every : when;
         final int keywordLength = useEvery ? "EVERY".length() : "WHEN".length();
         final String body = afterAs.substring(0, at).strip();
         final String spec = afterAs.substring(at + keywordLength).strip();
         if (body.isEmpty()) {
-            throw new IllegalArgumentException("CREATE JOB needs a body before its trigger");
+            throw IqlError.of(IqlError.JOB_NEEDS_BODY);
         }
         if (spec.isEmpty()) {
-            throw new IllegalArgumentException("CREATE JOB trigger needs a value");
+            throw IqlError.of(IqlError.TRIGGER_NEEDS_VALUE);
         }
         return IqlDefinition.create(IqlDefinition.ObjectType.JOB, name, body,
                 useEvery ? IqlDefinition.TriggerKind.EVERY : IqlDefinition.TriggerKind.WHEN, spec);
@@ -118,7 +118,7 @@ public final class IqlDefinitionParser {
             return null; // DROP <item> is the action, not a definition drop, so fall through to the action parser
         }
         if (parts.length < 2 || parts[1].isBlank()) {
-            throw new IllegalArgumentException("DROP " + name(type) + " needs a name");
+            throw IqlError.of(IqlError.DROP_NEEDS_NAME, name(type));
         }
         return IqlDefinition.drop(type, parts[1].strip());
     }
@@ -126,10 +126,10 @@ public final class IqlDefinitionParser {
     private static IqlDefinition parseExec(final String rest) {
         final String procedure = rest.strip();
         if (procedure.isEmpty()) {
-            throw new IllegalArgumentException("EXEC needs a procedure name");
+            throw IqlError.of(IqlError.EXEC_NEEDS_NAME);
         }
         if (procedure.split("\\s+").length > 1) {
-            throw new IllegalArgumentException("EXEC takes a single procedure name");
+            throw IqlError.of(IqlError.EXEC_ONE_NAME);
         }
         return IqlDefinition.exec(procedure);
     }
@@ -153,9 +153,38 @@ public final class IqlDefinitionParser {
                 && (text.length() == keyword.length() || Character.isWhitespace(text.charAt(keyword.length())));
     }
 
-    /** Index of {@code keyword} as a standalone word in {@code text} (case-insensitive), or -1. */
+    /**
+     * Index of the last {@code keyword} standing alone in {@code text} (case-insensitive) outside any quoted
+     * name and any braces, or -1. The last one is the job's trigger: a bus or item name that happens to be
+     * the word is quoted, and a bus setting may itself say WHEN earlier in the body.
+     */
     private static int keywordIndex(final String text, final String keyword) {
         final Matcher matcher = Pattern.compile("(?i)\\b" + keyword + "\\b").matcher(text);
-        return matcher.find() ? matcher.start() : -1;
+        int found = -1;
+        while (matcher.find()) {
+            if (isTopLevel(text, matcher.start())) {
+                found = matcher.start();
+            }
+        }
+        return found;
+    }
+
+    /** Whether the position in {@code text} is outside every quoted run and every brace block. */
+    private static boolean isTopLevel(final String text, final int position) {
+        int depth = 0;
+        char quote = 0;
+        for (int i = 0; i < position; i++) {
+            final char c = text.charAt(i);
+            if (quote != 0) {
+                quote = c == quote ? 0 : quote;
+            } else if (c == '"' || c == '\'') {
+                quote = c;
+            } else if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth = Math.max(0, depth - 1);
+            }
+        }
+        return quote == 0 && depth == 0;
     }
 }

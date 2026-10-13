@@ -7,13 +7,14 @@
  */
 package dev.jstech.computers.os.fs;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.core.audio.media.MediaStore;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.world.item.ItemStack;
 
@@ -54,8 +55,18 @@ public final class DiskFilesystem {
 
     /** The weight of every file on {@code volume}, in mB-equivalents at the volume's own era. */
     public static long filesWeight(final ItemStack volume) {
-        return volume.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY)
+        return volume.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY)
                 .usedWeight(eraOf(volume));
+    }
+
+    /**
+     * What the file at {@code path} weighs on {@code volume}, in mB-equivalents, or 0 when there is none: the room a
+     * write over it hands back.
+     */
+    public static long weightOf(final ItemStack volume, final String path) {
+        final StoredFile file = volume.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY)
+                .files().get(path);
+        return file == null ? 0L : file.weight(eraOf(volume));
     }
 
     private DiskFilesystem() {
@@ -90,10 +101,12 @@ public final class DiskFilesystem {
     public enum WriteResult {
         /** The file was written (created or overwritten) successfully. */
         OK,
-        /** The path is syntactically invalid for the given {@link FilesystemKind}. */
+        /** The path is syntactically invalid for the given {@link FilesystemKind}, or already names a folder. */
         INVALID_PATH,
         /** The file's size would exceed the available free-weight budget. */
         DISK_FULL,
+        /** The file would be longer than a file holds ({@link StoredFile#MOST_CHARS}). */
+        TOO_LARGE,
         /**
          * The requested {@link FileType} is a virtual projection ({@link FileType#virtualProjection()}
          * returns true) and cannot be written as a real file.
@@ -139,7 +152,7 @@ public final class DiskFilesystem {
         }
 
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final HardwareEra era = eraOf(disk);
 
         final List<FileEntry> result = new ArrayList<>();
@@ -185,7 +198,7 @@ public final class DiskFilesystem {
      */
     public static Optional<String> read(final ItemStack disk, final String path) {
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final StoredFile file = fs.files().get(path);
         if (file == null || file.type().virtualProjection()) {
             return Optional.empty();
@@ -202,9 +215,12 @@ public final class DiskFilesystem {
      * <ol>
      *   <li>If {@code path} is not valid for {@code kind} ({@link FsPaths#isValidPath}),
      *       returns {@link WriteResult#INVALID_PATH} without mutation.</li>
-     *   <li>If {@code type} is a virtual projection ({@link FileType#virtualProjection()}),
-     *       returns {@link WriteResult#READ_ONLY} without mutation.</li>
-     *   <li>If the file's byte cost ({@link FsPaths#sizeMbEq} of the UTF-8-encoded content)
+     *   <li>If {@code type} is a virtual projection ({@link FileType#virtualProjection()}), or the content is not
+     *       what a file of that type may hold (a recording the server does not keep, or a recording's lines under
+     *       another type), returns {@link WriteResult#READ_ONLY} without mutation.</li>
+     *   <li>If the content is longer than a file holds ({@link StoredFile#MOST_CHARS}), returns
+     *       {@link WriteResult#TOO_LARGE} without mutation.</li>
+     *   <li>If the file's byte cost ({@link FsPaths#sizeMbEq} of {@link StoredFile#bytesOf})
      *       exceeds {@code freeWeight}, returns {@link WriteResult#DISK_FULL} without
      *       mutation.</li>
      *   <li>Otherwise, updates the {@code FILESYSTEM} component on {@code disk} and returns
@@ -236,18 +252,26 @@ public final class DiskFilesystem {
         if (!FsPaths.isValidPath(path, kind)) {
             return WriteResult.INVALID_PATH;
         }
-        if (type.virtualProjection() || installerLocked(disk)) {
+        if (type.virtualProjection() || installerLocked(disk) || !holdsItsKind(type, content)) {
             return WriteResult.READ_ONLY;
         }
-        final int byteCount = content.getBytes(StandardCharsets.UTF_8).length;
-        final long cost = FsPaths.sizeMbEq(byteCount, eraOf(disk));
+        if (content.length() > StoredFile.MOST_CHARS) {
+            return WriteResult.TOO_LARGE;
+        }
+        final long cost = FsPaths.sizeMbEq(StoredFile.bytesOf(type, content), eraOf(disk));
         if (cost > freeWeight) {
             return WriteResult.DISK_FULL;
         }
         final FilesystemContents current = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        if (namesAFolder(current, path) || standsUnderAFile(current, path)) {
+            return WriteResult.INVALID_PATH;
+        }
         final FilesystemContents updated = current.with(new StoredFile(path, type, content, now));
-        disk.set(ComputingModule.FILESYSTEM.get(), updated);
+        if (overfull(updated)) {
+            return WriteResult.DISK_FULL;
+        }
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return WriteResult.OK;
     }
 
@@ -264,39 +288,42 @@ public final class DiskFilesystem {
         if (!FsPaths.isValidPath(path, kind)) {
             return WriteResult.INVALID_PATH;
         }
-        if (type.virtualProjection() || installerLocked(disk)) {
+        // A recording is only ever the song it names: nothing is added to the end of one.
+        if (type.virtualProjection() || type.recording() || installerLocked(disk)) {
             return WriteResult.READ_ONLY;
         }
         final FilesystemContents current = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final StoredFile had = current.files().get(path);
-        if (had != null && had.type().virtualProjection()) {
+        if (had != null && (had.type().virtualProjection() || had.type().recording())) {
             return WriteResult.READ_ONLY;
         }
-        final int held = had == null ? 0 : had.byteSize();
-        final int added = addition.getBytes(StandardCharsets.UTF_8).length;
+        if (namesAFolder(current, path) || standsUnderAFile(current, path)) {
+            return WriteResult.INVALID_PATH;
+        }
+        if ((long) (had == null ? 0 : had.content().length()) + addition.length() > StoredFile.MOST_CHARS) {
+            return WriteResult.TOO_LARGE;
+        }
+        final long held = had == null ? 0L : had.byteSize();
+        final long added = addition.getBytes(StandardCharsets.UTF_8).length;
         final long grows = FsPaths.sizeMbEq(held + added, eraOf(disk)) - FsPaths.sizeMbEq(held, eraOf(disk));
         if (grows > freeWeight) {
             return WriteResult.DISK_FULL;
         }
         final String content = had == null ? addition : had.content() + addition;
-        disk.set(ComputingModule.FILESYSTEM.get(), current.with(new StoredFile(path, type, content, now)));
+        if (!holdsItsKind(type, content)) {
+            return WriteResult.READ_ONLY;
+        }
+        final FilesystemContents updated = current.with(new StoredFile(path, type, content, now));
+        if (overfull(updated)) {
+            return WriteResult.DISK_FULL;
+        }
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return WriteResult.OK;
     }
 
     // delete
 
-    /**
-     * Deletes a real file at {@code path} from the disk.
-     *
-     * <p>Returns {@code false}, without mutation, if the path does not exist as a real stored
-     * file or if the path corresponds to a {@code .dat} virtual projection (items cannot be removed
-     * this way; use the Network Interactor instead).
-     *
-     * @param disk the disk {@link ItemStack} to modify
-     * @param path the full path of the file to delete
-     * @return true if the file was found and removed; false otherwise
-     */
     /**
      * Whether {@code volume} is an install medium: a stamp on blank media whose whole listing is a
      * projection. Nothing is ever written to, removed from or moved on one, so a setup disc can neither
@@ -312,18 +339,29 @@ public final class DiskFilesystem {
                 && MediaItem.payload(volume) != null;
     }
 
+    /**
+     * Deletes a real file at {@code path} from the disk.
+     *
+     * <p>Returns {@code false}, without mutation, if the path does not exist as a real stored
+     * file or if the path corresponds to a {@code .dat} virtual projection (items cannot be removed
+     * this way; use the Network Interactor instead).
+     *
+     * @param disk the disk {@link ItemStack} to modify
+     * @param path the full path of the file to delete
+     * @return true if the file was found and removed; false otherwise
+     */
     public static boolean delete(final ItemStack disk, final String path) {
         if (installerLocked(disk)) {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final StoredFile file = fs.files().get(path);
         // Guard: never delete a .dat entry (virtual projection) or a missing file.
         if (file == null || file.type().virtualProjection()) {
             return false;
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), fs.without(path));
+        disk.set(ComputingComponents.FILESYSTEM.get(), fs.without(path));
         return true;
     }
 
@@ -341,7 +379,7 @@ public final class DiskFilesystem {
      */
     public static boolean exists(final ItemStack disk, final String path) {
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         return fs.files().containsKey(path);
     }
 
@@ -381,11 +419,41 @@ public final class DiskFilesystem {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         if (fs.files().containsKey(path) || fs.hasDir(path)) {
             return false;
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), fs.withDir(path));
+        final FilesystemContents updated = fs.withDir(path);
+        if (overfull(updated)) {
+            return false;
+        }
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
+        return true;
+    }
+
+    /**
+     * Makes the folder at {@code path} and every folder above it that is not there yet, so a program can put a file
+     * in a folder the system never laid down.
+     *
+     * @return whether the folder is there afterwards; false when the kind has no folders, the path is invalid or a
+     *         file stands where one of the folders would go
+     */
+    public static boolean mkdirs(final ItemStack disk, final String path, final FilesystemKind kind) {
+        if (kind != FilesystemKind.HIERARCHICAL || !FsPaths.isValidPath(path, kind) || installerLocked(disk)) {
+            return false;
+        }
+        String at = "";
+        for (final String segment : path.split("/")) {
+            at = FsPaths.join(at, segment);
+            final FilesystemContents fs = disk.getOrDefault(
+                    ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+            if (fs.files().containsKey(at)) {
+                return false;
+            }
+            if (!namesAFolder(fs, at) && !mkdir(disk, at, kind)) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -408,7 +476,7 @@ public final class DiskFilesystem {
             return List.of();
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final Set<String> dirs = new LinkedHashSet<>();
         // Explicit directories whose immediate parent is `dir`.
         for (final String d : fs.directories()) {
@@ -455,11 +523,11 @@ public final class DiskFilesystem {
      * @return true if at least one directory or file was removed
      */
     public static boolean rmdir(final ItemStack disk, final String path, final FilesystemKind kind) {
-        if (kind != FilesystemKind.HIERARCHICAL) {
+        if (kind != FilesystemKind.HIERARCHICAL || installerLocked(disk)) {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         FilesystemContents updated = fs;
         boolean changed = false;
         if (updated.hasDir(path)) {
@@ -479,7 +547,7 @@ public final class DiskFilesystem {
             }
         }
         if (changed) {
-            disk.set(ComputingModule.FILESYSTEM.get(), updated);
+            disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         }
         return changed;
     }
@@ -535,6 +603,61 @@ public final class DiskFilesystem {
     }
 
     /**
+     * Whether {@code content} may be written as a file of {@code type}.
+     *
+     * <p>A recording file names a recording the server keeps and weighs what that recording weighs, so one is only
+     * written when the server really keeps the recording it names, of the kind the file is. And a recording's lines
+     * are never written as any other kind: as text they would weigh a few bytes, and could be written back as the
+     * song, leaving a disk that holds music for nothing.
+     */
+    private static boolean holdsItsKind(final FileType type, final String content) {
+        // A picture is a picture: anything else written under its name would be a file no paint program can open.
+        if (type == FileType.PIX && PixImage.decode(content) == null) {
+            return false;
+        }
+        final RecordingFile recording = RecordingFile.read(content);
+        if (!type.recording()) {
+            return recording == null;
+        }
+        return recording != null && type.extension().equals(recording.media().format())
+                && MediaStore.current().map(store -> store.has(recording.media())).orElse(false);
+    }
+
+    /**
+     * Whether {@code path} is a folder: one made on its own, or one that exists because files sit inside it.
+     *
+     * <p>A file is never put at such a path. The disk would then hold a file and a folder of the same name, which
+     * a listing shows twice and nothing can tell apart.
+     */
+    private static boolean namesAFolder(final FilesystemContents fs, final String path) {
+        return fs.hasDir(path) || fs.files().keySet().stream().anyMatch(p -> FsPaths.isUnder(path, p));
+    }
+
+    /*
+     * Whether a disk would hold more files or folders than its contents can be sent to the players holding it. Past
+     * that, every time the disk was sent, the player holding it was dropped from the game, so a disk is full there.
+     */
+    private static boolean overfull(final FilesystemContents fs) {
+        return fs.files().size() > FilesystemContents.MOST_FILES
+                || fs.directories().size() > FilesystemContents.MOST_DIRS;
+    }
+
+    /**
+     * Whether a proper ancestor of {@code path} is a stored file, so nothing can be put at {@code path}: the disk
+     * would hold one name as both a file and a folder.
+     */
+    private static boolean standsUnderAFile(final FilesystemContents fs, final String path) {
+        int slash = path.indexOf('/');
+        while (slash >= 0) {
+            if (fs.files().containsKey(path.substring(0, slash))) {
+                return true;
+            }
+            slash = path.indexOf('/', slash + 1);
+        }
+        return false;
+    }
+
+    /**
      * Re-keys a file or directory from {@code src} to the full path {@code dest}.
      *
      * <p>Returns {@code false}, without mutation, when the kind is not hierarchical, the
@@ -548,7 +671,7 @@ public final class DiskFilesystem {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         if (dest.equals(src) || !FsPaths.isValidPath(dest, kind)) {
             return false;
         }
@@ -556,7 +679,8 @@ public final class DiskFilesystem {
         // File: re-key the single stored file.
         final StoredFile file = fs.files().get(src);
         if (file != null) {
-            if (file.type().virtualProjection() || fs.files().containsKey(dest)) {
+            if (file.type().virtualProjection() || fs.files().containsKey(dest) || namesAFolder(fs, dest)
+                    || standsUnderAFile(fs, dest)) {
                 return false;
             }
             /*
@@ -569,7 +693,14 @@ public final class DiskFilesystem {
             if (newType.virtualProjection()) {
                 return false;
             }
-            disk.set(ComputingModule.FILESYSTEM.get(),
+            /*
+             * A recording keeps its kind. Renamed to text it would weigh a few bytes and could be renamed back into
+             * the song, and text renamed into one would be a song nobody brought.
+             */
+            if (newType != file.type() && (newType.recording() || file.type().recording())) {
+                return false;
+            }
+            disk.set(ComputingComponents.FILESYSTEM.get(),
                     fs.without(src).with(new StoredFile(dest, newType, file.content(), file.modified())));
             return true;
         }
@@ -589,7 +720,7 @@ public final class DiskFilesystem {
          * directory (or over an existing file) would silently overwrite colliding entries and destroy
          * data. Mirrors the collision guard on the file-rename branch above.
          */
-        if (fs.hasDir(dest) || fs.files().containsKey(dest)
+        if (fs.hasDir(dest) || fs.files().containsKey(dest) || standsUnderAFile(fs, dest)
                 || fs.files().keySet().stream().anyMatch(p -> FsPaths.isUnder(dest, p))) {
             return false;
         }
@@ -606,7 +737,7 @@ public final class DiskFilesystem {
                         .with(new StoredFile(dest + f.substring(src.length()), sf.type(), sf.content(), sf.modified()));
             }
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), updated);
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return true;
     }
 
@@ -619,23 +750,29 @@ public final class DiskFilesystem {
      */
     public static boolean copy(final ItemStack disk, final String src, final String dest,
                                final long freeWeight, final FilesystemKind kind) {
-        if (kind != FilesystemKind.HIERARCHICAL || dest.equals(src) || !FsPaths.isValidPath(dest, kind)) {
+        if (kind != FilesystemKind.HIERARCHICAL || dest.equals(src) || !FsPaths.isValidPath(dest, kind)
+                || installerLocked(disk)) {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
 
         // File: duplicate the single stored file at the new path.
         final StoredFile file = fs.files().get(src);
         if (file != null) {
-            if (file.type().virtualProjection() || fs.files().containsKey(dest)) {
+            if (file.type().virtualProjection() || fs.files().containsKey(dest) || namesAFolder(fs, dest)
+                    || standsUnderAFile(fs, dest)) {
                 return false;
             }
             if (file.weight(eraOf(disk)) > freeWeight) {
                 return false;
             }
-            disk.set(ComputingModule.FILESYSTEM.get(),
-                    fs.with(new StoredFile(dest, file.type(), file.content(), file.modified())));
+            final FilesystemContents copied = fs.with(new StoredFile(dest, file.type(), file.content(),
+                    file.modified()));
+            if (overfull(copied)) {
+                return false;
+            }
+            disk.set(ComputingComponents.FILESYSTEM.get(), copied);
             return true;
         }
 
@@ -645,7 +782,7 @@ public final class DiskFilesystem {
         if (!isDir || FsPaths.isUnder(src, dest)) {
             return false;
         }
-        if (fs.hasDir(dest) || fs.files().containsKey(dest)
+        if (fs.hasDir(dest) || fs.files().containsKey(dest) || standsUnderAFile(fs, dest)
                 || fs.files().keySet().stream().anyMatch(p -> FsPaths.isUnder(dest, p))) {
             return false;
         }
@@ -671,7 +808,10 @@ public final class DiskFilesystem {
                 updated = updated.with(new StoredFile(dest + f.substring(src.length()), sf.type(), sf.content(), sf.modified()));
             }
         }
-        disk.set(ComputingModule.FILESYSTEM.get(), updated);
+        if (overfull(updated)) {
+            return false;
+        }
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return true;
     }
 }

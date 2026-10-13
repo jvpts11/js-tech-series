@@ -1,0 +1,131 @@
+{
+  "parent": "jsc:systems/distro_hopper",
+  "criteria": {
+    "arch": {
+      "conditions": {
+        "detail": "arch",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "debian": {
+      "conditions": {
+        "detail": "debian",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "fedora": {
+      "conditions": {
+        "detail": "fedora",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "frames_10": {
+      "conditions": {
+        "detail": "frames_10",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "frames_11": {
+      "conditions": {
+        "detail": "frames_11",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "frames_7": {
+      "conditions": {
+        "detail": "frames_7",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "frames_95": {
+      "conditions": {
+        "detail": "frames_95",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "frames_xp": {
+      "conditions": {
+        "detail": "frames_xp",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "freebsd": {
+      "conditions": {
+        "detail": "freebsd",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "gentoo": {
+      "conditions": {
+        "detail": "gentoo",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "ubuntu": {
+      "conditions": {
+        "detail": "ubuntu",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.professional_larper.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:painting"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.professional_larper.title"
+    }
+  },
+  "requirements": [
+    [
+      "ubuntu"
+    ],
+    [
+      "debian"
+    ],
+    [
+      "fedora"
+    ],
+    [
+      "arch"
+    ],
+    [
+      "gentoo"
+    ],
+    [
+      "freebsd"
+    ],
+    [
+      "frames_95"
+    ],
+    [
+      "frames_xp"
+    ],
+    [
+      "frames_7"
+    ],
+    [
+      "frames_10"
+    ],
+    [
+      "frames_11"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

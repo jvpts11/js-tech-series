@@ -1,0 +1,184 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_sounds.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_sounds.table1",
+      "heads": [
+        "jsc.guide.system_sounds.table1_head1",
+        "jsc.guide.system_sounds.table1_head2",
+        "jsc.guide.system_sounds.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.system_sounds.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_sounds.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_sounds.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_sounds.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_sounds.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_sounds.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_sounds.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_sounds.table2",
+      "heads": [
+        "jsc.guide.system_sounds.table2_head1",
+        "jsc.guide.system_sounds.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.system_sounds.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_sounds.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_sounds.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_sounds.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.system_sounds.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_sounds.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_sounds.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_sounds.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_sounds.fix1",
+          "problem": "jsc.guide.system_sounds.problem1"
+        },
+        {
+          "fix": "jsc.guide.system_sounds.fix2",
+          "problem": "jsc.guide.system_sounds.problem2"
+        },
+        {
+          "fix": "jsc.guide.system_sounds.fix3",
+          "problem": "jsc.guide.system_sounds.problem3"
+        },
+        {
+          "fix": "jsc.guide.system_sounds.fix4",
+          "problem": "jsc.guide.system_sounds.problem4"
+        }
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.system_sounds.definition1",
+      "term": "jsc.guide.system_sounds.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.system_sounds.definition2",
+      "term": "jsc.guide.system_sounds.term2"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_settings",
+        "jsc:speakers",
+        "jsc:sound_cards"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:system_sounds",
+  "order": 160,
+  "section": "jsc:desktop_settings",
+  "title": "jsc.guide.system_sounds.title"
+}

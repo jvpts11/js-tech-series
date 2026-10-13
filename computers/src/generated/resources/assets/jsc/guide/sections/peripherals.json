@@ -1,0 +1,7 @@
+{
+  "chapter": "jsc:peripheral_devices",
+  "icon": "jsc:monitor",
+  "id": "jsc:peripherals",
+  "order": 9,
+  "title": "jsc.guide.section.peripherals"
+}

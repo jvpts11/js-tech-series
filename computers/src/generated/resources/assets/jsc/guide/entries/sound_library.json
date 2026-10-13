@@ -1,0 +1,234 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_library.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sound_library.definition1",
+      "term": "jsc.guide.sound_library.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sound_library.definition2",
+      "term": "jsc.guide.sound_library.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sound_library.definition3",
+      "term": "jsc.guide.sound_library.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sound_library.definition4",
+      "term": "jsc.guide.sound_library.term4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sound_library.table1",
+      "heads": [
+        "jsc.guide.sound_library.table1_head1",
+        "jsc.guide.sound_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Sound.Beep(hertz, millis)"
+          },
+          {
+            "words": "jsc.guide.sound_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Sound.Tones(tune)"
+          },
+          {
+            "words": "jsc.guide.sound_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Sound.Play(path)"
+          },
+          {
+            "words": "jsc.guide.sound_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Sound.Stop()"
+          },
+          {
+            "words": "jsc.guide.sound_library.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sound_library.table2",
+      "heads": [
+        "jsc.guide.sound_library.table2_head1",
+        "jsc.guide.sound_library.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Speaker.Named(name)"
+          },
+          {
+            "words": "jsc.guide.sound_library.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Speaker.Name"
+          },
+          {
+            "words": "jsc.guide.sound_library.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Speaker.Play(path)"
+          },
+          {
+            "words": "jsc.guide.sound_library.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_library.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sound_library.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_library.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sound_library.table3",
+      "heads": [
+        "jsc.guide.sound_library.table3_head1",
+        "jsc.guide.sound_library.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "C4"
+          },
+          {
+            "words": "jsc.guide.sound_library.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "F#3, Bb5"
+          },
+          {
+            "words": "jsc.guide.sound_library.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "440"
+          },
+          {
+            "words": "jsc.guide.sound_library.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "R"
+          },
+          {
+            "words": "jsc.guide.sound_library.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "C4+E4+G4"
+          },
+          {
+            "words": "jsc.guide.sound_library.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": ":250"
+          },
+          {
+            "words": "jsc.guide.sound_library.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_library.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_library.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sound_library.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_library.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_library.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_library.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sound_library.fix1",
+          "problem": "jsc.guide.sound_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.sound_library.fix2",
+          "problem": "jsc.guide.sound_library.problem2"
+        },
+        {
+          "fix": "jsc.guide.sound_library.fix3",
+          "problem": "jsc.guide.sound_library.problem3"
+        },
+        {
+          "fix": "jsc.guide.sound_library.fix4",
+          "problem": "jsc.guide.sound_library.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sound_cards",
+        "jsc:speakers"
+      ]
+    }
+  ],
+  "id": "jsc:sound_library",
+  "order": 367,
+  "section": "jsc:library_machine",
+  "title": "jsc.guide.sound_library.title"
+}

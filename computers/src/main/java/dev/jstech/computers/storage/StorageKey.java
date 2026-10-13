@@ -9,8 +9,9 @@ package dev.jstech.computers.storage;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.chemical.ChemicalBridges;
+import dev.jstech.core.chemical.IChemicalBridge;
 import dev.jstech.core.util.Sizes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -94,6 +95,29 @@ public final class StorageKey {
             return null;
         }
         return BuiltInRegistries.ITEM.getOptional(location).map(StorageKey::of).orElse(null);
+    }
+
+    /**
+     * The key a text id of {@link #id()} names ({@code item|minecraft:iron_ingot}), or null when it names nothing
+     * known: what a log line written with the id is shown with again.
+     */
+    @Nullable
+    public static StorageKey byId(final String id) {
+        final int bar = id == null ? -1 : id.indexOf('|');
+        if (bar < 0) {
+            return null;
+        }
+        final ResourceLocation location = ResourceLocation.tryParse(id.substring(bar + 1));
+        if (location == null) {
+            return null;
+        }
+        return switch (id.substring(0, bar)) {
+            case "item" -> BuiltInRegistries.ITEM.getOptional(location).map(StorageKey::of).orElse(null);
+            case "fluid" -> BuiltInRegistries.FLUID.getOptional(location).map(fluid -> new FluidStack(fluid, 1))
+                    .filter(stack -> !stack.isEmpty()).map(StorageKey::of).orElse(null);
+            case "chemical" -> StorageKey.chemical(location);
+            default -> null;
+        };
     }
 
     public Kind kind() {
@@ -226,16 +250,6 @@ public final class StorageKey {
                 case FLUID -> Either.left(Either.right(key.fluidStack(1)));
                 case CHEMICAL -> Either.right(key);
             });
-
-    public DataResult<StorageKey> validated() {
-        if (kind == Kind.ITEM && itemPrototype.isEmpty()) {
-            return DataResult.error(() -> "empty item storage key");
-        }
-        if (kind == Kind.CHEMICAL && chemical == null) {
-            return DataResult.error(() -> "chemical storage key without an id");
-        }
-        return DataResult.success(this);
-    }
 
     private static final byte WIRE_ITEM = 0;
     private static final byte WIRE_FLUID = 1;

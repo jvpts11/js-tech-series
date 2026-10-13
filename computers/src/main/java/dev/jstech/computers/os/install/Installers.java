@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.os.install;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.IOsHost;
@@ -16,10 +15,13 @@ import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -29,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Reads a machine for the things its installer has to ask about: the disks it has, what each already holds, and
@@ -44,14 +48,18 @@ public final class Installers {
     }
 
     /**
-     * The disks the installer can offer, in slot order.
+     * The disks the installer can offer, in slot order, each named the way its maker called it, or, when
+     * {@code adaNames} is set, the way {@code bsdinstall} names one instead: {@code ada0}, {@code ada1} and so on,
+     * counted the same way {@link Installers#adaLabel} and the boot lines count them, so the two never disagree
+     * about which drive is which.
      *
      * <p>What is free on a disk is what would really fit on it, so the free room is counted in whole units of
      * whatever this generation of disk stores a file in, and the system already on it is part of what is taken.
      * Counting it any other way would let a page offer a disk that the write then refuses.
      */
-    public static List<InstallerFlow.Disk> disksOf(final IOsHost machine) {
+    public static List<InstallerFlow.Disk> disksOf(final IOsHost machine, final boolean adaNames) {
         final List<InstallerFlow.Disk> disks = new ArrayList<>();
+        int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack stack = machine.diskInSlot(slot);
             if (!(stack.getItem() instanceof DiskItem disk)) {
@@ -59,12 +67,23 @@ public final class Installers {
             }
             final HardwareEra era = disk.spec().era();
             final long sizeMb = disk.spec().capacityItems() * era.mbPerItem();
-            final long freeMb = OsDisks.systemDiskFreeWeight(stack) / StorageKey.MB_EQ_PER_ITEM * era.mbPerItem();
-            disks.add(new InstallerFlow.Disk(slot, stack.getHoverName().getString(),
+            final long freeMb = OsDisks.systemDiskFreeWeight(stack) * era.mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
+            final String label = adaNames ? adaLabel(drive) : stack.getHoverName().getString();
+            disks.add(new InstallerFlow.Disk(slot, label,
                     (int) Math.min(Integer.MAX_VALUE, sizeMb), (int) Math.min(Integer.MAX_VALUE, freeMb),
                     holderOf(stack), disk.spec().tier().speedMultiplier()));
+            drive++;
         }
         return disks;
+    }
+
+    /**
+     * A disk drive by FreeBSD's own name for one, {@code ada<n>}: shared here rather than kept inline wherever a
+     * drive is named this way, so {@code bsdinstall}'s disk page and the boot lines never spell the same drive
+     * two different ways.
+     */
+    public static String adaLabel(final int driveIndex) {
+        return "ada" + driveIndex;
     }
 
     /**
@@ -111,23 +130,20 @@ public final class Installers {
      *
      * <p>Beside {@link #networkHost} and {@link #mirrorHost} because it answers the same kind of question about
      * the same Mainframe: what a machine finds when it looks up its own network.
+     *
+     * <p>The services are named as they are sold, which is data in every language.
      */
-    public static String servicesOn(final IOsHost machine, final ServerLevel level) {
+    public static Text servicesOn(final IOsHost machine, final ServerLevel level) {
         final MainframeBlockEntity mainframe = mainframeOf(machine, level);
         if (mainframe == null) {
-            return "";
+            return Text.EMPTY;
         }
-        final List<String> running = new ArrayList<>();
-        if (mainframe.isIqlEngineInstalled()) {
-            running.add("IQL Engine");
-        }
-        if (mainframe.isAutomationEngineInstalled()) {
-            running.add("Automation Engine");
-        }
-        if (mainframe.isMirrorInstalled()) {
-            running.add("Mirror");
-        }
-        return String.join(", ", running);
+        final ProgramSpec engine = mainframe.activeEngine() == null ? null : Programs.get(mainframe.activeEngine());
+        return Text.literal(String.join(", ", Stream.of(
+                        engine == null ? null : engine.name().english(),
+                        mainframe.isAutomationEngineInstalled() ? "Automation Engine" : null,
+                        mainframe.isMirrorInstalled() ? "Mirror" : null)
+                .filter(Objects::nonNull).toList()));
     }
 
     /** The Mainframe orchestrating this machine's network, or null when it belongs to none. */
@@ -138,7 +154,7 @@ public final class Installers {
             return null;
         }
         return NetworkSystem.get(level).mainframePositionOf(net)
-                .map(pos -> level.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
+                .map(pos -> Loaded.blockEntity(level, BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
                 .orElse(null);
     }
 
@@ -161,26 +177,31 @@ public final class Installers {
         final String mirror = system.installerStyle().offersDesktop() ? mirrorHost(machine, level) : "";
         final List<InstallerFlow.Desktop> desktops = mirror.isEmpty()
                 ? List.of() : desktopsFor(system, era, SetupTiming.eraFactor(era));
+        final boolean adaNames = system.installerStyle() == InstallerStyle.BSD_INSTALL;
         return InstallerFlow.beginning(system.installerStyle(), system.id().toString(), system.displayName(),
-                system.footprintMb(), baseRate, disksOf(machine), machineName(machine), desktops, mirror);
+                system.footprintMb(), baseRate, disksOf(machine, adaNames), machineName(machine), desktops, mirror);
     }
 
     /**
-     * An installation put back on a machine as it stands now, with the answers it had been given.
+     * An installation put back on a machine as it stands now, with the answers it had been given, including
+     * bsdinstall's own pages.
      *
      * <p>The disks and the desktops are read again rather than remembered, so a disk pulled out while the world
      * was away is simply not on the list any more.
      */
     public static InstallerFlow restored(final IOsHost machine, final ServerLevel level, final OsDef system,
                                          final int copyTicks, final int stageIndex, final int targetSlot,
-                                         final String computerName, final String desktopId, final int eraseSlot) {
+                                         final String computerName, final String desktopId, final int eraseSlot,
+                                         final boolean portsSelected, final boolean useMirror,
+                                         final boolean cronEnabled, final boolean sshdEnabled) {
         final HardwareEra era = machine.installedEra();
         final String mirror = system.installerStyle().offersDesktop() ? mirrorHost(machine, level) : "";
         final List<InstallerFlow.Desktop> desktops = mirror.isEmpty()
                 ? List.of() : desktopsFor(system, era, SetupTiming.eraFactor(era));
+        final boolean adaNames = system.installerStyle() == InstallerStyle.BSD_INSTALL;
         return InstallerFlow.restored(system.installerStyle(), system.id().toString(), system.displayName(),
-                system.footprintMb(), copyTicks, disksOf(machine), desktops, mirror, stageIndex, targetSlot,
-                computerName, desktopId, eraseSlot);
+                system.footprintMb(), copyTicks, disksOf(machine, adaNames), desktops, mirror, stageIndex, targetSlot,
+                computerName, desktopId, eraseSlot, portsSelected, useMirror, cronEnabled, sshdEnabled);
     }
 
     /**

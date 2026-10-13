@@ -1,0 +1,222 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_memory.table1",
+      "heads": [
+        "jsc.guide.frames_memory.table1_head1",
+        "jsc.guide.frames_memory.table1_head2",
+        "jsc.guide.frames_memory.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_memory.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_memory.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.frames_memory.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_memory.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_memory.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.frames_memory.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_memory.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_memory.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_memory.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_memory.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_memory.table2",
+      "heads": [
+        "jsc.guide.frames_memory.table2_head1",
+        "jsc.guide.frames_memory.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_memory.table2_1_1"
+          },
+          {
+            "amount": 64,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_memory.table2_2_1"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_memory.table2_3_1"
+          },
+          {
+            "amount": 2048,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_memory.table2_4_1"
+          },
+          {
+            "amount": 6144,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_memory.table2_5_1"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text12"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_memory.definition1",
+      "term": "jsc.guide.frames_memory.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_memory.definition2",
+      "term": "jsc.guide.frames_memory.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_memory.definition3",
+      "term": "jsc.guide.frames_memory.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_memory.definition4",
+      "term": "jsc.guide.frames_memory.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_memory.definition5",
+      "term": "jsc.guide.frames_memory.term5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_memory.fix1",
+          "problem": "jsc.guide.frames_memory.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_memory.fix2",
+          "problem": "jsc.guide.frames_memory.problem2"
+        },
+        {
+          "fix": "jsc.guide.frames_memory.fix3",
+          "problem": "jsc.guide.frames_memory.problem3"
+        },
+        {
+          "fix": "jsc.guide.frames_memory.fix4",
+          "problem": "jsc.guide.frames_memory.problem4"
+        },
+        {
+          "fix": "jsc.guide.frames_memory.fix5",
+          "problem": "jsc.guide.frames_memory.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:memory",
+        "jsc:frames_which_machine"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:frames_memory",
+  "order": 146,
+  "section": "jsc:midsoft_installs",
+  "title": "jsc.guide.frames_memory.title"
+}

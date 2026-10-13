@@ -124,9 +124,9 @@ public final class Label extends UiComponent {
         final int lineHeight = Math.round(ctx.font().lineHeight * scale);
         final int ty = height() <= lineHeight ? y() : y() + (height() - lineHeight + 2) / 2;
         if (scale == 1f) {
-            g.drawString(ctx.font(), shown, tx, ty, color(ctx), false);
+            Draw.text(g, ctx.font(), shown, tx, ty, color(ctx));
         } else {
-            Texts.scaled(g, ctx.font(), shown, tx, ty, scale, color(ctx));
+            Draw.textScaled(g, ctx.font(), shown, tx, ty, color(ctx), scale);
         }
     }
 }

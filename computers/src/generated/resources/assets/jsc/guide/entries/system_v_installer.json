@@ -1,0 +1,133 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_installer.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_installer.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.system_v_installer.step1",
+        "jsc.guide.system_v_installer.step2",
+        "jsc.guide.system_v_installer.step3",
+        "jsc.guide.system_v_installer.step4",
+        "jsc.guide.system_v_installer.step5",
+        "jsc.guide.system_v_installer.step6"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_v_installer.table1",
+      "heads": [
+        "jsc.guide.system_v_installer.table1_head1",
+        "jsc.guide.system_v_installer.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.system_v_installer.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.system_v_installer.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_installer.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.system_v_installer.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_installer.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.system_v_installer.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_installer.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.system_v_installer.definition1",
+      "term": "jsc.guide.system_v_installer.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_installer.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_v_installer.table2",
+      "heads": [
+        "jsc.guide.system_v_installer.table2_head1",
+        "jsc.guide.system_v_installer.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Erase <disk> and install the UNIX System V"
+          },
+          {
+            "words": "jsc.guide.system_v_installer.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Install the UNIX System V beside <what it holds>"
+          },
+          {
+            "words": "jsc.guide.system_v_installer.table2_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_installer.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_installer.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_v_installer.fix1",
+          "problem": "jsc.guide.system_v_installer.problem1"
+        },
+        {
+          "fix": "jsc.guide.system_v_installer.fix2",
+          "problem": "jsc.guide.system_v_installer.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installpkg",
+        "jsc:firmware",
+        "jsc:two_systems"
+      ]
+    }
+  ],
+  "id": "jsc:system_v_installer",
+  "order": 281,
+  "section": "jsc:system_v_start",
+  "title": "jsc.guide.system_v_installer.title"
+}

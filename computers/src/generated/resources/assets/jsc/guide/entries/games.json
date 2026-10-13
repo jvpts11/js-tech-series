@@ -1,0 +1,213 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.games.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.games.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.games.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.games.definition1",
+      "term": "jsc.guide.games.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.games.table1",
+      "heads": [
+        "jsc.guide.games.table1_head1",
+        "jsc.guide.games.table1_head2",
+        "jsc.guide.games.table1_head3",
+        "jsc.guide.games.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.games.table1_1_1"
+          },
+          {
+            "literal": "Beg"
+          },
+          {
+            "words": "jsc.guide.games.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.games.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.games.table1_2_1"
+          },
+          {
+            "literal": "Int"
+          },
+          {
+            "words": "jsc.guide.games.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.games.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.games.table1_3_1"
+          },
+          {
+            "literal": "Exp"
+          },
+          {
+            "words": "jsc.guide.games.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.games.table1_3_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.games.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.games.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.games.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.games.definition2",
+      "term": "jsc.guide.games.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.games.definition3",
+      "term": "jsc.guide.games.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.games.table2",
+      "heads": [
+        "jsc.guide.games.table2_head1",
+        "jsc.guide.games.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.games.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.games.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.games.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.games.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.games.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.games.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.games.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.games.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.games.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.games.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.games.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.games.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.games.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.games.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.games.table3",
+      "heads": [
+        "jsc.guide.games.table3_head1",
+        "jsc.guide.games.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.games.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.games.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.games.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.games.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.games.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.games.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.games.text8"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:units_and_ticks"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:games",
+  "order": 54,
+  "section": "jsc:desktop_apps",
+  "title": "jsc.guide.games.title"
+}

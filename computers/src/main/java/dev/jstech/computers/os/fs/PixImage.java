@@ -342,7 +342,7 @@ public final class PixImage {
         for (int r = 0; r < 6 && at < COLOURS; r++) {
             for (int g = 0; g < 6 && at < COLOURS; g++) {
                 for (int b = 0; b < 6 && at < COLOURS; b++) {
-                    final int colour = 0xFF000000 | (r * 51) << 16 | (g * 51) << 8 | (b * 51);
+                    final int colour = 0xFF << 24 | (r * 51) << 16 | (g * 51) << 8 | (b * 51);
                     if (taken.add(colour)) {
                         out[at++] = colour;
                     }
@@ -368,6 +368,6 @@ public final class PixImage {
 
     /** The colour of one level of grey, opaque. */
     private static int grey(final int level) {
-        return 0xFF000000 | level << 16 | level << 8 | level;
+        return 0xFF << 24 | level << 16 | level << 8 | level;
     }
 }

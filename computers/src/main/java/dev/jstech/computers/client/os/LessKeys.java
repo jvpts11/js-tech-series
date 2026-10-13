@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.edit.TtyLook;
+import dev.jstech.core.text.GameText;
 import java.util.Locale;
 import org.lwjgl.glfw.GLFW;
 
@@ -48,15 +49,14 @@ public final class LessKeys implements TtyEditor.IKeys {
         }
         final int line = editor.document().cursorLine() + 1;
         final int of = Math.max(1, editor.document().lineCount());
-        return editor.name() + "  line " + line + "/" + of + "  (" + line * 100 / of + "%)"
-                + "   /search   q quit";
+        return GameText.resolve(TtyTexts.LESS_STATUS.with(editor.name(), line, of, line * 100 / of));
     }
 
     /** A file opened for reading says nothing about whether it was there; the command already did. */
     @Override
     public void opened(final TtyEditor editor, final boolean existed) {
         if (!existed) {
-            editor.say(editor.name() + ": no such file");
+            editor.say(TtyTexts.NO_SUCH_FILE.with(editor.name()));
         }
     }
 
@@ -155,6 +155,6 @@ public final class LessKeys implements TtyEditor.IKeys {
                 return;
             }
         }
-        editor.say("Pattern not found below: " + text);
+        editor.say(TtyTexts.PATTERN_NOT_FOUND.with(text));
     }
 }

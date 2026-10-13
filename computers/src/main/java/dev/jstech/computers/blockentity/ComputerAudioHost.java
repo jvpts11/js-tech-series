@@ -1,0 +1,278 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.blockentity;
+
+import dev.jstech.computers.audio.ComputingAudioDevices;
+import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.IMachineCue;
+import dev.jstech.computers.audio.MachineVoices;
+import dev.jstech.computers.audio.SoundHardwareTexts;
+import dev.jstech.computers.audio.SoundOutput;
+import dev.jstech.computers.audio.SpeakerSides;
+import dev.jstech.computers.audio.SystemSound;
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.block.SubwooferBlock;
+import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ExpansionCardKind;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.SoundCardSpec;
+import dev.jstech.core.audio.Audio;
+import dev.jstech.core.audio.AudioDevice;
+import dev.jstech.core.audio.AudioDevices;
+import dev.jstech.core.audio.AudioOutput;
+import dev.jstech.core.audio.IAudioHost;
+import dev.jstech.core.audio.SoundContext;
+import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Loaded;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.items.ItemStackHandler;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ * A computer as the source of its system's sound: the device that plays it and where it comes out. A sound card, or
+ * the sound built into a board from the Transition on, plays out of the monitors linked to the machine and out of its
+ * speakers, which add to the monitors. Two or more speakers play a stereo recording a side each, by where they stand
+ * against the monitor; a Legacy speaker plays it coarser than a Standard one, and a Transition satellite without the
+ * bass until a subwoofer stands against one of the machine's satellites. The system chooses among them and sets
+ * how loud they play. With no monitor and no speaker there is only the speaker inside the case, which beeps and plays
+ * no recording.
+ */
+final class ComputerAudioHost implements IAudioHost {
+
+    private final AbstractComputerBlockEntity machine;
+
+    ComputerAudioHost(final AbstractComputerBlockEntity machine) {
+        this.machine = machine;
+    }
+
+    @Override
+    public AudioDevice audioDevice() {
+        final ComputerBuild build = machine.currentBuild();
+        if (build == null) {
+            return AudioDevices.NONE;
+        }
+        if (monitors().isEmpty() && speakers().isEmpty()) {
+            return ComputingAudioDevices.PC_SPEAKER;
+        }
+        for (final IExpansionCardSpec card : build.cardsOfKind(ExpansionCardKind.SOUND)) {
+            if (card instanceof SoundCardSpec sound) {
+                return ComputingAudioDevices.of(sound);
+            }
+        }
+        return build.motherboard().hasOnBoardAudio()
+                ? ComputingAudioDevices.ON_BOARD : ComputingAudioDevices.PC_SPEAKER;
+    }
+
+    /** The system's own volume, and nothing while it is muted. */
+    @Override
+    public float audioVolume() {
+        return machine.console().settings().soundLevel();
+    }
+
+    @Override
+    public List<Vec3> audioOutputs() {
+        return outputs().stream().map(AudioOutput::position).toList();
+    }
+
+    /** Where the sound comes out, by the output the system chose: its monitors, its speakers, or both. */
+    @Override
+    public List<AudioOutput> outputs() {
+        final List<AudioOutput> outputs = new ArrayList<>();
+        final List<BlockPos> monitors = monitors();
+        final List<SpeakerBlockEntity> speakers = speakers();
+        final SoundOutput choice = machine.console().settings().soundOutput();
+        if (choice.monitorsPlay(!monitors.isEmpty(), !speakers.isEmpty())) {
+            for (final BlockPos monitor : monitors) {
+                outputs.add(AudioOutput.at(Vec3.atCenterOf(monitor)));
+            }
+        }
+        if (choice.speakersPlay(!monitors.isEmpty(), !speakers.isEmpty())) {
+            final boolean subwoofer = hasSubwoofer(speakers);
+            for (final SpeakerBlockEntity speaker : speakers) {
+                outputs.add(new AudioOutput(Vec3.atCenterOf(speaker.getBlockPos()),
+                        sideOf(speaker.getBlockPos(), speakers.size(), monitors), speaker.response(subwoofer)));
+            }
+        }
+        if (outputs.isEmpty()) {
+            outputs.add(AudioOutput.at(Vec3.atCenterOf(machine.getBlockPos())));
+        }
+        return outputs;
+    }
+
+    @Override
+    public SoundContext soundContext() {
+        SoundContext context = SoundContext.EMPTY;
+        final HardwareEra era = machine.installedEra();
+        if (era != null) {
+            context = context.with(SoundContext.ERA, era.serializedName());
+        }
+        final ResourceLocation system = machine.installedOsId();
+        if (system != null) {
+            context = context.with(ComputingSounds.SYSTEM, system.toString());
+        }
+        final ResourceLocation desktop = machine.bootedDesktopId();
+        if (desktop != null) {
+            context = context.with(ComputingSounds.DESKTOP, desktop.toString());
+        }
+        return context;
+    }
+
+    /**
+     * Plays one of the system's or its programs' own sounds, when the machine's sound hardware plays recordings at
+     * all. It holds a voice of the sound card while it rings, and lets it go when another sound wants it; a muted
+     * system rings nothing and takes no voice.
+     */
+    void play(final ServerLevel level, final IMachineCue sound) {
+        final MachineVoices voices = machine.voices();
+        if (audioDevice().samples() && audioVolume() > 0.0F && voices.take(level, false, voices.name("system"), 1,
+                level.getGameTime() + sound.voiceTicks(), MachineVoices.LET_RING)) {
+            Audio.cue(level, this, sound.cue());
+        }
+    }
+
+    /**
+     * Rings the system's bell. A system with a bell of its own rings it through the sound card, and not at all while
+     * it is muted; the text systems, a desktop with no bell of its own and a machine with no sound card to play one
+     * ring the speaker in the case instead, which no volume setting reaches.
+     */
+    void bell(final ServerLevel level) {
+        if (audioDevice().samples() && SystemSound.BEEP.cue().defaults().pick(soundContext()) != null) {
+            play(level, SystemSound.BEEP);
+            return;
+        }
+        Audio.at(level, machine.getBlockPos(), ComputingSounds.POST_BEEP);
+    }
+
+    /** How many speakers the machine has. */
+    int speakerCount() {
+        return speakers().size();
+    }
+
+    /** The speakers linked to the machine, in a fixed order. */
+    List<SpeakerBlockEntity> linkedSpeakers() {
+        return speakers();
+    }
+
+    /** Whether a subwoofer stands against one of the machine's Transition satellites, giving them back the bass. */
+    boolean hasSubwoofer() {
+        return hasSubwoofer(speakers());
+    }
+
+    /** Whether a monitor plays, by the output the system chose and what is linked. */
+    boolean monitorsPlay() {
+        final boolean hasMonitors = !monitors().isEmpty();
+        return hasMonitors
+                && machine.console().settings().soundOutput().monitorsPlay(true, !speakers().isEmpty());
+    }
+
+    /** Whether the speakers play, by the output the system chose and what is linked. */
+    boolean speakersPlay() {
+        return machine.console().settings().soundOutput().speakersPlay(!monitors().isEmpty(), !speakers().isEmpty());
+    }
+
+    /**
+     * What plays the system's sound, as a screen names it: the sound card by its own name, the sound on a Standard
+     * board, or the speaker in the case.
+     */
+    Text hardwareLabel() {
+        final ItemStackHandler slots = machine.getHardware();
+        for (int i = 0; i < slots.getSlots(); i++) {
+            final ItemStack stack = slots.getStackInSlot(i);
+            if (AbstractComputerBlockEntity.isSoundCard(stack)) {
+                return GameText.of(stack.getHoverName());
+            }
+        }
+        final ComputerBuild build = machine.currentBuild();
+        return build != null && build.motherboard().hasOnBoardAudio()
+                ? SoundHardwareTexts.ON_BOARD_AUDIO.text() : SoundHardwareTexts.PC_SPEAKER_ONLY.text();
+    }
+
+    /** Which side of a stereo recording the speaker at {@code speaker} plays for this machine. */
+    StereoSide sideOf(final BlockPos speaker) {
+        return sideOf(speaker, speakerCount(), monitors());
+    }
+
+    /*
+     * The side, by where the speaker stands against the first monitor: the one on the left of someone sitting at the
+     * screen plays the left. The monitor faces away from whoever placed it, so they look along its facing.
+     */
+    private StereoSide sideOf(final BlockPos speaker, final int speakers, final List<BlockPos> monitors) {
+        final Level level = machine.getLevel();
+        if (speakers < 2 || monitors.isEmpty() || level == null) {
+            return StereoSide.BOTH;
+        }
+        final BlockPos monitor = monitors.getFirst();
+        final BlockState state = level.getBlockState(monitor);
+        if (!state.hasProperty(MonitorBlock.FACING)) {
+            return StereoSide.BOTH;
+        }
+        final Direction left = state.getValue(MonitorBlock.FACING).getCounterClockWise();
+        return SpeakerSides.sideOf(speakers, left.getStepX(), left.getStepZ(), speaker.getX() - monitor.getX(),
+                speaker.getZ() - monitor.getZ());
+    }
+
+    /* Whether a subwoofer stands against one of these speakers that is a Transition satellite; one is all a set uses. */
+    private boolean hasSubwoofer(final List<SpeakerBlockEntity> speakers) {
+        final Level level = machine.getLevel();
+        if (level == null) {
+            return false;
+        }
+        for (final SpeakerBlockEntity speaker : speakers) {
+            if (speaker.era() == HardwareEra.TRANSITION && SubwooferBlock.against(level, speaker.getBlockPos())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* The monitors the machine drives, in a fixed order, where its sound comes out; a disabled one plays nothing. */
+    private List<BlockPos> monitors() {
+        final Level level = machine.getLevel();
+        final List<BlockPos> found = new ArrayList<>();
+        if (level == null) {
+            return found;
+        }
+        for (final long endpoint : machine.enabledEndpoints()) {
+            final BlockPos pos = BlockPos.of(endpoint);
+            if (Loaded.blockEntity(level, pos) instanceof MonitorBlockEntity) {
+                found.add(pos);
+            }
+        }
+        found.sort(Comparator.naturalOrder());
+        return found;
+    }
+
+    /* The speakers the machine drives, in a fixed order; a disabled one is not among them. */
+    private List<SpeakerBlockEntity> speakers() {
+        final Level level = machine.getLevel();
+        final List<SpeakerBlockEntity> found = new ArrayList<>();
+        if (level == null) {
+            return found;
+        }
+        for (final long endpoint : machine.enabledEndpoints()) {
+            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof SpeakerBlockEntity speaker) {
+                found.add(speaker);
+            }
+        }
+        found.sort(Comparator.comparing(SpeakerBlockEntity::getBlockPos));
+        return found;
+    }
+}

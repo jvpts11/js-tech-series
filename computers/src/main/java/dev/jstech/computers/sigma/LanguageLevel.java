@@ -49,6 +49,11 @@ public enum LanguageLevel {
         return this.compiler;
     }
 
+    /** The package that command comes in, whose version is the version of the language a machine can build. */
+    public String compilerPackage() {
+        return "jsc:" + this.compiler;
+    }
+
     /** The name a message uses, since a player reads this and not the constant. */
     public String displayName() {
         return this.displayName;

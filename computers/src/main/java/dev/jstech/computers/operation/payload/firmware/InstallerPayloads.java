@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.firmware;
 
 import dev.jstech.computers.block.IInstallerScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -37,9 +38,31 @@ public final class InstallerPayloads {
         registrar.playToClient(OpenInstallerPayload.TYPE, OpenInstallerPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         IInstallerScreenOpener.Holder.open(payload)));
-        // The installer is a plain screen, like the setup and the self-test, so it answers to the screen gate.
+        // The installer is one of the monitor's own sessions, like the setup and the self-test.
         ComputerAccess.accept(registrar, InstallerActionPayload.TYPE, InstallerActionPayload.STREAM_CODEC,
-                ComputerAccess.screen(InstallerActionPayload::hostPos), InstallerPayloads::handleAction);
+                ComputerAccess.screenAt(InstallerActionPayload::hostPos, InstallerActionPayload::monitorPos,
+                        MonitorSessionMenu.Phase.INSTALLER),
+                InstallerPayloads::handleAction);
+    }
+
+    /**
+     * Chooses the disk the system goes on and re-quotes the copy to it, exactly what a real
+     * {@link InstallerActionPayload#ACTION_SELECT_DISK} answer does. Exposed so a test can drive the same update
+     * a disk choice causes without sending a payload of its own.
+     */
+    public static void selectDiskAndResize(final IOsHost machine, final InstallerFlow flow, final int slot) {
+        flow.select(slot);
+        resize(machine, flow);
+    }
+
+    /**
+     * Chooses the desktop that comes with the system (or drops it) and re-quotes the copy to match, exactly what
+     * a real {@link InstallerActionPayload#ACTION_DESKTOP} answer does. Exposed for the same reason as
+     * {@link #selectDiskAndResize}.
+     */
+    public static void chooseDesktopAndResize(final IOsHost machine, final InstallerFlow flow, final int index) {
+        flow.chooseDesktop(index);
+        resize(machine, flow);
     }
 
     private static void handleAction(final InstallerActionPayload payload, final ServerPlayer player,
@@ -60,16 +83,28 @@ public final class InstallerPayloads {
         switch (payload.action()) {
             case InstallerActionPayload.ACTION_NEXT -> flow.next();
             case InstallerActionPayload.ACTION_BACK -> flow.back();
-            case InstallerActionPayload.ACTION_SELECT_DISK -> flow.select(payload.value());
+            case InstallerActionPayload.ACTION_SELECT_DISK -> selectDiskAndResize(machine, flow, payload.value());
             case InstallerActionPayload.ACTION_NAME -> flow.setComputerName(payload.text());
-            case InstallerActionPayload.ACTION_DESKTOP -> {
-                flow.chooseDesktop(payload.value());
-                resize(machine, flow);
-            }
+            case InstallerActionPayload.ACTION_DESKTOP -> chooseDesktopAndResize(machine, flow, payload.value());
             case InstallerActionPayload.ACTION_ERASE -> {
                 flow.askErase(payload.value());
                 flow.confirmErase();
+                resize(machine, flow);
             }
+            case InstallerActionPayload.ACTION_CANCEL_ERASE -> {
+                flow.cancelErase();
+                resize(machine, flow);
+            }
+            case InstallerActionPayload.ACTION_PORTS -> {
+                flow.setPortsSelected(payload.value() != 0);
+                resize(machine, flow);
+            }
+            case InstallerActionPayload.ACTION_MIRROR -> {
+                flow.setUseMirror(payload.value() != 0);
+                resize(machine, flow);
+            }
+            case InstallerActionPayload.ACTION_CRON -> flow.setCronEnabled(payload.value() != 0);
+            case InstallerActionPayload.ACTION_SSHD -> flow.setSshdEnabled(payload.value() != 0);
             case InstallerActionPayload.ACTION_GO_TO -> flow.goToStage(payload.value());
             case InstallerActionPayload.ACTION_QUIT -> {
                 quit(machine, player, level, payload);
@@ -91,18 +126,29 @@ public final class InstallerPayloads {
     }
 
     /**
-     * A desktop chosen from the Mirror makes the whole installation longer, so the clock is cut again to match.
+     * Any answer that changes how long the copy takes cuts the clock again to match: a desktop chosen from the
+     * Mirror or the Mirror turned down after one was chosen, and a disk chosen, erased or an erase taken back,
+     * since a faster or slower disk changes the rate the whole copy runs at.
      *
-     * <p>Only ever while nothing has been done: every installer that offers a desktop asks for it before it
-     * copies anything, which is what makes this safe rather than a clock that jumps under a running bar.
+     * <p>What has already run stays run: a job already under way is not assumed to still be at its first tick.
+     * The ticks already spent are kept exactly as they were and the ticks still to come are worked out fresh from
+     * the installer's new total, so a shorter choice cannot leave more ticks to run than the job now has, and a
+     * longer one is not shortened by what had already gone before it. Before the copy starts, the job is simply
+     * re-quoted at the new total with nothing done, since it was already quoted the moment the installer opened.
      */
     private static void resize(final IOsHost machine, final InstallerFlow flow) {
         final OsInstallJob job = machine.installing();
-        if (job == null || job.ticksLeft() != job.ticksTotal()) {
+        if (job == null) {
             return;
         }
-        machine.setInstalling(new OsInstallJob(job.osId(), flow.targetSlot(), job.readerPos(),
-                flow.ticksTotal(), flow.ticksTotal()));
+        final int done = job.ticksTotal() - job.ticksLeft();
+        final int newTotal = flow.ticksTotal();
+        // A disk of the same speed re-times to the same total but is still another disk: the job must follow it.
+        if (newTotal == job.ticksTotal() && flow.targetSlot() == job.targetSlot()) {
+            return;
+        }
+        machine.setInstalling(new OsInstallJob(job.osId(), flow.targetSlot(), job.readerPos(), job.readerBay(),
+                newTotal, Math.max(0, newTotal - done)));
     }
 
     /** Leaving with nothing written, which the pages before the work allow and the work itself does not. */

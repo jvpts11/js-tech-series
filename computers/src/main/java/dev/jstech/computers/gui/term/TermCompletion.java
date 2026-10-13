@@ -71,6 +71,18 @@ public final class TermCompletion {
         return Optional.of(candidates.size() == 1 ? pick + " " : pick);
     }
 
+    /**
+     * Every command a press of Tab would cycle through for {@code onTheLine}, or every command the machine
+     * has when nothing was typed yet: what a second Tab in a row lists instead of filling one candidate in,
+     * the way sh and bash do. Looking here spends no press, so it never disturbs where {@link #next} stands.
+     */
+    public List<String> everyCommandFor(final String onTheLine) {
+        if (onTheLine.indexOf(' ') >= 0) {
+            return List.of();
+        }
+        return onTheLine.isEmpty() ? List.copyOf(this.commands) : commandsFrom(onTheLine);
+    }
+
     private List<String> commandsFrom(final String typed) {
         final List<String> out = new ArrayList<>();
         if (typed.isEmpty()) {

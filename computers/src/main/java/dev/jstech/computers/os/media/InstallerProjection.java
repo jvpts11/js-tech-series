@@ -18,7 +18,7 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.fs.InstallerLayout;
-import net.minecraft.network.chat.Component;
+import dev.jstech.core.text.Text;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
@@ -101,10 +101,9 @@ public final class InstallerProjection {
         final boolean linux = os.platform().unixLike();
         return new InstallerLayout.Facts(
                 os.displayName(), os.id().getPath(), os.id().getPath(), true, false, linux,
-                Branding.osYear(os.displayName(), os.minEra()), os.house().name(),
-                Component.translatable("os.jsc." + os.id().getPath() + ".desc").getString()
-                        .replace("os.jsc." + os.id().getPath() + ".desc", ""),
-                plain(MinSpecTooltip.osMinSpec(os.id())), os.platform().label(), "any computer",
+                // A system declares no line of its own about what it does, so its disc has none to print.
+                Branding.osYear(os.displayName(), os.minEra()), os.house().name(), "",
+                english(MinSpecTooltip.osMinSpecText(os.id())), os.platform().label(), hostLabel(HostScope.ANY),
                 List.of(), KernelNames.bootFiles(os.platform()));
     }
 
@@ -112,30 +111,34 @@ public final class InstallerProjection {
         final boolean linux = Platform.onlyUnixLike(spec.platforms());
         return new InstallerLayout.Facts(
                 spec.displayName(), spec.commandName(), spec.id().getPath(), false,
-                spec.kind() == ProgramKind.SERVICE, linux, Branding.year(spec.era()),
+                spec.kind().runsInBackground(), linux, Branding.year(spec.era()),
                 // A disc of a bundled program has no shipper to be credited to, so it says Midsoft.
-                spec.houseOr(SoftwareHouse.MIDSOFT).name(),
-                Component.translatable("program.jsc." + spec.id().getPath() + ".desc").getString()
-                        .replace("program.jsc." + spec.id().getPath() + ".desc", ""),
-                plain(MinSpecTooltip.programMinSpec(spec.id())),
+                spec.houseOr(SoftwareHouse.MIDSOFT).name(), spec.description(),
+                english(MinSpecTooltip.programMinSpecText(spec.id())),
                 MinSpecTooltip.platformsLabel(spec.platforms()), hostLabel(spec.hostScope()),
                 FormattedMediaItem.installCommands(spec));
     }
 
+    /**
+     * Where a program runs, as the file on the disc says it. A file on a disk is data, written in the machine's
+     * own language like every other file, so these words are the same whoever reads them.
+     */
     private static String hostLabel(final HostScope scope) {
-        return switch (scope) {
+        return Text.literal(switch (scope) {
             case MAINFRAME -> "the Mainframe";
             case SERVER -> "a server in a rack";
             case CRAFTING_COMPUTER -> "a Crafting Computer";
             case CLUSTER_MANAGEMENT_COMPUTER -> "a Cluster Management Computer";
+            case PERSONAL_COMPUTER -> "a Personal Computer";
             default -> "any computer";
-        };
+        }).english();
     }
 
-    private static List<String> plain(final List<Component> lines) {
+    /* The lines as the file on the disc carries them: in English, like every other file. */
+    private static List<String> english(final List<Text> lines) {
         final List<String> out = new ArrayList<>(lines.size());
-        for (final Component line : lines) {
-            final String text = line.getString().trim();
+        for (final Text line : lines) {
+            final String text = line.english().trim();
             if (!text.isEmpty()) {
                 out.add(text);
             }

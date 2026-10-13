@@ -1,0 +1,232 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_command.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cluster_command.definition1",
+      "term": "jsc.guide.cluster_command.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_command.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_command.table1",
+      "heads": [
+        "jsc.guide.cluster_command.table1_head1",
+        "jsc.guide.cluster_command.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "list"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "nodes <name>"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "power <name> on|off"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "power <name> R:U on|off"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "install <name> system|program"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "status"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "cancel"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_command.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_command.table2",
+      "heads": [
+        "jsc.guide.cluster_command.table2_head1",
+        "jsc.guide.cluster_command.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "KIND"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "NAME"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "STATE"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "LOAD"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_command.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_command.table3",
+      "heads": [
+        "jsc.guide.cluster_command.table3_head1",
+        "jsc.guide.cluster_command.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "RACK"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "U"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "NODE"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "SYSTEM"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "POWER"
+          },
+          {
+            "words": "jsc.guide.cluster_command.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cluster_command.fix1",
+          "problem": "jsc.guide.cluster_command.problem1"
+        },
+        {
+          "fix": "jsc.guide.cluster_command.fix2",
+          "problem": "jsc.guide.cluster_command.problem2"
+        },
+        {
+          "fix": "jsc.guide.cluster_command.fix3",
+          "problem": "jsc.guide.cluster_command.problem3"
+        },
+        {
+          "fix": "jsc.guide.cluster_command.fix4",
+          "problem": "jsc.guide.cluster_command.problem4"
+        },
+        {
+          "fix": "jsc.guide.cluster_command.fix5",
+          "problem": "jsc.guide.cluster_command.problem5"
+        },
+        {
+          "fix": "jsc.guide.cluster_command.fix6",
+          "problem": "jsc.guide.cluster_command.problem6"
+        },
+        {
+          "fix": "jsc.guide.cluster_command.fix7",
+          "problem": "jsc.guide.cluster_command.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cluster_manager",
+        "jsc:cluster_installs"
+      ]
+    }
+  ],
+  "icon": "jsc:cluster_management_computer",
+  "id": "jsc:cluster_command",
+  "order": 117,
+  "section": "jsc:cluster_tools",
+  "title": "jsc.guide.cluster_command.title"
+}

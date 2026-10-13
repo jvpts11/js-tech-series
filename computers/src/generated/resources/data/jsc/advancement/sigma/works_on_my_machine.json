@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:sigma/erm_what_the_sigma",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:sigma_two_machines"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.sigma.works_on_my_machine.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:personal_computer"
+    },
+    "title": {
+      "translate": "advancements.jsc.sigma.works_on_my_machine.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

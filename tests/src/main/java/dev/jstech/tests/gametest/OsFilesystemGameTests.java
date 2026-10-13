@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
@@ -21,9 +22,12 @@ import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.fs.RecordingFile;
 import dev.jstech.computers.os.fs.StoredFile;
+import dev.jstech.computers.program.DesktopLayout;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -62,12 +66,12 @@ public final class OsFilesystemGameTests {
         // Stamp it with a FILESYSTEM containing one IQL file.
         final StoredFile file = new StoredFile("a.iql", FileType.IQL, "SELECT *");
         final FilesystemContents fs = new FilesystemContents(Map.of("a.iql", file));
-        stack.set(ComputingModule.FILESYSTEM.get(), fs);
+        stack.set(ComputingComponents.FILESYSTEM.get(), fs);
 
         // Stamp it with the systems component identifying mc_net.
         final ResourceLocation osId =
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
-        stack.set(ComputingModule.DISK_SYSTEMS.get(), DiskSystems.of(osId));
+        stack.set(ComputingComponents.DISK_SYSTEMS.get(), DiskSystems.of(osId));
 
         /*
          * copy() exercises the DataComponent codec path (the components are serialised and
@@ -78,7 +82,7 @@ public final class OsFilesystemGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final FilesystemContents recovered =
-                            copy.get(ComputingModule.FILESYSTEM.get());
+                            copy.get(ComputingComponents.FILESYSTEM.get());
                     helper.assertTrue(recovered != null,
                             "FILESYSTEM component must survive stack.copy()");
 
@@ -142,7 +146,7 @@ public final class OsFilesystemGameTests {
         }
         final ItemStackHandler inv = mainframe.getInventory();
         inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
                 new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
@@ -186,11 +190,33 @@ public final class OsFilesystemGameTests {
                 .thenSucceed();
     }
 
-    // Task 5: DiskFilesystem API tests
+    // DiskFilesystem
 
     /**
-     * A write followed by a read must return the same content (FLAT filesystem).
+     * A file never takes the name of a folder, whether the folder was made on its own or exists because files
+     * sit in it. Writing, renaming or copying onto one used to leave a file and a folder of the same name.
      */
+    @GameTest(template = ARENA)
+    public static void fs_aFileIsNeverPutWhereAFolderIs(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        final FilesystemKind kind = FilesystemKind.HIERARCHICAL;
+        helper.assertTrue(DiskFilesystem.mkdir(disk, "Reports", kind), "a folder is made");
+        DiskFilesystem.write(disk, "Docs/notes.txt", FileType.TXT, "inside", Long.MAX_VALUE, kind);
+        DiskFilesystem.write(disk, "summary.txt", FileType.TXT, "the summary", Long.MAX_VALUE, kind);
+
+        helper.assertTrue(DiskFilesystem.write(disk, "Reports", FileType.TXT, "x", Long.MAX_VALUE, kind)
+                        == DiskFilesystem.WriteResult.INVALID_PATH, "a file is not written over a folder");
+        helper.assertTrue(DiskFilesystem.write(disk, "Docs", FileType.TXT, "x", Long.MAX_VALUE, kind)
+                        == DiskFilesystem.WriteResult.INVALID_PATH, "nor over one that holds files");
+        helper.assertFalse(DiskFilesystem.rename(disk, "summary.txt", "Reports", kind),
+                "a file is not renamed onto a folder");
+        helper.assertFalse(DiskFilesystem.copy(disk, "summary.txt", "Docs", Long.MAX_VALUE, kind),
+                "nor copied onto one");
+        helper.assertTrue(DiskFilesystem.exists(disk, "summary.txt"), "and the file it would have been is untouched");
+        helper.succeed();
+    }
+
+    /** A write followed by a read must return the same content (FLAT filesystem). */
     @GameTest(template = ARENA)
     public static void fs_writeThenReadRoundTrips(final GameTestHelper helper) {
         final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
@@ -255,7 +281,7 @@ public final class OsFilesystemGameTests {
                 .thenSucceed();
     }
 
-    // Task 6: StorageProjection tests
+    // StorageProjection
 
     /**
      * A disk whose storage volume holds two StorageKeys must surface two read-only .dat entries in
@@ -526,13 +552,13 @@ public final class OsFilesystemGameTests {
     }
 
     /**
-     * A program runs only on an OS that meets its declared capability and era: the NMS needs a full desktop
+     * A program runs only on an OS that meets its declared capability and era: the ISMS needs a full desktop
      * (Frames), the IQL Engine service runs anywhere, an unregistered program is unrestricted, and a gated
      * program is refused when no OS is installed.
      */
     @GameTest(template = ARENA)
     public static void os_programGatingHonorsCapability(final GameTestHelper helper) {
-        final ResourceLocation nms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
+        final ResourceLocation isms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "isms");
         final ResourceLocation iql = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "iqlengine");
         final ResourceLocation frames95 = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_95");
         final ResourceLocation framesXp = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
@@ -543,24 +569,26 @@ public final class OsFilesystemGameTests {
         // Ample hardware, so only the platform and OS-version gates decide the outcome here.
         final int cpu = 9999;
         final int vram = 9999;
-        helper.assertFalse(OsRegistry.canRunProgram(frames95, nms, cpu, vram),
-                "the NMS needs Frames XP or newer, so Frames 95 must refuse it");
-        helper.assertTrue(OsRegistry.canRunProgram(framesXp, nms, cpu, vram),
-                "the NMS must run on Frames XP");
-        helper.assertFalse(OsRegistry.canRunProgram(mcDos, nms, cpu, vram),
-                "the NMS must be refused on MC-DOS (wrong platform)");
+        helper.assertFalse(OsRegistry.canRunProgram(frames95, isms, cpu, vram),
+                "the ISMS needs Frames XP or newer, so Frames 95 must refuse it");
+        helper.assertTrue(OsRegistry.canRunProgram(framesXp, isms, cpu, vram),
+                "the ISMS must run on Frames XP");
+        helper.assertFalse(OsRegistry.canRunProgram(mcDos, isms, cpu, vram),
+                "the ISMS must be refused on MC-DOS (wrong platform)");
         helper.assertTrue(OsRegistry.canRunProgram(mcDos, iql, cpu, vram),
                 "the IQL Engine (a headless service) still runs on a non-Frames Mainframe");
-        helper.assertFalse(OsRegistry.canRunProgram(null, nms, cpu, vram),
+        helper.assertFalse(OsRegistry.canRunProgram(null, isms, cpu, vram),
                 "a gated program must be refused when no OS is installed");
         helper.assertTrue(OsRegistry.canRunProgram(mcDos, unknown, cpu, vram),
                 "an unregistered program declares no requirement and must pass");
-        // The 11-only Automation Manager: refused on Frames XP, allowed on Frames 11.
+        // The Automation Manager reaches back to Frames XP, so a Legacy network keeps its jobs; not to Frames 95.
         final ResourceLocation frames11 = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_11");
         final ResourceLocation autoMgr =
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "automation_manager");
-        helper.assertFalse(OsRegistry.canRunProgram(framesXp, autoMgr, cpu, vram),
-                "the Automation Manager needs Frames 11, so Frames XP must refuse it");
+        helper.assertFalse(OsRegistry.canRunProgram(frames95, autoMgr, cpu, vram),
+                "the Automation Manager needs Frames XP or newer, so Frames 95 must refuse it");
+        helper.assertTrue(OsRegistry.canRunProgram(framesXp, autoMgr, cpu, vram),
+                "the Automation Manager must run on Frames XP");
         helper.assertTrue(OsRegistry.canRunProgram(frames11, autoMgr, cpu, vram),
                 "the Automation Manager must run on Frames 11");
         helper.succeed();
@@ -583,10 +611,12 @@ public final class OsFilesystemGameTests {
             helper.assertTrue(!spec.platforms().isEmpty(), "program " + spec.id() + " needs a platform");
         }
         // A known program resolves, and its title key follows the vanilla convention.
-        final ResourceLocation nms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
-        helper.assertTrue(OsRegistry.getProgram(nms) != null, "the NMS must be registered");
-        helper.assertTrue(OsRegistry.getProgram(nms).titleKey().equals("program.jsc.nms"),
-                "the title key must be program.jsc.nms");
+        final ResourceLocation isms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "isms");
+        helper.assertTrue(OsRegistry.getProgram(isms) != null, "the ISMS must be registered");
+        helper.assertTrue(OsRegistry.getProgram(isms).titleKey().equals("program.jsc.isms"),
+                "the title key must be program.jsc.isms");
+        helper.assertTrue(OsRegistry.getProgram(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms"))
+                == null, "the studio's old name is no longer a program of its own");
 
         /*
          * The OS registry is well-formed too: every built-in OS is registered with a display name and a
@@ -639,7 +669,7 @@ public final class OsFilesystemGameTests {
         }
         final ItemStackHandler inv = mainframe.getInventory();
         inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
                 new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
@@ -658,7 +688,7 @@ public final class OsFilesystemGameTests {
                     helper.assertTrue(mainframe.installOs(framesXp), "installOs(frames_xp) must succeed");
                     final ItemStack disk = mainframe.systemDisk();
                     helper.assertFalse(disk.isEmpty(), "system disk must be present");
-                    final FilesystemContents fs = disk.get(ComputingModule.FILESYSTEM.get());
+                    final FilesystemContents fs = disk.get(ComputingComponents.FILESYSTEM.get());
                     helper.assertTrue(fs != null,
                             "FILESYSTEM component must be present after a desktop install");
                     helper.assertTrue(fs.hasDir("Program Files"), "Program Files must be seeded");
@@ -678,8 +708,8 @@ public final class OsFilesystemGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final dev.jstech.computers.program.ComputerConsoleState state =
                             new dev.jstech.computers.program.ComputerConsoleState();
-                    state.install("jsc:nms");
-                    state.setWallpaper("winxp");
+                    state.install("jsc:isms");
+                    state.desktop().setWallpaper("winxp");
                     state.setComputerName("HAL");
                     final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                     state.save(tag);
@@ -687,10 +717,10 @@ public final class OsFilesystemGameTests {
                     final dev.jstech.computers.program.ComputerConsoleState loaded =
                             new dev.jstech.computers.program.ComputerConsoleState();
                     loaded.load(tag);
-                    helper.assertTrue(loaded.isInstalled("jsc:nms"),
+                    helper.assertTrue(loaded.isInstalled("jsc:isms"),
                             "an installed program must persist across a reload");
-                    helper.assertTrue("winxp".equals(loaded.wallpaper()),
-                            "the chosen wallpaper must persist; got " + loaded.wallpaper());
+                    helper.assertTrue("winxp".equals(loaded.desktop().wallpaper()),
+                            "the chosen wallpaper must persist; got " + loaded.desktop().wallpaper());
                     helper.assertTrue("HAL".equals(loaded.computerName()),
                             "the computer name must persist; got " + loaded.computerName());
                 })
@@ -707,29 +737,21 @@ public final class OsFilesystemGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final dev.jstech.computers.program.ComputerConsoleState state =
                             new dev.jstech.computers.program.ComputerConsoleState();
-                    final int cell =
-                            dev.jstech.computers.program.ComputerConsoleState.packCell(2, 3);
-                    state.setIconCell("file:Notes.txt", cell);
-                    state.setIconCell("app:Network",
-                            dev.jstech.computers.program.ComputerConsoleState.packCell(1, 0));
+                    final int cell = DesktopLayout.packCell(2, 3);
+                    state.desktop().setIconCell("file:Notes.txt", cell);
+                    state.desktop().setIconCell("app:jsc:network", DesktopLayout.packCell(1, 0));
                     final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                     state.save(tag);
 
                     final dev.jstech.computers.program.ComputerConsoleState loaded =
                             new dev.jstech.computers.program.ComputerConsoleState();
                     loaded.load(tag);
-                    final Integer back = loaded.iconCells().get("file:Notes.txt");
+                    final Integer back = loaded.desktop().iconCells().get("file:Notes.txt");
                     helper.assertTrue(back != null && back == cell,
                             "a pinned icon's cell must persist; got " + back);
-                    helper.assertTrue(
-                            dev.jstech.computers.program.ComputerConsoleState
-                                    .cellColumn(back) == 2,
-                            "the persisted column must be 2");
-                    helper.assertTrue(
-                            dev.jstech.computers.program.ComputerConsoleState
-                                    .cellRow(back) == 3,
-                            "the persisted row must be 3");
-                    helper.assertTrue(loaded.iconCells().containsKey("app:Network"),
+                    helper.assertTrue(DesktopLayout.cellColumn(back) == 2, "the persisted column must be 2");
+                    helper.assertTrue(DesktopLayout.cellRow(back) == 3, "the persisted row must be 3");
+                    helper.assertTrue(loaded.desktop().iconCells().containsKey("app:jsc:network"),
                             "a pinned launcher's cell must persist too");
                 })
                 .thenSucceed();
@@ -816,5 +838,64 @@ public final class OsFilesystemGameTests {
                     helper.assertTrue(stillProjected, "the .dat projection must remain after a refused move");
                 })
                 .thenSucceed();
+    }
+
+    /** A name cannot be a file and a folder at once, so nothing is put under a path whose parent is a file. */
+    @GameTest(template = ARENA)
+    public static void fs_nothingIsPutUnderAFile(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        final FilesystemKind kind = FilesystemKind.HIERARCHICAL;
+        DiskFilesystem.write(disk, "a.txt", FileType.TXT, "file", Long.MAX_VALUE, kind);
+        DiskFilesystem.write(disk, "b.txt", FileType.TXT, "other", Long.MAX_VALUE, kind);
+
+        helper.assertTrue(DiskFilesystem.write(disk, "a.txt/b.txt", FileType.TXT, "x", Long.MAX_VALUE, kind)
+                == DiskFilesystem.WriteResult.INVALID_PATH, "a file is not written under a file");
+        helper.assertTrue(DiskFilesystem.append(disk, "a.txt/c.txt", FileType.TXT, "x", Long.MAX_VALUE, kind, 0L)
+                == DiskFilesystem.WriteResult.INVALID_PATH, "nor appended under one");
+        helper.assertFalse(DiskFilesystem.copy(disk, "b.txt", "a.txt/b.txt", Long.MAX_VALUE, kind),
+                "nor copied under one");
+        helper.assertFalse(DiskFilesystem.rename(disk, "b.txt", "a.txt/b.txt", kind), "nor renamed under one");
+        helper.assertFalse(DiskFilesystem.list(disk, "a.txt", kind).stream()
+                .anyMatch(e -> e.path().startsWith("a.txt/")), "so nothing ever sits inside the file");
+        helper.succeed();
+    }
+
+    /**
+     * A recording's lines are never kept as another kind of file, and appending them is no way around that. Lines
+     * added after other text are no recording file, which must start with its mark, so only a text that ends up as
+     * the lines alone is refused.
+     */
+    @GameTest(template = ARENA)
+    public static void fs_appendingRecordingLinesToTextIsRefused(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        final FilesystemKind kind = FilesystemKind.HIERARCHICAL;
+        // The media line names the recording by the SHA-256 of its bytes; without a real one it is no recording's line.
+        final String lines = RecordingFile.MAGIC + "\nmedia " + "0".repeat(MediaId.HASH_DIGITS) + ".ogg 1000\n";
+
+        helper.assertTrue(DiskFilesystem.append(disk, "song.txt", FileType.TXT, lines, Long.MAX_VALUE, kind, 0L)
+                == DiskFilesystem.WriteResult.READ_ONLY, "recording lines are not appended to a new text file");
+        DiskFilesystem.write(disk, "empty.txt", FileType.TXT, "", Long.MAX_VALUE, kind);
+        helper.assertTrue(DiskFilesystem.append(disk, "empty.txt", FileType.TXT, lines, Long.MAX_VALUE, kind, 0L)
+                == DiskFilesystem.WriteResult.READ_ONLY, "nor to an empty text file that is there");
+        DiskFilesystem.write(disk, "notes.txt", FileType.TXT, "notes\n", Long.MAX_VALUE, kind);
+        helper.assertTrue(DiskFilesystem.append(disk, "notes.txt", FileType.TXT, lines, Long.MAX_VALUE, kind, 0L)
+                == DiskFilesystem.WriteResult.OK, "after other text they are only text, and are kept");
+        helper.succeed();
+    }
+
+    /** A disk that holds as many systems as it can has no room for another, which would be lost off its end. */
+    @GameTest(template = ARENA)
+    public static void roomFor_aFullListOfSystems_refusesAnother(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        DiskSystems systems = DiskSystems.of(ResourceLocation.fromNamespaceAndPath("jsc", "filler_0"));
+        for (int i = 1; i < DiskSystems.MOST_SYSTEMS; i++) {
+            systems = systems.with(ResourceLocation.fromNamespaceAndPath("jsc", "filler_" + i));
+        }
+        disk.set(ComputingComponents.DISK_SYSTEMS.get(), systems);
+        final ResourceLocation mcNet = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
+
+        helper.assertFalse(OsDisks.roomFor(1, slot -> disk, mcNet, 0),
+                "a seventeenth system must be refused rather than dropped after the install");
+        helper.succeed();
     }
 }

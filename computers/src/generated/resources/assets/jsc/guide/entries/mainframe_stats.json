@@ -1,0 +1,153 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_stats.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_stats.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframe_stats.table1",
+      "heads": [
+        "jsc.guide.mainframe_stats.table1_head1",
+        "jsc.guide.mainframe_stats.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Mainframe.Online"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Mainframe.PeakToday"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Mainframe.Stats(kind)"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Mainframe.Work()"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_stats.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mainframe_stats.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframe_stats.table2",
+      "heads": [
+        "jsc.guide.mainframe_stats.table2_head1",
+        "jsc.guide.mainframe_stats.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "WorkStat.Type"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "WorkStat.Count"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "WorkStat.AverageWait"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "WorkStat.AverageRun"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "WorkStat.ShortfallPercent"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "WorkStat.Moved"
+          },
+          {
+            "words": "jsc.guide.mainframe_stats.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mainframe_stats.fix1",
+          "problem": "jsc.guide.mainframe_stats.problem1"
+        },
+        {
+          "fix": "jsc.guide.mainframe_stats.fix2",
+          "problem": "jsc.guide.mainframe_stats.problem2"
+        },
+        {
+          "fix": "jsc.guide.mainframe_stats.fix3",
+          "problem": "jsc.guide.mainframe_stats.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:mainframes",
+        "jsc:operations_catalogue",
+        "jsc:states_and_queues"
+      ]
+    }
+  ],
+  "id": "jsc:mainframe_stats",
+  "order": 361,
+  "section": "jsc:library_network",
+  "title": "jsc.guide.mainframe_stats.title"
+}

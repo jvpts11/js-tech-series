@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
@@ -20,20 +20,16 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.media.LiveMedium;
-import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -140,7 +136,8 @@ final class OsSession {
             if (system != null) {
                 this.installer = Installers.restored(this.machine, level, system, memo.getInt("Copy"),
                         memo.getInt("Stage"), memo.getInt("Slot"), memo.getString("Name"),
-                        memo.getString("Desktop"), memo.getInt("Erase"));
+                        memo.getString("Desktop"), memo.getInt("Erase"), memo.getBoolean("Ports"),
+                        memo.getBoolean("UseMirror"), memo.getBoolean("Cron"), memo.getBoolean("Sshd"));
             }
         }
         return this.installer;
@@ -207,13 +204,13 @@ final class OsSession {
      */
     ItemStack systemDisk() {
         final int from = this.bootOnce >= 0 ? this.bootOnce : this.bootDisk;
-        return OsDisks.systemDisk(this.machine.layout().diskCount(), this::diskInSlot, from);
+        return OsDisks.systemDisk(diskCount(), this::diskInSlot, from);
     }
 
     /** The slot the machine boots from, or -1 when nothing in it carries a system. */
     private int systemDiskSlot() {
         final int from = this.bootOnce >= 0 ? this.bootOnce : this.bootDisk;
-        return OsDisks.systemDiskSlot(this.machine.layout().diskCount(), this::diskInSlot, from);
+        return OsDisks.systemDiskSlot(diskCount(), this::diskInSlot, from);
     }
 
     /** What the system this machine boots remembers about being greeted. */
@@ -278,7 +275,7 @@ final class OsSession {
      * callers filter as needed (the "This PC" disk listing reads it).
      */
     List<ItemStack> diskStacks() {
-        final int count = this.machine.layout().diskCount();
+        final int count = diskCount();
         final List<ItemStack> out = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             out.add(diskInSlot(i));
@@ -286,12 +283,17 @@ final class OsSession {
         return out;
     }
 
-    /** The disk stack in that 0-based disk slot, or EMPTY when the slot is out of range. */
+    /**
+     * The disk stack in that 0-based disk slot, or EMPTY when the slot is out of range: the layout's disk slots, and
+     * after them the bays of the case's front a disk slides into.
+     */
     ItemStack diskInSlot(final int slot) {
-        if (slot < 0 || slot >= this.machine.layout().diskCount()) {
+        final int inside = this.machine.layout().diskCount();
+        if (slot < 0 || slot >= diskCount()) {
             return ItemStack.EMPTY;
         }
-        return this.machine.getHardware().getStackInSlot(this.machine.layout().diskStart() + slot);
+        return slot < inside ? this.machine.getHardware().getStackInSlot(this.machine.layout().diskStart() + slot)
+                : this.machine.frontDisk(slot - inside);
     }
 
     /**
@@ -355,23 +357,23 @@ final class OsSession {
         return OsDisks.systemDiskFreeWeight(disk) * diskEra(disk).mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
     }
 
+    /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
+    boolean canTakeOs(final ResourceLocation osId, final int preferredSlot) {
+        return OsDisks.roomFor(diskCount(), this::diskInSlot, osId, preferredSlot);
+    }
+
     /**
      * Installs {@code osId} onto disk slot {@code preferredSlot}, or (-1) onto the default target: a slot
      * already carrying this system (so a re-install is idempotent), else the first disk without one, else the
      * first disk. False when the system is unknown, no disk is present, or the footprint does not fit.
      */
-    /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
-    boolean canTakeOs(final ResourceLocation osId, final int preferredSlot) {
-        return OsDisks.roomFor(this.machine.layout().diskCount(), this::diskInSlot, osId, preferredSlot);
-    }
-
     boolean installOs(final ResourceLocation osId, final int preferredSlot) {
         /*
          * Writing back through setStackInSlot makes onContentsChanged fire (setChanged + build
          * invalidation); the block update then pushes the new disk state to watching clients.
          */
         final boolean installed = OsDisks.installOs(
-                this.machine.layout().diskCount(), this::diskInSlot, this::putDisk, osId, preferredSlot);
+                diskCount(), this::diskInSlot, this::putDisk, osId, preferredSlot);
         if (installed) {
             /*
              * A network system arrives with its interface on, which is the one install that also puts a
@@ -396,7 +398,7 @@ final class OsSession {
      */
     boolean validateOsSession() {
         final LiveInstallState live = liveInstall();
-        if (live != null && LiveMedium.holding(this.machine.getLevel(), this.machine.linkedEndpoints(),
+        if (live != null && LiveMedium.holding(this.machine.getLevel(), this.machine,
                 live.distro()) != LiveMedium.Answer.GONE) {
             /*
              * Asked, never acted on. This is a predicate: it is called by the network gate on every payload
@@ -421,7 +423,7 @@ final class OsSession {
         if (live == null) {
             return false;
         }
-        if (LiveMedium.holding(this.machine.getLevel(), this.machine.linkedEndpoints(), live.distro())
+        if (LiveMedium.holding(this.machine.getLevel(), this.machine, live.distro())
                 != LiveMedium.Answer.GONE) {
             return false;
         }
@@ -443,9 +445,16 @@ final class OsSession {
      * actually formatted comes back.
      */
     boolean formatDisk(final int slot) {
+        /*
+         * The console in memory belongs to the disk the machine runs from. It is taken before the format because
+         * afterwards the running disk is a different stack, or another system's disk, and asking for the console
+         * then would hand back that one and wipe the wrong software.
+         */
+        final boolean runningDisk = slot >= 0 && !diskInSlot(slot).isEmpty() && diskInSlot(slot) == systemDisk();
+        final ComputerConsoleState runningConsole = runningDisk ? this.machine.console() : null;
         // Write back through the handler so onContentsChanged fires (setChanged + build invalidation).
         final OsDisks.FormatResult result = OsDisks.formatDisk(
-                this.machine.layout().diskCount(), this::diskInSlot, this::putDisk, slot);
+                diskCount(), this::diskInSlot, this::putDisk, slot);
         if (!result.formatted()) {
             return false;
         }
@@ -453,6 +462,9 @@ final class OsSession {
             this.bootDisk = -1;
         }
         if (result == OsDisks.FormatResult.ERASED_SYSTEM) {
+            if (runningConsole != null) {
+                runningConsole.wipeSoftware();
+            }
             this.machine.onSystemErased();
         }
         this.machine.setChanged();
@@ -464,12 +476,12 @@ final class OsSession {
      * system lands beside the first for dual boot, else the first disk; -1 when no disk is installed.
      */
     int defaultInstallSlot() {
-        return OsDisks.defaultInstallSlot(this.machine.layout().diskCount(), this::diskInSlot);
+        return OsDisks.defaultInstallSlot(diskCount(), this::diskInSlot);
     }
 
     /** Takes the system off the boot disk. Nothing at all when no bootable disk is installed. */
     void uninstallOs() {
-        for (int i = 0; i < this.machine.layout().diskCount(); i++) {
+        for (int i = 0; i < diskCount(); i++) {
             final ItemStack stack = diskInSlot(i);
             if (!(stack.getItem() instanceof DiskItem) || OsDisks.systemOn(stack) == null) {
                 continue;
@@ -480,7 +492,7 @@ final class OsSession {
              * uninstall it, rather than pull the disk physically and risk losing the files on it.
              */
             final ItemStack updated = stack.copy();
-            updated.remove(ComputingModule.DISK_SYSTEMS.get());
+            updated.remove(ComputingComponents.DISK_SYSTEMS.get());
             putDisk(updated, i);
             tellClients();
             return;
@@ -512,6 +524,9 @@ final class OsSession {
             copying.putString("Os", this.installing.osId());
             copying.putInt("Slot", this.installing.targetSlot());
             copying.putLong("Reader", this.installing.readerPos());
+            if (this.installing.readerBay() != MediaVolume.MEDIUM) {
+                copying.putInt("ReaderBay", this.installing.readerBay());
+            }
             copying.putInt("Total", this.installing.ticksTotal());
             copying.putInt("Left", this.installing.ticksLeft());
             tag.put("Installing", copying);
@@ -525,6 +540,10 @@ final class OsSession {
             pages.putString("Name", this.installer.computerName());
             pages.putString("Desktop", this.installer.desktopId());
             pages.putInt("Erase", this.installer.eraseSlot());
+            pages.putBoolean("Ports", this.installer.portsSelected());
+            pages.putBoolean("UseMirror", this.installer.useMirror());
+            pages.putBoolean("Cron", this.installer.cronEnabled());
+            pages.putBoolean("Sshd", this.installer.sshdEnabled());
             tag.put("Installer", pages);
         } else if (this.installerMemo != null) {
             // Saved again without ever being asked for: a machine unloaded before anybody looked at it.
@@ -543,8 +562,10 @@ final class OsSession {
                 ? tag.getInt("PendingInstall") : IOsHost.NO_PENDING_INSTALL;
         if (tag.contains("Installing")) {
             final CompoundTag copying = tag.getCompound("Installing");
+            // A copy saved before a drive could stand on the computer's own front read a reader's medium.
             this.installing = new OsInstallJob(copying.getString("Os"), copying.getInt("Slot"),
-                    copying.getLong("Reader"), copying.getInt("Total"), copying.getInt("Left"));
+                    copying.getLong("Reader"), copying.contains("ReaderBay") ? copying.getInt("ReaderBay")
+                    : MediaVolume.MEDIUM, copying.getInt("Total"), copying.getInt("Left"));
         } else {
             this.installing = null;
         }
@@ -554,18 +575,22 @@ final class OsSession {
 
     /** Puts a disk stack back in its slot through the handler, so the machine hears the change. */
     private void putDisk(final ItemStack stack, final int slot) {
-        this.machine.getHardware().setStackInSlot(this.machine.layout().diskStart() + slot, stack);
+        final int inside = this.machine.layout().diskCount();
+        if (slot < inside) {
+            this.machine.getHardware().setStackInSlot(this.machine.layout().diskStart() + slot, stack);
+        } else {
+            this.machine.putFrontDisk(slot - inside, stack);
+        }
+    }
+
+    /* The disk slots the system sees: the layout's, then the bays of the case's front a disk slides into. */
+    private int diskCount() {
+        return this.machine.layout().diskCount() + this.machine.frontDiskSlots();
     }
 
     /** The disks changed under the players watching this block, who are drawing what is in them. */
     private void tellClients() {
-        final Level level = this.machine.getLevel();
-        if (level == null) {
-            return;
-        }
-        final BlockPos pos = this.machine.getBlockPos();
-        level.sendBlockUpdated(pos, this.machine.getBlockState(), this.machine.getBlockState(),
-                Block.UPDATE_CLIENTS);
+        this.machine.fields().syncToClients();
     }
 
     /** The era a disk was made for, which sets what an item and a system image cost on it; standard for none. */

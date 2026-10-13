@@ -14,4 +14,9 @@ package dev.jstech.core.multiblock;
 public interface IBlockProvider {
 
     String blockAt(long encodedPos);
+
+    /** Whether the block at that place is in the block tag of that id; a provider that knows no tags says no. */
+    default boolean hasTag(long encodedPos, String tag) {
+        return false;
+    }
 }

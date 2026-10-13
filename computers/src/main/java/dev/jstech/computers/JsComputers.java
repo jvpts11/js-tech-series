@@ -8,15 +8,25 @@
 package dev.jstech.computers;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.advancement.MachineOperators;
+import dev.jstech.computers.advancement.PendingAwards;
+import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
+import dev.jstech.computers.audio.MusicImports;
+import dev.jstech.computers.block.part.ComputingParts;
+import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
 import dev.jstech.computers.config.ComputersServerConfig;
-import dev.jstech.computers.integration.mekanism.MekanismIntegration;
+import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.operation.ComputingOperations;
+import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.registry.JscCreativeModeTabs;
+import dev.jstech.computers.os.ComponentKinds;
+import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.core.api.CoreRegisterEvent;
+import dev.jstech.core.audio.media.MediaKeepers;
+import dev.jstech.core.state.CoreStates;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoader;
@@ -54,13 +64,30 @@ public class JsComputers {
          */
         modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(
                 () -> ModLoader.postEvent(new ComputersRegisterEvent())));
-        modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(OsRegistry::freeze));
+        // The programs' runtime finds the mods' kinds of component through the list kept outside it.
+        ComponentKinds.install();
+        modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(() -> {
+            OsRegistry.freeze();
+            ComponentKinds.freeze();
+            // Every system and every mod's commands are known now, so each command's page in the manuals is too.
+            CommandGuidePages.register();
+        }));
 
+        // The mod's chapter of the manuals and its own Guide to Operations, with the manual's item.
+        ComputersGuide.declare();
         ComputingModule.register(modEventBus);
-        JscCreativeModeTabs.register(modEventBus);
-
-        // Soft integrations: each one checks for its mod and stays a no-op without it.
-        MekanismIntegration.bootstrap();
+        // The buses mounted on cables, registered with the Core's parts.
+        ComputingParts.register(modEventBus);
+        MachineOperators.register(modEventBus);
+        ProgramTravels.register(modEventBus);
+        // What each player earned while away, kept with the world until they join.
+        CoreStates.register(PendingAwards.WAITING);
+        // Songs players bring from their own computers, kept on a computer's disk.
+        MusicImports.register();
+        // The catalogue's songs stay on the server however long nobody plays them.
+        MediaKeepers.register(SoundfoundryCatalog::media);
+        // How each desktop moves, declared before the data generation writes it and the packs replace it.
+        OsMotions.declare();
     }
 
     /**

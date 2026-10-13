@@ -7,27 +7,27 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.hardware.DiskSize;
-import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.ItemStackHandler;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * The compiler and the runtime at the prompt, the way a player types them.
@@ -56,31 +56,12 @@ public final class SigmaShellGameTests {
             """;
 
     private static CraftingComputerBlockEntity computer(final GameTestHelper helper, final BlockPos at) {
-        helper.setBlock(at, ComputingModule.CRAFTING_COMPUTER.get());
-        if (!(helper.getBlockEntity(at) instanceof CraftingComputerBlockEntity computer)) {
-            helper.fail("no computer at " + at);
-            return null;
-        }
-        final ItemStackHandler hw = computer.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT, new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
+        final CraftingComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper).placeCraftingComputer(at,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
         for (final String id : new String[] {"sgsc", "sigma"}) {
             computer.console().install(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, id).toString());
         }
         return computer;
-    }
-
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
-        }
-        return out.toString();
     }
 
     /**
@@ -221,6 +202,65 @@ public final class SigmaShellGameTests {
                             "a program that returned leaves the machine's list; still there: "
                                     + computer.programs().view().stream().map(one -> one.name() + "/"
                                     + one.state()).toList());
+                })
+                .thenSucceed();
+    }
+
+    /** A program that asks with a question it leaves open, the way the old consoles asked. */
+    private static final String ASKS_OPEN = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Asks {
+                static void Main() {
+                    printf("name? ");
+                    Console.PrintLine("hello " + gets());
+                }
+            }
+            """;
+
+    /**
+     * A question left open is what the program asks with: it stands open while the program waits, it is still
+     * open after the machine is saved and loaded, and the answer typed goes on the same line.
+     */
+    @GameTest(template = ARENA)
+    public static void sigma_aQuestionLeftOpenIsAskedWithAndOutlivesASave(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        computer.togglePower();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.write(computer.systemDisk(), "progs/open.sgs", FileType.SGS, ASKS_OPEN,
+                            Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
+                    final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
+                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    final String compiled = text(shell.run("sgsc progs/open.sgs", cli));
+                    helper.assertTrue(compiled.contains("wrote"), "the program compiles; got " + compiled);
+                    shell.run("sigma run progs/open.asm", cli);
+                    helper.assertTrue(computer.programs().held() > 0, "the program holds the terminal");
+                })
+                .thenExecuteAfter(SETTLE * 4, () -> {
+                    final var asking = computer.programs().byId(computer.programs().held()).process();
+                    helper.assertTrue(asking.waitingForInput() && "name? ".equals(asking.openLine()),
+                            "it waits with its question open; open line '" + asking.openLine() + "'");
+                    helper.assertTrue(asking.console().isEmpty(), "an open line is no line yet; got "
+                            + asking.console());
+                    final CompoundTag tag = new CompoundTag();
+                    computer.programs().save(tag);
+                    final MachinePrograms after = new MachinePrograms();
+                    after.load(tag, computer);
+                    helper.assertTrue(after.held() > 0, "the terminal still holds it after the load");
+                    final var back = after.byId(after.held()).process();
+                    helper.assertTrue("name? ".equals(back.openLine()),
+                            "the question is still open after the load; got '" + back.openLine() + "'");
+                    helper.assertTrue(after.offerInput("Ada"), "a typed line goes to it");
+                    helper.assertTrue(back.console().equals(List.of("name? Ada")),
+                            "the answer goes on the line the question left open; got " + back.console());
+                    after.tick(2048);
+                    helper.assertTrue(back.console().equals(List.of("name? Ada", "hello Ada")),
+                            "and the program read it; got " + back.console());
                 })
                 .thenSucceed();
     }

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/pattern_encoder_body"
+    }
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "code_font": "jscore:fixed_5x8",
+  "cover": {
+    "kind": "book",
+    "label": false,
+    "parts": [
+      {
+        "colour": "#FFF4F4EF",
+        "height": 218,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "height": 1,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "height": 218,
+        "kind": "fill",
+        "width": 1
+      },
+      {
+        "colour": "#FFC9C9C0",
+        "height": 1,
+        "kind": "fill",
+        "width": 180,
+        "y": 217
+      },
+      {
+        "colour": "#FFC9C9C0",
+        "height": 218,
+        "kind": "fill",
+        "width": 1,
+        "x": 179
+      },
+      {
+        "colour": "cover",
+        "height": 218,
+        "kind": "fill",
+        "width": 12
+      },
+      {
+        "colour": "spine",
+        "height": 218,
+        "kind": "fill",
+        "width": 1,
+        "x": 11
+      },
+      {
+        "height": 20,
+        "image": "jsc:gui/splash/frames_95_mark",
+        "kind": "image",
+        "width": 20,
+        "x": 26,
+        "y": 26
+      },
+      {
+        "height": 20,
+        "image": "jsc:gui/splash/frames_xp_mark",
+        "kind": "image",
+        "width": 20,
+        "x": 56,
+        "y": 26
+      },
+      {
+        "height": 20,
+        "image": "jsc:gui/splash/frames_7_mark",
+        "kind": "image",
+        "width": 20,
+        "x": 86,
+        "y": 26
+      },
+      {
+        "height": 20,
+        "image": "jsc:gui/splash/frames_10_mark",
+        "kind": "image",
+        "width": 20,
+        "x": 116,
+        "y": 26
+      },
+      {
+        "height": 20,
+        "image": "jsc:gui/splash/frames_11_mark",
+        "kind": "image",
+        "width": 20,
+        "x": 146,
+        "y": 26
+      },
+      {
+        "colour": "rule",
+        "height": 1,
+        "kind": "fill",
+        "width": 150,
+        "x": 22,
+        "y": 52
+      },
+      {
+        "colour": "heading",
+        "kind": "bold",
+        "line": 1,
+        "scale": 2.5,
+        "width": 154,
+        "x": 22,
+        "y": 64
+      },
+      {
+        "colour": "ink",
+        "kind": "bold",
+        "line": 2,
+        "scale": 1.5,
+        "width": 154,
+        "x": 22,
+        "y": 92
+      },
+      {
+        "colour": "rule",
+        "height": 1,
+        "kind": "fill",
+        "width": 150,
+        "x": 22,
+        "y": 112
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 3,
+        "width": 154,
+        "x": 22,
+        "y": 118
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 4,
+        "width": 154,
+        "x": 22,
+        "y": 126
+      },
+      {
+        "colour": "cover",
+        "height": 26,
+        "kind": "fill",
+        "width": 168,
+        "x": 12,
+        "y": 160
+      },
+      {
+        "colour": "band",
+        "height": 2,
+        "kind": "fill",
+        "width": 168,
+        "x": 12,
+        "y": 160
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "kind": "small",
+        "line": 5,
+        "width": 154,
+        "x": 22,
+        "y": 168
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "kind": "small",
+        "line": 6,
+        "width": 154,
+        "x": 22,
+        "y": 176
+      },
+      {
+        "height": 9,
+        "image": "jsc:gui/emblem/frames_xp",
+        "kind": "image",
+        "width": 9,
+        "x": 22,
+        "y": 196
+      },
+      {
+        "colour": "ink",
+        "kind": "small_bold",
+        "line": 7,
+        "width": 142,
+        "x": 34,
+        "y": 197
+      }
+    ]
+  },
+  "hold_bar": "blocks",
+  "make": {
+    "binding": "glued",
+    "colours": [
+      "heading",
+      "band"
+    ],
+    "marks": "thumb"
+  },
+  "pages": {
+    "height": 201,
+    "width": 166
+  },
+  "palette": "jsc:guide/frames_resource_kit"
+}

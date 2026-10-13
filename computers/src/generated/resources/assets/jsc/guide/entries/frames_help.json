@@ -1,0 +1,181 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_help.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_help.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_help.table1",
+      "heads": [
+        "jsc.guide.frames_help.table1_head1",
+        "jsc.guide.frames_help.table1_head2",
+        "jsc.guide.frames_help.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_help.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_help.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.frames_help.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_help.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_help.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.frames_help.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_help.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_help.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.frames_help.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_help.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_help.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.frames_help.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_help.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.frames_help.step1",
+        "jsc.guide.frames_help.step2",
+        "jsc.guide.frames_help.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_help.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_help.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_help.table2",
+      "heads": [
+        "jsc.guide.frames_help.table2_head1",
+        "jsc.guide.frames_help.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Alt+Left"
+          },
+          {
+            "words": "jsc.guide.frames_help.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+Right"
+          },
+          {
+            "words": "jsc.guide.frames_help.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Backspace"
+          },
+          {
+            "words": "jsc.guide.frames_help.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Page Up, Page Down"
+          },
+          {
+            "words": "jsc.guide.frames_help.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.frames_help.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.frames_help.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_help.definition1",
+      "term": "jsc.guide.frames_help.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_help.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_help.fix1",
+          "problem": "jsc.guide.frames_help.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_help.fix2",
+          "problem": "jsc.guide.frames_help.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:help_on_a_computer"
+      ]
+    }
+  ],
+  "id": "jsc:frames_help",
+  "order": 169,
+  "section": "jsc:frames_help_and_studio",
+  "title": "jsc.guide.frames_help.title"
+}

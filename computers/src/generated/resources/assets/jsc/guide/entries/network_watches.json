@@ -1,0 +1,257 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.network_watches.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_watches.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_watches.table1",
+      "heads": [
+        "jsc.guide.network_watches.table1_head1",
+        "jsc.guide.network_watches.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Network.Online"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Current"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Capacity"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Used"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Total(item)"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Types()"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Find(item)"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Servers()"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Watch(item, handler)"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.WatchBelow(item, threshold, handler)"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.WatchAbove(item, threshold, handler)"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Computers()"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network.Computer(host)"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_13_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_watches.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_watches.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_watches.table2",
+      "heads": [
+        "jsc.guide.network_watches.table2_head1",
+        "jsc.guide.network_watches.table2_head2",
+        "jsc.guide.network_watches.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "HoldingInfo"
+          },
+          {
+            "literal": "HoldingInfo.Server, HoldingInfo.Quantity"
+          },
+          {
+            "words": "jsc.guide.network_watches.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "ServerInfo"
+          },
+          {
+            "literal": "ServerInfo.Name, ServerInfo.Stored, ServerInfo.Capacity"
+          },
+          {
+            "words": "jsc.guide.network_watches.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "StockEvent"
+          },
+          {
+            "literal": "StockEvent.Item, StockEvent.Total, StockEvent.Previous"
+          },
+          {
+            "words": "jsc.guide.network_watches.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "Subscription"
+          },
+          {
+            "literal": "Subscription.Id, Subscription.Item"
+          },
+          {
+            "words": "jsc.guide.network_watches.table2_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_watches.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_watches.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_watches.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_watches.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_watches.definition1",
+      "term": "jsc.guide.network_watches.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_watches.definition2",
+      "term": "jsc.guide.network_watches.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_watches.definition3",
+      "term": "jsc.guide.network_watches.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_watches.fix1",
+          "problem": "jsc.guide.network_watches.problem1"
+        },
+        {
+          "fix": "jsc.guide.network_watches.fix2",
+          "problem": "jsc.guide.network_watches.problem2"
+        },
+        {
+          "fix": "jsc.guide.network_watches.fix3",
+          "problem": "jsc.guide.network_watches.problem3"
+        },
+        {
+          "fix": "jsc.guide.network_watches.fix4",
+          "problem": "jsc.guide.network_watches.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:what_a_network_is",
+        "jsc:first_network",
+        "jsc:network_identity"
+      ]
+    }
+  ],
+  "id": "jsc:network_watches",
+  "order": 359,
+  "section": "jsc:library_network",
+  "title": "jsc.guide.network_watches.title"
+}

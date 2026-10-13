@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.INetworkOperation;
@@ -16,12 +17,16 @@ import dev.jstech.core.operation.OperationDispatch;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.IOperationResult;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * A craft request whose plan is still being worked out. Planning a recursive craft is CPU work over
@@ -31,13 +36,16 @@ import java.util.UUID;
  * placeholder collected meanwhile) and the placeholder steps aside without a log entry of its own. A
  * request nothing can make settles FAILED here, and one cancelled while planning settles DISCARDED.
  */
+@TextHolder
 public final class PendingCraftOperation implements INetworkOperation {
 
     /** No pattern, and no chain of patterns, leads from what the network holds to what was asked for. */
-    private static final String NO_WAY_TO_MAKE_IT = "jsc.operation.failure.no_way_to_make_it";
+    private static final TextKey NO_WAY_TO_MAKE_IT = TextKey.of("jsc.operation.failure.no_way_to_make_it",
+            "nothing on the network knows how to make %s");
 
     /** There is a way to make it, but no computer on the network free to carry the plan out. */
-    private static final String NO_CRAFTING_COMPUTER = "jsc.operation.failure.no_crafting_computer";
+    private static final TextKey NO_CRAFTING_COMPUTER = TextKey.of("jsc.operation.failure.no_crafting_computer",
+            "no crafting computer was free to make the %s");
 
     private final MainframeBlockEntity mainframe;
     private final StorageKey key;
@@ -50,10 +58,13 @@ public final class PendingCraftOperation implements INetworkOperation {
     private Runnable onSettle;
     private boolean done;
     private boolean cancelled;
+    private boolean abandoned;
     private boolean failed;
     private OperationFailure cause = OperationFailure.NONE;
     @Nullable
     private NetworkCraftOperation delivered;
+    @Nullable
+    private Consumer<NetworkCraftOperation> onDelivered;
 
     public PendingCraftOperation(final MainframeBlockEntity mainframe, final StorageKey key, final long demand,
                                  final boolean partial, final String label) {
@@ -70,24 +81,50 @@ public final class PendingCraftOperation implements INetworkOperation {
      */
     public void start(final OperationDispatch dispatch, final List<CraftingPattern> patterns,
                       final List<ProcessingPattern> machines, final Map<StorageKey, Long> stock) {
+        start(dispatch, () -> new CraftPlanning.Routed(
+                CraftPlanning.plan(key, demand, partial, patterns, machines, stock), CraftRouting.NONE), null);
+    }
+
+    /**
+     * Plans with {@code planning} on a virtual thread instead of the core's own planner, and runs what it chose the
+     * way it says: what an engine with a planner of its own does. {@code planning} must only read what was captured
+     * on the main thread. {@code delivered} hears of the craft the plan became, if it became one.
+     */
+    public void start(final OperationDispatch dispatch, final Supplier<CraftPlanning.Routed> planning,
+                      @Nullable final Consumer<NetworkCraftOperation> delivered) {
+        this.onDelivered = delivered;
         dispatch.submit(context -> {
-            final CraftPlanning.Planned planned = CraftPlanning.plan(key, demand, partial, patterns, machines, stock);
-            context.onMainThread(() -> deliver(planned));
+            CraftPlanning.Routed routed;
+            try {
+                routed = planning.get();
+            } catch (final RuntimeException planningFailed) {
+                /*
+                 * A plan that could not be made is a craft with no way to make it. Thrown out of here it was only
+                 * marked on the dispatcher's side, and this craft stayed waiting in the Mainframe's list for ever.
+                 */
+                JsComputers.LOGGER.warn("Planning a craft of {} failed", key.displayName().getString(), planningFailed);
+                routed = new CraftPlanning.Routed(null, CraftRouting.NONE);
+            }
+            final CraftPlanning.Routed made = routed;
+            context.onMainThread(() -> deliver(made));
             return IOperationResult.success();
         }, priority);
     }
 
-    private void deliver(@Nullable final CraftPlanning.Planned planned) {
+    private void deliver(final CraftPlanning.Routed routed) {
         if (done) {
             return; // cancelled or abandoned while the plan was being made: the plan is dropped
         }
+        final CraftPlanning.Planned planned = routed.planned();
+        final CraftRouting routing = routed.routing();
         if (planned == null) {
             failed = true;
             cause = OperationFailure.of(NO_WAY_TO_MAKE_IT, key.displayName().getString());
             settle();
             return;
         }
-        final NetworkCraftOperation craft = mainframe.submitPlannedCraft(key, demand, planned.plan(), label, null);
+        final NetworkCraftOperation craft =
+                mainframe.submitPlannedCraft(key, demand, planned.plan(), label, null, routing);
         if (craft == null) {
             failed = true;
             cause = OperationFailure.of(NO_CRAFTING_COMPUTER, key.displayName().getString());
@@ -99,6 +136,9 @@ public final class PendingCraftOperation implements INetworkOperation {
             craft.onSettle(onSettle);
         }
         delivered = craft;
+        if (onDelivered != null) {
+            onDelivered.accept(craft);
+        }
         settle();
     }
 
@@ -163,6 +203,10 @@ public final class PendingCraftOperation implements INetworkOperation {
 
     @Override
     public void abandon() {
+        if (!done) {
+            // Marked before settling, so the callback it fires reads a request that was dropped, not a pending one.
+            abandoned = true;
+        }
         settle();
     }
 
@@ -190,7 +234,7 @@ public final class PendingCraftOperation implements INetworkOperation {
 
     @Override
     public OperationRecord toRecord() {
-        final byte status = cancelled ? OperationRecord.STATUS_DISCARDED
+        final byte status = cancelled || abandoned ? OperationRecord.STATUS_DISCARDED
                 : failed ? OperationRecord.STATUS_FAILED
                 : delivered != null ? OperationRecord.STATUS_COMPLETED
                 : OperationRecord.STATUS_PENDING;

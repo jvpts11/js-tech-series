@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -21,14 +22,21 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record UninstallProgramPayload(BlockPos hostPos, String programId) implements CustomPacketPayload {
 
+    /** The longest program id, the same as opening a program takes. */
+    private static final int ID_MOST = 64;
+
     public static final CustomPacketPayload.Type<UninstallProgramPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "uninstall_program"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, UninstallProgramPayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, UninstallProgramPayload::hostPos,
-                    ByteBufCodecs.STRING_UTF8, UninstallProgramPayload::programId,
+                    ByteBufCodecs.stringUtf8(ID_MOST), UninstallProgramPayload::programId,
                     UninstallProgramPayload::new);
+
+    public UninstallProgramPayload {
+        programId = TextBounds.clip(programId, ID_MOST);
+    }
 
     @Override
     public CustomPacketPayload.Type<UninstallProgramPayload> type() {

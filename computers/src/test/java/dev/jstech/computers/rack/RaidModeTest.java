@@ -69,6 +69,28 @@ class RaidModeTest {
     }
 
     @Test
+    void volumeOf_aDegradedMirrorKeepsItsSizeWhenTheSmallestMemberIsPulled() {
+        final long promised = RaidMode.RAID1.usableCapacity(List.of(1000L, 2000L));
+        assertEquals(1000L, RaidMode.RAID1.volumeOf(List.of(2000L), 2, promised));
+    }
+
+    @Test
+    void volumeOf_aDegradedParityArrayKeepsItsSizeWhenTheSmallestMemberIsPulled() {
+        final long promised = RaidMode.RAID5.usableCapacity(List.of(1000L, 2000L, 4000L));
+        assertEquals(2000L, RaidMode.RAID5.volumeOf(List.of(2000L, 4000L), 3, promised));
+    }
+
+    @Test
+    void volumeOf_aFullArrayIsComputedFromItsMembers() {
+        assertEquals(4000L, RaidMode.RAID5.volumeOf(List.of(2000L, 4000L, 4000L), 3, 2000L));
+    }
+
+    @Test
+    void volumeOf_withoutAKeptSizeFallsBackToTheMemberCount() {
+        assertEquals(4000L, RaidMode.RAID5.volumeOf(List.of(2000L, 2000L), 3, 0L));
+    }
+
+    @Test
     void usableCapacity_isZeroWithNoDrivesLeft() {
         assertEquals(0L, RaidMode.RAID5.usableCapacity(List.of(), 3));
     }

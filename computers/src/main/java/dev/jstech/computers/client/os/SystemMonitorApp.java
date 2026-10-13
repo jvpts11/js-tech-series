@@ -7,8 +7,10 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
@@ -19,6 +21,11 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -35,12 +42,13 @@ import java.util.function.Supplier;
  * snapshot the Settings app already builds, so it needs no server code of its own, and re-requests it on a
  * slow cadence so the storage bars track items being stored.
  */
+@PaletteHolder
 public final class SystemMonitorApp implements IDesktopApp {
 
     private static final int REFRESH_FRAMES = 40;
-    private static final int C_GREEN = 0xFF2EA043;
-    private static final int C_AMBER = 0xFFE0A020;
-    private static final int C_RED = 0xFFD1495B;
+    /** The window's own colours, {@code jsc:app/system_monitor}: a disk usage bar at each threshold. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/system_monitor",
+            new Colours(0xFF2EA043, 0xFFE0A020, 0xFFD1495B));
     private static final int BAR_H = 8;
     private static final int DISK_ROW_H = BAR_H + 12;
     private static final int MEM_ROW_H = 10;
@@ -73,24 +81,33 @@ public final class SystemMonitorApp implements IDesktopApp {
 
     public SystemMonitorApp(final BlockPos host) {
         this.host = host;
-        loadingLabel = root.add(new Label("Reading machine...", Label.Tone.DIM));
-        nameLabel = root.add(new Label(() -> data == null || data.computerName().isEmpty() ? "Computer" : data.computerName()));
+        loadingLabel = root.add(new Label(GameText.resolve(SystemMonitorTexts.READING), Label.Tone.DIM));
+        nameLabel = root.add(new Label(() -> data == null || data.computerName().isEmpty()
+                ? GameText.resolve(SystemMonitorTexts.COMPUTER) : data.computerName()));
         osLabel = root.add(new Label(() -> data == null ? "" : data.osLabel() + "  (" + data.platform() + ")", Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
-        spec(0, "Processor", () -> data == null || data.cpuLabel().isEmpty() ? "-" : data.cpuLabel(), () -> cpuClock(data == null ? 0 : data.cpuMhz()));
+        spec(0, SystemMonitorTexts.PROCESSOR, () -> data == null || data.cpuLabel().isEmpty() ? "-"
+                : GameText.resolve(data.cpuLabel()), () -> cpuClock(data == null ? 0 : data.cpuMhz()));
         // A second processor line with no group of its own, the way a continuation row reads under the one above it.
-        spec(1, "", () -> data == null || data.cpuArch().isEmpty() ? "-" : data.cpuArch(), () -> "");
-        spec(2, "Memory", () -> "RAM", () -> data == null ? "-"
-                : RamLedger.heldLabel(heldBytes()) + " of " + JsTechTheme.fmt(data.ramMb()) + " MB");
-        spec(3, "Graphics", () -> data != null && data.vramMb() > 0 ? "VRAM" : "no GPU",
-                () -> data != null && data.vramMb() > 0 ? JsTechTheme.fmt(data.vramMb()) + " MB" : "-");
-        memoryHeader = root.add(new Label("MEMORY", Label.Tone.DIM));
-        memoryFree = root.add(new Label(() -> data == null ? ""
-                : JsTechTheme.fmt(Math.max(0, data.ramMb() - data.ramUsedMb())) + " MB free", Label.Tone.DIM)
+        spec(1, null, () -> data == null || data.cpuArch().isEmpty() ? "-" : GameText.resolve(data.cpuArch()),
+                () -> "");
+        spec(2, SystemMonitorTexts.MEMORY, () -> GameText.resolve(SystemMonitorTexts.RAM), () -> data == null ? "-"
+                : GameText.resolve(SystemMonitorTexts.HELD_OF.with(RamLedger.heldLabel(heldBytes()),
+                        JsTechTheme.fmt(data.ramMb()))));
+        // The card by its name, and its video memory held of what it has with how busy it is; a bar under them.
+        spec(3, SystemMonitorTexts.GRAPHICS, () -> data == null || !data.gpu().present()
+                        ? GameText.resolve(SystemMonitorTexts.NO_GPU) : GameText.resolve(data.gpu().card()),
+                () -> data == null || !data.gpu().present() ? "-"
+                        : GameText.resolve(SystemMonitorTexts.VIDEO_HELD.with(VramLedger.label(data.gpu().usedKb()),
+                                VramLedger.label(data.gpu().totalKb()), data.gpu().load())));
+        memoryHeader = root.add(new Label(GameText.resolve(SystemMonitorTexts.MEMORY_HEADER), Label.Tone.DIM));
+        memoryFree = root.add(new Label(() -> data == null ? "" : GameText.resolve(SystemMonitorTexts.FREE.with(
+                JsTechTheme.fmt(Math.max(0, data.ramMb() - data.ramUsedMb())))), Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
         memList = root.add(new ListView<RamUse>(() -> data == null ? List.of() : data.ramUses(), MEM_ROW_H, this::renderMemoryRow));
-        storageHeader = root.add(new Label("STORAGE", Label.Tone.DIM));
-        programsLabel = root.add(new Label(() -> data == null ? "" : data.installed().size() + " programs installed", Label.Tone.DIM)
+        storageHeader = root.add(new Label(GameText.resolve(SystemMonitorTexts.STORAGE_HEADER), Label.Tone.DIM));
+        programsLabel = root.add(new Label(() -> data == null ? ""
+                : GameText.resolve(SystemMonitorTexts.PROGRAMS_INSTALLED.with(data.installed().size())), Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
         diskList = root.add(new ListView<DiskUse>(() -> data == null ? List.of() : data.disks(), DISK_ROW_H, this::renderDiskRow));
         active = this;
@@ -106,8 +123,10 @@ public final class SystemMonitorApp implements IDesktopApp {
         return sum;
     }
 
-    private void spec(final int index, final String group, final Supplier<String> label, final Supplier<String> value) {
-        specGroups[index] = root.add(new Label(group, Label.Tone.DIM));
+    /* A line of specifications: its group, or none for a line that continues the one above, then its two values. */
+    private void spec(final int index, @Nullable final TextKey group, final Supplier<String> label,
+                      final Supplier<String> value) {
+        specGroups[index] = root.add(new Label(group == null ? "" : GameText.resolve(group), Label.Tone.DIM));
         specLabels[index] = root.add(new Label(label));
         specValues[index] = root.add(new Label(value).setAlign(Label.Align.RIGHT));
     }
@@ -121,7 +140,7 @@ public final class SystemMonitorApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "System Monitor";
+        return GameText.resolve(SystemMonitorTexts.TITLE);
     }
 
     @Override
@@ -188,6 +207,12 @@ public final class SystemMonitorApp implements IDesktopApp {
             specValues[i].setBounds(px + pw / 2, row, pw / 2, 8);
             row += 12;
         }
+        if (ready && data.gpu().present()) {
+            // Under the graphics line, how full the card's memory is.
+            final double full = (double) data.gpu().usedKb() / Math.max(1L, data.gpu().totalKb());
+            g.fill(px + 62, row - 3, px + pw, row - 1, skin.fieldBg());
+            g.fill(px + 62, row - 3, px + 62 + (int) ((pw - 62) * Math.min(1.0, full)), row - 1, skin.accent());
+        }
         row += 4;
         memoryHeader.setBounds(px, row, pw / 2, 8);
         memoryFree.setBounds(px + pw / 2, row, pw / 2, 8);
@@ -210,21 +235,26 @@ public final class SystemMonitorApp implements IDesktopApp {
         // What it holds now, which is what a person watching this list is watching for.
         final String amount = RamLedger.heldLabel(use.heldBytes());
         final int amountW = font.width(amount);
-        final String name = font.plainSubstrByWidth(use.label(), w - amountW - 6);
-        g.drawString(font, name, x, y + 1, ctx.skin().text(), false);
-        g.drawString(font, amount, x + w - amountW, y + 1, ctx.skin().dim(), false);
+        // A window is listed by the name the desktop gives its program, not by the key the machine keeps it under.
+        final RamLedger.Kind kind = RamLedger.Kind.find(use.kind());
+        final String label = kind == RamLedger.Kind.WINDOW ? ActiveDesktop.windowName(use.label())
+                : kind == RamLedger.Kind.GRAPHICS ? GameText.resolve(SystemMonitorTexts.SHARED_GRAPHICS) : use.label();
+        final String name = font.plainSubstrByWidth(label, w - amountW - 6);
+        Draw.text(g, font, name, x, y + 1, ctx.skin().text());
+        Draw.text(g, font, amount, x + w - amountW, y + 1, ctx.skin().dim());
     }
 
     private void renderDiskRow(final GuiGraphics g, final UiContext ctx, final DiskUse disk, final int index, final int x,
                                final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final Font font = ctx.font();
-        final String tag = disk.label() + (disk.system() ? " (system)" : "");
-        g.drawString(font, tag, x, y, ctx.skin().text(), false);
+        final String tag = GameText.resolve(disk.system() ? SystemMonitorTexts.SYSTEM_DISK.with(disk.label())
+                : disk.label());
+        Draw.text(g, font, tag, x, y, ctx.skin().text());
         final long cap = Math.max(1L, disk.capMb());
         final double frac = Math.min(1.0, (double) disk.usedMb() / cap);
         final String usage = DiskSpec.sizeLabel(disk.usedMb())
                 + " / " + DiskSpec.sizeLabel(disk.capMb());
-        g.drawString(font, usage, x + w - font.width(usage), y, ctx.skin().dim(), false);
+        Draw.text(g, font, usage, x + w - font.width(usage), y, ctx.skin().dim());
         final int barY = y + 10;
         g.fill(x, barY, x + w, barY + BAR_H, ctx.skin().fieldBg());
         g.fill(x, barY, x + (int) (w * frac), barY + BAR_H, usageColor(frac));
@@ -232,13 +262,14 @@ public final class SystemMonitorApp implements IDesktopApp {
     }
 
     private static int usageColor(final double frac) {
+        final Colours c = PALETTE.get();
         if (frac >= 0.9) {
-            return C_RED;
+            return c.critical();
         }
         if (frac >= 0.7) {
-            return C_AMBER;
+            return c.warning();
         }
-        return C_GREEN;
+        return c.normal();
     }
 
     private static String cpuClock(final int mhz) {
@@ -251,5 +282,9 @@ public final class SystemMonitorApp implements IDesktopApp {
     @Override
     public boolean mouseScrolled(final double delta) {
         return root.mouseScrolled(lastMouseX, lastMouseY, delta);
+    }
+
+    /** A disk usage bar's colour under, at, and over the threshold that flags it. */
+    private record Colours(int normal, int warning, int critical) {
     }
 }

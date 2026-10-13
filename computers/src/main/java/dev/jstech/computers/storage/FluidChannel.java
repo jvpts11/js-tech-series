@@ -69,4 +69,29 @@ public record FluidChannel(IFluidHandler fluids) implements IDataChannel {
         }
         return new ArrayList<>(keys);
     }
+
+    @Override
+    public int places() {
+        return fluids.getTanks();
+    }
+
+    @Override
+    public int placesUsed() {
+        int used = 0;
+        for (int tank = 0; tank < fluids.getTanks(); tank++) {
+            if (!fluids.getFluidInTank(tank).isEmpty()) {
+                used++;
+            }
+        }
+        return used;
+    }
+
+    @Override
+    public long room() {
+        long free = 0L;
+        for (int tank = 0; tank < fluids.getTanks(); tank++) {
+            free += Math.max(0, fluids.getTankCapacity(tank) - fluids.getFluidInTank(tank).getAmount());
+        }
+        return free;
+    }
 }

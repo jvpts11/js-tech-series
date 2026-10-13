@@ -11,6 +11,9 @@ import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.TypeRef;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,12 +29,16 @@ import java.util.Set;
  * something of their own for their body to see. Getting that wrong is invisible until two names collide,
  * so it is written the same way every time: keep what was there, replace it, put it back.
  */
+@TextHolder
 final class StatementChecker {
 
     private final BodyScope scope;
     private final ExpressionChecker expressions;
 
     static final String INFERRED = "var";
+
+    /** What a message names where there is no value or type at all, as in "cannot convert 'nothing' to 'var'". */
+    static final TextKey NOTHING = TextKey.of("jsc.sigma.statement_checker.nothing", "nothing");
 
     StatementChecker(final BodyScope scope, final ExpressionChecker expressions) {
         this.scope = scope;
@@ -54,15 +61,44 @@ final class StatementChecker {
             case IStmt.Block block -> block.statements().stream().anyMatch(StatementChecker::alwaysReturns);
             case IStmt.If branch -> branch.otherwise() != null
                     && alwaysReturns(branch.then()) && alwaysReturns(branch.otherwise());
-            case IStmt.While loop -> isAlwaysTrue(loop.condition());
-            case IStmt.DoWhile loop -> alwaysReturns(loop.body()) || isAlwaysTrue(loop.condition());
-            case IStmt.For loop -> loop.condition() == null || isAlwaysTrue(loop.condition());
+            case IStmt.While loop -> isAlwaysTrue(loop.condition()) && !breaksOut(loop.body());
+            case IStmt.DoWhile loop -> (alwaysReturns(loop.body()) || isAlwaysTrue(loop.condition()))
+                    && !breaksOut(loop.body());
+            case IStmt.For loop -> (loop.condition() == null || isAlwaysTrue(loop.condition()))
+                    && !breaksOut(loop.body());
             case IStmt.Switch choice -> choice.sections().stream().anyMatch(IStmt.SwitchSection::fallback)
-                    && choice.sections().stream().allMatch(section ->
-                            section.statements().stream().anyMatch(StatementChecker::alwaysReturns));
+                    && choice.sections().stream().allMatch(StatementChecker::sectionReturns);
             case IStmt.Lock lock -> alwaysReturns(lock.body());
             default -> false;
         };
+    }
+
+    /*
+     * Whether a break in this statement leaves the loop or switch that holds it. A break inside a loop or a
+     * switch nested in it leaves that one instead, and a lambda is an expression, so neither is looked into.
+     */
+    private static boolean breaksOut(final IStmt statement) {
+        return switch (statement) {
+            case IStmt.Break ignored -> true;
+            case IStmt.Block block -> block.statements().stream().anyMatch(StatementChecker::breaksOut);
+            case IStmt.If branch -> breaksOut(branch.then())
+                    || branch.otherwise() != null && breaksOut(branch.otherwise());
+            case IStmt.Lock lock -> breaksOut(lock.body());
+            default -> false;
+        };
+    }
+
+    /* A section returns when a statement of it does and no break comes before that one; one after it never runs. */
+    private static boolean sectionReturns(final IStmt.SwitchSection section) {
+        for (final IStmt statement : section.statements()) {
+            if (breaksOut(statement)) {
+                return false;
+            }
+            if (alwaysReturns(statement)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void checkBlock(final IStmt.Block block, final boolean newScope) {
@@ -90,6 +126,10 @@ final class StatementChecker {
     }
 
     private void checkStatement(final IStmt statement) {
+        // A body the player has not typed yet, read while the line is still being written, has nothing to check.
+        if (statement == null) {
+            return;
+        }
         switch (statement) {
             case IStmt.Block block -> this.checkBlock(block, true);
             case IStmt.If branch -> {
@@ -187,7 +227,7 @@ final class StatementChecker {
                 if (!this.scope.rules().isAssignable(labelType, value)) {
                     this.scope.report(label.line(), label.column(),
                             SigmaError.CANNOT_CONVERT, labelType.describe(), value.describe());
-                } else if (label instanceof IExpr.Literal literal && !seen.add(String.valueOf(literal.value()))) {
+                } else if (label instanceof IExpr.Literal literal && !seen.add(labelKey(literal.value()))) {
                     this.scope.report(label.line(), label.column(), SigmaError.DUPLICATE_SWITCH_LABEL);
                 }
             }
@@ -199,6 +239,22 @@ final class StatementChecker {
             this.scope.scope(saved);
         }
         this.scope.leaveChoice();
+    }
+
+    /*
+     * Two labels are the same label when they pick the same value. A character in a numeric switch picks its code,
+     * and 1 and 1.0 pick the same number, so numbers and characters are compared by value, not by how they were
+     * written; anything else is compared as written, kept apart by its kind.
+     */
+    private static String labelKey(final Object value) {
+        return switch (value) {
+            case null -> "null";
+            case Character character -> "number:" + (int) character;
+            case Float real when !Float.isFinite(real) -> "number:" + real;
+            case Double real when !Double.isFinite(real) -> "number:" + real;
+            case Number number -> "number:" + new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
+            default -> value.getClass().getSimpleName() + ":" + value;
+        };
     }
 
     private void checkReturn(final IStmt.Return give) {
@@ -234,7 +290,7 @@ final class StatementChecker {
     private ITypeSymbol inferred(final IStmt.LocalDecl local) {
         if (local.initializer() == null) {
             this.scope.report(local.line(), local.column(),
-                    SigmaError.CANNOT_CONVERT, "nothing", INFERRED);
+                    SigmaError.CANNOT_CONVERT, NOTHING, INFERRED);
             return ITypeSymbol.Special.ERROR;
         }
         final ITypeSymbol found = this.expressions.check(local.initializer(), null);

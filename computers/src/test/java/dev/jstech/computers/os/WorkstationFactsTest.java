@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,9 @@ class WorkstationFactsTest {
     @Test
     void groups_readTheWayTheApprovedWindowShowsThem() {
         final WorkstationFacts facts = new WorkstationFacts("player", "unix", NETWORK, "UNIX System V 3.2",
-                "vel64", "CDE 2.5.2", "Integra Servo 2620", 2000, 8192, 612, 3072, 512_000, 1_229);
+                "vel64", "CDE 2.5.2", Text.literal("Integra Servo 2620"), 2000, 8192, 612, 3072, 512_000, 1_229);
         assertEquals(List.of("Workstation", "System", "Hardware"),
-                facts.groups().stream().map(WorkstationFacts.Group::title).toList());
+                facts.groups().stream().map(group -> group.title().english()).toList());
         assertEquals(List.of("User Name=player", "Host Name=unix", "Network=" + NETWORK,
                 "Operating System=UNIX System V 3.2", "Architecture=vel64", "Window System=CDE 2.5.2",
                 "Processor=Integra Servo 2620, 2000 MHz", "Physical Memory=8192 MB", "Memory in Use=612 MB",
@@ -31,21 +32,23 @@ class WorkstationFactsTest {
 
     @Test
     void network_saysSoWhenTheMachineIsOnNone() {
-        final WorkstationFacts facts = new WorkstationFacts("player", "debian", "", "", "", "", "", 0, 0, 0, 0, 0, 0);
-        assertEquals("Network=" + WorkstationFacts.NO_NETWORK, rows(facts).get(2));
+        final WorkstationFacts facts =
+                new WorkstationFacts("player", "debian", "", "", "", "", Text.EMPTY, 0, 0, 0, 0, 0, 0);
+        assertEquals("Network=" + WorkstationFacts.NO_NETWORK.english(), rows(facts).get(2));
     }
 
     @Test
     void processor_readsNoneWithoutOneAndLeavesAnUnknownClockOff() {
-        assertEquals("Processor=None", rows(new WorkstationFacts("", "", "", "", "", "", "", 1000, 0, 0, 0, 0, 0))
-                .get(6));
+        assertEquals("Processor=None",
+                rows(new WorkstationFacts("", "", "", "", "", "", Text.EMPTY, 1000, 0, 0, 0, 0, 0)).get(6));
         assertEquals("Processor=Integra 486DX2", rows(new WorkstationFacts("", "", "", "", "", "",
-                "Integra 486DX2", 0, 0, 0, 0, 0, 0)).get(6));
+                Text.literal("Integra 486DX2"), 0, 0, 0, 0, 0, 0)).get(6));
     }
 
     @Test
     void usedAmounts_neverReadAsMoreThanThereIs() {
-        final WorkstationFacts facts = new WorkstationFacts("", "", "", "", "", "", "", 0, 512, 900, 0, 1_024, 5_000);
+        final WorkstationFacts facts =
+                new WorkstationFacts("", "", "", "", "", "", Text.EMPTY, 0, 512, 900, 0, 1_024, 5_000);
         assertEquals(512, facts.memoryUsedMb());
         assertEquals(1_024, facts.diskUsedMb());
         assertEquals(1.0, facts.memoryShare());
@@ -61,7 +64,7 @@ class WorkstationFactsTest {
         final List<String> out = new ArrayList<>();
         for (final WorkstationFacts.Group group : facts.groups()) {
             for (final WorkstationFacts.Row row : group.rows()) {
-                out.add(row.label() + "=" + row.value());
+                out.add(row.label().english() + "=" + row.value().english());
             }
         }
         return out;

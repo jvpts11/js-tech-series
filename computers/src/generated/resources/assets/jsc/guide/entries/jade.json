@@ -1,0 +1,33 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.jade.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jade.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jade.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.jade.fix1",
+          "problem": "jsc.guide.jade.problem1"
+        }
+      ]
+    }
+  ],
+  "id": "jsc:jade",
+  "order": 122,
+  "section": "jsc:mod_integrations",
+  "title": "jsc.guide.jade.title"
+}

@@ -7,6 +7,11 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.advancement.OperationMilestones;
+import dev.jstech.computers.crafting.CraftingDispatch;
+import dev.jstech.computers.crafting.NetworkCraftOperation;
+import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -16,20 +21,24 @@ import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.core.operation.exec.QueueArbiter;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,11 +58,24 @@ import org.jetbrains.annotations.Nullable;
  * its queue count from it, and hands finished Operations back to it for the log. It is a piece of that machine
  * rather than a thing of its own, which is why it takes the machine rather than a set of numbers.
  */
+@TextHolder
 final class MainframeScheduler {
 
     /** The two things counted per Operation: the ticks it waited, and the ticks it actually ran. */
     private static final int WAITED = 0;
     private static final int RAN = 1;
+
+    /** Where an Operation's saved state keeps who asked for it. */
+    private static final String REQUESTED_BY = "RequestedBy";
+
+    /** An Operation settled short: it delivered part of what was requested. */
+    private static final TextKey SETTLED_PARTIAL = TextKey.of("jsc.operation.failure.settled_partial",
+            "delivered %s of %s");
+    /** An Operation settled after waiting out its timeout on a resource somebody else was holding. */
+    private static final TextKey SETTLED_RESOURCE_LOCKED = TextKey.of("jsc.operation.failure.settled_resource_locked",
+            "timed out waiting on a locked resource");
+    /** An Operation settled with none of the above, and said nothing more about why. */
+    private static final TextKey SETTLED_FAILED = TextKey.of("jsc.operation.failure.settled_failed", "failed");
 
     private final MainframeBlockEntity mainframe;
 
@@ -75,8 +97,17 @@ final class MainframeScheduler {
     /** Per in-flight Operation: ticks spent waiting (queued or on a lock) and ticks spent running. */
     private final Map<INetworkOperation, int[]> timing = new IdentityHashMap<>();
 
+    /*
+     * Who asked for each Operation, when somebody was acting as it was taken on; the advancements credit them. It
+     * goes into the Operation's saved state (stampAsker), and a resume takes the Operation on in their name again.
+     */
+    private final Map<INetworkOperation, UUID> askedBy = new IdentityHashMap<>();
+
     /** The last hour of settled Operations by type, and the day's peak concurrency; RAM only. */
     private final OperationStatistics statistics = new OperationStatistics();
+
+    /** Gives the processing jobs their Crafting Interfaces and credits what their machines give back. */
+    private final CraftingDispatch crafting = new CraftingDispatch();
 
     /** The Operations the last tick granted a queue slot to; the views report the rest as PENDING. */
     private Set<INetworkOperation> lastGranted = Set.of();
@@ -95,8 +126,36 @@ final class MainframeScheduler {
      */
     void track(final INetworkOperation operation) {
         inFlight.add(operation);
+        Acting.current().ifPresent(player -> askedBy.put(operation, player));
         post(net -> new IOperationLifecycleEvent.Created(
                 net, operation.operationId(), operation.typeId()));
+    }
+
+    /** Who asked for the Operation with that id, when it is in flight and somebody did. */
+    Optional<UUID> askedBy(final UUID operationId) {
+        for (final INetworkOperation operation : inFlight) {
+            if (operation.operationId().equals(operationId)) {
+                return Optional.ofNullable(askedBy.get(operation));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Writes who asked for an Operation into the state it is saved as, so that when it resumes after a reload it is
+     * taken on in their name again, see {@link #askerIn}.
+     */
+    void stampAsker(final INetworkOperation operation, final CompoundTag state) {
+        final UUID asker = askedBy.get(operation);
+        if (asker != null) {
+            state.putUUID(REQUESTED_BY, asker);
+        }
+    }
+
+    /** Who asked for the Operation saved as {@code state}, or null when nobody did. */
+    @Nullable
+    static UUID askerIn(final CompoundTag state) {
+        return state.hasUUID(REQUESTED_BY) ? state.getUUID(REQUESTED_BY) : null;
     }
 
     /** Runs {@code work} on the next tick, after the storage index has caught up with this one. */
@@ -254,6 +313,7 @@ final class MainframeScheduler {
         inFlight.clear();
         timing.clear();
         deferredTicks.clear();
+        askedBy.clear();
         lastGranted = Set.of();
     }
 
@@ -270,10 +330,17 @@ final class MainframeScheduler {
             lastGranted = Set.of();
             deferredTicks.clear();
             timing.clear();
+            /*
+             * What a settled job is still owed keeps coming out of its machine after the last job has gone. Not while
+             * saved jobs wait to resume, though: their buses must keep what they saw when those jobs began.
+             */
+            if (!mainframe.resumesOperations() && crafting.wantsIdleTick(mainframe.gameTime())) {
+                dispatchCrafting();
+            }
             return;
         }
         // Progress lives in the Operations themselves and is saved with the block entity.
-        mainframe.setChanged();
+        mainframe.markDirtyOnly();
         statistics.observeConcurrency(mainframe.gameTime(), inFlight.size());
         /*
          * A queue processes at most the RAM buffer per tick: a buffer smaller than the CPU leaves the CPU idle
@@ -282,7 +349,7 @@ final class MainframeScheduler {
          */
         final long effectiveCapacity = Math.min(mainframe.pooledCapacity(), mainframe.ramBuffer());
         final int slots = Math.max(1, mainframe.pooledQueues());
-        assignMachines();
+        dispatchCrafting();
         feed(effectiveCapacity, slots);
         settle();
     }
@@ -321,9 +388,20 @@ final class MainframeScheduler {
                         operation, operation.priority(), deferredTicks.getOrDefault(operation, 0)));
             }
         }
+        final List<INetworkOperation> grantedInOrder = QueueArbiter.grant(ready, slots,
+                OperationBalance.priorityAgingTicks());
         final Set<INetworkOperation> granted = Collections.newSetFromMap(new IdentityHashMap<>());
-        granted.addAll(QueueArbiter.grant(ready, slots, OperationBalance.priorityAgingTicks()));
+        granted.addAll(grantedInOrder);
         lastGranted = granted;
+        /*
+         * Each granted Operation runs on a queue of its own, the fastest queues to the Operations granted first: the
+         * processor's queue at its full capacity, a graphics card's no faster than the card can run it.
+         */
+        final Map<INetworkOperation, Long> queueOf = new IdentityHashMap<>();
+        final long[] speeds = mainframe.pooledQueueSpeeds(effectiveCapacity);
+        for (int i = 0; i < grantedInOrder.size(); i++) {
+            queueOf.put(grantedInOrder.get(i), i < speeds.length ? speeds[i] : effectiveCapacity);
+        }
         for (final INetworkOperation operation : snapshot) {
             if (operation.isDone()) {
                 continue;
@@ -340,7 +418,8 @@ final class MainframeScheduler {
                 operation.tick(machineFeedBudget(operation, effectiveCapacity, stepsPerComputer));
             } else if (granted.contains(operation)) {
                 countTick(operation, RAN);
-                operation.tick(machineFeedBudget(operation, effectiveCapacity, stepsPerComputer));
+                final long queue = Math.min(effectiveCapacity, queueOf.getOrDefault(operation, effectiveCapacity));
+                operation.tick(machineFeedBudget(operation, queue, stepsPerComputer));
             } else {
                 /*
                  * Ready Operations beyond the queue count stay PENDING this tick: no progress, no latency
@@ -361,6 +440,7 @@ final class MainframeScheduler {
                 continue;
             }
             deferredTicks.remove(operation);
+            final UUID asker = askedBy.remove(operation);
             final int[] counted = timing.remove(operation);
             final int waited = counted == null ? 0 : counted[WAITED];
             final int ran = counted == null ? 0 : counted[RAN];
@@ -379,69 +459,33 @@ final class MainframeScheduler {
                     completedTotal++; // network Operations count toward the lifetime tally too
                 }
                 postSettled(operation, record);
+                OperationMilestones.report(mainframe, asker, operation.typeId(), record,
+                        operation instanceof NetworkCraftOperation craft && craft.madeOnAMachine()
+                                || operation instanceof NetworkMultiStageOperation pipeline
+                                && pipeline.hasMachineStage());
             }
             it.remove();
         }
     }
 
     /**
-     * Gives every running processing job a distinct physical machine, so concurrency on a machine type scales
-     * with the machines actually present, so two same-type jobs never share (and jam) one block. A job keeps
-     * the machine it already holds (as long as it is still there and routable); a new job claims a free one of
-     * the ones its recipe can route to. A job with no free machine is flagged blocked (it waits, it does not
-     * time out). The Machines tab's Max Jobs is an OPTIONAL per-type ceiling on top of this: 0 means "use them
-     * all".
+     * Gives every running processing job a Crafting Interface that holds its recipe and may take it now, and
+     * credits what the machines gave back since the last tick to the jobs that fed them. A job with no interface
+     * free waits; it times out only when no interface holds its recipe at all.
      */
-    private void assignMachines() {
-        final Set<BlockPos> taken = new HashSet<>();
-        final Map<String, Integer> perType = new HashMap<>();
+    private void dispatchCrafting() {
         final List<NetworkProcessingOperation> jobs = new ArrayList<>();
         for (final INetworkOperation operation : inFlight) {
             if (operation instanceof NetworkProcessingOperation proc && !proc.isDone()) {
                 jobs.add(proc);
             }
         }
-        /*
-         * Pass 1: a job that already holds a still-valid, unclaimed machine keeps it (stable across ticks so a
-         * machine is never fed by two jobs turn and turn about).
-         */
-        for (final NetworkProcessingOperation proc : jobs) {
-            final BlockPos held = proc.assignedMachine();
-            if (held != null && !taken.contains(held) && proc.routableMachines().contains(held)) {
-                taken.add(held);
-                perType.merge(proc.machineKey(), 1, Integer::sum);
-                proc.setConcurrencyBlocked(false);
-            } else {
-                proc.setAssignedMachine(null);
-            }
+        final ServerLevel level = mainframe.getLevel() instanceof ServerLevel server ? server : null;
+        final NetworkUuid network = mainframe.networkUuid();
+        if (level == null || network == null) {
+            return;
         }
-        // Pass 2: an unassigned job claims a free routable machine, within its type's optional Max Jobs ceiling.
-        for (final NetworkProcessingOperation proc : jobs) {
-            if (proc.assignedMachine() != null) {
-                continue;
-            }
-            final String key = proc.machineKey();
-            final int ceiling = mainframe.maxJobsFor(key); // 0 = auto: bounded only by the machines present
-            if (ceiling > 0 && perType.getOrDefault(key, 0) >= ceiling) {
-                proc.setConcurrencyBlocked(true);
-                continue;
-            }
-            BlockPos free = null;
-            for (final BlockPos candidate : proc.routableMachines()) {
-                if (!taken.contains(candidate)) {
-                    free = candidate;
-                    break;
-                }
-            }
-            if (free != null) {
-                proc.setAssignedMachine(free);
-                taken.add(free);
-                perType.merge(key, 1, Integer::sum);
-                proc.setConcurrencyBlocked(false);
-            } else {
-                proc.setConcurrencyBlocked(true); // every machine of this type is busy: wait, do not time out
-            }
-        }
+        crafting.tick(level, network, mainframe.craftingComputerPositions(), jobs);
     }
 
     /**
@@ -502,11 +546,15 @@ final class MainframeScheduler {
         }
     }
 
+    /*
+     * The reason travels on a lifecycle event other code reads and records, so it is kept in the English the key
+     * was declared with rather than in whatever language this side of the game has loaded.
+     */
     private static String settleReason(final OperationRecord record) {
         return switch (record.status()) {
-            case OperationRecord.STATUS_PARTIAL -> "delivered " + record.moved() + " of " + record.requested();
-            case OperationRecord.STATUS_RESOURCE_LOCKED -> "timed out waiting on a locked resource";
-            default -> "failed";
+            case OperationRecord.STATUS_PARTIAL -> SETTLED_PARTIAL.with(record.moved(), record.requested()).english();
+            case OperationRecord.STATUS_RESOURCE_LOCKED -> SETTLED_RESOURCE_LOCKED.text().english();
+            default -> SETTLED_FAILED.text().english();
         };
     }
 

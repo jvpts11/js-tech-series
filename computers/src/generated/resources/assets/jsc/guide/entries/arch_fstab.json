@@ -1,0 +1,116 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_fstab.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_fstab.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_fstab.step1",
+        "jsc.guide.arch_fstab.step2",
+        "jsc.guide.arch_fstab.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_fstab.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.arch_fstab.table1",
+      "heads": [
+        "jsc.guide.arch_fstab.table1_head1",
+        "jsc.guide.arch_fstab.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "# /dev/sda2"
+          },
+          {
+            "words": "jsc.guide.arch_fstab.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "UUID="
+          },
+          {
+            "words": "jsc.guide.arch_fstab.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "/"
+          },
+          {
+            "words": "jsc.guide.arch_fstab.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "ext4"
+          },
+          {
+            "words": "jsc.guide.arch_fstab.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "rw,relatime"
+          },
+          {
+            "words": "jsc.guide.arch_fstab.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_fstab.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_fstab.definition1",
+      "term": "jsc.guide.arch_fstab.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_fstab.definition2",
+      "term": "jsc.guide.arch_fstab.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_fstab.fix1",
+          "problem": "jsc.guide.arch_fstab.problem1"
+        },
+        {
+          "fix": "jsc.guide.arch_fstab.fix2",
+          "problem": "jsc.guide.arch_fstab.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_chroot"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_fstab",
+  "order": 248,
+  "section": "jsc:arch_base",
+  "title": "jsc.guide.arch_fstab.title"
+}

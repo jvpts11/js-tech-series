@@ -17,12 +17,15 @@ import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
+import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.SigmaFrontEnd;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,8 +37,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -92,12 +95,21 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         }
     }
 
+    /** A save on its way: the file, the text that was sent, and whether the tab closes once it is safe. */
+    private record PendingSave(Doc doc, String text, boolean closeAfter) {
+    }
+
     private final BlockPos host;
     private final List<DiskFilesPayload.WireFile> files = new ArrayList<>();
     private final List<Doc> docs = new ArrayList<>();
     private int current = -1;
     private String status = "";
-    private InkPalette palette = InkPalette.LIGHT;
+    private Supplier<InkPalette> palette = InkPalette.LIGHT;
+    /**
+     * The version of its language the project a file sits in names, by the file's path, 0 for none; an editor
+     * without projects leaves it at none, and a file is then checked at what the machine's compiler knows.
+     */
+    private ToIntFunction<String> projectVersion = path -> 0;
 
     /*
      * The folder the workspace is on. It starts on the machine's own, and an editor that works in
@@ -114,8 +126,19 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     /** Folders still to be asked for, one at a time, since one listing is waited for at once. */
     private final ArrayDeque<String> toList = new ArrayDeque<>();
 
+    /** The saves sent and not yet answered, oldest first, since the machine answers them in order. */
+    private final ArrayDeque<PendingSave> pendingSaves = new ArrayDeque<>();
+
+    /** The folder whose listing was asked for and has not come back, or null when none is outstanding. */
+    private String inFlight;
+
     public CodeWorkspace(final BlockPos host) {
         this.host = host;
+    }
+
+    /** Checks each file at the version of its language its project names, as {@code versionOf} reads it. */
+    public void setProjectVersion(final ToIntFunction<String> versionOf) {
+        this.projectVersion = versionOf;
     }
 
     /* What is on the disk */
@@ -136,6 +159,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     /** Asks the machine what the folder holds, and what every opened subfolder holds. */
     public void refresh() {
         this.toList.clear();
+        // The waiter is replaced by the next request, so a listing still on its way is not expected any more.
+        this.inFlight = null;
         this.toList.add(this.folder);
         this.toList.addAll(this.expanded);
         askNext();
@@ -146,6 +171,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         if (dir == null) {
             return;
         }
+        this.inFlight = dir;
         CodeFileReplies.expectListing(this, dir);
         PacketDistributor.sendToServer(new RequestDiskFilesPayload(this.host, dir));
     }
@@ -156,7 +182,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
             this.expanded.add(dir);
             if (!this.listings.containsKey(dir)) {
                 this.toList.add(dir);
-                if (this.toList.size() == 1) {
+                // Only one listing is waited for at once; the reply to the one in flight asks for the next.
+                if (this.inFlight == null) {
                     askNext();
                 }
             }
@@ -206,6 +233,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     @Override
     public void onListing(final DiskFilesPayload listing) {
+        this.inFlight = null;
         this.listings.put(listing.dir(), List.copyOf(listing.files()));
         if (listing.dir().equals(this.folder)) {
             this.files.clear();
@@ -318,7 +346,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         this.current = this.docs.size() - 1;
         recompile(doc);
         ensureSurveyed(dirOf(path));
-        this.status = exists ? "Opened " + doc.name() : "New file " + doc.name();
+        this.status = GameText.resolve((exists ? EditorTexts.OPENED : EditorTexts.NEW_FILE_NAMED).with(doc.name()));
         if (!this.toOpen.isEmpty() || !this.endOn.isEmpty()) {
             openNext();
         }
@@ -364,26 +392,56 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     /** Puts the file being edited back on the disk. */
     public void save() {
+        send(false);
+    }
+
+    /**
+     * Puts the file at {@code index} back on the disk and closes its tab once the machine says it is
+     * saved; if the save is refused the tab stays open, since it holds the only copy of the text.
+     */
+    public void saveAndClose(final int index) {
+        setCurrent(index);
+        send(true);
+    }
+
+    private void send(final boolean closeAfter) {
         final Doc doc = current();
         if (doc == null) {
             return;
         }
-        this.status = "Saving...";
+        final String text = doc.area.text();
+        if (text.length() > SaveFilePayload.MAX_CONTENT) {
+            this.status = GameText.resolve(FileSaves.tooLong(text));
+            return;
+        }
+        this.status = GameText.resolve(EditorTexts.SAVING);
+        this.pendingSaves.add(new PendingSave(doc, text, closeAfter));
         CodeFileReplies.expectSaved(this);
-        PacketDistributor.sendToServer(new SaveFilePayload(this.host, doc.path, doc.area.text()));
+        FileSaves.send(this.host, doc.path, text);
         FilesApps.diskChanged();
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
-        this.status = message;
-        final Doc doc = current();
-        if (ok && doc != null) {
-            doc.dirty = false;
+    public void onSaved(final boolean ok, final Text message) {
+        this.status = GameText.resolve(message);
+        final PendingSave pending = this.pendingSaves.poll();
+        if (!this.pendingSaves.isEmpty()) {
+            // A reply hands over the waiter, so the next one has to be waited for again.
+            CodeFileReplies.expectSaved(this);
+        }
+        if (ok && pending != null) {
+            final Doc doc = pending.doc();
+            // Text edited after the save was sent is not on the disk, so the tab stays marked as changed.
+            if (doc.area.text().equals(pending.text())) {
+                doc.dirty = false;
+            }
             // A save can be a file the folder did not have; the list and the survey read the disk again.
             refresh();
             if (this.surveyed.contains(dirOf(doc.path))) {
                 surveyFolder(dirOf(doc.path));
+            }
+            if (pending.closeAfter() && !doc.dirty) {
+                close(this.docs.indexOf(doc));
             }
         }
     }
@@ -399,13 +457,14 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     /** Stops the machine's answers arriving after the window is gone. */
     public void release() {
+        this.pendingSaves.clear();
         CodeFileReplies.forget(this);
     }
 
     /* What it looks like and what is wrong with it */
 
     /** The colours to paint code in, which follow the window's own ground. */
-    public void setPalette(final InkPalette value) {
+    public void setPalette(final Supplier<InkPalette> value) {
         this.palette = value;
         for (final Doc doc : this.docs) {
             doc.area.setPalette(value);
@@ -555,7 +614,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         final List<IProgrammingLanguage.SourceText> sources = new ArrayList<>();
         sources.add(new IProgrammingLanguage.SourceText(doc.name(), doc.area.text()));
         sources.addAll(siblingsOf(doc, language));
-        final List<IProgrammingLanguage.Complaint> all = language.compile(sources).complaints();
+        final List<IProgrammingLanguage.Complaint> all = language.compile(sources,
+                InstalledCompilers.options(language, "", this.projectVersion.applyAsInt(doc.path()))).complaints();
         final List<IProgrammingLanguage.Complaint> mine = new ArrayList<>();
         for (final IProgrammingLanguage.Complaint complaint : all) {
             if (complaint.file().isEmpty() || complaint.file().equals(doc.name())) {
@@ -633,10 +693,6 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         return this.folderTexts.get(path);
     }
 
-    /** What the compiler says when a class leaves an interface's method out, with the three names in it. */
-    private static final Pattern MISSING_MEMBER =
-            Pattern.compile("'([^']+)' says it is a '([^']+)' but does not have '([^']+)'");
-
     /**
      * Writes into {@code doc} every method its classes promised an interface and left out, the way
      * a studio's "Implement interface" does; false when there was nothing to write.
@@ -650,11 +706,9 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         final Map<Integer, String> indentByClassLine = new HashMap<>();
         final TextDocument text = doc.area.document();
         for (final IProgrammingLanguage.Complaint complaint : doc.complaints) {
-            if (!"S3018".equals(complaint.code())) {
-                continue;
-            }
-            final Matcher m = MISSING_MEMBER.matcher(complaint.message());
-            if (!m.find()) {
+            // The class, the interface and the missing method, in the order the complaint names them.
+            final List<String> names = complaint.arguments();
+            if (!SigmaError.MISSING_INTERFACE_MEMBER.code().equals(complaint.code()) || names.size() < 3) {
                 continue;
             }
             final int classLine = complaint.line() - 1;
@@ -665,7 +719,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
             final String indent = " ".repeat(classText.length() - classText.stripLeading().length());
             indentByClassLine.put(classLine, indent);
             stubsByClassLine.computeIfAbsent(classLine, k -> new ArrayList<>())
-                    .add(stubFor(m.group(2), m.group(3), indent + " ".repeat(doc.area.tabSize())));
+                    .add(stubFor(names.get(1), names.get(2), indent + " ".repeat(doc.area.tabSize())));
         }
         if (stubsByClassLine.isEmpty()) {
             return false;
@@ -777,7 +831,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
      * a wrong name is underlined whole rather than as one letter.
      */
     private static CodeArea.Mark markOf(final Doc doc, final IProgrammingLanguage.Complaint complaint) {
-        final String text = complaint.code() + ": " + complaint.message();
+        final String text = complaint.code() + ": " + GameText.resolve(complaint.message());
         final int row = complaint.line() - 1;
         if (complaint.column() <= 0 || row < 0 || row >= doc.area.document().lineCount()) {
             return new CodeArea.Mark(complaint.line(), true, text);
@@ -850,7 +904,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         this.current = this.docs.size() - 1;
         doc.dirty = true;
         recompile(doc);
-        this.status = "New file " + doc.name();
+        this.status = GameText.resolve(EditorTexts.NEW_FILE_NAMED.with(doc.name()));
     }
 
     /** Whether any open file has changes not yet on the disk. */
@@ -892,13 +946,14 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
              * reported as the machine would find it, and the open copy has its own margin for that.
              */
             this.folderComplaints.put(file.path(), language.compile(
-                    List.of(new IProgrammingLanguage.SourceText(
-                            ProblemReport.nameOf(file.path()), file.text()))).complaints());
+                    List.of(new IProgrammingLanguage.SourceText(ProblemReport.nameOf(file.path()), file.text())),
+                    InstalledCompilers.options(language, "", this.projectVersion.applyAsInt(file.path())))
+                    .complaints());
         }
         if (this.announceSurvey) {
             this.announceSurvey = false;
-            this.status = ProblemReport.brokenFiles(this.folderComplaints) + " of "
-                    + folder.files().size() + " program(s) with problems";
+            this.status = GameText.resolve(EditorTexts.WITH_PROBLEMS.with(
+                    ProblemReport.brokenFiles(this.folderComplaints), folder.files().size()));
         }
     }
 

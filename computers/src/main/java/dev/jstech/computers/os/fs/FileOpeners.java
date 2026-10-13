@@ -55,7 +55,7 @@ public final class FileOpeners {
         BY_TYPE.put(FileType.SLN, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.SGSPROJ, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.SGPROJ, List.of("virtual_studio", EDITOR));
-        BY_TYPE.put(FileType.IQL, List.of("nms", EDITOR));
+        BY_TYPE.put(FileType.IQL, List.of("isms", EDITOR));
         BY_TYPE.put(FileType.CRAFT, List.of("crafting_manager"));
         /*
          * An archive opens in the archiver and a picture in the paint program, the way the file each of
@@ -64,6 +64,8 @@ public final class FileOpeners {
          */
         BY_TYPE.put(FileType.ARK, List.of("ark"));
         BY_TYPE.put(FileType.PIX, List.of("paint"));
+        BY_TYPE.put(FileType.OGG, List.of("soundfoundry"));
+        BY_TYPE.put(FileType.WAV, List.of("soundfoundry"));
         BY_TYPE.put(FileType.TXT, List.of(EDITOR));
         BY_TYPE.put(FileType.CFG, List.of(EDITOR));
         BY_TYPE.put(FileType.CSV, List.of(EDITOR));
@@ -115,15 +117,31 @@ public final class FileOpeners {
 
     /**
      * Every program the player can pick for {@code path} on a machine that has {@code installed}, best first: the
-     * ones for its kind, then, for a kind that is text, the rest of the ones that open any file. It is what Choose
-     * another program offers, so a text file can go to a code editor as well as to the plain one.
+     * ones for its kind, then every other program on the machine that opens files at all, as Choose another program
+     * does on a real system. Which program reads the file well is the player's choice; a picture opened in the editor
+     * shows the numbers it is made of. Kept to their own programs: a read-only view of a drive, a song, whose lines
+     * only name the recording, and a kind no program opens.
      */
     public static List<String> choices(final String path, final List<String> installed) {
         final List<String> out = new ArrayList<>(available(path, installed));
         final FileType type = typeOf(path);
-        if (type != null && type.userEditable()) {
-            for (final String program : ANY_FILE) {
-                if (!out.contains(program) && (program.equals(EDITOR) || installed.contains(program))) {
+        if (type == null || type.virtualProjection() || type.recording() || forPath(path).isEmpty()) {
+            return out;
+        }
+        for (final String program : everyOpener()) {
+            if (!out.contains(program) && (program.equals(EDITOR) || installed.contains(program))) {
+                out.add(program);
+            }
+        }
+        return out;
+    }
+
+    /* Every program that opens a file of some kind, the ones for any file first, each once. */
+    private static List<String> everyOpener() {
+        final List<String> out = new ArrayList<>(ANY_FILE);
+        for (final List<String> openers : BY_TYPE.values()) {
+            for (final String program : openers) {
+                if (!out.contains(program) && !program.equals(RUNTIME)) {
                     out.add(program);
                 }
             }

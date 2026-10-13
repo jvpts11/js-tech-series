@@ -69,6 +69,12 @@ final class WorldCalls implements IWorldCall {
         this.moved += Math.max(0, bytes);
     }
 
+    /** How many files the program holds open, counted among what it holds, so a reload counts them too. */
+    @Override
+    public int openFiles() {
+        return this.process.heap().count(OpenFile::isOpen);
+    }
+
     /** Counts the rows the call being answered brought back inside a record, towards its price. */
     @Override
     public void rows(final int count) {

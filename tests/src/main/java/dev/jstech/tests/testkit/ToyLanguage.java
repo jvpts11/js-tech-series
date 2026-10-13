@@ -10,6 +10,7 @@ package dev.jstech.tests.testkit;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IMachineView;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import java.util.Set;
@@ -82,7 +83,7 @@ public final class ToyLanguage implements IProgrammingLanguage {
         final String text = sources.isEmpty() ? "" : sources.getFirst().text().trim();
         if (!text.startsWith(COUNT) && !CLOCK.equals(text) && !QUOTA.equals(text)) {
             return CompileResult.failed(List.of(new Complaint(sources.isEmpty() ? "" : sources.getFirst().name(),
-                    1, 1, "T001", "a toy program counts, or tells the time or its memory")));
+                    1, 1, "T001", Text.literal("a toy program counts, or tells the time or its memory"))));
         }
         return CompileResult.of(text);
     }
@@ -164,8 +165,8 @@ public final class ToyLanguage implements IProgrammingLanguage {
         }
 
         @Override
-        public String message() {
-            return "";
+        public Text message() {
+            return Text.EMPTY;
         }
 
         @Override

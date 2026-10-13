@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class ShLineTest {
 
     private static ShLine of(final String line) {
-        return ShLine.of(CliTokenizer.tokenize(line));
+        return ShLine.of(ShWord.typed(CliTokenizer.words(line)));
     }
 
     @Test
@@ -40,7 +40,8 @@ class ShLineTest {
         assertEquals(3, line.stages().size());
         assertEquals("grep", line.stages().get(1).word());
         assertEquals(List.of("stone"), line.stages().get(1).args());
-        assertEquals(List.of("wc", "-l"), line.stages().get(2).tokens());
+        assertEquals("wc", line.stages().get(2).word());
+        assertEquals(List.of("-l"), line.stages().get(2).args());
     }
 
     @Test
@@ -93,5 +94,47 @@ class ShLineTest {
 
         assertEquals(List.of("where", "oak log"), line.stages().get(0).args());
         assertEquals("where.txt", line.into());
+    }
+
+    @Test
+    void of_anArrowInQuotesIsAWordForTheCommand() {
+        final ShLine line = of("grep \">\" notes.txt");
+
+        assertEquals(List.of(">", "notes.txt"), line.stages().get(0).args());
+        assertFalse(line.writes(), "nothing is written over notes.txt");
+    }
+
+    @Test
+    void of_anArrowWithNoNameAfterItIsASyntaxError() {
+        assertEquals("newline", of("cat a.txt >").badToken());
+        assertEquals("newline", of("cat a.txt >>").badToken());
+        assertEquals("newline", of("cat < ").badToken());
+    }
+
+    @Test
+    void of_aPipeWithNothingOnOneSideIsASyntaxError() {
+        assertEquals("newline", of("ls |").badToken());
+        assertEquals("|", of("| wc").badToken());
+        assertEquals("|", of("ls | | wc").badToken());
+    }
+
+    @Test
+    void of_anArrowFollowedByAMarkNamesThatMarkAsUnexpected() {
+        assertEquals("|", of("ls > | wc").badToken());
+    }
+
+    @Test
+    void of_aWellFormedLineHasNoBadToken() {
+        assertEquals("", of("ls | grep a > out.txt").badToken());
+        assertEquals("", of("ls").badToken());
+    }
+
+    @Test
+    void of_aWordThatOnlyReadsAsAMarkIsStillAWord() {
+        // What a star opened out into, or what a name stood for, is never one of the shell's marks.
+        final ShLine line = ShLine.of(List.of(ShWord.plain("cat"), ShWord.plain(">old.txt"), ShWord.plain("|")));
+
+        assertTrue(line.isSimple(), "one command and nothing else");
+        assertEquals(List.of(">old.txt", "|"), line.stages().get(0).args());
     }
 }

@@ -7,39 +7,41 @@
  */
 package dev.jstech.computers.program;
 
-import dev.jstech.computers.gui.CdeStyle;
-import dev.jstech.computers.os.ProgramVersions;
+import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.job.JobStorage;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.LongText;
+import dev.jstech.core.text.TextTags;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.List;
+import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The per-computer state behind the Command Prompt: the command history (so it survives closing the prompt or the Monitor, and a world reload) and the set of programs the player has installed on this computer. Held on the host BlockEntity and saved with its NBT.
+ * The per-computer state behind the machine's prompt and desktop, held on the host BlockEntity and saved with its
+ * NBT: the command history (so it survives closing the prompt or the Monitor, and a world reload), the programs
+ * installed on the computer, the work it does on its own, and its settings.
+ *
+ * <p>The installed programs are the heart of it and are asked of it directly; they are kept by
+ * {@link InstalledPrograms}. Where the shells stand is {@link ShellLocations}, how the desktop is laid out is
+ * {@link DesktopLayout}, and how the settings are saved is {@link SettingsStorage}.
  */
 public final class ComputerConsoleState {
 
-    public static final int MAX_HISTORY = 100;
-
     private final Deque<String> history = new ArrayDeque<>();
-    private final Set<String> installed = new LinkedHashSet<>();
-
+    private final InstalledPrograms programs = new InstalledPrograms();
     /**
      * The work this machine does with nobody at it: lines left running and lines to be run at an hour.
      *
@@ -47,9 +49,21 @@ public final class ComputerConsoleState {
      * carry on while the player is away, which is the whole reason for having them.
      */
     private final MachineJobs jobs = new MachineJobs();
-    private String wallpaper = "";
-    /** CDE's palette and the backdrop of each workspace, as {@code CdeStyle} keeps them; empty until one is chosen. */
-    private String cdeStyle = "";
+    private final ComputerSettings settings = new ComputerSettings();
+    private final ShellLocations locations = new ShellLocations();
+    private final DesktopLayout desktop = new DesktopLayout();
+    /** Soundfoundry's playlist and how it plays, which go on with the screen closed. */
+    private final SoundfoundryState soundfoundry = new SoundfoundryState();
+    /*
+     * The tool running in front of this machine's terminal, if one is: a fetch, an unpack, a compile. Kept
+     * apart from this class because it is a thing of its own, with its own rules about what is written down.
+     */
+    private final TerminalForeground foreground = new TerminalForeground();
+    /*
+     * The last lines the terminal printed this run, which is what a monitor showing it in the world draws.
+     * Deliberately not saved: a machine reloaded from disk starts its glass clean, as its terminal does.
+     */
+    private final Deque<WireLine> glass = new ArrayDeque<>();
     private String computerName = "";
     /**
      * Which run of this machine is on the glass, counted up every time the machine starts over.
@@ -63,27 +77,76 @@ public final class ComputerConsoleState {
      * at, and counting from zero again only means the first terminal opened after a reload starts clean.
      */
     private long session;
-    private final ComputerSettings settings = new ComputerSettings();
+    /*
+     * The run of the machine in which MC-DOS's PRINT put its resident part in memory, or -1: a restart takes it
+     * out again, so the first PRINT of the next run installs it afresh. Not saved, as the run is not.
+     */
+    private long printResident = -1L;
+    /*
+     * The program being set up right now, if any. One at a time: a machine installs one thing and
+     * then the next, and a second request while one runs is told the machine is busy.
+     */
+    @Nullable
+    private SetupJob setup;
+    /*
+     * A live installation medium booted on this computer (the manual Arch / Gentoo install), until it reboots
+     * into the installed system. Persisted so a half-done install survives a reload.
+     */
+    @Nullable
+    private LiveInstallState liveInstall;
+    /*
+     * The machine this session is currently ssh'd into, as a packed block position, or null when the
+     * shell is local. In memory like the rest of the session: closing the terminal drops the remote
+     * shell, exactly as hanging up a real one does.
+     */
+    @Nullable
+    private Long sshTarget;
+
+    public static final int MAX_HISTORY = 100;
+    /** How many printed lines the glass keeps: a screenful. */
+    public static final int GLASS_LINES = 24;
+
+    private static final StableNames<PackageManagerKind> MANAGERS = StableNames.of(PackageManagerKind.class);
+
+    /**
+     * A program written by a player and installed from the Mirror.
+     *
+     * <p>It is not a {@code ProgramSpec}: those are the mod's own and are registered when the game
+     * starts, and there is no registering something a player wrote yesterday on a server. So the little
+     * the desktop needs in order to give it an icon and run it is kept here, with the machine that
+     * installed it.
+     *
+     * @param entry the listing to run, as a path on this machine's disk
+     */
+    public record Community(String name, String version, String house, String icon, String entry) {
+    }
 
     /** The per-computer settings owned by the Settings app and the {@code config} command. */
     public ComputerSettings settings() {
         return settings;
     }
 
-    /**
-     * Free-positioned desktop icon cells, keyed by the icon's stable id ({@code app:<label>} for a program
-     * launcher, {@code file:<name>} for a desktop file or folder). Each value packs the grid column in the
-     * high 16 bits and the row in the low 16 bits, so the slot stays put across monitor sizes (snap-to-grid).
-     * Icons with no entry fall back to the auto-flow layout, exactly like before this was added.
-     */
-    private final Map<String, Integer> iconCells = new LinkedHashMap<>();
+    /** What Soundfoundry plays on this machine. */
+    public SoundfoundryState soundfoundry() {
+        return soundfoundry;
+    }
 
-    /** The command history, oldest first. */
     /** The work this machine does with nobody at it. */
     public MachineJobs jobs() {
         return this.jobs;
     }
 
+    /** Where this machine's shells stand. */
+    public ShellLocations locations() {
+        return this.locations;
+    }
+
+    /** How this machine's desktop is laid out. */
+    public DesktopLayout desktop() {
+        return this.desktop;
+    }
+
+    /** The command history, oldest first. */
     public List<String> history() {
         return new ArrayList<>(history);
     }
@@ -101,66 +164,74 @@ public final class ComputerConsoleState {
     }
 
     public Set<String> installed() {
-        return Set.copyOf(installed);
+        return programs.installed();
     }
 
     public boolean isInstalled(final String programId) {
-        return installed.contains(programId);
+        return programs.isInstalled(programId);
     }
 
-    /** Installs a program by id; returns false if it was already installed. */
+    /** Installs a program by id; returns false if it was already installed. A fresh copy is a package. */
     public boolean install(final String programId) {
-        return installed.add(programId);
-    }
-
-    /*
-     * The mod version each installed package was built against. A mod update leaves packages behind
-     * their new build, which is what `pckmgr update` exists to reconcile, the same way a real
-     * package manager reconciles a repository that moved on without you.
-     */
-    private final Map<String, String> installedVersions = new LinkedHashMap<>();
-
-    /** The version a package was installed at, or {@code ""} when it predates version tracking. */
-    public String installedVersion(final String programId) {
-        return installedVersions.getOrDefault(programId, "");
-    }
-
-    public void setInstalledVersion(final String programId, final String version) {
-        if (version == null || version.isBlank()) {
-            installedVersions.remove(programId);
-        } else {
-            installedVersions.put(programId, version);
-        }
-    }
-
-    /**
-     * Every installed package behind the version this build ships for it.
-     *
-     * <p>Each package against its own version, which is what a package manager reconciles: a version is part
-     * of a program's face, so an update brings each one up to what this build of it is, not to a single
-     * number shared by all of them. It used to take one version to hold every package to, which read as
-     * "everything is outdated" the moment a machine carried a package installed at its own version.
-     */
-    public List<String> outdatedPackages() {
-        final List<String> out = new ArrayList<>();
-        for (final String id : installed) {
-            if (!ProgramVersions.of(id).equals(installedVersions.get(id))) {
-                out.add(id);
-            }
-        }
-        return out;
+        return programs.install(programId);
     }
 
     public boolean uninstall(final String programId) {
-        return installed.remove(programId);
+        return programs.uninstall(programId);
     }
 
-    /*
-     * The program being set up right now, if any. One at a time: a machine installs one thing and
-     * then the next, and a second request while one runs is told the machine is busy.
+    /** The version a package was installed at, or {@code ""} when it predates version tracking. */
+    public String installedVersion(final String programId) {
+        return programs.version(programId);
+    }
+
+    public void setInstalledVersion(final String programId, final String version) {
+        programs.setVersion(programId, version);
+    }
+
+    /**
+     * Every installed package behind the version this build ships for it, each against its own version: a
+     * version is part of a program's face, so an update brings each one up to what this build of it is.
      */
+    public List<String> outdatedPackages() {
+        return programs.outdated();
+    }
+
+    /** Whether that installed program was built on this machine from source. */
+    public boolean builtFromSource(final String programId) {
+        return programs.builtFromSource(programId);
+    }
+
+    /** Every installed program built on this machine from source. */
+    public Set<String> builtFromSource() {
+        return programs.builtFromSource();
+    }
+
+    /** Records that an installed program was built here from source; a program not installed is not recorded. */
+    public void markBuiltFromSource(final String programId) {
+        programs.markBuiltFromSource(programId);
+    }
+
+    /** Every player-written program installed here. */
+    public Collection<Community> community() {
+        return programs.community();
+    }
+
+    /** One of them, or null. */
     @Nullable
-    private SetupJob setup;
+    public Community communityProgram(final String name) {
+        return programs.communityProgram(name);
+    }
+
+    /** Records one as installed. */
+    public void addCommunity(final Community program) {
+        programs.addCommunity(program);
+    }
+
+    /** Forgets one; false when it was not installed. */
+    public boolean removeCommunity(final String name) {
+        return programs.removeCommunity(name);
+    }
 
     /** What the machine is setting up, or null when nothing. */
     @Nullable
@@ -178,13 +249,8 @@ public final class ComputerConsoleState {
         this.setup = null;
     }
 
-    /*
-     * A live installation medium booted on this computer (the manual Arch / Gentoo install), until it reboots
-     * into the installed system. Persisted so a half-done install survives a reload.
-     */
-    private LiveInstallState liveInstall;
-
     /** The live installation in progress, or null when the computer is not booted from a live medium. */
+    @Nullable
     public LiveInstallState liveInstall() {
         return liveInstall;
     }
@@ -199,12 +265,6 @@ public final class ComputerConsoleState {
         this.liveInstall = null;
     }
 
-    /*
-     * The tool running in front of this machine's terminal, if one is: a fetch, an unpack, a compile. Kept
-     * apart from this class because it is a thing of its own, with its own rules about what is written down.
-     */
-    private final TerminalForeground foreground = new TerminalForeground();
-
     /** What is running in front of the terminal, which may be nothing. */
     public TerminalForeground foreground() {
         return this.foreground;
@@ -215,29 +275,45 @@ public final class ComputerConsoleState {
         return this.session;
     }
 
+    /** Puts PRINT's resident part in memory for this run of the machine; whether it was not already there. */
+    public boolean installPrint() {
+        if (this.printResident == this.session) {
+            return false;
+        }
+        this.printResident = this.session;
+        return true;
+    }
+
     /** The machine started over: whatever a terminal printed belongs to the run that has just ended. */
     public void newSession() {
         this.session++;
         /* Whatever was running in front of it went down with the machine, unfinished. */
         this.foreground.clear();
+        this.glass.clear();
     }
 
-    /** The chosen desktop wallpaper id ({@code ""} means the OS default). */
-    public String wallpaper() {
-        return wallpaper;
+    /**
+     * Notes lines the terminal printed, after a clear of the glass when {@code clear}: a line printed over the last
+     * one takes its place, the way a bar grows where it stands.
+     */
+    public void printed(final boolean clear, final List<WireLine> lines) {
+        if (clear) {
+            this.glass.clear();
+        }
+        for (final WireLine line : lines) {
+            if (line.over() && !this.glass.isEmpty()) {
+                this.glass.removeLast();
+            }
+            this.glass.addLast(line);
+        }
+        while (this.glass.size() > GLASS_LINES) {
+            this.glass.removeFirst();
+        }
     }
 
-    public void setWallpaper(final String id) {
-        this.wallpaper = id == null ? "" : id;
-    }
-
-    /** CDE's look on this machine, which is its wallpaper and its window colours at once. */
-    public CdeStyle cdeStyle() {
-        return CdeStyle.parse(this.cdeStyle);
-    }
-
-    public void setCdeStyle(final CdeStyle style) {
-        this.cdeStyle = style == null || style.equals(CdeStyle.DEFAULT) ? "" : style.encoded();
+    /** The last lines the terminal printed this run, oldest first: what its glass shows. */
+    public List<WireLine> glass() {
+        return List.copyOf(this.glass);
     }
 
     /** The player-given computer name ({@code ""} means unset). */
@@ -259,13 +335,6 @@ public final class ComputerConsoleState {
                 : given.substring(0, InstallerFlow.MOST_NAME_LETTERS);
     }
 
-    /*
-     * The machine this session is currently ssh'd into, as a packed block position, or null when the
-     * shell is local. In memory like the rest of the session: closing the terminal drops the remote
-     * shell, exactly as hanging up a real one does.
-     */
-    private Long sshTarget;
-
     /** The packed position of the machine this session is connected to, or null when local. */
     @Nullable
     public Long sshTarget() {
@@ -276,141 +345,24 @@ public final class ComputerConsoleState {
         this.sshTarget = packedPos;
     }
 
-    /*
-     * The command line's current drive and per-drive current directory (a DOS-style session). Kept in memory:
-     * like closing a real terminal, it resets to the boot drive's root when the computer reloads. Each drive
-     * remembers its own directory, so switching back to a drive returns to where you left it.
-     */
-    private char terminalDrive = 'C';
-    private final Map<Character, String> terminalDirs = new LinkedHashMap<>();
-
-    /** The terminal session's current drive letter (upper-cased). */
-    public char terminalDrive() {
-        return terminalDrive;
-    }
-
-    /** The current directory of the current drive as a {@code '/'}-separated storage path; {@code ""} is the root. */
-    public String terminalDir() {
-        return terminalDirs.getOrDefault(terminalDrive, "");
-    }
-
-    /** Whether the session has explicitly set a directory on the current drive (false = fresh session). */
-    public boolean hasTerminalLocation() {
-        return terminalDirs.containsKey(terminalDrive);
-    }
-
-    /** Switches the current drive, restoring that drive's remembered directory. */
-    public void setTerminalDrive(final char drive) {
-        this.terminalDrive = Character.toUpperCase(drive);
-    }
-
     /**
      * Erases everything the software layer remembered, because the disk it conceptually lived on was just
-     * formatted: command history, the terminal session's location, installed programs, and any builds. The
-     * next system starts from a genuinely clean console.
+     * formatted: command history, where the shells stood, installed programs, and any builds. The next system
+     * starts from a genuinely clean console.
      */
     public void wipeSoftware() {
         history.clear();
-        terminalDirs.clear();
-        sessions.clear();
-        terminalDrive = 'C';
-        installed.clear();
+        locations.clear();
+        // What a player installed from the Mirror, which version of each program, and which were built here, were
+        // on that disk too.
+        programs.clear();
         // Whatever was being built went with the system it was being built for.
         foreground.clear();
-    }
-
-    /** Sets the current drive and stores that drive's current directory. */
-    public void setTerminalLocation(final char drive, final String dir) {
-        this.terminalDrive = Character.toUpperCase(drive);
-        this.terminalDirs.put(this.terminalDrive, dir == null ? "" : dir);
-    }
-
-    /** Where one terminal window's shell is: its drive and directory. */
-    public record ShellSpot(char drive, String dir) {
-    }
-
-    /**
-     * Where each terminal window's shell is, by session number.
-     *
-     * <p>Every terminal window is a shell of its own, so a {@code cd} in one leaves the others where
-     * they were. The spots are not saved: a session lives as long as its window, and a machine that is
-     * loaded again starts them all fresh from the terminal's own location above.
-     */
-    private final Map<Integer, ShellSpot> sessions = new LinkedHashMap<>();
-
-    /** Where session {@code session}'s shell is, or null when it has not moved from the machine's spot. */
-    public ShellSpot sessionLocation(final int session) {
-        return sessions.get(session);
-    }
-
-    public void setSessionLocation(final int session, final char drive, final String dir) {
-        sessions.put(session, new ShellSpot(Character.toUpperCase(drive), dir == null ? "" : dir));
-    }
-
-    /** Packs a desktop grid column and row into a single value for {@link #iconCells}. */
-    public static int packCell(final int column, final int row) {
-        return (column << 16) | (row & 0xFFFF);
-    }
-
-    public static int cellColumn(final int packed) {
-        return packed >> 16;
-    }
-
-    public static int cellRow(final int packed) {
-        return packed & 0xFFFF;
-    }
-
-    /** A read-only view of every pinned desktop icon's cell, keyed by its stable id. */
-    public Map<String, Integer> iconCells() {
-        return Map.copyOf(iconCells);
-    }
-
-    /** Pins a desktop icon ({@code key}) to a packed grid cell, replacing any previous position for it. */
-    public void setIconCell(final String key, final int packedCell) {
-        if (key != null && !key.isEmpty()) {
-            iconCells.put(key, packedCell);
-        }
-    }
-
-    /** Forgets a pinned icon position (e.g. when its file is deleted or moved off the desktop). */
-    public void clearIconCell(final String key) {
-        iconCells.remove(key);
-    }
-
-    /**
-     * A program written by a player and installed from the Mirror.
-     *
-     * <p>It is not a {@code ProgramSpec}: those are the mod's own and are registered when the game
-     * starts, and there is no registering something a player wrote yesterday on a server. So the little
-     * the desktop needs in order to give it an icon and run it is kept here, with the machine that
-     * installed it.
-     *
-     * @param entry the listing to run, as a path on this machine's disk
-     */
-    public record Community(String name, String version, String house, String icon, String entry) {
-    }
-
-    private final Map<String, Community> community = new LinkedHashMap<>();
-
-    /** Every player-written program installed here. */
-    public Collection<Community> community() {
-        return List.copyOf(community.values());
-    }
-
-    /** One of them, or null. */
-    @Nullable
-    public Community communityProgram(final String name) {
-        return community.get(name);
-    }
-
-    /** Records one as installed. */
-    public void addCommunity(final Community program) {
-        community.put(program.name(), program);
-    }
-
-    /** Forgets one; false when it was not installed. */
-    public boolean removeCommunity(final String name) {
-        return community.remove(name) != null;
+        // A setup half done was installing onto the system that is gone; finishing it would put a program on the
+        // freshly formatted one.
+        setup = null;
+        // And the playlist named songs on that disk.
+        SoundfoundryStorage.load(soundfoundry, new CompoundTag());
     }
 
     public void save(final CompoundTag tag) {
@@ -427,117 +379,29 @@ public final class ComputerConsoleState {
             job.putString("Name", setup.name());
             job.putString("House", setup.house());
             job.putInt("SizeMb", setup.sizeMb());
-            job.putString("Source", setup.source());
+            job.put("Source", TextTags.write(setup.source()));
             job.putBoolean("Removing", setup.removing());
             job.putInt("Total", setup.ticksTotal());
             job.putInt("Left", setup.ticksLeft());
-            job.putString("Via", setup.via());
+            job.putString("Via", setup.manager().serializedName());
             job.putString("Package", setup.packageName());
             tag.put("Setup", job);
         }
-        final ListTag installedTag = new ListTag();
-        for (final String id : installed) {
-            installedTag.add(StringTag.valueOf(id));
-        }
-        tag.put("Installed", installedTag);
-        if (!installedVersions.isEmpty()) {
-            final CompoundTag versions = new CompoundTag();
-            installedVersions.forEach(versions::putString);
-            tag.put("InstalledVersions", versions);
-        }
-        if (!community.isEmpty()) {
-            final ListTag written = new ListTag();
-            for (final Community one : community.values()) {
-                final CompoundTag each = new CompoundTag();
-                each.putString("Name", one.name());
-                each.putString("Version", one.version());
-                each.putString("House", one.house());
-                each.putString("Icon", one.icon());
-                each.putString("Entry", one.entry());
-                written.add(each);
-            }
-            tag.put("Community", written);
-        }
+        programs.save(tag);
         if (liveInstall != null) {
-            tag.putString("LiveInstall", liveInstall.serialize());
+            LongText.put(tag, "LiveInstall", liveInstall.serialize());
         }
         if (foreground.running()) {
             final CompoundTag front = new CompoundTag();
             foreground.save(front);
             tag.put("Foreground", front);
         }
-        if (!wallpaper.isEmpty()) {
-            tag.putString("Wallpaper", wallpaper);
-        }
-        if (!cdeStyle.isEmpty()) {
-            tag.putString("CdeStyle", cdeStyle);
-        }
+        desktop.save(tag);
         if (!computerName.isEmpty()) {
             tag.putString("ComputerName", computerName);
         }
-        if (!iconCells.isEmpty()) {
-            final ListTag cells = new ListTag();
-            for (final Map.Entry<String, Integer> e : iconCells.entrySet()) {
-                final CompoundTag c = new CompoundTag();
-                c.putString("Key", e.getKey());
-                c.putInt("Cell", e.getValue());
-                cells.add(c);
-            }
-            tag.put("IconCells", cells);
-        }
-        final CompoundTag s = new CompoundTag();
-        s.putInt("Accent", settings.accent());
-        s.putBoolean("Clock12h", settings.clock12h());
-        s.putInt("GuiScale", settings.guiScale());
-        s.putInt("Brightness", settings.brightness());
-        s.putString("SaveDrive", String.valueOf(settings.defaultSaveDrive()));
-        s.putBoolean("RemovableAutoOpen", settings.removableAutoOpen());
-        s.putBoolean("RemoteAllowed", settings.remoteAllowed());
-        s.putBoolean("TaskbarCentered", settings.taskbarCentered());
-        s.putBoolean("DarkMode", settings.darkMode());
-        // Always written, even empty: a machine whose player unpinned everything must not get the default back.
-        final ListTag pinned = new ListTag();
-        for (final String id : settings.pinned()) {
-            pinned.add(StringTag.valueOf(id));
-        }
-        s.put("Pinned", pinned);
-        if (!settings.favourites().isEmpty()) {
-            final ListTag favourites = new ListTag();
-            for (final String id : settings.favourites()) {
-                favourites.add(StringTag.valueOf(id));
-            }
-            s.put("Favourites", favourites);
-        }
-        if (!settings.shares().isEmpty()) {
-            final ListTag shares = new ListTag();
-            for (final ComputerSettings.Share share : settings.shares()) {
-                final CompoundTag each = new CompoundTag();
-                each.putString("Name", share.name());
-                each.putString("Path", share.path());
-                each.putBoolean("Write", share.writable());
-                shares.add(each);
-            }
-            s.put("Shares", shares);
-        }
-        if (!settings.recipeChoices().isEmpty()) {
-            final CompoundTag choices = new CompoundTag();
-            settings.recipeChoices().forEach(choices::putInt);
-            s.put("RecipeChoices", choices);
-        }
-        if (!settings.themePreset().isEmpty()) {
-            s.putString("Theme", settings.themePreset());
-        }
-        if (!settings.defaultApps().isEmpty()) {
-            final CompoundTag apps = new CompoundTag();
-            settings.defaultApps().forEach(apps::putString);
-            s.put("DefaultApps", apps);
-        }
-        if (!settings.variables().isEmpty()) {
-            final CompoundTag named = new CompoundTag();
-            settings.variables().forEach(named::putString);
-            s.put("Variables", named);
-        }
-        tag.put("Settings", s);
+        SettingsStorage.save(settings, tag);
+        SoundfoundryStorage.save(soundfoundry, tag);
     }
 
     /**
@@ -558,99 +422,22 @@ public final class ComputerConsoleState {
         while (history.size() > MAX_HISTORY) {
             history.removeFirst();
         }
-        installed.clear();
-        for (final Tag entry : tag.getList("Installed", Tag.TAG_STRING)) {
-            installed.add(entry.getAsString());
-        }
+        programs.load(tag);
         setup = null;
         if (tag.contains("Setup")) {
             final CompoundTag job = tag.getCompound("Setup");
             setup = new SetupJob(job.getString("Program"), job.getString("Name"),
-                    job.getString("House"), job.getInt("SizeMb"), job.getString("Source"),
+                    job.getString("House"), job.getInt("SizeMb"), TextTags.read(job.getCompound("Source")),
                     job.getBoolean("Removing"), job.getInt("Total"), job.getInt("Left"),
-                    job.getString("Via"), job.getString("Package"));
+                    MANAGERS.find(job.getString("Via")), job.getString("Package"));
         }
-        community.clear();
-        for (final Tag entry : tag.getList("Community", Tag.TAG_COMPOUND)) {
-            final CompoundTag each = (CompoundTag) entry;
-            community.put(each.getString("Name"), new Community(each.getString("Name"),
-                    each.getString("Version"), each.getString("House"), each.getString("Icon"),
-                    each.getString("Entry")));
-        }
-        installedVersions.clear();
-        if (tag.contains("InstalledVersions")) {
-            final CompoundTag versions = tag.getCompound("InstalledVersions");
-            for (final String id : versions.getAllKeys()) {
-                installedVersions.put(id, versions.getString(id));
-            }
-        }
-        liveInstall = tag.contains("LiveInstall")
-                ? LiveInstallState.deserialize(
-                        tag.getString("LiveInstall"))
+        liveInstall = LongText.has(tag, "LiveInstall")
+                ? LiveInstallState.deserialize(LongText.get(tag, "LiveInstall"))
                 : null;
         foreground.load(tag.getCompound("Foreground"));
-        wallpaper = tag.getString("Wallpaper");
-        cdeStyle = tag.getString("CdeStyle");
+        desktop.load(tag);
         computerName = tag.getString("ComputerName");
-        iconCells.clear();
-        for (final Tag entry : tag.getList("IconCells", Tag.TAG_COMPOUND)) {
-            final CompoundTag c = (CompoundTag) entry;
-            final String key = c.getString("Key");
-            if (!key.isEmpty()) {
-                iconCells.put(key, c.getInt("Cell"));
-            }
-        }
-        final CompoundTag s = tag.getCompound("Settings");
-        settings.setAccent(s.getInt("Accent"));
-        settings.setClock12h(s.getBoolean("Clock12h"));
-        settings.setGuiScale(s.getInt("GuiScale"));
-        settings.setBrightness(s.contains("Brightness") ? s.getInt("Brightness") : 100);
-        final String saveDrive = s.getString("SaveDrive");
-        if (!saveDrive.isEmpty()) {
-            settings.setDefaultSaveDrive(saveDrive.charAt(0));
-        }
-        settings.setRemovableAutoOpen(!s.contains("RemovableAutoOpen") || s.getBoolean("RemovableAutoOpen"));
-        settings.setRemoteAllowed(!s.contains("RemoteAllowed") || s.getBoolean("RemoteAllowed"));
-        settings.setTaskbarCentered(!s.contains("TaskbarCentered") || s.getBoolean("TaskbarCentered"));
-        settings.setDarkMode(s.getBoolean("DarkMode"));
-        if (s.contains("Pinned")) {
-            final List<String> pinned = new ArrayList<>();
-            for (final Tag entry : s.getList("Pinned", Tag.TAG_STRING)) {
-                pinned.add(entry.getAsString());
-            }
-            settings.setPinned(pinned);
-        }
-        final List<String> favourites = new ArrayList<>();
-        for (final Tag entry : s.getList("Favourites", Tag.TAG_STRING)) {
-            favourites.add(entry.getAsString());
-        }
-        settings.setFavourites(favourites);
-        final List<ComputerSettings.Share> shares = new ArrayList<>();
-        final ListTag sharesTag = s.getList("Shares", Tag.TAG_COMPOUND);
-        for (int i = 0; i < sharesTag.size(); i++) {
-            final CompoundTag each = sharesTag.getCompound(i);
-            shares.add(new ComputerSettings.Share(each.getString("Name"), each.getString("Path"),
-                    each.getBoolean("Write")));
-        }
-        settings.setShares(shares);
-        final Map<String, Integer> choices = new LinkedHashMap<>();
-        final CompoundTag choicesTag = s.getCompound("RecipeChoices");
-        for (final String key : choicesTag.getAllKeys()) {
-            choices.put(key, choicesTag.getInt(key));
-        }
-        settings.putRecipeChoices(choices);
-        settings.setThemePreset(s.getString("Theme"));
-        final Map<String, String> apps = new LinkedHashMap<>();
-        final CompoundTag appsTag = s.getCompound("DefaultApps");
-        for (final String key : appsTag.getAllKeys()) {
-            apps.put(key, appsTag.getString(key));
-        }
-        settings.putDefaultApps(apps);
-        final Map<String, String> named = new LinkedHashMap<>();
-        final CompoundTag namedTag = s.getCompound("Variables");
-        for (final String key : namedTag.getAllKeys()) {
-            named.put(key, namedTag.getString(key));
-        }
-        settings.putVariables(named);
+        SettingsStorage.load(settings, tag);
+        SoundfoundryStorage.load(soundfoundry, tag);
     }
 }

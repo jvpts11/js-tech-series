@@ -13,9 +13,12 @@ import dev.jstech.computers.operation.index.ItemLocation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.core.operation.ILatencyScheduler;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationFailure;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.server.level.ServerLevel;
@@ -32,17 +35,20 @@ import java.util.function.BooleanSupplier;
 /**
  * A multi-tick SELECT: pulls an item out of the network's servers into a destination over time. It reserves the items first and, if another Operation already holds them LOCKed, waits (holding nothing) until they free up.
  */
+@TextHolder
 public final class NetworkSelectOperation extends AbstractTransferOperation {
 
     /** The design default of the WAITING timeout; the live value comes from the balance config. */
     public static final int DEFAULT_WAIT_TIMEOUT_TICKS =
             OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS;
 
-    /** Waited as long as it was allowed to for something another Operation was holding. */
-    private static final String HELD_BY_ANOTHER = "jsc.operation.failure.held_by_another";
+    /** Waited as long as it was allowed to for something another Operation was holding; a craft says it too. */
+    public static final TextKey HELD_BY_ANOTHER = TextKey.of("jsc.operation.failure.held_by_another",
+            "another Operation was holding the %s it needed");
 
     /** Took everything of it the network had, which was less than was asked for. */
-    private static final String NOT_ENOUGH_STORED = "jsc.operation.failure.not_enough_stored";
+    private static final TextKey NOT_ENOUGH_STORED = TextKey.of("jsc.operation.failure.not_enough_stored",
+            "the network was not holding enough %s");
 
     private final IDataSink destination;
     private final String destinationLabel;
@@ -108,9 +114,17 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
             waiting = true;
         } else {
             buildSources(plan, tiers, ramLatencies);
+            traceLock(plan);
             if (sourcesEmpty()) {
                 finish(); // nothing to serve, settles immediately as FAILED
             }
+        }
+    }
+
+    /* Tells a trace what the SELECT now holds, once it holds anything. */
+    private void traceLock(final Allocation plan) {
+        if (plan.allocated() > 0L) {
+            TracePoints.lockAcquired(level, network, operationId, key, plan.allocated(), plan.perServer().size());
         }
     }
 
@@ -184,9 +198,13 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
             finish();
             return;
         }
+        final long gross = index.grossAvailable(key, sourceFilter);
+        if (gross >= demand && index.available(key, sourceFilter) < demand) {
+            // Still held by another Operation: nothing to take yet, so skip the captures and the lock.
+            return;
+        }
         final Map<NodeUuid, StorageTier> tiers = captureTiers();
         final Map<NodeUuid, Integer> ramLatencies = captureRamLatencies();
-        final long gross = index.grossAvailable(key, sourceFilter);
         final Allocation plan = index.lock(operationId, key, demand, sourceFilter);
         if (plan.covers(demand) || gross < demand) {
             /*
@@ -195,6 +213,7 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
              */
             waiting = false;
             buildSources(plan, tiers, ramLatencies);
+            traceLock(plan);
             if (sourcesEmpty()) {
                 finish();
             }
@@ -265,7 +284,7 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
     private OperationRecord buildRecord(final byte recordStatus, final boolean includeSubs) {
         final List<OperationRecord.MoveRow> moves = new ArrayList<>();
         movedPerServer.forEach((server, moved) ->
-                moves.add(new OperationRecord.MoveRow("SRV-" + shortId(server.asString()), moved, destinationLabel)));
+                moves.add(new OperationRecord.MoveRow(nodeLabel(server), moved, destinationLabel)));
         final List<OperationRecord.SubRow> subs = includeSubs ? subRows() : List.of();
         return new OperationRecord(operationId, recordType, key, demand, movedTotal,
                 recordStatus, priority(), List.copyOf(moves), subs).withCause(cause());

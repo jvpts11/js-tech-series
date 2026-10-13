@@ -1,0 +1,212 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.operation_states.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.operation_states.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operation_states.definition1",
+      "term": "jsc.guide.operation_states.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operation_states.definition2",
+      "term": "jsc.guide.operation_states.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.operation_states.table1",
+      "heads": [
+        "jsc.guide.operation_states.table1_head1",
+        "jsc.guide.operation_states.table1_head2",
+        "jsc.guide.operation_states.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "PENDING"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "PROCESSING"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "WAITING"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "COMPLETED"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "COMPLETED_PARTIAL"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "FAILED"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "RESOURCE_LOCKED"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "DISCARDED"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.operation_states.table1_8_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.operation_states.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.operation_states.table2",
+      "heads": [
+        "jsc.guide.operation_states.table2_head1",
+        "jsc.guide.operation_states.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "delivered 40 of 64"
+          },
+          {
+            "words": "jsc.guide.operation_states.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "timed out waiting on a locked resource"
+          },
+          {
+            "words": "jsc.guide.operation_states.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "failed"
+          },
+          {
+            "words": "jsc.guide.operation_states.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network was not holding enough"
+          },
+          {
+            "words": "jsc.guide.operation_states.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network had no room left for the"
+          },
+          {
+            "words": "jsc.guide.operation_states.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.operation_states.fix1",
+          "problem": "jsc.guide.operation_states.problem1"
+        },
+        {
+          "fix": "jsc.guide.operation_states.fix2",
+          "problem": "jsc.guide.operation_states.problem2"
+        },
+        {
+          "fix": "jsc.guide.operation_states.fix3",
+          "problem": "jsc.guide.operation_states.problem3"
+        },
+        {
+          "fix": "jsc.guide.operation_states.fix4",
+          "problem": "jsc.guide.operation_states.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:states_and_queues",
+        "jsc:cancelling_and_the_log"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:operation_states",
+  "order": 95,
+  "section": "jsc:operations",
+  "title": "jsc.guide.operation_states.title"
+}

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.core.client.gui.component.Draw;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -41,7 +42,7 @@ public final class TextWall {
         g.pose().pushPose();
         g.pose().translate(x, y, 0.0F);
         g.pose().scale(SCALE, SCALE, 1.0F);
-        g.drawString(font, line, 0, 0, color, false);
+        Draw.text(g, font, line, 0, 0, color);
         g.pose().popPose();
     }
 
@@ -77,10 +78,8 @@ public final class TextWall {
         if (width(font, line) <= pixels) {
             return line;
         }
-        String cut = line;
-        while (cut.length() > 1 && width(font, cut + "...") > pixels) {
-            cut = cut.substring(0, cut.length() - 1);
-        }
-        return cut + "...";
+        // Measured in the font's own units in one pass; a room too small even for the dots holds nothing.
+        final int fit = room(pixels) - font.width("...");
+        return fit <= 0 ? "" : font.plainSubstrByWidth(line, fit) + "...";
     }
 }

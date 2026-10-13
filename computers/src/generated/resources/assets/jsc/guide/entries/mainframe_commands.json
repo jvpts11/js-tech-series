@@ -1,0 +1,249 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframe_commands.table1",
+      "heads": [
+        "jsc.guide.mainframe_commands.table1_head1",
+        "jsc.guide.mainframe_commands.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "iqlengine"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "services"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "analyze"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "reindex"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "vacuum"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "mirror"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "cluster"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "gateway"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mainframe_commands.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/iqlengine"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/services"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mainframe_commands.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframe_commands.definition1",
+      "term": "jsc.guide.mainframe_commands.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframe_commands.definition2",
+      "term": "jsc.guide.mainframe_commands.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframe_commands.table2",
+      "heads": [
+        "jsc.guide.mainframe_commands.table2_head1",
+        "jsc.guide.mainframe_commands.table2_head2",
+        "jsc.guide.mainframe_commands.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "analyze"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table2_1_2"
+          },
+          {
+            "literal": "ANALYZE complete - 12 types reconciled"
+          }
+        ],
+        [
+          {
+            "literal": "reindex"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table2_2_2"
+          },
+          {
+            "literal": "REINDEX started - rebuilding the catalog from disks"
+          }
+        ],
+        [
+          {
+            "literal": "vacuum"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table2_3_2"
+          },
+          {
+            "literal": "VACUUM freed 3 ghost entries"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/analyze"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/reindex"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/vacuum"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mainframe_commands.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text6"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/mirror"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mainframe_commands.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text8"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/cluster"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/gateway"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mainframe_commands.fix1",
+          "problem": "jsc.guide.mainframe_commands.problem1"
+        },
+        {
+          "fix": "jsc.guide.mainframe_commands.fix2",
+          "problem": "jsc.guide.mainframe_commands.problem2"
+        },
+        {
+          "fix": "jsc.guide.mainframe_commands.fix3",
+          "problem": "jsc.guide.mainframe_commands.problem3"
+        },
+        {
+          "fix": "jsc.guide.mainframe_commands.fix4",
+          "problem": "jsc.guide.mainframe_commands.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:mainframes",
+        "jsc:engine_services",
+        "jsc:mirror"
+      ]
+    }
+  ],
+  "id": "jsc:mainframe_commands",
+  "order": 202,
+  "section": "jsc:shell_software",
+  "title": "jsc.guide.mainframe_commands.title"
+}

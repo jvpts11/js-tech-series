@@ -7,12 +7,14 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.CodeFileReplies;
-import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.FilesApps;
+import dev.jstech.computers.gui.help.HelpViews;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
+import dev.jstech.computers.operation.payload.files.FileAccess.DatIndex;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FileContentPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
@@ -26,22 +28,28 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.ProgramFilesProjection;
+import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.InstallerProjection;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MachineMedia;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.interac.InteracState;
 import dev.jstech.computers.program.cli.interac.InteracView;
-import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.program.cli.menushell.MenuShellListing;
+import dev.jstech.computers.program.cli.menushell.MenuShellView;
+import dev.jstech.computers.program.cli.msd.MsdState;
+import dev.jstech.computers.program.cli.msd.MsdView;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -51,12 +59,13 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.NET_ROOT;
+import static dev.jstech.computers.operation.payload.files.FileAccess.datIndexOf;
 import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaSubPath;
 import static dev.jstech.computers.operation.payload.files.FileAccess.netDos;
 import static dev.jstech.computers.operation.payload.files.FileAccess.netShell;
-import static dev.jstech.computers.operation.payload.files.FileAccess.resolveDatKey;
+import static dev.jstech.computers.operation.payload.files.FileAccess.volumeOf;
 
 /**
  * The payloads that list a computer's drives and folders and read the contents of a file.
@@ -93,27 +102,26 @@ public final class FilePayloads {
                     && filesystemKindOf(computer)
                             != FilesystemKind.NONE) {
                 volumes.add(new DiskFilesPayload.WireVolume("",
-                        VolumeLabel.of(
-                                computer.systemDisk(), "Local Disk")));
+                        VolumeLabel.of(computer.systemDisk(), DiskFilesPayload.LOCAL_DISK.text())));
             }
-            for (final long endpoint : computer.linkedEndpoints()) {
-                if (level.getBlockEntity(BlockPos.of(endpoint))
-                        instanceof MediaReaderBlockEntity reader
-                        && !reader.mediaSlot().getStackInSlot(0).isEmpty()) {
-                    /*
-                     * An installer's drive is named for what it installs ("Frames 11 Setup"), so the
-                     * tree says what is in the drive before it is opened.
-                     */
-                    final ItemStack medium = reader.mediaSlot().getStackInSlot(0);
-                    final String fallback = InstallerProjection.facts(medium)
-                            .map(f -> f.name() + " Setup").orElse("Removable Drive");
-                    volumes.add(new DiskFilesPayload.WireVolume("media:" + endpoint,
-                            VolumeLabel.of(medium, fallback)));
+            for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
+                final ItemStack medium = drive.medium();
+                if (medium.isEmpty()) {
+                    continue;
                 }
+                /*
+                 * An installer's drive is named for what it installs ("Frames 11 Setup"), so the tree says what is
+                 * in the drive before it is opened. A docked disk is named as the disk is.
+                 */
+                final Text fallback = drive.volume().docked() ? GameText.of(medium.getHoverName())
+                        : InstallerProjection.facts(medium)
+                                .map(f -> DiskFilesPayload.SETUP.with(f.name()))
+                                .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text());
+                volumes.add(new DiskFilesPayload.WireVolume(drive.volume().key(), VolumeLabel.of(medium, fallback)));
             }
             // The other machines' shared folders, reached through this machine's own shell.
             if (netShell(level, computer) != null) {
-                volumes.add(new DiskFilesPayload.WireVolume(NET_ROOT, "Network"));
+                volumes.add(new DiskFilesPayload.WireVolume(NET_ROOT, DiskFilesPayload.NETWORK.text()));
             }
             final String reqDir = payload.dir();
             if (reqDir.startsWith(NET_ROOT)) {
@@ -133,11 +141,7 @@ public final class FilePayloads {
                                     disk, reqDir, kind)) {
                         wire.add(new DiskFilesPayload.WireFile(d, "", 0L, false, true));
                     }
-                    for (final DiskFilesystem.FileEntry e
-                            : DiskFilesystem.list(
-                                    disk, reqDir, kind)) {
-                        wire.add(wireFile(disk, e, ""));
-                    }
+                    addFiles(wire, disk, DiskFilesystem.list(disk, reqDir, kind), "");
                     /*
                      * The system's own files and the installed programs' folders are generated, not
                      * stored, and take their place among the real entries; a real one with the same
@@ -162,7 +166,10 @@ public final class FilePayloads {
                  */
             }
         }
-        PacketDistributor.sendToPlayer(player, new DiskFilesPayload(payload.dir(), wire, volumes));
+        // The packet's list codec refuses more than MAX_FILES rows, so a crowded folder is clipped.
+        final List<DiskFilesPayload.WireFile> sent = wire.size() > DiskFilesPayload.MAX_FILES
+                ? wire.subList(0, DiskFilesPayload.MAX_FILES) : wire;
+        PacketDistributor.sendToPlayer(player, new DiskFilesPayload(payload.dir(), sent, volumes));
     }
 
     /** Lists what a network path holds into {@code wire}: hosts, a host's shares, or a shared folder. */
@@ -192,13 +199,14 @@ public final class FilePayloads {
         if (media.isEmpty()) {
             return;
         }
-        final String rest = reqDir.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        final long readerPos = Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
-        final String subDir = slash < 0 ? "" : rest.substring(slash + 1);
+        final MediaVolume volume = MediaVolume.parse(reqDir);
+        if (volume == null) {
+            return;
+        }
+        final String subDir = MediaVolume.subPath(reqDir);
         final FilesystemKind kind =
                 FilesystemKind.HIERARCHICAL;
-        final String prefix = "media:" + readerPos + "/";
+        final String prefix = volume.key() + "/";
         /*
          * An installer shows the disc of its era: setup, readme, manifest and payload, generated from
          * the medium's stamp the way a disk's .dat files are generated from its storage. It carries no
@@ -214,36 +222,38 @@ public final class FilePayloads {
                 media, subDir, kind)) {
             wire.add(new DiskFilesPayload.WireFile(prefix + d, "", 0L, false, true));
         }
-        for (final DiskFilesystem.FileEntry e
-                : DiskFilesystem.list(media, subDir, kind)) {
-            wire.add(wireFile(media, e, prefix));
-        }
+        addFiles(wire, media, DiskFilesystem.list(media, subDir, kind), prefix);
     }
 
     /**
      * A listed file on the wire. A {@code .dat} row also carries the item it projects and how many are
      * stored, so the explorer shows the item and its count rather than a file name a player has to decode.
      */
-    private static DiskFilesPayload.WireFile wireFile(final ItemStack volume,
-            final DiskFilesystem.FileEntry e, final String prefix) {
-        String itemId = "";
-        long count = 0L;
-        if (e.type() == FileType.DAT
-                && volume.getItem() instanceof DiskItem) {
-            final StorageKey key = resolveDatKey(volume, e.path());
-            if (key != null && key.item() != null) {
-                itemId = BuiltInRegistries.ITEM.getKey(key.item()).toString();
-                count = DriveVolumes.contents(volume)
-                        .items().getOrDefault(key, 0L);
+    private static void addFiles(final List<DiskFilesPayload.WireFile> wire, final ItemStack volume,
+            final List<DiskFilesystem.FileEntry> entries, final String prefix) {
+        // The storage is projected once per listing, and only when a .dat row needs it.
+        DatIndex datIndex = null;
+        for (final DiskFilesystem.FileEntry e : entries) {
+            String itemId = "";
+            long count = 0L;
+            if (e.type() == FileType.DAT && volume.getItem() instanceof DiskItem) {
+                if (datIndex == null) {
+                    datIndex = datIndexOf(volume);
+                }
+                final StorageKey key = datIndex.keys().get(e.path());
+                if (key != null && key.item() != null) {
+                    itemId = BuiltInRegistries.ITEM.getKey(key.item()).toString();
+                    count = datIndex.storage().items().getOrDefault(key, 0L);
+                }
             }
+            wire.add(new DiskFilesPayload.WireFile(prefix + e.path(), e.type().extension(), e.weight(),
+                    e.readOnly(), false, itemId, count));
         }
-        return new DiskFilesPayload.WireFile(prefix + e.path(), e.type().extension(), e.weight(), e.readOnly(),
-                false, itemId, count);
     }
 
     private static void handleDiskFiles(final DiskFilesPayload payload, final Player player) {
         // The drives a listing names are the machine's, whoever asked, so the desktop takes them from any of them.
-        DesktopScreen.acceptVolumes(payload);
+        ActiveDesktop.acceptVolumes(payload);
         if (!CodeFileReplies.listing(payload)) {
             FilesApps.accept(payload);
         }
@@ -296,8 +306,15 @@ public final class FilePayloads {
         String content = "";
         boolean exists = false;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
-            final Optional<String> drawn = interacScreen(level, computer, player, payload.path());
-            final Optional<String> read = drawn.isPresent() ? drawn
+            final Optional<String> interac = interacScreen(level, computer, player, payload.path());
+            final Optional<String> msd = interac.isPresent() ? interac
+                    : msdScreen(level, computer, player, payload.path());
+            final Optional<String> drawn = msd.isPresent() ? msd
+                    : menuShellListing(level, computer, player, payload.path());
+            // A help viewer draws from the player's manuals; what it was opened on is all it needs, and no disk has it.
+            final Optional<String> help = drawn.isPresent() ? drawn
+                    : HelpViews.names(payload.path()) ? Optional.of("") : Optional.empty();
+            final Optional<String> read = help.isPresent() ? help
                     : readDiskFile(level, computer, payload.path());
             if (read.isPresent()) {
                 content = read.get();
@@ -334,6 +351,31 @@ public final class FilePayloads {
     }
 
     /**
+     * The diagnostics screen of the Vintage systems, drawn by the machine, when that is what was asked for: asked
+     * for as a file is, and anything the name says was asked of a port carried out here, on the machine.
+     */
+    private static Optional<String> msdScreen(final ServerLevel level, final IOsHost computer,
+                                              final ServerPlayer player, final String path) {
+        if (!MsdState.names(path) || !(computer instanceof IComputerTerminalHost terminal)) {
+            return Optional.empty();
+        }
+        final ServerCliComputer shell = new ServerCliComputer(terminal, level, player);
+        return Optional.of(String.join("\n", MsdView.screen(shell, MsdState.of(path))));
+    }
+
+    /**
+     * What a text-mode shell of the Vintage systems asked the machine, when that is what was asked for: a folder and
+     * what is round it, or a search, read by the machine's own commands and handed back as lines.
+     */
+    private static Optional<String> menuShellListing(final ServerLevel level, final IOsHost computer,
+                                                     final ServerPlayer player, final String path) {
+        if (!MenuShellListing.names(path) || !(computer instanceof IComputerTerminalHost terminal)) {
+            return Optional.empty();
+        }
+        return Optional.of(MenuShellView.answer(new ServerCliComputer(terminal, level, player), path));
+    }
+
+    /**
      * Reads a file the file explorer named, which is a path from the root of a disk rather than one
      * relative to wherever a shell happens to be.
      */
@@ -349,11 +391,10 @@ public final class FilePayloads {
                 return Optional.empty();
             }
             final ICliComputer.FsResult read = shell.readFile(netDos(path));
-            return read.ok() ? Optional.of(read.message()) : Optional.empty();
+            return read.ok() ? Optional.of(read.message().english()) : Optional.empty();
         }
         final boolean media = path.startsWith("media:");
-        final ItemStack vol =
-                media ? mediaStackFor(level, computer, path) : computer.systemDisk();
+        final ItemStack vol = volumeOf(level, computer, path);
         if (vol.isEmpty()) {
             return Optional.empty();
         }

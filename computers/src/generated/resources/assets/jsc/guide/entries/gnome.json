@@ -1,0 +1,137 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.gnome.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gnome.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.gnome.definition1",
+      "term": "jsc.guide.gnome.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gnome.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gnome.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gnome.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gnome.table1",
+      "heads": [
+        "jsc.guide.gnome.table1_head1",
+        "jsc.guide.gnome.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.gnome.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.gnome.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gnome.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.gnome.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gnome.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.gnome.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gnome.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.gnome.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gnome.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.gnome.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gnome.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.gnome.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gnome.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.gnome.table1_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gnome.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.gnome.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gnome.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.gnome.fix1",
+          "problem": "jsc.guide.gnome.problem1"
+        },
+        {
+          "fix": "jsc.guide.gnome.fix2",
+          "problem": "jsc.guide.gnome.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:install_a_desktop",
+        "jsc:desktop_program_names",
+        "jsc:eras"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:gnome",
+  "order": 207,
+  "section": "jsc:desktop_environments",
+  "title": "jsc.guide.gnome.title"
+}

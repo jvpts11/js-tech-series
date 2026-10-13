@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * How a RAID Controller aggregates the drives of its bay into one logical volume. Pure arithmetic
+ * How a RAID controller card aggregates the drives of its server into one logical volume. Pure arithmetic
  * over drive capacities and counts, with no Minecraft types, so the capacity, redundancy and
  * throughput rules are unit tested on their own.
  *
@@ -122,6 +122,20 @@ public enum RaidMode implements IStableId, IStableName {
             case RAID5 -> (Math.max(memberCount, driveCapacities.size()) - 1) * smallest;
             case NONE -> 0L;
         };
+    }
+
+    /**
+     * The size of the volume of an array formed with {@code memberCount} drives, of which {@code driveCapacities} are
+     * present, given the size {@code promised} it was stamped with when it formed (0 when none was kept). While a
+     * member is missing the stamped size stands: recomputing from the survivors would grow the volume whenever the
+     * smallest member is the one pulled, and then shrink it again when a smaller drive is rebuilt in.
+     */
+    public long volumeOf(final List<Long> driveCapacities, final int memberCount, final long promised) {
+        if (promised > 0L && !driveCapacities.isEmpty() && driveCapacities.size() < memberCount
+                && formsArray(memberCount)) {
+            return promised;
+        }
+        return usableCapacity(driveCapacities, memberCount);
     }
 
     /** The storage-throughput multiplier in percent (100 = unchanged) for a healthy array. */

@@ -166,18 +166,6 @@ class NetworkSystemTest {
     }
 
     @Test
-    void nodeByPosition_throwsInPhase0() {
-        assertThrows(UnsupportedOperationException.class,
-                () -> system.nodeByPosition(0L));
-    }
-
-    @Test
-    void failoverPartnerOf_throwsInPhase0() {
-        assertThrows(UnsupportedOperationException.class,
-                () -> system.failoverPartnerOf(net));
-    }
-
-    @Test
     void connectivityFacade_delegatesCorrectly() {
         // Smoke test: delegations work end-to-end.
         long pos1 = 100L;

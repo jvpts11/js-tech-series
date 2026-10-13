@@ -45,4 +45,15 @@ class MakeOptsTest {
     void jobs_nothingIsNeverFewerThanOne() {
         assertEquals(1, MakeOpts.jobs("MAKEOPTS=\"-j0\""));
     }
+
+    @Test
+    void jobs_aCountTooLongToBeANumberIsTheLargestOne() {
+        assertEquals(Integer.MAX_VALUE, MakeOpts.jobs("MAKEOPTS=\"-j99999999999\""));
+    }
+
+    @Test
+    void count_aCountTooLongToBeANumberIsTheLargestOne() {
+        assertEquals(12, MakeOpts.count("12"));
+        assertEquals(Integer.MAX_VALUE, MakeOpts.count("99999999999999999999"));
+    }
 }

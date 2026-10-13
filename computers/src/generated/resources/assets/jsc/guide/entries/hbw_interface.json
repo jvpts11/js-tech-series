@@ -1,0 +1,52 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.hbw_interface.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.hbw_interface.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.hbw_interface.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.hbw_interface.step1",
+        "jsc.guide.hbw_interface.step2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.hbw_interface.fix1",
+          "problem": "jsc.guide.hbw_interface.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:data_cables",
+        "jsc:supercomputers"
+      ]
+    }
+  ],
+  "icon": "jsc:hbw_interface",
+  "id": "jsc:hbw_interface",
+  "items": [
+    "jsc:hbw_interface",
+    "jsc:advanced_hbw_interface"
+  ],
+  "order": 36,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.hbw_interface.title"
+}

@@ -1,3 +1,6 @@
 {
-  "parent": "jsc:block/crafting_cable_core"
+  "parent": "jscore:block/cable/item_4",
+  "textures": {
+    "jacket": "jsc:block/cable/crafting"
+  }
 }

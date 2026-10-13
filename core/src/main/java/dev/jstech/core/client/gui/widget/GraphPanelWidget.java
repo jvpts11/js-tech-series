@@ -65,7 +65,7 @@ public final class GraphPanelWidget extends AbstractWidget {
             final int mouseY,
             final float partialTick) {
         // Panel background + border.
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, 0xFF101010);
+        graphics.fill(getX(), getY(), getX() + width, getY() + height, WidgetPalette.get().graphGround());
 
         if (count < 2) {
             return; // need at least two points to draw a line

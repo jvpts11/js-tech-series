@@ -9,9 +9,13 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
-import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,14 +26,21 @@ import java.util.List;
  * knows. The graphical Network Interactor asks them of its details panel and a terminal asks them of
  * {@code info}, and both get the same words, because they are the same question about the same network.
  */
+@TextHolder
 public final class ItemRecipes {
+
+    private static final TextKey PROCESSING = TextKey.of("jsc.service.recipes.processing", "%s · processing");
+    private static final TextKey MULTI_STAGE = TextKey.of("jsc.service.recipes.multi_stage", "%s · multi-stage · %s");
+    private static final TextKey AT_THE_BENCH = TextKey.of("jsc.service.recipes.at_the_bench", "%s · bench");
+    private static final TextKey BENCH_STAGE = TextKey.of("jsc.service.recipes.bench_stage", "Bench");
+    private static final TextKey MACHINE_STAGE = TextKey.of("jsc.service.recipes.machine_stage", "Machine");
 
     private ItemRecipes() {
     }
 
     /** The ways the network can make that thing, one line each, newest knowledge first. */
-    public static List<String> madeBy(final MainframeBlockEntity mainframe, final StorageKey key, final int most) {
-        final List<String> lines = new ArrayList<>();
+    public static List<Text> madeBy(final MainframeBlockEntity mainframe, final StorageKey key, final int most) {
+        final List<Text> lines = new ArrayList<>();
         if (mainframe == null) {
             return lines;
         }
@@ -43,41 +54,41 @@ public final class ItemRecipes {
     }
 
     /** The things the network's recipes take that thing for, by name, each named once. */
-    public static List<String> usedIn(final MainframeBlockEntity mainframe, final StorageKey key, final int most) {
-        final List<String> names = new ArrayList<>();
+    public static List<Text> usedIn(final MainframeBlockEntity mainframe, final StorageKey key, final int most) {
+        final List<Text> names = new ArrayList<>();
         if (mainframe == null) {
             return names;
         }
         for (final CraftingPattern pattern : mainframe.networkPatterns()) {
             if (pattern.ingredientTotals().containsKey(key)) {
-                add(names, pattern.result().getHoverName().getString(), most);
+                add(names, GameText.of(pattern.result().getHoverName()), most);
             }
         }
         for (final NetworkRecipe recipe : mainframe.networkMachineRecipes()) {
             if (consumes(recipe, key)) {
                 final StorageKey made = recipe.resultKey();
-                add(names, made == null ? recipe.displayName() : made.displayName().getString(), most);
+                add(names, made == null ? recipe.displayText() : GameText.of(made.displayName()), most);
             }
         }
         return names;
     }
 
-    /** "Blast &#183; processing &#183; Blast Furnace": one way of making a thing, in one line. */
-    public static String line(final NetworkRecipe recipe) {
+    /**
+     * "Blast &#183; processing &#183; Blast Furnace": one way of making a thing, in one line, each name in the
+     * language of whoever reads it.
+     */
+    public static Text line(final NetworkRecipe recipe) {
         if (recipe.proc().isPresent()) {
-            return recipe.displayName() + " · processing · "
-                    + MachineCategory.label(recipe.proc().get().machineType());
+            return PROCESSING.with(recipe.displayText());
         }
         if (recipe.multi().isPresent()) {
-            final List<String> machines = new ArrayList<>();
+            final List<Text> machines = new ArrayList<>();
             for (final var stage : recipe.multi().get().stages()) {
-                machines.add(stage.proc().isPresent()
-                        ? MachineCategory.label(stage.proc().get().machineType())
-                        : "Bench");
+                machines.add(stage.proc().isPresent() ? MACHINE_STAGE.text() : BENCH_STAGE.text());
             }
-            return recipe.displayName() + " · multi-stage · " + String.join(" -> ", machines);
+            return MULTI_STAGE.with(recipe.displayText(), TextLists.join(" -> ", machines));
         }
-        return recipe.displayName() + " · bench";
+        return AT_THE_BENCH.with(recipe.displayText());
     }
 
     /** Whether a recipe takes that thing in, at any of its stages. */
@@ -98,7 +109,7 @@ public final class ItemRecipes {
         return false;
     }
 
-    private static void add(final List<String> names, final String name, final int most) {
+    private static void add(final List<Text> names, final Text name, final int most) {
         if (names.size() < most && !names.contains(name)) {
             names.add(name);
         }

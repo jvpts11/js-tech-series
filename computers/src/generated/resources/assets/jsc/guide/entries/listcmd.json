@@ -1,0 +1,133 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.listcmd.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.listcmd.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.listcmd.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.listcmd.step1",
+        "jsc.guide.listcmd.step2",
+        "jsc.guide.listcmd.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.listcmd.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.listcmd.table1",
+      "heads": [
+        "jsc.guide.listcmd.table1_head1",
+        "jsc.guide.listcmd.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.listcmd.table1_1_1"
+          },
+          {
+            "literal": "jscomputers-server.toml"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.listcmd.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.listcmd.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.listcmd.table1_3_1"
+          },
+          {
+            "literal": "prompt.list_commands"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.listcmd.table1_4_1"
+          },
+          {
+            "literal": "false"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.listcmd.table2",
+      "heads": [
+        "jsc.guide.listcmd.table2_head1",
+        "jsc.guide.listcmd.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "COMMANDS"
+          },
+          {
+            "words": "jsc.guide.listcmd.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "PROGRAMS"
+          },
+          {
+            "words": "jsc.guide.listcmd.table2_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.listcmd.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/listcmd"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.listcmd.fix1",
+          "problem": "jsc.guide.listcmd.problem1"
+        },
+        {
+          "fix": "jsc.guide.listcmd.fix2",
+          "problem": "jsc.guide.listcmd.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:help_command",
+        "jsc:programs"
+      ]
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:listcmd",
+  "order": 226,
+  "section": "jsc:help_at_the_prompt",
+  "title": "jsc.guide.listcmd.title"
+}

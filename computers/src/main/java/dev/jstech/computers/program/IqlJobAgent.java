@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.iql.IIqlCondition;
+import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.program.iql.IqlConditionParser;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
@@ -47,27 +49,31 @@ public final class IqlJobAgent {
     public void tick(final MainframeBlockEntity mainframe, final ServerLevel level) {
         clock++;
         /*
-         * Either service enables job firing: the IQL Engine (with the NMS) or the Automation Engine
-         * (with the Automation Manager). A player needs only one installed for their jobs to run.
+         * Jobs are the Automation Engine's: "at this time, or when this happens, do that", the same whichever
+         * Network Operations Engine plans the network's work. A job's body is the network's language, so it still
+         * needs an engine running to be answered.
          */
-        if ((!mainframe.isIqlEngineActive() && !mainframe.isAutomationEngineActive())
-                || clock % EVAL_INTERVAL != 0) {
+        if (!mainframe.isAutomationEngineActive() || clock % EVAL_INTERVAL != 0) {
             return;
         }
         final List<IqlSavedObject> jobs = mainframe.iqlCatalog().ofType(IqlDefinition.ObjectType.JOB);
         if (jobs.isEmpty()) {
             return;
         }
-        IqlEngine engine = null;
+        IIqlView machine = null;
         for (final IqlSavedObject job : jobs) {
             if (mainframe.isJobPaused(job.name())) {
                 continue; // a paused job never fires until it is restarted from the Processes tab
             }
             if (shouldFire(job, mainframe, level)) {
-                if (engine == null) {
-                    engine = new IqlEngine(mainframe, new ServerCliComputer(mainframe, level), QUERY_ROW_LIMIT);
+                if (machine == null) {
+                    machine = IqlEngine.viewOf(new ServerCliComputer(mainframe, level));
                 }
-                engine.run(job.body());
+                final IIqlView caller = machine;
+                // What the job sets on a bus is marked with the job's name.
+                IqlEngine.asJob(job.name(),
+                        () -> mainframe.networkOperations().query(caller, job.body(), QUERY_ROW_LIMIT));
+                JscEvents.awardOperator(mainframe, JscEvents.IQL_JOB);
             }
         }
     }
@@ -92,7 +98,7 @@ public final class IqlJobAgent {
         try {
             interval = IqlDuration.toTicks(job.triggerSpec());
         } catch (final IllegalArgumentException e) {
-            return false; // a malformed interval never fires (the NMS surfaces the error on create)
+            return false; // a malformed interval never fires (the ISMS surfaces the error on create)
         }
         if (interval <= 0) {
             return false;

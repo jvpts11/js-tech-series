@@ -1,0 +1,21 @@
+{
+  "accent": "#FF39D6C4",
+  "blue": "#FF5A8FD6",
+  "bright": "#FFFFFFFF",
+  "cyan": "#FF2FA6E8",
+  "dim": "#FF7D8A9C",
+  "error": "#FFEF6A5A",
+  "green": "#FF5FD35F",
+  "ground": "#FF000000",
+  "info": "#FF2AA7E0",
+  "magenta": "#FFDB5FDB",
+  "ok": "#FF5FE07A",
+  "orange": "#FFE95420",
+  "plain": "#FFCDD6E2",
+  "prompt": "#FFCDD6E2",
+  "purple": "#FF9E8FD6",
+  "red": "#FFD8332C",
+  "selection": "#50CDD6E2",
+  "warn": "#FFF0B23A",
+  "yellow": "#FFE8D23C"
+}

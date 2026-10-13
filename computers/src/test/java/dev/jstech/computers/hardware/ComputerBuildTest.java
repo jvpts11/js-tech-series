@@ -24,7 +24,7 @@ class ComputerBuildTest {
 
     private static MotherboardSpec mtxStandard() {
         return new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4,
-                Set.of(RamGeneration.DDR3), 24, PcieGeneration.PCIE_3_0, 10, 4, 8);
+                Set.of(RamGeneration.DDR3), 24, PcieGeneration.PCIE_3_0, 10, 4);
     }
 
     private static CpuSpec standardCpu() {
@@ -41,7 +41,7 @@ class ComputerBuildTest {
     }
 
     private static CraftingCardSpec craftingCard() {
-        return new CraftingCardSpec(IndustrialTier.T3, PcieGeneration.PCIE_3_0, 1.5, 8, 40);
+        return new CraftingCardSpec(HardwareEra.STANDARD, IndustrialTier.T3, PcieGeneration.PCIE_3_0, 1.5, 8, 40);
     }
 
     private static PsuSpec psu(final int watts) {
@@ -91,22 +91,22 @@ class ComputerBuildTest {
     }
 
     @Test
-    void architecture_isTheProcessors() {
+    void isa_isTheProcessors() {
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(standardCpu()), List.of(), List.of(ddr3()), psu(650));
-        assertEquals(Architectures.X86_64, build.architecture());
+        assertEquals(Isas.X86_64, build.isa());
     }
 
     @Test
-    void architecture_withNoCpu_isNothing() {
+    void isa_withNoCpu_isNothing() {
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(), List.of(), List.of(ddr3()), psu(650));
-        assertNull(build.architecture());
+        assertNull(build.isa());
     }
 
     @Test
-    void mixedArchitectures_isNotPowered() {
-        final CpuSpec odd = new CpuSpec(HardwareEra.STANDARD, Architectures.X86, CpuSocketId.LGA_2011,
+    void mixedIsas_isNotPowered() {
+        final CpuSpec odd = new CpuSpec(HardwareEra.STANDARD, Isas.X86, CpuSocketId.LGA_2011,
                 8, 3500, 130, false);
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(standardCpu(), odd), List.of(), List.of(ddr3()), psu(650));
@@ -114,7 +114,7 @@ class ComputerBuildTest {
     }
 
     @Test
-    void sameArchitectureTwice_isPowered() {
+    void sameIsaTwice_isPowered() {
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(standardCpu(), standardCpu()), List.of(), List.of(ddr3()), psu(650));
         assertTrue(build.isPowered());
@@ -307,6 +307,30 @@ class ComputerBuildTest {
                         disk(StorageTier.HDD, 100, 6), disk(StorageTier.HDD, 100, 6),
                         disk(StorageTier.HDD, 100, 6)));
         assertFalse(build.isPowered());
+    }
+
+    @Test
+    void frontDisks_holdDrawAndRunButTakeNoDiskSlot() {
+        // Four disks fill mtxStandard's four slots; a fifth in a hot-swap bay takes none of them.
+        final List<DiskSpec> slots = List.of(disk(StorageTier.HDD, 100, 6), disk(StorageTier.HDD, 100, 6),
+                disk(StorageTier.HDD, 100, 6), disk(StorageTier.HDD, 100, 6));
+        final ComputerBuild build = new ComputerBuild(mtxStandard(), List.of(standardCpu()), List.of(),
+                List.of(ddr3()), psu(650), slots, List.of(disk(StorageTier.NVME, 1_000, 4)));
+        assertTrue(build.isPowered(), "a hot-swap bay's disk takes no disk slot of the board");
+        assertEquals(1_400L, build.totalStorageItems());
+        assertEquals(130 + 15 + 4 * 6 + 4, build.powerDraw());
+        assertEquals(StorageTier.NVME, build.fastestDiskTier());
+        assertEquals(5, build.allDisks().size());
+        assertEquals(4, build.disks().size());
+    }
+
+    @Test
+    void allDisks_isTheBoardsAloneWithNoFrontDisk() {
+        final List<DiskSpec> slots = List.of(disk(StorageTier.SSD, 50, 3));
+        final ComputerBuild build = new ComputerBuild(mtxStandard(), List.of(standardCpu()), List.of(),
+                List.of(ddr3()), psu(650), slots);
+        assertEquals(slots, build.allDisks());
+        assertTrue(build.frontDisks().isEmpty());
     }
 
     @Test

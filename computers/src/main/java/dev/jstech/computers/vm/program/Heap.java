@@ -8,12 +8,16 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.system.IPureContext;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Everything a process has allocated, counted to the byte.
@@ -31,6 +35,7 @@ import java.util.Map;
  * <p>The heap also remembers which line each allocation came from. That costs a little and buys the
  * one thing a player needs when a process runs out: the three lines that asked for the most.
  */
+@TextHolder
 public final class Heap implements IPureContext {
 
     /** What every object costs before its own contents. */
@@ -41,6 +46,15 @@ public final class Heap implements IPureContext {
 
     /** How many of the biggest allocating lines are named when a process runs out. */
     private static final int NAMED_LINES = 3;
+
+    private static final TextKey OUT_OF_MEMORY = TextKey.of("jsc.vm.heap.out_of_memory",
+            "out of memory: %s of %s bytes are live and %s more were asked for");
+    private static final TextKey LINE_HOLDS = TextKey.of("jsc.vm.heap.line_holds", "line %s holds %s bytes");
+    /** Joins one more named line onto what running out says, the way the list reads in that language. */
+    private static final TextKey AND_THEN = TextKey.of("jsc.vm.heap.and_then", "%s; %s");
+    private static final TextKey NOTHING_TO_REACH = TextKey.of("jsc.vm.heap.nothing_to_reach",
+            "there is nothing here to reach into");
+    private static final TextKey DISPOSED = TextKey.of("jsc.vm.heap.disposed", "this was disposed and cannot be used");
 
     /** One thing on the heap: how big it is, where it was made, and when. */
     private static final class Entry {
@@ -64,11 +78,6 @@ public final class Heap implements IPureContext {
 
     public Heap(final long budget) {
         this.budget = budget;
-    }
-
-    /** What running out reads like when an allocation does not fit in what is left. */
-    public String overBudget() {
-        return this.outOfMemory(0);
     }
 
     /** How many bytes this process may hold at once. */
@@ -98,6 +107,17 @@ public final class Heap implements IPureContext {
         this.used += bytes;
         this.live.put(value, new Entry(bytes, line, this.allocations++));
         return value;
+    }
+
+    /**
+     * Halts, as {@link #allocate} would, when that many more bytes would not fit; holds nothing either way. Asked
+     * before something is built whose size the program chose, so a size past the budget is refused before the
+     * machine running the game is asked to hold it.
+     */
+    void reserve(final long bytes, final int line) {
+        if (this.used + bytes > this.budget) {
+            throw new Halt(Halt.Reason.OUT_OF_MEMORY, line, this.outOfMemory(bytes));
+        }
     }
 
     /**
@@ -171,7 +191,7 @@ public final class Heap implements IPureContext {
      * Frees something. A second free of the same thing is not a mistake in itself, because the
      * reference that named it is set to null by the same statement; using a freed one is.
      */
-    public void dispose(final Object value, final int line) {
+    public void dispose(final Object value) {
         final Entry entry = this.live.remove(value);
         if (entry == null) {
             return;
@@ -190,6 +210,17 @@ public final class Heap implements IPureContext {
         if (entry != null) {
             this.used -= entry.bytes;
         }
+    }
+
+    /** How many things held now satisfy the test, counted in place with no copy and no ordering. */
+    int count(final Predicate<Object> test) {
+        int found = 0;
+        for (final Object held : this.live.keySet()) {
+            if (test.test(held)) {
+                found++;
+            }
+        }
+        return found;
     }
 
     /** Whether this was freed and may no longer be read. */
@@ -211,8 +242,8 @@ public final class Heap implements IPureContext {
     /* Built apart from alive, so the check every reach makes stays small enough to be inlined wherever it is called. */
     private static Halt unreachable(final Object value, final int line) {
         return value == null
-                ? new Halt(Halt.Reason.NO_OBJECT, line, "there is nothing here to reach into")
-                : new Halt(Halt.Reason.USE_AFTER_DISPOSE, line, "this was disposed and cannot be used");
+                ? new Halt(Halt.Reason.NO_OBJECT, line, NOTHING_TO_REACH.text())
+                : new Halt(Halt.Reason.USE_AFTER_DISPOSE, line, DISPOSED.text());
     }
 
     /**
@@ -259,28 +290,26 @@ public final class Heap implements IPureContext {
     }
 
     /** Everything still held, biggest first, for the console to show. */
-    public List<String> liveByLine() {
+    public List<Text> liveByLine() {
         final Map<Integer, Long> byLine = new LinkedHashMap<>();
         for (final Entry entry : this.live.values()) {
             byLine.merge(entry.line, entry.bytes, Long::sum);
         }
         final List<Map.Entry<Integer, Long>> sorted = new ArrayList<>(byLine.entrySet());
         sorted.sort(Comparator.<Map.Entry<Integer, Long>>comparingLong(Map.Entry::getValue).reversed());
-        final List<String> lines = new ArrayList<>();
+        final List<Text> lines = new ArrayList<>();
         for (int i = 0; i < Math.min(NAMED_LINES, sorted.size()); i++) {
-            lines.add("line " + sorted.get(i).getKey() + " holds " + sorted.get(i).getValue() + " bytes");
+            lines.add(LINE_HOLDS.with(sorted.get(i).getKey(), sorted.get(i).getValue()));
         }
         return lines;
     }
 
-    private String outOfMemory(final long wanted) {
-        final StringBuilder message = new StringBuilder("out of memory: ")
-                .append(this.used).append(" of ").append(this.budget)
-                .append(" bytes are live and ").append(wanted).append(" more were asked for");
-        for (final String line : this.liveByLine()) {
-            message.append("; ").append(line);
+    private Text outOfMemory(final long wanted) {
+        Text message = OUT_OF_MEMORY.with(this.used, this.budget, wanted);
+        for (final Text line : this.liveByLine()) {
+            message = AND_THEN.with(message, line);
         }
-        return message.toString();
+        return message;
     }
 
     /** What a value of that type costs inside an object or an array. */

@@ -1,0 +1,172 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_iql_is.definition1",
+      "term": "jsc.guide.what_iql_is.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_iql_is.definition2",
+      "term": "jsc.guide.what_iql_is.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_iql_is.definition3",
+      "term": "jsc.guide.what_iql_is.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_iql_is.definition4",
+      "term": "jsc.guide.what_iql_is.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_iql_is.definition5",
+      "term": "jsc.guide.what_iql_is.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_iql_is.definition6",
+      "term": "jsc.guide.what_iql_is.term6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_iql_is.definition7",
+      "term": "jsc.guide.what_iql_is.term7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_iql_is.definition8",
+      "term": "jsc.guide.what_iql_is.term8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.what_iql_is.table1",
+      "heads": [
+        "jsc.guide.what_iql_is.table1_head1",
+        "jsc.guide.what_iql_is.table1_head2",
+        "jsc.guide.what_iql_is.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.what_iql_is.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.what_iql_is.table1_1_2"
+          },
+          {
+            "literal": "SELECT"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.what_iql_is.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.what_iql_is.table1_2_2"
+          },
+          {
+            "literal": "64"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.what_iql_is.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.what_iql_is.table1_3_2"
+          },
+          {
+            "literal": "iron_ingot"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.what_iql_is.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.what_iql_is.table1_4_2"
+          },
+          {
+            "literal": "WHERE qty > 100"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_iql_is.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.what_iql_is.fix1",
+          "problem": "jsc.guide.what_iql_is.problem1"
+        },
+        {
+          "fix": "jsc.guide.what_iql_is.fix2",
+          "problem": "jsc.guide.what_iql_is.problem2"
+        },
+        {
+          "fix": "jsc.guide.what_iql_is.fix3",
+          "problem": "jsc.guide.what_iql_is.problem3"
+        },
+        {
+          "fix": "jsc.guide.what_iql_is.fix4",
+          "problem": "jsc.guide.what_iql_is.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operations_catalogue",
+        "jsc:where_to_type_iql",
+        "jsc:query_and_select"
+      ]
+    }
+  ],
+  "id": "jsc:what_iql_is",
+  "order": 286,
+  "section": "jsc:iql_start",
+  "title": "jsc.guide.what_iql_is.title"
+}

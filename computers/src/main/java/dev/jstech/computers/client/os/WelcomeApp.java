@@ -7,14 +7,19 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.RequestWelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomeStartupPayload;
 import dev.jstech.computers.os.boot.WelcomeFacts;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -45,6 +50,15 @@ public final class WelcomeApp implements IDesktopApp {
 
     private static final int PAD = 8;
 
+    /** Frames 10's band in the accent across the top, and one of its rows: a tile of the program beside its line. */
+    private static final int BAND_H = 28;
+    private static final int TILE_ROW_H = 17;
+    /** The look the white glyphs of Frames 10's tiles are drawn from. */
+    private static final String TILE_LOOK = "frames_10_tile";
+
+    /** The welcome's own picture: the lamp of the tips on the older editions, the star on the newest. */
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "welcome");
+
     /** The windows waiting on an answer, so a machine's reply reaches the window that asked it. */
     private static final List<WelcomeApp> OPEN = new ArrayList<>();
 
@@ -73,13 +87,28 @@ public final class WelcomeApp implements IDesktopApp {
         }
     }
 
+    /** Whether the machine has answered, so the window shows what it says rather than that it is getting ready. */
+    public boolean ready() {
+        return this.facts != null;
+    }
+
     @Override
     public String title() {
-        if (this.skin.form() == OsSkin.Form.FLAT) {
-            return "Get started";
+        if (this.skin.flatForm()) {
+            return GameText.resolve(WelcomeTexts.TITLE_GET_STARTED);
+        }
+        // Frames 7 called its first window Getting Started, its list of what to do first with the machine.
+        if (this.skin.form() == OsSkin.Form.AERO) {
+            return GameText.resolve(WelcomeTexts.TITLE_GETTING_STARTED);
         }
         return this.facts == null || this.facts.systemName().isEmpty()
-                ? "Welcome" : "Welcome to " + this.facts.systemName();
+                ? GameText.resolve(WelcomeTexts.TITLE)
+                : GameText.resolve(WelcomeTexts.WELCOME_TO.with(this.facts.systemName()));
+    }
+
+    @Override
+    public ResourceLocation iconId() {
+        return ICON;
     }
 
     @Override
@@ -127,11 +156,12 @@ public final class WelcomeApp implements IDesktopApp {
         this.startupBox = null;
         g.fill(x, y, x + width, y + height, this.skin.windowBg());
         if (this.facts == null) {
-            g.drawString(font, "Getting ready...", x + PAD, y + PAD, this.skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(WelcomeTexts.GETTING_READY), x + PAD, y + PAD, this.skin.dim());
             return;
         }
         switch (this.skin.form()) {
-            case LUNA -> this.renderPaned(g, font, x, y, width, height);
+            case LUNA, AERO -> this.renderPaned(g, font, x, y, width, height);
+            case METRO -> this.renderTiles(g, font, x, y, width);
             case FLAT -> this.renderCards(g, font, x, y, width, height);
             default -> this.renderTips(g, font, x, y, width, height);
         }
@@ -154,12 +184,12 @@ public final class WelcomeApp implements IDesktopApp {
         }
         for (final Door door : this.doors) {
             if (hit(door.box(), mouseX, mouseY)) {
-                DesktopScreen.openProgramById(door.program());
+                ActiveDesktop.openProgramById(door.program());
                 return;
             }
         }
         if (hit(this.closeButton, mouseX, mouseY)) {
-            DesktopScreen.requestClose(KEY);
+            ActiveDesktop.requestClose(KEY);
         }
     }
 
@@ -175,21 +205,22 @@ public final class WelcomeApp implements IDesktopApp {
     private void renderTips(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                             final int h) {
         final int right = x + w - PAD - DOOR_COLUMN;
-        g.drawString(font, "Welcome to " + this.facts.systemName(), x + PAD, y + PAD, this.skin.text(), false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.WELCOME_TO.with(this.facts.systemName())), x + PAD, y + PAD,
+                this.skin.text());
 
         final int boxY = y + PAD + 14;
         final int boxW = right - x - PAD * 2;
         final int boxH = h - PAD * 2 - 14 - ROW;
         this.skin.field(g, x + PAD, boxY, boxW, boxH, false);
-        g.drawString(font, "Did you know...", x + PAD + 4, boxY + 4, this.skin.text(), false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.DID_YOU_KNOW), x + PAD + 4, boxY + 4, this.skin.text());
         int ty = boxY + 16;
         if (!this.facts.tips().isEmpty()) {
-            final String said = this.facts.tips().get(this.tip % this.facts.tips().size());
+            final String said = GameText.resolve(this.facts.tips().get(this.tip % this.facts.tips().size()));
             for (final FormattedCharSequence line : font.split(Component.literal(said), boxW - 8)) {
                 if (ty > boxY + boxH - 10) {
                     break;
                 }
-                g.drawString(font, line, x + PAD + 4, ty, this.skin.dim(), false);
+                Draw.text(g, font, line, x + PAD + 4, ty, this.skin.dim());
                 ty += 10;
             }
         }
@@ -198,7 +229,7 @@ public final class WelcomeApp implements IDesktopApp {
         by = this.door(g, font, right, by, DOOR_COLUMN, "this_pc");
         by = this.door(g, font, right, by, DOOR_COLUMN, "files");
         by = this.door(g, font, right, by, DOOR_COLUMN, "command_prompt");
-        this.nextTipButton = this.button(g, font, right, by + 3, DOOR_COLUMN, "Next Tip");
+        this.nextTipButton = this.button(g, font, right, by + 3, DOOR_COLUMN, GameText.resolve(WelcomeTexts.NEXT_TIP));
     }
 
     /** The middle shape: a pane of doors, and the machine itself written out beside them. */
@@ -206,7 +237,8 @@ public final class WelcomeApp implements IDesktopApp {
                              final int h) {
         final int paneW = 88;
         this.skin.panel(g, x, y, paneW, h - ROW - 4);
-        g.drawString(font, "Get going", x + 5, y + 5, this.skin.accent(), false);
+        Draw.text(g, font, clip(font, GameText.resolve(WelcomeTexts.GET_GOING), paneW - 10), x + 5, y + 5,
+                this.skin.accent());
         int by = y + 18;
         by = this.door(g, font, x + 4, by, paneW - 8, "this_pc");
         by = this.door(g, font, x + 4, by, paneW - 8, "files");
@@ -214,16 +246,17 @@ public final class WelcomeApp implements IDesktopApp {
         this.door(g, font, x + 4, by, paneW - 8, "settings");
 
         final int fx = x + paneW + PAD;
-        g.drawString(font, this.facts.machineName() + " is ready", fx, y + PAD, this.skin.accent(), false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.IS_READY.with(this.facts.machineName())), fx, y + PAD,
+                this.skin.accent());
         this.machineFacts(g, font, fx, y + PAD + 16, x + w - fx - PAD);
     }
 
     /** The newest shape: one card per door, each saying what is true of this computer. */
     private void renderCards(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                              final int h) {
-        g.drawString(font, this.facts.machineName() + " is ready", x + PAD, y + PAD, this.skin.text(), false);
-        g.drawString(font, "What this PC has, and where to go next.", x + PAD, y + PAD + 11, this.skin.dim(),
-                false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.IS_READY.with(this.facts.machineName())), x + PAD, y + PAD,
+                this.skin.text());
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.WHAT_IT_HAS), x + PAD, y + PAD + 11, this.skin.dim());
         final int cardW = (w - PAD * 2 - 4) / 2;
         final int cardH = Math.max(24, (h - PAD * 2 - 30 - ROW) / 2);
         final int top = y + PAD + 26;
@@ -231,30 +264,63 @@ public final class WelcomeApp implements IDesktopApp {
         this.card(g, font, x + PAD + cardW + 4, top, cardW, cardH, "command_prompt", this.softwareLine());
         this.card(g, font, x + PAD, top + cardH + 4, cardW, cardH, "network", this.networkLine());
         this.card(g, font, x + PAD + cardW + 4, top + cardH + 4, cardW, cardH, "files",
-                "The folders on Disk " + this.facts.systemSlot() + ".");
+                GameText.resolve(WelcomeTexts.FOLDERS_ON_DISK.with(this.facts.systemSlot())));
+    }
+
+    /**
+     * Frames 10's shape: its band in the accent with the greeting in white, and under it the doors as rows, each the
+     * program's tile (its white glyph on the accent) beside its name and what is true of this computer.
+     */
+    private void renderTiles(final GuiGraphics g, final Font font, final int x, final int y, final int w) {
+        final int white = 0xFF << 24 | 0xFFFFFF;
+        g.fill(x, y, x + w, y + BAND_H, this.skin.accent());
+        Draw.text(g, font, clip(font, GameText.resolve(WelcomeTexts.IS_READY.with(this.facts.machineName())),
+                w - PAD * 2), x + PAD, y + 5, white);
+        Texts.small(g, font, clip(font, GameText.resolve(WelcomeTexts.WHAT_IT_HAS), Texts.smallFits(w - PAD * 2)),
+                x + PAD, y + 17, white);
+        int ry = y + BAND_H + 4;
+        ry = this.tileRow(g, font, x + PAD, ry, w - PAD * 2, "this_pc", this.hardwareLine());
+        ry = this.tileRow(g, font, x + PAD, ry, w - PAD * 2, "command_prompt", this.softwareLine());
+        ry = this.tileRow(g, font, x + PAD, ry, w - PAD * 2, "network", this.networkLine());
+        this.tileRow(g, font, x + PAD, ry, w - PAD * 2, "files",
+                GameText.resolve(WelcomeTexts.FOLDERS_ON_DISK.with(this.facts.systemSlot())));
+    }
+
+    private int tileRow(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                        final String program, final String body) {
+        final int side = ProgramIcons.SIZE;
+        g.fill(x, y + 1, x + side, y + 1 + side, this.skin.accent());
+        ProgramIcons.draw(g, x, y + 1, side, side,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, program), TILE_LOOK);
+        Draw.text(g, font, clip(font, label(program), w - side - 4), x + side + 4, y, this.skin.text());
+        Texts.small(g, font, clip(font, body, Texts.smallFits(w - side - 4)), x + side + 4, y + 9, this.skin.dim());
+        this.doors.add(new Door(program, new int[]{x, y, w, TILE_ROW_H}));
+        return y + TILE_ROW_H;
     }
 
     /** The machine written out as a list of facts, which is the middle shape's way of saying it. */
     private void machineFacts(final GuiGraphics g, final Font font, final int x, final int y, final int w) {
         int ty = y;
-        ty = this.fact(g, font, x, ty, w, "Computer name", this.facts.machineName());
-        ty = this.fact(g, font, x, ty, w, "Processor", this.facts.cpuName());
-        ty = this.fact(g, font, x, ty, w, "Memory", this.facts.memoryMb() + " MB");
+        ty = this.fact(g, font, x, ty, w, GameText.resolve(WelcomeTexts.COMPUTER_NAME), this.facts.machineName());
+        ty = this.fact(g, font, x, ty, w, GameText.resolve(WelcomeTexts.PROCESSOR),
+                GameText.resolve(this.facts.cpuName()));
+        ty = this.fact(g, font, x, ty, w, GameText.resolve(WelcomeTexts.MEMORY),
+                GameText.resolve(WelcomeTexts.MEGABYTES.with(this.facts.memoryMb())));
         ty = this.fact(g, font, x, ty, w, this.facts.systemName(),
-                "Disk " + this.facts.systemSlot() + ", " + this.facts.systemDisk());
+                GameText.resolve(WelcomeTexts.ON_DISK.with(this.facts.systemSlot(), this.facts.systemDisk())));
         if (!this.facts.others().isEmpty()) {
             final WelcomeFacts.Other other = this.facts.others().getFirst();
-            ty = this.fact(g, font, x, ty, w, "Also installed",
-                    other.system() + " on Disk " + other.slot() + " (F12 at power-on)");
+            ty = this.fact(g, font, x, ty, w, GameText.resolve(WelcomeTexts.ALSO_INSTALLED),
+                    GameText.resolve(WelcomeTexts.OTHER_SYSTEM.with(other.system(), other.slot())));
         }
-        this.fact(g, font, x, ty, w, "Network", this.networkLine());
+        this.fact(g, font, x, ty, w, GameText.resolve(WelcomeTexts.NETWORK), this.networkLine());
     }
 
     private int fact(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                      final String key, final String value) {
         final int keyW = Math.min(76, w / 2);
-        g.drawString(font, clip(font, key, keyW - 4), x, y, this.skin.dim(), false);
-        g.drawString(font, clip(font, value, w - keyW), x + keyW, y, this.skin.text(), false);
+        Draw.text(g, font, clip(font, key, keyW - 4), x, y, this.skin.dim());
+        Draw.text(g, font, clip(font, value, w - keyW), x + keyW, y, this.skin.text());
         return y + 11;
     }
 
@@ -262,13 +328,13 @@ public final class WelcomeApp implements IDesktopApp {
                       final String program, final String body) {
         this.skin.panel(g, x, y, w, h);
         final String name = label(program);
-        g.drawString(font, name, x + 4, y + 3, this.skin.text(), false);
+        Draw.text(g, font, name, x + 4, y + 3, this.skin.text());
         int ty = y + 13;
         for (final FormattedCharSequence line : font.split(Component.literal(body), w - 8)) {
             if (ty > y + h - 8) {
                 break;
             }
-            g.drawString(font, line, x + 4, ty, this.skin.dim(), false);
+            Draw.text(g, font, line, x + 4, ty, this.skin.dim());
             ty += 9;
         }
         this.doors.add(new Door(program, new int[]{x, y, w, h}));
@@ -281,10 +347,10 @@ public final class WelcomeApp implements IDesktopApp {
         this.startupBox = new int[]{x + PAD, by, 9, 9};
         this.skin.field(g, x + PAD, by, 9, 9, false);
         if (this.facts.showAtStartup()) {
-            g.drawString(font, "x", x + PAD + 2, by, this.skin.accent(), false);
+            Draw.text(g, font, "x", x + PAD + 2, by, this.skin.accent());
         }
-        g.drawString(font, "Show this at startup", x + PAD + 13, by, this.skin.dim(), false);
-        this.closeButton = this.button(g, font, x + w - PAD - 46, by - 3, 46, "Close");
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.SHOW_AT_STARTUP), x + PAD + 13, by, this.skin.dim());
+        this.closeButton = this.button(g, font, x + w - PAD - 46, by - 3, 46, GameText.resolve(WelcomeTexts.CLOSE));
     }
 
     /** A door to one of this machine's programs, under the name this desktop gives it. */
@@ -302,30 +368,28 @@ public final class WelcomeApp implements IDesktopApp {
 
     /** What this computer is made of, in one line, for the card that opens This PC. */
     private String hardwareLine() {
-        return this.facts.cpuName() + ", " + this.facts.memoryMb() + " MB. " + this.facts.systemName()
-                + " on Disk " + this.facts.systemSlot() + ".";
+        return GameText.resolve(WelcomeTexts.HARDWARE.with(this.facts.cpuName(), this.facts.memoryMb(),
+                this.facts.systemName(), this.facts.systemSlot()));
     }
 
     /** Where software comes from on this machine, which is not the same answer on every machine. */
     private String softwareLine() {
-        return this.facts.mirrorAnswers()
-                ? "pckmgr install adds programs from the Mirror on " + this.facts.mirrorHost() + "."
-                : "pckmgr installs programs once a Mainframe on this network runs the Mirror.";
+        return GameText.resolve(this.facts.mirrorAnswers()
+                ? WelcomeTexts.MIRROR_ANSWERS.with(this.facts.mirrorHost()) : WelcomeTexts.NO_MIRROR.text());
     }
 
     /** What this computer is connected to, said plainly, including when the answer is nothing. */
     private String networkLine() {
         if (!this.facts.networked()) {
-            return "Not cabled to a network.";
+            return GameText.resolve(WelcomeTexts.NOT_CABLED);
         }
-        return this.facts.mirrorAnswers()
-                ? "Cabled to " + this.facts.networkHost() + ", and its Mirror answers."
-                : "Cabled to " + this.facts.networkHost() + ".";
+        return GameText.resolve((this.facts.mirrorAnswers() ? WelcomeTexts.CABLED_WITH_MIRROR : WelcomeTexts.CABLED)
+                .with(this.facts.networkHost()));
     }
 
     /** The name this desktop gives that program, falling back to the id when it has none. */
     private static String label(final String program) {
-        final String named = DesktopScreen.programLabel(program);
+        final String named = ActiveDesktop.programLabel(program);
         return named.isEmpty() ? program : named;
     }
 

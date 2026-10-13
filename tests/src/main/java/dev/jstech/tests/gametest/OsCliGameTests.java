@@ -9,9 +9,12 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.ConsoleInitPayload;
@@ -23,7 +26,9 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -38,6 +43,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * In-world integration tests for the filesystem CLI commands (dir, type, del, run).
@@ -89,7 +96,9 @@ public final class OsCliGameTests {
                             + e.getMessage());
                     return;
                 }
-                helper.assertTrue(ConsoleInitPayload.STREAM_CODEC.decode(buf).commands().equals(commands),
+                final List<ConsoleInitPayload.WireCommand> back =
+                        ConsoleInitPayload.STREAM_CODEC.decode(buf).commands();
+                helper.assertTrue(shapes(back).equals(shapes(commands)),
                         "the " + family + (live ? " live" : "") + " shell's commands survive the round trip");
             }
         }
@@ -170,7 +179,7 @@ public final class OsCliGameTests {
 
                     helper.assertTrue(result.ok(),
                             "readFile must succeed for an existing .iql file; got: " + result.message());
-                    helper.assertTrue(expected.equals(result.message()),
+                    helper.assertTrue(expected.equals(result.message().english()),
                             "readFile must return the written content; got: " + result.message());
                 })
                 .thenSucceed();
@@ -278,7 +287,7 @@ public final class OsCliGameTests {
                      */
                     final boolean parsedOk = result.ok()
                             || (result.opResult() != null)
-                            || (!result.ok() && result.message().contains("Mainframe"));
+                            || (!result.ok() && result.message().english().contains("Mainframe"));
                     helper.assertTrue(parsedOk,
                             "runScript must reach dispatch (not fail on missing file / syntax); got: "
                                     + result.message());
@@ -304,7 +313,7 @@ public final class OsCliGameTests {
                     final ICliComputer.FsResult result = cli.runScript("notes.txt");
                     helper.assertFalse(result.ok(),
                             "runScript on a .txt file must fail");
-                    helper.assertTrue(result.message().contains("iql"),
+                    helper.assertTrue(result.message().english().contains("iql"),
                             "error message must mention .iql; got: " + result.message());
                 })
                 .thenSucceed();
@@ -348,7 +357,7 @@ public final class OsCliGameTests {
                             "writeFile must succeed for a .txt file; got: " + write.message());
 
                     final ICliComputer.FsResult read = cli.readFile("notes.txt");
-                    helper.assertTrue(read.ok() && content.equals(read.message()),
+                    helper.assertTrue(read.ok() && content.equals(read.message().english()),
                             "readFile must return the written content; got: " + read.message());
                 })
                 .thenSucceed();
@@ -388,7 +397,7 @@ public final class OsCliGameTests {
                     final ICliComputer.FsResult write = cli.writeFile("thing.fk", "made by a program");
                     helper.assertTrue(write.ok(), "writeFile takes a .fk; got: " + write.message());
                     final ICliComputer.FsResult read = cli.readFile("thing.fk");
-                    helper.assertTrue(read.ok() && "made by a program".equals(read.message()),
+                    helper.assertTrue(read.ok() && "made by a program".equals(read.message().english()),
                             "and reads it back; got: " + read.message());
                 })
                 .thenSucceed();
@@ -432,7 +441,7 @@ public final class OsCliGameTests {
                             .filter(one -> "notes.fk".equals(one.path())).findFirst().orElse(null);
                     helper.assertTrue(entry != null && entry.type() == dev.jstech.computers.os.fs.FileType.OTHER,
                             "it is a file of a kind the machine does not know; got " + entry);
-                    helper.assertTrue("hi".equals(cli.readFile("notes.fk").message()), "with what it held");
+                    helper.assertTrue("hi".equals(cli.readFile("notes.fk").message().english()), "with what it held");
                 })
                 .thenSucceed();
     }
@@ -530,7 +539,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(cli.copyPath("a.txt", "b.txt").ok(), "copy a.txt b.txt must succeed");
                     helper.assertTrue(cli.readFile("a.txt").ok(), "source must still exist after copy");
                     final ICliComputer.FsResult copy = cli.readFile("b.txt");
-                    helper.assertTrue(copy.ok() && copy.message().equals("payload"),
+                    helper.assertTrue(copy.ok() && copy.message().english().equals("payload"),
                             "copy must contain the source content");
                 })
                 .thenSucceed();
@@ -549,6 +558,27 @@ public final class OsCliGameTests {
                     helper.assertTrue(cli.movePath("m.txt", "Dest").ok(), "move m.txt Dest must succeed");
                     helper.assertFalse(cli.readFile("m.txt").ok(), "source must be gone after move");
                     helper.assertTrue(cli.readFile("Dest\\m.txt").ok(), "file must exist under Dest");
+                })
+                .thenSucceed();
+    }
+
+    /** {@code mv} with a bare new name puts the file in the current folder, and with a folder moves it in. */
+    @GameTest(template = ARENA)
+    public static void cliMoveTo_readsABareNameFromTheCurrentFolder(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    helper.assertTrue(cli.makeDir("Src").ok(), "mkdir Src must succeed");
+                    helper.assertTrue(cli.makeDir("Docs").ok(), "mkdir Docs must succeed");
+                    helper.assertTrue(cli.writeFile("Src\\file.txt", "data").ok(), "write must succeed");
+                    helper.assertTrue(cli.moveTo("Src\\file.txt", "note.txt").ok(), "mv to a bare name must succeed");
+                    helper.assertFalse(cli.readFile("Src\\file.txt").ok(), "source must be gone");
+                    helper.assertFalse(cli.readFile("Src\\note.txt").ok(), "it must not be renamed in place");
+                    helper.assertTrue(cli.readFile("note.txt").ok(), "it must land in the current folder");
+                    helper.assertTrue(cli.moveTo("note.txt", "Docs").ok(), "mv into a folder must succeed");
+                    helper.assertTrue(cli.readFile("Docs\\note.txt").ok(), "it must sit inside the folder");
                 })
                 .thenSucceed();
     }
@@ -610,7 +640,7 @@ public final class OsCliGameTests {
                             "current drive must be D after switching; got " + cli.currentLocation().dosPath());
                     helper.assertTrue(cli.writeFile("note.txt", "on-d").ok(), "write on D: must succeed");
                     final ICliComputer.FsResult readD = cli.readFile("note.txt");
-                    helper.assertTrue(readD.ok() && readD.message().equals("on-d"),
+                    helper.assertTrue(readD.ok() && readD.message().english().equals("on-d"),
                             "read on D: must return the D: content");
                     // Back to C:; the D: file must not be visible there.
                     helper.assertTrue(cli.changeDrive('C').ok(), "switching back to C: must succeed");
@@ -621,10 +651,36 @@ public final class OsCliGameTests {
                     helper.assertTrue(cli.copyPath("src.txt", "D:\\copy.txt").ok(),
                             "cross-drive copy C: -> D: must succeed");
                     final ICliComputer.FsResult copied = cli.readFile("D:\\copy.txt");
-                    helper.assertTrue(copied.ok() && copied.message().equals("payload"),
+                    helper.assertTrue(copied.ok() && copied.message().english().equals("payload"),
                             "the cross-drive copy on D: must hold the source content");
                     // An unmapped drive letter fails cleanly.
                     helper.assertFalse(cli.changeDrive('Z').ok(), "switching to an unmapped drive must fail");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A copy or a move to another drive does not write over a file already there, as one on the same drive never
+     * did: across drives the copy is a write, and a write replaces, so D:'s file used to be lost without a word.
+     */
+    @GameTest(template = ARENA)
+    public static void cliDrives_crossDriveCopyAndMoveLeaveAFileAlreadyThere(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+        mainframe.getInventory().setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START + 1,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    helper.assertTrue(cli.writeFile("D:\\backup.txt", "the one on D").ok(), "D: holds a backup");
+                    helper.assertTrue(cli.writeFile("backup.txt", "the one on C").ok(), "and so does C:");
+
+                    helper.assertFalse(cli.copyPath("backup.txt", "D:\\backup.txt").ok(),
+                            "copying onto it is refused");
+                    helper.assertFalse(cli.movePath("backup.txt", "D:\\").ok(), "and so is moving onto it");
+                    helper.assertTrue(cli.readFile("D:\\backup.txt").message().english().equals("the one on D"),
+                            "D:'s file is still its own");
+                    helper.assertTrue(cli.readFile("backup.txt").ok(), "and the one on C: was not moved away");
                 })
                 .thenSucceed();
     }
@@ -742,12 +798,12 @@ public final class OsCliGameTests {
                     helper.assertTrue(cli.setConfig("theme", "ocean").ok(), "config theme ocean must succeed");
                     helper.assertTrue(mainframe.console().settings().accent() == 0xFF12A26F,
                             "ocean must set the teal accent");
-                    helper.assertTrue(mainframe.console().wallpaper().equals("winxp"),
+                    helper.assertTrue(mainframe.console().desktop().wallpaper().equals("winxp"),
                             "ocean must set the winxp wallpaper");
                     helper.assertTrue(cli.setConfig("theme", "system").ok(), "config theme system must succeed");
                     helper.assertTrue(mainframe.console().settings().accent() == 0,
                             "system must clear the accent");
-                    helper.assertTrue(mainframe.console().wallpaper().isEmpty(),
+                    helper.assertTrue(mainframe.console().desktop().wallpaper().isEmpty(),
                             "system must clear the wallpaper");
                 })
                 .thenSucceed();
@@ -765,17 +821,8 @@ public final class OsCliGameTests {
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
         }
-        final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
         // A 500 GB HDD provides 2 000 item slots; MC-DOS needs 256.
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+        TestWorldBuilder.installMainframeBuild(mainframe,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         mainframe.togglePower();
         // Install MC-DOS so the filesystem kind resolves to a hierarchical filesystem.
@@ -796,16 +843,8 @@ public final class OsCliGameTests {
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
         }
-        final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        // No disk slot filled, so systemDisk() returns empty, resolveDiskCtx() returns null.
+        TestWorldBuilder.installMainframeBuild(mainframe, null); // no disk, so systemDisk() is empty
+        // and resolveDiskCtx() returns null.
         mainframe.togglePower();
         return mainframe;
     }
@@ -839,7 +878,7 @@ public final class OsCliGameTests {
                             "the Linux kernel must give the shell the POSIX family");
                     helper.assertTrue("player@ubuntu:~$".equals(cli.prompt()),
                             "the bash prompt must start in the home directory; got " + cli.prompt());
-                    final var fs = mainframe.systemDisk().get(ComputingModule.FILESYSTEM.get());
+                    final var fs = mainframe.systemDisk().get(ComputingComponents.FILESYSTEM.get());
                     helper.assertTrue(fs != null && fs.hasDir("home/player") && fs.hasDir("etc"),
                             "the install must lay down the Unix tree (/home/player, /etc)");
 
@@ -947,6 +986,8 @@ public final class OsCliGameTests {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.newShell(
                             cli.shellFamily(), 52);
+                    // The Mainframe ships with the engine; taken off, it is a package like any other.
+                    mainframe.uninstallEngine(NetworkEngines.MIDSOFT_IQL_SERVER.program());
                     helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("could not resolve mirror"),
                             "without a Mirror, apt must fail to resolve the mirror");
                     helper.assertTrue(text(shell.run("mirror install", cli)).contains("Mirror installed"),
@@ -954,7 +995,8 @@ public final class OsCliGameTests {
                     helper.assertTrue(mainframe.isMirrorInstalled(), "the Mirror flag must be set");
                     helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("done"),
                             "with the Mirror serving, apt must install the IQL Engine package");
-                    helper.assertTrue(mainframe.isIqlEngineInstalled(),
+                    helper.assertTrue(mainframe.installedEngines().containsKey(
+                                    NetworkEngines.MIDSOFT_IQL_SERVER.program()),
                             "installing the iqlengine package must switch the Engine on");
                     helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("newest version"),
                             "a second install must report the package as already installed");
@@ -989,7 +1031,7 @@ public final class OsCliGameTests {
                     shell.run("mirror install", cli);
                     helper.assertTrue(text(shell.run("apt install gnome", cli)).contains("Get:1"),
                             "apt must fetch the GNOME package from the mirror");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     final ResourceLocation gnome = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gnome");
                     helper.assertTrue(gnome.equals(mainframe.installedDesktopId()),
@@ -1013,7 +1055,7 @@ public final class OsCliGameTests {
 
                     // And removing it takes effect the same way: on the next boot, not immediately.
                     shell.run("apt remove gnome", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(dev.jstech.computers.os.boot.BootController
                                     .targetForComputer(mainframe)
@@ -1073,7 +1115,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(mainframe.isMirrorInstalled(), "the mirror verb installs the service");
                     helper.assertTrue(text(shell.run("uninstall mirror", cli)).contains("Removing mirror"),
                             "uninstall removes an installed service by name");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertFalse(mainframe.isMirrorInstalled(), "the service flag turns off with it");
                     helper.assertTrue(text(shell.run("format D:", cli)).contains("WILL BE LOST"),
@@ -1098,13 +1140,13 @@ public final class OsCliGameTests {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     shell.run("apt install cinnamon", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() != null,
                             "installing a desktop environment registers it");
                     helper.assertTrue(text(shell.run("apt remove cinnamon", cli)).contains("Removing cinnamon"),
                             "the package manager removes an installed package");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() == null,
                             "without the package the computer boots back to the TTY");
@@ -1129,7 +1171,7 @@ public final class OsCliGameTests {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     shell.run("pacman -S cinnamon", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() != null,
                             "pacman -S installs a package");
@@ -1137,7 +1179,7 @@ public final class OsCliGameTests {
                             "the usage line names the removal flag");
                     helper.assertTrue(text(shell.run("pacman -R cinnamon", cli)).contains("Removing cinnamon"),
                             "pacman -R removes an installed package");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() == null,
                             "the desktop environment is gone with its package");
@@ -1161,12 +1203,12 @@ public final class OsCliGameTests {
          */
         final MainframeBlockEntity legacy = placeMainframeWithEra(helper, legacyPos, ubuntu,
                 ComputingModule.LEGACY_MAINFRAME.get(),
-                HardwareItems.MOTHERBOARD_MTX_LEGACY.get(), HardwareItems.CPU_VELOCION_DUAL_285.get(),
-                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_500B.get());
+                HardwareItems.MOTHERBOARD_MTX_LEGACY.get(), HardwareItems.CPU_VELOCION_OPTERA_250.get(),
+                HardwareItems.RAM_DDR_1024.get(), HardwareItems.PSU_500B.get());
         final MainframeBlockEntity vintage = placeMainframeWithEra(helper, vintagePos, ubuntu,
                 ComputingModule.VINTAGE_MAINFRAME.get(),
-                HardwareItems.MOTHERBOARD_MTX_VINTAGE.get(), HardwareItems.CPU_VELOCION_K6_III.get(),
-                HardwareItems.RAM_EDO_16.get(), HardwareItems.PSU_300B.get());
+                HardwareItems.MOTHERBOARD_MTX_VINTAGE.get(), HardwareItems.CPU_INTEGRA_PENTIX_PRO_200.get(),
+                HardwareItems.RAM_EDO_16.get(), HardwareItems.PSU_300.get());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     legacy.installMirror();
@@ -1178,7 +1220,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(text(legacyShell.run("apt install kde-plasma", legacyCli))
                                     .contains("Get:1"),
                             "KDE is old enough for a Legacy machine");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(legacy, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(legacy, helper.getLevel(),
                             helper.absolutePos(legacyPos));
                     helper.assertTrue(text(legacyShell.run("apt install cinnamon", legacyCli))
                                     .contains("Standard hardware"),
@@ -1213,7 +1255,7 @@ public final class OsCliGameTests {
                     final var shell = dev.jstech.computers.program.cli.CliCommands
                             .shellFor(cli, 52);
                     shell.run("apt install cinnamon", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() != null,
                             "the desktop environment installs on the original disk");
@@ -1247,8 +1289,8 @@ public final class OsCliGameTests {
         final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
         final java.util.List<dev.jstech.computers.os.OpenWindow> layout = java.util.List.of(
-                new dev.jstech.computers.os.OpenWindow("Files", 40, 30, 200, 140, false, false),
-                new dev.jstech.computers.os.OpenWindow("Editor", 60, 50, 180, 120, true, false));
+                new dev.jstech.computers.os.OpenWindow("jsc:files", 40, 30, 200, 140, false, false),
+                new dev.jstech.computers.os.OpenWindow("jsc:editor", 60, 50, 180, 120, true, false));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);
@@ -1379,13 +1421,15 @@ public final class OsCliGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
+                    // As wide as a monitor's terminal: screenfetch cuts what passes the edge rather than wrap it.
+                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli,
+                            TermBuffer.MONITOR_COLUMNS);
                     // A package the Mirror serves, not a built-in: a fresh system does not have it.
                     helper.assertTrue(text(shell.run("screenfetch", cli)).contains("command not found"),
                             "screenfetch is a package, absent on a fresh install");
                     mainframe.installMirror();
                     shell.run("apt install screenfetch", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     final String out = text(shell.run("screenfetch", cli));
                     helper.assertTrue(out.contains("player@ubuntu"), "the header is user@host; got " + out);
@@ -1395,7 +1439,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(out.contains("DE: none (tty1)"), "without a DE the machine is a TTY");
                     helper.assertTrue(out.contains("CPU: 2000 MHz"), "the CPU line shows the clock");
                     shell.run("apt install cinnamon", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(text(shell.run("neofetch", cli)).contains("DE: Cinnamon"),
                             "with a desktop environment installed the DE line names it (alias included)");
@@ -1467,16 +1511,7 @@ public final class OsCliGameTests {
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
         }
-        final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+        TestWorldBuilder.installMainframeBuild(mainframe,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         mainframe.togglePower();
         if (!mainframe.installOs(osId)) {
@@ -1485,13 +1520,27 @@ public final class OsCliGameTests {
         return mainframe;
     }
 
-    /** All of a shell response's lines joined with newlines. */
-    private static String text(final dev.jstech.computers.program.cli.CliShell.Response response) {
-        final StringBuilder sb = new StringBuilder();
-        for (final var line : response.lines()) {
-            sb.append(line.text()).append('\n');
+    /**
+     * Each command as its name and the shape of its usage: the key of a declared sentence and what went into it,
+     * or the words of data. The English stays behind with the sender, so the shape is what a round trip keeps.
+     */
+    private static List<String> shapes(final List<ConsoleInitPayload.WireCommand> commands) {
+        final List<String> out = new ArrayList<>(commands.size());
+        for (final ConsoleInitPayload.WireCommand command : commands) {
+            out.add(command.name() + " " + shape(command.usage()));
         }
-        return sb.toString();
+        return out;
+    }
+
+    private static String shape(final Text text) {
+        if (!(text instanceof Text.Translated translated)) {
+            return "'" + text.english() + "'";
+        }
+        final List<String> args = new ArrayList<>(translated.args().size());
+        for (final Text arg : translated.args()) {
+            args.add(shape(arg));
+        }
+        return translated.key().key() + args;
     }
 
     /**
@@ -1538,10 +1587,10 @@ public final class OsCliGameTests {
                             "dir lists the projected disc: " + names);
                     helper.assertTrue(supportIsDir, "the disc's folder lists as a folder");
                     final ICliComputer.FsResult readme = cli.readFile("README.TXT");
-                    helper.assertTrue(readme.ok() && readme.message().contains("Crafting Manager"),
+                    helper.assertTrue(readme.ok() && readme.message().english().contains("Crafting Manager"),
                             "type reads the readme's generated text: " + readme.message());
                     final ICliComputer.FsResult licence = cli.readFile("LICENSE.TXT");
-                    helper.assertTrue(licence.ok() && licence.message().contains("licensed"),
+                    helper.assertTrue(licence.ok() && licence.message().english().contains("licensed"),
                             "type reads the licence's generated text: " + licence.message());
                     helper.assertTrue(cli.changeDir("SUPPORT").ok(), "a projected folder can be entered");
                     helper.assertTrue(cli.changeDir("\\").ok(), "and left again");

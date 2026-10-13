@@ -40,11 +40,6 @@ public record CompilationUnit(String file, List<Using> usings, List<Declared> de
             Objects.requireNonNull(name, "name");
         }
 
-        /** A using with nowhere in particular to point a complaint at. */
-        public Using(final String name, final boolean all) {
-            this(name, all, 1, 1);
-        }
-
         /** How the using was written. */
         public String describe() {
             return this.all ? this.name + ".*" : this.name;
@@ -64,20 +59,6 @@ public record CompilationUnit(String file, List<Using> usings, List<Declared> de
         Objects.requireNonNull(file, "file");
         usings = usings == null ? List.of() : List.copyOf(usings);
         declared = declared == null ? List.of() : List.copyOf(declared);
-    }
-
-    /** A file at the top, bringing nothing in, every type in {@code namespace}. */
-    public CompilationUnit(final String file, final String namespace, final List<Using> usings,
-                           final List<IDecl.ITypeDecl> types) {
-        this(file, usings, inNamespace(namespace, types));
-    }
-
-    private static List<Declared> inNamespace(final String namespace, final List<IDecl.ITypeDecl> types) {
-        final List<Declared> out = new ArrayList<>(types.size());
-        for (final IDecl.ITypeDecl type : types) {
-            out.add(new Declared(namespace, type));
-        }
-        return out;
     }
 
     /** The declarations, in the order written. */

@@ -1,0 +1,178 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.device_listing.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.device_listing.definition1",
+      "term": "jsc.guide.device_listing.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.device_listing.definition2",
+      "term": "jsc.guide.device_listing.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.device_listing.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.device_listing.table1",
+      "heads": [
+        "jsc.guide.device_listing.table1_head1",
+        "jsc.guide.device_listing.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "<driver name>@pci0:<bus>:<device>:<function>:"
+          },
+          {
+            "words": "jsc.guide.device_listing.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "class=0x<six hex digits>"
+          },
+          {
+            "words": "jsc.guide.device_listing.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "device   = '<name>'"
+          },
+          {
+            "words": "jsc.guide.device_listing.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "class    = <class name>"
+          },
+          {
+            "words": "jsc.guide.device_listing.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.device_listing.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.device_listing.table2",
+      "heads": [
+        "jsc.guide.device_listing.table2_head1",
+        "jsc.guide.device_listing.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.device_listing.table2_1_1"
+          },
+          {
+            "literal": "hostb0"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.device_listing.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.device_listing.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.device_listing.table2_3_1"
+          },
+          {
+            "literal": "hdac0, hdac1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.device_listing.table2_4_1"
+          },
+          {
+            "literal": "em0, em1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.device_listing.table2_5_1"
+          },
+          {
+            "literal": "vgapci0"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.device_listing.table2_6_1"
+          },
+          {
+            "literal": "none<n>"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.device_listing.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.device_listing.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.device_listing.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.device_listing.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.device_listing.fix1",
+          "problem": "jsc.guide.device_listing.problem1"
+        },
+        {
+          "fix": "jsc.guide.device_listing.fix2",
+          "problem": "jsc.guide.device_listing.problem2"
+        },
+        {
+          "fix": "jsc.guide.device_listing.fix3",
+          "problem": "jsc.guide.device_listing.problem3"
+        },
+        {
+          "fix": "jsc.guide.device_listing.fix4",
+          "problem": "jsc.guide.device_listing.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:devices_commands",
+        "jsc:system_commands"
+      ]
+    }
+  ],
+  "id": "jsc:device_listing",
+  "order": 278,
+  "section": "jsc:freebsd_tools",
+  "title": "jsc.guide.device_listing.title"
+}

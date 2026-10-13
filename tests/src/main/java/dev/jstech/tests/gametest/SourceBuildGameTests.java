@@ -8,8 +8,11 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.PackageService;
@@ -70,6 +73,8 @@ public final class SourceBuildGameTests {
                 .thenWaitUntil(() -> helper.assertFalse(term.busy(), "the build is still running"))
                 .thenExecute(() -> {
                     helper.assertTrue(machine.console().isInstalled(MINESWEEPER), "the program is there at the end");
+                    helper.assertTrue(machine.console().builtFromSource(MINESWEEPER),
+                            "recorded as built on this machine, which is what lets it ask a little less of it");
                     helper.assertTrue(term.type("emerge mines").contains("already the newest version"),
                             "and asking for it again says it is there");
                     helper.assertFalse(term.busy(), "without building anything");
@@ -131,8 +136,8 @@ public final class SourceBuildGameTests {
                     fourJobs.installMirror();
                     final ItemStack disk = fourJobs.systemDisk();
                     final FilesystemContents was =
-                            disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
-                    disk.set(ComputingModule.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
+                            disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                    disk.set(ComputingComponents.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
                             .with(new StoredFile(MakeOpts.PATH, FileType.CFG, "MAKEOPTS=\"-j4\"")));
                     slow.type("emerge mines");
                     quick.type("emerge mines");
@@ -164,8 +169,8 @@ public final class SourceBuildGameTests {
                     // Every core it has, or the test sits through two minutes of one of them compiling a toolkit.
                     final ItemStack disk = machine.systemDisk();
                     final FilesystemContents was =
-                            disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
-                    disk.set(ComputingModule.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
+                            disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                    disk.set(ComputingComponents.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
                             .with(new StoredFile(MakeOpts.PATH, FileType.CFG, "MAKEOPTS=\"-j6\"")));
                     helper.assertTrue(term.type("emerge no-such-category/no-such-thing").contains("unable to locate"),
                             "a name the tree does not have is not found");
@@ -199,6 +204,36 @@ public final class SourceBuildGameTests {
         helper.succeed();
     }
 
+    /**
+     * A Linux built by hand on old hardware is offered only what that hardware runs, as every other way of
+     * installing is. The hand-built path used to lay a Legacy desktop onto a Vintage machine's disk.
+     */
+    @GameTest(template = ARENA)
+    public static void byHand_isOfferedOnlyWhatTheHardwareRuns(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        helper.setBlock(at, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get());
+        if (!(helper.getBlockEntity(at) instanceof PersonalComputerBlockEntity computer)) {
+            helper.fail("no vintage personal computer at " + at);
+            return;
+        }
+        final ItemStackHandler hardware = computer.getHardware();
+        hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
+                new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(HardwareItems.RAM_SIMM_4.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300.get()));
+        computer.togglePower();
+
+        final PackageService packages = computer.services().packages();
+        helper.assertTrue(packages != null, "the machine answers for its packages");
+        helper.assertTrue(packages.whileInstalling("gnome", false) == null,
+                "a desktop that needs Legacy hardware is not offered to a Vintage machine");
+        helper.assertTrue(packages.whileInstalling("vim", false) != null, "while one Vintage runs still is");
+        helper.succeed();
+    }
+
     /** A running machine whose system builds what it installs. */
     private static MainframeBlockEntity gentooMachine(final GameTestHelper helper, final BlockPos where) {
         helper.setBlock(where, ComputingModule.MAINFRAME.get());
@@ -207,7 +242,7 @@ public final class SourceBuildGameTests {
         }
         final ItemStackHandler parts = machine.getInventory();
         parts.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         parts.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
                 new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         parts.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,

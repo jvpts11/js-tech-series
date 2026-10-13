@@ -7,25 +7,46 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.client.monitor.MonitorTubes;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
+import dev.jstech.computers.menu.IMonitorMenu;
+import dev.jstech.core.client.live.TubeFilter;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.client.recipeview.IKeepsViewersClear;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.client.gui.screen.CoreContainerScreen;
+import java.util.List;
+import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Base for the computing container screens, holding the two hand-rolled helpers every one of them repeated: a hit-test against a rectangle in this screen's local space, and a menu-button send to the server. It also resolves the screen's per-era skin and binds it for the render pass, so every computing screen paints in the host computer's hardware-era theme. A screen with no host era (a topology element, a board-less assembly, a program with no era source) falls back to the frozen STANDARD skin, which renders exactly as before.
+ * Base for the computing container screens. It resolves the screen's per-era skin and binds it for the render pass,
+ * so every computing screen paints in the host computer's hardware-era theme; a screen with no host era (a topology
+ * element, a board-less assembly, a program with no era source) falls back to the frozen STANDARD skin. It also
+ * writes a machine's own words as a text wall. The mouse test against a rectangle and the menu buttons come from
+ * J's Core's container screen.
  */
-public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
+public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> extends CoreContainerScreen<T>
+        implements IKeepsViewersClear {
 
     /** The skin this screen paints with for the current render pass; STANDARD until {@link #init} resolves it. */
     protected EraTheme theme = EraThemes.STANDARD;
+    /**
+     * Whether this screen draws a monitor's face in the world rather than the screen a player has open: it is the
+     * same screen drawing the same thing, but nobody is at it, so it tells the server nothing and never closes.
+     */
+    private final boolean face;
 
     /**
      * Where a label goes when the screen draws none.
@@ -40,8 +61,102 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
     protected static final float WALL_SCALE = TextWall.SCALE;
     protected static final int WALL_ROW = TextWall.ROW;
 
+    /** A pointer far off the glass, for a face, which nothing on it should light up for. */
+    private static final int FAR = -10_000;
+
+    /** Set while a screen is being built to draw a face, which its constructor reads. */
+    private static boolean buildingFace;
+
     protected AbstractComputerScreen(final T menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
+        this.face = buildingFace;
+    }
+
+    /**
+     * Builds a screen to draw a monitor's face in the world, the way {@code make} builds it, laid out as it would be
+     * on a game window just bigger than its glass by {@code aroundX} and {@code aroundY}, so the glass stands at half
+     * of each from the corner.
+     */
+    public static <S extends AbstractComputerScreen<?>> S face(final Supplier<S> make, final int aroundX,
+                                                               final int aroundY) {
+        buildingFace = true;
+        final S screen;
+        try {
+            screen = make.get();
+        } finally {
+            buildingFace = false;
+        }
+        screen.init(Minecraft.getInstance(), screen.imageWidth + aroundX, screen.imageHeight + aroundY);
+        return screen;
+    }
+
+    /** How wide this screen's glass is drawn. */
+    public final int glassWidth() {
+        return imageWidth;
+    }
+
+    /** How tall this screen's glass is drawn. */
+    public final int glassHeight() {
+        return imageHeight;
+    }
+
+    /**
+     * Draws this screen as a monitor's face: what it draws when it is open, with no pointer anywhere on it, and
+     * without the game's dimming of the world behind it or the tube, which the face is given after.
+     */
+    public final void paintFace(final GuiGraphics g, final float partialTick) {
+        JsTechTheme.bind(theme);
+        try {
+            renderBg(g, partialTick, FAR, FAR);
+            for (final Renderable widget : renderables) {
+                widget.render(g, FAR, FAR, partialTick);
+            }
+            g.pose().pushPose();
+            g.pose().translate(leftPos, topPos, 0);
+            renderLabels(g, FAR, FAR);
+            g.pose().popPose();
+        } finally {
+            JsTechTheme.unbind();
+        }
+    }
+
+    /** Moves this screen on by one tick as a monitor's face, as it would move on with the screen open. */
+    public final void tickFace() {
+        containerTick();
+    }
+
+    /** Never sees itself out while it draws a face: nobody is at it to leave. */
+    @Override
+    public void onClose() {
+        if (!face) {
+            super.onClose();
+        }
+    }
+
+    /** Whether this screen draws a monitor's face in the world rather than a screen a player has open. */
+    protected final boolean onFace() {
+        return face;
+    }
+
+    /** Tells the server, unless this screen draws a face, which nobody is at to tell it anything. */
+    protected final void send(final CustomPacketPayload payload) {
+        if (!face) {
+            PacketDistributor.sendToServer(payload);
+        }
+    }
+
+    /**
+     * Stands the window where a window {@code anchorHeight} tall would be centred, lifted when the window is now
+     * taller so its bottom still ends on the screen. A screen whose height changes after it opens (its state arrived,
+     * or another tab is shown) calls this so it never runs off the bottom; returns how far the top moved, for the
+     * widgets placed once at open.
+     */
+    protected final int placeVertically(final int anchorHeight) {
+        final int centred = Math.max(0, (height - anchorHeight) / 2);
+        final int top = Math.max(0, Math.min(centred, height - imageHeight));
+        final int moved = top - topPos;
+        topPos = top;
+        return moved;
     }
 
     /** Draws one line of a text wall with its top left corner at {@code (x, y)}. */
@@ -92,6 +207,13 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
                 .geometry(leftPos, topPos, imageWidth, imageHeight);
     }
 
+    /** The monitor body: the recipe viewers' lists sit beside it rather than over its bezel. */
+    @Override
+    public List<Rect2i> areasKeptClear() {
+        final MonitorFrameStyle.Geometry body = frameBounds();
+        return List.of(new Rect2i(body.x(), body.y(), body.w(), body.h()));
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -116,25 +238,17 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
         JsTechTheme.bind(theme);
         try {
             super.render(graphics, mouseX, mouseY, partialTick);
-            renderTooltip(graphics, mouseX, mouseY);
         } finally {
             JsTechTheme.unbind();
         }
-    }
-
-    /**
-     * Whether the mouse is inside the rectangle at {@code (rx, ry)} sized {@code w x h}, with the rectangle given in this screen's local coordinates (relative to its top-left).
-     */
-    protected boolean hover(final int mouseX, final int mouseY, final int rx, final int ry, final int w, final int h) {
-        final int mx = mouseX - leftPos;
-        final int my = mouseY - topPos;
-        return mx >= rx && mx < rx + w && my >= ry && my < ry + h;
-    }
-
-    /** Tells the server the player clicked the menu button with the given id. */
-    protected void sendButton(final int id) {
-        if (minecraft != null && minecraft.gameMode != null) {
-            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
+        /*
+         * A screen on a monitor reaches the player through the monitor's tube: a monochrome one shows every colour as
+         * its phosphor, the sixteen-colour one as the nearest of its sixteen. Done to the whole glass once it is drawn,
+         * so whatever drew on it goes through the tube.
+         */
+        if (menu instanceof IMonitorMenu at) {
+            TubeFilter.filterScreen(graphics, leftPos, topPos, imageWidth, imageHeight,
+                    MonitorTubes.tubeAt(at.monitorPos()));
         }
     }
 }

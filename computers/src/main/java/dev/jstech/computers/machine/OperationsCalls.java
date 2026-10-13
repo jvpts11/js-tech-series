@@ -9,9 +9,13 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.iql.IqlParseResult;
+import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 import java.util.Map;
 
@@ -22,21 +26,26 @@ import java.util.Map;
  * base's programs to go and look at. Asking is dear, and deliberately so: it is the network's time being spent. A
  * refusal is answered rather than thrown, so a script can carry on and try something else.
  */
+@TextHolder
 final class OperationsCalls {
 
     private static final String STRING = "string";
     private static final String LONG = "long";
 
+    /** Why a program is stopped: it is said in English, the language a program's run keeps what stopped it in. */
+    private static final TextKey NO_NETWORK =
+            TextKey.of("jsc.service.operations.calls.no_network", "this computer is not on a network");
+
     private OperationsCalls() {
     }
 
     static void bind(final Map<MemberId, MachineCalls.Binding<?>> bindings) {
-        operations(bindings, "Pull", (ops, call, target, arguments, line) ->
-                asked(ops.pull(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
-        operations(bindings, "Push", (ops, call, target, arguments, line) ->
-                asked(ops.push(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
-        operations(bindings, "Craft", (ops, call, target, arguments, line) ->
-                asked(ops.craft(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
+        operations(bindings, "Pull", (ops, call, target, arguments, line) -> started(ops,
+                ops.pull(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
+        operations(bindings, "Push", (ops, call, target, arguments, line) -> started(ops,
+                ops.push(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
+        operations(bindings, "Craft", (ops, call, target, arguments, line) -> started(ops,
+                ops.craft(item(arguments), amount(arguments), MoveLabels.sigma(call.caller()))), STRING, LONG);
         operations(bindings, "Cancel",
                 (ops, call, target, arguments, line) -> asked(ops.cancel(item(arguments))), STRING);
         operations(bindings, "Reprioritise", (ops, call, target, arguments, line) -> asked(ops.reprioritise(
@@ -53,6 +62,23 @@ final class OperationsCalls {
             }
             return all;
         });
+        /*
+         * The action is written as the SET of the network's language writes it (SMELT, ENCHANT OFFER 2, REPAIR WITH
+         * diamond, NAME 'Old Faithful'), so the call asks exactly what the statement would.
+         */
+        MachineCalls.bind(bindings, services -> services, "Operations", "Update",
+                (services, call, target, arguments, line) -> {
+                    if (!services.operations().onNetwork()) {
+                        throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text());
+                    }
+                    final long amount = amount(arguments, 2);
+                    final IqlParseResult parsed = IqlParser.tryParse("UPDATE " + (amount > 0L ? amount + " " : "")
+                            + item(arguments) + " SET " + (arguments.length < 2 ? "" : String.valueOf(arguments[1])));
+                    if (!parsed.ok() || parsed.operation() == null) {
+                        return asked(ICliComputer.OpResult.fail(parsed.error()));
+                    }
+                    return started(services.operations(), services.iql().update(parsed.operation()));
+                }, STRING, STRING, LONG);
     }
 
     /** Binds one of the calls, every one of which needs the machine to be on a network. */
@@ -62,17 +88,26 @@ final class OperationsCalls {
         MachineCalls.bind(bindings, MachineServices::operations, "Operations", name,
                 (ops, call, target, arguments, line) -> {
                     if (!ops.onNetwork()) {
-                        throw new Halt(Halt.Reason.NO_NETWORK, line, "this computer is not on a network");
+                        throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text());
                     }
                     return function.call(ops, call, target, arguments, line);
                 }, parameters);
+    }
+
+    /* The answer to a call that sets an Operation going, which is what a program running one has earned. */
+    private static Values.Obj started(final OperationsService ops, final ICliComputer.OpResult result) {
+        if (result.ok()) {
+            ops.creditProgram();
+        }
+        return asked(result);
     }
 
     /** What came of asking: whether the network took it, and why not when it did not. */
     private static Values.Obj asked(final ICliComputer.OpResult result) {
         final Values.Obj made = new Values.Obj("AskResult");
         made.set("Ok", result.ok());
-        made.set("Message", result.message());
+        // A program reads in the machine's language, and keeps only strings on its heap.
+        made.set("Message", result.message().english());
         return made;
     }
 
@@ -93,6 +128,10 @@ final class OperationsCalls {
     }
 
     private static long amount(final Object[] arguments) {
-        return arguments.length > 1 && arguments[1] instanceof Number number ? number.longValue() : 0L;
+        return amount(arguments, 1);
+    }
+
+    private static long amount(final Object[] arguments, final int at) {
+        return arguments.length > at && arguments[at] instanceof Number number ? number.longValue() : 0L;
     }
 }

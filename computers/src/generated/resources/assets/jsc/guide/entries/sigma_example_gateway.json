@@ -1,0 +1,226 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_gateway.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_gateway.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_gateway.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_gateway.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "using System.Collections.*;",
+        "using System.Network.*;",
+        "namespace Corpus;",
+        "class GatewayCorpus {",
+        "    static void Main() {",
+        "        bool online = Gateway.Online;",
+        "        string current = Gateway.Current;",
+        "        List<string> names = Gateway.Names();",
+        "        bool chosen = Gateway.Select(\"east\");",
+        "        Console.PrintLine(\"\" + online + current + names.Count + chosen);",
+        "        foreach (CcComputer computer in Gateway.Computers()) {",
+        "            Console.PrintLine(\"\" + computer.Id + computer.Name + computer.Label + computer.Online);",
+        "        }",
+        "        foreach (CcPeripheral device in Gateway.Peripherals()) {",
+        "            Console.PrintLine(device.Name + device.Type + device.Methods.Count);",
+        "        }",
+        "",
+        "        object none = Gateway.Call(\"left\", \"getName\");",
+        "        object one = Gateway.Call(\"left\", \"setOutput\", true);",
+        "        object two = Gateway.Call(\"left\", \"setOutput\", \"top\", true);",
+        "        object three = Gateway.Call(\"left\", \"setOutput\", \"top\", true, 1);",
+        "        bool powered = Gateway.TurnOn(1) && Gateway.Shutdown(1) && Gateway.Reboot(1);",
+        "        bool sent = Gateway.Send(1, \"hello\");",
+        "        Gateway.OnMessage(Heard);",
+        "        Console.PrintLine(\"\" + none + one + two + three + powered + sent);",
+        "    }",
+        "",
+        "    static void Heard(GatewayMessage message) {",
+        "        Console.PrintLine(\"\" + message.From + message.Text + message.Tick);",
+        "    }",
+        "}"
+      ],
+      "name": "Gateway.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_gateway.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_gateway.table1",
+      "heads": [
+        "jsc.guide.sigma_example_gateway.table1_head1",
+        "jsc.guide.sigma_example_gateway.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Gateway.Online"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Current"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Names()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Select(\"east\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Computers()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Peripherals()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Call(\"left\", \"getName\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Call(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.TurnOn(1), Shutdown(1), Reboot(1)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Send(1, \"hello\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.OnMessage(Heard)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Heard(GatewayMessage message)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_gateway.table1_12_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_gateway.definition1",
+      "term": "jsc.guide.sigma_example_gateway.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_gateway.definition2",
+      "term": "jsc.guide.sigma_example_gateway.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_gateway.definition3",
+      "term": "jsc.guide.sigma_example_gateway.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_gateway.fix1",
+          "problem": "jsc.guide.sigma_example_gateway.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_gateway.fix2",
+          "problem": "jsc.guide.sigma_example_gateway.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_gateway.fix3",
+          "problem": "jsc.guide.sigma_example_gateway.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_gateway.fix4",
+          "problem": "jsc.guide.sigma_example_gateway.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_gateway.fix5",
+          "problem": "jsc.guide.sigma_example_gateway.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:network_gateway",
+        "jsc:gateway_permissions",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_gateway",
+  "order": 402,
+  "section": "jsc:examples_devices",
+  "title": "jsc.guide.sigma_example_gateway.title"
+}

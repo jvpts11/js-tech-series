@@ -10,6 +10,9 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.ProcessActionPayload;
 import dev.jstech.computers.operation.payload.ProcessListPayload;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -61,22 +64,24 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
         final var processes = menu.processes();
         clampSelection(processes.size());
 
-        g.drawString(font(), "SERVICES & JOBS", cx, cy + SUBHEAD_Y, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.SERVICES_AND_JOBS), cx, cy + SUBHEAD_Y, DIM());
 
         // Toolbar: two context buttons for the selected process (disabled when the list is empty).
         final boolean any = !processes.isEmpty();
         final ProcessListPayload.ProcessLine sel = any ? processes.get(selected) : null;
         final boolean service = sel != null && sel.kind() == ProcessListPayload.KIND_SERVICE;
-        final boolean running = sel != null && (sel.state().equals("running") || sel.state().equals("active"));
-        final String primary = sel == null ? "None" : service ? (running ? "Stop" : "Start") : "End";
+        final boolean running = sel != null && sel.state().running();
+        final TextKey primary = sel == null ? TerminalUpkeepTexts.NONE
+                : service ? (running ? TerminalUpkeepTexts.STOP : TerminalUpkeepTexts.START) : TerminalUpkeepTexts.END;
         final int primaryColor = service ? TEXT() : RED();
         final int[] b1 = primaryRect(cx, cy, cw);
         final int[] b2 = restartRect(cx, cy, cw);
-        button(g, b1[0], b1[1], b1[2], b1[3], primary, any ? primaryColor : DIM(), any);
-        button(g, b2[0], b2[1], b2[2], b2[3], "Restart", any ? ACCENT() : DIM(), any);
+        button(g, b1[0], b1[1], b1[2], b1[3], GameText.resolve(primary), any ? primaryColor : DIM(), any);
+        button(g, b2[0], b2[1], b2[2], b2[3], GameText.resolve(TerminalUpkeepTexts.RESTART),
+                any ? ACCENT() : DIM(), any);
 
         if (!any) {
-            g.drawString(font(), "no processes running", cx, cy + LIST_Y + 6, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.NO_PROCESSES), cx, cy + LIST_Y + 6, DIM());
             return;
         }
 
@@ -88,10 +93,10 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
             } else {
                 jobIcon(g, cx + 3, row + 3);
             }
-            g.drawString(font(), p.name(), cx + 18, row + 2, TEXT(), false);
-            final String state = p.state();
-            g.drawString(font(), state, cx + cw - 4 - font().width(state), row + 2, stateColor(state), false);
-            g.drawString(font(), p.detail(), cx + 18, row + 12, DIM(), false);
+            Draw.text(g, font(), p.name(), cx + 18, row + 2, TEXT());
+            final String state = GameText.resolve(p.state().word());
+            Draw.text(g, font(), state, cx + cw - 4 - font().width(state), row + 2, stateColor(p.state()));
+            Draw.text(g, font(), GameText.resolve(p.detail()), cx + 18, row + 12, DIM());
             row += ROW_H;
         }
     }
@@ -133,8 +138,7 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
         if (p.kind() == ProcessListPayload.KIND_JOB) {
             return ProcessActionPayload.ACTION_END;
         }
-        final boolean running = p.state().equals("running") || p.state().equals("active");
-        return running ? ProcessActionPayload.ACTION_STOP : ProcessActionPayload.ACTION_START;
+        return p.state().running() ? ProcessActionPayload.ACTION_STOP : ProcessActionPayload.ACTION_START;
     }
 
     private void act(final ProcessListPayload.ProcessLine p, final int action) {
@@ -162,7 +166,7 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
         g.fill(x, y + h - 1, x + w, y + h, LINE());
         g.fill(x, y, x + 1, y + h, LINE());
         g.fill(x + w - 1, y, x + w, y + h, LINE());
-        g.drawCenteredString(font(), label, x + w / 2, y + (h - 8) / 2, textColor);
+        Draw.textCentered(g,font(), label, x + w / 2, y + (h - 8) / 2, textColor);
     }
 
     private void cogIcon(final GuiGraphics g, final int x, final int y) {
@@ -183,12 +187,11 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
         g.fill(x + 4, y + 4, x + 8, y + 8, TRACK());
     }
 
-    private int stateColor(final String state) {
+    private int stateColor(final ProcessListPayload.ProcessState state) {
         return switch (state) {
-            case "running", "active" -> GREEN();
-            case "paused", "idle" -> AMBER();
-            case "stopped" -> RED();
-            default -> DIM();
+            case RUNNING, ACTIVE -> GREEN();
+            case PAUSED, IDLE -> AMBER();
+            case STOPPED -> RED();
         };
     }
 }

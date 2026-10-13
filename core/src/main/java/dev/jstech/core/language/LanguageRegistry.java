@@ -52,7 +52,8 @@ public final class LanguageRegistry {
      *
      * <p>Replacing lets an addon improve a language in place, which is the same gesture as adding one; the log says
      * so, so a pack can see it happened. A language that claims an extension another language already has is
-     * refused, and so is every change once the registry is closed.
+     * refused, and so is one that declares an extension in anything but lower case, since the lookups compare in
+     * lower case, and every change once the registry is closed.
      *
      * @return whether the language is now registered
      */
@@ -64,6 +65,12 @@ public final class LanguageRegistry {
             LOGGER.warn("The language {} was not registered: languages can only be added while the game loads",
                     language.id());
             return false;
+        }
+        for (final String extension : rawExtensionsOf(language)) {
+            if (!extension.equals(extension.toLowerCase(Locale.ROOT))) {
+                LOGGER.warn("The language {} was not registered: .{} is not in lower case", language.id(), extension);
+                return false;
+            }
         }
         for (final String extension : extensionsOf(language)) {
             if (this.reserved.contains(extension)) {
@@ -195,12 +202,16 @@ public final class LanguageRegistry {
     /** Every extension a language claims, as a person writes it or as its compiler produces it, in lower case. */
     private static List<String> extensionsOf(final IProgrammingLanguage language) {
         final List<String> all = new ArrayList<>();
-        for (final String extension : language.sourceExtensions()) {
+        for (final String extension : rawExtensionsOf(language)) {
             all.add(extension.toLowerCase(Locale.ROOT));
         }
-        for (final String extension : language.binaryExtensions()) {
-            all.add(extension.toLowerCase(Locale.ROOT));
-        }
+        return all;
+    }
+
+    /** Every extension a language claims, exactly as it declared them. */
+    private static List<String> rawExtensionsOf(final IProgrammingLanguage language) {
+        final List<String> all = new ArrayList<>(language.sourceExtensions());
+        all.addAll(language.binaryExtensions());
         return all;
     }
 }

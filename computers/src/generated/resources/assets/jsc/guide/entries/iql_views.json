@@ -1,0 +1,124 @@
+{
+  "blocks": [
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_views.definition1",
+      "term": "jsc.guide.iql_views.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_views.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_views.text2"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CREATE VIEW low_iron AS QUERY items WHERE item = iron_ingot AND qty < 100"
+      ],
+      "name": "views.iql"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.iql_views.step1",
+        "jsc.guide.iql_views.step2",
+        "jsc.guide.iql_views.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_views.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_views.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_views.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_views.table1",
+      "heads": [
+        "jsc.guide.iql_views.table1_head1",
+        "jsc.guide.iql_views.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "view <name> dropped"
+          },
+          {
+            "words": "jsc.guide.iql_views.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "no view named <name>"
+          },
+          {
+            "words": "jsc.guide.iql_views.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "DROP VIEW needs a name"
+          },
+          {
+            "words": "jsc.guide.iql_views.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_views.fix1",
+          "problem": "jsc.guide.iql_views.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_views.fix2",
+          "problem": "jsc.guide.iql_views.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql_views.fix3",
+          "problem": "jsc.guide.iql_views.problem3"
+        },
+        {
+          "fix": "jsc.guide.iql_views.fix4",
+          "problem": "jsc.guide.iql_views.problem4"
+        },
+        {
+          "fix": "jsc.guide.iql_views.fix5",
+          "problem": "jsc.guide.iql_views.problem5"
+        },
+        {
+          "fix": "jsc.guide.iql_views.fix6",
+          "problem": "jsc.guide.iql_views.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql_procedures",
+        "jsc:iql_jobs",
+        "jsc:midsoft_iql_server"
+      ]
+    }
+  ],
+  "id": "jsc:iql_views",
+  "order": 301,
+  "section": "jsc:iql_saved_objects",
+  "title": "jsc.guide.iql_views.title"
+}

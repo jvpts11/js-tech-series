@@ -1,0 +1,243 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.personalize.table1",
+      "heads": [
+        "jsc.guide.personalize.table1_head1",
+        "jsc.guide.personalize.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.personalize.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.personalize.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.personalize.table2",
+      "heads": [
+        "jsc.guide.personalize.table2_head1",
+        "jsc.guide.personalize.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.personalize.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.personalize.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.personalize.table3",
+      "heads": [
+        "jsc.guide.personalize.table3_head1",
+        "jsc.guide.personalize.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.personalize.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personalize.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.personalize.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.personalize.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.personalize.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.personalize.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personalize.text9"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.personalize.step1",
+        "jsc.guide.personalize.step2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.personalize.fix1",
+          "problem": "jsc.guide.personalize.problem1"
+        },
+        {
+          "fix": "jsc.guide.personalize.fix2",
+          "problem": "jsc.guide.personalize.problem2"
+        },
+        {
+          "fix": "jsc.guide.personalize.fix3",
+          "problem": "jsc.guide.personalize.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_settings",
+        "jsc:effects",
+        "jsc:editions_compared"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:personalize",
+  "order": 158,
+  "section": "jsc:desktop_settings",
+  "title": "jsc.guide.personalize.title"
+}

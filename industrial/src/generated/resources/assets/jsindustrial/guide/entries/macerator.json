@@ -1,0 +1,147 @@
+{
+  "blocks": [
+    {
+      "type": "views",
+      "callouts": [
+        {
+          "number": 1,
+          "text": "jsindustrial.manual.the_front",
+          "u": 8,
+          "v": 8,
+          "view": "front"
+        },
+        {
+          "number": 2,
+          "text": "jsindustrial.manual.any_side",
+          "u": 8,
+          "v": 8,
+          "view": "side"
+        }
+      ],
+      "item": "jsindustrial:macerator"
+    },
+    {
+      "type": "note",
+      "text": "jsindustrial.manual.set_up_next"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.macerator.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.macerator.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "plan",
+      "caption": "jsindustrial.manual.set_up_plan",
+      "parts": [
+        {
+          "item": "jsindustrial:coal_generator",
+          "label": "jsindustrial.manual.generator"
+        },
+        {
+          "item": "jsindustrial:macerator",
+          "label": "jsindustrial.guide.macerator.plan1_2"
+        },
+        {
+          "label": "jsindustrial.manual.second_generator",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.macerator.use1",
+        "jsindustrial.guide.macerator.use2",
+        "jsindustrial.guide.macerator.use3",
+        "jsindustrial.guide.macerator.use4"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.macerator.fix1",
+          "problem": "jsindustrial.guide.macerator.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.macerator.fix2",
+          "problem": "jsindustrial.guide.macerator.problem2"
+        },
+        {
+          "fix": "jsindustrial.guide.macerator.fix3",
+          "problem": "jsindustrial.guide.macerator.problem3"
+        }
+      ]
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.macerator.heading1"
+    },
+    {
+      "type": "recipes",
+      "recipe_type": "jsindustrial:macerating"
+    },
+    {
+      "type": "note",
+      "text": "jsindustrial.guide.macerator.note1"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:dust_ingots_plates",
+        "jsindustrial:electric_furnace"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:macerator",
+  "id": "jsindustrial:macerator",
+  "items": [
+    "jsindustrial:macerator"
+  ],
+  "order": 3,
+  "section": "jsindustrial:machines",
+  "title": "jsindustrial.guide.macerator.title"
+}

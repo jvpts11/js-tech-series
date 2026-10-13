@@ -1,0 +1,17 @@
+using System.*;
+using System.IO.*;
+using System.Machine.*;
+namespace Corpus;
+class RedstoneCorpus {
+    static void Main() {
+        Redstone gate = redstone("Gate");
+        if (gate != null) {
+            gate.In().Out(15);
+            Console.PrintLine(gate.Name + Convert.ToString(gate.Level()));
+        }
+        Redstone lever = Redstone.Named("Lever");
+        if (lever != null) {
+            Console.PrintLine(lever.Name);
+        }
+    }
+}

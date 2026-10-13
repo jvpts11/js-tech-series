@@ -1,0 +1,131 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.os;
+
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.monitor.VideoMemory;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
+import java.util.function.Predicate;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * What a machine's memory holds: the running system's own share, the desktop package it booted, the services it is
+ * running, the programs it is running and the windows it has open, each weighed under the installed system.
+ *
+ * <p>Worked out from the machine each time it is asked, since every one of those can change between two questions,
+ * and a ledger kept up to date by hand is a ledger that drifts.
+ */
+public final class MachineMemory {
+
+    /** What a window no program owns (a system's welcome) holds on a Legacy machine: a tool the system ships. */
+    private static final int OWNERLESS_WINDOW_MB = 16;
+
+    private MachineMemory() {
+    }
+
+    /** That machine's ledger. A machine that is off or has no system holds nothing. */
+    public static RamLedger ledgerOf(final IOsHost host) {
+        final RamLedger ledger = new RamLedger(host.ramTotalMb());
+        final OsDef os = host.installedOs();
+        if (os == null || !host.isRunning()) {
+            return ledger;
+        }
+        ledger.add(os.displayName(), os.ramMb(), RamLedger.Kind.SYSTEM);
+        // Every program holds what it holds on a machine of this one's era.
+        final HardwareEra era = host.displayEra();
+        final ComputerConsoleState console = host.console();
+        final ResourceLocation desktopId = host.bootedDesktopId();
+        final DesktopEnvironmentDef desktop = desktopId != null ? OsRegistry.getDesktop(desktopId) : null;
+        if (desktopId != null && !desktopId.equals(os.id())) {
+            // A desktop package on a Linux system; a Frames desktop is the system itself and is counted above.
+            final ProgramSpec pack = OsRegistry.getProgram(desktopId);
+            if (pack != null) {
+                ledger.add(desktop != null ? desktop.displayName() : pack.displayName(),
+                        pack.ramMbOn(era, builtHere(console, pack)), RamLedger.Kind.DESKTOP);
+            }
+        }
+        if (console != null) {
+            for (final ProgramSpec spec : OsRegistry.programs()) {
+                /*
+                 * By the whole id, which is how every install path writes it down. Asking by the path alone
+                 * matched nothing, so no service ever weighed anything here and none of them was listed as
+                 * running, whatever the player had installed.
+                 */
+                /*
+                 * What the machine came with (a Mainframe's engine) is there with no package written down, and
+                 * weighs what it holds whenever it runs all the same.
+                 */
+                if (spec.kind().runsInBackground()
+                        && (console.isInstalled(spec.id().toString()) || host.cameWith(spec))
+                        && host.serviceRunning(spec)) {
+                    ledger.add(spec.displayName(), spec.ramMbOn(era, builtHere(console, spec))
+                            + host.serviceLoadMb(spec), RamLedger.Kind.SERVICE, spec.id().toString());
+                }
+            }
+        }
+        final MachinePrograms scripts = host.programs();
+        if (scripts != null) {
+            for (final var one : scripts.view()) {
+                ledger.add(one.name(), one.heapMb(), one.heldBytes(), RamLedger.Kind.PROCESS, one.id());
+            }
+        }
+        // Graphics on the processor's die borrow the system's memory for what they show.
+        if (host instanceof BlockEntity be && be.getLevel() instanceof ServerLevel level) {
+            ledger.add("graphics", VideoMemory.sharedHeldMb(level, host), RamLedger.Kind.GRAPHICS);
+        }
+        for (final OpenWindow window : host.openWindows()) {
+            ledger.add(window.key(), windowRamMb(window.key(), era, spec -> builtHere(console, spec)),
+                    RamLedger.Kind.WINDOW, window.key());
+        }
+        return ledger;
+    }
+
+    /** Everything the session holds before the player opens a window: the system, its desktop, its services. */
+    public static int reservedMb(final IOsHost host) {
+        final RamLedger ledger = host.ramLedger();
+        return ledger.usedMb() - ledger.usedMb(RamLedger.Kind.WINDOW);
+    }
+
+    /**
+     * The leading windows of {@code windows} that fit beside everything else that machine holds, in order; the
+     * first past the budget and everything after it are dropped, so the oldest windows survive.
+     */
+    public static List<OpenWindow> withinBudget(final IOsHost host, final List<OpenWindow> windows) {
+        if (host.installedOs() == null) {
+            return windows;
+        }
+        final HardwareEra era = host.displayEra();
+        final ComputerConsoleState console = host.console();
+        return RamLedger.withinBudget(windows,
+                window -> windowRamMb(window.key(), era, spec -> builtHere(console, spec)),
+                host.ramTotalMb() - host.ramReservedMb());
+    }
+
+    /**
+     * The megabytes a window opened under {@code key} holds on a machine of {@code era}: the weight there of the
+     * program the key names ({@link WindowKeys}); a window no program owns weighs what a tool that ships with the
+     * system does.
+     *
+     * @param builtHere which programs the machine built from source, which hold a little less
+     */
+    public static int windowRamMb(final String key, @Nullable final HardwareEra era,
+                                  final Predicate<ProgramSpec> builtHere) {
+        final ProgramSpec spec = WindowKeys.program(key);
+        return spec != null ? spec.ramMbOn(era, builtHere.test(spec)) : EraMemory.scaled(OWNERLESS_WINDOW_MB, era);
+    }
+
+    /** Whether the machine whose console that is built that program from source; nothing is, with no console. */
+    private static boolean builtHere(@Nullable final ComputerConsoleState console, final ProgramSpec spec) {
+        return console != null && console.builtFromSource(spec.id().toString());
+    }
+}

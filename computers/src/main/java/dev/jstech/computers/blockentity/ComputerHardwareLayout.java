@@ -9,6 +9,8 @@ package dev.jstech.computers.blockentity;
 
 /**
  * The hardware-slot map of a computer block: where each component category sits in the assembly {@code ItemStackHandler}.
+ * The 5.25-inch bays come last, so a machine saved before it had them keeps every part where it was; how many of them
+ * a machine really has is its case's to say, up to {@code bayCount}.
  */
 public record ComputerHardwareLayout(
         int motherboardSlot,
@@ -17,6 +19,7 @@ public record ComputerHardwareLayout(
         int pcieStart, int pcieCount,
         int psuSlot,
         int diskStart, int diskCount,
+        int bayStart, int bayCount,
         int totalSlots) {
 
     public boolean isCpu(final int slot) {
@@ -33,5 +36,9 @@ public record ComputerHardwareLayout(
 
     public boolean isDisk(final int slot) {
         return slot >= diskStart && slot < diskStart + diskCount;
+    }
+
+    public boolean isBay(final int slot) {
+        return slot >= bayStart && slot < bayStart + bayCount;
     }
 }

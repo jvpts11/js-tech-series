@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/brand/series.png" alt="J's Tech Series" width="720"></p>
+
 # J's Tech Series
 
 A series of technology mods for Minecraft 1.21.1 on NeoForge, one mod per area, on top of a shared core library.
@@ -30,10 +32,21 @@ Planned, in the order the series grows: Space, Warfare, Transport, Agriculture, 
 Geology and Oceanics. The phases the series goes through, and what each phase needs before it starts, are
 in [docs/RELEASING.md](docs/RELEASING.md).
 
+**Every mod of the series depends only on J's Core, never on another mod of the series.** J's Computers needs only
+J's Core, and so does J's Industrial; J's Space will need only J's Core, and so will every mod that comes after it.
+When several are installed together, they work with each other through what J's Core gives them all and through
+integrations that only wake when the other mod is present, so leaving any of them out never breaks the others. The
+computing mod drives any machine that exposes the usual item and energy capabilities, and the industrial mod's
+machines work with any FE generator.
+
 Every mod carries the same version and they are released together. Put J's Core and the mods you want in
-`mods/`, all at the same version; each mod's page lists its own requirements. J's Computers and J's
-Industrial do not need each other: the computing mod drives any machine that exposes the usual item and
-energy capabilities, and the industrial mod's machines work with any FE generator.
+`mods/`, all at the same version; each mod's page lists its own requirements.
+
+All the current obligatory dependencies are set to be replaced in the future for a native implementation of what
+the dependency adds, the objective is to ease the process of porting by controlling the entire source code on the
+main version, this way, it allows the J's Tech Series to not worry about any specific detail of a dependency in a
+certain version of the game or of the dependency, it also allows us to better generalize anything that can be
+generalized in an older or newer version and improve world conversion.
 
 ## Repository layout
 
@@ -46,7 +59,9 @@ Until the entire series hit v1.0.0r, all mods of the J's Tech Series live here i
   and hosts the development runs; This mot is not intended to be used in-game, if you ever find this in your mods folder,
   uninstall, since this mod does nothing than just run tests for development, it also adds nothing to the game by itself. See
   [tests/README.md](tests/README.md).
-- `docs/`: the public documentation: code style, versions and releases.
+- `docs/`: what concerns the whole series (the API promise, code style, versions and releases) and the
+  [index of every mod's documentation](docs/README.md). Each mod keeps its own documentation in its `docs/`
+  folder.
 
 In the future, each mod will get their own dedicated repository, for now, all mods will stay here to ease development.
 
@@ -67,9 +82,16 @@ a build that is not the tagged release carries a `-SNAPSHOT.<commit>` suffix. Us
 ## Contributing
 
 If you want to make a contribution, read [docs/CODE_STYLE.md](docs/CODE_STYLE.md) before opening a pull request, and
-[AI_POLICY.md](AI_POLICY.md) if you work with an AI assistant. Bug reports and ideas go in the issues.
+[AI_POLICY.md](AI_POLICY.md) if you work with an AI assistant. Every asset of the mods is listed in
+[ASSET_REGISTRY.md](ASSET_REGISTRY.md), with where it came from and who made it, and a pull request that brings an
+asset records it there. Most of the art the mods ship today is AI-generated and temporary, waiting for hand-made art
+to replace it; if you draw, model or record, that is a good place to start. Bug reports and ideas go in the issues.
 
 ## License
 
 [LGPL-3.0-only](COPYING.LESSER), © jvpts11. The LGPL adds its permissions to the GPL, whose text is in
 [COPYING](COPYING).
+
+The logos of the series and of its mods are drawn with the Minercraftory font by Jayvee D. Enaguas
+(GrandChaos9000), under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), and the logo images are
+shared under the same licence.

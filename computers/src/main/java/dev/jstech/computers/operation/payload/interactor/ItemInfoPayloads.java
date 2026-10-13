@@ -8,10 +8,7 @@
 package dev.jstech.computers.operation.payload.interactor;
 
 import dev.jstech.computers.block.part.AbstractBusPart;
-import dev.jstech.computers.block.part.CablePartType;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.client.os.StorageInsightsApp;
 import dev.jstech.computers.machine.ItemRecipes;
@@ -24,11 +21,12 @@ import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.RequestItemDetailPayload;
 import dev.jstech.computers.operation.payload.RequestItemRecipesPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,9 +40,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.jstech.computers.operation.payload.WireStrings.wire;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.resolveMainframe;
-import static dev.jstech.computers.operation.payload.network.NetworkLookup.serverLabel;
 import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHost;
 
 /**
@@ -88,23 +84,17 @@ public final class ItemInfoPayloads {
     private static ItemDetailPayload collectItemDetail(final ServerLevel level, final NetworkUuid network,
                                                        final StorageKey key) {
         final NetworkSystem system = NetworkSystem.get(level);
-        final long total = NetworkStorage.of(level, network)
-                .query().getOrDefault(key, 0L);
+        final NetworkStorage storage = NetworkStorage.of(level, network);
+        final long total = storage.count(key);
 
-        // Where it is stored: per server that holds any.
+        // Where it is stored: per storage node that holds any, labelled as the Network tab labels them.
         final List<NetworkItemEntry.StorageShare> stored = new ArrayList<>();
-        for (final ServerNode server : system.serversOf(network)) {
+        for (final var share : storage.breakdown(key).entrySet()) {
             if (stored.size() >= ItemDetailPayload.MAX_STORED) {
                 break;
             }
-            final long held = system.locationOf(server.nodeUuid())
-                    .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
-                            instanceof ServerRackBlockEntity rack
-                            ? rack.getServerStorage(loc.slot()).count(key) : 0L)
-                    .orElse(0L);
-            if (held > 0) {
-                stored.add(new NetworkItemEntry.StorageShare(serverLabel(level, server.nodeUuid()), held));
-            }
+            stored.add(new NetworkItemEntry.StorageShare(
+                    NetworkInteractorPayloads.serverLabel(system, share.getKey()), share.getValue()));
         }
 
         // What it makes: the products of any pattern that consumes it as an ingredient.
@@ -137,28 +127,22 @@ public final class ItemInfoPayloads {
 
         // Which buses filter it: walk the network's cable positions and read each bus's filter.
         final List<ItemDetailPayload.BusRef> buses = new ArrayList<>();
-        for (final long posLong : system.connectivity().positionsOf(network)) {
+        for (final BlockPos cablePos : Cables.blocksOf(level, system.connectivity().positionsOf(network))) {
             if (buses.size() >= ItemDetailPayload.MAX_BUSES) {
                 break;
             }
-            if (!(level.getBlockEntity(BlockPos.of(posLong))
-                    instanceof DataCableBlockEntity cable)) {
+            if (!(Loaded.blockEntity(level, cablePos) instanceof CableBlockEntity cable)) {
                 continue;
             }
             for (final Direction dir : Direction.values()) {
                 if (cable.getPart(dir)
                         instanceof AbstractBusPart bus
-                        && key.equals(bus.filterKey())) {
-                    buses.add(new ItemDetailPayload.BusRef(bus.name(), busKind(bus.type())));
+                        && bus.filterKeys().contains(key)) {
+                    buses.add(new ItemDetailPayload.BusRef(bus.name(), bus.type().text()));
                 }
             }
         }
         return new ItemDetailPayload(key.stack(1), total, stored, uses, buses);
-    }
-
-    private static String busKind(final CablePartType type) {
-        final String name = type.name();
-        return name.charAt(0) + name.substring(1).toLowerCase(Locale.ROOT).replace('_', ' ');
     }
 
     /** Answers the details panel: what makes the item on this network, and what uses it. */
@@ -169,14 +153,8 @@ public final class ItemInfoPayloads {
             return;
         }
         final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-        final List<String> madeBy = new ArrayList<>();
-        final List<String> usedIn = new ArrayList<>();
-        for (final String line : ItemRecipes.madeBy(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES)) {
-            madeBy.add(wire(line, ItemRecipesPayload.MAX_TEXT));
-        }
-        for (final String name : ItemRecipes.usedIn(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES)) {
-            usedIn.add(wire(name, ItemRecipesPayload.MAX_TEXT));
-        }
-        PacketDistributor.sendToPlayer(player, new ItemRecipesPayload(payload.key(), madeBy, usedIn));
+        PacketDistributor.sendToPlayer(player, new ItemRecipesPayload(payload.key(),
+                ItemRecipes.madeBy(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES),
+                ItemRecipes.usedIn(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES)));
     }
 }

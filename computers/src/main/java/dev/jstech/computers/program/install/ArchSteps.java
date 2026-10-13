@@ -9,6 +9,9 @@ package dev.jstech.computers.program.install;
 
 import dev.jstech.computers.program.install.voice.FetchVoice;
 import dev.jstech.computers.program.install.voice.PacmanVoices;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +23,7 @@ import java.util.List;
  * that takes time is left running in front of the terminal rather than answered: what it is for is done when
  * it ends.
  */
+@TextHolder
 final class ArchSteps {
 
     private final LiveFiles files;
@@ -31,6 +35,44 @@ final class ArchSteps {
 
     /** How long building both boot images takes on the slowest processor there is, in megahertz-seconds. */
     private static final long IMAGES_WORK = 18_000L;
+
+    /** What the network library says of a host nobody can find, which the package manager passes on as it is. */
+    private static final Text NO_HOST = Text.literal("Could not resolve host: mainframe");
+
+    private static final TextKey NOT_A_MOUNTPOINT = TextKey.of("jsc.install.arch_steps.not_a_mountpoint",
+            "==> ERROR: %s is not a mountpoint!");
+    private static final TextKey FAILED_RETRIEVING = TextKey.of("jsc.install.arch_steps.failed_retrieving",
+            "error: failed retrieving file '%s' from %s : %s");
+    private static final TextKey FAILED_TO_SYNC = TextKey.of("jsc.install.arch_steps.failed_to_sync",
+            "error: failed to synchronize all databases (unexpected error)");
+    private static final TextKey NO_ETC = TextKey.of("jsc.install.arch_steps.no_etc",
+            "==> ERROR: %s/etc does not exist");
+    private static final TextKey BASE_FIRST = TextKey.of("jsc.install.arch_steps.base_first",
+            "    (install the base system first: pacstrap -K %s base linux)");
+    private static final TextKey GENFSTAB_USAGE = TextKey.of("jsc.install.arch_steps.genfstab_usage",
+            "usage: genfstab [options] root");
+    private static final TextKey NOT_ROOT = TextKey.of("jsc.install.arch_steps.not_root",
+            "error: you cannot perform this operation unless you are root in the new");
+    private static final TextKey NOT_ROOT_HINT = TextKey.of("jsc.install.arch_steps.not_root_hint",
+            "       system (arch-chroot %s first)");
+    private static final TextKey NO_OPERATION = TextKey.of("jsc.install.arch_steps.no_operation",
+            "error: no operation specified (use -h for help)");
+    private static final TextKey TARGET_NOT_FOUND = TextKey.of("jsc.install.arch_steps.target_not_found",
+            "error: target not found: %s");
+    private static final TextKey NO_TARGETS = TextKey.of("jsc.install.arch_steps.no_targets",
+            "error: no targets specified (use -h for help)");
+    private static final TextKey MKINITCPIO_NOT_YET = TextKey.of("jsc.install.arch_steps.mkinitcpio_not_yet",
+            "mkinitcpio: command not found (it is the new system's: arch-chroot %s first)");
+    private static final TextKey TOO_FULL = TextKey.of("jsc.install.arch_steps.too_full",
+            "error: Partition %s too full: %s blocks needed, %s blocks free");
+    private static final TextKey NOT_ENOUGH_SPACE = TextKey.of("jsc.install.arch_steps.not_enough_space",
+            "error: failed to commit transaction (not enough free disk space)");
+    private static final TextKey NOTHING_UPGRADED = TextKey.of("jsc.install.arch_steps.nothing_upgraded",
+            "Errors occurred, no packages were upgraded.");
+    private static final TextKey NOT_INSTALLED_TO_ROOT = TextKey.of("jsc.install.arch_steps.not_installed_to_root",
+            "==> ERROR: Failed to install packages to new root");
+    /** A filesystem's blocks of four kilobytes in a mebibyte, the unit pacman counts room in. */
+    private static final int BLOCKS_PER_MIB = 256;
 
     ArchSteps(final LiveFiles files, final LiveDisks disks, final LiveProgress progress) {
         this.files = files;
@@ -47,13 +89,21 @@ final class ArchSteps {
             }
         }
         if (!point.equals(this.files.root()) || !this.disks.mounted()) {
-            return LiveTurn.refused("==> ERROR: " + (point.isEmpty() ? this.files.root() : point)
-                    + " is not a mountpoint!");
+            return LiveTurn.refused(NOT_A_MOUNTPOINT.with(point.isEmpty() ? this.files.root() : point));
         }
         if (!env.mirror()) {
-            return LiveTurn.refused("error: failed retrieving file 'core.db' from " + FetchVoice.MIRROR
-                    + " : Could not resolve host: mainframe",
-                    "error: failed to synchronize all databases (unexpected error)");
+            return unreachable();
+        }
+        /*
+         * pacman counts the room before it unpacks a byte, in the filesystem's blocks of four kilobytes, and a root
+         * too small for the base system takes none of it.
+         */
+        final long room = this.disks.sizeOf(this.disks.rootDevice(), env);
+        final double needed = PacmanVoices.baseInstalledMib();
+        if (room < needed) {
+            return LiveTurn.refused(TOO_FULL.with(this.files.root(), Math.round(needed * BLOCKS_PER_MIB),
+                    room * BLOCKS_PER_MIB), NOT_ENOUGH_SPACE.text(), NOTHING_UPGRADED.text(),
+                    NOT_INSTALLED_TO_ROOT.text());
         }
         final LiveInstallState.Device disk = env.find(LiveDisks.diskOf(this.disks.rootDevice()));
         final double size = PacmanVoices.baseMib();
@@ -70,29 +120,18 @@ final class ArchSteps {
      */
     LiveTurn genfstab(final String line, final LiveInstallState.Env env) {
         if (!this.progress.base) {
-            return LiveTurn.refused("==> ERROR: " + this.files.root() + "/etc does not exist",
-                    "    (install the base system first: pacstrap -K " + this.files.root() + " base linux)");
+            return LiveTurn.refused(NO_ETC.with(this.files.root()), BASE_FIRST.with(this.files.root()));
         }
         if (!line.contains(this.files.root())) {
-            return LiveTurn.refused("usage: genfstab [options] root",
-                    "       genfstab -U " + this.files.root() + " >> " + this.files.root() + "/etc/fstab");
+            // The second line is the command as it is typed, which is data.
+            return LiveTurn.refused(GENFSTAB_USAGE.text(), Text.literal(
+                    "       genfstab -U " + this.files.root() + " >> " + this.files.root() + "/etc/fstab"));
         }
-        final List<String> table = new ArrayList<>(List.of("# Static information about the filesystems.",
-                "# See fstab(5) for details.", "", "# <file system> <dir> <type> <options> <dump> <pass>",
-                "# /dev/" + this.disks.rootDevice(),
-                "UUID=" + this.disks.rootUuid(env) + "\t/         \text4      \trw,relatime\t0 1"));
-        if (!this.disks.espMount().isEmpty()) {
-            table.add("");
-            table.add("# /dev/" + this.disks.espDevice());
-            table.add("UUID=" + this.disks.espSerial(env) + "      \t"
-                    + this.disks.espMount().substring(this.files.root().length()) + "     \tvfat      \t"
-                    + "rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,"
-                    + "errors=remount-ro\t0 2");
-        }
+        final String table = this.fstabFor(env);
         if (!line.contains(">")) {
-            return LiveTurn.said(table.toArray(String[]::new));
+            return LiveTurn.said(table.split("\n", -1));
         }
-        this.files.write(this.files.inNewSystem("/etc/fstab"), String.join("\n", table));
+        this.files.write(this.files.inNewSystem("/etc/fstab"), table);
         this.progress.fstab = true;
         return LiveTurn.silent();
     }
@@ -100,16 +139,13 @@ final class ArchSteps {
     /** Installs named packages inside the new system, where the question is really asked. */
     LiveTurn pacman(final String[] parts, final LiveInstallState.Env env) {
         if (!this.files.inside()) {
-            return LiveTurn.refused("error: you cannot perform this operation unless you are root in the new",
-                    "       system (arch-chroot " + this.files.root() + " first)");
+            return LiveTurn.refused(NOT_ROOT.text(), NOT_ROOT_HINT.with(this.files.root()));
         }
         if (parts.length < 3 || !parts[1].startsWith("-S")) {
-            return LiveTurn.refused("error: no operation specified (use -h for help)");
+            return LiveTurn.refused(NO_OPERATION.text());
         }
         if (!env.mirror()) {
-            return LiveTurn.refused("error: failed retrieving file 'core.db' from " + FetchVoice.MIRROR
-                    + " : Could not resolve host: mainframe",
-                    "error: failed to synchronize all databases (unexpected error)");
+            return unreachable();
         }
         boolean bootloader = false;
         final List<String> programs = new ArrayList<>();
@@ -128,14 +164,14 @@ final class ArchSteps {
                 // Anything else is a program of the Mirror's, and a name it does not have stops the transaction.
                 final MirrorPackage found = env.shelf().find(named, false);
                 if (found == null) {
-                    return LiveTurn.refused("error: target not found: " + named);
+                    return LiveTurn.refused(TARGET_NOT_FOUND.with(named));
                 }
                 programs.add(found.id());
                 packages.add(new PacmanVoices.Package(found.name() + "-" + found.version() + "-1", found.sizeMb()));
             }
         }
         if (packages.isEmpty()) {
-            return LiveTurn.refused("error: no targets specified (use -h for help)");
+            return LiveTurn.refused(NO_TARGETS.text());
         }
         double size = 0;
         for (final PacmanVoices.Package one : packages) {
@@ -153,14 +189,38 @@ final class ArchSteps {
     /** Builds both boot images again, for whoever changed what goes into them. */
     LiveTurn mkinitcpio(final LiveInstallState.Env env) {
         if (!this.files.inside()) {
-            return LiveTurn.refused("mkinitcpio: command not found (it is the new system's: arch-chroot "
-                    + this.files.root() + " first)");
+            return LiveTurn.refused(MKINITCPIO_NOT_YET.with(this.files.root()));
         }
         return LiveTurn.running(PacmanVoices.mkinitcpio(RELEASE, LiveTimes.compile(IMAGES_WORK, 1, env), () -> {
             this.progress.initramfs = true;
             this.files.write(this.files.inNewSystem("/boot/initramfs-linux.img"), "");
             this.files.write(this.files.inNewSystem("/boot/initramfs-linux-fallback.img"), "");
         }));
+    }
+
+    /**
+     * The table of what to mount, as the table writer writes it: a file's contents, so data in the machine's own
+     * words whatever language the player reads, printed or written the same.
+     */
+    private String fstabFor(final LiveInstallState.Env env) {
+        final String root = Text.literal(String.join("\n", "# Static information about the filesystems.",
+                "# See fstab(5) for details.", "", "# <file system> <dir> <type> <options> <dump> <pass>",
+                "# /dev/" + this.disks.rootDevice(),
+                "UUID=" + this.disks.rootUuid(env) + "\t/         \text4      \trw,relatime\t0 1")).english();
+        if (this.disks.espMount().isEmpty()) {
+            return root;
+        }
+        return root + "\n" + Text.literal(String.join("\n", "", "# /dev/" + this.disks.espDevice(),
+                "UUID=" + this.disks.espSerial(env) + "      \t"
+                        + this.disks.espMount().substring(this.files.root().length()) + "     \tvfat      \t"
+                        + "rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,"
+                        + "errors=remount-ro\t0 2")).english();
+    }
+
+    /** The package manager with no Mirror to reach, which cannot even read what there is to install. */
+    private static LiveTurn unreachable() {
+        return LiveTurn.refused(FAILED_RETRIEVING.with("core.db", FetchVoice.MIRROR, NO_HOST),
+                FAILED_TO_SYNC.text());
     }
 
     /** The directories and files a base system brings with it, and everything installing it built. */

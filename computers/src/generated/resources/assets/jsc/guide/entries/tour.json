@@ -1,0 +1,69 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tour.text10"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.tour.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.tour.step1",
+        "jsc.guide.tour.step2",
+        "jsc.guide.tour.step3",
+        "jsc.guide.tour.step4"
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:welcome",
+        "jsc:first_computer"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:tour",
+  "order": 1,
+  "section": "jsc:getting_started",
+  "title": "jsc.guide.tour.title"
+}

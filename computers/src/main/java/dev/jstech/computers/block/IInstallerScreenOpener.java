@@ -8,7 +8,7 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
-import org.jetbrains.annotations.Nullable;
+import dev.jstech.computers.registry.ClientHook;
 
 /**
  * Opens the client-only installer. Mirrors {@link IBootMenuScreenOpener}: the payload handler lives in common
@@ -23,20 +23,17 @@ public interface IInstallerScreenOpener {
 
     final class Holder {
 
-        @Nullable
-        private static IInstallerScreenOpener instance;
+        private static final ClientHook<IInstallerScreenOpener> HOOK = new ClientHook<>();
 
         private Holder() {
         }
 
         public static void set(final IInstallerScreenOpener opener) {
-            instance = opener;
+            HOOK.set(opener);
         }
 
         public static void open(final OpenInstallerPayload payload) {
-            if (instance != null) {
-                instance.open(payload);
-            }
+            HOOK.ifPresent(target -> target.open(payload));
         }
     }
 }

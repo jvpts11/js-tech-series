@@ -67,7 +67,7 @@ public final class ComputerCraftAbsenceGameTests {
                     }
                     final boolean loaded = ComputerCraftIntegration.isLoaded();
                     helper.assertTrue(gateway.online(), "the Gateway links to its computer; loaded=" + loaded);
-                    helper.assertTrue(gateway.log().entries().stream().anyMatch(e -> e.what().equals("link")),
+                    helper.assertTrue(gateway.log().entries().stream().anyMatch(e -> e.what().english().equals("link")),
                             "and logs the link; loaded=" + loaded);
                     helper.assertTrue((gateway.bridge() != null) == loaded,
                             "it has a bridge to ComputerCraft exactly when the mod is there; loaded=" + loaded);

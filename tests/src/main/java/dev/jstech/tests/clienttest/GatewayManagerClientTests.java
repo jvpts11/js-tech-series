@@ -36,7 +36,11 @@ public final class GatewayManagerClientTests {
     }
 
     private static final int SETTLE = 4;
-    private static final int SCREEN_WAIT = 80;
+    /*
+     * Every step here waits on the server's answer reaching the window, which on a machine running the GameTests
+     * and three other client windows beside this one has been seen to take more than eighty ticks.
+     */
+    private static final int SCREEN_WAIT = 160;
     private static final int BOOT_WAIT = 400;
 
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
@@ -52,7 +56,7 @@ public final class GatewayManagerClientTests {
 
     @Nullable
     private static GatewayManagerApp manager(final ClientTestContext ctx) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+        final DesktopScreen desktop = ctx.openScreen(DesktopScreen.class);
         if (desktop == null) {
             return null;
         }
@@ -74,7 +78,7 @@ public final class GatewayManagerClientTests {
                     world.placeMonitor(MONITOR, Direction.EAST);
                     world.setBlock(GATEWAY, ComputingModule.NETWORK_GATEWAY.get().defaultBlockState()
                             .setValue(NetworkGatewayBlock.FACING, Direction.SOUTH));
-                    world.setBlock(SHARER_CABLE, ComputingModule.ETHERNET_CABLE.get());
+                    world.setBlock(SHARER_CABLE, ComputingModule.ETHERNET_CABLE);
                     final PersonalComputerBlockEntity sharer = world.placeRunningPersonalComputer(SHARER);
                     sharer.console().setComputerName("lab");
                     final ServerCliComputer lab = new ServerCliComputer(sharer, world.level());
@@ -106,8 +110,10 @@ public final class GatewayManagerClientTests {
                 .thenWaitUntil(() -> "cc-bridge".equals(manager(ctx).selectedName()), SCREEN_WAIT,
                         "the rail and the pane to show the new name")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).identifyCenter()))
-                .thenWaitUntil(() -> manager(ctx).statusLine().contains("blinking"), SCREEN_WAIT,
-                        "Identify to answer on the status line")
+                // The window never draws the reply's status line, and the next refresh replaces it; what the player
+                // sees of Identify is its row in the Gateway's log, which every refresh carries.
+                .thenWaitUntil(() -> manager(ctx).logWhats().contains("identify"), SCREEN_WAIT,
+                        "Identify to show in the Gateway's log")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).clearBufferCenter()))
                 .thenWaitUntil(() -> manager(ctx).bufferUsedShown() == 0, SCREEN_WAIT,
                         "the buffer to empty into the network")

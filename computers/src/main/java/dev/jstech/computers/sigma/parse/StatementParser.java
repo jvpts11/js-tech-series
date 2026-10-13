@@ -31,6 +31,7 @@ final class StatementParser {
     private final DiagnosticBag diagnostics;
     private final TypeParser types;
     private final ExpressionParser expressions;
+    private final LanguageGaps gaps;
 
     StatementParser(final TokenCursor cursor, final DiagnosticBag diagnostics, final TypeParser types,
                     final ExpressionParser expressions) {
@@ -38,6 +39,7 @@ final class StatementParser {
         this.diagnostics = diagnostics;
         this.types = types;
         this.expressions = expressions;
+        this.gaps = new LanguageGaps(cursor, diagnostics);
     }
 
     IStmt.Block parseBlock() {
@@ -60,7 +62,19 @@ final class StatementParser {
         return new IStmt.Block(statements, start.line(), start.column());
     }
 
+    /* Blocks and the statements that hold statements read themselves a level down, so each counts once. */
     private IStmt parseStatement() {
+        if (!this.cursor.descend()) {
+            return null;
+        }
+        try {
+            return this.statement();
+        } finally {
+            this.cursor.ascend();
+        }
+    }
+
+    private IStmt statement() {
         final Token start = this.cursor.peek();
         switch (start.kind()) {
             case LEFT_BRACE:
@@ -95,6 +109,11 @@ final class StatementParser {
             case LOCK:
                 return this.parseLock();
             default:
+                // A word kept for a later version is reported and passed over; a const, and its variable declared.
+                if (this.gaps.passesStatement(this)) {
+                    return null;
+                }
+                this.gaps.passesConst(false);
                 return this.parseDeclarationOrExpressionStatement();
         }
     }
@@ -296,7 +315,6 @@ final class StatementParser {
      * expression. This is the one place the grammar genuinely needs more than one token of lookahead.
      */
     private boolean looksLikeDeclaration() {
-        final int after = this.types.scanType(this.cursor.at());
-        return after > this.cursor.at() && this.cursor.kindAt(after) == TokenKind.IDENTIFIER;
+        return this.types.typedNameAhead();
     }
 }

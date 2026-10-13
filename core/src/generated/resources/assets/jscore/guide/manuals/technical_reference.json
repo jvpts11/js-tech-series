@@ -1,0 +1,20 @@
+{
+  "about": [
+    "jscore.guide.manual.technical_reference.about1",
+    "jscore.guide.manual.technical_reference.about2",
+    "jscore.guide.manual.technical_reference.about3"
+  ],
+  "chapters": [
+    "*"
+  ],
+  "cover": [
+    "jscore.guide.manual.technical_reference.cover1",
+    "jscore.guide.manual.technical_reference.cover2"
+  ],
+  "edition": "jscore.guide.manual.technical_reference.edition",
+  "id": "jscore:technical_reference",
+  "part_number": "JTS-0001",
+  "priority": 100,
+  "style": "jscore:binder",
+  "title": "jscore.guide.manual.technical_reference.title"
+}

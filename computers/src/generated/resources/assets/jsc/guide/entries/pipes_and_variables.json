@@ -1,0 +1,315 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pipes_and_variables.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pipes_and_variables.table1",
+      "heads": [
+        "jsc.guide.pipes_and_variables.table1_head1",
+        "jsc.guide.pipes_and_variables.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "|"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": ">"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": ">>"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "<"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "&"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.pipes_and_variables.definition1",
+      "term": "jsc.guide.pipes_and_variables.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.pipes_and_variables.definition2",
+      "term": "jsc.guide.pipes_and_variables.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pipes_and_variables.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.pipes_and_variables.definition3",
+      "term": "jsc.guide.pipes_and_variables.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pipes_and_variables.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text9"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.pipes_and_variables.definition4",
+      "term": "jsc.guide.pipes_and_variables.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pipes_and_variables.table2",
+      "heads": [
+        "jsc.guide.pipes_and_variables.table2_head1",
+        "jsc.guide.pipes_and_variables.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "HOSTNAME"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "USER"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "OS"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "PWD"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "PATH"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pipes_and_variables.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text12"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.pipes_and_variables.definition5",
+      "term": "jsc.guide.pipes_and_variables.term5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text13"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pipes_and_variables.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text14"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text15"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pipes_and_variables.heading6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pipes_and_variables.text16"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pipes_and_variables.table3",
+      "heads": [
+        "jsc.guide.pipes_and_variables.table3_head1",
+        "jsc.guide.pipes_and_variables.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": ";"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "2>"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "$(command)"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "alias"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "find"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "more"
+          },
+          {
+            "words": "jsc.guide.pipes_and_variables.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.pipes_and_variables.fix1",
+          "problem": "jsc.guide.pipes_and_variables.problem1"
+        },
+        {
+          "fix": "jsc.guide.pipes_and_variables.fix2",
+          "problem": "jsc.guide.pipes_and_variables.problem2"
+        },
+        {
+          "fix": "jsc.guide.pipes_and_variables.fix3",
+          "problem": "jsc.guide.pipes_and_variables.problem3"
+        },
+        {
+          "fix": "jsc.guide.pipes_and_variables.fix4",
+          "problem": "jsc.guide.pipes_and_variables.problem4"
+        },
+        {
+          "fix": "jsc.guide.pipes_and_variables.fix5",
+          "problem": "jsc.guide.pipes_and_variables.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:shell_prompt",
+        "jsc:processes_and_jobs"
+      ]
+    }
+  ],
+  "id": "jsc:pipes_and_variables",
+  "order": 193,
+  "section": "jsc:shell_basics",
+  "title": "jsc.guide.pipes_and_variables.title"
+}

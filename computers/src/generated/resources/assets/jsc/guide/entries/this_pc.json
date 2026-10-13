@@ -1,0 +1,132 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.this_pc.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.this_pc.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.this_pc.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.this_pc.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.this_pc.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.this_pc.step1",
+        "jsc.guide.this_pc.step2",
+        "jsc.guide.this_pc.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.this_pc.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.this_pc.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.this_pc.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.this_pc.table1",
+      "heads": [
+        "jsc.guide.this_pc.table1_head1",
+        "jsc.guide.this_pc.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Open"
+          },
+          {
+            "words": "jsc.guide.this_pc.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Install"
+          },
+          {
+            "words": "jsc.guide.this_pc.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Eject"
+          },
+          {
+            "words": "jsc.guide.this_pc.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.this_pc.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.this_pc.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.this_pc.definition1",
+      "term": "jsc.guide.this_pc.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.this_pc.definition2",
+      "term": "jsc.guide.this_pc.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.this_pc.fix1",
+          "problem": "jsc.guide.this_pc.problem1"
+        },
+        {
+          "fix": "jsc.guide.this_pc.fix2",
+          "problem": "jsc.guide.this_pc.problem2"
+        },
+        {
+          "fix": "jsc.guide.this_pc.fix3",
+          "problem": "jsc.guide.this_pc.problem3"
+        },
+        {
+          "fix": "jsc.guide.this_pc.fix4",
+          "problem": "jsc.guide.this_pc.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:drives",
+        "jsc:installing"
+      ]
+    }
+  ],
+  "id": "jsc:this_pc",
+  "order": 163,
+  "section": "jsc:frames_everyday",
+  "title": "jsc.guide.this_pc.title"
+}

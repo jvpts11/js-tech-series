@@ -1,0 +1,621 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.vim.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vim.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vim.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.vim.definition1",
+      "term": "jsc.guide.vim.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.vim.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vim.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.vim.table1",
+      "heads": [
+        "jsc.guide.vim.table1_head1",
+        "jsc.guide.vim.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.vim.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.vim.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.vim.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.vim.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.vim.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.vim.table2",
+      "heads": [
+        "jsc.guide.vim.table2_head1",
+        "jsc.guide.vim.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "i"
+          },
+          {
+            "words": "jsc.guide.vim.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "a"
+          },
+          {
+            "words": "jsc.guide.vim.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "A"
+          },
+          {
+            "words": "jsc.guide.vim.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "I"
+          },
+          {
+            "words": "jsc.guide.vim.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "o"
+          },
+          {
+            "words": "jsc.guide.vim.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "O"
+          },
+          {
+            "words": "jsc.guide.vim.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "h j k l"
+          },
+          {
+            "words": "jsc.guide.vim.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "w"
+          },
+          {
+            "words": "jsc.guide.vim.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "b"
+          },
+          {
+            "words": "jsc.guide.vim.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "e"
+          },
+          {
+            "words": "jsc.guide.vim.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "0"
+          },
+          {
+            "words": "jsc.guide.vim.table2_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "^"
+          },
+          {
+            "words": "jsc.guide.vim.table2_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "$"
+          },
+          {
+            "words": "jsc.guide.vim.table2_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "G"
+          },
+          {
+            "words": "jsc.guide.vim.table2_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "gg"
+          },
+          {
+            "words": "jsc.guide.vim.table2_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "x"
+          },
+          {
+            "words": "jsc.guide.vim.table2_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "D"
+          },
+          {
+            "words": "jsc.guide.vim.table2_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "dd"
+          },
+          {
+            "words": "jsc.guide.vim.table2_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "dw"
+          },
+          {
+            "words": "jsc.guide.vim.table2_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "yy"
+          },
+          {
+            "words": "jsc.guide.vim.table2_20_2"
+          }
+        ],
+        [
+          {
+            "literal": "p"
+          },
+          {
+            "words": "jsc.guide.vim.table2_21_2"
+          }
+        ],
+        [
+          {
+            "literal": "P"
+          },
+          {
+            "words": "jsc.guide.vim.table2_22_2"
+          }
+        ],
+        [
+          {
+            "literal": "u"
+          },
+          {
+            "words": "jsc.guide.vim.table2_23_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+R"
+          },
+          {
+            "words": "jsc.guide.vim.table2_24_2"
+          }
+        ],
+        [
+          {
+            "literal": ":"
+          },
+          {
+            "words": "jsc.guide.vim.table2_25_2"
+          }
+        ],
+        [
+          {
+            "literal": "Arrows, Home, End"
+          },
+          {
+            "words": "jsc.guide.vim.table2_26_2"
+          }
+        ],
+        [
+          {
+            "literal": "PageUp, PageDown"
+          },
+          {
+            "words": "jsc.guide.vim.table2_27_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.vim.table2_28_2"
+          }
+        ],
+        [
+          {
+            "literal": "Backspace"
+          },
+          {
+            "words": "jsc.guide.vim.table2_29_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.vim.table2_30_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vim.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.vim.definition2",
+      "term": "jsc.guide.vim.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.vim.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.vim.table3",
+      "heads": [
+        "jsc.guide.vim.table3_head1",
+        "jsc.guide.vim.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.vim.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.vim.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.vim.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Tab"
+          },
+          {
+            "words": "jsc.guide.vim.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Backspace"
+          },
+          {
+            "words": "jsc.guide.vim.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Delete"
+          },
+          {
+            "words": "jsc.guide.vim.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.vim.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.vim.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vim.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.vim.table4",
+      "heads": [
+        "jsc.guide.vim.table4_head1",
+        "jsc.guide.vim.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": ":w"
+          },
+          {
+            "words": "jsc.guide.vim.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": ":q"
+          },
+          {
+            "words": "jsc.guide.vim.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": ":q!"
+          },
+          {
+            "words": "jsc.guide.vim.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": ":wq"
+          },
+          {
+            "words": "jsc.guide.vim.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": ":x"
+          },
+          {
+            "words": "jsc.guide.vim.table4_5_2"
+          }
+        ],
+        [
+          {
+            "literal": ":wq!"
+          },
+          {
+            "words": "jsc.guide.vim.table4_6_2"
+          }
+        ],
+        [
+          {
+            "literal": ":x!"
+          },
+          {
+            "words": "jsc.guide.vim.table4_7_2"
+          }
+        ],
+        [
+          {
+            "literal": ":<number>"
+          },
+          {
+            "words": "jsc.guide.vim.table4_8_2"
+          }
+        ],
+        [
+          {
+            "literal": ": Enter"
+          },
+          {
+            "words": "jsc.guide.vim.table4_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.vim.heading5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.vim.table5",
+      "heads": [
+        "jsc.guide.vim.table5_head1",
+        "jsc.guide.vim.table5_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.vim.table5_1_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_2_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_3_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_4_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_5_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_6_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_7_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_8_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_9_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_9_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vim.table5_10_1"
+          },
+          {
+            "words": "jsc.guide.vim.table5_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/vim"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.vim.fix1",
+          "problem": "jsc.guide.vim.problem1"
+        },
+        {
+          "fix": "jsc.guide.vim.fix2",
+          "problem": "jsc.guide.vim.problem2"
+        },
+        {
+          "fix": "jsc.guide.vim.fix3",
+          "problem": "jsc.guide.vim.problem3"
+        },
+        {
+          "fix": "jsc.guide.vim.fix4",
+          "problem": "jsc.guide.vim.problem4"
+        },
+        {
+          "fix": "jsc.guide.vim.fix5",
+          "problem": "jsc.guide.vim.problem5"
+        },
+        {
+          "fix": "jsc.guide.vim.fix6",
+          "problem": "jsc.guide.vim.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:emacs",
+        "jsc:vi",
+        "jsc:ee"
+      ]
+    }
+  ],
+  "id": "jsc:vim",
+  "order": 217,
+  "section": "jsc:the_editors",
+  "title": "jsc.guide.vim.title"
+}

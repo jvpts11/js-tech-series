@@ -1,0 +1,37 @@
+{
+  "key": {
+    "E": {
+      "blocks": [
+        "jstests:test_furnace_part"
+      ]
+    },
+    "I": {
+      "blocks": [
+        "jstests:test_furnace_part"
+      ]
+    },
+    "O": {
+      "blocks": [
+        "jstests:test_furnace_part"
+      ]
+    },
+    "P": {
+      "blocks": [
+        "jstests:test_furnace_part"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "PIP",
+      "E#P",
+      "POP"
+    ]
+  ],
+  "name": "test_furnace",
+  "ports": {
+    "E": "energy_input",
+    "I": "item_input",
+    "O": "item_output"
+  }
+}

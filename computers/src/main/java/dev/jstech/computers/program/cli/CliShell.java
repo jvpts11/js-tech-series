@@ -7,13 +7,17 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.computers.program.cli.sh.ShLine;
 import dev.jstech.computers.program.cli.sh.ShRunner;
+import dev.jstech.computers.program.cli.sh.ShWord;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.program.tty.ITtyProcess;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,11 +27,27 @@ import java.util.Map;
 /**
  * The command interpreter: it owns a set of {@link ICliCommand}s, looks one up by name or alias, and runs it against an {@link ICliComputer}, collecting the styled output. Pure logic with no Minecraft types, so the whole parse-and-dispatch path is unit-tested with a fake computer.
  */
+@TextHolder
 public final class CliShell {
 
     private final Map<String, ICliCommand> byName = new LinkedHashMap<>();
     private final Map<String, ICliCommand> lookup = new LinkedHashMap<>();
     private final int width;
+
+    private static final TextKey TRY_HELP = TextKey.of("jsc.cli.shell.try_help", "type 'help' to list commands");
+    /* FreeBSD's sh has no help to point to, so its not-found line points to the two ways it does have. */
+    private static final TextKey NOT_FOUND_TRY_APROPOS = TextKey.of("jsc.cli.shell.not_found_try_apropos",
+            "%s: not found. Try: apropos <word>, or man intro");
+    private static final TextKey NO_JOB_MEMORY =
+            TextKey.of("jsc.cli.shell.no_job_memory", "the machine has no memory left for another job");
+    private static final TextKey SYNTAX_ERROR = TextKey.of("jsc.cli.shell.syntax_error",
+            "syntax error near unexpected token `%s'");
+    private static final TextKey NO_JOBS =TextKey.of("jsc.cli.shell.no_jobs", "this machine keeps no jobs");
+    /* A program with only windows, typed at a system with no desktop: there is nowhere to show it, as on a real one. */
+    private static final TextKey CANNOT_OPEN_DISPLAY =
+            TextKey.of("jsc.cli.shell.cannot_open_display", "%s: cannot open display");
+    private static final TextKey NO_DESKTOP = TextKey.of("jsc.cli.shell.no_desktop",
+            "(it shows itself in windows, and this system has no desktop to show them on)");
 
     public CliShell(final List<ICliCommand> commands, final int width) {
         this.width = width;
@@ -69,25 +89,30 @@ public final class CliShell {
          * on the family whose shell does that, opens out a word with a star in it into the names it matches.
          */
         final boolean live = computer.liveInstall() != null;
-        final List<String> tokens = live
-                ? CliTokenizer.tokenize(line) : ShRunner.expand(computer, CliTokenizer.tokenize(line));
+        final List<CliTokenizer.Token> typed = CliTokenizer.words(line);
+        final List<ShWord> words = live ? ShWord.typed(typed) : ShRunner.expand(computer, typed);
+        final List<String> tokens = ShWord.texts(words);
         if (tokens.isEmpty()) {
             return new Response(out.lines(), false);
         }
         /*
          * A live medium's installer is a shell of its own, swapped in whole: its verbs take the line as it was
-         * typed, arrows and all, because on a real one the arrow is part of the step being taught. So the line
-         * is only taken apart when an installed system is the one reading it.
+         * typed, arrows and all, because on a real one the arrow is part of the step being taught. The words
+         * are still found so the verb can be looked up, but the verb is handed the typed text itself below.
          */
         /*
          * A line that ends in & is not run here at all: it is left with the machine, which runs it on its own
          * tick and hands the prompt straight back. That is what the mark has always meant on this family.
          */
-        if (!live && !tokens.isEmpty() && tokens.get(tokens.size() - 1).equals("&")
-                && computer.shellFamily() == ShellFamily.POSIX) {
-            return backgrounded(tokens.subList(0, tokens.size() - 1), computer, out);
+        if (!live && words.get(words.size() - 1).isBackground() && computer.shellFamily() == ShellFamily.POSIX) {
+            // The line is kept as it was typed, its quotes too, so what it says reads the same when it runs.
+            return backgrounded(line.substring(0, line.lastIndexOf('&')).strip(), computer, out);
         }
-        final ShLine whole = live ? ShLine.NOTHING : ShLine.of(tokens);
+        final ShLine whole = live ? ShLine.NOTHING : ShLine.of(words);
+        if (!whole.badToken().isEmpty()) {
+            out.error(SYNTAX_ERROR.with(whole.badToken()));
+            return new Response(out.lines(), false);
+        }
         if (!whole.isEmpty() && !whole.isSimple()) {
             return ShRunner.run(this, whole, computer, out);
         }
@@ -115,16 +140,42 @@ public final class CliShell {
             return new Response(out.lines(), false);
         }
         final ICliCommand command = find(word);
+        final List<String> args = new ArrayList<>(tokens.subList(1, tokens.size()));
+        final boolean unresolved = command == null || !command.available(computer);
         /*
-         * A command that is not available on this computer (another distribution's package manager, an
-         * uninstalled program's verbs) does not exist here, exactly like an unknown word.
+         * A word that answers to no command here, or to one this system does not have, may be the name of a
+         * listing on this machine: the current directory or the PATH, depending on what the family asks of a bare
+         * name. Tried only for a word nothing already runs, so a command this system does have is never shadowed
+         * by a file of the same name.
          */
-        if (command == null || !command.available(computer)) {
-            out.error("command not found: " + word);
-            out.dim("type 'help' to list commands");
+        if (unresolved) {
+            final Response ranByName = ByNameProgram.tryRun(word, args, computer, out);
+            if (ranByName != null) {
+                return ranByName;
+            }
+        }
+        // A program the machine has, which only shows itself in windows, on a system with no desktop to show them.
+        if (unresolved && command == null && computer.windowsWithoutDesktop(word)) {
+            out.error(CANNOT_OPEN_DISPLAY.with(word));
+            out.dim(NO_DESKTOP);
             return new Response(out.lines(), false);
         }
-        final List<String> args = new ArrayList<>(tokens.subList(1, tokens.size()));
+        /*
+         * A command that is not available on this computer (another distribution's package manager, an
+         * uninstalled program's verbs) does not exist here, exactly like an unknown word this system found no
+         * program under either.
+         */
+        if (unresolved) {
+            if (computer.platform() == Platform.FREEBSD) {
+                out.error(NOT_FOUND_TRY_APROPOS.with(word));
+            } else if (command == null && ByNameProgram.ownsItsWording(computer)) {
+                out.line(CliTexts.PROGRAM_NOT_FOUND.with(word));
+            } else {
+                out.error(CliTexts.NOT_FOUND.with(word));
+                out.dim(TRY_HELP);
+            }
+            return new Response(out.lines(), false);
+        }
         /*
          * Asking a command what it does: --help anywhere, and /? on the family that has written it that way
          * since there was a DOS. Answered here rather than by every command, so no command can be written
@@ -135,21 +186,29 @@ public final class CliShell {
          */
         if (args.contains("--help")
                 || (computer.shellFamily() == ShellFamily.DOS && args.contains("/?"))) {
-            out.accent(command.name() + (command.usage().isEmpty() ? "" : " " + command.usage()));
-            for (final String said : ManPage.lines(command, false)) {
+            out.line(ManPage.synopsis(command, CliStyle.ACCENT));
+            for (final CliLine said : ManPage.lines(command, false)) {
                 out.line(said);
             }
             return new Response(out.lines(), false);
         }
-        final CliContext context = new CliContext(args, computer, out, this);
+        final String typedLine = line.strip();
+        final boolean asTyped = typedLine.regionMatches(true, 0, word, 0, word.length());
+        final CliContext context = new CliContext(args, computer, out, this, List.of(),
+                asTyped ? typedLine.substring(word.length()).strip() : String.join(" ", args));
         try {
-            command.run(context);
+            if (live && command instanceof LiveInstallCommands.LiveVerb verb && asTyped) {
+                // The installer reads the rest exactly as typed: quotes and runs of spaces are part of it.
+                verb.runLine(context, word + typedLine.substring(word.length()));
+            } else {
+                command.run(context);
+            }
         } catch (final RuntimeException unexpected) {
             /*
              * A command must not throw for ordinary errors; if one does anyway, the shell stays alive
              * and reports it rather than tearing down the session.
              */
-            out.error("error running '" + word + "': " + unexpected.getMessage());
+            out.error(CliTexts.FAILED.with(word, String.valueOf(unexpected.getMessage())));
         }
         final boolean clear = command instanceof IClearMarker;
         /*
@@ -157,8 +216,20 @@ public final class CliShell {
          * was just run with, which the shell already has, so nothing has to be remembered anywhere.
          */
         final String file = command instanceof IHandOver giving ? giving.fileOf(computer, args) : null;
-        final CliShell.HandOver handOver = file == null ? null : new HandOver(command.name(), file);
+        final CliShell.HandOver handOver =
+                file == null ? null : new HandOver(editorNameFor(command.name(), computer), file);
         return new Response(out.lines(), clear, handOver, out.started());
+    }
+
+    /**
+     * The verb a hand-over is opened under: the command's own name, except {@code vi}, which is one engine
+     * behind two systems' own voices and answers to whichever the machine is running.
+     */
+    private static String editorNameFor(final String commandName, final ICliComputer computer) {
+        if (!commandName.equals("vi")) {
+            return commandName;
+        }
+        return computer.platform() == Platform.UNIX ? "vi-unix" : "vi-freebsd";
     }
 
     /**
@@ -167,15 +238,20 @@ public final class CliShell {
      * <p>A job costs the machine a megabyte while it has it, which is what says how many a computer can be
      * left with; a machine with none left says so rather than quietly dropping the line.
      */
-    private Response backgrounded(final List<String> tokens, final ICliComputer computer, final CliOutput out) {
-        final ICliComputer.MemoryUse memory = computer.memory();
-        if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
-            out.error("the machine has no memory left for another job");
+    private Response backgrounded(final String typed, final ICliComputer computer, final CliOutput out) {
+        if (typed.isBlank()) {
+            // A lone mark has nothing to leave with the machine; it would only burn a job number.
+            out.error(JobCommands.NOTHING_TO_RUN);
             return new Response(out.lines(), false);
         }
-        final MachineJobs.Job job = computer.addJob(String.join(" ", tokens), JobWhen.AT_ONCE);
+        final ICliComputer.MemoryUse memory = computer.memory();
+        if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
+            out.error(NO_JOB_MEMORY);
+            return new Response(out.lines(), false);
+        }
+        final MachineJobs.Job job = computer.addJob(typed, JobWhen.AT_ONCE);
         if (job == null) {
-            out.error("this machine keeps no jobs");
+            out.error(NO_JOBS);
         } else {
             out.ok("[" + job.id() + "] " + job.line());
         }

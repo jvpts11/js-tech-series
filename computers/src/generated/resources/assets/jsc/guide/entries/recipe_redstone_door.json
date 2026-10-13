@@ -1,0 +1,142 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_redstone_door.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_redstone_door.definition1",
+      "term": "jsc.guide.recipe_redstone_door.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_redstone_door.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_redstone_door.table1",
+      "heads": [
+        "jsc.guide.recipe_redstone_door.table1_head1",
+        "jsc.guide.recipe_redstone_door.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.recipe_redstone_door.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.recipe_redstone_door.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_redstone_door.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.recipe_redstone_door.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_redstone_door.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.recipe_redstone_door.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.recipe_redstone_door.step1",
+        "jsc.guide.recipe_redstone_door.step2",
+        "jsc.guide.recipe_redstone_door.step3",
+        "jsc.guide.recipe_redstone_door.step4",
+        "jsc.guide.recipe_redstone_door.step5"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_redstone_door.table2",
+      "heads": [
+        "jsc.guide.recipe_redstone_door.table2_head1",
+        "jsc.guide.recipe_redstone_door.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SET REDSTONE 'Gate' IN"
+          },
+          {
+            "words": "jsc.guide.recipe_redstone_door.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET REDSTONE 'Gate' OUT 15"
+          },
+          {
+            "words": "jsc.guide.recipe_redstone_door.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET REDSTONE 'Gate' OUT 0"
+          },
+          {
+            "words": "jsc.guide.recipe_redstone_door.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_redstone_door.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.recipe_redstone_door.fix1",
+          "problem": "jsc.guide.recipe_redstone_door.problem1"
+        },
+        {
+          "fix": "jsc.guide.recipe_redstone_door.fix2",
+          "problem": "jsc.guide.recipe_redstone_door.problem2"
+        },
+        {
+          "fix": "jsc.guide.recipe_redstone_door.fix3",
+          "problem": "jsc.guide.recipe_redstone_door.problem3"
+        },
+        {
+          "fix": "jsc.guide.recipe_redstone_door.fix4",
+          "problem": "jsc.guide.recipe_redstone_door.problem4"
+        },
+        {
+          "fix": "jsc.guide.recipe_redstone_door.fix5",
+          "problem": "jsc.guide.recipe_redstone_door.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:redstone_interfaces",
+        "jsc:peripheral_cables",
+        "jsc:set_redstone",
+        "jsc:where_to_type_iql"
+      ]
+    }
+  ],
+  "icon": "jsc:standard_redstone_interface",
+  "id": "jsc:recipe_redstone_door",
+  "order": 326,
+  "section": "jsc:iql_recipe_list",
+  "title": "jsc.guide.recipe_redstone_door.title"
+}

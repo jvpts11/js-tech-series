@@ -1,0 +1,215 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.tables.what"
+    },
+    {
+      "type": "table",
+      "caption": "jstests.guide.tables.table1",
+      "heads": [
+        "jstests.guide.tables.table1_head1",
+        "jstests.guide.tables.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "dir"
+          },
+          {
+            "words": "jstests.guide.tables.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "cd"
+          },
+          {
+            "words": "jstests.guide.tables.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "type"
+          },
+          {
+            "words": "jstests.guide.tables.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "write"
+          },
+          {
+            "words": "jstests.guide.tables.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "del"
+          },
+          {
+            "words": "jstests.guide.tables.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "mkdir"
+          },
+          {
+            "words": "jstests.guide.tables.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "rmdir"
+          },
+          {
+            "words": "jstests.guide.tables.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "copy"
+          },
+          {
+            "words": "jstests.guide.tables.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "move"
+          },
+          {
+            "words": "jstests.guide.tables.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "ren"
+          },
+          {
+            "words": "jstests.guide.tables.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "format"
+          },
+          {
+            "words": "jstests.guide.tables.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "tree"
+          },
+          {
+            "words": "jstests.guide.tables.table1_12_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jstests.guide.tables.table2",
+      "heads": [
+        "jstests.guide.tables.table2_head1",
+        "jstests.guide.tables.table2_head2",
+        "jstests.guide.tables.table2_head3",
+        "jstests.guide.tables.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S1001"
+          },
+          {
+            "words": "jstests.guide.tables.table2_1_2"
+          },
+          {
+            "words": "jstests.guide.tables.table2_1_3"
+          },
+          {
+            "words": "jstests.guide.tables.table2_1_4"
+          }
+        ],
+        [
+          {
+            "literal": "S3001"
+          },
+          {
+            "words": "jstests.guide.tables.table2_2_2"
+          },
+          {
+            "words": "jstests.guide.tables.table2_2_3"
+          },
+          {
+            "words": "jstests.guide.tables.table2_2_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.tables.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jstests.guide.tables.table3",
+      "heads": [
+        "jstests.guide.tables.table3_head1",
+        "jstests.guide.tables.table3_head2"
+      ],
+      "source": "jstests:items"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.tables.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.tables.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.tables.use1"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.tables.fix1",
+          "problem": "jstests.guide.tables.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:writable_book",
+  "id": "jstests:tables",
+  "order": 3,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.tables.title"
+}

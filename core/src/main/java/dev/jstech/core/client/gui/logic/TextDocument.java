@@ -50,12 +50,16 @@ public final class TextDocument {
     /** The kind of the last change recorded, so a run of typing is one step to take back. */
     private String lastEdit = "";
 
+    /** Counts every change to the text, so a reader can tell cheaply that what it cached is out of date. */
+    private long revision;
+
     public TextDocument() {
         lines.add(new StringBuilder());
     }
 
     /** Replaces the whole text and puts the caret at the start, forgetting what could be undone. */
     public void setText(final String text) {
+        revision++;
         lines.clear();
         for (final String part : text.split("\n", -1)) {
             lines.add(new StringBuilder(part));
@@ -69,6 +73,14 @@ public final class TextDocument {
         undo.clear();
         redo.clear();
         lastEdit = "";
+    }
+
+    /**
+     * A number that changes whenever the text may have changed, so a reader holding work done on the text can tell
+     * it is still current without joining the whole document to compare. Moving the caret does not change it.
+     */
+    public long revision() {
+        return revision;
     }
 
     /** The whole text, lines joined by newlines. */
@@ -180,6 +192,11 @@ public final class TextDocument {
     /** Removes what is selected, the caret landing where it was; false when nothing was selected. */
     public boolean deleteSelection() {
         if (!hasSelection()) {
+            /*
+             * An anchor left on the caret by a move that went nowhere (Shift+End at the end of a line) is no selection,
+             * but outlived the edit that follows and pointed past the line it shortened: dropped before any edit.
+             */
+            anchorLine = -1;
             return false;
         }
         final Spot from = selectionStart();
@@ -206,6 +223,8 @@ public final class TextDocument {
 
     /** Sets the anchor before a move that extends, or drops the selection before one that does not. */
     private void beginMove(final boolean extend) {
+        // A move ends the run of typing before it, so undo does not swallow what was typed on either side.
+        lastEdit = "";
         if (extend) {
             if (anchorLine < 0) {
                 anchorLine = line;
@@ -226,6 +245,8 @@ public final class TextDocument {
      * new step.
      */
     private void remember(final String kind) {
+        // Every change to the text goes through here first, so this is where the revision moves.
+        revision++;
         if (!kind.equals(lastEdit) || undo.isEmpty()) {
             undo.push(new Snapshot(text(), line, col));
             while (undo.size() > UNDO_DEPTH) {
@@ -264,6 +285,7 @@ public final class TextDocument {
     }
 
     private void restore(final Snapshot snapshot) {
+        revision++;
         lines.clear();
         for (final String part : snapshot.text().split("\n", -1)) {
             lines.add(new StringBuilder(part));
@@ -338,23 +360,31 @@ public final class TextDocument {
             final int indent = text.length() - text.stripLeading().length();
             if (adding) {
                 cur.insert(indent, marker);
-                if (i == line) {
+                if (i == line && col >= indent) {
                     col += marker.length();
                 }
-                if (i == anchorLine) {
+                if (i == anchorLine && anchorCol >= indent) {
                     anchorCol += marker.length();
                 }
             } else if (text.startsWith(marker, indent)) {
                 cur.delete(indent, indent + marker.length());
                 if (i == line) {
-                    col = Math.max(0, col - marker.length());
+                    col = afterRemoval(col, indent, marker.length());
                 }
                 if (i == anchorLine) {
-                    anchorCol = Math.max(0, anchorCol - marker.length());
+                    anchorCol = afterRemoval(anchorCol, indent, marker.length());
                 }
             }
         }
         col = Math.min(col, lines.get(line).length());
+    }
+
+    /* Where a column lands once a marker at {@code indent} is cut out: before it stays, inside it goes to its start. */
+    private static int afterRemoval(final int column, final int indent, final int length) {
+        if (column < indent) {
+            return column;
+        }
+        return column < indent + length ? indent : column - length;
     }
 
     /**

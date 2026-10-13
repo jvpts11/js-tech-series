@@ -1,0 +1,127 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_7.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_7.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_7.definition1",
+      "term": "jsc.guide.frames_7.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_7.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_7.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_7.table1_1"
+          },
+          {
+            "words": "jsc.guide.frames_7.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_7.table1_2"
+          },
+          {
+            "words": "jsc.guide.frames_7.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_7.table1_3"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_7.table1_4"
+          },
+          {
+            "amount": 1024,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_7.table1_5"
+          },
+          {
+            "words": "jsc.guide.frames_7.value1_5"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_7.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.frames_7.step1",
+        "jsc.guide.frames_7.step2",
+        "jsc.guide.frames_7.step3",
+        "jsc.guide.frames_7.step4",
+        "jsc.guide.frames_7.step5"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_7.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_7.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_7.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_7.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_7.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_7.fix1",
+          "problem": "jsc.guide.frames_7.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_xp",
+        "jsc:frames_10"
+      ]
+    }
+  ],
+  "id": "jsc:frames_7",
+  "order": 174,
+  "section": "jsc:editions",
+  "title": "jsc.guide.frames_7.title"
+}

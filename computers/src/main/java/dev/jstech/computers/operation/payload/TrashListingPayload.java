@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -53,7 +54,7 @@ public record TrashListingPayload(BlockPos hostPos, List<WireEntry> entries) imp
 
         /* Cut here rather than refused on the wire: a limit on a string there drops the connection. */
         public WireEntry {
-            original = original.length() <= MAX_ORIGINAL ? original : original.substring(0, MAX_ORIGINAL);
+            original = TextBounds.clip(original, MAX_ORIGINAL);
         }
     }
 

@@ -70,7 +70,7 @@ public final class NetworkSharesClientTests {
                      * A second computer on the same network, off the router's ethernet, is the one that
                      * shares: its whole disk, with a file on it to find.
                      */
-                    world.setBlock(SHARER_CABLE, ComputingModule.ETHERNET_CABLE.get());
+                    world.setBlock(SHARER_CABLE, ComputingModule.ETHERNET_CABLE);
                     final PersonalComputerBlockEntity sharer = world.placeRunningPersonalComputer(SHARER);
                     sharer.console().setComputerName("main");
                     final ServerCliComputer main = new ServerCliComputer(sharer, world.level());

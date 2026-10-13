@@ -16,14 +16,36 @@ import dev.jstech.computers.block.IInstallProgressScreenOpener;
 import dev.jstech.computers.block.IInstallerScreenOpener;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.IPostScreenOpener;
+import dev.jstech.computers.block.ICrashScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.api.client.IOperatingSpaceScreen;
 import dev.jstech.computers.api.client.OperatingSpaceScreens;
+import dev.jstech.computers.client.audio.SoundfoundryCoverArt;
+import dev.jstech.computers.client.audio.SoundfoundryPages;
+import dev.jstech.computers.client.audio.SoundfoundryShares;
+import dev.jstech.computers.client.audio.SoundfoundryStates;
+import dev.jstech.computers.client.bus.ExportBusScreen;
+import dev.jstech.computers.client.monitor.MonitorPictureCache;
+import dev.jstech.computers.client.monitor.MonitorScreenRenderer;
+import dev.jstech.computers.client.printer.PrintedPaperFrames;
+import dev.jstech.computers.client.printer.PrintedPaperScreen;
+import dev.jstech.computers.client.printer.PrintedPictureTextures;
+import dev.jstech.computers.monitor.IMonitorPictureSink;
+import dev.jstech.computers.printer.IPrintedPaperReader;
+import dev.jstech.computers.client.bus.ExternalStorageBusScreen;
+import dev.jstech.computers.client.bus.ImportBusScreen;
+import dev.jstech.computers.client.bus.CraftingInterfaceScreen;
+import dev.jstech.computers.client.bus.CraftingRouterScreen;
+import dev.jstech.computers.client.bus.ReceivingBusScreen;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.SigmaImages;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.registry.ComputingMenus;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -32,8 +54,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RenderItemInFrameEvent;
 
 /**
  * Client-only wiring for the Computing module: binds each computer menu to its screen, registers the data-cable renderer that draws mounted bus parts, and makes the standalone funnel part models available to the model manager.
@@ -51,7 +73,20 @@ public final class ComputingClientSetup {
     @SubscribeEvent
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         // The desktop's per-machine caches belong to the world being left.
-        DesktopScreen.forgetClientState();
+        ActiveDesktop.forgetClientState();
+        CommandPromptScreen.forgetClientState();
+        SoundfoundryStates.clear();
+        SoundfoundryShares.clear();
+        SoundfoundryPages.clear();
+        SoundfoundryCoverArt.clear();
+        PrintedPictureTextures.forgetAll();
+        SigmaImages.clear();
+    }
+
+    /** A printed picture in an item frame shows on it, as a map does. */
+    @SubscribeEvent
+    public static void onRenderItemInFrame(final RenderItemInFrameEvent event) {
+        PrintedPaperFrames.onRenderItemInFrame(event);
     }
 
     @SubscribeEvent
@@ -92,18 +127,21 @@ public final class ComputingClientSetup {
         ISystemBootScreenOpener.Holder.set(
                 (pos, monitorPos, sequence, remaining, total, endsDark, splash, who) ->
                         SystemBootScreen.expect(sequence, remaining, total, endsDark, splash, who));
+        ICrashScreenOpener.Holder.set(CrashScreen::expect);
         IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) -> {
                     OsInstallScreen.expectWorking(kind, osName, targetLabel, ticksLeft, ticksTotal);
                     OsInstallScreen.refreshOpen(pos);
                 });
         IKvmScreenOpener.Holder.set(KvmChannelScreen::expect);
+        IMonitorPictureSink.Holder.set(MonitorPictureCache::accept);
+        IPrintedPaperReader.Holder.set(PrintedPaperScreen::open);
 
         /*
          * Every session on a monitor that is not a system shares one menu, so which screen it opens is read
          * off the phase it carries rather than off a menu type of its own.
          */
-        event.register(ComputingModule.MONITOR_SESSION_MENU.get(),
+        event.register(ComputingMenus.MONITOR_SESSION_MENU.get(),
                 (final MonitorSessionMenu menu, final Inventory inv, final Component title) ->
                         switch (menu.phase()) {
                             case POST -> new BootSequenceScreen(menu, inv, title);
@@ -112,61 +150,82 @@ public final class ComputingClientSetup {
                             case INSTALLER -> new InstallerScreen(menu, inv, title);
                             case BOOT_MENU -> new BootMenuScreen(menu, inv, title);
                             case KVM -> new KvmChannelScreen(menu, inv, title);
+                            case SYSTEM_CRASH -> new CrashScreen(menu, inv, title);
                             default -> new SystemBootScreen(menu, inv, title);
                         });
-        event.register(ComputingModule.DESKTOP_MENU.get(), DesktopScreen::new);
-        event.register(ComputingModule.MAINFRAME_MENU.get(), MainframeScreen::new);
-        event.register(ComputingModule.PERSONAL_COMPUTER_MENU.get(), PersonalComputerScreen::new);
-        event.register(ComputingModule.CRAFTING_COMPUTER_MENU.get(), CraftingComputerScreen::new);
-        event.register(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
-        event.register(ComputingModule.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
-        event.register(ComputingModule.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
-        event.register(ComputingModule.COMMAND_PROMPT_MENU.get(),
+        event.register(ComputingMenus.DESKTOP_MENU.get(), DesktopScreen::new);
+        event.register(ComputingMenus.MAINFRAME_MENU.get(), MainframeScreen::new);
+        event.register(ComputingMenus.PERSONAL_COMPUTER_MENU.get(), PersonalComputerScreen::new);
+        event.register(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), CraftingComputerScreen::new);
+        event.register(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
+        event.register(ComputingMenus.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
+        event.register(ComputingMenus.PRINTER_MENU.get(), PrinterScreen::new);
+        event.register(ComputingMenus.DOCK_STATION_MENU.get(), DockStationScreen::new);
+        event.register(ComputingMenus.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
+        event.register(ComputingMenus.COMMAND_PROMPT_MENU.get(),
                 (final CommandPromptMenu menu,
                  final Inventory inv,
                  final Component title) -> new CommandPromptScreen<>(menu, inv, title));
-        event.register(ComputingModule.DOS_TERMINAL_MENU.get(), DosTerminalScreen::new);
-        event.register(ComputingModule.LINUX_TTY_MENU.get(), LinuxTtyScreen::new);
-        event.register(ComputingModule.NET_TERMINAL_MENU.get(), NetTerminalScreen::new);
-        event.register(ComputingModule.SERVER_RACK_MENU.get(), ServerRackScreen::new);
-        event.register(ComputingModule.SERVER_ROUTER_MENU.get(), ServerRouterScreen::new);
-        event.register(ComputingModule.SERVER_ASSEMBLY_MENU.get(), ServerAssemblyScreen::new);
+        event.register(ComputingMenus.DOS_TERMINAL_MENU.get(), DosTerminalScreen::new);
+        event.register(ComputingMenus.LINUX_TTY_MENU.get(), LinuxTtyScreen::new);
+        event.register(ComputingMenus.NET_TERMINAL_MENU.get(), NetTerminalScreen::new);
+        event.register(ComputingMenus.SERVER_RACK_MENU.get(), ServerRackScreen::new);
+        event.register(ComputingMenus.SERVER_ROUTER_MENU.get(), ServerRouterScreen::new);
+        event.register(ComputingMenus.SPEAKER_MENU.get(), SpeakerScreen::new);
+        event.register(ComputingMenus.REDSTONE_INTERFACE_MENU.get(), RedstoneInterfaceScreen::new);
+        event.register(ComputingMenus.SERVER_ASSEMBLY_MENU.get(), ServerAssemblyScreen::new);
         /*
          * The one place an operating space is chosen. The mod's own is registered through the same door an
          * addon uses, so it is the API's first client rather than a special case behind it; a machine whose
          * space nobody draws falls back to the Interactor, never to a blank screen.
          */
-        OperatingSpaceScreens.register(INTERACTOR, ComputerTerminalScreen::new);
-        event.register(ComputingModule.COMPUTER_TERMINAL_MENU.get(),
-                (final ComputerTerminalMenu menu,
-                 final Inventory inv,
-                 final Component title) -> {
-                    final IOperatingSpaceScreen space = OperatingSpaceScreens.get(menu.spaceId());
-                    return space != null ? space.open(menu, inv, title)
-                            : new ComputerTerminalScreen(menu, inv, title);
-                });
-        event.register(ComputingModule.EXPORT_BUS_MENU.get(), ExportBusScreen::new);
-        event.register(ComputingModule.IMPORT_BUS_MENU.get(), ImportBusScreen::new);
-        event.register(ComputingModule.CRAFTING_SWITCH_MENU.get(), CraftingSwitchScreen::new);
-        event.register(ComputingModule.INPUT_BUS_MENU.get(), InputBusScreen::new);
-        event.register(ComputingModule.RECEIVING_BUS_MENU.get(), ReceivingBusScreen::new);
+        OperatingSpaceScreens.register(INTERACTOR, (space, inv, title) ->
+                new ComputerTerminalScreen(((TerminalSpaceOpening) space).terminal(), inv, title));
+        event.register(ComputingMenus.COMPUTER_TERMINAL_MENU.get(), ComputingClientSetup::spaceScreen);
+        event.register(ComputingMenus.EXPORT_BUS_MENU.get(), ExportBusScreen::new);
+        event.register(ComputingMenus.IMPORT_BUS_MENU.get(), ImportBusScreen::new);
+        event.register(ComputingMenus.EXTERNAL_STORAGE_BUS_MENU.get(), ExternalStorageBusScreen::new);
+        event.register(ComputingMenus.CRAFTING_ROUTER_MENU.get(), CraftingRouterScreen::new);
+        event.register(ComputingMenus.RECEIVING_BUS_MENU.get(), ReceivingBusScreen::new);
+        event.register(ComputingMenus.CRAFTING_INTERFACE_MENU.get(), CraftingInterfaceScreen::new);
     }
 
     @SubscribeEvent
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ComputingModule.DATA_CABLE_BE.get(), DataCableRenderer::new);
-        event.registerBlockEntityRenderer(ComputingModule.TANK_BE.get(), TankRenderer::new);
         // Every rack cabinet (server, per era, and supercomputer) is one GeckoLib model on its controller.
         event.registerBlockEntityRenderer(ComputingModule.SERVER_RACK_BE.get(), RackRenderer::new);
         // The Mainframe is the same idea: one cabinet per era, drawn from the controller block.
         event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), MainframeRenderer::new);
-        // The Pattern Encoder: one burner body per era, with its bay, display and lamps.
+        // The Pattern Encoder: one burner body per era, with its bay and lamps.
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.PRINTER_BE.get(), PrinterRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.DOCK_STATION_BE.get(), DockStationRenderer::new);
+        // The floppy, CD and DVD drives the same way; the Dock Station keeps its block model.
+        event.registerBlockEntityRenderer(ComputingModule.MEDIA_READER_BE.get(), MediaDriveRenderer::new);
+        // The Redstone Interfaces: the sensor of each era, its lens and mode lamps showing what it does.
+        event.registerBlockEntityRenderer(ComputingModule.REDSTONE_INTERFACE_BE.get(),
+                RedstoneInterfaceRenderer::new);
+        // The small computers: each machine's case, by its age and the case it comes in.
+        event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.CRAFTING_COMPUTER_BE.get(), ComputerRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(), ComputerRenderer::new);
+        // The monitors: what the machine shows, live on the glass, and a big screen drawn whole.
+        event.registerBlockEntityRenderer(ComputingModule.MONITOR_BE.get(), MonitorScreenRenderer::new);
     }
 
-    @SubscribeEvent
-    public static void registerExtraModels(final ModelEvent.RegisterAdditional event) {
-        event.register(DataCableRenderer.IMPORT_MODEL);
-        event.register(DataCableRenderer.EXPORT_MODEL);
+    /*
+     * The screen of a machine's operating space: the one its space registered, handed the opening behind the API's
+     * narrow face, or the Interactor's when nobody draws that space. A space builds its screen on the menu the opening
+     * hands it, so whatever type it says, the screen is this menu's.
+     */
+    @SuppressWarnings("unchecked")
+    private static AbstractContainerScreen<ComputerTerminalMenu> spaceScreen(final ComputerTerminalMenu menu,
+                                                                             final Inventory inv,
+                                                                             final Component title) {
+        final IOperatingSpaceScreen space = OperatingSpaceScreens.get(menu.spaceId());
+        final AbstractContainerScreen<?> screen = space == null ? null
+                : space.open(new TerminalSpaceOpening(menu), inv, title);
+        return screen != null ? (AbstractContainerScreen<ComputerTerminalMenu>) screen
+                : new ComputerTerminalScreen(menu, inv, title);
     }
 }

@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.client.gui.component;
 
-import dev.jstech.core.client.gui.skin.ISkin;
+import dev.jstech.core.api.client.ISkin;
 import net.minecraft.client.gui.Font;
 
 /**

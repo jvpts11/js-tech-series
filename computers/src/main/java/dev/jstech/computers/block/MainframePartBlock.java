@@ -8,16 +8,20 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.menu.MainframeMenu;
+import dev.jstech.core.connect.Connection;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
-import dev.jstech.core.network.IDataNetworkConnectable;
-import dev.jstech.core.network.DataTier;
-import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.Set;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -44,36 +48,37 @@ import org.jetbrains.annotations.Nullable;
  * A structural part of the Mainframe multiblock, one of the 11 non-controller blocks.
  */
 public class MainframePartBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IDataNetworkConnectable, IPeripheralConnectable {
+        implements EntityBlock, IFaceConnector {
 
     public static final MapCodec<MainframePartBlock> CODEC = simpleCodec(MainframePartBlock::new);
-
-    @Override
-    public PeripheralCableType peripheralType() {
-        /*
-         * The whole Mainframe footprint is a COMPUTING peripheral owner, so a
-         * Peripheral Cable may attach to any part's face, not just the controller.
-         */
-        return PeripheralCableType.COMPUTING;
-    }
+    /*
+     * The backbone, on any face, as the controller takes it. A part does not know its Mainframe's age, so it takes
+     * every era's backbone; the controller's own faces are where the age is held to.
+     */
+    private static final FacePorts PORTS =
+            FacePorts.everyFace(DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE),
+                    PeripheralLine.of(HardwareEra.ADVANCED));
+    /* What a part of each era's Mainframe takes: that era's backbone and peripheral cables, and the earlier ones. */
+    private static final Map<HardwareEra, FacePorts> BY_ERA = byEra();
 
     public static final BooleanProperty CORE = BooleanProperty.create("core");
 
     /*
      * The part inherits its controller's hardware era so the whole footprint wears one skin. The value
-     * is the era's level() (0=Vintage, 1=Legacy, 2=Standard), and only the eras that actually have
-     * a Mainframe controller. Storing the level keeps the Minecraft-aware property type out of the
-     * pure HardwareEra enum; consumers map it back with HardwareEra.fromLevel(int).
+     * is the era's level() (0=Vintage, 1=Legacy, 2=Transition, 3=Standard, 4=Advanced), from the first era with a
+     * Mainframe to the last. Storing the level keeps the Minecraft-aware property type out of the pure HardwareEra
+     * enum; consumers map it back with HardwareEra.fromLevel(int).
      */
     public static final IntegerProperty ERA = IntegerProperty.create(
-            "era", HardwareEra.VINTAGE.level(), HardwareEra.STANDARD.level());
+            "era", HardwareEra.VINTAGE.level(), HardwareEra.ADVANCED.level());
 
     public MainframePartBlock(final Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(CORE, false)
-                .setValue(ERA, HardwareEra.STANDARD.level()));
+                .setValue(ERA, HardwareEra.STANDARD.level())
+                .setValue(OpticalPort.OPTICAL, false));
     }
 
     @Override
@@ -81,15 +86,25 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
         return CODEC;
     }
 
+    /* The whole Mainframe footprint takes HBW, so a cable may attach to any face. */
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        // The whole Mainframe footprint takes HBW, so a cable may attach to any face.
-        return Set.of(DataTier.T2_HBW);
+    public FacePorts ports() {
+        return PORTS;
+    }
+
+    /*
+     * The cables of the Mainframe's own era and the earlier ones, read from the era its controller stamps on every
+     * part, as its controller takes them; and the fibre only while the Mainframe holds an Optical Network Card.
+     */
+    @Override
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        return BY_ERA.get(HardwareEra.fromLevel(state.getValue(ERA))).accepts(state, face, offered)
+                && OpticalPort.admits(state, offered);
     }
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, CORE, ERA);
+        builder.add(FACING, CORE, ERA, OpticalPort.OPTICAL);
     }
 
     @Override
@@ -100,6 +115,7 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
                 && part.controllerPos() != null
                 && level.getBlockEntity(part.controllerPos()) instanceof MainframeBlockEntity controller) {
             final BlockPos controllerPos = part.controllerPos();
+            MachineOperators.note(controller, player);
             /*
              * Sneaking anywhere on the cabinet takes its service panel off, the same as on the
              * controller: a player has no way to tell which of the twelve blocks they are looking at.
@@ -120,13 +136,13 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     @Override
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
                                         final Player player) {
-        // Drops happen here (not in dissolve) so creative mode never spills items.
-        if (level instanceof ServerLevel serverLevel && !player.getAbilities().instabuild
+        // The whole Mainframe goes with any of its blocks, so a player's break here is a break of the Mainframe.
+        if (level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof MainframePartBlockEntity part
                 && part.controllerPos() != null
                 && level.getBlockState(part.controllerPos()).getBlock()
                         instanceof AbstractMultiblockControllerBlock controller) {
-            controller.dropContentsExternally(serverLevel, part.controllerPos());
+            controller.brokenBy(serverLevel, part.controllerPos(), player);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
@@ -167,5 +183,14 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     @Nullable
     public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return new MainframePartBlockEntity(pos, state);
+    }
+
+    private static Map<HardwareEra, FacePorts> byEra() {
+        final Map<HardwareEra, FacePorts> ports = new EnumMap<>(HardwareEra.class);
+        for (int level = HardwareEra.VINTAGE.level(); level <= HardwareEra.ADVANCED.level(); level++) {
+            final HardwareEra era = HardwareEra.fromLevel(level);
+            ports.put(era, FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE), PeripheralLine.of(era)));
+        }
+        return Map.copyOf(ports);
     }
 }

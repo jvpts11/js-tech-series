@@ -10,7 +10,9 @@ package dev.jstech.computers.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.core.client.geo.LookGeoModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
@@ -32,7 +34,7 @@ public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> 
     private static final int ROWS = ServerRackBlockEntity.CAPACITY_U;
 
     public RackRenderer(final BlockEntityRendererProvider.Context context) {
-        super(new RackGeoModel());
+        super(new LookGeoModel<>(ComputingLooks.RACK));
     }
 
     @Override
@@ -101,8 +103,8 @@ public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> 
         final int seated = rack.unitCodeAt(row);
         if (unit.equals("band")) {
             // A chassis band lights for both rows a seated 2U node covers.
-            return seated == ServerRackBlockEntity.UNIT_NODE_2U
-                    || (row > 0 && rack.unitCodeAt(row - 1) == ServerRackBlockEntity.UNIT_NODE_2U);
+            return ServerRackBlockEntity.isNodeUnit(seated)
+                    || (row > 0 && ServerRackBlockEntity.isNodeUnit(rack.unitCodeAt(row - 1)));
         }
         return seated != ServerRackBlockEntity.UNIT_NONE
                 && unit.equals(ServerRackBlockEntity.UNIT_BONES[seated]);
@@ -116,10 +118,5 @@ public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> 
     @Override
     public AABB getRenderBoundingBox(final ServerRackBlockEntity rack) {
         return rack.renderBox();
-    }
-
-    /** Which bone a seated unit shows in a given row. */
-    public static String boneFor(final int row, final int unitCode) {
-        return "row_" + row + "_" + ServerRackBlockEntity.UNIT_BONES[unitCode];
     }
 }

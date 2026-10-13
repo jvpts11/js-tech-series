@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.program.job;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.time.GameCalendar;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -14,26 +18,18 @@ import java.util.Locale;
 /**
  * When a job runs: as soon as the machine can, or at an hour of the world's own day.
  *
- * <p>The clock is the world's, because everything a player would set a job by is the world's: dawn, dusk, the
- * hour the farm is full. A day here is twenty thousand ticks of daylight and four of dark, and an hour is a
- * thousand of them, which is why an hour is the shortest anything may repeat.
- *
- * <p>Pure, and it is the one place the arithmetic lives, so {@code cron} and {@code AT} cannot fall out of
- * step about what "every day at six" means.
+ * <p>The clock is the world's, read through the Core's calendar, because everything a player would set a job by is
+ * the world's: dawn, dusk, the hour the farm is full. An hour is the shortest anything may repeat. {@code cron} and
+ * {@code AT} both ask this, so they cannot fall out of step about what "every day at six" means.
  *
  * @param hour     the hour of the day it runs at, or {@code -1} for a job that runs once, at once
  * @param days     the days of the week it runs on, from 0 for the first; empty means every day
  */
+@TextHolder
 public record JobWhen(int hour, List<Integer> days) {
 
-    /** Ticks in a day of this world, daylight and dark together. */
-    public static final int DAY_TICKS = 24000;
-
-    /** Ticks in an hour of it. */
-    public static final int HOUR_TICKS = 1000;
-
-    /** A day here starts at six in the morning, which is where the world's own clock starts counting. */
-    public static final int DAY_STARTS_AT = 6;
+    /** What a job left running says in place of an hour. */
+    private static final TextKey RUNNING = TextKey.of("jsc.cli.job.running", "running");
 
     /** As soon as the machine can, once. */
     public static final JobWhen AT_ONCE = new JobWhen(-1, List.of());
@@ -67,34 +63,26 @@ public record JobWhen(int hour, List<Integer> days) {
         if (once()) {
             return true;
         }
-        if (!this.days.isEmpty() && !this.days.contains(dayOfWeek(dayTime))) {
+        if (!this.days.isEmpty() && !this.days.contains(GameCalendar.dayOfWeek(dayTime))) {
             return false;
         }
-        return hourOf(dayTime) == this.hour && (lastRun < 0L || hoursBetween(lastRun, dayTime) >= 1L);
+        /* A run stamped later than now means the world clock was set back, so the old stamp says nothing. */
+        return GameCalendar.hourOf(dayTime) == this.hour
+                && (lastRun < 0L || lastRun > dayTime || GameCalendar.hoursBetween(lastRun, dayTime) >= 1L);
     }
 
-    /** The hour of the day the world's clock is showing, counting from midnight. */
-    public static int hourOf(final long dayTime) {
-        return (int) ((dayTime % DAY_TICKS) / HOUR_TICKS + DAY_STARTS_AT) % 24;
-    }
-
-    /** Which day of the week it is, from 0 for the first. */
-    public static int dayOfWeek(final long dayTime) {
-        return (int) (dayTime / DAY_TICKS % 7L);
-    }
-
-    /** How many whole hours passed between two readings of the clock. */
-    public static long hoursBetween(final long from, final long to) {
-        return (to - from) / HOUR_TICKS;
-    }
-
-    /** How a person reads it. */
-    public String label() {
+    /** How a person reads it: the word for a job left running, or the hour and the days, which are data. */
+    public Text shown() {
         if (once()) {
-            return "running";
+            return RUNNING.text();
         }
         final String when = String.format(Locale.ROOT, "%02d:00", this.hour);
-        return this.days.isEmpty() ? when : when + " " + dayNames();
+        return Text.literal(this.days.isEmpty() ? when : when + " " + dayNames());
+    }
+
+    /** The same in English, the language a machine writes it down in. */
+    public String label() {
+        return shown().english();
     }
 
     /** The days as the letters a schedule is written with. */

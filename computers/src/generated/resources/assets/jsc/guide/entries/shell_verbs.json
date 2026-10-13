@@ -1,0 +1,290 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.shell_verbs.table1",
+      "heads": [
+        "jsc.guide.shell_verbs.table1_head1",
+        "jsc.guide.shell_verbs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "help"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "cls"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "version"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "echo"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "whoami"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "exit"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "set"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shell_verbs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.shell_verbs.table2",
+      "heads": [
+        "jsc.guide.shell_verbs.table2_head1",
+        "jsc.guide.shell_verbs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Tab"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+C"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+N"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+B"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+I"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+S"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.shell_verbs.table2_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/help"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shell_verbs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/cls"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/version"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text6"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/echo"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shell_verbs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text7"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/whoami"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text8"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/exit"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shell_verbs.heading4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.shell_verbs.definition1",
+      "term": "jsc.guide.shell_verbs.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_verbs.text10"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.shell_verbs.step1",
+        "jsc.guide.shell_verbs.step2",
+        "jsc.guide.shell_verbs.step3",
+        "jsc.guide.shell_verbs.step4"
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/set"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.shell_verbs.fix1",
+          "problem": "jsc.guide.shell_verbs.problem1"
+        },
+        {
+          "fix": "jsc.guide.shell_verbs.fix2",
+          "problem": "jsc.guide.shell_verbs.problem2"
+        },
+        {
+          "fix": "jsc.guide.shell_verbs.fix3",
+          "problem": "jsc.guide.shell_verbs.problem3"
+        },
+        {
+          "fix": "jsc.guide.shell_verbs.fix4",
+          "problem": "jsc.guide.shell_verbs.problem4"
+        },
+        {
+          "fix": "jsc.guide.shell_verbs.fix5",
+          "problem": "jsc.guide.shell_verbs.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:help_on_a_computer",
+        "jsc:network_verbs"
+      ]
+    }
+  ],
+  "id": "jsc:shell_verbs",
+  "order": 183,
+  "section": "jsc:prompt_system",
+  "title": "jsc.guide.shell_verbs.title"
+}

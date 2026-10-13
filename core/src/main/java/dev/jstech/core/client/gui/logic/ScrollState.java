@@ -38,7 +38,7 @@ public record ScrollState(int totalItems, int visibleRows, int offset) {
     }
 
     public ScrollState scrolledBy(final int delta) {
-        return new ScrollState(totalItems, visibleRows, offset + delta);
+        return new ScrollState(totalItems, visibleRows, Math.clamp((long) offset + delta, 0, maxOffset()));
     }
 
     public ScrollState scrolledToTop() {

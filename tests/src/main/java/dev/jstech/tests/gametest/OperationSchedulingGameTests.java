@@ -11,18 +11,17 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.hardware.DiskSize;
-import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
-import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.StorageNetworkFixture;
+import dev.jstech.tests.testkit.TestCli;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -36,7 +35,6 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * The Mainframe hands its queue slots out by priority: a HIGH request runs before MEDIUM ones submitted
@@ -56,54 +54,11 @@ public final class OperationSchedulingGameTests {
     private static final BlockPos MAINFRAME = new BlockPos(1, 2, 2);
     private static final BlockPos RACK = new BlockPos(3, 2, 2);
 
-    /**
-     * A running single-queue Mainframe cabled to one Server Rack whose server sits on HDD drives. The HDD
-     * seek latency (ten ticks) keeps an Operation visibly in flight for a while, so a test can look at who
-     * holds the queue mid-way; on NVMe a thirty-item pull is over the tick after it is granted.
-     * Package-private so the cancellation tests share the fixture.
-     */
-    static MainframeBlockEntity storageNetwork(final GameTestHelper helper) {
-        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final MainframeBlockEntity mainframe = world.placeRunningMainframe(MAINFRAME);
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
-        world.setBlock(RACK, ComputingModule.SERVER_RACK.get().defaultBlockState()
-                .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST)); // cables attach through the rear
-        final ServerRackBlockEntity rack = world.blockEntity(RACK, ServerRackBlockEntity.class);
-        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
-        rack.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        rack.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        return mainframe;
-    }
-
-    static ServerRackBlockEntity rack(final GameTestHelper helper) {
-        if (helper.getBlockEntity(RACK) instanceof ServerRackBlockEntity rack) {
-            return rack;
-        }
-        throw new IllegalStateException("no rack at " + RACK);
-    }
-
-    static ExternalDataPort port(final ItemStackHandler handler) {
-        return new ExternalDataPort(handler, null);
-    }
-
-    static ItemStackHandler fullHandler() {
-        final ItemStackHandler handler = new ItemStackHandler(1);
-        handler.setStackInSlot(0, new ItemStack(Items.STICK, 64));
-        return handler;
-    }
-
-    static int count(final ItemStackHandler handler) {
-        int total = 0;
-        for (int i = 0; i < handler.getSlots(); i++) {
-            total += handler.getStackInSlot(i).getCount();
-        }
-        return total;
-    }
-
     private static NetworkSelectOperation pull(final GameTestHelper helper, final MainframeBlockEntity mainframe,
                                                final ItemStackHandler dest, final String label,
                                                final OperationPriority priority) {
-        final NetworkSelectOperation op = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30, port(dest), label);
+        final NetworkSelectOperation op = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
+                StorageNetworkFixture.port(dest), label);
         helper.assertTrue(op != null, label + " dispatched");
         op.setPriority(priority);
         return op;
@@ -111,12 +66,13 @@ public final class OperationSchedulingGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void priority_highRequestRunsBeforeEarlierMediumOnes(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final ItemStackHandler first = new ItemStackHandler(9);
         final ItemStackHandler second = new ItemStackHandler(9);
         final ItemStackHandler urgent = new ItemStackHandler(9);
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> rack(helper).getServerStorage(0).insert(Items.COBBLESTONE, 100))
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
+                        .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     // Two ordinary requests first, then an urgent one: the urgent one must take the only queue.
                     pull(helper, mainframe, first, "first", OperationPriority.MEDIUM);
@@ -134,12 +90,17 @@ public final class OperationSchedulingGameTests {
                                     && records.get(1).status() == OperationRecord.STATUS_PENDING,
                             "both MEDIUM ops wait behind it; got " + records.get(0).status() + "/"
                                     + records.get(1).status());
-                    helper.assertTrue(count(first) == 0 && count(second) == 0,
+                    helper.assertTrue(StorageNetworkFixture.count(first) == 0
+                                    && StorageNetworkFixture.count(second) == 0,
                             "nothing has moved for the MEDIUM ops yet");
                 })
                 .thenExecuteAfter(120, () -> {
-                    helper.assertTrue(count(urgent) == 30 && count(first) == 30 && count(second) == 30,
-                            "every op delivered its 30; got " + count(urgent) + "/" + count(first) + "/" + count(second));
+                    final int deliveredUrgent = StorageNetworkFixture.count(urgent);
+                    final int deliveredFirst = StorageNetworkFixture.count(first);
+                    final int deliveredSecond = StorageNetworkFixture.count(second);
+                    helper.assertTrue(deliveredUrgent == 30 && deliveredFirst == 30 && deliveredSecond == 30,
+                            "every op delivered its 30; got " + deliveredUrgent + "/" + deliveredFirst + "/"
+                                    + deliveredSecond);
                     // The log is newest-first: the HIGH op settled first, then the MEDIUM ones in submission order.
                     final List<OperationRecord> log = mainframe.recentOperations();
                     helper.assertTrue(log.size() >= 3, "all three ops logged; got " + log.size());
@@ -155,12 +116,13 @@ public final class OperationSchedulingGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 160)
     public static void priority_promotingAQueuedOpTakesTheSlotNextTick(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = storageNetwork(helper);
-        final ItemStackHandler fullDest = fullHandler();
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
+        final ItemStackHandler fullDest = StorageNetworkFixture.fullHandler();
         final ItemStackHandler goodDest = new ItemStackHandler(9);
         final NetworkSelectOperation[] queued = new NetworkSelectOperation[1];
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> rack(helper).getServerStorage(0).insert(Items.COBBLESTONE, 100))
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
+                        .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     // op1 stalls against a full destination while holding the single queue; op2 waits behind it.
                     pull(helper, mainframe, fullDest, "full", OperationPriority.MEDIUM);
@@ -188,7 +150,8 @@ public final class OperationSchedulingGameTests {
                             "the stalled MEDIUM op yielded the queue; got " + records.get(0).status());
                 })
                 .thenExecuteAfter(40, () -> {
-                    helper.assertTrue(count(goodDest) == 30, "the promoted op delivered its 30; got " + count(goodDest));
+                    final int delivered = StorageNetworkFixture.count(goodDest);
+                    helper.assertTrue(delivered == 30, "the promoted op delivered its 30; got " + delivered);
                     final long left = NetworkStorage.of(helper.getLevel(), mainframe.networkUuid()).count(Items.COBBLESTONE);
                     helper.assertTrue(left == 70, "only the promoted op moved anything; left " + left);
                     final List<OperationRecord> log = mainframe.recentOperations();
@@ -197,12 +160,6 @@ public final class OperationSchedulingGameTests {
                             "the promoted op settled first, at the level it was given; log=" + log);
                 })
                 .thenSucceed();
-    }
-
-    private static boolean cliContains(final CliShell.Response response, final String needle) {
-        final String lower = needle.toLowerCase(Locale.ROOT);
-        return response.lines().stream()
-                .anyMatch(line -> line.text().toLowerCase(Locale.ROOT).contains(lower));
     }
 
     @GameTest(template = ARENA)
@@ -214,9 +171,9 @@ public final class OperationSchedulingGameTests {
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(MAINFRAME);
-        world.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        world.setBlock(hbw, ComputingModule.HBW_CABLE);
         world.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = world.placeRunningPersonalComputer(pc);
         world.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
@@ -232,7 +189,7 @@ public final class OperationSchedulingGameTests {
                     final ServerCliComputer cli = new ServerCliComputer((IComputerTerminalHost) computer, helper.getLevel());
                     final CliShell shell = CliCommands.newShell(50);
 
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone priority high", cli),
+                    helper.assertTrue(TestCli.contains(shell.run("operation select 30 cobblestone priority high", cli),
                             "SELECT queued"), "a SELECT with a PRIORITY clause queues");
                     final List<OperationRecord> records = mainframe.activeOperationRecords();
                     helper.assertTrue(records.size() == 1, "one op in flight; got " + records.size());
@@ -241,13 +198,15 @@ public final class OperationSchedulingGameTests {
                     helper.assertTrue(records.get(0).priority() == OperationPriority.HIGH,
                             "the statement's level reached the operation; got " + records.get(0).priority());
 
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
                             "a SELECT without the clause queues too");
                     final List<OperationRecord> both = mainframe.activeOperationRecords();
                     helper.assertTrue(both.size() == 2 && both.get(1).priority() == OperationPriority.MEDIUM,
                             "the default level is MEDIUM; got " + both);
 
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone priority urgent", cli),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 30 cobblestone priority urgent", cli),
                             "unknown priority level"), "an unknown level is a syntax error, not a queued op");
                     helper.assertTrue(mainframe.activeOperationRecords().size() == 2,
                             "the rejected statement queued nothing");

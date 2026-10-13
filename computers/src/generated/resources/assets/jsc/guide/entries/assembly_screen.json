@@ -1,0 +1,528 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text1"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.assembly_screen.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              1,
+              5,
+              0,
+              13,
+              15,
+              3
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon1"
+        },
+        {
+          "detail": "jsc.guide.assembly_screen.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              4,
+              10,
+              2,
+              9,
+              15,
+              7
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon2"
+        },
+        {
+          "detail": "jsc.guide.assembly_screen.balloon3_detail",
+          "number": 3,
+          "part": {
+            "box": [
+              9,
+              9,
+              1,
+              13,
+              15,
+              4
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon3"
+        },
+        {
+          "number": 4,
+          "part": {
+            "box": [
+              1,
+              7,
+              1,
+              11,
+              10,
+              5
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon4"
+        },
+        {
+          "number": 5,
+          "part": {
+            "box": [
+              1,
+              0,
+              1,
+              13,
+              4,
+              9
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon5"
+        },
+        {
+          "number": 6,
+          "part": {
+            "box": [
+              9,
+              0,
+              6,
+              14,
+              2,
+              11
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon6"
+        },
+        {
+          "detail": "jsc.guide.assembly_screen.balloon7_detail",
+          "number": 7,
+          "part": {
+            "box": [
+              8,
+              6,
+              1,
+              12,
+              8,
+              3
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon7"
+        },
+        {
+          "detail": "jsc.guide.assembly_screen.balloon8_detail",
+          "number": 8,
+          "part": {
+            "box": [
+              7,
+              12,
+              3,
+              16,
+              15,
+              13
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon8"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Hardware:{Size:15,Items:[{Slot:0,id:\"jsc:motherboard_atx_standard_lga1150\",count:1},{Slot:1,id:\"jsc:cpu_integra_centro_c5_4690k\",count:1},{Slot:2,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:3,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:6,id:\"jsc:gpu_vertex_gtx_970\",count:1},{Slot:10,id:\"jsc:psu_650g\",count:1},{Slot:11,id:\"jsc:disk_hdd_4t\",count:1},{Slot:12,id:\"jsc:disk_nvme_500g\",count:1},{Slot:13,id:\"jsc:internal_dvd_drive\",count:1}]},SidePanelOff:1b}",
+          "state": "jsc:personal_computer[facing=east]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        }
+      ],
+      "caption": "jsc.guide.assembly_screen.figure1",
+      "height": 130,
+      "view": {
+        "pitch": 20.0,
+        "yaw": -20.0,
+        "zoom": 1.2
+      }
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.assembly_screen.definition1",
+      "term": "jsc.guide.assembly_screen.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.assembly_screen.definition2",
+      "term": "jsc.guide.assembly_screen.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.assembly_screen.definition3",
+      "term": "jsc.guide.assembly_screen.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.assembly_screen.definition4",
+      "term": "jsc.guide.assembly_screen.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.assembly_screen.definition5",
+      "term": "jsc.guide.assembly_screen.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.assembly_screen.definition6",
+      "term": "jsc.guide.assembly_screen.term6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.assembly_screen.definition7",
+      "term": "jsc.guide.assembly_screen.term7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.assembly_screen.definition8",
+      "term": "jsc.guide.assembly_screen.term8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.assembly_screen.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.assembly_screen.table1",
+      "heads": [
+        "jsc.guide.assembly_screen.table1_head1",
+        "jsc.guide.assembly_screen.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "PC"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "CC"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "CMC"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "MAINFRAME"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "SERVER"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "SUPERCOMPUTER NODE"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.assembly_screen.table2",
+      "heads": [
+        "jsc.guide.assembly_screen.table2_head1",
+        "jsc.guide.assembly_screen.table2_head2",
+        "jsc.guide.assembly_screen.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "OFFLINE"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "READY"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "ONLINE"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table2_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.assembly_screen.table3",
+      "heads": [
+        "jsc.guide.assembly_screen.table3_head1",
+        "jsc.guide.assembly_screen.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "PWR"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "DISK"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "NET"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.assembly_screen.table4",
+      "heads": [
+        "jsc.guide.assembly_screen.table4_head1",
+        "jsc.guide.assembly_screen.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "CAPACITY"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "RAM BUFFER"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "NETWORK"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table4_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.assembly_screen.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text8"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.assembly_screen.table5",
+      "heads": [
+        "jsc.guide.assembly_screen.table5_head1",
+        "jsc.guide.assembly_screen.table5_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "AUTO START"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table5_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SIDE PANEL"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table5_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text13"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text14"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.assembly_screen.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text15"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.assembly_screen.heading4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.assembly_screen.step1",
+        "jsc.guide.assembly_screen.step2",
+        "jsc.guide.assembly_screen.step3",
+        "jsc.guide.assembly_screen.step4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.assembly_screen.fix1",
+          "problem": "jsc.guide.assembly_screen.problem1"
+        },
+        {
+          "fix": "jsc.guide.assembly_screen.fix2",
+          "problem": "jsc.guide.assembly_screen.problem2"
+        },
+        {
+          "fix": "jsc.guide.assembly_screen.fix3",
+          "problem": "jsc.guide.assembly_screen.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:first_computer",
+        "jsc:case_front",
+        "jsc:build_refusals"
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:assembly_screen",
+  "order": 13,
+  "section": "jsc:assembly",
+  "shows": [
+    "jsc:motherboard_atx_standard_lga1150",
+    "jsc:cpu_integra_centro_c5_4690k",
+    "jsc:ram_ddr3_8192",
+    "jsc:gpu_vertex_gtx_970",
+    "jsc:psu_650g"
+  ],
+  "title": "jsc.guide.assembly_screen.title"
+}

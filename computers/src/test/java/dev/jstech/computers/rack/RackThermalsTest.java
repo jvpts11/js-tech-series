@@ -11,22 +11,35 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
 class RackThermalsTest {
 
     @Test
-    void budgetWatts_addsOneCoolingUnitsWorthPerUnit() {
+    void budgetWatts_addsWhatTheCoolingUnitsShed() {
         assertEquals(RackThermals.PASSIVE_BUDGET_W, RackThermals.budgetWatts(0));
-        assertEquals(RackThermals.PASSIVE_BUDGET_W + RackThermals.COOLING_UNIT_BUDGET_W,
-                RackThermals.budgetWatts(1));
-        assertEquals(RackThermals.PASSIVE_BUDGET_W + 3 * RackThermals.COOLING_UNIT_BUDGET_W,
-                RackThermals.budgetWatts(3));
+        assertEquals(RackThermals.PASSIVE_BUDGET_W + 1_500, RackThermals.budgetWatts(1_500));
+        assertEquals(RackThermals.PASSIVE_BUDGET_W + 300 + 2_500, RackThermals.budgetWatts(300 + 2_500));
     }
 
     @Test
-    void budgetWatts_treatsANegativeCountAsNone() {
+    void budgetWatts_treatsANegativeSumAsNone() {
         assertEquals(RackThermals.PASSIVE_BUDGET_W, RackThermals.budgetWatts(-2));
+    }
+
+    @Test
+    void coolingUnitWatts_growsWithEachEra() {
+        assertEquals(300, RackThermals.coolingUnitWatts(HardwareEra.VINTAGE));
+        assertEquals(600, RackThermals.coolingUnitWatts(HardwareEra.LEGACY));
+        assertEquals(1_000, RackThermals.coolingUnitWatts(HardwareEra.TRANSITION));
+        assertEquals(1_500, RackThermals.coolingUnitWatts(HardwareEra.STANDARD));
+        assertEquals(2_500, RackThermals.coolingUnitWatts(HardwareEra.ADVANCED));
+    }
+
+    @Test
+    void coolingUnitWatts_holdsTheAdvancedFigurePastIt() {
+        assertEquals(2_500, RackThermals.coolingUnitWatts(HardwareEra.SINGULARITY));
     }
 
     @Test

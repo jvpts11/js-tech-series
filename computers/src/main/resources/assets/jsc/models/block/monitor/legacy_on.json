@@ -1,0 +1,6 @@
+{
+  "parent": "jsc:block/monitor/legacy",
+  "textures": {
+    "button": "jsc:block/monitor/legacy_button_on"
+  }
+}

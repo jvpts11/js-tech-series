@@ -1,0 +1,142 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_windows.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_windows.table1",
+      "heads": [
+        "jsc.guide.frames_windows.table1_head1",
+        "jsc.guide.frames_windows.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_windows.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_windows.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_windows.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_windows.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_windows.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_windows.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_windows.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.frames_windows.step1",
+        "jsc.guide.frames_windows.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_windows.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_windows.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_windows.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_windows.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_windows.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_windows.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_windows.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_windows.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_windows.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_windows.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_windows.fix1",
+          "problem": "jsc.guide.frames_windows.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_windows.fix2",
+          "problem": "jsc.guide.frames_windows.problem2"
+        }
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_windows.definition1",
+      "term": "jsc.guide.frames_windows.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_windows.definition2",
+      "term": "jsc.guide.frames_windows.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_windows.definition3",
+      "term": "jsc.guide.frames_windows.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_windows.definition4",
+      "term": "jsc.guide.frames_windows.term4"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:taskbar",
+        "jsc:frames_11"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:frames_windows",
+  "order": 155,
+  "section": "jsc:desktop_working",
+  "title": "jsc.guide.frames_windows.title"
+}

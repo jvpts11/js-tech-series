@@ -1,0 +1,488 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror_and_packages.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mirror_and_packages.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.mirror_and_packages.step1",
+        "jsc.guide.mirror_and_packages.step2",
+        "jsc.guide.mirror_and_packages.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror_and_packages.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mirror_and_packages.table1",
+      "heads": [
+        "jsc.guide.mirror_and_packages.table1_head1",
+        "jsc.guide.mirror_and_packages.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Mirror: not installed"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Mirror: serving"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Mirror: installed (Mainframe off)"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror_and_packages.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mirror_and_packages.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror_and_packages.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mirror_and_packages.table2",
+      "heads": [
+        "jsc.guide.mirror_and_packages.table2_head1",
+        "jsc.guide.mirror_and_packages.table2_head2",
+        "jsc.guide.mirror_and_packages.table2_head3",
+        "jsc.guide.mirror_and_packages.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "kde-plasma"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_1_4"
+          }
+        ],
+        [
+          {
+            "literal": "gnome"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_2_4"
+          }
+        ],
+        [
+          {
+            "literal": "cinnamon"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_3_4"
+          }
+        ],
+        [
+          {
+            "literal": "vim"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_4_4"
+          }
+        ],
+        [
+          {
+            "literal": "emacs"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_5_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_5_4"
+          }
+        ],
+        [
+          {
+            "literal": "screenfetch"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_6_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_6_4"
+          }
+        ],
+        [
+          {
+            "literal": "sgsc"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_7_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_7_4"
+          }
+        ],
+        [
+          {
+            "literal": "scc"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_8_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_8_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_8_4"
+          }
+        ],
+        [
+          {
+            "literal": "sigma"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_9_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_9_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_9_4"
+          }
+        ],
+        [
+          {
+            "literal": "mirror"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_10_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_10_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_10_4"
+          }
+        ],
+        [
+          {
+            "literal": "mines"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_11_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_11_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_11_4"
+          }
+        ],
+        [
+          {
+            "literal": "solitaire"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_12_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_12_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_12_4"
+          }
+        ],
+        [
+          {
+            "literal": "snake"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_13_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_13_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_13_4"
+          }
+        ],
+        [
+          {
+            "literal": "ark"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_14_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_14_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_14_4"
+          }
+        ],
+        [
+          {
+            "literal": "paint"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_15_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_15_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_15_4"
+          }
+        ],
+        [
+          {
+            "literal": "soundfoundry"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_16_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_16_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_16_4"
+          }
+        ],
+        [
+          {
+            "literal": "exceed"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_17_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_17_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_17_4"
+          }
+        ],
+        [
+          {
+            "literal": "messenger"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_18_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_18_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_18_4"
+          }
+        ],
+        [
+          {
+            "literal": "knot"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_19_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_19_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_19_4"
+          }
+        ],
+        [
+          {
+            "literal": "insights"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_20_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_20_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_20_4"
+          }
+        ],
+        [
+          {
+            "literal": "planner"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_21_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_21_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_21_4"
+          }
+        ],
+        [
+          {
+            "literal": "autoeng"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_22_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_22_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_22_4"
+          }
+        ],
+        [
+          {
+            "literal": "msgsvc"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_23_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_23_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_23_4"
+          }
+        ],
+        [
+          {
+            "literal": "iqlengine"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_24_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_24_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_24_4"
+          }
+        ],
+        [
+          {
+            "literal": "nextgreiql"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_25_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_25_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_25_4"
+          }
+        ],
+        [
+          {
+            "literal": "youriql"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_26_2"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_26_3"
+          },
+          {
+            "words": "jsc.guide.mirror_and_packages.table2_26_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror_and_packages.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror_and_packages.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mirror_and_packages.fix1",
+          "problem": "jsc.guide.mirror_and_packages.problem1"
+        },
+        {
+          "fix": "jsc.guide.mirror_and_packages.fix2",
+          "problem": "jsc.guide.mirror_and_packages.problem2"
+        },
+        {
+          "fix": "jsc.guide.mirror_and_packages.fix3",
+          "problem": "jsc.guide.mirror_and_packages.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:apt",
+        "jsc:dnf",
+        "jsc:mirror",
+        "jsc:mainframes"
+      ]
+    }
+  ],
+  "id": "jsc:mirror_and_packages",
+  "order": 235,
+  "section": "jsc:linux_packages",
+  "title": "jsc.guide.mirror_and_packages.title"
+}

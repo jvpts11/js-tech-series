@@ -8,6 +8,8 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -24,10 +26,10 @@ import java.util.List;
 public record NetworkItemEntry(StorageKey key, long total, List<StorageShare> shares) {
 
     /** Where a data type lives: a server/storage label and how much of the type that one holds. */
-    public record StorageShare(String label, long qty) {
+    public record StorageShare(Text label, long qty) {
         public static final StreamCodec<RegistryFriendlyByteBuf, StorageShare> STREAM_CODEC =
                 StreamCodec.composite(
-                        ByteBufCodecs.STRING_UTF8, StorageShare::label,
+                        TextCodecs.STREAM_CODEC, StorageShare::label,
                         ByteBufCodecs.VAR_LONG, StorageShare::qty,
                         StorageShare::new);
     }

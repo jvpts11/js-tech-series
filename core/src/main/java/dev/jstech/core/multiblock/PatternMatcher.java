@@ -8,7 +8,9 @@
 package dev.jstech.core.multiblock;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Algorithm for matching a {@link MultiblockPattern} against a world (abstracted as an {@link IBlockProvider}) at a candidate controller position.
@@ -49,6 +51,7 @@ public final class PatternMatcher {
         int cwX = cWorld[0], cwY = cWorld[1], cwZ = cWorld[2];
 
         List<Long> slavePositions = new ArrayList<>();
+        Map<Long, PortKind> ports = new HashMap<>();
 
         for (int py = 0; py < pattern.sizeY(); py++) {
             for (int pz = 0; pz < pattern.sizeZ(); pz++) {
@@ -91,7 +94,7 @@ public final class PatternMatcher {
                      * Builder validation guarantees mapping is present, but
                      * be defensive in case of ill-constructed patterns.
                      */
-                    if (matcher == null || !matcher.matches(actualBlockId)) {
+                    if (matcher == null || !matcher.matchesAt(provider, worldEncoded, actualBlockId)) {
                         return new IMatchResult.Failure(
                                 relX, relY, relZ,
                                 c,
@@ -99,11 +102,15 @@ public final class PatternMatcher {
                         );
                     }
                     slavePositions.add(worldEncoded);
+                    final PortKind port = pattern.ports().get(c);
+                    if (port != null) {
+                        ports.put(worldEncoded, port);
+                    }
                 }
             }
         }
 
-        return new IMatchResult.Success(rotation, slavePositions);
+        return new IMatchResult.Success(rotation, slavePositions, ports);
     }
 
     // Position encoding (Phase 0 only)
@@ -115,14 +122,11 @@ public final class PatternMatcher {
     }
 
     public static int[] decodePosition(long encoded) {
-        int x = (int) ((encoded >> 38) & 0x3FFFFFFL);
-        int y = (int) (encoded & 0xFFFL);
-        int z = (int) ((encoded >> 12) & 0x3FFFFFFL);
-
-        // Sign-extend 26-bit x and z, and 12-bit y.
-        if ((x & 0x2000000) != 0) x |= 0xFC000000;
-        if ((z & 0x2000000) != 0) z |= 0xFC000000;
-        if ((y & 0x800) != 0) y |= 0xFFFFF000;
+        // Each field is moved up to the top of the long and shifted back down arithmetically, which sign-extends it:
+        // x already sits at the top (26 bits), z is the 26 bits under it and y the 12 at the bottom.
+        final int x = (int) (encoded >> 38);
+        final int y = (int) (encoded << 52 >> 52);
+        final int z = (int) (encoded << 26 >> 38);
 
         return new int[] { x, y, z };
     }

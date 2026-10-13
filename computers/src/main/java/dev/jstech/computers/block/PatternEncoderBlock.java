@@ -11,37 +11,38 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.menu.PatternEncoderMenu;
+import dev.jstech.computers.os.media.DiscTray;
+import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.ITrayBlock;
 import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.StandingTray;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.content.Device;
+import dev.jstech.core.content.DeviceBlock;
+import dev.jstech.core.content.IStandingParts;
 import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.peripheral.PeripheralCableType;
-import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -50,23 +51,62 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The Pattern Encoder block: the burner a computer's Pattern Studio sends finished recipe files to. One block
- * per hardware era, each writing the media of its day. A click with a disc the era accepts puts it in the bay,
+ * per hardware era, each writing the media of its day. A click with a medium the era accepts puts it in the bay,
  * a sneak-click takes it out (unless a job holds it), and a plain click opens the bay's small panel.
+ *
+ * <p>From the Legacy era on the encoder burns discs, which lie on a tray: a click on the eject button on its front
+ * opens and closes the tray, and a disc is laid on it or lifted off it only while it is out. A stick goes into its
+ * port whatever the tray is doing.
  */
-public class PatternEncoderBlock extends HorizontalDirectionalBlock implements EntityBlock, IPeripheralConnectable,
-        IEraChassisBlock {
+@TextHolder
+public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock, ITrayBlock,
+        IStandingParts {
+
+    private final HardwareEra era;
+    private final FacePorts ports;
 
     public static final MapCodec<PatternEncoderBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
     ).apply(i, PatternEncoderBlock::new));
 
-    private final HardwareEra era;
+    /** The encoder's block entity, ticking its link and its jobs, with the bay's panel as its menu. */
+    private static final Device<PatternEncoderBlockEntity> DEVICE =
+            Device.of(() -> ComputingModule.PATTERN_ENCODER_BE.get())
+                    .ticks(PatternEncoderBlockEntity::serverTick)
+                    .opensMenu(PatternEncoderMenu::new);
+
+    private static final TextKey WRITING_WAIT = TextKey.of("jsc.pattern_encoder.writing_wait",
+            "The encoder is writing - wait for it to finish.");
+    private static final TextKey BAY_FULL = TextKey.of("jsc.pattern_encoder.bay_full",
+            "The bay already holds a disc - sneak-click to eject it.");
+    private static final TextKey READ_ONLY = TextKey.of("jsc.pattern_encoder.read_only",
+            "That disc is read-only and cannot be written.");
+    private static final TextKey VINTAGE_ONLY =
+            TextKey.of("jsc.pattern_encoder.vintage_only", "A Vintage encoder writes floppy disks only.");
+    private static final TextKey LEGACY_ONLY =
+            TextKey.of("jsc.pattern_encoder.legacy_only", "A Legacy encoder writes CDs only.");
+    private static final TextKey TRANSITION_ONLY =
+            TextKey.of("jsc.pattern_encoder.transition_only", "A Transition encoder writes DVDs and CDs only.");
+    private static final TextKey STANDARD_ONLY = TextKey.of("jsc.pattern_encoder.standard_only",
+            "This encoder writes DVDs, CDs and USB sticks, not that.");
+    private static final TextKey ADVANCED_ONLY = TextKey.of("jsc.pattern_encoder.advanced_only",
+            "An Advanced encoder writes Blu-ray discs and USB sticks only.");
+
+    /*
+     * The eject button beside the tray, where each era's model draws it: on the Legacy burner below the tray's right
+     * end, on the later ones a little higher and further right. Each front is set a pixel back in its case.
+     */
+    private static final EjectButton LEGACY_BUTTON = new EjectButton(46, 24, 54, 27, 4);
+    private static final EjectButton LATER_BUTTON = new EjectButton(48, 23, 56, 25, 4);
+    /* Each era's tray as its model slides it out, seven model pixels, with the disc lying on it. */
+    private static final StandingTray LEGACY_TRAY = new StandingTray(new FrontArea(10, 12, 52, 20), 24);
+    private static final StandingTray LATER_TRAY = new StandingTray(new FrontArea(8, 12, 46, 20), 24);
 
     public PatternEncoderBlock(final Properties properties, final HardwareEra era) {
-        super(properties);
+        super(properties, DEVICE);
         this.era = era;
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        this.ports = PeripheralSockets.back(era);
     }
 
     /** The era of this encoder, which decides which media it writes. */
@@ -79,19 +119,56 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
         return era;
     }
 
+    /** The device port of its era, in the middle of its back. */
     @Override
-    protected MapCodec<PatternEncoderBlock> codec() {
+    public FacePorts ports() {
+        return ports;
+    }
+
+    /** The button of its tray; the Vintage encoder writes floppies, which go through a slot, and has none. */
+    @Override
+    @Nullable
+    public EjectButton ejectButton() {
+        return switch (era) {
+            case VINTAGE -> null;
+            case LEGACY -> LEGACY_BUTTON;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> LATER_BUTTON;
+        };
+    }
+
+    @Override
+    @Nullable
+    public StandingTray standingTray() {
+        return switch (era) {
+            case VINTAGE -> null;
+            case LEGACY -> LEGACY_TRAY;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> LATER_TRAY;
+        };
+    }
+
+    /* Its tray, once open, stands out of the block, and is looked at and clicked as the encoder's own. */
+    @Override
+    public List<AABB> standingParts(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        final StandingTray tray = standingTray();
+        return tray != null && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder
+                && encoder.tray().isOpen() ? List.of(tray.box(state.getValue(FACING))) : List.of();
+    }
+
+    /**
+     * The eject button pressed, from the block or from the bay's panel: the tray rides out, or back in, unless the head
+     * is on the disc, which the encoder does not give up mid-write.
+     */
+    public static void pressEjectButton(final PatternEncoderBlockEntity encoder, final Player player) {
+        if (encoder.locked()) {
+            player.displayClientMessage(GameText.component(WRITING_WAIT), true);
+            return;
+        }
+        encoder.tray().press(encoder.getLevel(), encoder.getBlockPos());
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
         return CODEC;
-    }
-
-    @Override
-    public PeripheralCableType peripheralType() {
-        return PeripheralCableType.COMPUTING;
-    }
-
-    @Override
-    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
     }
 
     /** The body is one model drawn by the block entity; the block itself paints nothing over it. */
@@ -112,11 +189,6 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
     }
 
     @Override
-    public BlockState getStateForPlacement(final BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
-    }
-
-    @Override
     protected ItemInteractionResult useItemOn(final ItemStack heldStack, final BlockState state, final Level level,
                                               final BlockPos pos, final Player player, final InteractionHand hand,
                                               final BlockHitResult hit) {
@@ -126,101 +198,84 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
         if (!(level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
+        // The eject button answers whatever the hand holds, as a real one does.
+        final EjectButton button = ejectButton();
+        if (button != null && DeviceFront.presses(button, state, pos, hit, player.getEyePosition())) {
+            pressEjectButton(encoder, player);
+            return ItemInteractionResult.SUCCESS;
+        }
+        // The open tray pushed with an empty hand slides back in, as a real one does, and opens no panel.
+        if (heldStack.isEmpty() && !player.isShiftKeyDown()
+                && DeviceFront.partAt(standingParts(state, level, pos), pos, hit.getLocation()) >= 0) {
+            pressEjectButton(encoder, player);
+            return ItemInteractionResult.SUCCESS;
+        }
         if (player.isShiftKeyDown()) {
-            if (encoder.locked()) {
-                player.displayClientMessage(Component.literal("The encoder is writing - wait for it to finish."), true);
-                return ItemInteractionResult.SUCCESS;
-            }
-            final ItemStack ejected = encoder.ejectMedia();
-            if (!ejected.isEmpty() && !player.addItem(ejected)) {
-                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, ejected);
-            }
+            eject(encoder, level, pos, player);
             return ItemInteractionResult.SUCCESS;
         }
         if (encoder.acceptsMedia(heldStack)) {
+            if (!encoder.tray().reaches(heldStack)) {
+                player.displayClientMessage(GameText.component(DiscTray.CLOSED), true);
+                return ItemInteractionResult.SUCCESS;
+            }
             final ItemStack left = encoder.insertMedia(heldStack.copyWithCount(1));
             if (left.isEmpty()) {
                 heldStack.shrink(1);
                 return ItemInteractionResult.SUCCESS;
             }
-            player.displayClientMessage(Component.literal("The bay already holds a disc - sneak-click to eject it."), true);
+            player.displayClientMessage(GameText.component(BAY_FULL), true);
             return ItemInteractionResult.SUCCESS;
         }
         if (heldStack.getItem() instanceof MediaItem) {
             // A refused disc says why; a silent click reads as a broken block.
-            player.displayClientMessage(Component.literal(refusal(heldStack)), true);
+            player.displayClientMessage(GameText.component(refusal(heldStack)), true);
             return ItemInteractionResult.SUCCESS;
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
-    /** What to tell a player whose disc the bay refused. */
-    private String refusal(final ItemStack held) {
-        if (held.getItem() instanceof FormattedMediaItem fmt
-                && !fmt.writable()) {
-            return "That disc is read-only and cannot be written.";
-        }
-        return switch (era) {
-            case VINTAGE -> "A Vintage encoder writes floppy disks only.";
-            case LEGACY -> "A Legacy encoder writes CDs only.";
-            default -> "This encoder writes DVDs, CDs and USB sticks, not that.";
-        };
-    }
-
     @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player, final BlockHitResult hit) {
-        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder) {
-            if (player.isShiftKeyDown()) {
-                if (encoder.locked()) {
-                    player.displayClientMessage(Component.literal("The encoder is writing - wait for it to finish."), true);
-                    return InteractionResult.sidedSuccess(false);
-                }
-                final ItemStack ejected = encoder.ejectMedia();
-                if (!ejected.isEmpty() && !player.addItem(ejected)) {
-                    Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, ejected);
-                }
-                return InteractionResult.sidedSuccess(false);
-            }
-            serverPlayer.openMenu(
-                    new SimpleMenuProvider(
-                            (id, inventory, p) -> new PatternEncoderMenu(
-                                    id, inventory, encoder),
-                            Component.translatable(getDescriptionId())),
-                    buf -> buf.writeBlockPos(pos));
+        if (!player.isShiftKeyDown()) {
+            return super.useWithoutItem(state, level, pos, player, hit);
+        }
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder) {
+            eject(encoder, level, pos, player);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
-    @Override
-    protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
-                            final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder) {
-            encoder.dropContents(level, pos);
-            if (level instanceof ServerLevel serverLevel) {
-                encoder.unlink(serverLevel); // free the computer's endpoint slot
-            }
+    /** Gives the medium back to {@code player}, or says why the bay keeps it. */
+    private static void eject(final PatternEncoderBlockEntity encoder, final Level level, final BlockPos pos,
+                              final Player player) {
+        if (encoder.locked()) {
+            player.displayClientMessage(GameText.component(WRITING_WAIT), true);
+            return;
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        if (!encoder.tray().reaches(encoder.mediaStack())) {
+            player.displayClientMessage(GameText.component(DiscTray.CLOSED), true);
+            return;
+        }
+        final ItemStack ejected = encoder.ejectMedia();
+        if (!ejected.isEmpty() && !player.addItem(ejected)) {
+            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, ejected);
+        }
     }
 
-    @Override
-    @Nullable
-    public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
-        return new PatternEncoderBlockEntity(pos, state);
-    }
-
-    @Override
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(final Level level, final BlockState state,
-                                                                  final BlockEntityType<T> type) {
-        if (level.isClientSide()) {
-            return null;
+    /** What to tell a player whose disc the bay refused. */
+    private TextKey refusal(final ItemStack held) {
+        if (held.getItem() instanceof FormattedMediaItem fmt
+                && !fmt.writable()) {
+            return READ_ONLY;
         }
-        return type == ComputingModule.PATTERN_ENCODER_BE.get()
-                ? (lvl, pos, st, be) -> PatternEncoderBlockEntity.serverTick(lvl, pos, st, (PatternEncoderBlockEntity) be)
-                : null;
+        return switch (era) {
+            case VINTAGE -> VINTAGE_ONLY;
+            case LEGACY -> LEGACY_ONLY;
+            case TRANSITION -> TRANSITION_ONLY;
+            case STANDARD -> STANDARD_ONLY;
+            case ADVANCED, EXA, SINGULARITY -> ADVANCED_ONLY;
+        };
     }
 }

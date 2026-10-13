@@ -1,0 +1,125 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_cooling_and_heat.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.rack_cooling_and_heat.definition1",
+      "term": "jsc.guide.rack_cooling_and_heat.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_cooling_and_heat.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.rack_cooling_and_heat.table1",
+      "heads": [
+        "jsc.guide.rack_cooling_and_heat.table1_head1",
+        "jsc.guide.rack_cooling_and_heat.table1_head2",
+        "jsc.guide.rack_cooling_and_heat.table1_head3"
+      ],
+      "source": "jsc:cooling_units"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_cooling_and_heat.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.rack_cooling_and_heat.table2",
+      "heads": [
+        "jsc.guide.rack_cooling_and_heat.table2_head1",
+        "jsc.guide.rack_cooling_and_heat.table2_head2",
+        "jsc.guide.rack_cooling_and_heat.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.rack_cooling_and_heat.table2_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_cooling_and_heat.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.rack_cooling_and_heat.fix1",
+          "problem": "jsc.guide.rack_cooling_and_heat.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:rack_equipment",
+        "jsc:server_racks"
+      ]
+    }
+  ],
+  "id": "jsc:rack_cooling_and_heat",
+  "order": 32,
+  "section": "jsc:racks",
+  "title": "jsc.guide.rack_cooling_and_heat.title"
+}

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -193,8 +194,8 @@ class CoreEventDispatcherTest {
         CoreEventDispatcher dispatcher = new CoreEventDispatcher();
         AtomicInteger kept = new AtomicInteger();
         AtomicInteger dropped = new AtomicInteger();
-        java.util.function.Consumer<IOperationLifecycleEvent.Created> keep = e -> kept.incrementAndGet();
-        java.util.function.Consumer<IOperationLifecycleEvent.Created> drop = e -> dropped.incrementAndGet();
+        Consumer<IOperationLifecycleEvent.Created> keep = e -> kept.incrementAndGet();
+        Consumer<IOperationLifecycleEvent.Created> drop = e -> dropped.incrementAndGet();
         dispatcher.subscribe(IOperationLifecycleEvent.Created.class, keep);
         dispatcher.subscribe(IOperationLifecycleEvent.Created.class, drop);
 
@@ -207,9 +208,23 @@ class CoreEventDispatcherTest {
     }
 
     @Test
+    void unsubscribe_listenerSubscribedTwice_keepsTheOtherRegistration() {
+        CoreEventDispatcher dispatcher = new CoreEventDispatcher();
+        AtomicInteger count = new AtomicInteger();
+        Consumer<IOperationLifecycleEvent.Created> twice = e -> count.incrementAndGet();
+        dispatcher.subscribe(IOperationLifecycleEvent.Created.class, twice);
+        dispatcher.subscribe(IOperationLifecycleEvent.Created.class, twice);
+
+        dispatcher.unsubscribe(IOperationLifecycleEvent.Created.class, twice);
+        dispatcher.post(created());
+
+        assertEquals(1, count.get());
+    }
+
+    @Test
     void unsubscribe_lastListenerDropsTheClass() {
         CoreEventDispatcher dispatcher = new CoreEventDispatcher();
-        java.util.function.Consumer<IOperationLifecycleEvent.Created> only = e -> { };
+        Consumer<IOperationLifecycleEvent.Created> only = e -> { };
         dispatcher.subscribe(IOperationLifecycleEvent.Created.class, only);
         dispatcher.unsubscribe(IOperationLifecycleEvent.Created.class, only);
         assertEquals(0, dispatcher.subscribedClassCount());

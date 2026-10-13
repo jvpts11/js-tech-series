@@ -1,0 +1,76 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_dispose.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_dispose.definition1",
+      "term": "jsc.guide.sigma_dispose.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_dispose.text2"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "namespace Work;",
+        "",
+        "class Scratch",
+        "{",
+        "    public int Size;",
+        "    public Scratch(int size) { Size = size; }",
+        "}",
+        "",
+        "class Work",
+        "{",
+        "    static void Main()",
+        "    {",
+        "        Scratch scratch = new Scratch(4096);",
+        "        dispose scratch;",
+        "    }",
+        "}"
+      ],
+      "name": "Work.sg"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_dispose.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_dispose.fix1",
+          "problem": "jsc.guide.sigma_dispose.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_dispose.fix2",
+          "problem": "jsc.guide.sigma_dispose.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_dispose.fix3",
+          "problem": "jsc.guide.sigma_dispose.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_no_exceptions",
+        "jsc:sigma_runtime_stops"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_dispose",
+  "order": 349,
+  "section": "jsc:sigma_failures",
+  "title": "jsc.guide.sigma_dispose.title"
+}

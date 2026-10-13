@@ -1,0 +1,13 @@
+{
+  "blocksBottom": "#FF173FA6",
+  "blocksEdge": "#FFB4B8C0",
+  "blocksMiddle": "#FF2F6FE8",
+  "blocksTop": "#FF8CBBFF",
+  "blocksTrack": "#FF000000",
+  "hazardBlack": "#FF161616",
+  "hazardEmpty": "#FF3A3A3A",
+  "hazardYellow": "#FFF2C200",
+  "plainEdge": "#FF3A4452",
+  "plainFill": "#FF39D6C4",
+  "plainTrack": "#FF101418"
+}

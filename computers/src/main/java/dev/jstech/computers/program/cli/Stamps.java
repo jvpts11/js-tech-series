@@ -16,7 +16,7 @@ import java.util.Locale;
  * for the listing. It lives on its own so that stays true: a stamp written by one shell and read at another
  * is the same stamp, not two spellings of one.
  */
-final class Stamps {
+public final class Stamps {
 
     /** How many ticks a day is here. */
     private static final long DAY = 24_000L;
@@ -36,13 +36,23 @@ final class Stamps {
      * <p>A stamp of nought is a file whose hour nobody knows: one the system itself put there, or one
      * written before any of them were stamped. It says so rather than claiming the first morning.
      */
-    static String of(final long ticks) {
+    public static String of(final long ticks) {
         if (ticks <= 0L) {
             return "  --  ";
         }
+        return String.format(Locale.ROOT, "Day %d  %s", day(ticks), clock(ticks));
+    }
+
+    /** The world's day a moment falls on, counted from zero: the first morning is day zero. */
+    public static long day(final long ticks) {
+        return ticks / DAY;
+    }
+
+    /** The hour and minute on the world's clock at a moment, as {@code 08:15}. */
+    public static String clock(final long ticks) {
         final long timeOfDay = ticks % DAY;
         final long hour = ((timeOfDay / HOUR) + DAWN) % 24L;
         final long minute = (timeOfDay % HOUR) * 60L / HOUR;
-        return String.format(Locale.ROOT, "Day %d  %02d:%02d", ticks / DAY, hour, minute);
+        return String.format(Locale.ROOT, "%02d:%02d", hour, minute);
     }
 }

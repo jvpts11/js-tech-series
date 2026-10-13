@@ -1,0 +1,303 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_which_machine.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_which_machine.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_which_machine.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_which_machine.table1",
+      "heads": [
+        "jsc.guide.frames_which_machine.table1_head1",
+        "jsc.guide.frames_which_machine.table1_head2",
+        "jsc.guide.frames_which_machine.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_which_machine.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_which_machine.table2",
+      "heads": [
+        "jsc.guide.frames_which_machine.table2_head1",
+        "jsc.guide.frames_which_machine.table2_head2",
+        "jsc.guide.frames_which_machine.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table2_1_1"
+          },
+          {
+            "amount": 32,
+            "unit": "MB"
+          },
+          {
+            "amount": 48,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table2_2_1"
+          },
+          {
+            "amount": 128,
+            "unit": "MB"
+          },
+          {
+            "amount": 1536,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table2_3_1"
+          },
+          {
+            "amount": 1024,
+            "unit": "MB"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table2_4_1"
+          },
+          {
+            "amount": 3072,
+            "unit": "MB"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table2_5_1"
+          },
+          {
+            "amount": 8192,
+            "unit": "MB"
+          },
+          {
+            "amount": 20480,
+            "unit": "MB"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_which_machine.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_which_machine.table3",
+      "heads": [
+        "jsc.guide.frames_which_machine.table3_head1",
+        "jsc.guide.frames_which_machine.table3_head2",
+        "jsc.guide.frames_which_machine.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_2_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_3_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_4_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_which_machine.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_5_2"
+          },
+          {
+            "words": "jsc.guide.frames_which_machine.table3_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_which_machine.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_which_machine.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_which_machine.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_which_machine.definition1",
+      "term": "jsc.guide.frames_which_machine.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_which_machine.definition2",
+      "term": "jsc.guide.frames_which_machine.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_which_machine.definition3",
+      "term": "jsc.guide.frames_which_machine.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_which_machine.definition4",
+      "term": "jsc.guide.frames_which_machine.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_which_machine.definition5",
+      "term": "jsc.guide.frames_which_machine.term5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_which_machine.fix1",
+          "problem": "jsc.guide.frames_which_machine.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_which_machine.fix2",
+          "problem": "jsc.guide.frames_which_machine.problem2"
+        },
+        {
+          "fix": "jsc.guide.frames_which_machine.fix3",
+          "problem": "jsc.guide.frames_which_machine.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_setup_95_xp",
+        "jsc:frames_setup_7_10_11",
+        "jsc:eras"
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:frames_which_machine",
+  "order": 141,
+  "section": "jsc:midsoft_installs",
+  "title": "jsc.guide.frames_which_machine.title"
+}

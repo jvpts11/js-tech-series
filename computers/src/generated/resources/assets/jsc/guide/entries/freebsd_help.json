@@ -1,0 +1,162 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_help.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.freebsd_help.definition1",
+      "term": "jsc.guide.freebsd_help.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_help.text2"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "text": "help: not found. Try: apropos <word>, or man intro"
+        }
+      ],
+      "look": "jsc:guide/terminal/sh",
+      "title": "FreeBSD"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.freebsd_help.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.freebsd_help.table1",
+      "heads": [
+        "jsc.guide.freebsd_help.table1_head1",
+        "jsc.guide.freebsd_help.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "apropos <word>"
+          },
+          {
+            "words": "jsc.guide.freebsd_help.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "man <command>"
+          },
+          {
+            "words": "jsc.guide.freebsd_help.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "man intro"
+          },
+          {
+            "words": "jsc.guide.freebsd_help.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "whatis <command>"
+          },
+          {
+            "words": "jsc.guide.freebsd_help.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.freebsd_help.step1",
+        "jsc.guide.freebsd_help.step2",
+        "jsc.guide.freebsd_help.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_help.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.freebsd_help.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_help.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.freebsd_help.table2",
+      "heads": [
+        "jsc.guide.freebsd_help.table2_head1",
+        "jsc.guide.freebsd_help.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "help: not found. Try: apropos <word>, or man intro"
+          },
+          {
+            "words": "jsc.guide.freebsd_help.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "<text>: nothing appropriate."
+          },
+          {
+            "words": "jsc.guide.freebsd_help.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "No manual entry for <word>"
+          },
+          {
+            "words": "jsc.guide.freebsd_help.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.freebsd_help.fix1",
+          "problem": "jsc.guide.freebsd_help.problem1"
+        },
+        {
+          "fix": "jsc.guide.freebsd_help.fix2",
+          "problem": "jsc.guide.freebsd_help.problem2"
+        },
+        {
+          "fix": "jsc.guide.freebsd_help.fix3",
+          "problem": "jsc.guide.freebsd_help.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:help_on_a_computer",
+        "jsc:finding_help_overview",
+        "jsc:man_pages",
+        "jsc:whatis_and_apropos",
+        "jsc:pipes_and_variables"
+      ]
+    }
+  ],
+  "id": "jsc:freebsd_help",
+  "order": 279,
+  "section": "jsc:freebsd_tools",
+  "title": "jsc.guide.freebsd_help.title"
+}

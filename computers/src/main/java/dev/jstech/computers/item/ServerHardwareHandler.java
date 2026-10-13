@@ -7,16 +7,21 @@
  */
 package dev.jstech.computers.item;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.PartRefusals;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.text.TextKey;
 import java.util.Set;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An item-handler view over the hardware of the Server item held in a player's hand, used by the Server assembly GUI.
@@ -62,7 +67,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         if (!writable()) {
             return; // the Server left the hand (picked up); ignore the write
         }
-        held().set(ComputingModule.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(items));
+        held().set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(items));
     }
 
     private NonNullList<ItemStack> snapshot() {
@@ -126,26 +131,70 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         if (slot == PSU) {
             return stack.getItem() instanceof PsuItem;
         }
+        /*
+         * A processor, memory or a card takes the board's socket, memory and bus, as in every other computer: a part
+         * that cannot go in the board stays out of its slot rather than going in only to keep the server from
+         * starting. With no board yet, anything of the kind is staged.
+         */
+        final MotherboardSpec board = getStackInSlot(MOBO).getItem() instanceof MotherboardItem seated
+                ? seated.spec() : null;
         if (slot >= CPU_START && slot < CPU_START + CPU) {
-            return stack.getItem() instanceof CpuItem;
+            return stack.getItem() instanceof CpuItem cpu && (board == null
+                    || cpu.spec().socket().equals(board.socket()) && cpu.spec().era() == board.era());
         }
         if (slot >= RAM_START && slot < RAM_START + RAM) {
-            return stack.getItem() instanceof RamItem;
+            return stack.getItem() instanceof RamItem ram && (board == null
+                    || board.acceptedRam().contains(ram.spec().generation()) && ram.spec().era() == board.era());
         }
         if (slot >= GPU_START && slot < GPU_START + GPU) {
             /*
-             * The expansion slots take a GPU in any server. The crafting co-processor is the one card
+             * The expansion slots take a GPU or a storage card in any server; the fibre comes into a rack through
+             * a Fibre Optic Interface, never a server's network card. The crafting co-processor is the one card
              * reserved to a chassis: it goes only in a Supercomputer Node, whose single expansion slot
              * exists for it, and accepting GPUs alone here left that slot unable to seat anything.
              */
             if (stack.getItem() instanceof PhiCoprocessorItem) {
-                return ServerItem.chassisOf(held())
-                        == RackChassis.SUPERCOMPUTER_NODE
-                        && !holdsCoprocessorOutside(slot);
+                final RackChassis chassis = ServerItem.chassisOf(held());
+                return chassis != null && chassis.isSupercomputerNode() && !holdsCoprocessorOutside(slot);
             }
-            return stack.getItem() instanceof GpuItem;
+            return isServerCard(stack.getItem()) && stack.getItem() instanceof IExpansionCardItem card
+                    && (board == null || board.takes(card.cardSpec()));
         }
         return false;
+    }
+
+    /**
+     * Why {@code stack} stays out of {@code slot}, for the player holding it there: the rule of {@link #isItemValid}
+     * it breaks, read in the order that method reads them; null when it goes in.
+     */
+    @Nullable
+    public TextKey refusal(final int slot, final ItemStack stack) {
+        if (stack.isEmpty() || isItemValid(slot, stack)) {
+            return null;
+        }
+        final Item item = stack.getItem();
+        if (slot == MOBO) {
+            return item instanceof MotherboardItem ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (slot >= CPU_START && slot < CPU_START + CPU) {
+            return item instanceof CpuItem ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (slot >= RAM_START && slot < RAM_START + RAM) {
+            return item instanceof RamItem ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (slot >= GPU_START && slot < GPU_START + GPU) {
+            if (item instanceof PhiCoprocessorItem) {
+                final RackChassis chassis = ServerItem.chassisOf(held());
+                return chassis != null && chassis.isSupercomputerNode() ? PartRefusals.ONE_PHI : PartRefusals.PHI;
+            }
+            return isServerCard(item) ? PartRefusals.CARD_BUS : PartRefusals.SERVER_CARD;
+        }
+        return PartRefusals.NOT_THIS_SLOT;
+    }
+
+    /* The kinds of card a server's expansion slots take, a bus that fits the board aside. */
+    private static boolean isServerCard(final Item item) {
+        return item instanceof GpuItem || item instanceof StorageCardItem;
     }
 
     /**

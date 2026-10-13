@@ -43,20 +43,20 @@ public record GraphScale(double minValue, double maxValue) {
         return heightPixels * (1.0 - t);
     }
 
+    /**
+     * The scale that spans the finite values; NaN and the infinities are ignored whatever their place, and a list with
+     * none gives an empty scale.
+     */
     public static GraphScale fromData(final double[] values) {
-        if (values.length == 0) {
-            return new GraphScale(0.0, 0.0);
-        }
-        double min = values[0];
-        double max = values[0];
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
         for (final double v : values) {
-            if (v < min) {
-                min = v;
+            if (!Double.isFinite(v)) {
+                continue;
             }
-            if (v > max) {
-                max = v;
-            }
+            min = Math.min(min, v);
+            max = Math.max(max, v);
         }
-        return new GraphScale(min, max);
+        return min > max ? new GraphScale(0.0, 0.0) : new GraphScale(min, max);
     }
 }

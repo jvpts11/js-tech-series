@@ -9,20 +9,26 @@ package dev.jstech.tests.testkit;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
+import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.industrial.IndustrialModule;
-import dev.jstech.industrial.blockentity.AbstractMachineBlockEntity;
+import dev.jstech.core.machine.MachineBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -71,7 +77,7 @@ public final class BigBaseScenario {
      * @param driveSize       the size of every drive
      * @param maxLot          the most items one seeded key gets; the average lot is half of it
      * @param feedstock       logs and copper ingots seeded for the crafting traffic
-     * @param machineDesks    Crafting Computers with a Compressor behind a crafting switch
+     * @param machineDesks    Crafting Computers with a Compressor fed by a Crafting Interface
      * @param mainframeGpus   graphics cards in the Mainframe: each one is another parallel operation queue
      */
     public record Params(Layout layout, Chassis chassis, int routers, int racksPerRouter, int serversPerRack,
@@ -152,7 +158,7 @@ public final class BigBaseScenario {
                         List<ServerRackBlockEntity> nodeRacks, List<HbwInterfaceBlockEntity> hubs,
                         List<PersonalComputerBlockEntity> personalComputers,
                         List<CraftingComputerBlockEntity> craftingComputers,
-                        List<AbstractMachineBlockEntity> machines, @Nullable ProcessingPattern processing,
+                        List<MachineBlockEntity> machines, @Nullable ProcessingPattern processing,
                         List<StorageKey> catalog) {
 
         /**
@@ -173,7 +179,7 @@ public final class BigBaseScenario {
             final List<Runnable> hooks = new ArrayList<>();
             if (!machines.isEmpty()) {
                 hooks.add(() -> {
-                    for (final AbstractMachineBlockEntity machine : machines) {
+                    for (final MachineBlockEntity machine : machines) {
                         machine.getEnergy().setEnergyStored(machine.getEnergy().getMaxEnergyStored());
                     }
                 });
@@ -262,7 +268,7 @@ public final class BigBaseScenario {
     private static Built buildWide(final TestWorldBuilder world, final Params params) {
         final MainframeBlockEntity mainframe = placeMainframe(world, params, new BlockPos(W_MAINFRAME_X, Y, W_BACKBONE_Z));
         for (int x = W_BACKBONE_X0; x <= W_BACKBONE_X1; x++) {
-            world.setBlock(new BlockPos(x, Y, W_BACKBONE_Z), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(x, Y, W_BACKBONE_Z), ComputingModule.HBW_CABLE);
         }
         final List<ServerRackBlockEntity> serverRacks = new ArrayList<>();
         for (int r = 0; r < params.routers(); r++) {
@@ -275,7 +281,7 @@ public final class BigBaseScenario {
             final int hx = W_HUB_X0 + s * PITCH;
             world.setBlock(new BlockPos(hx, Y, W_NORTH_ROW_Z), ComputingModule.HBW_INTERFACE.get());
             hubs.add(world.blockEntity(new BlockPos(hx, Y, W_NORTH_ROW_Z), HbwInterfaceBlockEntity.class));
-            nodeRacks.addAll(placeCabinetRow(world, ComputingModule.HPC_CABLE.get(), ComputingModule.SUPERCOMPUTER_RACK.get(),
+            nodeRacks.addAll(placeCabinetRow(world, ComputingModule.HPC_CABLE, ComputingModule.SUPERCOMPUTER_RACK.get(),
                     hx, W_NORTH_ROW_Z - 1, Direction.NORTH, params.nodeRacksPerSupercomputer(), BigBaseScenario::seatNodes));
         }
         final List<PersonalComputerBlockEntity> pcs = new ArrayList<>();
@@ -283,7 +289,7 @@ public final class BigBaseScenario {
             pcs.add(world.placeRunningPersonalComputer(placeDesk(world, W_PC_X0 + p * PITCH, W_NORTH_ROW_Z, Direction.NORTH)));
         }
         final List<CraftingComputerBlockEntity> crafting = new ArrayList<>();
-        final List<AbstractMachineBlockEntity> machines = new ArrayList<>();
+        final List<MachineBlockEntity> machines = new ArrayList<>();
         if (params.machineDesks() > 0) {
             final BlockPos desk = placeDesk(world, W_CRAFTING_X, W_NORTH_ROW_Z, Direction.NORTH);
             crafting.add(placeCraftingComputer(world, desk));
@@ -296,14 +302,14 @@ public final class BigBaseScenario {
         final MainframeBlockEntity mainframe =
                 placeMainframe(world, params, new BlockPos(D_CONNECTOR_X - 1, Y, D_BACKBONE_A_Z));
         for (int x = D_CONNECTOR_X; x <= D_BACKBONE_X1; x++) {
-            world.setBlock(new BlockPos(x, Y, D_BACKBONE_A_Z), ComputingModule.HBW_CABLE.get());
-            world.setBlock(new BlockPos(x, Y, D_BACKBONE_B_Z), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(x, Y, D_BACKBONE_A_Z), ComputingModule.HBW_CABLE);
+            world.setBlock(new BlockPos(x, Y, D_BACKBONE_B_Z), ComputingModule.HBW_CABLE);
         }
         for (int z = D_BACKBONE_A_Z + 1; z < D_BACKBONE_B_Z; z++) {
-            world.setBlock(new BlockPos(D_CONNECTOR_X, Y, z), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(D_CONNECTOR_X, Y, z), ComputingModule.HBW_CABLE);
         }
         for (int x = D_CONNECTOR_X + 1; x <= D_BACKBONE_X1; x++) {
-            world.setBlock(new BlockPos(x, Y, D_SPINE_Z), ComputingModule.HBW_CABLE.get());
+            world.setBlock(new BlockPos(x, Y, D_SPINE_Z), ComputingModule.HBW_CABLE);
         }
         /*
          * Four rows of sections: both sides of each backbone. The row facing the spine is kept short so
@@ -329,8 +335,8 @@ public final class BigBaseScenario {
             world.setBlock(new BlockPos(hx, Y, D_SPINE_Z + 1), ComputingModule.HBW_INTERFACE.get());
             hubs.add(world.blockEntity(new BlockPos(hx, Y, D_SPINE_Z + 1), HbwInterfaceBlockEntity.class));
             for (int j = 1; j <= params.nodeRacksPerSupercomputer(); j++) {
-                world.setBlock(new BlockPos(hx + 2 * j - 1, Y, D_SPINE_Z + 1), ComputingModule.HPC_CABLE.get());
-                world.setBlock(new BlockPos(hx + 2 * j, Y, D_SPINE_Z + 1), ComputingModule.HPC_CABLE.get());
+                world.setBlock(new BlockPos(hx + 2 * j - 1, Y, D_SPINE_Z + 1), ComputingModule.HPC_CABLE);
+                world.setBlock(new BlockPos(hx + 2 * j, Y, D_SPINE_Z + 1), ComputingModule.HPC_CABLE);
                 final ServerRackBlockEntity rack = placeCabinet(world, ComputingModule.SUPERCOMPUTER_RACK.get(),
                         new BlockPos(hx + 2 * j, Y, D_SPINE_Z + 3), Direction.SOUTH);
                 seatNodes(rack);
@@ -343,7 +349,7 @@ public final class BigBaseScenario {
                     placeDesk(world, D_CONNECTOR_X + 1, D_DESK_Z0 + p * D_DESK_PITCH, Direction.EAST)));
         }
         final List<CraftingComputerBlockEntity> crafting = new ArrayList<>();
-        final List<AbstractMachineBlockEntity> machines = new ArrayList<>();
+        final List<MachineBlockEntity> machines = new ArrayList<>();
         for (int m = 0; m < params.machineDesks(); m++) {
             final BlockPos desk = placeDesk(world, D_CONNECTOR_X - 1, D_DESK_Z0 + m * D_MACHINE_DESK_PITCH, Direction.WEST);
             crafting.add(placeCraftingComputer(world, desk));
@@ -356,7 +362,7 @@ public final class BigBaseScenario {
                                 final List<ServerRackBlockEntity> serverRacks, final List<ServerRackBlockEntity> nodeRacks,
                                 final List<HbwInterfaceBlockEntity> hubs, final List<PersonalComputerBlockEntity> pcs,
                                 final List<CraftingComputerBlockEntity> crafting,
-                                final List<AbstractMachineBlockEntity> machines) {
+                                final List<MachineBlockEntity> machines) {
         final ProcessingPattern processing = machines.isEmpty() ? null : copperPlatePattern();
         final List<StorageKey> catalog = catalog(params.types(), params.variantPercent());
         final Built built = new Built(params, mainframe, List.copyOf(serverRacks), List.copyOf(nodeRacks), List.copyOf(hubs),
@@ -372,12 +378,16 @@ public final class BigBaseScenario {
         // The router's back is its uplink: it faces away from the backbone, so its back meets the cable.
         world.setBlock(new BlockPos(rx, Y, routerZ), ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, away));
-        return placeCabinetRow(world, ComputingModule.HBW_CABLE.get(), ComputingModule.SERVER_RACK.get(), rx,
+        // A cabinet's bays take drives of its own era or older, so the Advanced drives need an Advanced cabinet.
+        final HardwareEra driveEra = ComputingModule.disk(StorageTier.NVME, params.driveSize()).spec().era();
+        final Block cabinet = driveEra.isAtMost(HardwareEra.STANDARD)
+                ? ComputingModule.SERVER_RACK.get() : ComputingModule.ADVANCED_SERVER_RACK.get();
+        return placeCabinetRow(world, ComputingModule.HBW_CABLE, cabinet, rx,
                 routerZ + away.getStepZ(), away, racks, rack -> {
                     for (int slot = 0; slot < params.serversPerRack(); slot++) {
                         final int row = params.chassis() == Chassis.STORAGE ? slot * 2 : slot;
                         rack.getServers().setStackInSlot(row, params.chassis() == Chassis.STORAGE
-                                ? ComputingModule.defaultStorageServer() : ComputingModule.defaultServer());
+                                ? ServerStacks.defaultStorageServer() : ServerStacks.defaultServer());
                         for (int drive = 0; drive < params.drivesPerServer(); drive++) {
                             rack.insertDrive(row, new ItemStack(ComputingModule.disk(StorageTier.NVME, params.driveSize())));
                         }
@@ -396,7 +406,7 @@ public final class BigBaseScenario {
      * whose rear meets a cable at {@code x} has its controller two blocks off the cable, and the two sides
      * are staggered by one so their footprints tile the cable without touching.
      */
-    private static List<ServerRackBlockEntity> placeCabinetRow(final TestWorldBuilder world, final Block cable,
+    private static List<ServerRackBlockEntity> placeCabinetRow(final TestWorldBuilder world, final CableEntry cable,
                                                                final Block rackBlock, final int x, final int start,
                                                                final Direction away, final int count,
                                                                final IRackFiller filler) {
@@ -442,7 +452,7 @@ public final class BigBaseScenario {
     private static void seatNodes(final ServerRackBlockEntity rack) {
         for (int node = 0; node < NODES_PER_RACK; node++) {
             final int row = node * 2;
-            rack.getServers().setStackInSlot(row, ComputingModule.defaultSupercomputerNode());
+            rack.getServers().setStackInSlot(row, ServerStacks.defaultSupercomputerNode());
             rack.insertDrive(row, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
         }
     }
@@ -453,45 +463,45 @@ public final class BigBaseScenario {
      */
     private static BlockPos placeDesk(final TestWorldBuilder world, final int x, final int z, final Direction toward) {
         world.setBlock(new BlockPos(x, Y, z), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(x, Y, z).relative(toward), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(x, Y, z).relative(toward), ComputingModule.ETHERNET_CABLE);
         return new BlockPos(x, Y, z).relative(toward, 2);
     }
 
     private static CraftingComputerBlockEntity placeCraftingComputer(final TestWorldBuilder world, final BlockPos desk) {
         final CraftingComputerBlockEntity cc = world.placeRunningCraftingComputer(desk);
-        cc.loadPattern(planksPattern());
+        cc.loadPattern(CraftFiles.oakPlanks());
         cc.loadPattern(sticksPattern());
         return cc;
     }
 
-    /** A crafting cable, a Crafting Switch and a Compressor in a line from the computer, in the given direction. */
-    private static AbstractMachineBlockEntity placeMachineLine(final TestWorldBuilder world, final BlockPos computer,
+    /**
+     * A machine desk's line, in the given direction from the computer: two blocks of crafting cable, a Crafting
+     * Interface on the second against a Compressor, and a Crafting Receiving Bus beside the Compressor on cable that
+     * runs round the side. The interface holds the copper plate recipe when the plate is registered.
+     */
+    private static MachineBlockEntity placeMachineLine(final TestWorldBuilder world, final BlockPos computer,
                                                                final Direction away) {
-        world.setBlock(computer.relative(away, 1), ComputingModule.CRAFTING_CABLE.get());
-        world.setBlock(computer.relative(away, 2), ComputingModule.CRAFTING_SWITCH.get());
-        world.setBlock(computer.relative(away, 3), IndustrialModule.COMPRESSOR.get());
-        return world.blockEntity(computer.relative(away, 3), AbstractMachineBlockEntity.class);
-    }
-
-    private static CraftingPattern planksPattern() {
-        final List<ItemStack> grid = emptyGrid();
-        grid.set(0, new ItemStack(Items.OAK_LOG));
-        return new CraftingPattern(grid, new ItemStack(Items.OAK_PLANKS, 4));
+        final Direction side = away.getClockWise();
+        final BlockPos second = computer.relative(away, 2);
+        final BlockPos machine = computer.relative(away, 3);
+        final BlockPos beside = machine.relative(side);
+        CraftingRig.lay(world, computer.relative(away), second, second.relative(side), beside);
+        world.setBlock(machine, IndustrialModule.COMPRESSOR.get());
+        final CraftingInterfacePart part = CraftingRig.addPart(world, new CraftingFloor.Site(second, away),
+                new CraftingInterfacePart(HardwareEra.STANDARD));
+        CraftingRig.addPart(world, new CraftingFloor.Site(beside, side.getOpposite()), new ReceivingBusPart());
+        final ProcessingPattern plates = copperPlatePattern();
+        if (plates != null) {
+            part.place(NetworkRecipe.ofProcessing(plates));
+        }
+        return world.blockEntity(machine, MachineBlockEntity.class);
     }
 
     private static CraftingPattern sticksPattern() {
-        final List<ItemStack> grid = emptyGrid();
+        final List<ItemStack> grid = CraftFiles.emptyGrid();
         grid.set(0, new ItemStack(Items.OAK_PLANKS));
         grid.set(3, new ItemStack(Items.OAK_PLANKS));
         return new CraftingPattern(grid, new ItemStack(Items.STICK, 4));
-    }
-
-    private static List<ItemStack> emptyGrid() {
-        final List<ItemStack> grid = new ArrayList<>(CraftingPattern.GRID_SIZE);
-        for (int i = 0; i < CraftingPattern.GRID_SIZE; i++) {
-            grid.add(ItemStack.EMPTY);
-        }
-        return grid;
     }
 
     /** The Compressor's ingot-to-plate recipe as a processing pattern, or null when the plate item is not registered. */
@@ -502,11 +512,10 @@ public final class BigBaseScenario {
         if (plate == null) {
             return null;
         }
-        final String machineType = BuiltInRegistries.BLOCK.getKey(IndustrialModule.COMPRESSOR.get()).toString();
         return new ProcessingPattern(
                 List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.COPPER_INGOT), 1L)),
                 List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(plate), 1L, 100)),
-                machineType, 120);
+                120);
     }
 
     /**

@@ -1,0 +1,177 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_overview.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_overview.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_overview.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_overview.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_overview.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_overview.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_overview.table1",
+      "heads": [
+        "jsc.guide.studio_overview.table1_head1",
+        "jsc.guide.studio_overview.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.studio_overview.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_overview.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_overview.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_overview.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_overview.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_overview.table2",
+      "heads": [
+        "jsc.guide.studio_overview.table2_head1",
+        "jsc.guide.studio_overview.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.studio_overview.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_overview.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_overview.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_overview.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_overview.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.studio_overview.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_overview.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_overview.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_overview.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.studio_overview.definition1",
+      "term": "jsc.guide.studio_overview.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.studio_overview.fix1",
+          "problem": "jsc.guide.studio_overview.problem1"
+        },
+        {
+          "fix": "jsc.guide.studio_overview.fix2",
+          "problem": "jsc.guide.studio_overview.problem2"
+        },
+        {
+          "fix": "jsc.guide.studio_overview.fix3",
+          "problem": "jsc.guide.studio_overview.problem3"
+        },
+        {
+          "fix": "jsc.guide.studio_overview.fix4",
+          "problem": "jsc.guide.studio_overview.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:what_iql_is",
+        "jsc:first_queries"
+      ]
+    }
+  ],
+  "id": "jsc:studio_overview",
+  "order": 314,
+  "section": "jsc:isms_studio",
+  "title": "jsc.guide.studio_overview.title"
+}

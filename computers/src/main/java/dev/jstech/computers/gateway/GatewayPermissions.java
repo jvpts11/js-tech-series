@@ -17,15 +17,15 @@ import dev.jstech.core.operation.OperationPriority;
  * @param read       whether CC may read the network (types, totals, servers, watches)
  * @param operations whether CC may pull, push, craft, cancel and start programs
  * @param ceiling    the priority a CC request can never outrank
- * @param callCap    calls answered per tick, one of {@link #CAPS}
+ * @param callCap    calls answered per tick, one of the caps {@link #capAt(int)} offers
  */
 public record GatewayPermissions(boolean read, boolean operations, OperationPriority ceiling, int callCap) {
 
     /** The priorities a ceiling may sit at, in order. */
-    public static final OperationPriority[] CEILINGS =
+    private static final OperationPriority[] CEILINGS =
             {OperationPriority.LOW, OperationPriority.MEDIUM, OperationPriority.HIGH};
     /** The call caps a Gateway offers, in order. */
-    public static final int[] CAPS = {4, 8, 16};
+    private static final int[] CAPS = {4, 8, 16};
 
     /** A fresh Gateway: reads and operations allowed, medium ceiling, eight calls a tick. */
     public static final GatewayPermissions DEFAULT =
@@ -44,6 +44,11 @@ public record GatewayPermissions(boolean read, boolean operations, OperationPrio
 
     public static OperationPriority ceilingAt(final int index) {
         return CEILINGS[Math.max(0, Math.min(CEILINGS.length - 1, index))];
+    }
+
+    /** How many call caps a Gateway offers; {@link #capAt(int)} answers each index below it. */
+    public static int capCount() {
+        return CAPS.length;
     }
 
     public static int capAt(final int index) {

@@ -1,0 +1,296 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.paths_and_drives.definition1",
+      "term": "jsc.guide.paths_and_drives.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.paths_and_drives.definition2",
+      "term": "jsc.guide.paths_and_drives.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.paths_and_drives.table1",
+      "heads": [
+        "jsc.guide.paths_and_drives.table1_head1",
+        "jsc.guide.paths_and_drives.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": ".."
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "\\DOS"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "D:\\WORK"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "D:"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "."
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.paths_and_drives.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text4"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "C:\\DOS> ",
+          "text": "cd",
+          "typed": true
+        },
+        {
+          "text": "C:\\DOS"
+        }
+      ],
+      "look": "jsc:guide/terminal/dos",
+      "title": "MC-DOS"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.paths_and_drives.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.paths_and_drives.definition3",
+      "term": "jsc.guide.paths_and_drives.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.paths_and_drives.table2",
+      "heads": [
+        "jsc.guide.paths_and_drives.table2_head1",
+        "jsc.guide.paths_and_drives.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "/y"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "/PID"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "/EVERY:"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "/DELETE"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "/I"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "/V"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "/R"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "/LOCAL"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "/S:COUNT"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table2_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.paths_and_drives.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.paths_and_drives.table3",
+      "heads": [
+        "jsc.guide.paths_and_drives.table3_head1",
+        "jsc.guide.paths_and_drives.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "--help"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "/?"
+          },
+          {
+            "words": "jsc.guide.paths_and_drives.table3_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.paths_and_drives.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.paths_and_drives.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.paths_and_drives.fix1",
+          "problem": "jsc.guide.paths_and_drives.problem1"
+        },
+        {
+          "fix": "jsc.guide.paths_and_drives.fix2",
+          "problem": "jsc.guide.paths_and_drives.problem2"
+        },
+        {
+          "fix": "jsc.guide.paths_and_drives.fix3",
+          "problem": "jsc.guide.paths_and_drives.problem3"
+        },
+        {
+          "fix": "jsc.guide.paths_and_drives.fix4",
+          "problem": "jsc.guide.paths_and_drives.problem4"
+        },
+        {
+          "fix": "jsc.guide.paths_and_drives.fix5",
+          "problem": "jsc.guide.paths_and_drives.problem5"
+        },
+        {
+          "fix": "jsc.guide.paths_and_drives.fix6",
+          "problem": "jsc.guide.paths_and_drives.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:dos_prompt",
+        "jsc:finding_a_command"
+      ]
+    }
+  ],
+  "id": "jsc:paths_and_drives",
+  "order": 178,
+  "section": "jsc:prompt_basics",
+  "title": "jsc.guide.paths_and_drives.title"
+}

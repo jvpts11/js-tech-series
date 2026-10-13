@@ -7,7 +7,11 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.sh.TextFilters;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -50,12 +54,15 @@ final class PipeCommands {
         if (ctx.hasInput() || from.isEmpty()) {
             return ctx.input();
         }
-        final ICliComputer.FsResult read = ctx.computer().readFile(from);
+        // A Unix path names the file the way the disk underneath names it only once it is put the disk's way.
+        final String path = ctx.computer().shellFamily() == ShellFamily.POSIX
+                ? PosixPath.toDos(ctx.computer().tree(), from) : from;
+        final ICliComputer.FsResult read = ctx.computer().readFile(path);
         if (!read.ok()) {
             ctx.out().error(read.message());
             return List.of();
         }
-        return List.of(read.message().split("\r?\n", -1));
+        return List.of(read.message().english().split("\r?\n", -1));
     }
 
     static void print(final CliContext ctx, final List<String> lines) {
@@ -64,11 +71,15 @@ final class PipeCommands {
         }
     }
 
-    /** The words of a line that are not switches, which is how every one of these reads its arguments. */
+    /**
+     * The words of a line that are not switches, which is how every one of these reads its arguments. Only the DOS
+     * family writes a switch with a slash; everywhere else a word that starts with one is a path from the root.
+     */
     static List<String> plainWords(final CliContext ctx) {
+        final boolean slashSwitches = ctx.computer().shellFamily() == ShellFamily.DOS;
         final List<String> words = new ArrayList<>();
         for (final String arg : ctx.args()) {
-            if (!arg.startsWith("-") && !arg.startsWith("/")) {
+            if (!arg.startsWith("-") && !(slashSwitches && arg.startsWith("/"))) {
                 words.add(arg);
             }
         }
@@ -107,7 +118,24 @@ final class PipeCommands {
         }
     }
 
+    @TextHolder
     static final class Grep implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.pipe.grep.summary", "print the lines that hold some text");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.pipe.grep.usage", "[-i] [-v] <text> [file]");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.pipe.grep.about", "Prints the lines that hold some"
+                + " text: the lines of the file it is given, or the lines a pipe hands it. It is what makes a listing"
+                + " worth asking for, since the answer can then be narrowed to the one line that matters.");
+        private static final TextKey IGNORE_CASE =
+                TextKey.of("jsc.cli.pipe.grep.option.ignore_case", "without regard to case");
+        private static final TextKey INVERT =
+                TextKey.of("jsc.cli.pipe.grep.option.invert", "the lines that do NOT hold it");
+        private static final TextKey ONLY_OAK =
+                TextKey.of("jsc.cli.pipe.grep.example.only_oak", "only the rows about oak");
+        private static final TextKey IN_A_FILE = TextKey.of("jsc.cli.pipe.grep.example.in_a_file",
+                "and in a file, whatever case it was written in");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
         }
@@ -116,28 +144,29 @@ final class PipeCommands {
             return "grep";
         }
 
-        @Override public String summary() {
-            return "print the lines that hold some text";
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
-        @Override public String usage() {
-            return "[-i] [-v] <text> [file]";
+        @Override public Text summary() {
+            return SUMMARY.text();
         }
 
-        @Override public List<String> description() {
-            return List.of("Prints the lines that hold some text: the lines of the file it is given, or the",
-                    "lines a pipe hands it. It is what makes a listing worth asking for, since the answer",
-                    "can then be narrowed to the one line that matters.");
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
         }
 
         @Override public List<Option> options() {
-            return List.of(new Option("-i", "without regard to case"),
-                    new Option("-v", "the lines that do NOT hold it"));
+            return List.of(new Option("-i", IGNORE_CASE), new Option("-v", INVERT));
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("interac list | grep oak", "only the rows about oak"),
-                    new Example("grep -i error /var/log/cron", "and in a file, whatever case it was written in"));
+            return List.of(new Example("interac list | grep oak", ONLY_OAK),
+                    new Example("grep -i error /var/log/cron", IN_A_FILE));
         }
 
         @Override public List<String> seeAlso() {
@@ -147,7 +176,7 @@ final class PipeCommands {
         @Override public void run(final CliContext ctx) {
             final List<String> words = plainWords(ctx);
             if (words.isEmpty()) {
-                ctx.out().error("usage: grep " + usage());
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
             final List<String> lines = linesFor(ctx, words.size() > 1 ? words.get(1) : "");
@@ -155,7 +184,13 @@ final class PipeCommands {
         }
     }
 
+    @TextHolder
     static final class Wc implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.pipe.wc.summary", "count the lines, words and characters");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.pipe.wc.usage", "[-l] [-w] [file]");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
         }
@@ -164,12 +199,16 @@ final class PipeCommands {
             return "wc";
         }
 
-        @Override public String summary() {
-            return "count the lines, words and characters";
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
-        @Override public String usage() {
-            return "[-l] [-w] [file]";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -186,7 +225,12 @@ final class PipeCommands {
         }
     }
 
+    @TextHolder
     static final class Head implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.pipe.head.summary", "print the first lines");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.pipe.head.usage", "[-n count] [file]");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
         }
@@ -195,12 +239,16 @@ final class PipeCommands {
             return "head";
         }
 
-        @Override public String summary() {
-            return "print the first lines";
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
-        @Override public String usage() {
-            return "[-n count] [file]";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -209,7 +257,12 @@ final class PipeCommands {
         }
     }
 
+    @TextHolder
     static final class Tail implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.pipe.tail.summary", "print the last lines");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.pipe.tail.usage", "[-n count] [file]");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
         }
@@ -218,12 +271,16 @@ final class PipeCommands {
             return "tail";
         }
 
-        @Override public String summary() {
-            return "print the last lines";
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
-        @Override public String usage() {
-            return "[-n count] [file]";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -232,7 +289,12 @@ final class PipeCommands {
         }
     }
 
+    @TextHolder
     static final class Sort implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.pipe.sort.summary", "put the lines in order");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.pipe.sort.usage", "[-r] [-u] [file]");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
         }
@@ -241,12 +303,16 @@ final class PipeCommands {
             return "sort";
         }
 
-        @Override public String summary() {
-            return "put the lines in order";
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
-        @Override public String usage() {
-            return "[-r] [-u] [file]";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -257,7 +323,13 @@ final class PipeCommands {
     }
 
     /** {@code FIND "text"}: the DOS family's grep, quotes and all. */
+    @TextHolder
     static final class DosFind implements ICliCommand {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.pipe.dos_find.summary", "print the lines that hold some text");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.pipe.dos_find.usage", "[/I] [/V] \"text\" [file]");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.DOS_SYSTEMS).needing(CommandScope.Need.FILES);
         }
@@ -266,18 +338,23 @@ final class PipeCommands {
             return "find";
         }
 
-        @Override public String summary() {
-            return "print the lines that hold some text";
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
-        @Override public String usage() {
-            return "[/I] [/V] \"text\" [file]";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {
             final List<String> words = plainWords(ctx);
             if (words.isEmpty()) {
-                ctx.out().error("usage: FIND " + usage());
+                // The DOS family has always named its commands in capitals when it says how one is typed.
+                ctx.out().error(CliTexts.USAGE.with(name().toUpperCase(Locale.ROOT), usage()));
                 return;
             }
             final List<String> lines = linesFor(ctx, words.size() > 1 ? words.get(1) : "");
@@ -285,7 +362,12 @@ final class PipeCommands {
         }
     }
 
+    @TextHolder
     static final class DosSort implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.pipe.dos_sort.summary", "put the lines in order");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.pipe.dos_sort.usage", "[/R] [file]");
+
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.DOS_SYSTEMS).needing(CommandScope.Need.FILES);
         }
@@ -294,12 +376,16 @@ final class PipeCommands {
             return "sort";
         }
 
-        @Override public String summary() {
-            return "put the lines in order";
+        @Override public CommandGroup group() {
+            return CommandGroup.TEXT;
         }
 
-        @Override public String usage() {
-            return "[/R] [file]";
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
         }
 
         @Override public void run(final CliContext ctx) {

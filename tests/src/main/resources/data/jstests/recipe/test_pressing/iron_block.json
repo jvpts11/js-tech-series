@@ -1,0 +1,18 @@
+{
+  "type": "jstests:test_pressing",
+  "inputs": [
+    {"item": "minecraft:iron_ingot", "count": 2},
+    {"item": "minecraft:coal", "count": 1}
+  ],
+  "fluid_inputs": [
+    {"fluid": "minecraft:water", "amount": 250}
+  ],
+  "outputs": [
+    {"id": "minecraft:iron_block", "count": 1},
+    {"id": "minecraft:charcoal", "count": 1}
+  ],
+  "fluid_outputs": [
+    {"id": "minecraft:lava", "amount": 100}
+  ],
+  "ticks": 10
+}

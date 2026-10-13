@@ -8,6 +8,7 @@
 package dev.jstech.computers.gateway;
 
 import java.util.Locale;
+import java.util.function.Predicate;
 
 /**
  * How a Network Gateway is named. A Gateway gets a default name the first time it links to a computer
@@ -33,6 +34,18 @@ public final class GatewayName {
     }
 
     /**
+     * The default name for the {@code ordinal}th Gateway, or the first one after it that {@code taken} does
+     * not claim, so a default never lands on a name another Gateway already publishes.
+     */
+    public static String freeDefault(final int ordinal, final Predicate<String> taken) {
+        int next = Math.max(1, ordinal);
+        while (taken.test(defaultFor(next))) {
+            next++;
+        }
+        return defaultFor(next);
+    }
+
+    /**
      * What a typed name becomes: lower case, letters, digits, dashes and underscores only, every other
      * run of characters folded into one dash, no dash at either end, at most {@link #MAX} characters.
      * An empty result means "back to the default".
@@ -54,10 +67,14 @@ public final class GatewayName {
             }
         }
         String name = out.toString();
+        if (name.length() > MAX) {
+            name = name.substring(0, MAX);
+        }
+        // After the cut, so a cut right behind an interior dash does not leave one at the end.
         while (name.endsWith("-")) {
             name = name.substring(0, name.length() - 1);
         }
-        return name.length() > MAX ? name.substring(0, MAX) : name;
+        return name;
     }
 
     /** The name a ComputerCraft computer wraps this Gateway by: {@code jsc_gateway_} and the name. */

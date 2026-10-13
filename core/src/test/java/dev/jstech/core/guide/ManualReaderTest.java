@@ -1,0 +1,314 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Core.
+ */
+package dev.jstech.core.guide;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.jstech.core.text.Text;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+
+class ManualReaderTest {
+
+    private static final GuideManual MANUAL = new GuideManual("test:manual", "manual.title", List.of(), "", "",
+            "test:style", List.of(GuideManual.EVERY_CHAPTER), List.of(), 0, "");
+
+    @Test
+    void tree_numbersAsThePrintedManualDoes() {
+        final ManualReader reader = reader();
+
+        assertEquals(List.of("1", "1.1", "1.1.1", "1.1.2", "2", "2.1", "2.1.1"),
+                reader.tree().stream().map(ManualReader.Node::number).toList());
+        assertEquals(List.of(0, 1, 2, 2, 0, 1, 2), reader.tree().stream().map(ManualReader.Node::depth).toList());
+        assertEquals(Optional.of("alpha:parts"), reader.parent("alpha:second"));
+        assertEquals(Optional.of("alpha"), reader.parent("alpha:parts"));
+        assertEquals(List.of("alpha:first", "alpha:second"),
+                reader.children("alpha:parts").stream().map(ManualReader.Node::id).toList());
+    }
+
+    @Test
+    void article_turnsEveryBlockIntoText() {
+        final ManualReader.Article first = reader().article("alpha:first").orElseThrow();
+
+        assertEquals("1.1.1", first.number());
+        assertEquals("alpha:parts", first.section());
+        assertEquals(List.of(
+                new ManualReader.Piece.Heading("jscore.guide.what_it_is", false),
+                new ManualReader.Piece.Paragraph("first.text", ManualReader.Tone.PLAIN),
+                new ManualReader.Piece.Picture("minecraft:stone", "jscore.guide.figure[1-1] first.figure"),
+                new ManualReader.Piece.Item("1.", "step.one"),
+                new ManualReader.Piece.Item("2.", "step.two"),
+                new ManualReader.Piece.Heading("jscore.guide.what_can_go_wrong", true),
+                new ManualReader.Piece.Term("problem", "fix"),
+                new ManualReader.Piece.Paragraph("jscore.guide.warning_line[careful]", ManualReader.Tone.WARNING),
+                new ManualReader.Piece.Term("term.fe", "term.def")), first.pieces());
+    }
+
+    @Test
+    void article_numbersFiguresAndTablesByChapter() {
+        final ManualReader reader = reader();
+
+        final ManualReader.Article second = reader.article("alpha:second").orElseThrow();
+        final ManualReader.Article only = reader.article("beta:only").orElseThrow();
+
+        assertEquals(new ManualReader.Piece.Picture("minecraft:dirt", "jscore.guide.figure[1-2] second.figure"),
+                second.pieces().get(0));
+        assertEquals(new ManualReader.Piece.Table("jscore.guide.table[1-1] table.caption", List.of(), List.of(
+                new ManualReader.Row("row0", "0 FE"), new ManualReader.Row("row1", "1000 FE"))),
+                second.pieces().get(1));
+        assertEquals(new ManualReader.Piece.Picture("minecraft:sand", "jscore.guide.figure[2-1] only.figure"),
+                only.pieces().get(0));
+    }
+
+    @Test
+    void article_namesALinkByTheNumberAndTitleOfWhereItGoes() {
+        final ManualReader.Article only = reader().article("beta:only").orElseThrow();
+
+        assertEquals(new ManualReader.Piece.Links("jscore.guide.see_also", List.of(
+                new ManualReader.Link("alpha:second", "1.1.2 alpha:second.title"),
+                new ManualReader.Link("alpha:parts", "1.1 parts.title"))), only.pieces().get(1));
+    }
+
+    @Test
+    void article_readsAPlanAndABlockSeenFromThreeSides() {
+        final ManualReader.Article plant = new ManualReader(MANUAL, new GuideContents(List.of(chapter("gamma",
+                entry("gamma:plant", new GuideBlock.Views("minecraft:furnace", List.of(new GuideBlock.Callout(1,
+                                GuideBlock.View.FRONT, 8, 8, "door"))),
+                        new GuideBlock.Break(GuideBlock.BreakKind.PAGE),
+                        new GuideBlock.Plan("plan.caption", List.of(new GuideBlock.PlanPart("minecraft:furnace",
+                                "furnace", false), new GuideBlock.PlanPart("", "spare", true))))))),
+                new FixedText()).article("gamma:plant").orElseThrow();
+
+        assertEquals(List.of(new ManualReader.Piece.Picture("minecraft:furnace", ""),
+                new ManualReader.Piece.Item("1", "door"),
+                new ManualReader.Piece.Paragraph("plan.caption", ManualReader.Tone.PLAIN),
+                new ManualReader.Piece.Item("-", "furnace"),
+                new ManualReader.Piece.Item("-", "jscore.guide.optional_part[spare]")), plant.pieces());
+    }
+
+    @Test
+    void article_namesTheItemsAnEntryShowsInALine() {
+        final List<String> items = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            items.add("gamma:part" + i);
+        }
+        final GuideEntry parts = new GuideEntry("gamma:parts", "gamma:section", 0, "parts.title", "", items,
+                List.of(new GuideBlock.Paragraph("text")));
+        final ManualReader.Article article = new ManualReader(MANUAL, new GuideContents(List.of(chapter("gamma",
+                parts))), new FixedText()).article("gamma:parts").orElseThrow();
+
+        final ManualReader.Piece.Parts line = (ManualReader.Piece.Parts) article.pieces().getFirst();
+        assertEquals("jscore.guide.items_more[part0, part1, part2, part3, part4, part5, part6, part7,2]",
+                line.line(), "the line names the first eight and says how many more");
+        assertEquals(10, line.parts().size());
+        assertEquals(new ManualReader.Part("gamma:part9", "part9"), line.parts().getLast());
+    }
+
+    @Test
+    void article_writesALinkInASentenceAsItsWordsAndListsItAfter() {
+        final GuideEntry one = new GuideEntry("gamma:one", "gamma:section", 0, "one.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("go to [the two](gamma:two) now")));
+        final GuideEntry two = new GuideEntry("gamma:two", "gamma:section", 1, "two.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("text")));
+        final ManualReader reader = new ManualReader(MANUAL, new GuideContents(List.of(new GuideContents.Chapter(
+                new GuideChapter("gamma", 0, "gamma.title", "", ""), List.of(new GuideContents.Section(
+                        new GuideSection("gamma:section", 0, "section.title", ""), List.of(one, two)))))),
+                new FixedText());
+
+        assertEquals(List.of(new ManualReader.Piece.Paragraph("go to the two (1.1.2) now", ManualReader.Tone.PLAIN),
+                new ManualReader.Piece.Links("jscore.guide.see_also", List.of(
+                        new ManualReader.Link("gamma:two", "1.1.2 two.title")))),
+                reader.article("gamma:one").orElseThrow().pieces());
+    }
+
+    @Test
+    void nextAndPrevious_walkTheEntriesAcrossChapters() {
+        final ManualReader reader = reader();
+
+        assertEquals(Optional.of("beta:only"), reader.next("alpha:second"));
+        assertEquals(Optional.of("alpha:second"), reader.previous("beta:only"));
+        assertEquals(Optional.empty(), reader.previous("alpha:first"));
+        assertEquals(Optional.empty(), reader.next("beta:only"));
+    }
+
+    @Test
+    void find_takesAnIdANumberOrATitleHoweverItsGapsAreWritten() {
+        final ManualReader reader = reader();
+
+        assertEquals(Optional.of("alpha:second"), reader.find("alpha:second"));
+        assertEquals(Optional.of("alpha:second"), reader.find("SECOND"));
+        assertEquals(Optional.of("beta:only"), reader.find("2.1.1"));
+        assertEquals(Optional.of("beta:only"), reader.find("ONLY.TITLE"));
+        assertEquals(Optional.of("alpha:parts"), reader.find("parts"));
+        assertEquals(Optional.empty(), reader.find("nothing"));
+        assertEquals(Optional.empty(), reader.find("  "));
+
+        final ManualReader cards = new ManualReader(MANUAL, new GuideContents(List.of(chapter("gamma",
+                entry("gamma:graphics_cards", new GuideBlock.Paragraph("text"))))), new FixedText());
+
+        assertEquals(Optional.of("gamma:graphics_cards"), cards.find("graphics-cards"));
+        assertEquals(Optional.of("gamma:graphics_cards"), cards.find("Graphics Cards"));
+    }
+
+    @Test
+    void article_readsATableWithItsHeadsAndEveryCell() {
+        final GuideEntry commands = entry("alpha:commands", new GuideBlock.Table("commands.caption",
+                List.of("head.command", "head.does"), List.of(new GuideBlock.TableRow(List.of(
+                        new GuideBlock.GuideValue.Literal("dir"), new GuideBlock.GuideValue.Words("lists.folder"))))));
+        final ManualReader reader = new ManualReader(MANUAL, new GuideContents(List.of(chapter("alpha", commands))),
+                new FixedText());
+
+        final ManualReader.Piece.Table table = (ManualReader.Piece.Table) reader.article("alpha:commands")
+                .orElseThrow().pieces().getFirst();
+        assertEquals(List.of("head.command", "head.does"), table.heads());
+        assertEquals(List.of(new ManualReader.Row(List.of("dir", "lists.folder"))), table.rows());
+        assertEquals(List.of("alpha:commands"), reader.search("lists.folder"));
+    }
+
+    @Test
+    void article_readsACommandsPageAsText() {
+        final GuideEntry dir = entry("alpha:dir", new GuideBlock.Command("alpha:command/dir"));
+        final GuideEntry copy = entry("alpha:copy", new GuideBlock.Command("alpha:command/copy"));
+        final ManualReader reader = new ManualReader(MANUAL, new GuideContents(List.of(new GuideContents.Chapter(
+                new GuideChapter("alpha", 0, "alpha.title", "", ""), List.of(new GuideContents.Section(
+                        new GuideSection("alpha:parts", 0, "parts.title", ""), List.of(dir, copy)))))),
+                new FixedText());
+
+        final List<ManualReader.Piece> pieces = reader.article("alpha:dir").orElseThrow().pieces();
+        assertEquals(new ManualReader.Piece.Paragraph("List the files in a folder.", ManualReader.Tone.PLAIN),
+                pieces.getFirst());
+        assertTrue(pieces.contains(new ManualReader.Piece.Code("", "", List.of("dir [path]"))), "how it is typed");
+        final ManualReader.Piece.Table options = pieces.stream().filter(piece -> piece instanceof
+                ManualReader.Piece.Table).map(piece -> (ManualReader.Piece.Table) piece).findFirst().orElseThrow();
+        assertEquals(List.of(GuideTexts.OPTION.key(), GuideTexts.WHAT_IT_DOES.key()), options.heads());
+        assertEquals(List.of(new ManualReader.Row(List.of("/w", "Names only."))), options.rows());
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof ManualReader.Piece.Links links
+                && links.links().stream().anyMatch(link -> link.target().equals("alpha:copy"))),
+                "the command to read next is listed with the entry's links");
+        assertEquals(List.of("alpha:dir"), reader.search("names only"));
+        assertEquals(Optional.of("alpha:dir"), reader.commandPage("alpha:command/dir"),
+                "the entry printing a command's page is found by the page's source");
+        assertEquals(Optional.empty(), reader.commandPage("alpha:command/tree"));
+    }
+
+    @Test
+    void article_readsASceneAsItsNumberedCaptionAndTheListOfItsBalloons() {
+        final GuideEntry entry = entry("alpha:case", new GuideBlock.Scene(List.of(new GuideBlock.SceneBlock(0, 0, 0,
+                "mod:case", "")), GuideBlock.SceneView.CORNER, List.of(
+                new GuideBlock.SceneBalloon(2, GuideBlock.ScenePart.of(0, 0, 0), "tray", "push"),
+                new GuideBlock.SceneBalloon(1, GuideBlock.ScenePart.of(0, 0, 0), "fan", "")), false, 90,
+                "case.caption"));
+        final ManualReader reader = new ManualReader(MANUAL, new GuideContents(List.of(chapter("alpha", entry))),
+                new FixedText());
+
+        assertEquals(List.of(new ManualReader.Piece.Picture("", GuideTexts.FIGURE.key() + "[1-1] case.caption"),
+                new ManualReader.Piece.Item("1", "fan"), new ManualReader.Piece.Item("2", "tray. push")),
+                reader.article("alpha:case").orElseThrow().pieces());
+    }
+
+    @Test
+    void search_findsEveryWordInTheTitleOrTheText() {
+        final ManualReader reader = reader();
+
+        assertEquals(List.of("alpha:first"), reader.search("STEP two"));
+        assertEquals(List.of("alpha:second"), reader.search("row1"));
+        assertEquals(List.of(), reader.search("step nothing"));
+        assertEquals(List.of(), reader.search(""));
+    }
+
+    @Test
+    void index_listsTitlesAndExplainedWordsAlphabetically() {
+        final List<ManualReader.IndexLine> index = reader().index();
+
+        assertEquals(List.of("alpha:first.title", "alpha:second.title", "only.title", "term.fe"),
+                index.stream().map(ManualReader.IndexLine::text).toList());
+        assertTrue(index.get(3).term());
+        assertEquals("alpha:first", index.get(3).target());
+    }
+
+    private static ManualReader reader() {
+        final GuideEntry first = entry("alpha:first", new GuideBlock.Heading("jscore.guide.what_it_is"),
+                new GuideBlock.Paragraph("first.text"), new GuideBlock.Figure("minecraft:stone", "first.figure"),
+                new GuideBlock.Steps(List.of("step.one", "step.two")),
+                new GuideBlock.Heading("jscore.guide.what_can_go_wrong"),
+                new GuideBlock.Problems(List.of(new GuideBlock.Problem("problem", "fix"))),
+                new GuideBlock.Warning("careful"), new GuideBlock.Define("term.fe", "term.def"));
+        final List<GuideBlock.TableRow> rows = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            rows.add(new GuideBlock.TableRow("row" + i, new GuideBlock.GuideValue.Amount(1000L * i, "FE")));
+        }
+        final GuideEntry second = entry("alpha:second", new GuideBlock.Figure("minecraft:dirt", "second.figure"),
+                new GuideBlock.Table("table.caption", rows));
+        final GuideEntry only = new GuideEntry("beta:only", "beta:things", 0, "only.title", "minecraft:sand",
+                List.of(), List.of(new GuideBlock.Figure("minecraft:sand", "only.figure"),
+                new GuideBlock.SeeAlso(List.of("alpha:second", "alpha:parts"))));
+        return new ManualReader(MANUAL, new GuideContents(List.of(
+                new GuideContents.Chapter(new GuideChapter("alpha", 0, "alpha.title", "", ""), List.of(
+                        new GuideContents.Section(new GuideSection("alpha:parts", 0, "parts.title", ""),
+                                List.of(first, second)))),
+                new GuideContents.Chapter(new GuideChapter("beta", 1, "beta.title", "", ""), List.of(
+                        new GuideContents.Section(new GuideSection("beta:things", 0, "things.title", ""),
+                                List.of(only)))))), new FixedText());
+    }
+
+    private static GuideContents.Chapter chapter(final String namespace, final GuideEntry entry) {
+        return new GuideContents.Chapter(new GuideChapter(namespace, 0, namespace + ".title", "", ""), List.of(
+                new GuideContents.Section(new GuideSection(namespace + ":section", 0, "section.title", ""),
+                        List.of(entry))));
+    }
+
+    private static GuideEntry entry(final String id, final GuideBlock... blocks) {
+        return new GuideEntry(id, GuideIds.namespace(id) + ":parts", 0, id + ".title", "", List.of(),
+                List.of(blocks));
+    }
+
+    /** Words that are their own keys, with any arguments after them in brackets, and two commands' pages. */
+    private record FixedText() implements IGuideText {
+
+        @Override
+        public Optional<GuideCommand> command(final String source) {
+            if (source.endsWith("/dir")) {
+                return Optional.of(new GuideCommand("dir", Text.literal("list the files in a folder"),
+                        Text.literal("[path]"), List.of(), List.of(new GuideCommand.Option("/w",
+                        Text.literal("Names only."))), List.of(), List.of(), List.of("copy")));
+            }
+            return source.endsWith("/copy") ? Optional.of(new GuideCommand("copy", Text.literal("copy a file"),
+                    Text.EMPTY, List.of(), List.of(), List.of(), List.of(), List.of())) : Optional.empty();
+        }
+
+        @Override
+        public String text(final String key, final Object... args) {
+            if (args.length == 0) {
+                return key;
+            }
+            final List<String> written = new ArrayList<>();
+            for (final Object arg : args) {
+                written.add(String.valueOf(arg));
+            }
+            return key + "[" + String.join(",", written) + "]";
+        }
+
+        @Override
+        public int width(final String text, final TextSize size) {
+            return text.length() * 6;
+        }
+
+        @Override
+        public int recipeCount(final String type, final String output) {
+            return 0;
+        }
+
+        @Override
+        public String amount(final long value, final String unit) {
+            return value + " " + unit;
+        }
+    }
+}

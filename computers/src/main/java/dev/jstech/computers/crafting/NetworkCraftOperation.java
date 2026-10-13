@@ -13,9 +13,11 @@ import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.NetworkIndex;
+import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.index.Allocation;
+import dev.jstech.computers.operation.index.ItemLocation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
@@ -23,6 +25,9 @@ import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
@@ -40,16 +45,19 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A multi-tick CRAFT: executes a {@link CraftPlanner.Plan} on a Crafting Computer.
  */
+@TextHolder
 public final class NetworkCraftOperation implements IPersistentOperation {
 
     public static final String KIND = "craft";
@@ -161,6 +169,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             final long amount = row.getLong("Amount");
             if (key != null && amount > 0) {
                 final long stored = storage.insert(key, amount);
+                // What storage cannot take now (full, or its chunks not loaded yet) is dropped, not lost.
+                spill(level, mainframe.getBlockPos(), key, amount - stored);
                 if (key.equals(result)) {
                     delivered += stored;
                 }
@@ -219,11 +229,9 @@ public final class NetworkCraftOperation implements IPersistentOperation {
 
     private static final String MACHINE_STEPS_KEY = "MachineSteps";
 
-    /** Waited as long as it was allowed to for ingredients another Operation was holding. */
-    private static final String HELD_BY_ANOTHER = "jsc.operation.failure.held_by_another";
-
     /** Made as many as the ingredients in the network stretched to, which was fewer than asked for. */
-    private static final String NOT_ENOUGH_INGREDIENTS = "jsc.operation.failure.not_enough_ingredients";
+    private static final TextKey NOT_ENOUGH_INGREDIENTS = TextKey.of("jsc.operation.failure.not_enough_ingredients",
+            "the ingredients for the %s ran out");
 
     private static final int STALL_LIMIT = 100;
 
@@ -268,6 +276,11 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     private int waitTicks;
     private boolean timedOut;
     private int stalledTicks;
+    /*
+     * The bench work the computers have done towards runs not yet made: what a tick's rate leaves over is kept for
+     * the next, so a computer slower than one run a tick makes one over as many ticks as it takes.
+     */
+    private double benchCredit;
     private long deliveredResult;
     private boolean done;
     private boolean cancelled;
@@ -298,6 +311,16 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      * the computer, are working); the craft claims a computer again once every step clears and bench work remains.
      */
     private boolean executorsParked;
+    /* Where the raw materials come from and how much may run at once, as the engine that planned this decided. */
+    private final CraftRouting routing;
+    /* The game time each step began and ended at, -1 until it does: what a plan shown afterwards reads as actual. */
+    private final long[] stepStarted;
+    private final long[] stepFinished;
+    private final long submittedAt;
+    private long startedAt = -1L;
+    private long finishedAt = -1L;
+    /* Who wants to know when this settles, beside the one who asked for it. */
+    private final List<Consumer<NetworkCraftOperation>> observers = new ArrayList<>();
 
     /** One running machine step: which plan step it is and the processing operation executing it. */
     private static final class MachineRun {
@@ -326,6 +349,23 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                                  final List<BlockPos> supercomputers, final String requesterLabel,
                                  @Nullable final CraftingPattern embeddedPattern,
                                  @Nullable final MainframeBlockEntity mainframe) {
+        this(level, network, resultKey, requested, plan, index, operationId, candidateComputers, supercomputers,
+                requesterLabel, embeddedPattern, mainframe, CraftRouting.NONE);
+    }
+
+    public NetworkCraftOperation(final ServerLevel level, final NetworkUuid network,
+                                 final StorageKey resultKey, final long requested,
+                                 final CraftPlanner.Plan plan, final NetworkIndex index,
+                                 final UUID operationId, final List<BlockPos> candidateComputers,
+                                 final List<BlockPos> supercomputers, final String requesterLabel,
+                                 @Nullable final CraftingPattern embeddedPattern,
+                                 @Nullable final MainframeBlockEntity mainframe, final CraftRouting routing) {
+        this.routing = routing;
+        this.stepStarted = new long[plan.steps().size()];
+        this.stepFinished = new long[plan.steps().size()];
+        Arrays.fill(stepStarted, -1L);
+        Arrays.fill(stepFinished, -1L);
+        this.submittedAt = level.getGameTime();
         this.mainframe = mainframe;
         this.level = level;
         this.network = network;
@@ -360,6 +400,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             }
             final CraftPlanner.Step step = plan.steps().get(run.step);
             runsDone[run.step] = Math.min(step.runs(), run.op.produced() / Math.max(1L, step.perRun()));
+            stepFinished[run.step] = level.getGameTime();
             return true;
         });
 
@@ -383,6 +424,9 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             }
             waiting = false;
             executorsParked = false;
+            if (startedAt < 0) {
+                startedAt = level.getGameTime();
+            }
         }
         if (!executorsAlive()) {
             /*
@@ -423,10 +467,18 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 return; // re-claim a computer before the bench work resumes
             }
             /*
-             * Bench work at the summed throughput of the live computers (never above the Mainframe's grant).
-             * Denser recipes take longer; faster computers contribute proportionally more of each tick's work.
+             * Bench work at the summed rate of the live computers (never above the Mainframe's grant). Denser
+             * recipes take longer; faster computers contribute proportionally more of each tick's work. What is
+             * left over is kept, up to the dearest run's cost, and saving up towards a run is progress.
              */
-            long budget = Math.min(throughputBudget, aliveThroughput());
+            final double rate = Math.min(throughputBudget, aliveRate());
+            final long dearest = dearestBenchRun();
+            this.benchCredit = Math.min(this.benchCredit + rate, Math.max(rate, dearest));
+            final long granted = (long) this.benchCredit;
+            if (rate > 0.0 && granted < dearest) {
+                progressed = true;
+            }
+            long budget = granted;
             final NetworkStorage storage = NetworkStorage.of(level, network);
             for (int i = 0; i < plan.steps().size() && budget > 0; i++) {
                 final CraftPlanner.Step step = plan.steps().get(i);
@@ -449,10 +501,17 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 }
                 pool.merge(StorageKey.of(step.pattern().result()),
                         executable * step.pattern().result().getCount(), Long::sum);
+                if (stepStarted[i] < 0) {
+                    stepStarted[i] = level.getGameTime();
+                }
                 runsDone[i] += executable;
+                if (runsDone[i] >= step.runs()) {
+                    stepFinished[i] = level.getGameTime();
+                }
                 budget -= executable * unitsPerRun;
                 progressed = true;
             }
+            this.benchCredit -= granted - budget;
         }
 
         if (allRunsDone()) {
@@ -480,7 +539,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         if (mainframe == null) {
             return !machineRuns.isEmpty();
         }
-        final int cap = Math.max(1, aliveThreads());
+        final int cap = routing.capped(Math.max(1, aliveThreads()));
         for (int i = 0; i < plan.steps().size() && machineRuns.size() < cap; i++) {
             final CraftPlanner.Step step = plan.steps().get(i);
             if (!step.isMachine() || launched[i] || runsDone[i] >= step.runs() || !machineInputsReady(step)) {
@@ -494,6 +553,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             op.setPriority(priority); // a stage of this craft reports the craft's level
             machineRuns.add(new MachineRun(i, op));
             launched[i] = true;
+            stepStarted[i] = level.getGameTime();
         }
         return !machineRuns.isEmpty();
     }
@@ -607,9 +667,10 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         lockedServers.clear();
         boolean covered = true;
         for (final Map.Entry<StorageKey, Long> entry : plan.rawConsumption().entrySet()) {
-            final Allocation allocation = index.lock(operationId, entry.getKey(), entry.getValue());
-            lockedServers.put(entry.getKey(), new HashSet<>(allocation.perServer().keySet()));
-            if (!allocation.covers(entry.getValue())) {
+            final Set<NodeUuid> servers = new HashSet<>();
+            final long held = lockRouted(entry.getKey(), entry.getValue(), servers);
+            lockedServers.put(entry.getKey(), servers);
+            if (held < entry.getValue()) {
                 covered = false;
                 break;
             }
@@ -620,6 +681,37 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         }
         locked = true;
         return true;
+    }
+
+    /*
+     * Reserves {@code demand} of {@code key} the way the routing says: from the preferred servers first, then from
+     * the rest, and from the avoided ones only for what nothing else holds, so a hint never makes a craft fail that
+     * could have run. Fills {@code servers} with where the reservation landed; answers how much it covers.
+     */
+    private long lockRouted(final StorageKey key, final long demand, final Set<NodeUuid> servers) {
+        if (routing.prefer().isEmpty() && routing.avoid().isEmpty()) {
+            final Allocation allocation = index.lock(operationId, key, demand);
+            servers.addAll(allocation.perServer().keySet());
+            return allocation.allocated();
+        }
+        final Set<NodeUuid> preferred = new HashSet<>();
+        final Set<NodeUuid> others = new HashSet<>();
+        final Set<NodeUuid> avoided = new HashSet<>();
+        for (final ItemLocation location : index.locations(key)) {
+            final NodeUuid server = location.server();
+            (routing.avoid().contains(server) ? avoided : routing.prefer().contains(server) ? preferred : others)
+                    .add(server);
+        }
+        long held = 0L;
+        for (final Set<NodeUuid> tier : List.of(preferred, others, avoided)) {
+            if (held >= demand || tier.isEmpty()) {
+                continue;
+            }
+            final Allocation allocation = index.lock(operationId, key, demand - held, tier);
+            servers.addAll(allocation.perServer().keySet());
+            held += allocation.allocated();
+        }
+        return held;
     }
 
     private boolean tryClaimExecutors() {
@@ -636,7 +728,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             if (capable.isEmpty()) {
                 return false;
             }
-            final int granted = sc.acquireCraftSlots(operationId, capable.size());
+            final int granted = sc.acquireCraftSlots(operationId, routing.capped(capable.size()));
             if (granted <= 0) {
                 return false; // the parallel budget is spent, wait in line
             }
@@ -668,7 +760,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         final List<HbwInterfaceBlockEntity> online =
                 new ArrayList<>();
         for (final BlockPos pos : supercomputers) {
-            if (level.getBlockEntity(pos)
+            if (Loaded.blockEntity(level, pos)
                     instanceof HbwInterfaceBlockEntity sc
                     && sc.clusterOnline()) {
                 online.add(sc);
@@ -721,13 +813,13 @@ public final class NetworkCraftOperation implements IPersistentOperation {
              * An embedded pattern travels with the request (a multi-stage's bench stage), so knowing
              * it does not require a Recipe ROM entry of its own.
              */
-            if (level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc
+            if (Loaded.blockEntity(level, pos) instanceof CraftingComputerBlockEntity cc
                     && cc.canCraft()
                     && (root == null || cc.romContains(root) || root.equals(embeddedPattern))) {
                 capable.add(cc);
             }
         }
-        capable.sort((a, b) -> Long.compare(b.craftingThroughput(), a.craftingThroughput()));
+        capable.sort((a, b) -> Double.compare(b.craftingRate(), a.craftingRate()));
         return capable;
     }
 
@@ -743,15 +835,30 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         return null;
     }
 
-    /** Sum of the crafting throughput of every live executor; faster computers contribute more of each tick. */
-    private long aliveThroughput() {
-        long sum = 0;
+    /**
+     * Sum of the crafting rate of every live executor, fractions and all; faster computers contribute more of each
+     * tick.
+     */
+    private double aliveRate() {
+        double sum = 0.0;
         for (final CraftingComputerBlockEntity cc : executors) {
             if (cc != null && !cc.isRemoved() && cc.canCraft()) {
-                sum += cc.craftingThroughput();
+                sum += cc.craftingRate();
             }
         }
         return sum;
+    }
+
+    /** What the costliest bench run left to make costs, or nothing when no bench run is left. */
+    private long dearestBenchRun() {
+        long dearest = 0L;
+        for (int i = 0; i < plan.steps().size(); i++) {
+            final CraftPlanner.Step step = plan.steps().get(i);
+            if (!step.isMachine() && runsDone[i] < step.runs()) {
+                dearest = Math.max(dearest, step.unitsPerRun());
+            }
+        }
+        return dearest;
     }
 
     /**
@@ -885,12 +992,17 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 : timedOut ? OperationRecord.STATUS_RESOURCE_LOCKED
                 : deliveredResult > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
         if (timedOut) {
-            cause = OperationFailure.of(HELD_BY_ANOTHER, resultKey.displayName().getString());
+            // Waited as long as it was allowed to for ingredients another Operation was holding.
+            cause = OperationFailure.of(NetworkSelectOperation.HELD_BY_ANOTHER, resultKey.displayName().getString());
         } else if (status == OperationRecord.STATUS_PARTIAL || status == OperationRecord.STATUS_FAILED) {
             cause = OperationFailure.of(NOT_ENOUGH_INGREDIENTS, resultKey.displayName().getString());
         }
+        finishedAt = level.getGameTime();
         if (onSettle != null) {
             onSettle.run();
+        }
+        for (final Consumer<NetworkCraftOperation> observer : List.copyOf(observers)) {
+            observer.accept(this);
         }
     }
 
@@ -914,22 +1026,53 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         final ItemStack prototype = key.stack(1);
         final NetworkStorage storage = NetworkStorage.of(level, network);
         if (prototype.isEmpty()) {
-            storage.insert(key, amount); // a fluid or chemical made by a machine step goes back as data
+            // A fluid or chemical made by a machine step goes back as data; what does not fit is reported.
+            spill(level, spillPoint(), key, amount - storage.insert(key, amount));
+            return;
+        }
+        long remaining = amount;
+        long overflow = 0;
+        while (remaining > 0) {
+            final int chunk = (int) Math.min(remaining, prototype.getMaxStackSize());
+            final int accepted = storage.insert(prototype.copyWithCount(chunk));
+            remaining -= chunk;
+            overflow += chunk - accepted;
+        }
+        // Network storage filled mid-craft: surface the items in the world, never void them.
+        spill(level, spillPoint(), key, overflow);
+    }
+
+    /* Where leftovers that the network cannot take surface: above the first executor, else above the Mainframe. */
+    @Nullable
+    private BlockPos spillPoint() {
+        for (final CraftingComputerBlockEntity executor : executors) {
+            if (executor != null) {
+                return executor.getBlockPos();
+            }
+        }
+        return mainframe == null ? null : mainframe.getBlockPos();
+    }
+
+    /*
+     * Puts {@code amount} of {@code key} that network storage could not take into the world above {@code at}, as
+     * stacks. A fluid or a chemical cannot be dropped, so its loss is logged rather than passing unseen.
+     */
+    private static void spill(final ServerLevel level, @Nullable final BlockPos at, final StorageKey key,
+                              final long amount) {
+        if (amount <= 0) {
+            return;
+        }
+        final ItemStack prototype = key.stack(1);
+        if (prototype.isEmpty() || at == null) {
+            JsComputers.LOGGER.warn("A craft lost {} of {} because network storage was full", amount, key.id());
             return;
         }
         long remaining = amount;
         while (remaining > 0) {
             final int chunk = (int) Math.min(remaining, prototype.getMaxStackSize());
-            final int accepted = storage.insert(prototype.copyWithCount(chunk));
+            Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 1.0, at.getZ() + 0.5,
+                    prototype.copyWithCount(chunk));
             remaining -= chunk;
-            final int overflow = chunk - accepted;
-            final CraftingComputerBlockEntity drop = executors.isEmpty() ? null : executors.get(0);
-            if (overflow > 0 && drop != null) {
-                // Network storage filled mid-craft: surface the items in the world, never void them.
-                Containers.dropItemStack(level,
-                        drop.getBlockPos().getX() + 0.5, drop.getBlockPos().getY() + 1.0,
-                        drop.getBlockPos().getZ() + 0.5, prototype.copyWithCount(overflow));
-            }
         }
     }
 
@@ -985,6 +1128,58 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         return this;
     }
 
+    /**
+     * Tells {@code observer} when this settles, beside whoever asked for it: what an engine that wants to see how
+     * its plan ran listens with. Told at once when it has settled already.
+     */
+    public void observe(final Consumer<NetworkCraftOperation> observer) {
+        if (done) {
+            observer.accept(this);
+        } else {
+            observers.add(observer);
+        }
+    }
+
+    /** The plan this craft runs. */
+    public CraftPlanner.Plan plan() {
+        return plan;
+    }
+
+    /** Where the raw materials come from and how much may run at once. */
+    public CraftRouting routing() {
+        return routing;
+    }
+
+    /** The game time this craft was made at. */
+    public long submittedAt() {
+        return submittedAt;
+    }
+
+    /** The game time it got what it needed and began, or -1 while it waits. */
+    public long startedAt() {
+        return startedAt;
+    }
+
+    /** The game time it settled at, or -1 while it runs. */
+    public long finishedAt() {
+        return finishedAt;
+    }
+
+    /** The game time step {@code step} of the plan began at, or -1 when it has not. */
+    public long stepStartedAt(final int step) {
+        return step < 0 || step >= stepStarted.length ? -1L : stepStarted[step];
+    }
+
+    /** The game time step {@code step} of the plan was done at, or -1 when it is not. */
+    public long stepFinishedAt(final int step) {
+        return step < 0 || step >= stepFinished.length ? -1L : stepFinished[step];
+    }
+
+    /** How many runs of step {@code step} are done. */
+    public long stepRunsDone(final int step) {
+        return step < 0 || step >= runsDone.length ? 0L : runsDone[step];
+    }
+
     @Override
     public OperationRecord toRecord() {
         /*
@@ -1024,6 +1219,16 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         for (final MachineRun run : machineRuns) {
             run.op.setPriority(priority);
         }
+    }
+
+    /** Whether one of its machine steps made something: then the craft passed through a machine. */
+    public boolean madeOnAMachine() {
+        for (int i = 0; i < plan.steps().size(); i++) {
+            if (plan.steps().get(i).isMachine() && runsDone[i] > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private long producedSoFar() {

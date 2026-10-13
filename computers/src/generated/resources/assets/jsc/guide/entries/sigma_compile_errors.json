@@ -1,0 +1,159 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_compile_errors.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_compile_errors.table1",
+      "heads": [
+        "jsc.guide.sigma_compile_errors.table1_head1",
+        "jsc.guide.sigma_compile_errors.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_compile_errors.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_compile_errors.table2",
+      "heads": [
+        "jsc.guide.sigma_compile_errors.table2_head1",
+        "jsc.guide.sigma_compile_errors.table2_head2",
+        "jsc.guide.sigma_compile_errors.table2_head3",
+        "jsc.guide.sigma_compile_errors.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_compile_errors.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table2_1_2"
+          },
+          {
+            "literal": "sg"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table2_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_compile_errors.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table2_2_2"
+          },
+          {
+            "literal": "sgs"
+          },
+          {
+            "words": "jsc.guide.sigma_compile_errors.table2_2_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_compile_errors.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_compile_errors.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_compile_errors.definition1",
+      "term": "jsc.guide.sigma_compile_errors.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_compile_errors.definition2",
+      "term": "jsc.guide.sigma_compile_errors.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_compile_errors.definition3",
+      "term": "jsc.guide.sigma_compile_errors.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_compile_errors.definition4",
+      "term": "jsc.guide.sigma_compile_errors.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_compile_errors.fix1",
+          "problem": "jsc.guide.sigma_compile_errors.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_compile_errors.fix2",
+          "problem": "jsc.guide.sigma_compile_errors.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_syntax_errors",
+        "jsc:sigma_semantic_errors",
+        "jsc:sigma_build_errors"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_compile_errors",
+  "order": 381,
+  "section": "jsc:errors_compile",
+  "title": "jsc.guide.sigma_compile_errors.title"
+}

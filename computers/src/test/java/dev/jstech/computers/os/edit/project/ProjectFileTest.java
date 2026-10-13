@@ -34,8 +34,8 @@ class ProjectFileTest {
         final String text = stockWatch().write();
         assertTrue(text.contains("name: StockWatch\n"));
         assertTrue(text.contains("kind: script\n"));
-        assertTrue(text.contains("sources: StockWatch.sgs, Helpers.sgs\n"));
-        assertTrue(text.contains("references: Helpers\n"));
+        assertTrue(text.contains("source: StockWatch.sgs\nsource: Helpers.sgs\n"));
+        assertTrue(text.contains("reference: Helpers\n"));
         assertTrue(text.contains("entry: build/StockWatch.asm\n"));
         assertTrue(text.contains("platform: jsc:x86\n"));
     }
@@ -44,7 +44,40 @@ class ProjectFileTest {
     void read_aProjectWithNoPlatformLine_isBuiltForTheOldestThatRunsIt() {
         final ProjectFile back = ProjectFile.read("name: Old\nkind: console\nlanguage: jsc:sigma_sharp\n"
                 + "sources: Old.sgs\nreferences: \nentry: build/Old.asm\n");
-        assertEquals(AsmProgram.DEFAULT_ARCHITECTURE, back.platform());
+        assertEquals(AsmProgram.DEFAULT_ISA, back.platform());
+    }
+
+    @Test
+    void write_withNoLanguageVersion_saysNothingOfOne() {
+        assertFalse(stockWatch().write().contains("langversion"));
+        assertEquals(0, stockWatch().languageVersion());
+    }
+
+    @Test
+    void withLanguageVersion_writesItsLineAndReadsBack() {
+        final ProjectFile held = stockWatch().withLanguageVersion(1);
+        assertTrue(held.write().contains("langversion: 1\n"));
+        assertEquals(1, ProjectFile.read(held.write()).languageVersion());
+        assertEquals(held, ProjectFile.read(held.write()));
+    }
+
+    @Test
+    void withLanguageVersion_zero_dropsTheLineSoTheProjectFollowsTheCompiler() {
+        final ProjectFile followed = stockWatch().withLanguageVersion(1).withLanguageVersion(0);
+        assertFalse(followed.write().contains("langversion"));
+        assertEquals(stockWatch(), followed);
+    }
+
+    @Test
+    void read_aLanguageVersionThatIsNotANumber_isNone() {
+        assertEquals(0, ProjectFile.read("name: X\nlangversion: two\n").languageVersion());
+    }
+
+    @Test
+    void withLanguageVersion_keepsItThroughTheOtherChanges() {
+        final ProjectFile held = stockWatch().withLanguageVersion(1);
+        assertEquals(1, held.withSource("More.sgs").withPlatform("jsc:x86_64").withReference("Other")
+                .languageVersion());
     }
 
     @Test
@@ -86,6 +119,13 @@ class ProjectFileTest {
     void read_trimsListsAndDropsEmptyEntries() {
         final ProjectFile file = ProjectFile.read("sources:  a.sgs ,, b.sgs , \n");
         assertEquals(List.of("a.sgs", "b.sgs"), file.sources());
+    }
+
+    @Test
+    void write_thenRead_keepsANameWithACommaAsOneSource() {
+        final ProjectFile file = new ProjectFile("Sorter,v2", ProjectFile.Kind.CONSOLE, "jsc:sigma_sharp",
+                List.of("Sorter,v2.sgs", "a, b.sgs"), List.of("Lib,1"), "build/Sorter,v2.asm");
+        assertEquals(file, ProjectFile.read(file.write()));
     }
 
     @Test

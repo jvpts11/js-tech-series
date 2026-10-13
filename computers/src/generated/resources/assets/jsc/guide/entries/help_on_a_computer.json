@@ -1,0 +1,211 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.help_on_a_computer.table1",
+      "heads": [
+        "jsc.guide.help_on_a_computer.table1_head1",
+        "jsc.guide.help_on_a_computer.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.help_on_a_computer.table2",
+      "heads": [
+        "jsc.guide.help_on_a_computer.table2_head1",
+        "jsc.guide.help_on_a_computer.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "n"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "p"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "u"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "l"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Tab"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "m"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "s"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "h"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "q"
+          },
+          {
+            "words": "jsc.guide.help_on_a_computer.table2_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.help_on_a_computer.fix1",
+          "problem": "jsc.guide.help_on_a_computer.problem1"
+        },
+        {
+          "fix": "jsc.guide.help_on_a_computer.fix2",
+          "problem": "jsc.guide.help_on_a_computer.problem2"
+        },
+        {
+          "fix": "jsc.guide.help_on_a_computer.fix3",
+          "problem": "jsc.guide.help_on_a_computer.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:library",
+        "jsc:finding_help_overview",
+        "jsc:help_command",
+        "jsc:info_keys"
+      ]
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:help_on_a_computer",
+  "order": 61,
+  "section": "jsc:getting_help",
+  "title": "jsc.guide.help_on_a_computer.title"
+}

@@ -15,6 +15,8 @@ import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -48,9 +50,9 @@ final class DeskFiles implements CodeFileReplies.IReader {
     /** How long a name may run, which is the cap the rename typing is held to. */
     private static final int MAX_NAME = 64;
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
-    DeskFiles(final DesktopScreen desktop) {
+    DeskFiles(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -77,11 +79,11 @@ final class DeskFiles implements CodeFileReplies.IReader {
         }
         final DiskFilesPayload.WireFile f = files.get(idx);
         if (f.readOnly()) {
-            desktop.showLocked();
+            desktop.notices().datLocked();
             return;
         }
         renaming = idx;
-        desktop.pickIcon(desktop.deskIcons().size() + idx);
+        desktop.iconGrid().pick(desktop.deskIcons().size() + idx);
         typed.setLength(0);
         typed.append(DesktopIcons.baseName(f.path()));
     }
@@ -137,7 +139,7 @@ final class DeskFiles implements CodeFileReplies.IReader {
         }
         final DiskFilesPayload.WireFile f = files.get(idx);
         if (f.readOnly()) {
-            desktop.showLocked();
+            desktop.notices().datLocked();
             return;
         }
         DeskTrash.delete(desktop.hostPos(), List.of(f.path()));
@@ -171,8 +173,9 @@ final class DeskFiles implements CodeFileReplies.IReader {
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
-        desktop.showBalloon(ok ? "67ark" : "Could not do that", message);
+    public void onSaved(final boolean ok, final Text message) {
+        desktop.notices().showBalloon(ok ? "67ark" : GameText.resolve(FilesTexts.COULD_NOT),
+                GameText.resolve(message));
         FilesApps.diskChanged();
     }
 
@@ -199,14 +202,14 @@ final class DeskFiles implements CodeFileReplies.IReader {
      * had to do.
      */
     void newFile(final FileType type) {
-        final String name = uniqueName("New File", "." + type.extension());
+        final String name = uniqueName(GameText.resolve(DesktopTexts.NEW_FILE), "." + type.extension());
         pending = name;
         PacketDistributor.sendToServer(new SaveFilePayload(desktop.hostPos(), desktop.deskDir() + "/" + name, ""));
         FilesApps.diskChanged();
     }
 
     void newFolder() {
-        final String name = uniqueName("New Folder", "");
+        final String name = uniqueName(GameText.resolve(DesktopTexts.NEW_FOLDER), "");
         pending = name;
         PacketDistributor.sendToServer(new MkdirPayload(desktop.hostPos(), desktop.deskDir() + "/" + name));
         FilesApps.diskChanged();

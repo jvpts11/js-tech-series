@@ -1,0 +1,3 @@
+# The lines of text each file still draws raw, outside Draw.text, which is where a shadow would come back.
+# A file may draw fewer, never more; one not listed draws none. Lower a count when a file draws fewer.
+# None is listed: every line of text of the series is drawn through Draw.text.

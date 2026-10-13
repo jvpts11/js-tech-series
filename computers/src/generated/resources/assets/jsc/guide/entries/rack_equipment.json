@@ -1,0 +1,150 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.rack_equipment.table1",
+      "heads": [
+        "jsc.guide.rack_equipment.table1_head1",
+        "jsc.guide.rack_equipment.table1_head2",
+        "jsc.guide.rack_equipment.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.rack_equipment.fix1",
+          "problem": "jsc.guide.rack_equipment.problem1"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix2",
+          "problem": "jsc.guide.rack_equipment.problem2"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix3",
+          "problem": "jsc.guide.rack_equipment.problem3"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix4",
+          "problem": "jsc.guide.rack_equipment.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:rack_cooling_and_heat"
+      ]
+    }
+  ],
+  "icon": "jsc:kvm_switch",
+  "id": "jsc:rack_equipment",
+  "items": [
+    "jsc:vintage_kvm_switch",
+    "jsc:legacy_kvm_switch",
+    "jsc:transition_kvm_switch",
+    "jsc:kvm_switch",
+    "jsc:advanced_kvm_switch",
+    "jsc:vintage_rack_ups",
+    "jsc:legacy_rack_ups",
+    "jsc:transition_rack_ups",
+    "jsc:rack_ups",
+    "jsc:advanced_rack_ups",
+    "jsc:vintage_cooling_unit",
+    "jsc:legacy_cooling_unit",
+    "jsc:transition_cooling_unit",
+    "jsc:cooling_unit",
+    "jsc:advanced_cooling_unit",
+    "jsc:fibre_optic_interface",
+    "jsc:advanced_fibre_optic_interface"
+  ],
+  "order": 31,
+  "section": "jsc:racks",
+  "title": "jsc.guide.rack_equipment.title"
+}

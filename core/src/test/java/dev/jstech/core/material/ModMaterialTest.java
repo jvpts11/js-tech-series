@@ -15,6 +15,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModMaterialTest {
 
+    @Test
+    void forms_neverListedAsBothVanillaAndAddedByTheMod() {
+        for (ModMaterial material : ModMaterial.values()) {
+            for (MaterialForm form : material.vanillaForms()) {
+                assertFalse(material.activeModForms().contains(form), material + " lists " + form + " twice");
+            }
+        }
+    }
+
     // materialName()
 
     @Test

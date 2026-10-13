@@ -1,0 +1,65 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.server_types.table1",
+      "heads": [
+        "jsc.guide.server_types.table1_head1",
+        "jsc.guide.server_types.table1_head2",
+        "jsc.guide.server_types.table1_head3",
+        "jsc.guide.server_types.table1_head4",
+        "jsc.guide.server_types.table1_head5",
+        "jsc.guide.server_types.table1_head6"
+      ],
+      "source": "jsc:servers"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.server_types.fix1",
+          "problem": "jsc.guide.server_types.problem1"
+        },
+        {
+          "fix": "jsc.guide.server_types.fix2",
+          "problem": "jsc.guide.server_types.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:rack_drive_bays"
+      ]
+    }
+  ],
+  "id": "jsc:server_types",
+  "order": 28,
+  "section": "jsc:racks",
+  "title": "jsc.guide.server_types.title"
+}

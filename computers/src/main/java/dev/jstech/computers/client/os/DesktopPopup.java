@@ -7,10 +7,15 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
@@ -27,6 +32,7 @@ import java.util.List;
  * <p>This is a pure client-side overlay: it owns no server state and is placed in desktop-local
  * coordinates (the same translated space the {@link DesktopScreen} draws its windows in).
  */
+@PaletteHolder
 final class DesktopPopup extends Popup {
 
     private static final int WIDTH = 196;
@@ -37,6 +43,9 @@ final class DesktopPopup extends Popup {
     private static final int BTN_W = 52;
     private static final int BTN_H = 16;
     private static final int MAX_TEXT_WIDTH = WIDTH - PADDING * 2 - ICON - 6;
+    /** The error dialog's colours, {@code jsc:desktop/error_dialog}: its dim, and its icon's disc and cross. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/error_dialog",
+            new Colours(0x80000000, 0xFFD0021B, 0xFFFFFFFF));
 
     private final List<Label> lines = new ArrayList<>();
     private final Button ok;
@@ -47,10 +56,10 @@ final class DesktopPopup extends Popup {
         for (final String line : wrapped) {
             lines.add(add(new Label(line)));
         }
-        ok = add(new Button("OK", this::close).setPrimary(true));
+        ok = add(new Button(GameText.resolve(CdeTexts.OK), this::close).setPrimary(true));
         final int bodyH = PADDING + Math.max(ICON, wrapped.size() * LINE_H) + PADDING + BTN_H + PADDING;
         setPreferredSize(WIDTH, TITLE_H + bodyH);
-        setDim(0x80000000);
+        setDim(PALETTE.get().dim());
         setCloseOnOutsideClick(false);
         setLayouter(this::layoutContent);
         // The dialog exists only while it is shown: the desktop drops it once it closes.
@@ -89,14 +98,15 @@ final class DesktopPopup extends Popup {
         // A filled circle approximated by rows, so it reads as a disc at this small size.
         final int[] half = {4, 6, 7, 8, 9, 9, 9, 9, 8, 7, 6, 4};
         final int cx = ox + ICON / 2;
+        final Colours c = PALETTE.get();
         for (int i = 0; i < half.length; i++) {
             final int ry = oy + 3 + i;
-            g.fill(cx - half[i], ry, cx + half[i], ry + 1, 0xFFD0021B);
+            g.fill(cx - half[i], ry, cx + half[i], ry + 1, c.disc());
         }
         // White X across the disc.
         for (int i = 0; i < 7; i++) {
-            g.fill(cx - 3 + i, oy + 5 + i, cx - 2 + i, oy + 6 + i, 0xFFFFFFFF);
-            g.fill(cx + 3 - i, oy + 5 + i, cx + 4 - i, oy + 6 + i, 0xFFFFFFFF);
+            g.fill(cx - 3 + i, oy + 5 + i, cx - 2 + i, oy + 6 + i, c.cross());
+            g.fill(cx + 3 - i, oy + 5 + i, cx + 4 - i, oy + 6 + i, c.cross());
         }
     }
 
@@ -121,5 +131,9 @@ final class DesktopPopup extends Popup {
             out.add(message);
         }
         return out;
+    }
+
+    /** The error dialog's dim, and its icon's disc and cross. */
+    private record Colours(int dim, int disc, int cross) {
     }
 }

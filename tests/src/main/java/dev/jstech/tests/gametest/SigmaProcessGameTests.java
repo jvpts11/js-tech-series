@@ -18,12 +18,16 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.ServerTickDeadline;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramConsole;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -109,24 +113,8 @@ public final class SigmaProcessGameTests {
 
     /** A computer with enough hardware to run and a system on it. */
     private static CraftingComputerBlockEntity computer(final GameTestHelper helper, final BlockPos at) {
-        helper.setBlock(at, ComputingModule.CRAFTING_COMPUTER.get());
-        if (!(helper.getBlockEntity(at) instanceof CraftingComputerBlockEntity computer)) {
-            helper.fail("no computer at " + at);
-            return null;
-        }
-        final ItemStackHandler hw = computer.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
-        return computer;
+        return TestWorldBuilder.forGameTest(helper).placeCraftingComputer(at,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
     }
 
     private static IMachineRuntime only(final MachinePrograms programs) {
@@ -145,7 +133,7 @@ public final class SigmaProcessGameTests {
             return null;
         }
         final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT, new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT, new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
@@ -365,7 +353,7 @@ public final class SigmaProcessGameTests {
                     programs.hold(id);
                     helper.assertTrue(programs.unseen().isEmpty(), "nothing has been printed yet");
                     programs.tick(512);
-                    final List<String> first = programs.unseen();
+                    final List<String> first = programs.unseen().stream().map(Text::english).toList();
                     helper.assertTrue(first.equals(List.of("hi 0", "hi 1", "hi 2")),
                             "it hands over what was printed; got " + first);
                     helper.assertTrue(programs.unseen().isEmpty(),
@@ -392,7 +380,7 @@ public final class SigmaProcessGameTests {
                             """), 1, computer).id();
                     programs.hold(id);
                     programs.tick(100000);
-                    final List<String> seen = programs.unseen();
+                    final List<String> seen = programs.unseen().stream().map(Text::english).toList();
                     /*
                      * What fell off the end while nobody looked is gone, as it is on any terminal; what
                      * is left is the newest, in order, ending with the last thing the program said.
@@ -607,8 +595,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final dev.jstech.computers.program.ServerCliComputer shell =
-                            new dev.jstech.computers.program.ServerCliComputer(computer, helper.getLevel());
+                    final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
                     helper.assertTrue(shell.writeFile("C:\\child.asm", listing(CHILD)).ok(),
                             "the child is on the disk");
                     final MachinePrograms programs = computer.programs();
@@ -629,6 +616,207 @@ public final class SigmaProcessGameTests {
                     programs.tick(2048);
                     helper.assertTrue(programs.isEmpty(),
                             "and both are gone once the parent is; " + programs.view().size() + " left");
+                })
+                .thenSucceed();
+    }
+
+    /** A program that works on files as C's stdio does, and leaves one open when it ends. */
+    private static final String FILES = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Files {
+                static void Main() {
+                    FILE w = fopen("notes.txt", "w");
+                    fprintf(w, "%s %d\\n", "iron", 16);
+                    fclose(w);
+                    FILE r = fopen("notes.txt", "r");
+                    string line;
+                    fgets(out line, r);
+                    Console.PrintLine("read " + line);
+                    fclose(r);
+                    Console.PrintLine("renamed " + rename("notes.txt", "stock.txt"));
+                    FILE left = fopen("left.txt", "w");
+                    fputs("still here", left);
+                }
+            }
+            """;
+
+    /**
+     * The files a program opens are the machine's own: what it wrote is on the disk once it closes them, what it
+     * renamed is under the new name, and what it left open is written when it ends.
+     */
+    @GameTest(template = ARENA)
+    public static void programs_workOnTheMachinesFilesAsCDoes(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms programs = computer.programs();
+                    final MachinePrograms.Started started =
+                            programs.start("files.asm", listing(FILES), 1, computer);
+                    helper.assertTrue(started.ok(), "it starts: " + started.message());
+                    final IMachineRuntime files = programs.byId(started.id()).process();
+                    int ticks = 0;
+                    while (MachinePrograms.running(files) && ticks++ < 12) {
+                        programs.tick(4096);
+                    }
+                    helper.assertTrue(files.console().equals(List.of("read iron 16", "renamed true")),
+                            "it read what it wrote and renamed it; got " + files.console() + " (" + files.message()
+                                    + ")");
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "stock.txt")
+                                    .filter("iron 16\n"::equals).isPresent(),
+                            "the file is on the disk under its new name; got "
+                                    + DiskFilesystem.read(computer.systemDisk(), "stock.txt"));
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "notes.txt").isEmpty(),
+                            "and not under the old one");
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "left.txt")
+                                    .filter("still here"::equals).isPresent(),
+                            "what it left open is written when it ends; got "
+                                    + DiskFilesystem.read(computer.systemDisk(), "left.txt"));
+                })
+                .thenSucceed();
+    }
+
+    /** A program that writes part of a file, waits for a line with the file still open, and writes the rest. */
+    private static final String SAVED_OPEN = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Saved {
+                static void Main() {
+                    FILE f = fopen("saved.txt", "w");
+                    fputs("before the save|", f);
+                    fputs(gets(), f);
+                }
+            }
+            """;
+
+    /** A file a program holds open is kept with it through a save, and what it writes after the load is not lost. */
+    @GameTest(template = ARENA)
+    public static void programs_carryAnOpenFileThroughASave(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms before = computer.programs();
+                    final MachinePrograms.Started started =
+                            before.start("saved.asm", listing(SAVED_OPEN), 1, computer);
+                    helper.assertTrue(started.ok(), "it starts: " + started.message());
+                    before.hold(started.id());
+                    before.tick(4096);
+                    helper.assertTrue(before.byId(started.id()).process().waitingForInput(),
+                            "it waits for a line with the file open");
+                    final CompoundTag tag = new CompoundTag();
+                    before.save(tag);
+                    final MachinePrograms after = new MachinePrograms();
+                    after.load(tag, computer);
+                    helper.assertTrue(after.offerInput("after it"), "the line typed after the load reaches it");
+                    int ticks = 0;
+                    while (after.byId(started.id()) != null
+                            && MachinePrograms.running(after.byId(started.id()).process()) && ticks++ < 12) {
+                        after.tick(4096);
+                    }
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "saved.txt")
+                                    .filter("before the save|after it"::equals).isPresent(),
+                            "what it wrote before the save and after it is on the disk; got "
+                                    + DiskFilesystem.read(computer.systemDisk(), "saved.txt"));
+                })
+                .thenSucceed();
+    }
+
+    /** A program that opens files until the machine says no, and says how many it had. */
+    private static final String OPENS_ALL = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Opens {
+                static void Main() {
+                    int n = 0;
+                    while (n < 100 && fopen("open" + n + ".txt", "w") != null) {
+                        n++;
+                    }
+                    Console.PrintLine("" + n);
+                }
+            }
+            """;
+
+    /** A machine holds a program to so many files open at once, by its era: a Legacy one to 20, a Standard one to 64. */
+    @GameTest(template = ARENA)
+    public static void programs_openAsManyFilesAsTheirMachinesEraAllows(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity standard = computer(helper, new BlockPos(2, 2, 2));
+        if (standard == null) {
+            return;
+        }
+        final CraftingComputerBlockEntity legacy = TestWorldBuilder.forGameTest(helper)
+                .placeRunningLegacyCraftingComputer(new BlockPos(4, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(opened(helper, standard).equals(List.of("64")),
+                            "a Standard machine holds a program to 64 files open");
+                    helper.assertTrue(opened(helper, legacy).equals(List.of("20")),
+                            "a Legacy machine holds a program to 20 files open");
+                })
+                .thenSucceed();
+    }
+
+    /** What the program that opens files until it cannot said on that machine. */
+    private static List<String> opened(final GameTestHelper helper, final CraftingComputerBlockEntity machine) {
+        final SigmaCompiler.Result built = SigmaCompiler.compile(
+                List.of(new SourceFile("Opens.sgs", OPENS_ALL)), "jsc:ia_16");
+        final MachinePrograms programs = machine.programs();
+        final MachinePrograms.Started started = programs.start("opens.asm", built.assembly(), 1, machine);
+        helper.assertTrue(started.ok(), "it starts: " + started.message());
+        final IMachineRuntime opens = programs.byId(started.id()).process();
+        int ticks = 0;
+        while (MachinePrograms.running(opens) && ticks++ < 40) {
+            programs.tick(8192);
+        }
+        return opens.console();
+    }
+
+    /** A child whose Main is handed the arguments it was started with and gives back the code it ends with. */
+    private static final String HANDED_CHILD = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Tool {
+                static int Main(string[] args) {
+                    Console.PrintLine("args " + args.Length + " " + args[0]);
+                    return 7;
+                }
+            }
+            """;
+
+    @GameTest(template = ARENA)
+    public static void programs_aMainIsHandedItsArgumentsAndWhatItGivesBackIsTheExitCode(
+            final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
+                    helper.assertTrue(shell.writeFile("C:\\child.asm", listing(HANDED_CHILD)).ok(),
+                            "the child is on the disk");
+                    final MachinePrograms programs = computer.programs();
+                    final MachinePrograms.Started started =
+                            programs.start("parent.asm", listing(PARENT), 1, computer);
+                    helper.assertTrue(started.ok(), "the parent starts: " + started.message());
+                    final IMachineRuntime parent = programs.byId(started.id()).process();
+                    int ticks = 0;
+                    while (parent.console().size() < 3 && ticks++ < 12) {
+                        programs.tick(2048);
+                    }
+                    helper.assertTrue(parent.console().equals(List.of("started child.asm", "child: args 1 a",
+                                    "code 7")),
+                            "the child's Main had the argument and its answer was the code; got "
+                                    + parent.console() + " (" + parent.message() + ")");
                 })
                 .thenSucceed();
     }
@@ -727,8 +915,7 @@ public final class SigmaProcessGameTests {
     private static IMachineRuntime startWaiting(final GameTestHelper helper,
                                                 final CraftingComputerBlockEntity computer, final String file,
                                                 final String source) {
-        final dev.jstech.computers.program.ServerCliComputer shell =
-                new dev.jstech.computers.program.ServerCliComputer(computer, helper.getLevel());
+        final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
         helper.assertTrue(shell.writeFile("C:\\" + file, listing(source)).ok(), "the child is on the disk");
         final MachinePrograms programs = computer.programs();
         final MachinePrograms.Started started = programs.start("patient.asm", listing(waitingOn(file)), 1, computer);

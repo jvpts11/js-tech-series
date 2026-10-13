@@ -1,0 +1,106 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_overview.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_overview.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.gentoo_overview.definition1",
+      "term": "jsc.guide.gentoo_overview.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.gentoo_overview.definition2",
+      "term": "jsc.guide.gentoo_overview.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_overview.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.gentoo_overview.definition3",
+      "term": "jsc.guide.gentoo_overview.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_overview.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_overview.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_overview.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gentoo_overview.table1",
+      "heads": [
+        "jsc.guide.gentoo_overview.table1_head1",
+        "jsc.guide.gentoo_overview.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "false"
+          },
+          {
+            "words": "jsc.guide.gentoo_overview.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "true"
+          },
+          {
+            "words": "jsc.guide.gentoo_overview.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_overview.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_overview.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.gentoo_overview.fix1",
+          "problem": "jsc.guide.gentoo_overview.problem1"
+        },
+        {
+          "fix": "jsc.guide.gentoo_overview.fix2",
+          "problem": "jsc.guide.gentoo_overview.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "icon": "jsc:usb_flash_drive",
+  "id": "jsc:gentoo_overview",
+  "order": 256,
+  "section": "jsc:gentoo_install",
+  "title": "jsc.guide.gentoo_overview.title"
+}

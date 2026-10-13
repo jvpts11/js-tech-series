@@ -18,6 +18,8 @@ import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.sigma.lex.Lexer;
 import dev.jstech.computers.sigma.lex.Token;
 import dev.jstech.computers.sigma.lex.TokenKind;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -33,12 +35,20 @@ import java.util.Set;
  * back on itself. The reader of statements is made here for that reason, and handed on to whoever else
  * needs it, since there is only ever one file being read.
  */
+@TextHolder
 final class ExpressionParser {
 
     private final TokenCursor cursor;
     private final DiagnosticBag diagnostics;
     private final TypeParser types;
     private final StatementParser statements;
+
+    /** What a hole in an interpolated string was expected to end with, where something else followed. */
+    private static final TextKey END_OF_HOLE = TextKey.of("jsc.sigma.expression_parser.end_of_hole",
+            "the end of the hole");
+
+    /** The word a place that is read before it is written starts with, in an argument. */
+    private static final String REF = "ref";
 
     private static final Set<TokenKind> LITERALS = EnumSet.of(
             TokenKind.INT_LITERAL, TokenKind.LONG_LITERAL, TokenKind.FLOAT_LITERAL, TokenKind.DOUBLE_LITERAL,
@@ -77,7 +87,14 @@ final class ExpressionParser {
     }
 
     IExpr parseExpression() {
-        return this.parseAssignment();
+        if (!this.cursor.descend()) {
+            return null;
+        }
+        try {
+            return this.parseAssignment();
+        } finally {
+            this.cursor.ascend();
+        }
     }
 
     /** Reads one expression standing on its own, as a hole in an interpolated string holds one. */
@@ -85,7 +102,7 @@ final class ExpressionParser {
         final IExpr expression = this.parseExpression();
         if (!this.cursor.atEnd()) {
             final Token extra = this.cursor.peek();
-            this.diagnostics.error(extra.line(), extra.column(), SigmaError.EXPECTED_TOKEN, "the end of the hole",
+            this.diagnostics.error(extra.line(), extra.column(), SigmaError.EXPECTED_TOKEN, END_OF_HOLE,
                     extra.describe());
         }
         return expression;
@@ -98,8 +115,8 @@ final class ExpressionParser {
         }
         while (!this.cursor.check(TokenKind.RIGHT_PAREN) && !this.cursor.atEnd()) {
             final int before = this.cursor.at();
-            final IExpr argument = this.cursor.check(TokenKind.OUT)
-                    ? this.parseOutArgument() : this.parseExpression();
+            final IExpr argument = this.cursor.check(TokenKind.OUT) ? this.parseOutArgument()
+                    : this.refAhead() ? this.parseRefArgument() : this.parseExpression();
             if (argument != null) {
                 arguments.add(argument);
             }
@@ -136,7 +153,8 @@ final class ExpressionParser {
             return left;
         }
         final Token at = this.cursor.advance();
-        final IExpr value = this.parseAssignment();
+        // Through the depth budget, as every nesting is: a chain of thousands of '=' would overflow the stack.
+        final IExpr value = this.parseExpression();
         if (!isAssignable(left)) {
             this.diagnostics.error(at.line(), at.column(), SigmaError.INVALID_ASSIGNMENT_TARGET);
         }
@@ -172,9 +190,10 @@ final class ExpressionParser {
             return condition;
         }
         this.cursor.advance();
-        final IExpr whenTrue = this.parseAssignment();
+        // Each branch counts against the depth budget, so a long chain of '?:' ends in an error, not a stack overflow.
+        final IExpr whenTrue = this.parseExpression();
         this.cursor.expect(TokenKind.COLON);
-        final IExpr whenFalse = this.parseAssignment();
+        final IExpr whenFalse = this.parseExpression();
         return new IExpr.Conditional(condition, whenTrue, whenFalse,
                 condition == null ? this.cursor.peek().line() : condition.line(),
                 condition == null ? this.cursor.peek().column() : condition.column());
@@ -233,22 +252,22 @@ final class ExpressionParser {
         switch (start.kind()) {
             case NOT:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.NOT, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.NOT, this.operand(), false, start.line(), start.column());
             case MINUS:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.NEGATE, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.NEGATE, this.operand(), false, start.line(), start.column());
             case PLUS:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.PLUS, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.PLUS, this.operand(), false, start.line(), start.column());
             case TILDE:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.COMPLEMENT, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.COMPLEMENT, this.operand(), false, start.line(), start.column());
             case PLUS_PLUS:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.INCREMENT, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.INCREMENT, this.operand(), false, start.line(), start.column());
             case MINUS_MINUS:
                 this.cursor.advance();
-                return new IExpr.Unary(Operator.DECREMENT, this.parseUnary(), false, start.line(), start.column());
+                return new IExpr.Unary(Operator.DECREMENT, this.operand(), false, start.line(), start.column());
             default:
                 break;
         }
@@ -256,9 +275,21 @@ final class ExpressionParser {
             this.cursor.advance();
             final TypeRef type = this.types.parseTypeRef();
             this.cursor.expect(TokenKind.RIGHT_PAREN);
-            return new IExpr.Cast(type, this.parseUnary(), start.line(), start.column());
+            return new IExpr.Cast(type, this.operand(), start.line(), start.column());
         }
         return this.parsePostfix();
+    }
+
+    /* What a unary operator or a cast applies to sits a level inside it, so a chain of them counts too. */
+    private IExpr operand() {
+        if (!this.cursor.descend()) {
+            return null;
+        }
+        try {
+            return this.parseUnary();
+        } finally {
+            this.cursor.ascend();
+        }
     }
 
     /*
@@ -346,13 +377,28 @@ final class ExpressionParser {
      */
     private IExpr parseOutArgument() {
         final Token start = this.cursor.advance();
-        final int afterType = this.types.scanType(this.cursor.at());
         TypeRef type = null;
-        if (afterType > this.cursor.at() && this.cursor.kindAt(afterType) == TokenKind.IDENTIFIER) {
+        if (this.types.typedNameAhead()) {
             type = this.types.parseTypeRef();
         }
         final String name = this.cursor.expectIdentifier();
         return new IExpr.OutArgument(type, name, start.line(), start.column());
+    }
+
+    /*
+     * "ref value" hands over a place that is read before it is written, which only strcat takes. The word is not
+     * kept from anybody: it means this only where an argument starts with it and a name follows, which is nowhere
+     * a program could already have written it, so a variable called ref is still a variable.
+     */
+    private boolean refAhead() {
+        return this.cursor.check(TokenKind.IDENTIFIER) && REF.equals(this.cursor.peek().text())
+                && this.cursor.kindAhead(1) == TokenKind.IDENTIFIER;
+    }
+
+    private IExpr parseRefArgument() {
+        final Token start = this.cursor.advance();
+        final String name = this.cursor.expectIdentifier();
+        return new IExpr.OutArgument(null, name, true, start.line(), start.column());
     }
 
     /**
@@ -376,18 +422,18 @@ final class ExpressionParser {
     /**
      * The expression in one hole, read by a lexer and parser of its own.
      *
-     * <p>The code is padded with the lines and columns before it, so anything wrong inside the hole is
-     * reported where it sits in the file rather than at the start of a string nobody can find.
+     * <p>The lexer starts at the line and column the hole sits at, so anything wrong inside it is reported
+     * where it sits in the file rather than at the start of a string nobody can find.
      */
     private IExpr parseHole(final Token token, final Lexer.Hole hole) {
         if (hole.code().isBlank()) {
             this.diagnostics.error(hole.line(), hole.column(), SigmaError.EXPECTED_EXPRESSION, "'}'");
             return new IExpr.Literal(TokenKind.STRING_LITERAL, "", token.line(), token.column());
         }
-        final String padded = "\n".repeat(Math.max(0, hole.line() - 1)) + " ".repeat(Math.max(0, hole.column() - 1))
-                + hole.code();
-        final Lexer lexer = new Lexer(new SourceFile("", padded), this.diagnostics);
-        return new Parser(lexer.tokenize(), this.diagnostics).parseLoneExpression();
+        final Lexer lexer = new Lexer(new SourceFile("", hole.code()), this.diagnostics,
+                Math.max(1, hole.line()), Math.max(1, hole.column()));
+        // The hole is read as deep as the string it sits in, so holes nested in holes still meet the limit.
+        return new Parser(lexer.tokenize(), this.diagnostics, this.cursor.depth()).parseLoneExpression();
     }
 
     private IExpr parsePrimary() {
@@ -467,9 +513,8 @@ final class ExpressionParser {
             final int before = this.cursor.at();
             final Token at = this.cursor.peek();
             final boolean outward = this.cursor.match(TokenKind.OUT);
-            final int afterType = this.types.scanType(this.cursor.at());
             TypeRef type = null;
-            if (afterType > this.cursor.at() && this.cursor.kindAt(afterType) == TokenKind.IDENTIFIER) {
+            if (this.types.typedNameAhead()) {
                 type = this.types.parseTypeRef();
             }
             final String name = this.cursor.expectIdentifier();

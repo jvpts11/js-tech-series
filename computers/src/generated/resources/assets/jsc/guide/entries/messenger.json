@@ -1,0 +1,118 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.messenger.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.messenger.definition1",
+      "term": "jsc.guide.messenger.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.messenger.definition2",
+      "term": "jsc.guide.messenger.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.messenger.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.messenger.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.messenger.table1",
+      "heads": [
+        "jsc.guide.messenger.table1_head1",
+        "jsc.guide.messenger.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.messenger.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.messenger.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.messenger.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.messenger.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.messenger.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.messenger.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.messenger.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.messenger.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.messenger.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.messenger.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.messenger.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.messenger.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.messenger.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.messenger.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.messenger.fix1",
+          "problem": "jsc.guide.messenger.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:server_router",
+        "jsc:mainframes"
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:messenger",
+  "order": 58,
+  "section": "jsc:social_and_media",
+  "title": "jsc.guide.messenger.title"
+}

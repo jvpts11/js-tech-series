@@ -1,0 +1,206 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_machine.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_machine.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_machine.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "using System.Collections.*;",
+        "using System.Machine.*;",
+        "namespace Corpus;",
+        "class MachineCorpus {",
+        "    static void Main() {",
+        "        bool there = File.Exists(\"a.txt\");",
+        "        string text = File.Read(\"a.txt\");",
+        "        if (File.TryRead(\"a.txt\", out string held)) {",
+        "            Console.PrintLine(held);",
+        "        }",
+        "        bool wrote = File.Write(\"a.txt\", \"x\") && File.Append(\"a.txt\", \"y\");",
+        "        bool tidied = File.Delete(\"a.txt\") && File.MkDir(\"d\");",
+        "        foreach (string entry in File.List(\"C:\\\\\")) {",
+        "            Console.PrintLine(entry);",
+        "        }",
+        "        Console.PrintLine(\"\" + there + text + wrote + tidied);",
+        "",
+        "        string name = Computer.Name;",
+        "        CpuInfo cpu = Computer.Cpu;",
+        "        OsInfo os = Computer.Os;",
+        "        int ram = Computer.RamMb + Computer.FreeRamMb;",
+        "        bool online = Computer.Online;",
+        "        Console.PrintLine(name + cpu.Mhz + cpu.Cores + cpu.Era + cpu.Architecture",
+        "            + os.Id + os.Name + ram + online);",
+        "        foreach (DiskInfo disk in Computer.Disks()) {",
+        "            Console.PrintLine(disk.Mount + disk.UsedMb + disk.CapacityMb);",
+        "        }",
+        "        List<string> programs = Computer.Programs();",
+        "        foreach (ProcessInfo process in Computer.Processes()) {",
+        "            Console.PrintLine(\"\" + process.Id + process.Name + process.State + process.HeldBytes + programs.Count);",
+        "        }",
+        "    }",
+        "}"
+      ],
+      "name": "Machine.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_machine.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_machine.table1",
+      "heads": [
+        "jsc.guide.sigma_example_machine.table1_head1",
+        "jsc.guide.sigma_example_machine.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "File.Exists(\"a.txt\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Read(\"a.txt\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.TryRead(\"a.txt\", out held)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Write, File.Append"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.Delete, File.MkDir"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.List(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Name, Cpu, Os"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.RamMb, FreeRamMb"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Disks()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Programs()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Processes()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_machine.table1_11_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_machine.definition1",
+      "term": "jsc.guide.sigma_example_machine.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_machine.definition2",
+      "term": "jsc.guide.sigma_example_machine.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_machine.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_machine.fix1",
+          "problem": "jsc.guide.sigma_example_machine.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_machine.fix2",
+          "problem": "jsc.guide.sigma_example_machine.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_machine.fix3",
+          "problem": "jsc.guide.sigma_example_machine.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_library",
+        "jsc:eras"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_machine",
+  "order": 399,
+  "section": "jsc:examples_devices",
+  "title": "jsc.guide.sigma_example_machine.title"
+}

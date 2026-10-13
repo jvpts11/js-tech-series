@@ -1,0 +1,86 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.mirror.step1",
+        "jsc.guide.mirror.step2",
+        "jsc.guide.mirror.step3",
+        "jsc.guide.mirror.step4"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mirror.table1",
+      "heads": [
+        "jsc.guide.mirror.table1_head1",
+        "jsc.guide.mirror.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "mirror install"
+          },
+          {
+            "words": "jsc.guide.mirror.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "mirror status"
+          },
+          {
+            "words": "jsc.guide.mirror.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mirror.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mirror.definition1",
+      "term": "jsc.guide.mirror.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mirror.fix1",
+          "problem": "jsc.guide.mirror.problem1"
+        },
+        {
+          "fix": "jsc.guide.mirror.fix2",
+          "problem": "jsc.guide.mirror.problem2"
+        },
+        {
+          "fix": "jsc.guide.mirror.fix3",
+          "problem": "jsc.guide.mirror.problem3"
+        },
+        {
+          "fix": "jsc.guide.mirror.fix4",
+          "problem": "jsc.guide.mirror.problem4"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:mirror",
+  "order": 71,
+  "section": "jsc:network_operation",
+  "title": "jsc.guide.mirror.title"
+}

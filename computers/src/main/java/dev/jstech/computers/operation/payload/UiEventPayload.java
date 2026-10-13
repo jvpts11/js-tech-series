@@ -27,11 +27,15 @@ import net.minecraft.resources.ResourceLocation;
 public record UiEventPayload(BlockPos hostPos, int program, long window, long widget, String kind, String said,
                              int number, int second) implements CustomPacketPayload {
 
-    /** What a player's hands can do to a widget; nothing else is taken. */
-    public static final Set<String> KINDS = Set.of("click", "text", "submit", "toggle", "select", "close");
+    /**
+     * What a player's hands can do to a widget; nothing else is taken. A number set, an entry picked from a menu, a
+     * file chosen in a dialog or the dialog turned down, and what a generic component's renderer says happened.
+     */
+    public static final Set<String> KINDS = Set.of("click", "text", "submit", "toggle", "select", "close", "number",
+            "pick", "file", "cancel", "action");
 
-    /** The longest line a player can put in a program's box. */
-    public static final int MAX_TEXT = UiWidgets.MOST_TEXT;
+    /** The most a player can put in one of a program's widgets at once: all of a text area. */
+    public static final int MAX_TEXT = UiWidgets.MOST_AREA;
 
     public static final CustomPacketPayload.Type<UiEventPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "ui_event"));
@@ -42,9 +46,9 @@ public record UiEventPayload(BlockPos hostPos, int program, long window, long wi
     /** What the event carries, as the runtime hands it to the program. */
     public List<Object> values() {
         return switch (this.kind) {
-            case "text", "submit" -> List.of(this.said);
+            case "text", "submit", "file", "action" -> List.of(this.said);
             case "toggle" -> List.of(this.number != 0);
-            case "select" -> List.of(this.number);
+            case "select", "number", "pick" -> List.of(this.number);
             case "click" -> this.number == 0 && this.second == 0 ? List.of() : List.of(this.number, this.second);
             default -> List.of();
         };

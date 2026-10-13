@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.storage;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.item.DiskItem;
 import net.minecraft.world.item.ItemStack;
 
@@ -36,17 +36,17 @@ public final class DriveVolumes {
         if (store == null) {
             return StorageVolume.EMPTY;
         }
-        UUID id = drive.get(ComputingModule.DISK_VOLUME.get());
+        UUID id = drive.get(ComputingComponents.DISK_VOLUME.get());
         if (id == null) {
             id = UUID.randomUUID();
-            drive.set(ComputingModule.DISK_VOLUME.get(), id);
+            drive.set(ComputingComponents.DISK_VOLUME.get(), id);
         }
         return store.volume(id);
     }
 
     /** The live volume behind a drive when it already has one, else the blank read-only volume. */
     public static StorageVolume peek(final ItemStack drive) {
-        final UUID id = drive.get(ComputingModule.DISK_VOLUME.get());
+        final UUID id = drive.get(ComputingComponents.DISK_VOLUME.get());
         if (id == null) {
             return StorageVolume.EMPTY;
         }
@@ -62,7 +62,7 @@ public final class DriveVolumes {
 
     /** The drive's usage summary, valid wherever the item is. */
     public static DiskUsage usage(final ItemStack drive) {
-        return drive.getOrDefault(ComputingModule.DISK_USAGE.get(), DiskUsage.EMPTY);
+        return drive.getOrDefault(ComputingComponents.DISK_USAGE.get(), DiskUsage.EMPTY);
     }
 
     /** The stored data weight, from the summary. */
@@ -73,9 +73,9 @@ public final class DriveVolumes {
     /** Rewrites the drive's summary from its volume; every write to the volume ends with this. */
     public static void refreshUsage(final ItemStack drive, final StorageVolume volume) {
         if (volume.isEmpty()) {
-            drive.remove(ComputingModule.DISK_USAGE.get());
+            drive.remove(ComputingComponents.DISK_USAGE.get());
         } else {
-            drive.set(ComputingModule.DISK_USAGE.get(), DiskUsage.of(volume));
+            drive.set(ComputingComponents.DISK_USAGE.get(), DiskUsage.of(volume));
         }
     }
 
@@ -88,14 +88,14 @@ public final class DriveVolumes {
 
     /** Wipes a drive's stored items: the volume is dropped from the store and the drive forgets it. */
     public static void erase(final ItemStack drive) {
-        final UUID id = drive.get(ComputingModule.DISK_VOLUME.get());
+        final UUID id = drive.get(ComputingComponents.DISK_VOLUME.get());
         if (id != null) {
             final StorageVolumes store = StorageVolumes.current();
             if (store != null) {
                 store.remove(id);
             }
         }
-        drive.remove(ComputingModule.DISK_VOLUME.get());
-        drive.remove(ComputingModule.DISK_USAGE.get());
+        drive.remove(ComputingComponents.DISK_VOLUME.get());
+        drive.remove(ComputingComponents.DISK_USAGE.get());
     }
 }

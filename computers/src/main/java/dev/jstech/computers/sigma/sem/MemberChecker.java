@@ -8,9 +8,11 @@
 package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.SigmaError;
+import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.INode;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Reaching something that belongs to a type, and deciding whether it may be reached that way.
@@ -29,6 +31,9 @@ final class MemberChecker {
     private final BodyScope scope;
     private final ExpressionChecker expressions;
 
+    /** How many places an array has, the one thing an array answers to. */
+    static final String ARRAY_LENGTH = "Length";
+
     MemberChecker(final BodyScope scope, final ExpressionChecker expressions) {
         this.scope = scope;
         this.expressions = expressions;
@@ -46,6 +51,7 @@ final class MemberChecker {
             final NamedType named = this.scope.declarations().lookup(spelled + "." + member.name(),
                     this.scope.currentType());
             if (named != null) {
+                this.scope.declarations().reportIfNewer(named, member.line(), member.column());
                 this.scope.model().setBinding(member, new IBinding.TypeName(named));
                 return named;
             }
@@ -68,6 +74,11 @@ final class MemberChecker {
                 this.scope.model().setBinding(member, new IBinding.TypeName(inside));
                 return inside;
             }
+        }
+        // An array's one value of its own is how many places it has, read the way C# reads it.
+        if (target instanceof ITypeSymbol.ArrayType && access == BodyScope.Access.INSTANCE
+                && ARRAY_LENGTH.equals(member.name())) {
+            return ITypeSymbol.Primitive.INT;
         }
         final List<IMemberSymbol> found = this.membersOf(target, member.name(), member);
         return found.isEmpty()
@@ -112,6 +123,11 @@ final class MemberChecker {
     }
 
     boolean checkAccess(final IExpr expression, final IMemberSymbol member, final BodyScope.Access access) {
+        if (!this.visible(member)) {
+            this.scope.report(expression.line(), expression.column(), SigmaError.NOT_ACCESSIBLE, member.name(),
+                    accessWord(member), member.owner().name());
+            return false;
+        }
         switch (access) {
             case TYPE:
                 if (!member.isStatic()) {
@@ -137,6 +153,29 @@ final class MemberChecker {
         }
     }
 
+    /**
+     * Whether the code being checked may reach {@code member}, as C# decides it. A public or an internal member is
+     * reached from anywhere in the program; a private one, which is what a member written with no word of access is,
+     * only from inside the type that declares it and the types nested in it; a protected one from there and from the
+     * types that stand on it. The library's members, an interface's and an enum's are public.
+     */
+    boolean visible(final IMemberSymbol member) {
+        final NamedType owner = member.owner();
+        final Set<IDecl.Modifier> words = member.modifiers();
+        if (owner == null || owner.isBuiltIn() || owner.kind() == NamedType.Kind.INTERFACE
+                || owner.kind() == NamedType.Kind.ENUM || words.contains(IDecl.Modifier.PUBLIC)
+                || words.contains(IDecl.Modifier.INTERNAL)) {
+            return true;
+        }
+        // The type being checked and the types it is nested in all see what each of them sees.
+        for (NamedType from = this.scope.currentType(); from != null; from = this.scope.declarations().outerOf(from)) {
+            if (from == owner || words.contains(IDecl.Modifier.PROTECTED) && from.isOrDescendsFrom(owner)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /*
      * A name or a member that turns out to be a method, written without brackets. Like a lambda, it
      * has no type of its own until it is known what it is being handed to.
@@ -150,9 +189,17 @@ final class MemberChecker {
             return !found.isEmpty() && found.getFirst() instanceof IMemberSymbol.MethodSymbol;
         }
         if (expression instanceof IExpr.Member member) {
+            /*
+             * The target is checked again when the argument itself is, so this look-ahead works in a scope
+             * of its own: a name it declares, such as an out variable, must not be there already when the
+             * real check declares it.
+             */
+            final Scope saved = this.scope.scope();
+            this.scope.scope(new Scope(saved));
             this.scope.hush();
             final ITypeSymbol target = this.expressions.check(member.target(), null);
             this.scope.speakAgain();
+            this.scope.scope(saved);
             final NamedType named = this.scope.rules().named(target);
             if (named == null) {
                 return false;
@@ -176,6 +223,12 @@ final class MemberChecker {
             }
             default -> null;
         };
+    }
+
+    /* The word of access that keeps a member from where it was reached, as the program wrote it or as it falls. */
+    private static String accessWord(final IMemberSymbol member) {
+        return member.modifiers().contains(IDecl.Modifier.PROTECTED) ? IDecl.Modifier.PROTECTED.text()
+                : IDecl.Modifier.PRIVATE.text();
     }
 
     private ITypeSymbol methodGroupType(final IExpr expression, final ITypeSymbol receiver,

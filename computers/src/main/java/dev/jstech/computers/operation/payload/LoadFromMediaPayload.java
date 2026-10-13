@@ -18,63 +18,35 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
 /**
- * Client to server: load one or more {@code .craft} files from a removable medium into the
- * Crafting Computer's Recipe ROM.
+ * Client to server: load one or more {@code .craft} files from a removable medium into a Crafting Computer: a bench
+ * recipe into a card's ROM, a processing or pipeline recipe into a Crafting Interface it drives.
  *
- * <p>When {@code allMissing} is true the server loads every {@code .craft} file on the medium
- * that does not already have a matching pattern in the ROM; {@code fileNames} is ignored in that
- * case. Otherwise the server loads exactly the files listed in {@code fileNames}.
+ * <p>When {@code allMissing} is true the server loads every {@code .craft} file on the medium that the computer does
+ * not keep yet; {@code fileNames} is ignored in that case. Otherwise the server loads exactly the files listed.
  *
- * @param hostPos      the position of the Crafting Computer
+ * @param hostPos        the position of the Crafting Computer
  * @param mediaVolumeKey the {@code media:<readerPos>} key identifying the medium
- * @param fileNames    the {@code .craft} file names to load (ignored when {@code allMissing})
- * @param allMissing   when true, load all files not already in the ROM instead of the explicit list
+ * @param fileNames      the {@code .craft} file names to load (ignored when {@code allMissing})
+ * @param allMissing     when true, load all files the computer does not keep yet instead of the explicit list
+ * @param place          the place to load into, as the state numbers them; -1 for the first with room
  */
-public record LoadFromMediaPayload(
-        BlockPos hostPos,
-        String mediaVolumeKey,
-        List<String> fileNames,
-        boolean allMissing) implements CustomPacketPayload {
+public record LoadFromMediaPayload(BlockPos hostPos, String mediaVolumeKey, List<String> fileNames,
+                                   boolean allMissing, int place) implements CustomPacketPayload {
 
     private static final int MAX_FILES = 64;
 
     public static final CustomPacketPayload.Type<LoadFromMediaPayload> TYPE =
-            new CustomPacketPayload.Type<>(
-                    ResourceLocation.fromNamespaceAndPath("jsc", "load_from_media"));
-
-    private record FileName(String value) {
-        static final StreamCodec<RegistryFriendlyByteBuf, FileName> STREAM_CODEC =
-                StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(FsPaths.MAX_NAME_LENGTH),
-                        FileName::value,
-                        FileName::new);
-    }
-
-    private record Wire(BlockPos pos, String key, List<FileName> files, boolean all) {
-        static final StreamCodec<RegistryFriendlyByteBuf, Wire> STREAM_CODEC =
-                StreamCodec.composite(
-                        BlockPos.STREAM_CODEC, Wire::pos,
-                        ByteBufCodecs.stringUtf8(64), Wire::key,
-                        FileName.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)), Wire::files,
-                        ByteBufCodecs.BOOL, Wire::all,
-                        Wire::new);
-
-        /* Copied on the way in, so what arrives cannot change under whoever is acting on it. */
-        Wire {
-            files = List.copyOf(files);
-        }
-    }
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "load_from_media"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LoadFromMediaPayload> STREAM_CODEC =
-            Wire.STREAM_CODEC.map(
-                    w -> new LoadFromMediaPayload(
-                            w.pos(), w.key(),
-                            w.files().stream().map(FileName::value).toList(),
-                            w.all()),
-                    p -> new Wire(
-                            p.hostPos(), p.mediaVolumeKey(),
-                            p.fileNames().stream().map(FileName::new).toList(),
-                            p.allMissing()));
+            StreamCodec.composite(
+                    BlockPos.STREAM_CODEC, LoadFromMediaPayload::hostPos,
+                    ByteBufCodecs.stringUtf8(64), LoadFromMediaPayload::mediaVolumeKey,
+                    ByteBufCodecs.stringUtf8(FsPaths.MAX_NAME_LENGTH).apply(ByteBufCodecs.list(MAX_FILES)),
+                    LoadFromMediaPayload::fileNames,
+                    ByteBufCodecs.BOOL, LoadFromMediaPayload::allMissing,
+                    ByteBufCodecs.VAR_INT, LoadFromMediaPayload::place,
+                    LoadFromMediaPayload::new);
 
     /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
     public LoadFromMediaPayload {

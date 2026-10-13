@@ -7,12 +7,20 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.WindowGeometry;
+import dev.jstech.core.motion.Motion;
+import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -25,9 +33,16 @@ import org.joml.Matrix4f;
  * corner is a resize grip. A maximized window fills the desktop above the taskbar; a minimized window is
  * hidden and reachable from its taskbar button.
  */
+@PaletteHolder
 public final class DesktopWindow {
 
+    /** An unfocused window's title ink, {@code jsc:desktop/window}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/window",
+            new Colours(0xFF5B6674));
+
     public static final int TITLE_H = 14;
+    /** How far the frame keeps a program's area in from the window's edges, on every side. */
+    public static final int CONTENT_INSET = 4;
     private static final int BTN = 11;
     /** The program icon in the title bar, sized to sit inside the bar with a pixel of air above and below. */
     private static final int ICON = 10;
@@ -83,6 +98,12 @@ public final class DesktopWindow {
     private int restoreW;
     private int restoreH;
 
+    /*
+     * Whether the window has been drawn yet. Its program learns where it stands by drawing in it, so until then the
+     * places the program reports for its controls are not yet where they will be drawn.
+     */
+    private boolean drawn;
+
     // The rectangle actually drawn this frame (differs from x/y/w/h when maximized); hit tests use it.
     private int curX;
     private int curY;
@@ -97,6 +118,15 @@ public final class DesktopWindow {
     private int resizeStartH;
     private int resizeStartMx;
     private int resizeStartMy;
+
+    /** The motion the window is drawn in: coming up, going down to its button, coming back, or going away. */
+    private Motion motion = Motion.FINISHED;
+    /*
+     * Whether the window was put away when it was last looked at, so a change, whoever made it, starts the motion of
+     * going down or coming back; nothing before the first look, so a window restored as it was left does not move.
+     */
+    private boolean looked;
+    private boolean lookedMinimized;
 
     public DesktopWindow(final IDesktopApp app, final String appKey, final int x, final int y,
                          final int w, final int h) {
@@ -114,6 +144,16 @@ public final class DesktopWindow {
         this.curY = y;
         this.curW = w;
         this.curH = h;
+    }
+
+    /** How wide a window must be to give its program exactly that much room inside the frame. */
+    public static int windowWidthFor(final int contentW) {
+        return contentW + 2 * CONTENT_INSET;
+    }
+
+    /** How tall a window must be to give its program exactly that much room under the title bar. */
+    public static int windowHeightFor(final int contentH) {
+        return contentH + TITLE_H + 2 * CONTENT_INSET;
     }
 
     public IDesktopApp app() {
@@ -154,6 +194,11 @@ public final class DesktopWindow {
         if (value != maximized) {
             toggleMaximize();
         }
+    }
+
+    /** Whether the program draws this whole window itself; see {@link IDesktopApp#drawsOwnFrame()}. */
+    public boolean ownFrame() {
+        return app.drawsOwnFrame();
     }
 
     public int x() {
@@ -199,6 +244,32 @@ public final class DesktopWindow {
         this.minimized = value;
     }
 
+    /** The motion the window is drawn in this frame, over once it has arrived. */
+    Motion motion() {
+        return motion;
+    }
+
+    /** Draws the window in that motion from now on. */
+    void move(final Motion next) {
+        this.motion = next;
+    }
+
+    /**
+     * Looks at whether the window was put away or brought back since it was last looked at, and if so starts the
+     * motion of going down to its button or coming back from it, as this desktop moves.
+     */
+    void follow(final DesktopMotion motions) {
+        if (!looked) {
+            looked = true;
+            lookedMinimized = minimized;
+            return;
+        }
+        if (minimized != lookedMinimized) {
+            lookedMinimized = minimized;
+            motion = motions.start(minimized ? MotionKinds.WINDOW_MINIMIZE : MotionKinds.WINDOW_RESTORE);
+        }
+    }
+
     public boolean maximized() {
         return maximized;
     }
@@ -225,7 +296,7 @@ public final class DesktopWindow {
      * A maximized window cannot be resized. Edges within {@link #BORDER_MARGIN} pixels combine into corners.
      */
     public int resizeHitTest(final double mx, final double my) {
-        if (maximized) {
+        if (maximized || ownFrame()) {
             return RESIZE_NONE;
         }
         final int left = curX;
@@ -331,6 +402,10 @@ public final class DesktopWindow {
      * size is clamped up to the app's minimum so the content never collapses.
      */
     public void snapTo(final int nx, final int ny, final int nw, final int nh) {
+        // A window drawn in its program's own shape keeps that shape: it is not stretched over half the screen.
+        if (ownFrame()) {
+            return;
+        }
         if (maximized) {
             maximized = false;
         }
@@ -346,6 +421,9 @@ public final class DesktopWindow {
 
     /** Toggles maximize, saving/restoring the floating geometry. */
     public void toggleMaximize() {
+        if (ownFrame() && !app.ownFrameFills()) {
+            return;
+        }
         if (maximized) {
             maximized = false;
             x = restoreX;
@@ -376,6 +454,18 @@ public final class DesktopWindow {
      * top panel), so a maximized window starts under it.
      */
     public void resolveGeometry(final int screenW, final int screenH, final int taskbarH, final int workTop) {
+        if (ownFrame()) {
+            // Its size is whatever shape the program is in right now: a part folded away makes the window smaller.
+            this.w = app.defaultWidth();
+            this.h = app.defaultHeight();
+            if (app.ownFrameFills()) {
+                // One that fills the desktop when asked also keeps within a desktop smaller than the size it wants.
+                this.w = Math.min(this.w, screenW);
+                this.h = Math.min(this.h, Math.max(0, screenH - taskbarH - workTop));
+            } else {
+                this.maximized = false;
+            }
+        }
         /*
          * The minimum-size clamp lives in the unit-tested WindowGeometry so it can never silently go missing
          * again (the bug where a stale small geometry squashed the content and clipped the details panel).
@@ -403,10 +493,47 @@ public final class DesktopWindow {
         this.focused = value;
     }
 
+    /** Whether the window has been drawn at least once, so its program knows where its controls stand. */
+    public boolean drawn() {
+        return this.drawn;
+    }
+
     public void render(final GuiGraphics g, final Font font, final OsSkin skin,
                        final int mouseX, final int mouseY, final float partialTick,
                        final int screenW, final int screenH, final int taskbarH) {
         render(g, font, skin, mouseX, mouseY, partialTick, screenW, screenH, taskbarH, 0);
+    }
+
+    /**
+     * The title bar alone at that place and size, the way a window flying to its button or back drew it on the
+     * systems of the nineties: lit, with the program's icon and as much of the title as fits, and no buttons.
+     */
+    public void renderCaption(final GuiGraphics g, final Font font, final OsSkin skin, final int x, final int y,
+                              final int w, final int h) {
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+        skin.titleBar(g, x, y, w, h, true, 0, 0);
+        if (h < ICON) {
+            return;
+        }
+        final Matrix4f mat = g.pose().last().pose();
+        final WindowGeometry.Rect clip = WindowGeometry.scissor(mat.m30(), mat.m31(), mat.m00(), mat.m11(), x, y,
+                x + w, y + h);
+        g.enableScissor(clip.x(), clip.y(), clip.x() + clip.w(), clip.y() + clip.h());
+        final ProgramSpec program = WindowKeys.program(appKey);
+        final ResourceLocation icon = program != null ? program.iconId() : app.iconId();
+        final int textLeft;
+        if (icon != null) {
+            ProgramIcons.draw(g, x + 3, y + 2, ICON, ICON, icon, skin.iconSet());
+            textLeft = x + 3 + ICON + 3;
+        } else {
+            textLeft = x + 4;
+        }
+        final DesktopEnvironmentDef desktop = OsRegistry.getDesktop(
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, skin.osPath()));
+        Draw.text(g, font, titleOn(desktop), textLeft, y + 3, skin.titleText());
+        g.disableScissor();
     }
 
     /** As {@link #render(GuiGraphics, Font, OsSkin, int, int, float, int, int, int)}, with a top panel reserve. */
@@ -414,12 +541,17 @@ public final class DesktopWindow {
                        final int mouseX, final int mouseY, final float partialTick,
                        final int screenW, final int screenH, final int taskbarH, final int workTop) {
         resolveGeometry(screenW, screenH, taskbarH, workTop);
+        this.drawn = true;
         // Where the buttons stand is the skin's to say, and the hit tests below have to agree with the drawing.
         this.menuAtLeft = skin.menuAtLeft();
         final int wx = curX;
         final int wy = curY;
         final int ww = curW;
         final int wh = curH;
+        if (ownFrame()) {
+            renderOwnFrame(g, font, skin, mouseX, mouseY, partialTick);
+            return;
+        }
 
         /*
          * A soft drop shadow lifts the window off the wallpaper, then the frame (border + body) and title bar,
@@ -429,7 +561,7 @@ public final class DesktopWindow {
         if (!maximized) {
             skin.windowShadow(g, wx, wy, ww, wh);
         }
-        skin.windowFrame(g, wx, wy, ww, wh);
+        skin.windowFrame(g, wx, wy, ww, wh, TITLE_H, CONTENT_INSET);
         skin.titleBar(g, wx, wy, ww, TITLE_H, focused, closeX() - wx + BTN + 2,
                 dialog() ? 3 : wx + ww - minX() + 2);
         /*
@@ -438,12 +570,12 @@ public final class DesktopWindow {
          */
         final DesktopEnvironmentDef desktop =
                 OsRegistry.getDesktop(
-                        ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
-        final ProgramSpec program =
-                desktop == null ? null : desktop.programFor(appKey);
-        final boolean titleIcon = program != null && !skin.titleCentered();
+                        ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, skin.osPath()));
+        final ProgramSpec program = WindowKeys.program(appKey);
+        final ResourceLocation icon = program != null ? program.iconId() : app.iconId();
+        final boolean titleIcon = icon != null && !skin.titleCentered();
         if (titleIcon) {
-            ProgramIcons.draw(g, wx + 3, wy + 2, ICON, ICON, program.iconId(), skin.iconSet());
+            ProgramIcons.draw(g, wx + 3, wy + 2, ICON, ICON, icon, skin.iconSet());
         }
         /*
          * Where the title sits is part of the skin's identity, not a constant: the GNOME form centres it,
@@ -455,8 +587,10 @@ public final class DesktopWindow {
         final int titleX = skin.titleCentered()
                 ? Math.max(titleFloor, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
                 : textLeft;
-        g.drawString(font, title, titleX, wy + 3,
-                focused ? skin.titleText() : 0xFF5B6674, focused && skin.textShadow());
+        if (focused) {
+            skin.titleGlow(g, titleX, wy + 3, font.width(title));
+        }
+        Draw.text(g, font, title, titleX, wy + 3, focused ? skin.titleText() : PALETTE.get().unfocusedTitle());
         /*
          * The focused window also carries an accent outline, so "which one am I typing into" reads
          * at a glance even when several windows overlap.
@@ -487,10 +621,10 @@ public final class DesktopWindow {
          * to the inner rect so nothing an app draws leaks past the frame when the window is resized smaller.
          * enableScissor ignores the pose in 1.21.1, so compensate for the desktop's translate.
          */
-        final int cx = wx + 4;
-        final int cy = wy + TITLE_H + 4;
-        final int cw = ww - 8;
-        final int ch = wh - TITLE_H - 8;
+        final int cx = wx + CONTENT_INSET;
+        final int cy = wy + TITLE_H + CONTENT_INSET;
+        final int cw = ww - 2 * CONTENT_INSET;
+        final int ch = wh - TITLE_H - 2 * CONTENT_INSET;
         final Matrix4f mat = g.pose().last().pose();
         final WindowGeometry.Rect clip =
                 WindowGeometry.scissor(
@@ -544,10 +678,11 @@ public final class DesktopWindow {
         if (minimized) {
             return;
         }
-        final int contentX = curX + 4;
-        final int contentY = curY + TITLE_H + 4;
-        final int contentW = curW - 8;
-        final int contentH = curH - TITLE_H - 8;
+        final boolean own = ownFrame();
+        final int contentX = own ? curX : curX + 4;
+        final int contentY = own ? curY : curY + TITLE_H + 4;
+        final int contentW = own ? curW : curW - 8;
+        final int contentH = own ? curH : curH - TITLE_H - 8;
         if (mouseX >= contentX && mouseX < contentX + contentW
                 && mouseY >= contentY && mouseY < contentY + contentH) {
             app.renderTooltip(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
@@ -571,19 +706,23 @@ public final class DesktopWindow {
     }
 
     public boolean closeBoxHit(final double mx, final double my) {
-        return inBtn(mx, my, closeX());
+        return ownFrame() ? ownControlAt(mx, my) == BUTTON_CLOSE : inBtn(mx, my, closeX());
     }
 
     public boolean maximizeBoxHit(final double mx, final double my) {
-        return !dialog() && inBtn(mx, my, maxX());
+        return ownFrame() ? app.ownFrameFills() && ownControlAt(mx, my) == BUTTON_MAXIMIZE
+                : !dialog() && inBtn(mx, my, maxX());
     }
 
     public boolean minimizeBoxHit(final double mx, final double my) {
-        return !dialog() && inBtn(mx, my, minX());
+        return ownFrame() ? ownControlAt(mx, my) == BUTTON_MINIMIZE : !dialog() && inBtn(mx, my, minX());
     }
 
     /** The middle of a title-bar button, in desktop pixels, by the numbers {@link #buttonAt} answers with. */
     public int[] buttonCentre(final int button) {
+        if (ownFrame()) {
+            return ownControlCentre(button);
+        }
         final int bx = button == BUTTON_MINIMIZE ? minX() : button == BUTTON_MAXIMIZE ? maxX() : closeX();
         return new int[] {bx + BTN / 2, curY + 2 + BTN / 2};
     }
@@ -608,9 +747,15 @@ public final class DesktopWindow {
      * Manager on CDE. A title of the program's own making, such as a dialog's or a document's, is kept as it is.
      */
     public String titleOn(@Nullable final DesktopEnvironmentDef desktop) {
-        final ProgramSpec program = desktop == null ? null : desktop.programFor(appKey);
+        final ProgramSpec program = WindowKeys.program(appKey);
         final String own = app.title();
-        return program != null && !dialog() && own.equals(program.displayName()) ? appKey : own;
+        /*
+         * A generic title is the program's own name, in English or in the player's language, depending on whether
+         * the program says it through its name or through a sentence of its own that reads the same.
+         */
+        final boolean generic = program != null && !dialog()
+                && (own.equals(program.displayName()) || own.equals(GameText.resolve(program.name())));
+        return desktop != null && generic ? GameText.resolve(desktop.launcherLabel(program)) : own;
     }
 
     public int workspaces() {
@@ -640,11 +785,66 @@ public final class DesktopWindow {
     }
 
     public boolean titleBarHit(final double mx, final double my) {
+        if (ownFrame()) {
+            return inside(mx, my) && ownControlAt(mx, my) == BUTTON_NONE
+                    && app.frameDragAt((int) Math.floor(mx) - curX, (int) Math.floor(my) - curY);
+        }
         return mx >= curX && mx <= curX + curW && my >= curY && my <= curY + TITLE_H
                 && !closeBoxHit(mx, my) && !maximizeBoxHit(mx, my) && !minimizeBoxHit(mx, my);
     }
 
     public boolean bodyHit(final double mx, final double my) {
+        if (ownFrame()) {
+            return inside(mx, my) && !titleBarHit(mx, my) && ownControlAt(mx, my) == BUTTON_NONE;
+        }
         return mx >= curX && mx <= curX + curW && my >= curY + TITLE_H && my <= curY + curH;
+    }
+
+    /*
+     * A window its program draws: the program is handed all of it, clipped to it, and is told first whether it is in
+     * front and which of its buttons is held.
+     */
+    private void renderOwnFrame(final GuiGraphics g, final Font font, final OsSkin skin, final int mouseX,
+                                final int mouseY, final float partialTick) {
+        app.frameState(focused, pressedBtn);
+        final Matrix4f mat = g.pose().last().pose();
+        final WindowGeometry.Rect clip = WindowGeometry.scissor(mat.m30(), mat.m31(), mat.m00(), mat.m11(),
+                curX, curY, curX + curW, curY + curH);
+        g.enableScissor(clip.x(), clip.y(), clip.x() + clip.w(), clip.y() + clip.h());
+        app.applySkin(skin);
+        app.renderContent(g, font, curX, curY, curW, curH, mouseX, mouseY, partialTick);
+        g.disableScissor();
+    }
+
+    private boolean inside(final double mx, final double my) {
+        return mx >= curX && mx < curX + curW && my >= curY && my < curY + curH;
+    }
+
+    private int ownControlAt(final double mx, final double my) {
+        return inside(mx, my) ? app.frameControlAt((int) Math.floor(mx) - curX, (int) Math.floor(my) - curY)
+                : BUTTON_NONE;
+    }
+
+    /* The middle of one of a program's own buttons, found by asking it where they are. */
+    private int[] ownControlCentre(final int button) {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        for (int y = 0; y < curH; y++) {
+            for (int x = 0; x < curW; x++) {
+                if (app.frameControlAt(x, y) == button) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+        return minX > maxX ? new int[] {curX, curY} : new int[] {curX + (minX + maxX) / 2, curY + (minY + maxY) / 2};
+    }
+
+    /** An unfocused window's title ink. */
+    private record Colours(int unfocusedTitle) {
     }
 }

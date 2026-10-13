@@ -10,6 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftPlanning;
+import dev.jstech.computers.crafting.CraftRouting;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ICraftIo;
 import dev.jstech.computers.crafting.MultiStagePattern;
@@ -23,12 +24,15 @@ import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +77,7 @@ final class MainframeCrafts {
         int total = 0;
         for (final BlockPos pos : supercomputers()) {
             if (mainframe.getLevel() != null
-                    && mainframe.getLevel().getBlockEntity(pos) instanceof HbwInterfaceBlockEntity sc
+                    && Loaded.blockEntity(mainframe.getLevel(), pos) instanceof HbwInterfaceBlockEntity sc
                     && sc.clusterOnline()) {
                 total += (int) sc.parallelCrafts();
                 used += sc.craftSlotsInUse();
@@ -127,9 +131,9 @@ final class MainframeCrafts {
 
     /**
      * Every recipe on the network that makes {@code key}, in a stable order: the machine recipes first
-     * (processing and multi-stage, in the order the Recipe ROMs hold them), then each bench pattern with that
-     * result. A craft dialog lists these so the player can pick one, and the index into this list is what a
-     * craft request names; the list only changes when a ROM does.
+     * (processing and multi-stage, in the order the Crafting Interfaces hold them), then each bench pattern with
+     * that result. A craft dialog lists these so the player can pick one, and the index into this list is what a
+     * craft request names; the list only changes when an interface or a card's ROM does.
      */
     List<NetworkRecipe> recipesFor(final StorageKey key) {
         final List<NetworkRecipe> out = new ArrayList<>();
@@ -147,8 +151,8 @@ final class MainframeCrafts {
     }
 
     /**
-     * Whether anything on the network produces {@code key}: a bench pattern in a Recipe ROM, or a machine
-     * recipe. The cheap answer a prompt needs at once, before the plan itself is made.
+     * Whether anything on the network produces {@code key}: a bench pattern in a card's ROM, or a machine
+     * recipe in a Crafting Interface. The cheap answer a prompt needs at once, before the plan itself is made.
      */
     boolean anythingMakes(final StorageKey key) {
         for (final CraftingPattern pattern : patterns()) {
@@ -178,29 +182,10 @@ final class MainframeCrafts {
     }
 
     /**
-     * The optional ceiling on how many jobs of one machine type may run at once, 0 for no ceiling.
-     *
-     * <p>Declared on a Crafting Computer's Machines tab; the first computer on the network that says anything
-     * about that type decides, and the rest of the network follows it.
-     */
-    int maxJobsFor(final String machineKey) {
-        for (final BlockPos pos : craftingComputers()) {
-            if (mainframe.getLevel() != null
-                    && mainframe.getLevel().getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
-                final CraftingComputerBlockEntity.MachineConfig cfg = cc.machineConfig(machineKey);
-                if (cfg != CraftingComputerBlockEntity.MachineConfig.DEFAULT) {
-                    return cfg.maxJobs();
-                }
-            }
-        }
-        return CraftingComputerBlockEntity.MachineConfig.DEFAULT.maxJobs();
-    }
-
-    /**
      * Plans and runs a recursive craft of {@code key}, with one extra pattern beside the network's own.
      *
      * <p>The extra one is for a pipeline's bench stage, which carries its own pattern and has to be makeable
-     * even where that pattern was never loaded into any Recipe ROM on the network.
+     * even where that pattern was never loaded into any card's ROM on the network.
      */
     @Nullable
     NetworkCraftOperation craft(final StorageKey key, final long demand, final boolean partial,
@@ -235,6 +220,14 @@ final class MainframeCrafts {
     NetworkCraftOperation plannedCraft(final StorageKey key, final long demand, final CraftPlanner.Plan plan,
                                        final String requesterLabel,
                                        @Nullable final CraftingPattern extraPattern) {
+        return plannedCraft(key, demand, plan, requesterLabel, extraPattern, CraftRouting.NONE);
+    }
+
+    /** The same, carried out the way {@code routing} says: where from, and how much at once. */
+    @Nullable
+    NetworkCraftOperation plannedCraft(final StorageKey key, final long demand, final CraftPlanner.Plan plan,
+                                       final String requesterLabel, @Nullable final CraftingPattern extraPattern,
+                                       final CraftRouting routing) {
         if (!canCraft(demand) || plan.steps().isEmpty()
                 || !(mainframe.getLevel() instanceof ServerLevel serverLevel)) {
             return null;
@@ -242,19 +235,41 @@ final class MainframeCrafts {
         final NetworkCraftOperation operation = new NetworkCraftOperation(
                 serverLevel, mainframe.networkUuid(), key, demand, plan, mainframe.networkIndex(),
                 UUID.randomUUID(), craftingComputers(), supercomputers(),
-                requesterLabel, extraPattern, mainframe);
+                requesterLabel, extraPattern, mainframe, routing);
         mainframe.takeOn(operation);
         return operation;
     }
 
     /**
-     * Runs a machine recipe: feeds the pattern's inputs into the matching machine (declared on a Crafting
-     * Switch) and collects its outputs back into the network, until {@code demand} of the primary output is
-     * produced or the pattern times out.
+     * A craft whose plan an engine works out with a planner of its own, on a virtual thread, listed as pending
+     * meanwhile. Nothing comes back where nothing on the network makes it at all, or no craft can run here.
+     */
+    @Nullable
+    PendingCraftOperation planAsyncWith(final StorageKey key, final long demand, final boolean partial,
+                                        final String label, final Supplier<CraftPlanning.Routed> planning,
+                                        @Nullable final Consumer<NetworkCraftOperation> delivered) {
+        if (!canCraft(demand) || !anythingMakes(key)) {
+            return null;
+        }
+        final PendingCraftOperation pending = new PendingCraftOperation(mainframe, key, demand, partial, label);
+        mainframe.takeOn(pending);
+        pending.start(mainframe.dispatch(), planning, delivered);
+        return pending;
+    }
+
+    /** The bench patterns as a plan reads them now: a cell that accepts a tag settled against {@code stock}. */
+    List<CraftingPattern> resolvedPatterns(final Map<StorageKey, Long> stock) {
+        return AnyTagResolver.resolveAll(patterns(), stock);
+    }
+
+    /**
+     * Runs a machine recipe: the dispatcher gives the job a Crafting Interface that holds the pattern, the job feeds
+     * that interface's machine and its outputs come back through the Receiving Buses, until {@code demand} of the
+     * primary output is produced or the pattern times out.
      *
      * <p>With an {@code io} the step draws from and returns to that instead of the network. A recursive craft
      * passes its own pool there so its machine steps pipeline through the pool, concurrent and race-free,
-     * rather than through the shared network; such a step is ephemeral and does not persist a reload.
+     * rather than through the shared network.
      */
     @Nullable
     NetworkProcessingOperation machineRun(final ProcessingPattern pattern, final long demand,
@@ -445,7 +460,7 @@ final class MainframeCrafts {
         final List<CraftingComputerBlockEntity> out = new ArrayList<>();
         for (final BlockPos pos : craftingComputers()) {
             if (mainframe.getLevel() != null
-                    && mainframe.getLevel().getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc
+                    && Loaded.blockEntity(mainframe.getLevel(), pos) instanceof CraftingComputerBlockEntity cc
                     && cc.isRunning()) {
                 out.add(cc);
             }

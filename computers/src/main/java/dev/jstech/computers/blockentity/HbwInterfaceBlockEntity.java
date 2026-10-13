@@ -7,23 +7,35 @@
  */
 package dev.jstech.computers.blockentity;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.Cables;
+import dev.jstech.core.cable.Wire;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
@@ -42,13 +54,16 @@ import java.util.UUID;
 /**
  * The HBW Interface: the uplink of a Supercomputer cluster.
  */
-public class HbwInterfaceBlockEntity extends BlockEntity {
+public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
 
     public static final int SLOT_NO_NODE = 0;
     public static final int SLOT_EMPTY = 1;
     public static final int SLOT_UNDER_RATED = 2;
     public static final int SLOT_OFFLINE = 3;
     public static final int SLOT_OK_BASE = 4;
+
+    /** Upper bound on cable blocks the fabric survey visits; nodes past it are not discovered. */
+    private static final int MAX_SURVEY_STEPS = 256;
 
     /**
      * One surveyed cluster slot: the rack the node sits in, its row, and what it contributes.
@@ -58,6 +73,10 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
 
     /** A node found on the fabric: the cabinet it is mounted in and the unit row it occupies. */
     public record NodeRef(BlockPos rack, int row) {
+    }
+
+    /* A place the survey reached, and the high-compute cable it reached it along: none at the interface itself. */
+    private record Reach(BlockPos pos, @Nullable CableType fabric) {
     }
 
     /*
@@ -71,11 +90,15 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
         return nodes;
     }
 
-    private NodeUuid nodeUuid;
+    /** The cluster's identity on the network, made the first time it is asked for and kept from then on. */
+    private final ValueField<NodeUuid> nodeUuid = fields().nullable("NodeUuid", NODE_UUID).save();
     private NetworkUuid networkUuid;
     private NetworkUuid registeredNetwork;
     // The player's name for the cluster; empty means the manager numbers it (SC-1, SC-2 ...).
-    private String customName = "";
+    private final ValueField<String> customName = fields().value("CustomName", Codec.STRING, "").save();
+
+    /** A node id saved the way a plain UUID is, as four ints. */
+    private static final Codec<NodeUuid> NODE_UUID = UUIDUtil.CODEC.xmap(NodeUuid::new, NodeUuid::value);
 
     private List<ClusterSlot> slots = List.of();
     private int unslottedNodes;
@@ -96,6 +119,7 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
     }
 
     private void tickCluster(final ServerLevel serverLevel) {
+        final boolean wasOnline = clusterOnline();
         survey(serverLevel);
         final NetworkSystem system = NetworkSystem.get(serverLevel);
         /*
@@ -116,37 +140,43 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
                     nodeUuid(), resolved, parallelCrafts, worldPosition.asLong()));
             registeredNetwork = resolved;
         }
+        if (!wasOnline && clusterOnline()) {
+            JscEvents.awardOperator(this, JscEvents.SUPERCOMPUTER_ONLINE);
+        }
     }
 
     private void survey(final ServerLevel serverLevel) {
         final List<NodeRef> discovered = new ArrayList<>();
         final Set<BlockPos> seenControllers = new HashSet<>();
         final Set<BlockPos> visited = new HashSet<>();
-        final ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-        queue.add(worldPosition);
+        final ArrayDeque<Reach> queue = new ArrayDeque<>();
+        final FacePorts own = getBlockState().getBlock() instanceof IFaceConnector connector ? connector.ports() : null;
+        queue.add(new Reach(worldPosition, null));
         visited.add(worldPosition);
         int steps = 0;
-        while (!queue.isEmpty() && steps++ < 256) {
-            final BlockPos current = queue.poll();
+        while (!queue.isEmpty() && steps++ < MAX_SURVEY_STEPS) {
+            final Reach current = queue.poll();
             for (final Direction direction : Direction.values()) {
-                final BlockPos neighbor = current.relative(direction);
-                if (!visited.add(neighbor)) {
-                    continue;
-                }
-                final BlockState state = serverLevel.getBlockState(neighbor);
-                // The fabric is the high-compute cable only. A cabinet is a leaf on it, not a conduit.
-                if (state.getBlock() instanceof DataCableBlock cable
-                        && cable.tier() == DataTier.HPC) {
-                    queue.add(neighbor);
+                final BlockPos neighbor = current.pos().relative(direction);
+                /*
+                 * The fabric is a run of one high-compute cable, of an era the interface takes; a run of another era
+                 * beside it is a run of its own. A cabinet is a leaf on it, not a conduit.
+                 */
+                final CableType fabric = fabricAt(serverLevel, neighbor);
+                if (fabric != null && (current.fabric() == null ? takes(own, fabric) : fabric == current.fabric())) {
+                    if (visited.add(neighbor)) {
+                        queue.add(new Reach(neighbor, fabric));
+                    }
                     continue;
                 }
                 /*
-                 * A Supercomputer Rack on the fabric: every node mounted in it, in rack order, is a
-                 * candidate slot. Cabinets are taken in discovery order, so slot numbering is stable
+                 * A Supercomputer Rack on the fabric, of the cable's era or a later one: every node mounted in it, in
+                 * rack order, is a candidate slot. Cabinets are taken in discovery order, so slot numbering is stable
                  * for a given build and does not shuffle between surveys.
                  */
                 final ServerRackBlockEntity rack = cabinetAt(serverLevel, neighbor);
                 if (rack != null && rack.rackType() == RackChassis.RackType.SUPERCOMPUTER
+                        && (current.fabric() == null || takes(portsOf(rack), current.fabric()))
                         && seenControllers.add(rack.getBlockPos())) {
                     /*
                      * The cabinet's link light: this survey already walks the whole fabric every tick, so
@@ -154,8 +184,8 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
                      */
                     rack.noteFabricUplink(serverLevel.getGameTime(), networkUuid != null);
                     for (final int row : rack.computerSlots()) {
-                        if (ServerItem.chassisOf(rack.getServers().getStackInSlot(row))
-                                == RackChassis.SUPERCOMPUTER_NODE) {
+                        final RackChassis chassis = ServerItem.chassisOf(rack.getServers().getStackInSlot(row));
+                        if (chassis != null && chassis.isSupercomputerNode()) {
                             discovered.add(new NodeRef(rack.getBlockPos(), row));
                         }
                     }
@@ -168,7 +198,7 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
             final NodeRef node = discovered.get(i);
             int code = SLOT_EMPTY;
             long crafts = 0;
-            if (serverLevel.getBlockEntity(node.rack()) instanceof ServerRackBlockEntity rack) {
+            if (Loaded.blockEntity(serverLevel, node.rack()) instanceof ServerRackBlockEntity rack) {
                 final ItemStack server = rack.getServers().getStackInSlot(node.row());
                 final PhiCoprocessorItem phi = installedPhi(server);
                 if (phi == null) {
@@ -191,15 +221,52 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
         this.parallelCrafts = budget;
     }
 
+    /* The high-compute cable in the cable block at {@code pos}, of whatever era, or null when it holds none. */
+    @Nullable
+    private static CableType fabricAt(final ServerLevel level, final BlockPos pos) {
+        final CableBlockEntity cable = Cables.at(level, pos);
+        if (cable == null) {
+            return null;
+        }
+        for (final Wire wire : cable.wires()) {
+            final DataLink link = DataLines.linkOf(wire.type().line());
+            if (link != null && link.line() == DataLine.HPC) {
+                return wire.type();
+            }
+        }
+        return null;
+    }
+
+    /*
+     * Whether a port of {@code ports}, on any face, takes {@code cable}: the era rule alone, since the cabinets have
+     * always been found on the fabric whichever way they face.
+     */
+    private static boolean takes(@Nullable final FacePorts ports, final CableType cable) {
+        if (ports == null) {
+            return false;
+        }
+        for (final FacePorts.Port port : ports.ports()) {
+            if (port.takes(cable.line())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    private static FacePorts portsOf(final ServerRackBlockEntity rack) {
+        return rack.getBlockState().getBlock() instanceof IFaceConnector connector ? connector.ports() : null;
+    }
+
     /** The rack a block belongs to (the controller itself or any part of the cabinet), or null. */
     @Nullable
     private static ServerRackBlockEntity cabinetAt(final ServerLevel level, final BlockPos pos) {
-        final BlockEntity be = level.getBlockEntity(pos);
+        final BlockEntity be = Loaded.blockEntity(level, pos);
         if (be instanceof ServerRackBlockEntity rack) {
             return rack;
         }
         if (be instanceof ServerRackPartBlockEntity part && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack) {
+                && Loaded.blockEntity(level, part.controllerPos()) instanceof ServerRackBlockEntity rack) {
             return rack;
         }
         return null;
@@ -231,23 +298,26 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
         };
     }
 
+    /* The backbone wire the interface reads its network off, by the number its grid knows it by. */
     private long adjacentHbwCable(final ServerLevel serverLevel) {
         for (final Direction direction : Direction.values()) {
-            final BlockPos neighbor = worldPosition.relative(direction);
-            if (serverLevel.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                    && cable.tier() == DataTier.T2_HBW) {
-                return neighbor.asLong();
+            final List<Long> wires = DataWires.numbersReaching(serverLevel, worldPosition, direction,
+                    DataWires.of(DataLine.BACKBONE));
+            if (!wires.isEmpty()) {
+                return wires.getFirst();
             }
         }
         return Long.MIN_VALUE;
     }
 
     public NodeUuid nodeUuid() {
-        if (nodeUuid == null) {
-            nodeUuid = new NodeUuid(UUID.randomUUID());
-            setChanged();
+        final NodeUuid known = nodeUuid.get();
+        if (known != null) {
+            return known;
         }
-        return nodeUuid;
+        final NodeUuid made = new NodeUuid(UUID.randomUUID());
+        nodeUuid.set(made);
+        return made;
     }
 
     @Nullable
@@ -330,31 +400,10 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
     }
 
     public String customName() {
-        return customName;
+        return customName.get();
     }
 
     public void setCustomName(@Nullable final String name) {
-        this.customName = name == null ? "" : name;
-        setChanged();
-    }
-
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.hasUUID("NodeUuid")) {
-            nodeUuid = new NodeUuid(tag.getUUID("NodeUuid"));
-        }
-        customName = tag.getString("CustomName");
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (nodeUuid != null) {
-            tag.putUUID("NodeUuid", nodeUuid.value());
-        }
-        if (!customName.isEmpty()) {
-            tag.putString("CustomName", customName);
-        }
+        customName.set(name == null ? "" : name);
     }
 }

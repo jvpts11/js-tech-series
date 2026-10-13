@@ -7,18 +7,28 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.AutomationPayload;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.JobActionPayload;
 import dev.jstech.computers.operation.payload.RequestAutomationPayload;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.gui.component.WaitBar;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
+import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -28,22 +38,36 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Automation Manager: the front-end for the network's standing jobs. It shows whether a job engine is
+ * Automation Manager: the front-end for the network's standing jobs. It shows whether the Automation Engine is
  * online on the Mainframe, lists the saved jobs with pause/resume/delete, and creates new ones from a form
- * (Keep Stock / Batch Craft / Periodic Move / IQL script) that the server compiles into jobs; no IQL is
- * typed here. Requires the Automation Engine (or the IQL Engine) on the Mainframe for jobs to actually run.
+ * (Restock below / Batch Craft / Periodic Move / IQL script) that the server compiles into jobs; no IQL is
+ * typed here. Jobs are the Automation Engine's alone: "at this time, or when this happens, do that", whichever
+ * engine plans the network's work.
  */
+@PaletteHolder
 public final class AutomationManagerApp implements IDesktopApp {
 
-    private static final int REFRESH_FRAMES = 40;
-    private static final int C_GOOD = 0xFF2EA043;
-    private static final int C_WARN = 0xFFE0A020;
-    private static final int C_DELETE = 0xFFC0504A;
+    /** The window's title in English, which is how a desktop is asked to open it. */
+    public static final String TITLE = AutomationManagerTexts.TITLE.english();
+
+    /** Milliseconds between state requests, so the request rate does not follow the frame rate. */
+    private static final long REFRESH_MILLIS = 2000L;
+    /** How wide the bar for the wait for the Mainframe runs at most. */
+    private static final int WAIT_W = 100;
+    /**
+     * The manager's own colours, {@code jsc:app/automation_manager}: what is running, what wants the eye, the
+     * delete action, and the engine's band when it is on and when it is off.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/automation_manager",
+            new Colours(0xFF2EA043, 0xFFE0A020, 0xFFC0504A, 0x162EA043, 0x22E0A020));
     private static final int JOB_ROW_H = 13;
-    private static final int FORM_H = 78;
+    private static final int FORM_H = 88;
+    /** The level the tip shows before one is typed. */
+    private static final String DEFAULT_LEVEL = "256";
     private static final int FIELD_MAX = 48;
 
-    private static final String[] TYPE_LABELS = {"Keep Stock", "Batch Craft", "Move", "IQL"};
+    private static final TextKey[] TYPE_LABELS =
+            {AutomationTexts.RESTOCK_BELOW, AutomationTexts.BATCH_CRAFT, AutomationTexts.MOVE, AutomationTexts.IQL};
 
     private final BlockPos host;
     private final BlockPos monitorPos;
@@ -51,7 +75,7 @@ public final class AutomationManagerApp implements IDesktopApp {
     @Nullable
     private AutomationPayload data;
     private int newType;
-    private int frame;
+    private long lastRequestMillis;
     private int lastMouseX;
     private int lastMouseY;
     /** The .iql files the script buttons were built for; a different list rebuilds them. */
@@ -85,6 +109,8 @@ public final class AutomationManagerApp implements IDesktopApp {
     // components
     private final Panel root = new Panel();
     private final Label loadingLabel;
+    /** The bar for the wait until the Mainframe answers, under the line that says it is being asked. */
+    private final WaitBar waiting;
     private final Label engineLabel;
     private final Label jobsLabel;
     private final ColumnHeader jobColumns;
@@ -98,6 +124,8 @@ public final class AutomationManagerApp implements IDesktopApp {
     private final TextField itemField;
     private final Label amountCaption;
     private final TextField amountField;
+    private final Label restockNote;
+    private final Label prophetTip;
     private final Label intervalCaption;
     private final TextField intervalField;
     private final Label fromCaption;
@@ -113,39 +141,49 @@ public final class AutomationManagerApp implements IDesktopApp {
         this.host = host;
         this.monitorPos = monitorPos;
 
-        loadingLabel = root.add(new Label("Contacting Mainframe...", Label.Tone.DIM));
-        engineLabel = root.add(new Label(this::engineText).setColor(() -> data != null && data.engineOnline() ? 0 : C_WARN));
-        jobsLabel = root.add(new Label(() -> data == null ? "" : data.jobs().size() + " jobs", Label.Tone.DIM).setAlign(Label.Align.RIGHT));
-        jobColumns = root.add(new ColumnHeader(List.of("JOB", "TYPE", "TRIGGER", "ACT")).setSortable(false));
-        jobList = root.add(new ListView<AutomationPayload.JobRow>(() -> data == null ? List.of() : data.jobs(), JOB_ROW_H, this::renderJobRow)
-                .setOnClick(this::jobClicked));
-        noJobsLabel = root.add(new Label("No jobs yet - create one below.", Label.Tone.DIM));
-        newJobLabel = root.add(new Label("NEW JOB", Label.Tone.DIM));
+        loadingLabel = root.add(new Label(GameText.resolve(AutomationTexts.CONTACTING), Label.Tone.DIM));
+        waiting = root.add(new WaitBar());
+        engineLabel = root.add(new Label(this::engineText)
+                .setColor(() -> data != null && data.engineOnline() ? 0 : PALETTE.get().warn()));
+        jobsLabel = root.add(new Label(() -> data == null ? ""
+                : GameText.resolve(AutomationTexts.JOBS.with(data.jobs().size())), Label.Tone.DIM)
+                .setAlign(Label.Align.RIGHT));
+        jobColumns = root.add(new ColumnHeader(List.of(GameText.resolve(AutomationTexts.JOB_COLUMN),
+                GameText.resolve(AutomationTexts.TYPE_COLUMN), GameText.resolve(AutomationTexts.TRIGGER_COLUMN),
+                GameText.resolve(AutomationTexts.ACT_COLUMN))).setSortable(false));
+        jobList = root.add(new ListView<AutomationPayload.JobRow>(() -> data == null ? List.of() : data.jobs(),
+                JOB_ROW_H, this::renderJobRow).setOnClick(this::jobClicked));
+        noJobsLabel = root.add(new Label(GameText.resolve(AutomationTexts.NO_JOBS), Label.Tone.DIM));
+        newJobLabel = root.add(new Label(GameText.resolve(AutomationTexts.NEW_JOB), Label.Tone.DIM));
         for (int i = 0; i < TYPE_LABELS.length; i++) {
             final int type = i;
-            typeButtons[i] = root.add(new Button(TYPE_LABELS[i], () -> {
+            typeButtons[i] = root.add(new Button(GameText.resolve(TYPE_LABELS[i]), () -> {
                 newType = type;
                 root.focus(null);
             }));
         }
-        nameCaption = root.add(new Label("Name", Label.Tone.DIM));
+        nameCaption = root.add(new Label(GameText.resolve(AutomationTexts.NAME), Label.Tone.DIM));
         nameField = root.add(new TokenField());
-        itemCaption = root.add(new Label(() -> newType == CreateAutomationJobPayload.TYPE_PERIODIC_MOVE ? "Item (blank=all)" : "Item id",
-                Label.Tone.DIM));
+        itemCaption = root.add(new Label(() -> GameText.resolve(newType == CreateAutomationJobPayload.TYPE_PERIODIC_MOVE
+                ? AutomationTexts.ITEM_OR_ALL : AutomationTexts.ITEM_ID), Label.Tone.DIM));
         itemField = root.add(new TokenField());
-        amountCaption = root.add(new Label(() -> newType == CreateAutomationJobPayload.TYPE_KEEP_STOCK ? "Keep at least" : "Amount",
-                Label.Tone.DIM));
+        amountCaption = root.add(new Label(() -> GameText.resolve(
+                newType == CreateAutomationJobPayload.TYPE_RESTOCK_BELOW ? AutomationTexts.WHEN_BELOW
+                        : AutomationTexts.AMOUNT), Label.Tone.DIM));
         amountField = root.add(new DigitField());
-        intervalCaption = root.add(new Label("Every (30s)", Label.Tone.DIM));
+        restockNote = root.add(new Label(GameText.resolve(AutomationTexts.RESTOCK_NOTE), Label.Tone.DIM));
+        // Who wants a level held, counting what is on its way, is pointed at the engine whose word "keep" is.
+        prophetTip = root.add(new Label(this::tipText, Label.Tone.DIM));
+        intervalCaption = root.add(new Label(GameText.resolve(AutomationTexts.EVERY), Label.Tone.DIM));
         intervalField = root.add(new TokenField());
-        fromCaption = root.add(new Label("From", Label.Tone.DIM));
+        fromCaption = root.add(new Label(GameText.resolve(AutomationTexts.FROM), Label.Tone.DIM));
         fromField = root.add(new TokenField());
-        toCaption = root.add(new Label("To", Label.Tone.DIM));
+        toCaption = root.add(new Label(GameText.resolve(AutomationTexts.TO), Label.Tone.DIM));
         toField = root.add(new TokenField());
-        scriptCaption = root.add(new Label("Script (on Mainframe disk):", Label.Tone.DIM));
-        noScriptsLabel = root.add(new Label("no .iql files - save one in the NMS", Label.Tone.DIM));
+        scriptCaption = root.add(new Label(GameText.resolve(AutomationTexts.SCRIPT), Label.Tone.DIM));
+        noScriptsLabel = root.add(new Label(GameText.resolve(AutomationTexts.NO_SCRIPTS), Label.Tone.DIM));
         root.add(scripts);
-        create = root.add(new Button("Create job", this::create).setPrimary(true));
+        create = root.add(new Button(GameText.resolve(AutomationTexts.CREATE), this::create).setPrimary(true));
 
         active = this;
         request();
@@ -158,6 +196,7 @@ public final class AutomationManagerApp implements IDesktopApp {
     }
 
     private void request() {
+        lastRequestMillis = Util.getMillis();
         PacketDistributor.sendToServer(new RequestAutomationPayload(host, monitorPos));
     }
 
@@ -169,7 +208,7 @@ public final class AutomationManagerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Automation Manager";
+        return GameText.resolve(AutomationManagerTexts.TITLE);
     }
 
     @Override
@@ -202,10 +241,17 @@ public final class AutomationManagerApp implements IDesktopApp {
         if (data == null) {
             return "";
         }
-        return data.engineOnline() ? data.engineLabel() + " online" : "No engine - install the Automation Engine on the Mainframe";
+        return GameText.resolve(data.engineOnline() ? AutomationTexts.ONLINE.with(data.engineLabel())
+                : AutomationTexts.NO_ENGINE.text());
     }
 
     // rendering
+
+    /** Until the Mainframe answers, the program can do nothing, which the pointer shows. */
+    @Override
+    public boolean waiting() {
+        return data == null;
+    }
 
     @Override
     public void renderContent(final GuiGraphics g, final Font font, final int x, final int y,
@@ -213,8 +259,7 @@ public final class AutomationManagerApp implements IDesktopApp {
                               final float partialTick) {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
-        frame++;
-        if (frame % REFRESH_FRAMES == 0) {
+        if (Util.getMillis() - lastRequestMillis >= REFRESH_MILLIS) {
             request();
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
@@ -225,8 +270,8 @@ public final class AutomationManagerApp implements IDesktopApp {
         if (data != null) {
             // The engine status band and its lamp, and the rule over the form.
             final boolean on = data.engineOnline();
-            g.fill(px, y + 6, px + pw, y + 20, on ? 0x162EA043 : 0x22E0A020);
-            g.fill(px + 4, y + 11, px + 8, y + 15, on ? C_GOOD : C_WARN);
+            g.fill(px, y + 6, px + pw, y + 20, on ? PALETTE.get().engineOn() : PALETTE.get().engineOff());
+            g.fill(px + 4, y + 11, px + 8, y + 15, on ? PALETTE.get().good() : PALETTE.get().warn());
             g.fill(px, newJobLabel.y() - 5, px + pw, newJobLabel.y() - 4, skin.edge());
         }
         root.render(g, ctx);
@@ -236,6 +281,8 @@ public final class AutomationManagerApp implements IDesktopApp {
         final boolean ready = data != null;
         loadingLabel.setVisible(!ready);
         loadingLabel.setBounds(x, y + 8, w, 8);
+        waiting.setVisible(!ready);
+        waiting.setBounds(x, y + 19, Math.min(w, WAIT_W), 7);
         engineLabel.setVisible(ready);
         engineLabel.setBounds(x + 12, y + 9, w - 60, 8);
         jobsLabel.setVisible(ready);
@@ -258,7 +305,7 @@ public final class AutomationManagerApp implements IDesktopApp {
         newJobLabel.setBounds(x + 2, fy, 40, 8);
         int sx = x + 44;
         for (int i = 0; i < TYPE_LABELS.length; i++) {
-            final int sw = font.width(TYPE_LABELS[i]) + 10;
+            final int sw = font.width(GameText.resolve(TYPE_LABELS[i])) + 10;
             typeButtons[i].setVisible(ready);
             typeButtons[i].setBounds(sx, fy - 2, sw, 12);
             typeButtons[i].setPrimary(i == newType);
@@ -268,16 +315,23 @@ public final class AutomationManagerApp implements IDesktopApp {
         final int rowY = fy + 14;
         final int colW = (w - 6) / 2;
         final int right = x + colW + 6;
-        for (final var c : List.of(nameCaption, nameField, itemCaption, itemField, amountCaption, amountField, intervalCaption,
-                intervalField, fromCaption, fromField, toCaption, toField, scriptCaption, noScriptsLabel, scripts)) {
+        for (final var c : List.of(nameCaption, nameField, itemCaption, itemField, amountCaption, amountField,
+                restockNote, prophetTip, intervalCaption, intervalField, fromCaption, fromField, toCaption, toField,
+                scriptCaption, noScriptsLabel, scripts)) {
             c.setVisible(false);
         }
+        final int cw = font.width(create.label()) + 14;
         if (ready) {
             field(nameCaption, nameField, x, rowY, colW);
             switch (newType) {
-                case CreateAutomationJobPayload.TYPE_KEEP_STOCK -> {
+                case CreateAutomationJobPayload.TYPE_RESTOCK_BELOW -> {
                     field(itemCaption, itemField, right, rowY, colW);
                     field(amountCaption, amountField, x, rowY + 24, colW);
+                    // Under the fields and clear of the Create button: a restock does not count what is coming.
+                    restockNote.setVisible(true);
+                    restockNote.setBounds(x, rowY + 48, w - cw - 6, 8);
+                    prophetTip.setVisible(true);
+                    prophetTip.setBounds(x, rowY + 58, w - cw - 6, 8);
                 }
                 case CreateAutomationJobPayload.TYPE_BATCH_CRAFT -> {
                     field(itemCaption, itemField, right, rowY, colW);
@@ -300,8 +354,34 @@ public final class AutomationManagerApp implements IDesktopApp {
             }
         }
         create.setVisible(ready);
-        final int cw = font.width(create.label()) + 14;
         create.setBounds(x + w - cw, fy + FORM_H - 12, cw, 12);
+    }
+
+    /** Whether the server has answered, so the window shows the network rather than waiting for it. */
+    public boolean hasState() {
+        return data != null;
+    }
+
+    /** Whether the window shows the Automation Engine online. */
+    public boolean engineOnline() {
+        return data != null && data.engineOnline();
+    }
+
+    /** Whether the form is showing the line that says a restock does not count what is on its way. */
+    public boolean restockNoteShown() {
+        return restockNote.visible();
+    }
+
+    /** The tip under it pointing at Prophet YourIQL's KEEP, as it reads now, or empty when it is not shown. */
+    public String prophetTipText() {
+        return prophetTip.visible() ? tipText() : "";
+    }
+
+    /* The KEEP that would hold the level the form is about, with what the form says so far. */
+    private String tipText() {
+        return GameText.resolve(AutomationTexts.PROPHET_TIP.with(
+                itemField.edit().isBlank() ? AutomationTexts.AN_ITEM.text() : Text.literal(itemField.edit().strip()),
+                amountField.edit().isBlank() ? DEFAULT_LEVEL : amountField.edit().strip()));
     }
 
     private static void field(final Label caption, final TextField field, final int x, final int y, final int w) {
@@ -350,12 +430,15 @@ public final class AutomationManagerApp implements IDesktopApp {
         ctx.skin().listRow(g, x, y, w, h, false, false);
         final int typeX = jobColumns.columnX(1);
         final int triggerX = jobColumns.columnX(2);
-        g.drawString(font, Texts.clip(font, j.name(), typeX - x - 6), x + 2, y + 3, j.paused() ? ctx.skin().dim() : ctx.skin().text(), false);
-        g.drawString(font, Texts.clip(font, j.type(), triggerX - typeX - 4), typeX, y + 3, ctx.skin().dim(), false);
-        g.drawString(font, Texts.clip(font, j.trigger(), (x + w - 22) - triggerX - 4), triggerX, y + 3, j.paused() ? C_WARN : C_GOOD, false);
+        Draw.text(g, font, Texts.clip(font, j.name(), typeX - x - 6), x + 2, y + 3, j.paused() ? ctx.skin().dim() : ctx.skin().text());
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(j.type()), triggerX - typeX - 4), typeX, y + 3,
+                ctx.skin().dim());
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(j.trigger()), (x + w - 22) - triggerX - 4), triggerX,
+                y + 3, j.paused() ? PALETTE.get().warn() : PALETTE.get().good());
         // Pause/resume + delete glyphs.
-        g.drawString(font, j.paused() ? ">" : "=", x + w - 22, y + 3, ctx.skin().text(), false);
-        g.drawString(font, "x", x + w - 10, y + 3, C_DELETE, false);
+        Draw.text(g, font, j.paused() ? ">" : "=", x + w - 22, y + 3, ctx.skin().text());
+        Draw.text(g, font, GameText.resolve(AutomationManagerTexts.DELETE_MARK), x + w - 10, y + 3,
+                PALETTE.get().delete());
     }
 
     private void jobClicked(final int index, final int button, final double mx, final double my) {
@@ -388,10 +471,15 @@ public final class AutomationManagerApp implements IDesktopApp {
     }
 
     private static long parseLong(final String s) {
-        try {
-            return Math.max(1, Long.parseLong(s.trim()));
-        } catch (final NumberFormatException e) {
+        final String digits = s.trim();
+        if (digits.isEmpty()) {
             return 1;
+        }
+        try {
+            return Math.max(1, Long.parseLong(digits));
+        } catch (final NumberFormatException e) {
+            // Digits beyond the range of a long saturate instead of silently turning into 1.
+            return digits.chars().allMatch(Character::isDigit) ? Long.MAX_VALUE : 1;
         }
     }
 
@@ -424,5 +512,9 @@ public final class AutomationManagerApp implements IDesktopApp {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** The manager's colours, as the palette above names them. */
+    private record Colours(int good, int warn, int delete, int engineOn, int engineOff) {
     }
 }

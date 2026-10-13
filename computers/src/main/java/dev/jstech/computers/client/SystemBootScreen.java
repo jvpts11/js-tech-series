@@ -7,12 +7,20 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.os.SceneHandoff;
 import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.layout.SystemBootLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
-import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * here from its own parts and its own network. This screen joins it wherever it has got to and waits: the machine
  * is what puts the system in front of the player when it is ready, so closing this changes nothing.
  */
+@PaletteHolder
 public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = MonitorGlass.WIDTH;
@@ -36,11 +45,14 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     /** Drawn for this long when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 60;
 
-    /** Where the wall of text begins, and how much air is left at the right edge. */
-    private static final int MARGIN = 12;
-
-    /** What a step that went well is written in, which is the one colour these logs ever used for it. */
-    private static final int GOOD = 0xFF5FE07A;
+    /**
+     * The screen's colours, {@code jsc:boot/system}: its ground; the earliest tube's text, quiet lines and good
+     * steps, in greys its phosphor lights; the later machines' white on black, their quiet lines, and the one colour
+     * these logs ever wrote a step that went well in; and the bar a silent system fills.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "boot/system",
+            new Colours(0xFF05070A, 0xFFB8B8B8, 0xFF707070, 0xFFB8B8B8, 0xFFE6ECF6, 0xFF7D8A9C, 0xFF5FE07A,
+                    0xFF1D2530, 0xFF39D6C4));
 
     /**
      * What the machine last said it was bringing up, kept until the screen showing it is built.
@@ -51,6 +63,19 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
      */
     @Nullable
     private static Starting pending;
+    /** What a screen being built to draw a monitor's face shows, handed to it alone and taken at once. */
+    @Nullable
+    private static Starting forFace;
+
+    static {
+        /*
+         * The layout keeps the wall's step and scale so it can be tested without the game, while the lines are drawn
+         * through TextWall: the two must agree, or the layout would check lines the screen does not draw.
+         */
+        if (SystemBootLayout.LINE_STEP != TextWall.ROW || SystemBootLayout.TEXT_SCALE != TextWall.SCALE) {
+            throw new IllegalStateException("SystemBootLayout's line step and scale must be TextWall's");
+        }
+    }
 
     private final BootSequence sequence;
     private final BootSplash splash;
@@ -68,15 +93,21 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         this.imageHeight = H;
         this.titleLabelX = OFF_SCREEN;
         this.inventoryLabelY = OFF_SCREEN;
-        final Starting starting = pending != null ? pending
+        final Starting starting = forFace != null ? forFace : pending != null ? pending
                 : new Starting(BootSequence.NONE, FALLBACK_TICKS, FALLBACK_TICKS, false, BootSplash.PLAIN,
                         BootIdentity.NONE);
+        forFace = null;
         this.sequence = starting.sequence();
         this.splash = starting.splash();
         this.totalTicks = starting.totalTicks() > 0 ? starting.totalTicks() : FALLBACK_TICKS;
         this.ticks = Math.max(0, this.totalTicks - Math.max(0, starting.remainingTicks()));
         this.endsDark = starting.endsDark();
         this.who = starting.who();
+    }
+
+    /** How far through its wait the machine is, in hundredths, for a test that pictures one moment of it. */
+    public int percentThrough() {
+        return this.totalTicks > 0 ? this.ticks * 100 / this.totalTicks : 0;
     }
 
     /** Whether the desktop's own loading screen has taken the glass from the system's lines, for a test to ask. */
@@ -89,6 +120,12 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     public static void expect(final BootSequence sequence, final int remainingTicks, final int totalTicks,
                               final boolean endsDark, final BootSplash splash, final BootIdentity who) {
         pending = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who);
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, leaving what a session expects alone. */
+    public static void faceWith(final BootSequence sequence, final int remainingTicks, final int totalTicks,
+                                final boolean endsDark, final BootSplash splash, final BootIdentity who) {
+        forFace = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who);
     }
 
     /** One machine coming up: what it prints, how far along it is, and what it comes up behind. */
@@ -117,13 +154,36 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         return false;
     }
 
+    /**
+     * A system coming up leaves its picture's colour on the monitor as this goes, for the desktop that takes the
+     * glass straight after to melt out of; a machine going down leaves nothing for anything to melt out of.
+     */
+    @Override
+    public void removed() {
+        if (!this.endsDark && !onFace()) {
+            SceneHandoff.leave(monitor(), lastGround());
+        }
+        super.removed();
+    }
+
+    /** The colour the glass was mostly drawn in on the last frame: the desktop's picture, the system's, or plain. */
+    private int lastGround() {
+        final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
+        if (desktopSplashUp()) {
+            return DesktopSplashArt.ground(this.who, era);
+        }
+        return BootSplashArt.paintsItsOwnGround(this.splash) ? BootSplashArt.ground(this.splash)
+                : PALETTE.get().ground();
+    }
+
     @Override
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
         final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
         MonitorFrame.renderBody(g, x, y, W, H, era, font);
-        g.fill(x, y, x + W, y + H, 0xFF05070A);
+        final Colours c = PALETTE.get();
+        g.fill(x, y, x + W, y + H, c.ground());
 
         /*
          * A machine with a desktop hands over to it before the desktop is there to click: the system's own
@@ -134,7 +194,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         if (desktopSplashUp()) {
             final int within = (through - DesktopSplashArt.FROM) * 100
                     / Math.max(1, 100 - DesktopSplashArt.FROM);
-            DesktopSplashArt.draw(g, font, this.who, era, x, y, W, H, this.ticks, Math.min(100, within));
+            DesktopSplashArt.draw(g, font, this.who, era, x, y, W, H, MotionClock.loopTicks(), Math.min(100, within));
             return;
         }
 
@@ -145,19 +205,20 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * words for that travel in the sequence and are drawn over the picture rather than instead of it.
          */
         if (BootSplashArt.paintsItsOwnGround(this.splash)) {
-            BootSplashArt.draw(g, font, this.splash, x, y, W, H, this.ticks, this.totalTicks,
-                    this.endsDark, this.sequence.title(), this.sequence.subtitle());
+            BootSplashArt.draw(g, font, this.splash, x, y, W, H, this.ticks, MotionClock.loopTicks(),
+                    this.totalTicks, this.endsDark, GameText.resolve(this.sequence.title()),
+                    GameText.resolve(this.sequence.subtitle()), this.who);
             return;
         }
 
         /*
-         * A machine of the earliest age wears its tube's one colour, as its self-test does; the later ones show
-         * the plain white on black their own sequences did.
+         * A machine of the earliest age writes in the greys its monitor's tube lights, as its self-test does; the
+         * later ones show the plain white on black their own sequences did.
          */
-        final boolean phosphor = era == HardwareEra.VINTAGE;
-        final int text = phosphor ? Phosphor.green(0xFFB8B8B8) : 0xFFE6ECF6;
-        final int dim = phosphor ? Phosphor.green(0xFF707070) : 0xFF7D8A9C;
-        final int good = phosphor ? Phosphor.green(0xFFB8B8B8) : GOOD;
+        final boolean tube = era == HardwareEra.VINTAGE;
+        final int text = tube ? c.tubeText() : c.text();
+        final int dim = tube ? c.tubeDim() : c.dim();
+        final int good = tube ? c.tubeGood() : c.good();
 
         /*
          * A system that reports nothing puts its name in the middle of the screen over a bar, which is what the
@@ -165,49 +226,53 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * the top corner, the way a machine reading out its own start does.
          */
         if (this.sequence.lines().isEmpty()) {
-            g.drawCenteredString(font, this.sequence.title(), x + W / 2, y + H / 2 - 22, text);
-            g.drawCenteredString(font, this.sequence.subtitle(), x + W / 2, y + H / 2 - 10, dim);
+            Draw.textCentered(g,font, GameText.resolve(this.sequence.title()), x + W / 2,
+                    y + H / 2 + SystemBootLayout.TITLE_CENTER_DY, text);
+            Draw.textCentered(g,font, GameText.resolve(this.sequence.subtitle()), x + W / 2,
+                    y + H / 2 + SystemBootLayout.SUBTITLE_CENTER_DY, dim);
             drawBar(g, x, y);
             return;
         }
 
-        int ty = y + 12;
+        int ty = y + SystemBootLayout.WALL_TOP;
         if (!this.sequence.title().isEmpty()) {
-            wall(g, this.sequence.title(), x + MARGIN, ty, text);
-            ty += WALL_ROW;
+            wall(g, GameText.resolve(this.sequence.title()), x + SystemBootLayout.MARGIN, ty, text);
+            ty += SystemBootLayout.LINE_STEP;
         }
         if (!this.sequence.subtitle().isEmpty()) {
-            wall(g, this.sequence.subtitle(), x + MARGIN, ty, dim);
-            ty += WALL_ROW;
+            wall(g, GameText.resolve(this.sequence.subtitle()), x + SystemBootLayout.MARGIN, ty, dim);
+            ty += SystemBootLayout.LINE_STEP;
         }
-        ty += 4;
+        ty += SystemBootLayout.AFTER_HEADER_GAP;
 
-        final int labelAt = x + MARGIN + markColumn();
-        final int valueAt = x + MARGIN + valueColumn();
+        final int labelAt = x + SystemBootLayout.MARGIN + markColumn();
+        final int valueAt = x + SystemBootLayout.MARGIN + valueColumn();
         // Each step appears once the machine has got that far, so the screen fills as the work is done.
         final int shown = this.sequence.shownAt(this.ticks, this.totalTicks);
         for (int i = 0; i < shown; i++) {
             final BootSequence.Line line = this.sequence.lines().get(i);
             if (!line.mark().isEmpty()) {
-                wall(g, line.mark(), x + MARGIN, ty, line.good() ? good : dim);
+                wall(g, line.mark(), x + SystemBootLayout.MARGIN, ty, line.good() ? good : dim);
             }
             /*
              * Cut to whatever is left of the line: a step that names a drive carries a name somebody else
              * chose the length of, and at full length it runs through the column beside it or off the glass.
              */
-            final int room = (line.value().isEmpty() ? x + W - MARGIN : valueAt - 4) - labelAt;
-            wall(g, wallClip(line.label(), room), labelAt, ty, text);
+            final int room = (line.value().isEmpty() ? x + W - SystemBootLayout.MARGIN
+                    : valueAt - SystemBootLayout.VALUE_GAP) - labelAt;
+            final String label = GameText.resolve(line.label());
+            wall(g, wallClip(label, room), labelAt, ty, text);
             if (!line.value().isEmpty()) {
                 /*
                  * A line with nothing at its head is one of the systems that ran dots out to its answer, which
                  * is how a machine of that age tied a question on the left to what came of it on the right.
                  */
                 if (line.mark().isEmpty()) {
-                    leader(g, labelAt + wallWidth(wallClip(line.label(), room)) + 3, valueAt - 3, ty, dim);
+                    leader(g, labelAt + wallWidth(wallClip(label, room)) + 3, valueAt - 3, ty, dim);
                 }
-                wall(g, line.value(), valueAt, ty, line.good() ? good : dim);
+                wall(g, GameText.resolve(line.value()), valueAt, ty, line.good() ? good : dim);
             }
-            ty += WALL_ROW;
+            ty += SystemBootLayout.LINE_STEP;
         }
     }
 
@@ -228,11 +293,11 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
             if (line.value().isEmpty()) {
                 continue;
             }
-            widest = Math.max(widest, wallWidth(line.label()));
-            widestValue = Math.max(widestValue, wallWidth(line.value()));
+            widest = Math.max(widest, wallWidth(GameText.resolve(line.label())));
+            widestValue = Math.max(widestValue, wallWidth(GameText.resolve(line.value())));
         }
-        final int room = W - 2 * MARGIN - widestValue;
-        return Math.min(room, markColumn() + widest + 10);
+        final int room = W - 2 * SystemBootLayout.MARGIN - widestValue;
+        return Math.min(room, markColumn() + widest + SystemBootLayout.LABEL_TO_VALUE_GAP);
     }
 
     /** The row of dots between a question and its answer, drawn to fill exactly the gap between them. */
@@ -247,11 +312,12 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
 
     /** The bar that fills over however long this machine takes: all a system that says nothing ever gave you. */
     private void drawBar(final GuiGraphics g, final int x, final int y) {
-        final int barW = 140;
-        final int bx = x + (W - barW) / 2;
-        final int by = y + H / 2 + 12;
-        g.fill(bx, by, bx + barW, by + 3, 0xFF1D2530);
-        g.fill(bx, by, bx + Math.min(barW, barW * this.ticks / this.totalTicks), by + 3, 0xFF39D6C4);
+        final int bx = x + SystemBootLayout.barX();
+        final int by = y + SystemBootLayout.barY();
+        final Colours c = PALETTE.get();
+        g.fill(bx, by, bx + SystemBootLayout.BAR_W, by + SystemBootLayout.BAR_H, c.barTrack());
+        g.fill(bx, by, bx + Math.min(SystemBootLayout.BAR_W, SystemBootLayout.BAR_W * this.ticks / this.totalTicks),
+                by + SystemBootLayout.BAR_H, c.barFill());
     }
 
     /** The monitor this is drawn on, for whatever asks. */
@@ -264,5 +330,10 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     @Nullable
     protected HardwareEra screenEra() {
         return this.getMenu().hardwareEra();
+    }
+
+    /** The screen's colours, as the palette above names them. */
+    private record Colours(int ground, int tubeText, int tubeDim, int tubeGood, int text, int dim, int good,
+                           int barTrack, int barFill) {
     }
 }

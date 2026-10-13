@@ -1,0 +1,287 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.profiler.definition1",
+      "term": "jsc.guide.profiler.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.profiler.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.profiler.table1",
+      "heads": [
+        "jsc.guide.profiler.table1_head1",
+        "jsc.guide.profiler.table1_head2",
+        "jsc.guide.profiler.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "StatementStarting"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "StatementCompleted"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "OperationCreated"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "OperationSettled"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "LockAcquired"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "PlanChosen"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "BusMoved"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.profiler.table1_7_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.profiler.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.profiler.table2",
+      "heads": [
+        "jsc.guide.profiler.table2_head1",
+        "jsc.guide.profiler.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.profiler.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.profiler.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.profiler.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.profiler.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.profiler.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.profiler.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.profiler.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.profiler.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.profiler.table2_9_1"
+          },
+          {
+            "words": "jsc.guide.profiler.table2_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.profiler.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.profiler.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text10"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.profiler.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.profiler.text12"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.profiler.fix1",
+          "problem": "jsc.guide.profiler.problem1"
+        },
+        {
+          "fix": "jsc.guide.profiler.fix2",
+          "problem": "jsc.guide.profiler.problem2"
+        },
+        {
+          "fix": "jsc.guide.profiler.fix3",
+          "problem": "jsc.guide.profiler.problem3"
+        },
+        {
+          "fix": "jsc.guide.profiler.fix4",
+          "problem": "jsc.guide.profiler.problem4"
+        },
+        {
+          "fix": "jsc.guide.profiler.fix5",
+          "problem": "jsc.guide.profiler.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operations_catalogue",
+        "jsc:buses"
+      ]
+    }
+  ],
+  "id": "jsc:profiler",
+  "order": 320,
+  "section": "jsc:iql_profiler_section",
+  "title": "jsc.guide.profiler.title"
+}

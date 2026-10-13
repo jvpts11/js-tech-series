@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.book_frames_resource_kit.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_frames_resource_kit.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_frames_resource_kit.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.book_frames_resource_kit.fix1",
+          "problem": "jsc.guide.book_frames_resource_kit.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_which_machine",
+        "jsc:library"
+      ]
+    }
+  ],
+  "icon": "jsc:frames_resource_kit",
+  "id": "jsc:book_frames_resource_kit",
+  "items": [
+    "jsc:frames_resource_kit"
+  ],
+  "order": 135,
+  "section": "jsc:the_library",
+  "title": "jsc.guide.book_frames_resource_kit.title"
+}

@@ -1,0 +1,261 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_permissions.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gateway_permissions.table1",
+      "heads": [
+        "jsc.guide.gateway_permissions.table1_head1",
+        "jsc.guide.gateway_permissions.table1_head2",
+        "jsc.guide.gateway_permissions.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.gateway_permissions.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gateway_permissions.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gateway_permissions.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gateway_permissions.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_permissions.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_permissions.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_permissions.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_permissions.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.gateway_permissions.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_permissions.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gateway_permissions.table2",
+      "heads": [
+        "jsc.guide.gateway_permissions.table2_head1",
+        "jsc.guide.gateway_permissions.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "denied: reading the network is off"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "denied: operations are off"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "busy: 8 calls a tick"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "which item?"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "unknown item: <name>"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "the computer is not on a network"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network has no running Mainframe"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "could not start the <type>"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "the buffer holds no <name>"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "no pattern crafts <name>"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "more than one operation starts with <id>; give more of the id"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name>: no such computer on this network"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> is powered off"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> does not take programs from other computers"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name>: nothing installed runs a program of this kind"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name>: <n> MB will not fit in <m> MB of free memory"
+          },
+          {
+            "words": "jsc.guide.gateway_permissions.table2_16_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.gateway_permissions.fix1",
+          "problem": "jsc.guide.gateway_permissions.problem1"
+        },
+        {
+          "fix": "jsc.guide.gateway_permissions.fix2",
+          "problem": "jsc.guide.gateway_permissions.problem2"
+        },
+        {
+          "fix": "jsc.guide.gateway_permissions.fix3",
+          "problem": "jsc.guide.gateway_permissions.problem3"
+        },
+        {
+          "fix": "jsc.guide.gateway_permissions.fix4",
+          "problem": "jsc.guide.gateway_permissions.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:gateway_manager",
+        "jsc:states_and_queues"
+      ]
+    }
+  ],
+  "id": "jsc:gateway_permissions",
+  "order": 126,
+  "section": "jsc:gateway",
+  "title": "jsc.guide.gateway_permissions.title"
+}

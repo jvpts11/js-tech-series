@@ -47,7 +47,7 @@ public final class SigmaSemantics {
 
         /** Whether the files can go on to the next stage. */
         public boolean ok() {
-            return this.diagnostics.stream().noneMatch(Diagnostic::isError);
+            return DiagnosticBag.noErrors(this.diagnostics);
         }
 
         /** The tree read from the file called {@code name}, or null when no file had that name. */
@@ -55,33 +55,33 @@ public final class SigmaSemantics {
             return this.units.get(name);
         }
 
-        /** The messages as the console prints them, one per line, plus a note if any were dropped. */
+        /**
+         * The messages one per line, plus a note if any were dropped, in English: the form they take as data, in a
+         * file or a log.
+         */
         public List<String> lines() {
-            final List<String> lines = new ArrayList<>();
-            for (final Diagnostic diagnostic : this.diagnostics) {
-                lines.add(diagnostic.format());
-            }
-            if (this.truncated) {
-                lines.add("too many errors; the rest were not reported");
-            }
-            return lines;
+            return DiagnosticBag.lines(this.diagnostics, this.truncated);
         }
     }
 
     /** Checks a set of classes: every type, every member and every body, but no entry point. */
     public static Result check(final List<SourceFile> sources) {
-        return analyse(sources, false);
+        return analyse(sources, Options.check());
     }
 
     /** Checks a whole program, which also means it has exactly one class the runtime can start. */
     public static Result checkProgram(final List<SourceFile> sources) {
-        return analyse(sources, true);
+        return analyse(sources, Options.program(LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST));
     }
 
     /** The same, for sources that may only be as much of the language as {@code level} allows. */
     public static Result checkProgram(final List<SourceFile> sources, final LanguageLevel level) {
-        final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
-        return result(sources, bag, analyse(sources, bag, true, false, level));
+        return checkProgram(sources, level, SigmaVersions.NEWEST);
+    }
+
+    /** The same, held to {@code version} of the language as well; see {@link SigmaVersions}. */
+    public static Result checkProgram(final List<SourceFile> sources, final LanguageLevel level, final int version) {
+        return analyse(sources, Options.program(level, version));
     }
 
     /**
@@ -93,13 +93,13 @@ public final class SigmaSemantics {
      * certain than after a clean parse, which is why the compiler proper stops at the parser.
      */
     public static Result checkTolerant(final List<SourceFile> sources) {
-        final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
-        return result(sources, bag, analyse(sources, bag, false, true));
+        return analyse(sources, Options.whileTyping());
     }
 
-    private static Result analyse(final List<SourceFile> sources, final boolean wholeProgram) {
-        final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
-        return result(sources, bag, analyse(sources, bag, wholeProgram));
+    private static Result analyse(final List<SourceFile> sources, final Options options) {
+        // Each source names itself to the bag before anything is reported, so it starts with no file of its own.
+        final DiagnosticBag bag = new DiagnosticBag("");
+        return result(sources, bag, analyse(sources, bag, options));
     }
 
     private static Result result(final List<SourceFile> sources, final DiagnosticBag bag, final Analysis analysis) {
@@ -121,20 +121,37 @@ public final class SigmaSemantics {
                     List<CompilationUnit> units, Lowerer lowered) {
     }
 
+    /**
+     * What a run of the checker was asked to do.
+     *
+     * <p>A whole program must also have exactly one class the runtime can start; a tolerant run goes on
+     * over a tree the parser had to guess at; the level and the version say how much of the language a
+     * source may use.
+     */
+    record Options(boolean wholeProgram, boolean tolerant, LanguageLevel level, int version) {
+
+        /** Every type, member and body, but no entry point, in the whole language. */
+        static Options check() {
+            return new Options(false, false, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST);
+        }
+
+        /** A whole program held to this level and version. */
+        static Options program(final LanguageLevel level, final int version) {
+            return new Options(true, false, level, version);
+        }
+
+        /** What an editor asks for while a file is being typed. */
+        static Options whileTyping() {
+            return new Options(false, true, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST);
+        }
+    }
+
     /** Reads and checks into a bag the caller owns, and hands back what the next stage needs. */
-    static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
-                            final boolean wholeProgram) {
-        return analyse(sources, bag, wholeProgram, false);
-    }
-
-    static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
-                            final boolean wholeProgram, final boolean tolerant) {
-        return analyse(sources, bag, wholeProgram, tolerant, LanguageLevel.SIGMA_SHARP);
-    }
-
-    static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
-                            final boolean wholeProgram, final boolean tolerant,
-                            final LanguageLevel level) {
+    static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag, final Options options) {
+        final boolean wholeProgram = options.wholeProgram();
+        final boolean tolerant = options.tolerant();
+        final LanguageLevel level = options.level();
+        final int version = options.version();
         final List<CompilationUnit> units = new ArrayList<>();
         for (final SourceFile source : sources) {
             bag.setFile(source.name());
@@ -151,6 +168,7 @@ public final class SigmaSemantics {
         final BuiltIns builtIns = new BuiltIns();
         final TypeRules rules = new TypeRules(builtIns);
         final Declarations declarations = new Declarations(builtIns, rules, bag, model);
+        declarations.holdTo(level, version);
         /*
          * A tree the parser had to guess its way through says nothing reliable about types, so the
          * player gets the mistakes that are certainly there rather than the ones that follow from them.

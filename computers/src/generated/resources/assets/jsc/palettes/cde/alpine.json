@@ -1,0 +1,11 @@
+{
+  "active": "#FF3F7F6A",
+  "activeInk": "#FFFFFFFF",
+  "backdropA": "#FF2F5D50",
+  "backdropB": "#FF2A5448",
+  "ink": "#FF1A1A1A",
+  "inset": "#FFC4D4CC",
+  "light": "#FFDDE8E2",
+  "shade": "#FF56675F",
+  "window": "#FFA9BDB3"
+}

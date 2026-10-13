@@ -1,0 +1,13 @@
+{
+  "about": [
+    "jstests.guide.manual.styled_linux_by_hand.about1"
+  ],
+  "chapters": [
+    "jstests",
+    "jstests:shared"
+  ],
+  "id": "jstests:styled_linux_by_hand",
+  "priority": -3,
+  "style": "jsc:linux_by_hand",
+  "title": "jstests.guide.manual.styled_linux_by_hand.title"
+}

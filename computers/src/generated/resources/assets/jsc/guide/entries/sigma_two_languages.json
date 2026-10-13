@@ -1,0 +1,317 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition1",
+      "term": "jsc.guide.sigma_two_languages.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition2",
+      "term": "jsc.guide.sigma_two_languages.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_two_languages.table1",
+      "heads": [
+        "jsc.guide.sigma_two_languages.table1_head1",
+        "jsc.guide.sigma_two_languages.table1_head2",
+        "jsc.guide.sigma_two_languages.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table1_1_1"
+          },
+          {
+            "literal": "scc"
+          },
+          {
+            "literal": ".sg"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table1_2_1"
+          },
+          {
+            "literal": "sgsc"
+          },
+          {
+            "literal": ".sgs"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition3",
+      "term": "jsc.guide.sigma_two_languages.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition4",
+      "term": "jsc.guide.sigma_two_languages.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition5",
+      "term": "jsc.guide.sigma_two_languages.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition6",
+      "term": "jsc.guide.sigma_two_languages.term6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition7",
+      "term": "jsc.guide.sigma_two_languages.term7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition8",
+      "term": "jsc.guide.sigma_two_languages.term8"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_two_languages.table2",
+      "heads": [
+        "jsc.guide.sigma_two_languages.table2_head1",
+        "jsc.guide.sigma_two_languages.table2_head2",
+        "jsc.guide.sigma_two_languages.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "IA-16"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "x86"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "x86-64"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table2_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_two_languages.definition9",
+      "term": "jsc.guide.sigma_two_languages.term9"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_two_languages.table3",
+      "heads": [
+        "jsc.guide.sigma_two_languages.table3_head1",
+        "jsc.guide.sigma_two_languages.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table3_1_1"
+          },
+          {
+            "literal": "IA-16"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table3_2_1"
+          },
+          {
+            "literal": "x86"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table3_3_1"
+          },
+          {
+            "literal": "x86-64"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_two_languages.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_two_languages.table4",
+      "heads": [
+        "jsc.guide.sigma_two_languages.table4_head1",
+        "jsc.guide.sigma_two_languages.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_5_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_6_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_7_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_8_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_9_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_9_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_10_1"
+          },
+          {
+            "words": "jsc.guide.sigma_two_languages.table4_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_two_languages.fix1",
+          "problem": "jsc.guide.sigma_two_languages.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_two_languages.fix2",
+          "problem": "jsc.guide.sigma_two_languages.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_language"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_two_languages",
+  "order": 328,
+  "section": "jsc:sigma_start",
+  "title": "jsc.guide.sigma_two_languages.title"
+}

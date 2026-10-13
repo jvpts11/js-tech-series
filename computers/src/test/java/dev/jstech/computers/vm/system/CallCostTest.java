@@ -45,6 +45,15 @@ class CallCostTest {
     }
 
     @Test
+    void drawData_chargesEveryStartedBlock() {
+        final int perBlock = SigmaCosts.DRAW_PER_KB * 4;
+        assertEquals(SigmaCosts.DRAW, SigmaCosts.DRAW_DATA.at(0, 0));
+        assertEquals(SigmaCosts.DRAW + perBlock, SigmaCosts.DRAW_DATA.at(0, 1));
+        assertEquals(SigmaCosts.DRAW + perBlock, SigmaCosts.DRAW_DATA.at(0, CallCost.BLOCK_BYTES));
+        assertEquals(SigmaCosts.DRAW + 2 * perBlock, SigmaCosts.DRAW_DATA.at(0, CallCost.BLOCK_BYTES + 1));
+    }
+
+    @Test
     void new_refusesACostBelowNothing() {
         assertThrows(IllegalArgumentException.class, () -> new CallCost(-1, 0, 0));
         assertThrows(IllegalArgumentException.class, () -> new CallCost(0, 0, -1));

@@ -1,0 +1,103 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.finding_a_command.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.finding_a_command.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.finding_a_command.definition1",
+      "term": "jsc.guide.finding_a_command.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.finding_a_command.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.finding_a_command.table1",
+      "heads": [
+        "jsc.guide.finding_a_command.table1_head1",
+        "jsc.guide.finding_a_command.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "help"
+          },
+          {
+            "words": "jsc.guide.finding_a_command.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "help NAME"
+          },
+          {
+            "words": "jsc.guide.finding_a_command.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "listcmd"
+          },
+          {
+            "words": "jsc.guide.finding_a_command.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.finding_a_command.text3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/listcmd"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.finding_a_command.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.finding_a_command.fix1",
+          "problem": "jsc.guide.finding_a_command.problem1"
+        },
+        {
+          "fix": "jsc.guide.finding_a_command.fix2",
+          "problem": "jsc.guide.finding_a_command.problem2"
+        },
+        {
+          "fix": "jsc.guide.finding_a_command.fix3",
+          "problem": "jsc.guide.finding_a_command.problem3"
+        },
+        {
+          "fix": "jsc.guide.finding_a_command.fix4",
+          "problem": "jsc.guide.finding_a_command.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:help_on_a_computer",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "id": "jsc:finding_a_command",
+  "order": 179,
+  "section": "jsc:prompt_basics",
+  "title": "jsc.guide.finding_a_command.title"
+}

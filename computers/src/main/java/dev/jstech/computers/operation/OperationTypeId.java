@@ -39,7 +39,8 @@ public enum OperationTypeId implements IStableId {
     ANALYZE(6, "analyze"),
     REINDEX(7, "reindex"),
     VACUUM(8, "vacuum"),
-    DROP(9, "drop");
+    DROP(9, "drop"),
+    UPDATE(10, "update");
 
     /** A kind this version does not know, which is what a row from a later one reads as. */
     public static final byte UNKNOWN = 0;

@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -19,6 +20,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
 
@@ -30,48 +32,45 @@ public final class CraftFilesOnDisk {
     /** The folder on a Crafting Computer's system disk that mirrors its loaded {@code .craft} files. */
     private static final String CRAFTS_DIR = "crafts";
 
+    /** How many numbered variants of one base name are searched when looking for a recipe's mirror. */
+    private static final int MAX_MIRROR_VARIANTS = 64;
+
     private CraftFilesOnDisk() {
     }
 
     /**
      * Mirrors a {@code .craft} onto the Crafting Computer's system disk under {@code crafts/} so the
      * loaded recipes are visible (and copyable) in the Files app. A flat filesystem keeps them at the
-     * root; a hierarchical one nests them in {@code crafts/}. A no-op when there is no system disk.
+     * root; a hierarchical one nests them in {@code crafts/}. A recipe whose content is already mirrored
+     * stays where it is; otherwise it takes {@code base.craft}, or {@code base_2.craft}, ... when that name
+     * holds a different recipe, so two recipes for the same result never share a file. A no-op when there is
+     * no system disk.
      */
-    static void writeCraftToDisk(final CraftingComputerBlockEntity cc, final String fileName,
-                                         final String content) {
+    static void writeCraftToDisk(final CraftingComputerBlockEntity cc, final String base, final String content) {
+        if (mirrorPath(cc, base + ".craft") == null) {
+            return;
+        }
         final ItemStack disk = cc.systemDisk();
-        if (disk.isEmpty()) {
-            return;
-        }
         final FilesystemKind kind = filesystemKindOf(cc);
-        if (kind == FilesystemKind.NONE) {
-            return;
-        }
-        final String path;
         if (kind == FilesystemKind.HIERARCHICAL) {
             DiskFilesystem.mkdir(disk, CRAFTS_DIR, kind);
-            path = CRAFTS_DIR + "/" + fileName;
-        } else {
-            path = fileName;
         }
-        DiskFilesystem.write(disk, path, FileType.CRAFT, content, cc.systemDiskFreeWeight(), kind,
-                cc.getLevel() == null ? 0L : cc.getLevel().getGameTime());
+        if (findMirror(cc, base, content) != null) {
+            return;
+        }
+        DiskFilesystem.write(disk, firstFreeMirror(cc, base), FileType.CRAFT, content, cc.systemDiskFreeWeight(),
+                kind, cc.getLevel() == null ? 0L : cc.getLevel().getGameTime());
     }
 
-    /** Deletes a mirrored {@code .craft} from the Crafting Computer's system disk, if present. */
-    static void deleteCraftFromDisk(final CraftingComputerBlockEntity cc, final String fileName) {
-        final ItemStack disk = cc.systemDisk();
-        if (disk.isEmpty()) {
-            return;
+    /**
+     * Deletes the mirror of one recipe from the Crafting Computer's system disk, if present. Only the file that
+     * holds exactly this recipe goes; a same-named file of another recipe stays.
+     */
+    static void deleteCraftFromDisk(final CraftingComputerBlockEntity cc, final String base, final String content) {
+        final String path = findMirror(cc, base, content);
+        if (path != null) {
+            DiskFilesystem.delete(cc.systemDisk(), path);
         }
-        final FilesystemKind kind = filesystemKindOf(cc);
-        if (kind == FilesystemKind.NONE) {
-            return;
-        }
-        final String path = kind == FilesystemKind.HIERARCHICAL
-                ? CRAFTS_DIR + "/" + fileName : fileName;
-        DiskFilesystem.delete(disk, path);
     }
 
     /**
@@ -85,13 +84,13 @@ public final class CraftFilesOnDisk {
         }
         boolean wrote = false;
         for (final CraftingPattern pattern : cc.romPatterns()) {
-            final String diskName = craftFileNameFor(pattern) + ".craft";
-            if (craftFileExistsOnDisk(cc, diskName)) {
+            final Optional<String> content = CraftFile.serialize(pattern, level.registryAccess());
+            if (content.isEmpty()) {
                 continue;
             }
-            final Optional<String> content = CraftFile.serialize(pattern, level.registryAccess());
-            if (content.isPresent()) {
-                writeCraftToDisk(cc, diskName, content.get());
+            final String base = craftFileNameFor(pattern);
+            if (findMirror(cc, base, content.get()) == null) {
+                writeCraftToDisk(cc, base, content.get());
                 wrote = true;
             }
         }
@@ -100,19 +99,51 @@ public final class CraftFilesOnDisk {
         }
     }
 
-    /** Reports whether a mirrored {@code .craft} of the given name already exists on the system disk. */
-    static boolean craftFileExistsOnDisk(final CraftingComputerBlockEntity cc, final String fileName) {
-        final ItemStack disk = cc.systemDisk();
-        if (disk.isEmpty()) {
-            return false;
+    /**
+     * The file base-name a recipe is mirrored and saved under: a bench recipe by its pattern's name, any other by
+     * its sanitized display name.
+     */
+    static String mirrorFileName(final NetworkRecipe recipe) {
+        return recipe.bench().isPresent() ? craftFileNameFor(recipe.bench().get())
+                : sanitizeFileBase(recipe.displayName());
+    }
+
+    /* The mirror path holding exactly this content under the base name or its numbered variants, or null. */
+    @Nullable
+    private static String findMirror(final CraftingComputerBlockEntity cc, final String base, final String content) {
+        for (int n = 1; n <= MAX_MIRROR_VARIANTS; n++) {
+            final String path = mirrorPath(cc, variantName(base, n));
+            if (path != null && DiskFilesystem.read(cc.systemDisk(), path).map(content::equals).orElse(false)) {
+                return path;
+            }
+        }
+        return null;
+    }
+
+    /* The first mirror path under the base name or its numbered variants that no file occupies. */
+    private static String firstFreeMirror(final CraftingComputerBlockEntity cc, final String base) {
+        String path = mirrorPath(cc, variantName(base, 1));
+        for (int n = 2; n <= MAX_MIRROR_VARIANTS && DiskFilesystem.exists(cc.systemDisk(), path); n++) {
+            path = mirrorPath(cc, variantName(base, n));
+        }
+        return path;
+    }
+
+    private static String variantName(final String base, final int n) {
+        return (n == 1 ? base : base + "_" + n) + ".craft";
+    }
+
+    /* Where a mirrored file lives on the system disk, or null when there is no disk or no filesystem on it. */
+    @Nullable
+    private static String mirrorPath(final CraftingComputerBlockEntity cc, final String fileName) {
+        if (cc.systemDisk().isEmpty()) {
+            return null;
         }
         final FilesystemKind kind = filesystemKindOf(cc);
         if (kind == FilesystemKind.NONE) {
-            return false;
+            return null;
         }
-        final String path = kind == FilesystemKind.HIERARCHICAL
-                ? CRAFTS_DIR + "/" + fileName : fileName;
-        return DiskFilesystem.read(disk, path).isPresent();
+        return kind == FilesystemKind.HIERARCHICAL ? CRAFTS_DIR + "/" + fileName : fileName;
     }
 
     /**

@@ -18,7 +18,9 @@ import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.boot.WelcomeFacts;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.tests.JsTests;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -96,6 +98,23 @@ public final class FirstBootGameTests {
     }
 
     /**
+     * Erasing the system disk forgets the programs a player installed from the Mirror, which lived on it. They
+     * used to be kept, so the desktop went on showing icons for programs whose files were gone.
+     */
+    @GameTest(template = ARENA)
+    public static void erasingTheDisk_forgetsThePlayersOwnPrograms(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        helper.assertTrue(computer.installOs(DEBIAN), "Debian installs on the machine");
+        computer.console().addCommunity(new ComputerConsoleState.Community("stockwatch", "1.0.0", "jvpts11",
+                "bell", "PROGRAMS/stockwatch/stockwatch.asm"));
+        helper.assertTrue(computer.console().communityProgram("stockwatch") != null, "a player's program is in");
+
+        helper.assertTrue(computer.formatDisk(0), "the disk is erased");
+        helper.assertTrue(computer.console().community().isEmpty(), "and the machine no longer has it");
+        helper.succeed();
+    }
+
+    /**
      * Two systems on two disks are met one at a time, since each mark is on its own disk.
      *
      * <p>This is the whole reason the mark does not live on the machine: a computer that dual-boots would
@@ -157,7 +176,7 @@ public final class FirstBootGameTests {
         computer.setBootDiskSlot(0);
 
         helper.assertTrue(WelcomeFacts.bootedSlot(computer) == 0, "the machine boots the first disk");
-        final java.util.List<WelcomeFacts.Other> others = WelcomeFacts.others(computer);
+        final List<WelcomeFacts.Other> others = WelcomeFacts.others(computer);
         helper.assertTrue(others.size() == 1, "and knows of one other system: " + others);
         helper.assertTrue("Ubuntu".equals(others.getFirst().system()) && others.getFirst().slot() == 1,
                 "named, and on the disk it is really on: " + others.getFirst());
@@ -173,7 +192,8 @@ public final class FirstBootGameTests {
         final PersonalComputerBlockEntity computer = legacy(helper);
         helper.assertTrue(computer.installOs(FRAMES_95), "Frames 95 installs on the machine");
 
-        final java.util.List<String> alone = WelcomeFacts.tips(computer, "", false);
+        final List<String> alone = WelcomeFacts.tips(computer, "", false).stream()
+                .map(tip -> tip.english()).toList();
         helper.assertTrue(alone.getFirst().contains("once a Mainframe on this network runs the Mirror"),
                 "with no Mirror it says where software would come from: " + alone.getFirst());
         for (final String tip : alone) {
@@ -181,7 +201,8 @@ public final class FirstBootGameTests {
                     "and a machine on no network is told nothing about one: " + tip);
         }
 
-        final java.util.List<String> served = WelcomeFacts.tips(computer, "CORE", true);
+        final List<String> served = WelcomeFacts.tips(computer, "CORE", true).stream()
+                .map(tip -> tip.english()).toList();
         helper.assertTrue(served.getFirst().contains("the Mirror on CORE"),
                 "with one answering it names it: " + served.getFirst());
         helper.succeed();
@@ -200,8 +221,8 @@ public final class FirstBootGameTests {
         computer.console().setComputerName("STUDIO-11");
 
         final BootSequence first = BootLines.forMachine(computer, helper.getLevel());
-        helper.assertTrue("Hi.".equals(first.title()), "the first start greets: " + first.title());
-        helper.assertTrue(first.subtitle().startsWith("STUDIO-11"),
+        helper.assertTrue("Hi.".equals(first.title().english()), "the first start greets: " + first.title());
+        helper.assertTrue(first.subtitle().english().startsWith("STUDIO-11"),
                 "and greets this machine by its own name: " + first.subtitle());
 
         computer.setSystemWelcome(computer.systemWelcome().met());
@@ -221,7 +242,7 @@ public final class FirstBootGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
@@ -241,9 +262,9 @@ public final class FirstBootGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,

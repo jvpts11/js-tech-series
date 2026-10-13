@@ -11,6 +11,9 @@ import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -21,16 +24,21 @@ import java.util.Optional;
  * {@link #MEDIUM} unless the requester says otherwise. Levels are declared lowest first, so {@code compareTo}
  * orders them.
  */
+@TextHolder
 public enum OperationPriority implements IStableId, IStableName {
     /*
      * Numbered in tens rather than one after another, so that a level can be put between two of these later
      * without any of the numbers already written into a world having to move.
      */
-    LOW(10, "low", "LOW"),
-    MEDIUM_LOW(20, "medium_low", "MED-"),
-    MEDIUM(30, "medium", "MED"),
-    MEDIUM_HIGH(40, "medium_high", "MED+"),
-    HIGH(50, "high", "HIGH");
+    LOW(10, "low", TextKey.of("jscore.priority.low", "LOW")),
+    MEDIUM_LOW(20, "medium_low", TextKey.of("jscore.priority.medium_low", "MED-")),
+    MEDIUM(30, "medium", TextKey.of("jscore.priority.medium", "MED")),
+    MEDIUM_HIGH(40, "medium_high", TextKey.of("jscore.priority.medium_high", "MED+")),
+    HIGH(50, "high", TextKey.of("jscore.priority.high", "HIGH"));
+
+    private final int id;
+    private final String serializedName;
+    private final TextKey label;
 
     /** The level every Operation starts at when the requester does not choose one. */
     public static final OperationPriority DEFAULT = MEDIUM;
@@ -38,11 +46,7 @@ public enum OperationPriority implements IStableId, IStableName {
     private static final StableIds<OperationPriority> IDS = StableIds.of(OperationPriority.class);
     private static final StableNames<OperationPriority> NAMES = StableNames.of(OperationPriority.class);
 
-    private final int id;
-    private final String serializedName;
-    private final String label;
-
-    OperationPriority(final int id, final String serializedName, final String label) {
+    OperationPriority(final int id, final String serializedName, final TextKey label) {
         this.id = id;
         this.serializedName = serializedName;
         this.label = label;
@@ -59,9 +63,14 @@ public enum OperationPriority implements IStableId, IStableName {
         return serializedName;
     }
 
-    /** A four-character tag for dense views (task lists, dialogs). */
+    /** A four-character tag for dense views (task lists, dialogs), in the English a machine writes down. */
     public String label() {
-        return label;
+        return label.english();
+    }
+
+    /** The same tag as text, for a player to read in their language. */
+    public Text text() {
+        return label.text();
     }
 
     /** The next level up, saturating at {@link #HIGH}. */

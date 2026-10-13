@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.edit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.core.gui.ColorContrast;
@@ -24,6 +25,18 @@ class InkPaletteTest {
     /** A line number or a rule may be quieter than code, but it still has to be seen. */
     private static final double VISIBLE = 2.0;
 
+    /**
+     * How much two inks drawn side by side on the same ground must differ to read as different colours
+     * rather than the same one at a slightly different weight: the floor bright and plain must clear, since an
+     * editor writes both of them on the glass at once.
+     */
+    private static final double DISTINCT = 1.38;
+
+    /** The colours each set ships with, which is what a player without a resource pack reads. */
+    private static final InkPalette LIGHT = InkPalette.LIGHT.declared();
+    private static final InkPalette DARK = InkPalette.DARK.declared();
+    private static final InkPalette GLASS = InkPalette.GLASS.declared();
+
     private static void assertReadable(final InkPalette palette, final String where) {
         for (final CodeRuns.Ink ink : CodeRuns.Ink.values()) {
             final double ratio = ColorContrast.ratio(palette.of(ink), palette.ground());
@@ -34,42 +47,42 @@ class InkPaletteTest {
 
     @Test
     void of_isReadableOnTheLightGround() {
-        assertReadable(InkPalette.LIGHT, "light");
+        assertReadable(LIGHT, "light");
     }
 
     @Test
     void of_isReadableOnTheDarkGround() {
-        assertReadable(InkPalette.DARK, "dark");
+        assertReadable(DARK, "dark");
     }
 
     /** A monitor's bare glass is black, and an editor that takes it over stays on that black. */
     @Test
     void glass_isBlackAndEverythingOnItReads() {
-        assertEquals(0xFF000000, InkPalette.GLASS.ground());
-        assertReadable(InkPalette.GLASS, "glass");
-        assertTrue(ColorContrast.ratio(InkPalette.GLASS.gutterText(), InkPalette.GLASS.gutter()) >= VISIBLE);
-        assertTrue(ColorContrast.ratio(InkPalette.GLASS.caret(), InkPalette.GLASS.ground()) >= READABLE);
+        assertEquals(0xFF000000, GLASS.ground());
+        assertReadable(GLASS, "glass");
+        assertTrue(ColorContrast.ratio(GLASS.gutterText(), GLASS.gutter()) >= VISIBLE);
+        assertTrue(ColorContrast.ratio(GLASS.caret(), GLASS.ground()) >= READABLE);
         // An editor writes its title and its keys the other way round: the ground's colour on the text's.
-        assertTrue(ColorContrast.ratio(InkPalette.GLASS.ground(), InkPalette.GLASS.plain()) >= READABLE);
+        assertTrue(ColorContrast.ratio(GLASS.ground(), GLASS.plain()) >= READABLE);
     }
 
     @Test
     void gutterText_isVisibleOnTheGutterOfBothPalettes() {
-        assertTrue(ColorContrast.ratio(InkPalette.LIGHT.gutterText(), InkPalette.LIGHT.gutter()) >= VISIBLE,
+        assertTrue(ColorContrast.ratio(LIGHT.gutterText(), LIGHT.gutter()) >= VISIBLE,
                 "light gutter numbers are lost on the gutter");
-        assertTrue(ColorContrast.ratio(InkPalette.DARK.gutterText(), InkPalette.DARK.gutter()) >= VISIBLE,
+        assertTrue(ColorContrast.ratio(DARK.gutterText(), DARK.gutter()) >= VISIBLE,
                 "dark gutter numbers are lost on the gutter");
     }
 
     @Test
     void caret_standsOutAgainstTheGround() {
-        assertTrue(ColorContrast.ratio(InkPalette.LIGHT.caret(), InkPalette.LIGHT.ground()) >= READABLE);
-        assertTrue(ColorContrast.ratio(InkPalette.DARK.caret(), InkPalette.DARK.ground()) >= READABLE);
+        assertTrue(ColorContrast.ratio(LIGHT.caret(), LIGHT.ground()) >= READABLE);
+        assertTrue(ColorContrast.ratio(DARK.caret(), DARK.ground()) >= READABLE);
     }
 
     @Test
     void currentLine_isTellableFromTheGroundWithoutDrowningTheCodeOnIt() {
-        for (final InkPalette palette : new InkPalette[] {InkPalette.LIGHT, InkPalette.DARK}) {
+        for (final InkPalette palette : new InkPalette[] {LIGHT, DARK}) {
             assertTrue(palette.currentLine() != palette.ground(), "the current line is invisible");
             for (final CodeRuns.Ink ink : CodeRuns.Ink.values()) {
                 assertTrue(ColorContrast.ratio(palette.of(ink), palette.currentLine()) >= READABLE,
@@ -80,15 +93,44 @@ class InkPaletteTest {
 
     @Test
     void forGround_picksThePaletteThatMatchesTheWindow() {
-        assertEquals(InkPalette.DARK, InkPalette.forGround(true));
-        assertEquals(InkPalette.LIGHT, InkPalette.forGround(false));
+        assertSame(InkPalette.DARK, InkPalette.forGround(true));
+        assertSame(InkPalette.LIGHT, InkPalette.forGround(false));
+    }
+
+    /** A menu's title, in an ink meant to stand out more than the plain text round it. */
+    @Test
+    void bright_standsOutOnEveryPalettesGround() {
+        for (final InkPalette palette : new InkPalette[] {LIGHT, DARK, GLASS}) {
+            assertTrue(ColorContrast.ratio(palette.bright(), palette.ground()) >= READABLE);
+        }
+    }
+
+    /**
+     * A bare chord is bright ink written right beside plain ink on the same ground, with no badge of its
+     * own to set it apart, so the two must actually read as different colours and not merely as the same
+     * dark or light corner of the palette.
+     */
+    @Test
+    void bright_isDistinguishableFromPlainOnEveryPalette() {
+        for (final InkPalette palette : new InkPalette[] {LIGHT, DARK, GLASS}) {
+            assertTrue(ColorContrast.ratio(palette.bright(), palette.plain()) >= DISTINCT,
+                    "bright reads as plain, so a bare chord would not stand out beside its own description");
+        }
+    }
+
+    /** A menu's chosen row, painted in its own ground's colour once it sits on this. */
+    @Test
+    void selection_readsTheGroundsColourOnIt() {
+        for (final InkPalette palette : new InkPalette[] {LIGHT, DARK, GLASS}) {
+            assertTrue(ColorContrast.ratio(palette.ground(), palette.selection()) >= READABLE);
+        }
     }
 
     @Test
     void of_answersForEveryInkTheRunBuilderCanProduce() {
         for (final CodeRuns.Ink ink : CodeRuns.Ink.values()) {
-            assertTrue((InkPalette.LIGHT.of(ink) >>> 24) == 0xFF, ink + " is not opaque on the light palette");
-            assertTrue((InkPalette.DARK.of(ink) >>> 24) == 0xFF, ink + " is not opaque on the dark palette");
+            assertTrue((LIGHT.of(ink) >>> 24) == 0xFF, ink + " is not opaque on the light palette");
+            assertTrue((DARK.of(ink) >>> 24) == 0xFF, ink + " is not opaque on the dark palette");
         }
     }
 }

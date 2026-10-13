@@ -51,8 +51,8 @@ public final class NetworkInteractorLayout {
     public static final int SORT_W = 32;           // width of the sort toggle box on a grid tab (small label)
     /** Width of the mod filter drop-down in the header row. */
     public static final int MOD_W = 34;
-    /** Width of the category filter drop-down in the header row: "Category" at the small scale. */
-    public static final int CAT_W = 46;
+    /** Width of the category filter drop-down in the header row: "Category" at the small scale, and its caret. */
+    public static final int CAT_W = 54;
     /** Padding of the framed inventory band around the slots (vanilla-style border, sharp corners). */
     public static final int INV_PAD = 4;
     /** Gap between the left column and the details panel, where the vertical grip sits. */

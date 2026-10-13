@@ -1,0 +1,126 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.fstab_by_hand.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.fstab_by_hand.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.fstab_by_hand.step1",
+        "jsc.guide.fstab_by_hand.step2",
+        "jsc.guide.fstab_by_hand.step3",
+        "jsc.guide.fstab_by_hand.step4"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.fstab_by_hand.table1",
+      "heads": [
+        "jsc.guide.fstab_by_hand.table1_head1",
+        "jsc.guide.fstab_by_hand.table1_head2",
+        "jsc.guide.fstab_by_hand.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_1_1"
+          },
+          {
+            "literal": "UUID=<its uuid>"
+          },
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_2_1"
+          },
+          {
+            "literal": "/"
+          },
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_3_1"
+          },
+          {
+            "literal": "ext4"
+          },
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_4_1"
+          },
+          {
+            "literal": "noatime"
+          },
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_5_1"
+          },
+          {
+            "literal": "0"
+          },
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_6_1"
+          },
+          {
+            "literal": "1"
+          },
+          {
+            "words": "jsc.guide.fstab_by_hand.table1_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.fstab_by_hand.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.fstab_by_hand.fix1",
+          "problem": "jsc.guide.fstab_by_hand.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_fstab",
+        "jsc:gentoo_reboot"
+      ]
+    }
+  ],
+  "id": "jsc:fstab_by_hand",
+  "order": 262,
+  "section": "jsc:gentoo_system",
+  "title": "jsc.guide.fstab_by_hand.title"
+}

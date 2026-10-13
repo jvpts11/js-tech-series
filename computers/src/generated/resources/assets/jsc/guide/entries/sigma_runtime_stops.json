@@ -1,0 +1,847 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_runtime_stops.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_runtime_stops.definition1",
+      "term": "jsc.guide.sigma_runtime_stops.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_runtime_stops.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_runtime_stops.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_runtime_stops.table1",
+      "heads": [
+        "jsc.guide.sigma_runtime_stops.table1_head1",
+        "jsc.guide.sigma_runtime_stops.table1_head2",
+        "jsc.guide.sigma_runtime_stops.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_10_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_11_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_12_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_12_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_13_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_13_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_runtime_stops.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_runtime_stops.table2",
+      "heads": [
+        "jsc.guide.sigma_runtime_stops.table2_head1",
+        "jsc.guide.sigma_runtime_stops.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_9_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_9_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_10_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_10_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_11_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_11_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_12_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_12_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_13_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_13_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_14_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_14_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_15_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_15_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_16_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_16_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_17_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_17_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_18_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_18_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_19_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_19_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_20_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_20_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_21_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_21_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_22_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_22_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_23_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_23_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_24_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_24_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_25_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_25_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_26_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_26_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_27_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_27_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_28_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_28_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_29_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_29_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_30_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_30_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_31_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_31_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_32_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_32_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_33_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_33_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_34_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_34_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_35_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_35_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_36_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_36_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_37_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_37_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_38_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_38_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_39_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_39_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_40_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_40_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_41_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_41_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_42_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_42_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_43_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_43_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_44_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_44_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_45_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_45_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_46_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_46_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_47_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_47_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_48_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_48_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_49_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_49_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_50_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_50_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_51_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_51_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_52_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_52_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_53_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_53_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_54_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_54_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_55_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_55_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_56_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_56_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_57_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_57_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_58_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_58_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_59_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_59_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_60_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_60_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_61_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_61_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_62_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_62_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_runtime_stops.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_runtime_stops.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_runtime_stops.table3",
+      "heads": [
+        "jsc.guide.sigma_runtime_stops.table3_head1",
+        "jsc.guide.sigma_runtime_stops.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_3_1"
+          },
+          {
+            "amount": 1,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_4_1"
+          },
+          {
+            "amount": 64,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_6_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_7_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_8_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_9_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table3_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_runtime_stops.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_runtime_stops.definition2",
+      "term": "jsc.guide.sigma_runtime_stops.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix1",
+          "problem": "jsc.guide.sigma_runtime_stops.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix2",
+          "problem": "jsc.guide.sigma_runtime_stops.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix3",
+          "problem": "jsc.guide.sigma_runtime_stops.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix4",
+          "problem": "jsc.guide.sigma_runtime_stops.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix5",
+          "problem": "jsc.guide.sigma_runtime_stops.problem5"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix6",
+          "problem": "jsc.guide.sigma_runtime_stops.problem6"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix7",
+          "problem": "jsc.guide.sigma_runtime_stops.problem7"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix8",
+          "problem": "jsc.guide.sigma_runtime_stops.problem8"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix9",
+          "problem": "jsc.guide.sigma_runtime_stops.problem9"
+        },
+        {
+          "fix": "jsc.guide.sigma_runtime_stops.fix10",
+          "problem": "jsc.guide.sigma_runtime_stops.problem10"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_listing_errors",
+        "jsc:sigma_compile_errors",
+        "jsc:sigma_running"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_runtime_stops",
+  "order": 386,
+  "section": "jsc:errors_running",
+  "title": "jsc.guide.sigma_runtime_stops.title"
+}

@@ -7,20 +7,24 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.text.Text;
+
 /**
  * Expansion-bus generations for graphics/expansion cards, oldest to newest (the legacy ISA/PCI/AGP buses precede the PCIe line).
  */
 public enum PcieGeneration {
     ISA(0),
     PCI(1),
-    AGP_4X(2),
-    AGP_8X(3),
-    PCIE_1_0(4),
-    PCIE_2_0(5),
-    PCIE_3_0(6),
-    PCIE_4_0(7),
-    PCIE_5_0(8),
-    PCIE_6_0(9);
+    /** The first AGP, of the Slot 1 boards and the cards of 1998. */
+    AGP_2X(2),
+    AGP_4X(3),
+    AGP_8X(4),
+    PCIE_1_0(5),
+    PCIE_2_0(6),
+    PCIE_3_0(7),
+    PCIE_4_0(8),
+    PCIE_5_0(9),
+    PCIE_6_0(10);
 
     /** The generation's place in the line, oldest first: one step is roughly a doubling of bandwidth. */
     private final int generation;
@@ -29,12 +33,46 @@ public enum PcieGeneration {
         this.generation = generation;
     }
 
+    /** The bus as a part's sheet names it, the same in every language: "AGP 4x", "PCI-e 3.0". */
+    public Text label() {
+        return switch (this) {
+            case ISA -> Text.literal("ISA");
+            case PCI -> Text.literal("PCI");
+            case AGP_2X -> Text.literal("AGP 2x");
+            case AGP_4X -> Text.literal("AGP 4x");
+            case AGP_8X -> Text.literal("AGP 8x");
+            case PCIE_1_0 -> Text.literal("PCI-e 1.0");
+            case PCIE_2_0 -> Text.literal("PCI-e 2.0");
+            case PCIE_3_0 -> Text.literal("PCI-e 3.0");
+            case PCIE_4_0 -> Text.literal("PCI-e 4.0");
+            case PCIE_5_0 -> Text.literal("PCI-e 5.0");
+            case PCIE_6_0 -> Text.literal("PCI-e 6.0");
+        };
+    }
+
+    /** The slot as its specifications name it, the same in every language: "AGP 4x", "PCI Express 3.0 x16". */
+    public Text slotName() {
+        return switch (this) {
+            case ISA -> Text.literal("ISA");
+            case PCI -> Text.literal("PCI");
+            case AGP_2X -> Text.literal("AGP 2x");
+            case AGP_4X -> Text.literal("AGP 4x");
+            case AGP_8X -> Text.literal("AGP 8x");
+            case PCIE_1_0 -> Text.literal("PCI Express 1.0 x16");
+            case PCIE_2_0 -> Text.literal("PCI Express 2.0 x16");
+            case PCIE_3_0 -> Text.literal("PCI Express 3.0 x16");
+            case PCIE_4_0 -> Text.literal("PCI Express 4.0 x16");
+            case PCIE_5_0 -> Text.literal("PCI Express 5.0 x16");
+            case PCIE_6_0 -> Text.literal("PCI Express 6.0 x16");
+        };
+    }
+
     /** The physical bus family this generation belongs to. */
     public ExpansionBus busFamily() {
         return switch (this) {
             case ISA -> ExpansionBus.ISA;
             case PCI -> ExpansionBus.PCI;
-            case AGP_4X, AGP_8X -> ExpansionBus.AGP;
+            case AGP_2X, AGP_4X, AGP_8X -> ExpansionBus.AGP;
             case PCIE_1_0, PCIE_2_0, PCIE_3_0, PCIE_4_0, PCIE_5_0, PCIE_6_0 -> ExpansionBus.PCIE;
         };
     }

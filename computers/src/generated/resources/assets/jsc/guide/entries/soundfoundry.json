@@ -1,0 +1,139 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.soundfoundry.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.soundfoundry.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.soundfoundry.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.soundfoundry.table1",
+      "heads": [
+        "jsc.guide.soundfoundry.table1_head1",
+        "jsc.guide.soundfoundry.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "OUT -"
+          },
+          {
+            "words": "jsc.guide.soundfoundry.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "OUT MON"
+          },
+          {
+            "words": "jsc.guide.soundfoundry.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "OUT SPK"
+          },
+          {
+            "words": "jsc.guide.soundfoundry.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "OUT MON+SPK"
+          },
+          {
+            "words": "jsc.guide.soundfoundry.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.soundfoundry.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.soundfoundry.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.soundfoundry.definition1",
+      "term": "jsc.guide.soundfoundry.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.soundfoundry.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.soundfoundry.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.soundfoundry.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.soundfoundry.definition2",
+      "term": "jsc.guide.soundfoundry.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.soundfoundry.definition3",
+      "term": "jsc.guide.soundfoundry.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.soundfoundry.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.soundfoundry.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.soundfoundry.definition4",
+      "term": "jsc.guide.soundfoundry.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.soundfoundry.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.soundfoundry.fix1",
+          "problem": "jsc.guide.soundfoundry.problem1"
+        },
+        {
+          "fix": "jsc.guide.soundfoundry.fix2",
+          "problem": "jsc.guide.soundfoundry.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sound_cards",
+        "jsc:speakers"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:soundfoundry",
+  "order": 59,
+  "section": "jsc:social_and_media",
+  "title": "jsc.guide.soundfoundry.title"
+}

@@ -9,73 +9,99 @@ package dev.jstech.computers.os.media;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.audio.MediaBaySounds;
+import dev.jstech.computers.audio.SystemSound;
+import dev.jstech.computers.client.audio.MachineSoundSources;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.SetupJob;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.ServerStorageContents;
-import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.audio.IAudible;
+import dev.jstech.core.audio.LoopRequest;
+import dev.jstech.core.blockentity.BoolField;
+import dev.jstech.core.blockentity.FieldItemHandler;
+import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
-import dev.jstech.core.peripheral.PeripheralLinkValidator;
-import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
- * BlockEntity for the {@link MediaReaderBlock}. Holds exactly one {@link MediaItem} in an internal
- * slot; exposes the loaded payload via {@link #insertedPayload()}, the media kind via
- * {@link #insertedKind()}, and the data contents via {@link #insertedData()}.
+ * The block entity of a {@link MediaReaderBlock}: one slot holding a {@link MediaItem} of a format the drive reads,
+ * whose payload, kind and data a linked computer reads through {@link #insertedPayload()}, {@link #insertedKind()}
+ * and {@link #insertedData()}.
  *
- * <p>Persistence: the slot is saved/loaded via the standard NeoForge {@link ItemStackHandler}
- * serialization, using {@link #saveAdditional} / {@link #loadAdditional} with a
- * {@link HolderLookup.Provider} (the 1.21.1 form). Sync to the client is done via
- * {@link #getUpdateTag} and {@link ClientboundBlockEntityDataPacket#create(BlockEntity)}.
+ * <p>It is a peripheral on the computing cable: it links to the computer the cables reach, and a computer can find
+ * installation media in any drive linked to it. The medium, the link and whether the computer is reading the drive
+ * are sent to the players who see it, and the block shows whether it holds a medium.
  *
- * <p>Participates in the {@link PeripheralCableType#COMPUTING} peripheral system as an endpoint.
- * Each server tick the reader runs a BFS via {@link PeripheralLinks#discoverOwner} to auto-link
- * to the nearest computer, mirroring the monitor pattern. The linked owner position is stored in
- * NBT and restored on world reload.
+ * <p>The floppy, CD, DVD and Blu-ray drives are drawn as models of the drives of their day: the medium in the drive
+ * is the very item the player put in, the floppy's slot plays its clip as a floppy goes in or comes out, and the lamps
+ * say whether a computer is linked and whether it is reading the drive. An optical drive has a {@link DiscTray tray}
+ * its eject button opens and closes: a disc is laid on it and lifted off it only while it is out, and a disc on an
+ * open tray is not read. The Dock Station is a reader of a kind of its own, its stick port being this slot, with
+ * trays for disks besides.
  */
-public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEndpoint {
+public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible,
+        GeoBlockEntity {
 
-    private static final String NBT_SLOT = "MediaSlot";
-    private static final String NBT_LINKED_OWNER = "LinkedOwner";
-
-    @Nullable
-    private Long linkedOwner;
-
-    private final ItemStackHandler slot = new ItemStackHandler(1) {
-        @Override
-        public boolean isItemValid(final int slotIndex, final ItemStack stack) {
-            return acceptsMedia(stack);
-        }
-
-        @Override
-        public int getSlotLimit(final int slotIndex) {
-            return 1;
-        }
-
-        @Override
-        protected void onContentsChanged(final int slotIndex) {
-            setChanged();
-            syncToClients();
-        }
-    };
+    /** What the drive sounds like taking a medium in and giving it back. */
+    private final MediaBaySounds baySounds = new MediaBaySounds();
+    /** On the client, the medium drawn in the drive, kept a moment after it is taken so its way out is seen. */
+    private final MediaBay bay = new MediaBay();
+    private final AnimatableInstanceCache geckoCache = GeckoLibUtil.createInstanceCache(this);
+    private final FieldItemHandler slot = fields().items("MediaSlot", 1).save().toClient().dropsWhenBroken()
+            .slotLimit(1).accepts((index, stack) -> acceptsMedia(stack))
+            .onChange(index -> mediaMoved()).onLoad(() -> baySounds.settle(mediaStack()));
+    private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
+            PeripheralLinks.COMPUTING);
+    /*
+     * Whether the linked computer is installing a system or a program from the medium in this drive: the server
+     * works it out, and the client hears the drive read and sees its activity lamp blink while it is true.
+     */
+    private final BoolField reading = fields().flag("Reading", false).toClient();
+    /** The tray of an optical drive, which its eject button opens and closes; a floppy drive's never opens. */
+    private final DiscTray tray = new DiscTray(fields());
+    /** The medium held just before an update from the server was read, on the client. */
+    private ItemStack beforeUpdate = ItemStack.EMPTY;
+    /** Whether the block is being broken, when the medium leaves without the sound of an eject. */
+    private boolean breaking;
 
     public MediaReaderBlockEntity(final BlockPos pos, final BlockState state) {
-        super(ComputingModule.MEDIA_READER_BE.get(), pos, state);
+        this(ComputingModule.MEDIA_READER_BE.get(), pos, state);
+    }
+
+    /** A reader of a kind of its own, as the Dock Station is, which holds disks besides its stick. */
+    protected MediaReaderBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
+        super(type, pos, state);
+        fields().mirror(MediaReaderBlock.LOADED, this::hasMedia);
+        fields().whenBroken((level, at) -> breaking = true);
+    }
+
+    public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
+                                  final MediaReaderBlockEntity drive) {
+        if (level instanceof ServerLevel server) {
+            drive.link.tick(server, pos);
+            drive.reading.set(drive.installingFromHere(server));
+        }
     }
 
     /** The drive type of this reader's block, deciding which media formats its slot accepts. */
@@ -85,8 +111,8 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
     }
 
     /**
-     * Returns whether this reader accepts the given stack. A {@link FormattedMediaItem} is accepted
-     * only when this drive can read its {@link MediaFormat}; generic media is accepted by any drive.
+     * Whether this reader takes the given stack. A {@link FormattedMediaItem} is taken only when this drive reads its
+     * {@link MediaFormat}; generic media is taken by any drive.
      */
     public boolean acceptsMedia(final ItemStack stack) {
         if (stack.getItem() instanceof FormattedMediaItem media) {
@@ -95,143 +121,166 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
         return stack.getItem() instanceof MediaItem;
     }
 
-    /**
-     * Returns the {@link MediaFormat} of the inserted medium, or {@code null} when the slot is empty
-     * or the medium carries no fixed format.
-     */
+    /** The format of the medium the drive reads, or null when it reads none. */
     @Nullable
     public MediaFormat insertedFormat() {
-        return slot.getStackInSlot(0).getItem() instanceof FormattedMediaItem media
-                ? media.format() : null;
+        return readableMedium().getItem() instanceof FormattedMediaItem media ? media.format() : null;
     }
-
-    // ─── IPeripheralEndpoint ──────────────────────────────────────────────────
 
     @Override
     public PeripheralCableType cableType() {
-        return PeripheralCableType.COMPUTING;
+        return link.cableType();
     }
 
     @Override
     public Optional<Long> linkedOwner() {
-        return Optional.ofNullable(linkedOwner);
+        return link.linkedOwner();
     }
 
     @Override
     public void onOwnerLinked(final long ownerPos) {
-        linkedOwner = ownerPos;
-        setChanged();
+        link.linked(ownerPos);
     }
 
     @Override
     public void onOwnerUnlinked() {
-        linkedOwner = null;
-        setChanged();
+        link.unlinked();
     }
 
-    /**
-     * Returns the linked computer's position, or {@code null} when not yet linked.
-     */
+    /** The linked computer's position, or null while unlinked. */
     @Nullable
     public BlockPos ownerPos() {
-        return linkedOwner == null ? null : BlockPos.of(linkedOwner);
+        return link.ownerPos();
     }
 
-    public static void serverTick(final Level level, final BlockPos pos,
-                                  final BlockState state, final MediaReaderBlockEntity be) {
-        if (level instanceof ServerLevel serverLevel) {
-            be.tick(serverLevel);
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.track(this);
         }
     }
 
-    private void tick(final ServerLevel level) {
-        final long self = worldPosition.asLong();
-        final PeripheralLinkValidator validator = PeripheralLinks.validator(level);
-        if (linkedOwner == null) {
-            // Find a reachable computer and link to it (the validator notifies both sides).
-            PeripheralLinks.discoverOwner(level, self)
-                    .ifPresent(ownerPos -> validator.tryEstablishLink(ownerPos, self));
-        } else {
-            // Drop the link if the computer is gone or the cable path is broken.
-            final boolean ownerPresent =
-                    level.getBlockEntity(BlockPos.of(linkedOwner)) instanceof IPeripheralOwner;
-            if (!ownerPresent
-                    || !validator.isLinkStillValid(linkedOwner, self, PeripheralCableType.COMPUTING)) {
-                unlink(level);
-            }
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide()) {
+            MachineSoundSources.untrack(this);
         }
+    }
+
+    @Override
+    public double audioX() {
+        return worldPosition.getX() + 0.5;
+    }
+
+    @Override
+    public double audioY() {
+        return worldPosition.getY() + 0.5;
+    }
+
+    @Override
+    public double audioZ() {
+        return worldPosition.getZ() + 0.5;
     }
 
     /**
-     * Breaks the peripheral link from this reader's side, notifying the owner so it frees the slot.
-     * Safe to call when no link exists (no-op).
+     * A floppy drive's head stepping, or a disc turning, while a system or a program installs from what the drive
+     * holds. A USB drive has nothing that moves.
      */
-    public void unlink(final ServerLevel level) {
-        if (linkedOwner != null
-                && level.getBlockEntity(BlockPos.of(linkedOwner)) instanceof IPeripheralOwner owner) {
-            owner.onEndpointUnlinked(worldPosition.asLong());
+    @Override
+    public List<LoopRequest> loops() {
+        final MediaFormat format = insertedFormat();
+        if (!reading.get() || format == null) {
+            return List.of();
         }
-        onOwnerUnlinked();
+        return switch (format) {
+            case FLOPPY -> List.of(LoopRequest.of(ComputingSounds.FLOPPY_READ));
+            case CD, DVD, BLU_RAY -> List.of(LoopRequest.of(ComputingSounds.OPTICAL_READ));
+            case USB -> List.of();
+        };
     }
 
-    // ─── Public API ──────────────────────────────────────────────────────────
+    @Override
+    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(MediaBay.controller(this, "media_drive"));
+        controllers.add(tray.controller(this, "media_drive"));
+    }
 
-    /**
-     * Returns the OS/program id of the inserted media, or {@code null} when the slot is empty
-     * or the media carries no payload component.
-     */
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return geckoCache;
+    }
+
+    /** Whether this reader plays a drive's clips as its medium moves: the drives do, the Dock Station has none. */
+    public boolean modelled() {
+        return driveType() != MediaDriveType.DOCK_STATION;
+    }
+
+    /** Whether the linked computer is reading this drive now, which its activity lamp shows by blinking. */
+    public boolean reading() {
+        return reading.get();
+    }
+
+    /** The medium the client draws in the drive, kept a moment after it is taken so its way out is seen. */
+    public ItemStack drawnMedium() {
+        return bay.drawn(mediaStack(), level);
+    }
+
+    /** The OS or program id the medium the drive reads carries, or null when it reads none or it carries none. */
     @Nullable
     public ResourceLocation insertedPayload() {
-        final ItemStack stack = slot.getStackInSlot(0);
-        if (stack.isEmpty()) {
-            return null;
-        }
-        return MediaItem.payload(stack);
+        final ItemStack stack = readableMedium();
+        return stack.isEmpty() ? null : MediaItem.payload(stack);
     }
 
-    /**
-     * Returns the {@link MediaKind} of the inserted medium, or {@code null} when the slot is empty.
-     */
+    /** The kind of the medium the drive reads, or null when it reads none. */
     @Nullable
     public MediaKind insertedKind() {
-        final ItemStack stack = slot.getStackInSlot(0);
-        if (stack.isEmpty()) {
-            return null;
-        }
-        return MediaItem.kind(stack);
+        final ItemStack stack = readableMedium();
+        return stack.isEmpty() ? null : MediaItem.kind(stack);
     }
 
     /**
-     * Returns the storage snapshot of the inserted DATA medium. Returns
-     * {@link ServerStorageContents#EMPTY} when the slot is empty or the medium is not a DATA kind.
-     *
-     * <p>// TODO(os): DATA transfer, move network storage to/from a DATA medium via a timed
-     * // Operation, bounded by capacity(stack).
+     * The storage snapshot of the DATA medium the drive reads, or {@link ServerStorageContents#EMPTY} when it reads
+     * none or the medium holds no data.
      */
     public ServerStorageContents insertedData() {
-        final ItemStack stack = slot.getStackInSlot(0);
-        if (stack.isEmpty()) {
-            return ServerStorageContents.EMPTY;
-        }
-        return MediaItem.data(stack);
+        final ItemStack stack = readableMedium();
+        return stack.isEmpty() ? ServerStorageContents.EMPTY : MediaItem.data(stack);
     }
 
     /**
-     * Attempts to insert the given media stack into the slot.
+     * The medium the drive reads: the one in it, or nothing while it lies on an open tray, where a computer sees an
+     * empty drive.
+     */
+    public ItemStack readableMedium() {
+        final ItemStack held = mediaStack();
+        return tray.reads(held) ? held : ItemStack.EMPTY;
+    }
+
+    /** The drive's disc tray, closed for good on a drive with none. */
+    public DiscTray tray() {
+        return tray;
+    }
+
+    /** Whether the drive holds a medium, read or not. */
+    public boolean hasMedia() {
+        return !mediaStack().isEmpty();
+    }
+
+    /**
+     * Puts the given medium in the drive.
      *
-     * @param stack the item to insert (must be a {@link MediaItem})
-     * @return the remainder after insertion (empty if fully inserted, unchanged if slot occupied)
+     * @return what is left over: empty when it went in, the stack unchanged when the drive already holds one
      */
     public ItemStack insertMedia(final ItemStack stack) {
         return slot.insertItem(0, stack, false);
     }
 
-    /**
-     * Removes and returns whatever media is currently in the slot. Returns
-     * {@link ItemStack#EMPTY} when the slot is already empty.
-     */
+    /** Takes out and returns the medium in the drive, or {@link ItemStack#EMPTY} when it is empty. */
     public ItemStack ejectMedia() {
-        final ItemStack held = slot.getStackInSlot(0);
+        final ItemStack held = mediaStack();
         if (held.isEmpty()) {
             return ItemStack.EMPTY;
         }
@@ -239,80 +288,77 @@ public class MediaReaderBlockEntity extends BlockEntity implements IPeripheralEn
         return held;
     }
 
-    /**
-     * Drops the slot contents into the world at this block's position. Called on block removal.
-     */
-    public void dropContents(final Level level, final BlockPos pos) {
-        final ItemStack held = slot.getStackInSlot(0);
-        if (!held.isEmpty()) {
-            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), held);
-            slot.setStackInSlot(0, ItemStack.EMPTY);
-        }
-    }
-
-    /** Direct access to the slot handler, e.g. for capability registration. */
+    /** The drive's slot. */
     public ItemStackHandler mediaSlot() {
         return slot;
     }
 
-    // ─── Persistence ─────────────────────────────────────────────────────────
+    @Override
+    protected void beforeClientUpdate() {
+        beforeUpdate = mediaStack().copy();
+    }
 
     @Override
-    protected void saveAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put(NBT_SLOT, slot.serializeNBT(registries));
-        if (linkedOwner != null) {
-            tag.putLong(NBT_LINKED_OWNER, linkedOwner);
+    protected void afterClientUpdate() {
+        bay.seen(beforeUpdate, mediaStack(), level);
+    }
+
+    private ItemStack mediaStack() {
+        return slot.getStackInSlot(0);
+    }
+
+    /*
+     * A medium went in or came out: the drive sounds it, a USB stick is a device coming or going for the linked
+     * computer's system, and the slot plays its clip; a disc only lies on the tray. A medium spilled as the drive
+     * breaks is silent.
+     */
+    private void mediaMoved() {
+        if (breaking) {
+            baySounds.settle(mediaStack());
+            return;
+        }
+        final MediaBaySounds.Move move = baySounds.changed(level, worldPosition, mediaStack());
+        if (move == null || move.format() == null) {
+            return;
+        }
+        if (move.format() == MediaFormat.USB && level instanceof ServerLevel server) {
+            deviceMoved(server, move.in());
+        }
+        final String clip = MediaBay.clip(move.format(), move.in());
+        if (modelled() && clip != null) {
+            triggerAnim(MediaBay.CONTROLLER, clip);
         }
     }
 
-    @Override
-    protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains(NBT_SLOT)) {
-            slot.deserializeNBT(registries, tag.getCompound(NBT_SLOT));
+    /*
+     * Whether the linked computer is installing something from the medium in this very drive: a system, whose job
+     * names the drive it reads from, or a program, whose setup is for the one this medium carries.
+     */
+    private boolean installingFromHere(final ServerLevel level) {
+        final BlockPos owner = link.ownerPos();
+        if (owner == null || readableMedium().isEmpty()
+                || !(Loaded.blockEntity(level, owner) instanceof IOsHost host)) {
+            return false;
         }
-        linkedOwner = tag.contains(NBT_LINKED_OWNER) ? tag.getLong(NBT_LINKED_OWNER) : null;
-    }
-
-    // ─── Client sync (1.21.1 forms) ──────────────────────────────────────────
-
-    @Override
-    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
-        final CompoundTag tag = super.getUpdateTag(registries);
-        tag.put(NBT_SLOT, slot.serializeNBT(registries));
-        if (linkedOwner != null) {
-            tag.putLong(NBT_LINKED_OWNER, linkedOwner);
+        final OsInstallJob job = host.installing();
+        if (job != null && job.reads(new MediaVolume(worldPosition.asLong(), MediaVolume.MEDIUM))) {
+            return true;
         }
-        return tag;
+        final ComputerConsoleState console = host.console();
+        final SetupJob setup = console == null ? null : console.setup();
+        final ResourceLocation program = insertedPayload();
+        return setup != null && !setup.removing() && program != null && program.toString().equals(setup.programId());
     }
 
-    @Override
-    @Nullable
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
-    private void syncToClients() {
-        if (level != null && !level.isClientSide()) {
-            /*
-             * Read the state from the world, not the cached one: while the drive is being broken the world
-             * already holds its replacement, and writing the drive's state back (the drop empties the slot)
-             * would make the chunk abort the removal, leaving the drive standing with its disc on the floor.
-             */
-            final BlockState state = level.getBlockState(worldPosition);
-            if (!(state.getBlock() instanceof MediaReaderBlock)) {
-                return;
-            }
-            final boolean loaded = !slot.getStackInSlot(0).isEmpty();
-            if (state.hasProperty(MediaReaderBlock.LOADED) && state.getValue(MediaReaderBlock.LOADED) != loaded) {
-                // Flip the LOADED blockstate so the model shows the lit "_active" face.
-                level.setBlock(worldPosition, state.setValue(MediaReaderBlock.LOADED, loaded), Block.UPDATE_CLIENTS);
-            } else {
-                level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
-            }
+    /*
+     * A USB drive plugged in or pulled out is a device coming and going for the system of the computer it is linked
+     * to, which says so with its own sound when it is up at its desktop; a drive it disabled it does not hear.
+     */
+    private void deviceMoved(final ServerLevel server, final boolean in) {
+        final BlockPos owner = link.ownerPos();
+        if (owner != null && Loaded.blockEntity(server, owner) instanceof IOsHost host && host.isRunning()
+                && host.bootedDesktopId() != null && !host.isDisabled(worldPosition.asLong())) {
+            host.systemSound(server, in ? SystemSound.DEVICE_CONNECT : SystemSound.DEVICE_DISCONNECT);
         }
     }
 }

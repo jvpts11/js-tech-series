@@ -131,8 +131,9 @@ final class ExpressionChecker {
                         BodyScope.Access.IMPLICIT);
             }
         }
-        final ITypeSymbol type = this.scope.declarations().lookup(name.identifier(), this.scope.currentType());
+        final NamedType type = this.scope.declarations().lookup(name.identifier(), this.scope.currentType());
         if (type != null) {
+            this.scope.declarations().reportIfNewer(type, name.line(), name.column());
             this.scope.model().setBinding(name, new IBinding.TypeName(type));
             return type;
         }
@@ -167,6 +168,12 @@ final class ExpressionChecker {
         if (result == null) {
             this.scope.report(unary.line(), unary.column(), SigmaError.OPERATOR_ON_TYPE,
                     unary.operator().text(), operand.describe());
+            return ITypeSymbol.Special.ERROR;
+        }
+        if ((unary.operator() == Operator.INCREMENT || unary.operator() == Operator.DECREMENT)
+                && unary.operand() instanceof IExpr.Member read && MemberChecker.ARRAY_LENGTH.equals(read.name())
+                && this.scope.model().typeOf(read.target()) instanceof ITypeSymbol.ArrayType) {
+            this.scope.report(unary.line(), unary.column(), SigmaError.CANNOT_ASSIGN_READONLY, read.name());
             return ITypeSymbol.Special.ERROR;
         }
         return result;
@@ -288,7 +295,7 @@ final class ExpressionChecker {
         final ITypeSymbol combined = this.scope.rules().binaryResult(assign.operator(), target, value);
         if (combined == null || !this.scope.rules().isAssignable(combined, target)) {
             this.scope.report(assign.line(), assign.column(), SigmaError.OPERATOR_ON_TYPES,
-                    assign.operator().text() + "=", target.describe(), value.describe());
+                    assign.operator().assignmentText(), target.describe(), value.describe());
         }
         return target;
     }
@@ -296,7 +303,7 @@ final class ExpressionChecker {
     private ITypeSymbol subscribe(final IExpr.Assign assign, final IMemberSymbol.EventSymbol event) {
         if (assign.operator() != Operator.ADD && assign.operator() != Operator.SUBTRACT) {
             this.scope.report(assign.line(), assign.column(), SigmaError.OPERATOR_ON_TYPE,
-                    assign.operator().text() + "=", event.delegateType().name());
+                    assign.operator().assignmentText(), event.delegateType().name());
             this.check(assign.value(), event.delegateType());
             return ITypeSymbol.Special.ERROR;
         }
@@ -306,6 +313,12 @@ final class ExpressionChecker {
     }
 
     private boolean writable(final IExpr.Assign assign, final IBinding binding) {
+        if (assign.target() instanceof IExpr.Member read && MemberChecker.ARRAY_LENGTH.equals(read.name())
+                && this.scope.model().typeOf(read.target()) instanceof ITypeSymbol.ArrayType) {
+            // An array is as long as it was made, so its length is only ever read.
+            this.scope.report(assign.line(), assign.column(), SigmaError.CANNOT_ASSIGN_READONLY, read.name());
+            return false;
+        }
         if (!(binding instanceof IBinding.Member member)) {
             return true;
         }
@@ -328,7 +341,7 @@ final class ExpressionChecker {
         if (wanted == null || wanted.kind() != NamedType.Kind.DELEGATE || wanted.invoke() == null) {
             if (!this.scope.rules().isError(expected)) {
                 this.scope.report(lambda.line(), lambda.column(), SigmaError.LAMBDA_SHAPE,
-                        expected == null ? "nothing" : expected.describe());
+                        expected == null ? StatementChecker.NOTHING : expected.describe());
             }
             return ITypeSymbol.Special.ERROR;
         }
@@ -352,7 +365,11 @@ final class ExpressionChecker {
                 this.scope.expect(body, shape.returnType(), lambda.body());
             }
         }
-        this.scope.checkOutParameters(lambda.parameters(), lambda.block(), lambda);
+        if (lambda.block() != null) {
+            this.scope.checkOutParameters(lambda.parameters(), lambda.block(), lambda);
+        } else {
+            this.scope.checkOutParameters(lambda.parameters(), lambda.body(), lambda);
+        }
         this.scope.scope(saved);
         this.scope.returnType(savedReturn);
         return expected;
@@ -390,6 +407,22 @@ final class ExpressionChecker {
      * known once the version of the method has been chosen.
      */
     private ITypeSymbol outArgumentType(final IExpr.OutArgument argument, final ITypeSymbol expected) {
+        if (argument.ref()) {
+            this.scope.report(argument.line(), argument.column(), SigmaError.REF_ONLY_FOR_STRCAT, argument.name());
+            return ITypeSymbol.Special.ERROR;
+        }
+        return this.placeType(argument, expected);
+    }
+
+    /**
+     * The place a {@code ref} argument names, which strcat reads and then writes: a variable or a field that already
+     * exists, since there is nothing in a place declared right there to read.
+     */
+    ITypeSymbol refArgumentType(final IExpr.OutArgument argument) {
+        return this.placeType(argument, null);
+    }
+
+    private ITypeSymbol placeType(final IExpr.OutArgument argument, final ITypeSymbol expected) {
         if (argument.type() != null) {
             final ITypeSymbol type = StatementChecker.isInferred(argument.type())
                     ? expected : this.scope.declarations().resolve(argument.type(), this.scope.currentType());
@@ -414,6 +447,9 @@ final class ExpressionChecker {
                 ? List.of() : BodyScope.lookup(this.scope.currentType(), argument.name());
         if (!found.isEmpty()) {
             if (found.getFirst() instanceof IMemberSymbol.FieldSymbol field && !field.isReadOnly()) {
+                if (!this.members.checkAccess(argument, field, BodyScope.Access.IMPLICIT)) {
+                    return ITypeSymbol.Special.ERROR;
+                }
                 this.scope.model().setBinding(argument, new IBinding.Member(field, field.type()));
                 return field.type();
             }

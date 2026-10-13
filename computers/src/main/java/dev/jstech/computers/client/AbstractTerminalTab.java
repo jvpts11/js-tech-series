@@ -136,6 +136,7 @@ abstract class AbstractTerminalTab implements ITerminalTab {
             case OperationRecord.TYPE_VACUUM -> "VACUUM";
             case OperationRecord.TYPE_DROP -> "DROP";
             case OperationRecord.TYPE_CRAFT -> "CRAFT";
+            case OperationRecord.TYPE_UPDATE -> "UPDATE";
             default -> "SELECT";
         };
     }
@@ -143,7 +144,8 @@ abstract class AbstractTerminalTab implements ITerminalTab {
     protected int opTypeColor(final byte type) {
         return switch (type) {
             case OperationRecord.TYPE_INSERT,
-                    OperationRecord.TYPE_CRAFT -> AMBER();
+                    OperationRecord.TYPE_CRAFT,
+                    OperationRecord.TYPE_UPDATE -> AMBER();
             case OperationRecord.TYPE_DELETE,
                     OperationRecord.TYPE_DROP -> RED();
             case OperationRecord.TYPE_MOVE -> GREEN();
@@ -164,6 +166,6 @@ abstract class AbstractTerminalTab implements ITerminalTab {
 
     protected static boolean inRect(final double mx, final double my,
                                     final int x, final int y, final int w, final int h) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
+        return TerminalHit.inRect(mx, my, x, y, w, h);
     }
 }

@@ -49,6 +49,16 @@ class DesktopIconLayoutTest {
     }
 
     @Test
+    void resolve_twoPinsClampedToTheSameCellGetDistinctCells() {
+        final Map<String, Integer> pinned = new HashMap<>();
+        pinned.put("a", DesktopIconLayout.pack(0, 3));
+        pinned.put("b", DesktopIconLayout.pack(0, 7));
+        final int[] cells = DesktopIconLayout.resolve(List.of("a", "b"), pinned, 4);
+        assertNotEquals(cells[0], cells[1]);
+        assertEquals(DesktopIconLayout.pack(0, 3), cells[0]);
+    }
+
+    @Test
     void resolve_unpinnedIconsSkipAPinnedCell() {
         // 'a' is pinned to (0,0); the unpinned 'b','c' must NOT reuse that cell.
         final Map<String, Integer> pinned = new HashMap<>();

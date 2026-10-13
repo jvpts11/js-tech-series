@@ -1,0 +1,23 @@
+{
+  "buttonBottom": "#FFC9C7C5",
+  "buttonLit": "#FFFFFFFF",
+  "buttonRim": "#FFA4A2A0",
+  "buttonTop": "#FFEFEEED",
+  "closeGlyph": "#FFB72D2D",
+  "edge": "#FFBCBAB8",
+  "focus": "#FF4C93DC",
+  "glyph": "#FF444444",
+  "idleBottom": "#FFDDDCDB",
+  "idleTabBottom": "#FFD3D1CF",
+  "idleTabTop": "#FFE8E7E6",
+  "idleTop": "#FFEAE9E8",
+  "panel": "#FFE0DFDE",
+  "pushBottom": "#FFDAD8D6",
+  "pushRim": "#FFA8A6A4",
+  "pushTop": "#FFF7F6F5",
+  "statusBottom": "#FFD6D5D4",
+  "statusRule": "#FFCFCDCB",
+  "statusTop": "#FFE9E8E7",
+  "titleBottom": "#FFD9D7D5",
+  "titleTop": "#FFF2F1F0"
+}

@@ -67,6 +67,19 @@ public final class MessengerLog {
         return room != null && room.indexOf(PAIR.charAt(0)) >= 0;
     }
 
+    /**
+     * Whether {@code who} may be in a room: any room but a private one, and a private one only for the two people
+     * it is between. A room's name comes from the player's screen, and naming a pair is not joining it.
+     */
+    public static boolean mayEnter(final String room, final String who) {
+        if (!isPrivate(room)) {
+            return true;
+        }
+        final int bar = room.indexOf(PAIR.charAt(0));
+        return who != null && (room.substring(0, bar).equalsIgnoreCase(who)
+                || room.substring(bar + 1).equalsIgnoreCase(who));
+    }
+
     /** The other person in a private room, from the point of view of {@code me}. */
     public static String otherIn(final String room, final String me) {
         if (!isPrivate(room)) {
@@ -159,6 +172,20 @@ public final class MessengerLog {
             seen.add(message.room());
         }
         return List.copyOf(seen);
+    }
+
+    /**
+     * The rooms {@code who} is shown: every room anything has been said in but the private ones between other
+     * people, whose names alone would tell who talks to whom.
+     */
+    public List<String> roomsFor(final String who) {
+        final List<String> shown = new ArrayList<>();
+        for (final String room : rooms()) {
+            if (mayEnter(room, who)) {
+                shown.add(room);
+            }
+        }
+        return List.copyOf(shown);
     }
 
     /** Everything kept, oldest first, for writing the whole lot down. */

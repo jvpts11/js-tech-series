@@ -13,6 +13,15 @@ authors = "${mod_authors}"
 description = '''
 ${mod_description}
 '''
+# The work of others the mod draws on, shown on its page in the mods list; THIRD_PARTY_NOTICES.md has the notices.
+credits = "Font of the manual's tables: Misc Fixed 6x10, from Markus Kuhn's ucs-fonts as the X.Org Foundation ships it, public domain, carried by J's Core. Logos in screenfetch: neofetch, MIT. Sounds: their makers on Freesound and Pixabay and the desktops' own sound themes, named in THIRD_PARTY_NOTICES.md."
+# The mark the mods list shows at the head of this mod's page: its own logo over the series logo.
+logoFile = "${mod_id}_logo.png"
+logoBlur = true
+
+# The square icon, for mod-list screens that show one.
+[modproperties.${mod_id}]
+catalogueImageIcon = "${mod_id}_icon.png"
 
 # Mixin config. The mixins array stays empty until the first mixin is added
 # under the dev.jstech.computers.mixin package.

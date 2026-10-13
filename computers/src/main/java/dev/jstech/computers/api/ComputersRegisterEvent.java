@@ -7,14 +7,22 @@
  */
 package dev.jstech.computers.api;
 
+import dev.jstech.computers.api.planner.IExplainNode;
+import dev.jstech.computers.api.planner.IPlannerOperator;
+import dev.jstech.computers.api.planner.IPlannerRule;
+import dev.jstech.computers.api.planner.IPlannerStatistic;
+import dev.jstech.computers.engine.EngineDef;
 import dev.jstech.computers.hardware.ArchitectureSpec;
+import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OperatingSpaceDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.event.IModBusEvent;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The one moment anything may be added to what the computers know.
@@ -31,9 +39,24 @@ import net.neoforged.fml.event.IModBusEvent;
  */
 public final class ComputersRegisterEvent extends Event implements IModBusEvent {
 
-    /** Adds a kind of machine, which programs can then be built for. */
+    /** Adds an instruction set architecture, a kind of machine that programs can then be built for. */
+    @ApiStatus.Experimental
+    public void isa(final IsaSpec isa) {
+        JsComputersApi.registerIsa(isa);
+    }
+
+    /**
+     * Adds a kind of machine under the ISA's former name.
+     *
+     * @deprecated use {@link #isa(IsaSpec)}; this goes in the next cycle of the series
+     */
+    @Deprecated(since = "0.5.0a", forRemoval = true)
+    @SuppressWarnings("removal")
     public void architecture(final ArchitectureSpec architecture) {
-        JsComputersApi.registerArchitecture(architecture);
+        if (architecture == null) {
+            return;
+        }
+        isa(architecture.toIsa());
     }
 
     /** Adds a kernel, which an operating system then names as the one it is built on. */
@@ -63,6 +86,17 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
         JsComputersApi.registerFileOpener(programId);
     }
 
+    /**
+     * Says the windows of a program draw through a surface, which holds video memory on the machine while they are
+     * open. The server counts that memory, so this is said here, on both sides, and not only in client setup.
+     *
+     * @param programId the program's id, as it was registered
+     */
+    @ApiStatus.Experimental
+    public void graphicsProgram(final ResourceLocation programId) {
+        JsComputersApi.registerGraphicsProgram(programId);
+    }
+
     /** Adds a desktop, which a Linux computer installs as a package or an operating system bundles. */
     public void desktop(final DesktopEnvironmentDef desktop) {
         JsComputersApi.registerDesktop(desktop);
@@ -76,5 +110,50 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
      */
     public void operatingSpace(final OperatingSpaceDef space) {
         JsComputersApi.registerSpace(space);
+    }
+
+    /**
+     * Adds a Network Operations Engine, which a Mainframe can then install and run to plan its network's work.
+     *
+     * <p>Register its package as a program too, the way any software is; this says what that package installs.
+     */
+    @ApiStatus.Experimental
+    public void engine(final EngineDef engine) {
+        JsComputersApi.registerEngine(engine);
+    }
+
+    /** Adds a rule to the planner of the engines that take extensions. */
+    @ApiStatus.Experimental
+    public void plannerRule(final IPlannerRule rule) {
+        JsComputersApi.registerPlannerRule(rule);
+    }
+
+    /** Adds a hint to the dialect of the engines that take extensions. */
+    @ApiStatus.Experimental
+    public void plannerOperator(final IPlannerOperator operator) {
+        JsComputersApi.registerPlannerOperator(operator);
+    }
+
+    /** Adds a statistic to the planner of the engines that take extensions. */
+    @ApiStatus.Experimental
+    public void plannerStatistic(final IPlannerStatistic statistic) {
+        JsComputersApi.registerPlannerStatistic(statistic);
+    }
+
+    /** Adds notes the planners of the engines that take extensions show under a plan's steps. */
+    @ApiStatus.Experimental
+    public void explainNode(final IExplainNode node) {
+        JsComputersApi.registerExplainNode(node);
+    }
+
+    /**
+     * Adds a kind of component for Σ# programs to put in their windows, named in your mod's namespace.
+     *
+     * <p>Register what draws it from your client setup, through {@code ComponentRenderers}; a player without your
+     * mod sees a placeholder in its place.
+     */
+    @ApiStatus.Experimental
+    public void componentKind(final ComponentKind kind) {
+        JsComputersApi.registerComponentKind(kind);
     }
 }

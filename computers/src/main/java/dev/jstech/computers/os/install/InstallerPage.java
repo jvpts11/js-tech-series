@@ -31,6 +31,15 @@ public enum InstallerPage {
     /** What the computer is called, which becomes the name the prompt and the network use. */
     NAME,
 
+    /** The optional parts of the system, over the ones that always go. */
+    COMPONENTS,
+
+    /** Where the packages and the ports come from over the network, or nowhere at all. */
+    MIRROR,
+
+    /** Which of the system's own services start at boot. */
+    SERVICES,
+
     /** Which desktop comes with the system, when a Mirror answers and can serve one. */
     DESKTOP,
 

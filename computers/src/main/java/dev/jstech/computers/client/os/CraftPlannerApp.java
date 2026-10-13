@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlannerPayload;
@@ -20,6 +22,10 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -31,6 +37,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static dev.jstech.computers.client.os.CraftPlannerTexts.BENCH_RUNS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.CRAFT;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.CRAFTABLE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.CRAFT_TREE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.HAVE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.INGREDIENTS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.LOADING;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.MACHINE_RUNS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.NOT_CRAFTABLE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.NO_MATCH;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PARTIAL;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PICK_AN_ITEM;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PLANNING;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.RAW;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.SEARCH_ITEM;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.SHORT;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.STAGES;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.STEPS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.SUMMARY;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.TREE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.TREE_NODE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.WHEEL_TO_SCROLL;
+
 /**
  * Craft Planner: pick a target from the network's craft catalogue and see its full plan before crafting.
  * The plan reports whether the item is craftable, whether the request is feasible from current stock, the
@@ -38,12 +67,16 @@ import java.util.Locale;
  * The catalogue and the plan are computed server-side; the Craft button submits the same request the
  * terminal and Network Interactor use.
  */
+@PaletteHolder
 public final class CraftPlannerApp implements IDesktopApp {
 
     private static final int REFRESH_FRAMES = 60;
-    private static final int C_GOOD = 0xFF2EA043;
-    private static final int C_CRIT = 0xFFD1495B;
-    private static final int C_AMBER = 0xFFE0A020;
+    /**
+     * The planner's own colours, {@code jsc:app/craft_planner}: what can be made, what is missing, what wants the
+     * eye, and the pill behind a plan that can run and one that cannot.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/craft_planner",
+            new Colours(0xFF2EA043, 0xFFD1495B, 0xFFE0A020, 0x2E2EA043, 0x33E0A020));
     private static final int CATALOG_ROW_H = 15;
     private static final int STAGE_ROW_H = 10;
     private static final int INGREDIENT_ROW_H = 11;
@@ -94,35 +127,37 @@ public final class CraftPlannerApp implements IDesktopApp {
         this.monitorPos = monitorPos;
 
         search = root.add(new SearchField(SEARCH_MAX));
-        search.setPlaceholder("search item...");
+        search.setPlaceholder(GameText.resolve(SEARCH_ITEM));
         catalogList = root.add(new ListView<CraftCatalogPayload.Entry>(this::filtered, CATALOG_ROW_H, this::renderCatalogRow)
                 .setOnClick(this::catalogClicked));
         search.setOnEdit(() -> catalogList.setScroll(0));
-        catalogEmpty = root.add(new Label(() -> catalog.isEmpty() ? "loading..." : "no match", Label.Tone.DIM));
+        catalogEmpty = root.add(new Label(() -> GameText.resolve(catalog.isEmpty() ? LOADING : NO_MATCH),
+                Label.Tone.DIM));
 
-        pickLabel = root.add(new Label("Pick an item to plan.", Label.Tone.DIM));
+        pickLabel = root.add(new Label(GameText.resolve(PICK_AN_ITEM), Label.Tone.DIM));
         nameLabel = root.add(new Label(() -> selected.getHoverName().getString()));
         qtyMinus = root.add(new Button("-", () -> setQty(qty - step())));
         qtyLabel = root.add(new Label(() -> String.valueOf(qty)).setAlign(Label.Align.CENTER));
         qtyPlus = root.add(new Button("+", () -> setQty(qty + step())));
-        planningLabel = root.add(new Label("planning...", Label.Tone.DIM));
-        notCraftableLabel = root.add(new Label("No pattern on the network makes this.").setColor(C_CRIT));
-        pillLabel = root.add(new Label(() -> plan != null && plan.feasible() ? "Craftable" : "Partial")
-                .setColor(() -> plan != null && plan.feasible() ? C_GOOD : C_AMBER));
+        planningLabel = root.add(new Label(GameText.resolve(PLANNING), Label.Tone.DIM));
+        notCraftableLabel = root.add(new Label(GameText.resolve(NOT_CRAFTABLE)).setColor(PALETTE.get().missing()));
+        pillLabel = root.add(new Label(() -> GameText.resolve(plan != null && plan.feasible() ? CRAFTABLE : PARTIAL))
+                .setColor(() -> plan != null && plan.feasible() ? PALETTE.get().good() : PALETTE.get().amber()));
         summaryLabel = root.add(new Label(() -> plan == null ? ""
-                : "max " + JsTechTheme.fmt(plan.maxFeasible()) + "  -  " + plan.stages().size() + " stages", Label.Tone.DIM));
-        viewToggle = root.add(new Button(() -> treeMode ? "Steps" : "Tree", () -> treeMode = !treeMode));
-        stagesHeader = root.add(new Label("STAGES", Label.Tone.DIM));
+                : GameText.resolve(SUMMARY.with(JsTechTheme.fmt(plan.maxFeasible()), plan.stages().size())),
+                Label.Tone.DIM));
+        viewToggle = root.add(new Button(() -> GameText.resolve(treeMode ? STEPS : TREE), () -> treeMode = !treeMode));
+        stagesHeader = root.add(new Label(GameText.resolve(STAGES), Label.Tone.DIM));
         stageList = root.add(new ListView<CraftPlannerPayload.Stage>(() -> plan == null ? List.of() : plan.stages(), STAGE_ROW_H,
                 this::renderStageRow));
-        ingredientsHeader = root.add(new Label("INGREDIENTS", Label.Tone.DIM));
+        ingredientsHeader = root.add(new Label(GameText.resolve(INGREDIENTS), Label.Tone.DIM));
         ingredientList = root.add(new ListView<CraftPlanPayload.Row>(() -> plan == null ? List.of() : plan.ingredients(),
                 INGREDIENT_ROW_H, this::renderIngredientRow));
-        treeHeader = root.add(new Label("CRAFT TREE", Label.Tone.DIM));
-        treeHint = root.add(new Label("wheel to scroll", Label.Tone.DIM).setAlign(Label.Align.RIGHT));
+        treeHeader = root.add(new Label(GameText.resolve(CRAFT_TREE), Label.Tone.DIM));
+        treeHint = root.add(new Label(GameText.resolve(WHEEL_TO_SCROLL), Label.Tone.DIM).setAlign(Label.Align.RIGHT));
         treeList = root.add(new ListView<CraftPlannerPayload.TreeNode>(() -> plan == null ? List.of() : plan.tree(), TREE_ROW_H,
                 this::renderTreeRow));
-        craft = root.add(new Button(() -> "Craft " + qty, this::craft));
+        craft = root.add(new Button(() -> GameText.resolve(CRAFT.with(qty)), this::craft));
 
         root.focus(search);
         active = this;
@@ -141,6 +176,37 @@ public final class CraftPlannerApp implements IDesktopApp {
         }
     }
 
+    /** What the catalogue lists as it stands, by the names the rows show (client tests pick a target by it). */
+    public List<String> catalogNames() {
+        final List<String> out = new ArrayList<>();
+        for (final CraftCatalogPayload.Entry entry : catalogList.items()) {
+            out.add(entry.result().getHoverName().getString());
+        }
+        return out;
+    }
+
+    /** The desktop point of the catalogue's row of that name as the last frame laid it out, or null. */
+    @Nullable
+    public int[] catalogRowPoint(final String name) {
+        final int index = catalogNames().indexOf(name);
+        return index < 0 ? null : catalogList.rowCenter(index);
+    }
+
+    /** Whether the plan of the picked target has come back and the network can make all of it now. */
+    public boolean planFeasible() {
+        return plan != null && plan.craftable() && plan.feasible();
+    }
+
+    /** How many stages the plan of the picked target runs, or 0 while there is none. */
+    public int planStages() {
+        return plan == null ? 0 : plan.stages().size();
+    }
+
+    /** The desktop point of the Craft button as the last frame laid it out. */
+    public int[] craftPoint() {
+        return new int[] {craft.x() + craft.width() / 2, craft.y() + craft.height() / 2};
+    }
+
     private void requestPlan() {
         if (!selected.isEmpty()) {
             PacketDistributor.sendToServer(new RequestCraftPlannerPayload(host, monitorPos, selected, qty));
@@ -157,7 +223,7 @@ public final class CraftPlannerApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Craft Planner";
+        return GameText.resolve(CraftPlannerAppTexts.TITLE);
     }
 
     @Override
@@ -211,7 +277,8 @@ public final class CraftPlannerApp implements IDesktopApp {
             if (pillLabel.visible()) {
                 final int pillW = font.width(pillLabel.text()) + 8;
                 g.fill(pillLabel.x() - 4, pillLabel.y() - 2, pillLabel.x() - 4 + pillW, pillLabel.y() + 9,
-                        plan != null && plan.feasible() ? 0x2E2EA043 : 0x33E0A020);
+                        plan != null && plan.feasible() ? PALETTE.get().feasiblePill()
+                                : PALETTE.get().infeasiblePill());
                 g.fill(px + leftW, pillLabel.y() + 12, px + leftW + width - 12 - leftW, pillLabel.y() + 13, skin.edge());
             }
         }
@@ -297,8 +364,8 @@ public final class CraftPlannerApp implements IDesktopApp {
         final boolean sel = ItemStack.isSameItemSameComponents(e.result(), selected);
         ctx.skin().listRow(g, x, y, w, h, hovered, sel);
         itemIcon(g, e.result(), x + 1, y, 12);
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), e.title(), w - 18), x + 15, y + 3,
-                sel ? ctx.skin().accent() : ctx.skin().text(), false);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), e.title(), w - 18), x + 15, y + 3,
+                sel ? ctx.skin().accent() : ctx.skin().text());
     }
 
     private void catalogClicked(final int index, final int button, final double mx, final double my) {
@@ -311,9 +378,9 @@ public final class CraftPlannerApp implements IDesktopApp {
     private void renderStageRow(final GuiGraphics g, final UiContext ctx, final CraftPlannerPayload.Stage s, final int index,
                                 final int x, final int y, final int w, final int h, final boolean hovered, final boolean selectedRow) {
         final Font font = ctx.font();
-        g.drawString(font, Texts.clip(font, s.name(), w - 60), x + 4, y, ctx.skin().text(), false);
-        final String tag = (s.machine() ? "machine" : "bench") + " x" + s.runs();
-        g.drawString(font, tag, x + w - font.width(tag), y, ctx.skin().dim(), false);
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(s.name()), w - 60), x + 4, y, ctx.skin().text());
+        final String tag = GameText.resolve((s.machine() ? MACHINE_RUNS : BENCH_RUNS).with(s.runs()));
+        Draw.text(g, font, tag, x + w - font.width(tag), y, ctx.skin().dim());
     }
 
     private void renderIngredientRow(final GuiGraphics g, final UiContext ctx, final CraftPlanPayload.Row r, final int index,
@@ -321,9 +388,10 @@ public final class CraftPlannerApp implements IDesktopApp {
         final Font font = ctx.font();
         final boolean ok = r.have() >= r.need();
         itemIcon(g, r.item(), x + 1, y - 1, 11);
-        g.drawString(font, Texts.clip(font, r.item().getHoverName().getString(), w - 76), x + 15, y, ctx.skin().text(), false);
-        final String s = ok ? "have " + JsTechTheme.fmt(r.have()) : "short " + JsTechTheme.fmt(r.need() - r.have());
-        g.drawString(font, s, x + w - font.width(s), y, ok ? C_GOOD : C_CRIT, false);
+        Draw.text(g, font, Texts.clip(font, r.item().getHoverName().getString(), w - 76), x + 15, y, ctx.skin().text());
+        final String s = GameText.resolve(ok ? HAVE.with(JsTechTheme.fmt(r.have()))
+                : SHORT.with(JsTechTheme.fmt(r.need() - r.have())));
+        Draw.text(g, font, s, x + w - font.width(s), y, ok ? PALETTE.get().good() : PALETTE.get().missing());
     }
 
     /** One node of the recipe dependency tree, flattened in pre-order and drawn indented by depth. */
@@ -335,10 +403,12 @@ public final class CraftPlannerApp implements IDesktopApp {
             g.fill(x + 2 + (n.depth() - 1) * 9 + 3, y + 4, ix - 1, y + 5, ctx.skin().edge());
         }
         itemIcon(g, n.item(), ix, y - 1, 10);
-        final String label = JsTechTheme.fmt(n.qty()) + "x " + n.item().getHoverName().getString();
-        g.drawString(font, Texts.clip(font, label, w - (ix - x) - 13 - 40), ix + 12, y, ctx.skin().text(), false);
+        final String label =
+                GameText.resolve(TREE_NODE.with(JsTechTheme.fmt(n.qty()), n.item().getHoverName().getString()));
+        Draw.text(g, font, Texts.clip(font, label, w - (ix - x) - 13 - 40), ix + 12, y, ctx.skin().text());
         if (!n.craftable()) {
-            g.drawString(font, "raw", x + w - font.width("raw"), y, ctx.skin().dim(), false);
+            final String raw = GameText.resolve(RAW);
+            Draw.text(g, font, raw, x + w - font.width(raw), y, ctx.skin().dim());
         }
     }
 
@@ -435,5 +505,9 @@ public final class CraftPlannerApp implements IDesktopApp {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         return root.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** The planner's colours, as the palette above names them. */
+    private record Colours(int good, int missing, int amber, int feasiblePill, int infeasiblePill) {
     }
 }

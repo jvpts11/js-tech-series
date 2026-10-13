@@ -8,7 +8,11 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,7 +30,11 @@ import java.util.Map;
  * won would otherwise depend on the order the mods happened to load in. They are kept in the order they
  * arrived, so what a list shows is the same every time.
  */
+@TextHolder
 public final class OsRegistry {
+
+    /** What a message calls a system past the end of the family, which no system answers to. */
+    private static final TextKey NEWER_SYSTEM = TextKey.of("jsc.os.newer_system", "a newer system");
 
     private static final Map<ResourceLocation, KernelDef> KERNELS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, OsDef> OSES = new LinkedHashMap<>();
@@ -151,6 +159,17 @@ public final class OsRegistry {
      */
     public static boolean canRunProgram(ResourceLocation osId, ResourceLocation progId,
                                         int cpuMhz, int vramMb) {
+        return canRunProgram(osId, progId, cpuMhz, vramMb, false);
+    }
+
+    /**
+     * The same, for a copy the computer may have built from source, which asks for a little less of a processor
+     * ({@link SourceAdvantage}).
+     *
+     * @param builtHere whether the computer built the program from source rather than installing a built package
+     */
+    public static boolean canRunProgram(final ResourceLocation osId, final ResourceLocation progId,
+                                        final int cpuMhz, final int vramMb, final boolean builtHere) {
         final ProgramSpec prog = getProgram(progId);
         if (prog == null) {
             return true;
@@ -166,7 +185,7 @@ public final class OsRegistry {
         final int rank = osVersionRank(osId);
         return (rank == 0 || rank >= prog.minOsRank())
                 && OsGating.canRunProgram(os.platform(), prog.platforms(), cpuMhz, vramMb,
-                prog.minCpuMhz(), prog.minVramMb());
+                SourceAdvantage.of(prog.minCpuMhz(), builtHere), prog.minVramMb());
     }
 
     /**
@@ -185,18 +204,34 @@ public final class OsRegistry {
     }
 
     /**
+     * Whether {@code os} is the newest of its family: it has a place in the family's order, and nothing of its
+     * platform is placed after it. A family with no order has no newest.
+     */
+    public static boolean newestOfFamily(final OsDef os) {
+        if (os.familyRank() == 0) {
+            return false;
+        }
+        for (final OsDef other : oses()) {
+            if (other.platform() == os.platform() && other.familyRank() > os.familyRank()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * The name of the system at that place in its family's order, for a message saying what is needed.
      *
      * <p>Falls back to words rather than a name where nothing answers to that rank, which is what happens if a
      * program asks for a rank past the end of its family.
      */
-    public static String systemOfRank(final int rank) {
+    public static Text systemOfRank(final int rank) {
         for (final OsDef os : oses()) {
             if (os.familyRank() == rank) {
-                return os.displayName();
+                return Text.literal(os.displayName());
             }
         }
-        return "a newer system";
+        return NEWER_SYSTEM.text();
     }
 
     /**
@@ -212,6 +247,18 @@ public final class OsRegistry {
      */
     public static boolean canInstallProgram(ResourceLocation osId, ResourceLocation progId,
                                             int cpuMhz, int vramMb, long freeDiskMb) {
+        return canInstallProgram(osId, progId, cpuMhz, vramMb, freeDiskMb, false);
+    }
+
+    /**
+     * The same, for a program about to be built from source on the computer, which asks for a little less of a
+     * processor and of the disk ({@link SourceAdvantage}).
+     *
+     * @param fromSource whether the program is being built from source rather than installed as a built package
+     */
+    public static boolean canInstallProgram(final ResourceLocation osId, final ResourceLocation progId,
+                                            final int cpuMhz, final int vramMb, final long freeDiskMb,
+                                            final boolean fromSource) {
         final ProgramSpec prog = getProgram(progId);
         if (prog == null) {
             return true;
@@ -223,7 +270,8 @@ public final class OsRegistry {
         final int rank = osVersionRank(osId);
         return (rank == 0 || rank >= prog.minOsRank())
                 && OsGating.canInstallProgram(os.platform(), prog.platforms(), cpuMhz, vramMb, freeDiskMb,
-                prog.minCpuMhz(), prog.minVramMb(), prog.minDiskMb());
+                SourceAdvantage.of(prog.minCpuMhz(), fromSource), prog.minVramMb(),
+                SourceAdvantage.of(prog.minDiskMb(), fromSource));
     }
 
     // Listing
@@ -241,5 +289,37 @@ public final class OsRegistry {
     /** Returns an unmodifiable view of all registered programs. */
     public static Collection<ProgramSpec> programs() {
         return Collections.unmodifiableCollection(PROGRAMS.values());
+    }
+
+    /**
+     * Where that program stands among the programs that run in the background, in the order they were registered, or
+     * -1 for one that does not run in the background: what a Unix machine numbers the service's process by.
+     */
+    public static int serviceIndex(final ResourceLocation id) {
+        int index = 0;
+        for (final ProgramSpec spec : PROGRAMS.values()) {
+            if (spec.kind().runsInBackground()) {
+                if (spec.id().equals(id)) {
+                    return index;
+                }
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    /** The program that runs in the background at that place in the same order, or null. */
+    @Nullable
+    public static ProgramSpec serviceAt(final int index) {
+        int at = 0;
+        for (final ProgramSpec spec : PROGRAMS.values()) {
+            if (spec.kind().runsInBackground()) {
+                if (at == index) {
+                    return spec;
+                }
+                at++;
+            }
+        }
+        return null;
     }
 }

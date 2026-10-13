@@ -17,9 +17,13 @@ import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayPermissions;
+import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -77,13 +81,14 @@ public final class NetworkGatewayGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
                     helper.assertTrue(g.online(), "the back socket against the computer links");
-                    helper.assertTrue("adjacent".equals(g.linkKind()), "with no cable between; got " + g.linkKind());
+                    helper.assertTrue("adjacent".equals(g.linkKind().english()),
+                            "with no cable between; got " + g.linkKind());
                     helper.assertTrue("gateway-1".equals(g.name()), "and takes the first default name; got " + g.name());
                     helper.assertTrue("desk".equals(g.hostName()), "on the host it linked to; got " + g.hostName());
                     helper.assertTrue(pc.linkedEndpoints().contains(helper.absolutePos(at).asLong()),
                             "the computer counts it as a peripheral");
                     helper.assertTrue(helper.getBlockState(at).getValue(NetworkGatewayBlock.LIT), "the lights come on");
-                    helper.assertTrue(g.log().entries().stream().anyMatch(e -> e.what().equals("link")),
+                    helper.assertTrue(g.log().entries().stream().anyMatch(e -> e.what().english().equals("link")),
                             "the link is the first thing in its log");
                 })
                 .thenSucceed();
@@ -93,19 +98,21 @@ public final class NetworkGatewayGameTests {
     public static void gateway_reachesItsHostThroughACableOnTheBack(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningPersonalComputer(COMPUTER);
-        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.PERIPHERAL_CABLE.get());
-        helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERIPHERAL_CABLE.get());
+        // The Gateway's socket is serial, the Vintage cable's, which a Standard computer takes too.
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
         final BlockPos at = new BlockPos(4, 2, 2);
         helper.setBlock(at, gateway(Direction.EAST));
         // A second Gateway on the same cable run, so the second default name is proven too.
-        helper.setBlock(new BlockPos(3, 2, 3), ComputingModule.PERIPHERAL_CABLE.get());
+        TestCables.lay(helper, new BlockPos(3, 2, 3), ComputingModule.VINTAGE_PERIPHERAL_CABLE);
         final BlockPos second = new BlockPos(3, 2, 4);
         helper.setBlock(second, gateway(Direction.SOUTH));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
                     helper.assertTrue(g.online(), "the cable on the back socket links");
-                    helper.assertTrue("cable, 2 blocks".equals(g.linkKind()), "and its length is known; got " + g.linkKind());
+                    helper.assertTrue("cable, 2 blocks".equals(g.linkKind().english()),
+                            "and its length is known; got " + g.linkKind());
                     final NetworkGatewayBlockEntity other = gatewayAt(helper, second);
                     helper.assertTrue(other.online(), "the second Gateway links too");
                     helper.assertTrue(!other.name().equals(g.name()), "under its own default name; got " + other.name());
@@ -126,10 +133,12 @@ public final class NetworkGatewayGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
-                    helper.assertTrue(g.rename("CC Bridge!", "desk").contains("cc-bridge"), "the name is cleaned");
+                    helper.assertTrue(g.rename("CC Bridge!", "desk").english().contains("cc-bridge"),
+                            "the name is cleaned");
                     helper.assertTrue("cc-bridge".equals(g.name()), "and kept; got " + g.name());
                     g.setPermissions(GatewayPermissions.DEFAULT.withRead(false)
-                            .withCeiling(OperationPriority.HIGH).withCallCap(16), "desk", "set everything");
+                                    .withCeiling(OperationPriority.HIGH).withCallCap(16), "desk",
+                            Text.literal("set everything"));
                     g.buffer().setStackInSlot(2, new ItemStack(Items.COBBLESTONE, 7));
                     final CompoundTag saved = g.saveWithoutMetadata(helper.getLevel().registryAccess());
                     final NetworkGatewayBlockEntity fresh = new NetworkGatewayBlockEntity(at, helper.getBlockState(at));
@@ -140,9 +149,33 @@ public final class NetworkGatewayGameTests {
                                     && p.ceiling() == OperationPriority.HIGH && p.callCap() == 16,
                             "so do the permissions; got " + p);
                     helper.assertTrue(fresh.log().size() == g.log().size() && fresh.log().entries().get(0).what()
-                            .equals("set everything"), "and the log, newest first");
+                            .english().equals("set everything"), "and the log, newest first");
                     helper.assertTrue(fresh.buffer().getStackInSlot(2).getCount() == 7, "and the buffer");
                     helper.assertTrue(fresh.log().entries().get(0).tone() == GatewayLog.Tone.OK, "with its tones");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void returnToBuffer_dropsWhatNoLongerFitsAndLogsIt(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        helper.setBlock(at, gateway(Direction.EAST));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
+                    // The buffer refilled while the items were away: eight slots full, one with room for 4.
+                    for (int slot = 0; slot < g.buffer().getSlots() - 1; slot++) {
+                        g.buffer().setStackInSlot(slot, new ItemStack(Items.COBBLESTONE, 64));
+                    }
+                    g.buffer().setStackInSlot(g.buffer().getSlots() - 1, new ItemStack(Items.COBBLESTONE, 60));
+                    GatewayService.returnToBuffer(helper.getLevel(), g, StorageKey.of(new ItemStack(Items.COBBLESTONE)),
+                            10L, "desk");
+                    helper.assertTrue(g.buffer().getStackInSlot(g.buffer().getSlots() - 1).getCount() == 64,
+                            "what fits goes back into the buffer");
+                    helper.assertItemEntityPresent(Items.COBBLESTONE, at, 3.0D);
+                    helper.assertTrue(g.log().entries().stream()
+                                    .anyMatch(e -> e.what().english().equals("return to buffer")),
+                            "and the rest is dropped at the Gateway and logged, never lost");
                 })
                 .thenSucceed();
     }

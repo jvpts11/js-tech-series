@@ -229,8 +229,9 @@ public final class HostileSaveGameTests {
                     helper.assertTrue(pc.programs().held() == started.id(), "the terminal still holds it");
                     helper.assertTrue(pc.programs().offerInput("Ada"), "the line typed after the save reaches it");
                     pc.programs().tick(PLENTY);
-                    helper.assertTrue(after.console().equals(List.of("name?", "got Ada")),
-                            "it reads the line and goes on; got " + after.console() + " (" + after.message() + ")");
+                    helper.assertTrue(after.console().equals(List.of("name?", "Ada", "got Ada")),
+                            "it reads the line, echoed as it was typed, and goes on; got " + after.console() + " ("
+                                    + after.message() + ")");
                 })
                 .thenSucceed();
     }
@@ -296,12 +297,12 @@ public final class HostileSaveGameTests {
     public static void save_whileAParentWaitsForAChildOnAnotherMachine(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.placeSeededRack(new BlockPos(2, 2, 1));
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity lab = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
-        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 3), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity desk = world.placeRunningPersonalComputer(new BlockPos(5, 2, 3));
         lab.console().setComputerName("lab");
         desk.console().setComputerName("desk");
@@ -416,7 +417,6 @@ public final class HostileSaveGameTests {
                 .thenSucceed();
     }
 
-    /** Writes the machine to its block entity's tag and reads it back in place, the way a chunk comes back. */
     /**
      * What a Gateway spent on a machine's behalf is still owed after the world is saved and loaded, so the machine's
      * next ticks still pay it back. The save used to forget it.
@@ -432,6 +432,7 @@ public final class HostileSaveGameTests {
         helper.succeed();
     }
 
+    /** Writes the machine to its block entity's tag and reads it back in place, the way a chunk comes back. */
     private static void reload(final GameTestHelper helper, final BlockEntity machine) {
         final var registries = helper.getLevel().registryAccess();
         final CompoundTag saved = machine.saveWithFullMetadata(registries);

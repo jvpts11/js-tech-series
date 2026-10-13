@@ -62,6 +62,7 @@ public final class BuiltIns {
         this.scriptBase = this.declare("Script", NamedType.Kind.CLASS);
 
         this.fillString();
+        this.fillCharacter(this.declare("char", NamedType.Kind.CLASS));
         this.fillList();
         this.fillMap();
         this.fillDelegates();
@@ -140,8 +141,8 @@ public final class BuiltIns {
      * <p>Its types are a handful on purpose: these are the machines that had a screen, a disk, a clock and not
      * much else, and a library they could not have held would be a lie about them. Every name in it is a type the
      * full language also has, under the namespace it has always had, so a call written in the subset compiles to
-     * the very same line of assembly; what the subset does not get is the other thirty-eight types, and most of
-     * the members of these.
+     * the very same line of assembly; what the subset does not get is every other type, and most of the members of
+     * these.
      */
     public static final String SUBSET_LIBRARY = "Standard";
 
@@ -153,6 +154,7 @@ public final class BuiltIns {
     private static final String OPERATIONS = "System.Operations";
     private static final String EXECUTION = "System.Execution";
     private static final String UI = "System.UI";
+    private static final String SOUND = "System.Sound";
 
     private static final Map<String, String> HOMES = Map.ofEntries(
             Map.entry("IScript", SYSTEM), Map.entry("Script", SUBSET_LIBRARY),
@@ -167,7 +169,8 @@ public final class BuiltIns {
      * thing with nothing gained, and a program moved between the languages would have to be rewritten to say it.
      */
     private static final Set<String> SUBSET_TYPES =
-            Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script");
+            Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script", "Sound", "Speaker",
+                    "Random", "FILE", "Bus", "BusItem", "Redstone", "CraftInterface", "CraftRouter");
 
     /**
      * The type known by exactly {@code fullName}, its namespace in front ({@code System.IO.Console}),
@@ -238,7 +241,8 @@ public final class BuiltIns {
 
     /** Every namespace the language has, System first, for a list that offers them. */
     public List<String> namespaces() {
-        return List.of(SYSTEM, COLLECTIONS, IO, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI, SUBSET_LIBRARY);
+        return List.of(SYSTEM, COLLECTIONS, IO, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI, SOUND,
+                SUBSET_LIBRARY);
     }
 
     private static String key(final String name, final int arity) {
@@ -285,6 +289,23 @@ public final class BuiltIns {
                 PUBLIC, ITypeSymbol.Primitive.CHAR);
         this.method(this.stringType, "Format", text, PUBLIC_STATIC, text, this.objectType);
         this.method(this.stringType, "Format", text, PUBLIC_STATIC, text, this.objectType, this.objectType);
+        // Which of two texts comes first, character by character: below zero, zero when they are the same, above.
+        this.method(this.stringType, "Compare", integer, PUBLIC_STATIC, text, text);
+    }
+
+    /**
+     * What the language says about a single character, asked of the type by its keyword as C# asks it:
+     * {@code char.IsDigit(c)}. A character itself has no members, since it runs as its number; the type is only
+     * reached for these.
+     */
+    private void fillCharacter(final NamedType character) {
+        final ITypeSymbol letter = ITypeSymbol.Primitive.CHAR;
+        final ITypeSymbol flag = ITypeSymbol.Primitive.BOOL;
+        this.method(character, "ToUpper", letter, PUBLIC_STATIC, letter);
+        this.method(character, "ToLower", letter, PUBLIC_STATIC, letter);
+        this.method(character, "IsDigit", flag, PUBLIC_STATIC, letter);
+        this.method(character, "IsLetter", flag, PUBLIC_STATIC, letter);
+        this.method(character, "IsWhiteSpace", flag, PUBLIC_STATIC, letter);
     }
 
     private void fillList() {

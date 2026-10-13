@@ -1,0 +1,216 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.virtual_studio.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.virtual_studio.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.virtual_studio.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.virtual_studio.table1",
+      "heads": [
+        "jsc.guide.virtual_studio.table1_head1",
+        "jsc.guide.virtual_studio.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.virtual_studio.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.virtual_studio.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.virtual_studio.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.virtual_studio.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.virtual_studio.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.virtual_studio.step1",
+        "jsc.guide.virtual_studio.step2",
+        "jsc.guide.virtual_studio.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.virtual_studio.table2",
+      "heads": [
+        "jsc.guide.virtual_studio.table2_head1",
+        "jsc.guide.virtual_studio.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Ctrl+Shift+N"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Shift+B"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+S"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+F"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+G"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "F5"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+W"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+."
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+`"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Space"
+          },
+          {
+            "words": "jsc.guide.virtual_studio.table2_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.virtual_studio.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.virtual_studio.definition1",
+      "term": "jsc.guide.virtual_studio.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.virtual_studio.definition2",
+      "term": "jsc.guide.virtual_studio.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.virtual_studio.definition3",
+      "term": "jsc.guide.virtual_studio.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.virtual_studio.definition4",
+      "term": "jsc.guide.virtual_studio.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.virtual_studio.fix1",
+          "problem": "jsc.guide.virtual_studio.problem1"
+        },
+        {
+          "fix": "jsc.guide.virtual_studio.fix2",
+          "problem": "jsc.guide.virtual_studio.problem2"
+        },
+        {
+          "fix": "jsc.guide.virtual_studio.fix3",
+          "problem": "jsc.guide.virtual_studio.problem3"
+        },
+        {
+          "fix": "jsc.guide.virtual_studio.fix4",
+          "problem": "jsc.guide.virtual_studio.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:book_of_sigma",
+        "jsc:sigma_editors"
+      ]
+    }
+  ],
+  "id": "jsc:virtual_studio",
+  "order": 170,
+  "section": "jsc:frames_help_and_studio",
+  "title": "jsc.guide.virtual_studio.title"
+}

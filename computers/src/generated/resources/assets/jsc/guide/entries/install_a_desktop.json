@@ -1,0 +1,183 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.install_a_desktop.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.install_a_desktop.step1",
+        "jsc.guide.install_a_desktop.step2",
+        "jsc.guide.install_a_desktop.step3",
+        "jsc.guide.install_a_desktop.step4",
+        "jsc.guide.install_a_desktop.step5"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.install_a_desktop.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.install_a_desktop.table1",
+      "heads": [
+        "jsc.guide.install_a_desktop.table1_head1",
+        "jsc.guide.install_a_desktop.table1_head2",
+        "jsc.guide.install_a_desktop.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.install_a_desktop.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.install_a_desktop.table1_1_2"
+          },
+          {
+            "literal": "apt install <name>"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_a_desktop.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.install_a_desktop.table1_2_2"
+          },
+          {
+            "literal": "dnf install <name>"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_a_desktop.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.install_a_desktop.table1_3_2"
+          },
+          {
+            "literal": "pacman -S <name>"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_a_desktop.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.install_a_desktop.table1_4_2"
+          },
+          {
+            "literal": "emerge <name>"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.install_a_desktop.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.install_a_desktop.table1_5_2"
+          },
+          {
+            "literal": "pkg install <name>"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.install_a_desktop.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.install_a_desktop.fix1",
+          "problem": "jsc.guide.install_a_desktop.problem1"
+        },
+        {
+          "fix": "jsc.guide.install_a_desktop.fix2",
+          "problem": "jsc.guide.install_a_desktop.problem2"
+        },
+        {
+          "fix": "jsc.guide.install_a_desktop.fix3",
+          "problem": "jsc.guide.install_a_desktop.problem3"
+        },
+        {
+          "fix": "jsc.guide.install_a_desktop.fix4",
+          "problem": "jsc.guide.install_a_desktop.problem4"
+        },
+        {
+          "fix": "jsc.guide.install_a_desktop.fix5",
+          "problem": "jsc.guide.install_a_desktop.problem5"
+        },
+        {
+          "fix": "jsc.guide.install_a_desktop.fix6",
+          "problem": "jsc.guide.install_a_desktop.problem6"
+        },
+        {
+          "fix": "jsc.guide.install_a_desktop.fix7",
+          "problem": "jsc.guide.install_a_desktop.problem7"
+        },
+        {
+          "fix": "jsc.guide.install_a_desktop.fix8",
+          "problem": "jsc.guide.install_a_desktop.problem8"
+        },
+        {
+          "fix": "jsc.guide.install_a_desktop.fix9",
+          "problem": "jsc.guide.install_a_desktop.problem9"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:desktops",
+        "jsc:the_systems",
+        "jsc:installing",
+        "jsc:mirror"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:install_a_desktop",
+  "order": 205,
+  "section": "jsc:desktop_environments",
+  "title": "jsc.guide.install_a_desktop.title"
+}

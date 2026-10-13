@@ -12,8 +12,15 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.payload.ThisPcPayload;
+import dev.jstech.computers.operation.payload.desktop.ThisPcPayloads;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.operation.payload.firmware.InstallerPayloads;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
@@ -25,10 +32,21 @@ import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootManager;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.ProgramFilesProjection;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.InstallerPage;
+import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -40,6 +58,8 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * FreeBSD is a system of its own and not a Linux under another name.
@@ -64,6 +84,9 @@ public final class FreeBsdGameTests {
 
     private static final ResourceLocation FREEBSD =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "freebsd");
+
+    private static final ResourceLocation UBUNTU =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu");
 
     private FreeBsdGameTests() {
     }
@@ -126,8 +149,9 @@ public final class FreeBsdGameTests {
         helper.assertTrue(computer.installOs(FREEBSD), "FreeBSD installs on the machine");
         final BootMenu menu = BootLines.menuFor(computer, 200);
         helper.assertTrue(menu.manager() == BootManager.LOADER, "FreeBSD brings its own loader: " + menu.manager());
-        helper.assertTrue(menu.title().equals("Welcome to FreeBSD"), "headed the way it heads it: " + menu.title());
-        helper.assertTrue(menu.entries().get(0).label().equals("Boot") && menu.defaultIndex() == 0,
+        helper.assertTrue(menu.title().english().equals("Welcome to FreeBSD"),
+                "headed the way it heads it: " + menu.title());
+        helper.assertTrue(menu.entries().get(0).label().english().equals("Boot") && menu.defaultIndex() == 0,
                 "the boot comes first and is what Enter does: " + menu.entries());
         helper.assertTrue(FREEBSD.toString().equals(menu.entries().get(0).osId()),
                 "and it boots the system it belongs to: " + menu.entries().get(0).osId());
@@ -176,8 +200,11 @@ public final class FreeBsdGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
                     helper.assertTrue(cli.shellFamily() == ShellFamily.POSIX, "its kernel gives the shell Unix verbs");
-                    helper.assertTrue("player@freebsd:~ $".equals(cli.prompt()),
-                            "sh stands at the prompt its home directory sets up; got " + cli.prompt());
+                    helper.assertTrue("root@freebsd:~ #".equals(cli.prompt()),
+                            "sh stands at root's prompt, as a machine fresh from its installer does; got "
+                                    + cli.prompt());
+                    helper.assertTrue(cli.promptLine().style() == CliStyle.RED,
+                            "with root and the machine's name in red; got " + cli.promptLine().spans());
                     final CliShell shell = CliCommands.newShell(cli.shellFamily(), 52);
                     helper.assertTrue("FreeBSD".equals(text(shell.run("uname", cli)).trim()),
                             "asked nothing, it names the kernel; got " + text(shell.run("uname", cli)));
@@ -204,6 +231,8 @@ public final class FreeBsdGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
                     final CliShell shell = CliCommands.newShell(cli.shellFamily(), 52);
+                    // The Mainframe ships with the engine; taken off, it is a package like any other.
+                    mainframe.uninstallEngine(NetworkEngines.MIDSOFT_IQL_SERVER.program());
                     final String unreachable = text(shell.run("pkg install iqlengine", cli));
                     helper.assertTrue(unreachable.contains("pkg: ") && unreachable.contains("mirror"),
                             "with no Mirror pkg says so, naming itself as it does; got " + unreachable);
@@ -213,14 +242,15 @@ public final class FreeBsdGameTests {
                     helper.assertTrue(installed.contains("Updating Mirror repository catalogue...")
                                     && installed.contains("done"),
                             "it looks at the repository first and then installs; got " + installed);
-                    helper.assertTrue(mainframe.isIqlEngineInstalled(), "and the Engine is on");
+                    helper.assertTrue(mainframe.installedEngines().containsKey(
+                            NetworkEngines.MIDSOFT_IQL_SERVER.program()), "and the Engine is on");
                     helper.assertTrue(text(shell.run("pkg install iqlengine", cli)).contains("already installed"),
                             "a second time there is nothing to do, said its way");
                     helper.assertTrue(text(shell.run("pkg info", cli)).contains("iqlengine"),
                             "what is installed is what 'pkg info' lists");
                     helper.assertTrue(text(shell.run("pkg update", cli)).contains("All repositories are up to date."),
                             "'pkg update' ends the way it ends");
-                    helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("command not found"),
+                    helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("apt: not found"),
                             "and apt does not exist here");
                 })
                 .thenSucceed();
@@ -233,7 +263,8 @@ public final class FreeBsdGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
-                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    // As wide as a monitor's terminal: screenfetch cuts what passes the edge rather than wrap it.
+                    final CliShell shell = CliCommands.shellFor(cli, TermBuffer.MONITOR_COLUMNS);
                     helper.assertTrue(text(shell.run("screenfetch", cli)).contains("not found"),
                             "screenfetch is a package, absent on a fresh install");
                     mainframe.installMirror();
@@ -301,9 +332,331 @@ public final class FreeBsdGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * bsdinstall's own answers become the machine's own state: sshd is off unless ticked, cron is on, and a
+     * ticked ports component lays an empty tree ready for the first {@code portsnap fetch}.
+     */
+    @GameTest(template = ARENA)
+    public static void bsdinstall_setsSshdOffAndCronOnAndLaysAnEmptyPortsTree(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = mainframeWithBsdInstallMedia(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "bsdinstall opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null && flow.style() == InstallerStyle.BSD_INSTALL,
+                            "the machine is in bsdinstall's own style");
+                    helper.assertTrue(flow.portsSelected(), "the ports component is ticked by default");
+                    helper.assertFalse(flow.sshdEnabled(), "sshd is off by default, unlike every other system");
+                    helper.assertTrue(flow.cronEnabled(), "cron is on by default");
+                    helper.assertTrue(!flow.disks().isEmpty() && "ada0".equals(flow.disks().get(0).label()),
+                            "the disk is named the way bsdinstall names one: " + flow.disks());
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the machine took the copy on");
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(flow.page() == InstallerPage.SERVICES,
+                            "the extraction stops on the page that still asks something, off any Mirror");
+                    helper.assertTrue(mainframe.installedOsId() == null,
+                            "and the system is not written while that page is unanswered");
+                    flow.next();
+                    for (int i = 0; i <= 10; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(FREEBSD.equals(mainframe.installedOsId()), "FreeBSD is on the disk");
+                    helper.assertFalse(mainframe.console().settings().remoteAllowed(),
+                            "the machine kept sshd off");
+                    helper.assertTrue(mainframe.console().settings().cronEnabled(), "and cron on");
+                    final String conf = ProgramFilesProjection.text(mainframe, "etc/rc.conf").orElse("");
+                    helper.assertTrue(conf.contains("sshd_enable=\"NO\"") && conf.contains("cron_enable=\"YES\""),
+                            "rc.conf reads back the same two switches; got " + conf);
+                    final ItemStack disk = mainframe.diskInSlot(0);
+                    helper.assertTrue(
+                            DiskFilesystem.listDirs(disk, "usr", FilesystemKind.HIERARCHICAL).contains("usr/ports"),
+                            "the ports tree's folder is there, empty, ready for the first fetch");
+                })
+                .thenSucceed();
+    }
+
+    /** Ticking sshd on and unticking ports on the services and components pages is carried all the way through. */
+    @GameTest(template = ARENA)
+    public static void bsdinstall_carriesTheServicesAndComponentsPagesAnswersThrough(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = mainframeWithBsdInstallMedia(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "bsdinstall opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null, "the machine opened an installer");
+                    flow.setPortsSelected(false);
+                    flow.setSshdEnabled(true);
+                    flow.setCronEnabled(false);
+                    /*
+                     * The components page's own checkbox resizes the job the same way the disk and Mirror
+                     * pages do, since it changes how much the copy has to cover; done here by hand because this
+                     * answer is given straight to the flow rather than through the payload that pairs the two.
+                     */
+                    final OsInstallJob quoted = mainframe.installing();
+                    helper.assertTrue(quoted != null, "bsdinstall quoted a job the moment it opened");
+                    mainframe.setInstalling(new OsInstallJob(quoted.osId(), flow.targetSlot(), quoted.readerPos(),
+                            flow.ticksTotal(), flow.ticksTotal()));
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the copy started");
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(flow.page() == InstallerPage.SERVICES,
+                            "the extraction stops on the page that still asks something");
+                    flow.next();
+                    for (int i = 0; i <= 10; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(mainframe.console().settings().remoteAllowed(), "sshd was ticked on");
+                    helper.assertFalse(mainframe.console().settings().cronEnabled(), "cron was unticked");
+                    final ItemStack disk = mainframe.diskInSlot(0);
+                    helper.assertFalse(
+                            DiskFilesystem.listDirs(disk, "usr", FilesystemKind.HIERARCHICAL).contains("usr/ports"),
+                            "with ports unticked, no ports tree is laid down");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * With a Mirror in use, the extraction still has to stop on Services and then Desktop before the system is
+     * written, and the ports component comes down as the full tree the Mirror serves rather than an empty folder.
+     */
+    @GameTest(template = ARENA)
+    public static void bsdinstall_reachesServicesAndDesktopBeforeWritingTheSystem(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = mainframeWithBsdInstallMedia(helper, pos);
+        mainframe.installMirror();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "bsdinstall opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null && flow.mirrorAnswers(), "the network's own Mirror answers");
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the copy started");
+                    for (int i = 0; i <= job.ticksTotal() && flow.page() != InstallerPage.SERVICES; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(flow.page() == InstallerPage.SERVICES,
+                            "the extraction stops on Services rather than finishing behind it: " + flow.page());
+                    helper.assertTrue(mainframe.installedOsId() == null,
+                            "the system is not written while a page that asks is still ahead");
+                    flow.setCronEnabled(true);
+                    flow.setSshdEnabled(true);
+                    flow.next();
+                    helper.assertTrue(flow.page() == InstallerPage.DESKTOP,
+                            "a Mirror in use puts the desktop page next: " + flow.page());
+                    helper.assertTrue(mainframe.installedOsId() == null,
+                            "and the system is still not written while the desktop page is unanswered");
+                    helper.assertTrue(!flow.desktops().isEmpty(), "the Mirror offers at least one desktop");
+                    final InstallerFlow.Desktop chosen = flow.desktops().get(0);
+                    final int beforeTotal = mainframe.installing().ticksTotal();
+                    // The same apply-and-resize a real ACTION_DESKTOP answer runs, not a bare flow mutation.
+                    InstallerPayloads.chooseDesktopAndResize(mainframe, flow, 0);
+                    final OsInstallJob resized = mainframe.installing();
+                    helper.assertTrue(resized != null && resized.ticksTotal() == beforeTotal + chosen.ticks(),
+                            "choosing the desktop grows the job by exactly its own ticks; got "
+                                    + (resized == null ? "none" : resized.ticksTotal()) + " for "
+                                    + (beforeTotal + chosen.ticks()));
+                    flow.next();
+                    helper.assertTrue(flow.page() == InstallerPage.COPY,
+                            "the desktop's fetch runs on the second copy stage, after the desktop page: "
+                                    + flow.page());
+                    helper.assertTrue(mainframe.installedOsId() == null,
+                            "and the system is still not written before that fetch ticks out");
+                    for (int i = 0; i <= resized.ticksTotal() && mainframe.installedOsId() == null; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(FREEBSD.equals(mainframe.installedOsId()),
+                            "the system is written once the fetch and both pages are answered");
+                    helper.assertTrue(mainframe.console().settings().cronEnabled(), "cron was answered on Services");
+                    helper.assertTrue(mainframe.console().settings().remoteAllowed(), "sshd was answered on Services");
+                    helper.assertTrue(mainframe.console().isInstalled(chosen.id()),
+                            "the desktop chosen from the Mirror is installed with the system");
+                    final ItemStack disk = mainframe.diskInSlot(0);
+                    helper.assertTrue(DiskFilesystem.exists(disk, "usr/ports/INDEX-14"),
+                            "with the Mirror in use, the ports tree is laid full rather than empty");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * The name typed at the installer renames a machine that already had one: the machine and the system it put on
+     * the disk both go by it, and the old name does not come back when the disk is read.
+     */
+    @GameTest(template = ARENA)
+    public static void installer_nameTypedRenamesAMachineThatHadOne(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = mainframeWithBsdInstallMedia(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setCustomName("Old");
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "bsdinstall opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null, "the machine opened an installer");
+                    flow.setComputerName("New");
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the copy started");
+                    for (int i = 0; i <= job.ticksTotal() && mainframe.installedOsId() == null; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                        if (flow.page() == InstallerPage.SERVICES || flow.page() == InstallerPage.DESKTOP) {
+                            flow.next();
+                        }
+                    }
+                    helper.assertTrue(FREEBSD.equals(mainframe.installedOsId()), "FreeBSD is on the disk");
+                    helper.assertTrue("New".equals(mainframe.customName()),
+                            "the machine goes by the name typed; got " + mainframe.customName());
+                    helper.assertTrue("New".equals(mainframe.console().computerName()),
+                            "and so does its system; got " + mainframe.console().computerName());
+                    mainframe.togglePower();
+                    mainframe.togglePower();
+                    helper.assertTrue("New".equals(mainframe.customName())
+                                    && "New".equals(mainframe.console().computerName()),
+                            "and both keep it once the machine starts again and reads the disk; got "
+                                    + mainframe.customName() + " / " + mainframe.console().computerName());
+                })
+                .thenSucceed();
+    }
+
+    /** A running Mainframe with an empty disk and, beside it, a CD drive holding FreeBSD's guided installer. */
+    private static MainframeBlockEntity mainframeWithBsdInstallMedia(final GameTestHelper helper, final BlockPos pos) {
+        helper.setBlock(pos, ComputingModule.MAINFRAME.get());
+        if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
+            throw new IllegalStateException("no Mainframe at " + pos);
+        }
+        final ItemStackHandler inv = mainframe.getInventory();
+        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
+        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
+        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
+        inv.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START, new ItemStack(ComputingModule.GPU_HD_7970.get()));
+        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        mainframe.togglePower();
+
+        final BlockPos readerPos = pos.east();
+        helper.setBlock(readerPos, ComputingModule.CD_DRIVE.get());
+        if (!(helper.getBlockEntity(readerPos) instanceof MediaReaderBlockEntity reader)) {
+            throw new IllegalStateException("no reader at " + readerPos);
+        }
+        final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
+        MediaItem.setKind(disc, MediaKind.OS_INSTALL);
+        MediaItem.setPayload(disc, FREEBSD);
+        reader.mediaSlot().setStackInSlot(0, disc);
+        return mainframe;
+    }
+
+    /**
+     * This PC's About-style page (Info Center on KDE, About on GNOME, System Info on Cinnamon) reads FreeBSD in
+     * its own words: the release in the "Operating System" line, Velocion's word for the architecture, the
+     * kernel's own build name, the desktop by its plain name with no version, and the machine's own hardware.
+     */
+    @GameTest(template = ARENA)
+    public static void thisPc_aboutPageReadsFreeBsdInItsOwnWords(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = mainframe(helper, WHERE);
+        final ResourceLocation kdePlasma = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "kde_plasma");
+        mainframe.console().install(kdePlasma.toString());
+        mainframe.setBootedDesktopId(kdePlasma);
+        final ThisPcPayload.AboutFacts about = ThisPcPayloads.aboutFactsOf(mainframe);
+        helper.assertTrue(about.operatingSystem().english().equals("FreeBSD 14.1-RELEASE"),
+                "the system by name and release; got " + about.operatingSystem().english());
+        helper.assertTrue(about.architecture().english().equals("vel64"),
+                "Velocion's word for a 64-bit processor; got " + about.architecture().english());
+        helper.assertTrue(about.kernel().english().equals("14.1-RELEASE GENERIC"),
+                "the kernel names its own build, as FreeBSD's uname does; got " + about.kernel().english());
+        helper.assertTrue(about.desktop().english().equals("KDE Plasma"),
+                "the desktop by its plain name, with no version on it; got " + about.desktop().english());
+        helper.assertTrue(about.hostName().english().equals(Installers.hostName(mainframe)),
+                "the machine's own host name; got " + about.hostName().english());
+        helper.assertTrue(about.freeBsd(), "the platform is named FreeBSD's own");
+        helper.assertTrue(about.ramMb() == mainframe.ramTotalMb() && about.diskMb() > 0,
+                "the machine's real memory and its system disk's real size, not item-equivalents");
+        helper.succeed();
+    }
+
+    /**
+     * A Linux is named by its distribution alone on the About page: the kernel keeps its own row, so the two
+     * never repeat the same fact, and its architecture and processor bits are read the Linux way.
+     */
+    @GameTest(template = ARENA)
+    public static void thisPc_aboutPageNamesALinuxByItsDistributionAlone(final GameTestHelper helper) {
+        final MainframeBlockEntity ubuntu = mainframeWithOs(helper, WHERE, UBUNTU);
+        final ResourceLocation gnome = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gnome");
+        ubuntu.console().install(gnome.toString());
+        ubuntu.setBootedDesktopId(gnome);
+        final ThisPcPayload.AboutFacts about = ThisPcPayloads.aboutFactsOf(ubuntu);
+        helper.assertTrue(about.operatingSystem().english().equals("Ubuntu"),
+                "the distribution alone, not the kernel line a second time; got " + about.operatingSystem().english());
+        helper.assertTrue(about.kernel().english().equals("6.8-jsc"),
+                "a Linux's kernel has no build name of its own to add; got " + about.kernel().english());
+        helper.assertTrue(about.architecture().english().equals("x86_64"),
+                "a Linux names a 64-bit processor its own way; got " + about.architecture().english());
+        helper.assertFalse(about.freeBsd(), "the platform is not named FreeBSD's own");
+        helper.assertTrue(about.bits64(), "the seated processor is 64-bit");
+        helper.succeed();
+    }
+
+    /** A Legacy machine reads IA-32, the narrower word FreeBSD and UNIX give a 32-bit processor. */
+    @GameTest(template = ARENA)
+    public static void thisPc_aboutPageOnALegacyMachineReadsIa32(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper, WHERE);
+        if (computer == null) {
+            return;
+        }
+        helper.assertTrue(computer.installOs(FREEBSD), "FreeBSD installs on a Legacy machine");
+        final ResourceLocation kdePlasma = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "kde_plasma");
+        computer.console().install(kdePlasma.toString());
+        computer.setBootedDesktopId(kdePlasma);
+        final ThisPcPayload.AboutFacts about = ThisPcPayloads.aboutFactsOf(computer);
+        helper.assertTrue(about.architecture().english().equals("IA-32"),
+                "a 32-bit Legacy processor is IA-32, not the maker's 64-bit word; got "
+                        + about.architecture().english());
+        helper.assertFalse(about.bits64(), "the seated processor is not 64-bit");
+        helper.succeed();
+    }
+
+    /** A system with no About-style page of its own (every one but FreeBSD and a Linux) answers with nothing. */
+    @GameTest(template = ARENA)
+    public static void thisPc_aboutPageIsEmptyOnASystemWithNoneOfItsOwn(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper, new BlockPos(6, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.assertTrue(computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp")),
+                "Frames XP installs on the machine");
+        helper.assertTrue(ThisPcPayloads.aboutFactsOf(computer).equals(ThisPcPayload.AboutFacts.EMPTY),
+                "Frames has its own explorer-style This PC, and no About page beside it");
+        helper.succeed();
+    }
+
     private static boolean has(final BootSequence sequence, final String label) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().equals(label)) {
+            if (line.label().english().equals(label)) {
                 return true;
             }
         }
@@ -312,7 +665,7 @@ public final class FreeBsdGameTests {
 
     private static boolean any(final BootSequence sequence, final String text) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().contains(text) || line.value().contains(text)) {
+            if (line.label().english().contains(text) || line.value().english().contains(text)) {
                 return true;
             }
         }
@@ -320,43 +673,41 @@ public final class FreeBsdGameTests {
     }
 
     private static String last(final BootSequence sequence) {
-        return sequence.lines().isEmpty() ? "" : sequence.lines().get(sequence.lines().size() - 1).label();
+        return sequence.lines().isEmpty() ? ""
+                : sequence.lines().get(sequence.lines().size() - 1).label().english();
     }
 
     private static String labels(final BootSequence sequence) {
         final StringBuilder out = new StringBuilder();
         for (final BootSequence.Line line : sequence.lines()) {
-            out.append(line.label()).append(" | ");
-        }
-        return out.toString();
-    }
-
-    /** All of a shell response's lines joined with newlines. */
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
+            out.append(line.label().english()).append(" | ");
         }
         return out.toString();
     }
 
     /** A powered Mainframe with a full build and a disk, with FreeBSD installed on it. */
     private static MainframeBlockEntity mainframe(final GameTestHelper helper, final BlockPos pos) {
+        return mainframeWithOs(helper, pos, FREEBSD);
+    }
+
+    /** A powered Mainframe with a full, 64-bit build and a disk, with {@code osId} installed on it. */
+    private static MainframeBlockEntity mainframeWithOs(final GameTestHelper helper, final BlockPos pos,
+                                                         final ResourceLocation osId) {
         helper.setBlock(pos, ComputingModule.MAINFRAME.get());
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
         }
         final ItemStackHandler inv = mainframe.getInventory();
         inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
         inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         mainframe.togglePower();
-        if (!mainframe.installOs(FREEBSD)) {
-            throw new IllegalStateException("failed to install FreeBSD on the test Mainframe");
+        if (!mainframe.installOs(osId)) {
+            throw new IllegalStateException("failed to install " + osId + " on the test Mainframe");
         }
         return mainframe;
     }
@@ -372,9 +723,9 @@ public final class FreeBsdGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_500B.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
@@ -394,7 +745,7 @@ public final class FreeBsdGameTests {
                 new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
-        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300B.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_300.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         return computer;

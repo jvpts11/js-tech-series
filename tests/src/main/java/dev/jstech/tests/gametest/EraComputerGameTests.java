@@ -9,19 +9,24 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * Verifies era-based hardware enforcement for the Vintage and Legacy Personal Computers:
- * a mismatched CPU socket prevents boot, a matching socket allows it, and breaking either
- * block drops the era-correct BlockItem back into the world.
+ * a mismatched CPU socket prevents boot, a matching socket allows it, breaking either
+ * block drops the era-correct BlockItem back into the world, and a sound card takes only a slot of
+ * its own era's board and bus.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -49,7 +54,7 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         be.togglePower();
 
         helper.startSequence()
@@ -72,11 +77,11 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         be.togglePower();
 
         helper.startSequence()
@@ -98,9 +103,9 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         be.togglePower();
@@ -127,7 +132,7 @@ public final class EraComputerGameTests {
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
                 new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         be.togglePower();
@@ -150,7 +155,7 @@ public final class EraComputerGameTests {
                  */
                 .thenExecute(() -> helper.getLevel().destroyBlock(helper.absolutePos(pos), true))
                 .thenExecuteAfter(SETTLE, () -> helper.assertItemEntityPresent(
-                        ComputingModule.VINTAGE_PERSONAL_COMPUTER_ITEM.get(), pos, 3.0))
+                        ComputingModule.VINTAGE_PERSONAL_COMPUTER.item(), pos, 3.0))
                 .thenSucceed();
     }
 
@@ -165,7 +170,125 @@ public final class EraComputerGameTests {
                  */
                 .thenExecute(() -> helper.getLevel().destroyBlock(helper.absolutePos(pos), true))
                 .thenExecuteAfter(SETTLE, () -> helper.assertItemEntityPresent(
-                        ComputingModule.LEGACY_PERSONAL_COMPUTER_ITEM.get(), pos, 3.0))
+                        ComputingModule.LEGACY_PERSONAL_COMPUTER.item(), pos, 3.0))
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void soundCard_takesOnlyASlotOfItsOwnEraAndBus(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity vintage = withBoard(helper, new BlockPos(1, 2, 1),
+                ComputingModule.VINTAGE_PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get());
+        final PersonalComputerBlockEntity legacy = withBoard(helper, new BlockPos(3, 2, 1),
+                ComputingModule.LEGACY_PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get());
+        final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(5, 2, 1),
+                ComputingModule.PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get());
+        final ItemStack isa = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER.get());
+        final ItemStack pci = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_128.get());
+        final ItemStack agp = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_LIVE.get());
+        final ItemStack pcie = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_AUDIGY.get());
+        final int card = PersonalComputerBlockEntity.GPU_SLOTS_START;
+
+        helper.assertTrue(vintage.isValidForSlot(card, isa), "the ISA card fits the Vintage ISA board");
+        helper.assertFalse(vintage.isValidForSlot(card, pci), "the PCI card does not fit an ISA board");
+        helper.assertFalse(vintage.isValidForSlot(card, agp), "a Legacy card does not fit a Vintage board");
+        helper.assertTrue(legacy.isValidForSlot(card, pcie), "the PCIe card fits the Legacy PCIe board");
+        helper.assertFalse(legacy.isValidForSlot(card, agp), "the AGP card does not fit a PCIe board");
+        helper.assertFalse(standard.isValidForSlot(card, pcie),
+                "a Standard board has its sound built in and takes no card, though the bus would fit");
+        helper.succeed();
+    }
+
+    /**
+     * The Legacy's PCI Crafting Card seats in the Legacy's own boards, AGP and PCI-e alike, as the boards of its years
+     * had PCI slots: held to PCI boards alone, it fitted no machine of its era. The ISA card keeps to ISA boards.
+     */
+    @GameTest(template = ARENA)
+    public static void pciCraftingCard_seatsInTheLegacysBoards(final GameTestHelper helper) {
+        final ItemStack pci = new ItemStack(ComputingModule.CRAFTING_CARD_PCI.get());
+        final ItemStack isa = new ItemStack(ComputingModule.CRAFTING_CARD_ISA.get());
+        final int card = CraftingComputerBlockEntity.PCIE_SLOTS_START;
+        final CraftingComputerBlockEntity agp = craftingWithBoard(helper, new BlockPos(1, 2, 1),
+                HardwareItems.MOTHERBOARD_ATX_LEGACY_478.get());
+        final CraftingComputerBlockEntity pcie = craftingWithBoard(helper, new BlockPos(3, 2, 1),
+                HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get());
+        helper.assertTrue(agp.isValidForSlot(card, pci), "the PCI card fits the Legacy AGP board");
+        helper.assertTrue(pcie.isValidForSlot(card, pci), "and the Legacy PCI-e board");
+        helper.assertFalse(agp.isValidForSlot(card, isa), "while the ISA card stays out of a board with no ISA");
+        helper.succeed();
+    }
+
+    /**
+     * A part kept out of a slot is kept out by a rule the computer can name, so the screen tells the player which:
+     * the board's socket, a node's co-processor, a disk of a later era, or a part of another kind.
+     */
+    @GameTest(template = ARENA)
+    public static void refusal_namesTheRuleThatKeepsAPartOut(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(1, 2, 1),
+                ComputingModule.PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get());
+        final ItemStack otherSocket = new ItemStack(HardwareItems.CPU_VELOCION_EPIC_7251.get());
+        helper.assertTrue(standard.refusal(PersonalComputerBlockEntity.CPU_SLOT, otherSocket) == PartRefusals.CPU,
+                "a processor of another socket is kept out for the socket");
+        helper.assertTrue(standard.refusal(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.PHI_5100.get())) == PartRefusals.PHI, "a Phi is kept out for nodes");
+        helper.assertTrue(standard.refusal(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, otherSocket)
+                == PartRefusals.NOT_THIS_SLOT, "a processor in the board's slot is a part of another kind");
+        helper.assertTrue(standard.refusal(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.OPTICAL_NETWORK_CARD.get())) == null, "and a part that fits has none");
+        helper.succeed();
+    }
+
+    /** A Phi co-processor seats only in a supercomputer node's server, so a computer refuses it on any board. */
+    @GameTest(template = ARENA)
+    public static void phi_staysOutOfAComputer(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(1, 2, 1),
+                ComputingModule.PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get());
+        final int card = PersonalComputerBlockEntity.GPU_SLOTS_START;
+        helper.assertFalse(standard.isValidForSlot(card, new ItemStack(ComputingModule.PHI_5100.get())),
+                "a Personal Computer refuses the Phi, though its PCIe bus would fit");
+        helper.assertTrue(standard.isValidForSlot(card, new ItemStack(ComputingModule.OPTICAL_NETWORK_CARD.get())),
+                "and still takes another card of that bus");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void motherboardSlot_takesTheWorkstationBoardFromTheTransitionOn(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity legacy = withBoard(helper, new BlockPos(1, 2, 1),
+                ComputingModule.LEGACY_PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get());
+        final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(3, 2, 1),
+                ComputingModule.PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get());
+        final int board = PersonalComputerBlockEntity.MOTHERBOARD_SLOT;
+
+        helper.assertTrue(legacy.isValidForSlot(board, new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_478.get())),
+                "a Legacy case takes a Legacy ATX board");
+        helper.assertFalse(legacy.isValidForSlot(board,
+                new ItemStack(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get())),
+                "a Legacy case has no room for an EATX board");
+        helper.assertTrue(standard.isValidForSlot(board,
+                new ItemStack(HardwareItems.MOTHERBOARD_EATX_STANDARD_2011.get())),
+                "a Standard case takes the workstation's EATX board");
+        helper.assertTrue(standard.isValidForSlot(board,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get())),
+                "and still the ATX one");
+        helper.succeed();
+    }
+
+    private static PersonalComputerBlockEntity withBoard(final GameTestHelper helper, final BlockPos pos,
+                                                         final Block block, final Item board) {
+        helper.setBlock(pos, block);
+        if (!(helper.getBlockEntity(pos) instanceof PersonalComputerBlockEntity be)) {
+            throw new IllegalStateException("no personal computer at " + pos);
+        }
+        be.getHardware().setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+        return be;
+    }
+
+    private static CraftingComputerBlockEntity craftingWithBoard(final GameTestHelper helper, final BlockPos pos,
+                                                                 final Item board) {
+        helper.setBlock(pos, ComputingModule.LEGACY_CRAFTING_COMPUTER.get());
+        if (!(helper.getBlockEntity(pos) instanceof CraftingComputerBlockEntity be)) {
+            throw new IllegalStateException("no crafting computer at " + pos);
+        }
+        be.getHardware().setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+        return be;
     }
 }

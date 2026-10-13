@@ -1,0 +1,11 @@
+{
+  "iconText": "#FFFFFFFF",
+  "menuBg": "#FFECECF6",
+  "menuText": "#FF101030",
+  "startButton": "#FF3FA13F",
+  "startText": "#FFFFFFFF",
+  "taskButton": "#FF4F7FCB",
+  "taskbar": "#FF295FBE",
+  "taskbarEdge": "#FF6E9BE0",
+  "titleActive": "#FF295FBE"
+}

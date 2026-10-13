@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.sigma.lex;
 
+import dev.jstech.core.text.Text;
 import java.util.Objects;
 
 /**
@@ -34,7 +35,7 @@ public record Token(TokenKind kind, String text, Object value, int line, int col
     }
 
     /** How a diagnostic names this token: the exact spelling for anything a player wrote. */
-    public String describe() {
-        return this.kind == TokenKind.END_OF_FILE ? this.kind.describe() : "'" + this.text + "'";
+    public Text describe() {
+        return this.kind == TokenKind.END_OF_FILE ? this.kind.describe() : Text.literal("'" + this.text + "'");
     }
 }

@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.iql.IIqlCondition;
+import dev.jstech.computers.program.iql.IqlTable;
 import java.util.List;
 
 /**
@@ -64,6 +65,15 @@ public interface ICliNetwork {
                                                       final IIqlCondition where,
                                                       final String server, final int limit) {
         return List.of();
+    }
+
+    /**
+     * The same read with every column of the table, as a studio's grid shows it: the WHERE on any column, sorted
+     * by {@code orderBy} when there is one; {@link IqlTable#NONE} for a name no table has.
+     */
+    default IqlTable queryTable(final String object, final IIqlCondition where, final String server,
+                                final int limit, final String orderBy, final boolean descending) {
+        return IqlTable.NONE;
     }
 
     /** Which servers hold the named item and how much each has. */

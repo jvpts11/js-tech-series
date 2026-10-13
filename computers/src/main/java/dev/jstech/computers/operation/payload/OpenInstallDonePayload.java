@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -22,13 +24,13 @@ import net.minecraft.resources.ResourceLocation;
  * @param monitorPos   the monitor the screen renders on
  * @param firmwareKind the firmware look of the machine's era, as its id
  * @param osName       the system that was installed, for the prompt
- * @param targetLabel  the disk it went onto, for the prompt
+ * @param targetLabel  the disk it went onto, for the prompt, read in the player's language
  * @param targetSlot   the disk slot to boot when the player restarts ({@code -1} = the default disk)
  * @param failure      empty when the system is on the disk; otherwise why the write was refused, so the
  *                     installer ends on that instead of a "complete" it never earned
  */
 public record OpenInstallDonePayload(BlockPos host, BlockPos monitorPos, int firmwareKind, String osName,
-                                     String targetLabel, int targetSlot, String failure)
+                                     Text targetLabel, int targetSlot, Text failure)
         implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<OpenInstallDonePayload> TYPE =
@@ -43,14 +45,14 @@ public record OpenInstallDonePayload(BlockPos host, BlockPos monitorPos, int fir
         buf.writeBlockPos(payload.monitorPos);
         buf.writeVarInt(payload.firmwareKind);
         buf.writeUtf(payload.osName);
-        buf.writeUtf(payload.targetLabel);
+        TextCodecs.STREAM_CODEC.encode(buf, payload.targetLabel);
         buf.writeVarInt(payload.targetSlot);
-        buf.writeUtf(payload.failure);
+        TextCodecs.STREAM_CODEC.encode(buf, payload.failure);
     }
 
     private static OpenInstallDonePayload read(final RegistryFriendlyByteBuf buf) {
         return new OpenInstallDonePayload(buf.readBlockPos(), buf.readBlockPos(), buf.readVarInt(), buf.readUtf(),
-                buf.readUtf(), buf.readVarInt(), buf.readUtf());
+                TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(), TextCodecs.STREAM_CODEC.decode(buf));
     }
 
     @Override

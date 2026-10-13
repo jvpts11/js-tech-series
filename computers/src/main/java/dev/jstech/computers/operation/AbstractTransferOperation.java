@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation;
 
+import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
@@ -99,7 +100,12 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
                                    final int ramLatencyTicks,
                                    @Nullable final ILatencyScheduler scheduler) {
         final int diskLatency = tier.latencyTicks();
-        final long cap = NetworkIndex.serverThroughputCap(level, server);
+        /*
+         * A server's share moves no faster than its own hardware, nor than the slowest cable between it and the
+         * Mainframe, which is worked out from the network as it stands when the Operation starts.
+         */
+        final long cap = Math.min(NetworkIndex.serverThroughputCap(level, server),
+                NetworkIndex.serverLinkCap(level, network, server));
         final Source source;
         if (scheduler != null) {
             source = new Source(server, new TransferState(quantity, 0), cap, false, ramLatencyTicks <= 0);
@@ -235,6 +241,18 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
         return done;
     }
 
+    /** How much the transfer has moved so far, all of it once it is done. */
+    public long moved() {
+        return movedTotal;
+    }
+
+    /** How much went through each node so far, the node that moved the most first. */
+    public final List<Map.Entry<NodeUuid, Long>> perNode() {
+        final List<Map.Entry<NodeUuid, Long>> out = new ArrayList<>(Map.copyOf(movedPerServer).entrySet());
+        out.sort(Map.Entry.<NodeUuid, Long>comparingByValue().reversed());
+        return out;
+    }
+
     @Override
     public OperationPriority priority() {
         return priority;
@@ -265,13 +283,25 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
                     : (!source.diskReady || !source.ramReady || source.state.waitingOnLatency())
                             ? OperationRecord.SubRow.SUB_READING
                     : OperationRecord.SubRow.SUB_STREAMING;
-            subs.add(new OperationRecord.SubRow("SRV-" + shortId(source.server.asString()),
-                    source.state.total(), source.state.moved(), state));
+            subs.add(new OperationRecord.SubRow(nodeLabel(source.server), source.state.total(), source.state.moved(),
+                    state));
         }
         return subs;
     }
 
     protected static String shortId(final String uuid) {
         return ShortId.of(uuid);
+    }
+
+    /**
+     * How a node a move went through is written on its row: a server by its short id, an External Storage Bus by
+     * its name, or its short id when it has none.
+     */
+    protected final String nodeLabel(final NodeUuid node) {
+        final ExternalStorageBusPart external = ExternalStores.find(level, node);
+        if (external == null) {
+            return "SRV-" + shortId(node.asString());
+        }
+        return external.name().isEmpty() ? "EXT-" + shortId(node.asString()) : external.name();
     }
 }

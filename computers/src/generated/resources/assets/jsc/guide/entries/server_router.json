@@ -1,0 +1,52 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.server_router.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.server_router.step1",
+        "jsc.guide.server_router.step2",
+        "jsc.guide.server_router.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_router.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_router.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.server_router.fix1",
+          "problem": "jsc.guide.server_router.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:datacenters",
+        "jsc:load_balancing"
+      ]
+    }
+  ],
+  "icon": "jsc:server_router",
+  "id": "jsc:server_router",
+  "items": [
+    "jsc:server_router"
+  ],
+  "order": 38,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.server_router.title"
+}

@@ -1,0 +1,520 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_old_names.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_old_names.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_old_names.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "namespace Corpus;",
+        "class OldNamesCorpus {",
+        "    static int Main(string[] args) {",
+        "        puts(\"How many ingots?\");",
+        "        putchar('>');",
+        "        Console.Print(' ');",
+        "        string line = gets();",
+        "        int letter = getchar();",
+        "        int count;",
+        "        int scanned = scanf(\"%d\", out count) + Console.Scan(out count) + letter;",
+        "        string built;",
+        "        strcpy(out built, line);",
+        "        strcat(ref built, \"!\");",
+        "        FILE notes = fopen(\"notes.txt\", \"a+\");",
+        "        string held;",
+        "        bool gotLine = fgets(out held, notes) && !feof(notes) && notes.ReadLine(out held) && notes.AtEnd;",
+        "        fputs(built, notes);",
+        "        fputc('.', notes);",
+        "        notes.Write(\"x\");",
+        "        notes.Write('y');",
+        "        int where = fgetc(notes) + notes.Read() + ftell(notes) + notes.Position + notes.Scan(out count);",
+        "        rewind(notes);",
+        "        fseek(notes, 2);",
+        "        notes.Seek(1);",
+        "        fprintf(notes, \"%05d\\n\", where);",
+        "        int more = fscanf(notes, \"%d\", out count);",
+        "        fclose(notes);",
+        "        FILE again = File.Open(\"notes.txt\", \"r\");",
+        "        again.Close();",
+        "        bool moved = remove(\"old.txt\") || rename(\"a.txt\", \"b.txt\") || File.Move(\"b.txt\", \"c.txt\");",
+        "        double asked = atof(line);",
+        "        int n = abs(-3) + min(4, 5) + max(1, 2);",
+        "        double root = sqrt(pow(3, 2)) + floor(2.5) + abs(-0.5) + min(1.5, 2) + max(0.5, 1);",
+        "        srand(1987);",
+        "        int lucky = rand();",
+        "        int length = strlen(line);",
+        "        int at = strstr(line, \"ingot\");",
+        "        string said = sprintf(\"%s: %d, %f\", itoa(n), lucky + length + at, root + asked);",
+        "        printf(\"%s\\n\", said);",
+        "        printf(\"%-12s|%5d|%05.2f|%#x|%e|%u\\n\", said, n, root, lucky, asked, length);",
+        "        int order = strcmp(line, said) + string.Compare(said, line) + atoi(line) + Convert.ToInt(line, -1);",
+        "        char first = toupper('a');",
+        "        char last = tolower(char.ToUpper('z'));",
+        "        bool kinds = isdigit(first) || isalpha(last) || isspace(' ') || char.ToLower(first) == 'a'",
+        "                || char.IsDigit('1') || char.IsLetter('b') || char.IsWhiteSpace('\\t');",
+        "        puts(itoa(order, 16) + Convert.ToString(lucky, 2) + first + last + kinds);",
+        "        if (args.Length > 1) {",
+        "            exit(0);",
+        "        }",
+        "        return args.Length;",
+        "    }",
+        "}"
+      ],
+      "name": "OldNames.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_old_names.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_old_names.table1",
+      "heads": [
+        "jsc.guide.sigma_example_old_names.table1_head1",
+        "jsc.guide.sigma_example_old_names.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "printf"
+          },
+          {
+            "literal": "Console.Print, with a formatted text"
+          }
+        ],
+        [
+          {
+            "literal": "puts"
+          },
+          {
+            "literal": "Console.PrintLine"
+          }
+        ],
+        [
+          {
+            "literal": "putchar"
+          },
+          {
+            "literal": "Console.Print, with one character"
+          }
+        ],
+        [
+          {
+            "literal": "gets"
+          },
+          {
+            "literal": "Console.ReadLine"
+          }
+        ],
+        [
+          {
+            "literal": "getchar"
+          },
+          {
+            "literal": "Console.Read"
+          }
+        ],
+        [
+          {
+            "literal": "scanf"
+          },
+          {
+            "literal": "Console.Scan, with one value"
+          }
+        ],
+        [
+          {
+            "literal": "exit"
+          },
+          {
+            "literal": "Program.Exit"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_old_names.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_old_names.table2",
+      "heads": [
+        "jsc.guide.sigma_example_old_names.table2_head1",
+        "jsc.guide.sigma_example_old_names.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "abs, min, max"
+          },
+          {
+            "literal": "Math.Abs, Math.Min, Math.Max"
+          }
+        ],
+        [
+          {
+            "literal": "sqrt, pow, floor"
+          },
+          {
+            "literal": "Math.Sqrt, Math.Pow, Math.Floor"
+          }
+        ],
+        [
+          {
+            "literal": "atoi"
+          },
+          {
+            "literal": "Convert.ToInt, which gives 0 for text that is not a number"
+          }
+        ],
+        [
+          {
+            "literal": "atof"
+          },
+          {
+            "literal": "Convert.ToDouble"
+          }
+        ],
+        [
+          {
+            "literal": "itoa"
+          },
+          {
+            "literal": "Convert.ToString"
+          }
+        ],
+        [
+          {
+            "literal": "sprintf"
+          },
+          {
+            "literal": "the formatted text, as a value"
+          }
+        ],
+        [
+          {
+            "literal": "srand, rand"
+          },
+          {
+            "literal": "Random.Seed, and Random.Next(32768)"
+          }
+        ],
+        [
+          {
+            "literal": "strlen"
+          },
+          {
+            "literal": "the Length of the text"
+          }
+        ],
+        [
+          {
+            "literal": "strstr"
+          },
+          {
+            "literal": "IndexOf of the text"
+          }
+        ],
+        [
+          {
+            "literal": "strcmp"
+          },
+          {
+            "literal": "string.Compare"
+          }
+        ],
+        [
+          {
+            "literal": "strcpy"
+          },
+          {
+            "literal": "the out place takes the text"
+          }
+        ],
+        [
+          {
+            "literal": "strcat"
+          },
+          {
+            "literal": "the ref place gets the text added on"
+          }
+        ],
+        [
+          {
+            "literal": "toupper, tolower"
+          },
+          {
+            "literal": "Char.ToUpper, Char.ToLower"
+          }
+        ],
+        [
+          {
+            "literal": "isdigit, isalpha, isspace"
+          },
+          {
+            "literal": "Char.IsDigit, Char.IsLetter, Char.IsWhiteSpace"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_old_names.heading4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_old_names.table3",
+      "heads": [
+        "jsc.guide.sigma_example_old_names.table3_head1",
+        "jsc.guide.sigma_example_old_names.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "fopen"
+          },
+          {
+            "literal": "File.Open, which gives a FILE"
+          }
+        ],
+        [
+          {
+            "literal": "fclose"
+          },
+          {
+            "literal": "Close of the file"
+          }
+        ],
+        [
+          {
+            "literal": "fgets"
+          },
+          {
+            "literal": "ReadLine of the file"
+          }
+        ],
+        [
+          {
+            "literal": "fputs, fprintf"
+          },
+          {
+            "literal": "Write of the text"
+          }
+        ],
+        [
+          {
+            "literal": "fscanf"
+          },
+          {
+            "literal": "Scan of the file"
+          }
+        ],
+        [
+          {
+            "literal": "fgetc"
+          },
+          {
+            "literal": "Read of the file"
+          }
+        ],
+        [
+          {
+            "literal": "fputc"
+          },
+          {
+            "literal": "Write of one character"
+          }
+        ],
+        [
+          {
+            "literal": "feof"
+          },
+          {
+            "literal": "AtEnd of the file"
+          }
+        ],
+        [
+          {
+            "literal": "rewind"
+          },
+          {
+            "literal": "Seek to 0"
+          }
+        ],
+        [
+          {
+            "literal": "fseek"
+          },
+          {
+            "literal": "Seek to the given position"
+          }
+        ],
+        [
+          {
+            "literal": "ftell"
+          },
+          {
+            "literal": "Position of the file"
+          }
+        ],
+        [
+          {
+            "literal": "remove"
+          },
+          {
+            "literal": "File.Delete"
+          }
+        ],
+        [
+          {
+            "literal": "rename"
+          },
+          {
+            "literal": "File.Move"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_old_names.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_old_names.table4",
+      "heads": [
+        "jsc.guide.sigma_example_old_names.table4_head1",
+        "jsc.guide.sigma_example_old_names.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "%d, %i, %u, %x, %X, %o"
+          },
+          {
+            "words": "jsc.guide.sigma_example_old_names.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "%f, %e, %E"
+          },
+          {
+            "words": "jsc.guide.sigma_example_old_names.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "%s"
+          },
+          {
+            "words": "jsc.guide.sigma_example_old_names.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "%c"
+          },
+          {
+            "words": "jsc.guide.sigma_example_old_names.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "%%"
+          },
+          {
+            "words": "jsc.guide.sigma_example_old_names.table4_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_old_names.definition1",
+      "term": "jsc.guide.sigma_example_old_names.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_old_names.definition2",
+      "term": "jsc.guide.sigma_example_old_names.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_old_names.definition3",
+      "term": "jsc.guide.sigma_example_old_names.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_old_names.definition4",
+      "term": "jsc.guide.sigma_example_old_names.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_old_names.definition5",
+      "term": "jsc.guide.sigma_example_old_names.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_old_names.definition6",
+      "term": "jsc.guide.sigma_example_old_names.term6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_old_names.fix1",
+          "problem": "jsc.guide.sigma_example_old_names.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_old_names.fix2",
+          "problem": "jsc.guide.sigma_example_old_names.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_old_names.fix3",
+          "problem": "jsc.guide.sigma_example_old_names.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_old_names.fix4",
+          "problem": "jsc.guide.sigma_example_old_names.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_old_names.fix5",
+          "problem": "jsc.guide.sigma_example_old_names.problem5"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_old_names.fix6",
+          "problem": "jsc.guide.sigma_example_old_names.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_printf_old_names",
+        "jsc:sigma_methods_out_ref",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_old_names",
+  "order": 406,
+  "section": "jsc:examples_language",
+  "title": "jsc.guide.sigma_example_old_names.title"
+}

@@ -1,0 +1,148 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.priorities.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.priorities.definition1",
+      "term": "jsc.guide.priorities.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.priorities.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.priorities.table1",
+      "heads": [
+        "jsc.guide.priorities.table1_head1",
+        "jsc.guide.priorities.table1_head2",
+        "jsc.guide.priorities.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "LOW"
+          },
+          {
+            "literal": "low"
+          },
+          {
+            "words": "jsc.guide.priorities.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "MEDIUM_LOW"
+          },
+          {
+            "literal": "medium_low"
+          },
+          {
+            "words": "jsc.guide.priorities.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "MEDIUM"
+          },
+          {
+            "literal": "medium"
+          },
+          {
+            "words": "jsc.guide.priorities.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "MEDIUM_HIGH"
+          },
+          {
+            "literal": "medium_high"
+          },
+          {
+            "words": "jsc.guide.priorities.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "HIGH"
+          },
+          {
+            "literal": "high"
+          },
+          {
+            "words": "jsc.guide.priorities.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.priorities.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.priorities.definition2",
+      "term": "jsc.guide.priorities.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.priorities.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.priorities.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.priorities.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.priorities.step1",
+        "jsc.guide.priorities.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.priorities.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.priorities.fix1",
+          "problem": "jsc.guide.priorities.problem1"
+        },
+        {
+          "fix": "jsc.guide.priorities.fix2",
+          "problem": "jsc.guide.priorities.problem2"
+        },
+        {
+          "fix": "jsc.guide.priorities.fix3",
+          "problem": "jsc.guide.priorities.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:states_and_queues",
+        "jsc:iql"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:priorities",
+  "order": 97,
+  "section": "jsc:operations",
+  "title": "jsc.guide.priorities.title"
+}

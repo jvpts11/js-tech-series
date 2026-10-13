@@ -8,6 +8,8 @@
 package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Sizes;
 
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +34,7 @@ public final class CraftPlanner {
 
     /**
      * One recipe executed {@code runs} times, inputs guaranteed by the steps before it: either a bench pattern
-     * a Crafting Computer runs, or a machine pattern the network feeds through a Crafting Switch.
+     * a Crafting Computer runs, or a machine pattern the network feeds through a Crafting Interface.
      */
     public record Step(@Nullable CraftingPattern pattern, @Nullable ProcessingPattern machine, long runs) {
 
@@ -66,8 +68,13 @@ public final class CraftPlanner {
         }
 
         public String resultName() {
+            return resultText().english();
+        }
+
+        /** What the step makes, named in the language of whoever reads it. */
+        public Text resultText() {
             final StorageKey key = resultKey();
-            return key == null ? "?" : key.displayName().getString();
+            return key == null ? Text.literal("?") : GameText.of(key.displayName());
         }
 
         /** Work units one run costs a computer: the ingredients it handles. */
@@ -76,7 +83,7 @@ public final class CraftPlanner {
         }
 
         public long produced() {
-            return runs * perRun();
+            return Sizes.times(runs, perRun());
         }
     }
 
@@ -103,7 +110,22 @@ public final class CraftPlanner {
     public static Plan plan(final StorageKey resultKey, final long quantity,
                             final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
                             final Map<StorageKey, Long> stock) {
-        final State state = new State(patterns, machines, stock);
+        return plan(resultKey, quantity, patterns, machines, stock, false);
+    }
+
+    /**
+     * The same, with the choice between a bench and a machine turned around when {@code machineFirst}: a thing that
+     * both a machine and a bench make is made on the machine. An engine weighing both plans asks for each.
+     */
+    public static Plan plan(final StorageKey resultKey, final long quantity,
+                            final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
+                            final Map<StorageKey, Long> stock, final boolean machineFirst) {
+        return plan(resultKey, quantity, Recipes.of(patterns, machines), stock, machineFirst);
+    }
+
+    private static Plan plan(final StorageKey resultKey, final long quantity, final Recipes recipes,
+                             final Map<StorageKey, Long> stock, final boolean machineFirst) {
+        final State state = new State(recipes, stock, machineFirst);
         final long covered = state.produce(resultKey, quantity, 0, new HashSet<>(), true);
         return new Plan(mergeMachineSteps(state.steps), Map.copyOf(state.rawConsumption),
                 Map.copyOf(state.missing), covered);
@@ -170,15 +192,24 @@ public final class CraftPlanner {
     public static long maxFeasible(final StorageKey resultKey, final long quantity,
                                    final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
                                    final Map<StorageKey, Long> stock) {
+        return maxFeasible(resultKey, quantity, patterns, machines, stock, false);
+    }
+
+    /** The most of {@code resultKey} the plan made with the bench and machine order of {@code machineFirst} reaches. */
+    public static long maxFeasible(final StorageKey resultKey, final long quantity,
+                                   final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
+                                   final Map<StorageKey, Long> stock, final boolean machineFirst) {
         long low = 0;
         /*
          * Cap the search ceiling so the midpoint arithmetic below cannot overflow when quantity is near
          * Long.MAX_VALUE (e.g. an IQL CRAFT with no count cap); a craft beyond this bound is unrealistic.
          */
         long high = Math.min(quantity, 2_000_000_000L);
+        // Indexed once: every probe below plans the same recipes again.
+        final Recipes recipes = Recipes.of(patterns, machines);
         while (low < high) {
             final long mid = low + (high - low + 1) / 2;
-            if (plan(resultKey, mid, patterns, machines, stock).feasible()) {
+            if (plan(resultKey, mid, recipes, stock, machineFirst).feasible()) {
                 low = mid;
             } else {
                 high = mid - 1;
@@ -188,22 +219,43 @@ public final class CraftPlanner {
     }
 
     /**
+     * The recipes of a planning call by what they make, the first of the list winning a tie as a scan would, so a
+     * lookup costs one hash instead of a pass over every pattern.
+     */
+    private record Recipes(Map<StorageKey, CraftingPattern> benches, Map<StorageKey, ProcessingPattern> machines) {
+
+        static Recipes of(final List<CraftingPattern> patterns, final List<ProcessingPattern> machines) {
+            final Map<StorageKey, CraftingPattern> benches = new HashMap<>();
+            for (final CraftingPattern pattern : patterns) {
+                benches.putIfAbsent(StorageKey.of(pattern.result()), pattern);
+            }
+            final Map<StorageKey, ProcessingPattern> byOutput = new HashMap<>();
+            for (final ProcessingPattern machine : machines) {
+                final ProcessingPattern.ProcessingOutput primary = machine.primaryOutput();
+                if (primary != null && !machine.inputs().isEmpty()) {
+                    byOutput.putIfAbsent(primary.key(), machine);
+                }
+            }
+            return new Recipes(benches, byOutput);
+        }
+    }
+
+    /**
      * Mutable planning pass: virtual stock + intermediates, consumed as the tree expands.
      */
     private static final class State {
-        private final List<CraftingPattern> patterns;
-        private final List<ProcessingPattern> machines;
+        private final Recipes recipes;
         private final Map<StorageKey, Long> remainingStock;
         private final Map<StorageKey, Long> intermediates = new HashMap<>();
         private final List<Step> steps = new ArrayList<>();
         private final Map<StorageKey, Long> rawConsumption = new LinkedHashMap<>();
         private final Map<StorageKey, Long> missing = new LinkedHashMap<>();
+        private final boolean machineFirst;
 
-        private State(final List<CraftingPattern> patterns, final List<ProcessingPattern> machines,
-                      final Map<StorageKey, Long> stock) {
-            this.patterns = patterns;
-            this.machines = machines;
+        private State(final Recipes recipes, final Map<StorageKey, Long> stock, final boolean machineFirst) {
+            this.recipes = recipes;
             this.remainingStock = new HashMap<>(stock);
+            this.machineFirst = machineFirst;
         }
 
         private long produce(final StorageKey key, final long quantity, final int depth,
@@ -222,9 +274,14 @@ public final class CraftPlanner {
                 return quantity;
             }
 
-            // A bench pattern wins; otherwise a machine pattern whose primary output is the key.
-            final CraftingPattern pattern = patternFor(key);
-            final ProcessingPattern machine = pattern == null ? machineFor(key) : null;
+            /*
+             * A bench pattern wins; otherwise a machine pattern whose primary output is the key (the other way round
+             * when the machines go first).
+             */
+            final ProcessingPattern firstMachine = machineFirst ? machineFor(key) : null;
+            final CraftingPattern pattern = firstMachine != null ? null : patternFor(key);
+            final ProcessingPattern machine = firstMachine != null ? firstMachine
+                    : pattern == null ? machineFor(key) : null;
             if ((pattern == null && machine == null) || depth >= MAX_DEPTH || chain.contains(key)) {
                 missing.merge(key, deficit, Long::sum);
                 return quantity - deficit;
@@ -240,7 +297,7 @@ public final class CraftPlanner {
             chain.add(key);
             long feasibleRuns = runs;
             for (final Map.Entry<StorageKey, Long> ingredient : ingredients.entrySet()) {
-                final long need = ingredient.getValue() * runs;
+                final long need = Sizes.times(ingredient.getValue(), runs);
                 final long got = produce(ingredient.getKey(), need, depth + 1, chain, false);
                 if (got < need) {
                     // Short on this ingredient: only the runs it fully covers can execute.
@@ -268,24 +325,14 @@ public final class CraftPlanner {
             return quantity - deficit;
         }
 
+        @Nullable
         private CraftingPattern patternFor(final StorageKey key) {
-            for (final CraftingPattern pattern : patterns) {
-                if (StorageKey.of(pattern.result()).equals(key)) {
-                    return pattern;
-                }
-            }
-            return null;
+            return recipes.benches().get(key);
         }
 
         @Nullable
         private ProcessingPattern machineFor(final StorageKey key) {
-            for (final ProcessingPattern machine : machines) {
-                final ProcessingPattern.ProcessingOutput primary = machine.primaryOutput();
-                if (primary != null && primary.key().equals(key) && !machine.inputs().isEmpty()) {
-                    return machine;
-                }
-            }
-            return null;
+            return recipes.machines().get(key);
         }
 
         /** A machine pattern's inputs per run, duplicates merged, in declaration order. */

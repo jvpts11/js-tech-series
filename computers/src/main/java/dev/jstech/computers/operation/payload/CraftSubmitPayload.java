@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.core.operation.OperationPriority;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -24,6 +25,10 @@ public record CraftSubmitPayload(BlockPos monitorPos, BlockPos hostPos,
                                  ItemStack result, long quantity, boolean partial, boolean multiStage,
                                  OperationPriority priority, int recipe)
         implements CustomPacketPayload {
+
+    public CraftSubmitPayload {
+        quantity = Math.min(quantity, CraftRequest.MOST_DEMAND);
+    }
 
     public CraftSubmitPayload(final BlockPos monitorPos, final BlockPos hostPos, final ItemStack result,
                               final long quantity, final boolean partial, final boolean multiStage,
@@ -44,7 +49,7 @@ public record CraftSubmitPayload(BlockPos monitorPos, BlockPos hostPos,
                         buf.writeVarLong(p.quantity());
                         buf.writeBoolean(p.partial());
                         buf.writeBoolean(p.multiStage());
-                        NiGridClickPayload.PRIORITY_CODEC.encode(buf, p.priority());
+                        PayloadCodecs.PRIORITY.encode(buf, p.priority());
                         buf.writeVarInt(p.recipe());
                     },
                     buf -> new CraftSubmitPayload(
@@ -54,7 +59,7 @@ public record CraftSubmitPayload(BlockPos monitorPos, BlockPos hostPos,
                             buf.readVarLong(),
                             buf.readBoolean(),
                             buf.readBoolean(),
-                            NiGridClickPayload.PRIORITY_CODEC.decode(buf),
+                            PayloadCodecs.PRIORITY.decode(buf),
                             buf.readVarInt()));
 
     @Override

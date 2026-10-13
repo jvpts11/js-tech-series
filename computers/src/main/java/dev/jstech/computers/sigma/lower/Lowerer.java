@@ -57,8 +57,13 @@ public final class Lowerer {
     private final TypeRules rules;
     /** What a method's lambdas keep hold of, which is a question about the tree and is answered here. */
     private final CaptureFinder finder;
-    /** How many locks are held where the statement being reduced was written. */
+    /** How many locks were held where each loop around the statement being reduced began. */
     private final Deque<Integer> loopLocks = new ArrayDeque<>();
+    /**
+     * The same for whatever a break leaves, which is the nearest loop or switch: a break inside a switch ends the
+     * switch and stays inside the loop, so only the locks taken since the switch began are behind it.
+     */
+    private final Deque<Integer> breakLocks = new ArrayDeque<>();
     /**
      * What each method's statements came to, by the declaration they were written in.
      *
@@ -80,6 +85,13 @@ public final class Lowerer {
      * is kept here rather than asked again at every line that stores something.
      */
     private final Set<IExpr> copied = Collections.newSetFromMap(new IdentityHashMap<>());
+    /*
+     * The expressions already walked. A call's long way is made over the very values handed to the call, so walking
+     * it walks them again; a long way nested in another's values is then walked twice for every level above it, and
+     * thirty levels of calls written inside one another took the server's thread for good. A second walk changes
+     * nothing, so it is not made.
+     */
+    private final Set<IExpr> walked = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private int locksOpen;
     /** What the lambdas of the method being walked keep, which is what makes a variable not a slot. */
@@ -103,6 +115,7 @@ public final class Lowerer {
     private IrStmt body(final IStmt.Block block) {
         this.locksOpen = 0;
         this.loopLocks.clear();
+        this.breakLocks.clear();
         return this.statements(block);
     }
 
@@ -133,8 +146,8 @@ public final class Lowerer {
             case IStmt.ForEach loop -> this.walked(loop);
             case IStmt.Switch chosen -> this.chosen(chosen);
             case IStmt.Lock held -> this.held(held);
-            case IStmt.Break ignored -> new IrStmt.Break(false, this.leavingTheLoop());
-            case IStmt.Continue ignored -> new IrStmt.Break(true, this.leavingTheLoop());
+            case IStmt.Break ignored -> new IrStmt.Break(false, this.leaving(this.breakLocks));
+            case IStmt.Continue ignored -> new IrStmt.Break(true, this.leaving(this.loopLocks));
             case IStmt.Return give -> new IrStmt.Return(give.value(), this.locksOpen);
             default -> new IrStmt.Source(statement);
         };
@@ -150,10 +163,12 @@ public final class Lowerer {
 
     private IrStmt chosen(final IStmt.Switch choice) {
         final List<IrStmt.Switch.Section> sections = new ArrayList<>(choice.sections().size());
+        this.breakLocks.push(this.locksOpen);
         for (final IStmt.SwitchSection section : choice.sections()) {
             sections.add(new IrStmt.Switch.Section(section.labels(), this.each(section.statements()),
                     section.fallback()));
         }
+        this.breakLocks.pop();
         return new IrStmt.Switch(choice.value(), sections);
     }
 
@@ -164,7 +179,7 @@ public final class Lowerer {
         final IrStmt body = this.reduce(lock.body());
         this.locksOpen--;
         return new IrStmt.Block(List.of(
-                new IrStmt.Keep(place, lock.target(), true),
+                new IrStmt.Keep(place, lock.target()),
                 new IrStmt.MonitorEnter(place),
                 body,
                 new IrStmt.MonitorExit(place)));
@@ -173,14 +188,16 @@ public final class Lowerer {
     /** A loop body, remembering how many locks were held when the loop began. */
     private IrStmt inLoop(final IStmt body) {
         this.loopLocks.push(this.locksOpen);
+        this.breakLocks.push(this.locksOpen);
         final IrStmt made = this.reduce(body);
+        this.breakLocks.pop();
         this.loopLocks.pop();
         return made;
     }
 
-    /** How many locks a break or a continue lets go of: the ones taken inside the loop it is leaving. */
-    private int leavingTheLoop() {
-        return this.loopLocks.isEmpty() ? 0 : this.locksOpen - this.loopLocks.peek();
+    /** How many locks a break or a continue lets go of: the ones taken inside what it is leaving. */
+    private int leaving(final Deque<Integer> boundaries) {
+        return boundaries.isEmpty() ? 0 : this.locksOpen - boundaries.peek();
     }
 
     /**
@@ -203,8 +220,7 @@ public final class Lowerer {
     /** Whether each turn of a walk takes its own copy, which it does when what it finds is a value. */
     private boolean copiesEachTurn(final IStmt.ForEach loop) {
         final IBinding.Variable walker = this.model.declaredAt(loop);
-        return walker != null && this.rules.named(walker.type()) != null
-                && this.rules.named(walker.type()).kind() == NamedType.Kind.STRUCT;
+        return walker != null && this.isStruct(walker.type());
     }
 
     /** What each method's statements came to, for the stage that writes them down. */
@@ -298,18 +314,19 @@ public final class Lowerer {
 
     /** The number one, written as the kind of number that place holds, and typed as it is made. */
     private IExpr one(final ITypeSymbol type, final IExpr at) {
+        final ITypeSymbol kind = type == ITypeSymbol.Primitive.LONG || type == ITypeSymbol.Primitive.FLOAT
+                || type == ITypeSymbol.Primitive.DOUBLE ? type : ITypeSymbol.Primitive.INT;
         final IExpr made;
-        if (type == ITypeSymbol.Primitive.LONG) {
+        if (kind == ITypeSymbol.Primitive.LONG) {
             made = new IExpr.Literal(TokenKind.LONG_LITERAL, 1L, at.line(), at.column());
-        } else if (type == ITypeSymbol.Primitive.FLOAT) {
+        } else if (kind == ITypeSymbol.Primitive.FLOAT) {
             made = new IExpr.Literal(TokenKind.FLOAT_LITERAL, 1.0F, at.line(), at.column());
-        } else if (type == ITypeSymbol.Primitive.DOUBLE) {
+        } else if (kind == ITypeSymbol.Primitive.DOUBLE) {
             made = new IExpr.Literal(TokenKind.DOUBLE_LITERAL, 1.0D, at.line(), at.column());
         } else {
             made = new IExpr.Literal(TokenKind.INT_LITERAL, 1, at.line(), at.column());
         }
-        this.model.setType(made, type == ITypeSymbol.Primitive.LONG || type == ITypeSymbol.Primitive.FLOAT
-                || type == ITypeSymbol.Primitive.DOUBLE ? type : ITypeSymbol.Primitive.INT);
+        this.model.setType(made, kind);
         return made;
     }
 
@@ -339,6 +356,9 @@ public final class Lowerer {
                 }
                 case IDecl.ConstructorDecl constructor -> {
                     this.kept = this.keptBy(constructor, constructor.parameters(), constructor.body());
+                    if (constructor.chained() != null) {
+                        constructor.chained().arguments().forEach(this::replaceIn);
+                    }
                     this.block(constructor.body());
                     this.bodies.put(constructor, this.body(constructor.body()));
                 }
@@ -413,6 +433,9 @@ public final class Lowerer {
 
     /** Walks an expression, putting the simpler shape in place of anything written in a richer one. */
     private void replaceIn(final IExpr expression) {
+        if (expression != null && !this.walked.add(expression)) {
+            return;
+        }
         switch (expression) {
             case null -> { }
             case IExpr.Unary unary -> {
@@ -476,10 +499,25 @@ public final class Lowerer {
      * <p>A string with holes becomes the pieces added together, left to right, each piece already reduced. An
      * empty one is the empty string; one that starts with a hole starts from the empty string, so that the
      * first addition is text joining text rather than whatever the hole turned out to hold.
+     *
+     * <p>A call of one of the old bare functions becomes the long way the checker worked out for it. That shape
+     * was made over the very values the player handed the call, so reducing those, which the walk has already
+     * done, reduces it too.
      */
     private IExpr lowered(final IExpr expression) {
+        if (expression instanceof IExpr.Call call && this.model.longWayOf(call) != null) {
+            final IExpr longWay = this.model.longWayOf(call);
+            /*
+             * The long way is walked as a shape written by hand would be: what it writes is worked out, and a format
+             * inside it is joined. What of it the player wrote was walked already, and walking it again changes nothing.
+             */
+            this.replaceIn(longWay);
+            return longWay;
+        }
         if (expression instanceof IExpr.Call call && this.model.formattedOf(call) != null) {
-            return this.printed(call);
+            // A formatting call that hands its text to nothing is sprintf, and the text is its value.
+            return this.model.callOf(call) == null ? this.joined(this.model.formattedOf(call), call)
+                    : this.printed(call);
         }
         if (!(expression instanceof IExpr.Interpolation written)) {
             return null;

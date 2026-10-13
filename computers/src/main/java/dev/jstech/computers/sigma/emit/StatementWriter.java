@@ -84,9 +84,7 @@ final class StatementWriter {
             case IrStmt.Switch choice -> this.choice(choice);
             case IrStmt.Keep kept -> {
                 this.values.value(kept.value(), null);
-                if (kept.leaves()) {
-                    this.body.emit(Opcode.DUP);
-                }
+                this.body.emit(Opcode.DUP);
                 this.body.emit(Opcode.STLOC, new IOperand.Slot(this.body.placeOf(kept.place())));
             }
             case IrStmt.MonitorEnter taken -> {
@@ -125,6 +123,12 @@ final class StatementWriter {
                 this.body.pushClosure();
                 this.values.copied(local.initializer(), variable.type());
                 this.body.storeKept(variable);
+            } else if (variable != null && this.values.isStruct(variable.type())) {
+                // The shared object does not start its fields as empty structs, so a captured struct local
+                // declared without a value would stay null for the lambda that reads or writes it.
+                this.body.pushClosure();
+                this.emptyStruct(variable);
+                this.body.storeKept(variable);
             }
             return;
         }
@@ -132,8 +136,7 @@ final class StatementWriter {
         if (local.initializer() == null) {
             if (variable != null && this.values.isStruct(variable.type())) {
                 // A struct is never nothing: a local declared without a value starts as an empty one.
-                this.body.emit(Opcode.NEWOBJ,
-                        new IOperand.Constructor(variable.type().describe(), List.of()));
+                this.emptyStruct(variable);
                 this.body.emit(Opcode.STLOC, new IOperand.Slot(place));
             }
             return;
@@ -147,7 +150,9 @@ final class StatementWriter {
      * behind is thrown away. An assignment is told beforehand, so it never puts it there at all.
      */
     private void discard(final IExpr expression) {
-        if (expression instanceof IExpr.Assign assign) {
+        // What a shorter shape was reduced to is what is written, and an assignment is one wherever it came from.
+        final IExpr simpler = this.emitter.model.loweredOf(expression);
+        if ((simpler == null ? expression : simpler) instanceof IExpr.Assign assign) {
             this.values.assign(assign, false);
             return;
         }
@@ -155,6 +160,11 @@ final class StatementWriter {
         if (this.leavesAValue(expression)) {
             this.body.emit(Opcode.POP);
         }
+    }
+
+    /** Makes an empty value of the struct the variable holds, leaving it on the stack. */
+    private void emptyStruct(final IBinding.Variable variable) {
+        this.body.emit(Opcode.NEWOBJ, new IOperand.Constructor(variable.type().describe(), List.of()));
     }
 
     private boolean leavesAValue(final IExpr expression) {
@@ -359,7 +369,8 @@ final class StatementWriter {
                     new IOperand.Field(field.owner().qualifiedName(), field.name()));
             return;
         }
-        this.values.receiver(target);
+        // The target names the field itself, so what goes on the stack is the object that holds it.
+        this.values.receiverOf(target);
         this.body.emit(pushValue);
         this.body.emit(Opcode.STFLD, new IOperand.Field(this.body.ownerOf(field), field.name()));
     }

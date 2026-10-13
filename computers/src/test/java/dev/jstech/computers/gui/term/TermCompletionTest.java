@@ -78,6 +78,28 @@ class TermCompletionTest {
     }
 
     @Test
+    void everyCommandFor_listsEveryCommandOnAnEmptyLine() {
+        assertEquals(List.of("mkdir", "mkfs.ext4", "mkfs.fat", "mount", "lsblk"), completion.everyCommandFor(""));
+    }
+
+    @Test
+    void everyCommandFor_listsOnlyWhatAPrefixMatches() {
+        assertEquals(List.of("mkdir", "mkfs.ext4", "mkfs.fat"), completion.everyCommandFor("mk"));
+    }
+
+    @Test
+    void everyCommandFor_offersNothingOnceADeviceIsBeingNamed() {
+        assertEquals(List.of(), completion.everyCommandFor("mount "));
+    }
+
+    @Test
+    void everyCommandFor_spendsNoPressOfTheRoundNextIsIn() {
+        assertEquals(Optional.of("mkdir"), completion.next("mk"));
+        completion.everyCommandFor("mk");
+        assertEquals(Optional.of("mkfs.ext4"), completion.next("mkdir"));
+    }
+
+    @Test
     void know_startsOverWithWhatTheMachineHasNow() {
         completion.next("mk");
         completion.know(List.of("make"), List.of());

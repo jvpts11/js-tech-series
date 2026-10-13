@@ -8,14 +8,21 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.menu.ServerRackMenu;
+import dev.jstech.core.connect.Connection;
+import dev.jstech.core.connect.FacePorts;
+import dev.jstech.core.connect.FaceRule;
+import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
-import dev.jstech.core.network.DataTier;
-import dev.jstech.core.network.IRearFacingDataPort;
-import java.util.EnumSet;
-import java.util.Set;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.peripheral.PeripheralLine;
+import dev.jstech.core.tier.HardwareEra;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -38,6 +45,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +53,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A structural part of the Server Rack, one of the 11 non-controller blocks of the 2x3x2 cabinet.
  */
-public class ServerRackPartBlock extends Block implements EntityBlock, IRearFacingDataPort {
+public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConnector {
 
     public static final MapCodec<ServerRackPartBlock> CODEC = simpleCodec(ServerRackPartBlock::new);
 
@@ -62,6 +70,26 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
     public static final DirectionProperty FACING =
             BlockStateProperties.HORIZONTAL_FACING;
 
+    /*
+     * The era of the cabinet the part belongs to, as the era's level(), stamped by the controller as it raises the
+     * part: the parts are one shared block, and the cabinet's age is what sets the cables they take.
+     */
+    public static final IntegerProperty ERA = IntegerProperty.create(
+            "era", HardwareEra.VINTAGE.level(), HardwareEra.ADVANCED.level());
+
+    /*
+     * The backbone and the compute fabric on the back, and the peripheral line on every face, every era's: what any
+     * part may take, which accepts() narrows to its own cabinet's. A rack is on the backbone; the access line is for
+     * the small computers, which reach it through a router.
+     */
+    private static final FacePorts PORTS = FacePorts.builder()
+            .port(FaceRule.BACK, DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE, DataLine.HPC))
+            .port(FaceRule.EVERY, PeripheralLine.of(HardwareEra.ADVANCED))
+            .build();
+    /* What a part takes, as its cabinet does: a server cabinet's of each era, and a compute cabinet's. */
+    private static final Map<HardwareEra, FacePorts> SERVER_PORTS = byEra(false);
+    private static final Map<HardwareEra, FacePorts> COMPUTE_PORTS = byEra(true);
+
     public ServerRackPartBlock(final Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any()
@@ -69,7 +97,9 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
                 .setValue(FRONT, false)
                 .setValue(COMPUTE, false)
                 .setValue(FACING, Direction.NORTH)
-                .setValue(ServerRackBlock.BAYS, 0));
+                .setValue(ERA, HardwareEra.STANDARD.level())
+                .setValue(ServerRackBlock.BAYS, 0)
+                .setValue(OpticalPort.FIBRE, FibreReach.NONE));
     }
 
     /** A part is collision and a link back to the controller; the cabinet model is drawn from there. */
@@ -84,24 +114,27 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
     }
 
     @Override
-    public Set<DataTier> acceptedCableTiers() {
-        return EnumSet.allOf(DataTier.class);
+    public FacePorts ports() {
+        return PORTS;
     }
 
+    /*
+     * A compute cabinet is on the high-compute fabric only; a server cabinet takes the backbone and the peripheral
+     * line, and both only the cables of their cabinet's era and the earlier ones, through the back for the data
+     * lines, as the cabinet's own block does. The cable's rendered nub and the cabinet's own link follow this same
+     * rule, so a data cable on a supercomputer cabinet neither shows a connection nor makes one. The fibre only as far
+     * as the Fibre Optic Interface mounted in the cabinet reaches.
+     */
     @Override
-    public boolean connectsOnFace(final BlockState state, final Direction face,
-                                  final DataTier tier) {
-        /*
-         * A compute cabinet is on the high-compute fabric only; a server cabinet takes every data tier but
-         * that one. The cable's rendered nub and the cabinet's own link follow this same rule, so a data
-         * cable on a supercomputer cabinet neither shows a connection nor makes one.
-         */
-        return state.getValue(COMPUTE) == (tier == DataTier.HPC);
+    public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
+        final HardwareEra era = HardwareEra.fromLevel(state.getValue(ERA));
+        return (state.getValue(COMPUTE) ? COMPUTE_PORTS : SERVER_PORTS).get(era).accepts(state, face, offered)
+                && OpticalPort.admits(state, offered);
     }
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(TOP, FRONT, COMPUTE, FACING, ServerRackBlock.BAYS);
+        builder.add(TOP, FRONT, COMPUTE, FACING, ERA, ServerRackBlock.BAYS, OpticalPort.FIBRE);
     }
 
     @Override
@@ -128,6 +161,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
                 && part.controllerPos() != null
                 && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack) {
             final BlockPos controllerPos = part.controllerPos();
+            MachineOperators.note(rack, player);
             serverPlayer.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> new ServerRackMenu(id, inv, rack),
                     // The cabinet names itself; every era and the compute cabinet have their own.
@@ -149,7 +183,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
         if (level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part && part.controllerPos() != null
                 && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack
                 && rack.getBlockState().getBlock() instanceof ServerRackBlock cabinet) {
-            return ServerRackBlock.pickFrom(rack, part.controllerPos(), pos, target, cabinet.blockItem());
+            return ServerRackBlock.pickFrom(rack, part.controllerPos(), pos, target, cabinet.asItem());
         }
         return super.getCloneItemStack(state, target, level, pos, player);
     }
@@ -157,13 +191,13 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
     @Override
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
                                         final Player player) {
-        // Drops happen here (not in dissolve) so creative mode never spills items.
-        if (level instanceof ServerLevel serverLevel && !player.getAbilities().instabuild
+        // The whole cabinet goes with any of its blocks, so a player's break here is a break of the cabinet.
+        if (level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part
                 && part.controllerPos() != null
                 && level.getBlockState(part.controllerPos()).getBlock()
                         instanceof AbstractMultiblockControllerBlock controller) {
-            controller.dropContentsExternally(serverLevel, part.controllerPos());
+            controller.brokenBy(serverLevel, part.controllerPos(), player);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
@@ -192,5 +226,19 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
     @Nullable
     public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return new ServerRackPartBlockEntity(pos, state);
+    }
+
+    private static Map<HardwareEra, FacePorts> byEra(final boolean compute) {
+        final Map<HardwareEra, FacePorts> ports = new EnumMap<>(HardwareEra.class);
+        for (int level = HardwareEra.VINTAGE.level(); level <= HardwareEra.ADVANCED.level(); level++) {
+            final HardwareEra era = HardwareEra.fromLevel(level);
+            ports.put(era, compute
+                    ? FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.HPC)).build()
+                    : FacePorts.builder()
+                            .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
+                            .port(FaceRule.EVERY, PeripheralLine.of(era))
+                            .build());
+        }
+        return Map.copyOf(ports);
     }
 }

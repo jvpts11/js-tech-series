@@ -1,0 +1,137 @@
+{
+  "blocks": [
+    {
+      "type": "views",
+      "callouts": [
+        {
+          "number": 1,
+          "text": "jsindustrial.manual.the_front",
+          "u": 10,
+          "v": 7,
+          "view": "front"
+        },
+        {
+          "number": 2,
+          "text": "jsindustrial.manual.any_side",
+          "u": 12,
+          "v": 5,
+          "view": "side"
+        }
+      ],
+      "item": "jsindustrial:compressor"
+    },
+    {
+      "type": "note",
+      "text": "jsindustrial.manual.set_up_next"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.compressor.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.compressor.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.compressor.heading1"
+    },
+    {
+      "type": "recipes",
+      "recipe_type": "jsindustrial:compressing"
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "plan",
+      "caption": "jsindustrial.manual.set_up_plan",
+      "parts": [
+        {
+          "item": "jsindustrial:coal_generator",
+          "label": "jsindustrial.manual.generator"
+        },
+        {
+          "item": "jsindustrial:compressor",
+          "label": "jsindustrial.guide.compressor.plan1_2"
+        },
+        {
+          "label": "jsindustrial.manual.second_generator",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.compressor.use1",
+        "jsindustrial.guide.compressor.use2",
+        "jsindustrial.guide.compressor.use3",
+        "jsindustrial.guide.compressor.use4",
+        "jsindustrial.guide.compressor.use5"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.compressor.fix1",
+          "problem": "jsindustrial.guide.compressor.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.compressor.fix2",
+          "problem": "jsindustrial.guide.compressor.problem2"
+        },
+        {
+          "fix": "jsindustrial.guide.compressor.fix3",
+          "problem": "jsindustrial.guide.compressor.problem3"
+        },
+        {
+          "fix": "jsindustrial.guide.compressor.fix4",
+          "problem": "jsindustrial.guide.compressor.problem4"
+        }
+      ]
+    }
+  ],
+  "icon": "jsindustrial:compressor",
+  "id": "jsindustrial:compressor",
+  "items": [
+    "jsindustrial:compressor"
+  ],
+  "order": 2,
+  "section": "jsindustrial:machines",
+  "title": "jsindustrial.guide.compressor.title"
+}

@@ -1,0 +1,142 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.speakers.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.speakers.definition1",
+      "term": "jsc.guide.speakers.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.speakers.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.speakers.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.speakers.table1",
+      "heads": [
+        "jsc.guide.speakers.table1_head1",
+        "jsc.guide.speakers.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.speakers.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.speakers.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.speakers.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.speakers.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.speakers.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.speakers.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.speakers.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.speakers.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.speakers.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.speakers.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.speakers.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.speakers.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.speakers.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.speakers.definition2",
+      "term": "jsc.guide.speakers.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.speakers.definition3",
+      "term": "jsc.guide.speakers.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.speakers.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.speakers.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.speakers.fix1",
+          "problem": "jsc.guide.speakers.problem1"
+        },
+        {
+          "fix": "jsc.guide.speakers.fix2",
+          "problem": "jsc.guide.speakers.problem2"
+        },
+        {
+          "fix": "jsc.guide.speakers.fix3",
+          "problem": "jsc.guide.speakers.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sound_cards",
+        "jsc:peripheral_cables",
+        "jsc:monitors"
+      ]
+    }
+  ],
+  "icon": "jsc:speaker",
+  "id": "jsc:speakers",
+  "items": [
+    "jsc:legacy_speaker",
+    "jsc:transition_speaker",
+    "jsc:transition_subwoofer",
+    "jsc:speaker",
+    "jsc:advanced_speaker"
+  ],
+  "order": 45,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.speakers.title"
+}

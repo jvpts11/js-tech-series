@@ -11,7 +11,6 @@ import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
 import dev.jstech.industrial.JsIndustrial;
-import dev.jstech.industrial.recipe.MaceratingRecipe;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -19,7 +18,6 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -78,14 +76,11 @@ public class JsIndustrialRecipeProvider extends RecipeProvider {
     }
 
     private static TagKey<Item> c(final String path) {
-        return ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", path));
+        return MaterialFormRecipes.cTag(path);
     }
 
     private static void macerating(final RecipeOutput recipeOutput, final Ingredient ingredient,
                                    final ItemStack result, final String name) {
-        recipeOutput.accept(
-                ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "macerating/" + name),
-                new MaceratingRecipe(ingredient, result, 200),
-                null);
+        MaterialFormRecipes.macerating(recipeOutput, ingredient, result, name);
     }
 }

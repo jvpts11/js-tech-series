@@ -7,57 +7,56 @@
  */
 package dev.jstech.computers;
 
-import com.mojang.serialization.Codec;
-import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.advancement.OsFirstBootTrigger;
+import static dev.jstech.computers.registry.ComputingContent.shelf;
+
+import dev.jstech.computers.advancement.JscTriggers;
+import dev.jstech.computers.audio.ComputingAudioDevices;
+import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.block.CableRunTexts;
+import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
-import dev.jstech.computers.block.CraftingSwitchBlock;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
-import dev.jstech.computers.block.LegacyClusterManagementComputerBlock;
-import dev.jstech.computers.block.LegacyCraftingComputerBlock;
-import dev.jstech.computers.block.LegacyMainframeBlock;
-import dev.jstech.computers.block.LegacyMonitorBlock;
-import dev.jstech.computers.block.LegacyPersonalComputerBlock;
-import dev.jstech.computers.block.LegacyServerRackBlock;
+import dev.jstech.computers.block.HubBlock;
+import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.block.MonitorKind;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.block.PatternEncoderBlock;
-import dev.jstech.computers.block.PeripheralCableBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
-import dev.jstech.computers.block.PersonalRouterBlock;
+import dev.jstech.computers.block.PrinterBlock;
+import dev.jstech.computers.block.DataWires;
+import dev.jstech.computers.block.RedstoneInterfaceBlock;
+import dev.jstech.computers.block.RepeaterBlock;
+import dev.jstech.computers.block.RouterBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
+import dev.jstech.computers.block.SpeakerBlock;
+import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
-import dev.jstech.computers.block.TankBlock;
-import dev.jstech.computers.block.VintageClusterManagementComputerBlock;
-import dev.jstech.computers.block.VintageCraftingComputerBlock;
-import dev.jstech.computers.block.VintageMainframeBlock;
-import dev.jstech.computers.block.VintageMonitorBlock;
-import dev.jstech.computers.block.VintagePersonalComputerBlock;
-import dev.jstech.computers.block.VintageServerRackBlock;
 import dev.jstech.computers.block.part.CablePartItem;
-import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
+import dev.jstech.computers.blockentity.HubBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.blockentity.PersonalRouterBlockEntity;
+import dev.jstech.computers.blockentity.PrinterBlockEntity;
+import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
+import dev.jstech.computers.blockentity.RepeaterBlockEntity;
+import dev.jstech.computers.blockentity.RouterBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
-import dev.jstech.computers.blockentity.TankBlockEntity;
+import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -66,13 +65,17 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.hardware.Microarchitectures;
 import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.NetworkCardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.item.ClusterInterfaceCardItem;
 import dev.jstech.computers.item.CpuItem;
@@ -81,868 +84,997 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.MainframeBlockItem;
 import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.item.NetworkCardItem;
 import dev.jstech.computers.item.PhiCoprocessorItem;
+import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.item.PsuItem;
-import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.ServerCaseItem;
-import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.menu.ClusterManagementComputerMenu;
-import dev.jstech.computers.menu.CommandPromptMenu;
-import dev.jstech.computers.menu.ComputerTerminalMenu;
-import dev.jstech.computers.menu.CraftingComputerMenu;
-import dev.jstech.computers.menu.CraftingSwitchMenu;
-import dev.jstech.computers.menu.DesktopMenu;
-import dev.jstech.computers.menu.DosTerminalMenu;
-import dev.jstech.computers.menu.ExportBusMenu;
-import dev.jstech.computers.menu.ImportBusMenu;
-import dev.jstech.computers.menu.InputBusMenu;
-import dev.jstech.computers.menu.LinuxTtyMenu;
-import dev.jstech.computers.menu.NetTerminalMenu;
-import dev.jstech.computers.menu.MainframeMenu;
-import dev.jstech.computers.menu.MonitorSessionMenu;
-import dev.jstech.computers.menu.NetworkGatewayMenu;
-import dev.jstech.computers.menu.PatternEncoderMenu;
-import dev.jstech.computers.menu.PersonalComputerMenu;
-import dev.jstech.computers.menu.ReceivingBusMenu;
-import dev.jstech.computers.menu.ServerAssemblyMenu;
-import dev.jstech.computers.menu.ServerRackMenu;
-import dev.jstech.computers.menu.ServerRouterMenu;
-import dev.jstech.computers.os.DiskSystems;
-import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.item.StorageCardItem;
+import dev.jstech.computers.item.WorkshopCardItem;
+import dev.jstech.computers.os.media.DockStationBlock;
+import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaFormat;
-import dev.jstech.computers.os.media.MediaItem;
-import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.rack.RackChassis;
-import dev.jstech.computers.storage.DiskUsage;
-import dev.jstech.computers.storage.ServerStorageContents;
-import dev.jstech.core.id.StableCodecs;
-import dev.jstech.core.network.DataTier;
+import dev.jstech.computers.workshop.WorkshopCard;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.registry.ComputingContent;
+import dev.jstech.computers.registry.ComputingContent.Shelf;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.Lane;
+import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.peripheral.PeripheralLine;
+import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.content.BlockBuilder;
+import dev.jstech.core.content.CableBuilder;
+import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.content.ContentTab;
+import dev.jstech.core.content.Drops;
+import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.content.IItemLook;
+import dev.jstech.core.content.ItemBuilder;
+import dev.jstech.core.content.ItemEntry;
+import dev.jstech.core.content.ModContent;
+import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.network.DataLink;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
-import net.minecraft.advancements.CriterionTrigger;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.codec.ByteBufCodecs;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.BlockItem;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
-import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.registries.DeferredRegister;
-
-import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Registration entry point for the Computing module: the data network's physical blocks (cables now; computers, routers and racks later).
+ * The catalogue of J's Computers: every block and item it adds, each declared once with everything said about it,
+ * onto the shelf of its era's tab, and the block entities its blocks make, beside the blocks that make them. The
+ * data the items carry is in {@link ComputingComponents}, the menus in {@link ComputingMenus}, the tabs and their
+ * shelves in {@link ComputingContent}, and the hardware of every era in {@link HardwareItems}.
+ *
+ * <p>A family of alike things (the cables, the computers of each era) shares a helper that says what they have in
+ * common; each declaration then names its own.
  */
 public final class ComputingModule {
 
-    private ComputingModule() {
-    }
-
-    public static final DeferredRegister.Blocks BLOCKS =
-            DeferredRegister.createBlocks(JsComputers.MODID);
-
-    public static final DeferredRegister.Items ITEMS =
-            DeferredRegister.createItems(JsComputers.MODID);
-
-    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
-            DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, JsComputers.MODID);
-
-    /** Advancement criteria triggers: booting a computer into an OS (the Arch / Gentoo challenges use it). */
-    public static final DeferredRegister<CriterionTrigger<?>> TRIGGERS =
-            DeferredRegister.create(Registries.TRIGGER_TYPE, JsComputers.MODID);
-    public static final DeferredHolder<CriterionTrigger<?>,
-            OsFirstBootTrigger> OS_FIRST_BOOT =
-            TRIGGERS.register("os_first_boot",
-                    OsFirstBootTrigger::new);
-
-    public static final DeferredRegister<MenuType<?>> MENUS =
-            DeferredRegister.create(Registries.MENU, JsComputers.MODID);
-
-    public static final DeferredRegister.DataComponents COMPONENTS =
-            DeferredRegister.createDataComponents(JsComputers.MODID);
-
-    /*
-     * Data components: a Server item carries its state in its NBT: the items it
-     * stores, the hardware it is built from, and its network node identity.
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<
-                    ServerStorageContents>>
-            SERVER_STORAGE = COMPONENTS.registerComponentType("server_storage", b -> b
-                    .persistent(ServerStorageContents.CODEC)
-                    .networkSynchronized(
-                            ServerStorageContents.STREAM_CODEC));
-
-    /*
-     * A drive's stored items live in the save-wide volume store, not on the item: the item carries the
-     * volume's id and a usage summary, so a drive holding thousands of types stays a tiny item.
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<UUID>>
-            DISK_VOLUME = COMPONENTS.registerComponentType("disk_volume", b -> b
-                    .persistent(UUIDUtil.CODEC)
-                    .networkSynchronized(UUIDUtil.STREAM_CODEC));
-
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<
-                    DiskUsage>>
-            DISK_USAGE = COMPONENTS.registerComponentType("disk_usage", b -> b
-                    .persistent(DiskUsage.CODEC)
-                    .networkSynchronized(DiskUsage.STREAM_CODEC));
-
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<ItemContainerContents>>
-            SERVER_HARDWARE = COMPONENTS.registerComponentType("server_hardware", b -> b
-                    .persistent(ItemContainerContents.CODEC)
-                    .networkSynchronized(ItemContainerContents.STREAM_CODEC));
-
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<UUID>>
-            SERVER_NODE_UUID = COMPONENTS.registerComponentType("server_node_uuid", b -> b
-                    .persistent(UUIDUtil.CODEC)
-                    .networkSynchronized(UUIDUtil.STREAM_CODEC));
-
-    /*
-     * A RAID Controller carries its array configuration: the mode it runs and how many member
-     * drives the array was formed with (so a missing member reads as degraded rather than smaller).
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<String>>
-            RAID_MODE = COMPONENTS.registerComponentType("raid_mode", b -> b
-                    .persistent(Codec.STRING)
-                    .networkSynchronized(ByteBufCodecs.STRING_UTF8));
-
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<Integer>>
-            RAID_MEMBERS = COMPONENTS.registerComponentType("raid_members", b -> b
-                    .persistent(Codec.INT)
-                    .networkSynchronized(ByteBufCodecs.VAR_INT));
-
-    /*
-     * A rack server's software state (console history, installed programs, settings) persists WITH
-     * the item, so it moves between racks with the machine. Server-side only: never network-synced.
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<CompoundTag>>
-            SERVER_CONSOLE = COMPONENTS.registerComponentType("server_console", b -> b
-                    .persistent(CompoundTag.CODEC));
-
-    /*
-     * The software a disk carries: installed programs and their versions, the desktop preferences, and
-     * the shell history. It rides on the DISK, not on the computer, because that is what it is: moving
-     * a system disk to another machine takes its programs along, and a fresh disk boots clean. Keeping
-     * this on the block entity meant a newly installed system still believed the old one's programs
-     * were present. Server-side only: never network-synced.
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<CompoundTag>>
-            DISK_CONSOLE = COMPONENTS.registerComponentType("disk_console", b -> b
-                    .persistent(CompoundTag.CODEC));
-
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<String>>
-            COMPUTER_NAME = COMPONENTS.registerComponentType("computer_name", b -> b
-                    .persistent(Codec.STRING)
-                    .networkSynchronized(ByteBufCodecs.STRING_UTF8));
-
-    /*
-     * How much of a (non-Server) computer disk's storage is public, as a per-mille 0..1000. The
-     * component rides on the disk ItemStack so the split travels with the disk when it is pulled
-     * and reinserted. An absent component reads as fully private (see DiskItem.publicPermille).
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<Integer>>
-            DISK_PUBLIC_PERMILLE = COMPONENTS.registerComponentType("disk_public_permille", b -> b
-                    .persistent(Codec.intRange(0, 1000))
-                    .networkSynchronized(ByteBufCodecs.VAR_INT));
-
-    /*
-     * OS media subsystem: components that together describe the content of a MediaItem.
-     * A medium carries exactly one kind and the matching content component for that kind.
-     */
-
-    // Installer payload (OS_INSTALL / PROGRAM_INSTALL): the OS or program id.
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<ResourceLocation>>
-            MEDIA_PAYLOAD = COMPONENTS.registerComponentType("media_payload", b -> b
-                    .persistent(ResourceLocation.CODEC)
-                    .networkSynchronized(ResourceLocation.STREAM_CODEC));
-
-    /*
-     * Which of the three content kinds this medium carries. Absent component → OS_INSTALL (safe
-     * default that keeps legacy blank media behaving as installer media).
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<MediaKind>>
-            MEDIA_KIND = COMPONENTS.registerComponentType("media_kind", b -> b
-                    .persistent(StableCodecs.byName(MediaKind.class))
-                    .networkSynchronized(StableCodecs.byId(MediaKind.class, MediaKind.OS_INSTALL)));
-
-    // Data contents (DATA kind): a portable item/fluid storage snapshot.
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<
-                    ServerStorageContents>>
-            MEDIA_DATA = COMPONENTS.registerComponentType("media_data", b -> b
-                    .persistent(ServerStorageContents.CODEC)
-                    .networkSynchronized(
-                            ServerStorageContents.STREAM_CODEC));
-
-    // Capacity of a DATA medium in item-equivalents. Absent → MediaItem.DEFAULT_CAPACITY.
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<Integer>>
-            MEDIA_CAPACITY = COMPONENTS.registerComponentType("media_capacity", b -> b
-                    .persistent(Codec.INT)
-                    .networkSynchronized(ByteBufCodecs.VAR_INT));
-
-    /*
-     * Disk filesystem components: files and the installed OS live on the DiskItem stack so
-     * they travel with the disk when it is inserted or removed.
-     */
-
-    // The filesystem contents of a disk volume: path-keyed map of stored files.
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<
-                    FilesystemContents>>
-            FILESYSTEM = COMPONENTS.registerComponentType("filesystem", b -> b
-                    .persistent(FilesystemContents.CODEC)
-                    .networkSynchronized(
-                            FilesystemContents.STREAM_CODEC));
-
-    /*
-     * The systems a disk carries and which of them it boots, with what each of them remembers about having been
-     * met. Present only on bootable disks; absent on plain data disks. It used to be one system written straight
-     * onto the disk, so installing a second wrote over the first, and one mark for the disk rather than one per
-     * system, which would have had a second system arrive already met.
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<DiskSystems>>
-            DISK_SYSTEMS = COMPONENTS.registerComponentType("disk_systems", b -> b
-                    .persistent(DiskSystems.CODEC)
-                    .networkSynchronized(DiskSystems.STREAM_CODEC));
-
-    /*
-     * A user-chosen label for a disk or media volume, shown in This PC and the explorer drive tree and
-     * editable there. Rides on the ItemStack so it travels with the disk/medium. Absent → the volume's
-     * default name (e.g. "Local Disk" for a system disk, "Removable Drive" for a medium).
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<String>>
-            VOLUME_LABEL = COMPONENTS.registerComponentType("volume_label", b -> b
-                    .persistent(Codec.STRING)
-                    .networkSynchronized(ByteBufCodecs.STRING_UTF8));
-
-    private static BlockBehaviour.Properties cableProperties() {
-        return BlockBehaviour.Properties.of()
-                .mapColor(MapColor.COLOR_GRAY)
-                .strength(0.3F)
-                .sound(SoundType.WOOL)
-                .noOcclusion();
-    }
-
-    // Cables
-
-    public static final DeferredBlock<DataCableBlock> ETHERNET_CABLE = BLOCKS.register(
-            "ethernet_cable", () -> new DataCableBlock(cableProperties(), DataTier.T1_ETHERNET));
-
-    public static final DeferredItem<BlockItem> ETHERNET_CABLE_ITEM = ITEMS.register(
-            "ethernet_cable", () -> new BlockItem(ETHERNET_CABLE.get(), new Item.Properties()));
-
-    public static final DeferredBlock<DataCableBlock> HBW_CABLE = BLOCKS.register(
-            "hbw_cable", () -> new DataCableBlock(cableProperties(), DataTier.T2_HBW));
-
-    public static final DeferredItem<BlockItem> HBW_CABLE_ITEM = ITEMS.register(
-            "hbw_cable", () -> new BlockItem(HBW_CABLE.get(), new Item.Properties()));
-
-    public static final DeferredBlock<DataCableBlock> HPC_CABLE = BLOCKS.register(
-            "hpc_cable", () -> new DataCableBlock(cableProperties(), DataTier.HPC));
-
-    public static final DeferredItem<BlockItem> HPC_CABLE_ITEM = ITEMS.register(
-            "hpc_cable", () -> new BlockItem(HPC_CABLE.get(), new Item.Properties()));
-
-    // Crafting cable: links a Crafting Switch to its Crafting Computer (a local machine cluster).
-    public static final DeferredBlock<DataCableBlock> CRAFTING_CABLE = BLOCKS.register(
-            "crafting_cable", () -> new DataCableBlock(cableProperties(), DataTier.CRAFTING));
-
-    public static final DeferredItem<BlockItem> CRAFTING_CABLE_ITEM = ITEMS.register(
-            "crafting_cable", () -> new BlockItem(CRAFTING_CABLE.get(), new Item.Properties()));
-
-    // Crafting Switch: declares up to 5 adjacent machines, wired to a Crafting Computer over the crafting cable.
-    public static final DeferredBlock<CraftingSwitchBlock> CRAFTING_SWITCH =
-            BLOCKS.register("crafting_switch",
-                    () -> new CraftingSwitchBlock(
-                            BlockBehaviour.Properties.of().strength(1.5F)));
-
-    public static final DeferredItem<BlockItem> CRAFTING_SWITCH_ITEM = ITEMS.register(
-            "crafting_switch", () -> new BlockItem(CRAFTING_SWITCH.get(), new Item.Properties()));
-
-    public static final DeferredBlock<PeripheralCableBlock> PERIPHERAL_CABLE =
-            BLOCKS.register("peripheral_cable",
-                    () -> new PeripheralCableBlock(cableProperties()));
-
-    public static final DeferredItem<BlockItem> PERIPHERAL_CABLE_ITEM = ITEMS.register(
-            "peripheral_cable", () -> new BlockItem(PERIPHERAL_CABLE.get(), new Item.Properties()));
-
-    public static final DeferredBlock<MonitorBlock> MONITOR =
-            BLOCKS.register("monitor", () -> new MonitorBlock(
-                    BlockBehaviour.Properties.of()
-                            .mapColor(MapColor.COLOR_BLACK)
-                            .strength(1.0F)
-                            .sound(SoundType.METAL)
-                            .noOcclusion()));
-
-    public static final DeferredItem<BlockItem> MONITOR_ITEM = ITEMS.register(
-            "monitor", () -> new BlockItem(MONITOR.get(), new Item.Properties()));
-
-    public static final DeferredBlock<VintageMonitorBlock> VINTAGE_MONITOR =
-            BLOCKS.register("vintage_monitor",
-                    () -> new VintageMonitorBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_BLACK)
-                                    .strength(1.0F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion()));
-
-    public static final DeferredItem<BlockItem> VINTAGE_MONITOR_ITEM = ITEMS.register(
-            "vintage_monitor", () -> new BlockItem(VINTAGE_MONITOR.get(), new Item.Properties()));
-
-    public static final DeferredBlock<LegacyMonitorBlock> LEGACY_MONITOR =
-            BLOCKS.register("legacy_monitor",
-                    () -> new LegacyMonitorBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_BLACK)
-                                    .strength(1.0F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion()));
-
-    public static final DeferredItem<BlockItem> LEGACY_MONITOR_ITEM = ITEMS.register(
-            "legacy_monitor", () -> new BlockItem(LEGACY_MONITOR.get(), new Item.Properties()));
-
-    // Block entities
-
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DataCableBlockEntity>> DATA_CABLE_BE =
-            BLOCK_ENTITIES.register("data_cable",
-                    () -> BlockEntityType.Builder.of(DataCableBlockEntity::new,
-                            ETHERNET_CABLE.get(), HBW_CABLE.get(), HPC_CABLE.get(),
-                            CRAFTING_CABLE.get()).build(null));
-
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<CraftingSwitchBlockEntity>>
-            CRAFTING_SWITCH_BE = BLOCK_ENTITIES.register("crafting_switch",
-                    () -> BlockEntityType.Builder.of(
-                            CraftingSwitchBlockEntity::new,
-                            CRAFTING_SWITCH.get()).build(null));
-
-    // Routers
-
-    public static final DeferredBlock<PersonalRouterBlock> PERSONAL_ROUTER = BLOCKS.register(
-            "personal_router", () -> new PersonalRouterBlock(BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.COLOR_LIGHT_BLUE)
-                    .strength(0.5F)
-                    .sound(SoundType.METAL)
-                    .noOcclusion()));
-
-    public static final DeferredItem<BlockItem> PERSONAL_ROUTER_ITEM = ITEMS.register(
-            "personal_router", () -> new BlockItem(PERSONAL_ROUTER.get(), new Item.Properties()));
-
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PersonalRouterBlockEntity>> PERSONAL_ROUTER_BE =
-            BLOCK_ENTITIES.register("personal_router",
-                    () -> BlockEntityType.Builder.of(PersonalRouterBlockEntity::new,
-                            PERSONAL_ROUTER.get()).build(null));
-
-    public static final DeferredBlock<ServerRouterBlock> SERVER_ROUTER =
-            BLOCKS.register("server_router",
-                    () -> new ServerRouterBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_GRAY)
-                                    .strength(0.6F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion()));
-
-    public static final DeferredItem<BlockItem> SERVER_ROUTER_ITEM = ITEMS.register(
-            "server_router", () -> new BlockItem(SERVER_ROUTER.get(), new Item.Properties()));
-
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<ServerRouterBlockEntity>> SERVER_ROUTER_BE =
-            BLOCK_ENTITIES.register("server_router",
-                    () -> BlockEntityType.Builder.of(
-                            ServerRouterBlockEntity::new,
-                            SERVER_ROUTER.get()).build(null));
-
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<MonitorBlockEntity>> MONITOR_BE =
-            BLOCK_ENTITIES.register("monitor",
-                    () -> BlockEntityType.Builder.of(
-                            MonitorBlockEntity::new,
-                            MONITOR.get(), VINTAGE_MONITOR.get(), LEGACY_MONITOR.get()).build(null));
-
-    public static final DeferredBlock<TankBlock> TANK =
-            BLOCKS.register("tank", () -> new TankBlock(
-                    BlockBehaviour.Properties.of()
-                            .mapColor(MapColor.COLOR_LIGHT_BLUE)
-                            .strength(0.6F)
-                            .sound(SoundType.GLASS)
-                            .noOcclusion()));
-
-    public static final DeferredItem<BlockItem> TANK_ITEM = ITEMS.register(
-            "tank", () -> new BlockItem(TANK.get(), new Item.Properties()));
-
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<TankBlockEntity>> TANK_BE =
-            BLOCK_ENTITIES.register("tank",
-                    () -> BlockEntityType.Builder.of(
-                            TankBlockEntity::new,
-                            TANK.get()).build(null));
-
-    // Interaction buses: move items between the network and adjacent inventories
-
-    public static final DeferredItem<CablePartItem> IMPORT_BUS_ITEM =
-            ITEMS.register("import_bus", () -> new CablePartItem(
-                    new Item.Properties(),
-                    CablePartType.IMPORT));
-
-    public static final DeferredItem<CablePartItem> EXPORT_BUS_ITEM =
-            ITEMS.register("export_bus", () -> new CablePartItem(
-                    new Item.Properties(),
-                    CablePartType.EXPORT));
-
-    public static final DeferredItem<CablePartItem> INPUT_BUS_ITEM =
-            ITEMS.register("input_bus", () -> new CablePartItem(
-                    new Item.Properties(),
-                    CablePartType.INPUT));
-
-    public static final DeferredItem<CablePartItem> RECEIVING_BUS_ITEM =
-            ITEMS.register("receiving_bus", () -> new CablePartItem(
-                    new Item.Properties(),
-                    CablePartType.RECEIVING));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<ExportBusMenu>> EXPORT_BUS_MENU =
-            MENUS.register("export_bus", () -> IMenuTypeExtension.create(
-                    ExportBusMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<ImportBusMenu>> IMPORT_BUS_MENU =
-            MENUS.register("import_bus", () -> IMenuTypeExtension.create(
-                    ImportBusMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<CraftingSwitchMenu>> CRAFTING_SWITCH_MENU =
-            MENUS.register("crafting_switch", () -> IMenuTypeExtension.create(
-                    CraftingSwitchMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<InputBusMenu>> INPUT_BUS_MENU =
-            MENUS.register("input_bus", () -> IMenuTypeExtension.create(
-                    InputBusMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<ReceivingBusMenu>> RECEIVING_BUS_MENU =
-            MENUS.register("receiving_bus", () -> IMenuTypeExtension.create(
-                    ReceivingBusMenu::fromNetwork));
-
-    // Server Rack: houses Server items as network nodes
-
-    public static final DeferredBlock<ServerRackBlock> SERVER_RACK =
-            BLOCKS.register("server_rack",
-                    () -> new ServerRackBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.METAL)
-                                    .strength(1.5F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion()));
+    private static final ModContent CONTENT = ComputingContent.CONTENT;
+
+    /** A body its block entity draws: the blocks show nothing but the particles a break scatters. */
+    private static final IBlockLook MAINFRAME_BODY =
+            IBlockLook.fixed(new IBlockModel.ParticleOnly("mainframe_cabinet", "block/mainframe_particle"));
+    private static final IBlockLook RACK_BODY =
+            IBlockLook.fixed(new IBlockModel.ParticleOnly("rack", "block/rack_particle"));
+    private static final IBlockLook ENCODER_BODY =
+            IBlockLook.fixed(new IBlockModel.ParticleOnly("pattern_encoder_body", "block/pattern_encoder_particle"));
 
     /**
      * How a rack cabinet sits in an item slot: 3 blocks tall is its longest side, and its model spans
      * x -1.5..0.5, y 0..3, z -0.5..1.5 blocks around the controller, so its middle moves by this much.
      */
-    private static final CabinetBlockItem.Fit RACK_FIT =
-            new CabinetBlockItem.Fit(48.0F, 0.5F, -1.5F, -0.5F);
+    private static final CabinetBlockItem.Fit RACK_FIT = new CabinetBlockItem.Fit(48.0F, 0.5F, -1.5F, -0.5F);
+    /** A rack's parts shown only when fitted or lit: the units seated in its rows and its light bars. */
+    private static final List<String> RACK_FITTED = List.of("row_", "lightbar_");
 
-    public static final DeferredItem<BlockItem> SERVER_RACK_ITEM = ITEMS.register(
-            "server_rack", () -> new CabinetBlockItem(
-                    SERVER_RACK.get(), new Item.Properties(), "rack", "server_rack", "rack", RACK_FIT));
+    /**
+     * How a device's body (an encoder, a drive) sits in an item slot: the body is one full block (x -0.5..0.5,
+     * y 0..1, z -0.5..0.5 around its origin), so only the height needs re-centring.
+     */
+    private static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
+    /** A device's lamps, dark on its item, whatever the devices in the world show. */
+    private static final List<String> DEVICE_LAMPS = List.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
+    /** A printer's lamps and the sheet that comes out of it, none of them on its item. */
+    private static final List<String> PRINTER_AT_REST = List.of(ComputingLooks.PRINTER_POWER_LAMP,
+            ComputingLooks.PRINTER_BUSY_LAMP, ComputingLooks.PRINTER_PAPER);
+    /** A Redstone Interface's lit lens and mode lamps, dark on its item: the item shows the lens at rest. */
+    private static final List<String> REDSTONE_INTERFACE_LIT = List.of(ComputingLooks.REDSTONE_LENS_HALF,
+            ComputingLooks.REDSTONE_LENS_FULL, ComputingLooks.REDSTONE_LAMP_IN, ComputingLooks.REDSTONE_LAMP_OUT);
+    /** How thick the long distance line is, in pixels; every other data cable is four. */
+    private static final int LONG_DISTANCE_PIXELS = 6;
+    /** What a personal-use card draws, in watts. */
+    private static final int WORKSHOP_CARD_WATTS = 15;
+    /** A small computer's lamps, dark on its item, and the parts of its bays, which the case as it comes has none of. */
+    private static final List<String> COMPUTER_LAMPS = List.of(ComputingLooks.COMPUTER_POWER_LAMP,
+            ComputingLooks.COMPUTER_DISK_LAMP, ComputingLooks.COMPUTER_BAY_PARTS);
 
     /*
-     * The supercomputer cabinet: the same foundation, but it seats only Supercomputer Nodes and its
-     * rear port takes only the high-compute fabric.
+     * Cables. Each data line has a cable of its own in each era, laid in the Core's cable block in the lane of its
+     * line: access top left, backbone top middle, compute in the middle, crafting middle right. The long distance
+     * line is thicker and never shares a block. The Crafting cable links a Crafting Computer to its interfaces, and an
+     * interface to its routers, one cable for every era.
      */
-    public static final DeferredBlock<SupercomputerRackBlock>
-            SUPERCOMPUTER_RACK = BLOCKS.register("supercomputer_rack",
-                    () -> new SupercomputerRackBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.METAL)
-                                    .strength(1.5F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion()));
 
-    public static final DeferredItem<BlockItem> SUPERCOMPUTER_RACK_ITEM = ITEMS.register(
-            "supercomputer_rack", () -> new CabinetBlockItem(
-                    SUPERCOMPUTER_RACK.get(), new Item.Properties(), "rack", "supercomputer_rack",
-                    "rack", RACK_FIT));
+    public static final CableEntry THIN_COAX_CABLE = dataCable("thin_coax_cable", DataLine.ACCESS,
+            HardwareEra.VINTAGE, "thin_coax", "bnc").named("Thin Coaxial Cable").register();
+    public static final CableEntry ETHERNET_CABLE = dataCable("ethernet_cable", DataLine.ACCESS, HardwareEra.LEGACY,
+            "ethernet", "rj45").named("Ethernet Cable").register();
+    public static final CableEntry CAT5E_CABLE = dataCable("cat5e_cable", DataLine.ACCESS, HardwareEra.TRANSITION,
+            "cat5e", "rj45_boot").named("Cat 5e Cable").register();
+    public static final CableEntry GIGABIT_CABLE = dataCable("gigabit_cable", DataLine.ACCESS, HardwareEra.STANDARD,
+            "gigabit", "rj45_snagless").named("Gigabit Ethernet Cable").register();
+    public static final CableEntry CAT6A_CABLE = dataCable("cat6a_cable", DataLine.ACCESS, HardwareEra.ADVANCED,
+            "cat6a", "rj45_shielded").named("Cat 6a Cable").register();
+    public static final CableEntry THICK_COAX_CABLE = dataCable("thick_coax_cable", DataLine.BACKBONE,
+            HardwareEra.VINTAGE, "thick_coax", "tap").named("Thick Coaxial Cable").register();
+    public static final CableEntry HBW_CABLE = dataCable("hbw_cable", DataLine.BACKBONE, HardwareEra.LEGACY, "hbw",
+            "hbw").named("HBW Cable").register();
+    public static final CableEntry CX4_CABLE = dataCable("cx4_cable", DataLine.BACKBONE, HardwareEra.TRANSITION,
+            "cx4", "cx4").named("10GBASE-CX4 Cable").register();
+    public static final CableEntry FIBRE_CABLE = dataCable("fibre_cable", DataLine.BACKBONE, HardwareEra.STANDARD,
+            "fibre", "lc").named("Fibre Optic Cable").register();
+    public static final CableEntry OM5_CABLE = dataCable("om5_cable", DataLine.BACKBONE, HardwareEra.ADVANCED, "om5",
+            "mpo").named("OM5 Fibre Cable").register();
+    public static final CableEntry TELEPHONE_LINE = dataCable("telephone_line", DataLine.LONG_DISTANCE,
+            HardwareEra.VINTAGE, "telephone", "rj11").named("Telephone Line").register();
+    public static final CableEntry LEASED_LINE = dataCable("leased_line", DataLine.LONG_DISTANCE, HardwareEra.LEGACY,
+            "leased", "rj48").named("Leased Line").register();
+    public static final CableEntry T3_LINE = dataCable("t3_line", DataLine.LONG_DISTANCE, HardwareEra.TRANSITION,
+            "t3", "bnc_pair").named("T3 Line").register();
+    public static final CableEntry VLDC_CABLE = dataCable("vldc_cable", DataLine.LONG_DISTANCE, HardwareEra.STANDARD,
+            "vldc", "vldc").named("VLDC Cable").register();
+    public static final CableEntry DARK_FIBRE_CABLE = dataCable("dark_fibre_cable", DataLine.LONG_DISTANCE,
+            HardwareEra.ADVANCED, "dark_fibre", "sc_duplex").named("Dark Fibre Cable").register();
+    public static final CableEntry INFINIBAND_CABLE = dataCable("infiniband_cable", DataLine.HPC,
+            HardwareEra.TRANSITION, "ib_qdr", "qsfp_bail").named("InfiniBand Cable").register();
+    public static final CableEntry HPC_CABLE = dataCable("hpc_cable", DataLine.HPC, HardwareEra.STANDARD, "hpc",
+            "qsfp").named("High Compute Cable").register();
+    public static final CableEntry OSFP_CABLE = dataCable("osfp_cable", DataLine.HPC, HardwareEra.ADVANCED,
+            "osfp_dac", "osfp").named("OSFP Cable").register();
+    public static final CableEntry CRAFTING_CABLE = dataCable("crafting_cable", DataLine.CRAFTING,
+            HardwareEra.VINTAGE, "crafting", "crafting").named("Crafting Cable").register();
+    /*
+     * The peripheral cables, one for each era, in the lane at the middle left: what a computer's screens, speakers and
+     * devices hang from. Each ends in the plug of the port it enters, the video plug at a screen and the device plug
+     * anywhere else; the Standard's keeps the id the one peripheral cable had.
+     */
+    public static final CableEntry VINTAGE_PERIPHERAL_CABLE = peripheralCable("vintage_peripheral_cable",
+            HardwareEra.VINTAGE, "periph_vintage", "db25", "de9").named("Vintage Peripheral Cable").register();
+    public static final CableEntry LEGACY_PERIPHERAL_CABLE = peripheralCable("legacy_peripheral_cable",
+            HardwareEra.LEGACY, "periph_legacy", "usb", "vga").named("Legacy Peripheral Cable").register();
+    public static final CableEntry TRANSITION_PERIPHERAL_CABLE = peripheralCable("transition_peripheral_cable",
+            HardwareEra.TRANSITION, "periph_transition", "usb_white", "dvi").named("Transition Peripheral Cable")
+            .register();
+    public static final CableEntry PERIPHERAL_CABLE = peripheralCable("peripheral_cable", HardwareEra.STANDARD,
+            "periph_standard", "usb3", "hdmi").named("Peripheral Cable").register();
+    public static final CableEntry ADVANCED_PERIPHERAL_CABLE = peripheralCable("advanced_peripheral_cable",
+            HardwareEra.ADVANCED, "periph_advanced", "usbc", "dp").named("Advanced Peripheral Cable").register();
 
     /*
-     * The Server Rack of the earlier eras: the same cabinet in its decade's materials, seating only
-     * servers of its own era or earlier.
+     * Routers and repeaters: plain blocks with six equal faces, each a plate with its era's connector, framed in the
+     * kind's colour, with two lamps. A router per era joins its access line to its backbone (the Personal Router is the
+     * Legacy one); the optical routers turn and branch the fibre; a repeater per era renews a run's range. The Server
+     * Router's back is its Mainframe uplink.
      */
-    public static final DeferredBlock<LegacyServerRackBlock>
-            LEGACY_SERVER_RACK = BLOCKS.register("legacy_server_rack",
-                    () -> new LegacyServerRackBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.METAL)
-                                    .strength(1.5F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion()));
 
-    public static final DeferredItem<BlockItem> LEGACY_SERVER_RACK_ITEM = ITEMS.register(
-            "legacy_server_rack", () -> new CabinetBlockItem(
-                    LEGACY_SERVER_RACK.get(), new Item.Properties(), "rack", "legacy_server_rack",
-                    "rack", RACK_FIT));
+    public static final BlockEntry<RouterBlock> VINTAGE_ROUTER =
+            router("vintage_router", HardwareEra.VINTAGE, false, "router_vintage").named("Vintage Router").register();
+    public static final BlockEntry<RouterBlock> PERSONAL_ROUTER =
+            router("personal_router", HardwareEra.LEGACY, false, "router_legacy").named("Personal Router").register();
+    public static final BlockEntry<RouterBlock> TRANSITION_ROUTER = router("transition_router",
+            HardwareEra.TRANSITION, false, "router_transition").named("Transition Router").register();
+    public static final BlockEntry<RouterBlock> STANDARD_ROUTER = router("standard_router", HardwareEra.STANDARD,
+            false, "router_standard").named("Standard Router").register();
+    public static final BlockEntry<RouterBlock> ADVANCED_ROUTER = router("advanced_router", HardwareEra.ADVANCED,
+            false, "router_advanced").named("Advanced Router").register();
+    public static final BlockEntry<RouterBlock> OPTICAL_ROUTER = router("optical_router", HardwareEra.STANDARD,
+            true, "optical_standard").named("Optical Router").register();
+    public static final BlockEntry<RouterBlock> ADVANCED_OPTICAL_ROUTER = router("advanced_optical_router",
+            HardwareEra.ADVANCED, true, "optical_advanced").named("Advanced Optical Router").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RouterBlockEntity>> ROUTER_BE =
+            CONTENT.blockEntity("personal_router", RouterBlockEntity::new, VINTAGE_ROUTER, PERSONAL_ROUTER,
+                    TRANSITION_ROUTER, STANDARD_ROUTER, ADVANCED_ROUTER, OPTICAL_ROUTER, ADVANCED_OPTICAL_ROUTER);
 
-    public static final DeferredBlock<VintageServerRackBlock>
-            VINTAGE_SERVER_RACK = BLOCKS.register("vintage_server_rack",
-                    () -> new VintageServerRackBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.METAL)
-                                    .strength(1.5F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion()));
+    public static final BlockEntry<RepeaterBlock> VINTAGE_REPEATER =
+            repeater("vintage_repeater", HardwareEra.VINTAGE).named("Vintage Repeater").register();
+    public static final BlockEntry<RepeaterBlock> LEGACY_REPEATER =
+            repeater("legacy_repeater", HardwareEra.LEGACY).named("Legacy Repeater").register();
+    public static final BlockEntry<RepeaterBlock> TRANSITION_REPEATER =
+            repeater("transition_repeater", HardwareEra.TRANSITION).named("Transition Repeater").register();
+    public static final BlockEntry<RepeaterBlock> STANDARD_REPEATER =
+            repeater("standard_repeater", HardwareEra.STANDARD).named("Standard Repeater").register();
+    public static final BlockEntry<RepeaterBlock> ADVANCED_REPEATER =
+            repeater("advanced_repeater", HardwareEra.ADVANCED).named("Advanced Repeater").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RepeaterBlockEntity>> REPEATER_BE =
+            CONTENT.blockEntity("repeater", RepeaterBlockEntity::new, VINTAGE_REPEATER, LEGACY_REPEATER,
+                    TRANSITION_REPEATER, STANDARD_REPEATER, ADVANCED_REPEATER);
 
-    public static final DeferredItem<BlockItem> VINTAGE_SERVER_RACK_ITEM = ITEMS.register(
-            "vintage_server_rack", () -> new CabinetBlockItem(
-                    VINTAGE_SERVER_RACK.get(), new Item.Properties(), "rack", "vintage_server_rack",
-                    "rack", RACK_FIT));
+    /*
+     * Hubs of the peripheral line, the same plain blocks as the routers: each takes one of its computer's device ports
+     * and offers its own, two on the Vintage's switch box, four on the Legacy and Transition USB hubs, seven on the
+     * Standard and Advanced ones.
+     */
 
-    public static final DeferredBlock<ServerRackPartBlock> SERVER_RACK_PART =
-            BLOCKS.register("server_rack_part",
-                    () -> new ServerRackPartBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.METAL)
-                                    .strength(1.5F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion()));
+    public static final BlockEntry<HubBlock> VINTAGE_HUB = hub("vintage_hub", HardwareEra.VINTAGE)
+            .named("Vintage Hub").register();
+    public static final BlockEntry<HubBlock> LEGACY_HUB = hub("legacy_hub", HardwareEra.LEGACY)
+            .named("Legacy Hub").register();
+    public static final BlockEntry<HubBlock> TRANSITION_HUB = hub("transition_hub", HardwareEra.TRANSITION)
+            .named("Transition Hub").register();
+    public static final BlockEntry<HubBlock> STANDARD_HUB = hub("standard_hub", HardwareEra.STANDARD)
+            .named("Standard Hub").register();
+    public static final BlockEntry<HubBlock> ADVANCED_HUB = hub("advanced_hub", HardwareEra.ADVANCED)
+            .named("Advanced Hub").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HubBlockEntity>> HUB_BE =
+            CONTENT.blockEntity("hub", HubBlockEntity::new, VINTAGE_HUB, LEGACY_HUB, TRANSITION_HUB, STANDARD_HUB,
+                    ADVANCED_HUB);
 
+    public static final BlockEntry<ServerRouterBlock> SERVER_ROUTER =
+            CONTENT.block("server_router", ServerRouterBlock::new)
+            .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(0.6F).sound(SoundType.METAL)
+                    .noOcclusion())
+            .named("Server Router")
+            // Every face is a port bank, one datacenter section each, so all six look alike and the facing shows none.
+            .look(IBlockLook.fixed(new IBlockModel.Handmade("network/server_router")))
+            .item().itemLook(IItemLook.parent("block/network/server_router")).tab(shelf(Shelf.NETWORK, null))
+            .register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRouterBlockEntity>> SERVER_ROUTER_BE =
+            CONTENT.blockEntity("server_router", ServerRouterBlockEntity::new, SERVER_ROUTER);
+
+    /*
+     * Mainframes: the same orchestrator and block entity in every era, differing by era, accepted board, cabinet and
+     * skin. A 3x2x2 cabinet drawn as one model by the controller; the controller hands its item over itself when
+     * broken, and the part blocks of the structure are taken down without drops.
+     */
+
+    public static final BlockEntry<MainframeBlock> MAINFRAME =
+            mainframe("mainframe", HardwareEra.STANDARD).named("Mainframe").register();
+    public static final BlockEntry<MainframeBlock> VINTAGE_MAINFRAME =
+            mainframe("vintage_mainframe", HardwareEra.VINTAGE).named("Vintage Mainframe").register();
+    public static final BlockEntry<MainframeBlock> LEGACY_MAINFRAME =
+            mainframe("legacy_mainframe", HardwareEra.LEGACY).named("Legacy Mainframe").register();
+    public static final BlockEntry<MainframeBlock> TRANSITION_MAINFRAME =
+            mainframe("transition_mainframe", HardwareEra.TRANSITION).named("Transition Mainframe").register();
+    public static final BlockEntry<MainframeBlock> ADVANCED_MAINFRAME =
+            mainframe("advanced_mainframe", HardwareEra.ADVANCED).named("Advanced Mainframe").register();
+    public static final BlockEntry<MainframePartBlock> MAINFRAME_PART =
+            CONTENT.block("mainframe_part", MainframePartBlock::new).properties(ComputingModule::mainframeProperties)
+                    .named("Mainframe").look(MAINFRAME_BODY).tag(BlockTags.MINEABLE_WITH_PICKAXE).register();
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframeBlockEntity>> MAINFRAME_BE =
+            CONTENT.blockEntity("mainframe", MainframeBlockEntity::new, MAINFRAME, VINTAGE_MAINFRAME, LEGACY_MAINFRAME,
+                    TRANSITION_MAINFRAME, ADVANCED_MAINFRAME);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframePartBlockEntity>>
+            MAINFRAME_PART_BE = CONTENT.blockEntity("mainframe_part", MainframePartBlockEntity::new, MAINFRAME_PART);
+
+    /*
+     * Monitors, era by era: the Vintage terminal tubes (paper-white, green, amber, and the sixteen-colour CGA), the
+     * Legacy colour tube, and the flat panels from the Transition on. A screen is meant to be looked at, so its front
+     * faces the player who placed it.
+     */
+
+    public static final BlockEntry<MonitorBlock> MONO_I_MONITOR =
+            monitor("mono_i_monitor", MonitorKind.MONO_I).named("Mono I Monitor").register();
+    public static final BlockEntry<MonitorBlock> VINTAGE_MONITOR =
+            monitor("vintage_monitor", MonitorKind.MONO_II).named("Mono II Monitor").register();
+    public static final BlockEntry<MonitorBlock> AMBER_MONITOR =
+            monitor("amber_monitor", MonitorKind.AMBER).named("Amber Monitor").register();
+    public static final BlockEntry<MonitorBlock> CGA_MONITOR =
+            monitor("cga_monitor", MonitorKind.CGA).named("CGA Monitor").register();
+    public static final BlockEntry<MonitorBlock> LEGACY_MONITOR =
+            monitor("legacy_monitor", MonitorKind.LEGACY).named("Legacy Monitor").register();
+    public static final BlockEntry<MonitorBlock> TRANSITION_MONITOR =
+            monitor("transition_monitor", MonitorKind.TRANSITION).named("Transition Monitor").register();
+    public static final BlockEntry<MonitorBlock> MONITOR =
+            monitor("monitor", MonitorKind.STANDARD).named("Monitor").register();
+    public static final BlockEntry<MonitorBlock> COLOR_MONITOR =
+            monitor("color_monitor", MonitorKind.COLOR).named("Color Monitor").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MonitorBlockEntity>> MONITOR_BE =
+            CONTENT.blockEntity("monitor", MonitorBlockEntity::new, MONO_I_MONITOR, VINTAGE_MONITOR, AMBER_MONITOR,
+                    CGA_MONITOR, LEGACY_MONITOR, TRANSITION_MONITOR, MONITOR, COLOR_MONITOR);
+
+    /*
+     * The small computers. Each machine comes in the tower of each age up to the Transition, and from the Standard
+     * age on in three cases, a block each: Neutral (plain id, as the case of the age with nothing added), High
+     * Performance and Aesthetic. The case is its look alone; the machine, its block entity and what it takes are
+     * the same in all of them.
+     */
+
+    public static final BlockEntry<PersonalComputerBlock> PERSONAL_COMPUTER =
+            personalComputer("personal_computer", HardwareEra.STANDARD, CaseStyle.NEUTRAL)
+                    .named("Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> HIGH_PERFORMANCE_PERSONAL_COMPUTER =
+            personalComputer("high_performance_personal_computer", HardwareEra.STANDARD, CaseStyle.HIGH_PERFORMANCE)
+                    .named("High Performance Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> AESTHETIC_PERSONAL_COMPUTER =
+            personalComputer("aesthetic_personal_computer", HardwareEra.STANDARD, CaseStyle.AESTHETIC)
+                    .named("Aesthetic Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> VINTAGE_PERSONAL_COMPUTER =
+            personalComputer("vintage_personal_computer", HardwareEra.VINTAGE, CaseStyle.SOLE)
+                    .named("Vintage Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> LEGACY_PERSONAL_COMPUTER =
+            personalComputer("legacy_personal_computer", HardwareEra.LEGACY, CaseStyle.SOLE)
+                    .named("Legacy Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> TRANSITION_PERSONAL_COMPUTER =
+            personalComputer("transition_personal_computer", HardwareEra.TRANSITION, CaseStyle.SOLE)
+                    .named("Transition Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> ADVANCED_PERSONAL_COMPUTER =
+            personalComputer("advanced_personal_computer", HardwareEra.ADVANCED, CaseStyle.NEUTRAL)
+                    .named("Advanced Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER =
+            personalComputer("advanced_high_performance_personal_computer", HardwareEra.ADVANCED,
+                    CaseStyle.HIGH_PERFORMANCE).named("Advanced High Performance Personal Computer").register();
+    public static final BlockEntry<PersonalComputerBlock> ADVANCED_AESTHETIC_PERSONAL_COMPUTER =
+            personalComputer("advanced_aesthetic_personal_computer", HardwareEra.ADVANCED, CaseStyle.AESTHETIC)
+                    .named("Advanced Aesthetic Personal Computer").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PersonalComputerBlockEntity>>
+            PERSONAL_COMPUTER_BE = CONTENT.blockEntity("personal_computer", PersonalComputerBlockEntity::new,
+                    PERSONAL_COMPUTER, HIGH_PERFORMANCE_PERSONAL_COMPUTER, AESTHETIC_PERSONAL_COMPUTER,
+                    VINTAGE_PERSONAL_COMPUTER, LEGACY_PERSONAL_COMPUTER, TRANSITION_PERSONAL_COMPUTER,
+                    ADVANCED_PERSONAL_COMPUTER, ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER,
+                    ADVANCED_AESTHETIC_PERSONAL_COMPUTER);
+
+    // Crafting Computer: an ATX computer that executes recipes once a Crafting Card is installed.
+    public static final BlockEntry<CraftingComputerBlock> CRAFTING_COMPUTER =
+            craftingComputer("crafting_computer", HardwareEra.STANDARD, CaseStyle.NEUTRAL)
+                    .named("Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> HIGH_PERFORMANCE_CRAFTING_COMPUTER =
+            craftingComputer("high_performance_crafting_computer", HardwareEra.STANDARD, CaseStyle.HIGH_PERFORMANCE)
+                    .named("High Performance Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> AESTHETIC_CRAFTING_COMPUTER =
+            craftingComputer("aesthetic_crafting_computer", HardwareEra.STANDARD, CaseStyle.AESTHETIC)
+                    .named("Aesthetic Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> VINTAGE_CRAFTING_COMPUTER =
+            craftingComputer("vintage_crafting_computer", HardwareEra.VINTAGE, CaseStyle.SOLE)
+                    .named("Vintage Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> LEGACY_CRAFTING_COMPUTER =
+            craftingComputer("legacy_crafting_computer", HardwareEra.LEGACY, CaseStyle.SOLE)
+                    .named("Legacy Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> TRANSITION_CRAFTING_COMPUTER =
+            craftingComputer("transition_crafting_computer", HardwareEra.TRANSITION, CaseStyle.SOLE)
+                    .named("Transition Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> ADVANCED_CRAFTING_COMPUTER =
+            craftingComputer("advanced_crafting_computer", HardwareEra.ADVANCED, CaseStyle.NEUTRAL)
+                    .named("Advanced Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> ADVANCED_HIGH_PERFORMANCE_CRAFTING_COMPUTER =
+            craftingComputer("advanced_high_performance_crafting_computer", HardwareEra.ADVANCED,
+                    CaseStyle.HIGH_PERFORMANCE).named("Advanced High Performance Crafting Computer").register();
+    public static final BlockEntry<CraftingComputerBlock> ADVANCED_AESTHETIC_CRAFTING_COMPUTER =
+            craftingComputer("advanced_aesthetic_crafting_computer", HardwareEra.ADVANCED, CaseStyle.AESTHETIC)
+                    .named("Advanced Aesthetic Crafting Computer").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CraftingComputerBlockEntity>>
+            CRAFTING_COMPUTER_BE = CONTENT.blockEntity("crafting_computer", CraftingComputerBlockEntity::new,
+                    CRAFTING_COMPUTER, HIGH_PERFORMANCE_CRAFTING_COMPUTER, AESTHETIC_CRAFTING_COMPUTER,
+                    VINTAGE_CRAFTING_COMPUTER, LEGACY_CRAFTING_COMPUTER, TRANSITION_CRAFTING_COMPUTER,
+                    ADVANCED_CRAFTING_COMPUTER, ADVANCED_HIGH_PERFORMANCE_CRAFTING_COMPUTER,
+                    ADVANCED_AESTHETIC_CRAFTING_COMPUTER);
+
+    /*
+     * Cluster Management Computer: a full computer that, with a Cluster Interface Card, drives every
+     * supercomputer fabric and datacenter section on its network as one machine.
+     */
+    public static final BlockEntry<ClusterManagementComputerBlock> CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("cluster_management_computer", HardwareEra.STANDARD, CaseStyle.NEUTRAL)
+                    .named("Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("high_performance_cluster_management_computer", HardwareEra.STANDARD,
+                    CaseStyle.HIGH_PERFORMANCE).named("High Performance Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("aesthetic_cluster_management_computer", HardwareEra.STANDARD,
+                    CaseStyle.AESTHETIC).named("Aesthetic Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> VINTAGE_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("vintage_cluster_management_computer", HardwareEra.VINTAGE, CaseStyle.SOLE)
+                    .named("Vintage Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> LEGACY_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("legacy_cluster_management_computer", HardwareEra.LEGACY, CaseStyle.SOLE)
+                    .named("Legacy Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> TRANSITION_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("transition_cluster_management_computer", HardwareEra.TRANSITION,
+                    CaseStyle.SOLE).named("Transition Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock> ADVANCED_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("advanced_cluster_management_computer", HardwareEra.ADVANCED,
+                    CaseStyle.NEUTRAL).named("Advanced Cluster Management Computer").register();
+    public static final BlockEntry<ClusterManagementComputerBlock>
+            ADVANCED_HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER = clusterManagementComputer(
+                    "advanced_high_performance_cluster_management_computer", HardwareEra.ADVANCED,
+                    CaseStyle.HIGH_PERFORMANCE).named("Advanced High Performance Cluster Management Computer")
+                    .register();
+    public static final BlockEntry<ClusterManagementComputerBlock> ADVANCED_AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER =
+            clusterManagementComputer("advanced_aesthetic_cluster_management_computer", HardwareEra.ADVANCED,
+                    CaseStyle.AESTHETIC).named("Advanced Aesthetic Cluster Management Computer").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ClusterManagementComputerBlockEntity>>
+            CLUSTER_MANAGEMENT_COMPUTER_BE = CONTENT.blockEntity("cluster_management_computer",
+                    ClusterManagementComputerBlockEntity::new, CLUSTER_MANAGEMENT_COMPUTER,
+                    HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER, AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER,
+                    VINTAGE_CLUSTER_MANAGEMENT_COMPUTER, LEGACY_CLUSTER_MANAGEMENT_COMPUTER,
+                    TRANSITION_CLUSTER_MANAGEMENT_COMPUTER, ADVANCED_CLUSTER_MANAGEMENT_COMPUTER,
+                    ADVANCED_HIGH_PERFORMANCE_CLUSTER_MANAGEMENT_COMPUTER,
+                    ADVANCED_AESTHETIC_CLUSTER_MANAGEMENT_COMPUTER);
+
+    /*
+     * The HBW Interface: a supercomputer's racks are tied together by the high-compute fabric and uplinked to the
+     * data network by one of these. The Standard's, and the Advanced's that takes the OSFP fabric and the OM5 backbone.
+     */
+    public static final BlockEntry<HbwInterfaceBlock> HBW_INTERFACE =
+            CONTENT.block("hbw_interface", properties -> new HbwInterfaceBlock(properties, HardwareEra.STANDARD))
+            .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(2.0F).noOcclusion())
+            .named("HBW Interface").look(IBlockLook::column).item().tab(shelf(Shelf.NETWORK, HardwareEra.STANDARD))
+            .register();
+    public static final BlockEntry<HbwInterfaceBlock> ADVANCED_HBW_INTERFACE =
+            CONTENT.block("advanced_hbw_interface", properties -> new HbwInterfaceBlock(properties,
+                    HardwareEra.ADVANCED))
+            .properties(properties -> properties.mapColor(MapColor.SNOW).strength(2.0F).noOcclusion())
+            .named("Advanced HBW Interface").look(IBlockLook::column).item()
+            .tab(shelf(Shelf.NETWORK, HardwareEra.ADVANCED)).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HbwInterfaceBlockEntity>> HBW_INTERFACE_BE =
+            CONTENT.blockEntity("hbw_interface", HbwInterfaceBlockEntity::new, HBW_INTERFACE, ADVANCED_HBW_INTERFACE);
+
+    /*
+     * Pattern Encoders burn .craft files onto removable media, one per era: the Advanced one writes Blu-ray discs and
+     * USB sticks, the Standard one DVDs, CDs and USB sticks, the Transition one, a LightScribe burner, DVDs and CDs,
+     * the Legacy one CDs, the Vintage one floppies. The body is drawn by the block entity.
+     */
+
+    public static final BlockEntry<PatternEncoderBlock> ADVANCED_PATTERN_ENCODER =
+            encoder("advanced_pattern_encoder", MapColor.COLOR_GRAY, HardwareEra.ADVANCED)
+                    .named("Advanced Pattern Encoder").register();
+    public static final BlockEntry<PatternEncoderBlock> TRANSITION_PATTERN_ENCODER =
+            encoder("transition_pattern_encoder", MapColor.COLOR_LIGHT_GRAY, HardwareEra.TRANSITION)
+                    .named("Transition Pattern Encoder").register();
+
+    public static final BlockEntry<PatternEncoderBlock> PATTERN_ENCODER =
+            encoder("pattern_encoder", MapColor.COLOR_GRAY, HardwareEra.STANDARD).named("Pattern Encoder").register();
+    public static final BlockEntry<PatternEncoderBlock> LEGACY_PATTERN_ENCODER =
+            encoder("legacy_pattern_encoder", MapColor.COLOR_LIGHT_GRAY, HardwareEra.LEGACY)
+                    .named("Legacy Pattern Encoder").register();
+    public static final BlockEntry<PatternEncoderBlock> VINTAGE_PATTERN_ENCODER =
+            encoder("vintage_pattern_encoder", MapColor.TERRACOTTA_WHITE, HardwareEra.VINTAGE)
+                    .named("Vintage Pattern Encoder").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PatternEncoderBlockEntity>>
+            PATTERN_ENCODER_BE = CONTENT.blockEntity("pattern_encoder", PatternEncoderBlockEntity::new,
+                    PATTERN_ENCODER, LEGACY_PATTERN_ENCODER, VINTAGE_PATTERN_ENCODER, TRANSITION_PATTERN_ENCODER,
+                    ADVANCED_PATTERN_ENCODER);
+
+    /*
+     * The printers, one per era, each the printer of its day on a period base, drawn by the block entity: a dot
+     * matrix, two inkjets, a laser and an ink tank printer. They print whatever their computer's programs send.
+     */
+
+    public static final BlockEntry<PrinterBlock> VINTAGE_PRINTER =
+            printer("vintage_printer", MapColor.TERRACOTTA_WHITE, HardwareEra.VINTAGE).named("Epsilon FX-80")
+                    .register();
+    public static final BlockEntry<PrinterBlock> LEGACY_PRINTER =
+            printer("legacy_printer", MapColor.COLOR_LIGHT_GRAY, HardwareEra.LEGACY).named("Pakard DeskJot 940")
+                    .register();
+    public static final BlockEntry<PrinterBlock> TRANSITION_PRINTER =
+            printer("transition_printer", MapColor.COLOR_LIGHT_GRAY, HardwareEra.TRANSITION)
+                    .named("Pakard FotoSmart C4280").register();
+    public static final BlockEntry<PrinterBlock> PRINTER =
+            printer("printer", MapColor.COLOR_BLACK, HardwareEra.STANDARD).named("Pakard LaserJot 1102").register();
+    public static final BlockEntry<PrinterBlock> ADVANCED_PRINTER =
+            printer("advanced_printer", MapColor.SNOW, HardwareEra.ADVANCED).named("Epsilon EcoTonk ET-2720")
+                    .register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PrinterBlockEntity>> PRINTER_BE =
+            CONTENT.blockEntity("printer", PrinterBlockEntity::new, VINTAGE_PRINTER, LEGACY_PRINTER,
+                    TRANSITION_PRINTER, PRINTER, ADVANCED_PRINTER);
+    /** The sheet a printer turns out, carrying what it printed. */
+    public static final ItemEntry<PrintedPaperItem> PRINTED_PAPER =
+            CONTENT.item("printed_paper", PrintedPaperItem::new).named("Printed Paper")
+                    .tab(shelf(Shelf.PERIPHERALS, null)).register();
+
+    /*
+     * Media drives: one block per drive type, each linked to a computer over the Peripheral Cable. A drive is drawn
+     * by its block entity as the drive of its day, the medium in it the player's own; the Dock Station is a low hub
+     * on the desk, drawn by hand, with the stick standing in it.
+     */
+
+    public static final BlockEntry<MediaReaderBlock> FLOPPY_DRIVE =
+            drive("floppy_drive", MediaDriveType.FLOPPY_DRIVE, MapColor.TERRACOTTA_WHITE).named("Floppy Drive")
+                    .register();
+    public static final BlockEntry<MediaReaderBlock> CD_DRIVE =
+            drive("cd_drive", MediaDriveType.CD_DRIVE, MapColor.COLOR_LIGHT_GRAY).named("CD Drive").register();
+    public static final BlockEntry<MediaReaderBlock> DVD_DRIVE =
+            drive("dvd_drive", MediaDriveType.DVD_DRIVE, MapColor.COLOR_BLACK).named("DVD Drive").register();
+    public static final BlockEntry<MediaReaderBlock> BLU_RAY_DRIVE =
+            drive("blu_ray_drive", MediaDriveType.BLU_RAY_DRIVE, MapColor.SNOW).named("Blu-ray Drive").register();
+    /*
+     * The Dock Station, a full block drawn by its block entity: three trays for disks of any era, each showing the
+     * player's own disk, and the USB port for the flash drive. Its item shows it as it comes, empty and dark.
+     */
+    public static final BlockEntry<DockStationBlock> DOCK_STATION =
+            CONTENT.block("dock_station", DockStationBlock::new)
+                    .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.5F)
+                            .sound(SoundType.METAL).noOcclusion())
+                    .named("Dock Station")
+                    .look(IBlockLook.fixed(new IBlockModel.ParticleOnly("dock_station_body",
+                            "block/dock_station_particle")))
+                    .geo(ComputingLooks.DOCK_STATION)
+                    .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.DOCK_STATION,
+                            "dock_station", DEVICE_FIT, ComputingLooks.DOCK_AT_REST))
+                    .itemLook(IItemLook.DRAWN_BY_ENTITY)
+                    .tab(shelf(Shelf.PERIPHERALS, MediaDriveType.DOCK_STATION.era())).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MediaReaderBlockEntity>> MEDIA_READER_BE =
+            CONTENT.blockEntity("media_reader", MediaReaderBlockEntity::new,
+                    FLOPPY_DRIVE, CD_DRIVE, DVD_DRIVE, BLU_RAY_DRIVE);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DockStationBlockEntity>>
+            DOCK_STATION_BE = CONTENT.blockEntity("dock_station", DockStationBlockEntity::new, DOCK_STATION);
+
+    /*
+     * The Redstone Interfaces, one each era: a sensor on the peripheral cable that reads a redstone signal for its
+     * computer, or emits one, through its lens alone.
+     */
+
+    public static final BlockEntry<RedstoneInterfaceBlock> VINTAGE_REDSTONE_INTERFACE =
+            redstoneInterface("vintage_redstone_interface", HardwareEra.VINTAGE)
+                    .named("Vintage Redstone Interface").register();
+    public static final BlockEntry<RedstoneInterfaceBlock> LEGACY_REDSTONE_INTERFACE =
+            redstoneInterface("legacy_redstone_interface", HardwareEra.LEGACY)
+                    .named("Legacy Redstone Interface").register();
+    public static final BlockEntry<RedstoneInterfaceBlock> TRANSITION_REDSTONE_INTERFACE =
+            redstoneInterface("transition_redstone_interface", HardwareEra.TRANSITION)
+                    .named("Transition Redstone Interface").register();
+    public static final BlockEntry<RedstoneInterfaceBlock> STANDARD_REDSTONE_INTERFACE =
+            redstoneInterface("standard_redstone_interface", HardwareEra.STANDARD)
+                    .named("Standard Redstone Interface").register();
+    public static final BlockEntry<RedstoneInterfaceBlock> ADVANCED_REDSTONE_INTERFACE =
+            redstoneInterface("advanced_redstone_interface", HardwareEra.ADVANCED)
+                    .named("Advanced Redstone Interface").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RedstoneInterfaceBlockEntity>>
+            REDSTONE_INTERFACE_BE = CONTENT.blockEntity("redstone_interface", RedstoneInterfaceBlockEntity::new,
+                    VINTAGE_REDSTONE_INTERFACE, LEGACY_REDSTONE_INTERFACE, TRANSITION_REDSTONE_INTERFACE,
+                    STANDARD_REDSTONE_INTERFACE, ADVANCED_REDSTONE_INTERFACE);
+
+    /*
+     * The speakers, which carry a computer's sound out beside its monitor, a model each era from the Legacy on; and the
+     * subwoofer of the Transition set, which takes no cable: set against a satellite, it plays the bass they leave out.
+     */
+    public static final BlockEntry<SpeakerBlock> LEGACY_SPEAKER =
+            speaker("legacy_speaker", HardwareEra.LEGACY, MapColor.COLOR_LIGHT_GRAY)
+                    .named("Artisan ToneWorks").register();
+    public static final BlockEntry<SpeakerBlock> TRANSITION_SPEAKER =
+            speaker("transition_speaker", HardwareEra.TRANSITION, MapColor.COLOR_BLACK)
+                    .named("Artisan Inspira 2.1").register();
+    public static final BlockEntry<SubwooferBlock> TRANSITION_SUBWOOFER =
+            subwoofer("transition_subwoofer", HardwareEra.TRANSITION, "subwoofer_transition")
+                    .named("Artisan Inspira 2.1 Subwoofer").register();
+    public static final BlockEntry<SpeakerBlock> SPEAKER =
+            speaker("speaker", HardwareEra.STANDARD, MapColor.COLOR_BLACK)
+                    .named("Artisan WattWorks T20").register();
+    public static final BlockEntry<SpeakerBlock> ADVANCED_SPEAKER =
+            speaker("advanced_speaker", HardwareEra.ADVANCED, MapColor.COLOR_BLACK)
+                    .named("Artisan Cobble").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SpeakerBlockEntity>> SPEAKER_BE =
+            CONTENT.blockEntity("speaker", SpeakerBlockEntity::new, LEGACY_SPEAKER, TRANSITION_SPEAKER, SPEAKER,
+                    ADVANCED_SPEAKER);
+
+    /*
+     * The Network Gateway: a peripheral of one of our computers that is, on its other face, a ComputerCraft
+     * peripheral, so the two families of computers reach each other through it. Its front lights for a linked
+     * Gateway and for one blinking to be found.
+     */
+    public static final BlockEntry<NetworkGatewayBlock> NETWORK_GATEWAY =
+            CONTENT.block("network_gateway", NetworkGatewayBlock::new)
+                    .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.5F)
+                            .sound(SoundType.METAL))
+                    .named("Network Gateway")
+                    .look(IBlockLook.facing(gateway("network_gateway", "block/network_gateway_front"))
+                            .whileOn(NetworkGatewayBlock.LIT,
+                                    gateway("network_gateway_lit", "block/network_gateway_front_lit")))
+                    .item().tab(shelf(Shelf.NETWORK, null)).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<NetworkGatewayBlockEntity>>
+            NETWORK_GATEWAY_BE =
+            CONTENT.blockEntity("network_gateway", NetworkGatewayBlockEntity::new, NETWORK_GATEWAY);
+
+    // Typed physical media: the format is the item's identity, the content lives in components.
+
+    public static final ItemEntry<FormattedMediaItem> FLOPPY_DISK =
+            medium("floppy_disk", MediaFormat.FLOPPY, true).named("Floppy Disk").register();
+    public static final ItemEntry<FormattedMediaItem> CD_ROM =
+            medium("cd_rom", MediaFormat.CD, false).named("CD-ROM").register();
+    public static final ItemEntry<FormattedMediaItem> CD_RW =
+            medium("cd_rw", MediaFormat.CD, true).named("CD-RW").register();
+    public static final ItemEntry<FormattedMediaItem> DVD_ROM =
+            medium("dvd_rom", MediaFormat.DVD, false).named("DVD-ROM").register();
+    public static final ItemEntry<FormattedMediaItem> DVD_RW =
+            medium("dvd_rw", MediaFormat.DVD, true).named("DVD-RW").register();
+    public static final ItemEntry<FormattedMediaItem> BD_ROM =
+            medium("bd_rom", MediaFormat.BLU_RAY, false).named("BD-ROM").register();
+    public static final ItemEntry<FormattedMediaItem> BD_RE =
+            medium("bd_re", MediaFormat.BLU_RAY, true).named("BD-RE").register();
+    // The flash drive is a model made by hand in three dimensions, not a flat sprite.
+    public static final ItemEntry<FormattedMediaItem> USB_FLASH_DRIVE =
+            medium("usb_flash_drive", MediaFormat.USB, true).look(IItemLook.HANDMADE).named("USB Flash Drive")
+                    .register();
+
+    /*
+     * The Server Racks, one per era, and the Supercomputer Racks of the Standard and the Advanced, which seat only
+     * Supercomputer Nodes and whose rear port takes only the high-compute fabric. A cabinet takes servers of its own
+     * era or earlier; it is drawn as one model by its controller, which hands its item over itself when broken.
+     */
+
+    public static final BlockEntry<ServerRackBlock> VINTAGE_SERVER_RACK =
+            serverRack("vintage_server_rack", HardwareEra.VINTAGE).named("Vintage Server Rack").register();
+    public static final BlockEntry<ServerRackBlock> LEGACY_SERVER_RACK =
+            serverRack("legacy_server_rack", HardwareEra.LEGACY).named("Legacy Server Rack").register();
+    public static final BlockEntry<ServerRackBlock> TRANSITION_SERVER_RACK =
+            serverRack("transition_server_rack", HardwareEra.TRANSITION).named("Transition Server Rack").register();
+    public static final BlockEntry<ServerRackBlock> SERVER_RACK =
+            serverRack("server_rack", HardwareEra.STANDARD).named("Server Rack").register();
+    public static final BlockEntry<ServerRackBlock> ADVANCED_SERVER_RACK =
+            serverRack("advanced_server_rack", HardwareEra.ADVANCED).named("Advanced Server Rack").register();
+    public static final BlockEntry<SupercomputerRackBlock> SUPERCOMPUTER_RACK =
+            supercomputerRack("supercomputer_rack", HardwareEra.STANDARD).named("Supercomputer Rack").register();
+    public static final BlockEntry<SupercomputerRackBlock> ADVANCED_SUPERCOMPUTER_RACK =
+            supercomputerRack("advanced_supercomputer_rack", HardwareEra.ADVANCED)
+                    .named("Advanced Supercomputer Rack").register();
+    public static final BlockEntry<ServerRackPartBlock> SERVER_RACK_PART =
+            CONTENT.block("server_rack_part", ServerRackPartBlock::new).properties(ComputingModule::rackProperties)
+                    .named("Server Rack").look(RACK_BODY).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRackBlockEntity>> SERVER_RACK_BE =
-            BLOCK_ENTITIES.register("server_rack",
-                    () -> BlockEntityType.Builder.of(ServerRackBlockEntity::new,
-                            SERVER_RACK.get(), SUPERCOMPUTER_RACK.get(), LEGACY_SERVER_RACK.get(),
-                            VINTAGE_SERVER_RACK.get()).build(null));
+            CONTENT.blockEntity("server_rack", ServerRackBlockEntity::new,
+                    SERVER_RACK, SUPERCOMPUTER_RACK, LEGACY_SERVER_RACK, VINTAGE_SERVER_RACK, TRANSITION_SERVER_RACK,
+                    ADVANCED_SERVER_RACK, ADVANCED_SUPERCOMPUTER_RACK);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRackPartBlockEntity>>
+            SERVER_RACK_PART_BE = CONTENT.blockEntity("server_rack_part", ServerRackPartBlockEntity::new,
+                    SERVER_RACK_PART);
 
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<ServerRackPartBlockEntity>> SERVER_RACK_PART_BE =
-            BLOCK_ENTITIES.register("server_rack_part",
-                    () -> BlockEntityType.Builder.of(
-                            ServerRackPartBlockEntity::new,
-                            SERVER_RACK_PART.get()).build(null));
+    // Interaction buses: parts mounted on a cable's face that move items between the network and an inventory.
 
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<ServerRackMenu>> SERVER_RACK_MENU =
-            MENUS.register("server_rack", () -> IMenuTypeExtension.create(
-                    ServerRackMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<ServerAssemblyMenu>> SERVER_ASSEMBLY_MENU =
-            MENUS.register("server_assembly", () -> IMenuTypeExtension.create(
-                    ServerAssemblyMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<ComputerTerminalMenu>> COMPUTER_TERMINAL_MENU =
-            MENUS.register("computer_terminal", () -> IMenuTypeExtension.create(
-                    ComputerTerminalMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<CommandPromptMenu>> COMMAND_PROMPT_MENU =
-            MENUS.register("command_prompt", () -> IMenuTypeExtension.create(
-                    CommandPromptMenu::fromNetwork));
+    public static final ItemEntry<CablePartItem> VINTAGE_IMPORT_BUS_ITEM = bus("vintage_import_bus",
+            HardwareEra.VINTAGE, ComputingParts.VINTAGE_IMPORT).named("Vintage Import Bus").register();
+    public static final ItemEntry<CablePartItem> LEGACY_IMPORT_BUS_ITEM = bus("legacy_import_bus",
+            HardwareEra.LEGACY, ComputingParts.LEGACY_IMPORT).named("Legacy Import Bus").register();
+    public static final ItemEntry<CablePartItem> TRANSITION_IMPORT_BUS_ITEM = bus("transition_import_bus",
+            HardwareEra.TRANSITION, ComputingParts.TRANSITION_IMPORT).named("Transition Import Bus").register();
+    public static final ItemEntry<CablePartItem> IMPORT_BUS_ITEM =
+            bus("import_bus", HardwareEra.STANDARD, ComputingParts.IMPORT).named("Import Bus").register();
+    public static final ItemEntry<CablePartItem> ADVANCED_IMPORT_BUS_ITEM = bus("advanced_import_bus",
+            HardwareEra.ADVANCED, ComputingParts.ADVANCED_IMPORT).named("Advanced Import Bus").register();
+    public static final ItemEntry<CablePartItem> VINTAGE_EXPORT_BUS_ITEM = bus("vintage_export_bus",
+            HardwareEra.VINTAGE, ComputingParts.VINTAGE_EXPORT).named("Vintage Export Bus").register();
+    public static final ItemEntry<CablePartItem> LEGACY_EXPORT_BUS_ITEM = bus("legacy_export_bus",
+            HardwareEra.LEGACY, ComputingParts.LEGACY_EXPORT).named("Legacy Export Bus").register();
+    public static final ItemEntry<CablePartItem> TRANSITION_EXPORT_BUS_ITEM = bus("transition_export_bus",
+            HardwareEra.TRANSITION, ComputingParts.TRANSITION_EXPORT).named("Transition Export Bus").register();
+    public static final ItemEntry<CablePartItem> EXPORT_BUS_ITEM =
+            bus("export_bus", HardwareEra.STANDARD, ComputingParts.EXPORT).named("Export Bus").register();
+    public static final ItemEntry<CablePartItem> ADVANCED_EXPORT_BUS_ITEM = bus("advanced_export_bus",
+            HardwareEra.ADVANCED, ComputingParts.ADVANCED_EXPORT).named("Advanced Export Bus").register();
+    public static final ItemEntry<CablePartItem> VINTAGE_EXTERNAL_STORAGE_BUS_ITEM = bus(
+            "vintage_external_storage_bus", HardwareEra.VINTAGE, ComputingParts.VINTAGE_EXTERNAL)
+            .named("Vintage External Storage Bus").register();
+    public static final ItemEntry<CablePartItem> LEGACY_EXTERNAL_STORAGE_BUS_ITEM = bus(
+            "legacy_external_storage_bus", HardwareEra.LEGACY, ComputingParts.LEGACY_EXTERNAL)
+            .named("Legacy External Storage Bus").register();
+    public static final ItemEntry<CablePartItem> TRANSITION_EXTERNAL_STORAGE_BUS_ITEM = bus(
+            "transition_external_storage_bus", HardwareEra.TRANSITION, ComputingParts.TRANSITION_EXTERNAL)
+            .named("Transition External Storage Bus").register();
+    public static final ItemEntry<CablePartItem> EXTERNAL_STORAGE_BUS_ITEM = bus("external_storage_bus",
+            HardwareEra.STANDARD, ComputingParts.EXTERNAL).named("External Storage Bus").register();
+    public static final ItemEntry<CablePartItem> ADVANCED_EXTERNAL_STORAGE_BUS_ITEM = bus(
+            "advanced_external_storage_bus", HardwareEra.ADVANCED, ComputingParts.ADVANCED_EXTERNAL)
+            .named("Advanced External Storage Bus").register();
+    /*
+     * The autocrafting parts on the crafting cable: an interface of each era, and the router and the Receiving Bus,
+     * which every era shares as it shares the cable.
+     */
+    public static final ItemEntry<CablePartItem> VINTAGE_CRAFTING_INTERFACE_ITEM = bus("vintage_crafting_interface",
+            HardwareEra.VINTAGE, ComputingParts.VINTAGE_INTERFACE).named("Vintage Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> LEGACY_CRAFTING_INTERFACE_ITEM = bus("legacy_crafting_interface",
+            HardwareEra.LEGACY, ComputingParts.LEGACY_INTERFACE).named("Legacy Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> TRANSITION_CRAFTING_INTERFACE_ITEM = bus(
+            "transition_crafting_interface", HardwareEra.TRANSITION, ComputingParts.TRANSITION_INTERFACE)
+            .named("Transition Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> CRAFTING_INTERFACE_ITEM = bus("crafting_interface",
+            HardwareEra.STANDARD, ComputingParts.INTERFACE).named("Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> ADVANCED_CRAFTING_INTERFACE_ITEM = bus("advanced_crafting_interface",
+            HardwareEra.ADVANCED, ComputingParts.ADVANCED_INTERFACE).named("Advanced Crafting Interface").register();
+    public static final ItemEntry<CablePartItem> CRAFTING_ROUTER_ITEM = bus("crafting_input_router", null,
+            ComputingParts.ROUTER).named("Crafting Input Router").register();
+    public static final ItemEntry<CablePartItem> RECEIVING_BUS_ITEM =
+            bus("receiving_bus", null, ComputingParts.RECEIVING).named("Crafting Receiving Bus").register();
 
     /*
-     * Every session on a monitor that is not a system: the self-test, the boot manager, the firmware setup,
-     * a system coming up, an installer, and the rack's channel switch. One menu with a phase rather than one
-     * per screen, because they carry exactly the same thing and differ only in what is drawn on the glass.
+     * Servers, and the cases they are assembled in. A case of an era takes only boards of that era, and its server
+     * seats in a cabinet of its era or later.
      */
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<MonitorSessionMenu>> MONITOR_SESSION_MENU =
-            MENUS.register("monitor_session", () -> IMenuTypeExtension.create(
-                    MonitorSessionMenu::fromNetwork));
+
+    public static final ItemEntry<ServerCaseItem> VINTAGE_SERVER_CASE =
+            serverCase("vintage_server_case", RackChassis.VINTAGE_SERVER).named("Vintage Server Case").register();
+    public static final ItemEntry<ServerItem> VINTAGE_SERVER =
+            server("vintage_server", RackChassis.VINTAGE_SERVER).named("Vintage Server").register();
+    public static final ItemEntry<ServerCaseItem> LEGACY_SERVER_CASE =
+            serverCase("legacy_server_case", RackChassis.LEGACY_SERVER).named("Legacy Server Case").register();
+    public static final ItemEntry<ServerItem> LEGACY_SERVER =
+            server("legacy_server", RackChassis.LEGACY_SERVER).named("Legacy Server").register();
+    public static final ItemEntry<ServerCaseItem> TRANSITION_SERVER_CASE =
+            serverCase("transition_server_case", RackChassis.TRANSITION_SERVER).named("Transition Server Case")
+                    .register();
+    public static final ItemEntry<ServerItem> TRANSITION_SERVER =
+            server("transition_server", RackChassis.TRANSITION_SERVER).named("Transition Server").register();
+    public static final ItemEntry<ServerCaseItem> SERVER_CASE =
+            serverCase("server_case", RackChassis.SERVER).named("Server Case").register();
+    public static final ItemEntry<ServerItem> SERVER =
+            server("server", RackChassis.SERVER).named("Server").register();
+    public static final ItemEntry<ServerCaseItem> ADVANCED_SERVER_CASE =
+            serverCase("advanced_server_case", RackChassis.ADVANCED_SERVER).named("Advanced Server Case").register();
+    public static final ItemEntry<ServerItem> ADVANCED_SERVER =
+            server("advanced_server", RackChassis.ADVANCED_SERVER).named("Advanced Server").register();
+    // Every era has a 2U storage server and a 2U compute server, with their cases.
+    public static final ItemEntry<ServerCaseItem> VINTAGE_STORAGE_SERVER_CASE = serverCase(
+            "vintage_storage_server_case", RackChassis.VINTAGE_STORAGE_SERVER).named("Vintage Storage Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> VINTAGE_STORAGE_SERVER = server("vintage_storage_server",
+            RackChassis.VINTAGE_STORAGE_SERVER).named("Vintage Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> LEGACY_STORAGE_SERVER_CASE = serverCase(
+            "legacy_storage_server_case", RackChassis.LEGACY_STORAGE_SERVER).named("Legacy Storage Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> LEGACY_STORAGE_SERVER = server("legacy_storage_server",
+            RackChassis.LEGACY_STORAGE_SERVER).named("Legacy Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> TRANSITION_STORAGE_SERVER_CASE = serverCase(
+            "transition_storage_server_case", RackChassis.TRANSITION_STORAGE_SERVER)
+            .named("Transition Storage Server Case").register();
+    public static final ItemEntry<ServerItem> TRANSITION_STORAGE_SERVER = server("transition_storage_server",
+            RackChassis.TRANSITION_STORAGE_SERVER).named("Transition Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> STORAGE_SERVER_CASE =
+            serverCase("storage_server_case", RackChassis.STORAGE_SERVER).named("Storage Server Case").register();
+    public static final ItemEntry<ServerItem> STORAGE_SERVER =
+            server("storage_server", RackChassis.STORAGE_SERVER).named("Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> ADVANCED_STORAGE_SERVER_CASE = serverCase(
+            "advanced_storage_server_case", RackChassis.ADVANCED_STORAGE_SERVER).named("Advanced Storage Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> ADVANCED_STORAGE_SERVER = server("advanced_storage_server",
+            RackChassis.ADVANCED_STORAGE_SERVER).named("Advanced Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> VINTAGE_COMPUTE_SERVER_CASE = serverCase(
+            "vintage_compute_server_case", RackChassis.VINTAGE_COMPUTE_SERVER).named("Vintage Compute Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> VINTAGE_COMPUTE_SERVER = server("vintage_compute_server",
+            RackChassis.VINTAGE_COMPUTE_SERVER).named("Vintage Compute Server").register();
+    public static final ItemEntry<ServerCaseItem> LEGACY_COMPUTE_SERVER_CASE = serverCase(
+            "legacy_compute_server_case", RackChassis.LEGACY_COMPUTE_SERVER).named("Legacy Compute Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> LEGACY_COMPUTE_SERVER = server("legacy_compute_server",
+            RackChassis.LEGACY_COMPUTE_SERVER).named("Legacy Compute Server").register();
+    public static final ItemEntry<ServerCaseItem> TRANSITION_COMPUTE_SERVER_CASE = serverCase(
+            "transition_compute_server_case", RackChassis.TRANSITION_COMPUTE_SERVER)
+            .named("Transition Compute Server Case").register();
+    public static final ItemEntry<ServerItem> TRANSITION_COMPUTE_SERVER = server("transition_compute_server",
+            RackChassis.TRANSITION_COMPUTE_SERVER).named("Transition Compute Server").register();
+    public static final ItemEntry<ServerCaseItem> COMPUTE_SERVER_CASE =
+            serverCase("compute_server_case", RackChassis.COMPUTE_SERVER).named("Compute Server Case").register();
+    public static final ItemEntry<ServerItem> COMPUTE_SERVER =
+            server("compute_server", RackChassis.COMPUTE_SERVER).named("Compute Server").register();
+    public static final ItemEntry<ServerCaseItem> ADVANCED_COMPUTE_SERVER_CASE = serverCase(
+            "advanced_compute_server_case", RackChassis.ADVANCED_COMPUTE_SERVER).named("Advanced Compute Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> ADVANCED_COMPUTE_SERVER = server("advanced_compute_server",
+            RackChassis.ADVANCED_COMPUTE_SERVER).named("Advanced Compute Server").register();
+    // The supercomputer's nodes are rack computers too, shown with the racks that seat them.
+    public static final ItemEntry<ServerItem> SUPERCOMPUTER_NODE =
+            server("supercomputer_node", RackChassis.SUPERCOMPUTER_NODE).named("Supercomputer Node").register();
+    public static final ItemEntry<ServerItem> ADVANCED_SUPERCOMPUTER_NODE =
+            server("advanced_supercomputer_node", RackChassis.ADVANCED_SUPERCOMPUTER_NODE)
+                    .named("Advanced Supercomputer Node").register();
+
+    // Rack equipment: rack units spend the cabinet's unit budget.
+
+    // Each era has its own KVM Switch, Rack UPS and Cooling Unit, and a rack seats its era's and the earlier ones.
+    public static final ItemEntry<RackUnitItem> VINTAGE_KVM_SWITCH = rackUnit("vintage_kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.VINTAGE).named("Vintage KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_KVM_SWITCH = rackUnit("legacy_kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.LEGACY).named("Legacy KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_KVM_SWITCH = rackUnit("transition_kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.TRANSITION).named("Transition KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> KVM_SWITCH = rackUnit("kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.STANDARD).named("KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_KVM_SWITCH = rackUnit("advanced_kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.ADVANCED).named("Advanced KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> VINTAGE_RACK_UPS = rackUnit("vintage_rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.VINTAGE).named("Vintage Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_RACK_UPS = rackUnit("legacy_rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.LEGACY).named("Legacy Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_RACK_UPS = rackUnit("transition_rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.TRANSITION).named("Transition Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> RACK_UPS = rackUnit("rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.STANDARD).named("Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_RACK_UPS = rackUnit("advanced_rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.ADVANCED).named("Advanced Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> VINTAGE_COOLING_UNIT = rackUnit("vintage_cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.VINTAGE).named("Vintage Cooling Unit").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_COOLING_UNIT = rackUnit("legacy_cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.LEGACY).named("Legacy Cooling Unit").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_COOLING_UNIT = rackUnit("transition_cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.TRANSITION).named("Transition Cooling Unit").register();
+    public static final ItemEntry<RackUnitItem> COOLING_UNIT = rackUnit("cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.STANDARD).named("Cooling Unit").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_COOLING_UNIT = rackUnit("advanced_cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.ADVANCED).named("Advanced Cooling Unit").register();
+    // A server rack takes the fibre backbone through one of these: the Standard's opens it to the Fibre Optic Cable,
+    // the Advanced's to the OM5 Fibre Cable as well.
+    public static final ItemEntry<RackUnitItem> FIBRE_OPTIC_INTERFACE = rackUnit("fibre_optic_interface",
+            RackUnitItem.Kind.FIBRE_INTERFACE, HardwareEra.STANDARD).named("Fibre Optic Interface").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_FIBRE_OPTIC_INTERFACE = rackUnit(
+            "advanced_fibre_optic_interface", RackUnitItem.Kind.FIBRE_INTERFACE, HardwareEra.ADVANCED)
+            .named("Advanced Fibre Optic Interface").register();
 
     /*
-     * Each terminal platform opens its own screen. They carry the same data and differ in how the machine
-     * greets and where it stands, so no system is ever met in another's voice.
+     * The parts of the first machines, Standard era; the rest of every era is in HardwareItems. The Mainframe's
+     * four-way board and the two-way server board take the Servo on LGA 2011, and their memory slots follow the
+     * boards of their kind before them; a machine counts only as many as its own case holds.
      */
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<DosTerminalMenu>> DOS_TERMINAL_MENU =
-            MENUS.register("dos_terminal", () -> IMenuTypeExtension.create(
-                    DosTerminalMenu::fromNetwork));
 
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<LinuxTtyMenu>> LINUX_TTY_MENU =
-            MENUS.register("linux_tty", () -> IMenuTypeExtension.create(
-                    LinuxTtyMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<NetTerminalMenu>> NET_TERMINAL_MENU =
-            MENUS.register("net_terminal", () -> IMenuTypeExtension.create(
-                    NetTerminalMenu::fromNetwork));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<DesktopMenu>> DESKTOP_MENU =
-            MENUS.register("desktop", () -> IMenuTypeExtension.create(
-                    DesktopMenu::fromNetwork));
-
-    // Hardware components (Standard era, minimal set to build a Mainframe)
-
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_P = ITEMS.register(
-            "motherboard_mtx_p", () -> new MotherboardItem(new Item.Properties(),
-                    new MotherboardSpec(FormFactor.MTX,
-                            HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4,
-                            Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 4, 8)));
-
-    public static final DeferredItem<CpuItem> CPU_SERVO_2620 = ITEMS.register(
-            "cpu_servo_2620", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95, false)));
-
-    public static final DeferredItem<CpuItem> CPU_SERVO_2690 = ITEMS.register(
-            "cpu_servo_2690", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900, 135, false)));
-
-    public static final DeferredItem<CpuItem> CPU_SERVO_2699 = ITEMS.register(
-            "cpu_servo_2699", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 18, 2300, 145, false)));
-
-    public static final DeferredItem<RamItem> RAM_DDR3_8192 = ITEMS.register(
-            "ram_ddr3_8192", () -> new RamItem(new Item.Properties(),
-                    new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 2048, 15)));
-
-    public static final DeferredItem<GpuItem> GPU_HD_7970 = ITEMS.register(
-            "gpu_hd_7970", () -> new GpuItem(new Item.Properties(),
-                    new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2048, 3072, 250)));
-
-    public static final DeferredItem<CraftingCardItem> CRAFTING_CARD_T2 = ITEMS.register(
-            "crafting_card_t2", () -> new CraftingCardItem(new Item.Properties(),
-                    new CraftingCardSpec(IndustrialTier.T2, PcieGeneration.PCIE_1_0, 0.05, 2, 75)));
-
-    public static final DeferredItem<CraftingCardItem> CRAFTING_CARD_T3 = ITEMS.register(
-            "crafting_card_t3", () -> new CraftingCardItem(new Item.Properties(),
-                    new CraftingCardSpec(IndustrialTier.T3, PcieGeneration.PCIE_2_0, 0.1, 4, 100)));
-
+    public static final ItemEntry<MotherboardItem> MOTHERBOARD_MTX_S_2011 = part("motherboard_mtx_s_2011",
+            HardwareEra.STANDARD, properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.MTX,
+                    HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4, Set.of(RamGeneration.DDR3), 48,
+                    PcieGeneration.PCIE_3_0, 8, 6)))
+            .named("MF MTX-S Motherboard (4x LGA 2011)").register();
+    public static final ItemEntry<MotherboardItem> MOTHERBOARD_EEB_S_2011 = part("motherboard_eeb_s_2011",
+            HardwareEra.STANDARD, properties -> new MotherboardItem(properties, new MotherboardSpec(FormFactor.EEB,
+                    HardwareEra.STANDARD, CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 16,
+                    PcieGeneration.PCIE_3_0, 6, 6)))
+            .named("MF EEB-S Server Board (2x LGA 2011)").register();
+    public static final ItemEntry<CpuItem> CPU_SERVO_2620 = part("cpu_integra_servo_2620", HardwareEra.STANDARD,
+            properties -> new CpuItem(properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95,
+                    false).on(Microarchitectures.SANDY_BRIDGE, "").withSmt()))
+            .named("Integra Servo 2620").register();
+    public static final ItemEntry<CpuItem> CPU_SERVO_2690 = part("cpu_integra_servo_2690", HardwareEra.STANDARD,
+            properties -> new CpuItem(properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900,
+                    135, false).on(Microarchitectures.SANDY_BRIDGE, "").withSmt()))
+            .named("Integra Servo 2690").register();
+    /* The top of the LGA 2011 Servos on DDR3; the eighteen-core chips came with the next socket and DDR4. */
+    public static final ItemEntry<CpuItem> CPU_SERVO_2697_V2 = part("cpu_integra_servo_2697_v2", HardwareEra.STANDARD,
+            properties -> new CpuItem(properties, new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 12, 2700,
+                    130, false).on(Microarchitectures.IVY_BRIDGE, "").withSmt()))
+            .named("Integra Servo 2697 v2").register();
+    public static final ItemEntry<RamItem> RAM_DDR3_8192 = part("ram_ddr3_8192", HardwareEra.STANDARD,
+            properties -> new RamItem(properties, new RamSpec(HardwareEra.STANDARD, RamGeneration.DDR3, 2048, 15)))
+            .named("Stratix Layer DDR3-8192").register();
+    public static final ItemEntry<GpuItem> GPU_HD_7970 = part("gpu_radiance_hd_7970", HardwareEra.STANDARD,
+            properties -> new GpuItem(properties, new GpuSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 2048,
+                    3072, 250).on(Microarchitectures.GCN, "Tahiti", 925)))
+            .named("Velocion Radiance HD 7970").register();
+    /*
+     * The Crafting Cards, one or two for each era on that era's slot: the ISA card of the Vintage boards, the PCI card
+     * of the Legacy, the T2 and T3 of the Transition, the PCIe 3.0 card of the Standard and the T4 of the Advanced.
+     * The newer cards are faster and run more pipelines; their era says how many interfaces each drives and how many
+     * bench recipes its ROM keeps. The numbers are estimates.
+     */
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_ISA = part("crafting_card_isa", HardwareEra.VINTAGE,
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.VINTAGE,
+                    IndustrialTier.T1, PcieGeneration.ISA, 0.02, 1, 10)))
+            .named("Forge Logic Crafting Card ISA").register();
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_PCI = part("crafting_card_pci", HardwareEra.LEGACY,
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.LEGACY,
+                    IndustrialTier.T2, PcieGeneration.PCI, 0.03, 2, 25)))
+            .named("Forge Logic Crafting Card PCI").register();
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T2 = part("crafting_card_t2", HardwareEra.TRANSITION,
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.TRANSITION,
+                    IndustrialTier.T2, PcieGeneration.PCIE_1_0, 0.05, 2, 75)))
+            .named("Forge Logic Crafting Card").register();
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T3 = part("crafting_card_t3", HardwareEra.TRANSITION,
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.TRANSITION,
+                    IndustrialTier.T3, PcieGeneration.PCIE_2_0, 0.1, 4, 100)))
+            .named("Forge Logic Crafting Card T3").register();
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_PCIE3 = part("crafting_card_pcie3",
+            HardwareEra.STANDARD, properties -> new CraftingCardItem(properties, new CraftingCardSpec(
+                    HardwareEra.STANDARD, IndustrialTier.T3, PcieGeneration.PCIE_3_0, 0.15, 6, 110)))
+            .named("Forge Logic Crafting Card PCI-e 3.0").register();
+    // The card of the Advanced boards, twice the tier before it again.
+    public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T4 = part("crafting_card_t4", HardwareEra.ADVANCED,
+            properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.ADVANCED,
+                    IndustrialTier.T4, PcieGeneration.PCIE_4_0, 0.2, 8, 125)))
+            .named("Forge Logic Crafting Card T4").register();
+    /*
+     * The personal-use cards, one of each kind for every era from the Legacy on, worked by the Workshop program of a
+     * Personal Computer. Their draw is an estimate.
+     */
+    public static final ItemEntry<WorkshopCardItem> CRAFTING_TABLE_CARD = workshopCard(WorkshopCard.CRAFTING_TABLE)
+            .named("Crafting Table Card").register();
+    public static final ItemEntry<WorkshopCardItem> FURNACE_CARD = workshopCard(WorkshopCard.FURNACE)
+            .named("Furnace Card").register();
+    public static final ItemEntry<WorkshopCardItem> ENCHANTING_CARD = workshopCard(WorkshopCard.ENCHANTING)
+            .named("Enchanting Card").register();
+    public static final ItemEntry<WorkshopCardItem> ANVIL_CARD = workshopCard(WorkshopCard.ANVIL)
+            .named("Anvil Card").register();
     /*
      * The Cluster Interface Cards: exclusive to the Cluster Management Computer, one per era. Each era
      * reaches further and writes more nodes at once. Numbers are estimates.
      */
-    public static final DeferredItem<ClusterInterfaceCardItem> SERIAL_CONSOLE_CARD =
-            ITEMS.register("serial_console_card", () -> new ClusterInterfaceCardItem(
-                    new Item.Properties(), new ClusterInterfaceCardSpec(
-                            HardwareEra.VINTAGE, IndustrialTier.T2, PcieGeneration.PCI,
-                            ClusterInterfaceCardSpec.Reach.DATACENTERS, 1, 10)));
-    public static final DeferredItem<ClusterInterfaceCardItem> MANAGEMENT_NIC =
-            ITEMS.register("management_nic", () -> new ClusterInterfaceCardItem(
-                    new Item.Properties(), new ClusterInterfaceCardSpec(
-                            HardwareEra.LEGACY, IndustrialTier.T3, PcieGeneration.PCIE_1_0,
-                            ClusterInterfaceCardSpec.Reach.SUPERCOMPUTERS, 2, 20)));
-    public static final DeferredItem<ClusterInterfaceCardItem> FABRIC_HOST_ADAPTER =
-            ITEMS.register("fabric_host_adapter", () -> new ClusterInterfaceCardItem(
-                    new Item.Properties(), new ClusterInterfaceCardSpec(
-                            HardwareEra.STANDARD, IndustrialTier.T4, PcieGeneration.PCIE_3_0,
-                            ClusterInterfaceCardSpec.Reach.ALL, 4, 35)));
-
-    public static final DeferredItem<PsuItem> PSU_650G = ITEMS.register(
-            "psu_650g", () -> new PsuItem(new Item.Properties(), new PsuSpec(650, 90)));
-
+    public static final ItemEntry<ClusterInterfaceCardItem> SERIAL_CONSOLE_CARD = part("serial_console_card",
+            HardwareEra.VINTAGE, properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(
+                    HardwareEra.VINTAGE, IndustrialTier.T2, PcieGeneration.PCI,
+                    ClusterInterfaceCardSpec.Reach.DATACENTERS, 1, 10)))
+            .named("Serial Console Card").register();
+    public static final ItemEntry<ClusterInterfaceCardItem> MANAGEMENT_NIC = part("management_nic",
+            HardwareEra.LEGACY, properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(
+                    HardwareEra.LEGACY, IndustrialTier.T3, PcieGeneration.PCIE_1_0,
+                    ClusterInterfaceCardSpec.Reach.SUPERCOMPUTERS, 2, 20)))
+            .named("Management NIC").register();
+    public static final ItemEntry<ClusterInterfaceCardItem> FABRIC_HOST_ADAPTER = part("fabric_host_adapter",
+            HardwareEra.STANDARD, properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(
+                    HardwareEra.STANDARD, IndustrialTier.T4, PcieGeneration.PCIE_3_0,
+                    ClusterInterfaceCardSpec.Reach.ALL, 4, 35)))
+            .named("Fabric Host Adapter").register();
+    public static final ItemEntry<ClusterInterfaceCardItem> FABRIC_DPU = part("fabric_dpu",
+            HardwareEra.ADVANCED, properties -> new ClusterInterfaceCardItem(properties, new ClusterInterfaceCardSpec(
+                    HardwareEra.ADVANCED, IndustrialTier.T5, PcieGeneration.PCIE_4_0,
+                    ClusterInterfaceCardSpec.Reach.ALL, 8, 75)))
+            .named("Fabric DPU").register();
     /*
-     * Pattern system: the Pattern Encoder burns .craft files onto removable media, one encoder per era:
-     * the Standard one writes DVDs, CDs and USB sticks, the Legacy one CDs, the Vintage one floppies.
+     * Vaultis's storage cards, a RAID controller and a read cache for each era's slot: in a server, the Array joins
+     * its drives into one volume and the Cache answers their reads faster. Draws and the cache's cut are estimates.
      */
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_ISA = storageCard("vaultis_array_isa",
+            StorageCardSpec.array(HardwareEra.VINTAGE, PcieGeneration.ISA, 8)).named("Vaultis Array ISA").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCI = storageCard("vaultis_array_pci",
+            StorageCardSpec.array(HardwareEra.LEGACY, PcieGeneration.PCI, 10)).named("Vaultis Array PCI").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE2 = storageCard("vaultis_array_pcie2",
+            StorageCardSpec.array(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 15))
+            .named("Vaultis Array PCI-e 2.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE3 = storageCard("vaultis_array_pcie3",
+            StorageCardSpec.array(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 13))
+            .named("Vaultis Array PCI-e 3.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE4 = storageCard("vaultis_array_pcie4",
+            StorageCardSpec.array(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 18))
+            .named("Vaultis Array PCI-e 4.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_ISA = storageCard("vaultis_cache_isa",
+            StorageCardSpec.cache(HardwareEra.VINTAGE, PcieGeneration.ISA, 6, 10)).named("Vaultis Cache ISA")
+            .register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCI = storageCard("vaultis_cache_pci",
+            StorageCardSpec.cache(HardwareEra.LEGACY, PcieGeneration.PCI, 12, 15)).named("Vaultis Cache PCI")
+            .register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE2 = storageCard("vaultis_cache_pcie2",
+            StorageCardSpec.cache(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 25, 20))
+            .named("Vaultis Cache PCI-e 2.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE3 = storageCard("vaultis_cache_pcie3",
+            StorageCardSpec.cache(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 25, 25))
+            .named("Vaultis Cache PCI-e 3.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE4 = storageCard("vaultis_cache_pcie4",
+            StorageCardSpec.cache(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 20, 30))
+            .named("Vaultis Cache PCI-e 4.0").register();
+    /* The fibre backbone's adapter: a Mainframe, a rack (in any of its servers) or a CMC takes the fibre with one. */
+    public static final ItemEntry<NetworkCardItem> OPTICAL_NETWORK_CARD = part("optical_network_card",
+            HardwareEra.STANDARD, properties -> new NetworkCardItem(properties, new NetworkCardSpec(
+                    HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 15)))
+            .named("Optical Network Card").register();
+    // The Supercomputer's co-processors, all on the PCIe 3.0 slot of the Standard's boards.
+    public static final ItemEntry<PhiCoprocessorItem> PHI_5100 = phi("phi_5100", HardwareEra.STANDARD,
+            new PhiCoprocessorSpec(IndustrialTier.T3, 2, 60, 1050, 225)).named("Integra Phi 5100 Co-processor")
+            .register();
+    public static final ItemEntry<PhiCoprocessorItem> PHI_7120 = phi("phi_7120", HardwareEra.STANDARD,
+            new PhiCoprocessorSpec(IndustrialTier.T4, 3, 61, 1240, 250)).named("Integra Phi 7120 Co-processor")
+            .register();
+    public static final ItemEntry<PhiCoprocessorItem> PHI_7290 = phi("phi_7290", HardwareEra.STANDARD,
+            new PhiCoprocessorSpec(IndustrialTier.T4, 4, 72, 1500, 270)).named("Integra Phi 7290 Co-processor")
+            .register();
+    public static final ItemEntry<PhiCoprocessorItem> PHI_9000 = phi("phi_9000", HardwareEra.STANDARD,
+            new PhiCoprocessorSpec(IndustrialTier.T5, 6, 96, 1800, 300)).named("Integra Phi 9000 Co-processor")
+            .register();
+    public static final ItemEntry<PsuItem> PSU_650G = part("psu_650g", HardwareEra.STANDARD,
+            properties -> new PsuItem(properties, new PsuSpec(650, 90))).named("MF PowerGold 650G").register();
 
-    public static final DeferredBlock<PatternEncoderBlock> PATTERN_ENCODER =
-            BLOCKS.register("pattern_encoder",
-                    () -> new PatternEncoderBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_GRAY)
-                                    .strength(1.5F)
-                                    .sound(SoundType.METAL)
-                                    /*
-                                     * The body is drawn by the block entity: without this a full cube would
-                                     * block its own light and cull the faces of its neighbours.
-                                     */
-                                    .noOcclusion(), HardwareEra.STANDARD));
+    /** Every disk of every tier and size, in that order. */
+    public static final List<DiskEntry> DISKS_BY_SIZE = registerDisks();
 
-    /**
-     * How an encoder body sits in an item slot: the body is one full block (x -0.5..0.5, y 0..1,
-     * z -0.5..0.5 around its origin), so only the height needs re-centring.
-     */
-    private static final CabinetBlockItem.Fit ENCODER_FIT =
-            new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
-
-    public static final DeferredItem<BlockItem> PATTERN_ENCODER_ITEM = ITEMS.register(
-            "pattern_encoder", () -> new CabinetBlockItem(
-                    PATTERN_ENCODER.get(), new Item.Properties(), "pattern_encoder", "pattern_encoder",
-                    "pattern_encoder", ENCODER_FIT));
-
-    public static final DeferredBlock<PatternEncoderBlock> LEGACY_PATTERN_ENCODER =
-            BLOCKS.register("legacy_pattern_encoder",
-                    () -> new PatternEncoderBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_LIGHT_GRAY)
-                                    .strength(1.5F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion(), HardwareEra.LEGACY));
-
-    public static final DeferredItem<BlockItem> LEGACY_PATTERN_ENCODER_ITEM = ITEMS.register(
-            "legacy_pattern_encoder", () -> new CabinetBlockItem(
-                    LEGACY_PATTERN_ENCODER.get(), new Item.Properties(), "pattern_encoder", "legacy_pattern_encoder",
-                    "pattern_encoder", ENCODER_FIT));
-
-    public static final DeferredBlock<PatternEncoderBlock> VINTAGE_PATTERN_ENCODER =
-            BLOCKS.register("vintage_pattern_encoder",
-                    () -> new PatternEncoderBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.TERRACOTTA_WHITE)
-                                    .strength(1.5F)
-                                    .sound(SoundType.METAL)
-                                    .noOcclusion(), HardwareEra.VINTAGE));
-
-    public static final DeferredItem<BlockItem> VINTAGE_PATTERN_ENCODER_ITEM = ITEMS.register(
-            "vintage_pattern_encoder", () -> new CabinetBlockItem(
-                    VINTAGE_PATTERN_ENCODER.get(), new Item.Properties(), "pattern_encoder", "vintage_pattern_encoder",
-                    "pattern_encoder", ENCODER_FIT));
-
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<PatternEncoderBlockEntity>> PATTERN_ENCODER_BE =
-            BLOCK_ENTITIES.register("pattern_encoder",
-                    () -> BlockEntityType.Builder.of(
-                            PatternEncoderBlockEntity::new,
-                            PATTERN_ENCODER.get(), LEGACY_PATTERN_ENCODER.get(), VINTAGE_PATTERN_ENCODER.get()).build(null));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<PatternEncoderMenu>> PATTERN_ENCODER_MENU =
-            MENUS.register("pattern_encoder", () -> IMenuTypeExtension.create(
-                    PatternEncoderMenu::fromNetwork));
-
-    /*
-     * OS media subsystem: a peripheral block that holds one MediaItem and exposes the
-     * installer payload or data contents so the firmware boot screen and transfer logic can read it.
-     */
-
-    // Media reader drives: one block per drive type, each linked to a computer via the Peripheral Cable.
-    public static final DeferredBlock<MediaReaderBlock> FLOPPY_DRIVE = BLOCKS.register("floppy_drive",
-            () -> new MediaReaderBlock(MediaDriveType.FLOPPY_DRIVE, BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.COLOR_GRAY).strength(1.5F).sound(SoundType.METAL)));
-    public static final DeferredBlock<MediaReaderBlock> CD_DRIVE = BLOCKS.register("cd_drive",
-            () -> new MediaReaderBlock(MediaDriveType.CD_DRIVE, BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.COLOR_GRAY).strength(1.5F).sound(SoundType.METAL)));
-    public static final DeferredBlock<MediaReaderBlock> DVD_DRIVE = BLOCKS.register("dvd_drive",
-            () -> new MediaReaderBlock(MediaDriveType.DVD_DRIVE, BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.COLOR_BLACK).strength(1.5F).sound(SoundType.METAL)));
-    public static final DeferredBlock<MediaReaderBlock> DOCK_STATION = BLOCKS.register("dock_station",
-            () -> new MediaReaderBlock(MediaDriveType.DOCK_STATION, BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.COLOR_BLACK).strength(1.5F).sound(SoundType.METAL)));
-
-    public static final DeferredItem<BlockItem> FLOPPY_DRIVE_ITEM = ITEMS.register("floppy_drive",
-            () -> new BlockItem(FLOPPY_DRIVE.get(), new Item.Properties()));
-    public static final DeferredItem<BlockItem> CD_DRIVE_ITEM = ITEMS.register("cd_drive",
-            () -> new BlockItem(CD_DRIVE.get(), new Item.Properties()));
-    public static final DeferredItem<BlockItem> DVD_DRIVE_ITEM = ITEMS.register("dvd_drive",
-            () -> new BlockItem(DVD_DRIVE.get(), new Item.Properties()));
-    public static final DeferredItem<BlockItem> DOCK_STATION_ITEM = ITEMS.register("dock_station",
-            () -> new BlockItem(DOCK_STATION.get(), new Item.Properties()));
-
-    // Typed physical media. The format is the item's identity; the content lives in components.
-    public static final DeferredItem<FormattedMediaItem> FLOPPY_DISK = ITEMS.register("floppy_disk",
-            () -> new FormattedMediaItem(new Item.Properties(), MediaFormat.FLOPPY, true));
-    public static final DeferredItem<FormattedMediaItem> CD_ROM = ITEMS.register("cd_rom",
-            () -> new FormattedMediaItem(new Item.Properties(), MediaFormat.CD, false));
-    public static final DeferredItem<FormattedMediaItem> CD_RW = ITEMS.register("cd_rw",
-            () -> new FormattedMediaItem(new Item.Properties(), MediaFormat.CD, true));
-    public static final DeferredItem<FormattedMediaItem> DVD_ROM = ITEMS.register("dvd_rom",
-            () -> new FormattedMediaItem(new Item.Properties(), MediaFormat.DVD, false));
-    public static final DeferredItem<FormattedMediaItem> DVD_RW = ITEMS.register("dvd_rw",
-            () -> new FormattedMediaItem(new Item.Properties(), MediaFormat.DVD, true));
-    public static final DeferredItem<FormattedMediaItem> USB_FLASH_DRIVE = ITEMS.register("usb_flash_drive",
-            () -> new FormattedMediaItem(new Item.Properties(), MediaFormat.USB, true));
-
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MediaReaderBlockEntity>> MEDIA_READER_BE =
-            BLOCK_ENTITIES.register("media_reader",
-                    () -> BlockEntityType.Builder.of(MediaReaderBlockEntity::new,
-                            FLOPPY_DRIVE.get(), CD_DRIVE.get(), DVD_DRIVE.get(), DOCK_STATION.get()).build(null));
-
-    /*
-     * The Network Gateway: a peripheral of one of our computers that is, on its other face, a ComputerCraft
-     * peripheral, so the two families of computers reach each other through it. Managed from its host.
-     */
-    public static final DeferredBlock<NetworkGatewayBlock> NETWORK_GATEWAY =
-            BLOCKS.register("network_gateway", () -> new NetworkGatewayBlock(
-                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(1.5F).sound(SoundType.METAL)));
-    public static final DeferredItem<BlockItem> NETWORK_GATEWAY_ITEM = ITEMS.register("network_gateway",
-            () -> new BlockItem(NETWORK_GATEWAY.get(), new Item.Properties()));
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<NetworkGatewayBlockEntity>> NETWORK_GATEWAY_BE =
-            BLOCK_ENTITIES.register("network_gateway",
-                    () -> BlockEntityType.Builder.of(NetworkGatewayBlockEntity::new,
-                            NETWORK_GATEWAY.get()).build(null));
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<NetworkGatewayMenu>> NETWORK_GATEWAY_MENU =
-            MENUS.register("network_gateway", () -> IMenuTypeExtension.create(
-                    NetworkGatewayMenu::fromNetwork));
-
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_P = ITEMS.register(
-            "motherboard_eeb_p", () -> new MotherboardItem(new Item.Properties(),
-                    new MotherboardSpec(FormFactor.EEB,
-                            HardwareEra.STANDARD, CpuSocketId.LGA_2011, 2,
-                            Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 6, 6)));
-
-    /**
-     * A registered disk item with its tier and size, for datagen and creative-tab iteration.
-     */
-    public record DiskEntry(StorageTier tier, DiskSize size, DeferredItem<DiskItem> item) {
-        public String displayName() {
-            return tier.productName() + " " + size.displayName();
-        }
+    private ComputingModule() {
     }
 
-    public static final List<DiskEntry> DISKS = registerDisks();
-
-    private static List<DiskEntry> registerDisks() {
-        final List<DiskEntry> disks = new ArrayList<>();
-        for (final StorageTier tier : StorageTier.values()) {
-            for (final DiskSize size : DiskSize.values()) {
-                final String id = "disk_" + tier.name().toLowerCase(Locale.ROOT) + "_" + size.id();
-                final DeferredItem<DiskItem> item = ITEMS.register(id, () -> new DiskItem(
-                        new Item.Properties(),
-                        new DiskSpec(tier, HardwareEra.STANDARD,
-                                size.capacityItems(), tier.tdpWatts())));
-                disks.add(new DiskEntry(tier, size, item));
-            }
-        }
-        return List.copyOf(disks);
-    }
-
+    /** The registered disk of that tier and size. */
     public static DiskItem disk(final StorageTier tier, final DiskSize size) {
-        for (final DiskEntry entry : DISKS) {
+        for (final DiskEntry entry : DISKS_BY_SIZE) {
             if (entry.tier() == tier && entry.size() == size) {
                 return entry.item().get();
             }
@@ -950,426 +1082,382 @@ public final class ComputingModule {
         throw new IllegalArgumentException("no registered disk for " + tier + " " + size);
     }
 
-    // Server items
-
-    public static final DeferredItem<ServerCaseItem> SERVER_CASE =
-            ITEMS.register("server_case",
-                    () -> new ServerCaseItem(new Item.Properties()));
-
-    public static final DeferredItem<ServerItem> SERVER =
-            ITEMS.register("server", () -> new ServerItem(
-                    new Item.Properties()));
-
-    /*
-     * The servers of the earlier eras: a case of its era takes only boards of that era, and seats in a
-     * cabinet of its era or later.
-     */
-    public static final DeferredItem<ServerCaseItem> LEGACY_SERVER_CASE =
-            ITEMS.register("legacy_server_case",
-                    () -> new ServerCaseItem(new Item.Properties()));
-
-    public static final DeferredItem<ServerItem> LEGACY_SERVER =
-            ITEMS.register("legacy_server", () -> new ServerItem(
-                    new Item.Properties(),
-                    RackChassis.LEGACY_SERVER));
-
-    public static final DeferredItem<ServerCaseItem> VINTAGE_SERVER_CASE =
-            ITEMS.register("vintage_server_case",
-                    () -> new ServerCaseItem(new Item.Properties()));
-
-    public static final DeferredItem<ServerItem> VINTAGE_SERVER =
-            ITEMS.register("vintage_server", () -> new ServerItem(
-                    new Item.Properties(),
-                    RackChassis.VINTAGE_SERVER));
-
-    public static final DeferredItem<ServerCaseItem> STORAGE_SERVER_CASE =
-            ITEMS.register("storage_server_case",
-                    () -> new ServerCaseItem(new Item.Properties()));
-
-    public static final DeferredItem<ServerItem> STORAGE_SERVER =
-            ITEMS.register("storage_server", () -> new ServerItem(
-                    new Item.Properties(),
-                    RackChassis.STORAGE_SERVER));
-
-    // Rack units: equipment that serves the cabinet and spends the same rack-unit budget servers do.
-    public static final DeferredItem<RackUnitItem> KVM_SWITCH =
-            ITEMS.register("kvm_switch",
-                    () -> new RackUnitItem(new Item.Properties(),
-                            RackUnitItem.Kind.KVM_SWITCH));
-
-    public static final DeferredItem<RackUnitItem> RACK_UPS =
-            ITEMS.register("rack_ups",
-                    () -> new RackUnitItem(new Item.Properties(),
-                            RackUnitItem.Kind.RACK_UPS));
-
-    public static final DeferredItem<RackUnitItem> COOLING_UNIT =
-            ITEMS.register("cooling_unit",
-                    () -> new RackUnitItem(new Item.Properties(),
-                            RackUnitItem.Kind.COOLING_UNIT));
-
-    /*
-     * Bay gadgets: they occupy a gadget slot on the rack's front panel and serve the machine
-     * mounted in that row.
-     */
-    public static final DeferredItem<RackGadgetItem> RAID_CONTROLLER =
-            ITEMS.register("raid_controller",
-                    () -> new RackGadgetItem(new Item.Properties(),
-                            RackGadgetItem.Kind.RAID_CONTROLLER));
-
-    public static final DeferredItem<RackGadgetItem> CACHE_CARD =
-            ITEMS.register("cache_card",
-                    () -> new RackGadgetItem(new Item.Properties(),
-                            RackGadgetItem.Kind.CACHE_CARD));
-
-    public static final DeferredItem<ServerCaseItem> COMPUTE_SERVER_CASE =
-            ITEMS.register("compute_server_case",
-                    () -> new ServerCaseItem(new Item.Properties()));
-
-    public static final DeferredItem<ServerItem> COMPUTE_SERVER =
-            ITEMS.register("compute_server", () -> new ServerItem(
-                    new Item.Properties(),
-                    RackChassis.COMPUTE_SERVER));
-
-    public static ItemStack defaultServer() {
-        final ItemStack stack = new ItemStack(SERVER.get());
-        final NonNullList<ItemStack> hardware =
-                NonNullList.withSize(
-                        ServerHardwareHandler.SLOTS,
-                        ItemStack.EMPTY);
-        hardware.set(ServerHardwareHandler.MOBO,
-                new ItemStack(MOTHERBOARD_EEB_P.get()));
-        hardware.set(ServerHardwareHandler.CPU_START,
-                new ItemStack(CPU_SERVO_2620.get()));
-        hardware.set(ServerHardwareHandler.RAM_START,
-                new ItemStack(RAM_DDR3_8192.get()));
-        hardware.set(ServerHardwareHandler.PSU,
-                new ItemStack(PSU_650G.get()));
-        stack.set(SERVER_HARDWARE.get(),
-                ItemContainerContents.fromItems(hardware));
-        return stack;
-    }
-
-    /** A 2U storage server ready to run: the same board, CPU, RAM and supply as the default server. */
-    public static ItemStack defaultStorageServer() {
-        final ItemStack stack = new ItemStack(STORAGE_SERVER.get());
-        final NonNullList<ItemStack> hardware =
-                NonNullList.withSize(
-                        ServerHardwareHandler.SLOTS,
-                        ItemStack.EMPTY);
-        hardware.set(ServerHardwareHandler.MOBO,
-                new ItemStack(MOTHERBOARD_EEB_P.get()));
-        hardware.set(ServerHardwareHandler.CPU_START,
-                new ItemStack(CPU_SERVO_2620.get()));
-        hardware.set(ServerHardwareHandler.RAM_START,
-                new ItemStack(RAM_DDR3_8192.get()));
-        hardware.set(ServerHardwareHandler.PSU,
-                new ItemStack(PSU_650G.get()));
-        stack.set(SERVER_HARDWARE.get(),
-                ItemContainerContents.fromItems(hardware));
-        return stack;
-    }
-
-    public static ItemStack cpulessServer() {
-        final ItemStack stack = new ItemStack(SERVER.get());
-        final NonNullList<ItemStack> hardware =
-                NonNullList.withSize(
-                        ServerHardwareHandler.SLOTS,
-                        ItemStack.EMPTY);
-        hardware.set(ServerHardwareHandler.MOBO,
-                new ItemStack(MOTHERBOARD_EEB_P.get()));
-        hardware.set(ServerHardwareHandler.RAM_START,
-                new ItemStack(RAM_DDR3_8192.get()));
-        hardware.set(ServerHardwareHandler.PSU,
-                new ItemStack(PSU_650G.get()));
-        stack.set(SERVER_HARDWARE.get(),
-                ItemContainerContents.fromItems(hardware));
-        return stack;
-    }
-
-    public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_P = ITEMS.register(
-            "motherboard_atx_p", () -> new MotherboardItem(new Item.Properties(),
-                    new MotherboardSpec(FormFactor.ATX,
-                            HardwareEra.STANDARD, CpuSocketId.AM3, 1,
-                            Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4)));
-
-    public static final DeferredItem<CpuItem> CPU_ASCENT_965 = ITEMS.register(
-            "cpu_ascent_965", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3400, 125, false)));
-
-    // Mainframe
-
-    private static BlockBehaviour.Properties mainframeProperties() {
+    public static void register(final IEventBus modEventBus) {
         /*
-         * The cabinet is one GeckoLib model drawn by the controller, so the twelve blocks render
-         * nothing themselves: without noOcclusion they would still cull their neighbours' faces and
-         * block light, leaving a machine-shaped hole in the world around the model.
+         * Load the per-era hardware catalogue so its items are declared before the content is handed to the mod
+         * event bus below.
          */
-        return BlockBehaviour.Properties.of()
-                .mapColor(MapColor.COLOR_GRAY)
-                .strength(3.5F)
-                .sound(SoundType.METAL)
-                .noOcclusion()
+        HardwareItems.init();
+        ComputingSounds.init();
+        ComputingAudioDevices.init();
+        CONTENT.register(modEventBus);
+        ComputingComponents.register(modEventBus);
+        ComputingMenus.register(modEventBus);
+        JscTriggers.register(modEventBus);
+    }
+
+    /** A registered disk with its tier and size. */
+    public record DiskEntry(StorageTier tier, DiskSize size, DeferredItem<DiskItem> item) {
+    }
+
+    private static List<DiskEntry> registerDisks() {
+        final List<DiskEntry> disks = new ArrayList<>();
+        for (final StorageTier tier : StorageTier.values()) {
+            for (final DiskSize size : DiskSize.values()) {
+                if (!size.comesAs(tier)) {
+                    continue;
+                }
+                final String id = "disk_" + tier.name().toLowerCase(Locale.ROOT) + "_" + size.id();
+                final HardwareEra era = diskEra(tier, size);
+                disks.add(new DiskEntry(tier, size, CONTENT.item(id, properties -> new DiskItem(properties,
+                                new DiskSpec(tier, era, size.capacityItems(), tier.tdpWatts())))
+                        .named(tier.productName() + " " + size.displayName())
+                        .tab(shelf(Shelf.COMPONENTS, era)).register()));
+            }
+        }
+        return List.copyOf(disks);
+    }
+
+    /*
+     * Each disk belongs to the years it sold in: the hard disks up to 2 TB to the Transition and the helium ones above
+     * 8 TB to the Advanced, the SATA SSD of 8 TB and the NVMe drives from 4 TB to the Advanced as well, and the rest of
+     * the grid to the Standard.
+     */
+    private static HardwareEra diskEra(final StorageTier tier, final DiskSize size) {
+        final long items = size.capacityItems();
+        final long lastStandard = switch (tier) {
+            case HDD -> DiskSize.TB_8.capacityItems();
+            case SSD -> DiskSize.TB_4.capacityItems();
+            case NVME -> DiskSize.TB_2.capacityItems();
+        };
+        if (tier == StorageTier.HDD && items <= DiskSize.TB_2.capacityItems()) {
+            return HardwareEra.TRANSITION;
+        }
+        return items <= lastStandard ? HardwareEra.STANDARD : HardwareEra.ADVANCED;
+    }
+
+    /*
+     * The cabinet is one model drawn by the controller, so the twelve blocks render nothing themselves: without
+     * noOcclusion they would still cull their neighbours' faces and block light, leaving a machine-shaped hole in
+     * the world around the model.
+     */
+    private static BlockBehaviour.Properties mainframeProperties(final BlockBehaviour.Properties properties) {
+        return properties.mapColor(MapColor.COLOR_GRAY).strength(3.5F).sound(SoundType.METAL).noOcclusion()
                 .requiresCorrectToolForDrops();
     }
 
-    public static final DeferredBlock<MainframeBlock> MAINFRAME = BLOCKS.register(
-            "mainframe", () -> new MainframeBlock(mainframeProperties()));
-
-    public static final DeferredItem<BlockItem> MAINFRAME_ITEM = ITEMS.register(
-            "mainframe", () -> new MainframeBlockItem(
-                    MAINFRAME.get(), new Item.Properties(), "mainframe"));
-
-    /*
-     * Earlier-era Mainframes: the same orchestrator and block entity, differing only by era, accepted
-     * MTX board and skin. Same 3x2x2 multiblock geometry and shared parts.
-     */
-    public static final DeferredBlock<VintageMainframeBlock>
-            VINTAGE_MAINFRAME = BLOCKS.register("vintage_mainframe",
-                    () -> new VintageMainframeBlock(mainframeProperties()));
-
-    public static final DeferredItem<BlockItem> VINTAGE_MAINFRAME_ITEM = ITEMS.register(
-            "vintage_mainframe", () -> new MainframeBlockItem(
-                    VINTAGE_MAINFRAME.get(), new Item.Properties(), "vintage_mainframe"));
-
-    public static final DeferredBlock<LegacyMainframeBlock>
-            LEGACY_MAINFRAME = BLOCKS.register("legacy_mainframe",
-                    () -> new LegacyMainframeBlock(mainframeProperties()));
-
-    public static final DeferredItem<BlockItem> LEGACY_MAINFRAME_ITEM = ITEMS.register(
-            "legacy_mainframe", () -> new MainframeBlockItem(
-                    LEGACY_MAINFRAME.get(), new Item.Properties(), "legacy_mainframe"));
-
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframeBlockEntity>> MAINFRAME_BE =
-            BLOCK_ENTITIES.register("mainframe",
-                    () -> BlockEntityType.Builder.of(MainframeBlockEntity::new,
-                            MAINFRAME.get(), VINTAGE_MAINFRAME.get(), LEGACY_MAINFRAME.get()).build(null));
-
-    public static final DeferredBlock<MainframePartBlock> MAINFRAME_PART = BLOCKS.register(
-            "mainframe_part", () -> new MainframePartBlock(mainframeProperties()));
-
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframePartBlockEntity>> MAINFRAME_PART_BE =
-            BLOCK_ENTITIES.register("mainframe_part",
-                    () -> BlockEntityType.Builder.of(MainframePartBlockEntity::new, MAINFRAME_PART.get()).build(null));
-
-    public static final DeferredHolder<MenuType<?>, MenuType<MainframeMenu>> MAINFRAME_MENU =
-            MENUS.register("mainframe", () -> IMenuTypeExtension.create(MainframeMenu::fromNetwork));
-
-    // Personal Computer
-
-    public static final DeferredBlock<PersonalComputerBlock> PERSONAL_COMPUTER = BLOCKS.register(
-            "personal_computer", () -> new PersonalComputerBlock(BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.COLOR_GRAY)
-                    .strength(2.0F)));
-
-    public static final DeferredItem<BlockItem> PERSONAL_COMPUTER_ITEM = ITEMS.register(
-            "personal_computer", () -> new BlockItem(PERSONAL_COMPUTER.get(), new Item.Properties()));
-
-    /*
-     * Earlier-era Personal Computers: the same machine and block entity, differing only by era, accepted
-     * board and skin.
-     */
-    public static final DeferredBlock<VintagePersonalComputerBlock>
-            VINTAGE_PERSONAL_COMPUTER = BLOCKS.register("vintage_personal_computer",
-                    () -> new VintagePersonalComputerBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_GRAY)
-                                    .strength(2.0F)));
-
-    public static final DeferredItem<BlockItem> VINTAGE_PERSONAL_COMPUTER_ITEM = ITEMS.register(
-            "vintage_personal_computer",
-            () -> new BlockItem(VINTAGE_PERSONAL_COMPUTER.get(), new Item.Properties()));
-
-    public static final DeferredBlock<LegacyPersonalComputerBlock>
-            LEGACY_PERSONAL_COMPUTER = BLOCKS.register("legacy_personal_computer",
-                    () -> new LegacyPersonalComputerBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_GRAY)
-                                    .strength(2.0F)));
-
-    public static final DeferredItem<BlockItem> LEGACY_PERSONAL_COMPUTER_ITEM = ITEMS.register(
-            "legacy_personal_computer",
-            () -> new BlockItem(LEGACY_PERSONAL_COMPUTER.get(), new Item.Properties()));
-
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PersonalComputerBlockEntity>> PERSONAL_COMPUTER_BE =
-            BLOCK_ENTITIES.register("personal_computer",
-                    () -> BlockEntityType.Builder.of(PersonalComputerBlockEntity::new,
-                            PERSONAL_COMPUTER.get(), VINTAGE_PERSONAL_COMPUTER.get(),
-                            LEGACY_PERSONAL_COMPUTER.get()).build(null));
-
-    public static final DeferredHolder<MenuType<?>, MenuType<PersonalComputerMenu>> PERSONAL_COMPUTER_MENU =
-            MENUS.register("personal_computer", () -> IMenuTypeExtension.create(PersonalComputerMenu::fromNetwork));
-
-    // Crafting Computer: an ATX computer that executes recipes once a Crafting Card is installed
-
-    public static final DeferredBlock<CraftingComputerBlock> CRAFTING_COMPUTER = BLOCKS.register(
-            "crafting_computer", () -> new CraftingComputerBlock(BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.COLOR_GRAY)
-                    .strength(2.0F)));
-
-    public static final DeferredItem<BlockItem> CRAFTING_COMPUTER_ITEM = ITEMS.register(
-            "crafting_computer", () -> new BlockItem(CRAFTING_COMPUTER.get(), new Item.Properties()));
-
-    /*
-     * Earlier-era Crafting Computers: the same machine and block entity, differing only by era, accepted
-     * board and skin.
-     */
-    public static final DeferredBlock<VintageCraftingComputerBlock>
-            VINTAGE_CRAFTING_COMPUTER = BLOCKS.register("vintage_crafting_computer",
-                    () -> new VintageCraftingComputerBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_GRAY)
-                                    .strength(2.0F)));
-
-    public static final DeferredItem<BlockItem> VINTAGE_CRAFTING_COMPUTER_ITEM = ITEMS.register(
-            "vintage_crafting_computer",
-            () -> new BlockItem(VINTAGE_CRAFTING_COMPUTER.get(), new Item.Properties()));
-
-    public static final DeferredBlock<LegacyCraftingComputerBlock>
-            LEGACY_CRAFTING_COMPUTER = BLOCKS.register("legacy_crafting_computer",
-                    () -> new LegacyCraftingComputerBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_GRAY)
-                                    .strength(2.0F)));
-
-    public static final DeferredItem<BlockItem> LEGACY_CRAFTING_COMPUTER_ITEM = ITEMS.register(
-            "legacy_crafting_computer",
-            () -> new BlockItem(LEGACY_CRAFTING_COMPUTER.get(), new Item.Properties()));
-
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CraftingComputerBlockEntity>> CRAFTING_COMPUTER_BE =
-            BLOCK_ENTITIES.register("crafting_computer",
-                    () -> BlockEntityType.Builder.of(CraftingComputerBlockEntity::new,
-                            CRAFTING_COMPUTER.get(), VINTAGE_CRAFTING_COMPUTER.get(),
-                            LEGACY_CRAFTING_COMPUTER.get()).build(null));
-
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<CraftingComputerMenu>> CRAFTING_COMPUTER_MENU =
-            MENUS.register("crafting_computer", () -> IMenuTypeExtension.create(
-                    CraftingComputerMenu::fromNetwork));
-
-    /*
-     * Cluster Management Computer: a full computer that, with a Cluster Interface Card, drives every
-     * supercomputer fabric and datacenter section on its network as one machine. Three eras.
-     */
-    public static final DeferredBlock<ClusterManagementComputerBlock>
-            CLUSTER_MANAGEMENT_COMPUTER = BLOCKS.register("cluster_management_computer",
-                    () -> new ClusterManagementComputerBlock(
-                            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(2.0F)));
-    public static final DeferredItem<BlockItem> CLUSTER_MANAGEMENT_COMPUTER_ITEM = ITEMS.register(
-            "cluster_management_computer",
-            () -> new BlockItem(CLUSTER_MANAGEMENT_COMPUTER.get(), new Item.Properties()));
-    public static final DeferredBlock<VintageClusterManagementComputerBlock>
-            VINTAGE_CLUSTER_MANAGEMENT_COMPUTER = BLOCKS.register("vintage_cluster_management_computer",
-                    () -> new VintageClusterManagementComputerBlock(
-                            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(2.0F)));
-    public static final DeferredItem<BlockItem> VINTAGE_CLUSTER_MANAGEMENT_COMPUTER_ITEM = ITEMS.register(
-            "vintage_cluster_management_computer",
-            () -> new BlockItem(VINTAGE_CLUSTER_MANAGEMENT_COMPUTER.get(), new Item.Properties()));
-    public static final DeferredBlock<LegacyClusterManagementComputerBlock>
-            LEGACY_CLUSTER_MANAGEMENT_COMPUTER = BLOCKS.register("legacy_cluster_management_computer",
-                    () -> new LegacyClusterManagementComputerBlock(
-                            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(2.0F)));
-    public static final DeferredItem<BlockItem> LEGACY_CLUSTER_MANAGEMENT_COMPUTER_ITEM = ITEMS.register(
-            "legacy_cluster_management_computer",
-            () -> new BlockItem(LEGACY_CLUSTER_MANAGEMENT_COMPUTER.get(), new Item.Properties()));
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<ClusterManagementComputerBlockEntity>>
-            CLUSTER_MANAGEMENT_COMPUTER_BE = BLOCK_ENTITIES.register("cluster_management_computer",
-                    () -> BlockEntityType.Builder.of(
-                            ClusterManagementComputerBlockEntity::new,
-                            CLUSTER_MANAGEMENT_COMPUTER.get(), VINTAGE_CLUSTER_MANAGEMENT_COMPUTER.get(),
-                            LEGACY_CLUSTER_MANAGEMENT_COMPUTER.get()).build(null));
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<ClusterManagementComputerMenu>>
-            CLUSTER_MANAGEMENT_COMPUTER_MENU = MENUS.register("cluster_management_computer",
-                    () -> IMenuTypeExtension.create(
-                            ClusterManagementComputerMenu::fromNetwork));
-
-    /*
-     * Supercomputer: the nodes are rack computers seated in Supercomputer Racks; the racks are tied
-     * together by the high-compute fabric and uplinked to the data network by one HBW Interface.
-     */
-
-    public static final DeferredItem<ServerItem> SUPERCOMPUTER_NODE =
-            ITEMS.register("supercomputer_node", () -> new ServerItem(
-                    new Item.Properties(),
-                    RackChassis.SUPERCOMPUTER_NODE));
-
-    /** A node ready to run: board, CPU, RAM, supply, and the entry crafting co-processor in its slot. */
-    public static ItemStack defaultSupercomputerNode() {
-        final ItemStack stack = new ItemStack(SUPERCOMPUTER_NODE.get());
-        final NonNullList<ItemStack> hardware =
-                NonNullList.withSize(
-                        ServerHardwareHandler.SLOTS,
-                        ItemStack.EMPTY);
-        hardware.set(ServerHardwareHandler.MOBO,
-                new ItemStack(MOTHERBOARD_EEB_P.get()));
-        hardware.set(ServerHardwareHandler.CPU_START,
-                new ItemStack(CPU_SERVO_2620.get()));
-        hardware.set(ServerHardwareHandler.RAM_START,
-                new ItemStack(RAM_DDR3_8192.get()));
-        hardware.set(ServerHardwareHandler.GPU_START,
-                new ItemStack(PHI_5100.get()));
-        hardware.set(ServerHardwareHandler.PSU,
-                new ItemStack(PSU_650G.get()));
-        stack.set(SERVER_HARDWARE.get(),
-                ItemContainerContents.fromItems(hardware));
-        return stack;
+    private static BlockBehaviour.Properties rackProperties(final BlockBehaviour.Properties properties) {
+        return properties.mapColor(MapColor.METAL).strength(1.5F).sound(SoundType.METAL).noOcclusion();
     }
 
-    public static final DeferredBlock<HbwInterfaceBlock>
-            HBW_INTERFACE = BLOCKS.register("hbw_interface",
-                    () -> new HbwInterfaceBlock(
-                            BlockBehaviour.Properties.of()
-                                    .mapColor(MapColor.COLOR_GRAY)
-                                    .strength(2.0F)
-                                    .noOcclusion()));
+    /*
+     * The data cable of {@code line} in {@code era}, carrying what that link carries, in the jacket and with the plug
+     * of the same names. Each line has a lane of its own, the same in every era; the long distance line has none and
+     * is thicker, since a block that holds it holds nothing else.
+     */
+    private static CableBuilder dataCable(final String id, final DataLine line, final HardwareEra era,
+                                          final String jacket, final String plug) {
+        final DataLink link = new DataLink(line, era);
+        // The crafting line has one cable for every era, so its cable names none.
+        final CableType.Builder builder = CableType.builder(DataLines.of(link))
+                .describe(line.job(), line == DataLine.CRAFTING ? null : era)
+                .carries(link.throughput(), link.range())
+                .jacket(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/" + jacket))
+                .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + plug));
+        if (link.straight()) {
+            builder.runsStraight();
+        }
+        final TextKey renewal = CableRunTexts.forLine(line);
+        if (renewal != null) {
+            builder.renewedBy(renewal);
+        }
+        if (link.betweenTwoEnds()) {
+            builder.alone().thickness(LONG_DISTANCE_PIXELS).joinsAtMost(DataLink.ENDS);
+        } else {
+            builder.lane(DataWires.laneOf(line));
+        }
+        return CONTENT.cable(id, builder).tab(shelf(Shelf.NETWORK, line == DataLine.CRAFTING ? null : era));
+    }
 
-    public static final DeferredItem<BlockItem> HBW_INTERFACE_ITEM = ITEMS.register(
-            "hbw_interface", () -> new BlockItem(HBW_INTERFACE.get(), new Item.Properties()));
+    /*
+     * The peripheral cable of {@code era}: no network on it, it reaches its era's run, and it ends in {@code
+     * devicePlug} at a device or a computer and in {@code videoPlug} at a screen.
+     */
+    private static CableBuilder peripheralCable(final String id, final HardwareEra era, final String jacket,
+                                                final String devicePlug, final String videoPlug) {
+        final CableType.Builder builder = CableType.builder(PeripheralLine.of(era))
+                .describe(PeripheralLine.JOB, era)
+                .grid(GridKind.PERIPHERAL)
+                .lane(Lane.LEFT)
+                .carries(0L, PeripheralLine.range(era))
+                .renewedBy(CableRunTexts.HUB)
+                .jacket(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/" + jacket))
+                .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + devicePlug))
+                .plug(PortKind.VIDEO,
+                        ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + videoPlug));
+        return CONTENT.cable(id, builder).tab(shelf(Shelf.PERIPHERALS, era));
+    }
 
-    public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<HbwInterfaceBlockEntity>>
-            HBW_INTERFACE_BE = BLOCK_ENTITIES.register("hbw_interface",
-                    () -> BlockEntityType.Builder.of(
-                            HbwInterfaceBlockEntity::new,
-                            HBW_INTERFACE.get()).build(null));
+    /* A router of {@code era}, or its optical router, wearing the network device model of the same name. */
+    private static BlockBuilder<RouterBlock> router(final String id, final HardwareEra era, final boolean optical,
+                                                    final String model) {
+        return networkDevice(CONTENT.block(id, properties -> new RouterBlock(properties, era, optical)), model,
+                shelf(Shelf.NETWORK, era));
+    }
 
-    public static final DeferredItem<PhiCoprocessorItem> PHI_5100 =
-            ITEMS.register("phi_5100", () -> new PhiCoprocessorItem(
-                    new Item.Properties(), new PhiCoprocessorSpec(
-                            IndustrialTier.T3, 2, 60, 1050, 225)));
+    /* The repeater of {@code era}. */
+    private static BlockBuilder<RepeaterBlock> repeater(final String id, final HardwareEra era) {
+        return networkDevice(CONTENT.block(id, properties -> new RepeaterBlock(properties, era)),
+                "repeater_" + era.serializedName(), shelf(Shelf.NETWORK, era));
+    }
 
-    public static final DeferredItem<PhiCoprocessorItem> PHI_7120 =
-            ITEMS.register("phi_7120", () -> new PhiCoprocessorItem(
-                    new Item.Properties(), new PhiCoprocessorSpec(
-                            IndustrialTier.T4, 3, 61, 1240, 250)));
+    /* The hub of {@code era}, which belongs to the peripheral line rather than to the network. */
+    private static BlockBuilder<HubBlock> hub(final String id, final HardwareEra era) {
+        return networkDevice(CONTENT.block(id, properties -> new HubBlock(properties, era)),
+                "hub_" + era.serializedName(), shelf(Shelf.PERIPHERALS, era));
+    }
 
-    public static final DeferredItem<PhiCoprocessorItem> PHI_7290 =
-            ITEMS.register("phi_7290", () -> new PhiCoprocessorItem(
-                    new Item.Properties(), new PhiCoprocessorSpec(
-                            IndustrialTier.T4, 4, 72, 1500, 270)));
+    /* A network device: a metal block with six equal faces, the model shipped with its lamps, on that shelf. */
+    private static <B extends Block> BlockBuilder<B> networkDevice(final BlockBuilder<B> block, final String model,
+                                                                  final ContentTab.Section shelf) {
+        return block.properties(properties -> properties.mapColor(MapColor.METAL).strength(0.5F)
+                        .sound(SoundType.METAL))
+                .look(IBlockLook.fixed(new IBlockModel.Handmade("network/" + model)))
+                .item().itemLook(IItemLook.parent("block/network/" + model)).tab(shelf);
+    }
 
-    public static final DeferredItem<PhiCoprocessorItem> PHI_9000 =
-            ITEMS.register("phi_9000", () -> new PhiCoprocessorItem(
-                    new Item.Properties(), new PhiCoprocessorSpec(
-                            IndustrialTier.T5, 6, 96, 1800, 300)));
+    private static BlockBuilder<MainframeBlock> mainframe(final String id, final HardwareEra era) {
+        return CONTENT.block(id, properties -> new MainframeBlock(properties, era))
+                .properties(ComputingModule::mainframeProperties).look(MAINFRAME_BODY)
+                .geo(ComputingLooks.MAINFRAME)
+                .item((block, properties) -> new MainframeBlockItem(block, properties, id))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
+                .tab(shelf(Shelf.MAINFRAMES, era));
+    }
 
-    public static final DeferredHolder<MenuType<?>,
-            MenuType<ServerRouterMenu>> SERVER_ROUTER_MENU =
-            MENUS.register("server_router", () -> IMenuTypeExtension.create(
-                    ServerRouterMenu::fromNetwork));
+    /**
+     * A screen, its front toward the player who placed it: its model by hand, with the power button standing out of
+     * the bezel, lit while it shows its computer, and left off on the monitors of a big screen past its corner. Switched
+     * on with no picture, a monitor from the Legacy on sleeps with its lamp amber, and a Vintage one keeps it lit.
+     */
+    private static BlockBuilder<MonitorBlock> monitor(final String id, final MonitorKind kind) {
+        final String model = "monitor/" + kind.getSerializedName();
+        return CONTENT.block(id, properties -> new MonitorBlock(properties, kind))
+                .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.0F)
+                        .sound(SoundType.METAL).noOcclusion())
+                .look(IBlockLook.facingByState(state -> new IBlockModel.Handmade(
+                        kind.flat() && !state.getValue(MonitorBlock.BUTTON) ? model + "_bare"
+                                : state.getValue(MonitorBlock.LIT) ? model + "_on"
+                                : !state.getValue(MonitorBlock.ON) ? model
+                                : kind.sleeps() ? model + "_sleep" : model + "_on"))
+                        .frontAgainstFacing())
+                .item().itemLook(IItemLook.parent("block/" + model)).tab(shelf(Shelf.PERIPHERALS, kind.era()));
+    }
 
-    public static void register(final IEventBus modEventBus) {
+    private static BlockBuilder<PersonalComputerBlock> personalComputer(final String id, final HardwareEra era,
+                                                                        final CaseStyle style) {
+        return computer(id, era, style, Shelf.PERSONAL_COMPUTERS,
+                properties -> new PersonalComputerBlock(properties, era, style));
+    }
+
+    private static BlockBuilder<CraftingComputerBlock> craftingComputer(final String id, final HardwareEra era,
+                                                                        final CaseStyle style) {
+        return computer(id, era, style, Shelf.CRAFTING_COMPUTERS,
+                properties -> new CraftingComputerBlock(properties, era, style));
+    }
+
+    private static BlockBuilder<ClusterManagementComputerBlock> clusterManagementComputer(
+            final String id, final HardwareEra era, final CaseStyle style) {
+        return computer(id, era, style, Shelf.CLUSTER_MANAGEMENT_COMPUTERS,
+                properties -> new ClusterManagementComputerBlock(properties, era, style));
+    }
+
+    /**
+     * A small computer, whose case its block entity draws: the block shows nothing but the particles a break scatters,
+     * and without noOcclusion the full cube would block its own light and cull the faces of its neighbours. Its item
+     * shows the same case, switched off.
+     */
+    private static <B extends Block & IComputerCase> BlockBuilder<B> computer(
+            final String id, final HardwareEra era, final CaseStyle style, final Shelf shelf,
+            final Function<BlockBehaviour.Properties, B> factory) {
+        return CONTENT.block(id, factory)
+                .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(2.0F).noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body",
+                        "block/computer/" + style.caseName(era) + "_particle")))
+                .geo(ComputingLooks.COMPUTER)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.COMPUTER,
+                        block.caseModel(), DEVICE_FIT, COMPUTER_LAMPS))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(shelf, era));
+    }
+
+    private static BlockBuilder<PatternEncoderBlock> encoder(final String id, final MapColor color,
+                                                             final HardwareEra era) {
         /*
-         * Force the per-era hardware catalog to load so its items register onto ITEMS before the
-         * DeferredRegister is handed to the mod event bus below.
+         * The body is drawn by the block entity: without noOcclusion a full cube would block its own light and cull
+         * the faces of its neighbours.
          */
-        HardwareItems.init();
-        BLOCKS.register(modEventBus);
-        ITEMS.register(modEventBus);
-        BLOCK_ENTITIES.register(modEventBus);
-        MENUS.register(modEventBus);
-        COMPONENTS.register(modEventBus);
-        TRIGGERS.register(modEventBus);
+        return CONTENT.block(id, properties -> new PatternEncoderBlock(properties, era))
+                .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)
+                        .noOcclusion())
+                .look(ENCODER_BODY).geo(ComputingLooks.PATTERN_ENCODER)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.PATTERN_ENCODER,
+                        id, DEVICE_FIT, DEVICE_LAMPS))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERIPHERALS, era));
+    }
+
+    /**
+     * A printer, whose body its block entity draws: the block shows nothing but the particles a break scatters, and
+     * without noOcclusion the full cube would block its own light and cull the faces of its neighbours. Its item
+     * shows the printer at rest, its lamps dark and no page coming out.
+     */
+    private static BlockBuilder<PrinterBlock> printer(final String id, final MapColor color, final HardwareEra era) {
+        return CONTENT.block(id, properties -> new PrinterBlock(properties, era))
+                .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)
+                        .noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/" + id + "_particle")))
+                .geo(ComputingLooks.PRINTER)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.PRINTER, id,
+                        DEVICE_FIT, PRINTER_AT_REST))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERIPHERALS, era));
+    }
+
+    /**
+     * A drive, whose body its block entity draws: the block shows nothing but the particles a break scatters, and
+     * without noOcclusion the full cube would block its own light and cull the faces of its neighbours.
+     */
+    private static BlockBuilder<MediaReaderBlock> drive(final String id, final MediaDriveType type,
+                                                        final MapColor color) {
+        return CONTENT.block(id, properties -> new MediaReaderBlock(type, properties))
+                .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)
+                        .noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/" + id + "_particle")))
+                .geo(ComputingLooks.MEDIA_DRIVE)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.MEDIA_DRIVE, id,
+                        DEVICE_FIT, DEVICE_LAMPS))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERIPHERALS, type.era()));
+    }
+
+    /*
+     * A Redstone Interface, whose sensor its block entity draws: the block shows nothing but the particles a break
+     * scatters, taken from its atlas. Like an observer it carries no signal through itself, or the wire it powers
+     * would power it back and light whatever stands beside it.
+     */
+    private static BlockBuilder<RedstoneInterfaceBlock> redstoneInterface(final String id, final HardwareEra era) {
+        final String model = ComputingLooks.redstoneInterface(era);
+        return CONTENT.block(id, properties -> new RedstoneInterfaceBlock(properties, era))
+                .properties(properties -> properties.mapColor(MapColor.COLOR_RED).strength(1.0F)
+                        .sound(SoundType.METAL).noOcclusion().isRedstoneConductor((state, level, pos) -> false))
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/redstone/" + model)))
+                .geo(ComputingLooks.REDSTONE_INTERFACE)
+                .item((block, properties) -> new CabinetBlockItem(block, properties,
+                        ComputingLooks.REDSTONE_INTERFACE, model, DEVICE_FIT, REDSTONE_INTERFACE_LIT))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERIPHERALS, era));
+    }
+
+    /**
+     * A speaker: its grille in front, its sockets behind, set down facing whoever places it. Its model, written by
+     * hand as {@code block/speaker/<id>}, carries its power light, lit in the {@code _on} model while its computer
+     * runs.
+     */
+    private static BlockBuilder<SpeakerBlock> speaker(final String id, final HardwareEra era, final MapColor color) {
+        return CONTENT.block(id, properties -> new SpeakerBlock(properties, era))
+                .properties(properties -> properties.mapColor(color).strength(1.0F).sound(SoundType.METAL))
+                .look(IBlockLook.facingByState(state -> new IBlockModel.Handmade(
+                        "speaker/" + id + (state.getValue(SpeakerBlock.LIT) ? "_on" : ""))))
+                .item().itemLook(IItemLook.parent("block/speaker/" + id)).tab(shelf(Shelf.PERIPHERALS, era));
+    }
+
+    /** A subwoofer: its bass port in front, its driver on the sides, set down facing whoever places it. */
+    private static BlockBuilder<SubwooferBlock> subwoofer(final String id, final HardwareEra era,
+                                                          final String textures) {
+        return CONTENT.block(id, SubwooferBlock::new)
+                .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.0F)
+                        .sound(SoundType.METAL))
+                .look(IBlockLook.facing(speakerFaces(id, textures)))
+                .item().tab(shelf(Shelf.PERIPHERALS, era));
+    }
+
+    /* A speaker cabinet's faces: the front, the back, the top, and one texture for the sides and the bottom. */
+    private static IBlockModel speakerFaces(final String id, final String textures) {
+        final String face = "block/" + textures + "_";
+        return new IBlockModel.SixFaces(id, face + "top", face + "top", face + "front", face + "back", face + "side",
+                face + "side", face + "side");
+    }
+
+    /** The gateway's box: the modem socket on the front, the cable socket behind, louvres and hatches. */
+    private static IBlockModel gateway(final String name, final String front) {
+        return new IBlockModel.SixFaces(name, "block/network_gateway_top", "block/network_gateway_top", front,
+                "block/network_gateway_back", "block/network_gateway_side", "block/network_gateway_side",
+                "block/network_gateway_side");
+    }
+
+    private static BlockBuilder<ServerRackBlock> serverRack(final String id, final HardwareEra era) {
+        return rack(id, era, properties -> new ServerRackBlock(properties, era));
+    }
+
+    private static BlockBuilder<SupercomputerRackBlock> supercomputerRack(final String id, final HardwareEra era) {
+        return rack(id, era, properties -> new SupercomputerRackBlock(properties, era));
+    }
+
+    private static <B extends Block> BlockBuilder<B> rack(final String id, final HardwareEra era,
+                                                         final Function<BlockBehaviour.Properties, B> factory) {
+        return CONTENT.block(id, factory).properties(ComputingModule::rackProperties).look(RACK_BODY)
+                .geo(ComputingLooks.RACK)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.RACK, id, RACK_FIT,
+                        RACK_FITTED))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tab(shelf(Shelf.SERVER_RACK, era));
+    }
+
+    /* A blank medium, shown before the installers of the era its format belongs to. */
+    private static ItemBuilder<FormattedMediaItem> medium(final String id, final MediaFormat format,
+                                                          final boolean writable) {
+        return CONTENT.item(id, properties -> new FormattedMediaItem(properties, format, writable))
+                .tab(shelf(Shelf.PROGRAMS, format.era()));
+    }
+
+    /*
+     * A bus's item, wearing the bus's own model, idle, as it sits on a cable; {@code era} is null for the parts of the
+     * crafting cable that every era shares.
+     */
+    private static ItemBuilder<CablePartItem> bus(final String id, @Nullable final HardwareEra era,
+                                                  final Supplier<? extends PartType<?>> type) {
+        return CONTENT.item(id, properties -> new CablePartItem(properties, type))
+                .look(IItemLook.parent(ComputingParts.MODELS + id)).tab(shelf(Shelf.NETWORK, era));
+    }
+
+    /* A server case, shown with the servers of the chassis assembled in it. */
+    private static ItemBuilder<ServerCaseItem> serverCase(final String id, final RackChassis chassis) {
+        return CONTENT.item(id, ServerCaseItem::new).tab(shelf(Shelf.SERVER_RACK, chassis.era()));
+    }
+
+    private static ItemBuilder<ServerItem> server(final String id, final RackChassis chassis) {
+        return CONTENT.item(id, properties -> new ServerItem(properties, chassis))
+                .tab(shelf(Shelf.SERVER_RACK, chassis.era()));
+    }
+
+    private static ItemBuilder<StorageCardItem> storageCard(final String id, final StorageCardSpec spec) {
+        return part(id, spec.era(), properties -> new StorageCardItem(properties, spec));
+    }
+
+    private static ItemBuilder<RackUnitItem> rackUnit(final String id, final RackUnitItem.Kind kind,
+                                                      final HardwareEra era) {
+        return CONTENT.item(id, properties -> new RackUnitItem(properties, kind, era)).tab(shelf(Shelf.RACK_BAYS, era));
+    }
+
+    /* A part of {@code era}, or of every era for null, on the components shelf. */
+    private static <I extends Item> ItemBuilder<I> part(final String id, @Nullable final HardwareEra era,
+                                                        final Function<Item.Properties, I> factory) {
+        return CONTENT.item(id, factory).tab(shelf(Shelf.COMPONENTS, era));
+    }
+
+    private static ItemBuilder<PhiCoprocessorItem> phi(final String id, final HardwareEra era,
+                                                       final PhiCoprocessorSpec spec) {
+        return part(id, era, properties -> new PhiCoprocessorItem(properties, spec));
+    }
+
+    /* A personal-use card, one for every era from the Legacy on, so shown with what every era shares. */
+    private static ItemBuilder<WorkshopCardItem> workshopCard(final WorkshopCard card) {
+        return part(card.id(), null, properties -> new WorkshopCardItem(properties, new WorkshopCardSpec(card,
+                WORKSHOP_CARD_WATTS)));
     }
 }

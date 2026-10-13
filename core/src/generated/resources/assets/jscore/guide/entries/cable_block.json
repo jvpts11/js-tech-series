@@ -1,0 +1,58 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.cable_block.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.cable_block.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.cable_block.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.cable_block.use1",
+        "jscore.guide.cable_block.use2",
+        "jscore.guide.cable_block.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.cable_block.fix1",
+          "problem": "jscore.guide.cable_block.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:string",
+  "id": "jscore:cable_block",
+  "order": 2,
+  "section": "jscore:cables",
+  "title": "jscore.guide.cable_block.title"
+}

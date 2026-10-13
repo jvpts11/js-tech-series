@@ -1,0 +1,172 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_projects.table1",
+      "heads": [
+        "jsc.guide.sigma_projects.table1_head1",
+        "jsc.guide.sigma_projects.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "name"
+          },
+          {
+            "words": "jsc.guide.sigma_projects.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "kind"
+          },
+          {
+            "words": "jsc.guide.sigma_projects.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "language"
+          },
+          {
+            "words": "jsc.guide.sigma_projects.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "source"
+          },
+          {
+            "words": "jsc.guide.sigma_projects.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "reference"
+          },
+          {
+            "words": "jsc.guide.sigma_projects.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "entry"
+          },
+          {
+            "words": "jsc.guide.sigma_projects.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "platform"
+          },
+          {
+            "words": "jsc.guide.sigma_projects.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "langversion"
+          },
+          {
+            "words": "jsc.guide.sigma_projects.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_projects.definition1",
+      "term": "jsc.guide.sigma_projects.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_projects.definition2",
+      "term": "jsc.guide.sigma_projects.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_projects.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sigma_projects.step1",
+        "jsc.guide.sigma_projects.step2",
+        "jsc.guide.sigma_projects.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_projects.text10"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_projects.fix1",
+          "problem": "jsc.guide.sigma_projects.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_projects.fix2",
+          "problem": "jsc.guide.sigma_projects.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_projects.fix3",
+          "problem": "jsc.guide.sigma_projects.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_sharing",
+        "jsc:sigma_compile"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_projects",
+  "order": 334,
+  "section": "jsc:sigma_start",
+  "title": "jsc.guide.sigma_projects.title"
+}

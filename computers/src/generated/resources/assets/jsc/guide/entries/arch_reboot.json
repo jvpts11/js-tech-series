@@ -1,0 +1,126 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_reboot.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_reboot.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_reboot.step1",
+        "jsc.guide.arch_reboot.step2"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.arch_reboot.table1",
+      "heads": [
+        "jsc.guide.arch_reboot.table1_head1",
+        "jsc.guide.arch_reboot.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.arch_reboot.table1_1_1"
+          },
+          {
+            "literal": "no base system installed (pacstrap)"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.arch_reboot.table1_2_1"
+          },
+          {
+            "literal": "no filesystem table (genfstab -U /mnt >> /mnt/etc/fstab)"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.arch_reboot.table1_3_1"
+          },
+          {
+            "literal": "no bootloader (grub-install)"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.arch_reboot.table1_4_1"
+          },
+          {
+            "literal": "nothing for the bootloader to start (grub-mkconfig -o /boot/grub/grub.cfg)"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_reboot.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_reboot.text4"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "root@archiso ~ # ",
+          "text": "reboot",
+          "typed": true
+        },
+        {
+          "text": "The new system will not boot:"
+        },
+        {
+          "text": "  - no bootloader (grub-install)"
+        },
+        {
+          "text": "  - nothing for the bootloader to start (grub-mkconfig -o /boot/grub/grub.cfg)"
+        }
+      ],
+      "look": "jsc:guide/terminal/zsh",
+      "title": "Arch Linux"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_reboot.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_reboot.fix1",
+          "problem": "jsc.guide.arch_reboot.problem1"
+        },
+        {
+          "fix": "jsc.guide.arch_reboot.fix2",
+          "problem": "jsc.guide.arch_reboot.problem2"
+        },
+        {
+          "fix": "jsc.guide.arch_reboot.fix3",
+          "problem": "jsc.guide.arch_reboot.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:when_reboot_refuses"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_reboot",
+  "order": 254,
+  "section": "jsc:arch_finish",
+  "title": "jsc.guide.arch_reboot.title"
+}

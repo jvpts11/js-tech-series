@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 
 /**
@@ -36,7 +38,7 @@ public interface ICliConfig {
      * @return the outcome of the change
      */
     default ICliComputer.OpResult setConfig(final String key, final String value) {
-        return ICliComputer.OpResult.fail("this computer has no settings store");
+        return ICliComputer.OpResult.fail(ConfigWords.NO_SETTINGS);
     }
 
     /** The folders this computer shares, in the order they were shared. */
@@ -68,5 +70,16 @@ public interface ICliConfig {
     /** Every folder the other running machines on this network share. */
     default List<ICliComputer.NetworkShare> networkShares() {
         return List.of();
+    }
+
+    /** What a computer with no settings store answers. */
+    @TextHolder
+    final class ConfigWords {
+
+        static final TextKey NO_SETTINGS =
+                TextKey.of("jsc.cli.config.no_settings", "this computer has no settings store");
+
+        private ConfigWords() {
+        }
     }
 }

@@ -1,0 +1,45 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.book_daemon_handbook.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_daemon_handbook.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_daemon_handbook.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.book_daemon_handbook.fix1",
+          "problem": "jsc.guide.book_daemon_handbook.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:freebsd_overview",
+        "jsc:system_v_overview",
+        "jsc:library"
+      ]
+    }
+  ],
+  "icon": "jsc:daemon_handbook",
+  "id": "jsc:book_daemon_handbook",
+  "items": [
+    "jsc:daemon_handbook"
+  ],
+  "order": 138,
+  "section": "jsc:the_library",
+  "title": "jsc.guide.book_daemon_handbook.title"
+}

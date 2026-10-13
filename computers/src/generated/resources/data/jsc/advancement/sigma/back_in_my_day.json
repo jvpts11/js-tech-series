@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:sigma/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:sigma_on_dos"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.sigma.back_in_my_day.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:floppy_disk"
+    },
+    "title": {
+      "translate": "advancements.jsc.sigma.back_in_my_day.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

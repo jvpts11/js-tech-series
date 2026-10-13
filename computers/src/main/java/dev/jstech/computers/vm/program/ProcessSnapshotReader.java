@@ -120,12 +120,12 @@ final class ProcessSnapshotReader {
             }
         }
         final Snapshot.ConsoleShot console = shot.console();
-        process.console0().restore(console.lines(), console.written());
+        process.console0().restore(console.lines(), console.written(), console.open());
         process.random().startFrom(console.random());
         process.input().restore(shot.input());
         callbacks.startFrom(shot.callbacks().dropped());
         identity.restore(identityShot.args(), identityShot.machineId(), identityShot.spent(), identityShot.exited(),
-                identityShot.exitCode(), halted, identityShot.message().isEmpty() ? null : identityShot.message());
+                identityShot.exitCode(), halted, identityShot.message());
         // The windows the program had open come back open, with everything they were showing.
         final Snapshot.WindowsShot windowsShot = shot.windows();
         final ProgramWindows windows = process.windows0();

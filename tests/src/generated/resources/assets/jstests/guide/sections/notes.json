@@ -1,0 +1,7 @@
+{
+  "chapter": "jstests:shared",
+  "icon": "minecraft:map",
+  "id": "jstests:notes",
+  "order": 2,
+  "title": "jstests.guide.section.notes"
+}

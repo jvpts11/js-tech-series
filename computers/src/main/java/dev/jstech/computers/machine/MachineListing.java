@@ -9,9 +9,9 @@ package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.hardware.ArchitectureSpec;
-import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingError;
@@ -22,6 +22,8 @@ import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.nbt.CompoundTag;
@@ -36,13 +38,14 @@ import org.slf4j.Logger;
  * reads it, runs it and saves it, and no language in the registry may claim the extension. That leaves a language free
  * to do nothing but compile, and keeps every compiled program running in a pack that took Σ# out of the registry.
  */
+@TextHolder
 public final class MachineListing {
 
     /** The extension of a listing, without the dot. */
     public static final String EXTENSION = "asm";
 
-    /** What a listing is called in front of a person. */
-    public static final String LABEL = "Σ# program";
+    /** What a listing is called in front of a person, in their language. */
+    public static final TextKey LABEL = TextKey.of("jsc.machine_listing.label", "Σ# program");
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -71,13 +74,15 @@ public final class MachineListing {
         final Process process = new Process(program, heapBytes, hostOf(machine));
         process.setArgs(arguments);
         if (program.shape() == Shape.CONSOLE) {
-            process.beginStatic(program.entryPoint(), "Main");
+            process.beginMain(program.entryPoint());
         } else {
             final Values.Obj script = process.create(program.entryPoint());
             if (script == null) {
                 return null;
             }
-            process.begin(script, "OnInit");
+            if (process.declares(script, "OnInit")) {
+                process.begin(script, "OnInit");
+            }
         }
         return new SigmaProgram(process);
     }
@@ -162,17 +167,17 @@ public final class MachineListing {
             return null;
         }
         final ComputerBuild build = computer.currentBuild();
-        final ArchitectureSpec here = build == null ? null : build.architecture();
-        if (here == null || here.runs(program.architecture())) {
+        final IsaSpec here = build == null ? null : build.isa();
+        if (here == null || here.runs(program.isa())) {
             return null;
         }
-        return new ListingProblem(program.architectureLine(), 1, ListingError.ARCHITECTURE_MISMATCH.code(),
-                ListingError.ARCHITECTURE_MISMATCH.message(nameOf(program.architecture()), here.name()));
+        return new ListingProblem(program.isaLine(), 1, ListingError.ISA_MISMATCH.code(),
+                ListingError.ISA_MISMATCH.message(nameOf(program.isa()), here.name()));
     }
 
-    /** An architecture as a person reads it, falling back to its id when no mod has brought one under that name. */
-    private static String nameOf(final String architecture) {
-        return Architectures.byId(architecture).map(ArchitectureSpec::name).orElse(architecture);
+    /** An instruction set as a person reads it, falling back to its id when no mod has brought one under that name. */
+    private static String nameOf(final String isa) {
+        return Isas.byId(isa).map(IsaSpec::name).orElse(isa);
     }
 
     /** A listing made ready, with everything wrong with it; there is no image when the text could not be read. */

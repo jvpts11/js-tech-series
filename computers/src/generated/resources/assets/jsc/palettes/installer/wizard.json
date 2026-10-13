@@ -1,0 +1,18 @@
+{
+  "accent": "#FF0000A8",
+  "bright": "#FF000000",
+  "buttonInk": "#FF000000",
+  "dark": "#FF000000",
+  "defaultRing": "#FF000000",
+  "dim": "#FF404040",
+  "face": "#FFC0C0C0",
+  "groundFrom": "#FF000080",
+  "groundTo": "#FF1084D0",
+  "light": "#FFFFFFFF",
+  "rail": "#FF008080",
+  "select": "#FF000080",
+  "selectText": "#FFFFFFFF",
+  "shadow": "#FF808080",
+  "text": "#FF000000",
+  "titleInk": "#FFFFFFFF"
+}

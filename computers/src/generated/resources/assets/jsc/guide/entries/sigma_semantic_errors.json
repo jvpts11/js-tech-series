@@ -1,0 +1,811 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_semantic_errors.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_semantic_errors.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_semantic_errors.definition1",
+      "term": "jsc.guide.sigma_semantic_errors.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_semantic_errors.table1",
+      "heads": [
+        "jsc.guide.sigma_semantic_errors.table1_head1",
+        "jsc.guide.sigma_semantic_errors.table1_head2",
+        "jsc.guide.sigma_semantic_errors.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S2012"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3001"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3002"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3040"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3059"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3060"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3031"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3041"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3015"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3057"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3028"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_11_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_semantic_errors.table2",
+      "heads": [
+        "jsc.guide.sigma_semantic_errors.table2_head1",
+        "jsc.guide.sigma_semantic_errors.table2_head2",
+        "jsc.guide.sigma_semantic_errors.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S3003"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3019"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3039"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3009"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3022"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3042"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3023"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table2_7_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_semantic_errors.table3",
+      "heads": [
+        "jsc.guide.sigma_semantic_errors.table3_head1",
+        "jsc.guide.sigma_semantic_errors.table3_head2",
+        "jsc.guide.sigma_semantic_errors.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S3007"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3008"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3024"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3025"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3026"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3050"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3005"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3006"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3004"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3020"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3021"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_11_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_11_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3014"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_12_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_12_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3033"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_13_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_13_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3027"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_14_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table3_14_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_semantic_errors.table4",
+      "heads": [
+        "jsc.guide.sigma_semantic_errors.table4_head1",
+        "jsc.guide.sigma_semantic_errors.table4_head2",
+        "jsc.guide.sigma_semantic_errors.table4_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S3029"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3010"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3011"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3012"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3013"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table4_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_semantic_errors.table5",
+      "heads": [
+        "jsc.guide.sigma_semantic_errors.table5_head1",
+        "jsc.guide.sigma_semantic_errors.table5_head2",
+        "jsc.guide.sigma_semantic_errors.table5_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S3034"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3035"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3036"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3037"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3038"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3030"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3032"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3058"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table5_8_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_semantic_errors.table6",
+      "heads": [
+        "jsc.guide.sigma_semantic_errors.table6_head1",
+        "jsc.guide.sigma_semantic_errors.table6_head2",
+        "jsc.guide.sigma_semantic_errors.table6_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S3016"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3043"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3044"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3045"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3046"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3047"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3048"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3049"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3018"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3051"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table6_10_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_semantic_errors.table7",
+      "heads": [
+        "jsc.guide.sigma_semantic_errors.table7_head1",
+        "jsc.guide.sigma_semantic_errors.table7_head2",
+        "jsc.guide.sigma_semantic_errors.table7_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S3017"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table7_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table7_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3052"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table7_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table7_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_semantic_errors.table8",
+      "heads": [
+        "jsc.guide.sigma_semantic_errors.table8_head1",
+        "jsc.guide.sigma_semantic_errors.table8_head2",
+        "jsc.guide.sigma_semantic_errors.table8_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S3053"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table8_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table8_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3054"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table8_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table8_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3055"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table8_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table8_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3056"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table8_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table8_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_semantic_errors.fix1",
+          "problem": "jsc.guide.sigma_semantic_errors.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_semantic_errors.fix2",
+          "problem": "jsc.guide.sigma_semantic_errors.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_semantic_errors.fix3",
+          "problem": "jsc.guide.sigma_semantic_errors.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_semantic_errors.fix4",
+          "problem": "jsc.guide.sigma_semantic_errors.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_compile_errors"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_semantic_errors",
+  "order": 383,
+  "section": "jsc:errors_compile",
+  "title": "jsc.guide.sigma_semantic_errors.title"
+}

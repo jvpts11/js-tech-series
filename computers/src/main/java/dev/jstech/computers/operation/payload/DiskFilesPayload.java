@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,8 +25,15 @@ import java.util.List;
  * mB-equivalents, whether it is read-only (a {@code .dat} storage projection or an installer's files),
  * and, for a {@code .dat}, the item it projects and how many are stored.
  */
+@TextHolder
 public record DiskFilesPayload(String dir, List<WireFile> files,
                                List<WireVolume> volumes) implements CustomPacketPayload {
+
+    /* What a volume is called when nobody has named it, in the player's language. */
+    public static final TextKey LOCAL_DISK = TextKey.of("jsc.disk_files.local_disk", "Local Disk");
+    public static final TextKey SETUP = TextKey.of("jsc.disk_files.setup", "%s Setup");
+    public static final TextKey REMOVABLE_DRIVE = TextKey.of("jsc.disk_files.removable_drive", "Removable Drive");
+    public static final TextKey NETWORK = TextKey.of("jsc.disk_files.network", "Network");
 
     public static final int MAX_FILES = 512;
     public static final int MAX_VOLUMES = 32;
@@ -32,7 +43,7 @@ public record DiskFilesPayload(String dir, List<WireFile> files,
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DiskFilesPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.stringUtf8(128), DiskFilesPayload::dir,
+                    PayloadCodecs.PATH, DiskFilesPayload::dir,
                     WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)), DiskFilesPayload::files,
                     WireVolume.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_VOLUMES)), DiskFilesPayload::volumes,
                     DiskFilesPayload::new);
@@ -50,14 +61,15 @@ public record DiskFilesPayload(String dir, List<WireFile> files,
 
     /**
      * One mountable volume for the explorer's drive tree: a {@code key} that addresses it ({@code ""}
-     * for the system disk, {@code "media:<readerPos>"} for a removable drive) and its display label.
+     * for the system disk, {@code "media:<readerPos>"} for a removable drive) and its display label: the name the
+     * player gave it, or what such a volume is called.
      */
-    public record WireVolume(String key, String label) {
+    public record WireVolume(String key, Text label) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, WireVolume> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.stringUtf8(64), WireVolume::key,
-                        ByteBufCodecs.stringUtf8(64), WireVolume::label,
+                        TextCodecs.STREAM_CODEC, WireVolume::label,
                         WireVolume::new);
 
         /** Whether this volume is a medium in a linked drive rather than the system disk. */
@@ -84,15 +96,15 @@ public record DiskFilesPayload(String dir, List<WireFile> files,
         // Written by hand: composite() tops out at six pairs, and an entry now carries seven fields.
         public static final StreamCodec<RegistryFriendlyByteBuf, WireFile> STREAM_CODEC =
                 StreamCodec.of((buf, f) -> {
-                    buf.writeUtf(f.path(), 160);
+                    PayloadCodecs.PATH.encode(buf, f.path());
                     buf.writeUtf(f.ext(), 16);
                     buf.writeVarLong(f.weight());
                     buf.writeBoolean(f.readOnly());
                     buf.writeBoolean(f.directory());
                     buf.writeUtf(f.itemId(), 96);
                     buf.writeVarLong(f.count());
-                }, buf -> new WireFile(buf.readUtf(160), buf.readUtf(16), buf.readVarLong(), buf.readBoolean(),
-                        buf.readBoolean(), buf.readUtf(96), buf.readVarLong()));
+                }, buf -> new WireFile(PayloadCodecs.PATH.decode(buf), buf.readUtf(16), buf.readVarLong(),
+                        buf.readBoolean(), buf.readBoolean(), buf.readUtf(96), buf.readVarLong()));
 
         /** Whether this entry projects a stored item. */
         public boolean projectsItem() {

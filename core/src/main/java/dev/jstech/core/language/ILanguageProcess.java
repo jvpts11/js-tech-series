@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.language;
 
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
@@ -58,8 +59,11 @@ public interface ILanguageProcess {
     /** Where it is up to. */
     State state();
 
-    /** What it said when it stopped, or an empty string while it is still going. */
-    String message();
+    /**
+     * What it said when it stopped, or nothing while it is still going: a sentence, so the player reads why a program
+     * halted in their own language.
+     */
+    Text message();
 
     /**
      * How many instructions it has spent since it started.

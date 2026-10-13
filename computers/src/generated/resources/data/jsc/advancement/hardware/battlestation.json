@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:hardware/pc_master_race",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:battlestation"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.battlestation.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:monitor"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.battlestation.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

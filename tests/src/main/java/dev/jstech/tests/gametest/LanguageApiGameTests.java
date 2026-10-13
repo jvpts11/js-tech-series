@@ -284,6 +284,31 @@ public final class LanguageApiGameTests {
     }
 
     /**
+     * A build asked for a version of the language is held to it: Σ# 1 has no Sound, the newest has. A language with
+     * no versions of its own builds as it always did, whatever version it is asked for.
+     */
+    @GameTest(template = ARENA)
+    public static void compileOptions_holdAVersionedLanguageToItsVersionAndLeaveAnotherAlone(
+            final GameTestHelper helper) {
+        final List<IProgrammingLanguage.SourceText> beeper = List.of(new IProgrammingLanguage.SourceText("b.sgs",
+                "using System.Sound.*; namespace T; class T { static void Main() { Sound.Beep(880, 200); } }"));
+        final IProgrammingLanguage.CompileResult first = SigmaLanguage.SIGMA_SHARP.compile(beeper,
+                new IProgrammingLanguage.CompileOptions("", 1));
+        helper.assertTrue(!first.ok() && first.complaints().stream().anyMatch(c -> "S3057".equals(c.code())),
+                "Σ# 1 has no Sound: " + first.complaints());
+        final IProgrammingLanguage.CompileResult newest = SigmaLanguage.SIGMA_SHARP.compile(beeper,
+                IProgrammingLanguage.CompileOptions.forIsa(""));
+        helper.assertTrue(newest.ok() && newest.binary().contains(".arch jsc:x86"),
+                "the newest version has it, built for the language's own baseline: " + newest.complaints());
+        final ToyLanguage toy = new ToyLanguage();
+        final List<IProgrammingLanguage.SourceText> clock =
+                List.of(new IProgrammingLanguage.SourceText("clock.toy", ToyLanguage.CLOCK));
+        helper.assertTrue(toy.compile(clock, new IProgrammingLanguage.CompileOptions("", 3))
+                        .equals(toy.compile(clock)), "a language without versions builds as it always did");
+        helper.succeed();
+    }
+
+    /**
      * The smaller language is a language of the registry in its own right, found by what its files end in, so an
      * editor colours it, complains about it and builds it as it does the full one. It is held to its own cut, it
      * builds for the oldest machines unless told otherwise, and the machine runs its source like any other.
@@ -299,7 +324,7 @@ public final class LanguageApiGameTests {
                 + "Console.PrintLine(\"hello\"); } }";
         final IProgrammingLanguage.CompileResult built =
                 sigma.compile(List.of(new IProgrammingLanguage.SourceText("t.sg", small)));
-        helper.assertTrue(built.ok() && built.binary().contains(".arch jsc:x86_16"),
+        helper.assertTrue(built.ok() && built.binary().contains(".arch jsc:ia_16"),
                 "it builds for the oldest machines: " + built.complaints());
         final IProgrammingLanguage.CompileResult refused = sigma.compile(List.of(
                 new IProgrammingLanguage.SourceText("t.sg", "namespace T; interface IThing { } class T { "
@@ -307,7 +332,7 @@ public final class LanguageApiGameTests {
         helper.assertTrue(!refused.ok() && refused.complaints().stream().anyMatch(c -> "S3052".equals(c.code())),
                 "and is refused what it does not have: " + refused.complaints());
         final IProgrammingLanguage.CompileResult tooOld = SigmaLanguage.SIGMA_SHARP.compile(
-                List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)), "jsc:x86_16");
+                List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)), "jsc:ia_16");
         helper.assertTrue(!tooOld.ok() && tooOld.complaints().stream().anyMatch(c -> "S4012".equals(c.code())),
                 "the full language is not built for the oldest machines: " + tooOld.complaints());
         final PersonalComputerBlockEntity computer =
@@ -345,6 +370,23 @@ public final class LanguageApiGameTests {
         helper.assertTrue(registry.byExtension("other") == null, "nor is any extension of its own");
         final var runner = registry.runnerOf("toyb");
         helper.assertTrue(runner != null && ToyLanguage.ID.equals(runner.id()), "the first one still runs .toyb");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void compileResult_withoutABinaryIsNotOkAndDoesNotThrow(final GameTestHelper helper) {
+        final IProgrammingLanguage.CompileResult none = new IProgrammingLanguage.CompileResult(null, null);
+        helper.assertTrue(!none.ok(), "a build with no binary and no complaints is not a build that worked");
+        helper.assertTrue(!IProgrammingLanguage.CompileResult.of(null).ok(), "nor is one made of a null binary");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void languageRegistry_refusesAnExtensionNotInLowerCase(final GameTestHelper helper) {
+        final LanguageRegistry registry = new LanguageRegistry();
+        helper.assertTrue(!registry.register(new ToyLanguage(OTHER, Set.of("TOY"), Set.of())),
+                "a language declaring an extension in upper case is refused");
+        helper.assertTrue(registry.get(OTHER) == null && registry.sourceOf("toy") == null, "and is not there");
         helper.succeed();
     }
 

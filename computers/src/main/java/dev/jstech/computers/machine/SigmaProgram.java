@@ -12,6 +12,7 @@ import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
@@ -60,8 +61,8 @@ final class SigmaProgram implements IMachineRuntime {
     }
 
     @Override
-    public String message() {
-        return this.process.message() == null ? "" : this.process.message();
+    public Text message() {
+        return this.process.message();
     }
 
     @Override
@@ -70,8 +71,18 @@ final class SigmaProgram implements IMachineRuntime {
     }
 
     @Override
+    public List<Text> consoleText() {
+        return this.process.consoleText();
+    }
+
+    @Override
     public long written() {
         return this.process.written();
+    }
+
+    @Override
+    public String openLine() {
+        return this.process.openLine();
     }
 
     @Override
@@ -98,7 +109,7 @@ final class SigmaProgram implements IMachineRuntime {
     @Override
     public void onTick() {
         final Values.Obj script = this.process.script();
-        if (script != null && this.process.readyForTurn("OnTick")) {
+        if (script != null && this.process.declares(script, "OnTick") && this.process.readyForTurn("OnTick")) {
             this.process.begin(script, "OnTick");
         }
     }
@@ -111,7 +122,8 @@ final class SigmaProgram implements IMachineRuntime {
     @Override
     public int farewell(final int budget) {
         final Values.Obj script = this.process.script();
-        if (budget <= 0 || script == null || this.process.state() == Process.State.HALTED) {
+        if (budget <= 0 || script == null || this.process.state() == Process.State.HALTED
+                || !this.process.declares(script, "OnDestroy")) {
             return 0;
         }
         this.process.beginFirst(script, "OnDestroy");

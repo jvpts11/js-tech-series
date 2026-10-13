@@ -41,7 +41,7 @@ class ProjectTemplateTest {
         assertEquals(List.of("Sorter.sg"), file.sources());
         assertEquals("jsc:sigma", file.language());
         assertEquals("Sorter.sgproj", file.fileName());
-        assertEquals("jsc:x86_16", file.platform());
+        assertEquals("jsc:ia_16", file.platform());
         assertEquals("jsc:x86", ProjectTemplate.CONSOLE_APP.project("Sorter", SHARP).platform());
         assertEquals(file, ProjectFile.read(file.write()), "and it reads back as it was written");
     }
@@ -128,5 +128,18 @@ class ProjectTemplateTest {
         assertFalse(ProjectTemplate.SCRIPT.isKind("Console"));
         assertTrue(ProjectTemplate.SCRIPT.isKind(""));
         assertTrue(ProjectTemplate.SCRIPT.isKind(null));
+    }
+
+    @Test
+    void isValidProjectName_acceptsOnlyIdentifiers() {
+        assertTrue(ProjectTemplate.isValidProjectName("Sorter_2"));
+        assertTrue(ProjectTemplate.isValidProjectName("_x"));
+        assertFalse(ProjectTemplate.isValidProjectName(""));
+        assertFalse(ProjectTemplate.isValidProjectName(null));
+        assertFalse(ProjectTemplate.isValidProjectName("2048"));
+        assertFalse(ProjectTemplate.isValidProjectName("my-app"));
+        assertFalse(ProjectTemplate.isValidProjectName("a\"b"));
+        assertFalse(ProjectTemplate.isValidProjectName("Sorter,v2"));
+        assertFalse(ProjectTemplate.isValidProjectName("My.App"));
     }
 }

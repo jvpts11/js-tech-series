@@ -1,0 +1,118 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.what_is_missing.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_is_missing.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.what_is_missing.table1",
+      "heads": [
+        "jsc.guide.what_is_missing.table1_head1",
+        "jsc.guide.what_is_missing.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "sudo"
+          },
+          {
+            "words": "jsc.guide.what_is_missing.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "su, passwd, useradd, usermod, adduser"
+          },
+          {
+            "words": "jsc.guide.what_is_missing.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "chmod, chown"
+          },
+          {
+            "words": "jsc.guide.what_is_missing.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "systemctl"
+          },
+          {
+            "words": "jsc.guide.what_is_missing.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "journalctl"
+          },
+          {
+            "words": "jsc.guide.what_is_missing.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "ip, ifconfig"
+          },
+          {
+            "words": "jsc.guide.what_is_missing.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "shutdown"
+          },
+          {
+            "words": "jsc.guide.what_is_missing.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_is_missing.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_is_missing.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.what_is_missing.fix1",
+          "problem": "jsc.guide.what_is_missing.problem1"
+        },
+        {
+          "fix": "jsc.guide.what_is_missing.fix2",
+          "problem": "jsc.guide.what_is_missing.problem2"
+        },
+        {
+          "fix": "jsc.guide.what_is_missing.fix3",
+          "problem": "jsc.guide.what_is_missing.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:apt",
+        "jsc:dnf"
+      ]
+    }
+  ],
+  "id": "jsc:what_is_missing",
+  "order": 236,
+  "section": "jsc:linux_differences",
+  "title": "jsc.guide.what_is_missing.title"
+}

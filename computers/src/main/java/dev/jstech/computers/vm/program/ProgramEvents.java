@@ -9,6 +9,7 @@ package dev.jstech.computers.vm.program;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -42,6 +43,8 @@ final class ProgramEvents {
     private final ProgramWindows windows;
     private final ProgramWatches watches;
     private final ProgramIdentity identity;
+    /** The tick each box was last typed into, so a box tells its handler once a tick however fast it is typed in. */
+    private final Map<Long, Long> typedAt = new HashMap<>();
 
     ProgramEvents(final Process process) {
         this.process = process;
@@ -112,6 +115,10 @@ final class ProgramEvents {
             return false;
         }
         if ("close".equals(kind)) {
+            // The throttle only matters while a box can be typed into, so a closed window's boxes are forgotten.
+            for (final Values.Obj gone : UiWidgets.inside(open)) {
+                this.typedAt.remove(Numbers.toLong(gone.get(UiWidgets.ID)));
+            }
             this.windows.close(open);
             this.ahead(handlerOf(open, "OnClose"));
             /*
@@ -126,17 +133,38 @@ final class ProgramEvents {
                 || !Boolean.TRUE.equals(found.get(UiWidgets.VISIBLE))) {
             return false;
         }
-        final String handler;
+        final UiMutator.Heard heard;
         try {
-            handler = this.windows.mutator().accept(found, kind, values);
+            heard = this.windows.mutator().accept(found, kind, values);
         } catch (final Halt halt) {
             this.process.halt(halt);
             return false;
         }
-        if (handler == null) {
+        if (heard == null) {
             return false;
         }
-        this.post(handlerOf(found, handler), List.of());
+        /*
+         * A box typed into fast says so once a tick at most: the box already holds every letter, so the one handler
+         * that runs reads all of them, and a player typing cannot fill the program's queue with a call a key.
+         */
+        if ("text".equals(kind)) {
+            final long tick = this.process.host().tick();
+            final Long last = this.typedAt.put(widget, tick);
+            if (last != null && last == tick) {
+                return true;
+            }
+        }
+        final Values.DelegateValue handler = handlerOf(found, heard.handler());
+        if (heard.action() == null) {
+            this.post(handler, List.of());
+            return true;
+        }
+        final String name = String.valueOf(heard.action().get(0));
+        final Object value = heard.action().get(1);
+        if (!this.offer(handler, EVENT_BYTES + Heap.sizeOfText(name) + ComponentValues.encodePlain(value).length(),
+                () -> List.of(this.actionOf(name, value)))) {
+            this.callbacks.drop();
+        }
         return true;
     }
 
@@ -173,6 +201,8 @@ final class ProgramEvents {
         if (!this.offer(watch.handler(), EVENT_BYTES,
                 () -> List.of(this.stockEvent(watch.item(), before, now, first)))) {
             this.callbacks.drop();
+        } else {
+            this.process.reached(ProgramMilestone.WATCH_FIRED);
         }
     }
 
@@ -195,6 +225,15 @@ final class ProgramEvents {
         return made;
     }
 
+    /** What a player did to a generic component, as the value its handler is handed: a name and what came with it. */
+    private Values.Obj actionOf(final String name, final Object value) {
+        final Values.Obj made = new Values.Obj(UiWidgets.COMPONENT_ACTION);
+        made.set("Name", this.heap.text(name, 0));
+        made.set("Value", this.heap.adopt(ComponentValues.toSigma(value), 0));
+        this.heap.allocate(made, Heap.HEADER + 2L * Heap.REFERENCE, 0);
+        return made;
+    }
+
     private Values.Obj messageOf(final int from, final String text, final long tick) {
         final Values.Obj made = new Values.Obj("ProcessMessage");
         made.set("From", from);
@@ -208,6 +247,10 @@ final class ProgramEvents {
      * Queues a handler's calls when there is room for them and for what their arguments hold, each call
      * counted with all of them, and only then builds the arguments, so a call turned away leaves nothing
      * behind on the heap. False when there was no room; a handler with nothing to call always fits.
+     *
+     * <p>Room means room on the heap as well as in the queue: the arguments are built outside any instruction, so a
+     * program too full to hold them would otherwise stop the tick of the machine running it rather than itself. Such a
+     * call is turned away like one with no place in the queue.
      */
     private boolean offer(final Values.DelegateValue handler, final long bytes,
                           final Supplier<List<Object>> arguments) {
@@ -215,10 +258,15 @@ final class ProgramEvents {
         if (queued.isEmpty()) {
             return true;
         }
-        if (!this.callbacks.fits(queued.size(), bytes * queued.size())) {
+        if (!this.callbacks.fits(queued.size(), bytes * queued.size()) || this.heap.free() < bytes) {
             return false;
         }
-        final List<Object> handed = arguments.get();
+        final List<Object> handed;
+        try {
+            handed = arguments.get();
+        } catch (final Halt noRoom) {
+            return false;
+        }
         for (final Frame call : queued) {
             CallDispatch.fill(call, handed);
             this.callbacks.add(call, bytes);

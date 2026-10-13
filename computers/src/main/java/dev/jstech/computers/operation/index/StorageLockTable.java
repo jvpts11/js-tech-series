@@ -41,16 +41,8 @@ public final class StorageLockTable<K> {
             return;
         }
         for (final Map.Entry<K, Map<NodeUuid, Long>> perItem : held.entrySet()) {
-            final Map<NodeUuid, Long> aggForItem = aggregate.get(perItem.getKey());
-            if (aggForItem == null) {
-                continue;
-            }
             for (final Map.Entry<NodeUuid, Long> perServer : perItem.getValue().entrySet()) {
-                aggForItem.merge(perServer.getKey(), -perServer.getValue(),
-                        (oldValue, delta) -> oldValue + delta <= 0L ? null : oldValue + delta);
-            }
-            if (aggForItem.isEmpty()) {
-                aggregate.remove(perItem.getKey());
+                subtractAggregate(perItem.getKey(), perServer.getKey(), perServer.getValue());
             }
         }
     }
@@ -77,13 +69,7 @@ public final class StorageLockTable<K> {
         } else {
             perServer.put(server, current - released);
         }
-        final Map<NodeUuid, Long> aggForItem = aggregate.get(key);
-        if (aggForItem != null) {
-            aggForItem.merge(server, -released, (oldValue, delta) -> oldValue + delta <= 0L ? null : oldValue + delta);
-            if (aggForItem.isEmpty()) {
-                aggregate.remove(key);
-            }
-        }
+        subtractAggregate(key, server, released);
     }
 
     public long lockedOn(final K key, final NodeUuid server) {
@@ -114,5 +100,25 @@ public final class StorageLockTable<K> {
     public void clear() {
         byOperation.clear();
         aggregate.clear();
+    }
+
+    /**
+     * Takes a released amount off the per-server aggregate. An entry that is not there is left alone
+     * instead of being created with a negative amount, which would make free stock look larger than it is.
+     */
+    private void subtractAggregate(final K key, final NodeUuid server, final long amount) {
+        final Map<NodeUuid, Long> aggForItem = aggregate.get(key);
+        final Long current = aggForItem == null ? null : aggForItem.get(server);
+        if (current == null) {
+            return;
+        }
+        if (current - amount <= 0L) {
+            aggForItem.remove(server);
+        } else {
+            aggForItem.put(server, current - amount);
+        }
+        if (aggForItem.isEmpty()) {
+            aggregate.remove(key);
+        }
     }
 }

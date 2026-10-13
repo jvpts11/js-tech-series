@@ -7,14 +7,20 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.MainframeStructure;
+import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.MainframeNode;
 import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.persistence.NetworkRegistrySavedData;
+import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.uuid.NetworkUuid;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuidState;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +34,6 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -52,10 +57,17 @@ import org.jetbrains.annotations.Nullable;
  * <p>All of it was written down the side of the block entity among the hardware and the readouts. It is one
  * subject and it is one class now.
  */
+@TextHolder
 final class MainframeNetworking {
 
     /** How long a standby waits, in ticks, before it decides the one it was backing is really gone. */
     private static final int PROMOTE_DELAY = 60;
+
+    /** What every player is told when two Mainframes meet on one network, and when they part again. */
+    private static final TextKey CONFLICT = TextKey.of("jsc.mainframe.network_conflict",
+            "[J's Computers] NETWORK_CONFLICT: two Mainframes share one network near %s");
+    private static final TextKey CONFLICT_RESOLVED = TextKey.of("jsc.mainframe.network_conflict_resolved",
+            "[J's Computers] Network conflict resolved near %s");
 
     /** Every side, held once: Direction.values() hands back a fresh copy of the array on every call. */
     /*
@@ -130,11 +142,11 @@ final class MainframeNetworking {
         final NetworkSystem system = NetworkSystem.get(level);
         final ConnectivityIndex index = system.connectivity();
         final Set<Long> cables = adjacentCables(level);
-        index.bridge(cables);
+        index.bridge(mainframe.getBlockPos().asLong(), cables);
 
         NetworkUuid adopted = null;
         for (final long cable : cables) {
-            final Optional<NetworkUuid> segment = index.networkOf(cable);
+            final Optional<NetworkUuid> segment = index.joinedNetwork(cable);
             if (segment.isPresent()) {
                 adopted = segment.get();
                 break;
@@ -159,12 +171,12 @@ final class MainframeNetworking {
         waitTicks = 0;
         final NetworkUuid effective = adopted != null ? adopted : mainframe.nativeNetworkUuid();
         if (adopted == null) {
-            NetworkRegistrySavedData.get(level).addNetwork(effective);
+            NetworkRegistry.addNetwork(level, effective);
         }
         setConflict(level, primaryPeerPresent);
         if (primaryPeerPresent) {
             // Two owners on one network: collapse it until they are physically separated.
-            NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.CONFLICTED);
+            NetworkRegistry.setNetworkState(level, effective, NetworkUuidState.CONFLICTED);
             mainframe.networkAttachment().attachTo(null);
             unregister(system);
             return;
@@ -215,7 +227,7 @@ final class MainframeNetworking {
                              final Set<Long> cables, final NetworkUuid effective) {
         // A cable whose BlockEntity has not registered yet (mid chunk-load) is skipped, picked up later.
         for (final long cable : cables) {
-            if (index.contains(cable) && !effective.equals(index.networkOf(cable).orElse(null))) {
+            if (index.contains(cable) && !effective.equals(index.joinedNetwork(cable).orElse(null))) {
                 index.assignUuid(cable, effective);
             }
         }
@@ -224,10 +236,13 @@ final class MainframeNetworking {
         index.anchor(here, effective, cables);
         mainframe.networkAttachment().attachTo(effective);
         // Restore the network from any prior CONFLICTED or ORPHANED state, since adopting it revives it.
-        NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.ACTIVE);
+        NetworkRegistry.setNetworkState(level, effective, NetworkUuidState.ACTIVE);
         system.registerMainframe(new MainframeNode(mainframe.nodeUuid(), effective, mainframe.capacity(),
                 FailoverRole.NONE, Optional.empty(), 0L));
         system.recordMainframePosition(effective, here);
+        if (mainframe.networkAttachment().registered() == null) {
+            JscEvents.awardOperator(mainframe, JscEvents.MAINFRAME_NETWORK);
+        }
         mainframe.networkAttachment().registeredAs(effective);
     }
 
@@ -248,11 +263,11 @@ final class MainframeNetworking {
         }
     }
 
-    /** Lets go of the network, which is what a Mainframe losing power does. */
+    /** Lets go of the network, which is what a Mainframe losing power does: data no longer passes through it. */
     void leave(final ServerLevel level) {
         mainframe.networkAttachment().attachTo(null);
         setConflict(level, false);
-        unregister(NetworkSystem.get(level));
+        unregisterFrom(NetworkSystem.get(level));
     }
 
     /**
@@ -281,11 +296,10 @@ final class MainframeNetworking {
             owned.add(registered);
         }
         for (final long cable : adjacentCables(level)) {
-            index.networkOf(cable).ifPresent(owned::add);
+            index.joinedNetwork(cable).ifPresent(owned::add);
         }
-        final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
         for (final NetworkUuid net : owned) {
-            registry.setNetworkState(net, NetworkUuidState.ORPHANED);
+            NetworkRegistry.setNetworkState(level, net, NetworkUuidState.ORPHANED);
         }
     }
 
@@ -293,21 +307,21 @@ final class MainframeNetworking {
     void eraseOwnedNetwork(final ServerLevel level) {
         final NetworkSystem system = NetworkSystem.get(level);
         final ConnectivityIndex index = system.connectivity();
-        final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
         for (final NetworkUuid net : new LinkedHashSet<>(Arrays.asList(
                 mainframe.networkAttachment().network(), mainframe.networkAttachment().registered()))) {
             if (net != null) {
                 index.clearNetwork(net);
-                registry.removeNetwork(net);
+                NetworkRegistry.removeNetwork(level, net);
             }
         }
         mainframe.networkAttachment().attachTo(null);
         unregister(system);
     }
 
-    /** Takes this Mainframe off the network's register, for a caller tearing the machine down itself. */
+    /** Takes this Mainframe off the network, and off every way through it: it is switched off, broken or unloaded. */
     void unregisterFrom(final NetworkSystem system) {
         unregister(system);
+        system.connectivity().forgetBridge(mainframe.getBlockPos().asLong());
     }
 
     private void unregister(final NetworkSystem system) {
@@ -324,11 +338,11 @@ final class MainframeNetworking {
         final Map<Long, MainframeBlockEntity> found = new LinkedHashMap<>();
         final Set<Long> scanned = new HashSet<>();
         for (final long anchor : cables) {
-            for (final long cablePos : index.componentPositions(anchor)) {
-                if (!scanned.add(cablePos)) {
+            for (final long wire : index.componentPositions(anchor)) {
+                final BlockPos base = Cables.blockOf(level, wire);
+                if (base == null || !scanned.add(base.asLong())) {
                     continue;
                 }
-                final BlockPos base = BlockPos.of(cablePos);
                 for (final Direction direction : SIDES) {
                     final MainframeBlockEntity peer = mainframeBehind(level, base.relative(direction));
                     if (peer != null && peer != mainframe && peer.isRunning()) {
@@ -348,7 +362,7 @@ final class MainframeNetworking {
             return found;
         }
         if (be instanceof MainframePartBlockEntity part && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof MainframeBlockEntity controller) {
+                && Loaded.blockEntity(level, part.controllerPos()) instanceof MainframeBlockEntity controller) {
             return controller;
         }
         return null;
@@ -356,23 +370,24 @@ final class MainframeNetworking {
 
     /** Says so in chat when a conflict starts and when it clears, since nothing else would show it. */
     private void setConflict(final ServerLevel level, final boolean conflict) {
+        if (conflict && !conflicted) {
+            JscEvents.awardOperator(mainframe, JscEvents.MAINFRAME_CONFLICT);
+        }
         if (conflict != conflicted && level.getServer() != null) {
             final String where = mainframe.getBlockPos().toShortString();
-            final String message = conflict
-                    ? "[J's Computers] NETWORK_CONFLICT: two Mainframes share one network near " + where
-                    : "[J's Computers] Network conflict resolved near " + where;
-            level.getServer().getPlayerList().broadcastSystemMessage(Component.literal(message), false);
+            final TextKey message = conflict ? CONFLICT : CONFLICT_RESOLVED;
+            level.getServer().getPlayerList().broadcastSystemMessage(GameText.component(message.with(where)), false);
         }
         conflicted = conflict;
     }
 
     /**
-     * Every cable touching the outside of the multiblock.
+     * Every data wire crossing into the outside of the multiblock, by the number its grid knows it by.
      *
      * <p>The Mainframe is 3x2x2, so it looks across its whole footprint rather than at one side, and it takes
-     * every cable it finds rather than the first, because it bridges all of them into its single network.
+     * every wire it finds rather than the first, because it bridges all of them into its single network.
      */
-    private Set<Long> adjacentCables(final ServerLevel level) {
+    Set<Long> adjacentCables(final ServerLevel level) {
         final Direction facing = mainframe.getBlockState().getValue(HorizontalDirectionalBlock.FACING);
         final BlockPos origin = mainframe.getBlockPos();
         final Set<Long> inside = new HashSet<>();
@@ -392,10 +407,7 @@ final class MainframeNetworking {
                 if (inside.contains(neighbor.asLong())) {
                     continue; // a face internal to the multiblock
                 }
-                if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                        && mainframe.acceptsDataTier(cable.tier())) {
-                    cables.add(neighbor.asLong());
-                }
+                cables.addAll(DataWires.numbersReaching(level, p, direction, DataWires::isNetwork));
             }
         }
         return cables;

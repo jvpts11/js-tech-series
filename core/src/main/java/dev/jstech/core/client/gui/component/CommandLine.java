@@ -7,16 +7,24 @@
  */
 package dev.jstech.core.client.gui.component;
 
+import dev.jstech.core.client.font.GridPainter;
 import dev.jstech.core.client.gui.logic.TextEditState;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.font.CellFont;
+import dev.jstech.core.font.GridSpan;
 import dev.jstech.core.gui.LineHistory;
-import java.util.function.Consumer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import org.lwjgl.glfw.GLFW;
-
+import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.motion.MotionScope;
+import java.util.List;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * One line of a terminal: what is being typed after a prompt, submitted with Enter and recalled with the
@@ -27,12 +35,6 @@ import java.util.function.Supplier;
  */
 public final class CommandLine extends UiComponent {
 
-    private static final int BACKGROUND = 0xFF101820;
-    private static final int PROMPT = 0xFF40C060;
-
-    /** What picked-out letters are drawn on: a wash of the ink the line is written in. */
-    private static final int PICKED = 0x50CDD6E2;
-
     /** How many lines of a paste a terminal will run: enough for a handful of commands, and no more. */
     private static final int MOST_PASTED_LINES = 16;
 
@@ -42,11 +44,12 @@ public final class CommandLine extends UiComponent {
     private final LineHistory history = new LineHistory();
     private Supplier<String> prompt = () -> ">";
     private Supplier<String> idleText = () -> "";
-    private IntSupplier idleColor = () -> PROMPT;
-    private int background = BACKGROUND;
-    private int textColor = PROMPT;
+    private IntSupplier idleColor = () -> ComponentPalette.get().consolePrompt();
+    private int background = ComponentPalette.get().consoleGround();
+    private int textColor = ComponentPalette.get().consolePrompt();
     private BooleanSupplier unseen = () -> false;
     private BooleanSupplier takesNothing = () -> false;
+    private @Nullable GridPainter<Integer> grid;
 
     public CommandLine(final int maxLength, final Consumer<String> onSubmit) {
         this.maxLength = Math.max(1, maxLength);
@@ -94,6 +97,17 @@ public final class CommandLine extends UiComponent {
         return this;
     }
 
+    /**
+     * Writes the line on a grid, one character to each cell, as the terminal above it is written, rather than letter
+     * after letter as wide as each is.
+     *
+     * @param font the font of cells the grid is drawn in, or null for the game's own font on cells
+     */
+    public CommandLine setCellFont(final @Nullable CellFont font) {
+        grid = new GridPainter<>(font);
+        return this;
+    }
+
     /** What is typed so far. */
     public String input() {
         return input.edit();
@@ -111,10 +125,11 @@ public final class CommandLine extends UiComponent {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
-        g.fill(x(), y(), right(), bottom(), background);
+        Grounds.fill(g, x(), y(), right(), bottom(), background);
+        final Font font = ctx.font();
         final String idle = idleText.get();
         if (isFocused() && input.edit().isEmpty() && !idle.isEmpty()) {
-            g.drawString(ctx.font(), Texts.trim(ctx.font(), idle, width() - 6), x() + 3, y() + 2, idleColor.getAsInt(), false);
+            write(g, font, trim(font, idle, width() - 6), x() + 3, idleColor.getAsInt());
             return;
         }
         /*
@@ -124,22 +139,22 @@ public final class CommandLine extends UiComponent {
         final boolean hidden = unseen.getAsBoolean();
         final String full = prompt.get() + " " + (hidden ? "" : input.edit()) + " ";
         final int caretAt = prompt.get().length() + 1 + (hidden ? 0 : input.caret());
-        final String shown = Texts.tail(ctx.font(), full, width() - 6);
+        final String shown = tail(font, full, width() - 6);
         final int dropped = full.length() - shown.length();
         if (isFocused() && !hidden && input.hasSelection()) {
-            // Under the letters, so what Shift and the arrows picked out reads as picked out.
+            // Under the letters, on a wash of the ink, so what Shift and the arrows picked out reads as picked out.
             final int from = Math.max(0, prompt.get().length() + 1 + input.selectionStart() - dropped);
             final int to = Math.max(from, Math.min(shown.length(),
                     prompt.get().length() + 1 + input.selectionEnd() - dropped));
-            final int left = x() + 3 + ctx.font().width(shown.substring(0, Math.min(from, shown.length())));
-            g.fill(left, y() + 1, left + ctx.font().width(shown.substring(Math.min(from, shown.length()), to)),
-                    y() + 11, PICKED);
+            final int left = x() + 3 + width(font, shown.substring(0, Math.min(from, shown.length())));
+            g.fill(left, y() + 1, left + width(font, shown.substring(Math.min(from, shown.length()), to)),
+                    y() + 11, ComponentPalette.get().consolePicked());
         }
-        g.drawString(ctx.font(), shown, x() + 3, y() + 2, textColor, false);
-        if (isFocused()) {
+        write(g, font, shown, x() + 3, textColor);
+        // The cursor blinks to the beat of the system's terminal, and stands lit on one that never blinked it.
+        if (isFocused() && MotionClock.blinkOn(MotionScope.spec(MotionKinds.CARET_BLINK))) {
             final int visibleCaret = Math.max(0, Math.min(shown.length(), caretAt - dropped));
-            final int cx = x() + 3 + ctx.font().width(shown.substring(0, visibleCaret));
-            g.drawString(ctx.font(), "_", cx, y() + 2, textColor, false);
+            write(g, font, "_", x() + 3 + width(font, shown.substring(0, visibleCaret)), textColor);
         }
     }
 
@@ -257,5 +272,38 @@ public final class CommandLine extends UiComponent {
 
     private void recall(final int direction) {
         history.recall(direction).ifPresent(input::sync);
+    }
+
+    /** Writes text from {@code x} along the strip, in the line's font. */
+    private void write(final GuiGraphics g, final Font font, final String text, final int x, final int colour) {
+        if (grid == null) {
+            Draw.text(g, font, text, x, y() + 2, colour, background);
+        } else {
+            grid.drawOnce(g, font, List.of(new GridSpan<>(text, colour)), x, y() + (height() - grid.cellHeight()) / 2,
+                    grid.cellHeight(), Integer::intValue, background);
+        }
+    }
+
+    /** How wide text comes out in the line's font: in whole cells when it has one. */
+    private int width(final Font font, final String text) {
+        return grid == null ? font.width(text) : text.length() * grid.cellWidth();
+    }
+
+    /** The end of a text that fits that room, which is the part a line scrolled to its caret shows. */
+    private String tail(final Font font, final String text, final int room) {
+        if (grid == null) {
+            return Texts.tail(font, text, room);
+        }
+        final int fits = Math.max(1, room / grid.cellWidth());
+        return text.length() <= fits ? text : text.substring(text.length() - fits);
+    }
+
+    /** The start of a text that fits that room. */
+    private String trim(final Font font, final String text, final int room) {
+        if (grid == null) {
+            return Texts.trim(font, text, room);
+        }
+        final int fits = Math.max(1, room / grid.cellWidth());
+        return text.length() <= fits ? text : text.substring(0, fits);
     }
 }

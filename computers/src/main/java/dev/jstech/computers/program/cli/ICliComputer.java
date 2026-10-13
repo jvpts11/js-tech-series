@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * The view of a computer and its network that a CLI command operates on, made of one part for each thing a command
@@ -39,6 +42,43 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     }
 
     /**
+     * One printer the machine prints on, for {@code lpstat} and {@code PRINT}.
+     *
+     * @param queue    the name its queue goes by in {@code lp -d}
+     * @param name     the name it was sold under
+     * @param printing whether a page is coming out now
+     * @param jobs     the documents in its queue, the one printing first
+     */
+    record PrinterInfo(String queue, String name, boolean printing, List<PrintJobInfo> jobs) {
+    }
+
+    /**
+     * One document in a printer's queue.
+     *
+     * @param id        its request id, the queue's name and a number
+     * @param user      who sent it
+     * @param bytes     how big it is
+     * @param submitted the world's time when it was sent
+     * @param title     its title, a file's name
+     */
+    record PrintJobInfo(String id, String user, int bytes, long submitted, String title) {
+    }
+
+    /**
+     * What became of a file sent to print.
+     *
+     * @param ok        whether a printer took it
+     * @param requestId the request id it became, empty when it was refused
+     * @param printer   the queue it went to, empty when none took it
+     * @param message   why it was refused, empty when it was taken
+     */
+    record PrintAnswer(boolean ok, String requestId, String printer, Text message) {
+
+        /** No printer took it, since the machine has none. */
+        public static final PrintAnswer NONE = new PrintAnswer(false, "", "", Text.EMPTY);
+    }
+
+    /**
      * Everything {@code screenfetch} shows about this machine: the distribution and its id (picks the
      * ASCII logo), kernel line, host and shell, the desktop environment (or the TTY), the hardware, disk
      * usage, installed package count and the world's uptime in ticks.
@@ -59,6 +99,16 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
         /** One that came with the machines. */
         public PackageInfo(final String name, final String description, final boolean installed) {
             this(name, description, installed, false);
+        }
+
+        /**
+         * Whether a typed search term finds this package: the term, trimmed and without regard to case, is in
+         * the name or the description. An empty term finds everything. Every package manager searches this way.
+         */
+        public boolean matches(final String term) {
+            final String needle = term == null ? "" : term.trim().toLowerCase(Locale.ROOT);
+            return needle.isEmpty() || this.name.toLowerCase(Locale.ROOT).contains(needle)
+                    || this.description.toLowerCase(Locale.ROOT).contains(needle);
         }
     }
 
@@ -81,11 +131,11 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     final class FsResult {
 
         private final boolean ok;
-        private final String message;
+        private final Text message;
         private final List<FsEntry> entries;
         private final OpResult opResult;
 
-        private FsResult(final boolean ok, final String message, final List<FsEntry> entries,
+        private FsResult(final boolean ok, final Text message, final List<FsEntry> entries,
                          final OpResult opResult) {
             this.ok = ok;
             this.message = message;
@@ -95,17 +145,22 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
 
         /** A listing result carrying one or more directory entries. */
         public static FsResult listing(final List<FsEntry> entries) {
-            return new FsResult(true, "", entries, null);
+            return new FsResult(true, Text.EMPTY, entries, null);
         }
 
-        /** A text-content result (for {@code type} / {@code cat}). */
+        /** A text-content result (for {@code type} / {@code cat}): the file's own words, which are data. */
         public static FsResult content(final String text) {
-            return new FsResult(true, text, null, null);
+            return new FsResult(true, Text.literal(text), null, null);
         }
 
         /** A simple confirmation message (for {@code del}). */
-        public static FsResult ok(final String message) {
+        public static FsResult ok(final Text message) {
             return new FsResult(true, message, null, null);
+        }
+
+        /** A confirmation whose words are data, the same in every language. */
+        public static FsResult ok(final String message) {
+            return ok(Text.literal(message));
         }
 
         /** An IQL execution result forwarded from the dispatcher. */
@@ -114,17 +169,22 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
         }
 
         /** A standard failure with a human-readable message. */
-        public static FsResult fail(final String message) {
+        public static FsResult fail(final Text message) {
             return new FsResult(false, message, null, null);
+        }
+
+        /** A failure the machine read somewhere as English words, which travel as they are. */
+        public static FsResult fail(final String message) {
+            return fail(Text.literal(message));
         }
 
         /** Returned when no OS or system disk is present. */
         public static FsResult noOs() {
-            return fail("no system disk or OS installed");
+            return fail(CliTexts.NO_SYSTEM.text());
         }
 
         public boolean ok() { return ok; }
-        public String message() { return message; }
+        public Text message() { return message; }
         public List<FsEntry> entries() { return entries; }
         /** The forwarded IQL result when this is an {@link #iqlResult}, or {@code null} otherwise. */
         public OpResult opResult() { return opResult; }
@@ -165,11 +225,25 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     record NetworkShare(String hostname, ShareInfo share) {
     }
 
-    /** A line in a storage listing: a name, a quantity, and an optional detail (e.g. where the item lives). */
-    record StoredItem(String name, long quantity, String detail) {
+    /**
+     * A line in a storage listing: a name, a quantity, and an optional detail (e.g. where the item lives). The name
+     * is read in the player's language where it is a thing's name, and its English is what a search and a program
+     * compare against.
+     */
+    record StoredItem(Text name, long quantity, Text detail) {
 
+        public StoredItem(final Text name, final long quantity) {
+            this(name, quantity, Text.EMPTY);
+        }
+
+        /** A row whose words are data. */
+        public StoredItem(final String name, final long quantity, final String detail) {
+            this(Text.literal(name), quantity, Text.literal(detail));
+        }
+
+        /** A row whose name is data, with no detail. */
         public StoredItem(final String name, final long quantity) {
-            this(name, quantity, "");
+            this(Text.literal(name), quantity, Text.EMPTY);
         }
     }
 
@@ -212,8 +286,8 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
      * @param madeBy  one line per way of making it, as the Network Interactor words them
      * @param usedIn  one line per thing it goes into
      */
-    record ItemDetail(String name, String id, long stored, List<Holding> where, List<String> madeBy,
-                      List<String> usedIn) {
+    record ItemDetail(String name, String id, long stored, List<Holding> where, List<Text> madeBy,
+                      List<Text> usedIn) {
 
         public ItemDetail {
             where = List.copyOf(where);
@@ -254,15 +328,52 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     record ServiceStatus(String name, String state) {
     }
 
-    /** The outcome of an effecting command: whether it was accepted, and a message to print. */
-    record OpResult(boolean ok, String message) {
+    /**
+     * The outcome of an effecting command: whether it was accepted, and a message to print, in whatever language
+     * whoever reads it reads.
+     */
+    record OpResult(boolean ok, Text message) {
 
-        public static OpResult ok(final String message) {
+        public OpResult {
+            message = message == null ? Text.EMPTY : message;
+        }
+
+        public static OpResult ok(final Text message) {
             return new OpResult(true, message);
         }
 
-        public static OpResult fail(final String message) {
+        public static OpResult ok(final TextKey message) {
+            return new OpResult(true, message.text());
+        }
+
+        public static OpResult fail(final Text message) {
             return new OpResult(false, message);
+        }
+
+        public static OpResult fail(final TextKey message) {
+            return new OpResult(false, message.text());
+        }
+
+        /** An outcome whose words are data, the same in every language: a name, a figure, a line of a file. */
+        public static OpResult ok(final String message) {
+            return ok(Text.literal(message));
+        }
+
+        /** A failure whose words are data, or English that came from somewhere that has only English. */
+        public static OpResult fail(final String message) {
+            return fail(Text.literal(message));
+        }
+    }
+
+    /**
+     * What a whole statement of the network's language answered: whether it was taken, what it says, and the rows a
+     * read brought back.
+     */
+    record StatementResult(boolean ok, Text said, List<StoredItem> rows) {
+
+        public StatementResult {
+            said = said == null ? Text.EMPTY : said;
+            rows = rows == null ? List.of() : List.copyOf(rows);
         }
     }
 }

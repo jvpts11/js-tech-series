@@ -26,7 +26,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * IQL run against the network through the same server-side CLI the Command Prompt and NMS use, checking the
+ * IQL run against the network through the same server-side CLI the Command Prompt and ISMS use, checking the
  * parts that must never misbehave under a storm of statements: QUERY reflects the real network, a manual LOCK
  * takes and releases hold of a stock type and accounts for the amount, and malformed or unknown-target
  * statements are rejected without crashing. None of these verbs moves items, so the network's counts must be
@@ -55,10 +55,10 @@ public final class IqlStressGameTests {
     public static void iqlQueryLockAndAdversarialAreSafe(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.placeSeededRack(new BlockPos(2, 2, 1));
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
         final IComputerTerminalHost host = pc;
         final StorageKey cobble = StorageKey.of(Items.COBBLESTONE);

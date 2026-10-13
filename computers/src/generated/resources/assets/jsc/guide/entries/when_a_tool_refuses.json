@@ -1,0 +1,253 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_tool_refuses.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_tool_refuses.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.when_a_tool_refuses.table1",
+      "heads": [
+        "jsc.guide.when_a_tool_refuses.table1_head1",
+        "jsc.guide.when_a_tool_refuses.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "fdisk: bad usage"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "fdisk: cannot open /dev/sda2: No such file or directory"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Device does not contain a recognized partition table."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "No partition is defined yet!"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "No free sectors available."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Value out of range."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Failed to parse partition type 'swap'."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "x: unknown command"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Changed type of partition 'Linux filesystem' to 'EFI System'."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table1_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.when_a_tool_refuses.table2",
+      "heads": [
+        "jsc.guide.when_a_tool_refuses.table2_head1",
+        "jsc.guide.when_a_tool_refuses.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Usage: mkfs.ext4 /dev/<device>"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "mke2fs: No such file or directory while trying to determine filesystem size"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "mke2fs: sda1 is the EFI System partition."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "/dev/sda contains a gpt partition table."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.when_a_tool_refuses.table3",
+      "heads": [
+        "jsc.guide.when_a_tool_refuses.table3_head1",
+        "jsc.guide.when_a_tool_refuses.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Usage: mkfs.fat -F 32 /dev/<partition>"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "mkfs.fat: unable to open sda1: No such file or directory"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "mkfs.fat: sda1 is not an EFI System partition."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.when_a_tool_refuses.table4",
+      "heads": [
+        "jsc.guide.when_a_tool_refuses.table4_head1",
+        "jsc.guide.when_a_tool_refuses.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "mount: bad usage"
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "mount: /mnt/boot: mount point does not exist."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "mount: /mnt/data: mount point does not exist."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "mount: /mnt/boot: wrong fs type on /dev/sda1."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "mount: /mnt: wrong fs type, bad option, bad superblock on /dev/sda2."
+          },
+          {
+            "words": "jsc.guide.when_a_tool_refuses.table4_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.when_a_tool_refuses.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.when_a_tool_refuses.fix1",
+          "problem": "jsc.guide.when_a_tool_refuses.problem1"
+        },
+        {
+          "fix": "jsc.guide.when_a_tool_refuses.fix2",
+          "problem": "jsc.guide.when_a_tool_refuses.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:seeing_the_disks",
+        "jsc:partitioning_with_fdisk",
+        "jsc:mounting"
+      ]
+    }
+  ],
+  "id": "jsc:when_a_tool_refuses",
+  "order": 246,
+  "section": "jsc:disk_tools",
+  "title": "jsc.guide.when_a_tool_refuses.title"
+}

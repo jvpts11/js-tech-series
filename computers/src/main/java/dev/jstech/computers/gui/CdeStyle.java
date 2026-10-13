@@ -19,7 +19,7 @@ import java.util.List;
  * a palette nobody has is the default one, and a backdrop that cannot be read is the one that workspace starts
  * with. Nothing a machine was left with can stop its desktop from being drawn.
  *
- * @param palette   the palette by the name the Style Manager lists it under
+ * @param palette   the scheme by the name the Style Manager lists it under
  * @param backdrops one backdrop for each workspace, the first workspace first
  */
 public record CdeStyle(String palette, List<CdeBackdrop> backdrops) {
@@ -29,7 +29,7 @@ public record CdeStyle(String palette, List<CdeBackdrop> backdrops) {
             List.of(CdeBackdrop.HATCH, CdeBackdrop.PINSTRIPE, CdeBackdrop.TILES, CdeBackdrop.WEAVE);
 
     /** What a workstation starts with: the default palette, and the starting backdrops. */
-    public static final CdeStyle DEFAULT = new CdeStyle(CdePalette.DEFAULT.name(), STARTING);
+    public static final CdeStyle DEFAULT = new CdeStyle(CdeScheme.DEFAULT.label(), STARTING);
 
     /** The longest a kept style can be written: the longest palette name and four of the longest backdrops. */
     public static final int MOST_LETTERS = 64;
@@ -38,7 +38,7 @@ public record CdeStyle(String palette, List<CdeBackdrop> backdrops) {
     private static final String BACKDROPS = ",";
 
     public CdeStyle {
-        palette = CdePalette.named(palette == null ? "" : palette).name();
+        palette = CdeScheme.named(palette == null ? "" : palette).label();
         final List<CdeBackdrop> each = new ArrayList<>(WorkspaceSet.COUNT);
         for (int i = 0; i < WorkspaceSet.COUNT; i++) {
             final CdeBackdrop given = backdrops != null && i < backdrops.size() ? backdrops.get(i) : null;
@@ -71,9 +71,14 @@ public record CdeStyle(String palette, List<CdeBackdrop> backdrops) {
         return this.palette + PARTS + String.join(BACKDROPS, keys);
     }
 
-    /** The palette the desktop is drawn from. */
+    /** The scheme the desktop is drawn from. */
+    public CdeScheme scheme() {
+        return CdeScheme.named(this.palette);
+    }
+
+    /** The colours the desktop is drawn in now. */
     public CdePalette colours() {
-        return CdePalette.named(this.palette);
+        return scheme().colours();
     }
 
     /** The backdrop that workspace wears, counted from nought. */

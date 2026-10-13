@@ -1,0 +1,252 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mc_net_commands.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mc_net_commands.heading1"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/net"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/iql"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/interac"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/ssh"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/cluster"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/gateway"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/mirror"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mc_net_commands.heading2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/listfiles"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/seefile"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/read"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/write"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/copy"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/rename"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/delete"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/findtext"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/sortlines"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mc_net_commands.heading3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/status"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/devices"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/msd"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/config"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/reboot"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/clear"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/memory"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/tasklist"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/end"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/findcommand"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/worldtime"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/format"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/run"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/help"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/echo"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/whoami"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/exit"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/set"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/runbackground"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/schedule"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/showcommands"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/listcmd"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mc_net_commands.heading4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/vim"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/emacs"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/programs"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/install"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/uninstall"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/store"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/iqlengine"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/services"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/netgetter"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/analyze"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/reindex"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/vacuum"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/scc"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/sgsc"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/sigma"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_net/sgpack"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:interactor_screen",
+        "jsc:remote_control"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:mc_net_commands",
+  "order": 78,
+  "section": "jsc:mc_net_terminal",
+  "title": "jsc.guide.mc_net_commands.title"
+}

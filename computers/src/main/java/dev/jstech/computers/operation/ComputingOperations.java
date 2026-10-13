@@ -10,8 +10,10 @@ package dev.jstech.computers.operation;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.network.NetworkCategory;
 import dev.jstech.core.operation.IOperationArgs;
 import dev.jstech.core.operation.OperationCategory;
@@ -55,6 +57,7 @@ public final class ComputingOperations {
     public static final String REINDEX = OperationTypeId.REINDEX.registryId();
     public static final String VACUUM = OperationTypeId.VACUUM.registryId();
     public static final String DROP = OperationTypeId.DROP.registryId();
+    public static final String UPDATE = OperationTypeId.UPDATE.registryId();
 
     /* The rest read as a kind the log already has: a craft, however the network goes about it. */
     public static final String PROCESSING = NAMESPACE + ":processing";
@@ -104,6 +107,11 @@ public final class ComputingOperations {
             implements IOperationArgs {
     }
 
+    /** A change to an item the network holds by a personal-use card of the computer the request names. */
+    public record UpdateArgs(MainframeBlockEntity mainframe, UpdateRequest request, OperationPriority priority)
+            implements IOperationArgs {
+    }
+
     /** A manual reservation of {@code demand} of {@code key}, or its release. */
     public record LockArgs(MainframeBlockEntity mainframe, StorageKey key, long demand,
                            @Nullable Set<NodeUuid> sources) implements IOperationArgs {
@@ -114,22 +122,28 @@ public final class ComputingOperations {
         if (registry.contains(SELECT)) {
             return;
         }
+        // Every kind that asks for work goes in through the network's door, to whichever engine runs there.
         registry.register(timed(SELECT, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
-                a.mainframe().submitNetworkSelect(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
+                a.mainframe().networkOperations().pull(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
                 a.priority())));
         registry.register(timed(MOVE, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
-                a.mainframe().submitNetworkMove(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
+                a.mainframe().networkOperations().move(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
                 a.priority())));
         registry.register(timed(DELETE, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
-                a.mainframe().submitNetworkDelete(a.key(), a.demand(), a.destination(), a.label()), a.priority())));
+                a.mainframe().networkOperations().export(a.key(), a.demand(), a.destination(), a.label()),
+                a.priority())));
         registry.register(timed(INSERT, InsertArgs.class, OperationCategory.STORAGE, a -> accepted(
-                a.mainframe().submitNetworkInsert(a.key(), a.amount(), a.label()), a.priority())));
+                a.mainframe().networkOperations().push(a.key(), a.amount(), a.label()), a.priority())));
         registry.register(timed(CRAFT, CraftArgs.class, OperationCategory.CRAFTING, a -> accepted(
-                a.mainframe().submitCraftRequest(a.key(), a.demand(), a.partial(), a.label(), null), a.priority())));
+                a.mainframe().networkOperations().craft(CraftRequest.of(a.key(), a.demand(), a.partial(), a.label(),
+                        null)), a.priority())));
         registry.register(timed(PROCESSING, ProcessingArgs.class, OperationCategory.CRAFTING, a -> accepted(
-                a.mainframe().submitNetworkProcessing(a.pattern(), a.demand(), a.label()), a.priority())));
+                a.mainframe().networkOperations().process(a.pattern(), a.demand(), a.label()), a.priority())));
         registry.register(timed(MULTI_STAGE, MultiStageArgs.class, OperationCategory.CRAFTING, a -> accepted(
-                a.mainframe().submitNetworkMultiStage(a.pattern(), a.demand(), a.label()), a.priority())));
+                a.mainframe().networkOperations().pipeline(a.pattern(), a.demand(), a.label()), a.priority())));
+        // An UPDATE changes what is stored and never makes anything: it is storage work, never a craft's.
+        registry.register(timed(UPDATE, UpdateArgs.class, OperationCategory.STORAGE, a -> accepted(
+                a.mainframe().networkOperations().update(a.request()), a.priority())));
         registry.register(instant(ANALYZE, IndexArgs.class, OperationCategory.NETWORK, a -> {
             a.mainframe().networkIndex().analyzeIncremental(a.level(), a.mainframe().networkUuid());
             return OperationStatus.COMPLETED;
@@ -165,10 +179,14 @@ public final class ComputingOperations {
         return new OperationType<>(id, args, category, IndustrialTier.T1, ORCHESTRATED, handler);
     }
 
+    /**
+     * An Operation whose handler settles at once. It is the same type as a timed one: the difference lives
+     * in what the handler returns, not in the type, so this only names the intent at the call site.
+     */
     private static <T extends IOperationArgs> OperationType<T> instant(final String id, final Class<T> args,
                                                                      final OperationCategory category,
                                                                      final IOperationHandler<T> handler) {
-        return new OperationType<>(id, args, category, IndustrialTier.T1, ORCHESTRATED, handler);
+        return timed(id, args, category, handler);
     }
 
     /** A submitted timed Operation is PENDING until the Mainframe ticks it; a refused one is FAILED. */

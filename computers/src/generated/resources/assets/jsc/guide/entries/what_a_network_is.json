@@ -1,0 +1,55 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.what_a_network_is.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_a_network_is.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_a_network_is.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_a_network_is.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_a_network_is.definition1",
+      "term": "jsc.guide.what_a_network_is.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_a_network_is.definition2",
+      "term": "jsc.guide.what_a_network_is.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_a_network_is.definition3",
+      "term": "jsc.guide.what_a_network_is.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_a_network_is.definition4",
+      "term": "jsc.guide.what_a_network_is.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_a_network_is.definition5",
+      "term": "jsc.guide.what_a_network_is.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_a_network_is.definition6",
+      "term": "jsc.guide.what_a_network_is.term6"
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:what_a_network_is",
+  "order": 62,
+  "section": "jsc:network_basics",
+  "title": "jsc.guide.what_a_network_is.title"
+}

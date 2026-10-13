@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:networks/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:computer_joined"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.series_of_tubes.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:ethernet_cable"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.series_of_tubes.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

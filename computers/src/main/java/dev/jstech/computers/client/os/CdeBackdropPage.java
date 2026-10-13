@@ -11,6 +11,8 @@ import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -35,8 +37,6 @@ final class CdeBackdropPage implements IDesktopApp {
     private OsSkin skin;
     private int left;
     private int top;
-
-    private static final String TITLE = "Style Manager - Backdrop";
 
     /** The patterns by name, in the order the Style Manager lists them. */
     private static final List<String> LABELS = labels();
@@ -63,7 +63,7 @@ final class CdeBackdropPage implements IDesktopApp {
 
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(CdeStyleTitles.BACKDROP_PAGE);
     }
 
     @Override
@@ -96,11 +96,11 @@ final class CdeBackdropPage implements IDesktopApp {
                               final int h, final int mouseX, final int mouseY, final float partialTick) {
         this.left = x;
         this.top = y;
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.skin == null || desktop == null) {
             return;
         }
-        final CdePalette p = desktop.cdePalette();
+        final CdePalette p = desktop.prefs().cdePalette();
         CdeStylePages.list(g, font, this.skin, p, x, y, false, LABELS, this.picked.place());
         final Rect preview = CdeStyleLayout.preview();
         this.skin.panel(g, x + preview.x(), y + preview.y(), preview.w(), preview.h());
@@ -109,9 +109,9 @@ final class CdeBackdropPage implements IDesktopApp {
         MotifChrome.backdrop(g, preview.w() - INSET * 2, preview.h() - INSET * 2, p, this.picked);
         g.pose().popPose();
         final Rect label = CdeStyleLayout.forWorkspace();
-        g.drawString(font, "For workspace " + CdePanels.workspaceName(desktop.workspace()), x + label.x(),
-                y + label.y(), this.skin.text(), false);
-        CdeStylePages.buttons(g, font, this.skin, x, y, false, "Apply", "Close", mouseX, mouseY);
+        Draw.text(g, font, GameText.resolve(CdeTexts.FOR_WORKSPACE.with(CdePanels.workspaceName(desktop.workspace()))),
+                x + label.x(), y + label.y(), this.skin.text());
+        CdeStylePages.buttons(g, font, this.skin, x, y, false, CdeTexts.APPLY, CdeTexts.CLOSE, mouseX, mouseY);
     }
 
     @Override
@@ -129,7 +129,7 @@ final class CdeBackdropPage implements IDesktopApp {
         if (pressed == 0) {
             apply();
         } else if (pressed == 1) {
-            DesktopScreen.closeDialog(this);
+            ActiveDesktop.closeDialog(this);
         }
     }
 
@@ -139,7 +139,7 @@ final class CdeBackdropPage implements IDesktopApp {
             case GLFW.GLFW_KEY_UP -> this.picked = byPlace(Math.max(0, this.picked.place() - 1));
             case GLFW.GLFW_KEY_DOWN -> this.picked = byPlace(Math.min(LABELS.size() - 1, this.picked.place() + 1));
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> apply();
-            case GLFW.GLFW_KEY_ESCAPE -> DesktopScreen.closeDialog(this);
+            case GLFW.GLFW_KEY_ESCAPE -> ActiveDesktop.closeDialog(this);
             default -> {
                 return false;
             }
@@ -159,9 +159,9 @@ final class CdeBackdropPage implements IDesktopApp {
     }
 
     private void apply() {
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (desktop != null) {
-            desktop.keepCdeStyle(desktop.cdeStyle().withBackdrop(desktop.workspace(), this.picked));
+            desktop.prefs().keepCdeStyle(desktop.prefs().cdeStyle().withBackdrop(desktop.workspace(), this.picked));
         }
     }
 

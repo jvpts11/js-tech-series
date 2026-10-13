@@ -9,6 +9,8 @@ package dev.jstech.computers.client.os;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A program that runs inside a {@link DesktopWindow} on the {@link DesktopScreen}. The window manager
@@ -36,12 +38,66 @@ public interface IDesktopApp {
     }
 
     /**
+     * Whether the program draws its whole window itself, frame and title bar included, in a skin of its own that looks
+     * the same on every desktop, the way the music players of the time did.
+     *
+     * <p>Its window is then exactly {@link #defaultWidth()} by {@link #defaultHeight()} at every moment, which it may
+     * change as it folds parts of itself away; it is never maximized, snapped to an edge or resized by a drag, and the
+     * desktop draws nothing of it: {@link #renderContent} is handed the whole window, and the window asks
+     * {@link #frameControlAt} and {@link #frameDragAt} where its buttons are and where it is dragged by.
+     */
+    default boolean drawsOwnFrame() {
+        return false;
+    }
+
+    /**
+     * For a program that draws its own frame: whether its window can also fill the desktop's work area, which its
+     * own maximize button asks for, and shrinks to a work area smaller than the size it asks for. A program that says
+     * so draws itself at whatever size its window is handed, the way the streaming players of the later desktops did.
+     */
+    default boolean ownFrameFills() {
+        return false;
+    }
+
+    /**
+     * For a program that draws its own frame: which of the window's buttons is at that point, measured from the
+     * window's top-left corner, as {@link DesktopWindow#BUTTON_MINIMIZE} or {@link DesktopWindow#BUTTON_CLOSE}. A
+     * button of the program's own, which the window has no part in, is not one of these: its click reaches the
+     * program like any other.
+     */
+    default int frameControlAt(final int x, final int y) {
+        return DesktopWindow.BUTTON_NONE;
+    }
+
+    /** For a program that draws its own frame: whether its window is dragged by that point, measured the same way. */
+    default boolean frameDragAt(final int x, final int y) {
+        return false;
+    }
+
+    /**
+     * For a program that draws its own frame, each frame before it draws: whether its window is the one in front, and
+     * which of the window's buttons is held down, so it draws them pushed in.
+     */
+    default void frameState(final boolean focused, final int pressedControl) {
+    }
+
+    /**
      * Hands the app the skin of the OS it is running on, each frame before {@link #renderContent}, so the app
      * can draw its content (panels, buttons, fields, tabs, lists) through the same per-OS primitives the window
      * chrome uses. An app that has been migrated to the skin overrides this and keeps the reference; an app not
      * yet migrated ignores it and keeps its old look.
      */
     default void applySkin(OsSkin skin) {
+    }
+
+    /**
+     * The icon the window wears when no program answers to its name: a setup, the welcome, a window a player's
+     * own program opened. The panel and the title bar draw it the way they draw a program's; null, the default,
+     * leaves the window to the program it belongs to.
+     */
+    @Nullable
+    default ResourceLocation iconId() {
+        return null;
     }
 
     /**
@@ -130,6 +186,14 @@ public interface IDesktopApp {
      * own dialog (over its dimmed content) in {@link #renderContent}.
      */
     default boolean modalActive() {
+        return false;
+    }
+
+    /**
+     * Whether the program is waiting on the machine and can do nothing until it answers, which the desktop's
+     * pointer shows as busy over the glass while the program is in front.
+     */
+    default boolean waiting() {
         return false;
     }
 

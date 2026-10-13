@@ -1,0 +1,19 @@
+{
+  "values": [
+    "jsc:guide_to_operations",
+    "jsc:frames_resource_kit",
+    "jsc:linux_desk_reference",
+    "jsc:linux_by_hand",
+    "jsc:daemon_handbook",
+    "jsc:learning_iql",
+    "jsc:book_of_sigma",
+    "jsc:floppy_disk",
+    "jsc:cd_rom",
+    "jsc:cd_rw",
+    "jsc:dvd_rom",
+    "jsc:dvd_rw",
+    "jsc:usb_flash_drive",
+    "jsc:bd_rom",
+    "jsc:bd_re"
+  ]
+}

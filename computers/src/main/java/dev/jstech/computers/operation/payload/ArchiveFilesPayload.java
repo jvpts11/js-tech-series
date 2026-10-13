@@ -43,8 +43,8 @@ public record ArchiveFilesPayload(BlockPos hostPos, String archivePath, List<Str
     public static final StreamCodec<RegistryFriendlyByteBuf, ArchiveFilesPayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, ArchiveFilesPayload::hostPos,
-                    ByteBufCodecs.stringUtf8(160), ArchiveFilesPayload::archivePath,
-                    ByteBufCodecs.stringUtf8(160).apply(ByteBufCodecs.list(MAX_PATHS)),
+                    PayloadCodecs.PATH, ArchiveFilesPayload::archivePath,
+                    PayloadCodecs.PATH.apply(ByteBufCodecs.list(MAX_PATHS)),
                     ArchiveFilesPayload::paths,
                     ByteBufCodecs.BOOL, ArchiveFilesPayload::removeOriginals,
                     ArchiveFilesPayload::new);

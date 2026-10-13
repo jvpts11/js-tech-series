@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -34,7 +35,8 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
                                    String systemName, int footprintMb, int copyTicks, List<InstallerFlow.Disk> disks,
                                    List<InstallerFlow.Desktop> desktops, String mirrorHost, int stageIndex,
                                    int targetSlot, String computerName, String desktopId, int eraseSlot,
-                                   int ticksDone) implements CustomPacketPayload {
+                                   int ticksDone, boolean portsSelected, boolean useMirror, boolean cronEnabled,
+                                   boolean sshdEnabled) implements CustomPacketPayload {
 
     /** The longest a drive's name or the system on it may be, which is wider than any the game ships. */
     public static final int MAX_LABEL = 64;
@@ -54,7 +56,7 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         return new OpenInstallerPayload(hostPos, monitorPos, flow.style(), flow.systemId(), flow.systemName(),
                 flow.footprintMb(), flow.copyTicks(), flow.disks(), flow.desktops(), flow.mirrorHost(),
                 flow.stageIndex(), flow.targetSlot(), flow.computerName(), flow.desktopId(), flow.eraseSlot(),
-                ticksDone);
+                ticksDone, flow.portsSelected(), flow.useMirror(), flow.cronEnabled(), flow.sshdEnabled());
     }
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
@@ -72,42 +74,48 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
     public InstallerFlow flow() {
         return InstallerFlow.restored(this.style, this.systemId, this.systemName, this.footprintMb, this.copyTicks,
                 this.disks, this.desktops, this.mirrorHost, this.stageIndex, this.targetSlot, this.computerName,
-                this.desktopId, this.eraseSlot);
+                this.desktopId, this.eraseSlot, this.portsSelected, this.useMirror, this.cronEnabled,
+                this.sshdEnabled);
     }
 
     private static void encode(final RegistryFriendlyByteBuf buf, final OpenInstallerPayload p) {
         buf.writeBlockPos(p.hostPos());
         buf.writeBlockPos(p.monitorPos());
         buf.writeUtf(p.style().serializedName(), MAX_LABEL);
-        buf.writeUtf(cut(p.systemId(), MAX_ID), MAX_ID);
-        buf.writeUtf(cut(p.systemName(), MAX_LABEL), MAX_LABEL);
+        buf.writeUtf(TextBounds.clip(p.systemId(), MAX_ID), MAX_ID);
+        buf.writeUtf(TextBounds.clip(p.systemName(), MAX_LABEL), MAX_LABEL);
         buf.writeVarInt(p.footprintMb());
         buf.writeVarInt(p.copyTicks());
         buf.writeVarInt(Math.min(p.disks().size(), InstallerFlow.MOST_DISKS));
         for (int i = 0; i < Math.min(p.disks().size(), InstallerFlow.MOST_DISKS); i++) {
             final InstallerFlow.Disk disk = p.disks().get(i);
             buf.writeVarInt(disk.slot());
-            buf.writeUtf(cut(disk.label(), MAX_LABEL), MAX_LABEL);
+            buf.writeUtf(TextBounds.clip(disk.label(), MAX_LABEL), MAX_LABEL);
             buf.writeVarInt(disk.sizeMb());
             buf.writeVarInt(disk.freeMb());
-            buf.writeUtf(cut(disk.holds(), MAX_LABEL), MAX_LABEL);
+            buf.writeUtf(TextBounds.clip(disk.holds(), MAX_LABEL), MAX_LABEL);
             buf.writeVarInt(disk.speed());
         }
         buf.writeVarInt(Math.min(p.desktops().size(), InstallerFlow.MOST_DESKTOPS));
         for (int i = 0; i < Math.min(p.desktops().size(), InstallerFlow.MOST_DESKTOPS); i++) {
             final InstallerFlow.Desktop desktop = p.desktops().get(i);
-            buf.writeUtf(cut(desktop.id(), MAX_ID), MAX_ID);
-            buf.writeUtf(cut(desktop.name(), MAX_LABEL), MAX_LABEL);
+            buf.writeUtf(TextBounds.clip(desktop.id(), MAX_ID), MAX_ID);
+            buf.writeUtf(TextBounds.clip(desktop.name(), MAX_LABEL), MAX_LABEL);
             buf.writeVarInt(desktop.sizeMb());
             buf.writeVarInt(desktop.ticks());
         }
-        buf.writeUtf(cut(p.mirrorHost(), MAX_LABEL), MAX_LABEL);
+        buf.writeUtf(TextBounds.clip(p.mirrorHost(), MAX_LABEL), MAX_LABEL);
         buf.writeVarInt(p.stageIndex());
         buf.writeVarInt(p.targetSlot() + 1);
-        buf.writeUtf(cut(p.computerName(), InstallerFlow.MOST_NAME_LETTERS), InstallerFlow.MOST_NAME_LETTERS);
-        buf.writeUtf(cut(p.desktopId(), MAX_ID), MAX_ID);
+        buf.writeUtf(TextBounds.clip(p.computerName(), InstallerFlow.MOST_NAME_LETTERS),
+                InstallerFlow.MOST_NAME_LETTERS);
+        buf.writeUtf(TextBounds.clip(p.desktopId(), MAX_ID), MAX_ID);
         buf.writeVarInt(p.eraseSlot() + 1);
         buf.writeVarInt(p.ticksDone());
+        buf.writeBoolean(p.portsSelected());
+        buf.writeBoolean(p.useMirror());
+        buf.writeBoolean(p.cronEnabled());
+        buf.writeBoolean(p.sshdEnabled());
     }
 
     private static OpenInstallerPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -137,16 +145,12 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         final String desktopId = buf.readUtf(MAX_ID);
         final int eraseSlot = buf.readVarInt() - 1;
         final int ticksDone = buf.readVarInt();
+        final boolean portsSelected = buf.readBoolean();
+        final boolean useMirror = buf.readBoolean();
+        final boolean cronEnabled = buf.readBoolean();
+        final boolean sshdEnabled = buf.readBoolean();
         return new OpenInstallerPayload(host, monitor, style == null ? InstallerStyle.PLAIN : style, systemId,
                 systemName, footprintMb, copyTicks, disks, desktops, mirrorHost, stageIndex, targetSlot,
-                computerName, desktopId, eraseSlot, ticksDone);
-    }
-
-    /** A string trimmed to what the wire takes, since writing one that is too long fails outright. */
-    private static String cut(final String text, final int most) {
-        if (text == null) {
-            return "";
-        }
-        return text.length() <= most ? text : text.substring(0, most);
+                computerName, desktopId, eraseSlot, ticksDone, portsSelected, useMirror, cronEnabled, sshdEnabled);
     }
 }

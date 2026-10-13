@@ -32,6 +32,14 @@ class FileTypeTest {
     }
 
     @Test
+    void ofPath_readsTheExtensionOfTheLastSegmentOnly() {
+        assertEquals(FileType.IQL, FileType.ofPath("jobs/run.IQL"));
+        assertEquals(FileType.OTHER, FileType.ofPath("v1.2/readme"));
+        assertEquals(FileType.OTHER, FileType.ofPath("notes."));
+        assertEquals(FileType.OTHER, FileType.ofPath("plain"));
+    }
+
+    @Test
     void fromExtension_neverAnswersOtherForAMissingExtension() {
         assertEquals(java.util.Optional.empty(), FileType.fromExtension(""));
     }
@@ -52,6 +60,19 @@ class FileTypeTest {
         for (FileType t : FileType.values()) {
             assertEquals(virtual.contains(t), t.virtualProjection(), t + " virtual");
             if (virtual.contains(t)) assertFalse(t.userEditable(), t + " must not be editable");
+        }
+    }
+
+    @Test
+    void forRecording_isTheKindASongIsKeptAsAndNothingElse() {
+        assertEquals(FileType.OGG, FileType.forRecording("ogg").orElseThrow());
+        assertEquals(FileType.WAV, FileType.forRecording("WAV").orElseThrow());
+        assertTrue(FileType.forRecording("txt").isEmpty());
+        assertTrue(FileType.forRecording("mp3").isEmpty());
+        for (final FileType type : FileType.values()) {
+            if (type.recording()) {
+                assertFalse(type.userEditable() || type.virtualProjection(), type + " is a real file nobody types");
+            }
         }
     }
 

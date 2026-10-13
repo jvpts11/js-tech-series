@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.text.Text;
+
 /**
  * RAM generations, in chronological order. Each generation carries a {@link #latencyTicks} value
  * representing the access latency modelled by the virtual-thread staging gate: older DRAM types
@@ -35,5 +37,21 @@ public enum RamGeneration {
     /** Ticks a virtual thread parks before the RAM staging gate opens. Zero means no delay. */
     public int latencyTicks() {
         return latencyTicks;
+    }
+
+    /** The memory as a part's sheet names it, the same in every language: "SDRAM", "DDR3". */
+    public Text label() {
+        return switch (this) {
+            case SIMM -> Text.literal("SIMM");
+            case EDO -> Text.literal("EDO");
+            case SDRAM -> Text.literal("SDRAM");
+            case DDR -> Text.literal("DDR");
+            case DDR2 -> Text.literal("DDR2");
+            case DDR3 -> Text.literal("DDR3");
+            case DDR4 -> Text.literal("DDR4");
+            case DDR5 -> Text.literal("DDR5");
+            case DDR6 -> Text.literal("DDR6");
+            case HBM -> Text.literal("HBM");
+        };
     }
 }

@@ -8,199 +8,204 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.gui.layout.AssemblyGeometry;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
+import dev.jstech.computers.gui.layout.MainframeLayout;
 import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.network.FailoverRole;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.client.gui.GuiGraphics;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 /**
- * Screen for the Mainframe: a flat-dark "computer OS" hardware-assembly surface.
+ * The Mainframe's assembly screen: its cabinet with its cards in two I/O cages and its disks at the front, the
+ * operations it has queued, running and done under the case, and on its front panel what it moves a tick, its parallel
+ * queues (each queue's speed in the tooltip), its RAM buffer and its network; its switches are auto start and failover.
  */
-public class MainframeScreen extends AbstractComputerScreen<MainframeMenu> {
-
-    private static final int COL_R = 126;
-    private static final int COL_R_W = 110;
-    private static final int BTN_H = 14;
-
-    // Control row (relative to the GUI top-left): four 54px buttons, 4px gaps, 8px margins.
-    private static final int BTN_Y = 162;
-    private static final int BTN_W = 54;
-    private static final int POWER_X = 8;
-    private static final int AUTO_X = 66;
-    private static final int FAILOVER_X = 124;
-
-    /** Window-relative centre of the POWER button (client tests press it the way the player does). */
-    public static int powerButtonX() {
-        return POWER_X + BTN_W / 2;
-    }
-
-    public static int powerButtonY() {
-        return BTN_Y + BTN_H / 2;
-    }
+public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu> {
 
     public MainframeScreen(final MainframeMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 244;
-        this.imageHeight = 262;
-        this.titleLabelX = -10000;
-        this.inventoryLabelY = -10000;
+    }
+
+    /** Window-relative centre of the power button (client tests press it the way the player does). */
+    public static int powerButtonX() {
+        final Box power = MainframeLayout.geometry().power();
+        return power.x() + power.w() / 2;
+    }
+
+    public static int powerButtonY() {
+        final Box power = MainframeLayout.geometry().power();
+        return power.y() + power.h() / 2;
     }
 
     @Override
-    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
-        final int x = leftPos;
-        final int y = topPos;
-        JsTechTheme.window(g, x, y, imageWidth, imageHeight);
-        JsTechTheme.headerBar(g, x + 6, y + 6, 232);
-        JsTechTheme.vLine(g, x + COL_R - 5, y + 24, 134);
-
-        // Hardware cells, only up to the count the installed board exposes.
-        JsTechTheme.slot(g, x + 8, y + 40);   // motherboard
-        JsTechTheme.slot(g, x + 8, y + 73);   // psu
-        /*
-         * The board-derived counts are already clamped to the chassis bays in the BlockEntity, so the
-         * screen draws exactly what the menu exposes, one source of truth, no duplicated cap literal.
-         */
-        final int cpu = menu.boardCpuSlots();
-        final int ram = menu.boardRamSlots();
-        final int gpu = menu.boardPcieSlots();
-        final int disk = menu.boardDiskSlots();
-        for (int i = 0; i < cpu; i++) {
-            JsTechTheme.slot(g, x + 44 + i * 18, y + 40);
-        }
-        for (int i = 0; i < ram; i++) {
-            JsTechTheme.slot(g, x + 44 + (i % 4) * 18, y + 73 + (i / 4) * 18);
-        }
-        for (int i = 0; i < gpu; i++) {
-            JsTechTheme.slot(g, x + 44 + (i % 3) * 18, y + 124 + (i / 3) * 18);
-        }
-        for (int i = 0; i < disk; i++) {
-            JsTechTheme.slot(g, x + 8 + (i % 2) * 18, y + 124 + (i / 2) * 18);
-        }
-
-        // Right spec column.
-        JsTechTheme.panel(g, x + COL_R, y + 27, COL_R_W, 22);   // CAPACITY
-        JsTechTheme.panel(g, x + COL_R, y + 52, COL_R_W, 18);   // QUEUES
-        JsTechTheme.panel(g, x + COL_R, y + 73, COL_R_W, 18);   // RAM BUFFER
-        JsTechTheme.panel(g, x + COL_R, y + 108, COL_R_W, 42);  // OPERATIONS
-
-        final boolean auto = menu.isAutoStart();
-        JsTechTheme.button(g, x + POWER_X, y + BTN_Y, BTN_W, BTN_H,
-                !auto && hover(mouseX, mouseY, POWER_X, BTN_Y, BTN_W, BTN_H));
-        JsTechTheme.button(g, x + AUTO_X, y + BTN_Y, BTN_W, BTN_H, hover(mouseX, mouseY, AUTO_X, BTN_Y, BTN_W, BTN_H));
-        JsTechTheme.button(g, x + FAILOVER_X, y + BTN_Y, BTN_W, BTN_H, hover(mouseX, mouseY, FAILOVER_X, BTN_Y, BTN_W, BTN_H));
-
-        // Player inventory.
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g, x + 8 + col * 18, y + 182 + row * 18);
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + 8 + col * 18, y + 240);
-        }
+    protected HardwareEra caseEra() {
+        final HardwareEra era = menu.hardwareEra();
+        return era == null ? HardwareEra.STANDARD : era;
     }
 
     @Override
-    protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        JsTechTheme.text(g, font, "MAINFRAME", 12, 11, JsTechTheme.text());
-        final String status;
-        final int statusColor;
+    protected AssemblyGeometry makeGeometry() {
+        return MainframeLayout.geometry();
+    }
+
+    @Override
+    protected String machineTitle() {
+        return GameText.resolve(AssemblyTexts.TITLE_MAINFRAME);
+    }
+
+    @Override
+    protected String stateWord() {
         if (menu.networkState() == MainframeBlockEntity.NET_STATE_CONFLICT) {
-            status = "CONFLICT";
-            statusColor = JsTechTheme.red();
-        } else if (!menu.buildValid()) {
-            status = "OFFLINE";
-            statusColor = JsTechTheme.red();
-        } else if (menu.isRunning() && menu.failoverRole() == FailoverRole.PASSIVE) {
-            status = "STANDBY"; // a Passive Failover member: powered and synced, not orchestrating
-            statusColor = JsTechTheme.amber();
-        } else if (menu.isRunning()) {
-            status = "ONLINE";
-            statusColor = JsTechTheme.green();
-        } else {
-            status = "READY";
-            statusColor = JsTechTheme.amber();
+            return GameText.resolve(AssemblyTexts.CONFLICT);
         }
-        final int pillX = 232 - font.width(status);
-        JsTechTheme.text(g, font, status, pillX, 11, statusColor);
-        g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
+        if (!menu.buildValid()) {
+            return GameText.resolve(AssemblyTexts.OFFLINE);
+        }
+        if (menu.isRunning()) {
+            // A Passive Failover member is powered and synced, not orchestrating.
+            return GameText.resolve(menu.failoverRole() == FailoverRole.PASSIVE ? AssemblyTexts.STANDBY
+                    : AssemblyTexts.ONLINE);
+        }
+        return GameText.resolve(AssemblyTexts.READY);
+    }
 
-        // Hardware group labels (no counters, the drawn cells show installed vs available).
-        JsTechTheme.text(g, font, "BOARD", 8, 27, menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, "CPU", 44, 27, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "PSU", 8, 60, JsTechTheme.dim());
-        g.fill(30, 61, 34, 65, psuColor());
-        JsTechTheme.text(g, font, "RAM", 44, 60, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "DISK", 8, 111, JsTechTheme.dim());
-        JsTechTheme.text(g, font, "GPU", 44, 111, JsTechTheme.dim());
+    @Override
+    protected int stateColour() {
+        if (menu.networkState() == MainframeBlockEntity.NET_STATE_CONFLICT || !menu.buildValid()) {
+            return JsTechTheme.red();
+        }
+        if (menu.isRunning()) {
+            return menu.failoverRole() == FailoverRole.PASSIVE ? JsTechTheme.amber() : JsTechTheme.green();
+        }
+        return JsTechTheme.amber();
+    }
 
-        // Right column: spec tiles.
-        JsTechTheme.tileText(g, font, COL_R, 27, "CAPACITY", JsTechTheme.fmt(menu.capacity()), "it/t", JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 52, "QUEUES", String.valueOf(menu.parallelQueues()), "", JsTechTheme.text());
-        JsTechTheme.tileText(g, font, COL_R, 73, "RAM BUFFER", JsTechTheme.fmt(menu.ramBuffer()), "it", JsTechTheme.text());
-
-        JsTechTheme.text(g, font, "NETWORK", COL_R, 96, JsTechTheme.dim());
+    @Override
+    protected List<Readout> readouts() {
         final int net = menu.networkState();
-        final String netStr = net == MainframeBlockEntity.NET_STATE_CONFLICT ? "CONFLICT"
-                : net == MainframeBlockEntity.NET_STATE_LINKED ? "LINKED" : "--";
-        final int netColor = net == MainframeBlockEntity.NET_STATE_CONFLICT ? JsTechTheme.red()
-                : net == MainframeBlockEntity.NET_STATE_LINKED ? JsTechTheme.green() : JsTechTheme.dim();
-        JsTechTheme.textRight(g, font, netStr, COL_R + COL_R_W, 96, netColor);
-
-        // Operations dispatch: one row per metric (label left, value right).
-        final int running = menu.runningOps();
-        opRow(g, "QUEUED", String.valueOf(menu.pendingOps()), 113, JsTechTheme.text());
-        opRow(g, "RUNNING", String.valueOf(running), 124, running > 0 ? JsTechTheme.green() : JsTechTheme.text());
-        opRow(g, "DONE", JsTechTheme.fmt(menu.completedOps()), 135, JsTechTheme.text());
-
-        // Control row captions.
-        final boolean auto = menu.isAutoStart();
-        final String powerCap = auto ? "AUTO" : (menu.isManualOn() ? "TURN OFF" : "TURN ON");
-        JsTechTheme.textCenter(g, font, powerCap, POWER_X + BTN_W / 2, BTN_Y + 4, auto ? JsTechTheme.dim() : JsTechTheme.accent());
-        JsTechTheme.textCenter(g, font, "AUTO " + (auto ? "ON" : "OFF"), AUTO_X + BTN_W / 2, BTN_Y + 4,
-                auto ? JsTechTheme.accent() : JsTechTheme.dim());
-        final boolean failover = menu.failoverEnabled();
-        JsTechTheme.textCenter(g, font, "FAIL " + (failover ? "ON" : "OFF"), FAILOVER_X + BTN_W / 2, BTN_Y + 4,
-                failover ? JsTechTheme.accent() : JsTechTheme.dim());
-    }
-
-    private void opRow(final GuiGraphics g, final String key, final String value, final int y, final int valueColor) {
-        JsTechTheme.text(g, font, key, COL_R + 4, y, JsTechTheme.dim());
-        JsTechTheme.textRight(g, font, value, COL_R + COL_R_W - 4, y, valueColor);
-    }
-
-    private int psuColor() {
-        if (!menu.hasPsu()) {
-            return JsTechTheme.dim();
-        }
-        return menu.buildValid() ? JsTechTheme.green() : JsTechTheme.amber();
+        final String network = net == MainframeBlockEntity.NET_STATE_CONFLICT ? GameText.resolve(AssemblyTexts.CONFLICT)
+                : net == MainframeBlockEntity.NET_STATE_LINKED ? GameText.resolve(AssemblyTexts.LINKED) : "--";
+        final int networkColour = net == MainframeBlockEntity.NET_STATE_CONFLICT ? JsTechTheme.red()
+                : net == MainframeBlockEntity.NET_STATE_LINKED ? JsTechTheme.accent() : JsTechTheme.dim();
+        return List.of(
+                new Readout(GameText.resolve(AssemblyTexts.CAPACITY),
+                        JsTechTheme.fmt(menu.capacity()) + " " + GameText.resolve(AssemblyTexts.ITEMS_PER_TICK),
+                        menu.isRunning() ? JsTechTheme.accent() : JsTechTheme.text()),
+                // In amber while a weak card holds its queue below the processor's speed; the tooltip says which.
+                new Readout(GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.parallelQueues()),
+                        anyQueueHeld() ? JsTechTheme.amber() : JsTechTheme.text(), queueLines()),
+                new Readout(GameText.resolve(AssemblyTexts.RAM_BUFFER),
+                        JsTechTheme.fmt(menu.ramBuffer()) + " " + GameText.resolve(AssemblyTexts.ITEMS),
+                        JsTechTheme.text()),
+                new Readout(GameText.resolve(AssemblyTexts.NETWORK), network, networkColour));
     }
 
     @Override
-    public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        if (button == 0) {
-            if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, POWER_X, BTN_Y, BTN_W, BTN_H)) {
-                sendButton(MainframeMenu.BUTTON_POWER);
-                return true;
-            }
-            if (hover((int) mouseX, (int) mouseY, AUTO_X, BTN_Y, BTN_W, BTN_H)) {
-                sendButton(MainframeMenu.BUTTON_AUTOSTART);
-                return true;
-            }
-            if (hover((int) mouseX, (int) mouseY, FAILOVER_X, BTN_Y, BTN_W, BTN_H)) {
-                sendButton(MainframeMenu.BUTTON_FAILOVER);
-                return true;
-            }
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
+    protected Operations operations() {
+        return new Operations(String.valueOf(menu.pendingOps()), String.valueOf(menu.runningOps()),
+                JsTechTheme.fmt(menu.completedOps()));
     }
 
     @Override
-    protected HardwareEra screenEra() {
-        return menu.hardwareEra();
+    protected List<ServiceSwitch> serviceSwitches() {
+        return List.of(
+                new ServiceSwitch(GameText.resolve(AssemblyTexts.AUTO_START), menu.isAutoStart(),
+                        MainframeMenu.BUTTON_AUTOSTART),
+                new ServiceSwitch(GameText.resolve(AssemblyTexts.FAILOVER), menu.failoverEnabled(),
+                        MainframeMenu.BUTTON_FAILOVER));
+    }
+
+    @Override
+    protected boolean[] lampsLit() {
+        // The disk lamp shows the Mainframe working its disks, which it does while operations run.
+        return new boolean[] {menu.isRunning(), menu.runningOps() > 0,
+                menu.networkState() == MainframeBlockEntity.NET_STATE_LINKED};
+    }
+
+    @Override
+    protected boolean boardIn() {
+        return menu.hasBoard();
+    }
+
+    @Override
+    protected int powerButton() {
+        return MainframeMenu.BUTTON_POWER;
+    }
+
+    @Override
+    protected boolean powerActive() {
+        return !menu.isAutoStart();
+    }
+
+    @Override
+    protected int powerLamp() {
+        return menu.isRunning() ? JsTechTheme.green() : JsTechTheme.red();
+    }
+
+    @Override
+    protected Component refusal(final Slot slot, final ItemStack carried) {
+        return menu.refusal(slot, carried);
+    }
+
+    @Override
+    protected List<Component> powerTooltip() {
+        if (!menu.buildValid()) {
+            return List.of(GameText.component(AssemblyTexts.NOT_A_COMPUTER),
+                    GameText.component(AssemblyTexts.NEEDS_PARTS).withStyle(ChatFormatting.GOLD),
+                    GameText.component(AssemblyTexts.THEN_SWITCH_ON).withStyle(ChatFormatting.GRAY));
+        }
+        if (menu.isAutoStart()) {
+            return List.of(GameText.component(AssemblyTexts.AUTO_KEEPS_ON).withStyle(ChatFormatting.GRAY));
+        }
+        return List.of();
+    }
+
+    /* Each queue's speed: the processor's, then each card's in its cage, a card that holds its queue in amber. */
+    private List<Component> queueLines() {
+        if (menu.parallelQueues() <= 0) {
+            return List.of();
+        }
+        final List<Component> lines = new ArrayList<>();
+        final int cpu = menu.queueSpeed(0);
+        lines.add(GameText.component(AssemblyTexts.QUEUE_CPU.with(JsTechTheme.fmt(cpu))));
+        int queue = 1;
+        for (final Seat seat : geometry().seats(SeatKind.CARD)) {
+            final Slot slot = seatSlot(seat);
+            if (slot == null || !slot.hasItem()) {
+                continue;
+            }
+            final int speed = menu.queueSpeed(queue);
+            lines.add(GameText.component(AssemblyTexts.QUEUE_GPU.with(queue, GameText.of(slot.getItem().getHoverName()),
+                            JsTechTheme.fmt(speed)))
+                    .withStyle(style -> style.withColor(speed < cpu ? JsTechTheme.amber() : JsTechTheme.text())));
+            queue++;
+        }
+        if (anyQueueHeld()) {
+            lines.add(GameText.component(AssemblyTexts.QUEUE_HELD).withStyle(ChatFormatting.GRAY));
+        }
+        return lines;
+    }
+
+    /* Whether a card holds any queue below the processor's speed. */
+    private boolean anyQueueHeld() {
+        final int cpu = menu.queueSpeed(0);
+        for (int i = 1; i < menu.parallelQueues(); i++) {
+            final int speed = menu.queueSpeed(i);
+            if (speed > 0 && speed < cpu) {
+                return true;
+            }
+        }
+        return false;
     }
 }

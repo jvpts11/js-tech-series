@@ -1,0 +1,12 @@
+{
+  "dash": "#66000000",
+  "emptyWorkspace": "#22FFFFFF",
+  "field": "#33FFFFFF",
+  "hint": "#FFB8BBC8",
+  "hover": "#33FFFFFF",
+  "ink": "#FFFFFFFF",
+  "shade": "#D00F0F14",
+  "windowHint": "#FFF6F5F4",
+  "workspace": "#33FFFFFF",
+  "workspaceEdge": "#FFFFFFFF"
+}

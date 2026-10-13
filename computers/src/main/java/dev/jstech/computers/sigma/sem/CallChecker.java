@@ -8,6 +8,7 @@
 package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.SigmaError;
+import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.INode;
 import java.util.ArrayList;
@@ -18,7 +19,8 @@ import java.util.List;
  *
  * <p>Three ways to be called and they end in the same place: a bare name that turns out to be a method
  * of the type around it, a method reached through a dot, and something holding a delegate, which is
- * called through the shape that delegate was declared with.
+ * called through the shape that delegate was declared with. The calls written with no type in front of them,
+ * printf and the old names, are checked apart, and only once the program has said the name is not its own.
  *
  * <p>Choosing between versions of a method comes last and reads only the types, which is why a lambda
  * and a method handed over without brackets are left out of the choosing: neither has a type until it
@@ -31,14 +33,15 @@ final class CallChecker {
     private final MemberChecker members;
     /** Choosing between the versions of a method that share a name, which is a question about types alone. */
     private final Overloads overloads;
-    private final PrintfChecker printf;
+    /** The calls written with no type in front of them: printf, and the old names for what the library does. */
+    private final BareFunctionChecker bare;
 
     CallChecker(final BodyScope scope, final ExpressionChecker expressions, final MemberChecker members) {
         this.scope = scope;
         this.expressions = expressions;
         this.members = members;
         this.overloads = new Overloads(scope.rules());
-        this.printf = new PrintfChecker(scope, expressions);
+        this.bare = new BareFunctionChecker(scope, expressions, this);
     }
 
     ITypeSymbol callType(final IExpr.Call call) {
@@ -50,10 +53,10 @@ final class CallChecker {
                         name.identifier(), BodyScope.Access.IMPLICIT);
             }
         }
-        // Only once the program has been asked: a printf of its own is its own, and is what was called above.
-        if (call.callee() instanceof IExpr.Name name && PrintfChecker.NAME.equals(name.identifier())
-                && this.scope.scope().lookup(name.identifier()) == null) {
-            return this.printf.check(call);
+        // Only once the program has been asked: a function of its own under one of these names is its own.
+        final BareFunctions.Function bareFunction = this.bare.named(call);
+        if (bareFunction != null) {
+            return this.bare.check(call, bareFunction);
         }
         if (call.callee() instanceof IExpr.Member member) {
             return this.callThroughMember(call, member);
@@ -65,11 +68,23 @@ final class CallChecker {
     void callConstructor(final NamedType named, final ITypeSymbol type, final List<IExpr> arguments,
                          final INode at) {
         final List<IMemberSymbol.MethodSymbol> candidates = new ArrayList<>();
+        boolean hidden = false;
         for (final IMemberSymbol member : named.members()) {
             if (member instanceof IMemberSymbol.ConstructorSymbol constructor) {
-                candidates.add(new IMemberSymbol.MethodSymbol(named, named.name(), type,
-                        constructor.parameters(), constructor.modifiers()));
+                if (this.members.visible(constructor)) {
+                    candidates.add(new IMemberSymbol.MethodSymbol(named, named.name(), type,
+                            constructor.parameters(), constructor.modifiers()));
+                } else {
+                    hidden = true;
+                }
             }
+        }
+        if (candidates.isEmpty() && hidden) {
+            // Every constructor is private or protected to the type, so it cannot be made from here.
+            this.checkArguments(arguments);
+            this.scope.report(at.line(), at.column(), SigmaError.NOT_ACCESSIBLE, named.name(),
+                    IDecl.Modifier.PRIVATE.text(), named.name());
+            return;
         }
         if (candidates.isEmpty()) {
             this.checkArguments(arguments);
@@ -159,8 +174,11 @@ final class CallChecker {
     }
 
     private ITypeSymbol callMembers(final IExpr.Call call, final IExpr callee, final ITypeSymbol receiver,
-                                    final List<IMemberSymbol> found, final String name,
+                                    final List<IMemberSymbol> all, final String name,
                                     final BodyScope.Access access) {
+        // Only the overloads that can be reached from here are chosen among, as C# chooses.
+        final List<IMemberSymbol> reachable = all.stream().filter(this.members::visible).toList();
+        final List<IMemberSymbol> found = reachable.isEmpty() ? all : reachable;
         if (!this.members.checkAccess(callee, found.getFirst(), access)) {
             this.checkArguments(call.arguments());
             return ITypeSymbol.Special.ERROR;
@@ -175,6 +193,7 @@ final class CallChecker {
         final IMemberSymbol.MethodSymbol chosen = this.callWith(candidates, call.arguments(), name, call);
         if (chosen != null) {
             this.scope.model().setBinding(callee, new IBinding.Member(chosen, chosen.returnType()));
+            this.scope.declarations().reportIfNewer(chosen, call.line(), call.column());
         }
         return chosen == null ? ITypeSymbol.Special.ERROR : chosen.returnType();
     }
@@ -184,8 +203,8 @@ final class CallChecker {
      * knows what it is being handed to, so it is left out of the choosing and checked afterwards,
      * against the version that won.
      */
-    private IMemberSymbol.MethodSymbol callWith(final List<IMemberSymbol.MethodSymbol> candidates,
-                                                final List<IExpr> arguments, final String name, final INode at) {
+    IMemberSymbol.MethodSymbol callWith(final List<IMemberSymbol.MethodSymbol> candidates,
+                                        final List<IExpr> arguments, final String name, final INode at) {
         final List<ITypeSymbol> given = new ArrayList<>();
         for (final IExpr argument : arguments) {
             final boolean waits = argument instanceof IExpr.Lambda
@@ -201,9 +220,7 @@ final class CallChecker {
         }
         final IMemberSymbol.MethodSymbol chosen = fitting.getFirst();
         this.checkAgainst(chosen, arguments, given);
-        if (at instanceof IExpr expression) {
-            this.scope.model().setCall(expression, chosen);
-        }
+        this.scope.model().setCall(at, chosen);
         return chosen;
     }
 
@@ -223,9 +240,7 @@ final class CallChecker {
         if (sameCount.size() == 1) {
             final IMemberSymbol.MethodSymbol only = sameCount.getFirst();
             this.checkAgainst(only, arguments, given);
-            if (at instanceof IExpr expression) {
-                this.scope.model().setCall(expression, only);
-            }
+            this.scope.model().setCall(at, only);
             return only;
         }
         this.scope.report(at.line(), at.column(), SigmaError.NO_MATCHING_OVERLOAD, name);

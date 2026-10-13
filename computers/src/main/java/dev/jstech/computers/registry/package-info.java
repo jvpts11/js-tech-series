@@ -6,6 +6,7 @@
  * This file is part of J's Computers.
  */
 /**
- * Registration that is not tied to one kind of content: today the mod's creative tab.
+ * What the mod registers besides its catalogue of blocks and items: the content they are declared into and the tab
+ * that shows them, the data its items carry, and its menus.
  */
 package dev.jstech.computers.registry;

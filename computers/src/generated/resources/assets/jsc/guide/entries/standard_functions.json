@@ -1,0 +1,426 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.standard_functions.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.standard_functions.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.standard_functions.table1",
+      "heads": [
+        "jsc.guide.standard_functions.table1_head1",
+        "jsc.guide.standard_functions.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "printf(format, ...)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "sprintf(format, ...)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "puts(text)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "putchar(char)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "gets()"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "getchar()"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "scanf(format, out ...)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.standard_functions.table2",
+      "heads": [
+        "jsc.guide.standard_functions.table2_head1",
+        "jsc.guide.standard_functions.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "exit(status)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "abs, min, max"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "floor, sqrt, pow"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "atoi(text)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "atof(text)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "itoa(value, base)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "srand(seed)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "rand()"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "strlen(text)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "strstr(text, part)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "strcmp(a, b)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "strcpy(out dest, src)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "strcat(ref dest, src)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "toupper, tolower"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "isdigit, isalpha, isspace"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table2_15_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.standard_functions.table3",
+      "heads": [
+        "jsc.guide.standard_functions.table3_head1",
+        "jsc.guide.standard_functions.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "remove(path)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "rename(from, to)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "fopen(path, mode)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "fclose(file)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "fgets(out line, file)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "fputs(text, file)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "fprintf(file, format, ...)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "fscanf(file, format, ...)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "fgetc(file)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "fputc(char, file)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "feof(file)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "rewind(file)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "fseek(file, place)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "ftell(file)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(name)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "redstone(name)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "craftInterface(name)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "craftRouter(name)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table3_18_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.standard_functions.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.standard_functions.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.standard_functions.definition1",
+      "term": "jsc.guide.standard_functions.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.standard_functions.definition2",
+      "term": "jsc.guide.standard_functions.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.standard_functions.definition3",
+      "term": "jsc.guide.standard_functions.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.standard_functions.definition4",
+      "term": "jsc.guide.standard_functions.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.standard_functions.fix1",
+          "problem": "jsc.guide.standard_functions.problem1"
+        },
+        {
+          "fix": "jsc.guide.standard_functions.fix2",
+          "problem": "jsc.guide.standard_functions.problem2"
+        },
+        {
+          "fix": "jsc.guide.standard_functions.fix3",
+          "problem": "jsc.guide.standard_functions.problem3"
+        },
+        {
+          "fix": "jsc.guide.standard_functions.fix4",
+          "problem": "jsc.guide.standard_functions.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_printf_old_names",
+        "jsc:sigma_methods_out_ref"
+      ]
+    }
+  ],
+  "id": "jsc:standard_functions",
+  "order": 352,
+  "section": "jsc:library_basics",
+  "title": "jsc.guide.standard_functions.title"
+}

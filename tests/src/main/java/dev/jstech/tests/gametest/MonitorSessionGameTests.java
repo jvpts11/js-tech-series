@@ -8,10 +8,14 @@
 package dev.jstech.tests.gametest;
 
 import com.mojang.authlib.GameProfile;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -66,6 +70,23 @@ public final class MonitorSessionGameTests {
                 HardwareEra.STANDARD, phase);
     }
 
+    /**
+     * The tab a terminal reopens on is settled on the server before the window opens, so a tab that is not there
+     * any more is left for Network on both sides at once. The client used to keep it while the server moved on.
+     */
+    @GameTest(template = ARENA)
+    public static void openingTab_leavesATabThatIsNotThereAnyMore(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(4, 2, 4));
+        helper.assertTrue(ComputerTerminalMenu.openingTab(computer, helper.getLevel(), ComputerTerminalMenu.TAB_CRAFT)
+                        == ComputerTerminalMenu.TAB_NETWORK,
+                "with no Crafting Computer on its network the Craft tab is not there, so it opens on Network");
+        helper.assertTrue(ComputerTerminalMenu.openingTab(computer, helper.getLevel(), ComputerTerminalMenu.TAB_LOCAL)
+                        == ComputerTerminalMenu.TAB_LOCAL,
+                "while a tab that is there is kept");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void isShowing_theSessionTheyAreHolding_isYes(final GameTestHelper helper) {
         final ServerPlayer player = holder(helper);
@@ -100,6 +121,39 @@ public final class MonitorSessionGameTests {
         helper.assertFalse(MonitorSessionMenu.isShowing(player, helper.absolutePos(COMPUTER),
                         MonitorSessionMenu.Phase.INSTALLER),
                 "an installer on another machine is not this machine's");
+        helper.succeed();
+    }
+
+    /**
+     * A monitor is one screen with one keyboard: a second player who uses it while the first is at it is told who
+     * has it, rather than being handed a session over the one the first is typing into.
+     */
+    @GameTest(template = ARENA)
+    public static void userOf_somebodyElseAtTheMonitor_isThem(final GameTestHelper helper) {
+        final ServerPlayer first = holder(helper);
+        final ServerPlayer second = FakePlayerFactory.get(helper.getLevel(),
+                new GameProfile(UUID.randomUUID(), "second-player"));
+        final BlockPos monitor = helper.absolutePos(MONITOR);
+        first.containerMenu = new MonitorSessionMenu(1, first.getInventory(), monitor,
+                helper.absolutePos(COMPUTER), HardwareEra.STANDARD, MonitorSessionMenu.Phase.POST);
+        second.containerMenu = second.inventoryMenu;
+        helper.assertTrue(IMonitorMenu.userOf(List.of(first, second), monitor, second) == first,
+                "the second player is told the first has the monitor");
+        helper.assertTrue(IMonitorMenu.userOf(List.of(first, second), monitor, first) == null,
+                "while the first, using it again, is in nobody's way but their own");
+        helper.succeed();
+    }
+
+    /** A player at another monitor, even one on the same machine, leaves this one free. */
+    @GameTest(template = ARENA)
+    public static void userOf_somebodyAtAnotherMonitor_isNobody(final GameTestHelper helper) {
+        final ServerPlayer first = holder(helper);
+        final ServerPlayer second = FakePlayerFactory.get(helper.getLevel(),
+                new GameProfile(UUID.randomUUID(), "second-player"));
+        first.containerMenu = new MonitorSessionMenu(1, first.getInventory(), helper.absolutePos(ELSEWHERE),
+                helper.absolutePos(COMPUTER), HardwareEra.STANDARD, MonitorSessionMenu.Phase.POST);
+        helper.assertTrue(IMonitorMenu.userOf(List.of(first, second), helper.absolutePos(MONITOR), second) == null,
+                "another monitor's session does not hold this one");
         helper.succeed();
     }
 

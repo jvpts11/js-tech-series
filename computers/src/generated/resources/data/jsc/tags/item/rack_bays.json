@@ -1,0 +1,21 @@
+{
+  "values": [
+    "jsc:vintage_kvm_switch",
+    "jsc:vintage_rack_ups",
+    "jsc:vintage_cooling_unit",
+    "jsc:legacy_kvm_switch",
+    "jsc:legacy_rack_ups",
+    "jsc:legacy_cooling_unit",
+    "jsc:transition_kvm_switch",
+    "jsc:transition_rack_ups",
+    "jsc:transition_cooling_unit",
+    "jsc:kvm_switch",
+    "jsc:rack_ups",
+    "jsc:cooling_unit",
+    "jsc:fibre_optic_interface",
+    "jsc:advanced_kvm_switch",
+    "jsc:advanced_rack_ups",
+    "jsc:advanced_cooling_unit",
+    "jsc:advanced_fibre_optic_interface"
+  ]
+}

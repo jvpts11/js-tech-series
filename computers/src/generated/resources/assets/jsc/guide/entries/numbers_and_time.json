@@ -1,0 +1,329 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.numbers_and_time.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.numbers_and_time.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.numbers_and_time.table1",
+      "heads": [
+        "jsc.guide.numbers_and_time.table1_head1",
+        "jsc.guide.numbers_and_time.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Math.Abs(number)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Math.Min(a, b)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Math.Max(a, b)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Math.Floor(number)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Math.Ceil(number)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Math.Round(number)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Math.Sqrt(number)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Math.Pow(number, power)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Math.Clamp(value, low, high)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table1_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.numbers_and_time.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.numbers_and_time.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.numbers_and_time.table2",
+      "heads": [
+        "jsc.guide.numbers_and_time.table2_head1",
+        "jsc.guide.numbers_and_time.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Convert.ToInt(text)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.ToInt(text, fallback)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.ToLong(text)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.ToFloat(text)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.ToDouble(text)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.ToBool(text)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.ToString(value)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.ToString(number, base)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.TryInt(text, out value)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.TryLong, Convert.TryDouble, Convert.TryBool"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table2_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.numbers_and_time.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.numbers_and_time.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.numbers_and_time.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.numbers_and_time.table3",
+      "heads": [
+        "jsc.guide.numbers_and_time.table3_head1",
+        "jsc.guide.numbers_and_time.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Random.Next(bound)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Random.NextDouble()"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Random.Seed(number)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.numbers_and_time.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.numbers_and_time.heading4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.numbers_and_time.table4",
+      "heads": [
+        "jsc.guide.numbers_and_time.table4_head1",
+        "jsc.guide.numbers_and_time.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Time.Tick"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Time.DayTime"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Time.Day"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Time.Ticks(seconds)"
+          },
+          {
+            "words": "jsc.guide.numbers_and_time.table4_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.numbers_and_time.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.numbers_and_time.definition1",
+      "term": "jsc.guide.numbers_and_time.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.numbers_and_time.fix1",
+          "problem": "jsc.guide.numbers_and_time.problem1"
+        },
+        {
+          "fix": "jsc.guide.numbers_and_time.fix2",
+          "problem": "jsc.guide.numbers_and_time.problem2"
+        },
+        {
+          "fix": "jsc.guide.numbers_and_time.fix3",
+          "problem": "jsc.guide.numbers_and_time.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_types_variables",
+        "jsc:sigma_runtime_stops"
+      ]
+    }
+  ],
+  "id": "jsc:numbers_and_time",
+  "order": 355,
+  "section": "jsc:library_basics",
+  "title": "jsc.guide.numbers_and_time.title"
+}

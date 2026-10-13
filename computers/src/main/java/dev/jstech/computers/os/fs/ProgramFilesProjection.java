@@ -45,6 +45,19 @@ public final class ProgramFilesProjection {
     public static final String FONTS = SystemLayout.SYSTEM_DIR + "/Fonts";
     public static final String HELP = SystemLayout.SYSTEM_DIR + "/Help";
 
+    /**
+     * The program ids a desktop environment bundles rather than the base system itself: on a platform with
+     * no desktop installed, none of these are there to find, no matter which platforms they declare.
+     */
+    private static final Set<String> DESKTOP_BUNDLE_PROGRAMS = Set.of("network", "this_pc", "settings", "files",
+            "editor", "command_prompt", "system_monitor", "calculator", "network_manager", "task_manager",
+            "workstation_info", "help_viewer", "disks");
+
+    /** Where each Unix-like system keeps what a program brings along, which is also where its readme goes. */
+    private static final String SYSV_SHARE = "usr/lib/";
+    private static final String FREEBSD_SHARE = "usr/local/share/";
+    private static final String LINUX_SHARE = "usr/share/";
+
     private ProgramFilesProjection() {
     }
 
@@ -77,10 +90,10 @@ public final class ProgramFilesProjection {
     private static void systemV(final IOsHost host, final List<InstallerLayout.Entry> out) {
         out.add(file("unix", FileType.BIN));
         out.add(file("etc/inittab", FileType.CFG));
-        for (final ProgramSpec spec : installed(host)) {
+        for (final ProgramSpec spec : shown(host, Platform.UNIX)) {
             out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
             out.add(dir("usr/lib/" + spec.commandName()));
-            out.add(file("usr/lib/" + spec.commandName() + "/readme", FileType.TXT));
+            out.add(file(readmeUnder(SYSV_SHARE, spec), FileType.TXT));
         }
     }
 
@@ -103,10 +116,14 @@ public final class ProgramFilesProjection {
         out.add(file("etc/rc.conf", FileType.CFG));
         out.add(dir("usr/local"));
         out.add(dir("usr/local/share"));
+        // The base system's own binaries, vi and ee among them, apart from anything a package brings in.
+        for (final ProgramSpec spec : preinstalledOn(Platform.FREEBSD)) {
+            out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
+        }
         for (final ProgramSpec spec : installed(host)) {
             out.add(file("usr/local/bin/" + spec.commandName(), FileType.BIN));
             out.add(dir("usr/local/share/" + spec.commandName()));
-            out.add(file("usr/local/share/" + spec.commandName() + "/readme", FileType.TXT));
+            out.add(file(readmeUnder(FREEBSD_SHARE, spec), FileType.TXT));
         }
     }
 
@@ -146,8 +163,43 @@ public final class ProgramFilesProjection {
         for (final ProgramSpec spec : installed(host)) {
             out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
             out.add(dir("usr/share/" + spec.commandName()));
-            out.add(file("usr/share/" + spec.commandName() + "/readme", FileType.TXT));
+            out.add(file(readmeUnder(LINUX_SHARE, spec), FileType.TXT));
         }
+    }
+
+    /**
+     * What the base system itself bundles for that platform, {@code vi} and {@code ee} among them: never a
+     * desktop's own apps, which reach that platform only once a desktop environment is installed on it.
+     */
+    private static List<ProgramSpec> preinstalledOn(final Platform platform) {
+        final List<ProgramSpec> out = new ArrayList<>();
+        for (final ProgramSpec spec : OsRegistry.programs()) {
+            if (spec.preinstalled() && spec.platforms().contains(platform)
+                    && !DESKTOP_BUNDLE_PROGRAMS.contains(spec.id().getPath())) {
+                out.add(spec);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Every program a Unix listing that keeps only one folder for its binaries shows in it: what the system
+     * bundles for that platform, and then whatever was installed on top of it.
+     */
+    private static List<ProgramSpec> shown(final IOsHost host, final Platform platform) {
+        final List<ProgramSpec> out = new ArrayList<>();
+        final Set<ResourceLocation> seen = new LinkedHashSet<>();
+        for (final ProgramSpec spec : preinstalledOn(platform)) {
+            if (seen.add(spec.id())) {
+                out.add(spec);
+            }
+        }
+        for (final ProgramSpec spec : installed(host)) {
+            if (seen.add(spec.id())) {
+                out.add(spec);
+            }
+        }
+        return out;
     }
 
     /** The programs installed on the machine, in the order they were installed, that the registry knows. */
@@ -246,9 +298,14 @@ public final class ProgramFilesProjection {
                     + ProgramVersions.of(os.id()) + "\"\n");
         }
         if (path.equals("etc/rc.conf")) {
-            // What the startup scripts read, which is this machine: its name, and its network when it has one.
+            // What the startup scripts read, which is this machine: its name, its network, and its services.
+            final ComputerConsoleState console = host.console();
+            final boolean cron = console == null || console.settings().cronEnabled();
+            final boolean sshd = console != null && console.settings().remoteAllowed();
             return Optional.of("hostname=\"" + Installers.hostName(host) + "\"\n"
                     + (host.networkAttached() ? "ifconfig_em0=\"DHCP\"\n" : "")
+                    + "cron_enable=\"" + (cron ? "YES" : "NO") + "\"\n"
+                    + "sshd_enable=\"" + (sshd ? "YES" : "NO") + "\"\n"
                     + "dumpdev=\"AUTO\"\n");
         }
         if (path.equals("etc/inittab")) {
@@ -258,9 +315,9 @@ public final class ProgramFilesProjection {
         for (final ProgramSpec spec : installed(host)) {
             final String frames = "/" + spec.displayName() + "/readme.txt";
             if (path.endsWith(frames) && (path.startsWith(PROGRAM_FILES) || path.startsWith(PROGRAM_FILES_X86))
-                    || path.equals("usr/share/" + spec.commandName() + "/readme")
-                    || path.equals("usr/local/share/" + spec.commandName() + "/readme")
-                    || path.equals("usr/lib/" + spec.commandName() + "/readme")
+                    || path.equals(readmeUnder(LINUX_SHARE, spec))
+                    || path.equals(readmeUnder(FREEBSD_SHARE, spec))
+                    || path.equals(readmeUnder(SYSV_SHARE, spec))
                     || path.equals(McDosTree.readmeOf(McDosTree.nameOf(spec.commandName())))) {
                 return Optional.of(readme(spec, os.platform() == Platform.FRAMES));
             }
@@ -294,8 +351,14 @@ public final class ProgramFilesProjection {
         return null;
     }
 
+    /** The desktop shell a Frames edition starts: the first edition's own, and the one every edition after it has. */
     private static String shellOf(final OsDef os) {
-        return os.id().getPath().equals("frames_95") ? "explorer.exe" : "frames.exe";
+        return os.familyRank() == 1 ? "explorer.exe" : "frames.exe";
+    }
+
+    /** The path of a program's readme under a Unix-like system's share folder; the layout and the matcher share it. */
+    private static String readmeUnder(final String share, final ProgramSpec spec) {
+        return share + spec.commandName() + "/readme";
     }
 
     /**

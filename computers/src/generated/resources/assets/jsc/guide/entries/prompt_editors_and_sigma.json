@@ -1,0 +1,182 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_editors_and_sigma.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.prompt_editors_and_sigma.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_editors_and_sigma.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.prompt_editors_and_sigma.table1",
+      "heads": [
+        "jsc.guide.prompt_editors_and_sigma.table1_head1",
+        "jsc.guide.prompt_editors_and_sigma.table1_head2",
+        "jsc.guide.prompt_editors_and_sigma.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "vim"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "emacs"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_editors_and_sigma.text3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/vim"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/emacs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.prompt_editors_and_sigma.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_editors_and_sigma.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.prompt_editors_and_sigma.table2",
+      "heads": [
+        "jsc.guide.prompt_editors_and_sigma.table2_head1",
+        "jsc.guide.prompt_editors_and_sigma.table2_head2",
+        "jsc.guide.prompt_editors_and_sigma.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "scc"
+          },
+          {
+            "literal": "scc"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "sgsc"
+          },
+          {
+            "literal": "sgsc"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "sigma"
+          },
+          {
+            "literal": "sigma"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "sgpack"
+          },
+          {
+            "literal": "sigma"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table2_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_editors_and_sigma.text5"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.prompt_editors_and_sigma.step1",
+        "jsc.guide.prompt_editors_and_sigma.step2",
+        "jsc.guide.prompt_editors_and_sigma.step3",
+        "jsc.guide.prompt_editors_and_sigma.step4"
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/scc"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/sgsc"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/sigma"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/sgpack"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.prompt_editors_and_sigma.fix1",
+          "problem": "jsc.guide.prompt_editors_and_sigma.problem1"
+        },
+        {
+          "fix": "jsc.guide.prompt_editors_and_sigma.fix2",
+          "problem": "jsc.guide.prompt_editors_and_sigma.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:software_verbs",
+        "jsc:sigma_installing",
+        "jsc:sigma_compile"
+      ]
+    }
+  ],
+  "id": "jsc:prompt_editors_and_sigma",
+  "order": 190,
+  "section": "jsc:prompt_programs_and_network",
+  "title": "jsc.guide.prompt_editors_and_sigma.title"
+}

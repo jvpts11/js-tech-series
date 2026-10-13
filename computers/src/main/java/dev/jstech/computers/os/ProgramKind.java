@@ -38,7 +38,13 @@ public enum ProgramKind implements IStableName {
      * draws. The matching {@link OperatingSpaceDef} names it, and the screen itself is registered on the
      * client, so an add-on writes a whole way of working the network rather than a theme over ours.
      */
-    OPERATING_SPACE("operating_space");
+    OPERATING_SPACE("operating_space"),
+
+    /**
+     * A Network Operations Engine: the software a Mainframe runs to plan its network's work. It runs in the
+     * background like a service, on the Mainframe, and the matching {@code EngineDef} says what engine it is.
+     */
+    NETWORK_ENGINE("network_engine");
 
     private final String serializedName;
 
@@ -49,5 +55,10 @@ public enum ProgramKind implements IStableName {
     @Override
     public String serializedName() {
         return serializedName;
+    }
+
+    /** Whether it runs headless in the background, with no window of its own: a service or an engine. */
+    public boolean runsInBackground() {
+        return this == SERVICE || this == NETWORK_ENGINE;
     }
 }

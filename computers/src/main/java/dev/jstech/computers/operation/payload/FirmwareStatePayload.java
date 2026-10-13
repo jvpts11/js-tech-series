@@ -7,6 +7,13 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.media.MediaVolume;
+import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -44,9 +51,9 @@ public record FirmwareStatePayload(
      * @param cpuName    the processor by model
      * @param cores      how many cores it has
      * @param cpuMhz     its clock, zero when no processor is seated
-     * @param cpuArch    the architecture by name, "x86-64"; the self-test reads it out on its own and the
+     * @param cpuArch    the instruction set by name, "x86-64"; the self-test reads it out on its own and the
      *                   hardware page puts the word size beside it
-     * @param cpuBits    the architecture's word size
+     * @param cpuBits    the instruction set's word size
      * @param boardName  the motherboard by model
      * @param ramMb      the memory counted over the modules seated
      * @param ramModules how many modules are in
@@ -57,13 +64,17 @@ public record FirmwareStatePayload(
      * @param ports      how many peripheral ports the board offers
      * @param eraLabel   the hardware generation in words
      */
-    public record Machine(String name, String cpuName, int cores, int cpuMhz, String cpuArch, int cpuBits,
-                          String boardName, int ramMb, int ramModules, int ramSlots, String ramName,
-                          String gpuName, int monitors, int ports, String eraLabel) {
+    @TextHolder
+    public record Machine(Text name, Text cpuName, int cores, int cpuMhz, String cpuArch, int cpuBits,
+                          Text boardName, int ramMb, int ramModules, int ramSlots, Text ramName,
+                          Text gpuName, int monitors, int ports, Text eraLabel) {
 
         /** A machine nothing could be read from: no parts, or a host that is not a computer. */
-        public static final Machine NONE =
-                new Machine("", "", 0, 0, "", 0, "", 0, 0, 0, "", "", 0, 0, "");
+        public static final Machine NONE = new Machine(Text.EMPTY, Text.EMPTY, 0, 0, "", 0, Text.EMPTY, 0, 0, 0,
+                Text.EMPTY, Text.EMPTY, 0, 0, Text.EMPTY);
+
+        /** How many modules of which kind: "2x DDR4 Module". */
+        private static final TextKey MODULES = TextKey.of("jsc.payload.firmware_state.modules", "%sx %s");
 
         /** Whether a processor was found at all, which is what decides that there is a self-test to show. */
         public boolean hasCpu() {
@@ -71,11 +82,11 @@ public record FirmwareStatePayload(
         }
 
         /** The memory as a self-test names it: how many modules of which kind, or nothing when none are in. */
-        public String memoryModules() {
+        public Text memoryModules() {
             if (this.ramModules <= 0 || this.ramName.isEmpty()) {
-                return "";
+                return Text.EMPTY;
             }
-            return this.ramModules + "x " + this.ramName;
+            return MODULES.with(this.ramModules, this.ramName);
         }
     }
 
@@ -104,25 +115,38 @@ public record FirmwareStatePayload(
     public static final int KIND_MEDIA = 1;
     public static final int MAX_ENTRIES = 32;
 
+    /** The most capacities a RAID summary carries, one per mode, so the encoder and the decoder agree on the cap. */
+    public static final int MAX_RAID_CAPACITIES = RaidMode.values().length;
+
     /**
      * One boot entry, in the parts a firmware reads out rather than as a sentence.
      *
      * <p>A self-test prints these in columns, a boot menu names the device beside what is on it, and a setup
      * page lists them a third way, so they arrive apart and each screen puts them together as its own age did.
      *
-     * @param kind        {@link #KIND_DISK} (an installed disk) or {@link #KIND_MEDIA} (a linked drive's medium)
-     * @param ref         the disk slot index, or the media reader's packed block position
+     * @param kind        {@link #KIND_DISK} (an installed disk) or {@link #KIND_MEDIA} (a drive's medium)
+     * @param ref         the disk slot index, or the media reader's packed block position, the computer's own for a
+     *                    drive on its front
      * @param osId        the OS on it ({@code ""} when the disk has no system / the medium is not an installer)
      * @param label       what the device holds: the system's name, an installer's name, or "no system"/"empty"
-     * @param device      the hardware itself by model, or the kind of drive for a reader
+     * @param device      the hardware itself by model, which is data, or the kind of drive for a reader, which is
+     *                    read in the player's language
      * @param size        how much the device holds, in words, and nothing for a drive whose size means nothing
      * @param note        why this cannot be booted or installed, and nothing when it can
      * @param bootable    whether this entry can be booted (a disk with an OS; an OS-installer medium whose OS
      *                    passes the hardware era gate)
      * @param installMode the id of the OS's install mode for a medium (guided / live manual / source), else -1
+     * @param bay         for a medium, which of the reader's volumes it is on, as {@link MediaVolume#bay()} counts
+     *                    them; {@link MediaVolume#MEDIUM} for a disk
      */
-    public record Entry(int kind, long ref, String osId, String label, String device, String size, String note,
-                        boolean bootable, int installMode) {
+    public record Entry(int kind, long ref, String osId, Text label, Text device, String size, Text note,
+                        boolean bootable, int installMode, int bay) {
+
+        /** An entry for a disk, or for the medium of a reader on a cable. */
+        public Entry(final int kind, final long ref, final String osId, final Text label, final Text device,
+                     final String size, final Text note, final boolean bootable, final int installMode) {
+            this(kind, ref, osId, label, device, size, note, bootable, installMode, MediaVolume.MEDIUM);
+        }
     }
 
     public static final CustomPacketPayload.Type<FirmwareStatePayload> TYPE =
@@ -153,12 +177,15 @@ public record FirmwareStatePayload(
             buf.writeVarInt(e.kind());
             buf.writeVarLong(e.ref());
             buf.writeUtf(e.osId(), 64);
-            buf.writeUtf(e.label(), 48);
-            buf.writeUtf(e.device(), 48);
+            TextCodecs.STREAM_CODEC.encode(buf, e.label());
+            // A model's name is cut to the column it is drawn in; a drive's kind is put together at the other end.
+            TextCodecs.STREAM_CODEC.encode(buf, e.device() instanceof Text.Literal model && model.value().length() > 48
+                    ? Text.literal(TextBounds.clip(model.value(), 48)) : e.device());
             buf.writeUtf(e.size(), 16);
-            buf.writeUtf(e.note(), 48);
+            TextCodecs.STREAM_CODEC.encode(buf, e.note());
             buf.writeBoolean(e.bootable());
             buf.writeVarInt(e.installMode());
+            buf.writeInt(e.bay());
         }
         final RaidInfo raid = p.raid == null ? RaidInfo.ABSENT : p.raid;
         buf.writeBoolean(raid.present());
@@ -166,9 +193,10 @@ public record FirmwareStatePayload(
             buf.writeVarInt(raid.mode());
             buf.writeVarInt(raid.members());
             buf.writeVarInt(raid.drives());
-            buf.writeVarInt(raid.capacities().size());
-            for (final long capacity : raid.capacities()) {
-                buf.writeVarLong(capacity);
+            final int capacityCount = Math.min(raid.capacities().size(), MAX_RAID_CAPACITIES);
+            buf.writeVarInt(capacityCount);
+            for (int i = 0; i < capacityCount; i++) {
+                buf.writeVarLong(raid.capacities().get(i));
             }
         }
     }
@@ -182,15 +210,16 @@ public record FirmwareStatePayload(
         final int count = Math.min(buf.readVarInt(), MAX_ENTRIES);
         final List<Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            entries.add(new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64), buf.readUtf(48),
-                    buf.readUtf(48), buf.readUtf(16), buf.readUtf(48), buf.readBoolean(), buf.readVarInt()));
+            entries.add(new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64),
+                    TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(16),
+                    TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readVarInt(), buf.readInt()));
         }
         RaidInfo raid = RaidInfo.ABSENT;
         if (buf.readBoolean()) {
             final int mode = buf.readVarInt();
             final int members = buf.readVarInt();
             final int drives = buf.readVarInt();
-            final int capacityCount = Math.min(buf.readVarInt(), 8);
+            final int capacityCount = Math.min(buf.readVarInt(), MAX_RAID_CAPACITIES);
             final List<Long> capacities = new ArrayList<>(capacityCount);
             for (int i = 0; i < capacityCount; i++) {
                 capacities.add(buf.readVarLong());
@@ -201,26 +230,39 @@ public record FirmwareStatePayload(
     }
 
     private static void writeMachine(final RegistryFriendlyByteBuf buf, final Machine m) {
-        buf.writeUtf(m.name(), 48);
-        buf.writeUtf(m.cpuName(), 48);
+        TextCodecs.STREAM_CODEC.encode(buf, m.name());
+        TextCodecs.STREAM_CODEC.encode(buf, m.cpuName());
         buf.writeVarInt(m.cores());
         buf.writeVarInt(m.cpuMhz());
         buf.writeUtf(m.cpuArch(), 32);
         buf.writeVarInt(m.cpuBits());
-        buf.writeUtf(m.boardName(), 64);
+        TextCodecs.STREAM_CODEC.encode(buf, m.boardName());
         buf.writeVarInt(m.ramMb());
         buf.writeVarInt(m.ramModules());
         buf.writeVarInt(m.ramSlots());
-        buf.writeUtf(m.ramName(), 48);
-        buf.writeUtf(m.gpuName(), 48);
+        TextCodecs.STREAM_CODEC.encode(buf, m.ramName());
+        TextCodecs.STREAM_CODEC.encode(buf, m.gpuName());
         buf.writeVarInt(m.monitors());
         buf.writeVarInt(m.ports());
-        buf.writeUtf(m.eraLabel(), 24);
+        TextCodecs.STREAM_CODEC.encode(buf, m.eraLabel());
     }
 
     private static Machine readMachine(final RegistryFriendlyByteBuf buf) {
-        return new Machine(buf.readUtf(48), buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readUtf(32),
-                buf.readVarInt(), buf.readUtf(64), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
-                buf.readUtf(48), buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readUtf(24));
+        final Text name = TextCodecs.STREAM_CODEC.decode(buf);
+        final Text cpuName = TextCodecs.STREAM_CODEC.decode(buf);
+        final int cores = buf.readVarInt();
+        final int mhz = buf.readVarInt();
+        final String arch = buf.readUtf(32);
+        final int bits = buf.readVarInt();
+        final Text board = TextCodecs.STREAM_CODEC.decode(buf);
+        final int ramMb = buf.readVarInt();
+        final int modules = buf.readVarInt();
+        final int slots = buf.readVarInt();
+        final Text ramName = TextCodecs.STREAM_CODEC.decode(buf);
+        final Text gpuName = TextCodecs.STREAM_CODEC.decode(buf);
+        final int monitors = buf.readVarInt();
+        final int ports = buf.readVarInt();
+        return new Machine(name, cpuName, cores, mhz, arch, bits, board, ramMb, modules, slots, ramName, gpuName,
+                monitors, ports, TextCodecs.STREAM_CODEC.decode(buf));
     }
 }

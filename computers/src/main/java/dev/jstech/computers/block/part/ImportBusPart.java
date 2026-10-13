@@ -8,16 +8,18 @@
 package dev.jstech.computers.block.part;
 
 import com.mojang.logging.LogUtils;
-import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.bus.BusActivity;
 import dev.jstech.computers.menu.ImportBusMenu;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkInsertOperation;
-import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.trace.TracePoints;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -28,16 +30,17 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
- * An Import Bus part: pulls data from the inventory its mounted face touches (items OR fluids, with no distinction) and pushes it into the network as INSERT Operations dispatched by the Mainframe. An empty filter imports everything; a set filter imports only that one type and the min/max window keeps the NETWORK stocked of it (with hysteresis).
+ * An Import Bus: takes data from the block its face touches (items, fluids or chemicals alike) into the network, as
+ * INSERT Operations the Mainframe dispatches, at its era's speed and never faster than its cable carries. It takes what
+ * its filter lets through, leaving in the chest what it was set to keep, a move at a time of at most its max; the
+ * Vintage bus, with no filter, takes whatever it finds first, one kind at a time. When the network has no room, the
+ * buses of a higher priority bring their items in first.
  */
 public non-sealed class ImportBusPart extends AbstractBusPart {
-
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final int MIN_BATCH = 64;
-    private static final int FLUSH_TICKS = 20;
 
     private StorageKey bufferKey;
     private long bufferAmount;
@@ -45,85 +48,81 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
     private StorageKey flushedKey;
     private long flushedAmount;
     private int ticksSinceFlush;
+    /* What the bus may still take at its speed: a tick's worth is added each tick, up to a move's worth. */
+    private long credit;
+    /* When the network last had no room for what this bus brought, which is when buses take turns by priority. */
+    private long fullSince = Long.MIN_VALUE;
+
+    private static final Logger LOGGER = LogUtils.getLogger();
+    /* A move goes when it is as big as it may be, or after this long with whatever was taken. */
+    private static final int FLUSH_TICKS = 20;
+    /* How long after the network had no room the buses keep taking turns by priority. */
+    private static final long TURNS_FOR = 40L;
+    /* What the buses taking turns for the network's room want. */
+    private static final String ROOM = "room";
+
+    public ImportBusPart(final HardwareEra era) {
+        super(era);
+    }
 
     @Override
-    public CablePartType type() {
-        return CablePartType.IMPORT;
+    public PartType<?> type() {
+        return ComputingParts.importBus(era());
     }
 
     @Override
     public AbstractContainerMenu createMenu(final int containerId, final Inventory inventory,
-                                            final DataCableBlockEntity cable, final Direction mountedFace) {
+                                            final CableBlockEntity cable, final Direction mountedFace) {
         return ImportBusMenu.create(containerId, inventory, cable, mountedFace);
     }
 
     @Override
     public void serverTick() {
-        // Wait for the in-flight flush to finish, then re-buffer whatever the network could not store.
+        final ServerLevel level = serverLevel();
+        if (level != null) {
+            settleLamps(level.getGameTime());
+        }
         if (activeOp != null) {
             if (!activeOp.isDone()) {
                 return;
             }
-            final long leftover = activeOp.leftover();
-            if (leftover > 0L && flushedKey != null && bufferKey == null) {
-                bufferKey = flushedKey;
-                bufferAmount = leftover;
-                host.setChanged();
-            }
-            activeOp = null;
-            flushedKey = null;
-            flushedAmount = 0L;
-            ticksSinceFlush = 0;
+            settle(level);
         }
-        final ServerLevel level = host.serverLevel();
         if (level == null) {
             return;
         }
-        final NetworkUuid network = host.network();
+        final NetworkUuid network = network();
         linked = network != null;
-        final MainframeBlockEntity mainframe = network == null ? null : host.mainframe();
+        final MainframeBlockEntity mainframe = network == null ? null : mainframe();
         ticksSinceFlush++;
-        // Redstone mode holds off pulling new data; an already-buffered payload still flushes below.
-        final boolean pulling = !redstoneBlocked();
-        // The batch size and pull rate follow the network's orchestration capacity.
-        final long cap = mainframe == null ? 1L
-                : Math.max(1L, Math.min(Integer.MAX_VALUE, mainframe.capacity()));
+        final long speed = speed();
         final ExternalDataPort port = neighborPort();
-        final StorageKey filter = filterKey(); // null = import anything
-
         boolean typeChange = false;
-        if (pulling && !port.isEmpty() && canAcceptMore(level, network, filter)) {
+        if (network != null && !port.isEmpty() && speed > 0L && mayMove(level, network) && takesTurn(level, network)) {
+            credit = Math.min(credit + speed, batch(bufferKey, speed));
             if (bufferKey == null) {
-                final StorageKey pick = filter != null ? filter
-                        : (port.available().isEmpty() ? null : port.available().get(0));
+                final StorageKey pick = pick(level, port);
                 if (pick != null) {
-                    final long pulled = port.extract(pick, cap, false);
-                    if (pulled > 0L) {
+                    final long taken = take(port, pick, Math.min(credit, batch(pick, speed)));
+                    if (taken > 0L) {
                         bufferKey = pick;
-                        bufferAmount = pulled;
-                        host.setChanged();
+                        bufferAmount = taken;
                     }
                 }
-            } else if (filter != null && !bufferKey.equals(filter)) {
-                // The filter changed while a different type was buffered: flush the old one, add no more.
+            } else if (!admits(bufferKey)) {
+                // The filter changed while another kind was taken: send that one on, take no more of it.
                 typeChange = true;
             } else {
-                final long room = cap - bufferAmount;
+                final long room = Math.min(credit, batch(bufferKey, speed) - bufferAmount);
                 if (room > 0L) {
-                    final long pulled = port.extract(bufferKey, room, false);
-                    if (pulled > 0L) {
-                        bufferAmount += pulled;
-                        host.setChanged();
-                    }
+                    bufferAmount += take(port, bufferKey, room);
                 }
-                if (filter == null) {
-                    typeChange = port.available().stream().anyMatch(k -> !k.equals(bufferKey));
-                }
+                // A kind with nothing more to take above what the chest keeps goes, and the next kind starts.
+                typeChange = above(port, bufferKey) <= 0L && pick(level, port) != null;
             }
         }
-
-        final boolean flush = bufferKey != null
-                && (bufferAmount >= cap || bufferAmount >= MIN_BATCH || ticksSinceFlush >= FLUSH_TICKS || typeChange);
+        final boolean flush = bufferKey != null && (bufferAmount >= batch(bufferKey, speed)
+                || ticksSinceFlush >= FLUSH_TICKS || typeChange);
         if (!flush) {
             return;
         }
@@ -140,7 +139,7 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
          * Push the buffered data into the network as a timed INSERT; whatever does not fit comes back
          * as the Operation's leftover and is re-buffered when it finishes (above).
          */
-        activeOp = mainframe.submitNetworkInsert(payloadKey, payloadAmount, MoveLabels.bus("Import Bus", name()));
+        activeOp = mainframe.networkOperations().push(payloadKey, payloadAmount, MoveLabels.bus("Import Bus", name()));
         flushedKey = payloadKey;
         flushedAmount = payloadAmount;
         if (activeOp == null) {
@@ -148,37 +147,15 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
             bufferAmount = payloadAmount;
             flushedKey = null;
             flushedAmount = 0L;
+        } else {
+            TracePoints.imported(level, network, name(), payloadKey, payloadAmount);
         }
         host.setChanged();
     }
 
-    /**
-     * Whether the bus may pull more right now. With no filter or no max it always may; with a filter and a
-     * max it stops once the network already holds {@code max} of that type, resuming only after the network
-     * stock falls back to the {@code min} low-water mark (hysteresis), exactly mirroring the Export Bus but
-     * measured on the network instead of the faced inventory.
-     */
-    private boolean canAcceptMore(final ServerLevel level, final NetworkUuid network, final StorageKey filter) {
-        if (filter == null || max <= 0 || network == null) {
-            return true;
-        }
-        final long have = NetworkStorage.of(level, network).count(filter);
-        if (have >= max) {
-            active = false;
-            return false;
-        }
-        if (min > 0) {
-            if (!active && have > min) {
-                return false;
-            }
-            active = true;
-        }
-        return true;
-    }
-
     @Override
     public ItemStack partItem() {
-        return new ItemStack(ComputingModule.IMPORT_BUS_ITEM.get());
+        return ComputingParts.importBusItem(era());
     }
 
     @Override
@@ -186,10 +163,17 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
         /*
          * Drop a buffered item back into the world; a buffered fluid (rare, transient) is discarded.
          * If an INSERT operation is in flight, the payload was already extracted from the source but
-         * not yet confirmed by the network, so drop the in-flight amount too; nothing is silently lost.
+         * not yet confirmed by the network, so drop what the network has not taken yet; nothing is silently
+         * lost, and the operation is stopped so it cannot also insert the dropped items.
          */
         final StorageKey drop = bufferKey != null ? bufferKey : flushedKey;
-        final long dropAmount = bufferKey != null ? bufferAmount : flushedAmount;
+        final long dropAmount = bufferKey != null ? bufferAmount : unconfirmedAmount();
+        if (activeOp != null) {
+            if (!activeOp.isDone()) {
+                activeOp.abandon();
+            }
+            activeOp = null;
+        }
         if (drop != null && drop.isItem() && dropAmount > 0L && host != null) {
             Containers.dropItemStack(level,
                     host.getBlockPos().getX(), host.getBlockPos().getY(), host.getBlockPos().getZ(),
@@ -211,12 +195,15 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
         }
         /*
          * Persist the in-flight payload so a save/reload cannot destroy items that were extracted
-         * from the source but whose INSERT operation has not yet been confirmed by the network.
+         * from the source but whose INSERT operation has not yet been confirmed by the network. Only
+         * what the network has not taken yet is saved: the rest is already in storage, and saving the
+         * full batch would insert it a second time after the reload.
          */
-        if (flushedKey != null && flushedAmount > 0L) {
+        final long unconfirmed = unconfirmedAmount();
+        if (flushedKey != null && unconfirmed > 0L) {
             StorageKey.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), flushedKey)
                     .result().ifPresent(encoded -> tag.put("FlushedKey", encoded));
-            tag.putLong("FlushedAmount", flushedAmount);
+            tag.putLong("FlushedAmount", unconfirmed);
         }
     }
 
@@ -258,5 +245,94 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
                         }
                     });
         }
+    }
+
+    /* The part of the in-flight batch the network has not written into storage yet. */
+    private long unconfirmedAmount() {
+        if (flushedKey == null) {
+            return 0L;
+        }
+        return activeOp == null ? flushedAmount : Math.max(0L, flushedAmount - activeOp.writtenTotal());
+    }
+
+    /*
+     * A finished move: what went in is in the activity; what the network had no room for comes back to be sent again,
+     * and the hold is written down.
+     */
+    private void settle(@Nullable final ServerLevel level) {
+        final long leftover = activeOp.leftover();
+        final long now = level == null ? 0L : level.getGameTime();
+        if (flushedKey != null) {
+            if (flushedAmount - leftover > 0L) {
+                activity.moved(now, flushedKey.id(), flushedAmount - leftover, leftover > 0L);
+                worked(now);
+            }
+            if (leftover > 0L) {
+                activity.held(now, flushedKey.id(), BusActivity.FULL, 0L);
+                fullSince = now;
+                if (bufferKey == null) {
+                    bufferKey = flushedKey;
+                    bufferAmount = leftover;
+                }
+            }
+        }
+        activeOp = null;
+        flushedKey = null;
+        flushedAmount = 0L;
+        ticksSinceFlush = 0;
+        host.setChanged();
+    }
+
+    /* While the network has had no room lately, the buses take turns by priority; otherwise every bus goes. */
+    private boolean takesTurn(final ServerLevel level, final NetworkUuid network) {
+        final boolean fullLately = fullSince != Long.MIN_VALUE && level.getGameTime() - fullSince <= TURNS_FOR;
+        return !fullLately || firstFor(level, network, ROOM);
+    }
+
+    /*
+     * What to take next: the first kind the faced block holds that the filter lets through and that has more than the
+     * chest keeps of it. A kind held back by what the chest keeps is written down.
+     */
+    @Nullable
+    private StorageKey pick(final ServerLevel level, final ExternalDataPort port) {
+        StorageKey kept = null;
+        for (final StorageKey key : port.available()) {
+            if (!admits(key)) {
+                continue;
+            }
+            if (above(port, key) > 0L) {
+                return key;
+            }
+            kept = kept == null ? key : kept;
+        }
+        if (kept != null) {
+            activity.held(level.getGameTime(), kept.id(), BusActivity.KEEPS, keepFor(kept));
+        }
+        return null;
+    }
+
+    /* How much of {@code key} the faced block holds beyond what the chest keeps. */
+    private long above(final ExternalDataPort port, final StorageKey key) {
+        return port.count(key) - keepFor(key);
+    }
+
+    /* Takes up to {@code amount} of {@code key}, never below what the chest keeps, out of the bus's credit. */
+    private long take(final ExternalDataPort port, final StorageKey key, final long amount) {
+        final long wanted = Math.min(amount, above(port, key));
+        if (wanted <= 0L) {
+            return 0L;
+        }
+        final long taken = port.extract(key, wanted, false);
+        credit -= taken;
+        if (taken > 0L) {
+            host.setChanged();
+        }
+        return taken;
+    }
+
+    /* How big a move of {@code key} may be: its max, or a second's worth at the bus's speed. */
+    private long batch(@Nullable final StorageKey key, final long speed) {
+        final int most = key == null ? max : maxFor(key);
+        return Math.max(1L, most > 0 ? most : speed * FLUSH_TICKS);
     }
 }

@@ -6,6 +6,6 @@
  * This file is part of J's Computers.
  */
 /**
- * Integration plugins for external mods (JEI, EMI, Jade, TheOneProbe, Modonomicon, Curios, FTB Teams, etc.).
+ * Integration plugins for external mods (JEI, EMI, Jade, TheOneProbe, Curios, FTB Teams, etc.).
  */
 package dev.jstech.computers.integration;

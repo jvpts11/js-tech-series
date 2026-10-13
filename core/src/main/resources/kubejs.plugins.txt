@@ -1,0 +1,1 @@
+dev.jstech.core.integration.kubejs.CoreKubeJsPlugin

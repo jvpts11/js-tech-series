@@ -50,6 +50,14 @@ class SpreadsheetTest {
     }
 
     @Test
+    void aFormulaNestedPastItsDepth_showsAnErrorRatherThanOverflowing() {
+        sheet.set(0, 0, "=" + "(".repeat(5000) + "1" + ")".repeat(5000));
+        assertEquals(Spreadsheet.ERROR, sheet.display(0, 0));
+        sheet.set(0, 1, "=" + "-".repeat(20000) + "1");
+        assertEquals(Spreadsheet.ERROR, sheet.display(0, 1));
+    }
+
+    @Test
     void aPlainValue_showsItself() {
         sheet.set(0, 0, "Item");
         assertEquals("Item", sheet.display(0, 0));

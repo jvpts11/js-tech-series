@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.WorkstationInfoLayout;
@@ -14,6 +15,10 @@ import dev.jstech.computers.operation.payload.RequestWorkstationInfoPayload;
 import dev.jstech.computers.operation.payload.WorkstationInfoPayload;
 import dev.jstech.computers.os.WorkstationFacts;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -26,11 +31,13 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * CDE's Workstation Info: what this workstation is, who is at it, the system under the desktop and the hardware
- * the system runs on, each group in a well of its own.
+ * the system runs on, each group in a well of its own, and Devices..., which opens the workstation's devices in a
+ * dialog where one is disabled or enabled.
  *
  * <p>Every figure is the machine's, asked for when the window opens and again every few seconds while it stays
  * open, so the memory in use, with the meter beside it, is always current.
  */
+@PaletteHolder
 public final class WorkstationInfoApp implements IDesktopApp {
 
     private final BlockPos host;
@@ -44,13 +51,12 @@ public final class WorkstationInfoApp implements IDesktopApp {
     private int left;
     private int top;
 
-    private static final String TITLE = "Workstation Info";
-
     /** How often an open window asks again, which is what keeps its memory figure current. */
     private static final long ASK_EVERY_MS = 2_000L;
 
-    /** The labels and the headings, a quieter ink than the facts beside them. */
-    private static final int LABEL_INK = 0xFF3A3D4A;
+    /** This window's own colours, {@code jsc:app/workstation_info}: the labels' and headings' quieter ink. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/workstation_info",
+            new Colours(0xFF3A3D4A));
     private static final String ELLIPSIS = "...";
 
     /** Every window of this kind that is up, so an answer from the machine reaches the one that asked. */
@@ -77,7 +83,7 @@ public final class WorkstationInfoApp implements IDesktopApp {
         if (this.facts != null) {
             for (final WorkstationFacts.Group group : this.facts.groups()) {
                 for (final WorkstationFacts.Row row : group.rows()) {
-                    out.add(row.label() + "=" + row.value());
+                    out.add(GameText.resolve(row.label()) + "=" + GameText.resolve(row.value()));
                 }
             }
         }
@@ -90,9 +96,14 @@ public final class WorkstationInfoApp implements IDesktopApp {
         return CdeStylePages.centre(r, this.left, this.top);
     }
 
+    /** The middle of Devices..., in desktop pixels. */
+    public int[] devicesCentre() {
+        return CdeStylePages.centre(WorkstationInfoLayout.devices(), this.left, this.top);
+    }
+
     @Override
     public String title() {
-        return TITLE;
+        return GameText.resolve(WorkstationInfoTexts.TITLE);
     }
 
     @Override
@@ -141,34 +152,44 @@ public final class WorkstationInfoApp implements IDesktopApp {
         if (System.currentTimeMillis() - this.askedAt >= ASK_EVERY_MS) {
             ask();
         }
-        final DesktopScreen desktop = DesktopScreen.current();
+        final DesktopState desktop = DesktopScreen.current();
         if (this.skin == null || desktop == null) {
             return;
         }
-        final CdePalette p = desktop.cdePalette();
+        final CdePalette p = desktop.prefs().cdePalette();
         if (this.facts != null) {
             final List<WorkstationFacts.Group> groups = this.facts.groups();
             for (int gi = 0; gi < groups.size() && gi < WorkstationInfoLayout.GROUPS.size(); gi++) {
                 drawGroup(g, font, gi, groups.get(gi), p);
             }
         }
+        final Rect devices = WorkstationInfoLayout.devices();
+        this.skin.button(g, font, x + devices.x(), y + devices.y(), devices.w(), devices.h(),
+                GameText.resolve(WorkstationInfoTexts.DEVICES_BUTTON),
+                devices.holds(mouseX - x, mouseY - y), false, false);
         final Rect close = WorkstationInfoLayout.close();
-        this.skin.button(g, font, x + close.x(), y + close.y(), close.w(), close.h(), "Close",
+        this.skin.button(g, font, x + close.x(), y + close.y(), close.w(), close.h(),
+                GameText.resolve(WorkstationInfoTexts.CLOSE),
                 close.holds(mouseX - x, mouseY - y), false, true);
     }
 
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY,
                              final int button) {
-        if (button == 0 && WorkstationInfoLayout.close().holds(mouseX - this.left, mouseY - this.top)) {
-            DesktopScreen.closeWindowFor(this);
+        if (button != 0) {
+            return;
+        }
+        if (WorkstationInfoLayout.close().holds(mouseX - this.left, mouseY - this.top)) {
+            ActiveDesktop.closeWindowFor(this);
+        } else if (WorkstationInfoLayout.devices().holds(mouseX - this.left, mouseY - this.top)) {
+            ActiveDesktop.openOrFocus(WorkstationDevicesApp.KEY);
         }
     }
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
-            DesktopScreen.closeWindowFor(this);
+            ActiveDesktop.closeWindowFor(this);
             return true;
         }
         return false;
@@ -183,17 +204,19 @@ public final class WorkstationInfoApp implements IDesktopApp {
                            final CdePalette p) {
         final Rect well = WorkstationInfoLayout.group(index);
         this.skin.panel(g, this.left + well.x(), this.top + well.y(), well.w(), well.h());
-        Texts.small(g, font, group.title().toUpperCase(Locale.ROOT), this.left + WorkstationInfoLayout.innerX(),
-                this.top + WorkstationInfoLayout.headY(index), LABEL_INK);
+        Texts.small(g, font, GameText.resolve(group.title()).toUpperCase(Locale.ROOT),
+                this.left + WorkstationInfoLayout.innerX(), this.top + WorkstationInfoLayout.headY(index),
+                PALETTE.get().labelInk());
         for (int r = 0; r < group.rows().size(); r++) {
             final WorkstationFacts.Row row = group.rows().get(r);
             final int rowY = this.top + WorkstationInfoLayout.rowY(index, r);
-            Texts.small(g, font, row.label(),
-                    this.left + WorkstationInfoLayout.LABEL_RIGHT - Texts.smallWidth(font, row.label()), rowY,
-                    LABEL_INK);
-            Texts.small(g, font, fit(font, row.value(), WorkstationInfoLayout.valueWidth()),
+            final String label = GameText.resolve(row.label());
+            Texts.small(g, font, label,
+                    this.left + WorkstationInfoLayout.LABEL_RIGHT - Texts.smallWidth(font, label), rowY,
+                    PALETTE.get().labelInk());
+            Texts.small(g, font, fit(font, GameText.resolve(row.value()), WorkstationInfoLayout.valueWidth()),
                     this.left + WorkstationInfoLayout.VALUE_X, rowY, p.ink());
-            if (row.label().equals(WorkstationFacts.MEMORY_IN_USE)) {
+            if (row.meter()) {
                 meter(g, WorkstationInfoLayout.meter(index, r), p);
             }
         }
@@ -217,5 +240,9 @@ public final class WorkstationInfoApp implements IDesktopApp {
         }
         final int units = Math.max(1, Texts.smallFits(room) - font.width(ELLIPSIS));
         return font.plainSubstrByWidth(text, units) + ELLIPSIS;
+    }
+
+    /** This window's colours: the labels' and headings' quieter ink. */
+    private record Colours(int labelInk) {
     }
 }

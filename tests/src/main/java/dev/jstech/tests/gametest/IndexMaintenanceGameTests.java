@@ -17,6 +17,8 @@ import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.StorageNetworkFixture;
+import dev.jstech.tests.testkit.TestCli;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,7 +29,6 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-import java.util.Locale;
 
 /**
  * A REINDEX reads the disks on its tick and builds the catalog off it: the swap lands a tick or two later,
@@ -46,10 +47,10 @@ public final class IndexMaintenanceGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 100)
     public static void reindexAsync_swapsTheCatalogOnALaterTick(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final boolean[] done = {false};
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 100,
@@ -59,8 +60,12 @@ public final class IndexMaintenanceGameTests {
                     helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 100,
                             "reads keep the old catalog while the new one is built");
                 })
-                .thenExecuteAfter(3, () -> {
-                    helper.assertTrue(done[0], "the completion ran once the catalog was swapped in");
+                /*
+                 * The rebuild runs on a worker and comes back on a later tick of the Mainframe, as soon as the worker
+                 * is done: how many ticks that takes is the machine's load, so the completion is waited for.
+                 */
+                .thenWaitUntil(() -> helper.assertTrue(done[0], "the completion ran once the catalog was swapped in"))
+                .thenExecute(() -> {
                     helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 100
                                     && mainframe.networkIndex().catalogSize() == 1
                                     && mainframe.networkIndex().indexedServerCount() == 1,
@@ -69,12 +74,6 @@ public final class IndexMaintenanceGameTests {
                     helper.assertTrue(mainframe.networkIndex().health().isClean(), "a full rebuild leaves the index clean");
                 })
                 .thenSucceed();
-    }
-
-    private static boolean cliContains(final CliShell.Response response, final String needle) {
-        final String lower = needle.toLowerCase(Locale.ROOT);
-        return response.lines().stream()
-                .anyMatch(line -> line.text().toLowerCase(Locale.ROOT).contains(lower));
     }
 
     @GameTest(template = ARENA, timeoutTicks = 100)
@@ -86,9 +85,9 @@ public final class IndexMaintenanceGameTests {
         final BlockPos rack = new BlockPos(2, 2, 3); // behind the cable (rear-only connection)
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        world.setBlock(hbw, ComputingModule.HBW_CABLE);
         world.setBlock(router, ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(eth, ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(eth, ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = world.placeRunningPersonalComputer(pc);
         world.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
@@ -100,7 +99,7 @@ public final class IndexMaintenanceGameTests {
                     // The maintenance verbs run on the Mainframe's own prompt.
                     final ServerCliComputer cli = new ServerCliComputer((IComputerTerminalHost) mainframe, helper.getLevel());
                     final CliShell shell = CliCommands.newShell(50);
-                    helper.assertTrue(cliContains(shell.run("reindex", cli), "REINDEX started"),
+                    helper.assertTrue(TestCli.contains(shell.run("reindex", cli), "REINDEX started"),
                             "the prompt answers at once and the rebuild runs on");
                 })
                 .thenExecuteAfter(3, () -> helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 200,

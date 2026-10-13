@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/where_it_all_started",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:freebsd"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.not_linux.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:legacy_personal_computer"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.not_linux.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

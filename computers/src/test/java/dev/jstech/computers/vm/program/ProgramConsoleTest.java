@@ -10,6 +10,8 @@ package dev.jstech.computers.vm.program;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,42 @@ class ProgramConsoleTest {
         assertEquals("line 50", kept.getFirst());
         assertEquals("line " + (ProgramConsole.MOST_LINES + 49), kept.getLast());
         assertEquals(ProgramConsole.MOST_LINES + 50, console.written());
+    }
+
+    @Test
+    void print_endsALineAtEveryBreakAndLeavesTheRestOpen() {
+        final ProgramConsole console = new ProgramConsole();
+        console.print("one\ntw");
+        console.print("o\n\nthree");
+        assertEquals(List.of("one", "two", ""), console.lines());
+        assertEquals("three", console.open());
+        assertEquals(3, console.written(), "an open line is not written yet");
+        console.close();
+        assertEquals(List.of("one", "two", "", "three"), console.lines());
+        assertEquals("", console.open());
+        console.close();
+        assertEquals(4, console.written(), "closing with nothing open writes nothing");
+    }
+
+    @Test
+    void print_cutsAnOpenLineThatRunsPastALineWhenItIsKept() {
+        final ProgramConsole console = new ProgramConsole();
+        console.print("x".repeat(ProgramConsole.MOST_LINE_CHARACTERS + 100));
+        console.print("\n");
+        assertEquals(ProgramConsole.MOST_LINE_CHARACTERS, console.lines().getFirst().length());
+        assertTrue(console.lines().getFirst().endsWith(ProgramConsole.CUT));
+    }
+
+    @Test
+    void restore_bringsBackTheLineLeftOpenAndClearTakesItAway() {
+        final ProgramConsole console = new ProgramConsole();
+        console.restore(List.of(Text.literal("before")), 1, "Name? ");
+        assertEquals("Name? ", console.open());
+        console.print("Ann\n");
+        assertEquals(List.of("before", "Name? Ann"), console.lines());
+        console.print("again? ");
+        console.clear();
+        assertEquals("", console.open());
     }
 
     @Test
@@ -66,11 +104,11 @@ class ProgramConsoleTest {
 
     @Test
     void restore_holdsWhatWasSavedToTheSameLimits() {
-        final List<String> saved = new ArrayList<>();
+        final List<Text> saved = new ArrayList<>();
         for (int i = 0; i < ProgramConsole.MOST_LINES + 10; i++) {
-            saved.add("saved " + i);
+            saved.add(Text.literal("saved " + i));
         }
-        saved.add("z".repeat(ProgramConsole.MOST_LINE_CHARACTERS + 1));
+        saved.add(Text.literal("z".repeat(ProgramConsole.MOST_LINE_CHARACTERS + 1)));
         final ProgramConsole console = new ProgramConsole();
 
         console.restore(saved, 5);
@@ -94,9 +132,19 @@ class ProgramConsoleTest {
     }
 
     @Test
+    void write_keepsASentenceForTheTerminalAndItsEnglishForTheProgram() {
+        final ProgramConsole console = new ProgramConsole();
+        final Text halted = TextKey.of("jsc.test.halted", "stopped at %s").with("7");
+        console.write("printed");
+        console.write(halted);
+        assertEquals(List.of(Text.literal("printed"), halted), console.texts());
+        assertEquals(List.of("printed", "stopped at 7"), console.lines());
+    }
+
+    @Test
     void written_countsPastWhatAnIntCanHold() {
         final ProgramConsole console = new ProgramConsole();
-        console.restore(List.of("last"), Integer.MAX_VALUE);
+        console.restore(List.of(Text.literal("last")), Integer.MAX_VALUE);
         console.write("one more");
         assertEquals(Integer.MAX_VALUE + 1L, console.written());
     }

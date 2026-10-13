@@ -1,0 +1,153 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cancelling_and_the_log.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.cancelling_and_the_log.step1",
+        "jsc.guide.cancelling_and_the_log.step2",
+        "jsc.guide.cancelling_and_the_log.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cancelling_and_the_log.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cancelling_and_the_log.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cancelling_and_the_log.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table1_1"
+          },
+          {
+            "literal": "interac ops"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table1_2"
+          },
+          {
+            "literal": "interac cancel <id>"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cancelling_and_the_log.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cancelling_and_the_log.table2",
+      "heads": [
+        "jsc.guide.cancelling_and_the_log.table2_head1",
+        "jsc.guide.cancelling_and_the_log.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.cancelling_and_the_log.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cancelling_and_the_log.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cancelling_and_the_log.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cancelling_and_the_log.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cancelling_and_the_log.fix1",
+          "problem": "jsc.guide.cancelling_and_the_log.problem1"
+        },
+        {
+          "fix": "jsc.guide.cancelling_and_the_log.fix2",
+          "problem": "jsc.guide.cancelling_and_the_log.problem2"
+        },
+        {
+          "fix": "jsc.guide.cancelling_and_the_log.fix3",
+          "problem": "jsc.guide.cancelling_and_the_log.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operation_states",
+        "jsc:network_identity"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:cancelling_and_the_log",
+  "order": 98,
+  "section": "jsc:operations",
+  "title": "jsc.guide.cancelling_and_the_log.title"
+}

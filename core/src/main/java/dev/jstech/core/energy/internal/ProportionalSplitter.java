@@ -32,51 +32,52 @@ public final class ProportionalSplitter {
          * LinkedHashMap preserves insertion order for deterministic tiebreaks.
          */
         final Map<Long, Long> effectiveCap = new LinkedHashMap<>();
-        long totalEffectiveDemand = 0L;
+        // Summed exactly: a total clamped at the long maximum would be a wrong denominator and over-allocate.
+        BigInteger total = BigInteger.ZERO;
         for (final Map.Entry<Long, Long> e : demand.entrySet()) {
             final long d = Math.max(0L, e.getValue());
             final long c = Math.max(0L, cap.getOrDefault(e.getKey(), Long.MAX_VALUE));
             final long eff = Math.min(d, c);
             if (eff > 0) {
                 effectiveCap.put(e.getKey(), eff);
-                totalEffectiveDemand = saturatingAdd(totalEffectiveDemand, eff);
+                total = total.add(BigInteger.valueOf(eff));
             }
         }
 
-        if (totalEffectiveDemand == 0L) {
+        if (effectiveCap.isEmpty()) {
             return Map.of();
         }
 
+        final BigInteger avail = BigInteger.valueOf(available);
+
         // Easy case: enough energy for everyone → each gets their effective ceiling.
-        if (available >= totalEffectiveDemand) {
+        if (avail.compareTo(total) >= 0) {
             return Map.copyOf(effectiveCap);
         }
 
         // Shortage case: largest-remainder method.
         final Map<Long, Long> result = new LinkedHashMap<>();
-        final Map<Long, Long> remainderNum = new LinkedHashMap<>();
+        final Map<Long, BigInteger> remainderNum = new LinkedHashMap<>();
         long allocated = 0L;
-        final BigInteger avail = BigInteger.valueOf(available);
-        final BigInteger total = BigInteger.valueOf(totalEffectiveDemand);
         for (final Map.Entry<Long, Long> e : effectiveCap.entrySet()) {
             /*
              * base = floor(available * effDemand / totalEffectiveDemand). The product can exceed a long
-             * for late-tier supplies, so compute it in 128-bit precision; both the quotient (at most
-             * `available`) and the remainder (below the total) fit back into a long without loss.
+             * for late-tier supplies, so compute it in 128-bit precision; the quotient (at most `available`)
+             * fits back into a long, and the remainder (below the total) is only ever compared, so it stays exact.
              */
             final BigInteger product = avail.multiply(BigInteger.valueOf(e.getValue()));
             final BigInteger[] divRem = product.divideAndRemainder(total);
             final long base = divRem[0].longValueExact();
             result.put(e.getKey(), base);
             allocated += base;
-            remainderNum.put(e.getKey(), divRem[1].longValueExact());
+            remainderNum.put(e.getKey(), divRem[1]);
         }
 
         // Distribute leftover (available - allocated) by largest remainder.
         long leftover = available - allocated;
         if (leftover > 0) {
             final var sortedKeys = remainderNum.entrySet().stream()
-                    .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+                    .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
                     .map(Map.Entry::getKey)
                     .toList();
             for (final Long k : sortedKeys) {
@@ -100,13 +101,5 @@ public final class ProportionalSplitter {
             }
         }
         return Map.copyOf(filtered);
-    }
-
-    private static long saturatingAdd(final long a, final long b) {
-        final long r = a + b;
-        if (((a ^ r) & (b ^ r)) < 0) {
-            return Long.MAX_VALUE;
-        }
-        return r;
     }
 }

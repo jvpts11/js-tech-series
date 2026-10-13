@@ -1,0 +1,220 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.software_verbs.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.software_verbs.definition1",
+      "term": "jsc.guide.software_verbs.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.software_verbs.definition2",
+      "term": "jsc.guide.software_verbs.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.software_verbs.table1",
+      "heads": [
+        "jsc.guide.software_verbs.table1_head1",
+        "jsc.guide.software_verbs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "programs (apps)"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "install"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "store (available)"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "uninstall"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "pckmgr"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.software_verbs.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.software_verbs.step1",
+        "jsc.guide.software_verbs.step2",
+        "jsc.guide.software_verbs.step3",
+        "jsc.guide.software_verbs.step4",
+        "jsc.guide.software_verbs.step5"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.software_verbs.text2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/programs"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/install"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/store"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/uninstall"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.software_verbs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.software_verbs.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.software_verbs.table2",
+      "heads": [
+        "jsc.guide.software_verbs.table2_head1",
+        "jsc.guide.software_verbs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "install NAME"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "remove NAME"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "search [text]"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "list [--available]"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "update"
+          },
+          {
+            "words": "jsc.guide.software_verbs.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/frames/pckmgr"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.software_verbs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.software_verbs.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/frames/screenfetch"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.software_verbs.fix1",
+          "problem": "jsc.guide.software_verbs.problem1"
+        },
+        {
+          "fix": "jsc.guide.software_verbs.fix2",
+          "problem": "jsc.guide.software_verbs.problem2"
+        },
+        {
+          "fix": "jsc.guide.software_verbs.fix3",
+          "problem": "jsc.guide.software_verbs.problem3"
+        },
+        {
+          "fix": "jsc.guide.software_verbs.fix4",
+          "problem": "jsc.guide.software_verbs.problem4"
+        },
+        {
+          "fix": "jsc.guide.software_verbs.fix5",
+          "problem": "jsc.guide.software_verbs.problem5"
+        },
+        {
+          "fix": "jsc.guide.software_verbs.fix6",
+          "problem": "jsc.guide.software_verbs.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:mirror"
+      ]
+    }
+  ],
+  "id": "jsc:software_verbs",
+  "order": 187,
+  "section": "jsc:prompt_programs_and_network",
+  "title": "jsc.guide.software_verbs.title"
+}

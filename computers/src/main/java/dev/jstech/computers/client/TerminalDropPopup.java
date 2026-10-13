@@ -7,14 +7,20 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.TerminalHit.inRect;
+
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkServersPayload;
 import dev.jstech.computers.operation.payload.TerminalDropPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
@@ -35,6 +41,9 @@ final class TerminalDropPopup {
     private static final int DROP_H = 146;
     private static final int DROP_GRID_COLS = 9;
     private static final int DROP_GRID_ROWS = 3;
+    /* The three scopes, in the order of TerminalDropPayload's SCOPE_* numbers. */
+    private static final TextKey[] SCOPES =
+            {TerminalUpkeepTexts.SCOPE_NETWORK, TerminalUpkeepTexts.SCOPE_SERVER, TerminalUpkeepTexts.SCOPE_TYPES};
 
     private final ComputerTerminalScreen screen;
     private final ComputerTerminalMenu menu;
@@ -86,25 +95,28 @@ final class TerminalDropPopup {
         final int top = screen.top();
         g.pose().pushPose();
         g.pose().translate(0, 0, 350);
-        g.fill(left, top, left + ComputerTerminalLayout.WIDTH, top + ComputerTerminalLayout.HEIGHT, 0xE0070A0F);
+        final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
+        g.fill(left, top, left + ComputerTerminalLayout.WIDTH, top + ComputerTerminalLayout.HEIGHT, c.veil());
         final int px = x();
         final int py = y();
         g.fill(px - 1, py - 1, px + DROP_W + 1, py + DROP_H + 1, JsTechTheme.red());
-        g.fill(px, py, px + DROP_W, py + DROP_H, 0xFF0F151C);
+        g.fill(px, py, px + DROP_W, py + DROP_H, c.panel());
 
-        g.drawString(screen.tabFont(), "DROP DATA", px + 8, py + 6, JsTechTheme.red(), false);
-        g.drawString(screen.tabFont(), "Irreversible data loss", px + 8, py + 17, JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.DROP_DATA), px + 8, py + 6,
+                JsTechTheme.red());
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.IRREVERSIBLE), px + 8, py + 17,
+                JsTechTheme.dim());
 
         // Scope selector: NETWORK | SERVER | TYPES.
         final int segW = (DROP_W - 16) / 3;
-        final String[] names = {"NETWORK", "SERVER", "TYPES"};
         for (int i = 0; i < 3; i++) {
             final int bx = px + 8 + i * segW;
             final boolean on = this.scope == i;
             final boolean hov = inRect(mouseX, mouseY, bx, py + 30, segW - 2, 14);
-            g.fill(bx, py + 30, bx + segW - 2, py + 44, on ? JsTechTheme.red() : (hov ? 0xFF24323C : 0xFF1A222B));
-            g.drawCenteredString(screen.tabFont(), names[i], bx + (segW - 2) / 2, py + 33,
-                    on ? 0xFFFFFFFF : JsTechTheme.dim());
+            g.fill(bx, py + 30, bx + segW - 2, py + 44,
+                    on ? JsTechTheme.red() : (hov ? c.controlHover() : c.control()));
+            Draw.textCentered(g,screen.tabFont(), GameText.resolve(SCOPES[i]), bx + (segW - 2) / 2, py + 33,
+                    on ? c.dangerInk() : JsTechTheme.dim());
         }
 
         final int bodyY = py + 50;
@@ -112,26 +124,30 @@ final class TerminalDropPopup {
             case TerminalDropPayload.SCOPE_SERVER -> renderServer(g, mouseX, mouseY, px, bodyY);
             case TerminalDropPayload.SCOPE_TYPES -> renderTypes(g, px, bodyY);
             default -> { // SCOPE_NETWORK
-                g.drawString(screen.tabFont(), "Destroys ALL public storage on", px + 8, bodyY,
-                        JsTechTheme.text(), false);
-                g.drawString(screen.tabFont(), "the entire network.", px + 8, bodyY + 11,
-                        JsTechTheme.text(), false);
-                g.drawString(screen.tabFont(), ComputerTerminalScreen.fmt(menu.indexedTypes()) + " types over "
-                        + menu.indexedServers() + " servers", px + 8, bodyY + 28, JsTechTheme.amber(), false);
+                int y = bodyY;
+                for (final FormattedCharSequence line : screen.tabFont().split(
+                        GameText.component(TerminalUpkeepTexts.DESTROYS_ALL), DROP_W - 16)) {
+                    Draw.text(g, screen.tabFont(), line, px + 8, y, JsTechTheme.text());
+                    y += 11;
+                }
+                Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.TYPES_OVER.with(
+                                ComputerTerminalScreen.fmt(menu.indexedTypes()), menu.indexedServers())),
+                        px + 8, y + 6, JsTechTheme.amber());
             }
         }
 
         // CANCEL | CONFIRM DROP.
         final int by = py + DROP_H - 22;
         final boolean cancelHov = inRect(mouseX, mouseY, px + 8, by, 70, 16);
-        g.fill(px + 8, by, px + 78, by + 16, cancelHov ? 0xFF2A3340 : 0xFF1A222B);
-        g.drawCenteredString(screen.tabFont(), "CANCEL", px + 43, by + 4, JsTechTheme.text());
+        g.fill(px + 8, by, px + 78, by + 16, cancelHov ? c.cancelHover() : c.control());
+        Draw.textCentered(g,screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.CANCEL), px + 43, by + 4,
+                JsTechTheme.text());
         final boolean canConfirm = confirmEnabled();
         final boolean confHov = inRect(mouseX, mouseY, px + 84, by, DROP_W - 92, 16);
         g.fill(px + 84, by, px + DROP_W - 8, by + 16,
-                !canConfirm ? 0xFF3A2420 : (confHov ? 0xFFB23228 : 0xFF8A241C));
-        g.drawCenteredString(screen.tabFont(), "CONFIRM DROP", px + 84 + (DROP_W - 92) / 2, by + 4,
-                canConfirm ? 0xFFFFFFFF : JsTechTheme.dim());
+                !canConfirm ? c.dangerOff() : (confHov ? c.dangerHover() : c.danger()));
+        Draw.textCentered(g,screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.CONFIRM_DROP),
+                px + 84 + (DROP_W - 92) / 2, by + 4, canConfirm ? c.dangerInk() : JsTechTheme.dim());
         g.pose().popPose();
     }
 
@@ -211,32 +227,34 @@ final class TerminalDropPopup {
                               final int px, final int bodyY) {
         final List<NetworkServersPayload.ServerEntry> servers = menu.networkServers();
         if (servers.isEmpty()) {
-            g.drawString(screen.tabFont(), "No Servers on the network.", px + 8, bodyY,
-                    JsTechTheme.amber(), false);
+            Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.NO_SERVERS), px + 8, bodyY,
+                    JsTechTheme.amber());
             return;
         }
         final NetworkServersPayload.ServerEntry target =
                 servers.get(Math.floorMod(this.serverIndex, servers.size()));
         final boolean lh = inRect(mouseX, mouseY, px + 8, bodyY, 14, 14);
         final boolean rh = inRect(mouseX, mouseY, px + DROP_W - 22, bodyY, 14, 14);
-        g.fill(px + 8, bodyY, px + 22, bodyY + 14, lh ? 0xFF24323C : 0xFF1A222B);
-        g.drawCenteredString(screen.tabFont(), "<", px + 15, bodyY + 3, JsTechTheme.accent());
-        g.fill(px + DROP_W - 22, bodyY, px + DROP_W - 8, bodyY + 14, rh ? 0xFF24323C : 0xFF1A222B);
-        g.drawCenteredString(screen.tabFont(), ">", px + DROP_W - 15, bodyY + 3, JsTechTheme.accent());
-        g.drawCenteredString(screen.tabFont(),
+        final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
+        g.fill(px + 8, bodyY, px + 22, bodyY + 14, lh ? c.controlHover() : c.control());
+        Draw.textCentered(g,screen.tabFont(), "<", px + 15, bodyY + 3, JsTechTheme.accent());
+        g.fill(px + DROP_W - 22, bodyY, px + DROP_W - 8, bodyY + 14, rh ? c.controlHover() : c.control());
+        Draw.textCentered(g,screen.tabFont(), ">", px + DROP_W - 15, bodyY + 3, JsTechTheme.accent());
+        Draw.textCentered(g,screen.tabFont(),
                 screen.tabFont().plainSubstrByWidth(target.name(), DROP_W - 56),
                 px + DROP_W / 2, bodyY + 3, JsTechTheme.text());
-        g.drawString(screen.tabFont(), "Wipes this server's storage.", px + 8, bodyY + 20,
-                JsTechTheme.text(), false);
-        g.drawString(screen.tabFont(), ComputerTerminalScreen.fmt(target.free()) + " free now",
-                px + 8, bodyY + 32, JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.WIPES_SERVER), px + 8, bodyY + 20,
+                JsTechTheme.text());
+        Draw.text(g, screen.tabFont(),
+                GameText.resolve(TerminalUpkeepTexts.FREE_NOW.with(ComputerTerminalScreen.fmt(target.free()))),
+                px + 8, bodyY + 32, JsTechTheme.dim());
     }
 
     private void renderTypes(final GuiGraphics g, final int px, final int bodyY) {
         final List<NetworkItemEntry> items = menu.networkItems();
         if (items.isEmpty()) {
-            g.drawString(screen.tabFont(), "No data types on the network.", px + 8, bodyY,
-                    JsTechTheme.amber(), false);
+            Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.NO_TYPES), px + 8, bodyY,
+                    JsTechTheme.amber());
             return;
         }
         final int gridX = px + (DROP_W - DROP_GRID_COLS * 18) / 2;
@@ -264,8 +282,9 @@ final class TerminalDropPopup {
                 }
             }
         }
-        g.drawString(screen.tabFont(), this.types.size() + " of " + items.size() + " selected",
-                px + 8, bodyY + DROP_GRID_ROWS * 18 + 2, JsTechTheme.amber(), false);
+        Draw.text(g, screen.tabFont(),
+                GameText.resolve(TerminalUpkeepTexts.SELECTED.with(this.types.size(), items.size())),
+                px + 8, bodyY + DROP_GRID_ROWS * 18 + 2, JsTechTheme.amber());
     }
 
     private int typeCellAt(final int mx, final int my, final int px, final int bodyY) {
@@ -291,11 +310,6 @@ final class TerminalDropPopup {
         }
         PacketDistributor.sendToServer(new TerminalDropPayload(
                 menu.monitorPos(), menu.hostPos(), this.scope, chosen, serverKey));
-        screen.maintHint = "DROP logged";
-    }
-
-    private static boolean inRect(final double mx, final double my, final int x, final int y,
-                                  final int w, final int h) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
+        screen.maintHint = TerminalTexts.LOGGED.with("DROP");
     }
 }

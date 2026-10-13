@@ -41,15 +41,7 @@ final class GatewayCalls {
     static List<String> methodsOf(final IPeripheral peripheral) {
         final List<String> names = new ArrayList<>();
         for (final Method method : peripheral.getClass().getMethods()) {
-            final LuaFunction mark = method.getAnnotation(LuaFunction.class);
-            if (mark == null) {
-                continue;
-            }
-            if (mark.value().length == 0) {
-                names.add(method.getName());
-            } else {
-                names.addAll(List.of(mark.value()));
-            }
+            names.addAll(luaNamesOf(method));
         }
         return names;
     }
@@ -80,21 +72,27 @@ final class GatewayCalls {
                 throw refused;
             }
             throw new LuaException(name + " failed: "
-                    + (cause == null ? failed.toString() : String.valueOf(cause.getMessage())));
+                    + (cause == null ? failed.toString()
+                            : cause.getMessage() != null ? cause.getMessage() : cause.toString()));
         }
     }
 
     private static Method methodOf(final IPeripheral peripheral, final String name) {
         for (final Method method : peripheral.getClass().getMethods()) {
-            final LuaFunction mark = method.getAnnotation(LuaFunction.class);
-            if (mark == null) {
-                continue;
-            }
-            if (mark.value().length == 0 ? method.getName().equals(name) : List.of(mark.value()).contains(name)) {
+            if (luaNamesOf(method).contains(name)) {
                 return method;
             }
         }
         return null;
+    }
+
+    /** The names a method answers to from Lua: empty when unmarked, its Java name when the mark names none. */
+    private static List<String> luaNamesOf(final Method method) {
+        final LuaFunction mark = method.getAnnotation(LuaFunction.class);
+        if (mark == null) {
+            return List.of();
+        }
+        return mark.value().length == 0 ? List.of(method.getName()) : List.of(mark.value());
     }
 
     /** What to hand the method, or null when it wants something only ComputerCraft itself can give. */
@@ -128,10 +126,15 @@ final class GatewayCalls {
             return given == null ? null : String.valueOf(given);
         }
         if ((want == int.class || want == Integer.class) && given instanceof Number number) {
-            return number.intValue();
+            final Long whole = wholeOf(number);
+            if (whole == null || whole < Integer.MIN_VALUE || whole > Integer.MAX_VALUE) {
+                return NOTHING;
+            }
+            return whole.intValue();
         }
         if ((want == long.class || want == Long.class) && given instanceof Number number) {
-            return number.longValue();
+            final Long whole = wholeOf(number);
+            return whole == null ? NOTHING : whole;
         }
         if ((want == double.class || want == Double.class) && given instanceof Number number) {
             return number.doubleValue();
@@ -143,6 +146,22 @@ final class GatewayCalls {
             return GatewayValues.toLua(given);
         }
         return NOTHING;
+    }
+
+    /**
+     * The number as a long when it is a finite whole number that fits one, otherwise null, so a call is
+     * refused instead of acting on a wrapped or truncated amount.
+     */
+    private static Long wholeOf(final Number number) {
+        if (number instanceof Double || number instanceof Float) {
+            final double real = number.doubleValue();
+            if (Double.isNaN(real) || Double.isInfinite(real) || real != Math.rint(real)
+                    || real < -0x1p63 || real >= 0x1p63) {
+                return null;
+            }
+            return (long) real;
+        }
+        return number.longValue();
     }
 
     /** What a method gave back: nothing, one value, or several. */

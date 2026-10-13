@@ -1,0 +1,216 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_console.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_console.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_console.table1",
+      "heads": [
+        "jsc.guide.sigma_console.table1_head1",
+        "jsc.guide.sigma_console.table1_head2",
+        "jsc.guide.sigma_console.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Console.Print(text)"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.Print(char)"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.PrintLine(text)"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.Clear()"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.ReadLine()"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.HasLine()"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.Read()"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.Scan(out value)"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.ReadInt()"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.ReadLong()"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.ReadDouble()"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_11_3"
+          }
+        ],
+        [
+          {
+            "literal": "Console.ReadBool()"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.sigma_console.table1_12_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_console.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_console.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_console.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_console.definition1",
+      "term": "jsc.guide.sigma_console.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_console.definition2",
+      "term": "jsc.guide.sigma_console.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_console.fix1",
+          "problem": "jsc.guide.sigma_console.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_console.fix2",
+          "problem": "jsc.guide.sigma_console.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_console.fix3",
+          "problem": "jsc.guide.sigma_console.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_console.fix4",
+          "problem": "jsc.guide.sigma_console.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_console.fix5",
+          "problem": "jsc.guide.sigma_console.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_runtime_stops"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_console",
+  "order": 353,
+  "section": "jsc:library_basics",
+  "title": "jsc.guide.sigma_console.title"
+}

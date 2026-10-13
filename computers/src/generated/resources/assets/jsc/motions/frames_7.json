@@ -1,0 +1,105 @@
+{
+  "caret_blink": {
+    "duration": 530,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blink"
+  },
+  "dialog_open": {
+    "duration": 200,
+    "easing": "ease-out-cubic",
+    "from": 0.9,
+    "group": "minimize animations",
+    "opacity_from": 0.0,
+    "style": "scale",
+    "to": 1.0
+  },
+  "menu_show": {
+    "duration": 200,
+    "easing": "linear",
+    "group": "menus animations",
+    "style": "appear"
+  },
+  "notice_hide": {
+    "duration": 300,
+    "easing": "linear",
+    "group": "animations",
+    "out": 1.0,
+    "style": "appear"
+  },
+  "notice_show": {
+    "duration": 300,
+    "easing": "linear",
+    "group": "animations",
+    "style": "appear"
+  },
+  "pointer_busy": {
+    "duration": 900,
+    "easing": "linear",
+    "frames": 18.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "pointer_working": {
+    "duration": 900,
+    "easing": "linear",
+    "frames": 18.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "progress_fill": {
+    "duration": 250,
+    "easing": "ease-out-cubic",
+    "group": "animations",
+    "style": "ease"
+  },
+  "progress_wait": {
+    "duration": 2000,
+    "easing": "linear",
+    "length": 0.3,
+    "steady": 1.0,
+    "style": "segment"
+  },
+  "scene_fade": {
+    "duration": 400,
+    "easing": "linear",
+    "style": "fade"
+  },
+  "tooltip_show": {
+    "duration": 200,
+    "easing": "linear",
+    "group": "tooltips animations",
+    "style": "appear"
+  },
+  "window_close": {
+    "duration": 200,
+    "easing": "ease-in-cubic",
+    "from": 1.0,
+    "group": "minimize animations",
+    "opacity_to": 0.0,
+    "style": "scale",
+    "to": 0.9
+  },
+  "window_minimize": {
+    "duration": 250,
+    "easing": "ease-in-cubic",
+    "group": "minimize animations",
+    "out": 1.0,
+    "style": "zoom"
+  },
+  "window_open": {
+    "duration": 250,
+    "easing": "ease-out-cubic",
+    "from": 0.9,
+    "group": "minimize animations",
+    "opacity_from": 0.0,
+    "style": "scale",
+    "to": 1.0
+  },
+  "window_restore": {
+    "duration": 250,
+    "easing": "ease-out-cubic",
+    "group": "minimize animations",
+    "style": "zoom"
+  }
+}

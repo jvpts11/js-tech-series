@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.term;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,29 +21,42 @@ class TermPaletteTest {
     /** What a line of text has to reach against its ground to be read without effort. */
     private static final double READABLE = 4.5;
 
-    /** The darkest ground a terminal window is drawn on. */
-    private static final int DARK_GLASS = 0xFF000000;
+    /** The inks each set ships with, which is what a player without a resource pack reads. */
+    private static final TermInks GLASS = TermPalette.GLASS.declared();
+    private static final TermInks PAPER = TermPalette.PAPER.declared();
 
     @Test
-    void onPaper_everyStyleReadsOnThePaper() {
+    void paper_everyStyleReadsOnThePaper() {
         for (final CliStyle style : CliStyle.values()) {
-            final double ratio = ColorContrast.ratio(TermPalette.onPaper(style), TermPalette.PAPER);
+            final double ratio = ColorContrast.ratio(PAPER.of(style), PAPER.ground());
             assertTrue(ratio >= READABLE, style + " reads at " + ratio + " on the paper");
         }
     }
 
     @Test
-    void onPaper_keepsTheStylesApartThatADarkGlassKeepsApart() {
-        assertNotEquals(TermPalette.onPaper(CliStyle.OK), TermPalette.onPaper(CliStyle.ERROR));
-        assertNotEquals(TermPalette.onPaper(CliStyle.WARN), TermPalette.onPaper(CliStyle.ERROR));
-        assertNotEquals(TermPalette.onPaper(CliStyle.DIM), TermPalette.onPaper(CliStyle.PROMPT));
+    void paper_keepsTheStylesApartThatADarkGlassKeepsApart() {
+        assertNotEquals(PAPER.of(CliStyle.OK), PAPER.of(CliStyle.ERROR));
+        assertNotEquals(PAPER.of(CliStyle.WARN), PAPER.of(CliStyle.ERROR));
+        assertNotEquals(PAPER.of(CliStyle.DIM), PAPER.of(CliStyle.PROMPT));
     }
 
     @Test
     void inksFor_answersThePaperInksOnALightGroundAndTheOthersOnADarkOne() {
         assertEquals(TermPalette.onPaper(CliStyle.ERROR),
-                TermPalette.inksFor(TermPalette.PAPER).applyAsInt(CliStyle.ERROR));
+                TermPalette.inksFor(PAPER.ground()).applyAsInt(CliStyle.ERROR));
         assertEquals(TermPalette.colorOf(CliStyle.ERROR),
-                TermPalette.inksFor(DARK_GLASS).applyAsInt(CliStyle.ERROR));
+                TermPalette.inksFor(GLASS.ground()).applyAsInt(CliStyle.ERROR));
+    }
+
+    @Test
+    void lightGround_tellsThePaperFromTheGlass() {
+        assertTrue(TermPalette.lightGround(PAPER.ground()));
+        assertFalse(TermPalette.lightGround(GLASS.ground()));
+    }
+
+    @Test
+    void selectionOn_washesInTheInkOfTheGround() {
+        assertEquals(PAPER.selection(), TermPalette.selectionOn(PAPER.ground()));
+        assertEquals(GLASS.selection(), TermPalette.selectionOn(GLASS.ground()));
     }
 }

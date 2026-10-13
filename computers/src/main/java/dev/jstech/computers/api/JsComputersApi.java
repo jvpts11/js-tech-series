@@ -7,15 +7,28 @@
  */
 package dev.jstech.computers.api;
 
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.api.planner.IExplainNode;
+import dev.jstech.computers.api.planner.IPlannerOperator;
+import dev.jstech.computers.api.planner.IPlannerRule;
+import dev.jstech.computers.api.planner.IPlannerStatistic;
+import dev.jstech.computers.engine.EngineDef;
+import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.engine.nextgre.NextgreExtensions;
 import dev.jstech.computers.hardware.ArchitectureSpec;
-import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.GraphicsPrograms;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OperatingSpaceDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.FileOpeners;
+import dev.jstech.computers.os.ComponentKinds;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What J's Computers promises to anything built on it.
@@ -35,19 +48,42 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 7;
 
     private JsComputersApi() {
     }
 
     /**
-     * Adds a kind of machine, with what it runs and how wide its words are.
+     * Adds an instruction set architecture, a kind of machine, with what it runs and how wide its words are.
      *
      * <p>A program built for an older machine of the same line runs on it; nothing runs what was built for
      * a machine that came after it.
      */
+    @ApiStatus.Experimental
+    public static void registerIsa(final IsaSpec isa) {
+        if (isa == null) {
+            return;
+        }
+        if (OsRegistry.isFrozen()) {
+            JsComputers.LOGGER.warn("The ISA {} was not registered: they are only added while the game loads",
+                    isa.id());
+            return;
+        }
+        Isas.add(isa);
+    }
+
+    /**
+     * Adds a kind of machine under the ISA's former name.
+     *
+     * @deprecated use {@link #registerIsa(IsaSpec)}; this goes in the next cycle of the series
+     */
+    @Deprecated(since = "0.5.0a", forRemoval = true)
+    @SuppressWarnings("removal")
     public static void registerArchitecture(final ArchitectureSpec architecture) {
-        Architectures.add(architecture);
+        if (architecture == null) {
+            return;
+        }
+        registerIsa(architecture.toIsa());
     }
 
     /** Adds a kernel, which an operating system then names as the one it is built on. */
@@ -71,7 +107,28 @@ public final class JsComputersApi {
      * @param programId the program's id path, as it was registered
      */
     public static void registerFileOpener(final String programId) {
+        if (OsRegistry.isFrozen()) {
+            JsComputers.LOGGER.warn("The file opener {} was not registered: they are only added while the game loads",
+                    programId);
+            return;
+        }
         FileOpeners.registerAnyFileOpener(programId);
+    }
+
+    /**
+     * Says the windows of a program draw through a surface, which holds video memory on the machine while they are
+     * open.
+     *
+     * <p>This is the common half of that fact: the server counts video memory too, and it never runs the client setup
+     * that says what opens the window. Call it for every program whose window answers a renderer.
+     *
+     * @param programId the program's id, as it was registered
+     */
+    @ApiStatus.Experimental
+    public static void registerGraphicsProgram(final ResourceLocation programId) {
+        if (programId != null) {
+            GraphicsPrograms.register(programId);
+        }
     }
 
     /** Adds a desktop, which a Linux computer installs as a package or an operating system bundles. */
@@ -88,5 +145,55 @@ public final class JsComputersApi {
      */
     public static void registerSpace(final OperatingSpaceDef space) {
         OsRegistry.registerSpace(space);
+    }
+
+    /**
+     * Adds a Network Operations Engine, which a Mainframe can then install, choose and run to plan its network's
+     * work. Its package is a program registered like any other; this says what the engine it installs is.
+     *
+     * <p>Until the engine brings a planner of its own, it plans the way the Midsoft IQL Server does, so a network
+     * never runs on an engine that cannot do the work.
+     */
+    @ApiStatus.Experimental
+    public static void registerEngine(final EngineDef engine) {
+        NetworkEngines.register(engine);
+    }
+
+    /**
+     * Adds a rule to the planner of the engines that take extensions (NextgreIQL among them): it weighs every plan
+     * they consider for a craft, and a player switches it on or off for their own Mainframe.
+     */
+    @ApiStatus.Experimental
+    public static void registerPlannerRule(final IPlannerRule rule) {
+        NextgreExtensions.addRule(rule);
+    }
+
+    /** Adds a hint to the dialect of the engines that take extensions, which changes the plans of the statement. */
+    @ApiStatus.Experimental
+    public static void registerPlannerOperator(final IPlannerOperator operator) {
+        NextgreExtensions.addOperator(operator);
+    }
+
+    /** Adds a statistic those planners show, and may reckon a step's time with. */
+    @ApiStatus.Experimental
+    public static void registerPlannerStatistic(final IPlannerStatistic statistic) {
+        NextgreExtensions.addStatistic(statistic);
+    }
+
+    /** Adds notes those planners show under the steps of a plan. */
+    @ApiStatus.Experimental
+    public static void registerExplainNode(final IExplainNode node) {
+        NextgreExtensions.addExplainNode(node);
+    }
+
+    /**
+     * Adds a kind of component for Σ# programs to put in their windows: {@code new GenericComponent("yourmod:dial")}.
+     *
+     * <p>The kind is named in the namespace of the mod adding it, and a name already taken stops the load. What draws
+     * it is registered on the client, through {@code ComponentRenderers}.
+     */
+    @ApiStatus.Experimental
+    public static void registerComponentKind(final ComponentKind kind) {
+        ComponentKinds.register(kind);
     }
 }

@@ -90,6 +90,11 @@ public final class Emitter {
         return program;
     }
 
+    /** One parameter as the assembly names it: its type, marked when it is one the method fills in. */
+    static String parameterText(final boolean outward, final ITypeSymbol type) {
+        return (outward ? "out " : "") + type.describe();
+    }
+
     /** How a method's parameters are written down: each one's type, marked when it is one it fills in. */
     static List<String> writtenParameters(final IMemberSymbol.MethodSymbol method) {
         final List<String> written = new ArrayList<>();
@@ -97,7 +102,7 @@ public final class Emitter {
             return written;
         }
         for (final IMemberSymbol.ParameterSymbol parameter : method.parameters()) {
-            written.add((parameter.outward() ? "out " : "") + parameter.type().describe());
+            written.add(parameterText(parameter.outward(), parameter.type()));
         }
         return written;
     }
@@ -302,8 +307,7 @@ public final class Emitter {
     private List<String> written(final List<IDecl.Parameter> parameters) {
         final List<String> names = new ArrayList<>();
         for (final IDecl.Parameter parameter : parameters) {
-            names.add((parameter.outward() ? "out " : "")
-                    + this.declarations.resolve(parameter.type()).describe());
+            names.add(parameterText(parameter.outward(), this.declarations.resolve(parameter.type())));
         }
         return names;
     }

@@ -1,0 +1,76 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.remote_control.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.remote_control.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.remote_control.table1",
+      "heads": [
+        "jsc.guide.remote_control.table1_head1",
+        "jsc.guide.remote_control.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.remote_control.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.remote_control.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.remote_control.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.remote_control.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.remote_control.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.remote_control.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.remote_control.fix1",
+          "problem": "jsc.guide.remote_control.problem1"
+        },
+        {
+          "fix": "jsc.guide.remote_control.fix2",
+          "problem": "jsc.guide.remote_control.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:mainframes",
+        "jsc:remote_access",
+        "jsc:monitors"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:remote_control",
+  "order": 56,
+  "section": "jsc:network_tools",
+  "title": "jsc.guide.remote_control.title"
+}

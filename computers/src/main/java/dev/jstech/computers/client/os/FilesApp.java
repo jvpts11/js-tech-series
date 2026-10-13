@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.FilesLayout;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
@@ -29,6 +30,7 @@ import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
@@ -44,6 +46,17 @@ import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.motion.MotionScope;
+import dev.jstech.core.motion.MotionSpec;
+import dev.jstech.core.motion.Rhythm;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -77,6 +90,7 @@ import java.util.Set;
  * lists' layout rather than draw in it. The geometry lives in {@link FilesLayout}, where a test proves
  * nothing overlaps.
  */
+@PaletteHolder
 public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** The archiver, by the id the desktop knows it under; nothing is offered without it installed. */
@@ -90,12 +104,18 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int VOLUME_LABEL_MAX = 32;
     private static final int SEARCH_MAX = 40;
     private static final int PROPERTY_ROWS = 5;
-    private static final int DROP_TARGET_EDGE = 0xFF2E8B2E;
-    private static final int BAND_FILL = 0x334C84F0;
-    private static final int BAND_EDGE = 0xCC4C84F0;
+    /** How long a place may take to answer before the throbber starts turning, in milliseconds. */
+    private static final double SLOW_ANSWER_MS = 250.0;
+    /**
+     * The explorer's own colours, {@code jsc:app/files}: the folder a drop would land in, the band a drag selects
+     * with, what dims the window behind Properties, the label that follows a dragged row with its words, and the
+     * pale band of Frames 7's command bar, top to foot.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/files",
+            new Colours(0xFF2E8B2E, 0x334C84F0, 0xCC4C84F0, 0x40000000, 0xD0303848, 0xFFFFFFFF, 0xFFF5F9FD,
+                    0xFFDDE7F3));
 
     private OsSkin skin = OsSkin.fallback();
-    private String os = "frames_95";
 
     private final BlockPos host;
     /*
@@ -110,6 +130,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private List<Row> rows = new ArrayList<>();
     private int selected = -1;
     private List<DiskFilesPayload.WireVolume> volumes = new ArrayList<>();
+    /** When the place being waited for was asked for, on the motion clock, or NaN while nothing is awaited. */
+    private double awaitingSince = Double.NaN;
 
     private int lastClickRow = -1;
     private long lastClickAt;
@@ -201,6 +223,18 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private final Label[] propertyKeys = new Label[PROPERTY_ROWS];
     private final Label[] propertyValues = new Label[PROPERTY_ROWS];
     private final Button propertiesClose;
+    /** Frames 7's command bar under the address row: Organize, then what the selection or the folder can do. */
+    private final Button organizeButton;
+    private final Button openButton;
+    private final Button newFolderButton;
+    /** Frames 10's ribbon: the tab dropped down over the window, or null, and the commands it holds. */
+    @Nullable
+    private TextKey ribbonTab;
+    private final Panel ribbonBody = new Panel();
+    private List<RibbonGroup> ribbonGroups = List.of();
+    private final List<Button> ribbonButtons = new ArrayList<>();
+    /** The ribbon's tabs as last drawn, which a click is read against. */
+    private final List<RibbonTabSpan> ribbonTabs = new ArrayList<>();
 
     /*
      * The content rectangle and cursor of the last render: the components are laid out in it, and the
@@ -227,6 +261,18 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** One entry of the drive tree: a section title, a quick-access shortcut, or a volume. */
     private record TreeItem(String label, String target, boolean section, boolean removable, int volumeIndex) {
+    }
+
+    /** A command on the ribbon: what it says, whether it can run now, whether it is the state now, what it does. */
+    private record RibbonCommand(TextKey label, boolean enabled, boolean on, Runnable action) {
+    }
+
+    /** A group of the ribbon's commands with the caption under it. */
+    private record RibbonGroup(TextKey caption, List<RibbonCommand> commands) {
+    }
+
+    /** A ribbon tab as drawn: its name and its left and right edges, in the window's coordinates. */
+    private record RibbonTabSpan(TextKey label, int left, int right) {
     }
 
     /** A text field for a file or volume name: a path separator cannot be typed into it. */
@@ -263,8 +309,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     public FilesApp(final BlockPos host, final String os, final String initialDir, @Nullable final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
-        this.os = os;
-        this.skin = OsSkin.forDesktop(ResourceLocation.fromNamespaceAndPath("jsc", os));
+        this.skin = OsSkin.forDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, os));
 
         backButton = root.add(new Button("<", this::goBack));
         forwardButton = root.add(new Button(">", this::goForward));
@@ -284,11 +329,16 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             applyFilterAndSort();
         });
         viewButton = root.add(new Button(() -> iconView ? "=" : "#", this::toggleView));
+        organizeButton = root.add(new Button(GameText.resolve(FilesTexts.ORGANIZE), this::openOrganize));
+        openButton = root.add(new Button(this::openLabel, this::openSelected));
+        newFolderButton = root.add(new Button(GameText.resolve(FilesTexts.NEW_FOLDER_COMMAND), this::newFolder));
 
         treeList = root.add(new ListView<TreeItem>(this::tree, FilesLayout.ROW_H, this::renderTreeRow)
                 .setPadding(1, 2)
                 .setOnClick(this::treeClicked));
-        columns = root.add(new ColumnHeader(List.of("Name", "Type", "Size")).setOnSort(column -> applyFilterAndSort())
+        columns = root.add(new ColumnHeader(List.of(GameText.resolve(FileDialogTexts.NAME_COLUMN),
+                GameText.resolve(FileDialogTexts.TYPE_COLUMN), GameText.resolve(FileDialogTexts.SIZE_COLUMN)))
+                .setOnSort(column -> applyFilterAndSort())
                 .setOnResize(this::resizeColumn));
         fileList = root.add(new ListView<Row>(() -> rows, FilesLayout.ROW_H, this::renderFileRow)
                 .setPadding(1, 1)
@@ -310,15 +360,16 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         statusLeft = root.add(new Label(this::statusLeftText));
         statusRight = root.add(new Label(this::statusRightText, Label.Tone.DIM).setAlign(Label.Align.RIGHT));
 
-        properties = new Popup("Properties", FilesLayout.PROPS_W, FilesLayout.PROPS_H)
-                .setDim(0x40000000)
+        properties = new Popup(GameText.resolve(FilesTexts.PROPERTIES), FilesLayout.PROPS_W, FilesLayout.PROPS_H)
+                .setDim(PALETTE.get().propertiesDim())
                 .setLayouter(this::layoutProperties);
         for (int i = 0; i < PROPERTY_ROWS; i++) {
             final int line = i;
             propertyKeys[i] = properties.add(new Label(() -> propertyText(line, 0), Label.Tone.DIM));
             propertyValues[i] = properties.add(new Label(() -> propertyText(line, 1)));
         }
-        propertiesClose = properties.add(new Button("Close", properties::close).setPrimary(true));
+        propertiesClose = properties.add(new Button(GameText.resolve(FilesTexts.CLOSE), properties::close)
+                .setPrimary(true));
 
         FilesApps.register(this);
         request(initialDir);
@@ -327,13 +378,27 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public void applySkin(final OsSkin osSkin) {
         this.skin = osSkin;
-        this.os = osSkin.osPath();
     }
 
     /** Takes a listing of the folder this explorer is on. */
     void accept(final DiskFilesPayload payload) {
+        this.awaitingSince = Double.NaN;
         this.volumes = payload.volumes();
         rebuild(payload.files());
+    }
+
+    /**
+     * Whether the throbber turns: a place asked for has been slow to answer. A folder the machine lists at once never
+     * sets it going, as a local folder never set the real ones going.
+     */
+    public boolean throbbing() {
+        return !Double.isNaN(awaitingSince) && MotionClock.now() - awaitingSince >= SLOW_ANSWER_MS;
+    }
+
+    /** A place slow to answer keeps the explorer waiting, which the pointer shows. */
+    @Override
+    public boolean waiting() {
+        return throbbing();
     }
 
     @Override
@@ -382,7 +447,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     @Override
     public String title() {
-        return "Files";
+        return GameText.resolve(FilesAppTexts.TITLE);
     }
 
     @Override
@@ -440,6 +505,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         // Row indices are about to mean something else, so a sweep selection cannot survive.
         this.bandActive = false;
         this.bandRows.clear();
+        if (Double.isNaN(awaitingSince)) {
+            this.awaitingSince = MotionClock.now();
+        }
         PacketDistributor.sendToServer(new RequestDiskFilesPayload(host, target));
     }
 
@@ -500,6 +568,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     /** The tree's key for the trash, which is no folder the explorer lists but a window the desktop opens. */
     private static final String TRASH_PLACE = "trash:";
 
+    /** The folder the machine keeps the network's stored items in, which the tree names in the player's language. */
+    private static final String STORAGE_PLACE = "Storage";
+
     private boolean onNetwork() {
         return dir.startsWith(NET_ROOT);
     }
@@ -545,22 +616,10 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return dir.startsWith("media:");
     }
 
-    /** The reader position of the medium being browsed, or {@code -1} on the system disk. */
-    private long mediaReaderPos() {
-        return mediaReaderPos(dir);
-    }
-
-    private static long mediaReaderPos(final String path) {
-        if (!path.startsWith("media:")) {
-            return -1L;
-        }
-        final String rest = path.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        try {
-            return Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
-        } catch (final NumberFormatException e) {
-            return -1L;
-        }
+    /** The key of the removable volume being browsed: a drive's medium or a docked disk; empty on the system disk. */
+    private String mediaRoot() {
+        final MediaVolume volume = MediaVolume.parse(dir);
+        return volume == null ? "" : volume.key();
     }
 
     /** Whether the volume being browsed refuses writes: an installer's projection, or a pressed disc. */
@@ -585,22 +644,26 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private void rebuild(final List<DiskFilesPayload.WireFile> files) {
         final List<Row> built = new ArrayList<>();
         if (dir.isEmpty()) {
-            built.add(new Row(Kind.STORAGE, "Storage", "Stored items", "", FileIcons.Kind.FOLDER, null, null));
+            built.add(new Row(Kind.STORAGE, GameText.resolve(FilesTexts.STORAGE),
+                    GameText.resolve(FilesTexts.STORED_ITEMS), "", FileIcons.Kind.FOLDER, null, null));
         } else {
-            built.add(new Row(Kind.UP, "..", "Up one level", "", FileIcons.Kind.UP, null, null));
+            built.add(new Row(Kind.UP, "..", GameText.resolve(FileDialogTexts.UP_ONE_LEVEL), "", FileIcons.Kind.UP,
+                    null, null));
         }
         for (final DiskFilesPayload.WireFile f : files) {
             if (f.directory()) {
                 final boolean drive = f.path().startsWith("media:") && f.path().indexOf('/') < 0;
                 final int depth = netDepth(f.path());
                 final String label = drive ? volumeLabel(f.path()) : depth >= 0 ? netName(f.path()) : baseName(f.path());
-                final String kind = drive ? "Removable drive"
-                        : depth == 0 ? "Computer" : depth == 1 ? "Shared folder" : "Folder";
-                built.add(new Row(Kind.DIR, label, kind, "", FileIcons.Kind.FOLDER, f, null));
+                final TextKey kind = drive ? FilesTexts.REMOVABLE_DRIVE
+                        : depth == 0 ? FilesTexts.COMPUTER : depth == 1 ? FilesTexts.SHARED_FOLDER
+                        : FileDialogTexts.FOLDER;
+                built.add(new Row(Kind.DIR, label, GameText.resolve(kind), "", FileIcons.Kind.FOLDER, f, null));
             } else if (f.projectsItem()) {
                 final ItemStack stack = stackOf(f.itemId());
                 built.add(new Row(Kind.FILE, stack.isEmpty() ? baseName(f.path()) : stack.getHoverName().getString(),
-                        "Stored item", f.count() + " it", FileIcons.Kind.DAT, f, stack.isEmpty() ? null : stack));
+                        GameText.resolve(FilesTexts.STORED_ITEM), GameText.resolve(FilesTexts.COUNT.with(f.count())),
+                        FileIcons.Kind.DAT, f, stack.isEmpty() ? null : stack));
             } else {
                 built.add(new Row(Kind.FILE, baseName(f.path()), typeLabel(f), sizeLabel(f), FileIcons.kindOf(f.ext()), f, null));
             }
@@ -694,73 +757,42 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** What a file is called in the Type column, by its extension, for any window that lists files the same way. */
     public static String typeLabel(final DiskFilesPayload.WireFile f) {
-        return switch (f.ext().toLowerCase(Locale.ROOT)) {
-            case "iql" -> "IQL script";
-            case "txt" -> "Text";
-            case "log" -> "Log";
-            case "cfg" -> "Configuration";
-            case "csv" -> "Table";
-            case "cmd" -> "Shell script";
-            case "craft" -> "Craft pattern";
-            case "dat" -> "Stored item";
-            case "exe" -> "Installer";
-            case "sh" -> "Install script";
-            case "pkg" -> "Package manifest";
-            case "inf" -> "Setup information";
-            case "bin" -> "Installer data";
-            case "cpk" -> "Program package";
-            case "sln" -> "Solution";
-            case "sgsproj" -> "Σ# project";
-            case "sgproj" -> "Σ project";
-            /*
-             * A language names its own files. Whatever is registered gets this for nothing, and the
-             * explorer stops needing to know which language the machines happen to speak.
-             */
-            default -> languageLabel(f.ext());
-        };
+        final TextKey name = FileType.of(f.ext()).typeName();
+        /*
+         * A language names its own files. Whatever is registered gets this for nothing, and the
+         * explorer stops needing to know which language the machines happen to speak.
+         */
+        return name != null ? GameText.resolve(name.text()) : languageLabel(f.ext());
     }
 
     private static String sizeLabel(final DiskFilesPayload.WireFile f) {
         if (f.readOnly() && f.weight() == 0L) {
             return "-";
         }
-        return f.weight() + " mB";
+        return GameText.resolve(FileDialogTexts.SIZE.with(f.weight()));
     }
 
     private String volumeLabel(final String key) {
         for (final DiskFilesPayload.WireVolume v : volumes) {
             if (v.key().equals(key)) {
-                return v.label();
+                return GameText.resolve(v.label());
             }
         }
-        return "Removable Drive";
+        return GameText.resolve(DiskFilesPayload.REMOVABLE_DRIVE);
+    }
+
+    /* A volume's name with its drive letter after it, or on its own where the desktop has no letters. */
+    private static String onDrive(final String label, final String letter) {
+        return DrivePaths.onDrive(label, letter);
     }
 
     /** The drive letter of a volume: the system disk is C:, then the media in the order the tree lists them. */
     private String letterOf(final String key) {
-        if (linux()) {
-            return "";
-        }
-        if (key.isEmpty()) {
-            return "C:";
-        }
-        if (key.equals(NET_ROOT)) {
-            return "";
-        }
-        int n = 0;
-        for (final DiskFilesPayload.WireVolume v : volumes) {
-            if (v.removable()) {
-                n++;
-                if (v.key().equals(key)) {
-                    return (char) ('C' + n) + ":";
-                }
-            }
-        }
-        return "";
+        return key.equals(NET_ROOT) ? "" : DrivePaths.letterOf(linux(), volumes, key);
     }
 
     private boolean linux() {
-        return !os.startsWith("frames_");
+        return skin.unixLike();
     }
 
     private boolean isSelected(final int index) {
@@ -771,21 +803,27 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private List<TreeItem> tree() {
         final List<TreeItem> out = new ArrayList<>();
-        out.add(new TreeItem("Quick access", "", true, false, -1));
-        out.add(new TreeItem("Desktop", desktopDirAt(host, !linux()), false, false, -1));
-        out.add(new TreeItem("Storage", "Storage", false, false, -1));
+        out.add(new TreeItem(GameText.resolve(FilesTexts.QUICK_ACCESS), "", true, false, -1));
+        out.add(new TreeItem(GameText.resolve(FileDialogTexts.DESKTOP), desktopDirAt(host, !linux()), false, false,
+                -1));
+        out.add(new TreeItem(GameText.resolve(FilesTexts.STORAGE), STORAGE_PLACE, false, false, -1));
         // The trash is a place of the desktop, opened in a window of its own; a file dropped on it is deleted.
-        out.add(new TreeItem(DeskTrash.titleHere(), TRASH_PLACE, false, false, -1));
-        out.add(new TreeItem(linux() ? "Devices" : "This PC", "", true, false, -1));
+        out.add(new TreeItem(GameText.resolve(DeskTrash.titleTextHere()), TRASH_PLACE, false, false, -1));
+        out.add(new TreeItem(computerPlace(), "", true, false, -1));
         for (int i = 0; i < volumes.size(); i++) {
             final DiskFilesPayload.WireVolume v = volumes.get(i);
-            final String letter = letterOf(v.key());
-            out.add(new TreeItem(letter.isEmpty() ? v.label() : v.label() + " (" + letter + ")", v.key(),
+            out.add(new TreeItem(onDrive(GameText.resolve(v.label()), letterOf(v.key())), v.key(),
                     false, v.removable(), i));
         }
-        out.add(new TreeItem("Network", "", true, false, -1));
-        out.add(new TreeItem(linux() ? "Shares" : "Shared folders", NET_ROOT, false, false, -1));
+        out.add(new TreeItem(GameText.resolve(FilesTexts.NETWORK), "", true, false, -1));
+        out.add(new TreeItem(GameText.resolve(linux() ? FilesTexts.SHARES : FilesTexts.SHARED_FOLDERS), NET_ROOT,
+                false, false, -1));
         return out;
+    }
+
+    /* What the machine's own drives are listed under: This PC, or on a Unix desktop its devices. */
+    private String computerPlace() {
+        return GameText.resolve(linux() ? FileDialogTexts.DEVICES : FileDialogTexts.THIS_PC);
     }
 
     private static boolean isVolumeItem(final TreeItem item) {
@@ -807,8 +845,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private List<Breadcrumbs.Crumb> crumbs() {
         final List<Breadcrumbs.Crumb> out = new ArrayList<>();
         if (onNetwork()) {
-            out.add(new Breadcrumbs.Crumb(linux() ? "Devices" : "This PC", ""));
-            out.add(new Breadcrumbs.Crumb("Network", NET_ROOT));
+            out.add(new Breadcrumbs.Crumb(computerPlace(), ""));
+            out.add(new Breadcrumbs.Crumb(GameText.resolve(FilesTexts.NETWORK), NET_ROOT));
             String acc = NET_ROOT;
             for (final String seg : dir.substring(NET_ROOT.length()).split("/")) {
                 if (seg.isEmpty()) {
@@ -820,10 +858,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             return out;
         }
         if (onMedia()) {
-            final String rootKey = "media:" + mediaReaderPos();
-            out.add(new Breadcrumbs.Crumb(linux() ? "Devices" : "This PC", ""));
-            final String letter = letterOf(rootKey);
-            out.add(new Breadcrumbs.Crumb(volumeLabel(rootKey) + (letter.isEmpty() ? "" : " (" + letter + ")"), rootKey));
+            final String rootKey = mediaRoot();
+            out.add(new Breadcrumbs.Crumb(computerPlace(), ""));
+            out.add(new Breadcrumbs.Crumb(onDrive(volumeLabel(rootKey), letterOf(rootKey)), rootKey));
             final int slash = dir.indexOf('/');
             if (slash >= 0) {
                 String acc = rootKey;
@@ -837,7 +874,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             }
             return out;
         }
-        out.add(new Breadcrumbs.Crumb(linux() ? "/" : "Local Disk (C:)", ""));
+        out.add(new Breadcrumbs.Crumb(linux() ? "/" : GameText.resolve(FileDialogTexts.LOCAL_DISK), ""));
         if (!dir.isEmpty()) {
             String acc = "";
             for (final String seg : dir.split("/")) {
@@ -866,64 +903,384 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         lastMouseY = mouseY;
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
-        layout(x, y, width, height);
+        final FilesLayout.Bar bar = bar();
+        layout(x, y, width, height, font);
 
         // The surfaces the components sit on: the toolbar rule, the tree rail, the list well, the status bar.
-        g.fill(x, y + FilesLayout.TOOL_H, x + width, y + FilesLayout.TOOL_H + 1, skin.edge());
+        final int toolBottom = y + FilesLayout.toolY(bar) + FilesLayout.TOOL_H;
+        g.fill(x, toolBottom, x + width, toolBottom + 1, skin.edge());
+        if (bar == FilesLayout.Bar.RIBBON) {
+            drawRibbonTabs(g, font, x, y, width, mouseX, mouseY);
+        } else if (bar == FilesLayout.Bar.COMMAND) {
+            // Frames 7's command bar: a pale band under the address row, its own rule under it.
+            final int cb = toolBottom + FilesLayout.COMMAND_H;
+            g.fillGradient(x, toolBottom + 1, x + width, cb - 1, PALETTE.get().commandTop(),
+                    PALETTE.get().commandBottom());
+            g.fill(x, cb - 1, x + width, cb, skin.edge());
+        }
         g.fill(treeList.x(), treeList.y(), treeList.right(), treeList.bottom(), skin.listHover());
         g.fill(treeList.right() - 1, treeList.y(), treeList.right(), treeList.bottom(), skin.edge());
         final int lx = x + FilesLayout.listX();
         final int lw = FilesLayout.listW(width);
-        final int listY = y + FilesLayout.listY();
-        final int listH = FilesLayout.listH(height);
+        final int listY = y + FilesLayout.listY(bar);
+        final int listH = FilesLayout.listH(height, bar);
         g.fill(lx, listY, lx + lw, listY + listH, skin.panelBg());
         Draw.outline(g, lx, listY, lw, listH, skin.edge());
         skin.statusBar(g, x, y + FilesLayout.statusY(height), width, FilesLayout.STATUS_H);
 
         dropTarget = dragging && !iconView ? folderRowAt(dragMx, dragMy) : -1;
         root.render(g, ctx);
+        drawThrobber(g, x, y, width);
 
         // The rubber band, over the rows it is selecting.
         if (bandActive) {
             final int[] b = bandRect();
-            g.fill(b[0], b[1], b[0] + b[2], b[1] + b[3], BAND_FILL);
-            Draw.outline(g, b[0], b[1], b[2], b[3], BAND_EDGE);
+            g.fill(b[0], b[1], b[0] + b[2], b[1] + b[3], PALETTE.get().bandFill());
+            Draw.outline(g, b[0], b[1], b[2], b[3], PALETTE.get().bandEdge());
         }
         if (dragging && dragRow >= 0 && dragRow < rows.size()) {
             final String label = rows.get(dragRow).name();
             final int gw = font.width(label) + 6;
             final int gx = (int) dragMx + 6;
             final int gy = (int) dragMy + 2;
-            g.fill(gx, gy, gx + gw, gy + 11, 0xD0303848);
-            g.drawString(font, label, gx + 3, gy + 2, 0xFFFFFFFF, false);
+            g.fill(gx, gy, gx + gw, gy + 11, PALETTE.get().ghost());
+            Draw.text(g, font, label, gx + 3, gy + 2, PALETTE.get().ghostInk());
+        }
+        if (ribbonTab != null) {
+            drawRibbonBody(g, ctx, x, y, width);
         }
         context.render(g, ctx);
     }
 
+    /** The bar this file manager wears besides its toolbar: Frames 7's command bar, Frames 10's ribbon, or none. */
+    private FilesLayout.Bar bar() {
+        return switch (skin.form()) {
+            case AERO -> FilesLayout.Bar.COMMAND;
+            case METRO -> FilesLayout.Bar.RIBBON;
+            default -> FilesLayout.Bar.NONE;
+        };
+    }
+
+    /**
+     * Frames 10's ribbon tabs over the address row, kept folded the way it came: File in the accent, then Home and
+     * View, the one dropped down drawn joined to its body. File is there only when it has something to offer.
+     */
+    private void drawRibbonTabs(final GuiGraphics g, final Font font, final int x, final int y, final int width,
+                                final int mouseX, final int mouseY) {
+        g.fill(x, y + FilesLayout.RIBBON_TABS_H - 1, x + width, y + FilesLayout.RIBBON_TABS_H, skin.edge());
+        ribbonTabs.clear();
+        int tx = x + 2;
+        for (final TextKey tab : visibleRibbonTabs()) {
+            final String label = GameText.resolve(tab);
+            final int w = font.width(label) + 12;
+            final boolean file = tab == FilesTexts.FILE_TAB;
+            final boolean open = tab == ribbonTab;
+            final boolean over = mouseX >= tx && mouseX < tx + w && mouseY >= y
+                    && mouseY < y + FilesLayout.RIBBON_TABS_H;
+            if (file) {
+                g.fill(tx, y, tx + w, y + FilesLayout.RIBBON_TABS_H - 1, skin.accent());
+            } else if (open) {
+                g.fill(tx, y + 1, tx + w, y + FilesLayout.RIBBON_TABS_H, skin.panelBg());
+                Draw.outline(g, tx, y + 1, w, FilesLayout.RIBBON_TABS_H, skin.edge());
+            } else if (over) {
+                g.fill(tx, y + 1, tx + w, y + FilesLayout.RIBBON_TABS_H - 1, skin.listHover());
+            }
+            Draw.text(g, font, label, tx + 6, y + 2, file ? PALETTE.get().ghostInk() : skin.text());
+            ribbonTabs.add(new RibbonTabSpan(tab, tx, tx + w));
+            tx += w;
+        }
+    }
+
+    /** The tabs the ribbon shows: File only on a machine with a terminal for it to open, then Home and View. */
+    private List<TextKey> visibleRibbonTabs() {
+        return DesktopScreen.terminalName().isEmpty() ? List.of(FilesTexts.HOME_TAB, FilesTexts.VIEW_TAB)
+                : List.of(FilesTexts.FILE_TAB, FilesTexts.HOME_TAB, FilesTexts.VIEW_TAB);
+    }
+
+    /** The dropped-down tab: its commands in their groups, a caption under each and a rule between them. */
+    private void drawRibbonBody(final GuiGraphics g, final UiContext ctx, final int x, final int y, final int width) {
+        final int top = y + FilesLayout.ribbonBodyY();
+        final int bottom = top + FilesLayout.RIBBON_BODY_H;
+        g.fill(x, top, x + width, bottom, skin.panelBg());
+        g.fill(x, bottom, x + width, bottom + 1, skin.edge());
+        ribbonBody.render(g, ctx);
+        int index = 0;
+        for (final RibbonGroup group : ribbonGroups) {
+            int gx = Integer.MAX_VALUE;
+            int right = 0;
+            for (int i = 0; i < group.commands().size(); i++) {
+                final Button button = ribbonButtons.get(index++);
+                gx = Math.min(gx, button.x());
+                right = Math.max(right, button.right());
+            }
+            final String caption = GameText.resolve(group.caption());
+            final int captionW = Texts.smallWidth(ctx.font(), caption);
+            final int gw = Math.max(right - gx, captionW);
+            Texts.small(g, ctx.font(), caption, gx + (gw - captionW) / 2, bottom - FilesLayout.RIBBON_CAPTION_H,
+                    skin.dim());
+            g.fill(gx + gw + 3, top + 3, gx + gw + 4, bottom - 3, skin.edge());
+        }
+    }
+
+    /**
+     * Places the dropped-down tab's commands: each group's in columns of two, stacked the way the ribbon stacked its
+     * small commands, each column as wide as its longest words, a group at least as wide as its caption.
+     */
+    private void layoutRibbonBody(final Font font, final int x, final int y) {
+        int bx = x + 4;
+        final int top = y + FilesLayout.ribbonBodyY() + 3;
+        int index = 0;
+        for (final RibbonGroup group : ribbonGroups) {
+            final int start = bx;
+            final List<RibbonCommand> commands = group.commands();
+            for (int column = 0; column * 2 < commands.size(); column++) {
+                final int first = column * 2;
+                final int last = Math.min(commands.size(), first + 2);
+                int columnW = 0;
+                for (int i = first; i < last; i++) {
+                    columnW = Math.max(columnW, Texts.smallWidth(font, GameText.resolve(commands.get(i).label())) + 6);
+                }
+                for (int i = first; i < last; i++) {
+                    ribbonButtons.get(index++).setBounds(bx, top + (i - first) * (FilesLayout.RIBBON_BUTTON_H + 1),
+                            columnW, FilesLayout.RIBBON_BUTTON_H);
+                }
+                bx += columnW + 1;
+            }
+            bx = Math.max(bx, start + Texts.smallWidth(font, GameText.resolve(group.caption()))) + 8;
+        }
+    }
+
+    /** Drops a tab down, or folds it back up when it is the one already down. */
+    private void toggleRibbonTab(final TextKey tab) {
+        if (tab == FilesTexts.FILE_TAB) {
+            closeRibbon();
+            final RibbonTabSpan span = ribbonSpan(tab);
+            openContext(List.of(new ContextMenu.Item(GameText.resolve(FilesTexts.OPEN_IN.with(
+                    DesktopScreen.terminalName())), true, this::openInTerminal)),
+                    span == null ? lastX + 2 : span.left(), lastY + FilesLayout.RIBBON_TABS_H);
+            return;
+        }
+        if (tab == ribbonTab) {
+            closeRibbon();
+            return;
+        }
+        ribbonTab = tab;
+        ribbonGroups = ribbonGroupsFor(tab);
+        ribbonBody.clear();
+        ribbonButtons.clear();
+        for (final RibbonGroup group : ribbonGroups) {
+            for (final RibbonCommand command : group.commands()) {
+                final Button button = new Button(GameText.resolve(command.label()), () -> {
+                    closeRibbon();
+                    command.action().run();
+                }).setPrimary(command.on()).setLabelScale(Texts.SMALL);
+                button.setEnabled(command.enabled());
+                ribbonButtons.add(ribbonBody.add(button));
+            }
+        }
+    }
+
+    private void closeRibbon() {
+        ribbonTab = null;
+        ribbonGroups = List.of();
+        ribbonBody.clear();
+        ribbonButtons.clear();
+    }
+
+    @Nullable
+    private RibbonTabSpan ribbonSpan(final TextKey tab) {
+        for (final RibbonTabSpan span : ribbonTabs) {
+            if (span.label() == tab) {
+                return span;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * What a tab holds, read from the selection and the folder when it drops down. Home: the clipboard, organizing,
+     * a new folder and opening. View: the two layouts this explorer draws, the one in use lit.
+     */
+    private List<RibbonGroup> ribbonGroupsFor(final TextKey tab) {
+        if (tab == FilesTexts.VIEW_TAB) {
+            return List.of(new RibbonGroup(FilesTexts.LAYOUT, List.of(
+                    new RibbonCommand(FilesTexts.LARGE_ICONS, true, iconView, () -> showIcons(true)),
+                    new RibbonCommand(FilesTexts.DETAILS, true, !iconView, () -> showIcons(false)))));
+        }
+        final Row sel = selectedFileRow();
+        final boolean ro = readOnlyVolume();
+        final boolean locked = sel != null && sel.file() != null && sel.file().readOnly();
+        final boolean editable = sel != null && !ro && !locked;
+        return List.of(
+                new RibbonGroup(FilesTexts.CLIPBOARD, List.of(
+                        new RibbonCommand(FilesTexts.CUT, editable, false, () -> cut(sel)),
+                        new RibbonCommand(FilesTexts.COPY, sel != null && !locked, false, () -> copy(sel)),
+                        new RibbonCommand(FilesTexts.PASTE, !clipboard.isEmpty() && !ro, false, this::paste))),
+                new RibbonGroup(FilesTexts.ORGANIZE, List.of(
+                        new RibbonCommand(FilesTexts.DELETE, editable, false, this::deleteSelected),
+                        new RibbonCommand(FilesTexts.RENAME, editable, false, () -> startRenameAt(selected)))),
+                new RibbonGroup(FilesTexts.NEW, List.of(
+                        new RibbonCommand(FilesTexts.NEW_FOLDER_COMMAND, !ro, false, this::newFolder))),
+                new RibbonGroup(FilesTexts.OPEN, List.of(
+                        new RibbonCommand(sel != null && opensAsProgram(sel) ? FilesTexts.RUN : FilesTexts.OPEN,
+                                sel != null, false, () -> open(sel)),
+                        new RibbonCommand(FilesTexts.PROPERTIES, sel != null, false, () -> openProperties(sel)))));
+    }
+
+    /** The selected row when it is a file or a folder, or null. */
+    @Nullable
+    private Row selectedFileRow() {
+        return selected >= 0 && selected < rows.size() && rows.get(selected).file() != null ? rows.get(selected)
+                : null;
+    }
+
+    private boolean opensAsProgram(final Row r) {
+        return isSetup(r) || r.kind() == Kind.FILE && r.file() != null && isProgram(r.file());
+    }
+
+    private void showIcons(final boolean icons) {
+        if (iconView != icons) {
+            toggleView();
+        }
+    }
+
+    /** Deletes what is selected, the sweep included, the way the right-button menu's Delete does. */
+    private void deleteSelected() {
+        ctxRow = selected;
+        deleteContextRow();
+    }
+
+    /** Frames 7's Organize: the selection's own menu, or the folder's with nothing selected, under the button. */
+    private void openOrganize() {
+        final Row sel = selectedFileRow();
+        ctxRow = sel == null ? -1 : selected;
+        openContext(buildContext(sel), organizeButton.x(), organizeButton.bottom());
+    }
+
+    /** What the command bar's Open says: Run on a setup or a program. */
+    private String openLabel() {
+        final Row sel = selectedFileRow();
+        return GameText.resolve(sel != null && opensAsProgram(sel) ? FilesTexts.RUN : FilesTexts.OPEN);
+    }
+
+    private void openSelected() {
+        final Row sel = selectedFileRow();
+        if (sel != null) {
+            open(sel);
+        }
+    }
+
+    /** Whether Frames 7's command bar is shown, for a test. */
+    public boolean commandBarShown() {
+        return organizeButton.visible();
+    }
+
+    /** The middle of the command bar's Organize, Open or New folder, by what it says, or null. */
+    @Nullable
+    public int[] commandPoint(final String label) {
+        for (final Button button : List.of(organizeButton, openButton, newFolderButton)) {
+            if (button.visible() && button.label().equals(label)) {
+                return new int[] {button.x() + button.width() / 2, button.y() + button.height() / 2};
+            }
+        }
+        return null;
+    }
+
+    /** The middle of the ribbon tab of that name, or null when the ribbon has none such. */
+    @Nullable
+    public int[] ribbonTabPoint(final String label) {
+        for (final RibbonTabSpan span : ribbonTabs) {
+            if (GameText.resolve(span.label()).equals(label)) {
+                return new int[] {(span.left() + span.right()) / 2, lastY + FilesLayout.RIBBON_TABS_H / 2};
+            }
+        }
+        return null;
+    }
+
+    /** What the dropped-down tab offers, or nothing when every tab is folded. */
+    public List<String> ribbonLabels() {
+        final List<String> out = new ArrayList<>();
+        for (final Button button : ribbonButtons) {
+            out.add(button.label());
+        }
+        return out;
+    }
+
+    /** The middle of the dropped-down tab's command of that name, or null. */
+    @Nullable
+    public int[] ribbonCommandPoint(final String label) {
+        for (final Button button : ribbonButtons) {
+            if (button.label().equals(label)) {
+                return new int[] {button.x() + button.width() / 2, button.y() + button.height() / 2};
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The throbber this file manager wears at the right end of its toolbar, by the period it belongs to: Frames 95's
+     * and XP's marks, Konqueror's gear, Nautilus's ring of dots. A file manager of any other look has none.
+     */
+    @Nullable
+    private String throbberSet() {
+        return switch (skin.form()) {
+            case BEVEL -> "frames_95";
+            case LUNA -> "frames_xp";
+            case KDE2 -> "kde2";
+            case GNOME1 -> "gnome1";
+            default -> null;
+        };
+    }
+
+    /* The throbber, still at its first picture, turning while a place is slow to answer. */
+    private void drawThrobber(final GuiGraphics g, final int x, final int y, final int width) {
+        final String set = throbberSet();
+        if (set == null) {
+            return;
+        }
+        // The pictures the strip holds, which the system's own rhythm steps through.
+        final int frames = "gnome1".equals(set) ? 8 : 12;
+        final MotionSpec spec = MotionScope.spec(MotionKinds.BUSY);
+        final int frame = throbbing() && !MotionClock.reduced()
+                ? Math.min(frames - 1, Rhythm.frame(spec, MotionClock.now() - awaitingSince)) : 0;
+        final int side = FilesLayout.THROBBER;
+        final ResourceLocation strip =
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/throbber/" + set + ".png");
+        Draw.blended(() -> g.blit(strip, x + FilesLayout.throbberX(width), y + FilesLayout.throbberY(), frame * side,
+                0, side, side, frames * side, side));
+    }
+
     /** Places every component from the content rectangle; the same layout the next click is read against. */
-    private void layout(final int x, final int y, final int width, final int height) {
-        final int ny = y + FilesLayout.navY();
+    private void layout(final int x, final int y, final int width, final int height, final Font font) {
+        final FilesLayout.Bar bar = bar();
+        final int ny = y + FilesLayout.navY(bar);
         backButton.setBounds(x + FilesLayout.navX(0), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
         backButton.setEnabled(!back.isEmpty());
         forwardButton.setBounds(x + FilesLayout.navX(1), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
         forwardButton.setEnabled(!forward.isEmpty());
         upButton.setBounds(x + FilesLayout.navX(2), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
         upButton.setEnabled(!dir.isEmpty());
-        address.setBounds(x + FilesLayout.addressX(), ny, FilesLayout.addressW(width), FilesLayout.NAV_H);
-        addressEdit.setBounds(x + FilesLayout.addressX(), ny, FilesLayout.addressW(width), FilesLayout.NAV_H);
-        search.setBounds(x + FilesLayout.searchX(width), ny, FilesLayout.SEARCH_W, FilesLayout.NAV_H);
-        viewButton.setBounds(x + FilesLayout.viewX(width), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
+        final boolean throbber = throbberSet() != null;
+        address.setBounds(x + FilesLayout.addressX(), ny, FilesLayout.addressW(width, throbber), FilesLayout.NAV_H);
+        addressEdit.setBounds(x + FilesLayout.addressX(), ny, FilesLayout.addressW(width, throbber),
+                FilesLayout.NAV_H);
+        search.setBounds(x + FilesLayout.searchX(width, throbber), ny, FilesLayout.SEARCH_W, FilesLayout.NAV_H);
+        viewButton.setBounds(x + FilesLayout.viewX(width, throbber), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
+        layoutCommandBar(x, y, font, bar);
+        if (ribbonTab != null) {
+            layoutRibbonBody(font, x, y);
+        }
 
-        treeList.setBounds(x, y + FilesLayout.treeY(), FilesLayout.TREE_W, FilesLayout.treeH(height));
+        treeList.setBounds(x, y + FilesLayout.treeY(bar), FilesLayout.TREE_W, FilesLayout.treeH(height, bar));
 
         final int lx = x + FilesLayout.listX();
         final int lw = FilesLayout.listW(width);
-        columns.setBounds(lx, y + FilesLayout.colsY(), lw, FilesLayout.COLS_H);
+        columns.setBounds(lx, y + FilesLayout.colsY(bar), lw, FilesLayout.COLS_H);
         columns.setColumnX(lx + 4 + FilesLayout.ICON_W + 3, x + FilesLayout.typeColX(width, typeColW, sizeColW),
                 x + FilesLayout.sizeColX(width, sizeColW));
 
-        final int listY = y + FilesLayout.listY();
-        final int listH = FilesLayout.listH(height);
+        final int listY = y + FilesLayout.listY(bar);
+        final int listH = FilesLayout.listH(height, bar);
         fileList.setBounds(lx, listY, lw, listH);
         fileList.setVisible(!iconView);
         final int cols = Math.max(1, (lw - 4) / ICON_CELL_W);
@@ -937,6 +1294,31 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         final int sy = y + FilesLayout.statusY(height) + 2;
         statusLeft.setBounds(x + 3, sy, width / 2 - 3, 8);
         statusRight.setBounds(x + width / 2, sy, width / 2 - 3, 8);
+    }
+
+    /**
+     * Frames 7's command bar: Organize first, then Open while a file or folder is selected, then New folder, each as
+     * wide as its words. Hidden on every other system.
+     */
+    private void layoutCommandBar(final int x, final int y, final Font font, final FilesLayout.Bar bar) {
+        final boolean command = bar == FilesLayout.Bar.COMMAND;
+        organizeButton.setVisible(command);
+        openButton.setVisible(command && selectedFileRow() != null);
+        newFolderButton.setVisible(command);
+        if (!command) {
+            return;
+        }
+        final int cy = y + FilesLayout.commandY(bar);
+        int cx = x + 3;
+        for (final Button button : List.of(organizeButton, openButton, newFolderButton)) {
+            if (!button.visible()) {
+                continue;
+            }
+            final int w = font.width(button.label()) + 10;
+            button.setBounds(cx, cy, w, FilesLayout.COMMAND_BUTTON_H);
+            cx += w + 2;
+        }
+        newFolderButton.setEnabled(!readOnlyVolume());
     }
 
     /** Puts the inline rename fields over the rows they edit, hidden while their row is out of view. */
@@ -974,37 +1356,44 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                                final int x, final int y, final int w, final int h, final boolean hovered,
                                final boolean selectedRow) {
         if (item.section()) {
-            g.drawString(ctx.font(), item.label().toUpperCase(Locale.ROOT), x + 3, y + 3, ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), item.label().toUpperCase(Locale.ROOT), x + 3, y + FilesLayout.TEXT_DY,
+                    ctx.skin().dim());
             return;
         }
         final boolean cur = item.target().isEmpty() ? (dir.isEmpty() && isVolumeItem(item))
                 : isVolumeItem(item) ? isCurrentVolume(item.target()) : dir.equals(item.target());
         ctx.skin().listRow(g, x, y, w, h, hovered, cur);
         if (item.target().equals(TRASH_PLACE)) {
-            final DesktopScreen desktop = DesktopScreen.current();
+            final DesktopState desktop = DesktopScreen.current();
             final boolean full = desktop != null && desktop.trashFull();
             ProgramIcons.draw(g, x + 2, y, FilesLayout.ICON_W, FilesLayout.ROW_H,
-                    ResourceLocation.fromNamespaceAndPath("jsc", full ? "trash_full" : "trash"),
-                    desktop == null ? skin.iconSet() : desktop.icons());
+                    ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, full ? "trash_full" : "trash"), iconSet());
         } else {
-            FileIcons.draw(g, x + 2, y + 1, item.target().equals("Storage") ? FileIcons.Kind.DAT
+            FileIcons.draw(g, x + 2, y, item.target().equals(STORAGE_PLACE) ? FileIcons.Kind.DAT
                     : (isVolumeItem(item) ? (item.removable() ? FileIcons.Kind.BIN : FileIcons.Kind.HOME)
-                    : FileIcons.Kind.FOLDER));
+                    : FileIcons.Kind.FOLDER), iconSet());
         }
         if (!(isVolumeItem(item) && item.volumeIndex() == volRenaming)) {
             final int maxW = w + 2 - (FilesLayout.ICON_W + 8) - (item.removable() ? 8 : 0);
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), item.label(), maxW), x + 3 + FilesLayout.ICON_W, y + 2,
-                    ctx.skin().listRowText(cur), false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), item.label(), maxW), x + 5 + FilesLayout.ICON_W,
+                    y + FilesLayout.TEXT_DY, ctx.skin().listRowText(cur));
         }
         if (item.removable()) {
-            // The eject control at the row's right edge: a tray glyph.
+            // The eject control at the row's right edge: a tray glyph, in the middle of the row.
             final int ex = x + w - 8;
+            final int ey = y + FilesLayout.TEXT_DY + 1;
             final int c = cur ? ctx.skin().listRowText(true) : ctx.skin().dim();
-            g.fill(ex + 2, y + 3, ex + 4, y + 4, c);
-            g.fill(ex + 1, y + 4, ex + 5, y + 5, c);
-            g.fill(ex, y + 5, ex + 6, y + 6, c);
-            g.fill(ex, y + 7, ex + 6, y + 8, c);
+            g.fill(ex + 2, ey, ex + 4, ey + 1, c);
+            g.fill(ex + 1, ey + 1, ex + 5, ey + 2, c);
+            g.fill(ex, ey + 2, ex + 6, ey + 3, c);
+            g.fill(ex, ey + 4, ex + 6, ey + 5, c);
         }
+    }
+
+    /** The look the pictures are drawn in: the desktop's own set, or this window's skin's when no desktop is open. */
+    private String iconSet() {
+        final DesktopState desktop = DesktopScreen.current();
+        return desktop == null ? skin.iconSet() : desktop.icons();
     }
 
     /** Whether {@code key} is the volume currently being browsed (system disk = any non-media path). */
@@ -1023,23 +1412,24 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         final boolean sel = isSelected(index);
         ctx.skin().listRow(g, x, y, w, h, hovered && index != renaming, sel);
         if (index == dropTarget) {
-            Draw.outline(g, x, y, w, h, DROP_TARGET_EDGE);
+            Draw.outline(g, x, y, w, h, PALETTE.get().dropTarget());
         }
         if (r.item() != null) {
-            DesktopItems.item(g, r.item(), x + 1, y - 3);
+            DesktopItems.item(g, r.item(), x + 2, y);
         } else {
-            FileIcons.draw(g, x + 2, y + 1, r.icon());
+            FileIcons.draw(g, x + 2, y, r.icon(), iconSet());
         }
         final boolean ro = r.file() != null && r.file().readOnly();
         final int nameColor = sel ? ctx.skin().listRowText(true) : (ro ? ctx.skin().dim() : ctx.skin().text());
         final int subColor = sel ? ctx.skin().listRowText(true) : ctx.skin().dim();
+        final int textY = y + FilesLayout.TEXT_DY;
         if (index != renaming) {
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), r.name(), FilesLayout.nameMaxW(contentW, typeColW, sizeColW)),
-                    x + 3 + FilesLayout.ICON_W + 3, y + 2, nameColor, false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), r.name(), FilesLayout.nameMaxW(contentW, typeColW, sizeColW)),
+                    x + 3 + FilesLayout.ICON_W + 3, textY, nameColor);
         }
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), r.type(), typeColW - 4),
-                lastX + FilesLayout.typeColX(contentW, typeColW, sizeColW), y + 2, subColor, false);
-        g.drawString(ctx.font(), r.size(), lastX + contentW - 4 - ctx.font().width(r.size()), y + 2, subColor, false);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), r.type(), typeColW - 4),
+                lastX + FilesLayout.typeColX(contentW, typeColW, sizeColW), textY, subColor);
+        Draw.text(g, ctx.font(), r.size(), lastX + contentW - 4 - ctx.font().width(r.size()), textY, subColor);
     }
 
     private void renderIconCell(final GuiGraphics g, final UiContext ctx, final int index, final int cx, final int cy,
@@ -1051,12 +1441,12 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (r.item() != null) {
             DesktopItems.item(g, r.item(), cx + w / 2 - 8, cy + 2);
         } else {
-            FileIcons.draw(g, cx + w / 2 - FilesLayout.ICON_W / 2, cy + 4, r.icon());
+            FileIcons.draw(g, cx + w / 2 - FileIcons.SIZE / 2, cy + 2, r.icon(), iconSet());
         }
         if (index != renaming) {
             final String label = Texts.clip(ctx.font(), r.name(), w - 4);
-            g.drawString(ctx.font(), label, cx + (w - ctx.font().width(label)) / 2, cy + h - 9,
-                    ctx.skin().listRowText(isSelected(index)), false);
+            Draw.text(g, ctx.font(), label, cx + (w - ctx.font().width(label)) / 2, cy + h - 9,
+                    ctx.skin().listRowText(isSelected(index)));
         }
     }
 
@@ -1068,19 +1458,19 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             }
         }
         final int selectedCount = bandRows.size() > 1 ? bandRows.size() : (selected >= 0 ? 1 : 0);
-        String left = items + (items == 1 ? " item" : " items");
+        Text left = (items == 1 ? FileDialogTexts.ONE_ITEM : FileDialogTexts.ITEMS).with(items);
         if (selectedCount > 0) {
-            left += " · " + selectedCount + " selected";
+            left = FilesTexts.WITH_SELECTED.with(left, selectedCount);
             if (selectedCount == 1 && selected >= 0 && selected < rows.size()) {
-                left += " · " + rows.get(selected).name();
+                left = FilesTexts.WITH_NAME.with(left, rows.get(selected).name());
             }
         }
-        return left;
+        return GameText.resolve(left);
     }
 
     private String statusRightText() {
         if (readOnlyVolume()) {
-            return "read-only medium";
+            return GameText.resolve(FilesTexts.READ_ONLY_MEDIUM);
         }
         long used = 0L;
         for (final Row r : rows) {
@@ -1088,7 +1478,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                 used += r.file().weight();
             }
         }
-        return used + " mB used";
+        return GameText.resolve(FilesTexts.USED.with(used));
     }
 
     @Override
@@ -1115,12 +1505,15 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void openProperties(final Row r) {
         final List<String[]> out = new ArrayList<>();
-        out.add(new String[] {"Name", r.name()});
-        out.add(new String[] {"Type", r.type()});
+        out.add(new String[] {GameText.resolve(FileDialogTexts.NAME_COLUMN), r.name()});
+        out.add(new String[] {GameText.resolve(FileDialogTexts.TYPE_COLUMN), r.type()});
         if (r.file() != null) {
-            out.add(new String[] {"Size", r.file().projectsItem() ? r.file().count() + " items" : r.file().weight() + " mB"});
-            out.add(new String[] {"Where", displayPath(parentOf(r.file().path()))});
-            out.add(new String[] {"Access", r.file().readOnly() ? "read-only" : "read/write"});
+            out.add(new String[] {GameText.resolve(FileDialogTexts.SIZE_COLUMN), GameText.resolve(
+                    r.file().projectsItem() ? FileDialogTexts.ITEMS.with(r.file().count())
+                            : FileDialogTexts.SIZE.with(r.file().weight()))});
+            out.add(new String[] {GameText.resolve(FilesTexts.WHERE), displayPath(parentOf(r.file().path()))});
+            out.add(new String[] {GameText.resolve(FilesTexts.ACCESS),
+                    GameText.resolve(r.file().readOnly() ? FilesTexts.READ_ONLY : FilesTexts.READ_WRITE)});
         }
         propertyLines = out;
         properties.open();
@@ -1139,6 +1532,30 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (properties.isOpen()) {
             properties.mouseClicked(mouseX, mouseY, button);
             return;
+        }
+        /*
+         * The ribbon: a click on a tab drops it down or folds it; a click on the dropped-down body is its commands'
+         * alone; a click anywhere else folds it and goes on to whatever it landed on, as the folded ribbon behaved.
+         */
+        if (bar() == FilesLayout.Bar.RIBBON) {
+            if (mouseY >= lastY && mouseY < lastY + FilesLayout.RIBBON_TABS_H) {
+                for (final RibbonTabSpan span : ribbonTabs) {
+                    if (mouseX >= span.left() && mouseX < span.right() && button == 0) {
+                        toggleRibbonTab(span.label());
+                        return;
+                    }
+                }
+                closeRibbon();
+                return;
+            }
+            if (ribbonTab != null) {
+                final int top = lastY + FilesLayout.ribbonBodyY();
+                if (mouseY >= top && mouseY < top + FilesLayout.RIBBON_BODY_H) {
+                    ribbonBody.mouseClicked(mouseX, mouseY, button);
+                    return;
+                }
+                closeRibbon();
+            }
         }
         clickX = mouseX;
         clickY = mouseY;
@@ -1160,7 +1577,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Whether the point is in the list's well: the area the rows or the tiles are shown in. */
     private boolean inListWell(final double mx, final double my) {
-        return mx >= lastX + FilesLayout.listX() && my >= lastY + FilesLayout.listY()
+        return mx >= lastX + FilesLayout.listX() && my >= lastY + FilesLayout.listY(bar())
                 && my < lastY + FilesLayout.statusY(contentH);
     }
 
@@ -1171,7 +1588,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         final TreeItem item = items.get(index);
         if (item.target().equals(TRASH_PLACE)) {
-            final DesktopScreen desktop = DesktopScreen.current();
+            final DesktopState desktop = DesktopScreen.current();
             if (button == 0 && desktop != null) {
                 desktop.openTrash();
             }
@@ -1180,7 +1597,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (button == 1) {
             if (isVolumeItem(item)) {
                 final int volume = item.volumeIndex();
-                openContext(List.of(new ContextMenu.Item("Rename", true, () -> startVolumeRename(volume))), mx, my);
+                openContext(List.of(item(FilesTexts.RENAME, true, () -> startVolumeRename(volume))), mx, my);
             }
             return;
         }
@@ -1244,7 +1661,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Brings the desktop's terminal up with its prompt in this folder. */
     private void openInTerminal() {
-        DesktopScreen.requestTypeAtTerminal(List.of("cd \"" + promptFolder() + "\""));
+        ActiveDesktop.requestTypeAtTerminal(List.of("cd \"" + promptFolder() + "\""));
     }
 
     /** The folder's path the way a prompt takes it: as the address bar writes it, without the trailing separator. */
@@ -1291,16 +1708,37 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return index < 0 ? null : context.itemCenter(index);
     }
 
+    /** The middle of the entry with that label in the menu open beside the right-button one, or null. */
+    @Nullable
+    public int[] submenuPoint(final String label) {
+        final ContextMenu beside = context.openSubmenu();
+        if (beside == null) {
+            return null;
+        }
+        final List<ContextMenu.Item> entries = beside.items();
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i).label().equals(label)) {
+                return beside.itemCenter(i);
+            }
+        }
+        return null;
+    }
+
     /** What the New entry offers: a folder first, then a file of every kind the machine can create. */
     private List<ContextMenu.Item> newItems(final boolean readOnly) {
         final List<ContextMenu.Item> out = new ArrayList<>();
-        out.add(new ContextMenu.Item("Folder", !readOnly, this::newFolder));
+        out.add(item(FilesTexts.NEW_FOLDER, !readOnly, this::newFolder));
         out.add(ContextMenu.Item.separator());
         for (final FileType type : FileOpeners.creatable()) {
-            out.add(new ContextMenu.Item(typeLabel(type) + " (." + type.extension() + ")", !readOnly,
-                    () -> newFile(type)));
+            out.add(new ContextMenu.Item(GameText.resolve(FilesTexts.NEW_OF_TYPE.with(typeLabel(type),
+                    type.extension())), !readOnly, () -> newFile(type)));
         }
         return out;
+    }
+
+    /* An entry of the right-button menu, in the player's language. */
+    private static ContextMenu.Item item(final TextKey label, final boolean enabled, final Runnable action) {
+        return new ContextMenu.Item(GameText.resolve(label), enabled, action);
     }
 
     /* The address bar as text */
@@ -1336,7 +1774,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             return "/" + (onMedia() ? mediaRest() : dir) + (dir.isEmpty() ? "" : "/");
         }
         if (onMedia()) {
-            final String rootKey = "media:" + mediaReaderPos();
+            final String rootKey = mediaRoot();
             final String letter = letterOf(rootKey);
             final String rest = mediaRest();
             return (letter.isEmpty() ? "D:" : letter) + "\\" + rest.replace('/', '\\') + (rest.isEmpty() ? "" : "\\");
@@ -1400,7 +1838,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     /** Escape closes the menu, the Properties window or the address being typed before it means anything to the desktop. */
     @Override
     public boolean wantsEscape() {
-        return context.isOpen() || properties.isOpen() || editingAddress();
+        return context.isOpen() || properties.isOpen() || editingAddress() || ribbonTab != null;
     }
 
     /** A point on the address bar past its last crumb, where a click turns the trail into text. */
@@ -1456,7 +1894,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             final boolean dat = target.file().projectsItem();
             final boolean setup = isSetup(target);
             final boolean program = target.kind() == Kind.FILE && isProgram(target.file());
-            items.add(new ContextMenu.Item(setup || program ? "Run" : "Open", true, () -> open(target)));
+            items.add(item(setup || program ? FilesTexts.RUN : FilesTexts.OPEN, true, () -> open(target)));
             if (target.kind() == Kind.FILE && !dat && !setup) {
                 /*
                  * One entry per program on this machine that can open the kind, so a player picks the one they
@@ -1464,53 +1902,55 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                  * program should open files like it for good.
                  */
                 final String path = target.file().path();
-                final List<String> installed = DesktopScreen.installedProgramIds();
+                final List<String> installed = ActiveDesktop.installedProgramIds();
                 final List<ContextMenu.Item> openWith = new ArrayList<>();
                 for (final String programId : FileOpeners.available(path, installed)) {
-                    openWith.add(new ContextMenu.Item(DesktopScreen.openerName(programId), true,
-                            () -> DesktopScreen.requestOpenFileWith(programId, path)));
+                    openWith.add(new ContextMenu.Item(ActiveDesktop.openerName(programId), true,
+                            () -> ActiveDesktop.requestOpenFileWith(programId, path)));
                 }
                 if (!FileOpeners.choices(path, installed).isEmpty()) {
                     if (!openWith.isEmpty()) {
                         openWith.add(ContextMenu.Item.separator());
                     }
-                    openWith.add(new ContextMenu.Item("Choose another program...", true,
-                            () -> DesktopScreen.requestChooseOpener(path)));
+                    openWith.add(item(FilesTexts.CHOOSE_ANOTHER, true,
+                            () -> ActiveDesktop.requestChooseOpener(path)));
                 }
                 if (!openWith.isEmpty()) {
-                    items.add(ContextMenu.Item.submenu("Open with", openWith));
+                    items.add(ContextMenu.Item.submenu(GameText.resolve(FilesTexts.OPEN_WITH), openWith));
                 }
             }
             addArchiveItems(items, target, ro);
+            final boolean locked = target.file().readOnly();
             items.add(ContextMenu.Item.separator());
-            items.add(new ContextMenu.Item("Cut", !ro && !target.file().readOnly(), () -> cut(target)));
-            items.add(new ContextMenu.Item("Copy", !target.file().readOnly(), () -> copy(target)));
-            items.add(new ContextMenu.Item("Paste", !clipboard.isEmpty() && !ro, this::paste));
+            items.add(item(FilesTexts.CUT, !ro && !locked, () -> cut(target)));
+            items.add(item(FilesTexts.COPY, !locked, () -> copy(target)));
+            items.add(item(FilesTexts.PASTE, !clipboard.isEmpty() && !ro, this::paste));
             items.add(ContextMenu.Item.separator());
-            items.add(new ContextMenu.Item("Rename", !ro && !target.file().readOnly(), () -> startRenameAt(rows.indexOf(target))));
-            items.add(new ContextMenu.Item("Delete", !ro && !target.file().readOnly(), this::deleteContextRow));
+            items.add(item(FilesTexts.RENAME, !ro && !locked, () -> startRenameAt(rows.indexOf(target))));
+            items.add(item(FilesTexts.DELETE, !ro && !locked, this::deleteContextRow));
             items.add(ContextMenu.Item.separator());
-            items.add(new ContextMenu.Item("Properties", true, () -> openProperties(target)));
+            items.add(item(FilesTexts.PROPERTIES, true, () -> openProperties(target)));
         } else if (target != null) {
-            items.add(new ContextMenu.Item("Open", true, () -> open(target)));
+            items.add(item(FilesTexts.OPEN, true, () -> open(target)));
             items.add(ContextMenu.Item.separator());
         } else {
-            items.add(new ContextMenu.Item("Paste", !clipboard.isEmpty() && !ro, this::paste));
-            items.add(ContextMenu.Item.submenu("New", newItems(ro)));
+            items.add(item(FilesTexts.PASTE, !clipboard.isEmpty() && !ro, this::paste));
+            items.add(ContextMenu.Item.submenu(GameText.resolve(FilesTexts.NEW), newItems(ro)));
             /*
              * The prompt where the window is, without typing the path over: the desktop's own terminal
              * comes up in this folder. And the folder's path for whatever else needs it.
              */
             final String terminal = DesktopScreen.terminalName();
             if (!terminal.isEmpty()) {
-                items.add(new ContextMenu.Item("Open in " + terminal, true, this::openInTerminal));
+                items.add(new ContextMenu.Item(GameText.resolve(FilesTexts.OPEN_IN.with(terminal)), true,
+                        this::openInTerminal));
             }
             items.add(ContextMenu.Item.separator());
             if (onMedia()) {
-                items.add(new ContextMenu.Item("Eject", true, () -> eject("media:" + mediaReaderPos())));
+                items.add(item(FilesTexts.EJECT, true, () -> eject(mediaRoot())));
             }
         }
-        items.add(new ContextMenu.Item("Refresh", true, () -> request(dir)));
+        items.add(item(FilesTexts.REFRESH, true, () -> request(dir)));
         return items;
     }
 
@@ -1523,18 +1963,18 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
      * without the archiver, because the menu should not name a program that is not there.
      */
     private void addArchiveItems(final List<ContextMenu.Item> items, final Row target, final boolean ro) {
-        if (!DesktopScreen.installedProgramIds().contains(ARCHIVER) || target.file() == null
+        if (!ActiveDesktop.installedProgramIds().contains(ARCHIVER) || target.file() == null
                 || target.file().projectsItem()) {
             return;
         }
         final String path = target.file().path();
         items.add(ContextMenu.Item.separator());
         if (Archive.EXTENSION.equalsIgnoreCase(target.file().ext())) {
-            items.add(new ContextMenu.Item("Extract here", !ro, () -> extractHere(path)));
+            items.add(item(FilesTexts.EXTRACT_HERE, !ro, () -> extractHere(path)));
             return;
         }
-        items.add(new ContextMenu.Item("Compress to " + Archive.leaf(archiveNameFor(path)), !ro,
-                () -> compress(path)));
+        items.add(new ContextMenu.Item(GameText.resolve(FilesTexts.COMPRESS_TO.with(
+                Archive.leaf(archiveNameFor(path)))), !ro, () -> compress(path)));
     }
 
     /** The archive a thing is packed into: its own name with the archive's extension, beside it. */
@@ -1561,10 +2001,11 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     @Override
-    public void onSaved(final boolean ok, final String message) {
+    public void onSaved(final boolean ok, final Text message) {
         // The folder has changed under the window either way, so it is read again before anything else.
         request(dir);
-        DesktopScreen.raise(host, ok ? "67ark" : "Could not do that", message, "");
+        ActiveDesktop.raise(host, ok ? "67ark" : GameText.resolve(FilesTexts.COULD_NOT), GameText.resolve(message),
+                "");
     }
 
     /**
@@ -1689,11 +2130,11 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                     }
                 } else if (destDir != null) {
                     // Reorganising a .dat into a normal folder by hand is forbidden; surface the error dialog.
-                    DesktopScreen.showDatLockedError();
+                    ActiveDesktop.showDatLockedError();
                 }
             } else if (src.file() != null && src.file().readOnly()) {
                 // An installer's projected file cannot leave its medium.
-                DesktopScreen.showInstallerLockedError();
+                ActiveDesktop.showInstallerLockedError();
             } else if (destDir != null && src.file() != null) {
                 // A real, non-projection entry moves into a real folder as before.
                 PacketDistributor.sendToServer(new MoveFilePayload(host, src.file().path(), destDir));
@@ -1819,7 +2260,6 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     // actions
 
-    /** Opens a row: a folder navigates; an installer's setup runs; a text file opens in the Editor. */
     /** Opens the entry called {@code name} the way a double click on it does; false when it is not listed. */
     public boolean open(final String name) {
         for (final Row r : rows) {
@@ -1831,9 +2271,10 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return false;
     }
 
+    /** Opens a row: a folder navigates; an installer's setup runs; a text file opens in the Editor. */
     private void open(final Row r) {
         switch (r.kind()) {
-            case STORAGE -> go("Storage");
+            case STORAGE -> go(STORAGE_PLACE);
             case UP -> goUp();
             case DIR -> {
                 if (r.file() != null) {
@@ -1858,19 +2299,22 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
     }
 
-    /** Runs the setup program on an installer medium: the same install This PC's button does. */
+    /**
+     * Runs the setup program on an installer medium: the same install This PC's button does. The volume is named
+     * whole, as a drive on the computer's own front stands at the computer, and a packed position may be negative.
+     */
     private void runSetup(final String path) {
-        final long reader = mediaReaderPos(path);
-        if (reader >= 0) {
-            PacketDistributor.sendToServer(new InstallFromMediaPayload(host, reader));
-            DesktopScreen.refreshActive();
+        final MediaVolume volume = MediaVolume.parse(path);
+        if (volume != null) {
+            PacketDistributor.sendToServer(new InstallFromMediaPayload(host, volume.readerPos(), volume.bay()));
+            ActiveDesktop.refreshActive();
         }
     }
 
     private void eject(final String volumeKey) {
-        final long reader = mediaReaderPos(volumeKey);
-        if (reader >= 0) {
-            PacketDistributor.sendToServer(new EjectMediaPayload(host, reader));
+        final MediaVolume volume = MediaVolume.parse(volumeKey);
+        if (volume != null) {
+            PacketDistributor.sendToServer(EjectMediaPayload.of(host, volume));
             if (isCurrentVolume(volumeKey)) {
                 go("");
             } else {
@@ -1920,7 +2364,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (readOnlyVolume()) {
             return;
         }
-        clipboard.pasteInto(host, dir);
+        clipboard.pasteInto(host, dir, names());
     }
 
     private void startRenameAt(final int index) {
@@ -1993,7 +2437,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                 doomed.add(r.file().path());
             }
             if (locked) {
-                DesktopScreen.showDatLockedError();
+                ActiveDesktop.showDatLockedError();
             }
             bandRows.clear();
             DeskTrash.delete(host, doomed);
@@ -2017,9 +2461,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     /** The right refusal for a projected entry: a stored item points at the Network Interactor, an installer's file at setup. */
     private static void lockedError(final Row r) {
         if (r.file() != null && r.file().projectsItem()) {
-            DesktopScreen.showDatLockedError();
+            ActiveDesktop.showDatLockedError();
         } else {
-            DesktopScreen.showInstallerLockedError();
+            ActiveDesktop.showInstallerLockedError();
         }
     }
 
@@ -2030,14 +2474,14 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
      * it, and a file made as text and renamed afterwards is a rename the player should not have had to do.
      */
     public void newFile(final FileType type) {
-        final String name = uniqueName("New File", "." + type.extension());
+        final String name = uniqueName(GameText.resolve(DesktopTexts.NEW_FILE), "." + type.extension());
         pendingRename = name;
         PacketDistributor.sendToServer(new SaveFilePayload(host, join(dir, name), ""));
         FilesApps.diskChanged();
     }
 
     private void newFolder() {
-        final String name = uniqueName("New Folder", "");
+        final String name = uniqueName(GameText.resolve(DesktopTexts.NEW_FOLDER), "");
         pendingRename = name;
         PacketDistributor.sendToServer(new MkdirPayload(host, join(dir, name)));
         FilesApps.diskChanged();
@@ -2048,7 +2492,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         volRenaming = index;
-        volumeField.set(volumes.get(index).label());
+        volumeField.set(GameText.resolve(volumes.get(index).label()));
         root.focus(volumeField);
     }
 
@@ -2081,6 +2525,10 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         if (properties.isOpen()) {
             return properties.keyPressed(key, scanCode, modifiers);
+        }
+        if (ribbonTab != null && key == GLFW.GLFW_KEY_ESCAPE) {
+            closeRibbon();
+            return true;
         }
         if (root.keyPressed(key, scanCode, modifiers)) {
             return true; // a field being typed in
@@ -2191,14 +2639,15 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private static String languageLabel(final String ext) {
         final String lower = ext.toLowerCase(Locale.ROOT);
         if (MachineListing.claims(lower)) {
-            return MachineListing.LABEL;
+            return GameText.resolve(MachineListing.LABEL);
         }
         final var language = JsCore.languages().byExtension(lower);
         if (language != null) {
-            return language.displayName()
-                    + (language.sourceExtensions().contains(lower) ? " source" : " program");
+            return GameText.resolve((language.sourceExtensions().contains(lower) ? FilesTexts.SOURCE
+                    : FilesTexts.PROGRAM).with(language.displayName()));
         }
-        return lower.isEmpty() ? "File" : lower.toUpperCase(Locale.ROOT) + " file";
+        return GameText.resolve(lower.isEmpty() ? FilesTexts.FILE.text()
+                : FilesTexts.EXTENSION_FILE.with(lower.toUpperCase(Locale.ROOT)));
     }
 
 
@@ -2224,12 +2673,16 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** The parent directory of {@code dir} (everything before the final {@code /}), or {@code ""} at the root. */
     private static String parentOf(final String dir) {
-        final int slash = dir.lastIndexOf('/');
-        return slash < 0 ? "" : dir.substring(0, slash);
+        return DrivePaths.parentOf(dir);
     }
 
     /** Joins a directory and a child name; the root ({@code ""}) yields the bare name. */
     private static String join(final String dir, final String name) {
         return dir.isEmpty() ? name : dir + "/" + name;
+    }
+
+    /** The explorer's colours, as the palette above names them. */
+    private record Colours(int dropTarget, int bandFill, int bandEdge, int propertiesDim, int ghost, int ghostInk,
+                           int commandTop, int commandBottom) {
     }
 }

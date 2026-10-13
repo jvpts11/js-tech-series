@@ -37,6 +37,23 @@ sourceSets.main.resources {
  * GameTests are told which of the two worlds they run in.
  */
 def withoutComputerCraft = providers.gradleProperty('withoutComputerCraft').isPresent()
+/*
+ * -PwithFtbTeams runs the development mods with FTB Teams, to prove the Core takes its teams from it; without it the
+ * game's scoreboard teams answer, which is what every other run proves.
+ */
+def withFtbTeams = providers.gradleProperty('withFtbTeams').isPresent()
+/*
+ * -PwithEmi runs the development client with EMI beside JEI, to see the Core's bridge to EMI at work: the processing
+ * machines' recipes and the areas screens keep clear. Off by default, so every other run shows JEI alone.
+ */
+def withEmi = providers.gradleProperty('withEmi').isPresent()
+// -PwithJade runs the development mods with Jade, to see the lines the Core's bridge gives its tooltip.
+def withJade = providers.gradleProperty('withJade').isPresent()
+/*
+ * -PwithKubeJs runs the development mods with KubeJS and the test scripts in src/kubejs, copied into the run's kubejs
+ * folder, to prove a modpack's scripts reach what the mods hand them; every other run proves the mods stand without it.
+ */
+def withKubeJs = providers.gradleProperty('withKubeJs').isPresent()
 if (withoutComputerCraft) {
     sourceSets.main.java {
         exclude '**/gametest/ComputerCraftGameTests.java'
@@ -64,8 +81,11 @@ neoForge {
 
         // Client tests: real client windows that create a test world, drive the screens with synthetic
         // input, take screenshots and write run/clienttests/shard-<i>/clienttests/report.txt. The suite is
-        // split round-robin over `clientShards` windows (default 4) so shards can run side by side:
-        //   .\gradlew.bat runClientTests0   (one shard)   -PclientShards=6 to change the split.
+        // split over `clientShards` windows (default 4) so shards can run side by side: by the ticks each test
+        // took last time (run/clienttests/durations.txt, written by every run) so the shards end together, or
+        // round-robin when nothing was measured yet.
+        //   .\gradlew.bat runClientTests0   (one shard)   -PclientShards=6 to change the split; every shard at
+        //   once: runClientTests0 ... runClientTests5 -PclientShards=6 --parallel
         def clientShards = (providers.gradleProperty('clientShards').getOrElse('4')) as int
         (0..<clientShards).each { shard ->
             create("clientTests${shard}") {
@@ -76,8 +96,8 @@ neoForge {
                 systemProperty 'jsc.clienttests', 'true'
                 systemProperty 'jsc.clienttests.shard', "${shard}"
                 systemProperty 'jsc.clienttests.shards', "${clientShards}"
-                // -PctOnly=<substring> runs only the client tests whose name contains it (case-insensitive),
-                // so a single test can be driven without stealing the mouse for the whole suite.
+                // -PctOnly=<substring>[,<substring>...] runs only the client tests whose name contains any of
+                // them (case-insensitive), so a few tests can be driven without stealing the mouse for the suite.
                 systemProperty 'jsc.clienttests.only', (providers.gradleProperty('ctOnly').getOrElse(''))
             }
         }
@@ -96,6 +116,10 @@ neoForge {
             gameDirectory = rootProject.file('run')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             systemProperty 'jsc.gametests.computercraft', withoutComputerCraft ? 'absent' : 'present'
+            // -PgtOnly=<TestClass or word>[,...] runs only those GameTests (see GameTestSelection).
+            systemProperty 'jsc.gametests.only', (providers.gradleProperty('gtOnly').getOrElse(''))
+            systemProperty 'jsc.gametests.ftbteams', withFtbTeams ? 'present' : 'absent'
+            systemProperty 'jsc.gametests.kubejs', withKubeJs ? 'present' : 'absent'
             // -Pjfr records the run with Java Flight Recorder, for profiling the scale benchmark. Deep stacks,
             // because what is being chased sits well below the tick. Off unless asked for.
             if (providers.gradleProperty('jfr').present) {
@@ -164,6 +188,34 @@ dependencies {
     compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cc_tweaked_version}"
     if (!withoutComputerCraft) {
         localRuntime "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_tweaked_version}"
+    }
+    if (withFtbTeams) {
+        localRuntime "dev.ftb.mods:ftb-teams-neoforge:${ftb_teams_version}"
+        localRuntime "dev.ftb.mods:ftb-library-neoforge:${ftb_library_version}"
+        localRuntime "dev.architectury:architectury-neoforge:${architectury_version}"
+    }
+    // EMI's API, for the client test that reads what the Core's bridge gave EMI when EMI is there.
+    compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
+    if (withEmi) {
+        localRuntime "dev.emi:emi-neoforge:${emi_version}"
+    }
+    if (withJade) {
+        localRuntime "maven.modrinth:jade:${jade_version}"
+    }
+    if (withKubeJs) {
+        localRuntime("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
+        localRuntime("dev.latvian.mods:rhino:${rhino_version}") { transitive = false }
+    }
+}
+
+// The test scripts go where KubeJS reads them, the kubejs folder of the run, before a run that has KubeJS.
+var copyKubeJsScripts = tasks.register('copyKubeJsScripts', Copy) {
+    from 'src/kubejs'
+    into rootProject.file('run/kubejs')
+}
+tasks.matching { it.name in ['runGameTestServer', 'runServer', 'runClient'] }.configureEach {
+    if (withKubeJs) {
+        dependsOn copyKubeJsScripts
     }
 }
 

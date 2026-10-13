@@ -38,7 +38,13 @@ public enum CliStyle implements IStableId {
      */
     BRIGHT(14),
     /* One more of the extended palette: a brand red, which is not the red an error is written in. */
-    RED(15);
+    RED(15),
+    /*
+     * The last two of a terminal's eight colours, which a logo drawn in all of them needs: the green and the
+     * yellow panes of a flag are not the green of success nor the amber of a warning.
+     */
+    GREEN(16),
+    YELLOW(17);
 
     private static final StableIds<CliStyle> IDS = StableIds.of(CliStyle.class);
 

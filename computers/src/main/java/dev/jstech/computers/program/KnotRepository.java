@@ -38,6 +38,9 @@ public final class KnotRepository {
     /** What one revision costs beyond its own text, for the author, the message and the time. */
     private static final int OVERHEAD_BYTES = 48;
 
+    /** The most cells of comparison table a diff builds; past it the changed stretch reads as rewritten whole. */
+    private static final int MAX_DIFF_CELLS = 4_000_000;
+
     /** One saved state of a file. */
     public record Revision(int number, String author, String message, long at, String content) {
 
@@ -222,38 +225,82 @@ public final class KnotRepository {
     public static List<DiffLine> diff(final String before, final String after) {
         final String[] old = (before == null ? "" : before).split("\n", -1);
         final String[] now = (after == null ? "" : after).split("\n", -1);
-        final int[][] common = longestCommon(old, now);
+        /*
+         * Lines both texts start and end with are context without any comparison, which is most of a typical
+         * edit; only the stretch in between needs the table, and the table is the one part that grows with the
+         * product of the two lengths.
+         */
+        int head = 0;
+        while (head < old.length && head < now.length && old[head].equals(now[head])) {
+            head++;
+        }
+        int tail = 0;
+        while (tail < old.length - head && tail < now.length - head
+                && old[old.length - 1 - tail].equals(now[now.length - 1 - tail])) {
+            tail++;
+        }
         final List<DiffLine> out = new ArrayList<>();
-        int i = 0;
-        int j = 0;
-        while (i < old.length && j < now.length) {
-            if (old[i].equals(now[j])) {
-                out.add(new DiffLine(DiffLine.Kind.CONTEXT, old[i]));
-                i++;
-                j++;
-            } else if (common[i + 1][j] >= common[i][j + 1]) {
-                out.add(new DiffLine(DiffLine.Kind.REMOVED, old[i]));
-                i++;
-            } else {
-                out.add(new DiffLine(DiffLine.Kind.ADDED, now[j]));
-                j++;
-            }
+        for (int k = 0; k < head; k++) {
+            out.add(new DiffLine(DiffLine.Kind.CONTEXT, old[k]));
         }
-        while (i < old.length) {
-            out.add(new DiffLine(DiffLine.Kind.REMOVED, old[i++]));
-        }
-        while (j < now.length) {
-            out.add(new DiffLine(DiffLine.Kind.ADDED, now[j++]));
+        diffMiddle(old, head, old.length - tail, now, head, now.length - tail, out);
+        for (int k = old.length - tail; k < old.length; k++) {
+            out.add(new DiffLine(DiffLine.Kind.CONTEXT, old[k]));
         }
         return out;
     }
 
-    /** The table behind the comparison: how many lines the two still have in common from each point on. */
-    private static int[][] longestCommon(final String[] old, final String[] now) {
-        final int[][] table = new int[old.length + 1][now.length + 1];
-        for (int i = old.length - 1; i >= 0; i--) {
-            for (int j = now.length - 1; j >= 0; j--) {
-                table[i][j] = old[i].equals(now[j])
+    /*
+     * Compares old[oldFrom, oldTo) with now[nowFrom, nowTo). Past the cell budget the table is not built and
+     * the whole stretch reads as removed and then added, which is still true, only coarser: a huge rewrite
+     * must not cost the server tens of megabytes of table for a view.
+     */
+    private static void diffMiddle(final String[] old, final int oldFrom, final int oldTo, final String[] now,
+                                   final int nowFrom, final int nowTo, final List<DiffLine> out) {
+        final int oldCount = oldTo - oldFrom;
+        final int nowCount = nowTo - nowFrom;
+        if ((long) (oldCount + 1) * (nowCount + 1) > MAX_DIFF_CELLS) {
+            for (int i = oldFrom; i < oldTo; i++) {
+                out.add(new DiffLine(DiffLine.Kind.REMOVED, old[i]));
+            }
+            for (int j = nowFrom; j < nowTo; j++) {
+                out.add(new DiffLine(DiffLine.Kind.ADDED, now[j]));
+            }
+            return;
+        }
+        final int[][] common = longestCommon(old, oldFrom, oldTo, now, nowFrom, nowTo);
+        int i = 0;
+        int j = 0;
+        while (i < oldCount && j < nowCount) {
+            if (old[oldFrom + i].equals(now[nowFrom + j])) {
+                out.add(new DiffLine(DiffLine.Kind.CONTEXT, old[oldFrom + i]));
+                i++;
+                j++;
+            } else if (common[i + 1][j] >= common[i][j + 1]) {
+                out.add(new DiffLine(DiffLine.Kind.REMOVED, old[oldFrom + i]));
+                i++;
+            } else {
+                out.add(new DiffLine(DiffLine.Kind.ADDED, now[nowFrom + j]));
+                j++;
+            }
+        }
+        while (i < oldCount) {
+            out.add(new DiffLine(DiffLine.Kind.REMOVED, old[oldFrom + i++]));
+        }
+        while (j < nowCount) {
+            out.add(new DiffLine(DiffLine.Kind.ADDED, now[nowFrom + j++]));
+        }
+    }
+
+    /** The table behind the comparison: how many lines the two stretches still have in common from each point on. */
+    private static int[][] longestCommon(final String[] old, final int oldFrom, final int oldTo,
+                                         final String[] now, final int nowFrom, final int nowTo) {
+        final int oldCount = oldTo - oldFrom;
+        final int nowCount = nowTo - nowFrom;
+        final int[][] table = new int[oldCount + 1][nowCount + 1];
+        for (int i = oldCount - 1; i >= 0; i--) {
+            for (int j = nowCount - 1; j >= 0; j--) {
+                table[i][j] = old[oldFrom + i].equals(now[nowFrom + j])
                         ? table[i + 1][j + 1] + 1
                         : Math.max(table[i + 1][j], table[i][j + 1]);
             }

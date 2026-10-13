@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.terminal;
 
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.peripheral.IPeripheralOwner;
@@ -17,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Finds the computer a terminal payload is about from the monitor and host positions it names.
@@ -35,6 +37,38 @@ public final class TerminalHosts {
             return host;
         }
         return null;
+    }
+
+    /**
+     * The computer a payload gated onto {@code menu} is about, resolved fresh from where the menu says it is: the
+     * gate already proved the menu is open and stands on the block the payload names, so nothing here re-checks that.
+     * The payload's own {@code monitorPos} is still checked against the menu's, so a payload that names a foreign
+     * monitor while riding a real terminal's gate is refused rather than acted on.
+     */
+    @Nullable
+    static IComputerTerminalHost hostOf(final ComputerTerminalMenu menu, final BlockPos monitorPos,
+                                        final ServerLevel level) {
+        if (!menu.monitorPos().equals(monitorPos)) {
+            return null;
+        }
+        return level.getBlockEntity(menu.hostPos()) instanceof IComputerTerminalHost host ? host : null;
+    }
+
+    /**
+     * The item source a deposit payload names: the cursor when {@code slotIndex} is one of the two cursor markers,
+     * otherwise the menu slot at that index, or {@code null} when the index is outside the menu. Every slot in a
+     * terminal menu belongs to the player's inventory, so any in-range slot is a legitimate source.
+     */
+    @Nullable
+    static DataHandoff.ISource sourceOf(final ComputerTerminalMenu menu, final ServerPlayer player,
+                                        final int slotIndex, final int cursor, final int cursorOne) {
+        if (slotIndex == cursor || slotIndex == cursorOne) {
+            return DataHandoff.cursor(player);
+        }
+        if (slotIndex < 0 || slotIndex >= menu.slots.size()) {
+            return null;
+        }
+        return DataHandoff.slot(menu.getSlot(slotIndex), player);
     }
 
     /**
@@ -66,10 +100,11 @@ public final class TerminalHosts {
         }
         /*
          * Anti-spoof: the monitor must actually be a linked peripheral of this host, so a player near any
-         * monitor cannot drive a foreign computer by sending that computer's position as the host.
+         * monitor cannot drive a foreign computer by sending that computer's position as the host; and one the host
+         * disabled shows it nothing.
          */
         if (!(host instanceof IPeripheralOwner owner)
-                || !owner.linkedEndpoints().contains(monitorPos.asLong())) {
+                || !owner.enabledEndpoints().contains(monitorPos.asLong())) {
             return null;
         }
         return host;

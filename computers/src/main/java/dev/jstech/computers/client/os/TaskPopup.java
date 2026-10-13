@@ -7,8 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TaskbarGroups;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -35,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * pinned it, which program the cursor is over and since when. Every rectangle it draws is the rectangle
  * the clicks are tested against, so the card a player sees and the card they hit are the same box.
  */
+@PaletteHolder
 final class TaskPopup {
 
     /** The program whose windows are showing, or null while nothing is. */
@@ -69,9 +76,13 @@ final class TaskPopup {
     private static final long HOVER_MS = 350L;
     private static final long LEAVE_MS = 300L;
 
-    private final DesktopScreen desktop;
+    /** This popup's own colours, {@code jsc:desktop/task_popup}: a close mark under the cursor and its ink. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/task_popup",
+            new Colours(0xFFC04A3E, 0xFFFFFFFF));
 
-    TaskPopup(final DesktopScreen desktop) {
+    private final DesktopState desktop;
+
+    TaskPopup(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -134,13 +145,13 @@ final class TaskPopup {
             }
             return;
         }
-        if (key != null && desktop.windowsOf(key).isEmpty()) {
+        if (key != null && desktop.wm().group(key).isEmpty()) {
             dismiss();
         }
-        if (desktop.panelOnTop()) {
+        if (desktop.view().panelOnTop()) {
             return; // the top bar lists no programs
         }
-        final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
+        final TaskStrip strip = desktop.taskbar().strip(sw);
         final int idx = lmy >= tbY ? strip.indexAt(lmx) : -1;
         final String under = idx >= 0 && strip.entries().get(idx).open() ? strip.entries().get(idx).key() : null;
         final long now = System.currentTimeMillis();
@@ -181,7 +192,7 @@ final class TaskPopup {
         if (r == null) {
             return;
         }
-        final OsSkin skin = desktop.panelSkin();
+        final OsSkin skin = desktop.prefs().skin();
         skin.windowShadow(g, r[0], r[1], r[2], r[3]);
         skin.panel(g, r[0], r[1], r[2], r[3]);
         final List<DesktopWindow> list = windows();
@@ -199,8 +210,8 @@ final class TaskPopup {
      * opened it is that and nothing more.
      */
     boolean click(final double mx, final double my, final int button) {
-        final int tbY = desktop.screenH() - DesktopScreen.TASKBAR_H;
-        final int[] r = rect(desktop.screenW(), tbY);
+        final int tbY = desktop.view().height() - DesktopScreen.TASKBAR_H;
+        final int[] r = rect(desktop.view().width(), tbY);
         final List<DesktopWindow> list = windows();
         if (r == null) {
             dismiss();
@@ -213,7 +224,7 @@ final class TaskPopup {
         final boolean pinned = sticky;
         dismiss();
         if (pinned && button == 0 && my >= tbY) {
-            final DesktopScreen.TaskStrip strip = desktop.taskButtons(desktop.screenW());
+            final TaskStrip strip = desktop.taskbar().strip(desktop.view().width());
             final int idx = strip.indexAt(mx);
             if (idx >= 0 && strip.entries().get(idx).key().equals(was)) {
                 return true; // the entry that opened it closes it; nothing more
@@ -227,9 +238,9 @@ final class TaskPopup {
         if (key == null) {
             return List.of();
         }
-        final List<DesktopWindow> mine = desktop.windowsOf(key);
+        final List<DesktopWindow> mine = desktop.wm().group(key);
         if (thumbnails()) {
-            final int most = Math.max(1, (desktop.screenW() - 4 - POPUP_PAD) / (CARD_W + POPUP_PAD));
+            final int most = Math.max(1, (desktop.view().width() - 4 - POPUP_PAD) / (CARD_W + POPUP_PAD));
             return mine.size() > most ? mine.subList(0, most) : mine;
         }
         return mine;
@@ -237,7 +248,7 @@ final class TaskPopup {
 
     /** Whether this panel shows the windows' live pictures rather than their titles. */
     private boolean thumbnails() {
-        return desktop.popupShowsThumbnails();
+        return desktop.taskbar().thumbnails();
     }
 
     /** Its box, desktop-local {x, y, w, h}, or null while it is not up. */
@@ -247,7 +258,7 @@ final class TaskPopup {
         if (list.isEmpty()) {
             return null;
         }
-        final DesktopScreen.TaskStrip strip = desktop.taskButtons(sw);
+        final TaskStrip strip = desktop.taskbar().strip(sw);
         final int index = TaskbarGroups.indexOf(strip.entries(), key);
         if (index < 0) {
             return null;
@@ -264,14 +275,14 @@ final class TaskPopup {
             h = 2 + n * LIST_ROW_H + 5 + LIST_ROW_H + 2;
         }
         final int x = Math.max(2, Math.min(center - w / 2, sw - w - 2));
-        final int y = desktop.panelOnTop() ? DesktopScreen.TASKBAR_H + 3 : tbY - 3 - h;
+        final int y = desktop.view().panelOnTop() ? DesktopScreen.TASKBAR_H + 3 : tbY - 3 - h;
         return new int[] {x, y, w, h};
     }
 
     /** Its {@code index}-th card or row, desktop-local {x, y, w, h}, or null. */
     @Nullable
     private int[] itemRect(final int index) {
-        final int[] r = rect(desktop.screenW(), desktop.screenH() - DesktopScreen.TASKBAR_H);
+        final int[] r = rect(desktop.view().width(), desktop.view().height() - DesktopScreen.TASKBAR_H);
         if (r == null || index < 0 || index >= windows().size()) {
             return null;
         }
@@ -297,7 +308,7 @@ final class TaskPopup {
     /** The "Close all" row of a list popup, or null on a modern panel. */
     @Nullable
     private int[] closeAllRect() {
-        final int[] r = rect(desktop.screenW(), desktop.screenH() - DesktopScreen.TASKBAR_H);
+        final int[] r = rect(desktop.view().width(), desktop.view().height() - DesktopScreen.TASKBAR_H);
         if (r == null || thumbnails()) {
             return null;
         }
@@ -328,10 +339,10 @@ final class TaskPopup {
             final int tx = card[0] + 3;
             final int ty = card[1] + CARD_TITLE_H + 1;
             final int tw = CARD_W - 6;
-            OsSkin.outline(g, tx - 1, ty - 1, tw + 2, THUMB_H + 2, skin.edge());
+            ChromeShapes.outline(g, tx - 1, ty - 1, tw + 2, THUMB_H + 2, skin.edge());
             g.fill(tx, ty, tx + tw, ty + THUMB_H, skin.fieldBg());
             w.renderThumbnail(g, desktop.textFont(), skin, tx, ty, tw, THUMB_H, sw, sh,
-                    desktop.panelReserve(), desktop.workAreaTop());
+                    desktop.view().panelReserve(), desktop.view().workAreaTop());
         }
     }
 
@@ -344,10 +355,10 @@ final class TaskPopup {
         }
         final boolean over = inRect(lmx, lmy, close);
         if (over) {
-            g.fill(close[0], close[1], close[0] + close[2], close[1] + close[3], 0xFFC04A3E);
+            g.fill(close[0], close[1], close[0] + close[2], close[1] + close[3], PALETTE.get().closeHover());
         }
-        g.drawString(desktop.textFont(), "x", close[0] + 2, close[1],
-                over ? 0xFFFFFFFF : skin.text(), false);
+        Draw.text(g, desktop.textFont(), "x", close[0] + 2, close[1],
+                over ? PALETTE.get().closeHoverInk() : skin.text());
     }
 
     /** The rows of a period panel: an icon and the window's title, dimmed while that window is put away. */
@@ -363,9 +374,9 @@ final class TaskPopup {
                 g.fill(row[0], row[1], row[0] + row[2], row[1] + row[3], skin.listHover());
             }
             ProgramIcons.draw(g, row[0] + 2, row[1] + 1, 9, 9, icon, desktop.icons());
-            g.drawString(desktop.textFont(),
+            Draw.text(g, desktop.textFont(),
                     desktop.textFont().plainSubstrByWidth(desktop.titleOf(w), row[2] - 16),
-                    row[0] + 14, row[1] + 2, w.minimized() ? skin.dim() : skin.text(), false);
+                    row[0] + 14, row[1] + 2, w.minimized() ? skin.dim() : skin.text());
         }
         final int[] all = closeAllRect();
         if (all == null) {
@@ -375,7 +386,8 @@ final class TaskPopup {
         if (inRect(lmx, lmy, all)) {
             g.fill(all[0], all[1], all[0] + all[2], all[1] + all[3], skin.listHover());
         }
-        g.drawString(desktop.textFont(), "Close all", all[0] + 14, all[1] + 2, 0xFFC04A3E, false);
+        Draw.text(g, desktop.textFont(), GameText.resolve(PanelTexts.CLOSE_ALL), all[0] + 14, all[1] + 2,
+                PALETTE.get().closeHover());
     }
 
     /** A click landing inside the popup: a close box, a window, the Close all row, or nothing at all. */
@@ -386,20 +398,20 @@ final class TaskPopup {
         }
         for (int i = 0; i < list.size(); i++) {
             if (thumbnails() && inRect(mx, my, closeRect(i))) {
-                desktop.closeOne(list.get(i));
-                if (key != null && desktop.windowsOf(key).isEmpty()) {
+                desktop.wm().close(list.get(i));
+                if (key != null && desktop.wm().group(key).isEmpty()) {
                     dismiss();
                 }
                 return true;
             }
             if (inRect(mx, my, itemRect(i))) {
-                desktop.focusOne(list.get(i));
+                desktop.wm().focus(list.get(i));
                 dismiss();
                 return true;
             }
         }
         if (inRect(mx, my, closeAllRect()) && key != null) {
-            desktop.closeAllOf(key);
+            desktop.wm().closeGroup(key);
             dismiss();
         }
         return true;
@@ -407,5 +419,9 @@ final class TaskPopup {
 
     private static boolean inRect(final double mx, final double my, @Nullable final int[] r) {
         return r != null && mx >= r[0] && mx < r[0] + r[2] && my >= r[1] && my < r[1] + r[3];
+    }
+
+    /** This popup's colours: a close mark's hovered fill, and the ink drawn over that fill. */
+    private record Colours(int closeHover, int closeHoverInk) {
     }
 }

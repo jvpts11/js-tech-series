@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.core.text.TextKey;
 import java.util.Optional;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The file types the filesystem recognises, each bound to a lowercase extension, and {@link #OTHER} for a file of
@@ -27,49 +29,49 @@ import java.util.Optional;
 public enum FileType {
 
     /** IQL query script, user-editable. */
-    IQL("iql", true, false),
+    IQL("iql", true, false, FileTypeNames.IQL),
 
     /** Plain text file, user-editable. */
-    TXT("txt", true, false),
+    TXT("txt", true, false, FileTypeNames.TXT),
 
     /** System log, append-only; not directly editable by the player. */
-    LOG("log", false, false),
+    LOG("log", false, false, FileTypeNames.LOG),
 
     /** Configuration file, user-editable. */
-    CFG("cfg", true, false),
+    CFG("cfg", true, false, FileTypeNames.CFG),
 
     /** Comma-separated values, user-editable. */
-    CSV("csv", true, false),
+    CSV("csv", true, false, FileTypeNames.CSV),
 
     /** Command script, user-editable. */
-    CMD("cmd", true, false),
+    CMD("cmd", true, false, FileTypeNames.CMD),
 
     /** Crafting-pattern data, not directly editable (managed by the Crafting Computer). */
-    CRAFT("craft", false, false),
+    CRAFT("craft", false, false, FileTypeNames.CRAFT),
 
     /** Virtual read-only projection of a disk's item/fluid storage; never persisted. */
-    DAT("dat", false, true),
+    DAT("dat", false, true, FileTypeNames.DAT),
     /*
      * What an install medium shows when opened: generated from its payload the way DAT is generated
      * from a disk's storage, never stored, never a player's to create, copy or delete.
      */
     /** A setup program a player runs to install what the medium carries. */
-    EXE("exe", false, true),
+    EXE("exe", false, true, FileTypeNames.EXE),
     /** The same on a Linux medium. */
-    SH("sh", false, true),
+    SH("sh", false, true, FileTypeNames.SH),
     /** The package manifest: name, package id, requirements and the install commands. */
-    PKG("pkg", false, true),
+    PKG("pkg", false, true, FileTypeNames.PKG),
     /** Setup information beside the installer, the way a disc of the era carried it. */
-    INF("inf", false, true),
+    INF("inf", false, true, FileTypeNames.INF),
     /** Opaque installer payload (a cabinet, an image, a kernel): listed, never opened. */
-    BIN("bin", false, true),
+    BIN("bin", false, true, FileTypeNames.BIN),
     /*
      * What the system folder and Program Files show: generated from the system and the programs
      * installed on it, never stored, never a player's to edit. A system has files in it, and a
      * computer whose system folder is empty is not a computer anybody has used.
      */
     /** A settings file the system keeps for itself. */
-    INI("ini", false, true),
+    INI("ini", false, true, null),
     /**
      * A piece of the system: the loader, the kernel, a driver.
      *
@@ -77,14 +79,14 @@ public enum FileType {
      * player can really delete. That is what makes a machine wreckable: the file is there, it can go, and at
      * the next start the machine says what it wanted and will not run without it.
      */
-    SYS("sys", false, false),
+    SYS("sys", false, false, null),
     /** A font the system draws with. */
-    FON("fon", false, true),
+    FON("fon", false, true, null),
 
     /** Σ# source, user-editable, and what the compiler reads. */
-    SGS("sgs", true, false),
+    SGS("sgs", true, false, null),
     /** Σ source: the smaller language the earliest machines are programmed in, which every later one reads too. */
-    SG("sg", true, false),
+    SG("sg", true, false, null),
 
     /**
      * The assembly the compiler writes, user-editable, and meant to be read.
@@ -92,7 +94,7 @@ public enum FileType {
      * <p>It is text on purpose: a player can open what their program was turned into and follow it a
      * line at a time, which is the whole reason the compiler does not keep it to itself.
      */
-    ASM("asm", true, false),
+    ASM("asm", true, false, null),
 
     /**
      * A Σ# package: its manifest and every file in it, in one piece of text.
@@ -102,13 +104,13 @@ public enum FileType {
      * which already means the manifest projected off an installation disc: one extension meaning two
      * things depending on where the file sits is how a player learns not to trust what they open.
      */
-    CPK("cpk", true, false),
+    CPK("cpk", true, false, FileTypeNames.CPK),
     /** A solution: the projects a studio works on together, and which starts. */
-    SLN("sln", true, false),
+    SLN("sln", true, false, FileTypeNames.SLN),
     /** A project: what it is made of and what it builds. */
-    SGSPROJ("sgsproj", true, false),
+    SGSPROJ("sgsproj", true, false, FileTypeNames.SGSPROJ),
     /** A project written in Σ, which keeps itself in a file of its own kind so nobody takes it for a Σ# one. */
-    SGPROJ("sgproj", true, false),
+    SGPROJ("sgproj", true, false, FileTypeNames.SGPROJ),
 
     /**
      * Many files packed into one, which weighs less than they did apart.
@@ -116,7 +118,7 @@ public enum FileType {
      * <p>Not editable, because most of it is compressed and a character changed by hand would make the rest
      * of it unreadable. An archiver opens it, and its listing is plain enough to read without one.
      */
-    ARK("ark", false, false),
+    ARK("ark", false, false, null),
 
     /**
      * A picture: a grid of pixels naming colours in a palette, run length encoded.
@@ -124,7 +126,15 @@ public enum FileType {
      * <p>Not editable by hand, because it is numbers rather than words and a character changed in it moves
      * every pixel after that point. A paint program opens it.
      */
-    PIX("pix", false, false),
+    PIX("pix", false, false, FileTypeNames.PIX),
+
+    /**
+     * A song or any other sound kept as Ogg Vorbis. The file names a recording the server keeps and weighs what the
+     * recording does; see {@link RecordingFile}. A player never writes one by hand: they bring it, or a program does.
+     */
+    OGG("ogg", false, false, FileTypeNames.OGG, true),
+    /** The same, kept as an uncompressed wave, which weighs many times what the Ogg of it would. */
+    WAV("wav", false, false, FileTypeNames.WAV, true),
 
     /**
      * A file of a kind the machines do not know: whatever a player or a program chose to call it, such as
@@ -133,21 +143,41 @@ public enum FileType {
      * <p>It is stored and edited like text, because text is what every file here holds. It has no extension of its
      * own: the one it was given lives in its name, and nothing needs to know what that extension means.
      */
-    OTHER("", true, false);
+    OTHER("", true, false, null);
 
     private final String extension;
     private final boolean userEditable;
     private final boolean virtualProjection;
+    @Nullable
+    private final TextKey typeName;
+    private final boolean recording;
 
-    FileType(final String extension, final boolean userEditable, final boolean virtualProjection) {
+    FileType(final String extension, final boolean userEditable, final boolean virtualProjection,
+             @Nullable final TextKey typeName) {
+        this(extension, userEditable, virtualProjection, typeName, false);
+    }
+
+    FileType(final String extension, final boolean userEditable, final boolean virtualProjection,
+             @Nullable final TextKey typeName, final boolean recording) {
         this.extension = extension;
         this.userEditable = userEditable;
         this.virtualProjection = virtualProjection;
+        this.typeName = typeName;
+        this.recording = recording;
     }
 
     /** The lowercase extension, without a leading dot (e.g. {@code "iql"}). */
     public String extension() {
         return extension;
+    }
+
+    /**
+     * What this kind of file is called in a listing, or null when something else names it: the language whose
+     * files these are, or, for a kind nothing names, its extension.
+     */
+    @Nullable
+    public TextKey typeName() {
+        return typeName;
     }
 
     /**
@@ -159,11 +189,33 @@ public enum FileType {
     }
 
     /**
+     * Whether a program writes a file of this kind whole although nobody edits one by hand: a paint program saves its
+     * picture. Such a save is taken only when what it carries is one of these, so an editor cannot write words into it.
+     */
+    public boolean writtenByPrograms() {
+        return this == PIX;
+    }
+
+    /**
      * Whether files of this type are generated on-the-fly from the disk's item storage
      * rather than being persisted. Only {@link #DAT} returns true.
      */
     public boolean virtualProjection() {
         return virtualProjection;
+    }
+
+    /**
+     * Whether a file of this type is a recording: it names a recording the server keeps rather than holding it, and
+     * weighs what that recording weighs. Such a file is only ever the recording it was made as; it never turns into
+     * text, and text never turns into one.
+     */
+    public boolean recording() {
+        return recording;
+    }
+
+    /** The type a recording of that kind of file is kept as on a disk, or empty for a kind no recording is kept as. */
+    public static Optional<FileType> forRecording(final String format) {
+        return fromExtension(format).filter(FileType::recording);
     }
 
     /**
@@ -193,5 +245,15 @@ public enum FileType {
      */
     public static FileType of(final String ext) {
         return fromExtension(ext).orElse(OTHER);
+    }
+
+    /**
+     * The kind of the file a path names, from the extension of its last segment, so a dot in a folder name is not
+     * mistaken for one. A name without an extension is {@link #OTHER}.
+     */
+    public static FileType ofPath(final String path) {
+        final String name = path.substring(path.lastIndexOf('/') + 1);
+        final int dot = name.lastIndexOf('.');
+        return dot >= 0 && dot < name.length() - 1 ? of(name.substring(dot + 1)) : OTHER;
     }
 }

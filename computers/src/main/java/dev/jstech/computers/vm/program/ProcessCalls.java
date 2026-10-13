@@ -12,6 +12,8 @@ import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.MemberKind;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.computers.vm.system.SystemApi;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.Map;
  * call the system declares as the process's to answer, and that is checked when the bindings are made, so what the
  * process answers cannot drift from what the compiler lets a program write.
  */
+@TextHolder
 final class ProcessCalls {
 
     /**
@@ -38,8 +41,11 @@ final class ProcessCalls {
     }
 
     private static final String STRING = "string";
+    /** The kinds of variable a read of one value fills in, each a version of Console.Scan of its own. */
+    private static final List<String> SCANNED = List.of("int", "long", "double", STRING, "char");
     /** What a watch on the network calls when it goes off. */
     private static final String STOCK_HANDLER = "Action<StockEvent>";
+    private static final TextKey NO_WIDGET = TextKey.of("jsc.vm.process_calls.no_widget", "there is no %s here to %s");
 
     /** A read has to wait while nothing has been typed at the terminal the program is in front of. */
     private static final IProcessWait LINE = (process, frame, count, line) -> {
@@ -68,6 +74,7 @@ final class ProcessCalls {
     private static Map<MemberId, Binding> build() {
         final Map<MemberId, Binding> bindings = new HashMap<>();
         console(bindings);
+        openFile(bindings);
         random(bindings);
         thread(bindings);
         program(bindings);
@@ -83,12 +90,17 @@ final class ProcessCalls {
      * text it could not read, as Convert would.
      */
     private static void console(final Map<MemberId, Binding> bindings) {
+        // Print leaves the line open for what follows it; PrintLine ends it.
         bind(bindings, "Console", "Print", null, (process, target, arguments, line) -> {
-            process.console0().writeLines(String.valueOf(arguments[0]));
+            process.console0().print(String.valueOf(arguments[0]));
             return null;
         }, STRING);
+        bind(bindings, "Console", "Print", null, (process, target, arguments, line) -> {
+            process.console0().print(String.valueOf((char) Numbers.toInt(arguments[0])));
+            return null;
+        }, "char");
         bind(bindings, "Console", "PrintLine", null, (process, target, arguments, line) -> {
-            process.console0().writeLines(String.valueOf(arguments[0]));
+            process.console0().print(arguments[0] + "\n");
             return null;
         }, STRING);
         bind(bindings, "Console", "Clear", null, (process, target, arguments, line) -> {
@@ -98,6 +110,18 @@ final class ProcessCalls {
         bind(bindings, "Console", "ReadLine", LINE,
                 (process, target, arguments, line) -> process.heap().adopt(process.takeInput(), line));
         bind(bindings, "Console", "HasLine", null, (process, target, arguments, line) -> process.hasInput());
+        /*
+         * Less than a line: one character, the line break at its end included, and one value, of the kind of the
+         * variable it goes into. What is left of the line waits for the next read.
+         */
+        bind(bindings, "Console", "Read", LINE, (process, target, arguments, line) -> (int) process.takeChar());
+        for (final String kind : SCANNED) {
+            bind(bindings, "Console", "Scan", LINE, (process, target, arguments, line) -> {
+                final Object value = process.scan(kind, line);
+                arguments[0] = value == null && STRING.equals(kind) ? process.text("", line) : value;
+                return value == null ? 0 : 1;
+            }, "out " + kind);
+        }
         bind(bindings, "Console", "ReadInt", LINE,
                 (process, target, arguments, line) -> NumberFunctions.number("ToInt", process.takeInput(), line));
         bind(bindings, "Console", "ReadLong", LINE,
@@ -106,6 +130,37 @@ final class ProcessCalls {
                 (process, target, arguments, line) -> NumberFunctions.number("ToDouble", process.takeInput(), line));
         bind(bindings, "Console", "ReadBool", LINE,
                 (process, target, arguments, line) -> NumberFunctions.truth(process.takeInput(), line));
+    }
+
+    /*
+     * A file the program opened, which it works on as one of its own objects: reading, writing and moving about in it
+     * is the program's own, and only closing it reaches the machine.
+     */
+    private static void openFile(final Map<MemberId, Binding> bindings) {
+        final String file = OpenFile.TYPE;
+        bind(bindings, file, "ReadLine", null, (process, target, arguments, line) ->
+                OpenFile.readLine(process, (Values.Obj) target, arguments, line), "out " + STRING);
+        bind(bindings, file, "Read", null, (process, target, arguments, line) ->
+                OpenFile.read((Values.Obj) target, line));
+        for (final String kind : SCANNED) {
+            bind(bindings, file, "Scan", null, (process, target, arguments, line) -> {
+                final Object value = OpenFile.scan(process, (Values.Obj) target, kind, line);
+                arguments[0] = value == null && STRING.equals(kind) ? process.text("", line) : value;
+                return value == null ? 0 : 1;
+            }, "out " + kind);
+        }
+        bind(bindings, file, "Write", null, (process, target, arguments, line) -> {
+            OpenFile.write(process, (Values.Obj) target, String.valueOf(arguments[0]), line);
+            return null;
+        }, STRING);
+        bind(bindings, file, "Write", null, (process, target, arguments, line) -> {
+            OpenFile.write(process, (Values.Obj) target, String.valueOf((char) Numbers.toInt(arguments[0])), line);
+            return null;
+        }, "char");
+        bind(bindings, file, "Seek", null, (process, target, arguments, line) -> {
+            OpenFile.seek((Values.Obj) target, Numbers.toInt(arguments[0]), line);
+            return null;
+        }, "int");
     }
 
     /** The program's own random numbers, which a program may start again from a number of its choosing. */
@@ -242,6 +297,47 @@ final class ProcessCalls {
             open(process, UiWidgets.message(String.valueOf(arguments[0]), String.valueOf(arguments[1]), line), line);
             return null;
         }, STRING, STRING);
+        // What the second version brought: runs of choices, entries and lines, and the widgets that hold others.
+        for (final String entries : List.of("RadioGroup", "ComboBox", "ContextMenu", "StatusBar", "LogView",
+                "ItemPicker")) {
+            drawn(bindings, entries, "Add", STRING);
+            drawn(bindings, entries, "Clear");
+        }
+        drawn(bindings, "TabView", "Add", STRING, "Widget");
+        drawn(bindings, "TabView", "Clear");
+        drawn(bindings, "Table", "AddColumn", STRING);
+        drawn(bindings, "Table", "AddRow", "List<string>");
+        drawn(bindings, "Table", "AddRow", STRING);
+        drawn(bindings, "Table", "AddRow", STRING, STRING);
+        drawn(bindings, "Table", "AddRow", STRING, STRING, STRING);
+        drawn(bindings, "Table", "AddRow", STRING, STRING, STRING, STRING);
+        drawn(bindings, "Table", "Clear");
+        read(bindings, "Table", "Cell", "int", "int");
+        drawn(bindings, "TreeView", "Add", STRING);
+        drawn(bindings, "TreeView", "Add", STRING, "int");
+        drawn(bindings, "TreeView", "Clear");
+        read(bindings, "TreeView", "NodeText", "int");
+        drawn(bindings, "MenuBar", "Add", STRING, STRING);
+        drawn(bindings, "MenuBar", "Clear");
+        drawn(bindings, "Chart", "Add", "double");
+        drawn(bindings, "Chart", "Clear");
+        drawn(bindings, "OperationView", "Show", "OperationInfo");
+        // A dialog goes up over a window as a window does, so it costs what opening one does.
+        for (final String dialog : List.of("OpenFileDialog", "SaveFileDialog")) {
+            bind(bindings, dialog, "Show", null, (process, target, arguments, line) -> {
+                final Values.Obj widget = widget(target, dialog, "Show", line);
+                process.charge(SigmaCosts.WRITE);
+                return process.windows0().mutator().call(widget, "Show", Arrays.asList(arguments), line);
+            }, "Window");
+        }
+        read(bindings, "GenericComponent", "OnAction", "Action<ComponentAction>");
+    }
+
+    /** Binds a call on a widget that only reads what it holds, or only says who is to hear it: it costs nothing. */
+    private static void read(final Map<MemberId, Binding> bindings, final String owner, final String name,
+                             final String... parameters) {
+        bind(bindings, owner, name, null, (process, target, arguments, line) -> process.windows0().mutator()
+                .call(widget(target, owner, name, line), name, Arrays.asList(arguments), line), parameters);
     }
 
     /** Binds a call on a widget that changes what it shows, charged a draw and made through the windows' one door. */
@@ -259,7 +355,7 @@ final class ProcessCalls {
         if (target instanceof Values.Obj object && UiWidgets.handles(object.type())) {
             return object;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no " + owner + " here to " + name);
+        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_WIDGET.with(owner, name));
     }
 
     /** Puts a window on the machine's desktop; one the runtime made itself is the program's to hold like any other. */

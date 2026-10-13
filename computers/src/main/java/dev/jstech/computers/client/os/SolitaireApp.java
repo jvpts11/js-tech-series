@@ -7,10 +7,16 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SolitaireGame;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -24,6 +30,7 @@ import java.util.Locale;
  * whatever the window around it looked like. Every rule lives in the pure {@link SolitaireGame}; this class
  * lays the table out, draws it, and turns dragging into moves.
  */
+@PaletteHolder
 public final class SolitaireApp implements IDesktopApp {
 
     private static final int W = PlayingCards.WIDTH;
@@ -37,9 +44,9 @@ public final class SolitaireApp implements IDesktopApp {
     private static final int STEP_UP = PlayingCards.MIN_READABLE_STRIP;
     /** Face-down cards show less, because there is nothing on them worth the room. */
     private static final int STEP_DOWN = 3;
-    private static final int FELT = 0xFF1F6B3A;
-    private static final int FELT_EDGE = 0xFF175430;
-    private static final int STATUS_INK = 0xFFDCEFE1;
+    /** The table's own colours, {@code jsc:game/solitaire}; the cards carry theirs. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "game/solitaire",
+            new Colours(0xFF1F6B3A, 0xFF175430, 0xFFC9D6F2, 0xFF1C7A32));
     /** How long two clicks may be apart and still be one gesture. */
     private static final long DOUBLE_CLICK_MS = 260L;
 
@@ -96,8 +103,8 @@ public final class SolitaireApp implements IDesktopApp {
     private long startedMs = System.currentTimeMillis();
 
     public SolitaireApp() {
-        newGame = root.add(new Button("New", this::deal));
-        finish = root.add(new Button("Finish", () -> this.finishing = true));
+        newGame = root.add(new Button(GameText.resolve(SolitaireTexts.NEW_GAME), this::deal));
+        finish = root.add(new Button(GameText.resolve(SolitaireTexts.FINISH), () -> this.finishing = true));
     }
 
     private void deal() {
@@ -109,7 +116,7 @@ public final class SolitaireApp implements IDesktopApp {
 
     @Override
     public String title() {
-        return "Solitaire";
+        return GameText.resolve(SolitaireTexts.TITLE);
     }
 
     @Override
@@ -151,7 +158,7 @@ public final class SolitaireApp implements IDesktopApp {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         newGame.setBounds(x + MARGIN, y + 2, 34, 12);
-        final int finishW = font.width("Finish") + 8;
+        final int finishW = font.width(GameText.resolve(SolitaireTexts.FINISH)) + 8;
         finish.setBounds(x + MARGIN + 36, y + 2, finishW, 12);
         playItselfHome();
         finish.setVisible(!finishing && !game.isWon() && game.canFinishAutomatically());
@@ -160,8 +167,8 @@ public final class SolitaireApp implements IDesktopApp {
 
         final int feltTop = y + TOOLBAR_H;
         final int feltBottom = y + height - STATUS_H;
-        g.fill(x, feltTop, x + width, feltBottom, FELT);
-        g.fill(x, feltTop, x + width, feltTop + 1, FELT_EDGE);
+        g.fill(x, feltTop, x + width, feltBottom, PALETTE.get().felt());
+        g.fill(x, feltTop, x + width, feltTop + 1, PALETTE.get().feltEdge());
 
         this.tableW = COLUMNS * (W + GAP) - GAP;
         this.tableX = x + Math.max(MARGIN, (width - tableW) / 2);
@@ -205,7 +212,7 @@ public final class SolitaireApp implements IDesktopApp {
 
     private void drawSeed(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         final String seed = "#" + Long.toString(Math.abs(game.seed()) % 1_000_000L);
-        g.drawString(font, seed, x + width - MARGIN - font.width(seed), y + 4, skin.dim(), false);
+        Draw.text(g, font, seed, x + width - MARGIN - font.width(seed), y + 4, skin.dim());
     }
 
     private void drawStockAndWaste(final GuiGraphics g, final Font font) {
@@ -213,7 +220,7 @@ public final class SolitaireApp implements IDesktopApp {
         if (game.stockSize() > 0) {
             PlayingCards.back(g, sx, tableY, H);
             final String left = String.valueOf(game.stockSize());
-            g.drawString(font, left, sx + (W - font.width(left)) / 2, tableY + H - 10, 0xFFC9D6F2, false);
+            Draw.text(g, font, left, sx + (W - font.width(left)) / 2, tableY + H - 10, PALETTE.get().stockCount());
         } else {
             PlayingCards.emptyStock(g, sx, tableY);
         }
@@ -278,11 +285,11 @@ public final class SolitaireApp implements IDesktopApp {
                             final int width, final int height) {
         g.fill(x, feltBottom, x + width, feltBottom + STATUS_H, skin.windowBg());
         final int ty = feltBottom + 2;
-        final String left = "Score " + game.score() + "   Moves " + game.moves();
-        g.drawString(font, left, x + MARGIN, ty, skin.text(), false);
-        final String right = game.isWon() ? "You win" : clock();
-        g.drawString(font, right, x + width - MARGIN - font.width(right), ty,
-                game.isWon() ? 0xFF1C7A32 : skin.dim(), false);
+        final String left = GameText.resolve(SolitaireTexts.SCORE_MOVES.with(game.score(), game.moves()));
+        Draw.text(g, font, left, x + MARGIN, ty, skin.text());
+        final String right = game.isWon() ? GameText.resolve(SolitaireTexts.YOU_WIN) : clock();
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), ty,
+                game.isWon() ? PALETTE.get().won() : skin.dim());
     }
 
     /** The cards being carried, drawn last so they sit over everything they are passing across. */
@@ -446,6 +453,16 @@ public final class SolitaireApp implements IDesktopApp {
         this.dragSuit = null;
     }
 
+    /** The deal as it stands, for a look at what a click on the table did. */
+    public SolitaireGame game() {
+        return game;
+    }
+
+    /** The desktop point in the middle of the stock, from the last frame drawn. */
+    public int[] stockPoint() {
+        return new int[] {columnX(0) + W / 2, tableY + H / 2};
+    }
+
     private void drop(final int cx, final int cy) {
         final int column = columnAt(cx);
         if (column < 0) {
@@ -539,5 +556,9 @@ public final class SolitaireApp implements IDesktopApp {
     private String clock() {
         final long seconds = (System.currentTimeMillis() - startedMs) / 1000L;
         return String.format(Locale.ROOT, "%d:%02d", Math.min(99, seconds / 60), seconds % 60);
+    }
+
+    /** The table's colours: the felt and its edge, the stock's count, and the line that says the game is won. */
+    private record Colours(int felt, int feltEdge, int stockCount, int won) {
     }
 }

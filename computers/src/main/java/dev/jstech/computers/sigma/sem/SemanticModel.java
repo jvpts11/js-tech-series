@@ -27,7 +27,7 @@ public final class SemanticModel {
 
     private final Map<IExpr, ITypeSymbol> types = new IdentityHashMap<>();
     private final Map<IExpr, IBinding> bindings = new IdentityHashMap<>();
-    private final Map<IExpr, IMemberSymbol> calls = new IdentityHashMap<>();
+    private final Map<INode, IMemberSymbol> calls = new IdentityHashMap<>();
     private final Map<INode, IBinding.Variable> places = new IdentityHashMap<>();
     /**
      * What each expression was reduced to before being written down, where it was reduced at all.
@@ -37,10 +37,16 @@ public final class SemanticModel {
      */
     private final Map<IExpr, IExpr> lowered = new IdentityHashMap<>();
     /**
-     * What each call of {@code printf} prints: the text of its format and the values that go in its holes, in
-     * the order they are joined, each a {@code String} or the {@link IExpr} of a value.
+     * What each call of {@code printf} prints, or of {@code sprintf} gives back: the text of its format and the
+     * values that go in its holes, in the order they are joined, each a {@code String} or the {@link IExpr} of a
+     * value.
      */
     private final Map<IExpr.Call, List<Object>> formatted = new IdentityHashMap<>();
+    /**
+     * What each call of an old bare function stands for: the call or the value of the library a player would have
+     * written the long way, checked and typed, over the very values the player handed the short one.
+     */
+    private final Map<IExpr.Call, IExpr> longWays = new IdentityHashMap<>();
     private final List<NamedType> declared = new ArrayList<>();
     private final List<DeclaredVariable> variables = new ArrayList<>();
     private String file = "";
@@ -86,14 +92,24 @@ public final class SemanticModel {
         return this.lowered.get(expression);
     }
 
-    /** Records what a call of {@code printf} prints, once its format has been read against its values. */
+    /** Records what a formatting call comes to, once its format has been read against its values. */
     public void setFormatted(final IExpr.Call call, final List<Object> pieces) {
         this.formatted.put(call, List.copyOf(pieces));
     }
 
-    /** What a call of {@code printf} prints, or null for a call that is not one. */
+    /** What a formatting call comes to, or null for a call that is not one. */
     public List<Object> formattedOf(final IExpr.Call call) {
         return this.formatted.get(call);
+    }
+
+    /** Records what a call of an old bare function stands for, written the long way. */
+    public void setLongWay(final IExpr.Call call, final IExpr longWay) {
+        this.longWays.put(call, longWay);
+    }
+
+    /** What a call of an old bare function stands for, written the long way, or null for a call that is not one. */
+    public IExpr longWayOf(final IExpr.Call call) {
+        return this.longWays.get(call);
     }
 
     /** Records what a name turned out to be. */
@@ -107,12 +123,12 @@ public final class SemanticModel {
     }
 
     /** Records which method or constructor a call resolved to. */
-    public void setCall(final IExpr expression, final IMemberSymbol member) {
+    public void setCall(final INode expression, final IMemberSymbol member) {
         this.calls.put(expression, member);
     }
 
     /** The method or constructor a call resolved to, or null. */
-    public IMemberSymbol callOf(final IExpr expression) {
+    public IMemberSymbol callOf(final INode expression) {
         return this.calls.get(expression);
     }
 

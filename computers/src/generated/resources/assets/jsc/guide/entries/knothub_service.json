@@ -1,0 +1,56 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.knothub_service.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knothub_service.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knothub_service.text3"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.knothub_service.warning1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.knothub_service.fix1",
+          "problem": "jsc.guide.knothub_service.problem1"
+        },
+        {
+          "fix": "jsc.guide.knothub_service.fix2",
+          "problem": "jsc.guide.knothub_service.problem2"
+        },
+        {
+          "fix": "jsc.guide.knothub_service.fix3",
+          "problem": "jsc.guide.knothub_service.problem3"
+        },
+        {
+          "fix": "jsc.guide.knothub_service.fix4",
+          "problem": "jsc.guide.knothub_service.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:knot",
+        "jsc:server_racks"
+      ]
+    }
+  ],
+  "id": "jsc:knothub_service",
+  "order": 394,
+  "section": "jsc:sharing_knot",
+  "title": "jsc.guide.knothub_service.title"
+}

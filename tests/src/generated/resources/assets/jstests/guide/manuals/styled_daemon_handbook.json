@@ -1,0 +1,13 @@
+{
+  "about": [
+    "jstests.guide.manual.styled_daemon_handbook.about1"
+  ],
+  "chapters": [
+    "jstests",
+    "jstests:shared"
+  ],
+  "id": "jstests:styled_daemon_handbook",
+  "priority": -3,
+  "style": "jsc:daemon_handbook",
+  "title": "jstests.guide.manual.styled_daemon_handbook.title"
+}

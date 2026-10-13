@@ -7,43 +7,36 @@
  */
 package dev.jstech.computers.menu;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.ReceivingBusPart;
-import dev.jstech.computers.blockentity.DataCableBlockEntity;
-import net.minecraft.core.BlockPos;
+import dev.jstech.computers.gui.layout.BusLayout;
+import dev.jstech.computers.registry.ComputingMenus;
+import dev.jstech.core.cable.CableBlockEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.Level;
 
 /**
- * Menu for configuring a Receiving Bus part. All behavior lives in {@link AbstractBusMenu}; this only binds the
- * receiving menu type and the create/fromNetwork factories.
+ * The window of a Crafting Receiving Bus. All behavior lives in {@link AbstractBusMenu}; this only binds the receiving
+ * menu type and the create/fromNetwork factories.
  */
 public class ReceivingBusMenu extends AbstractBusMenu {
 
     public ReceivingBusMenu(final int containerId, final Inventory playerInventory, final ReceivingBusPart part,
-                            final Level level, final BlockPos cablePos, final Direction face, final String busName) {
-        super(ComputingModule.RECEIVING_BUS_MENU.get(), containerId, playerInventory, part, level, cablePos, face,
-                busName);
+                            final Level level, final Opening opening) {
+        super(ComputingMenus.RECEIVING_BUS_MENU.get(), containerId, playerInventory, part, level, opening,
+                BusLayout.Window.RECEIVING);
     }
 
     public static ReceivingBusMenu create(final int containerId, final Inventory playerInventory,
-                                          final DataCableBlockEntity cable, final Direction face) {
-        final ReceivingBusPart part =
-                cable.getPart(face) instanceof ReceivingBusPart real ? real : new ReceivingBusPart();
-        return new ReceivingBusMenu(containerId, playerInventory, part, cable.getLevel(), cable.getBlockPos(),
-                face, part.name());
+                                          final CableBlockEntity cable, final Direction face) {
+        return open(containerId, playerInventory, cable, face, ReceivingBusPart.class,
+                era -> new ReceivingBusPart(), ReceivingBusMenu::new);
     }
 
     public static ReceivingBusMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                final RegistryFriendlyByteBuf buf) {
-        final BlockPos pos = buf.readBlockPos();
-        final Direction face = Direction.from3DDataValue(buf.readByte());
-        final String busName = buf.readUtf();
-        final Level level = playerInventory.player.level();
-        final ReceivingBusPart part = level.getBlockEntity(pos) instanceof DataCableBlockEntity cable
-                && cable.getPart(face) instanceof ReceivingBusPart real ? real : new ReceivingBusPart();
-        return new ReceivingBusMenu(containerId, playerInventory, part, level, pos, face, busName);
+        return openFromNetwork(containerId, playerInventory, buf, ReceivingBusPart.class,
+                era -> new ReceivingBusPart(), ReceivingBusMenu::new);
     }
 }

@@ -8,8 +8,10 @@
 package dev.jstech.computers.sigma.edit;
 
 import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
+import dev.jstech.computers.sigma.sem.BareFunctions;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
@@ -20,6 +22,9 @@ import dev.jstech.computers.sigma.sem.SubsetRules;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -36,6 +41,7 @@ import java.util.Set;
  * declared above it in the same method, a field of the type around it, {@code this}, {@code base}, a
  * type named for its static side, or a chain of those read one member at a time.
  */
+@TextHolder
 public final class SigmaCompletions {
 
     /** What a candidate is, which is what an editor draws its little mark from. */
@@ -45,11 +51,20 @@ public final class SigmaCompletions {
      * One candidate.
      *
      * @param label     what to insert, and what to list it under
-     * @param signature the whole shape, with what it takes and what it gives back
+     * @param signature the whole shape, with what it takes and what it gives back, in English for the one line
+     *                  that is words rather than code
      * @param sort      what kind of member it is
      * @param owner     the type that declares it, for the line under the list
      */
     public record Item(String label, String signature, Sort sort, String owner) {
+
+        /**
+         * What the list shows for it, in the reader's words. A signature is code and reads the same in every
+         * language; the star that opens a whole namespace is the one line that says something in words.
+         */
+        public Text shown() {
+            return ALL.equals(this.label) ? EVERYTHING_IN.with(this.owner) : Text.literal(this.signature);
+        }
     }
 
     /**
@@ -93,9 +108,23 @@ public final class SigmaCompletions {
     /** What the line under a namespace says it is. */
     private static final String NAMESPACE = "namespace";
 
-    /** The call both languages have with no type in front of it, listed under the language itself. */
-    private static final Item PRINTF =
-            new Item("printf", "printf(string format, ...) : void", Sort.METHOD, "the language");
+    /** What the calls written with no type in front of them are listed under, which is the language itself. */
+    private static final String LANGUAGE = "the language";
+
+    /** What a using writes to bring in everything a namespace holds. */
+    private static final String ALL = "*";
+
+    /** The one value an array has of its own. */
+    private static final String ARRAY_LENGTH = "Length";
+
+    /** The line the star is listed with, naming the namespace it opens. */
+    private static final TextKey EVERYTHING_IN = TextKey.of("jsc.sigma.completions.everything_in",
+            "* : everything in %s");
+
+    /* What a call costs a program, as the strip under the list says it. */
+    private static final TextKey COSTS = TextKey.of("jsc.sigma.completions.costs", "costs %s");
+    private static final TextKey COSTS_READ_WRITE = TextKey.of("jsc.sigma.completions.costs_read_write",
+            "costs %s to read and %s to write");
 
     private SigmaCompletions() {
     }
@@ -109,12 +138,49 @@ public final class SigmaCompletions {
      * of the library is listed under the one namespace this language knows it by.
      */
     public static List<Item> within(final LanguageLevel level, final List<Item> candidates) {
+        return within(level, SigmaVersions.NEWEST, candidates);
+    }
+
+    /**
+     * The same, held to {@code version} of the language as well: a type of the library that came in a later version
+     * is not offered, nor what it has, nor a call written with no type in front of it that came later, since the
+     * compiler would refuse all of them. What the program declares stays.
+     */
+    public static List<Item> within(final LanguageLevel level, final int version, final List<Item> candidates) {
+        final List<Item> held = new ArrayList<>(candidates.size());
+        for (final Item item : candidates) {
+            final boolean ownOrVariable = item.sort() == Sort.VARIABLE || OWN.equals(item.owner());
+            if (ownOrVariable || since(level, item) <= version) {
+                held.add(item);
+            }
+        }
+        return atLevel(level, held);
+    }
+
+    /** The version of {@code level} a candidate of the language came in, or never when that language lacks it. */
+    private static int since(final LanguageLevel level, final Item item) {
+        final BareFunctions.Function bare = bareFunction(item);
+        if (bare != null) {
+            return bare.in(level) ? bare.since() : Integer.MAX_VALUE;
+        }
+        if (item.sort() == Sort.TYPE) {
+            return SigmaVersions.sinceType(level, item.label());
+        }
+        return SigmaVersions.sinceMember(level, item.owner(), item.label(), takenBy(item.signature()));
+    }
+
+    /** The call written with no type in front of it that a candidate is, or null when it is not one. */
+    private static BareFunctions.Function bareFunction(final Item item) {
+        return LANGUAGE.equals(item.owner()) ? BareFunctions.named(item.label()) : null;
+    }
+
+    private static List<Item> atLevel(final LanguageLevel level, final List<Item> candidates) {
         if (level.full()) {
             return candidates;
         }
         final List<Item> out = new ArrayList<>(candidates.size());
         for (final Item item : candidates) {
-            if (item.sort() == Sort.VARIABLE || OWN.equals(item.owner()) || "*".equals(item.label())) {
+            if (item.sort() == Sort.VARIABLE || OWN.equals(item.owner()) || ALL.equals(item.label())) {
                 out.add(item);
             } else if (item.sort() == Sort.TYPE && item.signature().endsWith(" : " + NAMESPACE)) {
                 if (BuiltIns.SUBSET_LIBRARY.equals(item.label())) {
@@ -258,6 +324,13 @@ public final class SigmaCompletions {
 
     /** The members of {@code target} whose names begin with {@code prefix}. */
     public static List<Item> members(final Target target, final String prefix) {
+        if (target.type() instanceof ITypeSymbol.ArrayType array && !target.staticSide()) {
+            // An array answers to how many places it has and to nothing else.
+            final boolean wanted = ARRAY_LENGTH.toLowerCase(Locale.ROOT)
+                    .startsWith(prefix == null ? "" : prefix.toLowerCase(Locale.ROOT));
+            return wanted ? List.of(new Item(ARRAY_LENGTH, ARRAY_LENGTH + " : int", Sort.PROPERTY, array.describe()))
+                    : List.of();
+        }
         final NamedType type = named(target.type());
         return type == null ? List.of() : membersOf(type, prefix, target.staticSide());
     }
@@ -278,10 +351,20 @@ public final class SigmaCompletions {
 
     private static List<Item> membersOf(final NamedType type, final String prefix, final boolean staticSide) {
         final String wanted = prefix == null ? "" : prefix.toLowerCase(Locale.ROOT);
-        final Set<String> seen = new LinkedHashSet<>();
+        return memberItems(type, wanted, new LinkedHashSet<>(), staticSide);
+    }
+
+    /**
+     * The members of {@code type} that start with {@code wanted} (already lower case), sorted by name and
+     * then signature. A null {@code staticSide} keeps both halves; {@code seen} carries the name and
+     * signature pairs already offered, so a member reached twice is listed once.
+     */
+    private static List<Item> memberItems(final NamedType type, final String wanted, final Set<String> seen,
+                                          final Boolean staticSide) {
         final List<Item> items = new ArrayList<>();
         for (final IMemberSymbol member : type.allMembers()) {
-            if (member instanceof IMemberSymbol.ConstructorSymbol || member.isStatic() != staticSide) {
+            if (member instanceof IMemberSymbol.ConstructorSymbol
+                    || staticSide != null && member.isStatic() != staticSide) {
                 continue;
             }
             final String name = member.name();
@@ -314,22 +397,18 @@ public final class SigmaCompletions {
         variables.sort(Comparator.comparing(Item::label));
         items.addAll(variables);
         if (scope.enclosing() != null) {
-            final List<Item> own = new ArrayList<>();
-            for (final IMemberSymbol member : scope.enclosing().allMembers()) {
-                if (member instanceof IMemberSymbol.ConstructorSymbol
-                        || !member.name().toLowerCase(Locale.ROOT).startsWith(wanted)
-                        || !seen.add(member.name() + signatureOf(member))) {
+            items.addAll(memberItems(scope.enclosing(), wanted, seen, null));
+        }
+        // The calls written with no type in front of them, each unless the program has its own by that name above.
+        if (!wanted.isEmpty()) {
+            for (final BareFunctions.Function function : BareFunctions.startingWith(wanted)) {
+                if (items.stream().anyMatch(item -> item.label().equals(function.name()))) {
                     continue;
                 }
-                own.add(new Item(member.name(), signatureOf(member), sortOf(member), member.owner().name()));
+                for (final BareFunctions.Form form : function.forms()) {
+                    items.add(new Item(function.name(), form.written(function.name()), Sort.METHOD, LANGUAGE));
+                }
             }
-            own.sort(Comparator.comparing(Item::label).thenComparing(Item::signature));
-            items.addAll(own);
-        }
-        // The one call written with no type in front of it, unless the program has a printf of its own above.
-        if (!wanted.isEmpty() && PRINTF.label().startsWith(wanted)
-                && items.stream().noneMatch(item -> item.label().equals(PRINTF.label()))) {
-            items.add(PRINTF);
         }
         items.addAll(types(builtIns, model, prefix));
         return items;
@@ -351,8 +430,8 @@ public final class SigmaCompletions {
         final String inside = under == null ? "" : under;
         final Set<String> seen = new LinkedHashSet<>();
         final List<Item> items = new ArrayList<>();
-        if (!inside.isEmpty() && "*".startsWith(wanted)) {
-            items.add(new Item("*", "* : everything in " + inside, Sort.TYPE, inside));
+        if (!inside.isEmpty() && ALL.startsWith(wanted)) {
+            items.add(new Item(ALL, EVERYTHING_IN.with(inside).english(), Sort.TYPE, inside));
         }
         for (final String namespace : builtIns.namespaces()) {
             final String rest = inside.isEmpty() ? namespace
@@ -366,12 +445,40 @@ public final class SigmaCompletions {
         }
         items.sort(Comparator.comparing(Item::label));
         if (!inside.isEmpty()) {
-            for (final Item type : types(builtIns, model, prefix)) {
+            for (final Item type : typesIn(builtIns, model, inside, wanted)) {
                 if (seen.add(type.label())) {
                     items.add(type);
                 }
             }
         }
+        return items;
+    }
+
+    /**
+     * The types declared directly in {@code namespace}, which is all a using can name there: a using
+     * resolves a type by its full name, so one from another namespace would be accepted by the list and
+     * then rejected by the compiler.
+     */
+    private static List<Item> typesIn(final BuiltIns builtIns, final SemanticModel model, final String namespace,
+                                      final String wanted) {
+        final Set<String> seen = new LinkedHashSet<>();
+        final List<Item> items = new ArrayList<>();
+        for (final NamedType type : declared(model)) {
+            if (type.namespace().equals(namespace)) {
+                offer(items, seen, type, wanted, OWN);
+            }
+        }
+        if (builtIns != null) {
+            for (final NamedType type : builtIns.all()) {
+                // The subset's library holds types that the full language keeps under other namespaces.
+                if (type.namespace().equals(namespace)
+                        || BuiltIns.SUBSET_LIBRARY.equals(namespace)
+                        && builtIns.qualified(BuiltIns.SUBSET_LIBRARY + "." + type.name(), -1) == type) {
+                    offer(items, seen, type, wanted, namespace);
+                }
+            }
+        }
+        items.sort(Comparator.comparing(Item::label));
         return items;
     }
 
@@ -466,12 +573,15 @@ public final class SigmaCompletions {
      * item is not a call of the library or the machine.
      *
      * <p>A call written several ways may cost something different each way, as a call across a Gateway does for
-     * every thing it hands over, so the price is the one for the way this item writes it.
+     * every thing it hands over, so the price is the one for the way this item writes it. A call written with no
+     * type in front of it costs what the library's call it stands for costs.
      */
-    public static String costOf(final Item item) {
-        final List<IMemberSpec> ways = SystemApi.members(item.owner(), item.label());
+    public static Text costOf(final Item item) {
+        final BareFunctions.Function bare = bareFunction(item);
+        final List<IMemberSpec> ways = bare == null ? SystemApi.members(item.owner(), item.label())
+                : SystemApi.members(bare.owner(), bare.member());
         IMemberSpec chosen = ways.size() == 1 ? ways.getFirst() : null;
-        final String taken = takenBy(item.signature());
+        final String taken = bare == null ? takenBy(item.signature()) : typesOnly(takenBy(item.signature()));
         for (int i = 0; chosen == null && i < ways.size(); i++) {
             if (String.join(", ", ways.get(i).id().parameters()).equals(taken)) {
                 chosen = ways.get(i);
@@ -481,8 +591,8 @@ public final class SigmaCompletions {
             return null;
         }
         return chosen instanceof PropertySpec value && value.writable()
-                ? "costs " + value.cost().describe() + " to read and " + value.writeCost().describe() + " to write"
-                : "costs " + chosen.cost().describe();
+                ? COSTS_READ_WRITE.with(value.cost().text(), value.writeCost().text())
+                : COSTS.with(chosen.cost().text());
     }
 
     /** What a signature says its member takes: the text between its brackets, or nothing for a value. */
@@ -490,5 +600,21 @@ public final class SigmaCompletions {
         final int open = signature.indexOf('(');
         final int close = signature.lastIndexOf(')');
         return open < 0 || close < open ? "" : signature.substring(open + 1, close);
+    }
+
+    /**
+     * What a call written with no type in front of it takes, with the names of the values left out, since it names
+     * them the way the manuals of its day did: {@code int a, int b} is {@code int, int}.
+     */
+    private static String typesOnly(final String taken) {
+        if (taken.isEmpty()) {
+            return taken;
+        }
+        final List<String> types = new ArrayList<>();
+        for (final String value : taken.split(", ")) {
+            final int space = value.indexOf(' ');
+            types.add(space < 0 ? value : value.substring(0, space));
+        }
+        return String.join(", ", types);
     }
 }

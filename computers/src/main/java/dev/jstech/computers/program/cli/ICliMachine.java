@@ -11,8 +11,13 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
+import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +66,23 @@ public interface ICliMachine {
         return null;
     }
 
+    /**
+     * The computer's hardware and ports as its Device Manager reads them, or null when there is no machine to read:
+     * what the device tools of a prompt list.
+     */
+    @Nullable
+    default DeviceMap devices() {
+        return null;
+    }
+
+    /**
+     * Disables or enables the device standing at {@code pos} (packed) on one of the computer's own ports, as its
+     * Device Manager does; false when no device of the machine's stands there.
+     */
+    default boolean setDeviceDisabled(final long pos, final boolean disabled) {
+        return false;
+    }
+
     /** This computer's host name as a POSIX shell shows it (its name, or the OS id when unnamed). */
     default String hostname() {
         return "computer";
@@ -69,6 +91,10 @@ public interface ICliMachine {
     /** The command-syntax family of the installed OS's kernel; DOS when nothing says otherwise. */
     default ShellFamily shellFamily() {
         return ShellFamily.DOS;
+    }
+
+    /** Rings the terminal's bell, as a program printing the bell character does; nothing where there is none. */
+    default void bell() {
     }
 
     /**
@@ -92,6 +118,15 @@ public interface ICliMachine {
         return 0;
     }
 
+    /**
+     * The hardware era of the board installed in this computer, which is what tells a Vintage machine, which
+     * never holds the Sigma Runtime, apart from every later one. {@link HardwareEra#STANDARD} on a machine with
+     * no board of its own to read one from (a network appliance, a computer made for a test).
+     */
+    default HardwareEra era() {
+        return HardwareEra.STANDARD;
+    }
+
     /** Whether this computer is of the kind a command asks for (any computer, a Mainframe, a Cluster Manager). */
     default boolean hostIs(final HostScope scope) {
         return scope == HostScope.ANY;
@@ -99,6 +134,24 @@ public interface ICliMachine {
 
     /** Whether the system keeps files at all, which a network system such as MC-NET does not. */
     default boolean hasFiles() {
+        return false;
+    }
+
+    /**
+     * Whether this machine can run a program of its own at all, which is true of every computer with a
+     * processor of its own and false of a server that only holds a network's files and drives on a board with
+     * nothing to run one on. A word that answers to a listing on such a machine is not a program it runs either,
+     * so a shell asks this before trying one by its bare name.
+     */
+    default boolean canRunPrograms() {
+        return true;
+    }
+
+    /**
+     * Whether that word is a program installed here that shows itself only in windows, on a system with no desktop
+     * running to show them: its name is a program the machine has, and still nothing a prompt can open.
+     */
+    default boolean windowsWithoutDesktop(final String word) {
         return false;
     }
 
@@ -113,8 +166,8 @@ public interface ICliMachine {
      * <p>There is one clock here and everything is timed by it: a job on a schedule, a line in a log, the hour
      * on a file. A machine that cannot see it says so rather than making an hour up.
      */
-    default String worldTime() {
-        return "the clock is not set";
+    default Text worldTime() {
+        return MachineWords.NO_CLOCK.text();
     }
 
     /** What this machine's memory is spent on: what it has, what it promised, and what is really in it. */
@@ -123,9 +176,17 @@ public interface ICliMachine {
     }
 
     /**
+     * What the kernel of this machine's system has logged in this run, oldest first: what it said of itself as it
+     * came up, then what it ended for want of memory. Nothing for a machine whose system keeps no such log.
+     */
+    default List<String> kernelLog() {
+        return List.of();
+    }
+
+    /**
      * The names the shell knows on this machine, by name in upper case.
      *
-     * <p>They belong to the machine and not to a prompt, so a name set at a monitor is still there in a
+     * <p>They belong to the machine and not to a prompt, so a name set at a monitor stays there in a
      * window on the desktop, in a session opened from another machine, and after a restart. That is what a
      * player means by setting one: a shell that forgot everything the moment a window closed would be a
      * shell nobody could use.
@@ -136,7 +197,7 @@ public interface ICliMachine {
 
     /** Gives a name a value on this machine, or forgets it when the value is blank. */
     default ICliComputer.OpResult setShellVariable(final String name, final String value) {
-        return ICliComputer.OpResult.fail("this machine keeps no names");
+        return ICliComputer.OpResult.fail(MachineWords.NO_NAMES);
     }
 
     /** The work this machine does with nobody at it: lines left running and lines waiting for an hour. */
@@ -189,5 +250,26 @@ public interface ICliMachine {
     /** Whether a command asked for a plain restart during this run. */
     default boolean rebootRequested() {
         return false;
+    }
+
+    /**
+     * Tells the game a command did something worth an advancement, named by one of the stable event ids; the one
+     * typing earns it, or whoever works the machine when nobody is. A computer made for a test lets it go.
+     */
+    default void report(final String event, final String detail) {
+    }
+
+    /**
+     * What a computer that says nothing about itself answers. Named apart from the other parts' words, since a
+     * computer is every one of these parts at once.
+     */
+    @TextHolder
+    final class MachineWords {
+
+        static final TextKey NO_CLOCK = TextKey.of("jsc.cli.machine.no_clock", "the clock is not set");
+        public static final TextKey NO_NAMES = TextKey.of("jsc.cli.machine.no_names", "this machine keeps no names");
+
+        private MachineWords() {
+        }
     }
 }

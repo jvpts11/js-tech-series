@@ -1,0 +1,6 @@
+{
+  "parent": "jsc:block/monitor/amber",
+  "textures": {
+    "button": "jsc:block/monitor/amber_button_on"
+  }
+}

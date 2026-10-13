@@ -1,0 +1,118 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.get"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.reading_drawings.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.text1"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.reading_drawings.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.reading_drawings.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.reading_drawings.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.text4"
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "heading",
+      "text": "jsindustrial.guide.reading_drawings.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.reading_drawings.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.reading_drawings.use1",
+        "jsindustrial.guide.reading_drawings.use2",
+        "jsindustrial.guide.reading_drawings.use3"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.reading_drawings.fix1",
+          "problem": "jsindustrial.guide.reading_drawings.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsindustrial:coal_generator"
+      ]
+    }
+  ],
+  "icon": "jsindustrial:plant_drawings",
+  "id": "jsindustrial:reading_drawings",
+  "items": [
+    "jsindustrial:plant_drawings"
+  ],
+  "section": "jsindustrial:reading",
+  "title": "jsindustrial.guide.reading_drawings.title"
+}

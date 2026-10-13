@@ -62,7 +62,8 @@ public final class WreckedMachineClientTests {
     }
 
     private static FilesApp files(final ClientTestContext ctx) {
-        final var window = desktop(ctx) == null ? null : desktop(ctx).windowFor("Files");
+        // By the program's own key, which every edition shares whatever it calls the file manager.
+        final var window = desktop(ctx) == null ? null : desktop(ctx).windowFor("jsc:files");
         final IDesktopApp app = window == null ? null : window.app();
         return app instanceof FilesApp f ? f : null;
     }

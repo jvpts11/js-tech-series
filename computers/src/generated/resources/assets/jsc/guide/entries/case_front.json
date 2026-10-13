@@ -1,0 +1,374 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text1"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.case_front.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              12,
+              9,
+              15,
+              14,
+              12,
+              16
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.case_front.balloon1"
+        },
+        {
+          "detail": "jsc.guide.case_front.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              9,
+              10,
+              15,
+              12,
+              12,
+              16
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.case_front.balloon2"
+        },
+        {
+          "detail": "jsc.guide.case_front.balloon3_detail",
+          "number": 3,
+          "part": {
+            "box": [
+              3,
+              13,
+              14,
+              13,
+              15,
+              16
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.case_front.balloon3"
+        },
+        {
+          "detail": "jsc.guide.case_front.balloon4_detail",
+          "number": 4,
+          "part": {
+            "box": [
+              4,
+              12,
+              14,
+              12,
+              13,
+              16
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.case_front.balloon4"
+        },
+        {
+          "detail": "jsc.guide.case_front.balloon5_detail",
+          "number": 5,
+          "part": {
+            "box": [
+              1,
+              11,
+              15,
+              5,
+              13,
+              16
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.case_front.balloon5"
+        },
+        {
+          "detail": "jsc.guide.case_front.balloon6_detail",
+          "number": 6,
+          "part": {
+            "box": [
+              1,
+              9,
+              15,
+              5,
+              10,
+              16
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.case_front.balloon6"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Hardware:{Size:15,Items:[{Slot:0,id:\"jsc:motherboard_atx_standard_lga1150\",count:1},{Slot:1,id:\"jsc:cpu_integra_centro_c5_4690k\",count:1},{Slot:2,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:3,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:6,id:\"jsc:gpu_vertex_gtx_970\",count:1},{Slot:10,id:\"jsc:psu_650g\",count:1},{Slot:11,id:\"jsc:disk_hdd_4t\",count:1},{Slot:12,id:\"jsc:disk_nvme_500g\",count:1},{Slot:13,id:\"jsc:internal_dvd_drive\",count:1}]},Front:{Size:4,Items:[{Slot:0,id:\"jsc:dvd_rom\",count:1},{Slot:2,id:\"jsc:usb_flash_drive\",count:1}]},Bay0TrayOpen:1b,Lamps:3}",
+          "state": "jsc:personal_computer[facing=south]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        }
+      ],
+      "caption": "jsc.guide.case_front.figure1",
+      "height": 130,
+      "view": {
+        "pitch": 15.0,
+        "yaw": -20.0,
+        "zoom": 1.4
+      }
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.case_front.definition1",
+      "term": "jsc.guide.case_front.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.case_front.table1",
+      "heads": [
+        "jsc.guide.case_front.table1_head1",
+        "jsc.guide.case_front.table1_head2",
+        "jsc.guide.case_front.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.case_front.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.case_front.definition2",
+      "term": "jsc.guide.case_front.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.case_front.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.case_front.table2",
+      "heads": [
+        "jsc.guide.case_front.table2_head1",
+        "jsc.guide.case_front.table2_head2",
+        "jsc.guide.case_front.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.case_front.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.case_front.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.case_front.table2_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.case_front.definition3",
+      "term": "jsc.guide.case_front.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.case_front.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.case_front.definition4",
+      "term": "jsc.guide.case_front.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.case_front.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.case_front.fix1",
+          "problem": "jsc.guide.case_front.problem1"
+        },
+        {
+          "fix": "jsc.guide.case_front.fix2",
+          "problem": "jsc.guide.case_front.problem2"
+        },
+        {
+          "fix": "jsc.guide.case_front.fix3",
+          "problem": "jsc.guide.case_front.problem3"
+        },
+        {
+          "fix": "jsc.guide.case_front.fix4",
+          "problem": "jsc.guide.case_front.problem4"
+        },
+        {
+          "fix": "jsc.guide.case_front.fix5",
+          "problem": "jsc.guide.case_front.problem5"
+        },
+        {
+          "fix": "jsc.guide.case_front.fix6",
+          "problem": "jsc.guide.case_front.problem6"
+        },
+        {
+          "fix": "jsc.guide.case_front.fix7",
+          "problem": "jsc.guide.case_front.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:assembly_screen",
+        "jsc:drives",
+        "jsc:disks"
+      ]
+    }
+  ],
+  "icon": "jsc:internal_cd_drive",
+  "id": "jsc:case_front",
+  "items": [
+    "jsc:hot_swap_drive_bay",
+    "jsc:internal_cd_drive",
+    "jsc:internal_dvd_drive",
+    "jsc:internal_blu_ray_drive"
+  ],
+  "order": 14,
+  "section": "jsc:assembly",
+  "title": "jsc.guide.case_front.title"
+}

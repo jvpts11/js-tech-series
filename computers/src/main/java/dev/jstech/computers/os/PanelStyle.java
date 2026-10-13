@@ -20,6 +20,18 @@ public enum PanelStyle {
     /** Bottom Luna taskbar, two-column Start menu (Frames XP). */
     FRAMES_XP(false),
 
+    /**
+     * Bottom glass superbar of icons with no titles, a round orb for Start, and a two-column Start menu with a glass
+     * column of places (Frames 7).
+     */
+    FRAMES_7(false),
+
+    /**
+     * Bottom dark taskbar with a search box and task view beside Start, a Start menu of a list and live tiles, and
+     * the Action Center at the right edge (Frames 10).
+     */
+    FRAMES_10(false),
+
     /** Bottom dark centred taskbar, floating Start with search and a pinned grid (Frames 11). */
     FRAMES_11(false),
 

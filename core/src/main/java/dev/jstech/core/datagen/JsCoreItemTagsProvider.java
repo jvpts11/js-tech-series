@@ -12,6 +12,7 @@ import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.IntrinsicHolderTagsProvider;
@@ -19,7 +20,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
 import java.util.concurrent.CompletableFuture;
@@ -58,12 +58,11 @@ public class JsCoreItemTagsProvider extends IntrinsicHolderTagsProvider<Item> {
     }
 
     private static Item vanillaItem(final ModMaterial mat, final MaterialForm form) {
-        return switch (mat) {
-            case IRON -> form == MaterialForm.INGOT ? Items.IRON_INGOT : Items.IRON_NUGGET;
-            case COPPER -> Items.COPPER_INGOT; // copper has no vanilla nugget in 1.21.1
-            case GOLD -> form == MaterialForm.INGOT ? Items.GOLD_INGOT : Items.GOLD_NUGGET;
-            default -> throw new IllegalArgumentException("No vanilla item for " + mat + "/" + form);
-        };
+        // The vanilla forms are declared by the material; the item itself is found by its vanilla name, so a
+        // form vanilla does not have (such as a copper nugget) fails the data run instead of being mapped wrongly.
+        final ResourceLocation id = ResourceLocation.withDefaultNamespace(form.itemKey(mat.materialName()));
+        return BuiltInRegistries.ITEM.getOptional(id).orElseThrow(
+                () -> new IllegalArgumentException("No vanilla item " + id + " for " + mat + "/" + form));
     }
 
     private static TagKey<Item> c(final String path) {

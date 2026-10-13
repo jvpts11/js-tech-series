@@ -7,21 +7,46 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.FirmwareScreenTexts.CORE_COUNT_MANY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CORE_COUNT_ONE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK_BOOT_FAILURE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK_NAMED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ENTERING_SETUP_NOW;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ENTRY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.INSERT_MEDIA;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEY_BOOT_MENU;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEY_SETUP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NON_SYSTEM_DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NOTHING_ATTACHED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_BOOTABLE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NO_BOOTABLE_FOUND;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PRESS_ANY_KEY_SETUP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.REPAIR;
+import static dev.jstech.computers.client.FirmwareScreenTexts.REPLACE_DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.SUMMARY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.THE_MEDIUM;
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.layout.BootSequenceLayout;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.FirmwareKind;
-import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -39,6 +64,7 @@ import java.util.List;
  * <p>DEL at any point enters the firmware setup instead. When the sequence ends the client reports
  * {@link PostCompletePayload} and the server swaps this screen for whatever boots.
  */
+@PaletteHolder
 public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = MonitorGlass.WIDTH;
@@ -47,9 +73,29 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     /** How long a self-test is drawn for when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 70;
 
+    /*
+     * The self-test in each firmware's look: {@code jsc:firmware/post_cli} (written in greys the Vintage tube's
+     * phosphor lights), {@code jsc:firmware/post_bios} and {@code jsc:firmware/post_uefi}. A Legacy machine posts on
+     * black with the maker's badge, the way the boards of that time did; only its setup was ever blue.
+     */
+    private static final Palette<Post> POST_CLI = Palettes.declare(JsComputers.MODID, "firmware/post_cli",
+            new Post(0xFF000000, 0xFFB8B8B8, 0xFF707070, 0xFFE8E8E8, 0xFFA8B2C6, 0xFF2A2D3E, 0xFF2A2D3E,
+                    0xFF3A4060, 0xFFF0B23A));
+    private static final Palette<Post> POST_BIOS = Palettes.declare(JsComputers.MODID, "firmware/post_bios",
+            new Post(0xFF000000, 0xFFBDBDBD, 0xFF8A8A8A, 0xFFFFFFFF, 0xFFA8B2C6, 0xFF2A2D3E, 0xFF2A2D3E,
+                    0xFF3A4060, 0xFFF0B23A));
+    private static final Palette<Post> POST_UEFI = Palettes.declare(JsComputers.MODID, "firmware/post_uefi",
+            new Post(0xFF10121C, 0xFFE6ECF6, 0xFF8090A8, 0xFF5FA8D3, 0xFFA8B2C6, 0xFF2A2D3E, 0xFF2A2D3E,
+                    0xFF3A4060, 0xFFF0B23A));
+
     /** The self-test the machine last reported, kept until the session that shows it is built. */
     @Nullable
     private static Testing pending;
+    /** What a screen being built to draw a monitor's face shows, with the parts it lists, taken at once. */
+    @Nullable
+    private static Testing forFace;
+    @Nullable
+    private static FirmwareStatePayload forFaceState;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -84,8 +130,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        final Testing testing = pending != null ? pending
+        final Testing testing = forFace != null ? forFace : pending != null ? pending
                 : new Testing(FirmwareKind.forEra(HardwareEra.STANDARD), "", FALLBACK_TICKS, false, "");
+        // A face is handed the parts the machine reads, since it asks the machine nothing itself.
+        this.state = forFace != null ? forFaceState : null;
+        forFace = null;
+        forFaceState = null;
         this.kind = testing.kind();
         this.machineName = testing.machineName();
         this.complaint = testing.complaint();
@@ -105,6 +155,14 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     public static void expect(final FirmwareKind kind, final String machineName, final int remainingTicks,
                               final boolean halted, final String complaint) {
         pending = new Testing(kind, machineName, remainingTicks, halted, complaint);
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, with the parts the machine reads. */
+    public static void faceWith(final FirmwareKind kind, final String machineName, final int remainingTicks,
+                                final boolean halted, final String complaint,
+                                @Nullable final FirmwareStatePayload state) {
+        forFace = new Testing(kind, machineName, remainingTicks, halted, complaint);
+        forFaceState = state;
     }
 
     /**
@@ -131,8 +189,10 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     @Override
     protected void init() {
         super.init();
-        active = this;
-        PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+        if (!onFace()) {
+            active = this;
+        }
+        send(new RequestFirmwareStatePayload(computerPos));
     }
 
     @Override
@@ -187,12 +247,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          */
         if (completed && !setupRequested && bootingFrom().isEmpty()) {
             setupRequested = true;
-            PacketDistributor.sendToServer(new PostCompletePayload(computerPos, monitorPos, false));
+            send(new PostCompletePayload(computerPos, monitorPos, false));
             return true;
         }
         if (keyCode == InputConstants.KEY_DELETE && !completed && !setupRequested) {
             setupRequested = true;
-            PacketDistributor.sendToServer(new PostCompletePayload(computerPos, monitorPos, true));
+            send(new PostCompletePayload(computerPos, monitorPos, true));
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -215,29 +275,15 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          * A Legacy machine posts on black with the maker's badge, the way the boards of that time did; the
          * setup it opens with DEL is the blue one. The two are different screens and only setup was ever blue.
          */
-        final int bg = switch (kind) {
-            case CLI_BIOS, BLUE_BIOS -> 0xFF000000;
-            case UEFI -> 0xFF10121C;
-        };
+        final Post look = post();
+        final int bg = look.ground();
         /*
-         * The Vintage machine posts on a green-phosphor tube, which has exactly one colour: its text is
-         * that green, brighter or dimmer, never the grey-white of a later monitor.
+         * The Vintage machine's palette is written in greys, and the monitor's tube lights them: green on a green
+         * tube, amber on an amber one, the nearest of sixteen on a colour one of its time.
          */
-        final int text = switch (kind) {
-            case CLI_BIOS -> Phosphor.green(0xFFB8B8B8);
-            case BLUE_BIOS -> 0xFFBDBDBD;
-            case UEFI -> 0xFFE6ECF6;
-        };
-        final int dim = switch (kind) {
-            case CLI_BIOS -> Phosphor.green(0xFF707070);
-            case BLUE_BIOS -> 0xFF8A8A8A;
-            case UEFI -> 0xFF8090A8;
-        };
-        final int accent = switch (kind) {
-            case CLI_BIOS -> Phosphor.green(0xFFE8E8E8);
-            case BLUE_BIOS -> 0xFFFFFFFF;
-            case UEFI -> 0xFF5FA8D3;
-        };
+        final int text = look.text();
+        final int dim = look.dim();
+        final int accent = look.accent();
         g.fill(x, y, x + W, y + H, bg);
 
         if (kind == FirmwareKind.UEFI) {
@@ -293,12 +339,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
                  * A disk boots this once and the saved order stays where it is; a medium boots the way it does
                  * from the setup, since booting one is already a thing that happens once.
                  */
-                PacketDistributor.sendToServer(chosen.slot() >= 0
+                send(chosen.slot() >= 0
                         ? new FirmwareActionPayload(computerPos, monitorPos,
                                 FirmwareActionPayload.ACTION_BOOT_ONCE, chosen.slot(), -1,
                                 chosen.entry().osId())
-                        : FirmwareActionPayload.of(computerPos, monitorPos,
-                                FirmwareActionPayload.ACTION_BOOT_MEDIA, chosen.entry().ref(), -1));
+                        : FirmwareActionPayload.onMedium(computerPos, monitorPos,
+                                FirmwareActionPayload.ACTION_BOOT_MEDIA, chosen.entry(), -1));
             }
             default -> bootMenu = false;
         }
@@ -343,7 +389,7 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         if (chosen == null) {
             return "";
         }
-        return (chosenSlot >= 0 ? "Disk " + chosenSlot : "the medium") + ": " + chosen.label();
+        return of(ENTRY.with(chosenSlot >= 0 ? DISK.with(chosenSlot) : THE_MEDIUM.text(), chosen.label()));
     }
 
     /**
@@ -356,20 +402,18 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
      */
     private List<String> noBootLines() {
         if (!this.complaint.isEmpty()) {
-            return List.of(this.complaint, "Put in an installation medium and install over it to repair.");
+            return List.of(this.complaint, of(REPAIR));
         }
         return switch (kind) {
-            case CLI_BIOS -> List.of("Non-system disk or disk error",
-                    "Replace and press any key when ready");
-            case BLUE_BIOS -> List.of("DISK BOOT FAILURE, INSERT SYSTEM DISK AND PRESS ENTER");
-            case UEFI -> List.of("No bootable device found",
-                    "Press any key to enter Setup");
+            case CLI_BIOS -> List.of(of(NON_SYSTEM_DISK), of(REPLACE_DISK));
+            case BLUE_BIOS -> List.of(of(DISK_BOOT_FAILURE));
+            case UEFI -> List.of(of(NO_BOOTABLE_FOUND), of(PRESS_ANY_KEY_SETUP));
         };
     }
 
     /** What the machine is called: the name its owner gave it, else the kind of machine it is. */
     private String machineTitle() {
-        final String named = state == null ? "" : state.machine().name();
+        final String named = state == null ? "" : of(state.machine().name());
         return named.isEmpty() ? machineName : named;
     }
 
@@ -380,8 +424,8 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         }
         final FirmwareStatePayload.Machine m = state.machine();
         final String memory = m.ramMb() >= 1024 ? m.ramMb() / 1024 + " GB" : m.ramMb() + " MB";
-        return m.cpuName() + " · " + m.cores() + (m.cores() == 1 ? " core" : " cores")
-                + " · " + memory + " · " + m.cpuArch();
+        return of(SUMMARY.with(m.cpuName(), (m.cores() == 1 ? CORE_COUNT_ONE : CORE_COUNT_MANY).with(m.cores()),
+                memory, m.cpuArch()));
     }
 
     /**
@@ -397,32 +441,38 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          * the one it names.
          */
         final int cx = x + W / 2;
-        SplashLogos.draw(g, SplashLogos.JSC, cx, y + H / 2 - 46);
-        wallCentered(g, machineTitle(), cx, y + H / 2 + 8, 0xFFA8B2C6);
-        final int barW = 120;
-        final int bx = cx - barW / 2;
-        final int by = y + H / 2 + 24;
-        g.fill(bx, by, bx + barW, by + 3, 0xFF2A2D3E);
-        final int fill = Math.min(barW, barW * ticks / postTicks);
-        g.fill(bx, by, bx + fill, by + 3, accent);
+        SplashLogos.draw(g, SplashLogos.JSC, cx, y + H / 2 + BootSequenceLayout.LOGO_CENTER_DY);
+        wallCentered(g, machineTitle(), cx, y + H / 2 + BootSequenceLayout.TITLE_CENTER_DY, post().subtitle());
         if (completed && bootingFrom().isEmpty()) {
+            /*
+             * With nothing to boot the self-test is over and the bar has nothing left to say, so it goes: drawn
+             * under the dialog it would peek out below a short one and hide under a tall one.
+             */
             renderUefiNoBoot(g, x, y, text, dim);
             return;
         }
+        final int barW = BootSequenceLayout.BAR_W;
+        final int bx = x + BootSequenceLayout.barX();
+        final int by = y + BootSequenceLayout.barY();
+        g.fill(bx, by, bx + barW, by + BootSequenceLayout.BAR_H, post().track());
+        final int fill = Math.min(barW, barW * ticks / postTicks);
+        g.fill(bx, by, bx + fill, by + BootSequenceLayout.BAR_H, accent);
         /*
          * Along the foot: what the machine is made of where a board of this age prints it, and the two keys
          * at the other end, blinking as they do until one of them is pressed.
          */
-        final int fy = y + H - 16;
-        wall(g, buildSummary(), x + PostWall.MARGIN, fy, dim);
+        final int fy = y + BootSequenceLayout.footerY();
+        wall(g, buildSummary(), x + BootSequenceLayout.FOOTER_X, fy, dim);
         if (setupRequested) {
-            wallRight(g, "Entering Setup ...", x + W - PostWall.MARGIN, fy, accent);
+            wallRight(g, of(ENTERING_SETUP_NOW), x + W - BootSequenceLayout.FOOTER_X, fy, accent);
         } else if ((ticks / 10) % 2 == 0) {
-            int tx = x + W - PostWall.MARGIN - wallWidth("DEL Setup   F12 Boot Menu");
+            final String setup = of(KEY_SETUP);
+            final String bootMenu = of(KEY_BOOT_MENU);
+            int tx = x + W - BootSequenceLayout.FOOTER_X - wallWidth("DEL" + setup + "F12" + bootMenu);
             tx = PostWall.run(g, font, "DEL", tx, fy, text);
-            tx = PostWall.run(g, font, " Setup   ", tx, fy, dim);
+            tx = PostWall.run(g, font, setup, tx, fy, dim);
             tx = PostWall.run(g, font, "F12", tx, fy, text);
-            PostWall.run(g, font, " Boot Menu", tx, fy, dim);
+            PostWall.run(g, font, bootMenu, tx, fy, dim);
         }
     }
 
@@ -435,33 +485,55 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     private void renderUefiNoBoot(final GuiGraphics g, final int x, final int y, final int text, final int dim) {
         final List<FirmwareStatePayload.Entry> entries = state == null ? List.of() : state.entries();
         final int listed = Math.min(entries.size(), PostWall.MOST_DRIVES);
-        final int boxW = 224;
-        final int boxH = 16 + Math.max(1, listed) * WALL_ROW + 22;
-        final int bx = x + (W - boxW) / 2;
-        final int by = y + (H - boxH) / 2;
-        g.fill(bx, by, bx + boxW, by + boxH, 0xFF2A2D3E);
-        g.fill(bx, by, bx + boxW, by + 14, 0xFF3A4060);
-        g.fill(bx, by, bx + 2, by + 14, 0xFFF0B23A);
+        final int boxW = BootSequenceLayout.NO_BOOT_BOX_W;
+        final int boxH = BootSequenceLayout.noBootBoxH(listed);
+        final int bx = x + BootSequenceLayout.noBootBoxX();
+        final int by = y + BootSequenceLayout.noBootBoxY(boxH);
+        final Post look = post();
+        g.fill(bx, by, bx + boxW, by + boxH, look.box());
+        g.fill(bx, by, bx + boxW, by + BootSequenceLayout.NO_BOOT_HEADER_STRIP_H, look.boxHead());
+        g.fill(bx, by, bx + 2, by + BootSequenceLayout.NO_BOOT_HEADER_STRIP_H, look.alarm());
         /*
          * What is wrong, when the machine knows: "no bootable device" is true of an empty computer and a lie
          * about a wrecked one, whose device is right there and whose system will not start. A player who
          * deleted a file needs to be told which file, not that their disk has gone.
          */
-        wall(g, this.complaint.isEmpty() ? "No bootable device" : this.complaint,
-                bx + 7, by + 4, 0xFFF0B23A);
-        int ly = by + 18;
+        wall(g, this.complaint.isEmpty() ? of(NO_BOOTABLE) : this.complaint,
+                bx + BootSequenceLayout.NO_BOOT_COMPLAINT_X, by + BootSequenceLayout.NO_BOOT_COMPLAINT_DY,
+                look.alarm());
+        int ly = by + BootSequenceLayout.NO_BOOT_LIST_TOP;
         if (entries.isEmpty()) {
-            wall(g, "No disk and no drive is attached to this computer.", bx + 8, ly, dim);
-            ly += WALL_ROW;
+            wall(g, of(NOTHING_ATTACHED), bx + BootSequenceLayout.NO_BOOT_LIST_X, ly, dim);
+            ly += BootSequenceLayout.NO_BOOT_LIST_STEP;
         }
         int slot = 0;
         for (int i = 0; i < listed; i++) {
             final FirmwareStatePayload.Entry entry = entries.get(i);
-            final String where = entry.kind() == FirmwareStatePayload.KIND_DISK
-                    ? "Disk " + slot++ + " · " + entry.device() : entry.device();
-            wall(g, wallClip(where + ": " + entry.label(), boxW - 16), bx + 8, ly, text);
-            ly += WALL_ROW;
+            final Text where = entry.kind() == FirmwareStatePayload.KIND_DISK
+                    ? DISK_NAMED.with(slot++, entry.device()) : entry.device();
+            wall(g, wallClip(of(ENTRY.with(where, entry.label())), boxW - 2 * BootSequenceLayout.NO_BOOT_LIST_X),
+                    bx + BootSequenceLayout.NO_BOOT_LIST_X, ly, text);
+            ly += BootSequenceLayout.NO_BOOT_LIST_STEP;
         }
-        wall(g, "Insert installation media and press Enter, or DEL for Setup", bx + 8, ly + 4, dim);
+        wall(g, of(INSERT_MEDIA), bx + BootSequenceLayout.NO_BOOT_LIST_X,
+                ly + BootSequenceLayout.NO_BOOT_INSERT_MEDIA_GAP, dim);
+    }
+
+    /* This machine's self-test colours, by the firmware it posts with. */
+    private Post post() {
+        return switch (kind) {
+            case CLI_BIOS -> POST_CLI.get();
+            case BLUE_BIOS -> POST_BIOS.get();
+            case UEFI -> POST_UEFI.get();
+        };
+    }
+
+    /**
+     * A self-test's colours: the ground, the text, the quiet lines and the accent (the tube's are greys its phosphor
+     * lights), the machine's name under the mark and the bar's track, and the box that says nothing will boot
+     * with its head and the alarm along it.
+     */
+    private record Post(int ground, int text, int dim, int accent, int subtitle, int track, int box, int boxHead,
+                        int alarm) {
     }
 }

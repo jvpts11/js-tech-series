@@ -1,0 +1,149 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bus_conditions.table1",
+      "heads": [
+        "jsc.guide.bus_conditions.table1_head1",
+        "jsc.guide.bus_conditions.table1_head2",
+        "jsc.guide.bus_conditions.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "STOCK"
+          },
+          {
+            "words": "jsc.guide.bus_conditions.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.bus_conditions.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "HOURS"
+          },
+          {
+            "words": "jsc.guide.bus_conditions.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.bus_conditions.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "AFTER"
+          },
+          {
+            "words": "jsc.guide.bus_conditions.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.bus_conditions.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_conditions.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.bus_conditions.definition1",
+      "term": "jsc.guide.bus_conditions.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_conditions.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_conditions.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_conditions.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_conditions.heading4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.bus_conditions.step1",
+        "jsc.guide.bus_conditions.step2",
+        "jsc.guide.bus_conditions.step3",
+        "jsc.guide.bus_conditions.step4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.bus_conditions.fix1",
+          "problem": "jsc.guide.bus_conditions.problem1"
+        },
+        {
+          "fix": "jsc.guide.bus_conditions.fix2",
+          "problem": "jsc.guide.bus_conditions.problem2"
+        },
+        {
+          "fix": "jsc.guide.bus_conditions.fix3",
+          "problem": "jsc.guide.bus_conditions.problem3"
+        },
+        {
+          "fix": "jsc.guide.bus_conditions.fix4",
+          "problem": "jsc.guide.bus_conditions.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:bus_activity"
+      ]
+    }
+  ],
+  "id": "jsc:bus_conditions",
+  "order": 89,
+  "section": "jsc:bus_settings",
+  "title": "jsc.guide.bus_conditions.title"
+}

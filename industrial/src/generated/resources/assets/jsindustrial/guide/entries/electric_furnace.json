@@ -1,0 +1,119 @@
+{
+  "blocks": [
+    {
+      "type": "views",
+      "callouts": [
+        {
+          "number": 1,
+          "text": "jsindustrial.manual.the_front",
+          "u": 8,
+          "v": 8,
+          "view": "front"
+        },
+        {
+          "number": 2,
+          "text": "jsindustrial.manual.any_side",
+          "u": 8,
+          "v": 8,
+          "view": "side"
+        }
+      ],
+      "item": "jsindustrial:electric_furnace"
+    },
+    {
+      "type": "note",
+      "text": "jsindustrial.manual.set_up_next"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.electric_furnace.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.electric_furnace.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "plan",
+      "caption": "jsindustrial.manual.set_up_plan",
+      "parts": [
+        {
+          "item": "jsindustrial:coal_generator",
+          "label": "jsindustrial.manual.generator"
+        },
+        {
+          "item": "jsindustrial:electric_furnace",
+          "label": "jsindustrial.guide.electric_furnace.plan1_2"
+        },
+        {
+          "label": "jsindustrial.manual.second_generator",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.electric_furnace.use1",
+        "jsindustrial.guide.electric_furnace.use2",
+        "jsindustrial.guide.electric_furnace.use3"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.electric_furnace.fix1",
+          "problem": "jsindustrial.guide.electric_furnace.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.electric_furnace.fix2",
+          "problem": "jsindustrial.guide.electric_furnace.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsindustrial:electric_furnace",
+  "id": "jsindustrial:electric_furnace",
+  "items": [
+    "jsindustrial:electric_furnace"
+  ],
+  "order": 4,
+  "section": "jsindustrial:machines",
+  "title": "jsindustrial.guide.electric_furnace.title"
+}

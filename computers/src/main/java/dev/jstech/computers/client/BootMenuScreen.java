@@ -8,16 +8,20 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * machine go on by itself exactly as it would if nobody had opened a monitor at all. A key stops that count, and
  * then the machine waits there for as long as it takes.
  */
+@PaletteHolder
 public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = MonitorGlass.WIDTH;
@@ -39,13 +44,16 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     private static final int BOX_ROWS = 8;
     private static final int BOX_H = 92;
 
-    /** The one grey these managers drew everything in, and the ground they drew it on. */
-    private static final int TEXT = 0xFFBDBDBD;
-    private static final int FRAME = 0xFFBDBDBD;
+    /** The one grey these managers drew everything in, and the ground they drew it on: {@code jsc:screen/boot_menu}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "screen/boot_menu",
+            new Colours(0xFFBDBDBD, 0xFFBDBDBD, 0xFF000000, 0xFF000000));
 
     /** The list the machine last sent, kept until the session that shows it is built. */
     @Nullable
     private static Standing pending;
+    /** What a screen being built to draw a monitor's face shows, handed to it alone and taken at once. */
+    @Nullable
+    private static Standing forFace;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -64,7 +72,9 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         this.inventoryLabelY = OFF_SCREEN;
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
-        final Standing standing = pending != null ? pending : new Standing(BootMenu.NONE, 0);
+        final Standing standing = forFace != null ? forFace : pending != null ? pending
+                : new Standing(BootMenu.NONE, 0);
+        forFace = null;
         this.menu = standing.menu();
         this.remaining = Math.max(0, standing.remaining());
         this.at = this.menu.defaultIndex();
@@ -74,6 +84,11 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     /** The list the machine is standing at, said before the session that shows it is opened. */
     public static void expect(final BootMenu menu, final int remaining) {
         pending = new Standing(menu, remaining);
+    }
+
+    /** The same, for the next screen built to draw a monitor's face, leaving what a session expects alone. */
+    public static void faceWith(final BootMenu menu, final int remaining) {
+        forFace = new Standing(menu, remaining);
     }
 
     /** One machine standing at its boot manager: what it lists, and how long before it goes on by itself. */
@@ -116,7 +131,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         if (!this.held) {
             this.held = true;
             this.remaining = 0;
-            PacketDistributor.sendToServer(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
+            send(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
                     FirmwareActionPayload.ACTION_HOLD_BOOT_MENU, 0L, -1));
         }
         if (this.menu.entries().isEmpty()) {
@@ -145,13 +160,13 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
             LoaderMenuPainter.draw(g, font, x, y, this.menu, this.remaining, this.held);
             return;
         }
-        g.fill(x, y, x + W, y + H, 0xFF000000);
+        g.fill(x, y, x + W, y + H, PALETTE.get().ground());
 
         /*
          * A boot manager of this kind drew a ruled box with the systems inside it and put its help underneath,
          * which is what tells a player at a glance that the list is the thing to act on and the rest is not.
          */
-        wallCentered(g, this.menu.title(), x + W / 2, y + 12, TEXT);
+        wallCentered(g, GameText.resolve(this.menu.title()), x + W / 2, y + 12, PALETTE.get().text());
         final int boxTop = y + 30;
         final int boxBottom = boxTop + BOX_H;
         rule(g, x + MARGIN, boxTop, W - 2 * MARGIN, BOX_H);
@@ -169,31 +184,31 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
             final BootMenu.Entry entry = this.menu.entries().get(i);
             final boolean on = i == this.at;
             if (on) {
-                g.fill(x + MARGIN + 2, ty - 1, x + W - MARGIN - 2, ty + WALL_ROW, FRAME);
+                g.fill(x + MARGIN + 2, ty - 1, x + W - MARGIN - 2, ty + WALL_ROW, PALETTE.get().frame());
             }
             /* The star marks the entry the machine boots on its own, which is not always the one highlighted. */
             final String mark = i == this.menu.defaultIndex() ? "*" : " ";
-            wall(g, wallClip(mark + entry.label(), W - 2 * MARGIN - 14), x + MARGIN + 6, ty,
-                    on ? 0xFF000000 : TEXT);
+            wall(g, wallClip(mark + GameText.resolve(entry.label()), W - 2 * MARGIN - 14), x + MARGIN + 6, ty,
+                    on ? PALETTE.get().onText() : PALETTE.get().text());
             ty += WALL_ROW + 2;
         }
         int hy = boxBottom + 8;
-        wall(g, "   Use the Up and Down keys to select which entry is", x + MARGIN, hy, TEXT);
+        wall(g, GameText.resolve(FirmwareScreenTexts.LOADER_HELP_FIRST), x + MARGIN, hy, PALETTE.get().text());
         hy += WALL_ROW;
-        wall(g, "   highlighted. Press Enter to boot the selected entry.", x + MARGIN, hy, TEXT);
+        wall(g, GameText.resolve(FirmwareScreenTexts.LOADER_HELP_SECOND), x + MARGIN, hy, PALETTE.get().text());
         hy += WALL_ROW;
-        wall(g, this.held
-                ? "The highlighted entry will be executed when you press Enter."
-                : "The highlighted entry will be executed automatically in "
-                        + this.menu.secondsLeft(this.remaining) + "s.", x + MARGIN, hy, TEXT);
+        wall(g, GameText.resolve(this.held ? FirmwareScreenTexts.LOADER_HELD.text()
+                        : FirmwareScreenTexts.LOADER_COUNTDOWN.with(this.menu.secondsLeft(this.remaining))),
+                x + MARGIN, hy, PALETTE.get().text());
     }
 
     /** The single rule around the list, which is the whole of that manager's furniture. */
     private void rule(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        g.fill(x, y, x + w, y + 1, FRAME);
-        g.fill(x, y + h - 1, x + w, y + h, FRAME);
-        g.fill(x, y, x + 1, y + h, FRAME);
-        g.fill(x + w - 1, y, x + w, y + h, FRAME);
+        final int frame = PALETTE.get().frame();
+        g.fill(x, y, x + w, y + 1, frame);
+        g.fill(x, y + h - 1, x + w, y + h, frame);
+        g.fill(x, y, x + 1, y + h, frame);
+        g.fill(x + w - 1, y, x + w, y + h, frame);
     }
 
     /**
@@ -226,7 +241,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     private void choose() {
         final BootMenu.Entry entry = this.menu.entries().get(this.at);
         if (entry.isFirmware() || entry.isRestart()) {
-            PacketDistributor.sendToServer(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
+            send(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
                     entry.isFirmware() ? FirmwareActionPayload.ACTION_OPEN_SETUP
                             : FirmwareActionPayload.ACTION_RESTART_FROM_MENU, 0L, -1));
             return;
@@ -236,8 +251,11 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
          * so the choice has to name both; a row number only means anything to a list, and this list is not the
          * only one that offers this action.
          */
-        PacketDistributor.sendToServer(new FirmwareActionPayload(this.computerPos, this.monitorPos,
+        send(new FirmwareActionPayload(this.computerPos, this.monitorPos,
                 FirmwareActionPayload.ACTION_BOOT_ONCE, entry.slot(), -1, entry.osId()));
     }
 
+    /** The manager's ink, the frame around its list, the ground behind it, and the ink on a highlighted row. */
+    private record Colours(int text, int frame, int ground, int onText) {
+    }
 }

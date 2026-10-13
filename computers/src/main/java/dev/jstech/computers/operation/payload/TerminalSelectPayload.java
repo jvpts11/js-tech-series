@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -26,6 +27,9 @@ public record TerminalSelectPayload(BlockPos monitorPos, BlockPos hostPos, Stora
 
     public static final int MAX_SERVERS = 64;
 
+    /** The longest server name a key names, the same as the desktop's SELECT takes. */
+    private static final int KEY_LENGTH = 64;
+
     public static final int DEST_AUTO = 0;
     public static final int DEST_INVENTORY = 1;
     public static final int DEST_LOCAL = 2;
@@ -42,23 +46,27 @@ public record TerminalSelectPayload(BlockPos monitorPos, BlockPos hostPos, Stora
                         BlockPos.STREAM_CODEC.encode(buf, p.hostPos());
                         StorageKey.STREAM_CODEC.encode(buf, p.key());
                         buf.writeVarLong(p.quantity());
-                        ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(MAX_SERVERS))
+                        ByteBufCodecs.stringUtf8(KEY_LENGTH).apply(ByteBufCodecs.list(MAX_SERVERS))
                                 .encode(buf, p.serverKeys());
                         buf.writeVarInt(p.destKind());
-                        ByteBufCodecs.STRING_UTF8.encode(buf, p.destServer());
+                        ByteBufCodecs.stringUtf8(KEY_LENGTH).encode(buf, p.destServer());
                     },
                     buf -> new TerminalSelectPayload(
                             BlockPos.STREAM_CODEC.decode(buf),
                             BlockPos.STREAM_CODEC.decode(buf),
                             StorageKey.STREAM_CODEC.decode(buf),
                             buf.readVarLong(),
-                            ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(MAX_SERVERS)).decode(buf),
+                            ByteBufCodecs.stringUtf8(KEY_LENGTH).apply(ByteBufCodecs.list(MAX_SERVERS)).decode(buf),
                             buf.readVarInt(),
-                            ByteBufCodecs.STRING_UTF8.decode(buf)));
+                            ByteBufCodecs.stringUtf8(KEY_LENGTH).decode(buf)));
 
-    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    /*
+     * Copied on the way in, so what arrives from a client cannot change under whoever is acting on it, and held
+     * to what the message carries, so making one can never fail to write it.
+     */
     public TerminalSelectPayload {
-        serverKeys = List.copyOf(serverKeys);
+        serverKeys = serverKeys.stream().limit(MAX_SERVERS).map(k -> TextBounds.clip(k, KEY_LENGTH)).toList();
+        destServer = TextBounds.clip(destServer, KEY_LENGTH);
     }
 
     @Override

@@ -13,11 +13,11 @@ import dev.jstech.core.energy.IEnergyNode;
 import dev.jstech.core.energy.internal.EnergyFlowGraph;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Aggregates generators, consumers and cables of one topological network and distributes energy per tick.
@@ -27,6 +27,7 @@ public final class EnergyNetwork {
     private final Map<Long, IEnergyNode> nodes = new LinkedHashMap<>();
     private final Map<Long, IEnergyCable> cables = new LinkedHashMap<>();
     private final Map<Long, List<Long>> adjacency = new HashMap<>();
+    private @Nullable EnergyFlowGraph graph;
 
     public void addNode(final long pos, final IEnergyNode node) {
         if (nodes.containsKey(pos) || cables.containsKey(pos)) {
@@ -35,6 +36,7 @@ public final class EnergyNetwork {
         }
         nodes.put(pos, node);
         adjacency.computeIfAbsent(pos, k -> new ArrayList<>());
+        graph = null;
     }
 
     public void addCable(final long pos, final IEnergyCable cable) {
@@ -44,6 +46,7 @@ public final class EnergyNetwork {
         }
         cables.put(pos, cable);
         adjacency.computeIfAbsent(pos, k -> new ArrayList<>());
+        graph = null;
     }
 
     public void connect(final long a, final long b) {
@@ -51,6 +54,7 @@ public final class EnergyNetwork {
         requireMember(b);
         adjacency.get(a).add(b);
         adjacency.get(b).add(a);
+        graph = null;
     }
 
     public boolean remove(final long pos) {
@@ -59,6 +63,7 @@ public final class EnergyNetwork {
         if (!wasNode && !wasCable) {
             return false;
         }
+        graph = null;
         // Remove connections in both directions.
         final List<Long> neighbors = adjacency.remove(pos);
         if (neighbors != null) {
@@ -76,9 +81,10 @@ public final class EnergyNetwork {
         if (nodes.isEmpty()) {
             return EnergyDistributionResult.empty();
         }
-        // The flow graph takes immutable snapshots in its constructor,
-        final EnergyFlowGraph graph = new EnergyFlowGraph(
-                nodes, cables, adjacency);
+        // The flow graph takes its own copy of the shape and keeps its ways until the shape changes.
+        if (graph == null) {
+            graph = new EnergyFlowGraph(nodes, cables, adjacency);
+        }
         final EnergyFlowGraph.FlowResult flow = graph.distribute();
 
         final long unsatisfiedDemand = Math.max(
@@ -89,7 +95,8 @@ public final class EnergyNetwork {
                 flow.totalDelivered(),
                 flow.consumerDelivered(),
                 flow.cableUsage(),
-                unsatisfiedDemand);
+                unsatisfiedDemand,
+                flow.totalLost());
     }
 
     public int nodeCount() {
@@ -102,11 +109,6 @@ public final class EnergyNetwork {
 
     public boolean contains(final long pos) {
         return nodes.containsKey(pos) || cables.containsKey(pos);
-    }
-
-    public List<Long> neighborsOf(final long pos) {
-        final List<Long> n = adjacency.get(pos);
-        return n == null ? List.of() : Collections.unmodifiableList(n);
     }
 
     private void requireMember(final long pos) {

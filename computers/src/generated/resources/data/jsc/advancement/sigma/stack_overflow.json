@@ -1,0 +1,31 @@
+{
+  "parent": "jsc:sigma/erm_what_the_sigma",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "stack",
+        "event": "jsc:sigma_halted"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.sigma.stack_overflow.description"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:ladder"
+    },
+    "title": {
+      "translate": "advancements.jsc.sigma.stack_overflow.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

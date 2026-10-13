@@ -112,6 +112,11 @@ public final class TextEditState {
     /** Removes the selected text, leaving the caret where it was; false when nothing was selected. */
     public boolean deleteSelection() {
         if (!hasSelection()) {
+            /*
+             * An anchor left on the caret by a move that went nowhere (Shift+End at the end) is no selection, but
+             * outlived the edit that follows and pointed past the end it shortened: dropped before any edit.
+             */
+            anchor = -1;
             return false;
         }
         final int from = selectionStart();

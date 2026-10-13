@@ -78,6 +78,11 @@ final class ProcessValues {
                 target instanceof Values.ListValue list ? list.size() : nothing("Count", line));
         core(bindings, "Map", "Count", (process, target, line) ->
                 target instanceof Values.MapValue map ? map.entries().size() : nothing("Count", line));
+        // Where a file the program opened is up to, and whether that is its end.
+        onObject(bindings, OpenFile.TYPE, "Position", (process, target, line) ->
+                OpenFile.position((Values.Obj) target, line));
+        onObject(bindings, OpenFile.TYPE, "AtEnd", (process, target, line) ->
+                OpenFile.atEnd((Values.Obj) target, line));
         // What a window and its widgets hold, which is read for nothing and written at the price of a draw.
         for (final TypeSpec type : SystemApi.types()) {
             if (UI.equals(type.namespace())) {
@@ -109,16 +114,24 @@ final class ProcessValues {
             return nothing(name, line);
         }
         final Object held = widget.get(name);
+        // What a generic component holds is its own: the program reads a copy, as it handed one over.
+        if (UiWidgets.DATA.equals(name) && UiWidgets.GENERIC.equals(widget.type())) {
+            return ComponentValues.copy(held, process.heap0(), line).value();
+        }
         return held instanceof String said ? process.heap().text(said, line) : held;
     }
 
     private static void writeWidget(final Process process, final Object target, final String name,
                                     final Object value, final int line) {
         if (!(target instanceof Values.Obj widget)) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + name + " on");
+            throw new Halt(Halt.Reason.NO_OBJECT, line, FieldAccess.NOTHING_TO_WRITE_ON.with(name));
         }
         process.charge(SigmaCosts.DRAW);
-        process.windows0().mutator().write(widget, name, value, line);
+        final long bytes = process.windows0().mutator().write(widget, name, value, line);
+        if (bytes > 0) {
+            // The per-block part of the declared price, so the editor tooltip and the charge agree.
+            process.charge(SigmaCosts.DRAW_DATA.at(0, bytes) - SigmaCosts.DRAW_DATA.fixed());
+        }
     }
 
     /** Binds a value the system declares as the process's, read from the type. */
@@ -133,6 +146,20 @@ final class ProcessValues {
                     owner + "." + name + " is not a value the system declares as the process's");
         }
         add(bindings, new Binding(new MemberId(owner, name, List.of()), read, null, true));
+    }
+
+    /** Binds a value the system declares as the process's, read from an object of the type. */
+    private static void onObject(final Map<MemberId, Binding> bindings, final String owner, final String name,
+                                 final IProcessValue read) {
+        boolean declared = false;
+        for (final IMemberSpec member : SystemApi.members(owner, name)) {
+            declared |= member instanceof PropertySpec && member.kind() == MemberKind.PROCESS && !member.isStatic();
+        }
+        if (!declared) {
+            throw new IllegalStateException(
+                    owner + "." + name + " is not a value the system declares as the process's");
+        }
+        add(bindings, new Binding(new MemberId(owner, name, List.of()), read, null, false));
     }
 
     /** Binds one of the values the language's core keeps on its own objects. */
@@ -151,6 +178,6 @@ final class ProcessValues {
     }
 
     private static Object nothing(final String name, final int line) {
-        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "there is no " + name + " to read here");
+        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, FieldAccess.NOTHING_TO_READ.with(name));
     }
 }

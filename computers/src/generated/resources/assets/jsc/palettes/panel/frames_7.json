@@ -1,0 +1,15 @@
+{
+  "bandBottom": "#DB12203A",
+  "bandTop": "#B83C5A82",
+  "basicBottom": "#FF101C30",
+  "basicTop": "#FF33496A",
+  "edge": "#8CA0C8F0",
+  "frontGloss": "#30FFFFFF",
+  "frontTop": "#80FFFFFF",
+  "hover": "#26FFFFFF",
+  "openBottom": "#14FFFFFF",
+  "openTop": "#59FFFFFF",
+  "orbGlow": "#60FFFFFF",
+  "rim": "#80FFFFFF",
+  "trayInk": "#FFFFFFFF"
+}

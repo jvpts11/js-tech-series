@@ -1,0 +1,13 @@
+{
+  "sounds": [
+    {
+      "sound": "minecraft:block.note_block.bass",
+      "when": {
+        "device": "jstests:buzzer"
+      }
+    },
+    {
+      "sound": "jstests:test/hum"
+    }
+  ]
+}

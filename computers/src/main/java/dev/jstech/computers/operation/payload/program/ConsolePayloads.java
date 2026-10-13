@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
-import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.client.CommandPromptScreen;
+import dev.jstech.computers.engine.EngineRequirements;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -18,6 +18,7 @@ import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.operation.payload.ConsoleInitPayload;
 import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestConsoleInitPayload;
 import dev.jstech.computers.operation.payload.RunCommandPayload;
@@ -31,8 +32,9 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -59,13 +61,14 @@ public final class ConsolePayloads {
 
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
-        ComputerAccess.accept(registrar, RunCommandPayload.TYPE, RunCommandPayload.STREAM_CODEC,
-                ComputerAccess.machine(RunCommandPayload::hostPos), ConsolePayloads::handleRunCommand,
-                (player, payload) -> notListening(player));
+        ComputerAccess.onMenu(registrar, RunCommandPayload.TYPE, RunCommandPayload.STREAM_CODEC,
+                CommandPromptMenu.class, CommandPromptMenu::hostPos, RunCommandPayload::hostPos,
+                ConsolePayloads::handleRunCommand, (player, payload) -> notListening(player));
         registrar.playToClient(CommandOutputPayload.TYPE, CommandOutputPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ConsolePayloads::handleCommandOutput));
-        ComputerAccess.accept(registrar, RequestConsoleInitPayload.TYPE, RequestConsoleInitPayload.STREAM_CODEC,
-                ComputerAccess.machine(RequestConsoleInitPayload::hostPos), ConsolePayloads::handleRequestConsoleInit);
+        ComputerAccess.onMenu(registrar, RequestConsoleInitPayload.TYPE, RequestConsoleInitPayload.STREAM_CODEC,
+                CommandPromptMenu.class, CommandPromptMenu::hostPos, RequestConsoleInitPayload::hostPos,
+                ConsolePayloads::handleRequestConsoleInit);
         registrar.playToClient(ConsoleInitPayload.TYPE, ConsoleInitPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ConsolePayloads::handleConsoleInit));
     }
@@ -80,18 +83,27 @@ public final class ConsolePayloads {
      */
     private static void notListening(final ServerPlayer player) {
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "",
-                List.of(new WireLine(
-                        "This terminal is no longer attached to that computer.",
-                        CliStyle.ERROR.id())), "", ""));
+                List.of(new WireLine(ConsoleTexts.NOT_ATTACHED.text(), CliStyle.ERROR.id())), "", ""));
     }
 
-    private static void handleRunCommand(final RunCommandPayload payload, final ServerPlayer player,
-                                         final ServerLevel level) {
-        if (!(player.containerMenu instanceof CommandPromptMenu menu)
-                || !menu.hostPos().equals(payload.hostPos())
-                || !(level.getBlockEntity(payload.hostPos())
-                        instanceof IComputerTerminalHost host)) {
+    private static void handleRunCommand(final RunCommandPayload payload, final CommandPromptMenu menu,
+                                         final ServerPlayer player, final ServerLevel level) {
+        if (!(level.getBlockEntity(menu.hostPos()) instanceof IComputerTerminalHost host)) {
             notListening(player);
+            return;
+        }
+        /*
+         * A program has the terminal: what is typed is its to read, and Ctrl+C stops it. What it prints, and the
+         * line typed echoed back, come from the machine's own tick, as they do at a desktop's terminal.
+         */
+        final var here = new ServerCliComputer(host, level);
+        final var running = here.foreground();
+        if (running != null) {
+            final List<WireLine> wire = new ArrayList<>();
+            final boolean still = DesktopShellPayloads.drainForeground(running, payload.line(), wire);
+            final var held = ProgramKeyboard.heldBy(running);
+            PacketDistributor.sendToPlayer(player, new CommandOutputPayload(still ? "" : SshTerminal.prompt(here,
+                    here), wire, still && held != null ? ProgramKeyboard.atTerminal(held) : TerminalKeyboard.PROMPT));
             return;
         }
         /*
@@ -100,7 +112,6 @@ public final class ConsolePayloads {
          */
         final TerminalTools.Turn turn = TerminalTools.typed(host, level, payload.line());
         if (turn != null) {
-            final var here = new ServerCliComputer(host, level);
             PacketDistributor.sendToPlayer(player, new CommandOutputPayload(
                     turn.ended() ? SshTerminal.prompt(here, here) : "", turn.lines(),
                     TerminalTools.settled(turn.keyboard(), here, here)));
@@ -111,8 +122,9 @@ public final class ConsolePayloads {
         if (parts.length == 2 && (parts[0].equalsIgnoreCase("run") || parts[0].equalsIgnoreCase("open"))) {
             if (host.console() != null && !payload.line().isBlank()) {
                 host.console().pushHistory(payload.line().trim());
+                ((BlockEntity) host).setChanged();
             }
-            launchProgram(player, host, menu.monitorPos(), payload.hostPos(), parts[1].trim());
+            launchProgram(player, host, menu.monitorPos(), menu.hostPos(), parts[1].trim());
             return;
         }
         /*
@@ -138,6 +150,7 @@ public final class ConsolePayloads {
          */
         final var shell = CliCommands.shellFor(
                 computer, CLI_WIDTH);
+        final String typedAt = SshTerminal.prompt(localComputer, computer);
         final var response = shell.run(payload.line(), computer);
         final List<WireLine> wire = new ArrayList<>(response.lines().size());
         for (final var cliLine : response.lines()) {
@@ -159,36 +172,12 @@ public final class ConsolePayloads {
                 handOver == null ? "" : handOver.editor(),
                 handOver == null ? "" : handOver.path(), false,
                 TerminalTools.settled(keyboard, localComputer, computer)));
-        if (computer.firmwareRebootRequested()) {
-            // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
-            player.closeContainer();
-            MonitorBlock.openFirmware(
-                    player, level, menu.monitorPos(), payload.hostPos());
-            return;
+        // What the glass now holds, for a monitor showing this terminal in the world: the line typed, then the reply.
+        if (host.console() != null) {
+            host.console().printed(false, List.of(new WireLine(typedAt + payload.line(), CliStyle.PROMPT.id())));
+            host.console().printed(response.clearScreen(), wire);
         }
-        if (computer.rebootRequested()) {
-            /*
-             * A plain "reboot": the system closes down in front of whoever is watching, and the POST replays on
-             * the same monitor when it has finished, after which whatever the boot target now is (a freshly
-             * installed OS included) comes up. A machine whose system has nothing to show on its way down goes
-             * straight to the self-test, which is what the restart itself falls back to.
-             */
-            if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
-                be.restart();
-                /*
-                 * Whoever typed it is at a terminal, not at a monitor session, so the machine's own goodbye
-                 * never reached them: the closing-down went on behind the prompt they were still sitting in,
-                 * and nothing moved until they left and came back.
-                 */
-                if (be.goingDown()) {
-                    player.closeContainer();
-                    MonitorBlock.openSystemDown(player, level, menu.monitorPos(), payload.hostPos(), be);
-                    return;
-                }
-            }
-            player.closeContainer();
-            MonitorBlock.openPost(
-                    player, level, menu.monitorPos(), payload.hostPos());
+        if (DesktopShellPayloads.handleReboot(player, level, menu.monitorPos(), menu.hostPos(), computer)) {
             return;
         }
         // Persist the typed line on the computer so the history survives closing the prompt or Monitor.
@@ -211,14 +200,14 @@ public final class ConsolePayloads {
             }
         }
         if (program == null) {
-            sendConsoleLine(player, "no such program: " + name, OperationRecord.STATUS_FAILED);
+            sendConsoleLine(player, ConsoleTexts.NO_SUCH_PROGRAM.with(name), OperationRecord.STATUS_FAILED);
             return;
         }
         final boolean installed = program.preinstalled()
                 || (host.console() != null && host.console().isInstalled(program.id().toString()));
         if (!installed) {
-            sendConsoleLine(player, program.commandName() + " is not installed - try: install "
-                    + program.commandName(), OperationRecord.STATUS_FAILED);
+            sendConsoleLine(player, ConsoleTexts.NOT_INSTALLED.with(program.commandName(), program.commandName()),
+                    OperationRecord.STATUS_FAILED);
             return;
         }
         /*
@@ -229,61 +218,50 @@ public final class ConsolePayloads {
                 && osLevel.getBlockEntity(hostPos) instanceof IOsHost osComputer
                 && !OsRegistry.canRunProgram(
                         osComputer.installedOsId(), program.id(),
-                        osComputer.maxCpuMhz(), osComputer.totalVramMb())) {
-            sendConsoleLine(player, program.commandName()
-                    + " cannot run on this computer's OS or hardware", OperationRecord.STATUS_FAILED);
-            player.displayClientMessage(Component.literal(
-                    "The " + program.commandName() + " cannot run on this computer's OS or hardware."), false);
+                        osComputer.maxCpuMhz(), osComputer.totalVramMb(),
+                        osComputer.console() != null
+                                && osComputer.console().builtFromSource(program.id().toString()))) {
+            sendConsoleLine(player, ConsoleTexts.CANNOT_RUN.with(program.commandName()),
+                    OperationRecord.STATUS_FAILED);
+            player.displayClientMessage(GameText.component(ConsoleTexts.CANNOT_RUN_MESSAGE.with(
+                    program.commandName())), false);
             return;
         }
-        if (program.id().equals(Programs.NMS)) {
-            // The NMS is now a desktop window opened from its Frames desktop icon, not a server-side menu.
-            sendConsoleLine(player, "open the NMS from its desktop icon on a Frames computer", -1);
-            player.displayClientMessage(Component.literal(
-                    "Open the NMS from its desktop icon."), false);
+        // A house's tool opens only on a network running the engine it was written for.
+        final Text unmet = player.level() instanceof ServerLevel netLevel && host.networkUuid() != null
+                ? EngineRequirements.unmet(program, NetworkLookup.resolveMainframe(netLevel, host.networkUuid()))
+                : EngineRequirements.unmet(program, null);
+        if (unmet != null) {
+            sendConsoleLine(player, unmet, OperationRecord.STATUS_FAILED);
+            return;
+        }
+        if (program.id().equals(Programs.ISMS)) {
+            // The studio is a desktop window opened from its icon, not something the prompt opens.
+            sendConsoleLine(player, ConsoleTexts.ISMS_FROM_ICON.text(), -1);
+            player.displayClientMessage(GameText.component(ConsoleTexts.ISMS_FROM_ICON_MESSAGE), false);
         } else {
-            sendConsoleLine(player, "the " + program.commandName() + " is already open", -1);
+            sendConsoleLine(player, ConsoleTexts.ALREADY_OPEN.with(program.commandName()), -1);
         }
     }
 
-    /** One styled line back to the open Command Prompt (status -1 = dim, FAILED = red, else green). */
-    private static void sendConsoleLine(final ServerPlayer player, final String text, final int status) {
+    /*
+     * One styled line back to the open Command Prompt (status -1 = dim, FAILED = red, else green). It goes as one
+     * line in the player's language, and the glass wraps it to its columns the way it wraps everything it shows.
+     */
+    private static void sendConsoleLine(final ServerPlayer player, final Text text, final int status) {
         final CliStyle style = status == OperationRecord.STATUS_FAILED
                 ? CliStyle.ERROR
                 : status < 0 ? CliStyle.DIM
                 : CliStyle.OK;
-        final List<WireLine> wire = new ArrayList<>();
-        for (final String line : wrapToConsole(text)) {
-            wire.add(new WireLine(line, style.id()));
-        }
         // An empty prompt means "keep the current prompt", so this helper does not change the directory.
-        PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "", wire));
+        PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "",
+                List.of(new WireLine(text, style.id()))));
     }
 
-    /** Word-wraps a direct console message to the console width so a long line never overflows the prompt. */
-    private static List<String> wrapToConsole(final String text) {
-        final List<String> lines = new ArrayList<>();
-        for (final String paragraph : text.split("\n", -1)) {
-            String remaining = paragraph;
-            while (remaining.length() > CLI_WIDTH) {
-                int cut = remaining.lastIndexOf(' ', CLI_WIDTH);
-                if (cut <= 0) {
-                    cut = CLI_WIDTH;
-                }
-                lines.add(remaining.substring(0, cut));
-                remaining = remaining.substring(cut).stripLeading();
-            }
-            lines.add(remaining);
-        }
-        return lines;
-    }
-
-    private static void handleRequestConsoleInit(final RequestConsoleInitPayload payload, final ServerPlayer player,
+    private static void handleRequestConsoleInit(final RequestConsoleInitPayload payload,
+                                                 final CommandPromptMenu menu, final ServerPlayer player,
                                                  final ServerLevel level) {
-        if (player.containerMenu instanceof CommandPromptMenu menu
-                && menu.hostPos().equals(payload.hostPos())
-                && level.getBlockEntity(payload.hostPos())
-                        instanceof IComputerTerminalHost host) {
+        if (level.getBlockEntity(menu.hostPos()) instanceof IComputerTerminalHost host) {
             sendConsoleInit(player, host);
         }
     }
@@ -348,7 +326,13 @@ public final class ConsolePayloads {
          * the terminal never has to guess at a prompt it has not been shown yet.
          */
         final TerminalKeyboard keyboard = TerminalTools.keyboardOf(host.console());
-        if (keyboard.busy()) {
+        // A program in front has the keyboard the way a tool does, asking with what it left open.
+        final var held = player.level() instanceof ServerLevel onLevel
+                ? ProgramKeyboard.heldBy(new ServerCliComputer(host, onLevel).foreground()) : null;
+        if (held != null) {
+            PacketDistributor.sendToPlayer(player, new CommandOutputPayload("", List.of(),
+                    ProgramKeyboard.atTerminal(held)));
+        } else if (keyboard.busy()) {
             PacketDistributor.sendToPlayer(player, new CommandOutputPayload("", List.of(), keyboard));
         } else if (cli != null) {
             PacketDistributor.sendToPlayer(player, new CommandOutputPayload(SshTerminal.prompt(cli, cli), List.of(),

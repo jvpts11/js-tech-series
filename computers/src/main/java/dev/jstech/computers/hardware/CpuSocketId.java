@@ -7,8 +7,6 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.computers.JsComputers;
-
 import java.util.Locale;
 import java.util.Objects;
 
@@ -26,43 +24,60 @@ public record CpuSocketId(String id) {
 
     public static final CpuSocketId SOCKET_3 = own("socket_3");
     public static final CpuSocketId SOCKET_7 = own("socket_7");
+    public static final CpuSocketId SOCKET_8 = own("socket_8");
+    public static final CpuSocketId SLOT_1 = own("slot_1");
     public static final CpuSocketId SOCKET_A = own("socket_a");
     public static final CpuSocketId SOCKET_370 = own("socket_370");
+    public static final CpuSocketId SOCKET_478 = own("socket_478");
+    public static final CpuSocketId SOCKET_604 = own("socket_604");
+    public static final CpuSocketId SOCKET_754 = own("socket_754");
+    public static final CpuSocketId SOCKET_939 = own("socket_939");
     public static final CpuSocketId LGA_771 = own("lga_771");
     public static final CpuSocketId LGA_775 = own("lga_775");
     public static final CpuSocketId SOCKET_940 = own("socket_940");
+    public static final CpuSocketId AM2 = own("am2");
     public static final CpuSocketId AM3 = own("am3");
-    public static final CpuSocketId AM4 = own("am4");
+    public static final CpuSocketId LGA_1156 = own("lga_1156");
+    public static final CpuSocketId LGA_1366 = own("lga_1366");
+    public static final CpuSocketId SOCKET_F = own("socket_f");
+    public static final CpuSocketId LGA_1155 = own("lga_1155");
+    public static final CpuSocketId AM3_PLUS = own("am3_plus");
+    public static final CpuSocketId FM2_PLUS = own("fm2_plus");
+    public static final CpuSocketId G34 = own("g34");
     public static final CpuSocketId LGA_1150 = own("lga_1150");
-    public static final CpuSocketId LGA_1700 = own("lga_1700");
     public static final CpuSocketId LGA_2011 = own("lga_2011");
-    public static final CpuSocketId LGA_4189 = own("lga_4189");
-    public static final CpuSocketId LGA_4677 = own("lga_4677");
+    public static final CpuSocketId AM4 = own("am4");
+    public static final CpuSocketId AM5 = own("am5");
+    public static final CpuSocketId LGA_1151 = own("lga_1151");
+    public static final CpuSocketId LGA_1200 = own("lga_1200");
+    public static final CpuSocketId LGA_1700 = own("lga_1700");
+    public static final CpuSocketId LGA_1851 = own("lga_1851");
+    public static final CpuSocketId LGA_2066 = own("lga_2066");
+    public static final CpuSocketId STR4 = own("str4");
+    public static final CpuSocketId STR5 = own("str5");
     public static final CpuSocketId SP3 = own("sp3");
     public static final CpuSocketId SP5 = own("sp5");
-    public static final CpuSocketId STR5 = own("str5");
+    public static final CpuSocketId LGA_3647 = own("lga_3647");
+    public static final CpuSocketId LGA_4189 = own("lga_4189");
+    public static final CpuSocketId LGA_4677 = own("lga_4677");
     public static final CpuSocketId SOCKET_Q = own("socket_q");
     public static final CpuSocketId SOCKET_EM = own("socket_em");
 
     public CpuSocketId {
         Objects.requireNonNull(id, "a socket must have an id");
-        final int colon = id.indexOf(':');
-        if (colon <= 0 || colon == id.length() - 1) {
-            throw new IllegalArgumentException("a socket id reads namespace:path; got '" + id + "'");
-        }
+        HardwareIds.requireNamespaced(id, "a socket");
     }
 
-    /*
-     * One of this mod's own sockets. The mod id is a constant the compiler writes in here as the text itself, so
-     * naming it costs nothing and does not drag the mod class, and Minecraft with it, into hardware that is
-     * tested without the game.
-     */
+    /* One of this mod's own sockets. */
     private static CpuSocketId own(final String path) {
-        return new CpuSocketId(JsComputers.MODID + ":" + path);
+        return new CpuSocketId(HardwareIds.own(path));
     }
 
-    /** The socket as a tooltip says it: LGA_1700, the way it is written on a board. */
+    /**
+     * The socket as a tooltip says it: LGA_1700, the way it is written on a board. An id cannot hold a plus sign, so
+     * a socket named for the one before it plus a little spells it out ({@code am3_plus}) and reads AM3+ here.
+     */
     public String display() {
-        return this.id.substring(this.id.indexOf(':') + 1).toUpperCase(Locale.ROOT);
+        return this.id.substring(this.id.indexOf(':') + 1).toUpperCase(Locale.ROOT).replace("_PLUS", "+");
     }
 }

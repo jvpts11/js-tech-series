@@ -1,0 +1,238 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.first_computer.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.first_computer.step1",
+        "jsc.guide.first_computer.step2",
+        "jsc.guide.first_computer.step3",
+        "jsc.guide.first_computer.step4",
+        "jsc.guide.first_computer.step5",
+        "jsc.guide.first_computer.step6"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.first_computer.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text7"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "number": 1,
+          "part": {
+            "x": 14,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.first_computer.balloon1"
+        },
+        {
+          "detail": "jsc.guide.first_computer.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              12,
+              9,
+              15,
+              14,
+              12,
+              16
+            ],
+            "x": 14,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.first_computer.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "x": 16,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.first_computer.balloon3"
+        },
+        {
+          "detail": "jsc.guide.first_computer.balloon4_detail",
+          "number": 4,
+          "part": {
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.first_computer.balloon4"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Hardware:{Size:15,Items:[{Slot:0,id:\"jsc:motherboard_atx_standard_lga1150\",count:1},{Slot:1,id:\"jsc:cpu_integra_centro_c5_4690k\",count:1},{Slot:2,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:3,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:6,id:\"jsc:gpu_vertex_gtx_970\",count:1},{Slot:10,id:\"jsc:psu_650g\",count:1},{Slot:11,id:\"jsc:disk_ssd_1t\",count:1}]},ManualOn:1b,Lamps:1}",
+          "state": "jsc:personal_computer[facing=south]",
+          "x": 14,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "data": "{Lit:1b,SwitchedOn:1b}",
+          "state": "jsc:monitor[facing=north,button=true,lit=true,on=true]",
+          "x": 16,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,4116,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,40,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,2072,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 16,
+          "y": 0,
+          "z": 14
+        }
+      ],
+      "caption": "jsc.guide.first_computer.figure1",
+      "height": 120
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.first_computer.definition1",
+      "term": "jsc.guide.first_computer.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.first_computer.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text11"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.first_computer.step7",
+        "jsc.guide.first_computer.step8",
+        "jsc.guide.first_computer.step9"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.first_computer.fix1",
+          "problem": "jsc.guide.first_computer.problem1"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix2",
+          "problem": "jsc.guide.first_computer.problem2"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix3",
+          "problem": "jsc.guide.first_computer.problem3"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix4",
+          "problem": "jsc.guide.first_computer.problem4"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix5",
+          "problem": "jsc.guide.first_computer.problem5"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix6",
+          "problem": "jsc.guide.first_computer.problem6"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix7",
+          "problem": "jsc.guide.first_computer.problem7"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix8",
+          "problem": "jsc.guide.first_computer.problem8"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:turning_on",
+        "jsc:installing"
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:first_computer",
+  "order": 2,
+  "section": "jsc:getting_started",
+  "shows": [
+    "jsc:personal_computer",
+    "jsc:motherboard_atx_standard_lga1150",
+    "jsc:cpu_integra_centro_c5_4690k",
+    "jsc:ram_ddr3_8192",
+    "jsc:gpu_vertex_gtx_970",
+    "jsc:psu_650g",
+    "jsc:disk_ssd_1t",
+    "jsc:monitor",
+    "jsc:dock_station"
+  ],
+  "title": "jsc.guide.first_computer.title"
+}

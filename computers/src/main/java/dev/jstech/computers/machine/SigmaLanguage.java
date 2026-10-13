@@ -7,12 +7,13 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.sigma.Diagnostic;
 import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SigmaError;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.edit.CommentSpans;
 import dev.jstech.computers.sigma.lex.Lexer;
@@ -57,7 +58,7 @@ public final class SigmaLanguage implements IProgrammingLanguage {
     private SigmaLanguage(final LanguageLevel level) {
         this.level = level;
         this.id = ResourceLocation.parse(level.id());
-        this.baseline = Architectures.oldestFor(level).id();
+        this.baseline = Isas.oldestFor(level).id();
     }
 
     @Override
@@ -92,31 +93,13 @@ public final class SigmaLanguage implements IProgrammingLanguage {
     }
 
     @Override
-    public CompileResult compile(final List<SourceText> sources, final String architecture) {
-        /*
-         * The oldest machines run the smaller language and nothing else, and that is kept true where a listing is
-         * made and not at the machine: one they could load can only have come from a source they could have held.
-         * The prompt's compiler says the same thing, so a studio pointed at those machines is told as plainly.
-         */
-        if (this.level.full() && Architectures.X86_16.id().equals(architecture)) {
-            final String first = sources.isEmpty() ? "" : sources.getFirst().name();
-            return CompileResult.failed(List.of(new Complaint(first, 1, 1,
-                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.code(),
-                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.message(Architectures.X86_16.name()))));
-        }
-        final List<SourceFile> files = new ArrayList<>();
-        for (final SourceText source : sources) {
-            files.add(new SourceFile(source.name(), source.text()));
-        }
-        final SigmaCompiler.Result built = SigmaCompiler.compile(files, architecture, this.level);
-        if (built.ok()) {
-            return CompileResult.of(built.assembly());
-        }
-        final List<Complaint> complaints = new ArrayList<>();
-        for (final Diagnostic one : built.diagnostics()) {
-            complaints.add(new Complaint(one.file(), one.line(), one.column(), one.code(), one.message()));
-        }
-        return CompileResult.failed(complaints);
+    public CompileResult compile(final List<SourceText> sources, final String isa) {
+        return build(sources, isa, CompileOptions.NEWEST);
+    }
+
+    @Override
+    public CompileResult compile(final List<SourceText> sources, final CompileOptions options) {
+        return build(sources, options.isa().isEmpty() ? this.baseline : options.isa(), options.languageVersion());
     }
 
     @Override
@@ -150,6 +133,36 @@ public final class SigmaLanguage implements IProgrammingLanguage {
         out.sort(Comparator.comparingInt(IProgrammingLanguage.Token::line)
                 .thenComparingInt(IProgrammingLanguage.Token::column));
         return out;
+    }
+
+    /** Builds for {@code isa}, held to {@code version} of the language, the newest when it is none. */
+    private CompileResult build(final List<SourceText> sources, final String isa, final int version) {
+        /*
+         * The oldest machines run the smaller language and nothing else, and that is kept true where a listing is
+         * made and not at the machine: one they could load can only have come from a source they could have held.
+         * The prompt's compiler says the same thing, so a studio pointed at those machines is told as plainly.
+         */
+        if (this.level.full() && Isas.IA_16.id().equals(isa)) {
+            final String first = sources.isEmpty() ? "" : sources.getFirst().name();
+            return CompileResult.failed(List.of(new Complaint(first, 1, 1,
+                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.code(),
+                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.message(Isas.IA_16.name()))));
+        }
+        final List<SourceFile> files = new ArrayList<>();
+        for (final SourceText source : sources) {
+            files.add(new SourceFile(source.name(), source.text()));
+        }
+        final SigmaCompiler.Result built =
+                SigmaCompiler.compile(files, isa, this.level, SigmaVersions.held(version));
+        if (built.ok()) {
+            return CompileResult.of(built.assembly());
+        }
+        final List<Complaint> complaints = new ArrayList<>();
+        for (final Diagnostic one : built.diagnostics()) {
+            complaints.add(new Complaint(one.file(), one.line(), one.column(), one.code(), one.message(),
+                    one.arguments()));
+        }
+        return CompileResult.failed(complaints);
     }
 
     /** What an editor should paint that piece of text as. */

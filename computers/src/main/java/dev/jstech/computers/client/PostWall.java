@@ -7,9 +7,40 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOARD;
+import static dev.jstech.computers.client.FirmwareScreenTexts.BOOTING_FROM;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CPU_CORES;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CPU_OLD;
+import static dev.jstech.computers.client.FirmwareScreenTexts.CPU_ONE_CORE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DETECTING_DRIVES;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DETECTING_DRIVES_OLD;
+import static dev.jstech.computers.client.FirmwareScreenTexts.DISK;
+import static dev.jstech.computers.client.FirmwareScreenTexts.ENTERING_SETUP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.HINT_BOOT_MENU;
+import static dev.jstech.computers.client.FirmwareScreenTexts.HINT_PRESS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.HINT_SETUP;
+import static dev.jstech.computers.client.FirmwareScreenTexts.KEYS_POST;
+import static dev.jstech.computers.client.FirmwareScreenTexts.MAIN_PROCESSOR;
+import static dev.jstech.computers.client.FirmwareScreenTexts.MEMORY;
+import static dev.jstech.computers.client.FirmwareScreenTexts.MEMORY_OLD;
+import static dev.jstech.computers.client.FirmwareScreenTexts.MORE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NONE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NOT_DETECTED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PROCESSOR;
+import static dev.jstech.computers.client.FirmwareScreenTexts.READING_CONFIG;
+import static dev.jstech.computers.client.FirmwareScreenTexts.VIDEO;
+import static dev.jstech.computers.client.FirmwareScreenTexts.VIDEO_ADAPTER;
+import static dev.jstech.computers.client.FirmwareScreenTexts.of;
+
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.gui.layout.BootSequenceLayout;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,7 +61,10 @@ import java.util.Locale;
  * <p>The two ages print the same facts in their own hand. The earliest board names the parts in a column of
  * short labels with the machine's name off to the right; the one after it writes them out and gives the
  * machine and its board a line of their own.
+ *
+ * <p>The key it lifts out of its hints is the palette {@code jsc:firmware/post_wall}.
  */
+@PaletteHolder
 public final class PostWall {
 
     /** Where the wall begins, and how much air is left at the right edge. */
@@ -45,12 +79,21 @@ public final class PostWall {
      * How many drives the self-test lists before it starts counting instead.
      *
      * <p>Enough for any computer a player builds, and few enough that the lines under the list, which are the
-     * ones that say what is about to boot or why nothing can, are still on the glass.
+     * ones that say what is about to boot or why nothing can, are still on the glass. The modern look's own
+     * no-boot dialog lists the same number, so this reads {@link BootSequenceLayout#MOST_LISTED_DEVICES}.
      */
-    public static final int MOST_DRIVES = 10;
+    public static final int MOST_DRIVES = BootSequenceLayout.MOST_LISTED_DEVICES;
 
     /** The amber those boards lifted a key out of a sentence with. */
-    private static final int KEY = 0xFFFFE14D;
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "firmware/post_wall",
+            new Colours(0xFFFFE14D));
+
+    /**
+     * The lines built for the last state drawn. Everything on the wall but the memory count is the same from one
+     * frame to the next, so it is built once and only that count is worked out again.
+     */
+    private static Key builtFor;
+    private static Built built;
 
     private PostWall() {
     }
@@ -98,7 +141,15 @@ public final class PostWall {
                             final String machineName, final String booting, final List<String> noBoot,
                             final int x, final int y, final int w, final int ticks, final boolean finished,
                             final int text, final int dim, final int accent) {
-        final List<Line> lines = lines(kind, era, state, machineName, booting, noBoot, ticks, finished);
+        final Key key = new Key(kind, era, state, machineName, booting, List.copyOf(noBoot), finished);
+        if (!key.equals(builtFor)) {
+            built = lines(kind, era, state, machineName, booting, noBoot, finished);
+            builtFor = key;
+        }
+        final List<Line> lines = built.lines();
+        if (built.memoryAt() >= 0 && state != null) {
+            lines.set(built.memoryAt(), Line.of(memoryLine(state.machine(), kind == FirmwareKind.BLUE_BIOS, ticks)));
+        }
         final int left = x + MARGIN;
         final int right = x + w - MARGIN;
         int ty = y + 10;
@@ -127,21 +178,22 @@ public final class PostWall {
                             final int accent) {
         final int ty = y + h - 14;
         if (leaving) {
-            TextWall.draw(g, font, "Entering SETUP ...", x + MARGIN, ty, accent);
+            TextWall.draw(g, font, of(ENTERING_SETUP), x + MARGIN, ty, accent);
             return;
         }
         if (kind == FirmwareKind.CLI_BIOS) {
             if ((ticks / 10) % 2 == 0) {
-                TextWall.draw(g, font, "DEL  Setup      F12  Boot Menu", x + MARGIN, ty, dim);
+                TextWall.draw(g, font, of(KEYS_POST), x + MARGIN, ty, dim);
             }
             return;
         }
+        final int key = PALETTE.get().key();
         int tx = x + MARGIN;
-        tx = run(g, font, "Press ", tx, ty, dim);
-        tx = run(g, font, "DEL", tx, ty, KEY);
-        tx = run(g, font, " to enter SETUP, ", tx, ty, dim);
-        tx = run(g, font, "F12", tx, ty, KEY);
-        run(g, font, " for Boot Menu", tx, ty, dim);
+        tx = run(g, font, of(HINT_PRESS), tx, ty, dim);
+        tx = run(g, font, "DEL", tx, ty, key);
+        tx = run(g, font, of(HINT_SETUP), tx, ty, dim);
+        tx = run(g, font, "F12", tx, ty, key);
+        run(g, font, of(HINT_BOOT_MENU), tx, ty, dim);
     }
 
     /** Draws one run of a line and answers where the next one starts. */
@@ -187,10 +239,9 @@ public final class PostWall {
     }
 
     /** What this machine's firmware prints while it tests itself. */
-    private static List<Line> lines(final FirmwareKind kind, final HardwareEra era,
-                                    @Nullable final FirmwareStatePayload state, final String machineName,
-                                    final String booting, final List<String> noBoot, final int ticks,
-                                    final boolean finished) {
+    private static Built lines(final FirmwareKind kind, final HardwareEra era,
+                               @Nullable final FirmwareStatePayload state, final String machineName,
+                               final String booting, final List<String> noBoot, final boolean finished) {
         final boolean legacy = kind == FirmwareKind.BLUE_BIOS;
         final String title = title(state, machineName);
         final List<Line> out = new ArrayList<>();
@@ -198,30 +249,31 @@ public final class PostWall {
         out.add(Line.of(Branding.firmwareCopyright(era)));
         out.add(Line.blank());
         if (state == null) {
-            out.add(Line.of("Reading system configuration ..."));
-            return out;
+            out.add(Line.of(of(READING_CONFIG)));
+            return new Built(out, -1);
         }
         final FirmwareStatePayload.Machine machine = state.machine();
         if (legacy) {
-            out.add(Line.found("", title, machine.boardName().isEmpty() ? "" : "   " + machine.boardName()));
+            out.add(Line.found("", title, machine.boardName().isEmpty() ? "" : "   " + of(machine.boardName())));
             out.add(Line.blank());
         }
         /*
          * The processor by its own model, then what it is: a self-test reads out the machine it found, and the
          * model is the part of it a player recognises.
          */
-        out.add(Line.found(legacy ? "Main Processor : " : "Processor : ",
-                machine.cpuName().isEmpty() ? "not detected" : machine.cpuName(),
+        out.add(Line.found(of(legacy ? MAIN_PROCESSOR : PROCESSOR),
+                of(machine.cpuName().isEmpty() ? NOT_DETECTED.text() : machine.cpuName()),
                 machine.hasCpu() ? cpuDetail(machine, legacy) : ""));
         if (!legacy) {
-            out.add(Line.of("Board     : "
-                    + (machine.boardName().isEmpty() ? "not detected" : machine.boardName())));
+            out.add(Line.of(of(BOARD.with(machine.boardName().isEmpty() ? NOT_DETECTED.text() : machine.boardName()))));
         }
-        out.add(Line.of(memoryLine(machine, legacy, ticks)));
-        out.add(Line.of((legacy ? "Video Adapter  : " : "Video     : ")
-                + (machine.gpuName().isEmpty() ? "none" : machine.gpuName())));
+        // The count is filled in at every frame, since it is the one line that moves.
+        final int memoryAt = out.size();
+        out.add(Line.of(memoryLine(machine, legacy, 0)));
+        out.add(Line.of(of((legacy ? VIDEO_ADAPTER : VIDEO)
+                .with(machine.gpuName().isEmpty() ? NONE.text() : machine.gpuName()))));
         out.add(Line.blank());
-        out.add(Line.of(legacy ? "Detecting drives ..." : "Detecting drives..."));
+        out.add(Line.of(of(legacy ? DETECTING_DRIVES_OLD : DETECTING_DRIVES)));
         drives(state, out);
         out.add(Line.blank());
         if (finished) {
@@ -230,14 +282,14 @@ public final class PostWall {
              * this age told you which drive it was reaching for, and which one it had given up on.
              */
             if (!booting.isEmpty()) {
-                out.add(Line.found("", "Booting from " + booting + " ...", ""));
+                out.add(Line.found("", of(BOOTING_FROM.with(booting)), ""));
             } else {
                 for (final String line : noBoot) {
                     out.add(Line.found("", line, ""));
                 }
             }
         }
-        return out;
+        return new Built(out, memoryAt);
     }
 
     /** Every drive the firmware found, up to the room the glass has for them. */
@@ -251,30 +303,31 @@ public final class PostWall {
              * is not showing rather than pushing those off the bottom.
              */
             if (listed >= MOST_DRIVES) {
-                out.add(Line.of("  +" + (state.entries().size() - listed) + " more"));
+                out.add(Line.of("  " + of(MORE.with(state.entries().size() - listed))));
                 return;
             }
+            final String named = GameText.resolve(entry.device());
             final String role = entry.kind() == FirmwareStatePayload.KIND_DISK
-                    ? "Disk " + slot++ : entry.device();
-            final String device = entry.kind() == FirmwareStatePayload.KIND_DISK ? entry.device() : "";
-            out.add(Line.columns(role, device, entry.size(), entry.label()));
+                    ? of(DISK.with(slot++)) : named;
+            final String device = entry.kind() == FirmwareStatePayload.KIND_DISK ? named : "";
+            out.add(Line.columns(role, device, entry.size(), of(entry.label())));
             listed++;
         }
     }
 
     /** What the machine is called: the name its owner gave it, else the kind of machine it is. */
     private static String title(@Nullable final FirmwareStatePayload state, final String fallback) {
-        final String named = state == null ? "" : state.machine().name();
+        final String named = state == null ? "" : of(state.machine().name());
         return named.isEmpty() ? fallback : named;
     }
 
-    /** What the firmware says about the processor beside its model: cores, clock and architecture. */
+    /** What the firmware says about the processor beside its model: cores, clock and instruction set. */
     private static String cpuDetail(final FirmwareStatePayload.Machine machine, final boolean legacy) {
         if (legacy) {
-            return "  " + machine.cpuMhz() + " MHz  " + machine.cpuArch();
+            return of(CPU_OLD.with(machine.cpuMhz(), machine.cpuArch()));
         }
-        return "   " + machine.cores() + (machine.cores() == 1 ? " core   " : " cores   ")
-                + machine.cpuMhz() + " MHz   " + machine.cpuArch();
+        return of((machine.cores() == 1 ? CPU_ONE_CORE : CPU_CORES)
+                .with(machine.cores(), machine.cpuMhz(), machine.cpuArch()));
     }
 
     /** The memory line: what the count has reached, and which modules it is counting over. */
@@ -284,10 +337,23 @@ public final class PostWall {
         final long total = (long) machine.ramMb() * 1024L;
         final long counted = Math.min(total, total * Math.max(0, ticks - 12) / 28L);
         final String amount = String.format(Locale.ROOT, "%,d", counted);
-        final String modules = machine.memoryModules();
+        final String modules = of(machine.memoryModules());
         if (legacy) {
-            return "Memory Testing : " + amount + "K OK" + (modules.isEmpty() ? "" : "  " + modules);
+            return of(MEMORY_OLD.with(amount)) + (modules.isEmpty() ? "" : "  " + modules);
         }
-        return "Memory    : " + amount + " KB OK" + (modules.isEmpty() ? "" : "      " + modules);
+        return of(MEMORY.with(amount)) + (modules.isEmpty() ? "" : "      " + modules);
+    }
+
+    /** What a built wall depends on: everything its lines are made of but the memory count. */
+    private record Key(FirmwareKind kind, HardwareEra era, @Nullable FirmwareStatePayload state,
+                       String machineName, String booting, List<String> noBoot, boolean finished) {
+    }
+
+    /** The lines of a wall, and which of them is the memory count (negative when there is none). */
+    private record Built(List<Line> lines, int memoryAt) {
+    }
+
+    /** The amber a key is lifted out of a hint sentence with. */
+    private record Colours(int key) {
     }
 }

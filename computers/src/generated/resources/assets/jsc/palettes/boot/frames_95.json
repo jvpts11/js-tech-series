@@ -1,0 +1,9 @@
+{
+  "horizon": "#FF000080",
+  "message": "#FFFFFFFF",
+  "runBright": "#FF7FCBFF",
+  "runDark": "#FF000080",
+  "runMid": "#FF1084D0",
+  "safeGround": "#FF000000",
+  "safeText": "#FFE8A33A"
+}

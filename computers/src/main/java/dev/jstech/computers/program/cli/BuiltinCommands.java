@@ -10,6 +10,9 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.interac.InteracCommand;
 import dev.jstech.computers.program.cli.man.ManCommands;
+import dev.jstech.computers.program.cli.menushell.DosShellCommand;
+import dev.jstech.computers.program.cli.msd.MsdCommand;
+import dev.jstech.computers.program.iql.IqlVerb;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -22,7 +25,6 @@ public final class BuiltinCommands {
     private BuiltinCommands() {
     }
 
-    /** Every built-in command, in the order they appear in {@code help}. */
     /** The DOS-only verbs: everything else in {@link #all()} is shared with the POSIX shell. */
     private static final Set<String> DOS_ONLY = Set.of(
             "cls", "dir", "cd", "type", "del", "write", "run", "mkdir", "rmdir", "copy", "move", "ren",
@@ -41,6 +43,8 @@ public final class BuiltinCommands {
             "find", "sort", "more",
             // And the ones whose DOS names are that family's own: the Unix shells have ps, kill, which, date.
             "tasklist", "taskkill", "where", "mem", "date", "tree",
+            // A Unix shell prints with lp, and lists what waits with lpstat.
+            "print",
             // START and AT are this family's jobs; the Unix systems have & with jobs and crontab.
             "start", "at");
 
@@ -55,6 +59,7 @@ public final class BuiltinCommands {
         return out;
     }
 
+    /** Every built-in command, in the order they appear in {@code help}. */
     public static List<ICliCommand> all() {
         final List<ICliCommand> out = new ArrayList<>(base());
         /*
@@ -74,6 +79,8 @@ public final class BuiltinCommands {
         out.addAll(MachineToolCommands.dos());
         // And its own way of leaving a machine with work: START and AT.
         out.addAll(JobCommands.dos());
+        // PRINT, which prints in the background from a resident part, as this family's own.
+        out.addAll(PrintCommands.dos());
         // Giving a name a value, which both families do and only the words differ over.
         out.addAll(VariableCommands.shared());
         return List.copyOf(out);
@@ -96,6 +103,10 @@ public final class BuiltinCommands {
                 new NetworkCommands.Operation(),
                 new InteracCommand(),
                 new MachineCommands.Devices(),
+                // The Vintage systems' diagnostics, where they disable a device, having no Device Manager.
+                new MsdCommand(),
+                // MC-DOS's menu shell, the desktop a machine of its age had none of.
+                new DosShellCommand(),
                 new NetworkCommands.Ssh(),
                 new ShellCommands.Exit(),
                 new SoftwareCommands.Pckmgr("pckmgr", Set.of(Platform.FRAMES)),
@@ -104,15 +115,15 @@ public final class BuiltinCommands {
                 new SoftwareCommands.Store(),
                 new SoftwareCommands.IqlEngineCommand(),
                 new SoftwareCommands.Services(),
-                new SoftwareCommands.Maint("analyze", "analyze"),
-                new SoftwareCommands.Maint("reindex", "reindex"),
-                new SoftwareCommands.Maint("vacuum", "vacuum"),
+                new SoftwareCommands.Maint("analyze", IqlVerb.ANALYZE),
+                new SoftwareCommands.Maint("reindex", IqlVerb.REINDEX),
+                new SoftwareCommands.Maint("vacuum", IqlVerb.VACUUM),
                 new MachineCommands.Config(),
                 new MachineCommands.Reboot(),
                 new ClusterCommand(),
                 new GatewayCommand(),
                 new SoftwareCommands.MirrorCommand(),
-                new SoftwareCommands.Uninstall(),
+                new SoftwareCommands.Uninstall(CommandScope.everywhere(), List.of()),
                 new DosFileCommands.Format(),
                 new DosFileCommands.Dir(),
                 new DosFileCommands.Cd(),
@@ -130,8 +141,16 @@ public final class BuiltinCommands {
                  * any other, so they are listed by help and gated by whether the machine has them,
                  * which is what lets a headless server be programmed at all.
                  */
-                new TtyEditorCommand("vim", "edit a file in the terminal", "vim"),
-                new TtyEditorCommand("emacs", "edit a file in the terminal", "emacs"));
+                new TtyEditorCommand("vim", TtyEditorCommand.EDITS_A_FILE, "vim", CommandScope.EVERY_SYSTEM),
+                new TtyEditorCommand("emacs", TtyEditorCommand.EDITS_A_FILE, "emacs", CommandScope.EVERY_SYSTEM),
+                /*
+                 * vi and ee come bundled with the systems that have them (FreeBSD and UNIX, FreeBSD alone
+                 * for ee), so they need no install step: available() reads that straight off the machine's
+                 * own program list, the same way every other bundled program is found there.
+                 */
+                new TtyEditorCommand("vi", TtyEditorCommand.EDITS_A_FILE, "vi",
+                        Set.of(Platform.FREEBSD, Platform.UNIX)),
+                new TtyEditorCommand("ee", TtyEditorCommand.EDITS_A_FILE, "ee", Set.of(Platform.FREEBSD)));
     }
 
     // meta

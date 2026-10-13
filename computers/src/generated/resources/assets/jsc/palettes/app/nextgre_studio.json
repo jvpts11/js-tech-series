@@ -1,0 +1,20 @@
+{
+  "accent": "#FF2F6DB5",
+  "actual": "#FF2F6DB5",
+  "bad": "#FFB3263A",
+  "box": "#FFF7FAFD",
+  "boxDim": "#FF4F5866",
+  "boxText": "#FF1B1B1B",
+  "chip": "#FF2F6DB5",
+  "chipText": "#FFFFFFFF",
+  "chosen": "#FFDCE8F7",
+  "estimate": "#FF9FB4E6",
+  "good": "#FF1E7F34",
+  "line": "#FF8C96A3",
+  "note": "#FFFFF8E5",
+  "noteText": "#FF6A5310",
+  "running": "#FFB86E00",
+  "status": "#FF2F6DB5",
+  "statusText": "#FFFFFFFF",
+  "track": "#FFE2E6EC"
+}

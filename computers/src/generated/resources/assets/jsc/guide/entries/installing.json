@@ -1,0 +1,135 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.installing.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.installing.table1_1"
+          },
+          {
+            "words": "jsc.guide.installing.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.installing.table1_2"
+          },
+          {
+            "words": "jsc.guide.installing.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.installing.table1_3"
+          },
+          {
+            "words": "jsc.guide.installing.value1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.installing.table1_4"
+          },
+          {
+            "words": "jsc.guide.installing.value1_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.installing.step1",
+        "jsc.guide.installing.step2",
+        "jsc.guide.installing.step3",
+        "jsc.guide.installing.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.installing.fix1",
+          "problem": "jsc.guide.installing.problem1"
+        },
+        {
+          "fix": "jsc.guide.installing.fix2",
+          "problem": "jsc.guide.installing.problem2"
+        },
+        {
+          "fix": "jsc.guide.installing.fix3",
+          "problem": "jsc.guide.installing.problem3"
+        },
+        {
+          "fix": "jsc.guide.installing.fix4",
+          "problem": "jsc.guide.installing.problem4"
+        },
+        {
+          "fix": "jsc.guide.installing.fix5",
+          "problem": "jsc.guide.installing.problem5"
+        },
+        {
+          "fix": "jsc.guide.installing.fix6",
+          "problem": "jsc.guide.installing.problem6"
+        },
+        {
+          "fix": "jsc.guide.installing.fix7",
+          "problem": "jsc.guide.installing.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:the_systems",
+        "jsc:drives",
+        "jsc:firmware"
+      ]
+    }
+  ],
+  "icon": "jsc:usb_flash_drive",
+  "id": "jsc:installing",
+  "items": [
+    "jsc:floppy_disk",
+    "jsc:cd_rom",
+    "jsc:cd_rw",
+    "jsc:dvd_rom",
+    "jsc:dvd_rw",
+    "jsc:bd_rom",
+    "jsc:bd_re",
+    "jsc:usb_flash_drive"
+  ],
+  "order": 10,
+  "section": "jsc:systems_and_eras",
+  "title": "jsc.guide.installing.title"
+}

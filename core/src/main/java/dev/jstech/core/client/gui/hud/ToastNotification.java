@@ -15,9 +15,9 @@ public final class ToastNotification {
     private ToastNotification() {
     }
 
-    public static void show(final ToastData data) {
-        // Phase 1+: build a vanilla Toast from `data` (title, description,
-        throw new UnsupportedOperationException(
-                "ToastNotification.show is implemented in a later phase.");
+    // Package-private until a caller exists. Showing a toast is deferred on purpose: the game's toast API changes
+    // between versions, so the bridge waits until it is needed and can be written against the version in use.
+    static void show(final ToastData data) {
+        throw new UnsupportedOperationException("ToastNotification.show is not implemented yet");
     }
 }

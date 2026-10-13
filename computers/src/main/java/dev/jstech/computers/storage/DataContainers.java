@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.storage;
 
+import dev.jstech.core.chemical.ChemicalBridges;
+import dev.jstech.core.chemical.IChemicalPort;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;

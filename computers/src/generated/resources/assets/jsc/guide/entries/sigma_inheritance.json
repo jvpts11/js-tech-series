@@ -1,0 +1,146 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_inheritance.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_inheritance.text2"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "namespace Garage;",
+        "",
+        "class Vehicle",
+        "{",
+        "    public virtual string Name() { return \"vehicle\"; }",
+        "}",
+        "",
+        "class Car : Vehicle",
+        "{",
+        "    public override string Name() { return \"car\"; }",
+        "}"
+      ],
+      "name": "Garage.sg"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_inheritance.table1",
+      "heads": [
+        "jsc.guide.sigma_inheritance.table1_head1",
+        "jsc.guide.sigma_inheritance.table1_head2",
+        "jsc.guide.sigma_inheritance.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "virtual"
+          },
+          {
+            "words": "jsc.guide.sigma_inheritance.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_inheritance.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "override"
+          },
+          {
+            "words": "jsc.guide.sigma_inheritance.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_inheritance.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "abstract"
+          },
+          {
+            "words": "jsc.guide.sigma_inheritance.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_inheritance.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_inheritance.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_inheritance.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_inheritance.definition1",
+      "term": "jsc.guide.sigma_inheritance.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_inheritance.definition2",
+      "term": "jsc.guide.sigma_inheritance.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_inheritance.definition3",
+      "term": "jsc.guide.sigma_inheritance.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_inheritance.definition4",
+      "term": "jsc.guide.sigma_inheritance.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_inheritance.fix1",
+          "problem": "jsc.guide.sigma_inheritance.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_inheritance.fix2",
+          "problem": "jsc.guide.sigma_inheritance.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_inheritance.fix3",
+          "problem": "jsc.guide.sigma_inheritance.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_inheritance.fix4",
+          "problem": "jsc.guide.sigma_inheritance.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_inheritance.fix5",
+          "problem": "jsc.guide.sigma_inheritance.problem5"
+        },
+        {
+          "fix": "jsc.guide.sigma_inheritance.fix6",
+          "problem": "jsc.guide.sigma_inheritance.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_entry_points",
+        "jsc:sigma_classes"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_inheritance",
+  "order": 341,
+  "section": "jsc:sigma_objects",
+  "title": "jsc.guide.sigma_inheritance.title"
+}

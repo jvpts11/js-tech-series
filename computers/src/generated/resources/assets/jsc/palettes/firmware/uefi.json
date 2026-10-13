@@ -1,0 +1,14 @@
+{
+  "accent": "#FF5FA8D3",
+  "amber": "#FFF0B23A",
+  "dim": "#FF8090A8",
+  "ground": "#FF1E2030",
+  "head": "#FF11131F",
+  "key": "#FFA8B2C6",
+  "ok": "#FF5FE07A",
+  "onAccent": "#FF0B1018",
+  "panel": "#FF2A2D3E",
+  "placeholder": "#FF3A4060",
+  "selection": "#FF23405A",
+  "text": "#FFE6ECF6"
+}

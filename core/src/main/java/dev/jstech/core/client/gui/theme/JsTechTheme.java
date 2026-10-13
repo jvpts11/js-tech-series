@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.client.gui.theme;
 
+import dev.jstech.core.client.GameLocale;
+import dev.jstech.core.client.gui.component.Draw;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -151,6 +153,10 @@ public final class JsTechTheme {
         active.button(g, x, y, w, h, hovered);
     }
 
+    public static void selectedTab(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        active.selectedTab(g, x, y, w, h);
+    }
+
     public static void track(final GuiGraphics g, final int x, final int y, final int w,
                              final double frac, final int fillColor) {
         active.track(g, x, y, w, frac, fillColor);
@@ -160,17 +166,21 @@ public final class JsTechTheme {
 
     public static void text(final GuiGraphics g, final Font f, final String s, final int x, final int y,
                             final int color) {
-        g.drawString(f, s, x, y, color, false);
+        Draw.text(g, f, s, x, y, color);
     }
 
     public static void textRight(final GuiGraphics g, final Font f, final String s, final int xRight,
                                  final int y, final int color) {
-        g.drawString(f, s, xRight - f.width(s), y, color, false);
+        Draw.text(g, f, s, xRight - f.width(s), y, color);
     }
 
+    /**
+     * Text centred on {@code cx}, shadowed by the ground it is drawn on: the theme's window, panel, button, slot,
+     * header and selected tab each say what they are as they are painted, and the shadow follows the shadow rule.
+     */
     public static void textCenter(final GuiGraphics g, final Font f, final String s, final int cx,
                                   final int y, final int color) {
-        g.drawCenteredString(f, s, cx, y, color);
+        Draw.textCentered(g, f, s, cx, y, color);
     }
 
     public static int widthS(final Font f, final String s) {
@@ -183,7 +193,7 @@ public final class JsTechTheme {
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(f, s, 0, 0, color, false);
+        Draw.text(g, f, s, 0, 0, color);
         g.pose().popPose();
     }
 
@@ -205,20 +215,20 @@ public final class JsTechTheme {
 
     public static void tileText(final GuiGraphics g, final Font f, final int x, final int y,
                                 final String key, final String value, final String unit, final int valueColor) {
-        g.drawString(f, key, x + 4, y + 4, active.dim(), false);
-        g.drawString(f, value, x + 4, y + 13, valueColor, false);
+        Draw.text(g, f, key, x + 4, y + 4, active.dim());
+        Draw.text(g, f, value, x + 4, y + 13, valueColor);
         if (unit != null && !unit.isEmpty()) {
-            g.drawString(f, unit, x + 6 + f.width(value), y + 15, active.dim(), false);
+            Draw.text(g, f, unit, x + 6 + f.width(value), y + 15, active.dim());
         }
     }
 
     public static String fmt(final long n) {
         if (n < 10_000L) {
-            return String.format("%,d", n);
+            return String.format(GameLocale.locale(), "%,d", n);
         }
         if (n < 1_000_000L) {
-            return String.format("%.1fk", n / 1_000.0);
+            return String.format(GameLocale.locale(), "%.1fk", n / 1_000.0);
         }
-        return String.format("%.1fM", n / 1_000_000.0);
+        return String.format(GameLocale.locale(), "%.1fM", n / 1_000_000.0);
     }
 }

@@ -7,10 +7,13 @@
  */
 package dev.jstech.core.client.gui.component;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.core.gui.TextShadow;
 import dev.jstech.core.gui.layout.WindowGeometry;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import org.joml.Matrix4f;
 
 /**
@@ -34,9 +37,6 @@ public final class Draw {
         g.disableScissor();
     }
 
-    /** The translucent white laid over a control that cannot be used right now. */
-    public static final int DISABLED_OVERLAY = 0x66FFFFFF;
-
     private Draw() {
     }
 
@@ -49,22 +49,96 @@ public final class Draw {
     }
 
     /**
-     * Text with a shadow under it that suits what it is written on.
+     * Text written on a ground of that colour, plain, with no shadow under it.
      *
-     * <p>The game's own shadow is a dark copy of the letter, which is a shadow on a dark ground and a smear on a
-     * light one. This one is a unit down and to the right in the colour {@link TextShadow} works out from the
-     * letter and the ground, so it is there on a black glass and on a cream panel alike.
+     * <p>The series draws its letters plain: a shadow, even one worked out from the letter and the ground as
+     * {@link TextShadow} does, made small text harder to read on many of its screens. The ground is still said in
+     * every call, and the grounds are still declared ({@link Grounds}), so a shadow can come back to the places it
+     * suits without touching the callers.
      *
      * @param ground the colour of what the text is written on
      */
     public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                             final int color, final int ground) {
-        g.drawString(font, text, x + 1, y + 1, TextShadow.of(color, ground), false);
         g.drawString(font, text, x, y, color, false);
+    }
+
+    /** The same text drawn at {@code scale} and anchored at its top-left corner: a hero title larger than the rest. */
+    public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                            final int color, final int ground, final float scale) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(scale, scale, 1.0f);
+        g.drawString(font, text, 0, 0, color, false);
+        g.pose().popPose();
+    }
+
+    /** Text on whatever ground was declared under it ({@link Grounds}). */
+    public static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                            final int color) {
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** Text centred on {@code cx}, on whatever ground was declared under it. */
+    public static void textCentered(final GuiGraphics g, final Font font, final String text, final int cx,
+                                    final int y, final int color) {
+        text(g, font, text, cx - font.width(text) / 2, y, color);
+    }
+
+    /** A line of game text, styles and all, written on a ground of that colour. */
+    public static void text(final GuiGraphics g, final Font font, final Component text, final int x, final int y,
+                            final int color, final int ground) {
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** A line of game text, styles and all, on whatever ground was declared under it. */
+    public static void text(final GuiGraphics g, final Font font, final Component text, final int x, final int y,
+                            final int color) {
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** A line already laid out, a wrapped row of game text, on whatever ground was declared under it. */
+    public static void text(final GuiGraphics g, final Font font, final FormattedCharSequence text, final int x,
+                            final int y, final int color) {
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** A line of game text, styles and all, centred on {@code cx}, on the ground declared under it. */
+    public static void textCentered(final GuiGraphics g, final Font font, final Component text, final int cx,
+                                    final int y, final int color) {
+        g.drawString(font, text, cx - font.width(text) / 2, y, color, false);
+    }
+
+    /** Text at {@code scale}, anchored at its top-left corner, on whatever ground was declared under it. */
+    public static void textScaled(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                                  final int color, final float scale) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(scale, scale, 1.0f);
+        g.drawString(font, text, 0, 0, color, false);
+        g.pose().popPose();
     }
 
     /** Fades a rectangle out, the way a disabled control is shown. */
     public static void disabled(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        g.fill(x, y, x + w, y + h, DISABLED_OVERLAY);
+        g.fill(x, y, x + w, y + h, ComponentPalette.get().disabled());
+    }
+
+    /**
+     * Runs a drawing of textures with their alpha blended, as a picture with soft edges needs: a pointer's shadow, an
+     * orb's rim, a logo's anti-aliased outline.
+     *
+     * <p>The game's blit draws with whatever blending was left on, and a filled box leaves none, so after one a
+     * texture's half-clear pixels came out solid: a pointer's soft shadow became a hard black outline, and a pixel
+     * almost wholly clear came out in its full colour. Only a pixel wholly clear is dropped without blending.
+     */
+    public static void blended(final Runnable drawing) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        try {
+            drawing.run();
+        } finally {
+            RenderSystem.disableBlend();
+        }
     }
 }

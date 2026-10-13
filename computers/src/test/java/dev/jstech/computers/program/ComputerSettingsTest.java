@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.audio.SoundOutput;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +25,30 @@ class ComputerSettingsTest {
     @BeforeEach
     void setUp() {
         settings = new ComputerSettings();
+    }
+
+    @Test
+    void tileKey_pinsMovesAndResizesAStartTile() {
+        settings.startTiles().setEncoded(List.of("files:m"));
+        assertTrue(SettingKey.apply(settings, "tile", "jsc:paint w 0"));
+        assertEquals(List.of("paint:w", "files:m"), settings.startTiles().encoded());
+        assertTrue(SettingKey.apply(settings, "TILE", "files s 0"));
+        assertEquals(List.of("files:s", "paint:w"), settings.startTiles().encoded());
+    }
+
+    @Test
+    void tileKey_refusesAValueItCannotRead() {
+        assertFalse(SettingKey.apply(settings, "tile", "paint"));
+        assertFalse(SettingKey.apply(settings, "tile", "paint q 0"));
+        assertFalse(SettingKey.apply(settings, "tile", "paint m first"));
+    }
+
+    @Test
+    void untileKey_takesATileOffStart() {
+        settings.startTiles().setEncoded(List.of("files:m", "paint:s"));
+        assertTrue(SettingKey.apply(settings, "untile", "files"));
+        assertEquals(List.of("paint:s"), settings.startTiles().encoded());
+        assertFalse(SettingKey.apply(settings, "untile", ""));
     }
 
     @Test
@@ -50,6 +77,51 @@ class ComputerSettingsTest {
     void setBrightness_clampsBelowZeroToZero() {
         settings.setBrightness(-40);
         assertEquals(0, settings.brightness());
+    }
+
+    @Test
+    void setVolume_holdsBetweenSilentAndFull() {
+        settings.setVolume(-5);
+        assertEquals(0, settings.volume());
+        settings.setVolume(150);
+        assertEquals(100, settings.volume());
+    }
+
+    @Test
+    void soundLevel_followsTheVolumeAndIsNothingWhileMuted() {
+        settings.setVolume(40);
+        assertEquals(0.4F, settings.soundLevel(), 1.0E-6F);
+        settings.setMuted(true);
+        assertEquals(0.0F, settings.soundLevel(), "muted plays nothing");
+        settings.setMuted(false);
+        assertEquals(0.4F, settings.soundLevel(), 1.0E-6F, "and turning it back on keeps the volume");
+    }
+
+    @Test
+    void applySetting_volumeTakesAPercentageWithOrWithoutItsSign() {
+        assertTrue(settings.applySetting("volume", "60%"));
+        assertEquals(60, settings.volume());
+        assertTrue(settings.applySetting("VOLUME", "35"));
+        assertEquals(35, settings.volume());
+        assertFalse(settings.applySetting("volume", "loud"));
+    }
+
+    @Test
+    void applySetting_muteReadsOnAndOff() {
+        assertTrue(settings.applySetting("mute", "on"));
+        assertTrue(settings.muted());
+        assertTrue(settings.applySetting("mute", "off"));
+        assertFalse(settings.muted());
+        assertFalse(settings.applySetting("mute", "maybe"));
+    }
+
+    @Test
+    void applySetting_outputTakesMonitorSpeakersOrBoth() {
+        assertEquals(SoundOutput.BOTH, settings.soundOutput(), "a fresh machine plays out of both");
+        assertTrue(settings.applySetting("output", "speakers"));
+        assertEquals(SoundOutput.SPEAKERS, settings.soundOutput());
+        assertFalse(settings.applySetting("output", "headphones"));
+        assertEquals(SoundOutput.SPEAKERS, settings.soundOutput(), "a refused value changes nothing");
     }
 
     @Test
@@ -178,7 +250,7 @@ class ComputerSettingsTest {
 
     @Test
     void pinned_startsWithTheFileExplorer() {
-        assertEquals(java.util.List.of("files"), settings.pinned());
+        assertEquals(List.of("files"), settings.pinned());
         assertTrue(settings.isPinned("jsc:files"), "a namespaced id names the same program");
     }
 
@@ -187,7 +259,7 @@ class ComputerSettingsTest {
         assertTrue(settings.pin("editor"));
         assertFalse(settings.pin("Editor"), "pinning again changes nothing");
         assertTrue(settings.pin("jsc:command_prompt"));
-        assertEquals(java.util.List.of("files", "editor", "command_prompt"), settings.pinned());
+        assertEquals(List.of("files", "editor", "command_prompt"), settings.pinned());
     }
 
     @Test
@@ -207,9 +279,9 @@ class ComputerSettingsTest {
 
     @Test
     void setPinned_replacesTheListDroppingBlanksAndRepeats() {
-        settings.setPinned(java.util.List.of("editor", "", "editor", "files"));
-        assertEquals(java.util.List.of("editor", "files"), settings.pinned());
-        settings.setPinned(java.util.List.of());
+        settings.setPinned(List.of("editor", "", "editor", "files"));
+        assertEquals(List.of("editor", "files"), settings.pinned());
+        settings.setPinned(List.of());
         assertTrue(settings.pinned().isEmpty(), "an empty list is a choice, not the default");
     }
 
@@ -228,11 +300,11 @@ class ComputerSettingsTest {
         assertTrue(settings.favourite("item|minecraft:iron_ingot"));
         assertFalse(settings.favourite("item|minecraft:iron_ingot"), "starring again changes nothing");
         assertTrue(settings.favourite("fluid|minecraft:water"));
-        assertEquals(java.util.List.of("item|minecraft:iron_ingot", "fluid|minecraft:water"), settings.favourites());
+        assertEquals(List.of("item|minecraft:iron_ingot", "fluid|minecraft:water"), settings.favourites());
         assertTrue(settings.isFavourite("fluid|minecraft:water"));
         assertTrue(settings.unfavourite("item|minecraft:iron_ingot"));
         assertFalse(settings.unfavourite("item|minecraft:iron_ingot"), "already gone");
-        assertEquals(java.util.List.of("fluid|minecraft:water"), settings.favourites());
+        assertEquals(List.of("fluid|minecraft:water"), settings.favourites());
     }
 
     @Test
@@ -301,6 +373,70 @@ class ComputerSettingsTest {
     }
 
     @Test
+    void setEffect_switchesAnEffectOffAndBackOn() {
+        assertTrue(settings.effectsOff().isEmpty(), "every effect is on until it is switched off");
+        settings.setEffect("Minimize", false);
+        settings.setEffect("menus", false);
+        assertEquals(Set.of("minimize", "menus"), settings.effectsOff());
+        settings.setEffect("minimize", true);
+        assertEquals(Set.of("menus"), settings.effectsOff());
+    }
+
+    @Test
+    void setEffect_ignoresANameThatIsNoPlainWord() {
+        settings.setEffect("two words", false);
+        settings.setEffect("", false);
+        settings.setEffect("x".repeat(40), false);
+        assertTrue(settings.effectsOff().isEmpty());
+    }
+
+    @Test
+    void setEffect_keepsNoMoreThanTheMost() {
+        for (int i = 0; i < ComputerSettings.MAX_EFFECTS_OFF + 5; i++) {
+            settings.setEffect("effect_" + i, false);
+        }
+        assertEquals(ComputerSettings.MAX_EFFECTS_OFF, settings.effectsOff().size());
+    }
+
+    @Test
+    void setEffectSpeed_holdsBetweenAtOnceAndTheSlowest() {
+        assertEquals(ComputerSettings.EFFECT_SPEED_NORMAL, settings.effectSpeed());
+        settings.setEffectSpeed(-10);
+        assertEquals(0, settings.effectSpeed());
+        settings.setEffectSpeed(5000);
+        assertEquals(ComputerSettings.EFFECT_SPEED_SLOWEST, settings.effectSpeed());
+    }
+
+    @Test
+    void applySetting_takesAnEffectAndItsSpeed() {
+        assertTrue(settings.applySetting("effect", "squash off"));
+        assertTrue(settings.effectsOff().contains("squash"));
+        assertTrue(settings.applySetting("effect", "squash on"));
+        assertFalse(settings.effectsOff().contains("squash"));
+        assertFalse(settings.applySetting("effect", "squash maybe"));
+        assertFalse(settings.applySetting("effect", "squash"));
+        assertTrue(settings.applySetting("effectspeed", "140%"));
+        assertEquals(140, settings.effectSpeed());
+    }
+
+    @Test
+    void share_aDifferentFolderWithTheSameNameIsRefused() {
+        assertTrue(settings.share("C:\\pub", false));
+
+        assertFalse(settings.share("D:\\work\\pub", true));
+        assertEquals("C:\\pub", settings.shareNamed("pub").path());
+        assertFalse(settings.shareNamed("pub").writable());
+    }
+
+    @Test
+    void share_theSameFolderAgainChangesWriteAccess() {
+        assertTrue(settings.share("C:\\pub", false));
+
+        assertTrue(settings.share("c:\\PUB", true));
+        assertTrue(settings.shareNamed("pub").writable());
+    }
+
+    @Test
     void summaryLines_reportEveryOwnedSetting() {
         settings.setClock12h(true);
         settings.setBrightness(80);
@@ -313,5 +449,10 @@ class ComputerSettingsTest {
         assertTrue(joined.contains("accent"));
         assertTrue(joined.contains("taskbar"));
         assertTrue(joined.contains("left"));
+        assertTrue(joined.contains("volume"));
+        assertTrue(joined.contains("mute"));
+        assertTrue(joined.contains("output"));
+        assertTrue(joined.contains("effect"));
+        assertTrue(joined.contains("effectspeed"));
     }
 }

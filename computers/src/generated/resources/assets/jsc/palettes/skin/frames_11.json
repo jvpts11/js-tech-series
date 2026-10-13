@@ -1,0 +1,12 @@
+{
+  "accent": "#FF3A6AE0",
+  "dim": "#FF6B7488",
+  "fieldBg": "#FFFFFFFF",
+  "listHover": "#FFF0F1F7",
+  "listSelect": "#FFE7EEFC",
+  "listSelectText": "#FF1D4ED8",
+  "text": "#FF202434",
+  "titleText": "#FF202434",
+  "windowBg": "#FFFAFAFE",
+  "windowBorder": "#FFC0C4D2"
+}

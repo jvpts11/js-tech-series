@@ -1,0 +1,642 @@
+# Σ#
+
+Σ# is the programming language of the series' computers. You write it at any computer in one of the
+editors the systems ship with, compile it there with `sgsc`, and run what comes out with `sigma run`.
+This page is the reference for what a program can be, what it can reach, and what it costs.
+
+## Files and shapes
+
+A source file ends in `.sgs`. `sgsc file.sgs` writes `file.asm`, a listing of the assembly the
+machine runs; the listing is text you can open and read a line at a time. `sigma run file.asm [args]`
+runs it, and whatever follows the file name is the program's `Program.Args`. `sgpack` wraps a program
+up for the network's Mirror so other players can install it.
+
+A program is one of two shapes, and says which by how it is written:
+
+- A class with a `static void Main()` runs at the terminal that started it. It holds the prompt, prints
+  as it goes, and is gone when `Main` returns (or when it calls `Program.Exit`). From version 2 its Main may
+  be `static int Main()`, and what it returns is the code the program ends with, the one another program reads
+  from `Process.ExitCode`; and it may take `string[] args`, handed the words it was started with, the same ones
+  `Program.Args` reads. An array says how many places it has with `Length`, as `args.Length`.
+- A class that implements `IScript` stays up. `OnInit` runs once, `OnTick` every tick, `OnDestroy` when
+  it is stopped, and it is still running after the world has been away and come back. It writes all three.
+
+A script can also be written by standing on the class `Script` instead of implementing the interface.
+`Script` already has the three, doing nothing, so a script written this way fills in only the ones it
+uses and says `override` on each. The two are the same program to the machine; the class is the form
+Σ uses, since that language has no interfaces at all.
+
+Every file starts with the namespaces it uses (`using System.IO.*;`) and its own (`namespace Mine;`).
+
+## Σ, the smaller language
+
+Σ is what the earliest machines are programmed in, and it is a true subset of Σ#: anything written in it is
+also Σ#, and compiles on a newer machine untouched. A source ends in `.sg`, `scc file.sg` compiles it, and
+what comes out is built for the 16-bit machines unless told otherwise, so it runs on every machine there is.
+`sgsc` does not build for those machines at all.
+
+It keeps classes with inheritance, `virtual` and `override`, structs, enums, arrays, the loops, `out`, `is`
+and `as`. It has no interfaces, records, delegates, events, properties, lambdas, `foreach`, `List`, `Map`,
+generics, `var`, `lock`, threads, windows, `abstract`, or strings with holes in them, and every refusal says
+what to write instead. Its whole library is one namespace, `Standard` (`using Standard.*;`), with
+`Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`, each a handful of members, and
+from version 2 (see Versions below) `Sound`, `Speaker`, `Bus`, `BusItem`, `Redstone` and `Random`, whose `Next` and
+`Seed` are the whole of it.
+
+It prints the way the languages of those machines printed, with `printf`, a call written with no type in
+front of it: `printf("%s has %d items\n", name, count);`. The format has to be written out in quotes,
+because it is read while the program is compiled and never while it runs; what is left is the pieces joined
+and handed to the console, the very line adding them up by hand would have given. The holes are `%d` and `%i`
+for a whole number, `%f` for a number, `%s` for text, `%c` for a character and `%%` for the sign itself, and
+the letters C writes for how long a number is (`l`, `ll`, `h`, `hh`) are taken and mean nothing.
+
+From version 2 a hole reads the rest of what C wrote in one: the flags (`-` to the left, `+` or a space for the
+sign, `0` to fill with zeros, `#` for `0x` or a leading `0`), a width, a precision after a dot, `%u` for a
+whole number read as never below zero, `%x`, `%X` and `%o` for one in hexadecimal and octal, and `%e` and
+`%E` for a number with an exponent. `printf("%-12s %5d %05.2f %03x\n", name, count, rate, id);` writes what
+C would. A number with a fraction is written as the language writes it (`2.5`) unless the hole gives a
+precision; C's six decimals are `%.6f`. A width or a precision goes up to 999, and one taken from a value
+(`%*d`) is not read. A hole like these is written down as one call that puts the value in it; a plain hole is
+still the value itself, joined to the rest. A hole with no value, a value with no hole, and a value of the wrong
+kind are all errors when the program is compiled. Σ# has `printf` as well, since it reads whatever Σ does.
+
+The console keeps an open line, as the consoles of those machines did. A `printf` without a line break, or a
+`Console.Print`, leaves the line open for what is printed next; a break, or a `Console.PrintLine`, ends it, and
+it ends when the program does. A program that waits for a line asks with what it left open: the question stands
+where the prompt was, and the answer is typed after it, on the same line.
+
+```
+printf("How many ingots? ");
+int n = atoi(gets());
+```
+
+```
+How many ingots? 16
+```
+
+What is typed while a program is in front is written into its console as it is typed, so every terminal looking
+at the machine shows it once, and a save keeps the exchange, the line left open included.
+
+A program can read less than a line. `getchar()` takes the next character typed, and `scanf` reads one value a
+call, with a format of one hole and the variable handed with `out`: `%d`, `%i` and `%u` read a whole number into
+an `int` or a `long`, `%f` and `%e` a number into a `double`, `%s` a word into a `string`, and `%c` a character.
+Spaces before a value are skipped, what follows it waits for the next read, and `scanf` gives back 1 when it read
+a value and 0 when what was typed was not one, in which case that line is let go and the next read takes the next
+line typed.
+
+Version 2 brings the other names those languages used, each written with no type in front of it. Each stands
+for a call of the library, the compiler writes that call down, and the listing is the very one writing it the
+long way gives. The few calls the library gained for them in the same version, `Console.Print(char)`,
+`Console.Read()`, `Console.Scan(out value)`, `string.Compare`, the `char`
+type's `ToUpper`, `ToLower`, `IsDigit`, `IsLetter` and `IsWhiteSpace`, `Convert.ToString(n, base)` and
+`Convert.ToInt(text, fallback)`, are there to be written the long way as well.
+
+| The old name | The long way |
+|---|---|
+| `puts(text)` | `Console.PrintLine(text)` |
+| `putchar(c)` | `Console.Print(c)`: one character, on the open line |
+| `gets()` | `Console.ReadLine()` |
+| `getchar()` | `Console.Read()`: the next character typed, the line break at the end of a line included |
+| `scanf("%d", out n)` | `Console.Scan(out n)`: one value into `n`, of the kind its hole names; 1 when there was one, 0 when not |
+| `exit(status)` | `Program.Exit(status)` |
+| `abs(n)`, `sqrt(x)`, `pow(x, y)`, `floor(x)`, `min(a, b)`, `max(a, b)` | `Math.Abs`, `Math.Sqrt`, `Math.Pow`, `Math.Floor`, `Math.Min`, `Math.Max` |
+| `atoi(text)` | `Convert.ToInt(text, 0)`: the number the text is, or 0 when it is not one |
+| `atof(text)` | `Convert.ToDouble(text)` |
+| `itoa(n)`, `itoa(n, base)` | `Convert.ToString(n)`, `Convert.ToString(n, base)`: a base from 2 to 36 |
+| `srand(seed)` | `Random.Seed(seed)` |
+| `rand()` | `Random.Next(32768)`: a whole number from 0 to 32767 |
+| `strlen(text)` | `text.Length` |
+| `strstr(haystack, needle)` | `haystack.IndexOf(needle)`: where the needle starts, or -1 when it is not there |
+| `sprintf(format, ...)` | the text `printf` would print, given back instead of printed |
+| `strcmp(a, b)` | `string.Compare(a, b)`: -1 when `a` comes first, 0 when they are the same, 1 after |
+| `toupper(c)`, `tolower(c)` | `char.ToUpper(c)`, `char.ToLower(c)` |
+| `isdigit(c)`, `isalpha(c)`, `isspace(c)` | `char.IsDigit(c)`, `char.IsLetter(c)`, `char.IsWhiteSpace(c)` |
+| `strcpy(out dest, src)` | `dest = src` |
+| `strcat(ref dest, src)` | `dest = dest + src` |
+
+Version 2 also works on files the way C's stdio does. `FILE f = fopen(path, mode)` opens one of the machine's
+files, on the same terms as `File.*`, and gives `null` when it cannot: `"r"` reads a file that has to be there,
+`"w"` writes one from nothing, `"a"` adds at its end, and each with a `+` both reads and writes (a `b` or a `t`
+is taken and means nothing, since every file is text). Opening reads what the file holds into the program, which
+works on it from then on as one of its own objects, a line, a value or a character at a time; what it writes
+reaches the disk when the file is closed, or when the program ends with it still open.
+
+| The old name | The long way |
+|---|---|
+| `fopen(path, mode)` | `File.Open(path, mode)`, a `FILE` |
+| `fclose(f)` | `f.Close()`: what was written goes to the disk |
+| `fgets(out line, f)` | `f.ReadLine(out line)`: the next line, false at the end |
+| `fputs(text, f)`, `fputc(c, f)` | `f.Write(text)`, `f.Write(c)`: where the file is up to, or at its end for `"a"` |
+| `fprintf(f, format, ...)` | `f.Write` of what `printf` would print |
+| `fscanf(f, format, out v)` | `f.Scan(out v)`: one value, as `scanf` reads one |
+| `fgetc(f)` | `f.Read()`: the next character, or -1 at the end |
+| `feof(f)` | `f.AtEnd`: whether there is nothing more to read |
+| `fseek(f, n)`, `rewind(f)`, `ftell(f)` | `f.Seek(n)`, `f.Seek(0)`, `f.Position`, counted in characters |
+| `remove(path)`, `rename(from, to)` | `File.Delete(path)`, `File.Move(from, to)` |
+
+A file opened to read refuses to be written and one opened only to write refuses to be read, each saying so, and
+a closed file refuses everything. A program holds only so many files open at once, by its machine's era: 8 on a
+Vintage machine, 20 on a Legacy one and 64 from the Transition on; one more and `fopen` gives `null`. An open file
+is kept with the program through a save, where it is up to and what it wrote included. `feof` says whether the file is at its end already, rather than whether a read
+has gone past it as C's does, so `while (!feof(f))` reads exactly what is there.
+
+`strcpy` and `strcat` keep C's order, the place first: handed with `out` to `strcpy`, which only writes it, and
+with `ref` to `strcat`, which reads it before joining onto it. `ref` is written for `strcat` alone, and only where
+an argument starts with it, so a variable called `ref` is still a variable.
+
+A method or a variable of the program's own under one of these names is still the one called, so a program
+that already had its own `abs` goes on calling it. Σ# has all of them too.
+
+An old language is no reason to write it the hard way. On a machine that runs them, the editors treat a
+`.sg` file as they treat a `.sgs` one: coloured, checked as it is typed, and completed from what Σ really
+has, so nothing is offered that the compiler would then refuse. Virtual Studio's New Project lists every
+shape of project in both languages; a Σ project keeps itself in a `.sgproj` file, holds `.sg` sources, and
+starts out built for the oldest machines. A Σ# project may reference a Σ library, since Σ# reads it; a Σ
+project cannot reference a Σ# one.
+
+## Versions
+
+Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
+first shipped under these names; version 2 brings `Sound` and `Speaker`, `Bus` and `BusItem`, `Redstone`,
+`CraftInterface` and `CraftRouter`, `Operations.Update`, the old names above with the calls
+they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`, `Random` in Σ's
+`Standard`, and the widgets of `System.UI` listed below as the second version's, `GenericComponent` and
+`ComponentAction` among them. A version only ever adds: whatever
+version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
+older program. The one exception came with version 2 itself, before it shipped: the words of access hold as
+C# holds them, and `try`, `catch`, `finally`, `throw`, `goto`, `const`, `comefrom`, `abstainfrom` and
+`reinstate` are kept for a later version. A
+version 1 program that reached a member written with no word of access, or named something with one of those
+words, needs `public` on the member or another name.
+
+The version a machine builds is its compiler's. The package `sgsc` 2.0 is Σ# 2 and `scc` 2.0 is Σ 2, and a
+machine whose compiler is older builds the older version until an upgrade brings it up: `pckmgr upgrade`, the
+upgrade verb of each Linux and BSD package manager, or on MC-DOS installing the compiler again from newer
+media. Both compilers say which they are before anything else (`Σ# Compiler 2.0`).
+
+A build can be held to an older version, never a newer one: `sgsc --lang 1 file.sgs` (and the same on `scc`),
+or a `langversion: 1` line in the project file. Whatever came later is refused where it was written:
+
+```
+Mine.sgs(4,5): error S3057: 'puts' needs Σ# 2; this project is Σ# 1
+```
+
+The editors follow the machine's compiler, and Virtual Studio the project as well: the suggestions offer only
+what that version has, and the checks as you type hold a file to it.
+
+In Virtual Studio the version is chosen in the project's Properties, under Language version: Default follows the
+installed compiler, and a version's button writes the `langversion` line for you. Choosing Default again takes
+the line out, and the project's Dependencies in the Solution Explorer name the version it builds against.
+
+## Classes standing on other classes
+
+A class may stand on one other class and on as many interfaces as it likes, written after a colon.
+Which method runs is always decided by what the object really is, not by the name it is held under,
+and a class that replaces one of its base's methods has to say so:
+
+- `virtual` on a method means a class below may put its own in its place.
+- `override` on a method means it is taking the place of a `virtual` one above it. An `override` may
+  itself be replaced further down, without writing `virtual` again.
+- Writing a method that has the name and parameters of a base method, without `override`, is an error:
+  either the one above is `virtual` and you meant `override`, or it is not and the two are a collision
+  rather than a replacement. There is no way to hide a base method.
+- `abstract` on a method leaves it without a body, for the classes below to fill in; only an `abstract`
+  class may hold one, an `abstract` class cannot be made with `new`, and the first class below it that
+  can be made has to give every one of them a body.
+- Giving an interface the method it asked for is not replacing anything, so it needs no word.
+- `static` methods, constructors and everything in a `struct` take none of the three: a struct is
+  copied rather than pointed at, so there is no object whose real type could decide.
+
+## The budget and the clock
+
+A program never blocks the game. Each tick a machine is worth a number of instructions, its credits:
+the cores of its processors times their megahertz, divided by eight, never fewer than 32 and with no
+ceiling. A faster machine gets through more of a program in the same second, and a loop that never ends
+costs its machine the same tick as a program that does nothing.
+
+What protects the server is the clock, not a cap on the credits. Two limits live in
+`jstech-balance.toml`: how much real time one machine may spend on its programs in a tick
+(`program_machine_micros`, 1000 by default) and how much every machine together may
+(`program_server_micros`, 8000). A machine that finds the server's time already spent runs nothing that
+tick and goes first the next, so a busy server slows every computer evenly and never stops one.
+
+Credits are dealt out in turns of at most 64 instructions, going round every program on the machine
+and every thread in each of them, so none finishes its share before another has begun. A program started
+at low priority sits out every other round.
+
+Reaching out of a program costs more than moving numbers about inside it. A look at something the
+computer knows about itself costs 5; a look at something the network knows, 10; gathering a list from
+the computer, 30; a read, 50; a write, 100; asking the network to do something, 200. A call that brings
+back rows costs one more per row. The editors show the price of a line as you write it.
+
+## Errors
+
+There are no exceptions. A mistake (dividing by zero, reaching into nothing, using what was disposed,
+running out of memory, asking for what is not there, calls going more than 1,024 deep) halts the
+program where it stands, and the message is what the console shows. Calls that can fail for ordinary
+reasons answer instead of halting: `File.Write` returns false on a full disk, `Convert.TryInt` says
+whether the text was a number. A whole number divided by zero halts too, while the smallest `int`
+divided by -1 comes round to itself rather than halting.
+
+`try`, `catch`, `finally`, `throw`, `goto` and `const`, and `comefrom`, `abstainfrom` and `reinstate`
+after INTERCAL, are kept for a later version of the language, which brings them. They are reserved
+already, so none of them can be a name, and a program that writes one is told what to write until then
+(S2014).
+
+## Access and shifts
+
+`public`, `private`, `protected` and `internal` hold as in C#. A public or an internal member is
+reached from anywhere in the program; a private one only from inside its own type and the types nested
+in it, and a member written with no word of access is private; a protected one from its own type and
+the types that stand on it. Reaching one from where its word does not let you is S3060.
+
+A shift is of the kind of its left side, and takes only the low bits of its count, as C# does: five
+for an `int` and six for a `long`. `1 << 32` is 1 and `1 << 33` is 2.
+
+## Namespaces
+
+| Namespace | What is in it |
+|---|---|
+| `System` | `IScript`, the delegates `Action`, `Action<T>` and `Func<T, R>` |
+| `System.IO` | `Console` (print, read a line), `File` (the machine's disks and the network's shares) |
+| `System.Collections` | `List<T>`, `Map<K, V>` |
+| `System.Utils` | `Math`, `Convert`, `Random`, `Time` |
+| `System.Machine` | `Computer`: what the machine is made of and what it runs; `Redstone` (one of its Redstone Interfaces) |
+| `System.Network` | `Network`, `Mainframe`, `Operations`' rows, `RemoteComputer`, `Iql`, `Bus` and `BusItem` |
+| `System.Operations` | `Operations`: pull, push, craft, update, cancel, ask after an operation |
+| `System.Execution` | `Program`, `Process`, `ProcessMessage` |
+| `System.Threading` | `Thread`, and the `lock` statement |
+| `System.Sound` | `Sound` (beeps, tunes, songs), `Speaker` (one speaker by its name) |
+
+## Programs starting programs: `System.Execution`
+
+```
+Program.Name / Program.SetName(string)     what the machine lists this program as
+Program.Args -> List<string>               what it was started with
+Program.Current -> Process                 this program, as a handle
+Program.Exit(int code)                     ends the program, every thread with it
+Program.Start(string path) -> Process
+Program.Start(string path, List<string> args) -> Process
+Program.Start(string path, List<string> args, string priority) -> Process
+Program.OnMessage(Action<ProcessMessage>)  hears lines other programs send
+Program.DroppedEvents -> long              clicks and watch alerts missed while too many calls waited
+
+Process { Id, Name, Host, Running, ExitCode }
+Process.Wait()                             parks until the program ends
+Process.Wait(long ticks) -> bool           the same, giving up after so many ticks (false)
+Process.Kill()
+Process.Output() -> List<string>           what it printed
+Process.Send(int id, string text) -> bool  a line to a program on this machine; false when it cannot take it
+
+ProcessMessage { From, Text, Tick }
+```
+
+`Start` runs a compiled file from the same disks (`C:\tools\count.asm` on Frames, `/home/tools/count.asm`
+on Linux) without handing it the terminal: what it prints goes to its own output, for the parent to read.
+Priority is `low`, `medium` or `high`; `medium` is what a program gets when nobody says. A program
+started by another keeps its output and exit code for that program to read until the parent is gone;
+a running child outlives its parent. `Running` and `ExitCode` are the machine's word, never a stale
+field. A halt reads as exit code 1.
+
+## More than one thing at once: `System.Threading`
+
+```
+Thread.Start(Action body) -> Thread        a thread running the body, beside the rest
+Thread.Current -> Thread
+Thread.Sleep(long ticks)
+Thread.Yield()                             gives the rest of the turn away
+Thread { Id, Running }
+Thread.Join()                              parks until the thread ends
+Thread.Join(long ticks) -> bool            the same, giving up after so many ticks (false)
+Thread.Stop()
+
+lock (thing) { ... }                       holds the object's lock while the block runs
+```
+
+Threads take turns a few instructions at a time over the same memory, so nothing runs at the same
+instant and a single expression is never torn. A run of them can be: `lock` keeps it together. The lock
+is held on every way out of the block (the end, a `return`, a `break`, a `continue`), a thread may take
+the same lock more than once, and a thread waiting on a held lock spends nothing. Threads, their waits
+and their locks come back from a save where they were. A program that runs at a terminal takes its
+threads with it when `Main` returns; a program that stays up keeps them between ticks.
+
+## The network's shares
+
+Any computer opens a folder to the others on its network with `config share C:\pub` (reading) or
+`config share C:\pub write` (writing too), and closes it with `config unshare pub`. Every other machine
+on the network reaches it as `\\host\pub` at the prompt (`/net/host/pub` on Linux), in the file
+explorer under Network, and in a program through `File` with the same path:
+
+```
+File.Read("\\\\lab\\pub\\note.txt")
+File.Read("//lab/pub/note.txt")            the same, easier to write
+```
+
+A read-only share refuses writes and lists everything as read-only. Files on another machine are copied,
+never moved or renamed from afar.
+
+## The other computers: `System.Network`
+
+```
+Network.Computers() -> List<RemoteComputer>
+Network.Computer(string name) -> RemoteComputer          null when there is no such computer
+
+RemoteComputer { Host, Name, Type, Os, Online }
+RemoteComputer.Start(string path[, List<string> args[, string priority]]) -> Process
+RemoteComputer.Shell(string line) -> List<string>        one line at its prompt, and what it printed
+RemoteComputer.Send(int processId, string text) -> bool
+RemoteComputer.Processes() -> List<Process>
+```
+
+`Start` runs a compiled file from the other machine's disks, on that machine, out of its budget. The
+handle that comes back is the same `Process` as a local one, and its `Host` says where the program is.
+A machine that would rather not take any of this says `config remote off`; a program that asks it
+anyway halts with the refusal. So does one that names a computer that is off, or not on the network.
+
+## The network's language: `Iql`
+
+```
+Iql.Run(string statement) -> IqlResult { Ok, Message, Rows }
+Iql.Query(string statement) -> List<Map<string, object>>     halts when the network refuses
+Iql.Exec(string procedure[, List<string> args]) -> IqlResult
+Iql.RunFile(string path) -> IqlResult                         one statement a line
+```
+
+A statement goes to the Mainframe as it would from the prompt or the IQL Server Management Studio, under
+the program's name. Rows are maps keyed by their columns (`name`, `quantity`, `detail`). Plain
+statements need only a Mainframe; views, procedures and jobs need the IQL Engine installed on it.
+`SET BUS` sets one of the network's buses, as the `Bus` calls below do, and `SET REDSTONE` one of the Redstone
+Interfaces of the machine that runs the statement, as `Redstone` does. `SET INTERFACE`, `PAUSE INTERFACE`,
+`RESUME INTERFACE`, `SET ROUTER` and `RENAME` set the parts of the crafting network, as `CraftInterface` and
+`CraftRouter` do.
+
+`UPDATE` has a personal-use card of the machine that runs it change an item the network holds:
+`UPDATE 64 raw_iron SET SMELT`, `UPDATE diamond_sword SET ENCHANT OFFER 3` (with no `OFFER` it lists the three
+offers and changes nothing), `UPDATE diamond_pickaxe SET REPAIR`, `UPDATE iron_sword SET COMBINE WITH
+enchanted_book`, `UPDATE diamond_sword SET NAME 'Old Faithful'`. Only a Personal Computer with the card in can,
+and the card's levels are paid by whoever works the machine, who has to be there; smelting is free. From Σ 2 the
+same goes as `Operations.Update(item, action, qty)`, the action written as it is after `SET`:
+
+```
+Operations.Update("raw_iron", "SMELT", 64) -> AskResult { Ok, Message }
+Operations.Update("diamond_sword", "ENCHANT OFFER 2", 1)
+```
+
+## The buses: `Bus`
+
+A bus is a port of the network on a data cable: an Import or Export Bus moving items between the network and
+the inventory it faces, or an External Storage Bus showing that inventory as the network's storage. A program
+sets it as its window does, and what a bus's era cannot be set to is refused there as it is in the window.
+
+```
+Bus.Named("Ore in") -> Bus                        the network's bus of that name, or null
+bus("Ore in")                                     the same
+ore.Name                                          its name
+ore.On(), ore.Off()                               moving, or not
+ore.Continuous(), ore.OnDemand()                  all the time, or only while its cable has a redstone signal
+ore.Only("iron_ore, coal"), ore.AllBut("dirt")    its filter, the items parted by commas
+ore.Tag("c:ores")                                 adds an item tag to the filter
+ore.Fuzzy(true)                                   matches an item whatever its damage and components
+ore.Keep(16), ore.Max(64)                         what the faced inventory keeps, the most one move takes
+ore.Priority(5)                                   which bus goes first, the higher before the lower
+ore.WhenStock("iron_ore", 512)                    moves only while the network holds less than that
+ore.WhenStockTag("c:ores", 4096)                  the same for every item of a tag
+ore.Between(18, 6)                                moves only between those hours, past midnight here
+ore.After(Bus.Named("Coal in"))                   waits until the other bus has been idle a while
+ore.Item("iron_ore") -> BusItem                   one listed item, with its own Keep(n) and Max(n)
+wall.ReadWrite(), wall.ReadOnly(), wall.WriteOnly()   how the network may use an External Storage Bus's inventory
+```
+
+Each setting hands the bus back, so they are written one after another: `bus("Ore in").Keep(16).Max(64);`.
+A setting is marked on the bus with the name of the program that set it, which its window shows. A setting the
+bus's era cannot take, an hour that is not one of the day's, or a bus that is gone halts the program, saying why.
+
+## The crafting network: `CraftInterface` and `CraftRouter`
+
+A Crafting Interface is the part on the crafting cable that holds a machine's patterns and feeds that machine: from
+the face it sits against, or through the Crafting Input Routers on a crafting cable of its own, one router against
+each face the machine takes an input on. A program finds either by the name its window gives it, on the crafting
+cables of the network's Crafting Computers, and sets it as its window does.
+
+```
+CraftInterface.Named("Kiln A") -> CraftInterface    the interface of that name, or null
+craftInterface("Kiln A")                            the same
+kiln.Name                                           its name
+kiln.Exclusive(true)                                one recipe at a time (true), or several at once
+kiln.MaxJobs(4)                                     the most jobs at once, 0 for as many as come
+kiln.Pause(), kiln.Resume()                         takes no new job, or takes them again
+kiln.Route("Coarse dirt", "gravel", craftRouter("North"))   one input of a pattern through that router
+kiln.Route("Coarse dirt", "gravel", null)           the input routed by the routers' filters again
+
+CraftRouter.Named("North") -> CraftRouter           the router of that name, or null
+craftRouter("North")                                the same
+north.Only("gravel"), north.AllBut("dirt")          its filter: the inputs it carries
+north.Any()                                         an empty filter, which carries anything
+north.Tag("c:gravels"), north.Fuzzy(true)           an item tag in its filter, and the loose match
+```
+
+The same settings in IQL, as the parts' windows write them under Software:
+
+```
+SET INTERFACE 'Kiln A' EXCLUSIVE ON
+SET INTERFACE 'Kiln A' MAX JOBS 4                     MAX JOBS AUTO for as many as come
+SET INTERFACE 'Mixer' ROUTE 'Coarse dirt' INPUT gravel TO ROUTER 'North'
+SET INTERFACE 'Mixer' ROUTE 'Coarse dirt' INPUT gravel AUTO
+PAUSE INTERFACE 'Kiln A'                              RESUME INTERFACE 'Kiln A'
+RENAME INTERFACE 'Kiln A' TO 'Kiln B'                 RENAME ROUTER 'North' TO 'Gravel in'
+SET ROUTER 'North' FILTER ONLY gravel                 any setting SET BUS takes
+```
+
+Each setting hands the part back and is marked on it with the program's name, as a bus's is. A part that is gone, a
+pattern the interface does not hold, an input that pattern does not have, or a router that is not on the
+interface's own cable halts the program, saying why.
+
+## Redstone: `Redstone`
+
+A Redstone Interface is a small sensor on a computer's peripheral cable, placed as an observer is: its lens
+faces what the player looked at while placing it. It either reads the redstone signal coming into its lens or
+emits a signal there, powering the block in front of the lens as a lever powers the block it stands on, and
+nothing on its other faces. It takes a device port of its computer, or of a hub, and with no computer at the
+other end of its cable it has no power: it reads and emits nothing, but keeps what it was set to.
+
+```
+Redstone.Named("Gate") -> Redstone                one of the machine's interfaces, or null
+redstone("Gate")                                  the same
+gate.Name                                         the name it answers to
+gate.In() -> Redstone                             it reads the signal at its lens
+gate.Out(15) -> Redstone                          it emits that strength at its lens, from 0 to 15
+gate.Level() -> int                               the strength it reads, or emits; 0 while nothing powers it
+```
+
+An interface belongs to its computer, not to the network: a program finds only the interfaces linked to the
+machine it runs on, by the name given in the interface's window, whatever the case of the letters. One with no
+name of its own answers to `Redstone Interface`, and a name is unique among one computer's interfaces. The window
+also shows the setting written as these calls, and what a program set is marked there with its name. Each setting hands the interface
+back and is marked on it with the program's name. A strength outside 0 to 15, or an interface no longer linked
+to the machine, halts the program. At the prompt or in a file of statements, `SET REDSTONE 'Gate' IN` and
+`SET REDSTONE 'Gate' OUT 15` do the same.
+
+## Windows of its own: `System.UI`
+
+A program is not only a stream of printed lines. It can open a window on the desktop of the machine it
+runs on, and the machine's own system draws it, so the same program looks like a Frames 95 program on a
+Frames 95 machine and like a KDE one on Linux.
+
+```
+using System.*;
+using System.UI.*;
+namespace Plant;
+
+class Reactor : IScript {
+    Window made;
+    Label heat;
+
+    public void OnInit() {
+        made = new Window("Reactor", 240, 150);
+        heat = new Label("holding at 900");
+        Button scram = new Button("Scram");
+        scram.OnClick += Scram;
+        Row top = new Row();
+        top.Add(heat, 1);
+        top.Add(scram);
+        Column page = new Column();
+        page.Add(top);
+        page.Add(new ProgressBar(0, 100), 1);
+        made.Content = page;
+        made.Show();
+    }
+
+    void Scram() {
+        heat.Text = "cold";
+    }
+
+    public void OnTick() { }
+
+    public void OnDestroy() {
+        made.Close();
+    }
+}
+```
+
+It is a script so that it stays up to hear the click: a script runs until it is stopped, while a `Main` program
+ends when its last line has run.
+
+Every widget is an object the program holds, on the program's own heap, and is saved with it: a machine
+that is loaded back opens the same windows with the same words in them. The first version has `Window`,
+`Row`, `Column`, `Label`, `Button`, `TextBox`, `CheckBox`, `ProgressBar`, `ListBox`, `Canvas` and
+`MessageBox`. What a player does reaches the program as a handler, on the program's own thread and in turn
+with everything else it does. At most 256 calls wait their turn at once, holding at most 64 KB between
+them: a click that finds no room is dropped and counted in `Program.DroppedEvents`, while closing a window
+always gets in, ahead of the rest. A box typed into tells its handler at most once a tick, holding every
+letter typed by then. A window is a thing of the machine, not of the screen: closing the desktop does not
+close it, and a program that ends with a window open ends.
+
+The second version brings the rest of what a window has:
+
+| Widget | What it is |
+|---|---|
+| `TextArea` | a box of several lines, up to 4096 letters; `OnChange` |
+| `NumberBox`, `Slider` | a whole number between `Least` and `Most`, moved by `Step`; `OnChange` |
+| `RadioGroup`, `ComboBox` | choices added with `Add`, the picked one in `Selected`, counted from one; `OnSelect`. A radio group lies `Across` until told otherwise |
+| `TabView` | pages added with `Add(title, widget)`, the first one showing; `OnSelect` |
+| `GroupBox` | a frame with a caption round its `Content` |
+| `ScrollView` | its `Content` as tall as it likes, scrolled by the player |
+| `Table` | `AddColumn(header)`, `AddRow(...)` with one to four cells or a `List<string>`, `Cell(row, column)`; `OnSelect` |
+| `TreeView` | `Add(text)` and `Add(text, parent)` hand back the node's number; `NodeText(node)`; `OnSelect` |
+| `MenuBar` | `Add(menu, entry)`; `Picked` and `PickedMenu`; `OnPick` |
+| `ContextMenu` | made for a widget, `new ContextMenu(table)`, opened by the other button on it; `OnPick` |
+| `StatusBar` | a line along the bottom and a few sections at its right |
+| `Image` | a Pix picture from the machine's disk, by its `Path` |
+| `Chart` | numbers added with `Add`, the newest 120 drawn as a line between `Least` and `Most` |
+| `LogView` | lines added with `Add`, the newest 256 kept; a line saying WARN or ERROR stands out |
+| `OpenFileDialog`, `SaveFileDialog` | the system's own dialog, shown over an open window with `Show(window)`; `OnChoose` with the answer in `Path`, or `OnCancel` |
+| `ItemSlot`, `ItemPicker` | an item by its id, as the game draws it; a grid of items with a search line, `OnSelect` |
+| `OperationView` | one operation of the network: `Show(Operations.Get(id))`, or `Text`, `State`, `Done`, `Total` and `Computer` set by hand |
+| `GenericComponent` | a component of a kind another mod adds, below |
+
+Each system draws them in its own look: a radio button is round on Frames and the Linux desktops and a diamond
+on CDE, a tree opens with a boxed plus on the older systems and a chevron on the flat ones. A window carries at
+most 128 KB to the screens showing it; past that, what the last widgets hold is left out and they say so.
+
+A machine that only has its terminal, as the Vintage systems do, draws a program's windows there in letters, as
+the full-screen programs of the age drew their dialogs: a menu bar along the top line, the window in a double
+frame in the middle, the status line along the bottom. Tab moves between the widgets, the arrows move inside
+one, Enter or Space presses, Escape shuts what is open and then the window, and F10 opens the menu bar. A
+picture, a chart, an item, an operation, a canvas and a generic component have no letters to be drawn in, and a
+program making one there stops, saying so.
+
+A `GenericComponent` is named by its kind, `new GenericComponent("somemod:dial")`, and holds any value of the
+language in `Data`: a number, a text, a list, a map, an object of the program's own. Not a handler, a file, a
+thread, a window or a widget, nothing that holds itself, and at most 32 KB, sixteen levels deep and 4096 parts;
+what it holds is a copy, made when it is handed over and charged by its size, and saved with the program. What
+a player does to it comes back to the handler given to `OnAction` as a `ComponentAction`, with a `Name` and a
+`Value`. The mod that adds the kind draws it, and says what it takes; a game without that mod shows a
+placeholder naming the kind. A kind that reaches outside the game, such as one showing a web address, is off
+unless the server's settings turn it on, and even then each player sees it only if their own settings do.
+
+## Sound: `System.Sound`
+
+A program plays through the machine it runs on, and what comes out is what the machine is made of.
+
+```
+Sound.Beep(880, 200)                              a beep out of the speaker inside the case
+Sound.Tones("C4:250 E4 G4 C4+E4+G4:500") -> bool  a tune through the sound card
+Sound.Play("Users/Public/Music/intro.ogg") -> bool a song from the disks, out of the monitors and speakers
+Sound.Stop()                                      stops the songs the machine's programs are playing
+Speaker.Named("Desk left") -> Speaker             the linked speaker of that name, or null
+desk.Name                                         its name
+desk.Play("Users/Public/Music/alarm.wav") -> bool a song out of that speaker alone
+```
+
+A tune is a line of items, each a note by its name (`C4`, `F#3`, `Bb5`), a pitch in hertz (`440`) or a
+rest (`R`). Notes played together are joined by `+`, and how long an item lasts, in milliseconds, follows a
+colon; an item that does not say lasts as long as the one before it, the first a quarter of a second. A tune
+holds at most 1,024 items and 16 notes to a chord, and an item that is no note halts the program, naming
+it. A beep is kept between 20 Hz and 20 kHz and to a minute at most.
+
+The notes have the voice of the card: the bright, metallic ring of an FM card, the rounder one of a
+wavetable card or of the sound on a Standard board. A machine with no card plays its tunes out of the speaker
+in the case, as square notes, and of each chord only the first note. `Play` answers false when the file is
+no song, when the server no longer keeps it, or when the machine has nothing to play a recording through: a
+Legacy machine needs a sound card, and every machine a monitor linked to it.
+
+Everything the machine plays shares the voices of its sound hardware: 9 on an FM card, 32 on a wavetable
+card, 64 on a Standard board, and one in the case. A stereo song takes two voices of a card that plays both
+sides and a mono one takes one, each note of a chord takes one, and so does each of the system's chimes. A
+sound that finds no voice free takes the voices of the sound that started first, which stops; Soundfoundry
+says so when it is its song. A new beep cuts the one before it off. Beeps, tunes and songs follow the
+system's volume and mute, and all of them stop when the machine goes off.
+
+## The ComputerCraft side: `Gateway`
+
+A Network Gateway is a device of a computer, linked to it through a peripheral cable, whose other face
+is a ComputerCraft peripheral. Where there is one, a program reaches across it.
+
+```
+Gateway.Online -> bool                    Gateway.Names() -> List<string>
+Gateway.Select(string name) -> bool       Gateway.Current -> string
+Gateway.Computers() -> List<CcComputer>   Gateway.Peripherals() -> List<CcPeripheral>
+Gateway.Call(string peripheral, string method[, object ...]) -> object
+Gateway.TurnOn(long id) / Shutdown(long id) / Reboot(long id) -> bool
+Gateway.Send(long id, string text) -> bool
+Gateway.OnMessage(Action<GatewayMessage>)
+```
+
+`Call` reaches any peripheral on their wired network by the names that side knows it by. A machine with
+several Gateways has a program choose with `Select`; one that chooses nothing gets the first.
+
+What a Gateway allows is set on the Gateway itself, in the Gateway Manager or with `gateway <name> set`:
+reading the network and running operations. The bridge goes one way for programs: a ComputerCraft
+program uses our network through the Gateway, and a program of ours reaches their devices and their
+computers' power switches, but never into a computer's own files or prompt.
+
+## Watching the network
+
+```
+Network.Watch(string item, Action<StockEvent>) -> Subscription
+Network.WatchBelow(string item, long threshold, Action<StockEvent>) -> Subscription
+Network.WatchAbove(string item, long threshold, Action<StockEvent>) -> Subscription
+```
+
+Being told beats asking. A threshold watch fires on the crossing, not for as long as the number stays
+crossed, and disposing the subscription stops it. Handlers run on the program's main thread, in turn.

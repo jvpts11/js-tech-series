@@ -17,6 +17,11 @@ package dev.jstech.core.api;
  * <p>The version below is not the Core's version: it is the number of the shape of this promise. It goes
  * up by one whenever something here is added, and an addon that wants to be sure asks for it. What the
  * number does NOT promise yet is that the shape will hold: see the note on stability.
+ *
+ * <p>What is new carries {@code @ApiStatus.Experimental} from the cycle it came in until the cycle after its
+ * first release, since until then no mod has used it in a released game and it is the part most likely to
+ * move. The promise is also written down line by line, with the version each part came in, and a test holds
+ * the code to it; {@code docs/API.md} says how.
  */
 public final class JsCoreApi {
 
@@ -24,9 +29,16 @@ public final class JsCoreApi {
      * The number of the shape of this API, raised by one whenever anything is added to it.
      *
      * <p>An addon that uses something added later can say so by refusing to load below the number that
-     * added it, which is the whole reason this is a number and not a date.
+     * added it, which is the whole reason this is a number and not a date. The list of what each number
+     * added is kept in {@code core/src/test/resources/api/core.txt}, one line per type and member.
+     *
+     * <pre>{@code
+     * if (JsCoreApi.VERSION < 3) {
+     *     throw new IllegalStateException("MyAddon needs J's Core with API version 3 or newer");
+     * }
+     * }</pre>
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 4;
 
     /**
      * How long something here lives once it is marked as going.

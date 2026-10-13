@@ -26,6 +26,9 @@ public final class KernelNames {
     /** The FreeBSD release these machines run. */
     public static final String FREEBSD_RELEASE = "14.1-RELEASE";
 
+    /** The kernel configuration these machines are built from, the way FreeBSD names its own build. */
+    public static final String FREEBSD_KERNEL_CONFIG = "GENERIC";
+
     /** The System V release these machines run, and the version of it, which that system reports apart. */
     public static final String SYSTEM_V_RELEASE = "3.2";
     public static final String SYSTEM_V_VERSION = "2";
@@ -48,6 +51,33 @@ public final class KernelNames {
             case FREEBSD -> FREEBSD_RELEASE;
             case UNIX -> SYSTEM_V_RELEASE;
             default -> LINUX_VERSION;
+        };
+    }
+
+    /**
+     * The kernel line a system report shows: FreeBSD names its build configuration after its release, where
+     * a Linux just gives its version. The one place this is spelled out, so {@code uname -a} and a system
+     * report can never drift apart on it.
+     */
+    public static String kernelLine(final Platform platform) {
+        final String release = release(platform);
+        return platform == Platform.FREEBSD ? release + " " + FREEBSD_KERNEL_CONFIG : release;
+    }
+
+    /**
+     * The version a Frames system gives for itself, which is not a kernel with a name of its own the way a Unix
+     * one is: the line a system report shows where a Unix system names its kernel.
+     *
+     * @param familyRank where the edition sits in the Frames line, counting from one
+     */
+    public static String frames(final int familyRank) {
+        return switch (familyRank) {
+            case 1 -> "Frames 4.00.950";
+            case 2 -> "Frames NT 5.1";
+            case 3 -> "Frames NT 6.1";
+            // Frames 10 and Frames 11 report the same kernel version, as the real pair did.
+            case 4, 5 -> "Frames NT 10.0";
+            default -> "Frames";
         };
     }
 
@@ -97,8 +127,8 @@ public final class KernelNames {
     public static String everything(final Platform platform, final String host, final int bits) {
         final String arch = architecture(platform, bits);
         return switch (platform) {
-            case FREEBSD -> "FreeBSD " + host + " " + FREEBSD_RELEASE + " FreeBSD " + FREEBSD_RELEASE
-                    + " GENERIC " + arch;
+            case FREEBSD -> "FreeBSD " + host + " " + FREEBSD_RELEASE + " FreeBSD " + kernelLine(platform)
+                    + " " + arch;
             // System V gives the system, the node, the release, the version and the machine, and no more.
             case UNIX -> "UNIX " + host + " " + SYSTEM_V_RELEASE + " " + SYSTEM_V_VERSION + " " + arch;
             default -> "Linux " + host + " " + LINUX_VERSION + " #1 SMP " + arch + " GNU/Linux";

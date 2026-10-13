@@ -71,13 +71,23 @@ final class ComputerPower {
      * desktop the player was in is not there to come back to on the other side of the self-test.
      */
     void beginDown(final long now, final int ticks) {
-        this.phases.beginDown(now, ticks);
+        beginDown(now, ticks, false);
+    }
+
+    /** The same, ending with the machine switched off when {@code off}, and starting over otherwise. */
+    void beginDown(final long now, final int ticks, final boolean off) {
+        this.phases.beginDown(now, ticks, off);
         this.endSession.run();
     }
 
-    /** Whether the machine is closing down before starting over. */
+    /** Whether the machine is closing down before starting over or switching off. */
     boolean goingDown() {
         return this.phases.goingDown();
+    }
+
+    /** Whether the closing-down under way ends with the machine switched off. */
+    boolean poweringOff() {
+        return this.phases.poweringOff();
     }
 
     /** How long that closing-down takes in all, and how much of it is left. */
@@ -87,6 +97,25 @@ final class ComputerPower {
 
     int downRemaining(final long now) {
         return this.phases.downRemaining(now);
+    }
+
+    /** Stops the closing-down's clock where it stands, until it is let go. */
+    void holdDown() {
+        this.phases.holdDown();
+    }
+
+    /** Lets a held closing-down go, ending it at once. */
+    void releaseDown(final long now) {
+        this.phases.releaseDown(now);
+    }
+
+    boolean downHeld() {
+        return this.phases.downHeld();
+    }
+
+    /** How long the system has been up, in ticks. */
+    long upFor(final long now) {
+        return this.phases.upFor(now);
     }
 
     /**

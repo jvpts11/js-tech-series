@@ -20,6 +20,8 @@ import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.computers.vm.system.IntrinsicTypes;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +36,7 @@ import java.util.List;
  * <p>A few shapes of the language have no instruction of their own and are written in terms of ones
  * that do. A property is a field. A short-circuit is a branch. An enum value is a number.
  */
+@TextHolder
 final class ExpressionWriter {
 
     private final Emitter emitter;
@@ -47,6 +50,10 @@ final class ExpressionWriter {
      */
     private static final String DELEGATE = IntrinsicTypes.DELEGATE;
     private static final String STRING = IntrinsicTypes.TEXT;
+
+    /** What is not built yet when a string with holes reaches this stage without having been reduced. */
+    private static final TextKey UNREDUCED_INTERPOLATION = TextKey.of(
+            "jsc.sigma.expression_writer.unreduced_interpolation", "a string with holes that was never reduced");
 
     /*
      * The one place the two fold back on each other: a call is a value, and the values a call takes are
@@ -101,8 +108,7 @@ final class ExpressionWriter {
              * which would otherwise show up as a program quietly missing a line it printed.
              */
             case IExpr.Interpolation written -> this.emitter.diagnostics.error(written.line(),
-                    written.column(), SigmaError.NOT_YET_BUILT,
-                    "a string with holes that was never reduced");
+                    written.column(), SigmaError.NOT_YET_BUILT, UNREDUCED_INTERPOLATION);
         }
         this.coerce(this.emitter.model.typeOf(expression), wanted);
     }
@@ -241,6 +247,10 @@ final class ExpressionWriter {
         final IBinding binding = this.emitter.model.bindingOf(expression);
         if (binding instanceof IBinding.Member member) {
             this.loadMember(expression.target(), member.member());
+        } else if (this.emitter.model.typeOf(expression.target()) instanceof ITypeSymbol.ArrayType) {
+            // How many places an array has, the one thing it answers to.
+            this.value(expression.target(), null);
+            this.body.emit(Opcode.LDLEN);
         }
     }
 
@@ -310,12 +320,6 @@ final class ExpressionWriter {
         this.body.emit(Opcode.LDLOC, new IOperand.Slot(element.at()));
     }
 
-    /**
-     * Where an expression says a value lives, or nothing when it names no place at all.
-     *
-     * <p>Worked out once, here, and then read by everything that writes: plain assignment, assignment that
-     * combines, and one more or one less. Each of the three used to walk this list for itself.
-     */
     /**
      * Pushes what the write will need under the value, and hands back the kept element when there is one.
      *
@@ -395,8 +399,11 @@ final class ExpressionWriter {
         }
     }
 
-    /** The same, for a member expression that has not been read as a place: an event has no place. */
-    private void receiverOf(final IExpr target) {
+    /**
+     * The same, for a member expression that has not been read as a place: an event has no place, and a field a
+     * statement writes to names the field, not what holds it.
+     */
+    void receiverOf(final IExpr target) {
         this.pushHolder(new Place.Held(target instanceof IExpr.Member member ? member.target() : null, null));
     }
 
@@ -502,16 +509,6 @@ final class ExpressionWriter {
         }
     }
 
-    /**
-     * One more or one less, wherever the one is kept.
-     *
-     * <p>Three shapes, and which one a place takes is decided by what reaching it leaves on the stack.
-     * A captured variable is read through the object that holds it, so the answer is read rather than
-     * kept. A slot or a place belonging to a type is reached from nothing, so the answer can be taken
-     * with a duplicate as the value goes past. A place on an object or inside a collection sits on top
-     * of what it belongs to, and a duplicate would be buried under that when the value goes back, so
-     * the answer is put away in a place of its own and read out at the end.
-     */
     /** Keeps the value that answers the expression: a duplicate on top, or one put away in a slot. */
     private void answer(final boolean now, final int kept) {
         if (!now) {
@@ -755,8 +752,8 @@ final class ExpressionWriter {
         final ITypeSymbol gives = this.emitter.rules.substitute(shape.returnType(), filled);
         final List<String> written = new ArrayList<>();
         for (final IMemberSymbol.ParameterSymbol parameter : shape.parameters()) {
-            written.add((parameter.outward() ? "out " : "")
-                    + this.emitter.rules.substitute(parameter.type(), filled).describe());
+            written.add(Emitter.parameterText(parameter.outward(),
+                    this.emitter.rules.substitute(parameter.type(), filled)));
         }
 
         final Closure closure = this.body.closure();

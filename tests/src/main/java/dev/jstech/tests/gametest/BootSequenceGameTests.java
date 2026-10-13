@@ -69,7 +69,7 @@ public final class BootSequenceGameTests {
             return;
         }
         final BootSequence sequence = BootLines.forMachine(computer, helper.getLevel());
-        helper.assertTrue(sequence.title().startsWith("Starting MC-DOS"),
+        helper.assertTrue(sequence.title().english().startsWith("Starting MC-DOS"),
                 "the system names itself as it starts: " + sequence.title());
         helper.assertTrue(marked(sequence, "Drive C:"),
                 "the first drive gets the first letter: " + labels(sequence));
@@ -126,9 +126,9 @@ public final class BootSequenceGameTests {
          * backbone and a Personal Router is what bridges an Ethernet machine onto it.
          */
         world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity onACable = legacy(helper, new BlockPos(5, 2, 2));
         if (onACable == null) {
             return;
@@ -192,7 +192,7 @@ public final class BootSequenceGameTests {
                 TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
                         .placeRunningPersonalComputer(WHERE);
         final BootSequence sequence = BootLines.forMachine(computer, helper.getLevel());
-        helper.assertTrue(sequence.title().equals("Hi."),
+        helper.assertTrue(sequence.title().english().equals("Hi."),
                 "a machine coming up for the first time is greeted: " + sequence.title());
         helper.assertFalse(sequence.subtitle().isEmpty(),
                 "and told what is being got ready for whom");
@@ -244,7 +244,7 @@ public final class BootSequenceGameTests {
         final BootMenu menu = BootLines.menuFor(linux, 100);
         helper.assertFalse(menu.isEmpty(), "a Linux machine stops at its boot manager");
         helper.assertTrue(menu.entries().size() == 1, "with one entry for its one disk: " + menu.entries());
-        helper.assertTrue(menu.entries().get(0).label().equals("Debian"),
+        helper.assertTrue(menu.entries().get(0).label().english().equals("Debian"),
                 "named after the system on it: " + menu.entries().get(0).label());
 
         final PersonalComputerBlockEntity frames =
@@ -324,6 +324,61 @@ public final class BootSequenceGameTests {
         helper.succeed();
     }
 
+    /**
+     * Shutting down from inside the system lets it say goodbye first, and the power goes only when it has.
+     *
+     * <p>The desktop's Shut Down used to cut the power where it stood, so the player was simply dropped out of the
+     * computer with no screen at all, while the same system said goodbye on the way to a restart.
+     */
+    @GameTest(template = ARENA, timeoutTicks = PATIENT)
+    public static void shutDown_saysGoodbyeBeforeThePowerGoes(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        computer.setNeedsPost(false);
+        final int closing = BootTiming.shutdownTicks(BootRunner.bootLength(computer));
+        computer.shutDown();
+        helper.assertTrue(computer.isRunning() && computer.goingDown() && computer.poweringOff(),
+                "a machine shutting down is still on, saying goodbye on its way off");
+        helper.assertTrue(MonitorBlock.entryFor(computer) == MonitorBlock.Entry.GOING_DOWN,
+                "and a monitor opened now joins the goodbye: " + MonitorBlock.entryFor(computer));
+        helper.startSequence()
+                .thenExecuteAfter(closing + 2, () -> {
+                    helper.assertFalse(computer.isRunning(), "once it has finished, the power has gone");
+                    helper.assertFalse(computer.goingDown(), "and nothing is closing down any more");
+                    helper.assertFalse(computer.needsPost() && computer.isManualOn(),
+                            "it switched off rather than starting over");
+                })
+                .thenSucceed();
+    }
+
+    /** A restart is still a restart: its goodbye ends in the self-test, not in the dark. */
+    @GameTest(template = ARENA)
+    public static void restart_isNotTakenForAShutDown(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        computer.setNeedsPost(false);
+        computer.restart();
+        helper.assertTrue(computer.goingDown() && !computer.poweringOff(),
+                "a restart closes down without switching off");
+        helper.succeed();
+    }
+
+    /** A machine of the earliest age has nothing to show on its way off, so it goes dark at once. */
+    @GameTest(template = ARENA)
+    public static void shutDown_withNothingToSay_goesDarkAtOnce(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = vintageWithDos(helper);
+        if (computer == null) {
+            return;
+        }
+        computer.setPowered(true);
+        computer.setNeedsPost(false);
+        computer.shutDown();
+        helper.assertFalse(computer.isRunning(), "nothing to say, so the power goes where it stands");
+        helper.succeed();
+    }
+
     /** A machine with no system has nothing to come up, and so nothing to say. */
     @GameTest(template = ARENA)
     public static void aMachineWithNoSystem_hasNoSequence(final GameTestHelper helper) {
@@ -338,7 +393,7 @@ public final class BootSequenceGameTests {
 
     private static boolean has(final BootSequence sequence, final String label) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().equals(label)) {
+            if (line.label().english().equals(label)) {
                 return true;
             }
         }
@@ -358,7 +413,7 @@ public final class BootSequenceGameTests {
     /** Whether any step says that anywhere in its line, for the lines a machine writes out as sentences. */
     private static boolean any(final BootSequence sequence, final String text) {
         for (final BootSequence.Line line : sequence.lines()) {
-            if (line.label().contains(text) || line.value().contains(text)) {
+            if (line.label().english().contains(text) || line.value().english().contains(text)) {
                 return true;
             }
         }
@@ -368,7 +423,7 @@ public final class BootSequenceGameTests {
     private static String labels(final BootSequence sequence) {
         final StringBuilder out = new StringBuilder();
         for (final BootSequence.Line line : sequence.lines()) {
-            out.append(line.label()).append(' ');
+            out.append(line.label().english()).append(' ');
         }
         return out.toString();
     }
@@ -404,9 +459,9 @@ public final class BootSequenceGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(HardwareItems.PSU_500B.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
@@ -432,7 +487,7 @@ public final class BootSequenceGameTests {
         hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(HardwareItems.RAM_SIMM_4.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_300B.get()));
+                new ItemStack(HardwareItems.PSU_300.get()));
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         return computer;

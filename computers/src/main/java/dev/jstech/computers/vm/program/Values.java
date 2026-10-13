@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -20,7 +22,15 @@ import java.util.Map;
  * two of them that are equal are the same. Everything else is one of the kinds here, and every one
  * of those is a thing on the heap with a size and a life the program controls.
  */
+@TextHolder
 public final class Values {
+
+    private static final TextKey NO_PLACE_IN_ARRAY = TextKey.of("jsc.vm.values.no_place_in_array",
+            "there is no place %s in an array of %s");
+    private static final TextKey NO_PLACE_TO_INSERT = TextKey.of("jsc.vm.values.no_place_to_insert",
+            "there is no place %s to insert at in a list of %s");
+    private static final TextKey NO_PLACE_IN_LIST = TextKey.of("jsc.vm.values.no_place_in_list",
+            "there is no place %s in a list of %s");
 
     private Values() {
     }
@@ -101,8 +111,7 @@ public final class Values {
 
         private void check(final int index, final int line) {
             if (index < 0 || index >= this.values.length) {
-                throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                        "there is no place " + index + " in an array of " + this.values.length);
+                throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NO_PLACE_IN_ARRAY.with(index, this.values.length));
             }
         }
 
@@ -142,8 +151,7 @@ public final class Values {
         /** Puts something in at that place, moving what was there one along; the end is a place too. */
         public void insert(final int index, final Object value, final int line) {
             if (index < 0 || index > this.items.size()) {
-                throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                        "there is no place " + index + " to insert at in a list of " + this.items.size());
+                throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NO_PLACE_TO_INSERT.with(index, this.items.size()));
             }
             this.items.add(index, value);
         }
@@ -156,8 +164,7 @@ public final class Values {
 
         private void check(final int index, final int line) {
             if (index < 0 || index >= this.items.size()) {
-                throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                        "there is no place " + index + " in a list of " + this.items.size());
+                throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NO_PLACE_IN_LIST.with(index, this.items.size()));
             }
         }
 

@@ -7,15 +7,18 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.item.RackGadgetItem;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.hardware.ExpansionCardKind;
+import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.ServerItem;
-import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.item.StorageCardItem;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageVolume;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
@@ -31,7 +34,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * The drives in one rack bay treated as a single volume, and what happens when one of them is pulled.
  *
- * <p>A bay with a RAID Controller in it stops being a handful of separate drives and becomes one volume.
+ * <p>A server with a RAID controller card in it stops being a handful of separate drives and becomes one volume.
  * That changes what pulling a drive means, and the answer depends on the array: an independent bay's drive
  * simply leaves with its contents, a stripe loses everything because no member held a whole copy of
  * anything, and a redundant array keeps serving while it waits for a replacement to rebuild onto.
@@ -67,21 +70,20 @@ final class RackArrays {
         this.rebuildTotal = new int[capacityU];
     }
 
-    /** The front-slot index holding the unit's RAID Controller, or -1 when it has none. */
-    int controllerSlot(final int serverSlot) {
-        return gadgetSlot(serverSlot, RackGadgetItem.Kind.RAID_CONTROLLER);
+    /** A copy of the RAID controller seated in the unit's server, or an empty stack when it has none. */
+    ItemStack controller(final int serverSlot) {
+        return ServerItem.card(rack.serverSlot(serverSlot), ExpansionCardKind.RAID_CONTROLLER);
     }
 
-    /** Whether the unit has a Cache Card fitted, which is what lets its bay answer faster. */
-    boolean hasCacheCard(final int serverSlot) {
-        return gadgetSlot(serverSlot, RackGadgetItem.Kind.CACHE_CARD) >= 0;
+    /** How much of its drives' read latency the unit's read cache takes away, 0 when it has none. */
+    int cacheCutPercent(final int serverSlot) {
+        return StorageCardItem.readCutPercent(ServerItem.card(rack.serverSlot(serverSlot),
+                ExpansionCardKind.READ_CACHE));
     }
 
     /** The RAID mode the unit at {@code serverSlot} runs, or {@link RaidMode#NONE}. */
     RaidMode modeOf(final int serverSlot) {
-        final int controller = controllerSlot(serverSlot);
-        return controller < 0 ? RaidMode.NONE
-                : RackGadgetItem.raidMode(rack.frontSlot(controller));
+        return StorageCardItem.raidMode(controller(serverSlot));
     }
 
     /**
@@ -91,17 +93,20 @@ final class RackArrays {
      * always that size: without it, an array of four missing one looks exactly like an array of three.
      */
     boolean setMode(final int serverSlot, final RaidMode mode) {
-        final int controller = controllerSlot(serverSlot);
-        if (controller < 0) {
+        final ItemStack controller = controller(serverSlot);
+        if (controller.isEmpty()) {
             return false;
         }
         final int drives = rack.claimedDriveStacks(serverSlot).size();
         if (mode != RaidMode.NONE && drives < mode.minDrives()) {
             return false; // not enough drives in the bay to form this array
         }
-        final ItemStack stack = rack.frontSlot(controller);
-        RackGadgetItem.setRaidMode(stack, mode);
-        stack.set(ComputingModule.RAID_MEMBERS.get(), mode == RaidMode.NONE ? 0 : drives);
+        StorageCardItem.setRaidMode(controller, mode);
+        controller.set(ComputingComponents.RAID_MEMBERS.get(), mode == RaidMode.NONE ? 0 : drives);
+        controller.set(ComputingComponents.RAID_VOLUME.get(),
+                mode == RaidMode.NONE ? 0L : mode.usableCapacity(driveSizes(serverSlot), drives));
+        // The array's settings live on the card, so the card goes back into the server with them.
+        ServerItem.replaceCard(rack.serverSlot(serverSlot), ExpansionCardKind.RAID_CONTROLLER, controller);
         rack.markStorageChanged(serverSlot);
         rack.setChanged();
         return true;
@@ -109,12 +114,25 @@ final class RackArrays {
 
     /** How many drives the unit's array was formed with (0 when it runs no array). */
     int memberCount(final int serverSlot) {
-        final int controller = controllerSlot(serverSlot);
-        if (controller < 0) {
-            return 0;
-        }
-        final Integer members = rack.frontSlot(controller).get(ComputingModule.RAID_MEMBERS.get());
+        final Integer members = controller(serverSlot).get(ComputingComponents.RAID_MEMBERS.get());
         return members == null ? 0 : members;
+    }
+
+    /** The size of the volume the unit's array was formed with (0 when it runs no array or none was kept). */
+    long promisedVolume(final int serverSlot) {
+        final Long volume = controller(serverSlot).get(ComputingComponents.RAID_VOLUME.get());
+        return volume == null ? 0L : volume;
+    }
+
+    /** The capacity in items of each disk in the unit's bay. */
+    List<Long> driveSizes(final int serverSlot) {
+        final List<Long> sizes = new ArrayList<>();
+        for (final ItemStack drive : rack.claimedDriveStacks(serverSlot)) {
+            if (drive.getItem() instanceof DiskItem disk) {
+                sizes.add(disk.spec().capacityItems());
+            }
+        }
+        return sizes;
     }
 
     /** Whether the unit's array is missing members but still serving data. */
@@ -273,7 +291,8 @@ final class RackArrays {
      * learns to doubt it. A fragmented index still wants a vacuum by hand.
      */
     private void notifyHotPull(final int topRow) {
-        if (!(rack.getLevel() instanceof ServerLevel serverLevel) || rack.hasService(topRow, "integrity_monitor")) {
+        if (!(rack.getLevel() instanceof ServerLevel serverLevel)
+                || rack.serviceUp(topRow, Programs.INTEGRITY_MONITOR)) {
             return;
         }
         final ItemStack stack = rack.serverSlot(topRow);
@@ -283,32 +302,11 @@ final class RackArrays {
             return; // an unnetworked bay has no index to confuse
         }
         rack.mainframePositionOn(serverLevel, network).ifPresent(pos -> {
-            if (serverLevel.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mainframe) {
+            if (Loaded.blockEntity(serverLevel, BlockPos.of(pos)) instanceof MainframeBlockEntity mainframe) {
                 final String name = ServerItem.customName(stack);
                 mainframe.networkIndex().markBayHotPull(new NodeUuid(node),
                         name.isEmpty() ? "srv-" + node.toString().substring(0, 6) : name);
             }
         });
-    }
-
-    /** The front slot of this unit holding a gadget of that kind, or -1 when it has none. */
-    private int gadgetSlot(final int serverSlot, final RackGadgetItem.Kind kind) {
-        final RackChassis chassis = ServerItem.chassisOf(rack.serverSlot(serverSlot));
-        if (chassis == null) {
-            return -1;
-        }
-        final List<RackLayout.Unit> mounted = rack.mountedUnits();
-        for (int row = serverSlot; row < serverSlot + chassis.heightU() && row < rebuildTicks.length; row++) {
-            for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
-                if (rack.slotRoleAt(row, column, mounted) != RackLayout.SlotRole.GADGET) {
-                    continue;
-                }
-                final int index = row * RackLayout.SLOTS_PER_U + column;
-                if (RackGadgetItem.kindOf(rack.frontSlot(index)) == kind) {
-                    return index;
-                }
-            }
-        }
-        return -1;
     }
 }

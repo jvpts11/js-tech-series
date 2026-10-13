@@ -122,6 +122,6 @@ public final class PixWallpaper {
     /** The colour the wall around the picture is painted, taken from the picture's own corner. */
     private static int backdrop(final PixImage image) {
         final int corner = image.get(0, 0);
-        return PixImage.isTransparent(corner) ? 0xFF1E1E1E : PixImage.colourOf(corner);
+        return PixImage.isTransparent(corner) ? WallpaperPalette.get().pictureBackdrop() : PixImage.colourOf(corner);
     }
 }

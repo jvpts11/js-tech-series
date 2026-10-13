@@ -7,33 +7,29 @@
  */
 package dev.jstech.computers.api.client;
 
-import dev.jstech.computers.menu.ComputerTerminalMenu;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Makes the screen that draws an operating space.
  *
  * <p>The split is deliberate: the menu is the mod's, because the items in it are the server's to move and
  * every space needs the same ones, and everything a player sees and types is the space's. So a space is
- * handed a menu that is already wired to the machine and draws whatever it likes over it, up to and
+ * handed an opening already wired to the machine and draws whatever it likes over its menu, up to and
  * including an interface nothing here imagined.
- *
- * <p>What the menu gives a space to work with: the machine and monitor it belongs to, the hardware era for
- * the skin ({@link ComputerTerminalMenu#hardwareEra()}), the network's items and servers, the operations
- * log, and the player's own inventory as real slots.
  */
 @FunctionalInterface
 public interface IOperatingSpaceScreen {
 
     /**
-     * The screen for one opening of one machine.
+     * The screen for one opening of one machine, built on {@link IOperatingSpace#menu()}.
      *
-     * @param menu      the machine's terminal menu, already holding the player's inventory slots
+     * @param space     the opening: the machine, its monitor, its era and its menu
      * @param inventory the player's inventory, as any container screen takes it
      * @param title     the name of the block the monitor is showing
      */
-    AbstractContainerScreen<ComputerTerminalMenu> open(ComputerTerminalMenu menu, Inventory inventory,
-                                                       Component title);
+    @ApiStatus.Experimental
+    AbstractContainerScreen<?> open(IOperatingSpace space, Inventory inventory, Component title);
 }

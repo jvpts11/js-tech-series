@@ -1,0 +1,149 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_front_panel.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cde_front_panel.table1",
+      "heads": [
+        "jsc.guide.cde_front_panel.table1_head1",
+        "jsc.guide.cde_front_panel.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table1_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_front_panel.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_front_panel.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cde_front_panel.table2",
+      "heads": [
+        "jsc.guide.cde_front_panel.table2_head1",
+        "jsc.guide.cde_front_panel.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_front_panel.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.cde_front_panel.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cde_front_panel.fix1",
+          "problem": "jsc.guide.cde_front_panel.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cde",
+        "jsc:cde_trash_can"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:cde_front_panel",
+  "order": 211,
+  "section": "jsc:cde_desktop",
+  "title": "jsc.guide.cde_front_panel.title"
+}

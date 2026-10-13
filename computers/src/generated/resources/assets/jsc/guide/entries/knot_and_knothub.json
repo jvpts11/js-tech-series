@@ -1,0 +1,65 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.knot_and_knothub.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.knot_and_knothub.definition1",
+      "term": "jsc.guide.knot_and_knothub.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.knot_and_knothub.definition2",
+      "term": "jsc.guide.knot_and_knothub.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.knot_and_knothub.definition3",
+      "term": "jsc.guide.knot_and_knothub.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot_and_knothub.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot_and_knothub.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot_and_knothub.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.knot_and_knothub.fix1",
+          "problem": "jsc.guide.knot_and_knothub.problem1"
+        },
+        {
+          "fix": "jsc.guide.knot_and_knothub.fix2",
+          "problem": "jsc.guide.knot_and_knothub.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:knot",
+        "jsc:server_racks",
+        "jsc:programs"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:knot_and_knothub",
+  "order": 60,
+  "section": "jsc:social_and_media",
+  "title": "jsc.guide.knot_and_knothub.title"
+}

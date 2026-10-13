@@ -1,0 +1,11 @@
+{
+  "busy": "#FFE0A020",
+  "calm": "#FF2EA043",
+  "connected": "#FF2EA043",
+  "grid": "#FF0F3D0F",
+  "high": "#FFD1495B",
+  "meterFace": "#FF001400",
+  "meterFill": "#FF1F8B1F",
+  "selectedInk": "#FFFFFFFF",
+  "trace": "#FF39D639"
+}

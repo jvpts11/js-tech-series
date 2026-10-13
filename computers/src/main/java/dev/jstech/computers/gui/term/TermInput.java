@@ -8,8 +8,9 @@
 package dev.jstech.computers.gui.term;
 
 import dev.jstech.computers.program.cli.CliLine;
-import dev.jstech.computers.program.cli.CliSpan;
+import dev.jstech.computers.program.cli.CliRun;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.core.text.ITextLanguage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,10 +61,11 @@ public final class TermInput {
      * @param typedStyle the colour it is typed in
      * @param cursor  how many characters of {@code typed} come before the cursor
      * @param columns how many cells a row of this glass has
+     * @param language the language the prompt or the question is read in
      */
     public static Laid lay(final CliLine before, final String typed, final CliStyle typedStyle, final int cursor,
-                           final int columns) {
-        return lay(before, typed, typedStyle, cursor, cursor, columns);
+                           final int columns, final ITextLanguage language) {
+        return lay(before, typed, typedStyle, cursor, cursor, columns, language);
     }
 
     /**
@@ -73,17 +75,17 @@ public final class TermInput {
      *             as {@code cursor} when nothing is
      */
     public static Laid lay(final CliLine before, final String typed, final CliStyle typedStyle, final int cursor,
-                           final int mark, final int columns) {
+                           final int mark, final int columns, final ITextLanguage language) {
         final int wide = Math.max(1, columns);
-        final List<TermBuffer.Cell> cells = new ArrayList<>(TermBuffer.cellsOf(before));
+        final List<TermBuffer.Cell> cells = new ArrayList<>(TermBuffer.cellsOf(before.resolve(language)));
         while (!cells.isEmpty() && cells.get(cells.size() - 1).ch() == ' ') {
             cells.remove(cells.size() - 1);
         }
         if (!cells.isEmpty()) {
-            cells.add(new TermBuffer.Cell(' ', CliSpan.plain(" ")));
+            cells.add(new TermBuffer.Cell(' ', CliStyle.PLAIN));
         }
         final int start = cells.size();
-        cells.addAll(TermBuffer.cellsOf(new CliLine(typed, typedStyle)));
+        cells.addAll(TermBuffer.cellsOf(List.of(new CliRun(typed, typedStyle))));
         final List<TermRow> rows = new ArrayList<>();
         for (int from = 0; from < cells.size(); from += wide) {
             rows.add(TermBuffer.rowOf(cells, from, Math.min(cells.size(), from + wide)));

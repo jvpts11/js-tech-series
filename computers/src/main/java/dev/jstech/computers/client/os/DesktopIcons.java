@@ -7,14 +7,18 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.DesktopIconLayout;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.os.OsMotions;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.client.gui.GuiGraphics;
@@ -36,6 +40,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * two lines and cut with an ellipsis past that; a name wider than its cell used to run across its
  * neighbour, which is how "Network" and "Command Prompt" came to read as one word.
  */
+@PaletteHolder
 final class DesktopIcons {
 
     /**
@@ -79,10 +84,29 @@ final class DesktopIcons {
     private static final int LABEL_LINES = 2;
     private static final int LABEL_LINE_H = 8;
 
-    private final DesktopScreen desktop;
+    /** The title KDE 4's Folder View writes over the icons it holds. */
+    static final int FOLDER_TITLE = 12;
 
-    DesktopIcons(final DesktopScreen desktop) {
+    /** The icons' own colours, {@code jsc:desktop/icons}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/icons",
+            new Colours(0x804C84F0, 0x66000080, 0x28FFFFFF, 0xFF49E07A, 0xE0000080, 0xFFFFFFFF, 0xFF000000));
+
+    private final DesktopState desktop;
+    /** The icon a click has picked, which shows its whole name, or -1. */
+    private int picked = -1;
+
+    DesktopIcons(final DesktopState desktop) {
         this.desktop = desktop;
+    }
+
+    /** The icon a click has picked, which shows its whole name, or -1 while none is picked. */
+    int picked() {
+        return picked;
+    }
+
+    /** Picks an icon, or none with -1; a fresh file is picked so its name is ready to be typed over. */
+    void pick(final int slot) {
+        picked = slot;
     }
 
     /** The file name part of a path: its last segment, or the whole path when it has no separator. */
@@ -103,14 +127,48 @@ final class DesktopIcons {
 
     /** How many icons a column holds: the work area, which is the screen minus the panel wherever it sits. */
     int perColumn() {
-        return Math.max(1, (desktop.workAreaBottom() - desktop.workAreaTop() - 12) / PITCH_Y);
+        return Math.max(1, (desktop.view().workAreaBottom() - desktop.view().workAreaTop() - topInset() - 2)
+                / PITCH_Y);
     }
 
-    /** The stable id of the icon at slot {@code i}: {@code app:<label>} or {@code file:<name>}. */
+    /**
+     * KDE 4's Folder View round the icons: the box they stand in, with its title over them, as x, y, width and
+     * height; the icons themselves stand where they always do, a title's height lower.
+     */
+    int[] folderView() {
+        final int[] cells = cells(perColumn());
+        int left = Integer.MAX_VALUE;
+        int top = Integer.MAX_VALUE;
+        int right = 0;
+        int bottom = 0;
+        for (final int cell : cells) {
+            left = Math.min(left, xOf(cell) + CELL_DX);
+            top = Math.min(top, yOf(cell) + CELL_DY);
+            right = Math.max(right, xOf(cell) + CELL_DX + CELL_W);
+            bottom = Math.max(bottom, yOf(cell) + CELL_DY + CELL_H);
+        }
+        if (cells.length == 0) {
+            left = ORIGIN_X + CELL_DX;
+            top = desktop.view().workAreaTop() + topInset() + CELL_DY;
+            right = left + CELL_W;
+            bottom = top + CELL_H;
+        }
+        return new int[] {left - 3, top - FOLDER_TITLE - 3, right - left + 6, bottom - top + FOLDER_TITLE + 6};
+    }
+
+    /* How far under the work area's top the first row stands: a title's height lower under KDE 4's Folder View. */
+    private int topInset() {
+        return desktop.kde4() ? 10 + FOLDER_TITLE : 10;
+    }
+
+    /**
+     * The stable id of the icon at slot {@code i}: {@code app:<key>} for a program or the trash, by the key its
+     * window goes by and not by the name it shows, or {@code file:<name>}.
+     */
     String keyOf(final int i) {
-        final List<DesktopScreen.Launcher> launchers = desktop.deskIcons();
+        final List<Launcher> launchers = desktop.deskIcons();
         if (i < launchers.size()) {
-            return "app:" + launchers.get(i).label();
+            return "app:" + launchers.get(i).key();
         }
         return "file:" + baseName(desktop.deskFiles().get(i - launchers.size()).path());
     }
@@ -135,11 +193,11 @@ final class DesktopIcons {
      */
     int xOf(final int packedCell) {
         final int across = ORIGIN_X + DesktopIconLayout.col(packedCell) * PITCH_X;
-        return desktop.objectsStandRight() ? desktop.workAreaWidth() - across - ICON_W : across;
+        return desktop.objectsStandRight() ? desktop.view().width() - across - ICON_W : across;
     }
 
     int yOf(final int packedCell) {
-        return desktop.workAreaTop() + 10 + DesktopIconLayout.row(packedCell) * PITCH_Y;
+        return desktop.view().workAreaTop() + topInset() + DesktopIconLayout.row(packedCell) * PITCH_Y;
     }
 
     /** The desktop-local middle of the picture in slot {@code slot}, where a click on it lands. */
@@ -165,10 +223,10 @@ final class DesktopIcons {
     /** The packed grid cell under a desktop-local point, clamped to the grid. */
     int cellAt(final double mx, final double my, final int perCol) {
         // Counted from whichever edge the columns start at, so a mirrored grid is the same sum.
-        final double across = desktop.objectsStandRight() ? desktop.workAreaWidth() - mx : mx;
+        final double across = desktop.objectsStandRight() ? desktop.view().width() - mx : mx;
         final int col = Math.max(0, (int) Math.floor((across - (ORIGIN_X - PITCH_X / 2.0)) / PITCH_X));
         final int row = Math.max(0, Math.min(perCol - 1,
-                (int) Math.floor((my - desktop.workAreaTop() - (10 - PITCH_Y / 2.0)) / PITCH_Y)));
+                (int) Math.floor((my - desktop.view().workAreaTop() - (topInset() - PITCH_Y / 2.0)) / PITCH_Y)));
         return DesktopIconLayout.pack(col, row);
     }
 
@@ -216,14 +274,15 @@ final class DesktopIcons {
      * clipped by it.
      */
     void render(final GuiGraphics g, final int lmx, final int lmy) {
-        final List<DesktopScreen.Launcher> launchers = desktop.deskIcons();
+        final List<Launcher> launchers = desktop.deskIcons();
         final List<DiskFilesPayload.WireFile> files = desktop.deskFiles();
         final int total = launchers.size() + files.size();
         final int perCol = perColumn();
         final int[] cells = cells(perCol);
-        final boolean dragging = desktop.draggingIcon();
+        final DesktopDrags drags = desktop.drags();
+        final boolean dragging = drags.iconDragging();
         final int dropTarget = dragging
-                ? slotAt(desktop.iconDragX(), desktop.iconDragY(), perCol)
+                ? slotAt(drags.iconX(), drags.iconY(), perCol)
                 : -1;
         String pickedLabel = null;
         int pickedX = 0;
@@ -233,7 +292,7 @@ final class DesktopIcons {
             final int iy = yOf(cells[i]);
             drawCell(g, i, ix, iy, lmx, lmy, dragging, dropTarget, launchers.size(), files);
             final String label = labelOf(i, launchers, files);
-            if (i == desktop.pickedIcon()) {
+            if (i == picked) {
                 // Defer the full name to a pass after every icon so nothing overdraws it.
                 pickedLabel = label;
                 pickedX = ix;
@@ -251,14 +310,15 @@ final class DesktopIcons {
     void drawDropCell(final GuiGraphics g, final int cell) {
         final int gx = xOf(cell) + CELL_DX;
         final int gy = yOf(cell) + CELL_DY;
-        g.fill(gx, gy, gx + CELL_W, gy + 1, 0x804C84F0);
-        g.fill(gx, gy + CELL_H - 1, gx + CELL_W, gy + CELL_H, 0x804C84F0);
-        g.fill(gx, gy, gx + 1, gy + CELL_H, 0x804C84F0);
-        g.fill(gx + CELL_W - 1, gy, gx + CELL_W, gy + CELL_H, 0x804C84F0);
+        final int edge = PALETTE.get().dropCell();
+        g.fill(gx, gy, gx + CELL_W, gy + 1, edge);
+        g.fill(gx, gy + CELL_H - 1, gx + CELL_W, gy + CELL_H, edge);
+        g.fill(gx, gy, gx + 1, gy + CELL_H, edge);
+        g.fill(gx + CELL_W - 1, gy, gx + CELL_W, gy + CELL_H, edge);
     }
 
     /** What an icon is called: a launcher's own name, or the file's, or what is being typed over it. */
-    private String labelOf(final int i, final List<DesktopScreen.Launcher> launchers,
+    private String labelOf(final int i, final List<Launcher> launchers,
                            final List<DiskFilesPayload.WireFile> files) {
         if (i < launchers.size()) {
             return launchers.get(i).label();
@@ -273,28 +333,32 @@ final class DesktopIcons {
                           final int launcherCount, final List<DiskFilesPayload.WireFile> files) {
         final int cellX = ix + CELL_DX;
         final int cellY = iy + CELL_DY;
-        if (i == desktop.pickedIcon() || selected.contains(i)) {
-            g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, 0x66000080);
+        final Colours c = PALETTE.get();
+        if (i == picked || selected.contains(i)) {
+            g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, c.picked());
         } else if (lmx >= cellX && lmx < cellX + CELL_W && lmy >= cellY && lmy < cellY + CELL_H && !dragging) {
             // Hover feedback so the player sees which icon the cursor is over.
-            g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, 0x28FFFFFF);
+            g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, c.hover());
         }
         /*
          * A green outline on the folder, or the trash, under the cursor while a real file or folder is being
          * dragged. A launcher has no file to move into a folder, so dragging one lights nothing.
          */
-        if (dragging && desktop.draggedIconSlot() >= launcherCount
-                && i == dropTarget && i != desktop.draggedIconSlot()
+        if (dragging && desktop.drags().iconSlot() >= launcherCount
+                && i == dropTarget && i != desktop.drags().iconSlot()
                 && (i >= launcherCount ? files.get(i - launcherCount).directory() : desktop.isTrashIcon(i))) {
-            g.fill(cellX, cellY, cellX + CELL_W, cellY + 1, 0xFF49E07A);
-            g.fill(cellX, cellY + CELL_H - 1, cellX + CELL_W, cellY + CELL_H, 0xFF49E07A);
-            g.fill(cellX, cellY, cellX + 1, cellY + CELL_H, 0xFF49E07A);
-            g.fill(cellX + CELL_W - 1, cellY, cellX + CELL_W, cellY + CELL_H, 0xFF49E07A);
+            g.fill(cellX, cellY, cellX + CELL_W, cellY + 1, c.dropTarget());
+            g.fill(cellX, cellY + CELL_H - 1, cellX + CELL_W, cellY + CELL_H, c.dropTarget());
+            g.fill(cellX, cellY, cellX + 1, cellY + CELL_H, c.dropTarget());
+            g.fill(cellX + CELL_W - 1, cellY, cellX + CELL_W, cellY + CELL_H, c.dropTarget());
         }
         if (i < launcherCount) {
             ProgramIcons.draw(g, ix, iy, 24, 22, desktop.deskIcons().get(i).programId(), desktop.icons());
         } else {
-            drawFileIcon(g, ix, iy, files.get(i - launcherCount));
+            // A file or folder wears the picture the explorer gives it, centred where a program's icon sits.
+            final DiskFilesPayload.WireFile file = files.get(i - launcherCount);
+            FileIcons.draw(g, ix + (ICON_W - FileIcons.SIZE) / 2, iy + 3,
+                    FileIcons.kindOfPath(file.path(), file.directory()), desktop.icons());
         }
     }
 
@@ -302,12 +366,13 @@ final class DesktopIcons {
     private void drawName(final GuiGraphics g, final String label, final int ix, final int iy) {
         int ly = iy + 23;
         final List<String> lines = wrap(label, labelWidth());
+        // The shadow under a name is the system's own effect, which its performance settings can switch off.
+        final boolean shadow = desktop.themeColours().textShadow() && desktop.motion().on(OsMotions.ICON_SHADOWS);
         for (int li = 0; li < lines.size() && li < LABEL_LINES; li++) {
             final String line = li == LABEL_LINES - 1 && lines.size() > LABEL_LINES
                     ? fit(lines.get(li) + "...")
                     : fit(lines.get(li));
-            drawLine(g, line, ix + 12, ly, desktop.themeColours().iconText(),
-                    desktop.themeColours().textShadow());
+            drawLine(g, line, ix + 12, ly, desktop.themeColours().iconText(), shadow);
             ly += LABEL_LINE_H;
         }
     }
@@ -318,8 +383,8 @@ final class DesktopIcons {
         for (final String line : wrap(label, labelWidth())) {
             final int lw = Texts.smallWidth(desktop.textFont(), line);
             final int lcx = ix + 12 - lw / 2;
-            g.fill(lcx - 2, ly - 1, lcx + lw + 2, ly + LABEL_LINE_H, 0xE0000080);
-            Texts.small(g, desktop.textFont(), line, lcx, ly, 0xFFFFFFFF);
+            g.fill(lcx - 2, ly - 1, lcx + lw + 2, ly + LABEL_LINE_H, PALETTE.get().pickedLabel());
+            Texts.small(g, desktop.textFont(), line, lcx, ly, PALETTE.get().pickedInk());
             ly += LABEL_LINE_H;
         }
     }
@@ -329,7 +394,7 @@ final class DesktopIcons {
                           final int color, final boolean shadow) {
         final int lx = cx - Texts.smallWidth(desktop.textFont(), line) / 2;
         if (shadow) {
-            Texts.small(g, desktop.textFont(), line, lx + 1, y + 1, 0xFF000000);
+            Texts.small(g, desktop.textFont(), line, lx + 1, y + 1, PALETTE.get().shadow());
         }
         Texts.small(g, desktop.textFont(), line, lx, y, color);
     }
@@ -373,33 +438,11 @@ final class DesktopIcons {
         return out;
     }
 
-    /** A folder or document icon (about 24 by 22) for a desktop file entry. */
-    private static void drawFileIcon(final GuiGraphics g, final int x, final int y,
-                                     final DiskFilesPayload.WireFile f) {
-        if (f.directory()) {
-            g.fill(x + 1, y + 1, x + 10, y + 4, 0xFFFFE9A8);   // tab
-            g.fill(x + 1, y + 4, x + 23, y + 20, 0xFFF4C842);  // body
-            g.fill(x + 1, y + 4, x + 23, y + 6, 0xFFFFF3C4);   // highlight
-            outline(g, x + 1, y + 1, 22, 19, 0xFF9A7B16);
-            return;
-        }
-        final int fill;
-        final int edge;
-        switch (f.ext().toLowerCase(Locale.ROOT)) {
-            case "iql" -> { fill = 0xFFA9D4FF; edge = 0xFF3A72B0; }
-            case "dat" -> { fill = 0xFFBDEEC0; edge = 0xFF4F9B53; }
-            default -> { fill = 0xFFEDEFF3; edge = 0xFF8A93A6; }
-        }
-        g.fill(x + 4, y + 1, x + 21, y + 21, fill);        // sheet
-        g.fill(x + 16, y + 1, x + 21, y + 6, 0xFFFFFFFF);  // folded corner
-        outline(g, x + 4, y + 1, 17, 20, edge);
-    }
-
-    private static void outline(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                final int color) {
-        g.fill(x, y, x + w, y + 1, color);
-        g.fill(x, y + h - 1, x + w, y + h, color);
-        g.fill(x, y, x + 1, y + h, color);
-        g.fill(x + w - 1, y, x + w, y + h, color);
+    /**
+     * The icons' own colours: the cell a dragged icon would snap to, a picked icon's cell, a hovered one, the
+     * folder a file would drop into, a picked icon's name and its ink, and the shadow under a name.
+     */
+    private record Colours(int dropCell, int picked, int hover, int dropTarget, int pickedLabel, int pickedInk,
+                           int shadow) {
     }
 }

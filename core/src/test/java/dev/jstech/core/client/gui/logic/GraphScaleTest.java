@@ -113,4 +113,19 @@ class GraphScaleTest {
     void constructor_maxLessThanMin_throws() {
         assertThrows(IllegalArgumentException.class, () -> new GraphScale(100, 0));
     }
+
+    @Test
+    void fromData_ignoresNanWhateverItsPlace() {
+        GraphScale first = GraphScale.fromData(new double[] {Double.NaN, 2.0, 8.0});
+        GraphScale last = GraphScale.fromData(new double[] {2.0, 8.0, Double.NaN});
+        assertEquals(2.0, first.minValue(), EPS);
+        assertEquals(8.0, first.maxValue(), EPS);
+        assertEquals(first, last);
+    }
+
+    @Test
+    void fromData_withNoFiniteValueGivesAnEmptyScale() {
+        assertEquals(new GraphScale(0.0, 0.0),
+                GraphScale.fromData(new double[] {Double.NaN, Double.POSITIVE_INFINITY}));
+    }
 }

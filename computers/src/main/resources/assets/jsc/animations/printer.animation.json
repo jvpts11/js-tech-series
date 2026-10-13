@@ -1,0 +1,130 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "animation.printer.print_vintage": {
+   "loop": true,
+   "animation_length": 2.5,
+   "bones": {
+    "paper": {
+     "position": {
+      "0.0": [
+       0,
+       -1.5,
+       0
+      ],
+      "2.0": [
+       0,
+       0,
+       0
+      ],
+      "2.5": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.printer.print_legacy": {
+   "loop": true,
+   "animation_length": 2.5,
+   "bones": {
+    "paper": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       1
+      ],
+      "1.8": [
+       0,
+       0,
+       0
+      ],
+      "2.5": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.printer.print_transition": {
+   "loop": true,
+   "animation_length": 2.5,
+   "bones": {
+    "paper": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       1.5
+      ],
+      "1.8": [
+       0,
+       0,
+       0
+      ],
+      "2.5": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.printer.print_standard": {
+   "loop": true,
+   "animation_length": 2.0,
+   "bones": {
+    "paper": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       3
+      ],
+      "1.2": [
+       0,
+       0,
+       0
+      ],
+      "2.0": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.printer.print_advanced": {
+   "loop": true,
+   "animation_length": 2.2,
+   "bones": {
+    "paper": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       2
+      ],
+      "1.5": [
+       0,
+       0,
+       0
+      ],
+      "2.2": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  }
+ }
+}

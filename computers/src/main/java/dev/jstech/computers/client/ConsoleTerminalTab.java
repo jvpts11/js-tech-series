@@ -12,6 +12,8 @@ import dev.jstech.computers.client.os.ShellView;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.gui.TextScreen;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -34,8 +36,6 @@ final class ConsoleTerminalTab extends AbstractTerminalTab {
     private static final int RIGHT_PAD = 2;
     private static final int BOTTOM = ComputerTerminalLayout.INV_LINE_Y - 2;
 
-    /** The line this system uses to say where to start, which is its own word and not the DOS family's. */
-    private static final String START_HINT = "showcommands lists what this machine can run.";
 
     @Nullable
     private ShellView view;
@@ -119,6 +119,12 @@ final class ConsoleTerminalTab extends AbstractTerminalTab {
         return this.view == null ? "" : this.view.scrollbackText();
     }
 
+    /** The screen the program holding this console last drew, for a test to read, or null when none is. */
+    @Nullable
+    TextScreen editorScreen() {
+        return this.view == null ? null : this.view.editorScreen();
+    }
+
     @Override
     public void onRemoved() {
         if (this.view != null) {
@@ -135,7 +141,9 @@ final class ConsoleTerminalTab extends AbstractTerminalTab {
      */
     private ShellView shell() {
         if (this.view == null) {
-            this.view = new ShellView(menu.hostPos(), false, screen.systemName(), START_HINT);
+            // The line this system uses to say where to start, which is its own word and not the DOS family's.
+            this.view = new ShellView(menu.hostPos(), false, screen.systemName(),
+                    GameText.resolve(TerminalUpkeepTexts.START_HINT.with("showcommands")));
         }
         return this.view;
     }

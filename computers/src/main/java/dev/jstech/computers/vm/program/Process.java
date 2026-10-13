@@ -8,9 +8,13 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -32,6 +36,7 @@ import java.util.function.Predicate;
  * <p>Nothing it does reaches outside itself except through the console it writes to and the host it
  * asks the time of, so a whole program can be run and read back with no world around it.
  */
+@TextHolder
 public final class Process {
 
     /** Where a process is up to. A snapshot writes it by its name. */
@@ -62,6 +67,26 @@ public final class Process {
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = SigmaCosts.THREAD_START;
+    /** Where a program that runs at a terminal starts. */
+    private static final String MAIN = "Main";
+    /** The machine's close of a file a program opened, which a program that ends with one open is given. */
+    private static final MemberId CLOSE_FILE = new MemberId(OpenFile.TYPE, "Close", List.of());
+    /** Text, as a listing names its type. */
+    private static final String TEXT = "string";
+
+    private static final TextKey FAULT = TextKey.of("jsc.vm.process.fault",
+            "the runtime could not carry this out (%s)");
+    private static final TextKey NO_PROCESS = TextKey.of("jsc.vm.process.no_process", "there is no process here");
+    private static final TextKey NOTHING_TO_RUN = TextKey.of("jsc.vm.process.nothing_to_run", "%s has no %s to run");
+    private static final TextKey NO_DESKTOP = TextKey.of("jsc.vm.process.no_desktop",
+            "this computer has no desktop to open a window on");
+    private static final TextKey NO_THREAD_BODY = TextKey.of("jsc.vm.process.no_thread_body",
+            "there is no body to run on the thread");
+    private static final TextKey NO_THREAD_METHOD = TextKey.of("jsc.vm.process.no_thread_method",
+            "there is no %s to run on the thread");
+    private static final TextKey NO_THREAD = TextKey.of("jsc.vm.process.no_thread", "there is no thread here");
+    private static final TextKey NO_WATCH_HANDLER = TextKey.of("jsc.vm.process.no_watch_handler",
+            "there is no handler to call for %s");
 
     private final ProgramImage program;
     private final Heap heap;
@@ -219,11 +244,6 @@ public final class Process {
         return this.worldCalls;
     }
 
-    /** Ends a thread other than the main one, as the runtime's coroutines do when theirs is over. */
-    void endThread(final ProgramThread thread) {
-        this.end(thread);
-    }
-
     public Process(final ProgramImage program, final long heapBytes, final IHost host) {
         this(program, heapBytes, host, true);
     }
@@ -281,19 +301,29 @@ public final class Process {
         return this.program;
     }
 
-    /** What it said when it stopped, or null while it is still going. */
-    public String message() {
+    /** What it was told when it stopped, or nothing while it is still going. */
+    public Text message() {
         return this.identity.message();
     }
 
-    /** What it has written to its own console. */
+    /** What it has written to its own console, in English, as a program reads it back. */
     public List<String> console() {
         return this.console.lines();
+    }
+
+    /** The same lines as a terminal shows them, with what the runtime said in its player's words. */
+    public List<Text> consoleText() {
+        return this.console.texts();
     }
 
     /** How many lines it has written since it started, the ones no longer kept included. */
     public long written() {
         return this.console.written();
+    }
+
+    /** What it has printed since its last line ended, which stands before what is typed when it asks. */
+    public String openLine() {
+        return this.console.open();
     }
 
     /** What it is holding, to the byte. */
@@ -401,6 +431,17 @@ public final class Process {
         return this.self;
     }
 
+    /** The arguments as the array a {@code Main(string[] args)} is handed, the program's to hold like anything else. */
+    private Values.Arr argsArray() {
+        final List<String> args = this.identity.args();
+        final Values.Arr made = new Values.Arr(TEXT, args.size());
+        for (int i = 0; i < args.size(); i++) {
+            made.set(i, this.text(args.get(i), 0), 0);
+        }
+        this.heap.allocate(made, Heap.HEADER + (long) Heap.sizeOf(TEXT) * args.size(), 0);
+        return made;
+    }
+
     /** A fresh list of the arguments, the program's to hold and to free like anything else. */
     Values.ListValue argsList(final int line) {
         final Values.ListValue made = new Values.ListValue();
@@ -412,10 +453,7 @@ public final class Process {
     }
 
     private Integer processId(final Object token, final int line) {
-        if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
-            return id;
-        }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no process here");
+        return this.tokenId(token, line, NO_PROCESS);
     }
 
     /** The machine a process handle points at: what its {@code Host} says, or this one when it says nothing. */
@@ -431,7 +469,7 @@ public final class Process {
      * does not wait for a program that has ended, nor once its time has run out or when it was given none.
      */
     boolean waitForWaits(final Frame frame, final int count, final int line) {
-        final Object token = frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
+        final Object token = handleBelow(frame, count);
         final Integer id = this.processId(token, line);
         final String host = processHost(token);
         final boolean over = !this.host.programRunning(id, host);
@@ -441,7 +479,7 @@ public final class Process {
         if (over || gaveUp || (count == 1 && ticks <= 0)) {
             return false;
         }
-        this.scheduler.await(this.current, new IWait.Child(id, host, ticks > 0 ? this.host.tick() + ticks : 0L));
+        this.scheduler.await(this.current, new IWait.Child(id, host, this.deadline(ticks)));
         return true;
     }
 
@@ -489,10 +527,47 @@ public final class Process {
     public void beginStatic(final String owner, final String method) {
         final MethodImage found = this.program.method(owner, method, List.of());
         if (found == null) {
-            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, owner + " has no " + method + " to run"));
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, NOTHING_TO_RUN.with(owner, method)));
             return;
         }
         this.waiting.add(new Frame(found, null), 0);
+    }
+
+    /**
+     * Puts the start of a program that runs at a terminal in the queue: its {@code Main} that takes nothing, or, when
+     * it has none, the one handed the program's arguments as an array of text.
+     */
+    public void beginMain(final String owner) {
+        final MethodImage bare = this.program.method(owner, MAIN, List.of());
+        final MethodImage handed = bare != null ? null : this.program.method(owner, MAIN, List.of(TEXT + "[]"));
+        if (bare == null && handed == null) {
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, NOTHING_TO_RUN.with(owner, MAIN)));
+            return;
+        }
+        final Frame frame = new Frame(bare != null ? bare : handed, null);
+        if (handed != null) {
+            try {
+                frame.slots[0] = this.argsArray();
+            } catch (final Halt noRoom) {
+                this.halt(noRoom);
+                return;
+            }
+        }
+        this.waiting.add(frame, 0);
+    }
+
+    /**
+     * Whether a method is the Main a program that runs at a terminal started at, whose answer, when it gives one,
+     * is the code the program ends with.
+     */
+    boolean isMain(final MethodImage method) {
+        return this.program.shape() == Shape.CONSOLE && method.isStatic() && MAIN.equals(method.name())
+                && method.owner().equals(this.program.entryPoint());
+    }
+
+    /** Takes what the program's Main gave back as the code it ends with, unless it already ended itself with one. */
+    void mainGave(final int code) {
+        this.identity.gave(code);
     }
 
     /**
@@ -508,12 +583,19 @@ public final class Process {
         return !this.main.waiting() && this.main.frames.isEmpty() && !this.waiting.holds(method);
     }
 
+    /**
+     * Whether that object's type has the method, taking nothing. A script in Sigma overrides only what it needs of
+     * Script, and what it leaves alone is Script's own, which does nothing: there is nothing to call for it.
+     */
+    public boolean declares(final Values.Obj self, final String method) {
+        return this.program.method(self.type(), method, List.of()) != null;
+    }
+
     /** Puts a call on that object in the queue, to be run by the slices that follow. */
     public void begin(final Values.Obj self, final String method) {
         final MethodImage found = this.program.method(self.type(), method, List.of());
         if (found == null) {
-            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0,
-                    self.type() + " has no " + method + " to run"));
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, NOTHING_TO_RUN.with(self.type(), method)));
             return;
         }
         this.waiting.add(new Frame(found, self), 0);
@@ -526,8 +608,7 @@ public final class Process {
     public void beginFirst(final Values.Obj self, final String method) {
         final MethodImage found = this.program.method(self.type(), method, List.of());
         if (found == null) {
-            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0,
-                    self.type() + " has no " + method + " to run"));
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, NOTHING_TO_RUN.with(self.type(), method)));
             return;
         }
         this.waiting.addFirst(new Frame(found, self), 0);
@@ -578,6 +659,9 @@ public final class Process {
             this.halt(this.fault(fault, 0));
         }
         if (!this.told && this.endedForGood()) {
+            // A program that ends leaves no line half written: what it had open is a line of its own.
+            this.console.close();
+            this.closeOpenFiles();
             this.told = true;
             this.host.programEnded(this.machineId());
         }
@@ -615,10 +699,10 @@ public final class Process {
                 try {
                     this.executor.one(thread);
                 } catch (final Halt halt) {
-                    this.fail(thread, halt);
+                    this.halt(halt);
                 } catch (final RuntimeException fault) {
                     final Frame top = thread.frames.peek();
-                    this.fail(thread, this.fault(fault, top == null ? 0 : top.at));
+                    this.halt(this.fault(fault, top == null ? 0 : top.at));
                 }
                 /*
                  * Reaching into the machine costs more than moving a number about, and the difference is
@@ -653,8 +737,7 @@ public final class Process {
      */
     private Halt fault(final RuntimeException cause, final int line) {
         this.host.fault(this.name(), line, cause);
-        return new Halt(Halt.Reason.FAULT, line,
-                "the runtime could not carry this out (" + cause.getClass().getSimpleName() + ")");
+        return new Halt(Halt.Reason.FAULT, line, FAULT.with(cause.getClass().getSimpleName()));
     }
 
     /**
@@ -701,8 +784,15 @@ public final class Process {
     /** The lines typed at the terminal this process is in front of, waiting for the program to read them. */
     private final ProgramInput input = new ProgramInput();
 
-    /** Hands the process a typed line; a thread stopped on a read carries on with it. */
+    /**
+     * Hands the process a typed line; a thread stopped on a read carries on with it.
+     *
+     * <p>The line is written into the console as it is typed, the way a terminal echoes it: onto the open line, so
+     * the question the program left open and the answer to it are one line, and a line typed ahead of any question
+     * stands on its own.
+     */
     public void offerInput(final String line) {
+        this.console.print((line == null ? "" : line) + "\n");
         this.input.offer(line);
         if (this.waitingForInput()) {
             this.resume();
@@ -744,6 +834,21 @@ public final class Process {
         return this.input.has();
     }
 
+    /** The next character typed, the end of its line included; the rest of the line waits for the next read. */
+    char takeChar() {
+        return this.input.takeChar();
+    }
+
+    /**
+     * The next value typed, of {@code kind} (int, long, double, string or char), read off what is left of the line;
+     * what follows it waits for the next read. Null when what was typed was not one.
+     */
+    Object scan(final String kind, final int line) {
+        final ScanReading.Read read = ScanReading.of(kind, this.input.takeRest());
+        this.input.putBack(read.rest());
+        return read.value() instanceof String text ? this.text(text, line) : read.value();
+    }
+
     /**
      * Puts a handler in the queue, to run on the main thread when it next has nothing else to do; false when the event
      * found no room and was dropped.
@@ -765,16 +870,22 @@ public final class Process {
     // windows
 
     /**
-     * Opens a window on the machine's desktop.
+     * Opens a window on the machine's desktop, or on its terminal when the machine draws its windows in text.
      *
-     * <p>A machine with no desktop has nowhere to put it and says so, which is the whole of what a
-     * program needs to be told: a window is a thing a system with a desktop has.
+     * <p>A machine with neither has nowhere to put it and says so, which is the whole of what a
+     * program needs to be told: a window is a thing a system with a screen has.
      */
     void openWindow(final Values.Obj window, final int line) {
-        if (!this.host.hasDesktop()) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this computer has no desktop to open a window on");
+        if (!this.host.hasDesktop() && !this.host.textMode()) {
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_DESKTOP.text());
         }
         this.windows.open(window, line);
+        this.host.reached(ProgramMilestone.WINDOW_OPENED);
+    }
+
+    /** Passes on to the host something the program did that is worth more than what it prints. */
+    void reached(final ProgramMilestone milestone) {
+        this.host.reached(milestone);
     }
 
     /** Closes a window, which takes it off the desktop; closing one that is not open is nothing at all. */
@@ -825,16 +936,16 @@ public final class Process {
     /** Starts a thread on the body a delegate holds, and hands back what the program holds it by. */
     Values.Obj spawn(final Object body, final int line) {
         if (!(body instanceof Values.DelegateValue delegate) || delegate.chain().isEmpty()) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no body to run on the thread");
+            throw new Halt(Halt.Reason.NO_OBJECT, line, NO_THREAD_BODY.text());
         }
         final Values.Bound bound = delegate.chain().getFirst();
         final MethodImage method =
                 this.program.method(bound.owner(), bound.method(), bound.parameters());
         if (method == null || !method.hasCode()) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                    "there is no " + bound.method() + " to run on the thread");
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_THREAD_METHOD.with(bound.method()));
         }
         final ProgramThread made = this.scheduler.start();
+        this.host.reached(ProgramMilestone.THREAD_STARTED);
         made.frames.push(new Frame(method, bound.target()));
         this.charge(START_COST);
         return this.tokenFor(made, line);
@@ -854,7 +965,10 @@ public final class Process {
     /** Puts the running thread to sleep for that many ticks; asking for none is asking for nothing. */
     void sleep(final long ticks) {
         if (ticks > 0) {
-            this.scheduler.await(this.current, new IWait.Sleep(this.host.tick() + ticks));
+            final long now = this.host.tick();
+            // A sum that wrapped negative would wake the sleeper at once, so a huge sleep stops at the largest tick.
+            final long until = ticks > Long.MAX_VALUE - now ? Long.MAX_VALUE : now + ticks;
+            this.scheduler.await(this.current, new IWait.Sleep(until));
         }
     }
 
@@ -876,10 +990,25 @@ public final class Process {
     }
 
     private Integer threadId(final Object token, final int line) {
+        return this.tokenId(token, line, NO_THREAD);
+    }
+
+    /* The number a process or thread handle carries, or a halt saying what was not a handle. */
+    private Integer tokenId(final Object token, final int line, final TextKey missing) {
         if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
             return id;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no thread here");
+        throw new Halt(Halt.Reason.NO_OBJECT, line, missing.text());
+    }
+
+    /* The handle a wait was called on, which sits under the time given when there is one; null when it is missing. */
+    private static Object handleBelow(final Frame frame, final int count) {
+        return frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
+    }
+
+    /* The tick a wait of that many ticks runs out at; 0 when none was given, which means no deadline. */
+    private long deadline(final long ticks) {
+        return ticks > 0 ? this.host.tick() + ticks : 0L;
     }
 
     /**
@@ -890,7 +1019,7 @@ public final class Process {
      * thread that is over or is the one asking, nor once its time has run out or when it was given none.
      */
     boolean joinWaits(final Frame frame, final int count, final int line) {
-        final Object token = frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
+        final Object token = handleBelow(frame, count);
         final ProgramThread target = this.thread(this.threadId(token, line));
         final long ticks = count == 1 ? Numbers.toLong(frame.peek()) : 0L;
         // Read before the test, so it is forgotten whenever the call answers, as it always was.
@@ -898,7 +1027,7 @@ public final class Process {
         if (target == null || target == this.current || gaveUp || (count == 1 && ticks <= 0)) {
             return false;
         }
-        this.scheduler.await(this.current, new IWait.Join(target.id, ticks > 0 ? this.host.tick() + ticks : 0L));
+        this.scheduler.await(this.current, new IWait.Join(target.id, this.deadline(ticks)));
         return true;
     }
 
@@ -958,7 +1087,7 @@ public final class Process {
     public Values.Obj watch(final String item, final Watching kind, final long threshold,
                             final Values.DelegateValue handler, final int line) {
         if (handler == null || handler.chain().isEmpty()) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no handler to call for " + item);
+            throw new Halt(Halt.Reason.NO_OBJECT, line, NO_WATCH_HANDLER.with(item));
         }
         final Values.Obj token = new Values.Obj("Subscription");
         token.set("Id", this.watches.nextId());
@@ -1002,16 +1131,15 @@ public final class Process {
         return true;
     }
 
-    /**
-     * A halt in a thread is the end of the process.
-     */
-    private void fail(final ProgramThread thread, final Halt first) {
-        this.halt(first);
-    }
-
     void halt(final Halt halt) {
-        this.identity.halt(halt.getMessage());
-        this.console.write(halt.getMessage());
+        this.identity.halt(halt.text());
+        this.console.close();
+        this.console.write(halt.text());
+        if (halt.reason() == Halt.Reason.STACK_DEPTH) {
+            this.host.reached(ProgramMilestone.STACK_OVERFLOW);
+        } else if (halt.reason() == Halt.Reason.DIVIDE_BY_ZERO) {
+            this.host.reached(ProgramMilestone.DIVIDE_BY_ZERO);
+        }
         for (final ProgramThread thread : this.scheduler.threads()) {
             thread.frames.clear();
         }
@@ -1037,9 +1165,30 @@ public final class Process {
         return ProcessSnapshotReader.read(program, shot, host);
     }
 
+    /**
+     * Closes the files the program left open when it ends, as C closes them at a program's exit: what was written to
+     * them reaches the disk. Nothing is charged, since the program is over; a file that cannot be written says why on
+     * the console, where the program's last words are.
+     */
+    private void closeOpenFiles() {
+        final IWorldFunction close = this.host.bind(CLOSE_FILE);
+        if (close == null) {
+            return;
+        }
+        for (final Object held : this.heap.live()) {
+            if (OpenFile.isOpen(held)) {
+                try {
+                    close.call(bytes -> { }, held, new Object[0], 0);
+                } catch (final Halt notWritten) {
+                    this.console.write(notWritten.text());
+                }
+            }
+        }
+    }
+
     // odds and ends
 
-    private String text(final String value, final int line) {
+    String text(final String value, final int line) {
         return this.heap.text(value, line);
     }
 }

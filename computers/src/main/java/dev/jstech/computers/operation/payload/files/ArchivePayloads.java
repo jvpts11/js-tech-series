@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.files;
 
 import dev.jstech.computers.client.os.PixWallpaper;
+import dev.jstech.computers.client.os.SigmaImages;
 import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -23,6 +24,7 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.PixImage;
 import dev.jstech.computers.os.fs.StoredFile;
+import dev.jstech.core.text.Text;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -30,10 +32,10 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
+import java.util.Set;
 
 /**
  * The payloads that pack files into an archive and take them back out again.
@@ -84,35 +86,38 @@ public final class ArchivePayloads {
 
     private static void handleWallpaperImage(final WallpaperImagePayload payload, final Player player) {
         PixWallpaper.accept(payload.path(), payload.content());
+        // A program's image widget asks for its picture the same way, and is handed it the same way.
+        SigmaImages.accept(payload.path(), payload.content());
     }
 
     private static void handleArchive(final ArchiveFilesPayload payload, final ServerPlayer player,
                                       final ServerLevel level) {
-        String message = "No computer";
+        Text message = FileSavedPayload.NO_COMPUTER.text();
         boolean ok = false;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             final ItemStack disk = computer.systemDisk();
             final FilesystemKind kind = FileAccess.filesystemKindOf(computer);
             if (disk.isEmpty() || kind == FilesystemKind.NONE) {
-                message = "No system disk";
+                message = FileSavedPayload.NO_SYSTEM_DISK.text();
             } else if (payload.paths().isEmpty()) {
-                message = "Nothing to archive";
+                message = ArchiveTexts.NOTHING_TO_ARCHIVE.text();
             } else {
-                message = pack(computer, disk, kind, payload, level);
-                ok = message.startsWith("Packed");
+                final Outcome packed = pack(computer, disk, kind, payload, level);
+                message = packed.message();
+                ok = packed.ok();
             }
         }
         PacketDistributor.sendToPlayer(player, new FileSavedPayload(ok, message));
     }
 
-    private static String pack(final IOsHost computer, final ItemStack disk, final FilesystemKind kind,
-                               final ArchiveFilesPayload payload, final ServerLevel level) {
+    private static Outcome pack(final IOsHost computer, final ItemStack disk, final FilesystemKind kind,
+                                final ArchiveFilesPayload payload, final ServerLevel level) {
         /*
          * A folder stands for everything under it, so compressing one from the right button packs what is
          * in it rather than failing on a path that names no file. Gathered here because only the machine
          * knows what a folder holds.
          */
-        final List<String> wanted = new ArrayList<>();
+        final Set<String> wanted = new LinkedHashSet<>();
         for (final String path : payload.paths()) {
             if (DiskFilesystem.read(disk, path).isPresent()) {
                 wanted.add(path);
@@ -121,7 +126,7 @@ public final class ArchivePayloads {
             final int before = wanted.size();
             gather(disk, path, kind, wanted);
             if (wanted.size() == before) {
-                return "Nothing in " + Archive.leaf(path);
+                return Outcome.refused(ArchiveTexts.NOTHING_IN.with(Archive.leaf(path)));
             }
         }
         final List<StoredFile> files = new ArrayList<>(wanted.size());
@@ -132,26 +137,26 @@ public final class ArchivePayloads {
              * and the delete takes the archive away with it.
              */
             if (path.equals(payload.archivePath())) {
-                return "An archive cannot hold itself";
+                return Outcome.refused(ArchiveTexts.HOLDS_ITSELF.text());
             }
             final String content = DiskFilesystem.read(disk, path).orElse(null);
             if (content == null) {
-                return "Missing " + Archive.leaf(path);
+                return Outcome.refused(ArchiveTexts.MISSING.with(Archive.leaf(path)));
             }
             files.add(new StoredFile(path, typeOf(path), content));
         }
         final String packed;
         try {
             packed = Archive.pack(files);
-        } catch (final IllegalArgumentException refused) {
-            return refused.getMessage();
+        } catch (final Archive.Refused refused) {
+            return Outcome.refused(refused.text());
         }
         /*
          * An archive nobody could ever open again is not worth writing. A file is handed to a screen
          * through a packet with a cap on it, so one past that cap would be on the disk and unreadable.
          */
         if (packed.length() > FileContentPayload.MAX_CONTENT) {
-            return "Too much to pack into one archive";
+            return Outcome.refused(ArchiveTexts.TOO_MUCH.text());
         }
         /*
          * The room needed is what the archive weighs, and the originals only pay for themselves once they
@@ -164,13 +169,16 @@ public final class ArchivePayloads {
         switch (result) {
             case OK -> { }
             case DISK_FULL -> {
-                return "Not enough free space";
+                return Outcome.refused(FileSavedPayload.NO_ROOM.text());
+            }
+            case TOO_LARGE -> {
+                return Outcome.refused(ArchiveTexts.TOO_MUCH.text());
             }
             case INVALID_PATH -> {
-                return "Invalid archive name";
+                return Outcome.refused(ArchiveTexts.INVALID_NAME.text());
             }
             case READ_ONLY -> {
-                return "Read-only";
+                return Outcome.refused(FileSavedPayload.READ_ONLY.text());
             }
         }
         int removed = 0;
@@ -183,11 +191,12 @@ public final class ArchivePayloads {
             }
         }
         computer.setChanged();
-        final int before = Archive.originalBytes(packed);
-        final int after = packed.getBytes(StandardCharsets.UTF_8).length;
-        return "Packed " + files.size() + " into " + Archive.leaf(payload.archivePath())
-                + ", " + before + " bytes became " + after
-                + (removed > 0 ? ", " + removed + " removed" : "");
+        final long before = Archive.originalBytes(packed);
+        final long after = StoredFile.bytesOf(FileType.ARK, packed);
+        final String into = Archive.leaf(payload.archivePath());
+        return Outcome.done(removed > 0
+                ? ArchiveTexts.PACKED_REMOVED.with(files.size(), into, before, after, removed)
+                : ArchiveTexts.PACKED.with(files.size(), into, before, after));
     }
 
     /**
@@ -197,7 +206,7 @@ public final class ArchivePayloads {
      * storage rather than a file, and packing it would archive a picture of something that is still there.
      */
     private static void gather(final ItemStack disk, final String dir, final FilesystemKind kind,
-                               final List<String> out) {
+                               final Set<String> out) {
         /*
          * A flat disk has no folders, so a path that named no file names nothing at all. Without this the
          * listing, which ignores the folder it is given on such a disk, would answer with every file there.
@@ -206,7 +215,7 @@ public final class ArchivePayloads {
             return;
         }
         for (final DiskFilesystem.FileEntry entry : DiskFilesystem.list(disk, dir, kind)) {
-            if (!entry.type().virtualProjection() && !out.contains(entry.path())) {
+            if (!entry.type().virtualProjection()) {
                 out.add(entry.path());
             }
         }
@@ -220,7 +229,7 @@ public final class ArchivePayloads {
 
     private static void handleExtract(final ExtractArchivePayload payload, final ServerPlayer player,
                                       final ServerLevel level) {
-        String message = "No computer";
+        Text message = FileSavedPayload.NO_COMPUTER.text();
         boolean ok = false;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             final ItemStack disk = computer.systemDisk();
@@ -228,25 +237,26 @@ public final class ArchivePayloads {
             final String content = disk.isEmpty() ? null
                     : DiskFilesystem.read(disk, payload.archivePath()).orElse(null);
             if (disk.isEmpty() || kind == FilesystemKind.NONE) {
-                message = "No system disk";
+                message = FileSavedPayload.NO_SYSTEM_DISK.text();
             } else if (content == null) {
-                message = "No such archive";
+                message = ArchiveTexts.NO_SUCH_ARCHIVE.text();
             } else if (!Archive.isArchive(content)) {
-                message = Archive.leaf(payload.archivePath()) + " is not an archive";
+                message = ArchiveTexts.NOT_AN_ARCHIVE.with(Archive.leaf(payload.archivePath()));
             } else {
-                message = extract(computer, disk, kind, payload, content, level);
-                ok = message.startsWith("Took");
+                final Outcome taken = extract(computer, disk, kind, payload, content, level);
+                message = taken.message();
+                ok = taken.ok();
             }
         }
         PacketDistributor.sendToPlayer(player, new FileSavedPayload(ok, message));
     }
 
-    private static String extract(final IOsHost computer, final ItemStack disk, final FilesystemKind kind,
-                                  final ExtractArchivePayload payload, final String content,
-                                  final ServerLevel level) {
+    private static Outcome extract(final IOsHost computer, final ItemStack disk, final FilesystemKind kind,
+                                   final ExtractArchivePayload payload, final String content,
+                                   final ServerLevel level) {
         final List<StoredFile> inside = Archive.unpack(content);
         if (inside.isEmpty()) {
-            return "The archive is damaged";
+            return Outcome.refused(ArchiveTexts.DAMAGED.text());
         }
         final List<StoredFile> wanted = new ArrayList<>();
         for (final StoredFile file : inside) {
@@ -255,7 +265,7 @@ public final class ArchivePayloads {
             }
         }
         if (wanted.isEmpty()) {
-            return "No " + payload.entry() + " in the archive";
+            return Outcome.refused(ArchiveTexts.NOT_INSIDE.with(payload.entry()));
         }
         /*
          * A file already sitting where one is going is left exactly as it is. Writing over it would be an
@@ -272,7 +282,8 @@ public final class ArchivePayloads {
             }
         }
         if (going.isEmpty()) {
-            return inTheWay == 1 ? "That one is already there" : "All " + inTheWay + " are already there";
+            return Outcome.refused(inTheWay == 1 ? ArchiveTexts.ONE_ALREADY_THERE.text()
+                    : ArchiveTexts.ALL_ALREADY_THERE.with(inTheWay));
         }
         /*
          * Everything is weighed before anything is written, so a disk that cannot hold the lot refuses the
@@ -283,8 +294,8 @@ public final class ArchivePayloads {
             needed += file.weight(DiskFilesystem.eraOf(disk));
         }
         if (needed > computer.systemDiskFreeWeight()) {
-            return "Not enough free space for " + going.size()
-                    + (going.size() == 1 ? " file" : " files");
+            return Outcome.refused((going.size() == 1 ? ArchiveTexts.NO_ROOM_FOR_ONE : ArchiveTexts.NO_ROOM_FOR)
+                    .with(going.size()));
         }
         int written = 0;
         for (final StoredFile file : going) {
@@ -297,13 +308,13 @@ public final class ArchivePayloads {
         }
         computer.setChanged();
         if (written > 0 && inTheWay > 0) {
-            return "Took out " + written + (written == 1 ? " file, " : " files, ")
-                    + inTheWay + " already there";
+            return Outcome.done((written == 1 ? ArchiveTexts.TOOK_OUT_ONE_SKIPPED : ArchiveTexts.TOOK_OUT_SKIPPED)
+                    .with(written, inTheWay));
         }
         if (written == 0) {
-            return "Nothing could be written";
+            return Outcome.refused(ArchiveTexts.NOTHING_WRITTEN.text());
         }
-        return "Took out " + written + (written == 1 ? " file" : " files");
+        return Outcome.done((written == 1 ? ArchiveTexts.TOOK_OUT_ONE : ArchiveTexts.TOOK_OUT).with(written));
     }
 
     /** Where a file inside the archive lands, which is its own name under the folder asked for. */
@@ -315,9 +326,18 @@ public final class ArchivePayloads {
     }
 
     private static FileType typeOf(final String path) {
-        final int dot = path.lastIndexOf('.');
-        final String ext = dot >= 0 && dot < path.length() - 1
-                ? path.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-        return FileType.of(ext);
+        return FileType.ofPath(path);
+    }
+
+    /** What packing or taking out came to: whether it was done, and what to tell the player either way. */
+    private record Outcome(boolean ok, Text message) {
+
+        static Outcome done(final Text message) {
+            return new Outcome(true, message);
+        }
+
+        static Outcome refused(final Text message) {
+            return new Outcome(false, message);
+        }
     }
 }

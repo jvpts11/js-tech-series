@@ -7,7 +7,12 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SolitaireGame;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -19,28 +24,24 @@ import net.minecraft.client.gui.GuiGraphics;
  * rather than as a card. Every mark is built from the same few fills, so they all sit on the pixel grid and
  * none of them is resampled.
  */
+@PaletteHolder
 public final class PlayingCards {
 
     /** How big a card is drawn, which the whole of the solitaire layout is measured in. */
     public static final int WIDTH = 20;
     public static final int HEIGHT = 28;
 
-    private static final int FACE = 0xFFFAF8F0;
-    private static final int EDGE = 0xFF2B2B2B;
-    private static final int RED = 0xFFB4231F;
-    private static final int BLACK = 0xFF1A1A1A;
-    private static final int BACK_DARK = 0xFF24427A;
-    private static final int BACK_LIGHT = 0xFF2B4E8C;
-    private static final int BACK_EDGE = 0xFF14264A;
-    private static final int EMPTY_EDGE = 0x66FFFFFF;
-    private static final int EMPTY_FILL = 0x24000000;
+    /** The cards' colours, {@code jsc:game/cards}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "game/cards",
+            new Colours(0xFFFAF8F0, 0xFF2B2B2B, 0xFFB4231F, 0xFF1A1A1A, 0xFF24427A, 0xFF2B4E8C, 0xFF14264A,
+                    0x66FFFFFF, 0x24000000, 0x80B4231F, 0x80FFFFFF));
 
     private PlayingCards() {
     }
 
     /** The colour a suit is printed in. */
     public static int inkOf(final SolitaireGame.Suit suit) {
-        return suit.red() ? RED : BLACK;
+        return suit.red() ? colours().red() : colours().black();
     }
 
     /** The one or two letters a rank is written with, which is how a card names itself in a corner. */
@@ -57,29 +58,29 @@ public final class PlayingCards {
     /** A card lying face up: its rank in the corner and its suit beside and below it. */
     public static void face(final GuiGraphics g, final Font font, final int x, final int y,
                             final SolitaireGame.Card card) {
-        g.fill(x, y, x + WIDTH, y + HEIGHT, EDGE);
-        g.fill(x + 1, y + 1, x + WIDTH - 1, y + HEIGHT - 1, FACE);
+        g.fill(x, y, x + WIDTH, y + HEIGHT, colours().edge());
+        g.fill(x + 1, y + 1, x + WIDTH - 1, y + HEIGHT - 1, colours().face());
         final int ink = inkOf(card.suit());
         final String label = rankLabel(card.rank());
-        g.drawString(font, label, x + 2, y + 2, ink, false);
+        Draw.text(g, font, label, x + 2, y + 2, ink);
         suit(g, card.suit(), x + WIDTH - 9, y + 2);
         // The big mark in the middle is what a card is recognised by across a table of them.
         suit(g, card.suit(), x + (WIDTH - 7) / 2, y + HEIGHT - 12);
     }
+
+    /** The shortest strip that can still carry a rank, which is the game's own reason to stack this close. */
+    public static final int MIN_READABLE_STRIP = 9;
 
     /**
      * A card lying face up but mostly covered by the one below it, as a tableau run is.
      *
      * <p>Only the top strip shows, so it carries the rank and the small suit and nothing else.
      */
-    /** The shortest strip that can still carry a rank, which is the game's own reason to stack this close. */
-    public static final int MIN_READABLE_STRIP = 9;
-
     public static void faceStrip(final GuiGraphics g, final Font font, final int x, final int y,
                                  final int visible, final SolitaireGame.Card card) {
         final int h = Math.max(3, visible);
-        g.fill(x, y, x + WIDTH, y + h, EDGE);
-        g.fill(x + 1, y + 1, x + WIDTH - 1, y + h, FACE);
+        g.fill(x, y, x + WIDTH, y + h, colours().edge());
+        g.fill(x + 1, y + 1, x + WIDTH - 1, y + h, colours().face());
         /*
          * A strip too short for a rank is drawn blank rather than with a letter sliced in half. The
          * stacking step is chosen to stay above this, so in an ordinary game every card in a run is
@@ -89,30 +90,30 @@ public final class PlayingCards {
             return;
         }
         final int ink = inkOf(card.suit());
-        g.drawString(font, rankLabel(card.rank()), x + 2, y + 2, ink, false);
+        Draw.text(g, font, rankLabel(card.rank()), x + 2, y + 2, ink);
         suit(g, card.suit(), x + WIDTH - 9, y + 2);
     }
 
     /** A card lying face down, in the pattern every back in the deck shares. */
     public static void back(final GuiGraphics g, final int x, final int y, final int visible) {
         final int h = Math.max(3, visible);
-        g.fill(x, y, x + WIDTH, y + h, BACK_EDGE);
-        g.fill(x + 1, y + 1, x + WIDTH - 1, y + h, BACK_DARK);
+        g.fill(x, y, x + WIDTH, y + h, colours().backEdge());
+        g.fill(x + 1, y + 1, x + WIDTH - 1, y + h, colours().backDark());
         // A diagonal weave, drawn as short steps, which is what a patterned back looks like this small.
         for (int row = 1; row < h - 1; row++) {
             for (int col = 1 + ((row + 1) % 3); col < WIDTH - 1; col += 3) {
-                g.fill(x + col, y + row, x + col + 1, y + row + 1, BACK_LIGHT);
+                g.fill(x + col, y + row, x + col + 1, y + row + 1, colours().backLight());
             }
         }
     }
 
     /** An empty place a card may be put, drawn as an outline so it reads as a slot and not as a card. */
     public static void empty(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y, x + WIDTH, y + HEIGHT, EMPTY_FILL);
-        g.fill(x, y, x + WIDTH, y + 1, EMPTY_EDGE);
-        g.fill(x, y + HEIGHT - 1, x + WIDTH, y + HEIGHT, EMPTY_EDGE);
-        g.fill(x, y, x + 1, y + HEIGHT, EMPTY_EDGE);
-        g.fill(x + WIDTH - 1, y, x + WIDTH, y + HEIGHT, EMPTY_EDGE);
+        g.fill(x, y, x + WIDTH, y + HEIGHT, colours().emptyFill());
+        g.fill(x, y, x + WIDTH, y + 1, colours().emptyEdge());
+        g.fill(x, y + HEIGHT - 1, x + WIDTH, y + HEIGHT, colours().emptyEdge());
+        g.fill(x, y, x + 1, y + HEIGHT, colours().emptyEdge());
+        g.fill(x + WIDTH - 1, y, x + WIDTH, y + HEIGHT, colours().emptyEdge());
     }
 
     /** An empty foundation, which says which suit belongs on it. */
@@ -128,10 +129,10 @@ public final class PlayingCards {
         final int cx = x + WIDTH / 2;
         final int cy = y + HEIGHT / 2;
         // A ring, for the turn back to the beginning.
-        g.fill(cx - 4, cy - 4, cx + 4, cy - 3, EMPTY_EDGE);
-        g.fill(cx - 4, cy + 3, cx + 4, cy + 4, EMPTY_EDGE);
-        g.fill(cx - 4, cy - 3, cx - 3, cy + 3, EMPTY_EDGE);
-        g.fill(cx + 3, cy - 3, cx + 4, cy + 3, EMPTY_EDGE);
+        g.fill(cx - 4, cy - 4, cx + 4, cy - 3, colours().emptyEdge());
+        g.fill(cx - 4, cy + 3, cx + 4, cy + 4, colours().emptyEdge());
+        g.fill(cx - 4, cy - 3, cx - 3, cy + 3, colours().emptyEdge());
+        g.fill(cx + 3, cy - 3, cx + 4, cy + 3, colours().emptyEdge());
     }
 
     /** One suit mark, seven pixels across, in that suit's own colour. */
@@ -142,7 +143,7 @@ public final class PlayingCards {
     /** The same mark, faint, for an empty place that is only saying what belongs there. */
     private static void suitTinted(final GuiGraphics g, final SolitaireGame.Suit suit,
                                    final int x, final int y) {
-        mark(g, suit, x, y, suit.red() ? 0x80B4231F : 0x80FFFFFF);
+        mark(g, suit, x, y, suit.red() ? colours().foundationRed() : colours().foundationBlack());
     }
 
     private static void mark(final GuiGraphics g, final SolitaireGame.Suit suit,
@@ -200,5 +201,17 @@ public final class PlayingCards {
     private static void span(final GuiGraphics g, final int x, final int y,
                              final int row, final int from, final int width, final int colour) {
         g.fill(x + from, y + row, x + from + width, y + row + 1, colour);
+    }
+
+    private static Colours colours() {
+        return PALETTE.get();
+    }
+
+    /**
+     * The cards' colours: a card's face and edge, the red and black suits, the back's two blues and its edge, an
+     * empty place's edge and fill, and the faint red and pale suit marks a foundation shows before its ace.
+     */
+    private record Colours(int face, int edge, int red, int black, int backDark, int backLight, int backEdge,
+                           int emptyEdge, int emptyFill, int foundationRed, int foundationBlack) {
     }
 }

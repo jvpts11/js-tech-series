@@ -7,6 +7,12 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.Platform;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import java.util.Set;
+
 /**
  * A command that hands the terminal to an editor instead of printing to it.
  *
@@ -17,21 +23,31 @@ package dev.jstech.computers.program.cli;
  * <p>One class serves every such editor, because they differ only in their name and in which program
  * has to be installed for them to exist. An addon's editor is another one of these.
  */
+@TextHolder
 public final class TtyEditorCommand implements ICliCommand, CliShell.IHandOver {
 
     private final String name;
-    private final String summary;
+    private final Text summary;
     private final String programId;
+    private final Set<Platform> systems;
+
+    /** What the editors that take the terminal say they are for, which is the same for all of them. */
+    public static final TextKey EDITS_A_FILE = TextKey.of("jsc.cli.editor.summary", "edit a file in the terminal");
+
+    private static final TextKey USAGE = TextKey.of("jsc.cli.editor.usage", "<file>");
 
     /**
      * @param name      the verb a player types
      * @param summary   what {@code help} says about it
      * @param programId the program that has to be installed for the verb to exist
+     * @param systems   the systems that program exists on, so the verb claims no system its program never reaches
      */
-    public TtyEditorCommand(final String name, final String summary, final String programId) {
+    public TtyEditorCommand(final String name, final TextKey summary, final String programId,
+                            final Set<Platform> systems) {
         this.name = name;
-        this.summary = summary;
+        this.summary = summary.text();
         this.programId = programId;
+        this.systems = Set.copyOf(systems);
     }
 
     @Override
@@ -40,19 +56,27 @@ public final class TtyEditorCommand implements ICliCommand, CliShell.IHandOver {
     }
 
     @Override
-    public String summary() {
+    public Text summary() {
         return this.summary;
     }
 
     @Override
-    public String usage() {
-        return "<file>";
+    public Text usage() {
+        return USAGE.text();
     }
 
-    /** An editor is a program, and it is where a file can be edited at all, so a system with no files has none. */
+    @Override
+    public CommandGroup group() {
+        return CommandGroup.PROGRAMMING;
+    }
+
+    /**
+     * An editor is a program, so it is on the systems its program is, and it is where a file can be edited at all, so
+     * a system with no files has none.
+     */
     @Override
     public CommandScope scope() {
-        return CommandScope.everywhere().needing(CommandScope.Need.FILES);
+        return CommandScope.on(this.systems).needing(CommandScope.Need.FILES);
     }
 
     /** Only where it was installed: a machine that never got the editor does not offer the verb. */
@@ -85,7 +109,7 @@ public final class TtyEditorCommand implements ICliCommand, CliShell.IHandOver {
     @Override
     public void run(final CliContext ctx) {
         if (!ctx.hasArgs()) {
-            ctx.out().error("usage: " + this.name + " <file>");
+            ctx.out().error(CliTexts.USAGE.with(this.name, USAGE));
         }
     }
 }

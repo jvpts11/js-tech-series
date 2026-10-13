@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -18,26 +18,31 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.StoredFile;
-import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.install.LiveTurn;
 import dev.jstech.computers.program.install.MakeOpts;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliInstallation;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -51,21 +56,33 @@ import org.jetbrains.annotations.Nullable;
  * or a live medium walks the player through installing the system by hand. What a machine has is read the same way
  * whichever way it got there.
  */
+@TextHolder
 public final class InstallService {
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
     /** The packages the machine installs over the network, which is what says whether it already has one. */
     private final PackageService packages;
-    /** The network's own language, since its engine is installed on the Mainframe rather than here. */
-    private final IqlService iql;
+
+    private static final TextKey NO_SUCH = TextKey.of("jsc.service.install.no_such", "no such program: %s");
+    private static final TextKey NEEDS_DISC =
+            TextKey.of("jsc.service.install.needs_disc", "%s needs its install disc in a linked drive");
+    private static final TextKey SETTING_UP = TextKey.of("jsc.service.install.setting_up", "Setting up %s from %s ...");
+    private static final TextKey FLOPPY = TextKey.of("jsc.service.install.floppy", "the floppy");
+    private static final TextKey CD = TextKey.of("jsc.service.install.cd", "the CD");
+    private static final TextKey DVD = TextKey.of("jsc.service.install.dvd", "the DVD");
+    private static final TextKey USB = TextKey.of("jsc.service.install.usb", "the USB drive");
+    private static final TextKey BLU_RAY = TextKey.of("jsc.service.install.blu_ray", "the Blu-ray disc");
+    private static final TextKey NOT_WRITTEN = TextKey.of("jsc.service.install.not_written",
+            "The installation could not be written to the disk (no space or no disk).");
+    private static final TextKey REBOOTING =
+            TextKey.of("jsc.service.install.rebooting", "Installation complete. Rebooting into the new system ...");
 
     public InstallService(final IComputerTerminalHost terminal, final ServerLevel level,
-                          final PackageService packages, final IqlService iql) {
+                          final PackageService packages) {
         this.terminal = terminal;
         this.level = level;
         this.packages = packages;
-        this.iql = iql;
     }
 
     /**
@@ -122,25 +139,24 @@ public final class InstallService {
                         : "jsc:" + programId.toLowerCase(Locale.ROOT));
         final ProgramSpec program = location == null ? null : Programs.get(location);
         if (program == null) {
-            return ICliComputer.OpResult.fail("no such program: " + programId);
+            return ICliComputer.OpResult.fail(NO_SUCH.with(programId));
         }
-        if (program.id().equals(Programs.IQL_ENGINE)) {
-            // The Engine is a service on the Mainframe, not a console-local app, so install it there.
-            return this.iql.control("install");
-        }
+        /*
+         * An engine installs the way every program does: from its disc, at the machine it lives on, written down
+         * with the system so the memory it holds is counted. It used to be switched on from anywhere with no disc.
+         */
         final MediaFormat medium = this.installMediumFor(program.id());
         if (medium == null) {
-            return ICliComputer.OpResult.fail(program.commandName() + " needs its install disc in a linked drive");
+            return ICliComputer.OpResult.fail(NEEDS_DISC.with(program.commandName()));
         }
         final IOsHost machine = this.osHost();
         if (machine == null) {
-            return ICliComputer.OpResult.fail("this computer cannot store installed programs");
+            return ICliComputer.OpResult.fail(PackageService.NO_STORE);
         }
-        final Optional<String> refusal = SetupRunner.begin(machine, this.level,
-                ((BlockEntity) this.terminal).getBlockPos(), program, medium, false, SetupJob.VIA_INSTALL);
+        final Optional<Text> refusal = SetupRunner.begin(machine, this.level,
+                ((BlockEntity) this.terminal).getBlockPos(), program, medium, false);
         return refusal.map(ICliComputer.OpResult::fail)
-                .orElseGet(() -> ICliComputer.OpResult.ok("Setting up " + program.commandName() + " from "
-                        + driveName(medium) + " ..."));
+                .orElseGet(() -> ICliComputer.OpResult.ok(SETTING_UP.with(program.commandName(), driveName(medium))));
     }
 
     /** The machine as the thing that installs programs, whichever of the two the prompt is held by. */
@@ -153,12 +169,13 @@ public final class InstallService {
     }
 
     /** What the disc a program comes from is called at a prompt. */
-    private static String driveName(final MediaFormat medium) {
+    private static TextKey driveName(final MediaFormat medium) {
         return switch (medium) {
-            case FLOPPY -> "the floppy";
-            case CD -> "the CD";
-            case DVD -> "the DVD";
-            case USB -> "the USB drive";
+            case FLOPPY -> FLOPPY;
+            case CD -> CD;
+            case DVD -> DVD;
+            case USB -> USB;
+            case BLU_RAY -> BLU_RAY;
         };
     }
 
@@ -183,7 +200,8 @@ public final class InstallService {
         final LiveInstallState state = console == null ? null : console.liveInstall();
         final BlockEntity machine = (BlockEntity) this.terminal;
         if (state == null || !(machine instanceof IOsHost computer)) {
-            return LiveTurn.refused("no live medium is booted");
+            return new LiveTurn(false, List.of(new CliLine(ICliInstallation.NO_LIVE_MEDIUM.text(), CliStyle.ERROR)),
+                    null, false);
         }
         /*
          * The devices the live system sees: every installed disk, in slot order (sda, sdb, ...), with the size
@@ -213,7 +231,7 @@ public final class InstallService {
         final boolean everyStep = state.distro() == LiveInstallState.Distro.ARCH
                 ? ComputersServerConfig.archEveryStep() : ComputersServerConfig.gentooEveryStep();
         final LiveTurn result = state.run(line, new LiveInstallState.Env(
-                devices, this.packages.reachable(), this.level.getGameTime(), computer.cpuCores(),
+                devices, this.packages.mirror().reachable(), this.level.getGameTime(), computer.cpuCores(),
                 computer.maxCpuMhz(), SetupTiming.eraFactor(era),
                 uefi, this.level.getDayTime(), everyStep, this.packages::whileInstalling));
         machine.setChanged();
@@ -225,8 +243,8 @@ public final class InstallService {
                 state.distro() == LiveInstallState.Distro.ARCH ? "arch" : "gentoo");
         final int target = state.targetIndex();
         if (!computer.installOs(osId, target)) {
-            return LiveTurn.refused(result.text(),
-                    "The installation could not be written to the disk (no space or no disk).");
+            return new LiveTurn(false, followedBy(result, new CliLine(NOT_WRITTEN.text(), CliStyle.ERROR)), null,
+                    false);
         }
         computer.setBootDiskSlot(target);
         carryOver(computer, state, target);
@@ -239,7 +257,14 @@ public final class InstallService {
         this.terminal.console().clearLiveInstall();
         machine.setChanged();
         reboot.run();
-        return LiveTurn.said(result.text(), "Installation complete. Rebooting into the new system ...");
+        return LiveTurn.said(followedBy(result, CliLine.plain(REBOOTING.text())));
+    }
+
+    /** What the installer printed for the last step, and one more line under it. */
+    private static List<CliLine> followedBy(final LiveTurn result, final CliLine last) {
+        final List<CliLine> out = new ArrayList<>(result.lines());
+        out.add(last);
+        return out;
     }
 
     /**
@@ -256,8 +281,9 @@ public final class InstallService {
             return;
         }
         if (!state.chosenName().isEmpty()) {
-            // The name the installer was given is the name the prompt and the network use from here on.
-            console.setComputerName(state.chosenName());
+            // The name the installer was given is the machine's from here on: the prompt, the network and the
+            // assembly screen all say it.
+            computer.setCustomName(state.chosenName());
         }
         for (final String pkg : state.askedFor()) {
             final ProgramSpec program = Programs.get(ResourceLocation.tryParse(
@@ -295,28 +321,25 @@ public final class InstallService {
         if (!(disk.getItem() instanceof DiskItem)) {
             return;
         }
-        final FilesystemContents was = disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
-        disk.set(ComputingModule.FILESYSTEM.get(),
+        final FilesystemContents was =
+                disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        disk.set(ComputingComponents.FILESYSTEM.get(),
                 was.withDir("/etc").withDir(dir).with(new StoredFile(path, FileType.CFG, content)));
     }
 
     /**
-     * The programs whose install media sit in this machine's linked drives right now, in the order the drives
-     * were linked. What a tool that installs "whatever is in the drive" has to choose from.
+     * The programs whose install media sit in this machine's drives right now, in the machine's order of its drives.
+     * What a tool that installs "whatever is in the drive" has to choose from.
      */
     public List<ProgramSpec> onMedia() {
         final List<ProgramSpec> out = new ArrayList<>();
         if (!(this.terminal instanceof IOsHost computer)) {
             return out;
         }
-        for (final long endpoint : computer.linkedEndpoints()) {
-            if (this.level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.PROGRAM_INSTALL) {
-                final ProgramSpec spec = reader.insertedPayload() == null ? null
-                        : Programs.get(reader.insertedPayload());
-                if (spec != null) {
-                    out.add(spec);
-                }
+        for (final IMediaDrive drive : MachineMedia.of(computer, this.level).drives()) {
+            final ProgramSpec spec = drive.installs(MediaKind.PROGRAM_INSTALL) ? Programs.get(drive.payload()) : null;
+            if (spec != null) {
+                out.add(spec);
             }
         }
         return out;
@@ -328,11 +351,9 @@ public final class InstallService {
         if (!(this.terminal instanceof IOsHost computer)) {
             return null;
         }
-        for (final long endpoint : computer.linkedEndpoints()) {
-            if (this.level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.PROGRAM_INSTALL
-                    && programId.equals(reader.insertedPayload())) {
-                return reader.insertedFormat();
+        for (final IMediaDrive drive : MachineMedia.of(computer, this.level).drives()) {
+            if (drive.kind() == MediaKind.PROGRAM_INSTALL && programId.equals(drive.payload())) {
+                return drive.format();
             }
         }
         return null;

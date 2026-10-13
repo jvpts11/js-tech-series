@@ -1,0 +1,66 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "jsc:mainframe",
+              "jsc:vintage_mainframe",
+              "jsc:legacy_mainframe",
+              "jsc:transition_mainframe",
+              "jsc:advanced_mainframe",
+              "jsc:personal_computer",
+              "jsc:high_performance_personal_computer",
+              "jsc:aesthetic_personal_computer",
+              "jsc:vintage_personal_computer",
+              "jsc:legacy_personal_computer",
+              "jsc:transition_personal_computer",
+              "jsc:advanced_personal_computer",
+              "jsc:advanced_high_performance_personal_computer",
+              "jsc:advanced_aesthetic_personal_computer",
+              "jsc:crafting_computer",
+              "jsc:high_performance_crafting_computer",
+              "jsc:aesthetic_crafting_computer",
+              "jsc:vintage_crafting_computer",
+              "jsc:legacy_crafting_computer",
+              "jsc:transition_crafting_computer",
+              "jsc:advanced_crafting_computer",
+              "jsc:advanced_high_performance_crafting_computer",
+              "jsc:advanced_aesthetic_crafting_computer",
+              "jsc:cluster_management_computer",
+              "jsc:high_performance_cluster_management_computer",
+              "jsc:aesthetic_cluster_management_computer",
+              "jsc:vintage_cluster_management_computer",
+              "jsc:legacy_cluster_management_computer",
+              "jsc:transition_cluster_management_computer",
+              "jsc:advanced_cluster_management_computer",
+              "jsc:advanced_high_performance_cluster_management_computer",
+              "jsc:advanced_aesthetic_cluster_management_computer"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/iron_block.png",
+    "description": {
+      "translate": "advancements.jsc.hardware.root.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:personal_computer"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

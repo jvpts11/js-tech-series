@@ -12,7 +12,6 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.media.MediaItem;
@@ -20,12 +19,13 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -105,9 +105,9 @@ public final class OsGameTests {
         final BlockPos mainframePos = new BlockPos(2, 2, 2);
         final BlockPos readerPos = mainframePos.east(); // placed adjacent, no cable needed for adjacency
 
-        // Place a Mainframe with a GPU so it has peripheral ports, then add a Media Reader next to it.
+        // Place a Mainframe, whose board gives the reader a device port, then add a Media Reader next to it.
         final MainframeBlockEntity mainframe = placeRunningMainframeWithDisk(helper, mainframePos);
-        // Install a GPU so the mainframe has peripheral ports (peripheralPorts from the motherboard).
+        // And a graphics card, for the video outputs a monitor would take.
         mainframe.getInventory().setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
         helper.setBlock(readerPos, ComputingModule.CD_DRIVE.get());
@@ -142,8 +142,7 @@ public final class OsGameTests {
                             "Mainframe must start with no OS");
 
                     // Run the server-side install logic directly (no client packet needed in a GameTest).
-                    final ServerLevel level = helper.getLevel();
-                    FirmwarePayloads.installOsFromLinkedReader(level, helper.absolutePos(mainframePos));
+                    helper.assertTrue(mainframe.installOs(MC_DOS), "the guided system must fit the disk");
 
                     // The OS must now be installed.
                     helper.assertTrue(mainframe.hasOs(),
@@ -233,8 +232,8 @@ public final class OsGameTests {
 
         // Place a running Mainframe WITH an OS (the standard test setup).
         final MainframeBlockEntity mainframe =
-                NetworkGameTests.placeRunningMainframe(helper, mainframePos);
-        helper.setBlock(cablePos, ComputingModule.HBW_CABLE.get());
+                TestWorldBuilder.forGameTest(helper).placeRunningMainframe(mainframePos);
+        TestCables.lay(helper, cablePos, ComputingModule.HBW_CABLE);
 
         // Place a Server Router (Category B, no OS concept).
         helper.setBlock(routerPos, ComputingModule.SERVER_ROUTER.get().defaultBlockState()
@@ -281,7 +280,7 @@ public final class OsGameTests {
         }
         final ItemStackHandler inv = be.getInventory();
         inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
         inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
                 new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
         inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,

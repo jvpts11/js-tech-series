@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +89,8 @@ public final class MainframeStatsService {
             return null;
         }
         return NetworkSystem.get(this.level).mainframePositionOf(net)
-                .map(pos -> this.level.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
+                .map(pos -> Loaded.blockEntity(this.level, BlockPos.of(pos)) instanceof MainframeBlockEntity mf
+                        ? mf : null)
                 .orElse(null);
     }
 }

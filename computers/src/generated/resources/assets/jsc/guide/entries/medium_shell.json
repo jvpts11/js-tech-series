@@ -1,0 +1,291 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.medium_shell.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.medium_shell.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.medium_shell.table1",
+      "heads": [
+        "jsc.guide.medium_shell.table1_head1",
+        "jsc.guide.medium_shell.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.medium_shell.table1_1_1"
+          },
+          {
+            "literal": "ls, cat, less, more, cd, echo, nano, mkdir"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.medium_shell.table1_2_1"
+          },
+          {
+            "literal": "lsblk, blkid, fdisk, mkfs, mkfs.ext4, mkfs.fat, mkfs.vfat, mount, umount"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.medium_shell.table1_3_1"
+          },
+          {
+            "literal": "chroot"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.medium_shell.table1_4_1"
+          },
+          {
+            "literal": "source, export, env-update, hwclock, hostname"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.medium_shell.table1_5_1"
+          },
+          {
+            "literal": "grub-install, grub-mkconfig"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.medium_shell.table1_6_1"
+          },
+          {
+            "literal": "help, exit, reboot"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.medium_shell.table2",
+      "heads": [
+        "jsc.guide.medium_shell.table2_head1",
+        "jsc.guide.medium_shell.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.medium_shell.table2_1_1"
+          },
+          {
+            "literal": "pacstrap, genfstab, pacman, mkinitcpio, arch-chroot"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.medium_shell.table2_2_1"
+          },
+          {
+            "literal": "wget, tar, emerge-webrsync, emerge, eselect, genkernel, make"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.medium_shell.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.medium_shell.table3",
+      "heads": [
+        "jsc.guide.medium_shell.table3_head1",
+        "jsc.guide.medium_shell.table3_head2",
+        "jsc.guide.medium_shell.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.medium_shell.table3_1_1"
+          },
+          {
+            "literal": "root@archiso ~ #"
+          },
+          {
+            "literal": "[root@archiso ~]#"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.medium_shell.table3_2_1"
+          },
+          {
+            "literal": "livecd ~ #"
+          },
+          {
+            "literal": "(chroot) livecd ~ #"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.medium_shell.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.medium_shell.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.medium_shell.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.medium_shell.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.medium_shell.table4",
+      "heads": [
+        "jsc.guide.medium_shell.table4_head1",
+        "jsc.guide.medium_shell.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "m"
+          },
+          {
+            "words": "jsc.guide.medium_shell.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "g"
+          },
+          {
+            "words": "jsc.guide.medium_shell.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "p"
+          },
+          {
+            "words": "jsc.guide.medium_shell.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "n"
+          },
+          {
+            "words": "jsc.guide.medium_shell.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "t"
+          },
+          {
+            "words": "jsc.guide.medium_shell.table4_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "d"
+          },
+          {
+            "words": "jsc.guide.medium_shell.table4_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "w"
+          },
+          {
+            "words": "jsc.guide.medium_shell.table4_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "q"
+          },
+          {
+            "words": "jsc.guide.medium_shell.table4_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.medium_shell.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.medium_shell.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.medium_shell.text7"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.medium_shell.warning1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.medium_shell.fix1",
+          "problem": "jsc.guide.medium_shell.problem1"
+        },
+        {
+          "fix": "jsc.guide.medium_shell.fix2",
+          "problem": "jsc.guide.medium_shell.problem2"
+        },
+        {
+          "fix": "jsc.guide.medium_shell.fix3",
+          "problem": "jsc.guide.medium_shell.problem3"
+        },
+        {
+          "fix": "jsc.guide.medium_shell.fix4",
+          "problem": "jsc.guide.medium_shell.problem4"
+        },
+        {
+          "fix": "jsc.guide.medium_shell.fix5",
+          "problem": "jsc.guide.medium_shell.problem5"
+        },
+        {
+          "fix": "jsc.guide.medium_shell.fix6",
+          "problem": "jsc.guide.medium_shell.problem6"
+        },
+        {
+          "fix": "jsc.guide.medium_shell.fix7",
+          "problem": "jsc.guide.medium_shell.problem7"
+        },
+        {
+          "fix": "jsc.guide.medium_shell.fix8",
+          "problem": "jsc.guide.medium_shell.problem8"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:firmware_for_install"
+      ]
+    }
+  ],
+  "id": "jsc:medium_shell",
+  "order": 241,
+  "section": "jsc:by_hand_basics",
+  "title": "jsc.guide.medium_shell.title"
+}

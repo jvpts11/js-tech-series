@@ -1,0 +1,396 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.monitors.definition1",
+      "term": "jsc.guide.monitors.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.monitors.definition2",
+      "term": "jsc.guide.monitors.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.monitors.table1",
+      "heads": [
+        "jsc.guide.monitors.table1_head1",
+        "jsc.guide.monitors.table1_head2",
+        "jsc.guide.monitors.table1_head3",
+        "jsc.guide.monitors.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.monitors.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_5_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_5_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_6_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_6_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_7_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_7_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_8_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_8_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.monitors.definition3",
+      "term": "jsc.guide.monitors.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text3"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.monitors.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 15,
+            "y": 0,
+            "z": 14
+          },
+          "text": "jsc.guide.monitors.balloon1"
+        },
+        {
+          "detail": "jsc.guide.monitors.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              13,
+              1,
+              15,
+              15,
+              3,
+              16
+            ],
+            "x": 16,
+            "y": 0,
+            "z": 14
+          },
+          "text": "jsc.guide.monitors.balloon2"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "jsc:monitor[facing=north,button=false,lit=true]",
+          "x": 14,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "state": "jsc:monitor[facing=north,button=false,lit=true]",
+          "x": 15,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "state": "jsc:monitor[facing=north,button=true,lit=true]",
+          "x": 16,
+          "y": 0,
+          "z": 14
+        }
+      ],
+      "caption": "jsc.guide.monitors.figure1",
+      "height": 110
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.monitors.definition4",
+      "term": "jsc.guide.monitors.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.monitors.table2",
+      "heads": [
+        "jsc.guide.monitors.table2_head1",
+        "jsc.guide.monitors.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.monitors.table2_1_1"
+          },
+          {
+            "amount": 64,
+            "unit": "KB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table2_2_1"
+          },
+          {
+            "amount": 256,
+            "unit": "KB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table2_3_1"
+          },
+          {
+            "amount": 4,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table2_4_1"
+          },
+          {
+            "amount": 16,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table2_5_1"
+          },
+          {
+            "amount": 64,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table2_6_1"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text10"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.monitors.definition5",
+      "term": "jsc.guide.monitors.term5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.monitors.fix1",
+          "problem": "jsc.guide.monitors.problem1"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix2",
+          "problem": "jsc.guide.monitors.problem2"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix3",
+          "problem": "jsc.guide.monitors.problem3"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix4",
+          "problem": "jsc.guide.monitors.problem4"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix5",
+          "problem": "jsc.guide.monitors.problem5"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix6",
+          "problem": "jsc.guide.monitors.problem6"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix7",
+          "problem": "jsc.guide.monitors.problem7"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix8",
+          "problem": "jsc.guide.monitors.problem8"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix9",
+          "problem": "jsc.guide.monitors.problem9"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix10",
+          "problem": "jsc.guide.monitors.problem10"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix11",
+          "problem": "jsc.guide.monitors.problem11"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix12",
+          "problem": "jsc.guide.monitors.problem12"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:peripheral_cables",
+        "jsc:graphics_cards",
+        "jsc:kvm_switch"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:monitors",
+  "items": [
+    "jsc:mono_i_monitor",
+    "jsc:vintage_monitor",
+    "jsc:amber_monitor",
+    "jsc:cga_monitor",
+    "jsc:legacy_monitor",
+    "jsc:transition_monitor",
+    "jsc:monitor",
+    "jsc:color_monitor"
+  ],
+  "order": 40,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.monitors.title"
+}

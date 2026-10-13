@@ -1,0 +1,70 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.block;
+
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+
+/**
+ * What a monitor says when it has nothing to show, and why: the line a player reads above the hotbar when they use
+ * one that is not linked, or linked to a machine that cannot drive it.
+ */
+@TextHolder
+final class MonitorTexts {
+
+    static final TextKey UNLINKED = TextKey.of("block.jsc.monitor.unlinked", "No computer linked");
+    static final TextKey NO_COMPUTER = TextKey.of("block.jsc.monitor.no_computer",
+            "No computer found in range over a Peripheral Cable");
+    static final TextKey NO_GPU = TextKey.of("block.jsc.monitor.no_gpu",
+            "The computer has no video output: install a graphics card");
+    static final TextKey AT_CAPACITY = TextKey.of("block.jsc.monitor.at_capacity",
+            "The computer's video outputs are all in use");
+    static final TextKey NO_POWER = TextKey.of("block.jsc.monitor.no_power", "No signal - the computer is powered off");
+    /* Switched on with parts that do not make a computer: it only beeps, and its assembly screen says why. */
+    static final TextKey BUILD_INCOMPLETE = TextKey.of("block.jsc.monitor.build_incomplete",
+            "No signal - the computer is on, but its parts do not make a computer: its assembly screen lists why");
+    /* The monitor's own switch is off: whatever runs behind it, its face is dark and a click opens nothing. */
+    static final TextKey OFF = TextKey.of("block.jsc.monitor.off", "The monitor is off");
+    static final TextKey DISABLED = TextKey.of("block.jsc.monitor.disabled",
+            "No signal - the computer has disabled this monitor");
+    static final TextKey RACK_EMPTY = TextKey.of("block.jsc.monitor.rack_empty", "The rack holds no computer to show");
+    static final TextKey NEEDS_KVM = TextKey.of("block.jsc.monitor.needs_kvm",
+            "This rack holds several computers - mount a KVM Switch to pick one");
+    static final TextKey IN_USE = TextKey.of("block.jsc.monitor.in_use", "%s is using this monitor");
+    static final TextKey NO_VRAM = TextKey.of("block.jsc.monitor.no_vram",
+            "Not enough video memory: this monitor needs %s, and %s are free");
+    /** A KVM channel for a machine nobody has named, called after the rack row it sits in. */
+    static final TextKey KVM_BAY = TextKey.of("block.jsc.monitor.kvm_bay", "bay %sU");
+    // What each monitor's glass shows, in its tooltip.
+    static final TextKey TUBE_WHITE = TextKey.of("block.jsc.monitor.tube.white",
+            "Paper-white phosphor: shows every system in white");
+    static final TextKey TUBE_GREEN = TextKey.of("block.jsc.monitor.tube.green",
+            "Green phosphor: shows every system in green");
+    static final TextKey TUBE_AMBER = TextKey.of("block.jsc.monitor.tube.amber",
+            "Amber phosphor: shows every system in amber");
+    static final TextKey TUBE_SIXTEEN = TextKey.of("block.jsc.monitor.tube.sixteen",
+            "Sixteen colours: every colour comes out as the nearest of sixteen");
+    static final TextKey TUBE_COLOUR = TextKey.of("block.jsc.monitor.tube.colour", "Colour picture tube");
+    static final TextKey FLAT_PANEL = TextKey.of("block.jsc.monitor.tube.flat", "Flat panel");
+    static final TextKey JOINS = TextKey.of("block.jsc.monitor.joins",
+            "Joins the same monitors beside it into one screen, up to %s wide and %s tall");
+
+    private MonitorTexts() {
+    }
+
+    /** What a monitor of that kind shows of the colours a system draws. */
+    static TextKey tubeOf(final MonitorKind kind) {
+        return switch (kind.tube()) {
+            case WHITE -> TUBE_WHITE;
+            case GREEN -> TUBE_GREEN;
+            case AMBER -> TUBE_AMBER;
+            case SIXTEEN -> TUBE_SIXTEEN;
+            case COLOUR -> kind.flat() ? FLAT_PANEL : TUBE_COLOUR;
+        };
+    }
+}

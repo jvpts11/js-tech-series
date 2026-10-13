@@ -17,7 +17,9 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 /**
- * Server to client: the network's craft catalog: every distinct result the Recipe ROMs of its Crafting Computers can produce, with an at-a-glance availability dot computed against current stock.
+ * Server to client: the network's craft catalog: every distinct result its Crafting Computers can produce, from the
+ * bench recipes in their cards and the machine recipes in their interfaces, with an at-a-glance availability dot
+ * computed against current stock.
  */
 public record CraftCatalogPayload(List<Entry> entries) implements CustomPacketPayload {
 

@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.os;
 
-import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -28,8 +31,23 @@ public final class VolumeLabel {
         if (stack.isEmpty()) {
             return fallback;
         }
-        final String label = stack.get(ComputingModule.VOLUME_LABEL.get());
+        final String label = stack.get(ComputingComponents.VOLUME_LABEL.get());
         return label != null && !label.isBlank() ? label : fallback;
+    }
+
+    /** The volume's label, which is the player's own words, or {@code fallback} read in the player's language. */
+    public static Text of(final ItemStack stack, final Text fallback) {
+        final String label = stack.isEmpty() ? null : stack.get(ComputingComponents.VOLUME_LABEL.get());
+        return label != null && !label.isBlank() ? Text.literal(label) : fallback;
+    }
+
+    /**
+     * The volume's label as text: what the player called it, which is theirs, or else the medium's own name, which
+     * each player reads in their language.
+     */
+    public static Text text(final ItemStack stack) {
+        final String label = stack.isEmpty() ? null : stack.get(ComputingComponents.VOLUME_LABEL.get());
+        return label != null && !label.isBlank() ? Text.literal(label) : GameText.of(stack.getHoverName());
     }
 
     /** Sets the volume's label, or clears it (restoring the default name) when {@code label} is blank. */
@@ -39,10 +57,9 @@ public final class VolumeLabel {
         }
         final String trimmed = label == null ? "" : label.trim();
         if (trimmed.isEmpty()) {
-            stack.remove(ComputingModule.VOLUME_LABEL.get());
+            stack.remove(ComputingComponents.VOLUME_LABEL.get());
         } else {
-            stack.set(ComputingModule.VOLUME_LABEL.get(),
-                    trimmed.length() > MAX_LENGTH ? trimmed.substring(0, MAX_LENGTH) : trimmed);
+            stack.set(ComputingComponents.VOLUME_LABEL.get(), TextBounds.clip(trimmed, MAX_LENGTH));
         }
     }
 }

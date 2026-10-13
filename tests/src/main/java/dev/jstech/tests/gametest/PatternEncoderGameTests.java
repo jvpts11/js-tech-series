@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
@@ -66,9 +67,77 @@ public final class PatternEncoderGameTests {
                 "a Standard encoder takes DVD-RW, CD-RW and USB");
         helper.assertFalse(standard.acceptsMedia(floppy), "a Standard encoder refuses a floppy");
         helper.assertFalse(standard.acceptsMedia(cdRom), "read-only media is refused everywhere");
-        helper.assertTrue(PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.USB),
-                "later eras write what the Standard one writes");
         helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void encoder_ofTheNewErasWritesWhatItsEraBurned(final GameTestHelper helper) {
+        // The Transition's DVD burner writes DVDs and CDs, and has no port for a stick.
+        helper.assertTrue(PatternEncoderBlockEntity.eraAccepts(HardwareEra.TRANSITION, MediaFormat.DVD)
+                && PatternEncoderBlockEntity.eraAccepts(HardwareEra.TRANSITION, MediaFormat.CD),
+                "a Transition encoder writes DVDs and CDs");
+        helper.assertFalse(PatternEncoderBlockEntity.eraAccepts(HardwareEra.TRANSITION, MediaFormat.USB),
+                "a Transition encoder takes no stick");
+        // The Advanced one writes Blu-ray discs and sticks, and leaves the older discs to the older encoders.
+        helper.assertTrue(PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.BLU_RAY)
+                && PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.USB),
+                "an Advanced encoder writes Blu-ray and USB");
+        helper.assertFalse(PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.DVD)
+                || PatternEncoderBlockEntity.eraAccepts(HardwareEra.ADVANCED, MediaFormat.CD),
+                "an Advanced encoder writes no DVD or CD");
+        helper.assertFalse(PatternEncoderBlockEntity.eraAccepts(HardwareEra.STANDARD, MediaFormat.BLU_RAY),
+                "a Standard encoder writes no Blu-ray");
+        final ItemStack bdRe = new ItemStack(ComputingModule.BD_RE.get());
+        final ItemStack bdRom = new ItemStack(ComputingModule.BD_ROM.get());
+        helper.assertTrue(bdRe.getItem() instanceof FormattedMediaItem re && re.writable()
+                && re.format() == MediaFormat.BLU_RAY, "a BD-RE is a rewritable Blu-ray");
+        helper.assertTrue(bdRom.getItem() instanceof FormattedMediaItem rom && !rom.writable()
+                && rom.format() == MediaFormat.BLU_RAY, "a BD-ROM is a pressed Blu-ray");
+        helper.assertTrue(PatternEncoderBlockEntity.seekTicks(MediaFormat.BLU_RAY) > 0
+                && PatternEncoderBlockEntity.bytesPerTick(MediaFormat.BLU_RAY)
+                > PatternEncoderBlockEntity.bytesPerTick(MediaFormat.DVD),
+                "a Blu-ray burns faster than a DVD");
+        helper.succeed();
+    }
+
+    /** The Transition and Advanced encoders, placed: each reports its era and takes the media its era burns. */
+    @GameTest(template = ARENA)
+    public static void encoder_ofTheNewErasTakesItsMediaWhenPlaced(final GameTestHelper helper) {
+        final PatternEncoderBlockEntity transition = place(helper, new BlockPos(1, 2, 1),
+                ComputingModule.TRANSITION_PATTERN_ENCODER.get());
+        final PatternEncoderBlockEntity advanced = place(helper, new BlockPos(3, 2, 1),
+                ComputingModule.ADVANCED_PATTERN_ENCODER.get());
+        final ItemStack cdRw = new ItemStack(ComputingModule.CD_RW.get());
+        final ItemStack dvdRw = new ItemStack(ComputingModule.DVD_RW.get());
+        final ItemStack bdRe = new ItemStack(ComputingModule.BD_RE.get());
+        final ItemStack usb = new ItemStack(ComputingModule.USB_FLASH_DRIVE.get());
+        helper.assertTrue(transition.era() == HardwareEra.TRANSITION && advanced.era() == HardwareEra.ADVANCED,
+                "each block reports its era");
+        helper.assertTrue(transition.acceptsMedia(dvdRw) && transition.acceptsMedia(cdRw),
+                "the Transition encoder takes a DVD-RW and a CD-RW");
+        helper.assertFalse(transition.acceptsMedia(bdRe) || transition.acceptsMedia(usb),
+                "but no Blu-ray and no stick");
+        helper.assertTrue(advanced.acceptsMedia(bdRe) && advanced.acceptsMedia(usb),
+                "the Advanced encoder takes a BD-RE and a stick");
+        helper.assertFalse(advanced.acceptsMedia(dvdRw) || advanced.acceptsMedia(cdRw),
+                "but leaves the older discs to the older encoders");
+        helper.succeed();
+    }
+
+    /** The Advanced encoder burns a file onto a BD-RE, through the same seek, write and verify. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void advancedEncoder_burnsABluRay(final GameTestHelper helper) {
+        final HolderLookup.Provider reg = helper.getLevel().registryAccess();
+        final PatternEncoderBlockEntity encoder = place(helper, POS, ComputingModule.ADVANCED_PATTERN_ENCODER.get());
+        encoder.media().setStackInSlot(0, new ItemStack(ComputingModule.BD_RE.get()));
+        final String content = CraftFile.serialize(CraftFiles.oakPlanks(), reg).orElseThrow();
+        helper.assertTrue(encoder.queueBurn("oak_planks", content), "the job is queued");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(encoder.phase() == PatternEncoderBlockEntity.Phase.DONE,
+                        "the burn to finish; it is at " + encoder.phase()))
+                .thenExecute(() -> helper.assertTrue(CraftFiles.count(encoder.mediaStack()) == 1,
+                        "the file is on the disc"))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
@@ -174,7 +243,8 @@ public final class PatternEncoderGameTests {
         helper.startSequence()
                 .thenExecuteAfter(10, () -> {
                     helper.assertFalse(encoder.busy(), "with no medium the job waits");
-                    helper.assertTrue("Insert media".equals(encoder.statusLine()), "the display says what is missing");
+                    helper.assertTrue("Insert media".equals(encoder.statusLine().english()),
+                            "the display says what is missing");
                     // The block goes away and comes back with its saved state: the job is still waiting.
                     final CompoundTag saved = encoder.saveWithFullMetadata(reg);
                     helper.setBlock(POS, Blocks.AIR);

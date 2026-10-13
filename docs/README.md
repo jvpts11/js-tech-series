@@ -1,18 +1,28 @@
 # Documentation
 
-Public documentation for the J's Tech Series: how the code is written, how it is versioned and released,
-and how the series is put together. Everything here is meant to be read by a contributor opening the
-repository for the first time. What each mod does is on its own page: [J's Core](../core/README.md),
-[J's Computers](../computers/README.md) and [J's Industrial](../industrial/README.md).
+The documentation of the J's Tech Series. Each mod keeps its own, in a `docs/` folder beside its code; this folder
+holds what concerns the whole series.
 
+## Each mod
+
+| Mod | For players | For programmers |
+| --- | --- | --- |
+| [J's Core](../core/README.md) | (a library: nothing to play on its own) | [J's Core documentation](../core/docs/README.md): every part of the library, from zero, with code. |
+| [J's Computers](../computers/README.md) | [J's Computers documentation](../computers/docs/README.md): computers, systems, the network, autocrafting, cables, Σ#. | [Building on J's Computers](../computers/docs/API.md). |
+| [J's Industrial](../industrial/README.md) | [The machines](../industrial/docs/MACHINES.md). | [For mod and pack authors](../industrial/docs/FOR_MOD_AUTHORS.md). |
+
+## The whole series
+
+- [The API](API.md): what a mod built on the series may use, what it may not, and what it can expect to keep
+  working from one release to the next.
 - [Code style](CODE_STYLE.md): headers, naming, modelling, imports, comments and commit messages.
-- [Versions, phases and releases](RELEASING.md): what a version number means, the development phases
-  and their gates, snapshot builds, and how a release is cut.
-- [UI components](UI_COMPONENTS.md): the component model the desktop programs and dialogs are built from,
-  and how to write a program on it.
-- [Σ#](SIGMA.md): the computers' programming language: its two shapes of program, the budget and
-  the clock it runs under, and everything a program can reach.
-- [ComputerCraft](COMPUTERCRAFT.md): the bridge to CC: Tweaked: the Network Gateway, what each side can
-  ask of the other, the agent their computers carry, and what it costs.
+- [Versions, phases and releases](RELEASING.md): what a version number means, the development phases and their
+  gates, snapshot builds, and how a release is cut.
 
-Design documents and balancing notes are not part of the repository.
+## The design
+
+Each mod's design lives in a `design/` folder inside its `docs/`, one page per subject, as each one is written:
+[J's Core's design](../core/docs/design/README.md),
+[J's Computers' design](../computers/docs/design/README.md),
+[J's Industrial's design](../industrial/docs/design/README.md) and
+[J's Space's design](../space/docs/design/README.md).

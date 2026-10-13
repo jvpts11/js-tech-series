@@ -10,6 +10,10 @@ package dev.jstech.core.tier;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.progression.IAxisStep;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Sizes;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,34 +27,55 @@ import org.jetbrains.annotations.Nullable;
  * that keeps the Minecraft-aware property type out of this enum. Data files name an era by its
  * {@link #serializedName()}.
  */
-public enum HardwareEra implements IStableId, IStableName {
-    VINTAGE(0, "vintage"),
-    LEGACY(1, "legacy"),
-    STANDARD(2, "standard"),
-    ADVANCED(3, "advanced"),
-    EXA(4, "exa"),
-    SINGULARITY(5, "singularity");
-
-    private static final StableIds<HardwareEra> IDS = StableIds.of(HardwareEra.class);
+@TextHolder
+public enum HardwareEra implements IStableId, IStableName, IAxisStep {
+    VINTAGE(0, "vintage", TextKey.of("jscore.era.vintage", "Vintage")),
+    LEGACY(1, "legacy", TextKey.of("jscore.era.legacy", "Legacy")),
+    TRANSITION(2, "transition", TextKey.of("jscore.era.transition", "Transition")),
+    STANDARD(3, "standard", TextKey.of("jscore.era.standard", "Standard")),
+    ADVANCED(4, "advanced", TextKey.of("jscore.era.advanced", "Advanced")),
+    EXA(5, "exa", TextKey.of("jscore.era.exa", "Exa")),
+    SINGULARITY(6, "singularity", TextKey.of("jscore.era.singularity", "Singularity"));
 
     private final int level;
     private final String serializedName;
+    /** The era's name as a player reads it. */
+    private final TextKey name;
 
-    HardwareEra(final int level, final String serializedName) {
+    private static final StableIds<HardwareEra> IDS = StableIds.of(HardwareEra.class);
+
+    /** An era named as one: "Legacy era", with the name put where each language puts it. */
+    private static final TextKey NAMED = TextKey.of("jscore.era.named", "%s era");
+
+    HardwareEra(final int level, final String serializedName, final TextKey name) {
         this.level = level;
         this.serializedName = serializedName;
+        this.name = name;
+    }
+
+    /** The era's name: "Legacy". */
+    @Override
+    public Text text() {
+        return this.name.text();
+    }
+
+    /** The era as an era: "Legacy era". */
+    public Text named() {
+        return NAMED.with(this.name);
     }
 
     /**
      * The colour an era's screens are remembered by, as an RGB int for a tooltip: the green phosphor of a
-     * CRT terminal for Vintage, the blue of the Legacy desktop's chrome, the accent blue of the Standard
-     * desktop, and a colder cast for each generation past that. A part's era reads at a glance, before
-     * the word does, which is what a player sorting a chest of boards and chips needs.
+     * CRT terminal for Vintage, the blue of the Legacy desktop's chrome, the sky blue of the glass desktops of
+     * the Transition, the accent blue of the Standard desktop, and a colder cast for each generation past that.
+     * A part's era reads at a glance, before the word does, which is what a player sorting a chest of boards and
+     * chips needs.
      */
     public int screenColor() {
         return switch (this) {
             case VINTAGE -> 0x33FF33;
             case LEGACY -> 0x245EDC;
+            case TRANSITION -> 0x3FA9E0;
             case STANDARD -> 0x0078D4;
             case ADVANCED -> 0x9B59FF;
             case EXA -> 0x00E5FF;
@@ -63,7 +88,7 @@ public enum HardwareEra implements IStableId, IStableName {
         return switch (this) {
             case VINTAGE -> 16;
             case LEGACY -> 32;
-            default -> 64;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> 64;
         };
     }
 
@@ -76,7 +101,7 @@ public enum HardwareEra implements IStableId, IStableName {
         return switch (this) {
             case VINTAGE -> 1L;
             case LEGACY -> 16L;
-            default -> 256L;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> 256L;
         };
     }
 
@@ -108,6 +133,7 @@ public enum HardwareEra implements IStableId, IStableName {
         return this == VINTAGE ? VINTAGE : fromLevel(level - 1);
     }
 
+    @Override
     public int level() {
         return level;
     }

@@ -1,0 +1,124 @@
+{
+  "variants": {
+    "button=false,facing=east,lit=false,on=false": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 270
+    },
+    "button=false,facing=east,lit=false,on=true": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 270
+    },
+    "button=false,facing=east,lit=true,on=false": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 270
+    },
+    "button=false,facing=east,lit=true,on=true": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 270
+    },
+    "button=false,facing=north,lit=false,on=false": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 180
+    },
+    "button=false,facing=north,lit=false,on=true": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 180
+    },
+    "button=false,facing=north,lit=true,on=false": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 180
+    },
+    "button=false,facing=north,lit=true,on=true": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 180
+    },
+    "button=false,facing=south,lit=false,on=false": {
+      "model": "jsc:block/monitor/advanced_bare"
+    },
+    "button=false,facing=south,lit=false,on=true": {
+      "model": "jsc:block/monitor/advanced_bare"
+    },
+    "button=false,facing=south,lit=true,on=false": {
+      "model": "jsc:block/monitor/advanced_bare"
+    },
+    "button=false,facing=south,lit=true,on=true": {
+      "model": "jsc:block/monitor/advanced_bare"
+    },
+    "button=false,facing=west,lit=false,on=false": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 90
+    },
+    "button=false,facing=west,lit=false,on=true": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 90
+    },
+    "button=false,facing=west,lit=true,on=false": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 90
+    },
+    "button=false,facing=west,lit=true,on=true": {
+      "model": "jsc:block/monitor/advanced_bare",
+      "y": 90
+    },
+    "button=true,facing=east,lit=false,on=false": {
+      "model": "jsc:block/monitor/advanced",
+      "y": 270
+    },
+    "button=true,facing=east,lit=false,on=true": {
+      "model": "jsc:block/monitor/advanced_sleep",
+      "y": 270
+    },
+    "button=true,facing=east,lit=true,on=false": {
+      "model": "jsc:block/monitor/advanced_on",
+      "y": 270
+    },
+    "button=true,facing=east,lit=true,on=true": {
+      "model": "jsc:block/monitor/advanced_on",
+      "y": 270
+    },
+    "button=true,facing=north,lit=false,on=false": {
+      "model": "jsc:block/monitor/advanced",
+      "y": 180
+    },
+    "button=true,facing=north,lit=false,on=true": {
+      "model": "jsc:block/monitor/advanced_sleep",
+      "y": 180
+    },
+    "button=true,facing=north,lit=true,on=false": {
+      "model": "jsc:block/monitor/advanced_on",
+      "y": 180
+    },
+    "button=true,facing=north,lit=true,on=true": {
+      "model": "jsc:block/monitor/advanced_on",
+      "y": 180
+    },
+    "button=true,facing=south,lit=false,on=false": {
+      "model": "jsc:block/monitor/advanced"
+    },
+    "button=true,facing=south,lit=false,on=true": {
+      "model": "jsc:block/monitor/advanced_sleep"
+    },
+    "button=true,facing=south,lit=true,on=false": {
+      "model": "jsc:block/monitor/advanced_on"
+    },
+    "button=true,facing=south,lit=true,on=true": {
+      "model": "jsc:block/monitor/advanced_on"
+    },
+    "button=true,facing=west,lit=false,on=false": {
+      "model": "jsc:block/monitor/advanced",
+      "y": 90
+    },
+    "button=true,facing=west,lit=false,on=true": {
+      "model": "jsc:block/monitor/advanced_sleep",
+      "y": 90
+    },
+    "button=true,facing=west,lit=true,on=false": {
+      "model": "jsc:block/monitor/advanced_on",
+      "y": 90
+    },
+    "button=true,facing=west,lit=true,on=true": {
+      "model": "jsc:block/monitor/advanced_on",
+      "y": 90
+    }
+  }
+}

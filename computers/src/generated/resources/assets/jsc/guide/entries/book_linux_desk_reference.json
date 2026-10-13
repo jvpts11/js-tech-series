@@ -1,0 +1,45 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.book_linux_desk_reference.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_linux_desk_reference.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_linux_desk_reference.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.book_linux_desk_reference.fix1",
+          "problem": "jsc.guide.book_linux_desk_reference.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:distributions",
+        "jsc:install_ubuntu",
+        "jsc:library"
+      ]
+    }
+  ],
+  "icon": "jsc:linux_desk_reference",
+  "id": "jsc:book_linux_desk_reference",
+  "items": [
+    "jsc:linux_desk_reference"
+  ],
+  "order": 136,
+  "section": "jsc:the_library",
+  "title": "jsc.guide.book_linux_desk_reference.title"
+}

@@ -1,0 +1,16 @@
+{
+  "code_font": "jscore:fixed_5x8",
+  "cover": {
+    "band": true,
+    "label": false
+  },
+  "decor": {
+    "rings": true
+  },
+  "hold_bar": "blocks",
+  "pages": {
+    "height": 201,
+    "width": 166
+  },
+  "palette": "jsc:guide/operations"
+}

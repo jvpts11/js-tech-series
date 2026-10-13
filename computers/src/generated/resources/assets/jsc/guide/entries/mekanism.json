@@ -1,0 +1,83 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mekanism.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mekanism.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mekanism.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mekanism.table1",
+      "heads": [
+        "jsc.guide.mekanism.table1_head1",
+        "jsc.guide.mekanism.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "chemical/mekanism:oxygen"
+          },
+          {
+            "words": "jsc.guide.mekanism.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "chemical/<registry id>"
+          },
+          {
+            "words": "jsc.guide.mekanism.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mekanism.definition1",
+      "term": "jsc.guide.mekanism.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mekanism.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mekanism.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mekanism.fix1",
+          "problem": "jsc.guide.mekanism.problem1"
+        },
+        {
+          "fix": "jsc.guide.mekanism.fix2",
+          "problem": "jsc.guide.mekanism.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:items_as_data",
+        "jsc:how_autocrafting_works"
+      ]
+    }
+  ],
+  "id": "jsc:mekanism",
+  "order": 121,
+  "section": "jsc:mod_integrations",
+  "title": "jsc.guide.mekanism.title"
+}

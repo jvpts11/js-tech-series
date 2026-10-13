@@ -1,0 +1,84 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.welcome.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text10"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.welcome.definition1",
+      "term": "jsc.guide.welcome.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.welcome.definition2",
+      "term": "jsc.guide.welcome.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.welcome.definition3",
+      "term": "jsc.guide.welcome.term3"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:tour",
+        "jsc:library"
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:welcome",
+  "items": [
+    "jsc:guide_to_operations"
+  ],
+  "section": "jsc:getting_started",
+  "shows": [
+    "jsc:personal_computer",
+    "jsc:monitor",
+    "jsc:mainframe",
+    "jsc:server_rack",
+    "jsc:crafting_computer"
+  ],
+  "title": "jsc.guide.welcome.title"
+}

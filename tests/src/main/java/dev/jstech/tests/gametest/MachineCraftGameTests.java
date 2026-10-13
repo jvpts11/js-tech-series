@@ -7,47 +7,44 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.block.part.CraftingInterfacePart;
 import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.ProcessingPattern.ProcessingInput;
 import dev.jstech.computers.crafting.ProcessingPattern.ProcessingOutput;
-import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
-import net.minecraft.core.BlockPos;
+import java.util.List;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-import java.util.List;
-
 /**
- * GameTests for the machine-crafting data model: processing/multi-stage patterns serialize to and from {@code
- * .craft} without loss (chances, timeout and machine survive), and load into a Crafting Computer's machine ROM
- * with dedupe and the shared slot budget.
+ * GameTests for the machine-crafting data model: processing and multi-stage patterns serialize to and from
+ * {@code .craft} without loss (chances and timeout survive), and go into a Crafting Interface each once.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class MachineCraftGameTests {
 
+    private static final String ARENA = "empty";
+
     private MachineCraftGameTests() {
     }
 
-    private static final String ARENA = "empty";
-
     @GameTest(template = ARENA)
-    public static void processingPattern_roundTripsAndLoadsIntoRom(final GameTestHelper helper) {
+    public static void processingPattern_roundTripsAndGoesIntoAnInterface(final GameTestHelper helper) {
         final var registries = helper.getLevel().registryAccess();
         final ProcessingPattern pattern = new ProcessingPattern(
                 List.of(new ProcessingInput(StorageKey.of(Items.IRON_INGOT), 1L)),
                 List.of(new ProcessingOutput(StorageKey.of(Items.COPPER_INGOT), 2L, 100),
                         new ProcessingOutput(StorageKey.of(Items.GOLD_NUGGET), 1L, 50)),
-                "Macerator", 200);
+                200);
 
         final String snbt = CraftFile.serializeProcessing(pattern, registries).orElseThrow();
         helper.assertTrue("proc".equals(CraftFile.typeOf(snbt)),
@@ -57,17 +54,12 @@ public final class MachineCraftGameTests {
         helper.assertTrue(parsed.outputs().get(1).chancePercent() == 50, "the 50% output chance survives");
         helper.assertTrue(parsed.timeoutTicks() == 200, "the timeout survives");
 
-        final BlockPos ccPos = new BlockPos(2, 2, 2);
-        helper.setBlock(ccPos, ComputingModule.CRAFTING_COMPUTER.get());
-        if (!(helper.getBlockEntity(ccPos) instanceof CraftingComputerBlockEntity be)) {
-            helper.fail("no Crafting Computer block entity");
-            return;
-        }
-        final NetworkRecipe recipe = NetworkRecipe.ofProcessing(pattern);
-        helper.assertTrue(be.loadMachineRecipe(recipe), "the machine recipe loads into the ROM");
-        helper.assertTrue(be.machineRecipes().size() == 1, "one machine recipe in the ROM");
-        helper.assertFalse(be.loadMachineRecipe(recipe), "a duplicate is rejected by dedupe");
-        helper.assertTrue(be.romUsed() == 1, "the machine recipe counts toward ROM use");
+        final CraftingInterfacePart part = new CraftingInterfacePart(HardwareEra.STANDARD);
+        final NetworkRecipe recipe = NetworkRecipe.ofProcessing(parsed);
+        helper.assertTrue(part.place(recipe), "the read pattern goes into an interface");
+        helper.assertTrue(part.patterns().size() == 1, "the interface holds one pattern");
+        helper.assertFalse(part.place(NetworkRecipe.ofProcessing(pattern)),
+                "the same recipe, read or not, goes in once");
         helper.succeed();
     }
 
@@ -77,7 +69,7 @@ public final class MachineCraftGameTests {
         final ProcessingPattern proc = new ProcessingPattern(
                 List.of(new ProcessingInput(StorageKey.of(Items.IRON_INGOT), 1L)),
                 List.of(new ProcessingOutput(StorageKey.of(Items.COPPER_INGOT), 1L, 100)),
-                "Furnace", 150);
+                150);
         final MultiStagePattern multi = new MultiStagePattern(List.of(MultiStagePattern.Stage.proc(proc)));
 
         final String snbt = CraftFile.serializeMultiStage(multi, registries).orElseThrow();
@@ -85,6 +77,8 @@ public final class MachineCraftGameTests {
         final MultiStagePattern parsed = CraftFile.parseMultiStage(snbt, registries).orElseThrow();
         helper.assertTrue(parsed.stages().size() == 1, "one stage survives");
         helper.assertTrue(parsed.stages().get(0).isProcessing(), "the stage is a processing stage");
+        helper.assertTrue(parsed.stages().get(0).proc().orElseThrow().timeoutTicks() == 150,
+                "the stage's timeout survives");
         helper.succeed();
     }
 }

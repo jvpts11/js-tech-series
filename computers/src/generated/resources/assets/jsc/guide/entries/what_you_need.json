@@ -1,0 +1,166 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.what_you_need.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_you_need.definition1",
+      "term": "jsc.guide.what_you_need.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_you_need.definition2",
+      "term": "jsc.guide.what_you_need.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_you_need.definition3",
+      "term": "jsc.guide.what_you_need.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_you_need.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.what_you_need.table1",
+      "heads": [
+        "jsc.guide.what_you_need.table1_head1",
+        "jsc.guide.what_you_need.table1_head2",
+        "jsc.guide.what_you_need.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.what_you_need.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.what_you_need.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table1_2_2"
+          },
+          {
+            "literal": "fdisk: cannot open /dev/sdb: No such file or directory"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.what_you_need.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.what_you_need.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.what_you_need.definition4",
+      "term": "jsc.guide.what_you_need.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_you_need.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.what_you_need.table2",
+      "heads": [
+        "jsc.guide.what_you_need.table2_head1",
+        "jsc.guide.what_you_need.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Mirror: not installed"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Mirror: installed (Mainframe off)"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Mirror: serving"
+          },
+          {
+            "words": "jsc.guide.what_you_need.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_you_need.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.what_you_need.fix1",
+          "problem": "jsc.guide.what_you_need.problem1"
+        },
+        {
+          "fix": "jsc.guide.what_you_need.fix2",
+          "problem": "jsc.guide.what_you_need.problem2"
+        },
+        {
+          "fix": "jsc.guide.what_you_need.fix3",
+          "problem": "jsc.guide.what_you_need.problem3"
+        },
+        {
+          "fix": "jsc.guide.what_you_need.fix4",
+          "problem": "jsc.guide.what_you_need.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:drives",
+        "jsc:mainframes"
+      ]
+    }
+  ],
+  "id": "jsc:what_you_need",
+  "order": 238,
+  "section": "jsc:by_hand_basics",
+  "title": "jsc.guide.what_you_need.title"
+}

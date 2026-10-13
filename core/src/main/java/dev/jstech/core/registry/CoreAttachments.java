@@ -9,8 +9,12 @@ package dev.jstech.core.registry;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.energy.LevelEnergy;
+import dev.jstech.core.fluid.LevelFluids;
+import dev.jstech.core.grid.LevelGrids;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
+import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.UUIDUtil;
 import net.neoforged.bus.api.IEventBus;
@@ -45,10 +49,25 @@ public final class CoreAttachments {
             ATTACHMENT_TYPES.register("network_system",
                     () -> AttachmentType.builder(NetworkSystem::new).build());
 
+    /** A dimension's grids of every kind but data; never saved, since the cables put themselves back as they load. */
+    public static final Supplier<AttachmentType<LevelGrids>> GRIDS =
+            ATTACHMENT_TYPES.register("grids", () -> AttachmentType.builder(LevelGrids::new).build());
+
+    /** How a dimension's energy grid moves energy; never saved, since it is worked out from the wires. */
+    public static final Supplier<AttachmentType<LevelEnergy>> ENERGY =
+            ATTACHMENT_TYPES.register("energy", () -> AttachmentType.builder(LevelEnergy::new).build());
+
+    /** How a dimension's fluid grid moves fluids; never saved, since it is worked out from the pipes. */
+    public static final Supplier<AttachmentType<LevelFluids>> FLUIDS =
+            ATTACHMENT_TYPES.register("fluids", () -> AttachmentType.builder(LevelFluids::new).build());
+
+    /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
+    public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");
+
     public static final Supplier<AttachmentType<CoreChunkData>> CHUNK_NETWORKS =
             ATTACHMENT_TYPES.register("chunk_networks",
                     () -> AttachmentType.builder(CoreChunkData::empty)
-                            .serialize(CHUNK_DATA_CODEC)
+                            .serialize(CHUNK_NETWORKS_LAYOUT.codec(CHUNK_DATA_CODEC))
                             .build());
 
     public static void register(final IEventBus modEventBus) {

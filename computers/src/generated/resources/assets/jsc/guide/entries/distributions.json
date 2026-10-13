@@ -1,0 +1,198 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.distributions.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.distributions.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.distributions.table1",
+      "heads": [
+        "jsc.guide.distributions.table1_head1",
+        "jsc.guide.distributions.table1_head2",
+        "jsc.guide.distributions.table1_head3",
+        "jsc.guide.distributions.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.distributions.table1_1_1"
+          },
+          {
+            "amount": 8192,
+            "unit": "MB"
+          },
+          {
+            "amount": 48,
+            "unit": "MB"
+          },
+          {
+            "literal": "apt"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.distributions.table1_2_1"
+          },
+          {
+            "amount": 4096,
+            "unit": "MB"
+          },
+          {
+            "amount": 24,
+            "unit": "MB"
+          },
+          {
+            "literal": "apt"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.distributions.table1_3_1"
+          },
+          {
+            "amount": 8192,
+            "unit": "MB"
+          },
+          {
+            "amount": 48,
+            "unit": "MB"
+          },
+          {
+            "literal": "dnf"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.distributions.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.distributions.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.distributions.table2",
+      "heads": [
+        "jsc.guide.distributions.table2_head1",
+        "jsc.guide.distributions.table2_head2",
+        "jsc.guide.distributions.table2_head3",
+        "jsc.guide.distributions.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.distributions.table2_1_1"
+          },
+          {
+            "literal": "kde-plasma"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          },
+          {
+            "amount": 224,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.distributions.table2_2_1"
+          },
+          {
+            "literal": "gnome"
+          },
+          {
+            "amount": 192,
+            "unit": "MB"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.distributions.table2_3_1"
+          },
+          {
+            "literal": "cinnamon"
+          },
+          {
+            "amount": 160,
+            "unit": "MB"
+          },
+          {
+            "amount": 160,
+            "unit": "MB"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.distributions.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.distributions.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.distributions.definition1",
+      "term": "jsc.guide.distributions.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.distributions.definition2",
+      "term": "jsc.guide.distributions.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.distributions.definition3",
+      "term": "jsc.guide.distributions.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.distributions.definition4",
+      "term": "jsc.guide.distributions.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.distributions.fix1",
+          "problem": "jsc.guide.distributions.problem1"
+        },
+        {
+          "fix": "jsc.guide.distributions.fix2",
+          "problem": "jsc.guide.distributions.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing_linux_keys",
+        "jsc:install_ubuntu",
+        "jsc:apt",
+        "jsc:dnf"
+      ]
+    }
+  ],
+  "id": "jsc:distributions",
+  "order": 227,
+  "section": "jsc:choosing_a_distribution",
+  "title": "jsc.guide.distributions.title"
+}

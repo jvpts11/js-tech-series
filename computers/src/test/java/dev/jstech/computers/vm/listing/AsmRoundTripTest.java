@@ -230,44 +230,44 @@ class AsmRoundTripTest {
     }
 
     @Test
-    void read_aListingThatNamesNoArchitecture_isTheOneTheFormatFallsBackTo() {
+    void read_aListingThatNamesNoIsa_isTheOneTheFormatFallsBackTo() {
         final AsmProgram read = this.read(".asm " + AsmProgram.OLDEST_VERSION + "\n.class C\n");
-        assertEquals(AsmProgram.DEFAULT_ARCHITECTURE, read.architecture());
+        assertEquals(AsmProgram.DEFAULT_ISA, read.isa());
     }
 
     @Test
-    void read_keepsTheArchitectureAListingNames() {
+    void read_keepsTheIsaAListingNames() {
         final AsmProgram read = this.read(".asm 3\n.arch jsc:x86_64\n.class C\n");
         assertFalse(this.reader.hasProblems());
-        assertEquals("jsc:x86_64", read.architecture());
+        assertEquals("jsc:x86_64", read.isa());
     }
 
     @Test
-    void read_remembersWhereTheArchitectureWasNamed() {
-        assertEquals(2, this.read(".asm 3\n.arch jsc:x86_64\n.class C\n").architectureLine());
+    void read_remembersWhereTheIsaWasNamed() {
+        assertEquals(2, this.read(".asm 3\n.arch jsc:x86_64\n.class C\n").isaLine());
     }
 
     @Test
-    void read_aListingThatNamesNoArchitecture_pointsAtItsHead() {
-        assertEquals(1, this.read(".asm 2\n.class C\n").architectureLine());
+    void read_aListingThatNamesNoIsa_pointsAtItsHead() {
+        assertEquals(1, this.read(".asm 2\n.class C\n").isaLine());
     }
 
     @Test
-    void read_refusesAnArchitectureThatIsNotANamespacedName() {
+    void read_refusesAnIsaThatIsNotANamespacedName() {
         this.read(".asm 3\n.arch x86\n.class C\n");
         assertEquals(List.of("A4006"), this.codes());
     }
 
     @Test
-    void write_thenRead_keepsTheArchitecture() {
+    void write_thenRead_keepsTheIsa() {
         final AsmProgram program = new AsmProgram();
-        program.setArchitecture("other:risc64", 1);
-        assertEquals("other:risc64", this.read(AsmWriter.write(program)).architecture());
+        program.setIsa("other:risc64", 1);
+        assertEquals("other:risc64", this.read(AsmWriter.write(program)).isa());
     }
 
     @Test
     void read_findsTheOwnerOfAConstructorCallBeforeTheDoubleDot() {
-        final String text = ".asm " + AsmProgram.VERSION + "\n.arch " + AsmProgram.DEFAULT_ARCHITECTURE
+        final String text = ".asm " + AsmProgram.VERSION + "\n.arch " + AsmProgram.DEFAULT_ISA
                 + "\n\n.class Tests.Below\n\n.method void .ctor() slots 0\n"
                 + "    call    Tests.Base..ctor(int) -> void\n    ret\n";
         final AsmProgram read = this.read(text);
@@ -278,6 +278,15 @@ class AsmRoundTripTest {
         assertEquals(new IOperand.Method("Tests.Base", AsmMethod.CONSTRUCTOR, List.of("int"), "void"),
                 constructor.body().getFirst().operand());
         assertEquals(text, AsmWriter.write(read));
+    }
+
+    @Test
+    void read_reportsAMethodNeedingFewerPlacesThanNoneOrMoreThanAFrameHolds() {
+        // A count below none threw out of the reader; two billion places ran the server out of memory on the call.
+        for (final String slots : List.of("-1", "2000000000", String.valueOf(AsmMethod.MOST_SLOTS + 1))) {
+            this.read(".asm 2\n.class C\n.method void M() slots " + slots + "\n    ret\n");
+            assertTrue(this.reader.hasProblems(), "slots " + slots + " was taken");
+        }
     }
 
     @Test
@@ -323,5 +332,44 @@ class AsmRoundTripTest {
                 + ".method void M() slots 0\n\n    ret\n");
         assertFalse(this.reader.hasProblems());
         assertEquals(1, read.type("C").methods().getFirst().body().size());
+    }
+
+    @Test
+    void read_reportsInstructionsUnderAHeaderWithNoSlotsLine() {
+        this.read(".asm 2\n.class C\n.method void M()\n    ret\n");
+        assertEquals(List.of("A4016"), this.codes());
+    }
+
+    @Test
+    void read_reportsAPlaceTheMethodDoesNotHave() {
+        this.read(".asm 2\n.class C\n.method void M() slots 1\n    ldloc 1\n    ldloc -1\n    ret\n");
+        assertEquals(List.of("A4017", "A4017"), this.codes());
+    }
+
+    @Test
+    void read_acceptsAPlaceWithinTheSlotsAndTheParameters() {
+        this.read(".asm 2\n.class C\n.method void M(int, int) slots 0\n    ldloc 1\n    ret\n");
+        assertFalse(this.reader.hasProblems());
+    }
+
+    @Test
+    void read_reportsALabelThatMarksTwoLines() {
+        this.read(".asm 2\n.class C\n.method void M() slots 0\nL1: ldnull\nL1: ret\n");
+        assertEquals(List.of("A4018"), this.codes());
+        assertEquals(5, this.reader.problems().getFirst().line());
+    }
+
+    @Test
+    void read_reportsOperandsWhoseTypeNameIsBlankWithoutThrowing() {
+        this.read(".asm 2\n.class C\n.method void M() slots 0\n    ldfld .x\n    call .M() -> void\n"
+                + "    call A.M() ->\n    newobj (int)\n    ret\n");
+        assertEquals(List.of("A4006", "A4006", "A4006", "A4006"), this.codes());
+    }
+
+    @Test
+    void read_reportsTextThatIsNotQuoted() {
+        this.read(".asm 2\n.class C\n.method void M() slots 0\n    ldstr hello\n    ldstr \"abc\n"
+                + "    ldstr \"abc\\\"\n    ret\n");
+        assertEquals(List.of("A4006", "A4006", "A4006"), this.codes());
     }
 }

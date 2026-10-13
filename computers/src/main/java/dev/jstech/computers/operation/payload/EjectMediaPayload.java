@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.media.MediaVolume;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -15,11 +16,17 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Client to server: eject the medium in the drive at {@code readerPos}, which must be linked to the
- * computer at {@code hostPos}. The medium goes to the player's inventory, or onto the drive when the
- * inventory is full, the same as sneak-clicking the drive in the world.
+ * Client to server: eject the medium in the drive at {@code readerPos}, the disk in one tray of a Dock Station there,
+ * or what a drive or a port on the front of the computer at {@code hostPos} holds; a drive elsewhere must be linked to
+ * that computer. What comes out goes to the player's inventory, or onto the drive when the inventory is full, the same
+ * as sneak-clicking the drive in the world. An optical drive instead opens its tray, as its eject button does, and the
+ * disc waits on it for the player's hand.
+ *
+ * @param hostPos   the computer
+ * @param readerPos the drive's packed position, or the computer's own for a drive on its front
+ * @param bay       which of its volumes, as {@link MediaVolume#bay()} counts them
  */
-public record EjectMediaPayload(BlockPos hostPos, long readerPos) implements CustomPacketPayload {
+public record EjectMediaPayload(BlockPos hostPos, long readerPos, int bay) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<EjectMediaPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "eject_media"));
@@ -28,7 +35,18 @@ public record EjectMediaPayload(BlockPos hostPos, long readerPos) implements Cus
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, EjectMediaPayload::hostPos,
                     ByteBufCodecs.VAR_LONG, EjectMediaPayload::readerPos,
+                    ByteBufCodecs.INT, EjectMediaPayload::bay,
                     EjectMediaPayload::new);
+
+    /** Ejects the drive's own medium. */
+    public EjectMediaPayload(final BlockPos hostPos, final long readerPos) {
+        this(hostPos, readerPos, MediaVolume.MEDIUM);
+    }
+
+    /** Ejects what a volume's key names: a drive's medium, a docked disk, or a slot on the computer's front. */
+    public static EjectMediaPayload of(final BlockPos hostPos, final MediaVolume volume) {
+        return new EjectMediaPayload(hostPos, volume.readerPos(), volume.bay());
+    }
 
     @Override
     public CustomPacketPayload.Type<EjectMediaPayload> type() {

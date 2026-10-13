@@ -87,7 +87,10 @@ final class CallWriter {
             return;
         }
         this.body.emit(Opcode.LDTHIS);
-        final IMemberSymbol.MethodSymbol chosen = constructorOf(target, call.arguments().size());
+        // The checker chose by argument types; counting arguments alone would bind the first overload of that size.
+        final IMemberSymbol.MethodSymbol chosen =
+                this.emitter.model.callOf(call) instanceof IMemberSymbol.MethodSymbol picked
+                        ? picked : constructorOf(target, call.arguments().size());
         this.arguments(call.arguments(), chosen);
         this.body.emit(Opcode.CALL, new IOperand.Method(target.qualifiedName(), AsmMethod.CONSTRUCTOR,
                 chosen == null ? List.of() : Emitter.writtenParameters(chosen), "void"));
@@ -125,6 +128,14 @@ final class CallWriter {
                 this.body.emit(Opcode.STLOC, new IOperand.Slot(this.body.slot(variable)));
             } else if (binding instanceof IBinding.Member member
                     && member.member() instanceof IMemberSymbol.FieldSymbol field) {
+                if (!field.isStatic()) {
+                    // The store wants the object beneath the value, and an out target is always the bare name of a
+                    // field of the current object, so the value is put away while this is pushed under it.
+                    final int held = this.body.hidden();
+                    this.body.emit(Opcode.STLOC, new IOperand.Slot(held));
+                    this.body.pushThis();
+                    this.body.emit(Opcode.LDLOC, new IOperand.Slot(held));
+                }
                 this.body.emit(field.isStatic() ? Opcode.STSFLD : Opcode.STFLD,
                         new IOperand.Field(field.isStatic() ? field.owner().qualifiedName()
                                 : this.body.ownerOf(field), field.name()));

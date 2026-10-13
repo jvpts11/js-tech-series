@@ -7,10 +7,13 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.client.NmsApp;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.gui.help.HelpForm;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.core.text.GameText;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -25,8 +28,8 @@ import java.util.Map;
  * and the launcher rail, taskbar and This PC all resolve the window through this one lookup instead of a
  * hardcoded {@code switch}.
  *
- * <p>An add-on registers its own factory the same way from its client setup, keeping the desktop open to
- * third-party programs.
+ * <p>This is the mod's own wiring, not a way in: an add-on registers its program's window through the API's
+ * {@code DesktopApps}, which lands here with the program wrapped in a window the desktop knows how to hold.
  */
 public final class ProgramClient {
 
@@ -45,8 +48,8 @@ public final class ProgramClient {
     private ProgramClient() {
     }
 
-    /** Registers the window factory for {@code id}. Safe to call from any mod's client setup. */
-    public static void register(final ResourceLocation id, final IDesktopAppFactory factory) {
+    /** Registers the window factory for {@code id}; a second one for the same program replaces the first. */
+    public static synchronized void register(final ResourceLocation id, final IDesktopAppFactory factory) {
         FACTORIES.put(id, factory);
     }
 
@@ -60,14 +63,32 @@ public final class ProgramClient {
         return FACTORIES.containsKey(id);
     }
 
+    /**
+     * What the program {@code id} is called in the player's language, which is what its window calls itself when it
+     * has nothing more particular to say; the id's path when no such program is registered.
+     */
+    public static String nameOf(final ResourceLocation id) {
+        final ProgramSpec spec = OsRegistry.getProgram(id);
+        return spec == null ? id.getPath() : GameText.resolve(spec.name());
+    }
+
+    /** The same for one of this mod's own programs, by the path of its id. */
+    public static String nameOf(final String path) {
+        return nameOf(rl(path));
+    }
+
     private static void registerBuiltins() {
         // Built-in Frames apps.
         register(rl("network"), (host, mon, os) -> new NetworkInteractorApp(host, mon));
-        register(rl("this_pc"), (host, mon, os) -> new ThisPcApp(host));
+        register(rl("this_pc"), (host, mon, os) -> new ThisPcApp(host, os));
         // CDE's settings are its Style Manager, which the approved desktop keeps to what CDE itself offered.
         register(rl("settings"), (host, mon, os) -> onCde(os) ? new StyleManagerApp() : new SettingsApp(host, mon));
         register(rl("workstation_info"), (host, mon, os) -> new WorkstationInfoApp(host));
-        register(rl("help_viewer"), (host, mon, os) -> new HelpViewerApp(host));
+        // Its Devices dialog, which Devices... opens and which comes back with the session.
+        register(rl("workstation_info/devices"), (host, mon, os) -> new WorkstationDevicesApp(host));
+        // Help, in the form the desktop it opens on had it; Frames 95's topic window is a second window of its own.
+        register(rl("help_viewer"), (host, mon, os) -> new HelpViewerApp(host, HelpViewerApp.formOf(os)));
+        register(rl("help_viewer/topic"), (host, mon, os) -> new HelpViewerApp(host, HelpForm.FRAMES_95_TOPIC));
         register(rl("files"), (host, mon, os) -> new FilesApp(host, os.getPath(), "", mon));
         register(rl("editor"), (host, mon, os) -> new EditorApp(host));
         register(rl("command_prompt"), (host, mon, os) -> new ShellApp(host, os));
@@ -75,18 +96,28 @@ public final class ProgramClient {
         register(rl("calculator"), (host, mon, os) -> new CalculatorApp());
         register(rl("network_manager"), (host, mon, os) -> new NetworkManagerApp(host, mon));
         register(rl("task_manager"), (host, mon, os) -> new TaskManagerApp(host, os));
+        register(rl("device_manager"), (host, mon, os) -> new DeviceManagerApp(host, os));
         // Installable programs.
-        register(rl("nms"), (host, mon, os) ->
-                new NmsApp(host, mon));
+        register(rl("isms"), (host, mon, os) -> new IsmsApp(host, mon));
+        // Its Profiler, which Tools opens in a window of its own and which comes back with the session.
+        register(rl("isms/profiler"), (host, mon, os) -> new IsmsProfilerApp(host, mon));
+        register(rl("nextgre_studio"), (host, mon, os) -> new NextgreStudioApp(host, mon));
+        register(rl("prophet_console"), (host, mon, os) -> new ProphetConsoleApp(host, mon));
         register(rl("crafting_manager"), (host, mon, os) -> new CraftingManagerApp(host));
         register(rl("pattern_studio"), (host, mon, os) -> new PatternStudioApp(host, mon));
+        register(rl("workshop"), (host, mon, os) -> new WorkshopApp(host, mon));
         register(rl("cluster_manager"), (host, mon, os) -> new ClusterManagerApp(host));
         register(rl("gateway_manager"), (host, mon, os) -> new GatewayManagerApp(host));
-        register(rl("minesweeper"), (host, mon, os) -> new MinesweeperApp());
+        register(rl("minesweeper"), (host, mon, os) -> new MinesweeperApp(host));
         register(rl("solitaire"), (host, mon, os) -> new SolitaireApp());
         register(rl("snake"), (host, mon, os) -> new SnakeApp());
         register(rl("ark"), (host, mon, os) -> new ArchiverApp(host));
         register(rl("paint"), (host, mon, os) -> new PaintApp(host));
+        // A streaming player on the Standard era's desktops, the Legacy one's on the desktops before them.
+        register(rl("soundfoundry"), (host, mon, os) -> SoundfoundryStandardApp.onStandardDesktop()
+                ? new SoundfoundryStandardApp(host) : new SoundfoundryApp(host));
+        // Soundfoundry's second window, which its NET button opens and which comes back with the session.
+        register(rl("soundfoundry/share"), (host, mon, os) -> new SoundfoundryShareApp(host));
         register(rl("exceed"), (host, mon, os) -> new ExceedApp(host, mon));
         register(rl("messenger"), (host, mon, os) -> new MessengerApp(host, mon));
         register(rl("knot"), (host, mon, os) -> new KnotApp(host, mon));
@@ -98,11 +129,11 @@ public final class ProgramClient {
         register(rl("virtual_studio_code"), (host, mon, os) -> new VirtualStudioCodeApp(host));
         register(rl("exposure"), (host, mon, os) -> new ExposureApp(host));
         // Linux's disk utility: the same volumes This PC lists, under the name that platform uses.
-        register(rl("disks"), (host, mon, os) -> new ThisPcApp(host, "Disks"));
+        register(rl("disks"), (host, mon, os) -> new ThisPcApp(host, nameOf(rl("disks"))));
     }
 
     private static ResourceLocation rl(final String path) {
-        return ResourceLocation.fromNamespaceAndPath("jsc", path);
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
     }
 
     /** Whether a program is being opened on CDE, whatever system CDE stands on. */

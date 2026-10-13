@@ -1,0 +1,17 @@
+{
+  "about": [
+    "jsindustrial.guide.manual.plant_drawings.about1"
+  ],
+  "chapters": [
+    "jsindustrial"
+  ],
+  "cover": [
+    "jsindustrial.guide.manual.plant_drawings.cover1"
+  ],
+  "edition": "jsindustrial.guide.manual.plant_drawings.edition",
+  "icon": "jsindustrial:gui/guide/cover_mark",
+  "id": "jsindustrial:plant_drawings",
+  "priority": 50,
+  "style": "jsindustrial:drawings",
+  "title": "jsindustrial.guide.manual.plant_drawings.title"
+}

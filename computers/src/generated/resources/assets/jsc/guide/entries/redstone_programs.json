@@ -1,0 +1,187 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.redstone_programs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.redstone_programs.table1",
+      "heads": [
+        "jsc.guide.redstone_programs.table1_head1",
+        "jsc.guide.redstone_programs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SET REDSTONE 'Gate' IN"
+          },
+          {
+            "words": "jsc.guide.redstone_programs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET REDSTONE 'Gate' OUT 15"
+          },
+          {
+            "words": "jsc.guide.redstone_programs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET REDSTONE 'Main Gate' IN"
+          },
+          {
+            "words": "jsc.guide.redstone_programs.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.redstone_programs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.redstone_programs.table2",
+      "heads": [
+        "jsc.guide.redstone_programs.table2_head1",
+        "jsc.guide.redstone_programs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "redstone(\"Gate\")"
+          },
+          {
+            "words": "jsc.guide.redstone_programs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": ".In()"
+          },
+          {
+            "words": "jsc.guide.redstone_programs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": ".Out(15)"
+          },
+          {
+            "words": "jsc.guide.redstone_programs.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": ".Level()"
+          },
+          {
+            "words": "jsc.guide.redstone_programs.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "redstone(\"Gate\").Out(15);"
+      ],
+      "name": "Lamp.sgs"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.redstone_programs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_programs.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.redstone_programs.fix1",
+          "problem": "jsc.guide.redstone_programs.problem1"
+        },
+        {
+          "fix": "jsc.guide.redstone_programs.fix2",
+          "problem": "jsc.guide.redstone_programs.problem2"
+        },
+        {
+          "fix": "jsc.guide.redstone_programs.fix3",
+          "problem": "jsc.guide.redstone_programs.problem3"
+        },
+        {
+          "fix": "jsc.guide.redstone_programs.fix4",
+          "problem": "jsc.guide.redstone_programs.problem4"
+        },
+        {
+          "fix": "jsc.guide.redstone_programs.fix5",
+          "problem": "jsc.guide.redstone_programs.problem5"
+        },
+        {
+          "fix": "jsc.guide.redstone_programs.fix6",
+          "problem": "jsc.guide.redstone_programs.problem6"
+        },
+        {
+          "fix": "jsc.guide.redstone_programs.fix7",
+          "problem": "jsc.guide.redstone_programs.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:redstone_interfaces",
+        "jsc:set_redstone",
+        "jsc:redstone_library",
+        "jsc:peripheral_cables"
+      ]
+    }
+  ],
+  "icon": "jsc:standard_redstone_interface",
+  "id": "jsc:redstone_programs",
+  "order": 115,
+  "section": "jsc:automation_jobs",
+  "title": "jsc.guide.redstone_programs.title"
+}

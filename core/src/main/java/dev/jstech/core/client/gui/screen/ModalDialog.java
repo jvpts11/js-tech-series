@@ -7,6 +7,9 @@
  */
 package dev.jstech.core.client.gui.screen;
 
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Grounds;
+import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -40,21 +43,22 @@ public final class ModalDialog extends Screen {
         final int buttonsY = this.height / 2 + 20;
 
         addRenderableWidget(Button.builder(
-                        Component.translatable("gui.jscore.confirm"),
+                        GameText.component(DialogTexts.CONFIRM),
                         b -> resolve(true))
                 .bounds(centerX - 105, buttonsY, 100, 20)
                 .build());
 
         addRenderableWidget(Button.builder(
-                        Component.translatable("gui.jscore.cancel"),
+                        GameText.component(DialogTexts.CANCEL),
                         b -> resolve(false))
                 .bounds(centerX + 5, buttonsY, 100, 20)
                 .build());
     }
 
     private void resolve(final boolean confirmed) {
-        onResult.accept(confirmed);
+        // The parent goes back first so a screen the callback opens is not replaced by it.
         this.minecraft.setScreen(parent);
+        onResult.accept(confirmed);
     }
 
     @Override
@@ -65,11 +69,12 @@ public final class ModalDialog extends Screen {
             final float partialTick) {
         this.renderBackground(graphics, mouseX, mouseY, partialTick);
         // Dim the parent further with a translucent overlay.
-        graphics.fill(0, 0, this.width, this.height, 0x90000000);
-        graphics.drawCenteredString(
-                this.font, this.title, this.width / 2, this.height / 2 - 30, 0xFFFFFFFF);
-        graphics.drawCenteredString(
-                this.font, this.message, this.width / 2, this.height / 2 - 10, 0xFFBBBBBB);
+        final ScreenPalette.Colours colours = ScreenPalette.get();
+        Grounds.fill(graphics, 0, 0, this.width, this.height, colours.dialogDim());
+        Draw.textCentered(graphics, this.font, this.title, this.width / 2, this.height / 2 - 30,
+                colours.dialogTitle());
+        Draw.textCentered(graphics, this.font, this.message, this.width / 2, this.height / 2 - 10,
+                colours.dialogMessage());
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 

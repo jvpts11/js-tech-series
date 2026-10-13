@@ -1,0 +1,200 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_control_flow.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_control_flow.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_control_flow.table1",
+      "heads": [
+        "jsc.guide.sigma_control_flow.table1_head1",
+        "jsc.guide.sigma_control_flow.table1_head2",
+        "jsc.guide.sigma_control_flow.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "if"
+          },
+          {
+            "literal": "if (condition) statement else statement"
+          },
+          {
+            "words": "jsc.guide.sigma_control_flow.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "while"
+          },
+          {
+            "literal": "while (condition) statement"
+          },
+          {
+            "words": "jsc.guide.sigma_control_flow.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "do"
+          },
+          {
+            "literal": "do statement while (condition);"
+          },
+          {
+            "words": "jsc.guide.sigma_control_flow.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "for"
+          },
+          {
+            "literal": "for (start; condition; step) statement"
+          },
+          {
+            "words": "jsc.guide.sigma_control_flow.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "foreach"
+          },
+          {
+            "literal": "foreach (Type name in array) statement"
+          },
+          {
+            "words": "jsc.guide.sigma_control_flow.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "switch"
+          },
+          {
+            "literal": "switch (value) with case and default labels"
+          },
+          {
+            "words": "jsc.guide.sigma_control_flow.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "lock"
+          },
+          {
+            "literal": "lock (object) statement"
+          },
+          {
+            "words": "jsc.guide.sigma_control_flow.table1_7_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_control_flow.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_control_flow.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_control_flow.text5"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "for (int i = 0; i < 3; i++)",
+        "{",
+        "    switch (i)",
+        "    {",
+        "        case 0:",
+        "            printf(\"zero\");",
+        "            break;",
+        "        default:",
+        "            printf(\"%d\", i);",
+        "            break;",
+        "    }",
+        "}"
+      ],
+      "name": "Counting.sg"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_control_flow.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_control_flow.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_control_flow.definition1",
+      "term": "jsc.guide.sigma_control_flow.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_control_flow.definition2",
+      "term": "jsc.guide.sigma_control_flow.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_control_flow.definition3",
+      "term": "jsc.guide.sigma_control_flow.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_control_flow.definition4",
+      "term": "jsc.guide.sigma_control_flow.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_control_flow.definition5",
+      "term": "jsc.guide.sigma_control_flow.term5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_control_flow.fix1",
+          "problem": "jsc.guide.sigma_control_flow.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_control_flow.fix2",
+          "problem": "jsc.guide.sigma_control_flow.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_control_flow.fix3",
+          "problem": "jsc.guide.sigma_control_flow.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_control_flow.fix4",
+          "problem": "jsc.guide.sigma_control_flow.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_methods_out_ref",
+        "jsc:sigma_dispose"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_control_flow",
+  "order": 338,
+  "section": "jsc:sigma_basics",
+  "title": "jsc.guide.sigma_control_flow.title"
+}

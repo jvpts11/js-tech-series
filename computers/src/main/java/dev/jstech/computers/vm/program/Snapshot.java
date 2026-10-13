@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
 
@@ -54,20 +55,30 @@ public record Snapshot(int format, String listing, HeapShot heap, IdentityShot i
     }
 
     /** Who the program is, what it has spent, and how it ended if it did. */
-    public record IdentityShot(String state, String message, long spent, String name, List<String> args,
+    public record IdentityShot(String state, Text message, long spent, String name, List<String> args,
                                int machineId, boolean exited, int exitCode) {
 
         public IdentityShot {
+            message = message == null ? Text.EMPTY : message;
             name = name == null ? "" : name;
             args = args == null ? List.of() : List.copyOf(args);
         }
     }
 
-    /** What the program printed, how much it has ever written, and where its random numbers stand. */
-    public record ConsoleShot(List<String> lines, long written, long random) {
+    /**
+     * What the program printed, how much it has ever written, where its random numbers stand, and the line it had
+     * left open.
+     */
+    public record ConsoleShot(List<Text> lines, long written, long random, String open) {
 
         public ConsoleShot {
             lines = List.copyOf(lines);
+            open = open == null ? "" : open;
+        }
+
+        /** A console with no line left open. */
+        public ConsoleShot(final List<Text> lines, final long written, final long random) {
+            this(lines, written, random, "");
         }
     }
 

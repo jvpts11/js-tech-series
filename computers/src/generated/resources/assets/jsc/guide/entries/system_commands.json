@@ -1,0 +1,138 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_commands.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_commands.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_commands.table1",
+      "heads": [
+        "jsc.guide.system_commands.table1_head1",
+        "jsc.guide.system_commands.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "name"
+          },
+          {
+            "words": "jsc.guide.system_commands.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "netshare"
+          },
+          {
+            "words": "jsc.guide.system_commands.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_commands.text3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/uname"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/hostname"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/date"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/status"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/config"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/reboot"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_commands.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/devices"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/which"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/whoami"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/echo"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/clear"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/set"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/export"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/unset"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_commands.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_commands.fix1",
+          "problem": "jsc.guide.system_commands.problem1"
+        },
+        {
+          "fix": "jsc.guide.system_commands.fix2",
+          "problem": "jsc.guide.system_commands.problem2"
+        },
+        {
+          "fix": "jsc.guide.system_commands.fix3",
+          "problem": "jsc.guide.system_commands.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:devices_commands",
+        "jsc:shell_prompt"
+      ]
+    }
+  ],
+  "id": "jsc:system_commands",
+  "order": 196,
+  "section": "jsc:shell_commands",
+  "title": "jsc.guide.system_commands.title"
+}

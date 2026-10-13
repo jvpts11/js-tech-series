@@ -9,8 +9,10 @@ package dev.jstech.computers.program.cli.sh;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -79,5 +81,12 @@ class ShWordsTest {
         assertTrue(ShWords.matches("*", "anything at all"));
         assertTrue(ShWords.matches("a*b*c", "aXXbYYc"));
         assertFalse(ShWords.matches("a*b*c", "aXXbYY"));
+    }
+
+    @Test
+    void matches_answersQuicklyAPatternOfManyStarsThatFails() {
+        final String pattern = "*a".repeat(40) + "b";
+        assertTimeoutPreemptively(Duration.ofSeconds(1),
+                () -> assertFalse(ShWords.matches(pattern, "a".repeat(64))));
     }
 }

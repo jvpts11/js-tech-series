@@ -11,12 +11,10 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
-import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.program.cli.man.ManualEntries;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -24,6 +22,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.says;
+import static dev.jstech.tests.testkit.TestShell.shell;
 
 /**
  * One body of text about a command, read by every way a player can ask.
@@ -41,7 +42,6 @@ public final class ManualPageGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 6;
-    private static final int WIDTH = 80;
 
     private static final ResourceLocation DEBIAN =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "debian");
@@ -56,25 +56,28 @@ public final class ManualPageGameTests {
                                                        final ResourceLocation system) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity computer = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
         computer.installOs(system);
         return computer;
     }
 
+    /*
+     * The books of the systems print a page for every command, the same page the command writes of itself, so man
+     * hands the terminal to the pager with the book's page instead of printing the page at the prompt.
+     */
     @GameTest(template = ARENA)
-    public static void man_printsThePageTheCommandItselfWrites(final GameTestHelper helper) {
+    public static void man_opensTheBooksPageOfTheCommandInThePager(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(ManualEntries.commandEntry(Platform.LINUX, "grep").isPresent(),
+                            "a book of Debian prints grep's page");
                     final List<String> page = shell(helper, computer, "man grep");
-                    helper.assertTrue(says(page, "NAME") && says(page, "SYNOPSIS") && says(page, "DESCRIPTION")
-                                    && says(page, "OPTIONS") && says(page, "EXAMPLES") && says(page, "SEE ALSO"),
-                            "a real page has all its parts; got " + page);
-                    helper.assertTrue(says(page, "-v") && says(page, "the lines that do NOT hold it"),
-                            "the options are the command's own words; got " + page);
+                    helper.assertTrue(page.isEmpty(), "and man opens it in the pager, leaving the prompt; got "
+                            + page);
                 })
                 .thenSucceed();
     }
@@ -164,19 +167,5 @@ public final class ManualPageGameTests {
      */
     private static List<String> head(final List<String> lines) {
         return lines.subList(0, Math.min(4, lines.size()));
-    }
-
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
-                                      final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.shellFor(computer, WIDTH).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
-    }
-
-    private static boolean says(final List<String> lines, final String text) {
-        return lines.stream().anyMatch(line -> line.contains(text));
     }
 }

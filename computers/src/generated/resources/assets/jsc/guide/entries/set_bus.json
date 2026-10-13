@@ -1,0 +1,302 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.set_bus.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.set_bus.text2"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "SET BUS 'Ore in' ON",
+        "SET BUS 'Ore in' KEEP 16 MAX 64"
+      ],
+      "name": "bus.iql"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.set_bus.table1",
+      "heads": [
+        "jsc.guide.set_bus.table1_head1",
+        "jsc.guide.set_bus.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SET BUS 'x' ON"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' OFF"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' MODE CONTINUOUS"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' MODE ON DEMAND"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' FILTER ONLY a, b"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' FILTER ALL BUT a, b"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' FILTER NONE"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' FILTER TAG c:ores, c:logs"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' MATCH FUZZY"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' MATCH EXACT"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' KEEP 16 MAX 64"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' MAX 64"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' KEEP iron_ore 16 MAX iron_ore 64"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' PRIORITY 5"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' WHEN STOCK iron_ore < 512"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' WHEN STOCK TAG c:ores < 4096"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' WHEN TIME BETWEEN 18 AND 6"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' AFTER BUS 'Coal in'"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' ACCESS READ AND WRITE"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' ACCESS READ ONLY"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_20_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'x' ACCESS WRITE ONLY"
+          },
+          {
+            "words": "jsc.guide.set_bus.table1_21_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.set_bus.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.set_bus.table2",
+      "heads": [
+        "jsc.guide.set_bus.table2_head1",
+        "jsc.guide.set_bus.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "bus <name> set"
+          },
+          {
+            "words": "jsc.guide.set_bus.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "no bus named <name> on this network"
+          },
+          {
+            "words": "jsc.guide.set_bus.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "the bus <name> cannot be set so: its era or its kind has no such setting"
+          },
+          {
+            "words": "jsc.guide.set_bus.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "<item> is not in the filter of the bus <name>"
+          },
+          {
+            "words": "jsc.guide.set_bus.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "no item or fluid named <item>"
+          },
+          {
+            "words": "jsc.guide.set_bus.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.set_bus.fix1",
+          "problem": "jsc.guide.set_bus.problem1"
+        },
+        {
+          "fix": "jsc.guide.set_bus.fix2",
+          "problem": "jsc.guide.set_bus.problem2"
+        },
+        {
+          "fix": "jsc.guide.set_bus.fix3",
+          "problem": "jsc.guide.set_bus.problem3"
+        },
+        {
+          "fix": "jsc.guide.set_bus.fix4",
+          "problem": "jsc.guide.set_bus.problem4"
+        },
+        {
+          "fix": "jsc.guide.set_bus.fix5",
+          "problem": "jsc.guide.set_bus.problem5"
+        },
+        {
+          "fix": "jsc.guide.set_bus.fix6",
+          "problem": "jsc.guide.set_bus.problem6"
+        },
+        {
+          "fix": "jsc.guide.set_bus.fix7",
+          "problem": "jsc.guide.set_bus.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:bus_filters_and_tags",
+        "jsc:bus_keep_max_and_priority",
+        "jsc:bus_conditions"
+      ]
+    }
+  ],
+  "id": "jsc:set_bus",
+  "order": 298,
+  "section": "jsc:iql_settings",
+  "title": "jsc.guide.set_bus.title"
+}

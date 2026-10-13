@@ -1,0 +1,171 @@
+# The public API of the mod in the folder 'computers': every type and member a mod
+# built on it can reach. The number before a line is the version of the API that brought
+# it in the shape written there. Whatever came after the stable version carries
+# @ApiStatus.Experimental until the cycle after its first release. Kept by ApiSurfaceTest,
+# which writes to build/api-photo what this file would have to say when the API changes.
+stable 1
+5 dev.jstech.computers.api.ComponentKind  type record(ResourceLocation id, boolean reachesOutside, IComponentValidator validator)
+5 dev.jstech.computers.api.ComponentKind  new(ResourceLocation)
+1 dev.jstech.computers.api.ComputersRegisterEvent  type final class extends Event implements IModBusEvent
+1 dev.jstech.computers.api.ComputersRegisterEvent  deprecated void architecture(ArchitectureSpec)
+5 dev.jstech.computers.api.ComputersRegisterEvent  void componentKind(ComponentKind)
+1 dev.jstech.computers.api.ComputersRegisterEvent  void desktop(DesktopEnvironmentDef)
+3 dev.jstech.computers.api.ComputersRegisterEvent  void engine(EngineDef)
+4 dev.jstech.computers.api.ComputersRegisterEvent  void explainNode(IExplainNode)
+1 dev.jstech.computers.api.ComputersRegisterEvent  void fileOpener(String)
+6 dev.jstech.computers.api.ComputersRegisterEvent  void graphicsProgram(ResourceLocation)
+2 dev.jstech.computers.api.ComputersRegisterEvent  void isa(IsaSpec)
+1 dev.jstech.computers.api.ComputersRegisterEvent  void kernel(KernelDef)
+1 dev.jstech.computers.api.ComputersRegisterEvent  void operatingSpace(OperatingSpaceDef)
+1 dev.jstech.computers.api.ComputersRegisterEvent  void operatingSystem(OsDef)
+4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerOperator(IPlannerOperator)
+4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerRule(IPlannerRule)
+4 dev.jstech.computers.api.ComputersRegisterEvent  void plannerStatistic(IPlannerStatistic)
+1 dev.jstech.computers.api.ComputersRegisterEvent  void program(ProgramSpec)
+5 dev.jstech.computers.api.IComponentValidator  type interface
+5 dev.jstech.computers.api.IComponentValidator  default boolean action(String, Object)
+5 dev.jstech.computers.api.IComponentValidator  default boolean data(Object)
+5 dev.jstech.computers.api.IComponentValidator  static final IComponentValidator ANYTHING
+1 dev.jstech.computers.api.JsComputersApi  type final class
+1 dev.jstech.computers.api.JsComputersApi  deprecated static void registerArchitecture(ArchitectureSpec)
+1 dev.jstech.computers.api.JsComputersApi  static final int VERSION
+5 dev.jstech.computers.api.JsComputersApi  static void registerComponentKind(ComponentKind)
+1 dev.jstech.computers.api.JsComputersApi  static void registerDesktop(DesktopEnvironmentDef)
+3 dev.jstech.computers.api.JsComputersApi  static void registerEngine(EngineDef)
+4 dev.jstech.computers.api.JsComputersApi  static void registerExplainNode(IExplainNode)
+1 dev.jstech.computers.api.JsComputersApi  static void registerFileOpener(String)
+6 dev.jstech.computers.api.JsComputersApi  static void registerGraphicsProgram(ResourceLocation)
+2 dev.jstech.computers.api.JsComputersApi  static void registerIsa(IsaSpec)
+1 dev.jstech.computers.api.JsComputersApi  static void registerKernel(KernelDef)
+1 dev.jstech.computers.api.JsComputersApi  static void registerOperatingSystem(OsDef)
+4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerOperator(IPlannerOperator)
+4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerRule(IPlannerRule)
+4 dev.jstech.computers.api.JsComputersApi  static void registerPlannerStatistic(IPlannerStatistic)
+1 dev.jstech.computers.api.JsComputersApi  static void registerProgram(ProgramSpec)
+1 dev.jstech.computers.api.JsComputersApi  static void registerSpace(OperatingSpaceDef)
+5 dev.jstech.computers.api.client.ComponentRenderers  type final class
+5 dev.jstech.computers.api.client.ComponentRenderers  static IComponentRenderer get(String)
+5 dev.jstech.computers.api.client.ComponentRenderers  static void register(ResourceLocation, IComponentRenderer)
+5 dev.jstech.computers.api.client.DesktopApps  type final class
+5 dev.jstech.computers.api.client.DesktopApps  static void register(ResourceLocation, boolean, IDesktopProgramFactory)
+5 dev.jstech.computers.api.client.DesktopProgram  type abstract class
+5 dev.jstech.computers.api.client.DesktopProgram  SurfaceRenderer renderer()
+5 dev.jstech.computers.api.client.DesktopProgram  abstract String title()
+5 dev.jstech.computers.api.client.DesktopProgram  boolean charTyped(char)
+5 dev.jstech.computers.api.client.DesktopProgram  boolean keyPressed(int, int, int)
+5 dev.jstech.computers.api.client.DesktopProgram  boolean keyReleased(int, int, int)
+5 dev.jstech.computers.api.client.DesktopProgram  boolean mouseScrolled(double)
+5 dev.jstech.computers.api.client.DesktopProgram  boolean worldSafe()
+5 dev.jstech.computers.api.client.DesktopProgram  int height()
+5 dev.jstech.computers.api.client.DesktopProgram  int width()
+5 dev.jstech.computers.api.client.DesktopProgram  void closed()
+5 dev.jstech.computers.api.client.DesktopProgram  void draw(GuiGraphics, Font, ISkin, int, int, int, int, int, int)
+5 dev.jstech.computers.api.client.DesktopProgram  void mouseClicked(double, double, int)
+5 dev.jstech.computers.api.client.DesktopProgram  void mouseReleased(double, double, int)
+5 dev.jstech.computers.api.client.IComponentActions  type interface
+5 dev.jstech.computers.api.client.IComponentActions  abstract void send(String, Object)
+5 dev.jstech.computers.api.client.IComponentRenderer  type interface
+5 dev.jstech.computers.api.client.IComponentRenderer  abstract void draw(GuiGraphics, Font, ISkin, int, int, int, int, Object, int, int)
+5 dev.jstech.computers.api.client.IComponentRenderer  default boolean charTyped(char, Object, IComponentActions)
+5 dev.jstech.computers.api.client.IComponentRenderer  default boolean keyPressed(int, int, int, Object, IComponentActions)
+5 dev.jstech.computers.api.client.IComponentRenderer  default boolean mouseClicked(double, double, int, Object, IComponentActions)
+5 dev.jstech.computers.api.client.IComponentRenderer  default int height()
+5 dev.jstech.computers.api.client.IComponentRenderer  default int width()
+5 dev.jstech.computers.api.client.IDesktopProgramFactory  type interface
+5 dev.jstech.computers.api.client.IDesktopProgramFactory  abstract DesktopProgram create(BlockPos, BlockPos, ResourceLocation)
+5 dev.jstech.computers.api.client.IOperatingSpace  type interface
+5 dev.jstech.computers.api.client.IOperatingSpace  abstract AbstractContainerMenu menu()
+5 dev.jstech.computers.api.client.IOperatingSpace  abstract BlockPos hostPos()
+5 dev.jstech.computers.api.client.IOperatingSpace  abstract BlockPos monitorPos()
+5 dev.jstech.computers.api.client.IOperatingSpace  abstract ResourceLocation spaceId()
+5 dev.jstech.computers.api.client.IOperatingSpace  abstract String era()
+1 dev.jstech.computers.api.client.IOperatingSpaceScreen  type interface
+5 dev.jstech.computers.api.client.IOperatingSpaceScreen  abstract AbstractContainerScreen<?> open(IOperatingSpace, Inventory, Component)
+1 dev.jstech.computers.api.client.OperatingSpaceScreens  type final class
+1 dev.jstech.computers.api.client.OperatingSpaceScreens  static IOperatingSpaceScreen get(ResourceLocation)
+1 dev.jstech.computers.api.client.OperatingSpaceScreens  static void register(ResourceLocation, IOperatingSpaceScreen)
+4 dev.jstech.computers.api.planner.IExplainNode  type interface
+4 dev.jstech.computers.api.planner.IExplainNode  abstract List<Component> notes(PlanStep)
+4 dev.jstech.computers.api.planner.IExplainNode  abstract ResourceLocation id()
+4 dev.jstech.computers.api.planner.IPlannerOperator  type interface
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract Component description()
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract ResourceLocation id()
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract String keyword()
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract boolean takesValue()
+4 dev.jstech.computers.api.planner.IPlannerOperator  abstract void apply(String, PlanCandidate)
+4 dev.jstech.computers.api.planner.IPlannerRule  type interface
+4 dev.jstech.computers.api.planner.IPlannerRule  abstract Component description()
+4 dev.jstech.computers.api.planner.IPlannerRule  abstract Component name()
+4 dev.jstech.computers.api.planner.IPlannerRule  abstract ResourceLocation id()
+4 dev.jstech.computers.api.planner.IPlannerRule  abstract void weigh(PlanCandidate)
+4 dev.jstech.computers.api.planner.IPlannerStatistic  type interface
+4 dev.jstech.computers.api.planner.IPlannerStatistic  abstract Component name()
+4 dev.jstech.computers.api.planner.IPlannerStatistic  abstract Component read(ServerLevel, BlockPos)
+4 dev.jstech.computers.api.planner.IPlannerStatistic  abstract ResourceLocation id()
+4 dev.jstech.computers.api.planner.IPlannerStatistic  default long estimate(PlanStep)
+4 dev.jstech.computers.api.planner.PlanCandidate  type final class
+4 dev.jstech.computers.api.planner.PlanCandidate  Component whySetAside()
+4 dev.jstech.computers.api.planner.PlanCandidate  List<Component> notes()
+4 dev.jstech.computers.api.planner.PlanCandidate  List<PlanStep> steps()
+4 dev.jstech.computers.api.planner.PlanCandidate  ResourceLocation result()
+4 dev.jstech.computers.api.planner.PlanCandidate  Set<String> hints()
+4 dev.jstech.computers.api.planner.PlanCandidate  boolean isSetAside()
+4 dev.jstech.computers.api.planner.PlanCandidate  long cost()
+4 dev.jstech.computers.api.planner.PlanCandidate  long quantity()
+4 dev.jstech.computers.api.planner.PlanCandidate  new(ResourceLocation, long, List<PlanStep>, long, Set<String>)
+4 dev.jstech.computers.api.planner.PlanCandidate  void addCost(long, Component)
+4 dev.jstech.computers.api.planner.PlanCandidate  void setAside(Component)
+4 dev.jstech.computers.api.planner.PlanStep  type record(ResourceLocation item, long runs, long made, boolean machine, long estimate)
+3 dev.jstech.computers.engine.EngineCapability  type enum implements IStableName
+3 dev.jstech.computers.engine.EngineCapability  DECLARATIVE_STATE
+3 dev.jstech.computers.engine.EngineCapability  EXPLAIN
+3 dev.jstech.computers.engine.EngineCapability  EXTENSIONS
+3 dev.jstech.computers.engine.EngineCapability  PLANNER_HINTS
+3 dev.jstech.computers.engine.EngineCapability  PROCEDURES_AND_VIEWS
+3 dev.jstech.computers.engine.EngineCapability  SUBSCRIPTIONS
+3 dev.jstech.computers.engine.EngineCapability  String serializedName()
+3 dev.jstech.computers.engine.EngineDef  type record(ResourceLocation program, String dialect, Map<HardwareEra, String> versions, Set<EngineCapability> extras)
+3 dev.jstech.computers.engine.EngineDef  String versionFor(HardwareEra)
+3 dev.jstech.computers.engine.EngineDef  boolean madeFor(HardwareEra)
+3 dev.jstech.computers.engine.EngineDef  boolean offers(EngineCapability)
+1 dev.jstech.computers.hardware.ArchitectureSpec  type deprecated record(String id, String name, int bits, Set<String> runs)
+2 dev.jstech.computers.hardware.ArchitectureSpec  IsaSpec toIsa()
+2 dev.jstech.computers.hardware.IsaSpec  type record(String id, String name, int bits, Set<String> runs)
+2 dev.jstech.computers.hardware.IsaSpec  boolean runs(IsaSpec)
+2 dev.jstech.computers.hardware.IsaSpec  boolean runs(String)
+2 dev.jstech.computers.os.DesktopEnvironmentDef  type record(ResourceLocation id, String displayName, PanelStyle panelStyle, List<ResourceLocation> bundledPrograms, Map<ResourceLocation, TextKey> nativeNames, SoftwareHouse house)
+1 dev.jstech.computers.os.DesktopEnvironmentDef  SoftwareHouse houseOf(ProgramSpec)
+2 dev.jstech.computers.os.DesktopEnvironmentDef  TextKey launcherLabel(ProgramSpec)
+2 dev.jstech.computers.os.DesktopEnvironmentDef  TextKey nameOf(ProgramSpec)
+1 dev.jstech.computers.os.DesktopEnvironmentDef  boolean bundles(ResourceLocation)
+1 dev.jstech.computers.os.KernelDef  type record(ResourceLocation id, SchedulerKind scheduler, FilesystemKind filesystem, ShellFamily shellFamily)
+1 dev.jstech.computers.os.KernelDef  static final Codec<KernelDef> CODEC
+1 dev.jstech.computers.os.OperatingSpaceDef  type record(ResourceLocation id, String displayName, SoftwareHouse house)
+2 dev.jstech.computers.os.OsDef  type record(ResourceLocation id, OsCapability capability, HardwareEra minEra, ResourceLocation kernelId, int footprintMb, Optional<ResourceLocation> installMediaId, Platform platform, String displayName, ShellKind shell, PackageManagerKind packageManager, InstallMode installMode, Optional<ResourceLocation> bundledDesktop, SoftwareHouse house, int ramMb, InstallerStyle installerStyle, int familyRank)
+1 dev.jstech.computers.os.OsDef  OsDef withInstaller(InstallerStyle)
+1 dev.jstech.computers.os.OsDef  OsDef withRam(int)
+1 dev.jstech.computers.os.OsDef  OsDef withRank(int)
+1 dev.jstech.computers.os.OsDef  String titleKey()
+1 dev.jstech.computers.os.OsDef  long footprintItemsOn(HardwareEra)
+2 dev.jstech.computers.os.OsDef  static OsDef linuxDistro(ResourceLocation, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)
+1 dev.jstech.computers.os.OsDef  static OsDef mediaInstalled(ResourceLocation, OsCapability, HardwareEra, ResourceLocation, int, Platform, String, Optional<ResourceLocation>, SoftwareHouse)
+2 dev.jstech.computers.os.OsDef  static OsDef terminalSystem(ResourceLocation, ResourceLocation, Platform, HardwareEra, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)
+1 dev.jstech.computers.os.OsDef  static final Codec<OsDef> CODEC
+3 dev.jstech.computers.os.ProgramSpec  type record(ResourceLocation id, String commandName, String displayName, String description, boolean preinstalled, Set<Platform> platforms, int minCpuMhz, int minVramMb, int minDiskMb, ProgramKind kind, int minOsRank, HostScope hostScope, ResourceLocation iconId, HardwareEra minEra, HardwareEra era, SoftwareHouse house, int ramMb, ProgramRequirement requires)
+2 dev.jstech.computers.os.ProgramSpec  ProgramSpec described(String)
+2 dev.jstech.computers.os.ProgramSpec  ProgramSpec named(String)
+3 dev.jstech.computers.os.ProgramSpec  ProgramSpec requiring(ProgramRequirement)
+1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withEra(HardwareEra)
+1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withHouse(SoftwareHouse)
+1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withMinEra(HardwareEra)
+1 dev.jstech.computers.os.ProgramSpec  ProgramSpec withRam(int)
+1 dev.jstech.computers.os.ProgramSpec  SoftwareHouse houseOr(SoftwareHouse)
+2 dev.jstech.computers.os.ProgramSpec  String descriptionKey()
+1 dev.jstech.computers.os.ProgramSpec  String titleKey()
+2 dev.jstech.computers.os.ProgramSpec  TextKey name()
+1 dev.jstech.computers.os.ProgramSpec  boolean installable()
+7 dev.jstech.computers.os.ProgramSpec  int legacyMb()
+7 dev.jstech.computers.os.ProgramSpec  int ramMbOn(HardwareEra)
+7 dev.jstech.computers.os.ProgramSpec  int ramMbOn(HardwareEra, boolean)
+2 dev.jstech.computers.os.ProgramSpec  static ProgramSpec of(ResourceLocation, String, boolean, Set<Platform>, int, ProgramKind, int, HostScope)
+1 dev.jstech.computers.os.ProgramSpec  static final Codec<ProgramSpec> CODEC

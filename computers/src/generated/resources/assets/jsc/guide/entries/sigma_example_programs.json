@@ -1,0 +1,246 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_programs.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_programs.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_programs.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "using System.Collections.*;",
+        "using System.Execution.*;",
+        "using System.Threading.*;",
+        "namespace Corpus;",
+        "class ProgramsCorpus {",
+        "    static void Main() {",
+        "        Program.SetName(\"corpus\");",
+        "        string name = Program.Name;",
+        "        List<string> args = Program.Args;",
+        "        long dropped = Program.DroppedEvents;",
+        "        Process self = Program.Current;",
+        "        Process one = Program.Start(\"C:\\\\tool.asm\");",
+        "        Process two = Program.Start(\"C:\\\\tool.asm\", args);",
+        "        Process three = Program.Start(\"C:\\\\tool.asm\", args, \"lab\");",
+        "        List<string> said = Program.Shell(\"dir\");",
+        "        Program.OnMessage(m => Console.PrintLine(m.Text + m.From + m.Tick));",
+        "        Console.PrintLine(name + dropped + self.Id + said.Count);",
+        "",
+        "        int id = one.Id;",
+        "        string oneName = one.Name;",
+        "        string host = one.Host;",
+        "        if (one.Running) {",
+        "            one.Wait();",
+        "        }",
+        "        bool done = two.Wait(20);",
+        "        int code = two.ExitCode;",
+        "        three.Kill();",
+        "        List<string> output = two.Output();",
+        "        bool sent = Process.Send(id, \"hello\");",
+        "        Console.PrintLine(oneName + host + done + code + output.Count + sent);",
+        "",
+        "        Thread worker = Thread.Start(() => {",
+        "            Thread.Sleep(5);",
+        "            Thread.Yield();",
+        "        });",
+        "        Thread current = Thread.Current;",
+        "        int threadId = worker.Id;",
+        "        if (worker.Running) {",
+        "            worker.Join();",
+        "        }",
+        "        bool joined = worker.Join(10);",
+        "        worker.Stop();",
+        "        Console.PrintLine(\"\" + current.Id + threadId + joined);",
+        "        Program.Exit(0);",
+        "    }",
+        "}"
+      ],
+      "name": "Programs.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_programs.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_programs.table1",
+      "heads": [
+        "jsc.guide.sigma_example_programs.table1_head1",
+        "jsc.guide.sigma_example_programs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Program.SetName(\"corpus\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Name, Args, DroppedEvents, Current"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Start(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Shell(\"dir\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.OnMessage(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "one.Id, Name, Host"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "one.Running, ExitCode"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "one.Wait(), two.Wait(20)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "three.Kill()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "two.Output()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Send(id, \"hello\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Start(() => { ... })"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Sleep(5), Thread.Yield()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Current, worker.Id, Running"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "worker.Join(), Join(10), Stop()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Exit(0)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_programs.table1_16_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_programs.definition1",
+      "term": "jsc.guide.sigma_example_programs.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_programs.fix1",
+          "problem": "jsc.guide.sigma_example_programs.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_programs.fix2",
+          "problem": "jsc.guide.sigma_example_programs.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_running",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_programs",
+  "order": 405,
+  "section": "jsc:examples_language",
+  "title": "jsc.guide.sigma_example_programs.title"
+}

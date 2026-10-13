@@ -13,6 +13,13 @@ import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
+import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -29,16 +36,21 @@ import net.minecraft.resources.ResourceLocation;
  * <p>Where each thing sits is {@link CdeFrontPanelLayout}'s to say, and both the drawing and the clicks ask
  * it, so the control a player sees and the one they hit are the same rectangle.
  */
+@PaletteHolder
 final class CdePanels {
 
-    private static final String[] WORKSPACE_NAMES = {"One", "Two", "Three", "Four"};
+    private static final TextKey[] WORKSPACE_NAMES = {CdePanelsTexts.WORKSPACE_ONE, CdePanelsTexts.WORKSPACE_TWO,
+        CdePanelsTexts.WORKSPACE_THREE, CdePanelsTexts.WORKSPACE_FOUR};
+    /** The clock hands and the calendar day's ink, {@code jsc:desktop/front_panel}. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/front_panel",
+            new Colours(0xFF1A1A1A));
 
     /** What each control opens, by the key its program goes by; the two that only show something open nothing. */
     private static final String FILES = "files";
     private static final String EDITOR = "editor";
     private static final String STYLE = "settings";
 
-    private final DesktopScreen desktop;
+    private final DesktopState desktop;
 
     /** The control the pointer rests on and since when, which is what a tip waits for; null while on none. */
     @Nullable
@@ -48,12 +60,15 @@ final class CdePanels {
     /** The tip on show, or empty while none is. */
     private String shownTip = "";
 
+    /** How big a control's picture is made and drawn. */
+    private static final int PICTURE = 24;
+
     /** How long the pointer rests on a control before its name comes up. */
     private static final long TIP_AFTER_MS = 500L;
     private static final int TIP_H = 12;
     private static final int TIP_PAD = 4;
 
-    CdePanels(final DesktopScreen desktop) {
+    CdePanels(final DesktopState desktop) {
         this.desktop = desktop;
     }
 
@@ -85,16 +100,16 @@ final class CdePanels {
             this.shownTip = "";
             return;
         }
-        this.shownTip = over.tip();
+        this.shownTip = GameText.resolve(over.tip());
         final int w = desktop.textFont().width(this.shownTip) + TIP_PAD * 2;
         final Rect at = CdeFrontPanelLayout.tip(over, w, TIP_H, sw, sh);
         MotifChrome.raised(g, at.x(), at.y(), at.w(), at.h(), p.window(), p);
-        g.drawString(desktop.textFont(), this.shownTip, at.x() + TIP_PAD, at.y() + 2, p.ink(), false);
+        Draw.text(g, desktop.textFont(), this.shownTip, at.x() + TIP_PAD, at.y() + 2, p.ink());
     }
 
     /** What workspace {@code index} is called, counted from nought: the four names CDE's switch came with. */
     static String workspaceName(final int index) {
-        return WORKSPACE_NAMES[WorkspaceSet.clampIndex(index)];
+        return GameText.resolve(WORKSPACE_NAMES[WorkspaceSet.clampIndex(index)]);
     }
 
     void render(final GuiGraphics g, final int sw, final int sh, final CdePalette p) {
@@ -107,7 +122,7 @@ final class CdePanels {
             if (CdeLaunchers.hasSubpanel(control)) {
                 arrow(g, r, open, p);
             }
-            picture(g, control, r, p);
+            picture(g, control, r);
         }
         workspaces(g, sw, sh, p);
     }
@@ -121,7 +136,7 @@ final class CdePanels {
             return false;
         }
         if (CdeFrontPanelLayout.exit(sw, sh).holds(mx, my)) {
-            desktop.askToPowerOff();
+            desktop.power().open();
             return true;
         }
         for (int i = 0; i < CdeFrontPanelLayout.WORKSPACES; i++) {
@@ -150,7 +165,7 @@ final class CdePanels {
             case FILES -> open(FILES);
             case EDITOR -> open(EDITOR);
             case STYLE -> open(STYLE);
-            case APPLICATIONS -> desktop.openApplicationManager(null);
+            case APPLICATIONS -> desktop.opener().openApplicationManager(null);
             case TRASH -> desktop.openTrash();
             case HELP -> open("help_viewer");
             default -> { }
@@ -158,9 +173,9 @@ final class CdePanels {
     }
 
     private void open(final String programPath) {
-        for (final DesktopScreen.Launcher launcher : desktop.launcherList()) {
+        for (final Launcher launcher : desktop.launcherList()) {
             if (launcher.programId() != null && launcher.programId().getPath().equals(programPath)) {
-                desktop.launch(launcher);
+                desktop.start().choose(launcher);
                 return;
             }
         }
@@ -178,20 +193,34 @@ final class CdePanels {
             } else {
                 MotifChrome.raised(g, r.x(), r.y(), r.w(), r.h(), p.window(), p);
             }
-            final String name = WORKSPACE_NAMES[i];
-            g.drawString(desktop.textFont(), name, r.x() + (r.w() - desktop.textFont().width(name)) / 2,
-                    r.y() + (r.h() - 7) / 2, up ? p.activeInk() : p.ink(), false);
+            final String name = GameText.resolve(WORKSPACE_NAMES[i]);
+            Draw.text(g, desktop.textFont(), name, r.x() + (r.w() - desktop.textFont().width(name)) / 2,
+                    r.y() + (r.h() - 7) / 2, up ? p.activeInk() : p.ink());
         }
         final Rect exit = CdeFrontPanelLayout.exit(sw, sh);
         // Pushed in for as long as the question it raised is still up.
-        if (desktop.powerDialogOpen()) {
+        if (desktop.power().isOpen()) {
             MotifChrome.sunken(g, exit.x(), exit.y(), exit.w(), exit.h(), p.inset(), p);
         } else {
             MotifChrome.raised(g, exit.x(), exit.y(), exit.w(), exit.h(), p.window(), p);
         }
-        final String word = "EXIT";
-        g.drawString(desktop.textFont(), word, exit.x() + (exit.w() - desktop.textFont().width(word)) / 2,
-                exit.y() + (exit.h() - 7) / 2, p.ink(), false);
+        final String word = GameText.resolve(CdePanelsTexts.EXIT);
+        Draw.text(g, desktop.textFont(), word, exit.x() + (exit.w() - desktop.textFont().width(word)) / 2,
+                exit.y() + (exit.h() - 7) / 2, p.ink());
+        busyLight(g, CdeFrontPanelLayout.busyLight(sw, sh), p);
+    }
+
+    /** The busy light, set into the panel: lit while it blinks for an action starting, dark the rest of the time. */
+    private void busyLight(final GuiGraphics g, final Rect r, final CdePalette p) {
+        MotifChrome.sunken(g, r.x(), r.y(), r.w(), r.h(), p.inset(), p);
+        final DesktopMotion.Colours lamp = DesktopMotion.colours();
+        g.fill(r.x() + 2, r.y() + 2, r.x() + r.w() - 2, r.y() + r.h() - 2,
+                desktop.busyLit() ? lamp.busyLit() : lamp.busyDark());
+    }
+
+    /** Whether the busy light is lit this frame, which is what a player watching the panel sees. */
+    boolean busyLightLit() {
+        return desktop.busyLit();
     }
 
     /** The small raised button at the head of a control that has more behind it, its mark turned when open. */
@@ -207,41 +236,35 @@ final class CdePanels {
         }
     }
 
-    /** What stands on a control, drawn out of a few rectangles each, the way the panel's own pictures were. */
-    private void picture(final GuiGraphics g, final Control control, final Rect r, final CdePalette p) {
+    /**
+     * What stands on a control: the panel's own picture of it, at {@code textures/gui/cde/panel/<control>.png}.
+     * The two that change as the world does are finished here, the clock with its hands and the page with its day.
+     */
+    private void picture(final GuiGraphics g, final Control control, final Rect r) {
         final int cx = r.x() + r.w() / 2;
         final int top = r.y() + CdeFrontPanelLayout.ARROW_H + 3;
-        switch (control) {
-            case CLOCK -> clockFace(g, cx, top + 12);
-            case DATE -> calendarPage(g, cx - 10, top, p);
-            case FILES -> folder(g, cx - 11, top + 6);
-            case EDITOR -> page(g, cx - 8, top);
-            case STYLE -> paintPots(g, cx - 10, top + 2);
-            case APPLICATIONS -> tiles(g, cx - 9, top + 3);
+        if (control == Control.TRASH) {
             // The can wears CDE's own picture of it, full or empty, as it did on the real panel.
-            case TRASH -> ProgramIcons.draw(g, cx - ProgramIcons.SIZE / 2, top + 2, ProgramIcons.SIZE,
-                    ProgramIcons.SIZE, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+            ProgramIcons.draw(g, cx - ProgramIcons.SIZE / 2, top + 2, ProgramIcons.SIZE, ProgramIcons.SIZE,
+                    ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                             desktop.trashFull() ? "trash_full" : "trash"), "cde");
-            // An open book, which is what that control was a picture of on the real panel.
-            case HELP -> book(g, cx - 9, top + 3);
+            return;
+        }
+        final ResourceLocation picture = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                "textures/gui/cde/panel/" + control.name().toLowerCase(Locale.ROOT) + ".png");
+        Draw.blended(() -> g.blit(picture, cx - PICTURE / 2, top, 0.0F, 0.0F, PICTURE, PICTURE, PICTURE, PICTURE));
+        switch (control) {
+            case CLOCK -> clockHands(g, cx, top + PICTURE / 2);
+            case DATE -> day(g, cx, top + 11);
+            default -> { }
         }
     }
 
-    /** A clock with hands that tell the world's own time, which is the one thing on the panel that moves. */
-    private void clockFace(final GuiGraphics g, final int cx, final int cy) {
-        disc(g, cx, cy, 11, 0xFF1A1A1A);
-        disc(g, cx, cy, 10, 0xFFF4F1E8);
-        final int minute = desktop.minuteOfDay();
+    /** The hands that tell the world's own time, which is the one thing on the panel that moves. */
+    private void clockHands(final GuiGraphics g, final int cx, final int cy) {
+        final int minute = desktop.prefs().minuteOfDay();
         hand(g, cx, cy, (minute % 720) / 720.0, 6);
         hand(g, cx, cy, (minute % 60) / 60.0, 9);
-    }
-
-    /** A filled circle a row at a time, which at this size is two dozen rectangles. */
-    private static void disc(final GuiGraphics g, final int cx, final int cy, final int radius, final int color) {
-        for (int dy = -radius; dy <= radius; dy++) {
-            final int half = (int) Math.round(Math.sqrt((double) radius * radius - (double) dy * dy));
-            g.fill(cx - half, cy + dy, cx + half, cy + dy + 1, color);
-        }
     }
 
     /** One hand, from the middle of the face, {@code turn} of the way round from twelve. */
@@ -250,58 +273,17 @@ final class CdePanels {
         for (int step = 0; step <= length; step++) {
             final int x = cx + (int) Math.round(Math.sin(angle) * step);
             final int y = cy - (int) Math.round(Math.cos(angle) * step);
-            g.fill(x, y, x + 1, y + 1, 0xFF1A1A1A);
+            g.fill(x, y, x + 1, y + 1, PALETTE.get().ink());
         }
     }
 
-    /** A calendar page with the day of the world on it under a red band. */
-    private void calendarPage(final GuiGraphics g, final int x, final int y, final CdePalette p) {
-        g.fill(x - 1, y - 1, x + 21, y + 25, p.shade());
-        g.fill(x, y, x + 20, y + 24, 0xFFF4F1E8);
-        g.fill(x, y, x + 20, y + 6, 0xFFB8412F);
-        final String day = Integer.toString(desktop.dayOfWorld());
-        g.drawString(desktop.textFont(), day, x + (20 - desktop.textFont().width(day)) / 2 + 1, y + 11,
-                0xFF1A1A1A, false);
+    /** The day of the world on the calendar page, under its red band. */
+    private void day(final GuiGraphics g, final int cx, final int y) {
+        final String day = Integer.toString(desktop.prefs().dayOfWorld());
+        Draw.text(g, desktop.textFont(), day, cx - desktop.textFont().width(day) / 2, y, PALETTE.get().ink());
     }
 
-    private static void folder(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y - 3, x + 9, y, 0xFFD5B35A);
-        g.fillGradient(x, y, x + 22, y + 15, 0xFFE2C36B, 0xFFC9A447);
-        g.fill(x, y + 14, x + 22, y + 15, 0xFF8C6F2A);
-    }
-
-    private static void page(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y, x + 16, y + 22, 0xFF6E7282);
-        g.fill(x + 1, y + 1, x + 15, y + 21, 0xFFFFFFFF);
-        for (int line = 0; line < 5; line++) {
-            g.fill(x + 3, y + 4 + line * 3, x + 13, y + 5 + line * 3, 0xFF9AA3B8);
-        }
-    }
-
-    /** Three pots of paint on a pale palette: what a desktop's colours were chosen with. */
-    private static void paintPots(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y + 2, x + 20, y + 18, 0xFFE9DDB8);
-        g.fill(x + 3, y + 5, x + 8, y + 10, 0xFFD8332C);
-        g.fill(x + 11, y + 4, x + 16, y + 9, 0xFF3B6FD8);
-        g.fill(x + 7, y + 11, x + 12, y + 16, 0xFF3FA34D);
-    }
-
-    /** Four tiles in four colours, which is every program at once. */
-    private static void tiles(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y, x + 8, y + 8, 0xFF3B6FD8);
-        g.fill(x + 10, y, x + 18, y + 8, 0xFFD8332C);
-        g.fill(x, y + 10, x + 8, y + 18, 0xFF3FA34D);
-        g.fill(x + 10, y + 10, x + 18, y + 18, 0xFFE2C36B);
-    }
-
-    /** An open book: two leaves, a spine between them, and lines of writing on each. */
-    private static void book(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y, x + 18, y + 14, 0xFF1A1A1A);
-        g.fill(x + 1, y + 1, x + 8, y + 13, 0xFFF4F1E8);
-        g.fill(x + 10, y + 1, x + 17, y + 13, 0xFFF4F1E8);
-        for (int line = 0; line < 4; line++) {
-            g.fill(x + 2, y + 3 + line * 2, x + 7, y + 4 + line * 2, 0xFF9AA3B8);
-            g.fill(x + 11, y + 3 + line * 2, x + 16, y + 4 + line * 2, 0xFF9AA3B8);
-        }
+    /** The ink the clock's hands and the calendar day are drawn in. */
+    private record Colours(int ink) {
     }
 }

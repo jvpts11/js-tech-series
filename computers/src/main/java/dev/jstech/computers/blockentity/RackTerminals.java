@@ -50,6 +50,11 @@ final class RackTerminals {
         this.viewers.closed(viewer);
     }
 
+    /** Who is at the rack's glass looking at the server at that row: nobody while its switch is turned elsewhere. */
+    List<ServerPlayer> watching(final ServerLevel level, final int row) {
+        return this.rack.shownRow() == row ? this.viewers.at(level) : List.of();
+    }
+
     /** The terminal of the server at one row, as its feed sees it. */
     private final class Unit implements IFedTerminal {
 
@@ -67,8 +72,7 @@ final class RackTerminals {
         @Override
         public List<ServerPlayer> watching(final ServerLevel level) {
             // Whoever is at the rack is looking at the server its switch is turned to, and at no other.
-            return RackTerminals.this.rack.soleComputerSlot() == this.row
-                    ? RackTerminals.this.viewers.at(level) : List.of();
+            return RackTerminals.this.watching(level, this.row);
         }
 
         @Override

@@ -34,6 +34,29 @@ class MinesweeperGameTest {
     }
 
     @Test
+    void reveal_opensAWholeBoardWithNoMinesWithoutOverflowing() {
+        // Every open cell reaches its neighbours, so a cell could be put on the fill's stack many times over.
+        for (final int[] size : new int[][] {{3, 3}, {9, 9}, {16, 16}, {16, 30}}) {
+            final MinesweeperGame g = new MinesweeperGame(size[0], size[1], 0, 1L);
+            g.reveal(size[0] / 2, size[1] / 2);
+            for (int r = 0; r < size[0]; r++) {
+                for (int c = 0; c < size[1]; c++) {
+                    assertTrue(g.isRevealed(r, c), "every cell of a mine-free board opens");
+                }
+            }
+        }
+    }
+
+    @Test
+    void reveal_survivesTheOpeningOfManyBeginnerGames() {
+        for (long seed = 0; seed < 2_000; seed++) {
+            final MinesweeperGame g = new MinesweeperGame(9, 9, 10, seed);
+            g.reveal(4, 4);
+            assertTrue(g.isRevealed(4, 4));
+        }
+    }
+
+    @Test
     void firstReveal_placesTheExactMineCount() {
         final MinesweeperGame g = new MinesweeperGame(9, 9, 10, 42L);
         assertEquals(0, countMines(g), "no mines exist before the first reveal");

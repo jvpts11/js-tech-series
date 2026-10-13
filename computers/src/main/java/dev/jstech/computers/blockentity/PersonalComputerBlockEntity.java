@@ -7,25 +7,42 @@
  */
 package dev.jstech.computers.blockentity;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.workshop.UpdateDrawer;
+import dev.jstech.computers.workshop.Workshop;
+import dev.jstech.computers.workshop.WorkshopCard;
+import dev.jstech.computers.workshop.WorkshopRates;
+import dev.jstech.computers.workshop.WorkshopTexts;
+import dev.jstech.core.blockentity.DerivedInt;
+import dev.jstech.core.blockentity.FieldItemHandler;
+import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +52,8 @@ import java.util.Set;
 /**
  * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board (one CPU, four RAM, four PCIe, one PSU, two disks).
  */
-public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
-        implements IComputerTerminalHost {
+public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntity
+        implements IComputerTerminalHost, IAssemblyComputer {
 
     // Slot layout, kept public so the assembly Menu and Screen address slots by name.
     public static final int MOTHERBOARD_SLOT = 0;
@@ -48,13 +65,17 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
     public static final int PSU_SLOT = 10;
     public static final int DISK_SLOTS_START = 11;
     public static final int DISK_SLOTS = 2;
-    public static final int HARDWARE_SLOTS = 13;
+    /** The 5.25-inch bays, as many as the most any era's case has; the case says how many it really has. */
+    public static final int BAY_SLOTS_START = 13;
+    public static final int BAY_SLOTS = 2;
+    public static final int HARDWARE_SLOTS = 15;
 
     public static final int STORAGE_SLOTS = 18;
 
     private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
             MOTHERBOARD_SLOT, CPU_SLOT, 1, RAM_SLOTS_START, RAM_SLOTS,
-            GPU_SLOTS_START, GPU_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, HARDWARE_SLOTS);
+            GPU_SLOTS_START, GPU_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, BAY_SLOTS_START, BAY_SLOTS,
+            HARDWARE_SLOTS);
 
     /*
      * Bumped on any change to the disk contents (insert/extract/disk swap) AND on a privacy-slider
@@ -62,9 +83,75 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
      * could have changed, since moving a slider changes the public view with no item movement at all.
      */
     private long storageModCount;
+    /*
+     * What the personal-use cards hold: the crafting grid, the furnace, the enchanting item and the anvil's two, kept
+     * with the computer and given back or dropped as a block's would be.
+     */
+    private final FieldItemHandler workshopSlots = fields().items("WorkshopSlots", Workshop.SLOTS).save();
+    private final ValueField<Integer> furnaceProgress = fields().value("WorkshopFurnace", Codec.INT, 0).save();
+    private final ValueField<Float> furnaceExperience = fields().value("WorkshopExperience", Codec.FLOAT, 0f).save();
+    private final ValueField<String> anvilName = fields().value("WorkshopAnvilName", Codec.STRING, "").save();
+    /* Whether the Furnace Card is smelting, which the desktop's tray shows. */
+    private final ValueField<Boolean> smelting = fields().value("WorkshopSmelting", Codec.BOOL, false).toClient();
+    private final Workshop workshop = new Workshop(workshopSlots, furnaceProgress, furnaceExperience, anvilName);
+    /* Where an item the network sends to the cards waits while they work on it, out of every query. */
+    private final FieldItemHandler updateSlots = fields().items("UpdateDrawer", UpdateDrawer.SLOTS).save();
+    private final ValueField<Integer> updateProgress = fields().value("UpdateProgress", Codec.INT, 0).save();
+    private final ValueField<Integer> updateCard = fields().value("UpdateCard", Codec.INT, -1).save();
+    private final UpdateDrawer updateDrawer = new UpdateDrawer(updateSlots, updateProgress, updateCard);
 
     public PersonalComputerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.PERSONAL_COMPUTER_BE.get(), pos, state, LAYOUT);
+    }
+
+    /** What the personal-use cards hold and do on this computer. */
+    public Workshop workshop() {
+        return workshop;
+    }
+
+    /** Where an item the network sends this computer's cards waits while they work on it. */
+    public UpdateDrawer updateDrawer() {
+        return updateDrawer;
+    }
+
+    /** The personal-use cards in this computer's build, as a mask of {@link WorkshopCard#bit()}; none while off. */
+    public int workshopCards() {
+        final ComputerBuild build = currentBuild();
+        if (build == null || !isRunning()) {
+            return 0;
+        }
+        int mask = 0;
+        for (final IExpansionCardSpec card : build.cardsOfKind(ExpansionCardKind.WORKSHOP)) {
+            if (card instanceof WorkshopCardSpec workshopCard) {
+                mask |= workshopCard.card().bit();
+            }
+        }
+        return mask;
+    }
+
+    /** How many times a furnace's pace the Furnace Card smelts at here: by the era of the computer's board. */
+    public int furnaceSpeed() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? 0 : WorkshopRates.furnaceSpeed(build.motherboard().era());
+    }
+
+    /** Whether the Furnace Card is smelting now, as the client sees it. */
+    public boolean furnaceSmelting() {
+        return Boolean.TRUE.equals(smelting.get());
+    }
+
+    /** Every item the personal-use cards hold, the network's work on them included, for the computer's drops. */
+    public List<ItemStack> workshopDrops() {
+        final List<ItemStack> drops = new ArrayList<>();
+        for (int i = 0; i < Workshop.SLOTS; i++) {
+            final ItemStack stack = workshopSlots.getStackInSlot(i);
+            if (!stack.isEmpty()) {
+                drops.add(stack.copy());
+                workshopSlots.setStackInSlot(i, ItemStack.EMPTY);
+            }
+        }
+        drops.addAll(updateDrawer.drops());
+        return drops;
     }
 
     public long storageModCount() {
@@ -102,10 +189,14 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     protected Set<FormFactor> acceptedFormFactors() {
-        // Each era takes its own consumer form factor: Vintage on Baby-AT/AT, Legacy and Standard on ATX.
+        /*
+         * Each era takes its own consumer form factor: Vintage on Baby-AT/AT, Legacy on ATX, and from the Transition
+         * on ATX or the workstation's EATX, as the tower cases of the time did.
+         */
         return switch (blockEra()) {
             case VINTAGE -> Set.of(FormFactor.BABY_AT, FormFactor.AT);
-            default -> Set.of(FormFactor.ATX);
+            case LEGACY -> Set.of(FormFactor.ATX);
+            default -> Set.of(FormFactor.ATX, FormFactor.EATX);
         };
     }
 
@@ -118,12 +209,49 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
         return blockEra();
     }
 
+    @Override
+    protected boolean takesWorkshopCards() {
+        return true;
+    }
+
     // Network node, a passive Category-C node read from the adjacent cable
 
     public static void serverTick(final Level level, final BlockPos pos,
                                   final BlockState state, final PersonalComputerBlockEntity be) {
         if (level instanceof ServerLevel serverLevel) {
             be.tickNode(serverLevel);
+            be.tickWorkshop(serverLevel);
+        }
+    }
+
+    /*
+     * The Furnace Card goes on smelting while the computer is on, window open or not; when the last of its input is
+     * done the desktops showing this computer say so in a balloon. One furnace serves both of the card's doors: while
+     * an UPDATE from the network smelts, the Workshop's own input waits its turn.
+     */
+    private void tickWorkshop(final ServerLevel level) {
+        for (final ItemStack lost : updateDrawer.recover(workshop)) {
+            Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), lost);
+        }
+        updateDrawer.tickOut(workshop);
+        final boolean furnace = WorkshopCard.FURNACE.in(workshopCards());
+        final boolean network = furnace && updateDrawer.smelting();
+        if (network) {
+            updateDrawer.tickSmelt(level, furnaceSpeed(), workshop);
+        }
+        final boolean finished = furnace && !network && workshop.tickFurnace(level, furnaceSpeed());
+        final boolean now = network || furnace && workshop.ticksPerItem(level, furnaceSpeed()) > 0;
+        if (now != furnaceSmelting()) {
+            smelting.set(now);
+        }
+        if (finished) {
+            final ItemStack made = workshop.slot(Workshop.FURNACE_OUT);
+            final DesktopBalloonPayload balloon = new DesktopBalloonPayload(worldPosition, WorkshopTexts.TITLE.text(),
+                    WorkshopTexts.FURNACE_DONE.with(made.getCount(), GameText.of(made.getHoverName())),
+                    Programs.WORKSHOP.toString());
+            for (final ServerPlayer viewer : consoleViewers(level)) {
+                PacketDistributor.sendToPlayer(viewer, balloon);
+            }
         }
     }
 
@@ -154,11 +282,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public LocalStore localStore() {
-        final List<ItemStack> disks = new ArrayList<>(DISK_SLOTS);
-        for (int i = 0; i < DISK_SLOTS; i++) {
-            disks.add(getHardware().getStackInSlot(DISK_SLOTS_START + i));
-        }
-        return new LocalStore(disks, this::setChanged);
+        return new LocalStore(storeDisks(), this::setChanged);
     }
 
     public Map<StorageKey, Long> localSnapshot() {
@@ -242,17 +366,19 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
         return true;
     }
 
+    /* Every disk the PC keeps items on has its slider: its own disk slots', then its hot-swap bays'. */
     @Override
     public int diskPrivacyDiskCount() {
-        return DISK_SLOTS;
+        return storeDisks().size();
     }
 
     @Override
     public int diskPrivacyPermille(final int diskIndex) {
-        if (diskIndex < 0 || diskIndex >= DISK_SLOTS) {
+        final List<ItemStack> disks = storeDisks();
+        if (diskIndex < 0 || diskIndex >= disks.size()) {
             return 0;
         }
-        return DiskItem.publicPermille(getHardware().getStackInSlot(DISK_SLOTS_START + diskIndex));
+        return DiskItem.publicPermille(disks.get(diskIndex));
     }
 
     @Override
@@ -269,10 +395,11 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
      * Writes a clamped public-share permille onto the disk in {@code diskIndex} and marks storage changed so the network re-reads this PC's public view. A no-op for an out-of-range index or an empty slot.
      */
     public void setDiskPrivacy(final int diskIndex, final int permille) {
-        if (diskIndex < 0 || diskIndex >= DISK_SLOTS) {
+        final List<ItemStack> disks = storeDisks();
+        if (diskIndex < 0 || diskIndex >= disks.size()) {
             return;
         }
-        final ItemStack disk = getHardware().getStackInSlot(DISK_SLOTS_START + diskIndex);
+        final ItemStack disk = disks.get(diskIndex);
         if (!(disk.getItem() instanceof DiskItem)) {
             return;
         }
@@ -280,55 +407,52 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
         bumpStorageModCount();
     }
 
-    // Screen sync (ContainerData wire layout, single source of truth shared with the Menu)
+    /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */
+    private final DerivedInt assemblyRunning = fields().derived("AssemblyRunning", this::isRunning).toMenu();
+    private final DerivedInt assemblyBuildValid = fields().derived("AssemblyBuildValid", this::buildValid).toMenu();
+    private final DerivedInt assemblyCapacity = fields().derived("AssemblyCapacity",
+            () -> (int) Math.min(Integer.MAX_VALUE, capacity())).toMenu();
+    private final DerivedInt assemblyRamBuffer = fields().derived("AssemblyRamBuffer",
+            () -> (int) Math.min(Integer.MAX_VALUE, ramBuffer())).toMenu();
+    private final DerivedInt assemblyAutoStart = fields().derived("AssemblyAutoStart", this::isAutoStart).toMenu();
+    private final DerivedInt assemblyOnNetwork = fields().derived("AssemblyOnNetwork",
+            () -> networkUuid() != null).toMenu();
+    private final DerivedInt assemblyServerCount = fields().derived("AssemblyServerCount",
+            this::networkServerCount).toMenu();
 
-    public static final int DATA_RUNNING = 0;
-    public static final int DATA_BUILD_VALID = 1;
-    public static final int DATA_CAPACITY = 2;
-    public static final int DATA_RAM_BUFFER = 3;
-    public static final int DATA_AUTOSTART = 4;
-    public static final int DATA_ON_NETWORK = 5;
-    public static final int DATA_SERVER_COUNT = 6;
-    public static final int DATA_COUNT = DATA_SERVER_COUNT + 1;
-
-    private final int[] clientData = new int[DATA_COUNT];
-
-    private int computeData(final int index) {
-        return switch (index) {
-            case DATA_RUNNING -> isRunning() ? 1 : 0;
-            case DATA_BUILD_VALID -> buildValid() ? 1 : 0;
-            case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
-            case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
-            case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_ON_NETWORK -> networkUuid() != null ? 1 : 0;
-            case DATA_SERVER_COUNT -> networkServerCount();
-            default -> 0;
-        };
+    /** Whether the assembly menu should show this machine as running; mirrored to the client while it is open. */
+    @Override
+    public boolean assemblyRunning() {
+        return assemblyRunning.isSet();
     }
 
-    private final ContainerData dataAccess = new ContainerData() {
-        @Override
-        public int get(final int index) {
-            if (level != null && level.isClientSide) {
-                return index >= 0 && index < clientData.length ? clientData[index] : 0;
-            }
-            return computeData(index);
-        }
+    /** Whether the assembly menu should show a valid build; mirrored to the client while it is open. */
+    @Override
+    public boolean assemblyBuildValid() {
+        return assemblyBuildValid.isSet();
+    }
 
-        @Override
-        public void set(final int index, final int value) {
-            if (index >= 0 && index < clientData.length) {
-                clientData[index] = value;
-            }
-        }
+    @Override
+    public long assemblyCapacity() {
+        return assemblyCapacity.getAsInt();
+    }
 
-        @Override
-        public int getCount() {
-            return DATA_COUNT;
-        }
-    };
+    @Override
+    public long assemblyRamBuffer() {
+        return assemblyRamBuffer.getAsInt();
+    }
 
-    public ContainerData getDataAccess() {
-        return dataAccess;
+    @Override
+    public boolean assemblyAutoStart() {
+        return assemblyAutoStart.isSet();
+    }
+
+    @Override
+    public boolean assemblyOnNetwork() {
+        return assemblyOnNetwork.isSet();
+    }
+
+    public int assemblyServerCount() {
+        return assemblyServerCount.getAsInt();
     }
 }

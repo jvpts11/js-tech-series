@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.operation;
 
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Map;
@@ -20,11 +22,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
  * The Operation dispatcher: runs CPU-bound Operation work on virtual threads while keeping every world mutation on the main (server) thread. A task does its computation on a virtual thread and uses its {@link IOperationContext} to bounce world reads/writes back to the main thread and to wait on whole game ticks, so disk latency and throughput are paced deterministically by ticks, never by a wall clock. Multiple disks (one task per server) therefore process in parallel without ever touching the world off-thread.
  */
+@TextHolder
 public final class OperationDispatch implements AutoCloseable, ILatencyScheduler {
 
     private record PendingOp(UUID id, IOperationTask task, OperationPriority priority, long sequence) {
@@ -37,13 +42,16 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     private static final int MAX_TERMINAL_HISTORY = 256;
 
     /** An Operation that ran to the end and then answered with nothing at all, which is a mistake in its code. */
-    private static final String NO_RESULT = "jscore.operation.failure.no_result";
+    private static final TextKey NO_RESULT = TextKey.of("jscore.operation.failure.no_result",
+            "the Operation finished without saying what it did");
 
     /** An Operation given up on because the machine running it stopped. */
-    private static final String CANCELLED = "jscore.operation.failure.cancelled";
+    private static final TextKey CANCELLED = TextKey.of("jscore.operation.failure.cancelled",
+            "the machine running it stopped");
 
     /** An Operation that threw: the type of what was thrown, then what it said. */
-    private static final String CRASHED = "jscore.operation.failure.crashed";
+    private static final TextKey CRASHED = TextKey.of("jscore.operation.failure.crashed",
+            "the Operation ran into a problem: %s (%s)");
 
     /*
      * Not final: the lane count follows the Mainframe's GPU count, which the player can change at runtime by
@@ -71,6 +79,8 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     private final ArrayDeque<UUID> terminalOrder = new ArrayDeque<>();
     private final Set<CompletableFuture<?>> inFlight = ConcurrentHashMap.newKeySet();
     private final Object tickMonitor = new Object();
+    /* Told of a main-thread step that threw, which the tick then goes on past. */
+    private final Consumer<Throwable> stepFailed;
 
     private volatile long tickCount;
     private volatile boolean closed;
@@ -87,12 +97,21 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
      * free of any knowledge of what a server is.
      */
     public OperationDispatch(final int parallelQueues) {
+        this(parallelQueues, OperationDispatch::reportToTheJdkLog);
+    }
+
+    /**
+     * The same, telling {@code stepFailed} of a main-thread step that throws, so the game can log it its own way;
+     * the Core stays free of any logging library this way, and so does a test that builds a dispatcher.
+     */
+    public OperationDispatch(final int parallelQueues, final Consumer<Throwable> stepFailed) {
         if (parallelQueues < 1) {
             throw new IllegalArgumentException("parallelQueues must be >= 1; got " + parallelQueues);
         }
         this.parallelQueues = parallelQueues;
         this.owner = Thread.currentThread();
         this.workers = Executors.newVirtualThreadPerTaskExecutor();
+        this.stepFailed = Objects.requireNonNull(stepFailed, "stepFailed");
     }
 
     /**
@@ -130,7 +149,12 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
         // 1. Apply everything the virtual threads asked the main thread to do since the last tick.
         Runnable action;
         while ((action = mainThreadActions.poll()) != null) {
-            action.run();
+            /* A step that throws must not take the server tick down with it, nor skip promotion and the tick clock. */
+            try {
+                action.run();
+            } catch (final RuntimeException | Error error) {
+                stepFailed.accept(error);
+            }
         }
         // 2. Promote pending Operations onto virtual threads, up to the parallel-queue capacity.
         while (running < parallelQueues) {
@@ -152,18 +176,25 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     @Override
     public void afterTicks(final int ticks, final Runnable callback) {
         Objects.requireNonNull(callback, "callback must not be null");
+        if (closed) {
+            return; // the dispatcher shut down, so the callback is dropped like one that was waiting
+        }
         /*
          * Park a virtual thread for the disk's read time, then resume the transfer on the main thread.
          * Many disks call this at once, so their reads genuinely overlap, capped only by the latency.
          */
-        workers.execute(() -> {
-            try {
-                awaitTicks(ticks);
-            } catch (final OperationCancelledException cancelled) {
-                return; // dispatcher shut down, the Operation is being abandoned, drop the read
-            }
-            mainThreadActions.add(callback);
-        });
+        try {
+            workers.execute(() -> {
+                try {
+                    awaitTicks(ticks);
+                } catch (final OperationCancelledException cancelled) {
+                    return; // dispatcher shut down, the Operation is being abandoned, drop the read
+                }
+                mainThreadActions.add(callback);
+            });
+        } catch (final RejectedExecutionException shutDown) {
+            // close() won the race after the check above: the callback is dropped the same way
+        }
     }
 
     /**
@@ -198,17 +229,17 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
             try {
                 result = op.task().run(context);
                 if (result == null) {
-                    result = IOperationResult.failure(NO_RESULT);
+                    result = IOperationResult.failure(NO_RESULT.key());
                 }
             } catch (final OperationCancelledException cancelled) {
-                result = IOperationResult.failure(CANCELLED);
+                result = IOperationResult.failure(CANCELLED.key());
             } catch (final Throwable throwable) {
                 /*
                  * The type and the message both, because a player reads the line and whoever is asked about it
                  * afterwards reads the same line: an exception with no message says nothing without its type,
                  * and a message with no type rarely says where it came from.
                  */
-                result = IOperationResult.failure(CRASHED,
+                result = IOperationResult.failure(CRASHED.key(),
                         throwable.getClass().getSimpleName(),
                         String.valueOf(throwable.getMessage()));
             }
@@ -364,7 +395,7 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
 
     private void discard(final UUID id) {
         statuses.put(id, OperationStatus.DISCARDED);
-        failures.put(id, OperationFailure.of(CANCELLED));
+        failures.put(id, OperationFailure.of(CANCELLED.key()));
         rememberTerminal(id);
     }
 
@@ -403,8 +434,17 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
             try {
                 return future.join();
             } catch (final CompletionException joinError) {
-                if (joinError.getCause() instanceof OperationCancelledException cancelled) {
+                final Throwable cause = joinError.getCause();
+                if (cause instanceof OperationCancelledException cancelled) {
                     throw cancelled;
+                }
+                /* A real failure of the main-thread work is passed on as it is, so the Operation settles as
+                   crashed with the true type and message rather than as cancelled. */
+                if (cause instanceof RuntimeException runtime) {
+                    throw runtime;
+                }
+                if (cause instanceof Error error) {
+                    throw error;
                 }
                 throw new OperationCancelledException();
             } finally {
@@ -426,5 +466,11 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
         public boolean isActive() {
             return !closed;
         }
+    }
+
+    /* Where a failing step is reported when nobody says otherwise: the JDK's own log, which needs no library. */
+    private static void reportToTheJdkLog(final Throwable error) {
+        System.getLogger(OperationDispatch.class.getName())
+                .log(System.Logger.Level.ERROR, "An Operation's main-thread step failed", error);
     }
 }

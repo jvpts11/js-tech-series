@@ -7,372 +7,103 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.assembly.AssemblyPainter;
+import dev.jstech.computers.client.theme.MonitorFrameStyle;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.operation.payload.RackBayPowerPayload;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
-import dev.jstech.core.client.gui.theme.EraTheme;
-import dev.jstech.core.client.gui.theme.EraThemes;
+import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
- * Screen for the Server Rack: physical only, by design: a rack-unit ruler, one row per unit with
- * the server slot and the rack's five hotswap slots, and a power switch per bay. No console and no
- * terminal live here: software access always goes through a monitor cabled to the rack.
+ * Screen for the Server Rack, drawn as the cabinet seen from the front: the rack-unit ruler, the two posts with their
+ * holes, and between them each mounted unit as its faceplate, with its own slot at the left end, its drive caddies
+ * along it, vents over what its chassis does not use and, on a computer, its power button with its lamp at
+ * the right end; an empty unit is a blank panel. The card on the right is the unit picked by clicking its faceplate: its
+ * name, its state, what it boots, how it is cabled and what a linked monitor shows. Physical only, by design: no console
+ * and no terminal live here, software access always goes through a monitor cabled to the rack.
  */
-public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
+@PaletteHolder
+public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
+
+    /* The unit the card describes: the top row of a mounted computer, picked by clicking its faceplate. */
+    private int selected;
 
     private static final int ROWS = ServerRackLayout.ROWS;
+    private static final int PITCH = ServerRackLayout.ROW_PITCH;
+    /** The post's holes, three to a rack unit, from the unit's top. */
+    private static final int[] POST_HOLES = {3, 9, 15};
+    private static final int GHOST_ALPHA = 110;
+
+    /**
+     * The cabinet's metal and its units' faceplates, per era: the metal its posts and its back are made of, the colour
+     * of that era's case, and the faceplates the units wear, dark in every era but the newest; and the light a
+     * faceplate's top edge and its vents catch.
+     */
+    private static final Palette<Cabinet> CABINET = Palettes.declare(JsComputers.MODID, "screen/rack_cabinet",
+            new Cabinet(0xFF061A08, 0xFF9AA0A8, 0xFF3A3E46, 0xFF2E3035, 0xFFDFE2E6,
+                    0xFF1B1D21, 0xFF1B1D21, 0xFF1B1D21, 0xFF1B1D21, 0xFF141518, 0xFFFFFFFF));
 
     public ServerRackScreen(final ServerRackMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
         this.imageWidth = ServerRackLayout.WIDTH;
         this.imageHeight = ServerRackLayout.HEIGHT;
-        this.titleLabelX = -10000;
-        this.inventoryLabelY = -10000;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
     }
 
-    /** The top row of the unit occupying {@code row} (the row itself when it holds the machine). */
-    private int unitTopOf(final int row) {
-        final int covered = coveredBy(row);
-        return covered >= 0 ? covered : row;
-    }
-
-    /** The top row of the chassis covering {@code row} from above, or -1 when the row is its own. */
-    private int coveredBy(final int row) {
-        for (int i = 0; i < row; i++) {
-            final RackChassis chassis = ServerItem.chassisOf(menu.serverInBay(i));
-            if (chassis != null && row < i + chassis.heightU()) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /*
-     * The cabinet's own look
-     *
-     * The rack is drawn as a piece of equipment rather than a flat panel: a brushed body, side rails
-     * the rows sit between, relief on every bay, and status lights. Rack hardware is the one screen in
-     * the mod that IS a physical object, so it wears the cabinet's OWN material, and a cabinet built
-     * in 1994 is not made of the same metal as one built today, so there is a set per era, matching the
-     * colours of that era's block model. The labels follow the era skin like every other screen.
+    /**
+     * The plain panel, with no monitor bezel: this screen is a physical cabinet panel, not a monitor, so a recipe viewer
+     * placing its own panel beside it should sit against the panel's edge rather than an unclaimed bezel.
      */
-
-    /** Everything the cabinet is made of, so one set of values can be swapped for another era's. */
-    private record Materials(int bodyTop, int bodyBottom, int bodyEdge, int bodyGloss,
-                             int headTop, int headBottom, int rail, int rowRule,
-                             int srvTop, int srvBottom, int srvEdge,
-                             int slotTop, int slotBottom, int slotEdge, int slotGloss, int vent,
-                             int pwrOnTop, int pwrOnBottom, int pwrOffTop, int pwrOffBottom,
-                             int blockedFill, int blockedText, int gadgetMark) {
-    }
-
-    /** Today's machine: black steel and cyan. Unchanged, to the value. */
-    private static final Materials STANDARD_RACK = new Materials(
-            0xFF171D24, 0xFF10151B, 0xFF39434F, 0xFF4A5563,
-            0xFF222A33, 0xFF171D25, 0xFF2A323B, 0xFF1B2129,
-            0xFF2B333D, 0xFF1A2028, 0xFF454F5C,
-            0xFF232A33, 0xFF161B21, 0xFF3C4653, 0xFF4D5765, 0xFF0D1116,
-            0xFF243B2A, 0xFF16261A, 0xFF3B2424, 0xFF261616,
-            0xFF232834, 0xFF4A5262, 0xFFF0B23A);
-
-    /** The grey-and-cream machine room of the nineties, the colours of the Legacy cabinet. */
-    private static final Materials LEGACY_RACK = new Materials(
-            0xFFB4B0A0, 0xFF9C9888, 0xFF6E6A58, 0xFFE4E0D0,
-            0xFFC4C0AC, 0xFFAAA694, 0xFF8A8676, 0xFF9A9684,
-            0xFFD2CEBC, 0xFFB4B0A0, 0xFF6E6A58,
-            0xFFC0BCA8, 0xFFA6A290, 0xFF6E6A58, 0xFFE4E0D0, 0xFF57544A,
-            0xFF3E7A46, 0xFF265A2E, 0xFF9A3A32, 0xFF6E221C,
-            0xFFA6A290, 0xFF6E6A58, 0xFFB8860B);
-
-    /** Beige plastic and a green screen: the Vintage cabinet, lit the way its own monitor is. */
-    private static final Materials VINTAGE_RACK = new Materials(
-            0xFF0A160A, 0xFF040D04, 0xFF1E5A1E, 0xFF2E8B2E,
-            0xFF0E1E0E, 0xFF071407, 0xFF103810, 0xFF0A2A0A,
-            0xFF103010, 0xFF071807, 0xFF1E5A1E,
-            0xFF0C260C, 0xFF041004, 0xFF1E5A1E, 0xFF2E8B2E, 0xFF000000,
-            0xFF10401A, 0xFF072207, 0xFF3E1410, 0xFF1E0A08,
-            0xFF061806, 0xFF2E8B2E, 0xFFFFB000);
-
-    /** What this cabinet is made of; resolved from its era every tick, so a rebuild repaints it live. */
-    private Materials mat = STANDARD_RACK;
-    private EraTheme theme = EraThemes.STANDARD;
-
-    private void resolveEra() {
-        final HardwareEra era = menu.rackEra();
-        this.theme = EraThemes.ofNullable(era);
-        this.mat = era == HardwareEra.VINTAGE ? VINTAGE_RACK
-                : era == HardwareEra.LEGACY ? LEGACY_RACK : STANDARD_RACK;
-    }
-
     @Override
-    protected void init() {
-        super.init();
-        resolveEra();
-    }
-
-    @Override
-    protected void containerTick() {
-        super.containerTick();
-        resolveEra();
-    }
-
-    /** What this cabinet is called: a compute cabinet is not a server rack, and each era has its own name. */
-    private String cabinetName() {
-        return title.getString().toUpperCase(Locale.ROOT);
-    }
-
-    /** A raised face: vertical gradient, outline, and a light top edge. */
-    private static void raised(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                              final int top, final int bottom, final int edge, final int gloss) {
-        g.fillGradient(x, y, x + w, y + h, top, bottom);
-        g.fill(x, y, x + w, y + 1, edge);
-        g.fill(x, y + h - 1, x + w, y + h, edge);
-        g.fill(x, y, x + 1, y + h, edge);
-        g.fill(x + w - 1, y, x + w, y + h, edge);
-        if (gloss != 0) {
-            g.fill(x + 1, y + 1, x + w - 1, y + 2, gloss);
-        }
-    }
-
-    /** A status light: a lit core with a dimmer halo, so it reads as a lamp and not a square. */
-    private static void led(final GuiGraphics g, final int x, final int y, final int color) {
-        final int halo = (color & 0x00FFFFFF) | 0x55000000;
-        g.fill(x, y - 1, x + 3, y + 4, halo);
-        g.fill(x - 1, y, x + 4, y + 3, halo);
-        g.fill(x, y, x + 3, y + 3, color);
-    }
-
-    @Override
-    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
-        final int x = leftPos;
-        final int y = topPos;
-        // Cabinet body.
-        g.fillGradient(x, y, x + imageWidth, y + imageHeight, mat.bodyTop(), mat.bodyBottom());
-        g.fill(x, y, x + imageWidth, y + 1, mat.bodyGloss());
-        g.fill(x, y + imageHeight - 1, x + imageWidth, y + imageHeight, mat.bodyEdge());
-        g.fill(x, y, x + 1, y + imageHeight, mat.bodyEdge());
-        g.fill(x + imageWidth - 1, y, x + imageWidth, y + imageHeight, mat.bodyEdge());
-        // Header plate.
-        raised(g, x + ServerRackLayout.HEADER_X, y + ServerRackLayout.HEADER_Y,
-                ServerRackLayout.HEADER_W, ServerRackLayout.HEADER_H, mat.headTop(), mat.headBottom(),
-                mat.bodyEdge(), mat.bodyGloss());
-        // The mounting rails the rows sit between.
-        final int railTop = y + ServerRackLayout.rowY(0) - 2;
-        final int railBottom = y + ServerRackLayout.rowY(ROWS - 1) + ServerRackLayout.SLOT + 2;
-        g.fill(x + 4, railTop, x + 7, railBottom, mat.rail());
-        g.fill(x + imageWidth - 7, railTop, x + imageWidth - 4, railBottom, mat.rail());
-
-        for (int row = 0; row < ROWS; row++) {
-            final int top = y + ServerRackLayout.rowY(row);
-            // Rack-unit ruler cell, recessed into the rail.
-            g.fill(x + ServerRackLayout.RULER_X, top, x + ServerRackLayout.RULER_X + 14,
-                    top + ServerRackLayout.SLOT, 0xFF141920);
-            g.fill(x + ServerRackLayout.RULER_X, top, x + ServerRackLayout.RULER_X + 14, top + 1, 0xFF262D36);
-            // Row separator, so eight units read as eight shelves.
-            g.fill(x + 8, top + ServerRackLayout.SLOT, x + imageWidth - 8,
-                    top + ServerRackLayout.SLOT + 1, mat.rowRule());
-            /*
-             * The server slot: a mounted unit's top row shows the machine; a covered row is part
-             * of the chassis above, so its cell reads as continuation rather than a free slot.
-             */
-            final boolean covered = coveredBy(row) >= 0;
-            if (covered) {
-                g.fill(x + ServerRackLayout.SERVER_X, top,
-                        x + ServerRackLayout.SERVER_X + ServerRackLayout.SLOT,
-                        top + ServerRackLayout.SLOT, mat.blockedFill());
-            } else {
-                raised(g, x + ServerRackLayout.SERVER_X, top, ServerRackLayout.SLOT,
-                        ServerRackLayout.SLOT, mat.srvTop(), mat.srvBottom(), mat.srvEdge(), 0xFF5B6673);
-            }
-            // The five hotswap slots of this row, colored by what the mounted chassis cables.
-            for (int column = 0; column < ServerRackLayout.FRONT_SLOTS; column++) {
-                final int slotX = x + ServerRackLayout.frontSlotX(column);
-                final RackLayout.SlotRole role =
-                        menu.frontSlotRole(row * RackLayout.SLOTS_PER_U + column);
-                switch (role) {
-                    case DRIVE -> {
-                        raised(g, slotX, top, ServerRackLayout.SLOT, ServerRackLayout.SLOT,
-                                mat.slotTop(), mat.slotBottom(), mat.slotEdge(), mat.slotGloss());
-                        // Two vent slits: the tray face of a drive caddy.
-                        g.fill(slotX + 3, top + 6, slotX + ServerRackLayout.SLOT - 3, top + 7, mat.vent());
-                        g.fill(slotX + 3, top + 11, slotX + ServerRackLayout.SLOT - 3, top + 12, mat.vent());
-                    }
-                    case GADGET -> {
-                        raised(g, slotX, top, ServerRackLayout.SLOT, ServerRackLayout.SLOT,
-                                mat.slotTop(), mat.slotBottom(), mat.slotEdge(), mat.slotGloss());
-                        // A gadget bay wears an amber sill instead of drive vents.
-                        g.fill(slotX + 2, top + ServerRackLayout.SLOT - 4,
-                                slotX + ServerRackLayout.SLOT - 2, top + ServerRackLayout.SLOT - 2,
-                                0xFF7A5C17);
-                    }
-                    case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> {
-                        g.fill(slotX, top, slotX + ServerRackLayout.SLOT,
-                                top + ServerRackLayout.SLOT, 0xFF141920);
-                        g.fill(slotX, top, slotX + ServerRackLayout.SLOT, top + 1, 0xFF262D36);
-                    }
-                }
-            }
-            // A rebuilding array draws its progress as a thin bar under the row's status text.
-            final int rebuild = menu.rebuildPermille(row);
-            if (rebuild > 0) {
-                final int barX = x + ServerRackLayout.STATUS_X;
-                final int barW = ServerRackLayout.PWR_X - ServerRackLayout.STATUS_X - 4;
-                final int barY = top + ServerRackLayout.SLOT - 4;
-                g.fill(barX, barY, barX + barW, barY + 2, 0xFF232834);
-                g.fill(barX, barY, barX + barW * rebuild / 1000, barY + 2, JsTechTheme.amber());
-            }
-            // The power switch on a mounted unit's top row, with the bay's own status lamp.
-            if (!covered && menu.serverInBay(row).getItem() instanceof ServerItem) {
-                final boolean on = menu.bayPowerOn(row);
-                final int px = x + ServerRackLayout.PWR_X;
-                final int py = top + ServerRackLayout.PWR_DY;
-                raised(g, px, py, ServerRackLayout.PWR_W, ServerRackLayout.PWR_H,
-                        on ? mat.pwrOnTop() : mat.pwrOffTop(), on ? mat.pwrOnBottom() : mat.pwrOffBottom(),
-                        on ? 0xFF3F6B4B : 0xFF6B3F3F, on ? 0xFF4F7A5B : 0xFF7A4F4F);
-                led(g, x + ServerRackLayout.STATUS_X - 8, top + 7,
-                        on ? JsTechTheme.green() : JsTechTheme.red());
-            }
-        }
-
-        // Player inventory, in the same material as the bays so the panel reads as one object.
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                raised(g, x + ServerRackLayout.INV_X + col * 18, y + ServerRackLayout.INV_Y + row * 18,
-                        18, 18, mat.slotTop(), mat.slotBottom(), mat.slotEdge(), mat.slotGloss());
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            raised(g, x + ServerRackLayout.INV_X + col * 18, y + ServerRackLayout.HOTBAR_Y,
-                    18, 18, mat.slotTop(), mat.slotBottom(), mat.slotEdge(), mat.slotGloss());
-        }
-    }
-
-    @Override
-    protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        final boolean linked = menu.networkLinked();
-        JsTechTheme.text(g, font, cabinetName(), 12, 11, JsTechTheme.text());
-        /*
-         * The header carries the cabinet summary beside the link pill: used rack units and whether
-         * the rack's rear cable sits on a network.
-         */
-        int usedU = 0;
-        for (int i = 0; i < ROWS; i++) {
-            final RackChassis chassis = ServerItem.chassisOf(menu.serverInBay(i));
-            if (chassis != null) {
-                usedU += chassis.heightU();
-            }
-        }
-        /*
-         * A cabinet past its thermal budget says so where the link state would sit: it is the thing
-         * the player most needs to know about this rack right now.
-         */
-        final int throttle = menu.throttlePercent();
-        final String pill = throttle < 100
-                ? usedU + "/" + ROWS + "U  THROTTLED " + throttle + "%"
-                : usedU + "/" + ROWS + "U  " + (linked ? "LINKED" : "OFFLINE");
-        final int pillColor = throttle < 100 ? JsTechTheme.amber()
-                : linked ? JsTechTheme.green() : JsTechTheme.red();
-        final int pillX = 232 - font.width(pill);
-        JsTechTheme.text(g, font, pill, pillX, 11, pillColor);
-        g.fill(pillX - 6, 11, pillX - 2, 15, pillColor);
-
-        for (int row = 0; row < ROWS; row++) {
-            final int top = ServerRackLayout.rowY(row);
-            JsTechTheme.textS(g, font, (row + 1) + "U", ServerRackLayout.RULER_X + 2, top + 6,
-                    JsTechTheme.dim());
-            for (int column = 0; column < ServerRackLayout.FRONT_SLOTS; column++) {
-                final RackLayout.SlotRole role =
-                        menu.frontSlotRole(row * RackLayout.SLOTS_PER_U + column);
-                if ((role == RackLayout.SlotRole.BLOCKED_NO_UNIT
-                        || role == RackLayout.SlotRole.BLOCKED_BUDGET)
-                        && menu.frontSlotStack(row * RackLayout.SLOTS_PER_U + column).isEmpty()) {
-                    JsTechTheme.textS(g, font, "x", ServerRackLayout.frontSlotX(column) + 7, top + 6,
-                            mat.blockedText());
-                }
-            }
-            final int covered = coveredBy(row);
-            if (covered >= 0) {
-                JsTechTheme.textS(g, font, "^ " + (covered + 1) + "U", ServerRackLayout.STATUS_X,
-                        top + 6, JsTechTheme.dim());
-                continue;
-            }
-            final ItemStack server = menu.serverInBay(row);
-            if (!(server.getItem() instanceof ServerItem)) {
-                continue;
-            }
-            final ComputerBuild build = ServerItem.build(server);
-            final String state;
-            final int color;
-            if (build == null) {
-                state = "INCOMPLETE";
-                color = JsTechTheme.red();
-            } else if (!menu.bayPowerOn(row)) {
-                state = "OFF";
-                color = JsTechTheme.dim();
-            } else if (linked) {
-                state = "ONLINE";
-                color = JsTechTheme.green();
-            } else {
-                state = "READY";
-                color = JsTechTheme.amber();
-            }
-            // An array replaces the plain machine state in the row: its health is what matters here.
-            final String raid = menu.raidLabel(row);
-            final int rebuild = menu.rebuildPermille(row);
-            if (rebuild > 0 && build != null) {
-                JsTechTheme.textS(g, font, "REBUILD " + rebuild / 10 + "%",
-                        ServerRackLayout.STATUS_X, top + 6, JsTechTheme.amber());
-            } else if (raid != null && build != null) {
-                final int raidColor = raid.endsWith("FAILED") ? JsTechTheme.red()
-                        : raid.endsWith("DEGRADED") ? JsTechTheme.amber() : JsTechTheme.green();
-                JsTechTheme.textS(g, font, raid, ServerRackLayout.STATUS_X, top + 6, raidColor);
-            } else {
-                JsTechTheme.textS(g, font, state, ServerRackLayout.STATUS_X, top + 6, color);
-            }
-            JsTechTheme.textS(g, font, "PWR", ServerRackLayout.PWR_X + 3,
-                    top + ServerRackLayout.PWR_DY + 2,
-                    menu.bayPowerOn(row) ? JsTechTheme.green() : JsTechTheme.red());
-        }
+    public MonitorFrameStyle.Geometry frameBounds() {
+        return new MonitorFrameStyle.Geometry(leftPos, topPos, imageWidth, imageHeight, topPos + imageHeight);
     }
 
     /*
-     * The rack GUI stays physical: it REPORTS the array's health but never configures it. A RAID
-     * controller is set up in its own firmware setup at power-on, like the real thing; see the
-     * machine's STORAGE page in the BIOS.
+     * The rack GUI stays physical: it REPORTS the array's health but never configures it. A RAID controller is set up
+     * in its own firmware setup at power-on, like the real thing; see the machine's STORAGE page in the BIOS.
      */
 
     @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        final double relX = mouseX - leftPos;
-        final double relY = mouseY - topPos;
-        for (int row = 0; row < ROWS; row++) {
-            if (coveredBy(row) >= 0 || !(menu.serverInBay(row).getItem() instanceof ServerItem)) {
-                continue;
-            }
-            final int top = ServerRackLayout.rowY(row) + ServerRackLayout.PWR_DY;
-            if (relX >= ServerRackLayout.PWR_X && relX < ServerRackLayout.PWR_X + ServerRackLayout.PWR_W
-                    && relY >= top && relY < top + ServerRackLayout.PWR_H) {
-                PacketDistributor.sendToServer(new RackBayPowerPayload(menu.rackPos(), row));
+        final int relX = (int) Math.floor(mouseX - leftPos);
+        final int relY = (int) Math.floor(mouseY - topPos);
+        final int row = rowAt(relX, relY);
+        final int top = row < 0 ? -1 : menu.unitTopOf(row);
+        if (isComputer(top)) {
+            // A click anywhere on a computer's faceplate picks it for the card, and still reaches the slot under it.
+            selected = top;
+            if (button == 0 && onPower(top, relX, relY)) {
+                send(new RackBayPowerPayload(menu.rackPos(), top));
                 return true;
             }
         }
@@ -381,110 +112,473 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
 
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
+        // The base binds the cabinet's era skin for the whole pass and renders the hovered slot's own tooltip.
+        super.render(g, mouseX, mouseY, partialTick);
+        renderRackTooltip(g, mouseX, mouseY);
+    }
+
+    /** The cabinet's own era, so its screen (labels included) wears that decade's skin. */
+    @Override
+    protected HardwareEra screenEra() {
+        return menu.rackEra();
+    }
+
+    @Override
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
+        final int x = leftPos;
+        final int y = topPos;
+        final HardwareEra era = menu.rackEra();
+        final int metal = CABINET.get().metal(era);
+        final int face = CABINET.get().face(era);
+        JsTechTheme.window(g, x, y, imageWidth, imageHeight);
+        drawHeader(g, x, y);
+        drawCabinet(g, x, y, metal);
+        int row = 0;
+        while (row < ROWS) {
+            final int ry = y + ServerRackLayout.rowY(row);
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.UNIT.with(row + 1)),
+                    x + ServerRackLayout.RULER_X, ry + 5, JsTechTheme.dim());
+            final IMountableRackUnit unit = IMountableRackUnit.of(menu.serverInBay(row));
+            if (unit == null) {
+                // An empty unit: a blank panel between the posts, nothing to click.
+                g.fill(x + ServerRackLayout.RAIL_L, ry, x + ServerRackLayout.RAIL_R - 2, ry + PITCH - 1,
+                        AssemblyPainter.mix(JsTechTheme.screen(), metal, 0.2f));
+                g.fill(x + ServerRackLayout.RAIL_L, ry, x + ServerRackLayout.RAIL_R - 2, ry + 1,
+                        AssemblyPainter.mix(JsTechTheme.line(), metal, 0.5f));
+                row++;
+                continue;
+            }
+            final int heightU = Math.max(1, Math.min(unit.heightU(), ROWS - row));
+            drawUnit(g, x, y, row, heightU, unit, face, mouseX, mouseY);
+            row += heightU;
+        }
+        // The unit the card is about, framed over the gap the units leave round each other.
+        final int top = selectedUnit();
+        if (top >= 0) {
+            final int h = menu.unitHeightAt(top) * PITCH;
+            final int ry = y + ServerRackLayout.rowY(top);
+            AssemblyPainter.frame(g, x + ServerRackLayout.RAIL_L - 1, ry - 1, x + ServerRackLayout.RAIL_R - 1, ry + h,
+                    JsTechTheme.accent());
+        }
+        drawCard(g, x, y, top);
         /*
-         * The cabinet's labels are drawn in its era's skin, and the default is always restored so an
-         * unthemed draw elsewhere still gets the frozen Standard look.
+         * The player inventory, drawn from the menu's own slots (everything past the rack's server and front slots),
+         * so a moved slot always draws its frame with it.
          */
-        JsTechTheme.bind(theme);
-        try {
-            super.render(g, mouseX, mouseY, partialTick);
-            renderTooltip(g, mouseX, mouseY);
-            renderRackTooltip(g, mouseX, mouseY);
-        } finally {
-            JsTechTheme.unbind();
+        for (int i = ServerRackMenu.RACK_SLOTS + ServerRackMenu.FRONT_SLOT_COUNT; i < menu.slots.size(); i++) {
+            final Slot slot = menu.slots.get(i);
+            if (slot.isActive()) {
+                JsTechTheme.slot(g, x + slot.x, y + slot.y);
+            }
         }
     }
 
-    private void renderRackTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {
-        final int relX = mouseX - leftPos;
-        final int relY = mouseY - topPos;
-        /*
-         * A chassis this cabinet does not seat says so the moment it is carried over a row, instead of
-         * the slot silently refusing it, so the player learns which cabinet it belongs in before letting go.
-         */
+    @Override
+    protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
+        // Every word is drawn with the cabinet in renderBg; the game's own title and inventory caption are not shown.
+    }
+
+    /**
+     * A front slot still holding what went in before its unit came out shows the stack and why the slot no longer
+     * takes anything, so the player knows to take it back out.
+     */
+    @Override
+    protected void renderTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {
+        final Slot slot = hoveredSlot;
+        final int index = slot == null ? -1 : frontIndex(slot);
+        // A unit or a drive held over a row or a bay that keeps it out says why, rather than nothing happening.
         final ItemStack carried = menu.getCarried();
-        final RackChassis carriedChassis =
-                ServerItem.chassisOf(carried);
-        final boolean refused = carriedChassis != null
-                && Minecraft.getInstance().level != null
-                && Minecraft.getInstance().level.getBlockEntity(menu.rackPos())
-                        instanceof ServerRackBlockEntity rack
-                && !rack.acceptsChassis(carried);
-        for (int row = 0; row < ROWS; row++) {
-            final int top = ServerRackLayout.rowY(row);
-            if (relY < top || relY >= top + ServerRackLayout.SLOT) {
-                continue;
+        if (slot != null && !carried.isEmpty() && !slot.mayPlace(carried)) {
+            final RackLayout.SlotRole role = index >= 0 ? menu.frontSlotRole(index) : null;
+            final Component why = role == RackLayout.SlotRole.BLOCKED_NO_UNIT
+                    ? GameText.component(ServerRackTexts.BLOCKED_NO_UNIT)
+                    : role == RackLayout.SlotRole.BLOCKED_BUDGET ? GameText.component(ServerRackTexts.BLOCKED_BUDGET)
+                    : menu.refusal(slot, carried);
+            if (why != null) {
+                g.renderComponentTooltip(font, List.of(why), mouseX, mouseY);
             }
-            if (refused) {
-                final String cabinet = switch (carriedChassis.rackType()) {
-                    case SERVER -> "a Server Rack";
-                    case SUPERCOMPUTER -> "a Supercomputer Rack";
-                    case AI -> "an AI Rack";
-                };
-                g.renderTooltip(font, Component.literal("This chassis belongs in " + cabinet), mouseX, mouseY);
-                return;
-            }
-            // Blocked front slots explain themselves (the mounted chassis derives the reason).
-            for (int column = 0; column < ServerRackLayout.FRONT_SLOTS; column++) {
-                final int slotX = ServerRackLayout.frontSlotX(column);
-                if (relX < slotX || relX >= slotX + ServerRackLayout.SLOT) {
-                    continue;
-                }
-                final int index = row * RackLayout.SLOTS_PER_U + column;
-                if (!menu.frontSlotStack(index).isEmpty()) {
-                    return; // the item's own tooltip already shows
-                }
-                if (menu.frontSlotRole(index) == RackLayout.SlotRole.DRIVE) {
-                    final String raid = menu.raidLabel(unitTopOf(row));
-                    if (raid != null) {
-                        g.renderTooltip(font, Component.literal("Array member slot - " + raid),
-                                mouseX, mouseY);
-                        return;
-                    }
-                }
-                if (menu.frontSlotRole(index) == RackLayout.SlotRole.GADGET) {
-                    /*
-                     * Point at where a controller is actually configured, so the player is never
-                     * left clicking a gadget hoping something opens.
-                     */
-                    g.renderTooltip(font, Component.literal(
-                            "Gadget bay - a RAID Controller is configured in the machine's firmware (STORAGE)"),
-                            mouseX, mouseY);
-                    return;
-                }
-                final String tip = switch (menu.frontSlotRole(index)) {
-                    case DRIVE -> "Drive bay - hotswap a disk here";
-                    case GADGET -> "Gadget bay - RAID controller or cache card";
-                    case BLOCKED_NO_UNIT -> "Blocked - no unit in this row cables these slots";
-                    case BLOCKED_BUDGET -> "Blocked - the chassis does not cable this slot";
-                };
-                g.renderTooltip(font, Component.literal(tip), mouseX, mouseY);
-                return;
-            }
-            // The unit's status area shows the machine summary.
-            if (relX >= ServerRackLayout.STATUS_X && relX < ServerRackLayout.PWR_X && coveredBy(row) < 0
-                    && menu.serverInBay(row).getItem() instanceof ServerItem) {
-                final ItemStack server = menu.serverInBay(row);
-                final List<Component> lines = new ArrayList<>();
-                final UUID uuid = ServerItem.nodeUuid(server);
-                lines.add(Component.literal(uuid != null
-                        ? "Node " + uuid.toString().substring(0, 8) : "Unassigned node"));
-                final RackChassis chassis = ServerItem.chassisOf(server);
-                if (chassis != null) {
-                    lines.add(Component.literal(chassis.heightU() + "U - " + chassis.driveSlots()
-                            + " drive + " + chassis.gadgetSlots() + " gadget bays")
-                            .withStyle(ChatFormatting.GRAY));
-                }
-                if (ServerItem.build(server) == null) {
-                    lines.add(Component.literal("Incomplete - needs a board + PSU")
-                            .withStyle(ChatFormatting.RED));
-                } else if (!menu.networkLinked()) {
-                    lines.add(Component.literal("Rack cable not on a network")
-                            .withStyle(ChatFormatting.YELLOW));
-                }
+            return;
+        }
+        if (index >= 0 && slot.hasItem() && menu.getCarried().isEmpty()) {
+            final RackLayout.SlotRole role = menu.frontSlotRole(index);
+            if (role == RackLayout.SlotRole.BLOCKED_NO_UNIT || role == RackLayout.SlotRole.BLOCKED_BUDGET) {
+                final List<Component> lines = new ArrayList<>(getTooltipFromContainerItem(slot.getItem()));
+                lines.add(GameText.component(role == RackLayout.SlotRole.BLOCKED_NO_UNIT
+                        ? ServerRackTexts.BLOCKED_NO_UNIT : ServerRackTexts.BLOCKED_BUDGET).withStyle(ChatFormatting.RED));
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
                 return;
             }
         }
+        super.renderTooltip(g, mouseX, mouseY);
+    }
+
+    /* The header: the cabinet's name, and beside the link lamp the rack units in use and the cabinet's state. */
+    private void drawHeader(final GuiGraphics g, final int x, final int y) {
+        JsTechTheme.headerBar(g, x + ServerRackLayout.HEADER_X, y + ServerRackLayout.HEADER_Y, ServerRackLayout.HEADER_W);
+        JsTechTheme.text(g, font, title.getString().toUpperCase(Locale.ROOT), x + ServerRackLayout.TITLE_X,
+                y + ServerRackLayout.TITLE_Y, JsTechTheme.accent());
+        final int usedU = RackLayout.usedU(menu.mountedUnits());
+        /*
+         * A cabinet past its thermal budget says so where the link state would sit: it is the thing the player most
+         * needs to know about this rack right now.
+         */
+        final int throttle = menu.throttlePercent();
+        final boolean linked = menu.networkLinked();
+        final String pill = GameText.resolve(throttle < 100 ? ServerRackTexts.THROTTLED.with(usedU, ROWS, throttle)
+                : (linked ? ServerRackTexts.LINKED : ServerRackTexts.OFFLINE).with(usedU, ROWS));
+        final int colour = throttle < 100 ? JsTechTheme.amber() : linked ? JsTechTheme.green() : JsTechTheme.red();
+        final int pillX = x + ServerRackLayout.HEADER_X + ServerRackLayout.HEADER_W - 4 - font.width(pill);
+        JsTechTheme.text(g, font, pill, pillX, y + ServerRackLayout.TITLE_Y, colour);
+        AssemblyPainter.drawLamp(g, pillX - 7, y + ServerRackLayout.TITLE_Y + 3, colour, true);
+    }
+
+    /* The cabinet's back between the posts, and the two posts with their holes. */
+    private void drawCabinet(final GuiGraphics g, final int x, final int y, final int metal) {
+        final int top = y + ServerRackLayout.ROW_Y0;
+        final int bottom = top + ROWS * PITCH;
+        g.fill(x + ServerRackLayout.CABINET_X, top - 2, x + ServerRackLayout.RAIL_R + 2, bottom,
+                AssemblyPainter.mix(JsTechTheme.screen(), metal, 0.4f));
+        final int post = AssemblyPainter.mix(metal, JsTechTheme.text(), 0.1f);
+        for (final int postX : new int[] {ServerRackLayout.RAIL_L - ServerRackLayout.POST_W,
+                ServerRackLayout.RAIL_R - 2}) {
+            g.fill(x + postX, top - 2, x + postX + ServerRackLayout.POST_W, bottom, post);
+            for (int row = 0; row < ROWS; row++) {
+                for (final int dy : POST_HOLES) {
+                    final int hy = top + row * PITCH + dy;
+                    g.fill(x + postX + 1, hy, x + postX + 3, hy + 2, JsTechTheme.screen());
+                }
+            }
+        }
+    }
+
+    /*
+     * One mounted unit's faceplate: its own slot, the drive caddies its chassis cables, the vents over
+     * the rest, and on a computer the power button with the bay's lamp and, while its array rebuilds, the progress.
+     */
+    private void drawUnit(final GuiGraphics g, final int x, final int y, final int row, final int heightU,
+                          final IMountableRackUnit unit, final int face, final int mouseX, final int mouseY) {
+        final int ry = y + ServerRackLayout.rowY(row);
+        final int h = heightU * PITCH;
+        final int left = x + ServerRackLayout.RAIL_L;
+        final int right = x + ServerRackLayout.RAIL_R - 2;
+        final int sheen = CABINET.get().sheen();
+        g.fill(left, ry, right, ry + h - 1, face);
+        g.fill(left, ry, right, ry + 1, AssemblyPainter.mix(face, sheen, 0.18f));
+        JsTechTheme.slot(g, x + ServerRackLayout.serverItemX(), y + ServerRackLayout.itemY(row));
+        final boolean computer = isComputer(row);
+        final boolean on = computer && menu.bayPowerOn(row);
+        // The vents across what the chassis does not cable, between its bays and its power button.
+        final int cabled = unit.driveSlots();
+        final int ventLeft = x + ServerRackLayout.frontItemX(Math.min(ServerRackLayout.FRONT_SLOTS, cabled)) + 2;
+        final int ventRight = x + ServerRackLayout.PWR_X - 2;
+        if (ventLeft < ventRight - 4) {
+            final int vent = AssemblyPainter.mix(face, sheen, 0.12f);
+            for (int vy = ry + 3; vy < ry + h - 3; vy += 2) {
+                g.fill(ventLeft, vy, ventRight, vy + 1, vent);
+            }
+            final int rebuild = computer ? menu.rebuildPermille(row) : 0;
+            if (rebuild > 0) {
+                g.fill(ventLeft, ry + h - 4, ventRight, ry + h - 2, JsTechTheme.track());
+                g.fill(ventLeft, ry + h - 4, ventLeft + (ventRight - ventLeft) * rebuild / 1000, ry + h - 2,
+                        JsTechTheme.amber());
+            }
+        }
+        for (int r = row; r < row + heightU; r++) {
+            for (int column = 0; column < ServerRackLayout.FRONT_SLOTS; column++) {
+                drawBay(g, x, y, r, column, face, on);
+            }
+        }
+        if (computer) {
+            final int px = x + ServerRackLayout.PWR_X;
+            final int py = y + ServerRackLayout.pwrY(row, heightU);
+            JsTechTheme.button(g, px, py, ServerRackLayout.PWR_W, ServerRackLayout.PWR_H,
+                    hover(mouseX, mouseY, ServerRackLayout.PWR_X, ServerRackLayout.pwrY(row, heightU),
+                            ServerRackLayout.PWR_W, ServerRackLayout.PWR_H));
+            final UnitState state = stateOf(row);
+            AssemblyPainter.drawLamp(g, px + ServerRackLayout.PWR_LAMP_DX, py + 4, state.lamp(), on);
+            JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.POWER), px + ServerRackLayout.PWR_LABEL_DX,
+                    py + 3, JsTechTheme.text());
+        }
+    }
+
+    /*
+     * One front-panel bay of a unit: a drive caddy with its handle and its lamp, the shape of a drive while it is
+     * empty; a bay the chassis does not cable shows only while it still holds
+     * something, with a red lamp.
+     */
+    private void drawBay(final GuiGraphics g, final int x, final int y, final int row, final int column,
+                         final int face, final boolean on) {
+        final int index = row * RackLayout.SLOTS_PER_U + column;
+        final int cx = x + ServerRackLayout.frontItemX(column);
+        final int cy = y + ServerRackLayout.itemY(row);
+        final ItemStack stack = menu.frontSlotStack(index);
+        switch (menu.frontSlotRole(index)) {
+            case DRIVE -> {
+                JsTechTheme.slot(g, cx, cy);
+                if (stack.isEmpty()) {
+                    AssemblyPainter.drawGhost(g, cx, cy, SeatKind.DISK, JsTechTheme.dim(), GHOST_ALPHA);
+                }
+                g.fill(cx, cy + 14, cx + 16, cy + 16, AssemblyPainter.mix(face, JsTechTheme.text(), 0.2f));
+                final boolean lit = on && !stack.isEmpty();
+                g.fill(cx + 13, cy + 1, cx + 15, cy + 3,
+                        lit ? JsTechTheme.green() : AssemblyPainter.mix(JsTechTheme.green(), JsTechTheme.screen(), 0.75f));
+            }
+            case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> {
+                if (!stack.isEmpty()) {
+                    JsTechTheme.slot(g, cx, cy);
+                    g.fill(cx + 13, cy + 1, cx + 15, cy + 3, JsTechTheme.red());
+                }
+            }
+        }
+    }
+
+    /* The card of the selected unit: its rack unit, its name, then a line each for what the player reads off it. */
+    private void drawCard(final GuiGraphics g, final int x, final int y, final int top) {
+        final int cx = x + ServerRackLayout.CARD_X;
+        final int cy = y + ServerRackLayout.CARD_Y;
+        final int w = ServerRackLayout.CARD_W;
+        JsTechTheme.panel(g, cx, cy, w, ServerRackLayout.CARD_H);
+        JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.UNIT.with(Math.max(top, 0) + 1)), cx + 3, cy + 3,
+                JsTechTheme.dim());
+        final String name = top < 0 ? GameText.resolve(ServerRackTexts.NO_UNIT) : unitName(top);
+        JsTechTheme.text(g, font, Texts.clip(font, name, w - 6), cx + 3, cy + 10,
+                top < 0 ? JsTechTheme.dim() : JsTechTheme.text());
+        g.fill(cx + 3, cy + 21, cx + w - 3, cy + 22, JsTechTheme.line());
+        final List<CardLine> lines = cardLines(top);
+        for (int i = 0; i < lines.size(); i++) {
+            final CardLine line = lines.get(i);
+            final int ly = y + ServerRackLayout.cardLineY(i);
+            JsTechTheme.textS(g, font, GameText.resolve(line.label()), cx + 3, ly, JsTechTheme.dim());
+            if (font.width(line.value()) <= w - 6) {
+                JsTechTheme.textRight(g, font, line.value(), cx + w - 3, ly + 7, line.colour());
+            } else {
+                final String small = JsTechTheme.widthS(font, line.value()) <= w - 6 ? line.value()
+                        : Texts.clip(font, line.value(), (int) ((w - 6) / JsTechTheme.small()));
+                JsTechTheme.textSRight(g, font, small, cx + w - 3, ly + 8, line.colour());
+            }
+        }
+    }
+
+    /* What the card says of the unit topped at top, or its empty lines when no computer is picked. */
+    private List<CardLine> cardLines(final int top) {
+        if (top < 0) {
+            final int text = JsTechTheme.text();
+            return List.of(new CardLine(ServerRackTexts.CARD_STATE, "--", text),
+                    new CardLine(ServerRackTexts.CARD_BOOT, "--", text),
+                    new CardLine(ServerRackTexts.CARD_SYSTEM, "--", text),
+                    new CardLine(ServerRackTexts.CARD_NETWORK, "--", text));
+        }
+        final UnitState state = stateOf(top);
+        final int disk = menu.bootDisk(top);
+        final OsDef system = menu.system(top);
+        final boolean linked = menu.networkLinked();
+        return List.of(
+                new CardLine(ServerRackTexts.CARD_STATE, GameText.resolve(state.word()), state.colour()),
+                new CardLine(ServerRackTexts.CARD_BOOT, disk < 0 ? "--" : GameText.resolve(ServerRackTexts.BOOT_DISK
+                        .with(disk)), disk < 0 ? JsTechTheme.dim() : JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_SYSTEM, system == null ? GameText.resolve(ServerRackTexts.NONE)
+                        : system.displayName(), system == null ? JsTechTheme.dim() : JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_NETWORK, linked ? GameText.resolve(ServerRackTexts.NETWORK_LINKED)
+                        : "--", linked ? JsTechTheme.accent() : JsTechTheme.dim()),
+                raidLine(top),
+                kvmLine(top));
+    }
+
+    /* The array: rebuilding with its progress, its level and health, or none. */
+    private CardLine raidLine(final int top) {
+        final int rebuild = menu.rebuildPermille(top);
+        if (rebuild > 0) {
+            return new CardLine(ServerRackTexts.CARD_RAID, GameText.resolve(ServerRackTexts.REBUILD.with(rebuild / 10)),
+                    JsTechTheme.amber());
+        }
+        final Text raid = menu.raidLabel(top);
+        if (raid == null) {
+            return new CardLine(ServerRackTexts.CARD_RAID, GameText.resolve(ServerRackTexts.NONE), JsTechTheme.dim());
+        }
+        final int colour = switch (menu.raidHealth(top)) {
+            case FAILED -> JsTechTheme.red();
+            case DEGRADED -> JsTechTheme.amber();
+            case NONE, HEALTHY -> JsTechTheme.green();
+        };
+        return new CardLine(ServerRackTexts.CARD_RAID, GameText.resolve(raid), colour);
+    }
+
+    /* What a linked monitor shows: this unit, another, or nothing when two machines share the rack with no switch. */
+    private CardLine kvmLine(final int top) {
+        final int screen = menu.screenRow();
+        if (screen == top) {
+            return new CardLine(ServerRackTexts.CARD_KVM, GameText.resolve(ServerRackTexts.THIS_UNIT), JsTechTheme.text());
+        }
+        if (screen < 0) {
+            return new CardLine(ServerRackTexts.CARD_KVM, GameText.resolve(ServerRackTexts.NO_SWITCH),
+                    JsTechTheme.amber());
+        }
+        return new CardLine(ServerRackTexts.CARD_KVM, GameText.resolve(ServerRackTexts.SHOWS_UNIT.with(screen + 1)),
+                JsTechTheme.dim());
+    }
+
+    /* A computer's state as its lamp and the card show it: unbuilt, switched off, on the network, or up alone. */
+    private UnitState stateOf(final int top) {
+        final ComputerBuild build = ServerItem.build(menu.serverInBay(top));
+        if (build == null) {
+            return new UnitState(ServerRackTexts.INCOMPLETE, JsTechTheme.red(), JsTechTheme.red());
+        }
+        if (!menu.bayPowerOn(top)) {
+            return new UnitState(ServerRackTexts.OFF, JsTechTheme.dim(), JsTechTheme.amber());
+        }
+        return menu.networkLinked() ? new UnitState(ServerRackTexts.ONLINE, JsTechTheme.green(), JsTechTheme.green())
+                : new UnitState(ServerRackTexts.READY, JsTechTheme.amber(), JsTechTheme.amber());
+    }
+
+    /* The name the player gave the machine, else its item's. */
+    private String unitName(final int top) {
+        final ItemStack server = menu.serverInBay(top);
+        final String custom = ServerItem.customName(server);
+        return custom.isEmpty() ? server.getHoverName().getString() : custom;
+    }
+
+    private void renderRackTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {
+        if (hoveredSlot != null && hoveredSlot.hasItem()) {
+            return; // the item's own tooltip already shows
+        }
+        final int relX = mouseX - leftPos;
+        final int relY = mouseY - topPos;
+        if (relX < ServerRackLayout.CABINET_X || relX >= ServerRackLayout.RAIL_R + 2 || relY < ServerRackLayout.ROW_Y0
+                || relY >= ServerRackLayout.ROW_Y0 + ROWS * PITCH) {
+            return;
+        }
+        /*
+         * A chassis this cabinet does not seat says so the moment it is carried over the cabinet, instead of the slot
+         * silently refusing it, so the player learns which cabinet it belongs in before letting go.
+         */
+        final ItemStack carried = menu.getCarried();
+        if (!carried.isEmpty()) {
+            final RackChassis carriedChassis = ServerItem.chassisOf(carried);
+            final ServerRackBlockEntity rack = Minecraft.getInstance().level != null
+                    && Minecraft.getInstance().level.getBlockEntity(menu.rackPos()) instanceof ServerRackBlockEntity found
+                    ? found : null;
+            if (carriedChassis != null && rack != null && !rack.acceptsChassis(carried)) {
+                // The right kind of cabinet refuses only a chassis of a later era than its own.
+                final TextKey belongs = carriedChassis.rackType() == rack.rackType() ? ServerRackTexts.NEWER_THAN_RACK
+                        : switch (carriedChassis.rackType()) {
+                            case SERVER -> ServerRackTexts.BELONGS_IN_SERVER_RACK;
+                            case SUPERCOMPUTER -> ServerRackTexts.BELONGS_IN_SUPERCOMPUTER_RACK;
+                            case AI -> ServerRackTexts.BELONGS_IN_AI_RACK;
+                        };
+                g.renderTooltip(font, GameText.component(belongs), mouseX, mouseY);
+            }
+            return;
+        }
+        // An empty bay explains itself: what goes in it, and whether it belongs to an array.
+        final int index = hoveredSlot == null ? -1 : frontIndex(hoveredSlot);
+        if (index >= 0) {
+            final RackLayout.SlotRole role = menu.frontSlotRole(index);
+            if (role == RackLayout.SlotRole.DRIVE) {
+                final int top = menu.unitTopOf(index / RackLayout.SLOTS_PER_U);
+                final Text raid = top < 0 ? null : menu.raidLabel(top);
+                g.renderTooltip(font, GameText.component(raid != null ? ServerRackTexts.ARRAY_MEMBER.with(raid)
+                        : ServerRackTexts.DRIVE_BAY.text()), mouseX, mouseY);
+            }
+            return;
+        }
+        // The rest of a computer's faceplate shows the machine's summary.
+        final int row = rowAt(relX, relY);
+        final int top = row < 0 ? -1 : menu.unitTopOf(row);
+        if (hoveredSlot != null || !isComputer(top) || onPower(top, relX, relY)) {
+            return;
+        }
+        final ItemStack server = menu.serverInBay(top);
+        final List<Component> lines = new ArrayList<>();
+        final UUID uuid = ServerItem.nodeUuid(server);
+        lines.add(GameText.component(uuid != null ? ServerRackTexts.NODE.with(uuid.toString().substring(0, 8))
+                : ServerRackTexts.UNASSIGNED_NODE.text()));
+        final RackChassis chassis = ServerItem.chassisOf(server);
+        if (chassis != null) {
+            lines.add(GameText.component(ServerRackTexts.CHASSIS.with(chassis.heightU(), chassis.driveSlots()))
+                    .withStyle(ChatFormatting.GRAY));
+        }
+        if (ServerItem.build(server) == null) {
+            lines.add(GameText.component(ServerRackTexts.NEEDS_BOARD).withStyle(ChatFormatting.RED));
+        } else if (!menu.networkLinked()) {
+            lines.add(GameText.component(ServerRackTexts.NOT_ON_NETWORK).withStyle(ChatFormatting.YELLOW));
+        }
+        g.renderComponentTooltip(font, lines, mouseX, mouseY);
+    }
+
+    /* The selected computer, or the topmost one when the selection holds none any more; -1 when the rack has none. */
+    private int selectedUnit() {
+        if (isComputer(selected)) {
+            return selected;
+        }
+        for (int row = 0; row < ROWS; row++) {
+            if (isComputer(row)) {
+                selected = row;
+                return row;
+            }
+        }
+        return -1;
+    }
+
+    /* Whether a computer is mounted with its top at row. */
+    private boolean isComputer(final int row) {
+        return row >= 0 && row < ROWS && menu.serverInBay(row).getItem() instanceof ServerItem;
+    }
+
+    /* The rack unit under a window-relative point between the posts, or -1. */
+    private static int rowAt(final int relX, final int relY) {
+        if (relX < ServerRackLayout.RAIL_L || relX >= ServerRackLayout.RAIL_R - 2 || relY < ServerRackLayout.ROW_Y0) {
+            return -1;
+        }
+        final int row = (relY - ServerRackLayout.ROW_Y0) / PITCH;
+        return row < ROWS ? row : -1;
+    }
+
+    /* Whether a window-relative point is on the power button of the computer topped at top. */
+    private boolean onPower(final int top, final int relX, final int relY) {
+        final int py = ServerRackLayout.pwrY(top, menu.unitHeightAt(top));
+        return relX >= ServerRackLayout.PWR_X && relX < ServerRackLayout.PWR_X + ServerRackLayout.PWR_W
+                && relY >= py && relY < py + ServerRackLayout.PWR_H;
+    }
+
+    /* The front-panel index of one of the menu's slots, or -1 when it is not a front slot. */
+    private static int frontIndex(final Slot slot) {
+        final int index = slot.index - ServerRackMenu.RACK_SLOTS;
+        return index >= 0 && index < ServerRackMenu.FRONT_SLOT_COUNT ? index : -1;
+    }
+
+    /**
+     * The cabinet's metal and its units' faceplates, one of each per era, and the light their edges catch.
+     */
+    private record Cabinet(int vintageMetal, int legacyMetal, int transitionMetal, int standardMetal, int advancedMetal,
+                           int vintageFace, int legacyFace, int transitionFace, int standardFace, int advancedFace,
+                           int sheen) {
+
+        int metal(final HardwareEra era) {
+            return switch (era) {
+                case VINTAGE -> vintageMetal;
+                case LEGACY -> legacyMetal;
+                case TRANSITION -> transitionMetal;
+                case ADVANCED, EXA, SINGULARITY -> advancedMetal;
+                default -> standardMetal;
+            };
+        }
+
+        int face(final HardwareEra era) {
+            return switch (era) {
+                case VINTAGE -> vintageFace;
+                case LEGACY -> legacyFace;
+                case TRANSITION -> transitionFace;
+                case ADVANCED, EXA, SINGULARITY -> advancedFace;
+                default -> standardFace;
+            };
+        }
+    }
+
+    /** One line of the card: its label, and its value in its colour. */
+    private record CardLine(TextKey label, String value, int colour) {
+    }
+
+    /** A computer's state: its word on the card and that word's colour, and its power lamp's colour. */
+    private record UnitState(TextKey word, int colour, int lamp) {
     }
 }

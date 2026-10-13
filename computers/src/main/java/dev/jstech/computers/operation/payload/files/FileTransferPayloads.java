@@ -7,29 +7,37 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.client.os.DesktopCopies;
+import dev.jstech.computers.machine.FileCopyJobs;
+import dev.jstech.computers.operation.payload.CancelCopyPayload;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CopyFilePayload;
+import dev.jstech.computers.operation.payload.CopyProgressPayload;
 import dev.jstech.computers.operation.payload.MediumTransferPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
+import dev.jstech.computers.operation.payload.PauseCopyPayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
-import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.VolumeLabel;
+import dev.jstech.computers.os.fs.CopyTiming;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
-import java.util.Locale;
+import java.util.Optional;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import org.jetbrains.annotations.Nullable;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.NET_ROOT;
 import static dev.jstech.computers.operation.payload.files.FileAccess.commitMedia;
-import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
+import static dev.jstech.computers.operation.payload.files.FileAccess.kindOf;
 import static dev.jstech.computers.operation.payload.files.FileAccess.localDos;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaFreeWeight;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
@@ -39,6 +47,7 @@ import static dev.jstech.computers.operation.payload.files.FileAccess.netShell;
 import static dev.jstech.computers.operation.payload.files.FileAccess.resolveDatKey;
 import static dev.jstech.computers.operation.payload.files.FileAccess.transferDatToMedium;
 import static dev.jstech.computers.operation.payload.files.FileAccess.volumeKey;
+import static dev.jstech.computers.operation.payload.files.FileAccess.volumeOf;
 import static dev.jstech.computers.operation.payload.interactor.NetworkInteractorPayloads.sendNetworkInteractor;
 import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHost;
 
@@ -46,6 +55,9 @@ import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHo
  * The payloads that copy and move files between drives, move a data file onto a medium and rename a volume.
  */
 public final class FileTransferPayloads {
+
+    /** How many names a copy tries ("name", "name - Copy", "name - Copy (2)" and on) before it gives up. */
+    private static final int MAX_COPY_NAMES = 100;
 
     private FileTransferPayloads() {
     }
@@ -60,19 +72,49 @@ public final class FileTransferPayloads {
                 ComputerAccess.machine(MediumTransferPayload::hostPos), FileTransferPayloads::handleMediumTransfer);
         ComputerAccess.accept(registrar, RenameVolumePayload.TYPE, RenameVolumePayload.STREAM_CODEC,
                 ComputerAccess.machine(RenameVolumePayload::host), FileTransferPayloads::handleRenameVolume);
+        ComputerAccess.accept(registrar, CancelCopyPayload.TYPE, CancelCopyPayload.STREAM_CODEC,
+                ComputerAccess.machine(CancelCopyPayload::hostPos),
+                (payload, player, level) -> FileCopyJobs.cancel(level, payload.hostPos(), payload.job()));
+        ComputerAccess.accept(registrar, PauseCopyPayload.TYPE, PauseCopyPayload.STREAM_CODEC,
+                ComputerAccess.machine(PauseCopyPayload::hostPos),
+                (payload, player, level) -> FileCopyJobs.pause(level, payload.hostPos(), payload.pause()));
+        registrar.playToClient(CopyProgressPayload.TYPE, CopyProgressPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) -> DesktopCopies.accept(payload)));
     }
 
     /**
-     * Copies a file within a volume or across to another one; the source stays. A projected file has no
-     * bytes and is refused by the read; a name already taken gets a numbered copy rather than overwriting.
+     * Copies a file within a volume or across to another one; the source stays. The copy takes the time its size
+     * and the slower of the two volumes say, or the slowest cable on the way to another machine, and the file arrives
+     * when that time is up.
      */
     private static void handleCopyFile(final CopyFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
+        copy(level, player, payload.hostPos(), payload.src(), payload.destDir());
+    }
+
+    /**
+     * Starts copying the file at {@code src} into {@code destDir} on the machine at {@code host} for {@code player},
+     * which is what pasting a copy in the explorer does: the file arrives when the copy's time is up.
+     */
+    public static void copy(final ServerLevel level, final ServerPlayer player, final BlockPos host,
+                            final String src, final String destDir) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
             return;
         }
-        final String src = payload.src();
-        final String destDir = payload.destDir();
+        final FileCopyJobs.Copy copy = CopyPlans.plan(level, computer, CopyProgressPayload.COPY, src, destDir);
+        FileCopyJobs.start(level, host, player, copy, CopyTiming.ticks(copy.sizeMb(), copy.mbPerSecond()),
+                () -> copyNow(level, host, src, destDir));
+    }
+
+    /**
+     * The copy carried out: a projected file has no bytes and is refused by the read; a name already taken gets a
+     * numbered copy rather than overwriting.
+     */
+    private static void copyNow(final ServerLevel level, final BlockPos host, final String src,
+                                final String destDir) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
+            return;
+        }
         if (src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
             /*
              * A copy to or from another machine's share goes through the shell, which reads where
@@ -88,82 +130,67 @@ public final class FileTransferPayloads {
             }
             return;
         }
-        final boolean srcMedia = src.startsWith("media:");
-        final boolean dstMedia = destDir.startsWith("media:");
-        final ItemStack srcVol =
-                srcMedia ? mediaStackFor(level, computer, src) : computer.systemDisk();
-        final ItemStack dstVol =
-                dstMedia ? mediaStackFor(level, computer, destDir) : computer.systemDisk();
-        if (srcVol.isEmpty() || dstVol.isEmpty()) {
-            return;
-        }
-        final String realSrc = srcMedia ? mediaSubPath(src) : src;
-        final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
-        final var read = DiskFilesystem.read(srcVol, realSrc);
-        if (read.isEmpty()) {
-            return;
-        }
-        final String name = realSrc.contains("/") ? realSrc.substring(realSrc.lastIndexOf('/') + 1) : realSrc;
-        final int dot = name.lastIndexOf('.');
-        final String stem = dot > 0 ? name.substring(0, dot) : name;
-        final String ext = dot >= 0 && dot < name.length() - 1
-                ? name.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-        final FileType type = FileType.of(ext);
-        final FilesystemKind dstKind = dstMedia
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
-        // "name - Copy.ext", then "name - Copy (2).ext", the way a desktop names a duplicate.
-        String candidate = name;
-        final String suffix = ext.isEmpty() ? "" : "." + ext;
-        for (int n = 1; n < 100; n++) {
-            final String path = realDstDir.isEmpty() ? candidate : realDstDir + "/" + candidate;
-            if (!DiskFilesystem.exists(dstVol, path)) {
-                break;
-            }
-            candidate = stem + (n == 1 ? " - Copy" : " - Copy (" + n + ")") + suffix;
-        }
-        final String destPath = realDstDir.isEmpty() ? candidate : realDstDir + "/" + candidate;
-        final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
-        if (DiskFilesystem.write(
-                dstVol, destPath, type, read.get(), free, dstKind, level.getGameTime())
-                == DiskFilesystem.WriteResult.OK) {
-            if (dstMedia) {
-                commitMedia(level, computer, destDir);
-            } else {
-                computer.setChanged();
-            }
-        }
+        transfer(level, computer, src, destDir, true);
     }
 
+    /**
+     * Moves a file. Within one volume it is only renamed, at once; across to another it is copied there and taken
+     * away here, which takes the time a copy between those two volumes does.
+     */
     private static void handleMoveFile(final MoveFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
+        move(level, player, payload.hostPos(), payload.srcPath(), payload.destDir(), payload.replace());
+    }
+
+    /** Moves a file on the computer at {@code host}, for {@code player}, as a cut and paste in its window does. */
+    public static void move(final ServerLevel level, final ServerPlayer player, final BlockPos host,
+                            final String src, final String destDir) {
+        move(level, player, host, src, destDir, false);
+    }
+
+    /**
+     * The same, where {@code replace} says whether a file of the same name already in {@code destDir} gives way to
+     * the one moved: the player was asked and chose to replace it. Without it a name taken there leaves the file
+     * where it was.
+     */
+    public static void move(final ServerLevel level, final ServerPlayer player, final BlockPos host,
+                            final String src, final String destDir, final boolean replace) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
             return;
         }
-        final String src = payload.srcPath();
-        final String destDir = payload.destDir();
+        if (volumeKey(src).equals(volumeKey(destDir)) || src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
+            moveNow(level, host, src, destDir, replace);
+            return;
+        }
+        final FileCopyJobs.Copy move = CopyPlans.plan(level, computer, CopyProgressPayload.MOVE, src, destDir);
+        FileCopyJobs.start(level, host, player, move, CopyTiming.ticks(move.sizeMb(), move.mbPerSecond()),
+                () -> moveNow(level, host, src, destDir, replace));
+    }
+
+    private static void moveNow(final ServerLevel level, final BlockPos host, final String src,
+                                final String destDir, final boolean replace) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
+            return;
+        }
         if (src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
             // A file on another machine is copied, not moved: the copy is what the explorer offers.
             return;
         }
-        final boolean srcMedia = src.startsWith("media:");
-        final boolean dstMedia = destDir.startsWith("media:");
-        final ItemStack srcVol =
-                srcMedia ? mediaStackFor(level, computer, src) : computer.systemDisk();
-        final ItemStack dstVol =
-                dstMedia ? mediaStackFor(level, computer, destDir) : computer.systemDisk();
-        if (srcVol.isEmpty() || dstVol.isEmpty()) {
-            return;
-        }
-        final String realSrc = srcMedia ? mediaSubPath(src) : src;
-        final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
-        final FilesystemKind srcKind = srcMedia
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
         if (volumeKey(src).equals(volumeKey(destDir))) {
             // Same volume, an in-place move.
-            if (DiskFilesystem.move(
-                    srcVol, realSrc, realDstDir, srcKind)) {
+            final ItemStack srcVol = volumeOf(level, computer, src);
+            if (srcVol.isEmpty()) {
+                return;
+            }
+            final boolean srcMedia = src.startsWith("media:");
+            final String realSrc = srcMedia ? mediaSubPath(src) : src;
+            final String realDir = destDir.startsWith("media:") ? mediaSubPath(destDir) : destDir;
+            final String target = joined(realDir, realSrc.substring(realSrc.lastIndexOf('/') + 1));
+            // A file put back where it already is takes nothing's place, least of all its own.
+            if (replace && !target.equals(realSrc)) {
+                DiskFilesystem.delete(srcVol, target);
+            }
+            if (DiskFilesystem.move(srcVol, realSrc, realDir, kindOf(computer, src))) {
                 if (srcMedia) {
                     commitMedia(level, computer, src);
                 } else {
@@ -174,38 +201,92 @@ public final class FileTransferPayloads {
         }
         /*
          * Cross-volume (disk <-> media): copy the file then delete the source. Directories are
-         * not copied across volumes here.
+         * not copied across volumes here. A name already taken at the destination is not moved over, because the
+         * source is deleted after the write and the file written over would be lost; when the player chose to
+         * replace it, it is set aside first and put back if the write does not go through.
          */
-        final var read = DiskFilesystem.read(srcVol, realSrc);
-        if (read.isEmpty()) {
+        final Displaced displaced = replace ? displace(level, computer, src, destDir) : null;
+        if (transfer(level, computer, src, destDir, false) == null) {
+            if (displaced != null) {
+                displaced.restore(level, computer, destDir);
+            }
             return;
         }
-        final String name = realSrc.contains("/")
-                ? realSrc.substring(realSrc.lastIndexOf('/') + 1) : realSrc;
-        final int dot = name.lastIndexOf('.');
-        final String ext = dot >= 0 && dot < name.length() - 1
-                ? name.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-        final FileType type = FileType.of(ext);
-        final FilesystemKind dstKind = dstMedia
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
-        final String destPath = realDstDir.isEmpty() ? name : realDstDir + "/" + name;
-        final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
-        if (DiskFilesystem.write(
-                dstVol, destPath, type, read.get(), free, dstKind, level.getGameTime())
-                == DiskFilesystem.WriteResult.OK) {
-            DiskFilesystem.delete(srcVol, realSrc);
-            if (srcMedia) {
-                commitMedia(level, computer, src);
-            } else {
-                computer.setChanged();
-            }
-            if (dstMedia) {
-                commitMedia(level, computer, destDir);
-            } else {
-                computer.setChanged();
-            }
+        final boolean srcMedia = src.startsWith("media:");
+        DiskFilesystem.delete(volumeOf(level, computer, src), srcMedia ? mediaSubPath(src) : src);
+        if (srcMedia) {
+            commitMedia(level, computer, src);
+        } else {
+            computer.setChanged();
         }
+    }
+
+    /**
+     * Writes the file at {@code src} into the folder {@code destDir}, which may be on another volume, and saves the
+     * volume it was written to.
+     *
+     * @param uniqueName whether a name already taken gets a numbered copy ("name - Copy.ext", then
+     *                   "name - Copy (2).ext") rather than being refused
+     * @return the path written within its volume, or null when nothing was written: the file could not be read, the
+     *         volume is not reachable, the name was taken, or the disk was full
+     */
+    @Nullable
+    private static String transfer(final ServerLevel level, final IOsHost computer, final String src,
+                                   final String destDir, final boolean uniqueName) {
+        final ItemStack srcVol = volumeOf(level, computer, src);
+        final ItemStack dstVol = volumeOf(level, computer, destDir);
+        if (srcVol.isEmpty() || dstVol.isEmpty()) {
+            return null;
+        }
+        final boolean srcMedia = src.startsWith("media:");
+        final boolean dstMedia = destDir.startsWith("media:");
+        final String realSrc = srcMedia ? mediaSubPath(src) : src;
+        final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
+        final Optional<String> read = DiskFilesystem.read(srcVol, realSrc);
+        if (read.isEmpty()) {
+            return null;
+        }
+        final String name = realSrc.substring(realSrc.lastIndexOf('/') + 1);
+        final String destPath = uniqueName ? freeCopyPath(dstVol, realDstDir, name) : joined(realDstDir, name);
+        if (destPath == null || !uniqueName && DiskFilesystem.exists(dstVol, destPath)) {
+            return null;
+        }
+        final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
+        if (DiskFilesystem.write(dstVol, destPath, FileType.ofPath(name), read.get(), free,
+                kindOf(computer, destDir), level.getGameTime()) != DiskFilesystem.WriteResult.OK) {
+            return null;
+        }
+        if (dstMedia) {
+            commitMedia(level, computer, destDir);
+        } else {
+            computer.setChanged();
+        }
+        return destPath;
+    }
+
+    /**
+     * The first path free in {@code dir}: the name itself, then "name - Copy.ext", then "name - Copy (2).ext" and on,
+     * the way a desktop names a duplicate. Every candidate is tested before it is used, and null comes back when
+     * none of them is free, so a copy never writes over a file.
+     */
+    @Nullable
+    private static String freeCopyPath(final ItemStack volume, final String dir, final String name) {
+        final int dot = name.lastIndexOf('.');
+        final String stem = dot > 0 ? name.substring(0, dot) : name;
+        final String suffix = dot > 0 ? name.substring(dot) : "";
+        String candidate = name;
+        for (int n = 0; n < MAX_COPY_NAMES; n++) {
+            final String path = joined(dir, candidate);
+            if (!DiskFilesystem.exists(volume, path)) {
+                return path;
+            }
+            candidate = stem + (n == 0 ? " - Copy" : " - Copy (" + (n + 1) + ")") + suffix;
+        }
+        return null;
+    }
+
+    private static String joined(final String dir, final String name) {
+        return dir.isEmpty() ? name : dir + "/" + name;
     }
 
     /**
@@ -284,6 +365,54 @@ public final class FileTransferPayloads {
             commitMedia(level, computer, key);
         } else {
             computer.setChanged();
+        }
+    }
+
+    /*
+     * Clears the file of the moved one's name out of the destination for a move the player chose to let replace it,
+     * holding what it was so it can be written back if the move does not go through; null when there was nothing to
+     * clear or it could not be taken away.
+     */
+    @Nullable
+    private static Displaced displace(final ServerLevel level, final IOsHost computer, final String src,
+                                      final String destDir) {
+        final ItemStack volume = volumeOf(level, computer, destDir);
+        if (volume.isEmpty()) {
+            return null;
+        }
+        final String realSrc = src.startsWith("media:") ? mediaSubPath(src) : src;
+        final String path = joined(destDir.startsWith("media:") ? mediaSubPath(destDir) : destDir,
+                realSrc.substring(realSrc.lastIndexOf('/') + 1));
+        final Optional<String> content = DiskFilesystem.read(volume, path);
+        if (content.isEmpty() || !DiskFilesystem.delete(volume, path)) {
+            return null;
+        }
+        saved(level, computer, destDir);
+        return new Displaced(path, content.get());
+    }
+
+    /* Saves the volume a path lives on after its files changed: a medium in its drive, else the machine. */
+    private static void saved(final ServerLevel level, final IOsHost computer, final String path) {
+        if (path.startsWith("media:")) {
+            commitMedia(level, computer, path);
+        } else {
+            computer.setChanged();
+        }
+    }
+
+    /** A file a replacing move cleared out of its way, and where it stood. */
+    private record Displaced(String path, String content) {
+
+        /** Writes the file back where it stood, the move it gave way to having failed. */
+        void restore(final ServerLevel level, final IOsHost computer, final String destDir) {
+            final ItemStack volume = volumeOf(level, computer, destDir);
+            if (volume.isEmpty()) {
+                return;
+            }
+            final long free = destDir.startsWith("media:") ? mediaFreeWeight(volume) : computer.systemDiskFreeWeight();
+            DiskFilesystem.write(volume, path, FileType.ofPath(path), content, free, kindOf(computer, destDir),
+                    level.getGameTime());
+            saved(level, computer, destDir);
         }
     }
 }

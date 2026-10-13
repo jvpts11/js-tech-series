@@ -11,6 +11,8 @@ import dev.jstech.computers.vm.system.IPureContext;
 import dev.jstech.computers.vm.system.IPureFunction;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicTypes;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 
 /**
  * What the language does with its two collections, a list and a map.
@@ -18,6 +20,7 @@ import dev.jstech.computers.vm.system.IntrinsicTypes;
  * <p>Every call is made on the collection itself, and whatever it did, the collection weighs afterwards what it then
  * holds, so a list that grows is paid for as it grows.
  */
+@TextHolder
 final class CollectionFunctions {
 
     private static final String LIST = IntrinsicTypes.LIST;
@@ -25,6 +28,8 @@ final class CollectionFunctions {
     private static final String NOTHING = "void";
     private static final String FLAG = "bool";
     private static final String WHOLE = "int";
+    private static final TextKey NO_LIST = TextKey.of("jsc.vm.collection_functions.no_list", "there is no list here");
+    private static final TextKey NO_MAP = TextKey.of("jsc.vm.collection_functions.no_map", "there is no map here");
 
     private CollectionFunctions() {
     }
@@ -95,7 +100,7 @@ final class CollectionFunctions {
     private static IPureFunction onList(final IListCall call) {
         return (context, target, arguments, line) -> {
             if (!(target instanceof Values.ListValue held)) {
-                throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no list here");
+                throw new Halt(Halt.Reason.NO_OBJECT, line, NO_LIST.text());
             }
             final Object answer = call.call(context, held, arguments, line);
             context.resize(held, held.bytes(), line);
@@ -107,7 +112,7 @@ final class CollectionFunctions {
     private static IPureFunction onMap(final IMapCall call) {
         return (context, target, arguments, line) -> {
             if (!(target instanceof Values.MapValue held)) {
-                throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no map here");
+                throw new Halt(Halt.Reason.NO_OBJECT, line, NO_MAP.text());
             }
             final Object answer = call.call(context, held, arguments, line);
             context.resize(held, held.bytes(), line);

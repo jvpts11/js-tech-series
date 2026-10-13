@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation;
 
+import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.index.Allocation;
@@ -18,6 +19,9 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.ILatencyScheduler;
 import dev.jstech.core.operation.OperationFailure;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -26,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,10 +38,12 @@ import java.util.UUID;
 /**
  * A multi-tick INSERT: writes an item into the network's servers over time, the inverse of a SELECT. It fills the fastest-tier servers first, up to each server's free space.
  */
+@TextHolder
 public final class NetworkInsertOperation extends AbstractTransferOperation {
 
     /** Wrote as much of it as would go, and the servers had no room for the rest. */
-    private static final String NO_ROOM = "jsc.operation.failure.no_room";
+    private static final TextKey NO_ROOM = TextKey.of("jsc.operation.failure.no_room",
+            "the network had no room left for the %s");
 
     private final String sourceLabel;
     private final UUID operationId = UUID.randomUUID();
@@ -44,23 +51,37 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
     public NetworkInsertOperation(final ServerLevel level, final NetworkUuid network, final StorageKey key,
                                   final long demand, final String sourceLabel, final NetworkIndex index,
                                   @Nullable final ILatencyScheduler scheduler) {
+        this(level, network, key, demand, sourceLabel, index, scheduler, null);
+    }
+
+    /**
+     * The same, filling {@code preferred} first as far as it has room, the rest as any write goes: what goes back to
+     * the server it came from lands there when it can.
+     */
+    public NetworkInsertOperation(final ServerLevel level, final NetworkUuid network, final StorageKey key,
+                                  final long demand, final String sourceLabel, final NetworkIndex index,
+                                  @Nullable final ILatencyScheduler scheduler, @Nullable final NodeUuid preferred) {
         super(level, network, key, demand);
         this.sourceLabel = sourceLabel;
 
-        // Choose where to write: fill the fastest-tier servers first, up to each server's free space.
+        /*
+         * Choose where to write: the storage of the highest priority first, then the fastest-tier servers, up to each
+         * one's free space. An external inventory whose bus will not take the item is no place for it.
+         */
         final long unitWeight = key.weight(1L);
         final List<ItemLocation> free = new ArrayList<>();
         final Map<NodeUuid, StorageTier> tiers = new HashMap<>();
         final Map<NodeUuid, Integer> ramLatencies = new HashMap<>();
         for (final ItemLocation room : index.freeSpace(level, network)) {
             final long roomNative = room.quantity() / unitWeight;
-            if (roomNative > 0L) {
+            if (roomNative > 0L && !ExternalStores.refuses(level, room.server(), key)) {
                 free.add(room.withQuantity(roomNative));
                 tiers.put(room.server(), room.tier());
                 ramLatencies.put(room.server(), NetworkIndex.serverRamLatencyTicks(level, room.server()));
             }
         }
-        final Allocation plan = StorageAllocator.allocate(free, demand);
+        final Allocation plan = preferred == null ? StorageAllocator.allocateByPriority(free, demand)
+                : preferring(free, demand, preferred);
         index.reserveRoom(plan.perServer(), unitWeight);
         plan.perServer().forEach((server, quantity) ->
                 addSource(server, quantity, tiers.getOrDefault(server, StorageTier.HDD),
@@ -82,13 +103,36 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
     @Override
     protected long moveFromSource(final NodeUuid server, final long planned) {
         final ServerStore store = storeOf(server);
-        return store == null ? 0L : store.insert(key, planned);
+        if (store != null) {
+            return store.insert(key, planned);
+        }
+        final ExternalStorageBusPart external = ExternalStores.find(level, server);
+        return external == null ? 0L : external.give(key, planned);
+    }
+
+    /* The room on {@code preferred} first, as much of the demand as it takes, then the rest by priority. */
+    private static Allocation preferring(final List<ItemLocation> free, final long demand, final NodeUuid preferred) {
+        final Map<NodeUuid, Long> plan = new LinkedHashMap<>();
+        final List<ItemLocation> others = new ArrayList<>(free.size());
+        long left = demand;
+        for (final ItemLocation room : free) {
+            if (room.server().equals(preferred) && left > 0L) {
+                final long take = Math.min(left, room.quantity());
+                plan.merge(room.server(), take, Long::sum);
+                left -= take;
+            } else {
+                others.add(room);
+            }
+        }
+        final Allocation rest = StorageAllocator.allocateByPriority(others, left);
+        rest.perServer().forEach((server, quantity) -> plan.merge(server, quantity, Long::sum));
+        return new Allocation(plan, demand - left + rest.allocated());
     }
 
     @Nullable
     private ServerStore storeOf(final NodeUuid server) {
         return NetworkSystem.get(level).locationOf(server)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
                         ? rack.getServerStorage(loc.slot()) : null)
                 .orElse(null);
     }
@@ -139,7 +183,7 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
     private OperationRecord buildRecord(final byte recordStatus, final boolean includeSubs) {
         final List<OperationRecord.MoveRow> moves = new ArrayList<>();
         movedPerServer.forEach((server, written) ->
-                moves.add(new OperationRecord.MoveRow(sourceLabel, written, "SRV-" + shortId(server.asString()))));
+                moves.add(new OperationRecord.MoveRow(sourceLabel, written, nodeLabel(server))));
         final List<OperationRecord.SubRow> subs = includeSubs ? subRows() : List.of();
         return new OperationRecord(operationId, OperationRecord.TYPE_INSERT, key, demand, movedTotal,
                 recordStatus, priority(), List.copyOf(moves), subs).withCause(cause());

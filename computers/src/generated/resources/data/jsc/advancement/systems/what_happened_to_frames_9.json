@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/never_upgrading",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:frames_10"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.what_happened_to_frames_9.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:usb_flash_drive"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.what_happened_to_frames_9.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,164 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.installpkg.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installpkg.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.installpkg.step1",
+        "jsc.guide.installpkg.step2",
+        "jsc.guide.installpkg.step3",
+        "jsc.guide.installpkg.step4"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.installpkg.table1",
+      "heads": [
+        "jsc.guide.installpkg.table1_head1",
+        "jsc.guide.installpkg.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "installpkg: no package medium in a drive"
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "installpkg: <name>: no such package on the media in the drives"
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "The following packages are on the media in the drives:"
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Installing the <name> package."
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "This computer is still setting up <name>."
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> is already installed."
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> needs <era> hardware or newer. This computer is <era>."
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> runs on <list>, not on <system>."
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> needs <n> MB free on the disk. There are <m> MB."
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> cannot install on this computer's system or hardware."
+          },
+          {
+            "words": "jsc.guide.installpkg.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installpkg.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installpkg.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installpkg.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/unix/installpkg"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.installpkg.fix1",
+          "problem": "jsc.guide.installpkg.problem1"
+        },
+        {
+          "fix": "jsc.guide.installpkg.fix2",
+          "problem": "jsc.guide.installpkg.problem2"
+        },
+        {
+          "fix": "jsc.guide.installpkg.fix3",
+          "problem": "jsc.guide.installpkg.problem3"
+        },
+        {
+          "fix": "jsc.guide.installpkg.fix4",
+          "problem": "jsc.guide.installpkg.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:drives",
+        "jsc:installing"
+      ]
+    }
+  ],
+  "id": "jsc:installpkg",
+  "order": 282,
+  "section": "jsc:system_v_software",
+  "title": "jsc.guide.installpkg.title"
+}

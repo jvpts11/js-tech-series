@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -55,18 +57,15 @@ public record ConsoleInitPayload(BlockPos hostPos, List<String> history,
     }
 
     /**
-     * One command's name and usage, for completion and hints. The usage cap is generous on purpose: a usage
-     * line longer than the cap does not truncate, it fails to encode and disconnects the player opening the
-     * console, for every console on every machine that offers the command.
+     * One command's name and usage, for completion and hints. The usage travels as text still to be put in a
+     * language, so the hint under the prompt is in the reader's.
      */
-    public record WireCommand(String name, String usage) {
-
-        public static final int MAX_USAGE = 256;
+    public record WireCommand(String name, Text usage) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, WireCommand> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.stringUtf8(48), WireCommand::name,
-                        ByteBufCodecs.stringUtf8(MAX_USAGE), WireCommand::usage,
+                        TextCodecs.STREAM_CODEC, WireCommand::usage,
                         WireCommand::new);
     }
 }

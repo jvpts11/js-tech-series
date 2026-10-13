@@ -9,12 +9,17 @@ package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.DiagnosticBag;
+import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.vm.listing.Shape;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +57,9 @@ public final class Declarations {
     private final Map<IMemberSymbol.MethodSymbol, INode> methodNodes = new LinkedHashMap<>();
     /** The type being filled, whose scope decides what a bare name means. */
     private NamedType current;
+    /** The language and the version of it the build is held to, which decide what of the library it may name. */
+    private LanguageLevel level = LanguageLevel.SIGMA_SHARP;
+    private int version = SigmaVersions.NEWEST;
 
     /** The namespace a file's types live in, and what the file brought in with using. */
     private record Scope(String namespace, List<CompilationUnit.Using> usings) {
@@ -64,6 +72,62 @@ public final class Declarations {
         this.rules = rules;
         this.diagnostics = diagnostics;
         this.model = model;
+    }
+
+    /**
+     * Holds the build to {@code version} of {@code level}: a type of the library that came in a later version is
+     * reported where it was named, and a program's own type of the same name is its own and is left alone.
+     */
+    public void holdTo(final LanguageLevel level, final int version) {
+        this.level = level;
+        this.version = SigmaVersions.held(version);
+    }
+
+    /**
+     * Reports {@code type}, named at {@code line}, {@code column}, when it is a type of the library that came in a
+     * later version than the one the build is held to.
+     */
+    public void reportIfNewer(final NamedType type, final int line, final int column) {
+        if (type == null || this.builtIns.type(type.name(), type.typeParameters().size()) != type) {
+            return;
+        }
+        this.reportIfLater(type.name(), SigmaVersions.sinceType(this.level, type.name()), line, column);
+    }
+
+    /**
+     * Reports a method of the library, called at {@code line}, {@code column}, when it was added to its type in a
+     * later version than the one the build is held to. One whose whole type came later is not reported again here:
+     * the type was, where it was named.
+     */
+    void reportIfNewer(final IMemberSymbol.MethodSymbol method, final int line, final int column) {
+        final NamedType owner = method.owner();
+        if (owner == null || this.builtIns.type(owner.name(), owner.typeParameters().size()) != owner) {
+            return;
+        }
+        final List<String> takes = new ArrayList<>(method.parameters().size());
+        for (final IMemberSymbol.ParameterSymbol parameter : method.parameters()) {
+            takes.add((parameter.outward() ? "out " : "") + parameter.type().describe());
+        }
+        final int since = SigmaVersions.sinceMember(this.level, owner.name(), method.name(), String.join(", ", takes));
+        if (since > SigmaVersions.sinceType(this.level, owner.name())) {
+            this.reportIfLater(owner.name() + "." + method.name(), since, line, column);
+        }
+    }
+
+    /**
+     * Reports {@code name}, written at {@code line}, {@code column}, when what it names came in {@code since}, a
+     * later version than the one the build is held to.
+     */
+    void reportIfLater(final String name, final int since, final int line, final int column) {
+        if (since > this.version) {
+            this.diagnostics.error(line, column, SigmaError.NEEDS_A_LATER_VERSION, name, this.level.mark(),
+                    since, this.level.mark(), this.version);
+        }
+    }
+
+    /** The language the build is in. */
+    LanguageLevel level() {
+        return this.level;
     }
 
     /** First pass: every type in the program gets its name and nothing else. */
@@ -290,6 +354,10 @@ public final class Declarations {
                 type.addInterface(named);
             } else if (named.kind().classLike() && type.kind() == NamedType.Kind.STRUCT) {
                 this.diagnostics.error(base.line(), base.column(), SigmaError.STRUCT_NO_BASE, base.describe());
+            } else if (named.kind().classLike() && type.base() == null && standsBehind(type, named)) {
+                // Linking it would close a loop, which every walk up the bases would then go round for ever.
+                this.diagnostics.error(base.line(), base.column(), SigmaError.CIRCULAR_BASE, type.name(),
+                        named.name());
             } else if (named.kind().classLike() && type.base() == null) {
                 type.setBase(named);
             } else {
@@ -352,7 +420,7 @@ public final class Declarations {
     private void addMethod(final NamedType type, final IMemberSymbol.MethodSymbol method, final INode declaration) {
         for (final IMemberSymbol existing : type.members()) {
             if (existing instanceof IMemberSymbol.MethodSymbol other && other.name().equals(method.name())
-                    && this.sameParameters(other, method)) {
+                    && other.sameParameters(method)) {
                 this.diagnostics.error(declaration.line(), declaration.column(),
                         SigmaError.DUPLICATE_DECLARATION, method.describe());
                 return;
@@ -384,7 +452,11 @@ public final class Declarations {
     private void fillInterface(final NamedType type, final IDecl.InterfaceDecl declaration) {
         for (final TypeRef base : declaration.bases()) {
             final ITypeSymbol resolved = this.resolve(base);
-            if (resolved instanceof NamedType named && named.kind() == NamedType.Kind.INTERFACE) {
+            if (resolved instanceof NamedType named && named.kind() == NamedType.Kind.INTERFACE
+                    && carries(named, type)) {
+                this.diagnostics.error(base.line(), base.column(), SigmaError.CIRCULAR_BASE, type.name(),
+                        named.name());
+            } else if (resolved instanceof NamedType named && named.kind() == NamedType.Kind.INTERFACE) {
                 type.addInterface(named);
             } else if (!this.rules.isError(resolved)) {
                 this.diagnostics.error(base.line(), base.column(), SigmaError.INVALID_BASE, base.describe());
@@ -446,6 +518,7 @@ public final class Declarations {
             this.reportUnknown(reference.line(), reference.column(), name);
             return ITypeSymbol.Special.ERROR;
         }
+        this.reportIfNewer(type, reference.line(), reference.column());
         if (type.typeParameters().size() != reference.arguments().size()) {
             this.diagnostics.error(reference.line(), reference.column(),
                     SigmaError.WRONG_TYPE_ARGUMENT_COUNT, name, type.typeParameters().size());
@@ -599,7 +672,7 @@ public final class Declarations {
                 if (member instanceof IMemberSymbol.MethodSymbol candidate
                         && !candidate.modifiers().contains(IDecl.Modifier.ABSTRACT)
                         && candidate.name().equals(wanted.name())
-                        && this.sameParameters(candidate, wanted)) {
+                        && candidate.sameParameters(wanted)) {
                     return true;
                 }
             }
@@ -615,12 +688,40 @@ public final class Declarations {
                 if (member instanceof IMemberSymbol.MethodSymbol candidate
                         && !candidate.isStatic()
                         && candidate.name().equals(method.name())
-                        && this.sameParameters(candidate, method)) {
+                        && candidate.sameParameters(method)) {
                     return candidate;
                 }
             }
         }
         return null;
+    }
+
+    /** Whether {@code type} already stands behind {@code candidate}, the candidate itself included. */
+    private static boolean standsBehind(final NamedType type, final NamedType candidate) {
+        final Set<NamedType> seen = new HashSet<>();
+        for (NamedType at = candidate; at != null && seen.add(at); at = at.base()) {
+            if (at == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether {@code candidate} carries {@code type} among its interfaces at any depth, or is it. */
+    private static boolean carries(final NamedType candidate, final NamedType type) {
+        final Deque<NamedType> open = new ArrayDeque<>();
+        open.push(candidate);
+        final Set<NamedType> seen = new HashSet<>();
+        while (!open.isEmpty()) {
+            final NamedType at = open.pop();
+            if (at == type) {
+                return true;
+            }
+            if (seen.add(at)) {
+                at.interfaces().forEach(open::push);
+            }
+        }
+        return false;
     }
 
     /** Whether something may stand in this method's place: it said so, or it is already standing in one. */
@@ -636,30 +737,19 @@ public final class Declarations {
                     && candidate.owner().kind().classLike()
                     && candidate.name().equals(required.name())
                     && candidate.returnType().equals(required.returnType())
-                    && this.sameParameters(candidate, required)) {
+                    && candidate.sameParameters(required)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean sameParameters(final IMemberSymbol.MethodSymbol left, final IMemberSymbol.MethodSymbol right) {
-        if (left.parameters().size() != right.parameters().size()) {
-            return false;
-        }
-        for (int i = 0; i < left.parameters().size(); i++) {
-            if (!left.parameters().get(i).type().equals(right.parameters().get(i).type())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     /**
      * Finds where the runtime starts, and which of the two kinds of program this is.
      *
      * <p>A class that implements the script interface is one that stays up; a class with a static
-     * {@code Main} that takes nothing and returns nothing is one that runs at a terminal. A program is
+     * {@code Main} is one that runs at a terminal, and from the second version that Main may give back the code
+     * the program ends with and may be handed the program's arguments. A program is
      * exactly one of those: none and there is nothing to run, more than one and there is no saying
      * which. A class that does both is a script, because implementing the interface is the deliberate
      * act and a method called Main is only a name.
@@ -684,22 +774,54 @@ public final class Declarations {
         }
         this.model.setEntryPoint(scripts.isEmpty() ? consoles.getFirst() : scripts.getFirst(),
                 scripts.isEmpty() ? Shape.CONSOLE : Shape.SCRIPT);
+        if (scripts.isEmpty()) {
+            this.reportIfLaterMain(mainOf(consoles.getFirst()), line, column);
+        }
     }
 
-    /** That class's {@code static void Main()}, or null when it has none of that exact shape. */
+    /**
+     * Reports a Main of a shape the first version did not start at: one that gives back the code the program ends
+     * with, or one handed the program's arguments.
+     */
+    private void reportIfLaterMain(final IMemberSymbol.MethodSymbol main, final int line, final int column) {
+        final boolean gives = main.returnType() != ITypeSymbol.Primitive.VOID;
+        final boolean takes = !main.parameters().isEmpty();
+        if (!gives && !takes) {
+            return;
+        }
+        final INode at = this.methodNodes.get(main);
+        this.reportIfLater((gives ? "int " : "") + MAIN + "(" + (takes ? ARGUMENTS : "") + ")", LATER_MAIN,
+                at == null ? line : at.line(), at == null ? column : at.column());
+    }
+
+    /**
+     * That class's Main: static, giving back nothing or the code the program ends with, taking nothing or the
+     * program's arguments as an array of text; or null when it has none of those shapes. When it has more than one,
+     * the one that takes nothing is where the program starts, as it is for the runtime.
+     */
     public static IMemberSymbol.MethodSymbol mainOf(final NamedType type) {
+        IMemberSymbol.MethodSymbol handed = null;
         for (final IMemberSymbol member : type.members()) {
-            if (member instanceof IMemberSymbol.MethodSymbol method
-                    && MAIN.equals(method.name())
-                    && method.isStatic()
-                    && method.parameters().isEmpty()
-                    && method.returnType() == ITypeSymbol.Primitive.VOID) {
+            if (!(member instanceof IMemberSymbol.MethodSymbol method) || !MAIN.equals(method.name())
+                    || !method.isStatic() || (method.returnType() != ITypeSymbol.Primitive.VOID
+                    && method.returnType() != ITypeSymbol.Primitive.INT)) {
+                continue;
+            }
+            if (method.parameters().isEmpty()) {
                 return method;
             }
+            if (handed == null && method.parameters().size() == 1 && !method.parameters().getFirst().outward()
+                    && ARGUMENTS.equals(method.parameters().getFirst().type().describe())) {
+                handed = method;
+            }
         }
-        return null;
+        return handed;
     }
 
     /** The name a program that runs at a terminal starts at. */
     public static final String MAIN = "Main";
+    /** The type a Main that is handed the program's arguments takes them as. */
+    public static final String ARGUMENTS = "string[]";
+    /** The version a Main that gives back a code or takes the arguments came in. */
+    private static final int LATER_MAIN = 2;
 }

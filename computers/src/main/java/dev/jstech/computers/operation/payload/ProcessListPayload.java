@@ -7,6 +7,14 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.program.iql.IqlDefinition;
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
+import dev.jstech.core.text.TextCodecs;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -22,9 +30,16 @@ import java.util.List;
  * picks the icon and the right actions), its name, its state and a short detail (uptime, the job's trigger,
  * or its condition).
  */
+@TextHolder
 public record ProcessListPayload(List<ProcessLine> processes) implements CustomPacketPayload {
 
     public static final int MAX = 64;
+
+    /* What the engine's own line says about it, serving or stopped. */
+    public static final TextKey ENGINE_SERVING =
+            TextKey.of("jsc.process.engine_serving", "the network's query and job engine");
+    public static final TextKey ENGINE_STOPPED =
+            TextKey.of("jsc.process.engine_stopped", "stopped, start it to run jobs");
 
     /** A service process (a background daemon, e.g. the IQL Engine): actions are Start/Stop/Restart. */
     public static final int KIND_SERVICE = 0;
@@ -39,9 +54,12 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
                     ProcessLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), ProcessListPayload::processes,
                     ProcessListPayload::new);
 
-    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    /*
+     * Copied on the way in, so what the client is handed cannot change under it after it arrives, and no longer
+     * than the list the message carries, which past that would throw as it is written.
+     */
     public ProcessListPayload {
-        processes = List.copyOf(processes);
+        processes = List.copyOf(processes.size() > MAX ? processes.subList(0, MAX) : processes);
     }
 
     @Override
@@ -49,15 +67,65 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
         return TYPE;
     }
 
-    /** One process: its kind, display name, current state, and a short detail line. */
-    public record ProcessLine(int kind, String name, String state, String detail) {
+    /** How a process stands, and the word the tab shows for it. */
+    @TextHolder
+    public enum ProcessState implements IStableId {
+        /** A service that is serving. */
+        RUNNING(0, TextKey.of("jsc.process.running", "running")),
+        /** A service that was stopped. */
+        STOPPED(1, TextKey.of("jsc.process.stopped", "stopped")),
+        /** A job whose service is running, so it fires when its moment comes. */
+        ACTIVE(2, TextKey.of("jsc.process.active", "active")),
+        /** A job the player paused. */
+        PAUSED(3, TextKey.of("jsc.process.paused", "paused")),
+        /** A job whose service is stopped, so nothing fires it. */
+        IDLE(4, TextKey.of("jsc.process.idle", "idle"));
+
+        private final int id;
+        private final TextKey word;
+
+        ProcessState(final int id, final TextKey word) {
+            this.id = id;
+            this.word = word;
+        }
+
+        @Override
+        public int id() {
+            return this.id;
+        }
+
+        /** What the tab calls it. */
+        public Text word() {
+            return this.word.text();
+        }
+
+        /** Whether the process is doing its work right now, which is what Stop, rather than Start, acts on. */
+        public boolean running() {
+            return this == RUNNING || this == ACTIVE;
+        }
+    }
+
+    /**
+     * One process: its kind, its name, its current state, and a short detail line. The name is also what an
+     * action on the process names it by, so it stays as it was written.
+     */
+    public record ProcessLine(int kind, String name, ProcessState state, Text detail) {
+
+        /** The longest name a line carries: a job's, which is the longest a process goes by. */
+        public static final int MAX_NAME = IqlDefinition.MAX_NAME;
 
         public static final StreamCodec<RegistryFriendlyByteBuf, ProcessLine> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.VAR_INT, ProcessLine::kind,
-                        ByteBufCodecs.stringUtf8(48), ProcessLine::name,
-                        ByteBufCodecs.stringUtf8(24), ProcessLine::state,
-                        ByteBufCodecs.stringUtf8(64), ProcessLine::detail,
+                        ByteBufCodecs.stringUtf8(MAX_NAME), ProcessLine::name,
+                        StableCodecs.byId(ProcessState.class, ProcessState.STOPPED), ProcessLine::state,
+                        TextCodecs.STREAM_CODEC, ProcessLine::detail,
                         ProcessLine::new);
+
+        public ProcessLine {
+            // Every name is made to fit where it is created; this only stops one that slipped by from dropping the
+            // player as the whole list is written.
+            name = TextBounds.clip(name, MAX_NAME);
+        }
     }
 }

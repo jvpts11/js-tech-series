@@ -8,6 +8,8 @@
 package dev.jstech.computers.program.tty;
 
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +38,6 @@ public final class TtyScript {
      * what anybody reads and well under what a machine with several terminals open can afford to send.
      */
     public static final int MAX_LINES_PER_TICK = 40;
-
-    /** A script with nothing in it, which is what a question answers with when there is nothing more to do. */
-    public static final TtyScript EMPTY = new TtyScript(List.of());
 
     private TtyScript(final List<IStep> steps) {
         this.steps = List.copyOf(steps);
@@ -146,6 +145,16 @@ public final class TtyScript {
 
         public Builder say(final String text) {
             return this.say(CliLine.plain(text));
+        }
+
+        /** A line of the tool's own words, read in the player's language. */
+        public Builder say(final Text text) {
+            return this.say(CliLine.plain(text));
+        }
+
+        /** A sentence of the tool's own with nothing put into it. */
+        public Builder say(final TextKey key) {
+            return this.say(CliLine.plain(key.text()));
         }
 
         /** Several lines at once, which is a tool that had them all ready. */

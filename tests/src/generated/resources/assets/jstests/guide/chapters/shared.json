@@ -1,0 +1,8 @@
+{
+  "about": "jstests.guide.chapter.shared.about",
+  "id": "jstests:shared",
+  "in_reference": false,
+  "order": 95,
+  "tab": "#FF40A0D0",
+  "title": "jstests.guide.chapter.shared"
+}

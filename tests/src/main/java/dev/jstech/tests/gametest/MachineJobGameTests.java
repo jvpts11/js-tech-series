@@ -11,12 +11,8 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -25,6 +21,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.says;
+import static dev.jstech.tests.testkit.TestShell.shell;
 
 /**
  * The work a machine is left with: a line put in the background, and a line waiting for an hour.
@@ -42,7 +41,6 @@ public final class MachineJobGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 8;
-    private static final int WIDTH = 80;
 
     private static final ResourceLocation DEBIAN =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "debian");
@@ -54,11 +52,11 @@ public final class MachineJobGameTests {
                                                     final ResourceLocation system) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(2, 2, 1));
         rack.getServerStorage(0).insert(Items.COBBLESTONE, 2048);
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
-        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final PersonalComputerBlockEntity lab = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
         lab.installOs(system);
         return lab;
@@ -118,6 +116,23 @@ public final class MachineJobGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * AT takes a job off only when it is told "AT id /DELETE". The same word inside the command being scheduled is
+     * that command's own, and used to turn the whole line into a delete of a job numbered by the time.
+     */
+    @GameTest(template = ARENA)
+    public static void at_schedulesACommandThatHasTheDeleteWordInIt(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity lab = wire(helper, FRAMES_XP);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final List<String> scheduled = shell(helper, lab, "AT 06:00 DEL OLD.LOG /DELETE");
+                    helper.assertTrue(says(scheduled, "Added a new job"),
+                            "a command with the word in it is scheduled, not read as a delete; got " + scheduled);
+                    helper.assertTrue(lab.console().jobs().all().size() == 1, "and it is on the list");
+                })
+                .thenSucceed();
+    }
+
     /** What a machine was left with goes with it through a save, or it would be no use leaving anything. */
     @GameTest(template = ARENA)
     public static void whatAMachineWasLeftWith_survivesASave(final GameTestHelper helper) {
@@ -139,19 +154,5 @@ public final class MachineJobGameTests {
                             "with its hour and its line; got " + listed);
                 })
                 .thenSucceed();
-    }
-
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
-                                      final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.shellFor(computer, WIDTH).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
-    }
-
-    private static boolean says(final List<String> lines, final String text) {
-        return lines.stream().anyMatch(line -> line.contains(text));
     }
 }

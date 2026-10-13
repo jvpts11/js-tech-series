@@ -9,6 +9,10 @@ package dev.jstech.tests.clienttest;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
+import com.mojang.logging.LogUtils;
+import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.os.media.EjectButton;
+import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -22,10 +26,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,11 +64,17 @@ public final class ClientTestContext {
     record Queued(int delay, String label, IStep step) {
     }
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private final Minecraft mc;
     private final String testName;
     private final BlockPos origin;
     private final List<Queued> queue = new ArrayList<>();
     private final List<String> screenshots = new ArrayList<>();
+    private final List<Runnable> afterTest = new ArrayList<>();
+
+    /* How long a peripheral may take to link before it is clicked: a few ticks alone, far more on a loaded machine. */
+    private static final int PERIPHERAL_LINK_WAIT = 200;
 
     ClientTestContext(final Minecraft mc, final String testName, final BlockPos origin) {
         this.mc = mc;
@@ -76,6 +88,27 @@ public final class ClientTestContext {
 
     List<String> screenshotsTaken() {
         return screenshots;
+    }
+
+    /**
+     * Registers {@code cleanup} to run once the test ends, whether it passed or failed, after its last step.
+     * Register it right after the change it undoes. Cleanups run in the reverse order they were registered, each
+     * on its own so one that throws does not stop the others. A cleanup that touches the server must not wait
+     * for it: it runs on the client thread.
+     */
+    public void afterTest(final Runnable cleanup) {
+        afterTest.add(cleanup);
+    }
+
+    void runAfterTest() {
+        for (int i = afterTest.size() - 1; i >= 0; i--) {
+            try {
+                afterTest.get(i).run();
+            } catch (final RuntimeException e) {
+                LOGGER.error("[JSC-CT] a cleanup of {} failed", testName, e);
+            }
+        }
+        afterTest.clear();
     }
 
     // Sequence building
@@ -210,9 +243,17 @@ public final class ClientTestContext {
         return thenWaitUntil(() -> type.isInstance(mc.screen), maxTicks, "screen " + type.getSimpleName());
     }
 
-    /** Waits until no screen is open. */
+    /**
+     * Waits until no screen is open, and until the server has closed the player's window as well. A window closed on
+     * the client reaches the server as a packet, and the game closes whatever window the server has open when that
+     * packet lands, whichever window it was sent for: a step that opened the next window from the server before then
+     * would have it closed at once, with its screen still up on the client.
+     */
     public ClientTestContext thenAwaitNoScreen(final int maxTicks) {
-        return thenWaitUntil(() -> mc.screen == null, maxTicks, "no screen");
+        return thenWaitUntil(() -> mc.screen == null, maxTicks, "no screen")
+                .thenWaitUntilServer(level -> serverPlayer().containerMenu == serverPlayer().inventoryMenu, maxTicks,
+                        "the server to close the window",
+                        level -> "still open: " + serverPlayer().containerMenu.getClass().getSimpleName());
     }
 
     /**
@@ -283,7 +324,25 @@ public final class ClientTestContext {
 
     /** Right-clicks the block at {@code relative} with the empty hand, the way the player opens a GUI. */
     public ClientTestContext thenRightClick(final int delayTicks, final BlockPos relative) {
+        /*
+         * A peripheral is waited for until it has linked to its machine: a monitor clicked before its link is made
+         * opens nothing, and how many ticks the link takes is the server's business, more of them on a loaded
+         * machine. A block that is no peripheral passes at once.
+         */
+        thenWaitUntilServer(level -> !(level.getBlockEntity(abs(relative)) instanceof IPeripheralEndpoint peripheral)
+                        || peripheral.linkedOwner().isPresent(), PERIPHERAL_LINK_WAIT,
+                "the peripheral at " + relative + " to link to its machine before it is clicked",
+                level -> "it is linked to nothing");
         return then(delayTicks, () -> rightClick(relative));
+    }
+
+    /**
+     * Right-clicks the front of the device at {@code relative} at {@code x}, {@code y} sixty-fourths from its top
+     * left as seen, as {@link #rightClickFront} does: a plain spot of a front whose middle carries a button.
+     */
+    public ClientTestContext thenRightClickFront(final int delayTicks, final BlockPos relative, final double x,
+                                                 final double y) {
+        return then(delayTicks, () -> rightClickFront(relative, x, y, 0));
     }
 
     /** Takes a screenshot named after the test and {@code label}. */
@@ -346,6 +405,11 @@ public final class ClientTestContext {
                 + (mc.screen == null ? "no screen" : mc.screen.getClass().getSimpleName()));
     }
 
+    /** The open screen as {@code type}, or null when something else (or nothing) is open. Never fails. */
+    public <T extends Screen> T openScreen(final Class<T> type) {
+        return type.isInstance(mc.screen) ? type.cast(mc.screen) : null;
+    }
+
     /** Server-side: moves the player to {@code relative} looking toward {@code facing}. Call from a server step. */
     public void teleport(final BlockPos relative, final Direction facing) {
         final BlockPos at = abs(relative);
@@ -386,6 +450,50 @@ public final class ClientTestContext {
         final Vec3 location = center.add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5));
         final BlockHitResult hit = new BlockHitResult(location, face, target, false);
         Objects.requireNonNull(mc.gameMode, "no game mode").useItemOn(player(), InteractionHand.MAIN_HAND, hit);
+    }
+
+    /**
+     * Client-side: uses the held item on the front of the device at {@code relative}, the face it turns to whoever
+     * placed it, at {@code x}, {@code y} sixty-fourths from the front's top left as seen and {@code depth}
+     * sixty-fourths behind its face: aimed from the player's eyes at that point and landing where the look crosses
+     * the face of the block, as the game's own aim would, so a part set back in the front is pressed where it is drawn.
+     */
+    public void rightClickFront(final BlockPos relative, final double x, final double y, final int depth) {
+        final BlockPos at = abs(relative);
+        final Direction facing = facingOf(at);
+        final Vec3 out = Vec3.atLowerCornerOf(facing.getNormal());
+        final Vec3 faceCentre = Vec3.atCenterOf(at).add(out.scale(0.5));
+        final Vec3 target = frontPoint(at, x, y).subtract(out.scale(depth / (double) EjectButton.FRONT));
+        final Vec3 eye = player().getEyePosition();
+        final Vec3 look = target.subtract(eye);
+        final Vec3 hit = eye.add(look.scale(out.dot(faceCentre.subtract(eye)) / out.dot(look)));
+        Objects.requireNonNull(mc.gameMode, "no game mode")
+                .useItemOn(player(), InteractionHand.MAIN_HAND, new BlockHitResult(hit, facing, at, false));
+    }
+
+    /**
+     * Client-side: turns the player's head to the point {@code x}, {@code y} sixty-fourths from the top left of the
+     * front of the device at {@code relative}, as seen, so the crosshair rests on what is drawn there.
+     */
+    public void lookAtFront(final BlockPos relative, final double x, final double y) {
+        lookAtFront(relative, x, y, 0);
+    }
+
+    /**
+     * Client-side: turns the player to look at the point ({@code x}, {@code y}) of a block's front, {@code out}
+     * sixty-fourths out in front of its face, where a part standing out of the block stands.
+     */
+    public void lookAtFront(final BlockPos relative, final double x, final double y, final double out) {
+        final BlockPos at = abs(relative);
+        final Vec3 normal = Vec3.atLowerCornerOf(facingOf(at).getNormal());
+        lookAt(frontPoint(at, x, y).add(normal.scale(out / EjectButton.FRONT)));
+    }
+
+    /** Client-side: turns the player's head to the world point {@code point}, so the crosshair rests on it. */
+    public void lookAt(final Vec3 point) {
+        final Vec3 look = point.subtract(player().getEyePosition());
+        player().setYRot((float) Math.toDegrees(Math.atan2(-look.x, look.z)));
+        player().setXRot((float) -Math.toDegrees(Math.atan2(look.y, Math.sqrt(look.x * look.x + look.z * look.z))));
     }
 
     /**
@@ -473,8 +581,7 @@ public final class ClientTestContext {
 
     /** Clicks a desktop-relative point (window and app geometry, as the desktop apps report it). */
     public void clickDesktop(final int[] point) {
-        final dev.jstech.computers.client.os.DesktopScreen desktop =
-                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        final DesktopScreen desktop = screen(DesktopScreen.class);
         // A desktop drawn smaller puts its points closer together on the screen; the click goes where they are drawn.
         click(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
                 desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
@@ -482,8 +589,7 @@ public final class ClientTestContext {
 
     /** Presses on one desktop-local point, drags to another and lets go, at the desktop's scale. */
     public void dragDesktop(final int[] from, final int[] to) {
-        final dev.jstech.computers.client.os.DesktopScreen desktop =
-                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        final DesktopScreen desktop = screen(DesktopScreen.class);
         final double s = desktop.desktopScale();
         final double sx = desktop.desktopX() + from[0] * s + 0.5;
         final double sy = desktop.desktopY() + from[1] * s + 0.5;
@@ -497,9 +603,15 @@ public final class ClientTestContext {
 
     /** The right button on a desktop-local point, the way {@link #clickDesktop} is the left one. */
     public void rightClickDesktop(final int[] point) {
-        final dev.jstech.computers.client.os.DesktopScreen desktop =
-                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        final DesktopScreen desktop = screen(DesktopScreen.class);
         rightClick(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
+                desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
+    }
+
+    /** Rests the pointer on a desktop-local point without pressing anything, the way {@link #pointAt} does. */
+    public void pointAtDesktop(final int[] point) {
+        final DesktopScreen desktop = screen(DesktopScreen.class);
+        pointAt(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
                 desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
     }
 
@@ -565,16 +677,46 @@ public final class ClientTestContext {
      * last rendered frame, so it proves what the player actually sees (a popup drawn above the slots, ...).
      */
     public int pixel(final int x, final int y) {
-        final double scale = mc.getWindow().getGuiScale();
-        final int px = (int) Math.min(mc.getWindow().getWidth() - 1, x * scale);
-        final int py = (int) Math.min(mc.getWindow().getHeight() - 1, y * scale);
-        try (NativeImage image = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+        try (FrameSampler frame = sampleFrame()) {
+            return frame.pixel(x, y);
+        }
+    }
+
+    /**
+     * One copy of the last rendered frame to read many pixels from; close it when done. Reading a grid through
+     * {@link #pixel} would copy the whole frame once per sample.
+     */
+    public FrameSampler sampleFrame() {
+        return new FrameSampler(mc.getWindow(), Screenshot.takeScreenshot(mc.getMainRenderTarget()));
+    }
+
+    /** A copy of one frame, read by logical GUI coordinates. */
+    public static final class FrameSampler implements AutoCloseable {
+
+        private final Window window;
+        private final NativeImage image;
+
+        private FrameSampler(final Window window, final NativeImage image) {
+            this.window = window;
+            this.image = image;
+        }
+
+        /** The colour at logical GUI coordinates ({@code x}, {@code y}), as ARGB. */
+        public int pixel(final int x, final int y) {
+            final double scale = window.getGuiScale();
+            final int px = (int) Math.min(window.getWidth() - 1, x * scale);
+            final int py = (int) Math.min(window.getHeight() - 1, y * scale);
             final int abgr = image.getPixelRGBA(px, py);
             final int r = abgr & 0xFF;
             final int g = (abgr >> 8) & 0xFF;
             final int b = (abgr >> 16) & 0xFF;
             final int a = (abgr >>> 24) & 0xFF;
             return (a << 24) | (r << 16) | (g << 8) | b;
+        }
+
+        @Override
+        public void close() {
+            image.close();
         }
     }
 
@@ -594,5 +736,20 @@ public final class ClientTestContext {
 
     public void fail(final String message) {
         throw new ClientTestFailure(message);
+    }
+
+    /* Which way the device at that absolute position faces: the face it turns to whoever placed it. */
+    private Direction facingOf(final BlockPos at) {
+        return Objects.requireNonNull(mc.level, "no level").getBlockState(at)
+                .getValue(HorizontalDirectionalBlock.FACING);
+    }
+
+    /* The point x, y sixty-fourths from the top left of the front of the device at that absolute position, as seen. */
+    private Vec3 frontPoint(final BlockPos at, final double x, final double y) {
+        final Direction facing = facingOf(at);
+        final Vec3 out = Vec3.atLowerCornerOf(facing.getNormal());
+        final Vec3 right = Vec3.atLowerCornerOf(facing.getCounterClockWise().getNormal());
+        final double front = EjectButton.FRONT;
+        return Vec3.atCenterOf(at).add(out.scale(0.5)).add(right.scale(x / front - 0.5)).add(0, 0.5 - y / front, 0);
     }
 }

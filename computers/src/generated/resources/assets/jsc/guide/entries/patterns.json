@@ -1,0 +1,138 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.patterns.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.patterns.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.patterns.table1",
+      "heads": [
+        "jsc.guide.patterns.table1_head1",
+        "jsc.guide.patterns.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.patterns.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.patterns.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.patterns.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.patterns.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.patterns.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.patterns.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.patterns.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text10"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.patterns.definition1",
+      "term": "jsc.guide.patterns.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.patterns.text12"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.patterns.fix1",
+          "problem": "jsc.guide.patterns.problem1"
+        },
+        {
+          "fix": "jsc.guide.patterns.fix2",
+          "problem": "jsc.guide.patterns.problem2"
+        },
+        {
+          "fix": "jsc.guide.patterns.fix3",
+          "problem": "jsc.guide.patterns.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:pattern_studio",
+        "jsc:pattern_encoders",
+        "jsc:crafting_interfaces",
+        "jsc:fluids",
+        "jsc:when_a_craft_goes_wrong"
+      ]
+    }
+  ],
+  "id": "jsc:patterns",
+  "order": 103,
+  "section": "jsc:autocrafting",
+  "title": "jsc.guide.patterns.title"
+}

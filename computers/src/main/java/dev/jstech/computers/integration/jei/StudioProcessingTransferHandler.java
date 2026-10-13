@@ -11,9 +11,10 @@ import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.integration.jei.payload.SetProcessingPatternPayload;
 import dev.jstech.computers.menu.DesktopMenu;
-import dev.jstech.computers.storage.IChemicalBridge;
-import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.chemical.ChemicalBridges;
+import dev.jstech.core.chemical.IChemicalBridge;
+import dev.jstech.core.text.GameText;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.ingredients.ITypedIngredient;
@@ -22,13 +23,9 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.transfer.IRecipeTransferError;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import mezz.jei.api.recipe.transfer.IUniversalRecipeTransferHandler;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +67,7 @@ public final class StudioProcessingTransferHandler implements IUniversalRecipeTr
                                                          final boolean maxTransfer, final boolean doTransfer) {
         final PatternStudioApp studio = PatternStudioApp.active();
         if (studio == null || !JscJeiPlugin.studioInFront(container)) {
-            return helper.createUserErrorWithTooltip(Component.literal("Open the Pattern Studio to transfer recipes"));
+            return helper.createUserErrorWithTooltip(GameText.component(JeiTexts.OPEN_STUDIO));
         }
         if (!doTransfer) {
             return null;
@@ -78,23 +75,10 @@ public final class StudioProcessingTransferHandler implements IUniversalRecipeTr
         final boolean perTick = ChemicalBridges.perTickUsage(recipe);
         final List<PatternWorkbench.DataCell> inputs = cells(recipeSlotsView, RecipeIngredientRole.INPUT, perTick);
         final List<PatternWorkbench.DataCell> outputs = cells(recipeSlotsView, RecipeIngredientRole.OUTPUT, false);
-        PacketDistributor.sendToServer(new SetProcessingPatternPayload(studio.host(), studio.monitorPos(), inputs, outputs,
-                recipeTypeOf(recipe)));
+        PacketDistributor.sendToServer(new SetProcessingPatternPayload(studio.host(), studio.monitorPos(), inputs,
+                outputs));
         studio.showTab(PatternStudioApp.TAB_MACHINE);
         return null;
-    }
-
-    /** The recipe type id the server maps to a machine, for the recipes the game registers; empty otherwise. */
-    private static String recipeTypeOf(final Object recipe) {
-        if (recipe instanceof RecipeHolder<?> holder) {
-            final ResourceLocation key =
-                    BuiltInRegistries.RECIPE_TYPE.getKey(holder.value().getType());
-            if (key != null) {
-                final String id = key.toString();
-                return id.length() <= SetProcessingPatternPayload.MAX_TYPE ? id : "";
-            }
-        }
-        return "";
     }
 
     /** One cell per slot with the given role, in display order; slots showing nothing are skipped. */

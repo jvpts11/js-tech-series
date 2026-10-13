@@ -189,6 +189,9 @@ class TypeCheckTest {
         assertClean(body("string s = \"a\"; switch (s) { case \"a\": break; case \"b\": break; }"));
         assertReports("S3003", body("int n = 1; switch (n) { case \"a\": break; }"));
         assertReports("S3029", body("int n = 1; switch (n) { case 1: break; case 1: break; }"));
+        // A character in a numeric switch is its code, so 'A' and 65 are the same label written two ways.
+        assertReports("S3029", body("int n = 1; switch (n) { case 65: break; case 'A': break; }"));
+        assertClean(body("int n = 1; switch (n) { case 65: break; case 'B': break; }"));
     }
 
     @Test
@@ -416,6 +419,44 @@ class TypeCheckTest {
     }
 
     @Test
+    void check_countsASwitchWhoseEverySectionGivesTheValue() {
+        assertClean(check("""
+                class C {
+                    bool Find(int key, out int value) {
+                        switch (key) {
+                            case 1: value = 1; break;
+                            default: value = 0; break;
+                        }
+                        return true;
+                    }
+                }
+                """));
+        // Without a default no section may run at all, so the switch cannot be counted on.
+        assertReports("S3037", check("""
+                class C {
+                    bool Find(int key, out int value) {
+                        switch (key) {
+                            case 1: value = 1; break;
+                        }
+                        return true;
+                    }
+                }
+                """));
+        // And one section that does not give it is a way through the switch without it.
+        assertReports("S3037", check("""
+                class C {
+                    bool Find(int key, out int value) {
+                        switch (key) {
+                            case 1: value = 1; break;
+                            default: break;
+                        }
+                        return true;
+                    }
+                }
+                """));
+    }
+
+    @Test
     void check_countsPassingItOnAsGivingItAValue() {
         assertClean(check("""
                 class C {
@@ -530,5 +571,19 @@ class TypeCheckTest {
                     }
                 }
                 """))));
+    }
+
+    @Test
+    void check_countsABreakAsAWayOutOfAnEndlessLoopAndOfASwitch() {
+        assertReports("S3012", check("class C { int F(bool b) { while (true) { if (b) { break; } } } }"));
+        assertReports("S3012", check("class C { int F(int v) { switch (v) { default: if (v > 1) { break; } "
+                + "return 1; } } }"));
+        assertClean(check("class C { int F(int v) { switch (v) { default: return 1; } } }"));
+    }
+
+    @Test
+    void check_refusesAnInstanceFieldHandedAsOutFromAStaticMethod() {
+        assertReports("S3014", check("class C { int x; static void Set(out int v) { v = 1; } "
+                + "static void M() { Set(out x); } }"));
     }
 }

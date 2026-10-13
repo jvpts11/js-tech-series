@@ -23,14 +23,17 @@ import java.util.List;
 final class TtyInk {
 
     private List<List<CodeRuns.Run>> cached = List.of();
-    private String colouredText;
+    private TextDocument colouredDoc;
+    private long colouredRevision;
+    private String colouredPath;
 
     /** The rows' colouring, a list of runs to a row; empty when nothing claims the file. */
     List<List<CodeRuns.Run>> of(final String path, final TextDocument doc) {
-        final String text = doc.text();
-        if (text.equals(this.colouredText)) {
+        // Keyed on the document's revision rather than its joined text, which would cost the whole file every frame.
+        if (doc == this.colouredDoc && doc.revision() == this.colouredRevision && path.equals(this.colouredPath)) {
             return this.cached;
         }
+        final String text = doc.text();
         final List<String> lines = new ArrayList<>(doc.lineCount());
         for (int i = 0; i < doc.lineCount(); i++) {
             lines.add(doc.line(i));
@@ -55,7 +58,9 @@ final class TtyInk {
             }
             this.cached = CodeRuns.byLine(lines, spans);
         }
-        this.colouredText = text;
+        this.colouredDoc = doc;
+        this.colouredRevision = doc.revision();
+        this.colouredPath = path;
         return this.cached;
     }
 }

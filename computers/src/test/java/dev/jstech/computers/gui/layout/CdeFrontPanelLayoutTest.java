@@ -74,21 +74,24 @@ class CdeFrontPanelLayoutTest {
     }
 
     @Test
-    void exit_isAsTallAsTheTwoRowsBesideIt() {
+    void busyLightAndExit_fillTheHeightOfTheTwoRowsBesideThem() {
+        final Rect busy = CdeFrontPanelLayout.busyLight(512, 341);
         final Rect exit = CdeFrontPanelLayout.exit(512, 341);
         final Rect one = CdeFrontPanelLayout.workspace(0, 512, 341);
         final Rect four = CdeFrontPanelLayout.workspace(3, 512, 341);
-        assertEquals(one.y(), exit.y());
+        assertEquals(one.y(), busy.y());
+        assertTrue(busy.y() + busy.h() < exit.y(), "the light stands over the way out");
         assertTrue(exit.y() + exit.h() >= four.y() + four.h());
         assertTrue(exit.x() >= four.x() + four.w());
+        assertTrue(busy.x() >= exit.x() && busy.x() + busy.w() <= exit.x() + exit.w(), "the light is over it");
     }
 
     @Test
     void everyControl_hasANameOfItsOwn() {
         final Set<String> tips = new HashSet<>();
         for (final Control control : Control.values()) {
-            assertFalse(control.tip().isBlank(), control.name());
-            assertTrue(tips.add(control.tip()), control + " shares its name");
+            assertFalse(control.tip().english().isBlank(), control.name());
+            assertTrue(tips.add(control.tip().english()), control + " shares its name");
         }
     }
 

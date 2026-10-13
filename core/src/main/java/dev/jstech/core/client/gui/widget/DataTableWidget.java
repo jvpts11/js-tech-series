@@ -7,9 +7,12 @@
  */
 package dev.jstech.core.client.gui.widget;
 
+import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.logic.PaginationState;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
@@ -85,15 +88,16 @@ public abstract class DataTableWidget<T> extends RowListWidget<T> {
             final float partialTick) {
         graphics.enableScissor(getX(), getY(), getX() + width, getY() + height);
 
+        final WidgetPalette.Colours colours = WidgetPalette.get();
         // Header row.
-        graphics.fill(getX(), getY(), getX() + width, getY() + headerHeight, 0xFF2A2A2A);
+        Grounds.fill(graphics, getX(), getY(), getX() + width, getY() + headerHeight, colours.tableHeader());
         for (int col = 0; col < columnHeaders.size(); col++) {
-            graphics.drawString(
-                    Minecraft.getInstance().font,
-                    columnHeaders.get(col),
-                    columnX(col) + 2,
-                    getY() + (headerHeight - 8) / 2,
-                    0xFFFFFFFF);
+            // Clipped to the column so a long header cannot run into the next one.
+            final Font font = Minecraft.getInstance().font;
+            final String header = font.plainSubstrByWidth(columnHeaders.get(col).getString(),
+                    Math.max(0, width / columnHeaders.size() - 4));
+            Draw.text(graphics, font, header, columnX(col) + 2,
+                    getY() + (headerHeight - 8) / 2, colours.tableHeaderText(), colours.tableHeader());
         }
 
         // Body rows for the current page.
@@ -102,8 +106,8 @@ public abstract class DataTableWidget<T> extends RowListWidget<T> {
         for (int i = first; i < last; i++) {
             final int rowY = getY() + headerHeight + (i - first) * rowHeight;
             // Alternating row background for readability.
-            final int bg = ((i - first) % 2 == 0) ? 0xFF1A1A1A : 0xFF222222;
-            graphics.fill(getX(), rowY, getX() + width, rowY + rowHeight, bg);
+            final int bg = ((i - first) % 2 == 0) ? colours.tableRowEven() : colours.tableRowOdd();
+            Grounds.fill(graphics, getX(), rowY, getX() + width, rowY + rowHeight, bg);
             for (int col = 0; col < columnHeaders.size(); col++) {
                 renderCell(graphics, itemList.get(i), col,
                         columnX(col) + 2, rowY + (rowHeight - 8) / 2);

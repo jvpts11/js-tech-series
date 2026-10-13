@@ -1,0 +1,182 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text1"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.failover.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.failover.balloon1"
+        },
+        {
+          "detail": "jsc.guide.failover.balloon2_detail",
+          "number": 2,
+          "part": {
+            "x": 4,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.failover.balloon2"
+        },
+        {
+          "detail": "jsc.guide.failover.balloon3_detail",
+          "number": 3,
+          "part": {
+            "x": 8,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.failover.balloon3"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{VisualFlags:7}",
+          "state": "jsc:mainframe[facing=south,optical=true]",
+          "x": 1,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,4144,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 3,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,48,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 4,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,48,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 5,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,8240,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 6,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{VisualFlags:7}",
+          "state": "jsc:mainframe[facing=south,optical=true]",
+          "x": 8,
+          "y": 0,
+          "z": 1
+        }
+      ],
+      "caption": "jsc.guide.failover.figure1",
+      "height": 110
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.failover.step1",
+        "jsc.guide.failover.step2",
+        "jsc.guide.failover.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.failover.table1",
+      "heads": [
+        "jsc.guide.failover.table1_head1",
+        "jsc.guide.failover.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.failover.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.failover.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "STANDBY"
+          },
+          {
+            "words": "jsc.guide.failover.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.failover.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.failover.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.failover.fix1",
+          "problem": "jsc.guide.failover.problem1"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.failover.fix2",
+          "problem": "jsc.guide.failover.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:failover",
+  "order": 69,
+  "section": "jsc:network_operation",
+  "title": "jsc.guide.failover.title"
+}

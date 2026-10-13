@@ -7,14 +7,19 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -34,14 +39,20 @@ import org.lwjgl.glfw.GLFW;
  * paste through the game's clipboard, undo, a new line that keeps its depth, brackets that close
  * themselves, Tab that pushes a whole selection in, and text that can be made bigger or smaller.
  */
+@PaletteHolder
 public final class CodeArea extends UiComponent {
 
     private static final int LINE_H = 9;
     private static final int INSET = 3;
     private static final int GUTTER_PAD = 4;
     private static final int MARK_W = 5;
-    /** The blue laid over selected text; translucent, so the colours underneath still read. */
-    private static final int SELECTION = 0x663A72B0;
+    /**
+     * The editor's own colours, {@code jsc:editor/code_area}: the blue laid over selected text, a scroll bar's
+     * track and thumb (all translucent, so the code under them still reads), and the marks of an error and of a
+     * warning in the gutter.
+     */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/code_area",
+            new Colours(0x663A72B0, 0x30808080, 0xA0909090, 0xFFC0392B, 0xFFD08A1E));
     private static final float MIN_SCALE = 0.75f;
     private static final float MAX_SCALE = 2.0f;
     /** How thick the two scroll bars are, in screen pixels. */
@@ -54,9 +65,6 @@ public final class CodeArea extends UiComponent {
      * is wider than the paint, the way it is in any editor worth typing in.
      */
     private static final int BAR_GRIP = 3;
-    /** The colours of a bar's track and of its thumb, translucent so the code under them still reads. */
-    private static final int BAR_TRACK = 0x30808080;
-    private static final int BAR_THUMB = 0xA0909090;
 
     /** Says how the rows of a document are coloured. */
     @FunctionalInterface
@@ -86,7 +94,8 @@ public final class CodeArea extends UiComponent {
     private final TextDocument doc = new TextDocument();
     private IColouring colouring = lines -> List.of();
     private List<Mark> marks = List.of();
-    private InkPalette palette = InkPalette.LIGHT;
+    /** The inks, asked for each time a row is painted, since a resource pack can change them. */
+    private Supplier<InkPalette> palette = InkPalette.LIGHT;
     private Runnable onEdit = () -> { };
     /*
      * A code area is used on its own, with no panel to hand the keyboard around, so it keeps its own
@@ -108,9 +117,15 @@ public final class CodeArea extends UiComponent {
     private boolean sweeping;
     /** The colouring stands until the text changes; painting is not a reason to read the program again. */
     private List<List<CodeRuns.Run>> cached = List.of();
-    private String colouredText;
+    /** The document revision the cached colouring and widest row were worked out for, or -1 for none. */
+    private long colouredRevision = -1;
+    private long widestRevision = -1;
+    private Font widestFont;
+    private int widestWidth;
     /** How many spaces the Tab key puts down; four unless an editor's settings say otherwise. */
     private int tabSize = 4;
+    /** Whether the rows are numbered in the gutter, as every editor does but the oldest. */
+    private boolean numbered = true;
 
     /** The document being edited, so an owner can read it or put a file in it. */
     public TextDocument document() {
@@ -127,7 +142,7 @@ public final class CodeArea extends UiComponent {
         this.doc.setText(value);
         this.scroll = 0;
         this.shift = 0;
-        this.colouredText = null;
+        this.colouredRevision = -1;
         return this;
     }
 
@@ -144,8 +159,13 @@ public final class CodeArea extends UiComponent {
     /** Says how to colour the rows. */
     public CodeArea setColouring(final IColouring value) {
         this.colouring = value == null ? lines -> List.of() : value;
-        this.colouredText = null;
+        this.colouredRevision = -1;
         return this;
+    }
+
+    /** What the compiler said that is marked now. */
+    public List<Mark> marks() {
+        return this.marks;
     }
 
     /** What the compiler said, to show in the margin and under the words. */
@@ -155,8 +175,14 @@ public final class CodeArea extends UiComponent {
     }
 
     /** What is drawn on: the colours follow the window's own ground. */
-    public CodeArea setPalette(final InkPalette value) {
+    public CodeArea setPalette(final Supplier<InkPalette> value) {
         this.palette = value == null ? InkPalette.LIGHT : value;
+        return this;
+    }
+
+    /** Numbers the rows in the gutter, or leaves only the room for marks there. */
+    public CodeArea setNumbered(final boolean value) {
+        this.numbered = value;
         return this;
     }
 
@@ -214,6 +240,9 @@ public final class CodeArea extends UiComponent {
 
     /** The width the numbers take, which is what the code is indented past, in unscaled units. */
     private int gutterWidth(final Font font) {
+        if (!this.numbered) {
+            return MARK_W + GUTTER_PAD;
+        }
         final int widest = font.width(String.valueOf(Math.max(1, this.doc.lineCount())));
         return MARK_W + GUTTER_PAD + widest + GUTTER_PAD;
     }
@@ -235,11 +264,17 @@ public final class CodeArea extends UiComponent {
 
     /** The widest row, in unscaled units, which is how far the view can slide. */
     private int widestLine(final Font font) {
-        int widest = 0;
-        for (int i = 0; i < this.doc.lineCount(); i++) {
-            widest = Math.max(widest, font.width(this.doc.line(i)));
+        // Measuring every row is work in proportion to the program, so it is redone only when the text changes.
+        if (this.widestRevision != this.doc.revision() || this.widestFont != font) {
+            int most = 0;
+            for (int i = 0; i < this.doc.lineCount(); i++) {
+                most = Math.max(most, font.width(this.doc.line(i)));
+            }
+            this.widestWidth = most;
+            this.widestRevision = this.doc.revision();
+            this.widestFont = font;
         }
-        return widest;
+        return this.widestWidth;
     }
 
     /** Slides the rows so the caret stays in view, and never past the end of the widest one. */
@@ -260,14 +295,13 @@ public final class CodeArea extends UiComponent {
 
     /** The rows, coloured, reading the program again only when it is not the one already coloured. */
     private List<List<CodeRuns.Run>> runs() {
-        final String text = this.doc.text();
-        if (!text.equals(this.colouredText)) {
+        if (this.colouredRevision != this.doc.revision()) {
             final List<String> lines = new ArrayList<>(this.doc.lineCount());
             for (int i = 0; i < this.doc.lineCount(); i++) {
                 lines.add(this.doc.line(i));
             }
             this.cached = this.colouring.runsOf(lines);
-            this.colouredText = text;
+            this.colouredRevision = this.doc.revision();
         }
         return this.cached;
     }
@@ -280,8 +314,9 @@ public final class CodeArea extends UiComponent {
         final Font font = ctx.font();
         followCaretAcross(font);
         final int gutter = gutterWidth(font);
-        g.fill(x(), y(), right(), bottom(), this.palette.ground());
-        g.fill(x(), y(), x() + Math.round(gutter * this.scale), bottom(), this.palette.gutter());
+        final InkPalette ink = this.palette.get();
+        g.fill(x(), y(), right(), bottom(), ink.ground());
+        g.fill(x(), y(), x() + Math.round(gutter * this.scale), bottom(), ink.gutter());
         final List<List<CodeRuns.Run>> runs = runs();
         final int visible = visibleLines();
         final TextDocument.Spot from = this.doc.selectionStart();
@@ -305,7 +340,7 @@ public final class CodeArea extends UiComponent {
             final String line = this.doc.line(i);
             final int textX = gutter + INSET - this.shift;
             if (i == this.doc.cursorLine() && focused && !selected) {
-                g.fill(gutter, ry, innerRight, ry + LINE_H, this.palette.currentLine());
+                g.fill(gutter, ry, innerRight, ry + LINE_H, ink.currentLine());
             }
             if (selected && i >= from.line() && i <= to.line()) {
                 final int startCol = i == from.line() ? Math.min(from.col(), line.length()) : 0;
@@ -314,14 +349,14 @@ public final class CodeArea extends UiComponent {
                 // A line wholly inside the selection shows a little past its end, the way editors do.
                 final int ex = i == to.line() ? textX + font.width(line.substring(0, endCol))
                         : textX + font.width(line) + 4;
-                g.fill(sx, ry, Math.max(sx + 1, ex), ry + LINE_H, SELECTION);
+                g.fill(sx, ry, Math.max(sx + 1, ex), ry + LINE_H, PALETTE.get().selection());
             }
             drawLine(g, font, line, i < runs.size() ? runs.get(i) : List.of(), textX, ry + 1);
             drawSquiggles(g, font, i, line, textX, ry);
             if (focused && i == this.doc.cursorLine()) {
                 final int col = Math.min(this.doc.cursorCol(), line.length());
                 final int cx = textX + font.width(line.substring(0, col));
-                g.fill(cx, ry, cx + 1, ry + LINE_H, this.palette.caret());
+                g.fill(cx, ry, cx + 1, ry + LINE_H, ink.caret());
             }
             ry += LINE_H;
         }
@@ -335,9 +370,11 @@ public final class CodeArea extends UiComponent {
         ry = 1;
         for (int i = this.scroll; i < this.doc.lineCount() && i - this.scroll < visible; i++) {
             drawMark(g, i, ry);
-            final String number = String.valueOf(i + 1);
-            g.drawString(font, number, gutter - GUTTER_PAD - font.width(number), ry + 1,
-                    this.palette.gutterText(), false);
+            if (this.numbered) {
+                final String number = String.valueOf(i + 1);
+                Draw.text(g, font, number, gutter - GUTTER_PAD - font.width(number), ry + 1,
+                        ink.gutterText());
+            }
             ry += LINE_H;
         }
         g.pose().popPose();
@@ -354,8 +391,9 @@ public final class CodeArea extends UiComponent {
         final int rows = this.doc.lineCount();
         final int visible = visibleLines();
         if (rows > visible) {
-            g.fill(right() - BAR, y(), right(), y() + height() - BAR, BAR_TRACK);
-            g.fill(right() - BAR, verticalThumbY(), right(), verticalThumbY() + verticalThumbHeight(), BAR_THUMB);
+            g.fill(right() - BAR, y(), right(), y() + height() - BAR, PALETTE.get().track());
+            g.fill(right() - BAR, verticalThumbY(), right(), verticalThumbY() + verticalThumbHeight(),
+                    PALETTE.get().thumb());
         }
         final int room = Math.max(8, codeRoom(font));
         final int widest = widestLine(font) + 4;
@@ -364,8 +402,8 @@ public final class CodeArea extends UiComponent {
             final int trackW = right() - BAR - trackX;
             final int thumbW = Math.max(6, trackW * room / widest);
             final int thumbX = trackX + (trackW - thumbW) * this.shift / Math.max(1, widest - room);
-            g.fill(trackX, bottom() - BAR, trackX + trackW, bottom(), BAR_TRACK);
-            g.fill(thumbX, bottom() - BAR, thumbX + thumbW, bottom(), BAR_THUMB);
+            g.fill(trackX, bottom() - BAR, trackX + trackW, bottom(), PALETTE.get().track());
+            g.fill(thumbX, bottom() - BAR, thumbX + thumbW, bottom(), PALETTE.get().thumb());
         }
     }
 
@@ -421,8 +459,9 @@ public final class CodeArea extends UiComponent {
     /** One row, run by run, each stretch in the colour its piece of source asked for. */
     private void drawLine(final GuiGraphics g, final Font font, final String line,
                           final List<CodeRuns.Run> runs, final int startX, final int textY) {
+        final InkPalette ink = this.palette.get();
         if (runs.isEmpty()) {
-            g.drawString(font, line, startX, textY, this.palette.plain(), false);
+            Draw.text(g, font, line, startX, textY, ink.plain());
             return;
         }
         int rx = startX;
@@ -433,7 +472,7 @@ public final class CodeArea extends UiComponent {
                 continue;
             }
             final String piece = line.substring(from, to);
-            g.drawString(font, piece, rx, textY, this.palette.of(run.ink()), false);
+            Draw.text(g, font, piece, rx, textY, ink.of(run.ink()));
             rx += font.width(piece);
         }
     }
@@ -471,7 +510,7 @@ public final class CodeArea extends UiComponent {
     }
 
     private static int colourOf(final Mark mark) {
-        return mark.error() ? 0xFFC0392B : 0xFFD08A1E;
+        return mark.error() ? PALETTE.get().error() : PALETTE.get().warning();
     }
 
     /**
@@ -777,5 +816,9 @@ public final class CodeArea extends UiComponent {
         this.scroll = Math.max(0, Math.min(Math.max(0, this.doc.lineCount() - visible),
                 this.scroll - (int) Math.signum(delta) * 3));
         return true;
+    }
+
+    /** The editor's colours, as the palette above names them. */
+    private record Colours(int selection, int track, int thumb, int error, int warning) {
     }
 }

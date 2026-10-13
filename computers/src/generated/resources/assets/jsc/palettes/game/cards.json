@@ -1,0 +1,13 @@
+{
+  "backDark": "#FF24427A",
+  "backEdge": "#FF14264A",
+  "backLight": "#FF2B4E8C",
+  "black": "#FF1A1A1A",
+  "edge": "#FF2B2B2B",
+  "emptyEdge": "#66FFFFFF",
+  "emptyFill": "#24000000",
+  "face": "#FFFAF8F0",
+  "foundationBlack": "#80FFFFFF",
+  "foundationRed": "#80B4231F",
+  "red": "#FFB4231F"
+}

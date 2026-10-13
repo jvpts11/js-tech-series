@@ -1,0 +1,330 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.routers.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.routers.table1",
+      "heads": [
+        "jsc.guide.routers.table1_head1",
+        "jsc.guide.routers.table1_head2",
+        "jsc.guide.routers.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.routers.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.routers.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.routers.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.routers.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.routers.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.routers.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.routers.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.routers.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.routers.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.routers.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.routers.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.routers.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.routers.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.routers.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.routers.table1_7_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.routers.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.routers.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.routers.text4"
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.routers.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "text": "jsc.guide.routers.balloon1"
+        },
+        {
+          "detail": "jsc.guide.routers.balloon2_detail",
+          "number": 2,
+          "part": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "text": "jsc.guide.routers.balloon2"
+        },
+        {
+          "detail": "jsc.guide.routers.balloon3_detail",
+          "number": 3,
+          "part": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "text": "jsc.guide.routers.balloon3"
+        },
+        {
+          "detail": "jsc.guide.routers.balloon4_detail",
+          "number": 4,
+          "part": {
+            "x": 6,
+            "y": 0,
+            "z": 0
+          },
+          "text": "jsc.guide.routers.balloon4"
+        },
+        {
+          "detail": "jsc.guide.routers.balloon5_detail",
+          "number": 5,
+          "part": {
+            "x": 6,
+            "y": 0,
+            "z": 3
+          },
+          "text": "jsc.guide.routers.balloon5"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "jsc:standard_router",
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,4144,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 1,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,8240,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 2,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "state": "jsc:standard_repeater",
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,4144,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 4,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,8240,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 5,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "state": "jsc:optical_router",
+          "x": 6,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,1036,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 6,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,2060,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 6,
+          "y": 0,
+          "z": 2
+        },
+        {
+          "state": "jsc:standard_router",
+          "x": 6,
+          "y": 0,
+          "z": 3
+        }
+      ],
+      "caption": "jsc.guide.routers.figure1",
+      "height": 120,
+      "view": {
+        "zoom": 1.35
+      }
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.routers.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.routers.table2",
+      "heads": [
+        "jsc.guide.routers.table2_head1",
+        "jsc.guide.routers.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.routers.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.routers.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.routers.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.routers.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.routers.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.routers.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.routers.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.routers.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.routers.fix1",
+          "problem": "jsc.guide.routers.problem1"
+        },
+        {
+          "fix": "jsc.guide.routers.fix2",
+          "problem": "jsc.guide.routers.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:standard_router",
+  "id": "jsc:routers",
+  "items": [
+    "jsc:vintage_router",
+    "jsc:personal_router",
+    "jsc:transition_router",
+    "jsc:standard_router",
+    "jsc:advanced_router",
+    "jsc:optical_router",
+    "jsc:advanced_optical_router",
+    "jsc:vintage_repeater",
+    "jsc:legacy_repeater",
+    "jsc:transition_repeater",
+    "jsc:standard_repeater",
+    "jsc:advanced_repeater"
+  ],
+  "order": 67,
+  "section": "jsc:network_basics",
+  "title": "jsc.guide.routers.title"
+}

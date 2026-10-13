@@ -1,0 +1,230 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_values.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_values.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_values.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.Collections.*;",
+        "namespace Corpus;",
+        "struct Vec {",
+        "    public int X;",
+        "    public int Y;",
+        "}",
+        "class Held {",
+        "    public Vec Spot;",
+        "    public static Vec Origin;",
+        "}",
+        "class ValuesCorpus {",
+        "    static Vec Kept;",
+        "",
+        "    static void Main() {",
+        "        Vec one = new Vec();",
+        "        one.X = 1;",
+        "        one.Y = 2;",
+        "",
+        "        Vec copy = one;",
+        "        copy.X = 9;",
+        "        Console.PrintLine(\"\" + one.X + copy.X);",
+        "",
+        "        Kept = one;",
+        "        Held held = new Held();",
+        "        held.Spot = one;",
+        "        Held.Origin = one;",
+        "        Console.PrintLine(\"\" + Kept.X + held.Spot.Y + Held.Origin.X);",
+        "",
+        "        Vec given = Same(one);",
+        "        Console.PrintLine(\"\" + given.X + given.Y);",
+        "",
+        "        Vec[] spots = new Vec[3];",
+        "        spots[0] = one;",
+        "        spots[1] = copy;",
+        "        Console.PrintLine(\"\" + spots[0].X + spots[1].X);",
+        "",
+        "        List<Vec> many = new List<Vec>();",
+        "        many.Add(one);",
+        "        many.Add(copy);",
+        "        Console.PrintLine(\"\" + many.Count);",
+        "",
+        "        int total = 0;",
+        "        foreach (Vec spot in spots) {",
+        "            total = total + spot.X;",
+        "        }",
+        "        foreach (Vec spot in many) {",
+        "            total = total + spot.Y;",
+        "        }",
+        "        Console.PrintLine(\"\" + total);",
+        "",
+        "        int[] numbers = new int[4];",
+        "        numbers[0] = 5;",
+        "        numbers[3] = 7;",
+        "        int sum = 0;",
+        "        foreach (int number in numbers) {",
+        "            sum = sum + number;",
+        "        }",
+        "        Console.PrintLine(\"\" + sum);",
+        "",
+        "        string[] words = new string[2];",
+        "        words[0] = \"a\";",
+        "        words[1] = \"b\";",
+        "        string joined = \"\";",
+        "        foreach (string word in words) {",
+        "            joined = joined + word;",
+        "        }",
+        "        Console.PrintLine(joined);",
+        "",
+        "        List<string> names = new List<string>();",
+        "        names.Add(\"x\");",
+        "        foreach (string name in names) {",
+        "            Console.PrintLine(name);",
+        "        }",
+        "    }",
+        "",
+        "    static Vec Same(Vec spot) {",
+        "        Vec back = spot;",
+        "        return back;",
+        "    }",
+        "}"
+      ],
+      "name": "Values.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_values.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_values.table1",
+      "heads": [
+        "jsc.guide.sigma_example_values.table1_head1",
+        "jsc.guide.sigma_example_values.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "struct Vec"
+          },
+          {
+            "words": "jsc.guide.sigma_example_values.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "class Held"
+          },
+          {
+            "words": "jsc.guide.sigma_example_values.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Vec copy = one; copy.X = 9;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_values.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Kept = one; held.Spot = one; Held.Origin = one;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_values.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Same(one)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_values.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "spots[0] = one;"
+          },
+          {
+            "words": "jsc.guide.sigma_example_values.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "many.Add(one);"
+          },
+          {
+            "words": "jsc.guide.sigma_example_values.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "foreach (...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_values.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_values.definition1",
+      "term": "jsc.guide.sigma_example_values.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_values.definition2",
+      "term": "jsc.guide.sigma_example_values.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_values.definition3",
+      "term": "jsc.guide.sigma_example_values.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_values.definition4",
+      "term": "jsc.guide.sigma_example_values.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_values.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_values.fix1",
+          "problem": "jsc.guide.sigma_example_values.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_classes",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_values",
+  "order": 403,
+  "section": "jsc:examples_language",
+  "title": "jsc.guide.sigma_example_values.title"
+}

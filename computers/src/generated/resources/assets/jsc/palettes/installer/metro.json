@@ -1,0 +1,15 @@
+{
+  "accent": "#FF0078D7",
+  "border": "#FF1883D7",
+  "brand": "#FF0078D7",
+  "button": "#FFE1E1E1",
+  "buttonHeld": "#FFCCE4F7",
+  "buttonRim": "#FFADADAD",
+  "dim": "#FF6D6D6D",
+  "heading": "#FF003399",
+  "select": "#FFE5F1FB",
+  "selectText": "#FF000000",
+  "text": "#FF000000",
+  "title": "#FF000000",
+  "window": "#FFFFFFFF"
+}

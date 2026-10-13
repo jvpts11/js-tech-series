@@ -11,6 +11,7 @@ import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 
 /**
@@ -26,6 +27,9 @@ public final class TabStrip extends UiComponent {
     private int labelPadding = -1;
     /** The widths of the tabs as last drawn; equal shares until the first frame measures the labels. */
     private int[] widths = new int[0];
+    /* Which tabs cannot be chosen now, and the word drawn small beside their label to say why. */
+    private IntPredicate disabled = i -> false;
+    private Supplier<String> disabledNote = () -> "";
 
     /** A strip whose tabs never change: the sections of a screen. */
     public TabStrip(final List<String> labels) {
@@ -63,8 +67,20 @@ public final class TabStrip extends UiComponent {
         return this;
     }
 
+    /**
+     * Makes the tabs {@code rule} names unavailable: they draw dim, with {@code note} after their label (what is
+     * missing), and a click on one selects nothing.
+     */
+    public TabStrip setDisabled(final IntPredicate rule, final Supplier<String> note) {
+        disabled = rule;
+        disabledNote = note;
+        return this;
+    }
+
     /** Room for the close mark at the right of a tab that can be closed. */
     private static final int CLOSE_W = 9;
+    /** The least padding a fitted tab keeps when the labels are squeezed to fit the strip. */
+    private static final int MIN_FITTED_PADDING = 4;
     private IntConsumer onClose;
 
     /**
@@ -140,20 +156,36 @@ public final class TabStrip extends UiComponent {
         final int close = onClose == null ? 0 : CLOSE_W;
         if (labelPadding >= 0) {
             final int[] measured = new int[current.size()];
+            int words = 0;
             for (int i = 0; i < current.size(); i++) {
-                measured[i] = ctx.font().width(current.get(i)) + labelPadding + close;
+                measured[i] = ctx.font().width(current.get(i)) + noteWidth(ctx, i);
+                words += measured[i] + close;
+            }
+            /*
+             * Labels that would run past the strip with their padding give up padding first, evenly, so a long
+             * language or a narrow window still shows every tab rather than pushing the last ones off the end.
+             */
+            final int padding = current.isEmpty() || words + labelPadding * current.size() <= width()
+                    ? labelPadding
+                    : Math.max(MIN_FITTED_PADDING, (width() - words) / current.size());
+            for (int i = 0; i < current.size(); i++) {
+                measured[i] += padding + close;
             }
             widths = measured;
         }
         for (int i = 0; i < current.size(); i++) {
             final int tx = tabX(i);
             final int tw = tabWidth(i);
+            if (disabled.test(i)) {
+                renderDisabled(g, ctx, tx, tw - close, current.get(i));
+                continue;
+            }
             ctx.skin().tab(g, ctx.font(), tx, y(), tw - close, height(), current.get(i), i == selected);
             if (close > 0) {
                 // The mark is part of the tab, drawn on the same ground, lit when the mouse is over it.
                 final boolean over = ctx.over(tx + tw - close, y(), close, height());
-                g.drawString(ctx.font(), "x", tx + tw - close + 2, y() + (height() - 7) / 2,
-                        over ? ctx.skin().text() : ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), "x", tx + tw - close + 2, y() + (height() - 7) / 2,
+                        over ? ctx.skin().text() : ctx.skin().dim());
             }
         }
         if (underline) {
@@ -191,10 +223,29 @@ public final class TabStrip extends UiComponent {
                 return true;
             }
         }
+        if (disabled.test(index)) {
+            return true;
+        }
         if (index != selected) {
             selected = index;
             onSelect.accept(index);
         }
         return true;
+    }
+
+    /* The room the note after a disabled tab's label takes, with the space before it. */
+    private int noteWidth(final UiContext ctx, final int index) {
+        final String note = disabledNote.get();
+        return disabled.test(index) && note != null && !note.isEmpty() ? ctx.font().width(" " + note) : 0;
+    }
+
+    /* A tab that cannot be chosen: its ground unselected, its label dim and the note after it. */
+    private void renderDisabled(final GuiGraphics g, final UiContext ctx, final int tx, final int tw,
+                                final String label) {
+        ctx.skin().tab(g, ctx.font(), tx, y(), tw, height(), "", false);
+        final String note = disabledNote.get() == null ? "" : disabledNote.get();
+        final String shown = note.isEmpty() ? label : label + " " + note;
+        final int textX = tx + Math.max(2, (tw - ctx.font().width(shown)) / 2);
+        Draw.text(g, ctx.font(), shown, textX, y() + (height() - 7) / 2, ctx.skin().dim());
     }
 }

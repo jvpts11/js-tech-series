@@ -8,9 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.operation.OperationPriority;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -43,10 +41,6 @@ public record NiGridClickPayload(BlockPos host, BlockPos monitorPos, StorageKey 
     public static final CustomPacketPayload.Type<NiGridClickPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "ni_grid_click"));
 
-    /** A priority level as one byte, its id; an id no level declares reads as the default, so a stale value never throws. */
-    static final StreamCodec<ByteBuf, OperationPriority> PRIORITY_CODEC =
-            StableCodecs.byId(OperationPriority.class, OperationPriority.DEFAULT);
-
     public static final StreamCodec<RegistryFriendlyByteBuf, NiGridClickPayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, NiGridClickPayload::host,
@@ -54,7 +48,7 @@ public record NiGridClickPayload(BlockPos host, BlockPos monitorPos, StorageKey 
                     StorageKey.STREAM_CODEC, NiGridClickPayload::key,
                     ByteBufCodecs.VAR_LONG, NiGridClickPayload::amount,
                     ByteBufCodecs.VAR_INT, NiGridClickPayload::mode,
-                    PRIORITY_CODEC, NiGridClickPayload::priority,
+                    PayloadCodecs.PRIORITY, NiGridClickPayload::priority,
                     NiGridClickPayload::new);
 
     @Override

@@ -1,0 +1,13 @@
+{
+  "darkShadow": "#FF000000",
+  "face": "#FFC0C0C0",
+  "focus": "#FF000000",
+  "glyph": "#FF000000",
+  "highlight": "#FFFFFFFF",
+  "idleTitleFrom": "#FF7F7F7F",
+  "idleTitleTo": "#FFB0B0B0",
+  "light": "#FFDFDFDF",
+  "shadow": "#FF808080",
+  "titleFrom": "#FF000080",
+  "titleTo": "#FF1084D0"
+}

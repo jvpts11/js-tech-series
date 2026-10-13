@@ -17,11 +17,14 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -31,22 +34,28 @@ import java.util.UUID;
 /**
  * Runs a {@link MultiStagePattern} as an ordered pipeline: it submits one stage at a time to the Mainframe (a
  * bench craft via {@code submitNetworkCraft}, a processing step via {@code submitNetworkProcessing}) and only
- * starts the next stage once the current one is done. Each stage's output goes to the network and the next
- * stage pulls it back, so the chain flows through shared network storage. If a stage fails, the whole craft
- * fails. The stages themselves are real network operations the Mainframe ticks; this just sequences them.
+ * starts the next stage once the current one is done. What a machine stage makes is held in the pipeline's own pool,
+ * apart from the network, and the next machine stage takes it from there; a bench stage plans against the network,
+ * so the pool goes into the network just before one starts, and the last stage delivers to the network. If a stage
+ * fails, the whole craft fails and the pool goes back to the network. The stages themselves are real operations the
+ * Mainframe ticks; this sequences them.
  */
+@TextHolder
 public final class NetworkMultiStageOperation implements IPersistentOperation {
 
     public static final String KIND = "multi";
 
     /** A pipeline with nothing in it, which is a pattern that was saved wrong. */
-    private static final String NO_STAGES = "jsc.operation.failure.no_stages";
+    private static final TextKey NO_STAGES = TextKey.of("jsc.operation.failure.no_stages",
+            "the pattern has no stages in it");
 
     /** A stage that could not be started at all: nothing is set up to carry it out. */
-    private static final String STAGE_WOULD_NOT_START = "jsc.operation.failure.stage_would_not_start";
+    private static final TextKey STAGE_WOULD_NOT_START = TextKey.of("jsc.operation.failure.stage_would_not_start",
+            "stage %s of %s could not be started");
 
     /** A stage that ran and failed without saying why. */
-    private static final String STAGE_FAILED = "jsc.operation.failure.stage_failed";
+    private static final TextKey STAGE_FAILED = TextKey.of("jsc.operation.failure.stage_failed",
+            "stage %s of %s failed");
 
     private final MainframeBlockEntity mainframe;
     private final MultiStagePattern pattern;
@@ -65,6 +74,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
     private OperationFailure cause = OperationFailure.NONE;
     private OperationPriority priority = OperationPriority.DEFAULT;
     private Runnable onSettle;
+    /* What the machine stages made for the stages after them, kept off the network; null off a server. */
+    @Nullable
+    private final HeldIo pool;
 
     public NetworkMultiStageOperation(final MainframeBlockEntity mainframe, final MultiStagePattern pattern,
                                       final long requested, final String requesterLabel) {
@@ -79,6 +91,8 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         this.requesterLabel = requesterLabel;
         this.resultKey = finalResultKey(pattern);
         this.operationId = operationId;
+        this.pool = mainframe.getLevel() instanceof ServerLevel server && mainframe.networkUuid() != null
+                ? new HeldIo(server, mainframe.networkUuid()) : null;
         if (pattern.stages().isEmpty()) {
             status = OperationRecord.STATUS_FAILED;
             cause = OperationFailure.of(NO_STAGES);
@@ -112,6 +126,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         } else if (pendingStageId != null) {
             tag.putUUID("StageId", pendingStageId);
         }
+        if (pool != null && !pool.isEmpty()) {
+            tag.put("Pool", pool.save(registries));
+        }
         return tag;
     }
 
@@ -133,6 +150,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         op.stageIndex = tag.getInt("StageIndex");
         op.pendingStageId = tag.hasUUID("StageId") ? tag.getUUID("StageId") : null;
         op.priority = NetworkCraftOperation.savedPriority(tag);
+        if (op.pool != null) {
+            op.pool.load(tag.getList("Pool", Tag.TAG_COMPOUND), registries);
+        }
         return op;
     }
 
@@ -149,6 +169,11 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         }
     }
 
+    /** Whether one of its stages runs on a machine: a finished pipeline then passed through one. */
+    public boolean hasMachineStage() {
+        return pattern.stages().stream().anyMatch(stage -> stage.proc().isPresent());
+    }
+
     /** The id of the stage this restored pipeline was waiting on, or null when it starts its next stage fresh. */
     @Nullable
     public UUID pendingStageId() {
@@ -163,6 +188,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
     public void adoptStage(@Nullable final INetworkOperation stage) {
         this.currentStage = stage;
         this.pendingStageId = null;
+        if (stage instanceof NetworkProcessingOperation proc && proc.isNested() && pool != null) {
+            proc.adoptIo(pool); // a machine stage between others hands what it makes to the pool again
+        }
     }
 
     /** The stage this restored pipeline waited on was fully delivered during the restore: move on to the next. */
@@ -222,14 +250,21 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
          * (one ingot makes nine) smelt one ingot; one iron block (nine ingots) smelts nine.
          */
         final long demand = pattern.stageDemands(requested)[stageIndex];
+        final boolean last = stageIndex == pattern.stages().size() - 1;
         if (stage.proc().isPresent()) {
-            return mainframe.submitNetworkProcessing(stage.proc().get(), demand, requesterLabel);
+            // A machine stage before the last makes into the pool; the last delivers to the network.
+            return mainframe.submitNetworkProcessing(stage.proc().get(), demand, requesterLabel,
+                    last || pool == null ? null : pool);
         }
         if (stage.bench().isPresent()) {
             /*
-             * The stage carries its own pattern: plan with it so the pipeline runs even when the bench
-             * recipe was never loaded into a Recipe ROM on its own.
+             * The stage carries its own pattern: plan with it so the pipeline runs even when the bench recipe was
+             * never loaded into a card's ROM on its own. It plans against the network, so what the machine stages
+             * made goes there first.
              */
+            if (pool != null) {
+                pool.flush();
+            }
             final CraftingPattern bench = stage.bench().get();
             return mainframe.submitNetworkCraft(
                     StorageKey.of(bench.result()), demand, true, requesterLabel, bench);
@@ -260,6 +295,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         done = true;
         if (currentStage != null && !currentStage.isDone()) {
             currentStage.abandon(); // settle the in-flight stage so it returns its ingredients
+        }
+        if (pool != null) {
+            pool.flush(); // whatever the stages made and nothing took goes back to the network
         }
         if (onSettle != null) {
             onSettle.run();

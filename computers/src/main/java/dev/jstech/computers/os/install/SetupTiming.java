@@ -98,6 +98,7 @@ public final class SetupTiming {
             case CD -> 4.0;
             case DVD -> 16.0;
             case USB -> 32.0;
+            case BLU_RAY -> 48.0;
         };
     }
 
@@ -131,11 +132,24 @@ public final class SetupTiming {
      * How much faster a machine of that generation sets a program up than a Vintage one.
      *
      * <p>A floppy is a floppy, but what unpacks and writes what it carries is the computer, and each
-     * generation does that twice as fast as the one before: Vintage 1, Legacy 2, Standard 4, and so on.
-     * A machine with no generation to speak of counts as Vintage.
+     * generation does that twice as fast as the one before: Vintage 1, Legacy 2, Standard 4, and so on. The
+     * Transition, a short generation between Legacy and Standard, sits between them at 3. Written out per era
+     * rather than worked out from the era's level, so an era placed between two others never moves the ones
+     * around it. A machine with no generation to speak of counts as Vintage.
      */
     public static int eraFactor(final HardwareEra era) {
-        return era == null ? 1 : 1 << era.level();
+        if (era == null) {
+            return 1;
+        }
+        return switch (era) {
+            case VINTAGE -> 1;
+            case LEGACY -> 2;
+            case TRANSITION -> 3;
+            case STANDARD -> 4;
+            case ADVANCED -> 8;
+            case EXA -> 16;
+            case SINGULARITY -> 32;
+        };
     }
 
     /** A disc's time on a machine that works {@code factor} times as fast as a Vintage one. */

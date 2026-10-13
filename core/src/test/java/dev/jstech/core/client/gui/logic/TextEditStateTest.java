@@ -33,6 +33,18 @@ public class TextEditStateTest {
     }
 
     @Test
+    public void typing_afterAShiftEndThatWentNowhereAndABackspaceDoesNotThrow() {
+        // Shift+End at the end left an anchor on the caret, the backspace shortened the edit under it, and the next
+        // letter typed cut the text past its end.
+        final TextEditState state = holding("abc");
+        state.end(true);
+        state.backspace();
+        state.type('x');
+        assertEquals("abx", state.edit());
+        assertFalse(state.hasSelection());
+    }
+
+    @Test
     public void left_withoutExtendCollapsesTheSelectionToItsStart() {
         final TextEditState state = holding("abcdef");
         state.left(true);

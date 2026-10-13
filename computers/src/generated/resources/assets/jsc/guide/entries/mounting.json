@@ -1,0 +1,137 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mounting.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mounting.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mounting.table1",
+      "heads": [
+        "jsc.guide.mounting.table1_head1",
+        "jsc.guide.mounting.table1_head2",
+        "jsc.guide.mounting.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.mounting.table1_1_1"
+          },
+          {
+            "literal": "/mnt"
+          },
+          {
+            "literal": "/mnt/gentoo"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mounting.table1_2_1"
+          },
+          {
+            "literal": "/mnt/boot"
+          },
+          {
+            "literal": "/mnt/gentoo/efi"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mounting.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mounting.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.mounting.step1",
+        "jsc.guide.mounting.step2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mounting.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.mounting.step3",
+        "jsc.guide.mounting.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mounting.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.mounting.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mounting.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mounting.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mounting.definition1",
+      "term": "jsc.guide.mounting.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mounting.fix1",
+          "problem": "jsc.guide.mounting.problem1"
+        },
+        {
+          "fix": "jsc.guide.mounting.fix2",
+          "problem": "jsc.guide.mounting.problem2"
+        },
+        {
+          "fix": "jsc.guide.mounting.fix3",
+          "problem": "jsc.guide.mounting.problem3"
+        },
+        {
+          "fix": "jsc.guide.mounting.fix4",
+          "problem": "jsc.guide.mounting.problem4"
+        },
+        {
+          "fix": "jsc.guide.mounting.fix5",
+          "problem": "jsc.guide.mounting.problem5"
+        },
+        {
+          "fix": "jsc.guide.mounting.fix6",
+          "problem": "jsc.guide.mounting.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_chroot",
+        "jsc:arch_fstab",
+        "jsc:when_a_tool_refuses"
+      ]
+    }
+  ],
+  "id": "jsc:mounting",
+  "order": 245,
+  "section": "jsc:disk_tools",
+  "title": "jsc.guide.mounting.title"
+}

@@ -36,8 +36,8 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
@@ -51,6 +51,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * CDE is a desktop like the others are: a package that turns a terminal system into a graphical one. What is
@@ -81,8 +83,8 @@ public final class CdeGameTests {
                         && spec.platforms().contains(Platform.FREEBSD) && spec.platforms().contains(Platform.LINUX)
                         && !spec.platforms().contains(Platform.FRAMES),
                 "it runs on every Unix family and on nothing else: " + (spec == null ? "none" : spec.platforms()));
-        helper.assertTrue("File Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("files"))))
-                        && "Style Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("settings")))),
+        helper.assertTrue("File Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("files"))).english())
+                        && "Style Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("settings"))).english()),
                 "and it calls its programs what it always called them");
         final ProgramSpec plasma = OsRegistry.getProgram(jsc("kde_plasma"));
         helper.assertFalse(plasma.platforms().contains(Platform.UNIX), "no later desktop runs on UNIX");
@@ -185,10 +187,10 @@ public final class CdeGameTests {
                 "the panel offers exactly the workspaces a window can be on");
         final int oneAndFour = WorkspaceSet.only(0) | WorkspaceSet.only(3);
         final List<OpenWindow> left = List.of(
-                new OpenWindow("File Manager", 40, 30, 200, 140, false, false, "", WorkspaceSet.only(0)),
-                new OpenWindow("Text Editor", 60, 50, 180, 120, false, false, "", WorkspaceSet.only(2)),
-                new OpenWindow("Terminal", 20, 20, 220, 140, false, false, "", WorkspaceSet.EVERY),
-                new OpenWindow("Calculator", 30, 30, 120, 140, true, false, "", oneAndFour));
+                new OpenWindow("jsc:files", 40, 30, 200, 140, false, false, "", WorkspaceSet.only(0)),
+                new OpenWindow("jsc:editor", 60, 50, 180, 120, false, false, "", WorkspaceSet.only(2)),
+                new OpenWindow("jsc:command_prompt", 20, 20, 220, 140, false, false, "", WorkspaceSet.EVERY),
+                new OpenWindow("jsc:calculator", 30, 30, 120, 140, true, false, "", oneAndFour));
         machine.setOpenWindows(left);
         machine.setDesktopWorkspace(2);
 
@@ -234,16 +236,16 @@ public final class CdeGameTests {
         final CdeStyle chosen = CdeStyle.DEFAULT.withPalette("Desert").withBackdrop(1, CdeBackdrop.DOTS);
         final ServerCliComputer cli = new ServerCliComputer(machine, helper.getLevel());
         final String said = text(CliCommands.shellFor(cli, 52).run("config cdestyle " + chosen.encoded(), cli));
-        helper.assertTrue(machine.console().cdeStyle().equals(chosen), "the setting takes the style; got "
-                + machine.console().cdeStyle() + " after " + said);
+        helper.assertTrue(machine.console().desktop().cdeStyle().equals(chosen), "the setting takes the style; got "
+                + machine.console().desktop().cdeStyle() + " after " + said);
 
         final CompoundTag saved = machine.saveWithoutMetadata(helper.getLevel().registryAccess());
-        machine.console().setCdeStyle(CdeStyle.DEFAULT);
+        machine.console().desktop().setCdeStyle(CdeStyle.DEFAULT);
         machine.loadWithComponents(saved, helper.getLevel().registryAccess());
-        helper.assertTrue(machine.console().cdeStyle().equals(chosen), "and it comes back from a save");
+        helper.assertTrue(machine.console().desktop().cdeStyle().equals(chosen), "and it comes back from a save");
 
         CliCommands.shellFor(cli, 52).run("config cdestyle Nobody;no,such", cli);
-        helper.assertTrue(machine.console().cdeStyle().equals(CdeStyle.DEFAULT),
+        helper.assertTrue(machine.console().desktop().cdeStyle().equals(CdeStyle.DEFAULT),
                 "a style nobody could draw is kept as the one a workstation starts with");
         helper.succeed();
     }
@@ -277,8 +279,13 @@ public final class CdeGameTests {
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess());
         WorkstationInfoPayload.STREAM_CODEC.encode(buf, new WorkstationInfoPayload(machine.getBlockPos(), facts));
-        helper.assertTrue(WorkstationInfoPayload.STREAM_CODEC.decode(buf).facts().equals(facts),
-                "the facts cross the wire whole");
+        final WorkstationFacts back = WorkstationInfoPayload.STREAM_CODEC.decode(buf).facts();
+        // The processor's name crosses as the key it is read from, which the other side reads in its own language.
+        final WorkstationFacts sameProcessor = new WorkstationFacts(back.userName(), back.hostName(), back.network(),
+                back.system(), back.architecture(), back.windowSystem(), facts.processor(), back.processorMhz(),
+                back.memoryMb(), back.memoryUsedMb(), back.videoMb(), back.diskMb(), back.diskUsedMb());
+        helper.assertTrue(sameProcessor.equals(facts) && keyOf(back.processor()).equals(keyOf(facts.processor())),
+                "the facts cross the wire whole; got " + back);
         helper.succeed();
     }
 
@@ -311,12 +318,9 @@ public final class CdeGameTests {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
     }
 
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
-        }
-        return out.toString();
+    /* A translated text by its key, which is all of it that crosses the wire; anything else by its words. */
+    private static String keyOf(final Text text) {
+        return text instanceof Text.Translated translated ? translated.key().key() : text.english();
     }
 
     /** A powered machine with a full build, a graphics card for its ports, and that system on its disk. */
