@@ -2032,6 +2032,30 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- Arch's pacstrap and Gentoo's tar count the room on the root partition before they lay the base system out: on a
+  root too small for it pacman says the partition is too full and installs nothing, and tar runs out of space. Both
+  laid the whole system out on any partition, however small.
+- A program that shows itself only in windows, typed at the prompt of a Linux or a FreeBSD with no desktop, says it
+  cannot open a display, as on a real one: it was a command not found, though it was installed.
+- A Sigma# program's windows leave the desktop when it ends, stopped or done, though it was the last program the
+  machine ran: with nothing left to run the machine sent nothing more, and the windows stayed on the screen.
+- The code editors go on suggesting while an if, a while or a for is typed as far as its condition: the body not
+  yet written stopped the reading of the whole file, and nothing was offered until it was.
+- A Sigma script that overrides only some of Script's methods runs: the ones it leaves alone are Script's own, which
+  do nothing. One with no OnInit of its own was halted the moment it started, as the manual's own example would have
+  been.
+- A Crafting Computer that does less than one run a tick still crafts: what a tick's work leaves over is kept for
+  the next, so a run takes as many ticks as it costs. Its work was counted in whole runs a tick, so a Vintage one with
+  its ISA card counted none, took every craft and made nothing until the craft was given up.
+- A machine that already had a name takes the one typed in a system's installer: the old name came back as soon as
+  the disk's console was read again, so the machine went on answering to it after the install.
+- MC-DOS's write puts in the file everything typed after its name, as it is typed: quotes and the spaces between
+  words were taken out, so a Sigma program written at the prompt lost the quotes of its strings and did not compile.
+- Arch's and Gentoo's live installs take the firmware's partition mounted at /boot/efi, besides /boot and /efi:
+  mount refused that place, though grub-install looks there when it is not told where.
+- A program that only installs on a Crafting Computer is refused on any other machine however it is asked for:
+  Gentoo's emerge and FreeBSD's ports built the Crafting Manager on a Personal Computer, where pacman, apt and pkg
+  refused it.
 - A restart closes every program a computer was running, as on any machine. The programs a player started at a
   prompt kept running through a reboot, as if the machine had never stopped; only switching it off ended them.
 - A file cut and pasted where a file of its name already is makes the desktop ask whether to replace it: Yes moves it
