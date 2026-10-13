@@ -45,8 +45,11 @@ public final class SigmaEditorClientTests {
 
     private static final int SETTLE = 4;
     private static final int SCREEN_WAIT = 80;
-    /** Long enough for a cold start's POST to play out on the monitor before the desktop shows. */
-    private static final int BOOT_WAIT = 400;
+    /**
+     * Long enough for a cold start's POST to play out on the monitor before the desktop shows, on a machine running
+     * the other shards beside this one, where a start that takes two hundred ticks alone has taken over four hundred.
+     */
+    private static final int BOOT_WAIT = 1_200;
 
     private static final BlockPos COMPUTER = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);

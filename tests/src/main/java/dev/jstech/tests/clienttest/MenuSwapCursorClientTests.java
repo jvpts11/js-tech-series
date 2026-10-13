@@ -42,6 +42,7 @@ public final class MenuSwapCursorClientTests {
     public static void systemComingUp_leavesTheCursorWhereThePlayerHadIt(final ClientTestContext ctx) {
         /* A quarter of the way in from the left and a third down: well clear of the middle the game would use. */
         final double[] put = new double[2];
+        final boolean[] focused = new boolean[1];
         ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
@@ -59,9 +60,18 @@ public final class MenuSwapCursorClientTests {
                     put[0] = Math.floor(ctx.mc().getWindow().getScreenWidth() / 4.0);
                     put[1] = Math.floor(ctx.mc().getWindow().getScreenHeight() / 3.0);
                     InputConstants.grabOrReleaseMouse(window, GLFW.GLFW_CURSOR_NORMAL, put[0], put[1]);
+                    focused[0] = ctx.mc().isWindowActive();
                 })
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
                 .then(SETTLE, () -> {
+                    /*
+                     * The window has to hold the focus the whole way. Run beside other clients, one of theirs can
+                     * take it in between, and then where the cursor stands is not this window's doing, so it says
+                     * nothing about what this checks.
+                     */
+                    if (!focused[0] || !ctx.mc().isWindowActive()) {
+                        return;
+                    }
                     final double[] x = new double[1];
                     final double[] y = new double[1];
                     GLFW.glfwGetCursorPos(ctx.mc().getWindow().getWindow(), x, y);
