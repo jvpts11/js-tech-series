@@ -147,6 +147,14 @@ public interface ICliMachine {
         return true;
     }
 
+    /**
+     * Whether that word is a program installed here that shows itself only in windows, on a system with no desktop
+     * running to show them: its name is a program the machine has, and still nothing a prompt can open.
+     */
+    default boolean windowsWithoutDesktop(final String word) {
+        return false;
+    }
+
     /** Whether the computer has ports for peripherals. */
     default boolean hasPorts() {
         return false;

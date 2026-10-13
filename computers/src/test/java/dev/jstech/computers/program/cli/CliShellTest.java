@@ -20,9 +20,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -80,6 +82,25 @@ class CliShellTest {
         computer.files.put("C:\\TOOLS\\hello.asm", ".asm 1\n");
         shell.run("hello", computer);
         assertEquals("C:\\TOOLS\\hello.asm", computer.startedListing);
+    }
+
+    /** MC-DOS's write keeps the text as it was typed, quotes and spacing too, so a program's strings survive it. */
+    @Test
+    void run_dosWriteKeepsTheTextAsItWasTyped() {
+        computer.hasFiles = true;
+        shell.run("write \"lamp one.sg\"  printf(\"lit\\n\");  char c = 'a';", computer);
+        assertEquals("printf(\"lit\\n\");  char c = 'a';", computer.files.get("lamp one.sg"));
+    }
+
+    /** A program of windows alone, typed where no desktop runs, cannot open a display rather than being unknown. */
+    @Test
+    void run_aProgramOfWindowsAloneCannotOpenADisplayWithoutADesktop() {
+        computer.platform = Platform.UNIX;
+        computer.shellFamily = ShellFamily.POSIX;
+        computer.windowed.add("paint");
+        final String said = joined("paint");
+        assertTrue(said.contains("paint: cannot open display"), said);
+        assertFalse(said.contains("not found"), said);
     }
 
     /** A word neither a command nor a listing anywhere answers to is an unknown command on MC-DOS. */
@@ -300,6 +321,8 @@ class CliShellTest {
         boolean canRunPrograms = true;
         final Map<String, String> files = new LinkedHashMap<>();
         final Map<String, String> variables = new LinkedHashMap<>();
+        /* The programs installed that show themselves only in windows, on a system with no desktop. */
+        final Set<String> windowed = new HashSet<>();
         String startedListing;
 
         @Override public String name() {
@@ -333,6 +356,10 @@ class CliShellTest {
         @Override public FsResult readFile(final String path) {
             final String held = this.files.get(path);
             return held == null ? FsResult.fail("no such file: " + path) : FsResult.content(held);
+        }
+
+        @Override public boolean windowsWithoutDesktop(final String word) {
+            return this.windowed.contains(word);
         }
 
         @Override public FsResult writeFile(final String path, final String content) {

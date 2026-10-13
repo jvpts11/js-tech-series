@@ -276,7 +276,8 @@ final class DosFileCommands {
                 ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().writeFile(ctx.arg(0), ctx.rest(1));
+            // MC-DOS hands a command the rest of its line as it was typed: quotes in the text are part of the text.
+            final ICliComputer.FsResult result = ctx.computer().writeFile(ctx.arg(0), ctx.typedAfter(1));
             if (!result.ok()) {
                 ctx.out().error(result.message());
                 return;

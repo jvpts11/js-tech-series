@@ -43,6 +43,11 @@ public final class CliShell {
     private static final TextKey SYNTAX_ERROR = TextKey.of("jsc.cli.shell.syntax_error",
             "syntax error near unexpected token `%s'");
     private static final TextKey NO_JOBS =TextKey.of("jsc.cli.shell.no_jobs", "this machine keeps no jobs");
+    /* A program with only windows, typed at a system with no desktop: there is nowhere to show it, as on a real one. */
+    private static final TextKey CANNOT_OPEN_DISPLAY =
+            TextKey.of("jsc.cli.shell.cannot_open_display", "%s: cannot open display");
+    private static final TextKey NO_DESKTOP = TextKey.of("jsc.cli.shell.no_desktop",
+            "(it shows itself in windows, and this system has no desktop to show them on)");
 
     public CliShell(final List<ICliCommand> commands, final int width) {
         this.width = width;
@@ -149,6 +154,12 @@ public final class CliShell {
                 return ranByName;
             }
         }
+        // A program the machine has, which only shows itself in windows, on a system with no desktop to show them.
+        if (unresolved && command == null && computer.windowsWithoutDesktop(word)) {
+            out.error(CANNOT_OPEN_DISPLAY.with(word));
+            out.dim(NO_DESKTOP);
+            return new Response(out.lines(), false);
+        }
         /*
          * A command that is not available on this computer (another distribution's package manager, an
          * uninstalled program's verbs) does not exist here, exactly like an unknown word this system found no
@@ -181,11 +192,12 @@ public final class CliShell {
             }
             return new Response(out.lines(), false);
         }
-        final CliContext context = new CliContext(args, computer, out, this);
+        final String typedLine = line.strip();
+        final boolean asTyped = typedLine.regionMatches(true, 0, word, 0, word.length());
+        final CliContext context = new CliContext(args, computer, out, this, List.of(),
+                asTyped ? typedLine.substring(word.length()).strip() : String.join(" ", args));
         try {
-            final String typedLine = line.strip();
-            if (live && command instanceof LiveInstallCommands.LiveVerb verb
-                    && typedLine.regionMatches(true, 0, word, 0, word.length())) {
+            if (live && command instanceof LiveInstallCommands.LiveVerb verb && asTyped) {
                 // The installer reads the rest exactly as typed: quotes and runs of spaces are part of it.
                 verb.runLine(context, word + typedLine.substring(word.length()));
             } else {

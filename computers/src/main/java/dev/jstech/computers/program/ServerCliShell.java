@@ -37,6 +37,8 @@ import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
@@ -260,6 +262,22 @@ abstract class ServerCliShell implements ICliComputer {
     @Override
     public boolean canRunPrograms() {
         return sigma() != null;
+    }
+
+    /* Only a Unix-like system runs without a desktop and still has programs with windows to install. */
+    @Override
+    public boolean windowsWithoutDesktop(final String word) {
+        if (!(hostBlock instanceof IOsHost computer) || computer.installedDesktopId() != null
+                || shellFamily() != ShellFamily.POSIX || host.console() == null) {
+            return false;
+        }
+        for (final ProgramSpec spec : Programs.all()) {
+            if (spec.kind() == ProgramKind.APP && spec.commandName().equalsIgnoreCase(word)
+                    && host.console().isInstalled(spec.id().toString())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* Whether the machine has a port of any kind a peripheral could take. */
