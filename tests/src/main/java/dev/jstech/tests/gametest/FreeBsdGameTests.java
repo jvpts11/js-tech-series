@@ -499,6 +499,49 @@ public final class FreeBsdGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * The name typed at the installer renames a machine that already had one: the machine and the system it put on
+     * the disk both go by it, and the old name does not come back when the disk is read.
+     */
+    @GameTest(template = ARENA)
+    public static void installer_nameTypedRenamesAMachineThatHadOne(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = mainframeWithBsdInstallMedia(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setCustomName("Old");
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "bsdinstall opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null, "the machine opened an installer");
+                    flow.setComputerName("New");
+                    for (int i = 0; i < flow.style().stages().size() && !flow.started(); i++) {
+                        flow.next();
+                    }
+                    final OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the copy started");
+                    for (int i = 0; i <= job.ticksTotal() && mainframe.installedOsId() == null; i++) {
+                        OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                        if (flow.page() == InstallerPage.SERVICES || flow.page() == InstallerPage.DESKTOP) {
+                            flow.next();
+                        }
+                    }
+                    helper.assertTrue(FREEBSD.equals(mainframe.installedOsId()), "FreeBSD is on the disk");
+                    helper.assertTrue("New".equals(mainframe.customName()),
+                            "the machine goes by the name typed; got " + mainframe.customName());
+                    helper.assertTrue("New".equals(mainframe.console().computerName()),
+                            "and so does its system; got " + mainframe.console().computerName());
+                    mainframe.togglePower();
+                    mainframe.togglePower();
+                    helper.assertTrue("New".equals(mainframe.customName())
+                                    && "New".equals(mainframe.console().computerName()),
+                            "and both keep it once the machine starts again and reads the disk; got "
+                                    + mainframe.customName() + " / " + mainframe.console().computerName());
+                })
+                .thenSucceed();
+    }
+
     /** A running Mainframe with an empty disk and, beside it, a CD drive holding FreeBSD's guided installer. */
     private static MainframeBlockEntity mainframeWithBsdInstallMedia(final GameTestHelper helper, final BlockPos pos) {
         helper.setBlock(pos, ComputingModule.MAINFRAME.get());

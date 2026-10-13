@@ -141,10 +141,14 @@ public final class OsInstallRunner {
         show(level, machine, pos, flow);
     }
 
-    /** The name the installer asked for becomes the name the prompt and the network use. */
+    /**
+     * The name the installer asked for becomes the machine's, and so the name the prompt and the network use. It is
+     * given to the machine and not only to the new system: a machine that already had a name would otherwise give its
+     * old one back to the system the moment the disk is read, and what the player typed would be lost.
+     */
     private static void name(final IOsHost machine, final InstallerFlow flow) {
-        if (machine.console() != null && !flow.computerName().isBlank()) {
-            machine.console().setComputerName(flow.computerName());
+        if (!flow.computerName().isBlank()) {
+            machine.setCustomName(flow.computerName());
         }
     }
 
