@@ -66,7 +66,8 @@ final class SigmaLanguagePages {
                         GuideCell.code("if else while for foreach do switch case default break continue return"
                                 + " lock in out"))
                 .row(GuideCell.words("Values and tests"), GuideCell.code("true false null is as"))
-                .row(GuideCell.words("Kept for a later version"), GuideCell.code("try catch finally throw goto const"))
+                .row(GuideCell.words("Kept for a later version"),
+                        GuideCell.code("try catch finally throw goto const comefrom abstainfrom reinstate"))
                 .paragraph("Sigma refuses some of these words, even though the language knows them. The table"
                         + " \"What Sigma has, and what Sigma# adds\" shows which features each language has. The"
                         + " words kept for a later version are refused in both languages until that version brings"

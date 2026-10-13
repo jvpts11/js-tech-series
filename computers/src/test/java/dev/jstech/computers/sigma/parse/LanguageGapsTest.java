@@ -17,8 +17,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * The words C# has that a later version of the language brings, try, catch, finally, throw, goto and const, are
- * reserved now: wherever one is written, the program is told so at the word, with what to write until then.
+ * The words a later version of the language brings, C#'s try, catch, finally, throw, goto and const and INTERCAL's
+ * comefrom, abstainfrom and reinstate, are reserved now: wherever one is written, the program is told so at the word,
+ * with what to write until then.
  */
 class LanguageGapsTest {
 
@@ -50,6 +51,18 @@ class LanguageGapsTest {
         assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes(inMain("goto again;")));
     }
 
+    @Test
+    void comefrom_isToldToBeALoop() {
+        assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes(inMain("comefrom again; Console.PrintLine(\"a\");")));
+    }
+
+    /** Each is reported once and passed over, so the statements around them still read without more noise. */
+    @Test
+    void abstainfromAndReinstate_areToldToKeepABool() {
+        assertEquals(List.of(NOT_IN_THE_LANGUAGE, NOT_IN_THE_LANGUAGE),
+                codes(inMain("abstainfrom done; Console.PrintLine(\"a\"); reinstate done;")));
+    }
+
     /** A const local is reported and then declared all the same, so the lines after it read it without more noise. */
     @Test
     void constLocal_isReportedAndStillDeclared() {
@@ -68,6 +81,9 @@ class LanguageGapsTest {
     void theWords_areNoNames() {
         assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes(inMain("int try = 1;")));
         assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes("class Box { public int goto; } "
+                + "class M { static void Main() { } }"));
+        assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes(inMain("int reinstate = 1;")));
+        assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes("class Box { public int comefrom; } "
                 + "class M { static void Main() { } }"));
     }
 

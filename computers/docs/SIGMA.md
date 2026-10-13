@@ -164,7 +164,8 @@ they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`,
 `ComponentAction` among them. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
 older program. The one exception came with version 2 itself, before it shipped: the words of access hold as
-C# holds them, and `try`, `catch`, `finally`, `throw`, `goto` and `const` are kept for a later version. A
+C# holds them, and `try`, `catch`, `finally`, `throw`, `goto`, `const`, `comefrom`, `abstainfrom` and
+`reinstate` are kept for a later version. A
 version 1 program that reached a member written with no word of access, or named something with one of those
 words, needs `public` on the member or another name.
 
@@ -237,9 +238,10 @@ reasons answer instead of halting: `File.Write` returns false on a full disk, `C
 whether the text was a number. A whole number divided by zero halts too, while the smallest `int`
 divided by -1 comes round to itself rather than halting.
 
-`try`, `catch`, `finally`, `throw`, `goto` and `const` are kept for a later version of the language,
-which brings them. They are reserved already, so none of them can be a name, and a program that writes
-one is told what to write until then (S2014).
+`try`, `catch`, `finally`, `throw`, `goto` and `const`, and `comefrom`, `abstainfrom` and `reinstate`
+after INTERCAL, are kept for a later version of the language, which brings them. They are reserved
+already, so none of them can be a name, and a program that writes one is told what to write until then
+(S2014).
 
 ## Access and shifts
 

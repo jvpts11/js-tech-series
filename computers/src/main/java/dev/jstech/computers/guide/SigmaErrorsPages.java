@@ -207,10 +207,11 @@ final class SigmaErrorsPages {
                 .row(GuideCell.code("S2014"),
                         GuideCell.words("'<word>' is kept for a later version of the language; for now,"
                                 + " <alternative>"),
-                        GuideCell.words("The file writes try, catch, finally, throw, goto or const. A later version"
-                                + " of the language brings them, so they are kept already, and no name can be one"
-                                + " of them. Until then, write what the message says: there are no exceptions, so"
-                                + " a mistake halts the program and a call that can fail answers instead."))
+                        GuideCell.words("The file writes try, catch, finally, throw, goto, const, comefrom,"
+                                + " abstainfrom or reinstate. A later version of the language brings them, so they"
+                                + " are kept already, and no name can be one of them. Until then, write what the"
+                                + " message says: there are no exceptions, so a mistake halts the program and a"
+                                + " call that can fail answers instead."))
                 .ifSomethingGoesWrong("It says \"expected ';' but found '}'\".",
                         "The line before the brace does not end with a semicolon. Add the semicolon at its end.",
                         "It says \"only a call, an assignment, an increment, a decrement or a new object can be used"

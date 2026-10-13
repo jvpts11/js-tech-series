@@ -109,7 +109,7 @@ final class StatementParser {
             case LOCK:
                 return this.parseLock();
             default:
-                // A try, a catch, a throw or a goto is reported and passed over; a const, and its variable declared.
+                // A word kept for a later version is reported and passed over; a const, and its variable declared.
                 if (this.gaps.passesStatement(this)) {
                     return null;
                 }

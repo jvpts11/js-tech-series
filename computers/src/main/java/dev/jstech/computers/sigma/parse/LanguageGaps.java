@@ -18,7 +18,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * The words C# has that a later version of the language brings: try, catch, finally, throw, goto and const.
+ * The words a later version of the language brings: C#'s try, catch, finally, throw, goto and const, and INTERCAL's
+ * comefrom, abstainfrom and reinstate.
  *
  * <p>They are reserved now, so no program takes them as names, and a program that writes them is told so at the word,
  * with what to write until then, rather than failing on whatever the parser makes of them. Each statement they begin
@@ -31,11 +32,14 @@ final class LanguageGaps {
     private final DiagnosticBag diagnostics;
 
     private static final Set<TokenKind> LATER = EnumSet.of(TokenKind.TRY, TokenKind.CATCH, TokenKind.FINALLY,
-            TokenKind.THROW, TokenKind.GOTO, TokenKind.CONST);
+            TokenKind.THROW, TokenKind.GOTO, TokenKind.CONST, TokenKind.COMEFROM, TokenKind.ABSTAINFROM,
+            TokenKind.REINSTATE);
     private static final TextKey EXCEPTIONS_INSTEAD = TextKey.of("jsc.sigma.language_gaps.exceptions_instead",
             "a mistake halts the program, and a call that can fail answers instead");
     private static final TextKey GOTO_INSTEAD = TextKey.of("jsc.sigma.language_gaps.goto_instead",
             "write a loop, and leave it with break or continue");
+    private static final TextKey SWITCH_INSTEAD = TextKey.of("jsc.sigma.language_gaps.switch_instead",
+            "keep a bool, and test it with if");
     private static final TextKey CONST_INSTEAD = TextKey.of("jsc.sigma.language_gaps.const_instead",
             "write a plain variable");
     private static final TextKey CONST_FIELD_INSTEAD = TextKey.of("jsc.sigma.language_gaps.const_field_instead",
@@ -68,8 +72,8 @@ final class LanguageGaps {
     }
 
     /**
-     * Whether the statement being read begins with a try, a catch, a finally, a throw or a goto, which it then reports
-     * and passes over whole, blocks and all.
+     * Whether the statement being read begins with a try, a catch, a finally, a throw, a goto, a comefrom, an
+     * abstainfrom or a reinstate, which it then reports and passes over whole, blocks and all.
      */
     boolean passesStatement(final StatementParser statements) {
         final TokenKind kind = this.cursor.peek().kind();
@@ -87,13 +91,18 @@ final class LanguageGaps {
             }
             return true;
         }
-        if (kind == TokenKind.THROW || kind == TokenKind.GOTO) {
-            refuse(this.diagnostics, this.cursor.advance(), kind == TokenKind.THROW ? EXCEPTIONS_INSTEAD
-                    : GOTO_INSTEAD);
-            this.skipPast(TokenKind.SEMICOLON);
-            return true;
+        final TextKey instead = switch (kind) {
+            case THROW -> EXCEPTIONS_INSTEAD;
+            case GOTO, COMEFROM -> GOTO_INSTEAD;
+            case ABSTAINFROM, REINSTATE -> SWITCH_INSTEAD;
+            default -> null;
+        };
+        if (instead == null) {
+            return false;
         }
-        return false;
+        refuse(this.diagnostics, this.cursor.advance(), instead);
+        this.skipPast(TokenKind.SEMICOLON);
+        return true;
     }
 
     private static void refuse(final DiagnosticBag diagnostics, final Token at, final TextKey instead) {

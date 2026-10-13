@@ -2108,9 +2108,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   in silence, and the manual's table of parts that stay out was the only place to look.
 - A shift in Σ and Σ# takes only the low bits of its count, as C# does, five for an int and six for a long, and is
   of the kind of its left side: 1 << 32 was 0, and an int shifted by a long count came out a long.
-- try, catch, finally, throw, goto and const are kept for a later version of Σ and Σ#: written as C# writes them,
-  or as a name, each is refused at the word with what to write until then (S2014), where it failed with a message
-  about something else.
+- try, catch, finally, throw, goto and const, and comefrom, abstainfrom and reinstate after INTERCAL, are kept for a
+  later version of Σ and Σ#: written as a statement or as a name, each is refused at the word with what to write
+  until then (S2014), where it failed with a message about something else.
 - The words of access hold in Σ and Σ# as in C#: a private member, which is what a member with no word is, is
   reached only from its own type and the types nested in it, a protected one also from the types built on it, and
   reaching one from anywhere else is the error S3060. They were read and ignored. internal is taken as public is.
