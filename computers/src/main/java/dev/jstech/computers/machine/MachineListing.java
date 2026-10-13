@@ -80,7 +80,9 @@ public final class MachineListing {
             if (script == null) {
                 return null;
             }
-            process.begin(script, "OnInit");
+            if (process.declares(script, "OnInit")) {
+                process.begin(script, "OnInit");
+            }
         }
         return new SigmaProgram(process);
     }

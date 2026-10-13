@@ -23,6 +23,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -490,6 +491,40 @@ public final class SigmaApiGameTests {
                     final List<String> said = computer.programs().byId(id[0]).process().console();
                     helper.assertTrue(said.size() == 1 && said.getFirst().startsWith("low: "),
                             "the script is woken once, when it crosses; got " + said);
+                })
+                .thenSucceed();
+    }
+
+    /** A watch set by the item's short name, its handler a lambda, wakes the script when the total rises past it. */
+    @GameTest(template = ARENA)
+    public static void watch_aboveWakesAScriptThroughALambdaByTheItemsShortName(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork wired = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
+        final CraftingComputerBlockEntity computer = wired.cc();
+        final int[] id = new int[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms.Started started = computer.programs().start("high.asm", listing("""
+                            class High : IScript {
+                                Subscription seen;
+                                public void OnInit() {
+                                    seen = Network.WatchAbove("cobblestone", 10, e => Console.PrintLine("high"));
+                                }
+                                public void OnTick() { }
+                                public void OnDestroy() { }
+                            }
+                            """), 1, computer);
+                    helper.assertTrue(started.ok(), "the program starts: " + started.message());
+                    id[0] = started.id();
+                    computer.programs().tick(100000, computer::networkStock);
+                })
+                .thenExecuteAfter(2, () -> {
+                    wired.rack().getServerStorage(0).insert(Items.COBBLESTONE, 32);
+                    for (int i = 0; i < 4; i++) {
+                        computer.programs().tick(100000, computer::networkStock);
+                    }
+                    final List<String> said = computer.programs().byId(id[0]).process().console();
+                    helper.assertTrue(said.contains("high"), "the script is woken when the stone passes its mark; got "
+                            + said + ", the network holding " + computer.networkStock("cobblestone"));
                 })
                 .thenSucceed();
     }

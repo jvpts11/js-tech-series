@@ -113,6 +113,16 @@ final class ClientReplication {
         }
     }
 
+    /** Whether a player watching was sent windows, which may since have closed and so be owed the word. */
+    boolean holdsSentWindows() {
+        for (final Map<WindowId, Long> sent : this.sentByViewer.values()) {
+            if (!sent.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * The windows this machine owes that player, taking them as sent in the same breath: everything its
      * programs have open that the player has not been given already, and the empty word for one that has

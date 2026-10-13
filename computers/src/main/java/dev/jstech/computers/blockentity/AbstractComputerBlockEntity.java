@@ -1798,6 +1798,13 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             tickJobs(world);
         }
         if (!host.tick() || !(level instanceof ServerLevel server)) {
+            /*
+             * A machine whose last program has just ended runs nothing, and still owes whoever watches it the word
+             * that the program's windows are gone; without it they would stay on the screen.
+             */
+            if (level instanceof ServerLevel world && replication.holdsSentWindows()) {
+                replication.pushWindows(world);
+            }
             return;
         }
         replication.pushOutput(server);

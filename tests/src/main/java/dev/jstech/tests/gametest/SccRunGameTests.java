@@ -17,6 +17,7 @@ import dev.jstech.computers.machine.ProgramView;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import java.util.List;
@@ -67,6 +68,15 @@ public final class SccRunGameTests {
             }
             """;
 
+    /** A script that does nothing each tick, which is the least a script can be. */
+    private static final String BEAT_SOURCE = """
+            using Standard.*;
+            namespace Beat;
+            class Beat : Script {
+                public override void OnTick() { }
+            }
+            """;
+
     /** A plain console program: no service, no loop, just what it prints before it returns. */
     private static final String HELLO_SOURCE = """
             using Standard.*;
@@ -108,6 +118,37 @@ public final class SccRunGameTests {
                      * all, not an empty one that would sit under the prompt for no reason.
                      */
                     helper.assertTrue(response.lines().isEmpty(), "no blank line under the prompt; got " + said);
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A script compiled with scc and started at MC-DOS's prompt with start, as a task of its own, keeps running on the
+     * machine: it is called every tick, and neither halts nor ends.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void mcDos_aScriptStartedAsATaskKeepsRunning(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = vintage(helper, WHERE, MC_DOS);
+        if (computer == null) {
+            return;
+        }
+        computer.togglePower();
+        final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
+        final CliShell shell = CliCommands.shellFor(cli, 52);
+        final String[] started = new String[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(computer.isRunning(), "the machine is up"))
+                .thenExecute(() -> {
+                    computer.console().install(SCC.toString());
+                    computer.console().install("jsc:sigma");
+                    helper.assertTrue(cli.writeFile("BEAT.SG", BEAT_SOURCE).ok(), "the source is on the disk");
+                    started[0] = text(shell.run("scc BEAT.SG", cli)) + text(shell.run("start sigma run BEAT.asm", cli));
+                })
+                .thenExecuteAfter(40, () -> {
+                    final List<ICliComputer.SigmaProcess> running = cli.sigmaProcesses();
+                    helper.assertTrue(running.size() == 1 && !"halted".equals(running.getFirst().state()),
+                            "the script runs; the prompt said " + started[0] + " then "
+                                    + text(shell.run("sigma ps", cli)));
                 })
                 .thenSucceed();
     }

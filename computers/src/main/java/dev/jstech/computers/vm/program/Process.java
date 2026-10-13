@@ -583,6 +583,14 @@ public final class Process {
         return !this.main.waiting() && this.main.frames.isEmpty() && !this.waiting.holds(method);
     }
 
+    /**
+     * Whether that object's type has the method, taking nothing. A script in Sigma overrides only what it needs of
+     * Script, and what it leaves alone is Script's own, which does nothing: there is nothing to call for it.
+     */
+    public boolean declares(final Values.Obj self, final String method) {
+        return this.program.method(self.type(), method, List.of()) != null;
+    }
+
     /** Puts a call on that object in the queue, to be run by the slices that follow. */
     public void begin(final Values.Obj self, final String method) {
         final MethodImage found = this.program.method(self.type(), method, List.of());

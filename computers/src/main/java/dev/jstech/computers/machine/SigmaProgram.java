@@ -109,7 +109,7 @@ final class SigmaProgram implements IMachineRuntime {
     @Override
     public void onTick() {
         final Values.Obj script = this.process.script();
-        if (script != null && this.process.readyForTurn("OnTick")) {
+        if (script != null && this.process.declares(script, "OnTick") && this.process.readyForTurn("OnTick")) {
             this.process.begin(script, "OnTick");
         }
     }
@@ -122,7 +122,8 @@ final class SigmaProgram implements IMachineRuntime {
     @Override
     public int farewell(final int budget) {
         final Values.Obj script = this.process.script();
-        if (budget <= 0 || script == null || this.process.state() == Process.State.HALTED) {
+        if (budget <= 0 || script == null || this.process.state() == Process.State.HALTED
+                || !this.process.declares(script, "OnDestroy")) {
             return 0;
         }
         this.process.beginFirst(script, "OnDestroy");
