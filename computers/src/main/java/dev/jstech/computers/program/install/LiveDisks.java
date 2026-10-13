@@ -265,7 +265,12 @@ final class LiveDisks {
         }
         final String dev = deviceName(words.get(0));
         final String point = words.get(1);
-        if (point.equals(this.root + "/boot") || point.equals(this.root + "/efi")) {
+        /*
+         * The three places the firmware's partition is mounted in practice; /boot/efi is also where grub-install
+         * looks when it is not told.
+         */
+        if (point.equals(this.root + "/boot") || point.equals(this.root + "/boot/efi")
+                || point.equals(this.root + "/efi")) {
             if (!this.mounted) {
                 return LiveTurn.refused(NO_MOUNT_POINT.with(point), ROOT_FIRST.with(this.root));
             }

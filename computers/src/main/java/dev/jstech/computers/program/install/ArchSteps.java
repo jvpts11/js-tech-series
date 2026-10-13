@@ -63,6 +63,16 @@ final class ArchSteps {
             "error: no targets specified (use -h for help)");
     private static final TextKey MKINITCPIO_NOT_YET = TextKey.of("jsc.install.arch_steps.mkinitcpio_not_yet",
             "mkinitcpio: command not found (it is the new system's: arch-chroot %s first)");
+    private static final TextKey TOO_FULL = TextKey.of("jsc.install.arch_steps.too_full",
+            "error: Partition %s too full: %s blocks needed, %s blocks free");
+    private static final TextKey NOT_ENOUGH_SPACE = TextKey.of("jsc.install.arch_steps.not_enough_space",
+            "error: failed to commit transaction (not enough free disk space)");
+    private static final TextKey NOTHING_UPGRADED = TextKey.of("jsc.install.arch_steps.nothing_upgraded",
+            "Errors occurred, no packages were upgraded.");
+    private static final TextKey NOT_INSTALLED_TO_ROOT = TextKey.of("jsc.install.arch_steps.not_installed_to_root",
+            "==> ERROR: Failed to install packages to new root");
+    /** A filesystem's blocks of four kilobytes in a mebibyte, the unit pacman counts room in. */
+    private static final int BLOCKS_PER_MIB = 256;
 
     ArchSteps(final LiveFiles files, final LiveDisks disks, final LiveProgress progress) {
         this.files = files;
@@ -83,6 +93,17 @@ final class ArchSteps {
         }
         if (!env.mirror()) {
             return unreachable();
+        }
+        /*
+         * pacman counts the room before it unpacks a byte, in the filesystem's blocks of four kilobytes, and a root
+         * too small for the base system takes none of it.
+         */
+        final long room = this.disks.sizeOf(this.disks.rootDevice(), env);
+        final double needed = PacmanVoices.baseInstalledMib();
+        if (room < needed) {
+            return LiveTurn.refused(TOO_FULL.with(this.files.root(), Math.round(needed * BLOCKS_PER_MIB),
+                    room * BLOCKS_PER_MIB), NOT_ENOUGH_SPACE.text(), NOTHING_UPGRADED.text(),
+                    NOT_INSTALLED_TO_ROOT.text());
         }
         final LiveInstallState.Device disk = env.find(LiveDisks.diskOf(this.disks.rootDevice()));
         final double size = PacmanVoices.baseMib();

@@ -49,6 +49,8 @@ final class GentooSteps {
 
     /** How big the archive of a base system is, the usual kind of estimate. */
     private static final int STAGE3_MB = 256;
+    /** How much more the base system takes unpacked than its archive. */
+    private static final int UNPACKED_PER_ARCHIVE = 4;
 
     /** How big a snapshot of the package tree is, and how many files it unpacks to. */
     private static final int TREE_MB = 48;
@@ -106,6 +108,10 @@ final class GentooSteps {
             "tar: refusing to unpack a whole system over the live medium");
     private static final TextKey TAR_CD_FIRST = TextKey.of("jsc.install.gentoo_steps.tar_cd_first",
             "     (cd %s first, with the disk mounted there)");
+    private static final TextKey TAR_NO_SPACE = TextKey.of("jsc.install.gentoo_steps.tar_no_space",
+            "tar: ./usr/lib64/libc.so.6: Cannot write: No space left on device");
+    private static final TextKey TAR_FAILED = TextKey.of("jsc.install.gentoo_steps.tar_failed",
+            "tar: Exiting with failure status due to previous errors");
     private static final TextKey EMERGE_NOT_YET = TextKey.of("jsc.install.gentoo_steps.emerge_not_yet",
             "emerge: command not found (the package manager is the new system's:");
     private static final TextKey CHROOT_FIRST = TextKey.of("jsc.install.gentoo_steps.chroot_first",
@@ -210,10 +216,15 @@ final class GentooSteps {
              */
             return LiveTurn.refused(TAR_OVER_MEDIUM.text(), TAR_CD_FIRST.with(this.files.root()));
         }
+        // The archive lies on the same root it is unpacked over, so the root has to hold both.
+        if (this.disks.sizeOf(this.disks.rootDevice(), env) < (long) STAGE3_MB * (UNPACKED_PER_ARCHIVE + 1)) {
+            return LiveTurn.refused(TAR_NO_SPACE.text(), TAR_FAILED.text());
+        }
         final boolean naming = parts.length > 1 && parts[1].replace("-", "").contains("v");
         final LiveInstallState.Device disk = env.find(LiveDisks.diskOf(this.disks.rootDevice()));
         return LiveTurn.running(ArchiveVoice.unpack(naming,
-                LiveTimes.write(STAGE3_MB * 4, disk == null ? 1 : disk.speed()), this::laidOut));
+                LiveTimes.write(STAGE3_MB * UNPACKED_PER_ARCHIVE, disk == null ? 1 : disk.speed()),
+                this::laidOut));
     }
 
     /** The package manager, in every form the installation uses it in. */

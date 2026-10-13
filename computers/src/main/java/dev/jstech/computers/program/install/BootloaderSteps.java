@@ -46,7 +46,7 @@ final class BootloaderSteps {
     private static final TextKey NOT_EFI_HINT = TextKey.of("jsc.install.bootloader_steps.not_efi_hint",
             "              (mount the EFI partition inside the new system, then name where:");
     private static final TextKey NOT_EFI_WHERE = TextKey.of("jsc.install.bootloader_steps.not_efi_where",
-            "               grub-install --efi-directory=/boot or /efi)");
+            "               grub-install --efi-directory=/boot, /boot/efi or /efi)");
     private static final TextKey NO_DEVICE = TextKey.of("jsc.install.bootloader_steps.no_device",
             "grub-install: error: install device isn't specified.");
     private static final TextKey NOT_A_DISK = TextKey.of("jsc.install.bootloader_steps.not_a_disk",

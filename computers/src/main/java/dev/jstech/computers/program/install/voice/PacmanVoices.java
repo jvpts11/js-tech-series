@@ -39,6 +39,9 @@ public final class PacmanVoices {
     /** The column the two totals' figures start at, so they stand one over the other. */
     private static final int FIGURES_AT = 23;
 
+    /** How much more packages take installed than fetched, compressed as they come. */
+    private static final double INSTALLED_PER_FETCHED = 4.1;
+
     private static final TextKey CHECK_KEYS =
             TextKey.of("jsc.install.pacman_voices.check_keys", "checking keys in keyring");
     private static final TextKey CHECK_INTEGRITY =
@@ -156,6 +159,11 @@ public final class PacmanVoices {
         return total(BASE);
     }
 
+    /** How much a base installation takes on the disk once installed, in mebibytes. */
+    public static double baseInstalledMib() {
+        return total(BASE) * INSTALLED_PER_FETCHED;
+    }
+
     /**
      * Installing the base system into a mounted root.
      *
@@ -208,7 +216,7 @@ public final class PacmanVoices {
                 .say(Tint.line(Tint.bright(PACKAGES.with(count)), " ", named(packages)))
                 .say("")
                 .say(sized(DOWNLOAD_SIZE, total))
-                .say(sized(INSTALLED_SIZE, total * 4.1))
+                .say(sized(INSTALLED_SIZE, total * INSTALLED_PER_FETCHED))
                 .say("");
         final CliLine proceed = Tint.line(Tint.blue("::"), " ", Tint.bright(PROCEED.text()), " ");
         if (ask) {
