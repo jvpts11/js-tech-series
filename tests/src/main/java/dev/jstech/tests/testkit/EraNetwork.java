@@ -8,10 +8,12 @@
 package dev.jstech.tests.testkit;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.item.CraftingCardItem;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.SoundCardItem;
@@ -58,6 +60,11 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
     public static final BlockPos SECOND_COMPUTER = new BlockPos(9, 2, 6);
     public static final BlockPos SECOND_MONITOR = new BlockPos(10, 2, 6);
     public static final BlockPos AT_THE_SECOND_DESK = new BlockPos(12, 2, 6);
+    /*
+     * How the monitors are turned: as a player at the desk puts one down, looking west at it, so its screen faces
+     * them. A monitor's front is against its facing.
+     */
+    private static final Direction TOWARD_THE_DESK = Direction.WEST;
 
     /** Lays the era's network through {@code world} and switches every machine on. */
     public static EraNetwork lay(final TestWorldBuilder world, final EraKit kit) {
@@ -72,7 +79,7 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         world.setBlock(new BlockPos(5, 2, 4), kit.backbone());
         final ServerRackBlockEntity rack = rack(world, kit);
         final PersonalComputerBlockEntity computer = computer(world, kit, COMPUTER);
-        world.placeMonitor(MONITOR, Direction.EAST, kit.monitor());
+        world.placeMonitor(MONITOR, TOWARD_THE_DESK, kit.monitor());
         return new EraNetwork(kit, mainframe, rack, computer);
     }
 
@@ -86,7 +93,42 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         }
         world.setBlock(new BlockPos(ROUTER.getX() + 1, ROUTER.getY(), SECOND_COMPUTER.getZ()), kit.access());
         final PersonalComputerBlockEntity computer = computer(world, kit, SECOND_COMPUTER);
-        world.placeMonitor(SECOND_MONITOR, Direction.EAST, kit.monitor());
+        world.placeMonitor(SECOND_MONITOR, TOWARD_THE_DESK, kit.monitor());
+        return computer;
+    }
+
+    /**
+     * The era's Crafting Computer where {@link #secondComputer} would stand, on the access line from the router's
+     * south side, built from the era's parts with a crafting card beside its graphics card, running the era's desktop
+     * system, with its monitor. Laid after {@link #lay}.
+     */
+    public static CraftingComputerBlockEntity craftingComputer(final TestWorldBuilder world, final EraKit kit) {
+        for (int z = ROUTER.getZ() + 1; z <= SECOND_COMPUTER.getZ(); z++) {
+            world.setBlock(new BlockPos(ROUTER.getX(), ROUTER.getY(), z), kit.access());
+        }
+        world.setBlock(new BlockPos(ROUTER.getX() + 1, ROUTER.getY(), SECOND_COMPUTER.getZ()), kit.access());
+        world.setBlock(SECOND_COMPUTER, kit.craftingComputer());
+        world.faceRearTowardCable(SECOND_COMPUTER);
+        final CraftingComputerBlockEntity computer = world.blockEntity(SECOND_COMPUTER,
+                CraftingComputerBlockEntity.class);
+        final ItemStackHandler hardware = computer.getHardware();
+        final Item board = kit.computerBoard();
+        hardware.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+        hardware.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT, new ItemStack(EraParts.cpuFor(board)));
+        hardware.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START, new ItemStack(EraParts.ramFor(board)));
+        hardware.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(EraParts.psuFor(kit.era())));
+        hardware.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
+                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+        hardware.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
+                new ItemStack(EraParts.cardFor(board, CraftingCardItem.class)));
+        hardware.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(EraParts.diskFor(kit.era())));
+        if (!computer.installOs(kit.desktopOs())) {
+            throw new IllegalStateException("could not install " + kit.desktopOs() + " on the " + kit
+                    + " Crafting Computer");
+        }
+        computer.togglePower();
+        world.placeMonitor(SECOND_MONITOR, TOWARD_THE_DESK, kit.monitor());
         return computer;
     }
 
@@ -130,6 +172,28 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         return stack;
     }
 
+    /** The era's Personal Computer at {@code at}, built and running the era's desktop system, its back on a cable. */
+    public static PersonalComputerBlockEntity runningComputer(final TestWorldBuilder world, final EraKit kit,
+                                                              final BlockPos at) {
+        return computer(world, kit, at);
+    }
+
+    /**
+     * The era's Personal Computer at {@code at}, built from the era's parts with {@code disks} of the era's disks and
+     * switched on with no system on any of them: what a player has before the first install. Its back goes to a
+     * cable beside it when there is one.
+     */
+    public static PersonalComputerBlockEntity bareComputer(final TestWorldBuilder world, final EraKit kit,
+                                                           final BlockPos at, final int disks) {
+        final PersonalComputerBlockEntity computer = assembled(world, kit, at);
+        for (int disk = 1; disk < disks; disk++) {
+            computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START + disk,
+                    new ItemStack(EraParts.diskFor(kit.era())));
+        }
+        computer.togglePower();
+        return computer;
+    }
+
     private static MainframeBlockEntity mainframe(final TestWorldBuilder world, final EraKit kit) {
         formed(world, MAINFRAME, kit.mainframe().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
@@ -170,6 +234,17 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
 
     private static PersonalComputerBlockEntity computer(final TestWorldBuilder world, final EraKit kit,
                                                         final BlockPos at) {
+        final PersonalComputerBlockEntity computer = assembled(world, kit, at);
+        if (!computer.installOs(kit.desktopOs())) {
+            throw new IllegalStateException("could not install " + kit.desktopOs() + " on the " + kit + " computer");
+        }
+        computer.togglePower();
+        return computer;
+    }
+
+    /* The era's computer put down at {@code at} and built from the era's parts, with one disk, switched off. */
+    private static PersonalComputerBlockEntity assembled(final TestWorldBuilder world, final EraKit kit,
+                                                         final BlockPos at) {
         world.setBlock(at, kit.computer());
         world.faceRearTowardCable(at);
         final PersonalComputerBlockEntity computer = world.blockEntity(at, PersonalComputerBlockEntity.class);
@@ -188,10 +263,6 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         }
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(EraParts.diskFor(kit.era())));
-        if (!computer.installOs(kit.desktopOs())) {
-            throw new IllegalStateException("could not install " + kit.desktopOs() + " on the " + kit + " computer");
-        }
-        computer.togglePower();
         return computer;
     }
 

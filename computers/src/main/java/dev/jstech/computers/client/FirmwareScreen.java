@@ -477,6 +477,19 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 target));
     }
 
+    /** The rows of the boot page that list a disk, in order, from the first (client tests pick one by its key). */
+    public List<Integer> diskRows() {
+        final List<Integer> out = new ArrayList<>();
+        if (state != null) {
+            for (int row = 0; row < state.entries().size(); row++) {
+                if (state.entries().get(row).kind() == FirmwareStatePayload.KIND_DISK) {
+                    out.add(row);
+                }
+            }
+        }
+        return out;
+    }
+
     /** Screen centre of the primary install action drawn on the last frame (client tests click it). */
     public int[] installButtonCenter() {
         return installHit == null ? new int[]{width / 2, height / 2}

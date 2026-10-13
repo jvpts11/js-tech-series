@@ -239,4 +239,104 @@ public enum EraKit {
             case ADVANCED -> ComputingModule.VAULTIS_CACHE_PCIE4.get();
         };
     }
+
+    /** The era's KVM Switch, which lets one monitor address each machine in the rack. */
+    public Item kvmSwitch() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_KVM_SWITCH.get();
+            case LEGACY -> ComputingModule.LEGACY_KVM_SWITCH.get();
+            case TRANSITION -> ComputingModule.TRANSITION_KVM_SWITCH.get();
+            case STANDARD -> ComputingModule.KVM_SWITCH.get();
+            case ADVANCED -> ComputingModule.ADVANCED_KVM_SWITCH.get();
+        };
+    }
+
+    /** The era's Rack UPS. */
+    public Item rackUps() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_RACK_UPS.get();
+            case LEGACY -> ComputingModule.LEGACY_RACK_UPS.get();
+            case TRANSITION -> ComputingModule.TRANSITION_RACK_UPS.get();
+            case STANDARD -> ComputingModule.RACK_UPS.get();
+            case ADVANCED -> ComputingModule.ADVANCED_RACK_UPS.get();
+        };
+    }
+
+    /** The era's Cooling Unit. */
+    public Item coolingUnit() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_COOLING_UNIT.get();
+            case LEGACY -> ComputingModule.LEGACY_COOLING_UNIT.get();
+            case TRANSITION -> ComputingModule.TRANSITION_COOLING_UNIT.get();
+            case STANDARD -> ComputingModule.COOLING_UNIT.get();
+            case ADVANCED -> ComputingModule.ADVANCED_COOLING_UNIT.get();
+        };
+    }
+
+    /** The era's repeater, which renews the reach of the lines through it. */
+    public Block repeater() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_REPEATER.get();
+            case LEGACY -> ComputingModule.LEGACY_REPEATER.get();
+            case TRANSITION -> ComputingModule.TRANSITION_REPEATER.get();
+            case STANDARD -> ComputingModule.STANDARD_REPEATER.get();
+            case ADVANCED -> ComputingModule.ADVANCED_REPEATER.get();
+        };
+    }
+
+    /** The era's Crafting Computer. */
+    public Block craftingComputer() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_CRAFTING_COMPUTER.get();
+            case LEGACY -> ComputingModule.LEGACY_CRAFTING_COMPUTER.get();
+            case TRANSITION -> ComputingModule.TRANSITION_CRAFTING_COMPUTER.get();
+            case STANDARD -> ComputingModule.CRAFTING_COMPUTER.get();
+            case ADVANCED -> ComputingModule.ADVANCED_CRAFTING_COMPUTER.get();
+        };
+    }
+
+    /** The era's printer. */
+    public Block printer() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_PRINTER.get();
+            case LEGACY -> ComputingModule.LEGACY_PRINTER.get();
+            case TRANSITION -> ComputingModule.TRANSITION_PRINTER.get();
+            case STANDARD -> ComputingModule.PRINTER.get();
+            case ADVANCED -> ComputingModule.ADVANCED_PRINTER.get();
+        };
+    }
+
+    /** The era's Redstone Interface. */
+    public Block redstoneInterface() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_REDSTONE_INTERFACE.get();
+            case LEGACY -> ComputingModule.LEGACY_REDSTONE_INTERFACE.get();
+            case TRANSITION -> ComputingModule.TRANSITION_REDSTONE_INTERFACE.get();
+            case STANDARD -> ComputingModule.STANDARD_REDSTONE_INTERFACE.get();
+            case ADVANCED -> ComputingModule.ADVANCED_REDSTONE_INTERFACE.get();
+        };
+    }
+
+    /** The era before this one, whose cables a device of this era still takes; null for the Vintage. */
+    @Nullable
+    public EraKit previous() {
+        return switch (this) {
+            case VINTAGE -> null;
+            case LEGACY -> VINTAGE;
+            case TRANSITION -> LEGACY;
+            case STANDARD -> TRANSITION;
+            case ADVANCED -> STANDARD;
+        };
+    }
+
+    /** The optical drive a case of the era takes in a bay; null for the Vintage, whose bays hold no disc. */
+    @Nullable
+    public Item opticalBayDrive() {
+        return switch (this) {
+            case VINTAGE -> null;
+            case LEGACY -> HardwareItems.INTERNAL_CD_DRIVE.get();
+            case TRANSITION, STANDARD -> HardwareItems.INTERNAL_DVD_DRIVE.get();
+            case ADVANCED -> HardwareItems.INTERNAL_BLU_RAY_DRIVE.get();
+        };
+    }
 }

@@ -176,6 +176,37 @@ public final class CraftPlannerApp implements IDesktopApp {
         }
     }
 
+    /** What the catalogue lists as it stands, by the names the rows show (client tests pick a target by it). */
+    public List<String> catalogNames() {
+        final List<String> out = new ArrayList<>();
+        for (final CraftCatalogPayload.Entry entry : catalogList.items()) {
+            out.add(entry.result().getHoverName().getString());
+        }
+        return out;
+    }
+
+    /** The desktop point of the catalogue's row of that name as the last frame laid it out, or null. */
+    @Nullable
+    public int[] catalogRowPoint(final String name) {
+        final int index = catalogNames().indexOf(name);
+        return index < 0 ? null : catalogList.rowCenter(index);
+    }
+
+    /** Whether the plan of the picked target has come back and the network can make all of it now. */
+    public boolean planFeasible() {
+        return plan != null && plan.craftable() && plan.feasible();
+    }
+
+    /** How many stages the plan of the picked target runs, or 0 while there is none. */
+    public int planStages() {
+        return plan == null ? 0 : plan.stages().size();
+    }
+
+    /** The desktop point of the Craft button as the last frame laid it out. */
+    public int[] craftPoint() {
+        return new int[] {craft.x() + craft.width() / 2, craft.y() + craft.height() / 2};
+    }
+
     private void requestPlan() {
         if (!selected.isEmpty()) {
             PacketDistributor.sendToServer(new RequestCraftPlannerPayload(host, monitorPos, selected, qty));

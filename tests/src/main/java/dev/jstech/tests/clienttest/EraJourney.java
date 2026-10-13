@@ -7,10 +7,17 @@
  */
 package dev.jstech.tests.clienttest;
 
+import dev.jstech.computers.client.AbstractMachineAssemblyScreen;
 import dev.jstech.computers.client.CommandPromptScreen;
+import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.gui.layout.AssemblyGeometry;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.tests.testkit.EraKit;
 import dev.jstech.tests.testkit.EraNetwork;
+import java.util.List;
+import java.util.function.BooleanSupplier;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.Direction;
 import org.lwjgl.glfw.GLFW;
@@ -37,7 +44,12 @@ final class EraJourney {
 
     /** Lays the era's network and sits the player at its computer until the era's system is up on the monitor. */
     static ClientTestContext atTheDesk(final ClientTestContext ctx, final EraKit kit) {
-        return lay(ctx, kit)
+        return sit(lay(ctx, kit), kit);
+    }
+
+    /** Sits the player at the network's computer, already laid, until the era's system is up on the monitor. */
+    static ClientTestContext sit(final ClientTestContext ctx, final EraKit kit) {
+        return ctx.thenWaitUntil(away(ctx), SCREEN_WAIT, "the screen to be left")
                 .thenTeleport(SETTLE, EraNetwork.AT_THE_DESK, Direction.WEST)
                 .thenRightClick(SETTLE, EraNetwork.MONITOR)
                 .thenAwaitScreen(systemScreen(kit), BOOT_WAIT);
@@ -82,5 +94,71 @@ final class EraJourney {
     /** Whether the era's desktop has a search box on its Start: Frames 7 has one, and every Frames after it. */
     static boolean searchableStart(final EraKit kit) {
         return kit.era().isAtLeast(EraKit.TRANSITION.era());
+    }
+
+    /** Picks up hotbar slot {@code slot} and puts it in seat {@code index} of {@code kind} on the open screen. */
+    static void seatFromHotbar(final ClientTestContext ctx,
+                               final Class<? extends AbstractMachineAssemblyScreen<?>> screen, final int slot,
+                               final SeatKind kind, final int index) {
+        final Seat seat = seat(ctx, screen, kind, index);
+        ctx.clickGui(hotbarX(slot), hotbarY(ctx, screen));
+        ctx.clickGui(seat.x() + 8, seat.y() + 8);
+    }
+
+    /** Seat {@code index} of {@code kind} on the open assembly screen. */
+    static Seat seat(final ClientTestContext ctx, final Class<? extends AbstractMachineAssemblyScreen<?>> screen,
+                     final SeatKind kind, final int index) {
+        final List<Seat> seats = ctx.screen(screen).geometry().seats(kind);
+        if (index >= seats.size()) {
+            throw new ClientTestFailure("the screen has " + seats.size() + " " + kind + " seats, not " + (index + 1));
+        }
+        return seats.get(index);
+    }
+
+    /** The middle of hotbar slot {@code slot} on an assembly screen, from the window's left. */
+    static int hotbarX(final int slot) {
+        return 16 + slot * 18;
+    }
+
+    /** The middle of the hotbar's row on the open assembly screen, from the window's top. */
+    static int hotbarY(final ClientTestContext ctx, final Class<? extends AbstractMachineAssemblyScreen<?>> screen) {
+        final AssemblyGeometry geometry = ctx.screen(screen).geometry();
+        return geometry.inventoryY() + 58 + 8;
+    }
+
+    /** Done once no screen is up; until then presses Escape every so often, as a player leaving a screen does. */
+    static BooleanSupplier away(final ClientTestContext ctx) {
+        return new Pressing(ctx, GLFW.GLFW_KEY_ESCAPE, () -> ctx.mc().screen == null);
+    }
+
+    /** Done once the firmware's Setup is up; until then presses DEL every so often, through the self-test. */
+    static BooleanSupplier intoSetup(final ClientTestContext ctx) {
+        return new Pressing(ctx, GLFW.GLFW_KEY_DELETE, () -> ctx.openScreen(FirmwareScreen.class) != null);
+    }
+
+    /* Presses a key every half second while a screen is up, until what it waits for is so. */
+    private static final class Pressing implements BooleanSupplier {
+
+        private final ClientTestContext ctx;
+        private final int key;
+        private final BooleanSupplier done;
+        private int ticks;
+
+        Pressing(final ClientTestContext ctx, final int key, final BooleanSupplier done) {
+            this.ctx = ctx;
+            this.key = key;
+            this.done = done;
+        }
+
+        @Override
+        public boolean getAsBoolean() {
+            if (done.getAsBoolean()) {
+                return true;
+            }
+            if (ticks++ % 10 == 0 && ctx.mc().screen != null) {
+                ctx.key(key);
+            }
+            return false;
+        }
     }
 }
