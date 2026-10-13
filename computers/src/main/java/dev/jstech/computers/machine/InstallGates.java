@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -44,6 +45,8 @@ final class InstallGates {
             TextKey.of("jsc.service.gates.cluster_only", "%s only installs on a Cluster Management Computer");
     private static final TextKey PERSONAL_ONLY =
             TextKey.of("jsc.service.gates.personal_only", "%s only installs on a Personal Computer");
+    private static final TextKey CRAFTING_ONLY =
+            TextKey.of("jsc.service.gates.crafting_only", "%s only installs on a Crafting Computer");
 
     InstallGates(final IComputerTerminalHost terminal) {
         this.terminal = terminal;
@@ -93,6 +96,9 @@ final class InstallGates {
         }
         if (spec.hostScope() == HostScope.PERSONAL_COMPUTER && !(machine instanceof PersonalComputerBlockEntity)) {
             return ICliComputer.OpResult.fail(PERSONAL_ONLY.with(spec.commandName()));
+        }
+        if (spec.hostScope() == HostScope.CRAFTING_COMPUTER && !(machine instanceof CraftingComputerBlockEntity)) {
+            return ICliComputer.OpResult.fail(CRAFTING_ONLY.with(spec.commandName()));
         }
         return null;
     }
