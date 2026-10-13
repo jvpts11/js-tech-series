@@ -10,13 +10,17 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackStructure;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.CraftFiles;
 import dev.jstech.tests.testkit.CraftingFixtures.Network;
+import dev.jstech.tests.testkit.EraKit;
+import dev.jstech.tests.testkit.EraNetwork;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,6 +48,8 @@ import static dev.jstech.tests.testkit.CraftingFixtures.storageKey;
 public final class BenchCraftGameTests {
 
     private static final String ARENA = "empty";
+    /** Room for an era's whole network. */
+    private static final String BENCH = "bench";
     private static final int SETTLE = 4;
 
     private BenchCraftGameTests() {
@@ -200,5 +206,35 @@ public final class BenchCraftGameTests {
                             "the controller bay keeps its own server");
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * A Vintage Crafting Computer with its ISA card does less bench work a tick than one run of planks costs, and still
+     * makes every plank asked for, over as many ticks as the work takes.
+     */
+    @GameTest(template = BENCH, timeoutTicks = 1_200)
+    public static void craft_aComputerSlowerThanARunATickStillMakesEveryRun(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final EraNetwork network = EraNetwork.lay(world, EraKit.VINTAGE);
+        final CraftingComputerBlockEntity crafter = EraNetwork.craftingComputer(world, EraKit.VINTAGE);
+        crafter.loadPattern(CraftFiles.oakPlanks());
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(crafter.canCraft() && network.mainframe().networkUuid() != null
+                        && network.mainframe().craftingComputerPositions().size() == 1, "the Crafting Computer is up"))
+                .thenExecute(() -> {
+                    helper.assertTrue(crafter.craftingRate() > 0.0 && crafter.craftingRate() < 1.0,
+                            "the Vintage computer does less than a run of planks a tick: " + crafter.craftingRate());
+                    storageOf(helper, network).insert(StorageKey.of(Items.OAK_LOG), 2);
+                })
+                .thenExecuteAfter(SETTLE + 2, () -> helper.assertTrue(network.mainframe().submitNetworkCraft(
+                        storageKey(Items.OAK_PLANKS), 8, false, "test") != null, "the CRAFT is accepted"))
+                .thenWaitUntil(() -> helper.assertTrue(storageOf(helper, network)
+                        .count(StorageKey.of(Items.OAK_PLANKS)) == 8, "the 8 planks to be made; there are "
+                        + storageOf(helper, network).count(StorageKey.of(Items.OAK_PLANKS))))
+                .thenSucceed();
+    }
+
+    private static NetworkStorage storageOf(final GameTestHelper helper, final EraNetwork network) {
+        return NetworkStorage.of(helper.getLevel(), network.mainframe().networkUuid());
     }
 }

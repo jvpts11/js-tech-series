@@ -123,7 +123,15 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     }
 
     public long craftingThroughput() {
-        return (long) (capacity() * craftingCardFactor());
+        return (long) craftingRate();
+    }
+
+    /**
+     * The bench work this computer does a tick, fractions and all: an old machine with an old card does less than one
+     * run a tick, and makes one over several.
+     */
+    public double craftingRate() {
+        return capacity() * craftingCardFactor();
     }
 
     /**

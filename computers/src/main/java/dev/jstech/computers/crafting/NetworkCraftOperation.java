@@ -276,6 +276,11 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     private int waitTicks;
     private boolean timedOut;
     private int stalledTicks;
+    /*
+     * The bench work the computers have done towards runs not yet made: what a tick's rate leaves over is kept for
+     * the next, so a computer slower than one run a tick makes one over as many ticks as it takes.
+     */
+    private double benchCredit;
     private long deliveredResult;
     private boolean done;
     private boolean cancelled;
@@ -462,10 +467,18 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 return; // re-claim a computer before the bench work resumes
             }
             /*
-             * Bench work at the summed throughput of the live computers (never above the Mainframe's grant).
-             * Denser recipes take longer; faster computers contribute proportionally more of each tick's work.
+             * Bench work at the summed rate of the live computers (never above the Mainframe's grant). Denser
+             * recipes take longer; faster computers contribute proportionally more of each tick's work. What is
+             * left over is kept, up to the dearest run's cost, and saving up towards a run is progress.
              */
-            long budget = Math.min(throughputBudget, aliveThroughput());
+            final double rate = Math.min(throughputBudget, aliveRate());
+            final long dearest = dearestBenchRun();
+            this.benchCredit = Math.min(this.benchCredit + rate, Math.max(rate, dearest));
+            final long granted = (long) this.benchCredit;
+            if (rate > 0.0 && granted < dearest) {
+                progressed = true;
+            }
+            long budget = granted;
             final NetworkStorage storage = NetworkStorage.of(level, network);
             for (int i = 0; i < plan.steps().size() && budget > 0; i++) {
                 final CraftPlanner.Step step = plan.steps().get(i);
@@ -498,6 +511,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 budget -= executable * unitsPerRun;
                 progressed = true;
             }
+            this.benchCredit -= granted - budget;
         }
 
         if (allRunsDone()) {
@@ -805,7 +819,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 capable.add(cc);
             }
         }
-        capable.sort((a, b) -> Long.compare(b.craftingThroughput(), a.craftingThroughput()));
+        capable.sort((a, b) -> Double.compare(b.craftingRate(), a.craftingRate()));
         return capable;
     }
 
@@ -821,15 +835,30 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         return null;
     }
 
-    /** Sum of the crafting throughput of every live executor; faster computers contribute more of each tick. */
-    private long aliveThroughput() {
-        long sum = 0;
+    /**
+     * Sum of the crafting rate of every live executor, fractions and all; faster computers contribute more of each
+     * tick.
+     */
+    private double aliveRate() {
+        double sum = 0.0;
         for (final CraftingComputerBlockEntity cc : executors) {
             if (cc != null && !cc.isRemoved() && cc.canCraft()) {
-                sum += cc.craftingThroughput();
+                sum += cc.craftingRate();
             }
         }
         return sum;
+    }
+
+    /** What the costliest bench run left to make costs, or nothing when no bench run is left. */
+    private long dearestBenchRun() {
+        long dearest = 0L;
+        for (int i = 0; i < plan.steps().size(); i++) {
+            final CraftPlanner.Step step = plan.steps().get(i);
+            if (!step.isMachine() && runsDone[i] < step.runs()) {
+                dearest = Math.max(dearest, step.unitsPerRun());
+            }
+        }
+        return dearest;
     }
 
     /**
