@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.sigma.edit;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -338,6 +339,18 @@ class SigmaCompletionsTest {
         assertTrue(names(read.scope()).contains("d"));
         assertEquals("int", SigmaCompletions.resolve(this.builtIns, read.model(), read.scope(),
                 List.of("Depth")).type().describe());
+    }
+
+    /** A branch typed as far as its condition, its body not yet begun, is read without anything going wrong. */
+    @Test
+    void checkTolerant_readsABranchWhoseBodyIsNotTypedYet() {
+        assertDoesNotThrow(() -> SigmaSemantics.checkTolerant(List.of(new SourceFile("Keep.sgs", PRELUDE + """
+                class Keep {
+                    static void Main() {
+                        if (1 < 8)
+                    }
+                }
+                """))));
     }
 
     @Test

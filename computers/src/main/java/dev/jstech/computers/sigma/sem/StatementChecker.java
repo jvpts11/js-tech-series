@@ -126,6 +126,10 @@ final class StatementChecker {
     }
 
     private void checkStatement(final IStmt statement) {
+        // A body the player has not typed yet, read while the line is still being written, has nothing to check.
+        if (statement == null) {
+            return;
+        }
         switch (statement) {
             case IStmt.Block block -> this.checkBlock(block, true);
             case IStmt.If branch -> {
