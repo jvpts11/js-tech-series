@@ -6,6 +6,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+## [0.5.0a] - 2026-10-13 - The Start Me Up Update
+
+Codename: Boron.
+
 ### API
 - Changed: its machines stand on J's Core's; `AbstractMachineBlockEntity`,
   `ProcessingMachineBlockEntity`, `MaceratingRecipe` and `CompressingRecipe` are gone, and its two kinds of recipe are

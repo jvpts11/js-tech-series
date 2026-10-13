@@ -6,6 +6,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+## [0.5.0a] - 2026-10-13 - The Start Me Up Update
+
+Codename: Boron.
+
 ### API
 - Versions: J's Core's API is at version 4 and J's Computers' at version 7. Everything this release
   adds to either, or changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it
