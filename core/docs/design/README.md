@@ -42,7 +42,7 @@ play.
 | [Lighting and effects](lighting-and-effects.md) | Coloured and dynamic light, bloom, particles, beams, smoke and screen effects. |
 | [Manuals](manuals.md) | The guide framework, 3D and animated scenes, finding one's way, export to the web. |
 | [Modpacks](modpacks.md) | Everything as data, scripts, unification, tools for packs, and stepping aside for other mods. |
-| [For those who make mods](developers.md) | Capabilities, calls from screens, work off the tick, codecs, errors that teach, inspectors, the Gradle plugin. |
+| [For those who make mods](developers.md) | Capabilities, calls from screens, work off the tick, codecs, errors that teach, the studio, the MCP server for agents, the Gradle plugin. |
 | [Low level](low-level.md) | Reaching into the game, and native animated models. |
 | [Implementation](implementation.md) | Performance, settings and state. |
 | [The series](series.md) | Who depends on whom, and what each mod takes from the Core. |

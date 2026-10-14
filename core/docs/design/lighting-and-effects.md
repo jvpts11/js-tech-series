@@ -39,7 +39,14 @@ one place, for any mod.
 - **Particle systems as data**: emitters with shapes (from meshes too), a rate and bursts; particles with a speed, **the
   gravity of the dimension, drag by the density of the air, the wind**, colour, size and rotation over their life,
   animated sprites, collision with blocks, light of their own, and emitters inside particles.
-- **An effects editor in the game**, for development, as Photon's.
+- **An effects editor in the world**, for development, a tool of the studio ([For those who make mods](developers.md)):
+  the effect plays on the real block, where it will play, with the world's wind and air. The game's debug lines show
+  what it costs (its particles against the budget, its time a frame) and what acts on it. A card beside it turns each
+  emitter on and off and changes the chosen one's numbers; the motion comes from the physics above, not from curves
+  drawn by hand. Saving writes the effect's file.
+- **A new effect from nothing**: at the block looked at, from one of its faces or a locator of its model, from a
+  starting point (smoke, steam, sparks, a beam, a trail, nothing) that plays there at once as it starts. Create writes
+  the file and opens it in the editor.
 - **Trails**: contrails, tracers.
 - **Beams and arcs**: lasers (J's Space's Laser Satellite), electric arcs between points (the arc flash of overvoltage,
   Tesla coils), lightning.

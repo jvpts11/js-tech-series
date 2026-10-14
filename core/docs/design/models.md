@@ -62,7 +62,9 @@ The kit reads instead the **formats those programs export**, each with a reader 
 
 ### Tools and moving over
 
-- **Live reload** of models and animations, and a **preview screen** in the game, for development.
+- **Live reload** of models and animations, and a **preview screen** in the game, for development, a tool of the studio
+  ([For those who make mods](developers.md)): the model turning on a grid, its animations as buttons (looped or once,
+  playing or not), its bones and locators shown, and the timeline under it; it reloads when the file changes.
 - **Models declared once**, with the data generation.
 - **Moving over**: J's Computers' Mainframes, racks, drives and encoders come across to the kit, and the Core's optional
   integration with GeckoLib goes away.

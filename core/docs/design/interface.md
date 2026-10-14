@@ -56,10 +56,14 @@ The toolkit gathers what owo-ui, LDLib and YACL do, in one place, for any mod.
 
 ### How a screen is made
 
-- **Screens declared as data**: a layout file with its styles, as owo-ui's and LDLib's XML; the Java keeps only the
-  logic. It stays explicit: no annotations doing things behind the scenes.
+- **Screens declared as data**: a screen is a JSON file in the game's own data format, read with codecs as data packs
+  and resource packs are; the Java keeps only the logic. There is no style sheet: a screen says what it holds and where,
+  and its look comes from the style the player picks (below), as J's Computers' screens already show. It stays
+  explicit: no annotations doing things behind the scenes.
 - **A flex and grid layout engine**: gaps, margins, smallest and largest sizes, growing; it fits the font, the GUI scale
   and the window. It stays testable: the overlap test runs on the layout worked out.
+- **Java from end to end**: the layout, the drawing and the tools are Java inside the Core's jar, with nothing native,
+  no browser and no other language, so anyone who knows Java can read and fix any of it.
 - **Binding to data**: a component is bound to a synced value of the menu and follows it, with no hand-written packets.
 
 ### Styles
@@ -90,10 +94,25 @@ Everything on a screen is drawn through a **style**, and the player picks it.
 
 ### For those who make screens
 
+These are helpers inside the game, not a workshop beside it: each opens over the real screen, with its machine running
+behind it, keeps the file as the source, and points out what is wrong. Their cards are the game's own grey windows.
+They open only with the Core's developer mode on, and they are tools of the studio
+([For those who make mods](developers.md)).
+
 - **Live reload**: a screen's file is edited and the screen changes with no restart.
-- **An inspector**, as a browser's "inspect element": the outline of every component, its name, the layout's boxes and
-  the slots' numbers, on a developer's key.
-- **A visual editor in the game**, to draw screens by dragging components, as LDLib's: for development only.
+- **An inspector**, as a browser's "inspect element", on a developer's key: the outline of every component, layout
+  boxes and components apart. Beside the screen, as the recipe book sits beside the inventory: the screen's tree, with
+  the arrows that open and close each part; the problems found (a text with no translation in a language, a component
+  the narrator has nothing to read for), marked on the screen and in the tree; and quick tests of the GUI scale, the
+  language and the machine's state (working, idle, jammed). The component under the pointer gets the game's tooltip:
+  its box, the values it is bound to, its style, when it redraws, and the file and line it is declared at.
+- **An editor on the screen itself**: the open screen, its machine working, with a bar of a few buttons (undo, redo,
+  snapping, add, save, done). The chosen component gets its handles and the guides that line it up with the others,
+  and a card beside it with only what that component has. A component is added from a short list searched by typing,
+  never a palette always open. Every change is written to the screen's file.
+- **A new screen from nothing**: for the block looked at, from a starting point (a machine with the inventory below, a
+  screen with no inventory, a tab of a screen, a HUD element, a copy of another screen), shown at once where the screen
+  will open. Create writes the file in its place and leaves it open in the editor.
 
 ### More components
 
