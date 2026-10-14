@@ -87,7 +87,10 @@ input just works); the rest is there when a player wants it.
 - **Flow in sight**: items seen moving through transparent tubes, liquids showing their level in glass pipes, and, with
   goggles or the wrench, the direction and amount of what a line carries.
 - **A network probe**: a network's members, what goes through it, **its bottleneck** (the narrowest cable) and its
-  losses.
+  losses. It is a handheld instrument, and its screen is the instrument itself, held up over the darkened world: a click
+  on any line (energy, pipes, tubes, shafts) shows a summary, the members by kind with what each gives or asks, the
+  flow over the last minute against the narrowest cable's ceiling, and the losses; HOLD freezes the reading and SHOW
+  points out in the world the bottleneck or the members chosen.
 
 ### Laying and keeping
 
@@ -108,8 +111,8 @@ towers, as in Immersive Engineering. They are **the only link outside the cable 
   passes it along, and a feedthrough insulator takes a wire through a wall one block thick.
 - Insulators go on poles, towers and the ports of blocks; a consumer that takes high voltage directly has an insulator
   where the line's wire ends.
-- **Any line can be hung**, not only energy (redstone in sixteen channels between connectors, for one). The kit gives
-  the ability; each line that uses it is still a decision of its mod's design.
+- **Any line can be hung**, not only energy. The kit gives the ability; each line that uses it is still a decision of
+  its mod's design.
 - The Core gives the hanging, the spans, the drawing of the wire's sag and the touch of a live wire; J's Industrial
   gives the energy lines, poles, towers and insulators.
 

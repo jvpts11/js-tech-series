@@ -342,9 +342,9 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
     - `System.Machine`: `Power` (the machine's draw in W, its power supply, the UPS and its charge), `Thermal`
       (temperature, thermal budget, throttling), `Wireless` (signal, access point, speed), `Disk` (health,
       corruption, bad sectors, the last Defrag), `Sensors` (any J's Core sensor joined to the machine, by name:
-      thermometers, Geiger counters, pressure, tachometers, J's Energy meters), `Signals` (the sixteen channels of
-      J's Core's bundled cable and signals by frequency) and `Settings` (a program's own settings, kept the
-      system's way: the registry on Frames, `~/.config` on Linux, `/etc` for services).
+      thermometers, Geiger counters, pressure, tachometers, J's Energy meters), `Signals` (J's Core's signals by
+      frequency, sent and heard) and `Settings` (a program's own settings, kept the system's way: the registry on
+      Frames, `~/.config` on Linux, `/etc` for services).
     - `System.Text`: `StringBuilder`, `Regex` (priced by the text it reads), `Json` (a tree of `JsonValue` read
       with indexers) and `Csv` (rows of `List<string>`), `Hash` (SHA-256, CRC32) and `Base64`.
     - `System.Collections`: `Queue<T>`, `Stack<T>`, `Set<T>`, `List.Sort` and `List.Find` with lambdas.

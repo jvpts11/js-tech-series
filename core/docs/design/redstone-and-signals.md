@@ -1,7 +1,10 @@
 # Redstone and signals
 
-Signals carried by wire, combined in logic, sent without wire by frequency, and read from every sensor. It is in the
-spirit of Project Red, Create's redstone links and the wireless redstone mods.
+Signals carried by the game's redstone, sent without wire by frequency, and read from every sensor. The signals by
+frequency are in the spirit of Create's redstone links and the wireless redstone mods.
+
+The series has no logic gates, no integrated circuits and no cables of many channels: its logic lives in J's Computers
+(programs, the network, Operations), and the mods that do those things well are left to do them.
 
 ## What exists today
 
@@ -9,19 +12,11 @@ The game's own redstone. Machines answer redstone and give a comparator signal b
 
 ## To build
 
-### Wires and signals
+### Signals
 
-- **A grid of signals** for any mod's lines: a strength from 0 to 15 per channel, with **sixteen channels in one cable**
-  (a bundled cable), still compatible with the game's redstone. The kit gives the ability; a bundled cable of the Core's
-  own would be a new line of the cable block, decided when a mod asks for it ([Cables and lines](cables-and-lines.md)).
 - **Every sensor speaks redstone**: light, heat, speed, a room's pressure, radiation, altitude, the declared parameters
-  of machines, through one capability of signal output.
-
-### Logic
-
-- **Logic gates as multipart parts**: AND, OR, NOT, XOR, latch, timer, counter, comparator, pulse former, random; small,
-  on the faces of blocks, as Project Red's are ([Multipart](multipart.md)).
-- **Integrated circuits**: a circuit is drawn on a bench and placed as **one part**, as Project Red's fabrication does.
+  of machines, through one capability of signal output. J's Computers also reads every sensor through its peripheral
+  links.
 
 ### Without wire
 
@@ -32,8 +27,10 @@ The game's own redstone. Machines answer redstone and give a comparator signal b
 
 ### Tools and bridges
 
-- **A signal probe** that shows each channel's strength on a wire, and an **oscilloscope**: the signal drawn over time,
-  to debug circuits.
+- **A signal probe**, a handheld instrument of the same family as the network probe ([Cables and
+  lines](cables-and-lines.md#seeing-what-flows)): the strength of the signal on a wire, and the frequencies heard where
+  it stands, each with who sends it and how strongly it arrives.
 - **Bridges to J's Computers' network**: redstone in and out of the network.
 - **It works on moving structures and in multipart spaces.**
-- **No storms of updates**: signals spread efficiently, so large circuits don't weigh on the game.
+- **No storms of updates**: signals by frequency and sensors change only when what they carry changes, so a large build
+  doesn't weigh on the game.

@@ -123,7 +123,10 @@ surge arrester stops it. Insulated cables don't shock.
 ### Seeing the energy
 
 - **Storage shows its charge on its own model**, as bars or a level, without opening a screen.
-- **Meters** read the energy through a line and through each face of a block.
+- **The meter**, a handheld clamp meter of the network probe's family and a tool of its own, reads the energy through a
+  line (how much, which way, how much since it was clamped, the line's ceiling, the highest and lowest) and through
+  each face of a block (what goes in and out, and the faces with no port). Held, its reading shows beside the
+  crosshair; its screen gives the details, in JE or in FE.
 
 ### Settings of consequence
 

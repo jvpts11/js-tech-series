@@ -29,7 +29,7 @@ play.
 | [Machines](machines.md) | The machine framework: resources, sides, never jammed, recipes, control, setting up fast, upgrades. |
 | [Multiblocks](multiblocks.md) | Shapes by pattern or by rule, the inside that counts, ports, forming, building, multiblocks as data. |
 | [Networks and Operations](networks-and-operations.md) | The data network's model, peripheral links, Operations, machines of any mod on the network, state as tables. |
-| [Redstone and signals](redstone-and-signals.md) | Sixteen channels in a cable, logic gates and circuits, signals by frequency, every sensor on redstone. |
+| [Redstone and signals](redstone-and-signals.md) | Signals by frequency, every sensor on redstone, the bridge to J's Computers' network, the signal probe. |
 | [The world](world.md) | Terrain and biomes, veins, reservoirs, structures, sky, day and weather, the physics kit, worlds that change, chunks. |
 | [Hazards](hazards.md) | The hazard kit, hazards of items, the lungs, treatment, radiation and its kinds, dissonance, pollution. |
 | [Explosions and fire](explosions-and-fire.md) | Blasts through blocks at the speed of sound, fire by material, air and wind, and its classes. |
