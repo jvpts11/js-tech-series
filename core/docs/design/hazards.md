@@ -73,8 +73,21 @@ mod's items.
 
 - **An instrument in hand shows the hazard on the screen**: with a Geiger counter, the rate, and the counter clicks
   faster; with a dosimeter, the dose taken.
-- **A screen of the body**: dose, contamination, lungs and dissonance in one place.
-- **A map of hazards** by chunk (radiation, pollution), through instruments or J's Computers' network.
+- **The hazard devices** are handheld items of the Core's shared content, one family that looks like the real
+  equipment: a yellow case with a black face. The **Geiger counter** shows on its face the needle on a scale of tens,
+  the rate, its range and a light for every click, with range and sound buttons on the case; the **dosimeter** shows
+  the dose taken, its band and the bands reached. In hand, each shows on the HUD as the device itself; the player puts
+  it anywhere on the screen and gives it the size wanted ([The interface](interface.md)); a click holds it up, full
+  size. The game's subtitles name the clicks for those who don't hear them.
+- **A screen of the body**, opened by a key of its own: dose, contamination, lungs and dissonance in one place, as a
+  worn panel of old green enamel, chipped and rusted: what is worn and how much of each kind it stops, the dose taken
+  on a big meter with the bands painted on its scale, the rate here on a meter of two needles (from outside, and from
+  what is on the body) with a lamp asking for a shower, the lungs on an edgewise meter, dissonance in five lamps, and
+  the other mods' hazards.
+- **A map of hazards** by chunk (radiation, pollution), in two versions: a **handheld device** of the same family,
+  whose screen shows the land around with the hazard on it, live, and a **screen** with the whole map, opened from the
+  device and shown by J's Computers' network too. The map only knows the chunks that were measured, by an instrument in
+  hand or a sensor on the network, and the age of each reading; what was never read stays grey.
 - **The world shows contamination**: dead grass and withered plants where radiation or pollution is high.
 
 ### Radiation
@@ -108,7 +121,8 @@ the blocks it crosses**, each by its material. The Core gives that family a kit 
 - **sources**: what mods declare (fuel, waste, reactors, cosmic radiation, radiation belts, violent stars), and every
   mineral with uranium or thorium in it, at a low rate ([Materials](materials.md)), with a setting to turn the
   minerals' radioactivity off;
-- **fallout** is a kind of pollution (below) that raises the dose rate of the chunk it lies on.
+- **fallout** is a kind of pollution (below) that raises the dose rate of the chunk it lies on;
+- **the whole radiation system can be turned off** by a server setting: no dose, no contamination, no sources.
 
 ### Dissonance
 

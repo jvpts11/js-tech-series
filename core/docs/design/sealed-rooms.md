@@ -88,6 +88,11 @@ What each block does is **data**, so any mod's blocks and any data pack take par
 A block of the Core's shared content: it reads the atmosphere around it, inside a sealed room or out in the open, and
 shows its composition (each gas and its share) and its pressure, and the view of the room.
 
+Its screen has no inventory: a pressure gauge from 0 to 120 kPa with the band one can breathe in and how fast it is
+changing; each gas with its share and its partial pressure, and a bar of the shares; the room as the detector draws it
+(its walls, its air, its leaks blinking), with its volume; the lamps BREATHABLE, HYPOXIA, LEAKING and VACUUM; and a
+button that shows the room in the world.
+
 ### Settings
 
 In the Core's files, as consequence settings: the pull of decompression, fire in pure oxygen, fire needing oxygen, mobs

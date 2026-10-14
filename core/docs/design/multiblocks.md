@@ -70,6 +70,9 @@ Modular Machinery do, in one place, for any mod.
 - **The Projector's screen** has no inventory, since it holds nothing: a 3D preview layer by layer (the chosen layer
   whole, the ones below as ghosts), the list of the installed mods' multiblocks, what is in the world, and the turn, the
   mirror (for shapes that allow it), "only what is missing" and the layer.
+- **Every multiblock can be projected by default**: registering a multiblock puts it on the Projector's list, with
+  nothing more to write. A mod that doesn't want one projected registers it through the overload that says so
+  (projectable: false).
 - **A preview in JEI, EMI and the manuals**: in 3D, layer by layer, cycling through the choices each place allows, with
   the **list of materials** and the counts for the size chosen, and whether it turns or mirrors; from there it is
   projected into the world or its manual page opened.

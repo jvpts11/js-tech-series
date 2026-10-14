@@ -149,7 +149,9 @@ In the spirit of Iceberg:
 
 - **World screens that can be touched**: a click on a monitor in the world and it answers. J's Computers' mirrored
   monitor becomes one use of the kit.
-- **A HUD the player arranges**: an editor to move and hide the HUD elements of every mod.
+- **A HUD the player arranges**: an editor to move, resize and hide the HUD elements of every mod; the devices shown
+  on the HUD while held (the Geiger counter, the dosimeter, the hazard map) go wherever the player puts them, at the
+  size the player chooses.
 
 ### The sound kit
 
