@@ -300,11 +300,69 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
     - `reinstate label;` switches the region on again; switching on what is on does nothing.
     - Each costs 1 instruction. The listing gains `abstain`, `reinstate` and `brabst` (jump past the region while it
       is switched off), in the same format `.asm 2`. Boron keeps the three words as it keeps the others.
-  - **Σ 3** gets what C has, `goto` to a label and `const`, and the three words above; Σ still never has exceptions.
+  - **New words are contextual.** Every word version 3 brings that Boron did not keep (`sealed`, `params`,
+    `nameof`, `operator`, `unsafe`, `stackalloc`, `byte`, `ignore`, `remember` and the rest) is a word only where
+    the language expects it, as C# did with `var`: a version 2 program that uses one as a name still compiles.
+  - **Small forms of C#:** `sealed` (a class nobody stands on; an `override` that goes no further), `static class`
+    (only static members, never made with `new`), `params T[]` as the last parameter, local functions inside a
+    method (reading the method's locals, as lambdas already do) and `nameof`.
+  - **Tuples:** `(int count, string name)`, up to eight places, copied by value as structs are and never disposed;
+    `var (n, s) = Find();` and `(a, b) = (b, a);`.
+  - **Extension methods:** in a `static class`, a first parameter written `this T`; reached through the `using` of
+    their namespace; an instance method of the same name wins, as in C#.
+  - **Operators and indexers** on the player's types: the arithmetic, unary and comparison operators, the
+    comparisons in pairs (`==` with `!=`, `<` with `>`) as C# asks; `this[...]` with `get` and `set`. No
+    conversion operators.
+  - **Pointers**, as C#'s unsafe code, only inside `unsafe` (a block or a method) in Σ#; a `.sg` file is unsafe
+    throughout, as C was. `int*`, `long*`, `byte*`, `void*` and pointers to structs that hold only values; `&` of
+    a local, `*`, `->`, `p[i]`, `p + n`, `p - q` and the comparisons; `stackalloc`, freed when the method returns.
+    No pointer reaches an object of a class, so there is no `fixed`. The type `byte` comes with them. Raw memory
+    is `Memory.Alloc`, `AllocZeroed`, `Resize`, `Free`, `Copy`, `Fill` and `Compare`; Σ writes them with C's old
+    names (`malloc`, `calloc`, `realloc`, `free`, `memcpy`, `memset`, `memcmp`). Every block knows its size: reading
+    outside a live block, a freed one or `null` is an `AccessViolationException` in Σ#, and in Σ the process dies
+    with its system's own words (`Segmentation fault (core dumped)` on Linux and the BSDs, a General Protection
+    Fault on Frames 3.x, "has performed an illegal operation" on Frames 95 and 98, the bomb on the classic Quince
+    systems). The bytes count exactly in the program's memory. A read or a write through a pointer costs 1
+    instruction, `Alloc` and `Free` cost what `new` and `dispose` cost, `Copy` and `Fill` 1 for every 64 bytes.
+    The listing gains the instructions in `.asm 2`, written only for a program that uses them.
+  - **`#if`, `#elif`, `#else`, `#endif`, `#define`, `#undef`, `#error` and `#warning`**, in Σ and Σ#, with symbols
+    the compiler defines: the instruction set (as `--isa` names it), the era, `SIGMA_3`, and `DEBUG` in a build
+    for the debugger; a project defines its own.
+  - **`ignore` and `remember`**, after INTERCAL's IGNORE and REMEMBER, in Σ and Σ#: `ignore x;` makes every later
+    write to `x` vanish silently (it still costs its instructions) until `remember x;`. They work on fields (for
+    that object), static fields and the locals of the running call; the state is the process's and is saved with
+    it; each costs 1 instruction.
+  - **Σ 3** gets what C has, `goto` to a label, `const`, pointers with the memory calls and `#if`, plus the
+    INTERCAL words above; Σ still never has exceptions.
   - **The listing:** exceptions need handler tables and new instructions (`throw`, `rethrow`, `leave`, `endfinally`),
     in the format `.asm 2`. The compiler writes `.asm 2` only for a program that uses them: a version 3 program with
     no `try` comes out as `.asm 1` and runs on an older runtime. `goto` uses the `br` that exists, and `const` adds no
     instruction.
+  - **The library of version 3** (each new look, read or write priced as today's: 5, 10, 50, 100, 200):
+    - `System.Machine`: `Power` (the machine's draw in W, its power supply, the UPS and its charge), `Thermal`
+      (temperature, thermal budget, throttling), `Wireless` (signal, access point, speed), `Disk` (health,
+      corruption, bad sectors, the last Defrag), `Sensors` (any J's Core sensor joined to the machine, by name:
+      thermometers, Geiger counters, pressure, tachometers, J's Energy meters), `Signals` (the sixteen channels of
+      J's Core's bundled cable and signals by frequency) and `Settings` (a program's own settings, kept the
+      system's way: the registry on Frames, `~/.config` on Linux, `/etc` for services).
+    - `System.Text`: `StringBuilder`, `Regex` (priced by the text it reads), `Json` (a tree of `JsonValue` read
+      with indexers) and `Csv` (rows of `List<string>`), `Hash` (SHA-256, CRC32) and `Base64`.
+    - `System.Collections`: `Queue<T>`, `Stack<T>`, `Set<T>`, `List.Sort` and `List.Find` with lambdas.
+    - `System.IO`: `Directory` and `Path`, a file's size and the tick it last changed, and `File.Watch(path,
+      handler)` as a source of events.
+    - `System.Utils`: `Calendar` (the world's day, week, season and year from J's Core) and `Stopwatch` (ticks and
+      credits spent over a stretch).
+    - `System.Network`: `EventLog.Write(level, text)` into the network's event log, read by others through
+      `Network.OnEvent`; `Channel`, named ports between programs on different computers, over the network, the
+      federation and wireless: a message carries text or a copied value of up to 32 KB (as `GenericComponent`'s
+      `Data`), sending costs 200, and each hop adds its latency.
+    - `System.Navigation`: the autopilot of J's Core's moving structures (go to a point, hold altitude, follow a
+      route, dock) and their readings (altitude, speed, tilt, heading).
+    - `System.Teracoin`: `Wallet` (balance, send, address), `Chain` (height, difficulty), `Miner`, `Pool`.
+    - `System.Robots`, commanding J's Core's robots (queued tasks, with loops, conditions and sensing written in the
+      program), is designed now and built when J's Robotics exists.
+  - **A debugger:** breakpoints on a line, stepping, the locals and the call stack, in Virtual Studio, Visual
+    Studio Code and at the terminal with `sgdb`; each step spends credits as running does.
 - **Generics defined by the player** (classes and methods with type parameters), in version 4, with no cycle set. Today
   Σ# only has the built-in collections as generics. Σ stays a subset of Σ#.
 - **Two more event sources:**
