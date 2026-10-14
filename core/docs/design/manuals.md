@@ -38,19 +38,24 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
 - **3D scenes on a page**: a structure or a multiblock the reader turns, zooms and goes through layer by layer (or hides
   layers of), brought in from a saved structure.
 - **Animated scenes that explain how something works**, as Ponder does: step by step, with captions, blocks appearing,
-  items moving along a pipe, a machine at work; with a timeline to pause and go back; written as data.
+  items moving along a pipe, a machine at work; with a timeline to pause and go back; written as data. On the page the
+  scene sits in its own box: the step and its caption above ("2 of 3: it is pressed flat"), the timeline below with a
+  mark for each step and the playhead, and buttons to step back, pause and step on.
 - **Animated pictures** on a page, from sprite sheets.
 - **Show it in the world**: from a page, a structure is projected into the world as ghosts, with the Structure Projector
   ([Multiblocks](multiblocks.md)).
 
 ### Finding one's way
 
-- **Back and forward**, as in a browser, and the player's own **bookmarks**.
+- **Back and forward**, as in a browser, and the player's own **bookmarks**: ribbons hanging from the binder's top
+  edge over the pages they mark, and a button on the toolbar that lists them and marks the open page.
 - **Search reaches recipes and uses**: "what uses copper plate" finds the entries of the machines that take it.
 - **JEI and EMI**: a key over an item in their lists opens its entry; a click on a recipe in a manual opens it in JEI or
   EMI.
 - **"New" and "reached" marks**: an entry shows that the player has just come to it, or not yet. **Nothing is ever
-  hidden**: a manual shows everything, as JEI and EMI show every recipe ([Progression](progression.md)).
+  hidden**: a manual shows everything, as JEI and EMI show every recipe ([Progression](progression.md)). In the
+  contents a newly reached entry not read yet shows NEW and one not reached shows "not yet", in place of the dotted
+  leader; a chapter's tab holding something new carries a red point.
 
 ### For those who write
 
@@ -61,8 +66,11 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
 ### Immersion
 
 - **A sheet torn out**: a page or a drawing becomes an item, to hang on a wall in a frame or hand to someone: the Plant
-  Drawings on the factory's wall.
-- **On a lectern**, a manual can be read by whoever passes.
-- **The player's own notes** in a page's margin, kept per player.
+  Drawings on the factory's wall. Tearing makes a copy, from a button on the toolbar: the manual stays whole. Framed,
+  the sheet fills the frame as a map does, and its tooltip says where it was torn from.
+- **On a lectern**, a manual can be read by whoever passes. Read from a lectern, the manual shows a strip below it
+  with where the lectern is and buttons to take the manual and to close, as the game's lectern has.
+- **The player's own notes** in a page's margin, kept per player: a yellow slip written in pencil blue, seen only by
+  the one who wrote it, from a pencil button on the toolbar.
 - **A tip at the right time**: the first time a player picks up an item, a quiet notice offers its page; a setting turns
   it off.
