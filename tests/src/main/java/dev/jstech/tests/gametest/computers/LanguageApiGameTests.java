@@ -1,0 +1,420 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Tech Series.
+ */
+package dev.jstech.tests.gametest.computers;
+
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.machine.IMachineRuntime;
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.SigmaLanguage;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.core.JsCore;
+import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.language.IMachineView;
+import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.language.LanguageRegistry;
+import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.ToyLanguage;
+import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.List;
+import java.util.Set;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+/**
+ * The Core's language API, exercised by a language that is not ours.
+ *
+ * <p>The machines resolve a program through the registry and never name a language, which is what lets
+ * an addon add one. With one language shipped, nothing would prove that any more, so the game-test server
+ * registers a toy language while the game loads, and it is put through the whole of it here: compiled on the
+ * way in, given a share of the tick, listed by what it calls itself, written down and read back. The
+ * registry's own rules are checked on registries of their own, because the game's is closed by the time a test
+ * runs.
+ */
+@GameTestHolder(JsTests.MODID)
+@PrefixGameTestTemplate(false)
+public final class LanguageApiGameTests {
+
+    private static final String ARENA = "empty";
+    private static final int SETTLE = 4;
+    private static final ResourceLocation OTHER = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "other");
+
+    private LanguageApiGameTests() {
+    }
+
+    /** A program in the toy language: one line of output a step, for as many steps as it says. */
+    private static final String SOURCE = "count 3";
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void languageRegistry_runsALanguageTheMachinesKnowNothingAbout(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(at);
+        final MachinePrograms.Started started =
+                computer.programs().start("count.toy", SOURCE, 1, computer);
+        helper.assertTrue(started.ok(), "the machine runs it without knowing the language: " + started.message());
+        final var one = computer.programs().byId(started.id());
+        helper.assertTrue("counter".equals(one.name()),
+                "and lists it by the name the program gave itself; got " + one.name());
+
+        computer.programs().tick(4096);
+        helper.assertTrue(one.process().console().equals(List.of("1", "2", "3")),
+                "it got its share of the tick and printed; console " + one.process().console());
+        helper.assertTrue(one.process().state() == ILanguageProcess.State.FINISHED,
+                "and finished; state " + one.process().state());
+
+        /*
+         * Written down and read back: the machine hands the language its own words and gets a
+         * program that carries on, which is the half an addon cannot do without.
+         */
+        final CompoundTag saved = new CompoundTag();
+        one.process().save(saved);
+        final ILanguageProcess again = new ToyLanguage().restore(SOURCE, saved, ToyLanguage.STATE_VERSION, nowhere());
+        helper.assertTrue(again != null && again.spent() == 3,
+                "a program comes back where it was; got " + (again == null ? "nothing" : again.spent()));
+        helper.succeed();
+    }
+
+    /**
+     * A machine whose terminal was holding a program that does not come back after a load, because nothing installed
+     * runs its kind of file any more, lets the terminal go. It used to keep pointing at the missing program, so every
+     * line typed at the prompt went nowhere until Ctrl+C.
+     */
+    @GameTest(template = ARENA)
+    public static void load_letsTheTerminalGoWhenItsProgramDoesNotComeBack(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final MachinePrograms.Started started =
+                computer.programs().start("count.toy", "count 100000", 1, computer);
+        helper.assertTrue(started.ok(), "the program starts: " + started.message());
+        computer.programs().hold(started.id());
+        final MachinePrograms.Started other = computer.programs().start("hello.sgs", HELLO, 1, computer);
+        helper.assertTrue(other.ok(), "a Σ# program starts beside it: " + other.message());
+        final var registries = helper.getLevel().registryAccess();
+        final CompoundTag saved = computer.saveWithFullMetadata(registries);
+        /*
+         * The registry is closed while the game runs, so the language cannot be taken away; the save names a language
+         * nothing installed is called instead, which is what a machine finds when the language of a program is gone.
+         */
+        saved.getCompound("Σ#").getList("programs", Tag.TAG_COMPOUND).getCompound(0).getCompound("hosted")
+                .putString("language", JsTests.MODID + ":gone");
+        computer.loadWithComponents(saved, registries);
+        helper.assertTrue(computer.programs().byId(started.id()) == null,
+                "the program does not come back without its language");
+        helper.assertTrue(computer.programs().byId(other.id()) != null,
+                "the program whose language is there comes back all the same");
+        helper.assertTrue(computer.programs().held() == 0,
+                "and the terminal holds nothing; got " + computer.programs().held());
+        helper.assertTrue(new ServerCliComputer(computer, helper.getLevel()).foreground() == null,
+                "so the prompt takes what is typed again");
+        helper.succeed();
+    }
+
+    /**
+     * A language is told the version of itself its program was saved by, so it can refuse what a later version wrote;
+     * the program it refuses is left out alone.
+     */
+    @GameTest(template = ARENA)
+    public static void load_tellsALanguageTheVersionItsProgramWasSavedBy(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final MachinePrograms.Started kept = computer.programs().start("kept.toy", "count 100000", 1, computer);
+        final MachinePrograms.Started later = computer.programs().start("later.toy", "count 100000", 1, computer);
+        helper.assertTrue(kept.ok() && later.ok(), "both start: " + kept.message() + " / " + later.message());
+        final var registries = helper.getLevel().registryAccess();
+        final CompoundTag saved = computer.saveWithFullMetadata(registries);
+        saved.getCompound("Σ#").getList("programs", Tag.TAG_COMPOUND).getCompound(1).getCompound("hosted")
+                .putInt("version", ToyLanguage.STATE_VERSION + 1);
+        computer.loadWithComponents(saved, registries);
+        helper.assertTrue(computer.programs().byId(kept.id()) != null,
+                "a program saved by the version of the language that is installed comes back");
+        helper.assertTrue(computer.programs().byId(later.id()) == null,
+                "one saved by a later version of it is left out");
+        helper.succeed();
+    }
+
+    /** A Σ# program that starts a toy program from the disk and waits for it to end. */
+    private static final String PATIENT = """
+            using System.*;
+            using System.IO.*;
+            using System.Collections.*;
+            using System.Execution.*;
+            namespace Programs;
+            class Patient {
+                static void Main() {
+                    Process p = Program.Start("C:\\\\count.toy", new List<string>());
+                    Console.PrintLine("started " + p.Name);
+                    p.Wait();
+                    Console.PrintLine("code " + p.ExitCode);
+                }
+            }
+            """;
+
+    /**
+     * A program waiting on one in a language that is not the machine's own is woken when that one ends, although
+     * such a language has no way to say so itself.
+     */
+    @GameTest(template = ARENA)
+    public static void wait_wakesWhenAProgramInAnotherLanguageEnds(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
+                    helper.assertTrue(shell.writeFile("C:\\count.toy", SOURCE).ok(),
+                            "the toy program is on the disk, whatever the machine makes of its kind");
+                    final MachinePrograms.Started started =
+                            computer.programs().start("patient.sgs", PATIENT, 1, computer);
+                    helper.assertTrue(started.ok(), "the patient starts: " + started.message());
+                    final IMachineRuntime patient = computer.programs().byId(started.id()).process();
+                    for (int i = 0; i < 6 && patient.console().size() < 2; i++) {
+                        computer.programs().tick(4096);
+                    }
+                    helper.assertTrue(patient.console().equals(List.of("started count.toy", "code 0")),
+                            "the patient is woken when the toy program ends; got " + patient.console() + " ("
+                                    + patient.message() + ")");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A program of another language reads the machine's clock and its memory quota through the view it is given, and
+     * what it prints there is the machine's to keep and count.
+     */
+    @GameTest(template = ARENA)
+    public static void machineView_givesAProgramTheClockAndItsMemory(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final MachinePrograms.Started clock = computer.programs().start("clock.toy", ToyLanguage.CLOCK, 1, computer);
+        final MachinePrograms.Started quota = computer.programs().start("quota.toy", ToyLanguage.QUOTA, 2, computer);
+        helper.assertTrue(clock.ok() && quota.ok(), "both start: " + clock.message() + " / " + quota.message());
+        final IMachineRuntime told = computer.programs().byId(clock.id()).process();
+        final IMachineRuntime room = computer.programs().byId(quota.id()).process();
+        final long now = helper.getLevel().getGameTime();
+        computer.programs().tick(4096);
+        helper.assertTrue(told.console().equals(List.of(Long.toString(now))),
+                "the program reads the world's clock; got " + told.console() + " with the world at " + now);
+        helper.assertTrue(room.console().equals(List.of(Long.toString(2L * 1024 * 1024)))
+                        && room.heapBytes() == 2L * 1024 * 1024,
+                "and the memory it was given; got " + room.console() + ", quota " + room.heapBytes());
+        helper.assertTrue(told.written() == 1, "the machine counts the line it kept; got " + told.written());
+        helper.succeed();
+    }
+
+    /** A machine that is nowhere: no time has passed on it, it gives no memory, and nothing printed on it is kept. */
+    private static IMachineView nowhere() {
+        return new IMachineView() {
+            @Override
+            public long tick() {
+                return 0L;
+            }
+
+            @Override
+            public long dayTime() {
+                return 0L;
+            }
+
+            @Override
+            public long day() {
+                return 0L;
+            }
+
+            @Override
+            public void print(final String line) {
+            }
+
+            @Override
+            public long memoryQuota() {
+                return 0L;
+            }
+        };
+    }
+
+    /** A Σ# program that says one line. */
+    private static final String HELLO = """
+            using System.*;
+            namespace Programs;
+            class Hello {
+                static void Main() {
+                    Console.PrintLine("hello");
+                }
+            }
+            """;
+
+    /**
+     * A listing belongs to the machine: no language claims {@code .asm} and Σ# runs nothing itself, yet the machine
+     * runs a listing, and a Σ# source file it compiles on the way in.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void machine_runsListingsNoLanguageClaims(final GameTestHelper helper) {
+        helper.assertTrue(JsCore.languages().isReserved("asm") && JsCore.languages().byExtension("asm") == null,
+                "no language claims .asm");
+        helper.assertTrue(SigmaLanguage.SIGMA_SHARP.binaryExtensions().isEmpty()
+                && JsCore.languages().runnerOf("sgs") == null, "and Σ# runs nothing itself");
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final IProgrammingLanguage.CompileResult built = SigmaLanguage.SIGMA_SHARP.compile(
+                List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)));
+        helper.assertTrue(built.ok(), "the program compiles: " + built.complaints());
+        final MachinePrograms.Started listing = computer.programs().start("hello.asm", built.binary(), 1, computer);
+        final MachinePrograms.Started source = computer.programs().start("hello.sgs", HELLO, 1, computer);
+        helper.assertTrue(listing.ok() && source.ok(),
+                "the machine runs the listing and the source: " + listing.message() + " / " + source.message());
+        computer.programs().tick(4096);
+        helper.assertTrue(computer.programs().byId(listing.id()).process().console().equals(List.of("hello"))
+                        && computer.programs().byId(source.id()).process().console().equals(List.of("hello")),
+                "and both say hello");
+        helper.succeed();
+    }
+
+    /**
+     * A build asked for a version of the language is held to it: Σ# 1 has no Sound, the newest has. A language with
+     * no versions of its own builds as it always did, whatever version it is asked for.
+     */
+    @GameTest(template = ARENA)
+    public static void compileOptions_holdAVersionedLanguageToItsVersionAndLeaveAnotherAlone(
+            final GameTestHelper helper) {
+        final List<IProgrammingLanguage.SourceText> beeper = List.of(new IProgrammingLanguage.SourceText("b.sgs",
+                "using System.Sound.*; namespace T; class T { static void Main() { Sound.Beep(880, 200); } }"));
+        final IProgrammingLanguage.CompileResult first = SigmaLanguage.SIGMA_SHARP.compile(beeper,
+                new IProgrammingLanguage.CompileOptions("", 1));
+        helper.assertTrue(!first.ok() && first.complaints().stream().anyMatch(c -> "S3057".equals(c.code())),
+                "Σ# 1 has no Sound: " + first.complaints());
+        final IProgrammingLanguage.CompileResult newest = SigmaLanguage.SIGMA_SHARP.compile(beeper,
+                IProgrammingLanguage.CompileOptions.forIsa(""));
+        helper.assertTrue(newest.ok() && newest.binary().contains(".arch jsc:x86"),
+                "the newest version has it, built for the language's own baseline: " + newest.complaints());
+        final ToyLanguage toy = new ToyLanguage();
+        final List<IProgrammingLanguage.SourceText> clock =
+                List.of(new IProgrammingLanguage.SourceText("clock.toy", ToyLanguage.CLOCK));
+        helper.assertTrue(toy.compile(clock, new IProgrammingLanguage.CompileOptions("", 3))
+                        .equals(toy.compile(clock)), "a language without versions builds as it always did");
+        helper.succeed();
+    }
+
+    /**
+     * The smaller language is a language of the registry in its own right, found by what its files end in, so an
+     * editor colours it, complains about it and builds it as it does the full one. It is held to its own cut, it
+     * builds for the oldest machines unless told otherwise, and the machine runs its source like any other.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void sigma_isALanguageOfItsOwnHeldToItsOwnCut(final GameTestHelper helper) {
+        final IProgrammingLanguage sigma = JsCore.languages().byExtension("sg");
+        helper.assertTrue(sigma == SigmaLanguage.SIGMA && JsCore.languages().byExtension("sgs")
+                == SigmaLanguage.SIGMA_SHARP, "each extension finds its own language");
+        helper.assertTrue("Σ".equals(sigma.displayName()) && !sigma.tokenize("class A { }").isEmpty(),
+                "which names itself and colours its sources");
+        final String small = "using Standard.*; namespace T; class T { static void Main() { "
+                + "Console.PrintLine(\"hello\"); } }";
+        final IProgrammingLanguage.CompileResult built =
+                sigma.compile(List.of(new IProgrammingLanguage.SourceText("t.sg", small)));
+        helper.assertTrue(built.ok() && built.binary().contains(".arch jsc:ia_16"),
+                "it builds for the oldest machines: " + built.complaints());
+        final IProgrammingLanguage.CompileResult refused = sigma.compile(List.of(
+                new IProgrammingLanguage.SourceText("t.sg", "namespace T; interface IThing { } class T { "
+                        + "static void Main() { } }")));
+        helper.assertTrue(!refused.ok() && refused.complaints().stream().anyMatch(c -> "S3052".equals(c.code())),
+                "and is refused what it does not have: " + refused.complaints());
+        final IProgrammingLanguage.CompileResult tooOld = SigmaLanguage.SIGMA_SHARP.compile(
+                List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)), "jsc:ia_16");
+        helper.assertTrue(!tooOld.ok() && tooOld.complaints().stream().anyMatch(c -> "S4012".equals(c.code())),
+                "the full language is not built for the oldest machines: " + tooOld.complaints());
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final MachinePrograms.Started source = computer.programs().start("t.sg", small, 1, computer);
+        helper.assertTrue(source.ok(), "the machine runs a source of it: " + source.message());
+        computer.programs().tick(4096);
+        helper.assertTrue(computer.programs().byId(source.id()).process().console().equals(List.of("hello")),
+                "and it says hello");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void languageRegistry_keepsAnExtensionBackForTheMachines(final GameTestHelper helper) {
+        final LanguageRegistry registry = new LanguageRegistry();
+        helper.assertTrue(registry.reserve("asm"), "the machines keep .asm back");
+        helper.assertTrue(!registry.register(new ToyLanguage(OTHER, Set.of("other"), Set.of("asm"))),
+                "a language claiming it is refused");
+        helper.assertTrue(registry.get(OTHER) == null && registry.byExtension("other") == null, "and is not there");
+        helper.assertTrue(registry.register(new ToyLanguage()), "a language that leaves it alone is taken");
+        helper.assertTrue(!registry.reserve("toyb"), "an extension a language already has cannot be kept back");
+        helper.assertTrue(registry.sourceOf("toy") != null && registry.sourceOf("toyb") == null,
+                "and the files written in a language are told apart from the ones it only runs");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void languageRegistry_refusesAnExtensionAnotherLanguageHas(final GameTestHelper helper) {
+        final LanguageRegistry registry = new LanguageRegistry();
+        helper.assertTrue(registry.register(new ToyLanguage()), "the first language is taken");
+        helper.assertTrue(!registry.register(new ToyLanguage(OTHER, Set.of("other"), Set.of("toyb"))),
+                "a second one claiming .toyb is refused");
+        helper.assertTrue(registry.get(OTHER) == null, "and is not there");
+        helper.assertTrue(registry.byExtension("other") == null, "nor is any extension of its own");
+        final var runner = registry.runnerOf("toyb");
+        helper.assertTrue(runner != null && ToyLanguage.ID.equals(runner.id()), "the first one still runs .toyb");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void compileResult_withoutABinaryIsNotOkAndDoesNotThrow(final GameTestHelper helper) {
+        final IProgrammingLanguage.CompileResult none = new IProgrammingLanguage.CompileResult(null, null);
+        helper.assertTrue(!none.ok(), "a build with no binary and no complaints is not a build that worked");
+        helper.assertTrue(!IProgrammingLanguage.CompileResult.of(null).ok(), "nor is one made of a null binary");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void languageRegistry_refusesAnExtensionNotInLowerCase(final GameTestHelper helper) {
+        final LanguageRegistry registry = new LanguageRegistry();
+        helper.assertTrue(!registry.register(new ToyLanguage(OTHER, Set.of("TOY"), Set.of())),
+                "a language declaring an extension in upper case is refused");
+        helper.assertTrue(registry.get(OTHER) == null && registry.sourceOf("toy") == null, "and is not there");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void languageRegistry_replacesALanguageRegisteredAgainUnderItsId(final GameTestHelper helper) {
+        final LanguageRegistry registry = new LanguageRegistry();
+        registry.register(new ToyLanguage());
+        final ToyLanguage better = new ToyLanguage(ToyLanguage.ID, Set.of("toy"), Set.of("toy", "toyc"));
+        helper.assertTrue(registry.register(better), "the same id comes in again");
+        helper.assertTrue(registry.all().size() == 1 && registry.get(ToyLanguage.ID) == better,
+                "in place of the one before");
+        helper.assertTrue(registry.runnerOf("toyb") == null && registry.runnerOf("toyc") == better,
+                "with its own extensions and none of the old one's");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void languageRegistry_takesNoChangeOnceClosed(final GameTestHelper helper) {
+        final LanguageRegistry registry = new LanguageRegistry();
+        registry.register(new ToyLanguage());
+        registry.freeze();
+        helper.assertTrue(!registry.register(new ToyLanguage(OTHER, Set.of("other"), Set.of("other"))),
+                "nothing is added once it is closed");
+        helper.assertTrue(!registry.unregister(ToyLanguage.ID), "and nothing is taken away");
+        helper.assertTrue(registry.get(ToyLanguage.ID) != null, "what was there stays");
+        helper.assertTrue(JsCore.languages().isFrozen(), "the game's own registry is closed once every mod has loaded");
+        helper.assertTrue(JsCore.languages().runnerOf("toy") != null,
+                "and holds the toy language the game-test server gave it while loading");
+        helper.succeed();
+    }
+}

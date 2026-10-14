@@ -1,0 +1,317 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Tech Series.
+ */
+package dev.jstech.tests.gametest.computers;
+
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.MainframeBlock;
+import dev.jstech.computers.block.MainframePartBlock;
+import dev.jstech.computers.block.OpticalPort;
+import dev.jstech.computers.block.ServerRackBlock;
+import dev.jstech.computers.block.ServerRackPartBlock;
+import dev.jstech.computers.guide.CableFacts;
+import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.Lane;
+import dev.jstech.core.connect.Connection;
+import dev.jstech.core.connect.IFaceConnector;
+import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.guide.GuideBlock;
+import dev.jstech.core.guide.GuideFacts;
+import dev.jstech.core.network.DataLine;
+import dev.jstech.core.network.DataLines;
+import dev.jstech.core.network.DataLink;
+import dev.jstech.core.peripheral.PeripheralLine;
+import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestCables;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+/**
+ * The data cables as lines by job, a cable of each line for each era: what each one is, the machines that take their
+ * era's cable and every earlier one, two eras of one line that never join directly, the backbone's fibre that runs
+ * only straight, and the long distance line that runs between two ends and shares no block.
+ */
+@GameTestHolder(JsTests.MODID)
+@PrefixGameTestTemplate(false)
+public final class CableLineGameTests {
+
+    private static final String ARENA = "empty";
+    private static final int SETTLE = 4;
+    /** The manual's table of reaches: the line, then one column for each era from the Vintage to the Advanced. */
+    private static final int REACH_COLUMNS = 6;
+
+    /** Every data cable, with the line and era it is. */
+    private static final List<Laid> CABLES = List.of(
+            new Laid(ComputingModule.THIN_COAX_CABLE, DataLine.ACCESS, HardwareEra.VINTAGE),
+            new Laid(ComputingModule.ETHERNET_CABLE, DataLine.ACCESS, HardwareEra.LEGACY),
+            new Laid(ComputingModule.CAT5E_CABLE, DataLine.ACCESS, HardwareEra.TRANSITION),
+            new Laid(ComputingModule.GIGABIT_CABLE, DataLine.ACCESS, HardwareEra.STANDARD),
+            new Laid(ComputingModule.CAT6A_CABLE, DataLine.ACCESS, HardwareEra.ADVANCED),
+            new Laid(ComputingModule.THICK_COAX_CABLE, DataLine.BACKBONE, HardwareEra.VINTAGE),
+            new Laid(ComputingModule.HBW_CABLE, DataLine.BACKBONE, HardwareEra.LEGACY),
+            new Laid(ComputingModule.CX4_CABLE, DataLine.BACKBONE, HardwareEra.TRANSITION),
+            new Laid(ComputingModule.FIBRE_CABLE, DataLine.BACKBONE, HardwareEra.STANDARD),
+            new Laid(ComputingModule.OM5_CABLE, DataLine.BACKBONE, HardwareEra.ADVANCED),
+            new Laid(ComputingModule.TELEPHONE_LINE, DataLine.LONG_DISTANCE, HardwareEra.VINTAGE),
+            new Laid(ComputingModule.LEASED_LINE, DataLine.LONG_DISTANCE, HardwareEra.LEGACY),
+            new Laid(ComputingModule.T3_LINE, DataLine.LONG_DISTANCE, HardwareEra.TRANSITION),
+            new Laid(ComputingModule.VLDC_CABLE, DataLine.LONG_DISTANCE, HardwareEra.STANDARD),
+            new Laid(ComputingModule.DARK_FIBRE_CABLE, DataLine.LONG_DISTANCE, HardwareEra.ADVANCED),
+            new Laid(ComputingModule.INFINIBAND_CABLE, DataLine.HPC, HardwareEra.TRANSITION),
+            new Laid(ComputingModule.HPC_CABLE, DataLine.HPC, HardwareEra.STANDARD),
+            new Laid(ComputingModule.OSFP_CABLE, DataLine.HPC, HardwareEra.ADVANCED),
+            new Laid(ComputingModule.CRAFTING_CABLE, DataLine.CRAFTING, HardwareEra.VINTAGE));
+
+    /** Each age's Mainframe and the backbone cable of each era. */
+    private static final List<BlockEntry<MainframeBlock>> MAINFRAMES = List.of(ComputingModule.VINTAGE_MAINFRAME,
+            ComputingModule.LEGACY_MAINFRAME, ComputingModule.TRANSITION_MAINFRAME, ComputingModule.MAINFRAME,
+            ComputingModule.ADVANCED_MAINFRAME);
+    private static final List<CableEntry> BACKBONES = List.of(ComputingModule.THICK_COAX_CABLE,
+            ComputingModule.HBW_CABLE, ComputingModule.CX4_CABLE, ComputingModule.FIBRE_CABLE,
+            ComputingModule.OM5_CABLE);
+
+    private CableLineGameTests() {
+    }
+
+    /**
+     * A Mainframe's parts take the cables of their Mainframe's era and the earlier ones, as its controller does: a
+     * Vintage Mainframe's cabinet took an Advanced peripheral cable on any of its parts.
+     */
+    @GameTest(template = ARENA)
+    public static void mainframeParts_takeOnlyTheCablesOfTheirMainframesEra(final GameTestHelper helper) {
+        final BlockState part = ComputingModule.MAINFRAME_PART.get().defaultBlockState()
+                .setValue(MainframePartBlock.ERA, HardwareEra.VINTAGE.level());
+        final IFaceConnector block = (IFaceConnector) part.getBlock();
+        helper.assertFalse(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.ADVANCED)),
+                "a Vintage Mainframe's part refuses the Advanced peripheral cable");
+        helper.assertTrue(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.VINTAGE)),
+                "and takes its own era's");
+        helper.assertFalse(block.accepts(part, Direction.NORTH, DataLines.of(new DataLink(DataLine.BACKBONE,
+                HardwareEra.STANDARD))), "and refuses a newer era's backbone");
+        helper.succeed();
+    }
+
+    /**
+     * A Server Rack's parts take the cables of their cabinet's era and the earlier ones, as the cabinet does, and a
+     * Supercomputer Rack's parts only its fabric: every part took an Advanced peripheral cable, whatever its cabinet.
+     */
+    @GameTest(template = ARENA)
+    public static void rackParts_takeOnlyTheCablesOfTheirCabinet(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        final ServerRackBlock rack = (ServerRackBlock) ComputingModule.VINTAGE_SERVER_RACK.get();
+        helper.setBlock(at, rack);
+        final BlockState controller = helper.getBlockState(at);
+        rack.setPlacedBy(helper.getLevel(), helper.absolutePos(at), controller, null, ItemStack.EMPTY);
+        final Direction facing = controller.getValue(ServerRackBlock.FACING);
+        BlockState part = null;
+        for (final BlockPos placed : rack.footprint(helper.absolutePos(at), facing)) {
+            final BlockState there = helper.getLevel().getBlockState(placed);
+            if (there.getBlock() instanceof ServerRackPartBlock) {
+                part = there;
+            }
+        }
+        helper.assertTrue(part != null, "the cabinet raised its parts");
+        helper.assertTrue(part.getValue(ServerRackPartBlock.ERA) == HardwareEra.VINTAGE.level(),
+                "the cabinet stamps its era on its parts");
+        final IFaceConnector block = (IFaceConnector) part.getBlock();
+        helper.assertFalse(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.ADVANCED)),
+                "a Vintage rack's part refuses the Advanced peripheral cable");
+        helper.assertTrue(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.VINTAGE)),
+                "and takes its own era's");
+        final BlockState compute = part.setValue(ServerRackPartBlock.COMPUTE, true)
+                .setValue(ServerRackPartBlock.ERA, HardwareEra.STANDARD.level());
+        helper.assertFalse(block.accepts(compute, Direction.NORTH, PeripheralLine.of(HardwareEra.STANDARD)),
+                "a Supercomputer Rack's part takes no peripheral cable, as its cabinet takes none");
+        helper.succeed();
+    }
+
+    /**
+     * Every data cable says on its item how far one run of it reaches, the reach the cable carries, and the manual's
+     * table of reaches reads the same number for its line in its era, so a player can plan where a run ends.
+     */
+    @GameTest(template = ARENA)
+    public static void cables_sayHowFarTheyReachOnTheirItemAndInTheManual(final GameTestHelper helper) {
+        final List<GuideBlock.TableRow> reaches = GuideFacts.rowsOf(CableFacts.LINE_REACH, REACH_COLUMNS);
+        for (final Laid laid : CABLES) {
+            final int reach = laid.cable().get().range();
+            final List<Component> tooltip = new ArrayList<>();
+            laid.cable().asItem().appendHoverText(laid.cable().stack(1), Item.TooltipContext.EMPTY, tooltip,
+                    TooltipFlag.NORMAL);
+            final String said = tooltip.stream().map(Component::getString).collect(Collectors.joining(" / "));
+            helper.assertTrue(reach > 0 && said.contains(String.valueOf(reach)),
+                    laid.cable().id() + " says it reaches " + reach + " cables: " + said);
+            // The table's rows are the lines in their order, its columns after the first the eras in theirs.
+            final GuideBlock.GuideValue cell = reaches.get(List.of(DataLine.values()).indexOf(laid.line())).cells()
+                    .get(1 + List.of(HardwareEra.values()).indexOf(laid.era()));
+            helper.assertTrue(cell.equals(new GuideBlock.GuideValue.Amount(reach, "")),
+                    "the manual's table reads " + reach + " for " + laid.cable().id() + ": " + cell);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void cables_eachLineHasACableInEachEraItExistsIn(final GameTestHelper helper) {
+        for (final Laid laid : CABLES) {
+            final CableType type = laid.cable().get();
+            final DataLink link = new DataLink(laid.line(), laid.era());
+            helper.assertValueEqual(DataLines.linkOf(type.line()), link, type.id() + " is its line in its era");
+            helper.assertTrue(type.throughput() == link.throughput() && type.range() == link.range(),
+                    type.id() + " carries and reaches what its link does");
+            if (laid.line() == DataLine.LONG_DISTANCE) {
+                helper.assertTrue(type.alone() && type.thickness() == 6 && type.mostJoins() == DataLink.ENDS,
+                        type.id() + " is six pixels, shares no block and joins two ends");
+            } else {
+                helper.assertTrue(type.lane().isPresent() && type.thickness() == 4,
+                        type.id() + " takes its line's lane and is four pixels");
+            }
+            helper.assertTrue(type.runsStraight() == link.straight(),
+                    type.id() + (link.straight() ? " runs only straight" : " bends"));
+        }
+        helper.assertValueEqual(ComputingModule.HBW_CABLE.get().lane().orElseThrow(),
+                ComputingModule.FIBRE_CABLE.get().lane().orElseThrow(), "every era of a line takes one lane");
+        helper.assertValueEqual(ComputingModule.ETHERNET_CABLE.get().lane().orElseThrow(), Lane.TOP_LEFT,
+                "the access line top left");
+        helper.succeed();
+    }
+
+    /**
+     * A machine takes its era's cable and every earlier one's, never a later one's. Each is asked as if it held an
+     * Optical Network Card, which the fibre needs on top of the era.
+     */
+    @GameTest(template = ARENA)
+    public static void ports_takeTheirErasCableAndEveryEarlierOne(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        for (int machine = 0; machine < MAINFRAMES.size(); machine++) {
+            helper.setBlock(at, MAINFRAMES.get(machine).get());
+            final BlockState state = helper.getBlockState(at).setValue(OpticalPort.OPTICAL, true);
+            final IFaceConnector ports = (IFaceConnector) state.getBlock();
+            for (int cable = 0; cable < BACKBONES.size(); cable++) {
+                final boolean takes = ports.accepts(state, Direction.EAST, BACKBONES.get(cable).get().line());
+                helper.assertTrue(takes == cable <= machine, MAINFRAMES.get(machine).getId() + " and "
+                        + BACKBONES.get(cable).get().id() + ": " + (takes ? "taken" : "refused"));
+            }
+            helper.setBlock(at, Blocks.AIR);
+        }
+        helper.succeed();
+    }
+
+    /** Two eras of one line do not join directly: they meet at a router or a repeater of the newer era. */
+    @GameTest(template = ARENA)
+    public static void twoEras_ofOneLineDoNotJoinDirectly(final GameTestHelper helper) {
+        TestCables.lay(helper, new BlockPos(1, 2, 2), ComputingModule.ETHERNET_CABLE);
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.ETHERNET_CABLE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.CAT5E_CABLE);
+        helper.runAfterDelay(SETTLE, () -> {
+            helper.assertTrue(TestCables.joined(helper, new BlockPos(1, 2, 2), new BlockPos(2, 2, 2)),
+                    "two Ethernet cables join");
+            helper.assertFalse(TestCables.joined(helper, new BlockPos(2, 2, 2), new BlockPos(3, 2, 2)),
+                    "Ethernet and Cat 5e touch and do not join");
+            helper.succeed();
+        });
+    }
+
+    /** The backbone's fibre runs only straight: a branch off its side is left out, a run on in line joins. */
+    @GameTest(template = ARENA)
+    public static void fibre_runsOnlyStraight(final GameTestHelper helper) {
+        TestCables.lay(helper, new BlockPos(1, 2, 2), ComputingModule.FIBRE_CABLE);
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.FIBRE_CABLE);
+        helper.runAfterDelay(SETTLE, () -> {
+            TestCables.lay(helper, new BlockPos(2, 2, 3), ComputingModule.FIBRE_CABLE);
+            TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.FIBRE_CABLE);
+        });
+        helper.runAfterDelay(SETTLE * 2, () -> {
+            helper.assertTrue(TestCables.joined(helper, new BlockPos(1, 2, 2), new BlockPos(3, 2, 2)),
+                    "a straight run of fibre joins");
+            helper.assertFalse(TestCables.joined(helper, new BlockPos(2, 2, 2), new BlockPos(2, 2, 3)),
+                    "fibre does not turn the corner");
+            helper.succeed();
+        });
+    }
+
+    /** The long distance line's dark fibre bends like the other long distance cables. */
+    @GameTest(template = ARENA)
+    public static void darkFibre_bends(final GameTestHelper helper) {
+        TestCables.lay(helper, new BlockPos(1, 2, 2), ComputingModule.DARK_FIBRE_CABLE);
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.DARK_FIBRE_CABLE);
+        TestCables.lay(helper, new BlockPos(2, 2, 3), ComputingModule.DARK_FIBRE_CABLE);
+        helper.runAfterDelay(SETTLE, () -> {
+            helper.assertTrue(TestCables.joined(helper, new BlockPos(1, 2, 2), new BlockPos(2, 2, 3)),
+                    "dark fibre turns the corner");
+            helper.succeed();
+        });
+    }
+
+    /** A long distance run goes between two ends: a third end laid against it is refused. */
+    @GameTest(template = ARENA)
+    public static void longDistance_takesNoThirdEnd(final GameTestHelper helper) {
+        TestCables.lay(helper, new BlockPos(1, 2, 2), ComputingModule.TELEPHONE_LINE);
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.TELEPHONE_LINE);
+        TestCables.lay(helper, new BlockPos(3, 2, 2), ComputingModule.TELEPHONE_LINE);
+        helper.runAfterDelay(SETTLE, () -> TestCables.lay(helper, new BlockPos(2, 2, 3),
+                ComputingModule.TELEPHONE_LINE));
+        helper.runAfterDelay(SETTLE * 2, () -> {
+            helper.assertTrue(TestCables.joined(helper, new BlockPos(1, 2, 2), new BlockPos(3, 2, 2)),
+                    "the line runs end to end");
+            helper.assertFalse(TestCables.joined(helper, new BlockPos(2, 2, 2), new BlockPos(2, 2, 3)),
+                    "a third end is refused");
+            helper.succeed();
+        });
+    }
+
+    /** A block holding a long distance cable holds nothing else. */
+    @GameTest(template = ARENA)
+    public static void longDistance_sharesNoBlock(final GameTestHelper helper) {
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.LEASED_LINE);
+        helper.assertFalse(TestCables.lay(helper.getLevel(), helper.absolutePos(new BlockPos(2, 2, 2)),
+                ComputingModule.ETHERNET_CABLE.get()), "no Ethernet in a leased line's block");
+        TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
+        helper.assertFalse(TestCables.lay(helper.getLevel(), helper.absolutePos(new BlockPos(4, 2, 2)),
+                ComputingModule.LEASED_LINE.get()), "and no leased line in an Ethernet's block");
+        helper.succeed();
+    }
+
+    /** A cable in a lane is refused when it is too thick for the lanes, while a cable alone may be thicker. */
+    @GameTest(template = ARENA)
+    public static void thickness_ofACableInALaneIsLimitedToWhatTheLanesHold(final GameTestHelper helper) {
+        final ResourceLocation jacket = ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw");
+        final ResourceLocation plug = ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/hbw");
+        final Connection line = Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "thick"));
+        boolean refused = false;
+        try {
+            CableType.builder(line).lane(Lane.TOP).thickness(8).jacket(jacket).plug(plug).build(() -> Items.STRING);
+        } catch (final IllegalStateException expected) {
+            refused = true;
+        }
+        helper.assertTrue(refused, "an 8 pixel cable in a lane is refused");
+        helper.assertTrue(CableType.builder(line).lane(Lane.TOP).thickness(6).jacket(jacket).plug(plug)
+                .build(() -> Items.STRING).thickness() == 6, "a 6 pixel cable fits a lane");
+        helper.assertTrue(CableType.builder(line).alone().thickness(8).jacket(jacket).plug(plug)
+                .build(() -> Items.STRING).thickness() == 8, "a cable alone may be 8 pixels");
+        helper.succeed();
+    }
+
+    /** A cable as the test lays it, with the line and era it is. */
+    private record Laid(CableEntry cable, DataLine line, HardwareEra era) {
+    }
+}

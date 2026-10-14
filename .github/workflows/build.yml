@@ -5,6 +5,11 @@ on:
     branches: ['**']
   pull_request:
   workflow_dispatch:
+    inputs:
+      suites:
+        description: 'GameTest suites to run (core, computers, industrial, series); empty runs every suite'
+        required: false
+        default: ''
 
 concurrency:
   group: build-${{ github.ref }}
@@ -59,8 +64,72 @@ jobs:
           path: '*/build/reports/tests/'
           if-no-files-found: ignore
 
+  suites:
+    name: Choose the GameTest suites
+    runs-on: ubuntu-latest
+    outputs:
+      mods: ${{ steps.choose.outputs.mods }}
+      run: ${{ steps.choose.outputs.run }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Choose the suites
+        id: choose
+        # Each mod has its own suite of GameTests. A push runs the suites of the mods it touched; a change to the
+        # build, to the shared test kit or to the workflows, a new branch, and a run by hand with no suites named run
+        # every suite. A push that touches no code runs none.
+        env:
+          ASKED: ${{ inputs.suites }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if ! printf '%s' "$ASKED" | grep -Eq '^[a-z, ]*$'; then
+              echo "Suites are named with lowercase letters and commas: core, computers, industrial, series."
+              exit 1
+            fi
+            echo "mods=$ASKED" >> "$GITHUB_OUTPUT"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] \
+              || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "mods=" >> "$GITHUB_OUTPUT"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mods=""
+          every=false
+          for file in $(git diff --name-only "$base" HEAD); do
+            case "$file" in
+              core/src/*|core/build.gradle) mods="$mods core" ;;
+              computers/src/*|computers/build.gradle) mods="$mods computers series" ;;
+              industrial/src/*|industrial/build.gradle) mods="$mods industrial series" ;;
+              tests/src/main/java/dev/jstech/tests/gametest/*/*|tests/src/main/java/dev/jstech/tests/clienttest/*/*)
+                mods="$mods $(echo "$file" | cut -d/ -f9)" ;;
+              tests/*|build.gradle|settings.gradle|gradle.properties|gradle/*|.github/workflows/*) every=true ;;
+            esac
+          done
+          if [ "$every" = true ]; then
+            echo "mods=" >> "$GITHUB_OUTPUT"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$mods" ]; then
+            echo "mods=$(echo $mods | tr ' ' '\n' | sort -u | paste -sd, -)" >> "$GITHUB_OUTPUT"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "mods=" >> "$GITHUB_OUTPUT"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   gametests:
     name: GameTests
+    needs: suites
+    if: needs.suites.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -77,7 +146,7 @@ jobs:
 
       - name: Run the GameTests
         # The server exits with the number of required tests that failed.
-        run: ./gradlew :tests:runGameTestServer --console=plain
+        run: ./gradlew :tests:runGameTestServer "-PgtMods=${{ needs.suites.outputs.mods }}" --console=plain
 
       - name: Keep the server logs
         if: failure()
@@ -89,6 +158,8 @@ jobs:
 
   gametests-without-computercraft:
     name: 'GameTests without CC: Tweaked'
+    needs: suites
+    if: needs.suites.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -105,7 +176,9 @@ jobs:
 
       - name: 'Run the GameTests with CC: Tweaked out of the runtime'
         # CC: Tweaked is a soft dependency, so every mod must run unchanged without it.
-        run: ./gradlew :tests:runGameTestServer -PwithoutComputerCraft --console=plain
+        run: >
+          ./gradlew :tests:runGameTestServer -PwithoutComputerCraft
+          "-PgtMods=${{ needs.suites.outputs.mods }}" --console=plain
 
       - name: Keep the server logs
         if: failure()

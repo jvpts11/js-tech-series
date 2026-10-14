@@ -1,0 +1,411 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Tech Series.
+ */
+package dev.jstech.tests.gametest.computers;
+
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.JscTriggers;
+import dev.jstech.computers.advancement.MachineOperators;
+import dev.jstech.computers.advancement.OperationMilestones;
+import dev.jstech.computers.advancement.PendingAwards;
+import dev.jstech.computers.advancement.ProgramTravels;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.ComputingOperations;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.advancement.EventTrigger;
+import dev.jstech.core.gametest.GameTestPlayers;
+import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestMachines;
+import dev.jstech.tests.testkit.computers.CraftingRig;
+import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.Criterion;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.ItemStackHandler;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * The advancements are earned by the player who caused what they name, and by nobody else.
+ *
+ * <p>Each test brings a real player into the world, because a machine acting as one, or a stand-in that is not a
+ * server player, is exactly what must earn nothing. The player is taken out again at the end, so no test leaves a
+ * stranger in the server's list for the next one.
+ */
+@GameTestHolder(JsTests.MODID)
+@PrefixGameTestTemplate(false)
+public final class AdvancementGameTests {
+
+    private static final String ARENA = "empty";
+
+    private static final BlockPos WHERE = new BlockPos(2, 2, 2);
+
+    private AdvancementGameTests() {
+    }
+
+    /** An event earns the advancement that names it, and leaves its neighbours alone. */
+    @GameTest(template = ARENA)
+    public static void award_earnsOnlyTheAdvancementThatNamesTheEvent(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            JscEvents.award(player, JscEvents.POST_PASSED);
+            helper.assertTrue(done(player, "hardware/pc_master_race"), "passing POST earns PC Master Race");
+            helper.assertFalse(done(player, "hardware/off_and_on_again"), "and nothing else in the tab");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** Frames 7 and Frames 10 each earn their own first boot, and one never earns the other's. */
+    @GameTest(template = ARENA)
+    public static void firstBoot_ofFrames7And10_earnsEachItsOwn(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            JscTriggers.OS_FIRST_BOOT.get().trigger(player,
+                    ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_7"));
+            helper.assertTrue(done(player, "systems/never_upgrading"), "booting Frames 7 earns Never Upgrading");
+            helper.assertFalse(done(player, "systems/what_happened_to_frames_9"), "but not Frames 10's");
+            JscTriggers.OS_FIRST_BOOT.get().trigger(player,
+                    ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_10"));
+            helper.assertTrue(done(player, "systems/what_happened_to_frames_9"),
+                    "booting Frames 10 earns What Happened to Frames 9?");
+            helper.assertFalse(done(player, "systems/bloat_11"), "and Frames 11's stays to be earned");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** An advancement asking for every one of several things waits for the last of them. */
+    @GameTest(template = ARENA)
+    public static void award_everyDetailCountsOnItsOwn(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            JscEvents.award(player, JscEvents.ERA_BUILT, "vintage");
+            JscEvents.award(player, JscEvents.ERA_BUILT, "legacy");
+            JscEvents.award(player, JscEvents.ERA_BUILT, "transition");
+            JscEvents.award(player, JscEvents.ERA_BUILT, "standard");
+            helper.assertTrue(done(player, "hardware/vintage_build"), "a Vintage build earns its own");
+            helper.assertFalse(done(player, "hardware/time_traveller"), "four eras of five are not every era");
+            JscEvents.award(player, JscEvents.ERA_BUILT, "advanced");
+            helper.assertTrue(done(player, "hardware/time_traveller"), "the fifth era completes Time Traveller");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** A machine acting as a player earns nothing, and never becomes anybody's operator. */
+    @GameTest(template = ARENA)
+    public static void note_aFakePlayerNeverOperatesAMachine(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        final FakePlayer fake = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MachineOperators.note(computer, fake);
+        helper.assertTrue(MachineOperators.of(computer).isEmpty(), "a fake player is nobody's operator");
+        JscEvents.award(fake, JscEvents.POST_PASSED);
+        helper.succeed();
+    }
+
+    /** What a machine does on its own is credited to whoever works it. */
+    @GameTest(template = ARENA)
+    public static void awardOperator_creditsWhoeverWorksTheMachine(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            final PersonalComputerBlockEntity computer = legacy(helper);
+            MachineOperators.note(computer, player);
+            helper.assertValueEqual(MachineOperators.of(computer).orElse(null), player,
+                    "the one who used the machine is its operator");
+            JscEvents.awardOperator(computer, JscEvents.DATACENTER_FORMED);
+            helper.assertTrue(done(player, "hardware/someone_elses_computer"), "the operator earns it");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** A port built and installed earns Built from Ports for whoever works the machine that built it. */
+    @GameTest(template = ARENA)
+    public static void builtFromPorts_isEarnedByWhoeverWorksTheMachine(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            final PersonalComputerBlockEntity computer = legacy(helper);
+            MachineOperators.note(computer, player);
+            helper.assertFalse(done(player, "systems/built_from_ports"), "nothing is built yet");
+            JscEvents.awardOperator(computer, JscEvents.BUILT_FROM_PORTS, "screenfetch");
+            helper.assertTrue(done(player, "systems/built_from_ports"), "a port installed earns it");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** Putting a working build together earns the era it belongs to, for whoever is building it. */
+    @GameTest(template = ARENA)
+    public static void hardwareChanged_aWorkingLegacyBuildEarnsItsEra(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            helper.setBlock(WHERE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+            if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity computer)) {
+                throw new IllegalStateException("no legacy personal computer at " + WHERE);
+            }
+            MachineOperators.note(computer, player);
+            fit(computer);
+            helper.assertTrue(done(player, "hardware/legacy_build"), "a working Legacy build earns its era");
+            helper.assertFalse(done(player, "hardware/vintage_build"), "and not another era's");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** A scope says who is acting, the innermost one wins, and outside all of them nobody is. */
+    @GameTest(template = ARENA)
+    public static void acting_theInnermostScopeSaysWhoActs(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            final PersonalComputerBlockEntity nobodys = legacy(helper);
+            final Optional<?>[] seen = new Optional<?>[2];
+            Acting.as(player, () -> {
+                seen[0] = Acting.current();
+                Acting.asOperatorOf(nobodys, () -> seen[1] = Acting.current());
+            });
+            helper.assertValueEqual(seen[0], Optional.of(player.getUUID()), "the sender acts inside their scope");
+            helper.assertTrue(seen[1].isEmpty(), "a machine nobody works hides whoever was acting around it");
+            helper.assertTrue(Acting.current().isEmpty(), "outside every scope nobody acts");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** A finished Operation is credited to whoever asked for it, and a partial one earns the hidden one too. */
+    @GameTest(template = ARENA)
+    public static void operationSettled_isCreditedToWhoeverAskedForIt(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            final PersonalComputerBlockEntity mainframe = legacy(helper);
+            final StorageKey logs = StorageKey.of(new ItemStack(Items.OAK_LOG));
+            OperationMilestones.report(mainframe, player.getUUID(), ComputingOperations.SELECT,
+                    new OperationRecord(OperationRecord.TYPE_SELECT, logs, 64L, 64L,
+                            OperationRecord.STATUS_COMPLETED, List.of()));
+            helper.assertTrue(done(player, "networks/select_from_chest"), "a finished SELECT earns its asker it");
+            helper.assertFalse(done(player, "networks/two_out_of_three"), "a whole one is not a partial one");
+            OperationMilestones.report(mainframe, player.getUUID(), ComputingOperations.SELECT,
+                    new OperationRecord(OperationRecord.TYPE_SELECT, logs, 64L, 32L,
+                            OperationRecord.STATUS_PARTIAL, List.of()));
+            helper.assertTrue(done(player, "networks/two_out_of_three"), "a partial one earns the hidden one");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * An Operation finishing while whoever asked for it is away is theirs all the same: what it earned waits with the
+     * world and is handed over when they join, once.
+     */
+    @GameTest(template = ARENA)
+    public static void operationSettled_anAskerWhoIsAwayGetsItOnJoining(final GameTestHelper helper) {
+        final UUID away = UUID.randomUUID();
+        final PersonalComputerBlockEntity mainframe = legacy(helper);
+        OperationMilestones.report(mainframe, away, ComputingOperations.SELECT,
+                new OperationRecord(OperationRecord.TYPE_SELECT, StorageKey.of(new ItemStack(Items.OAK_LOG)), 64L,
+                        64L, OperationRecord.STATUS_COMPLETED, List.of()));
+        final MinecraftServer server = helper.getLevel().getServer();
+        helper.assertTrue(PendingAwards.waitingFor(server, away)
+                        .contains(new PendingAwards.Award(JscEvents.SELECT_DONE, "")),
+                "what a player away earned waits for them; got " + PendingAwards.waitingFor(server, away));
+        final ServerPlayer player = join(helper, away);
+        try {
+            PendingAwards.deliver(player);
+            helper.assertTrue(done(player, "networks/select_from_chest"), "joining, they are given it");
+            helper.assertTrue(PendingAwards.waitingFor(server, away).isEmpty(),
+                    "and it is not kept to be given twice");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** A machine's operator who is away when it does something is given it on joining too. */
+    @GameTest(template = ARENA)
+    public static void awardOperator_anOperatorWhoIsAwayGetsItOnJoining(final GameTestHelper helper) {
+        final UUID away = UUID.randomUUID();
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        MachineOperators.note(computer, away);
+        JscEvents.awardOperator(computer, JscEvents.DATACENTER_FORMED);
+        final ServerPlayer player = join(helper, away);
+        try {
+            PendingAwards.deliver(player);
+            helper.assertTrue(done(player, "hardware/someone_elses_computer"), "the operator earns it on joining");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** The same program on a second computer earns Works on My Machine; again on the first does not. */
+    @GameTest(template = ARENA)
+    public static void ran_onlyASecondComputerCounts(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            ProgramTravels.ran(player, "sorter.asm", 1L);
+            ProgramTravels.ran(player, "sorter.asm", 1L);
+            helper.assertFalse(done(player, "sigma/works_on_my_machine"), "one computer twice is still one");
+            ProgramTravels.ran(player, "sorter.asm", 2L);
+            helper.assertTrue(done(player, "sigma/works_on_my_machine"), "a second computer earns it");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A bench craft whose tree runs a machine step earns Machine Learning for whoever works the Mainframe, though the
+     * machine step is not an Operation of its own: the stone for a button smelted in a kiln through its interface.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void machineLearning_isEarnedByACraftWhoseTreeRunsAMachine(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final CraftingRig rig = CraftingRig.direct(world, net.cc(), TestMachines.KILN.get());
+        final List<ItemStack> grid = new ArrayList<>(Collections.nCopies(CraftingPattern.GRID_SIZE, ItemStack.EMPTY));
+        grid.set(0, new ItemStack(Items.STONE));
+        helper.startSequence()
+                .thenExecuteAfter(6, () -> {
+                    MachineOperators.note(net.mainframe(), player);
+                    net.seed(Items.COBBLESTONE, 4);
+                    rig.hold(CraftingRig.pattern(Items.COBBLESTONE, Items.STONE, 200));
+                    net.cc().loadPattern(new CraftingPattern(grid, new ItemStack(Items.STONE_BUTTON)));
+                })
+                .thenExecuteAfter(4, () -> helper.assertTrue(net.mainframe().submitNetworkCraft(
+                        StorageKey.of(Items.STONE_BUTTON), 1, false, "test") != null,
+                        "the button is planned through the kiln"))
+                .thenWaitUntil(() -> helper.assertTrue(net.storage(helper.getLevel())
+                        .count(StorageKey.of(Items.STONE_BUTTON)) == 1, "the button is not made yet"))
+                .thenExecuteAfter(4, () -> {
+                    try {
+                        helper.assertTrue(done(player, "networks/machine_learning"),
+                                "a craft that ran a machine on its way earns Machine Learning");
+                        helper.assertTrue(done(player, "networks/the_factory_must_grow"), "and an autocraft's own");
+                    } finally {
+                        leave(player);
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /** Every event an advancement waits for is one the code can report: a misspelt id would never be earned. */
+    @GameTest(template = ARENA)
+    public static void advancements_waitOnlyForEventsTheCodeReports(final GameTestHelper helper) {
+        final Set<String> reported = declaredEvents();
+        int checked = 0;
+        for (final AdvancementHolder holder : helper.getLevel().getServer().getAdvancements().getAllAdvancements()) {
+            if (!JsComputers.MODID.equals(holder.id().getNamespace())) {
+                continue;
+            }
+            for (final Criterion<?> criterion : holder.value().criteria().values()) {
+                if (criterion.triggerInstance() instanceof EventTrigger.Instance instance) {
+                    helper.assertTrue(instance.event().getNamespace().equals(JsComputers.MODID)
+                                    && reported.contains(instance.event().getPath()),
+                            holder.id() + " waits for " + instance.event() + ", which nothing reports");
+                    checked++;
+                }
+            }
+        }
+        helper.assertTrue(checked > 40, "the event advancements are loaded, " + checked + " criteria seen");
+        helper.succeed();
+    }
+
+    private static boolean done(final ServerPlayer player, final String path) {
+        final AdvancementHolder holder = player.server.getAdvancements()
+                .get(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path));
+        if (holder == null) {
+            throw new IllegalStateException("no advancement " + path);
+        }
+        return player.getAdvancements().getOrStartProgress(holder).isDone();
+    }
+
+    /* A server player of the test's own, online only where the server looks a player up by id. */
+    private static ServerPlayer join(final GameTestHelper helper) {
+        return GameTestPlayers.join(helper, "advancer");
+    }
+
+    private static ServerPlayer join(final GameTestHelper helper, final UUID id) {
+        return GameTestPlayers.join(helper.getLevel(), id, "advancer");
+    }
+
+    private static void leave(final ServerPlayer player) {
+        GameTestPlayers.leave(player);
+    }
+
+    private static Set<String> declaredEvents() {
+        final Set<String> events = new HashSet<>();
+        for (final Field field : JscEvents.class.getFields()) {
+            if (Modifier.isStatic(field.getModifiers()) && field.getType() == String.class) {
+                try {
+                    events.add((String) field.get(null));
+                } catch (final IllegalAccessException impossible) {
+                    throw new IllegalStateException(impossible);
+                }
+            }
+        }
+        return events;
+    }
+
+    private static PersonalComputerBlockEntity legacy(final GameTestHelper helper) {
+        helper.setBlock(WHERE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+        if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity computer)) {
+            throw new IllegalStateException("no legacy personal computer at " + WHERE);
+        }
+        fit(computer);
+        return computer;
+    }
+
+    private static void fit(final PersonalComputerBlockEntity computer) {
+        final ItemStackHandler hardware = computer.getHardware();
+        hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
+                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
+                new ItemStack(HardwareItems.PSU_500B.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+    }
+}

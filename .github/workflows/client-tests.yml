@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:
+    inputs:
+      suites:
+        description: 'Client test suites to run (core, computers, industrial, series); empty runs every suite'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -35,12 +40,18 @@ jobs:
           sudo apt-get install -y xvfb libgl1-mesa-dri
 
       - name: Run the shard
-        # The game renders through Mesa's software OpenGL on a virtual screen.
+        # The game renders through Mesa's software OpenGL on a virtual screen. The nightly run takes every suite; a
+        # run by hand may name some.
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
-        run: >
-          xvfb-run --auto-servernum --server-args="-screen 0 1280x800x24"
-          ./gradlew ":tests:runClientTests${{ matrix.shard }}" --console=plain
+          ASKED: ${{ inputs.suites }}
+        run: |
+          if ! printf '%s' "$ASKED" | grep -Eq '^[a-z, ]*$'; then
+            echo "Suites are named with lowercase letters and commas: core, computers, industrial, series."
+            exit 1
+          fi
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x800x24" \
+            ./gradlew ":tests:runClientTests${{ matrix.shard }}" "-PctMods=$ASKED" --console=plain
 
       - name: Read the report
         # The client closes normally either way, so the verdict is the report's last line.

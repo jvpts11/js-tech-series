@@ -1,0 +1,115 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Tech Series.
+ */
+package dev.jstech.tests.gametest.computers;
+
+import dev.jstech.computers.hardware.ExperienceIndex;
+import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.os.DesktopEffects;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.text.Text;
+import dev.jstech.tests.JsTests;
+import io.netty.buffer.Unpooled;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.List;
+
+/**
+ * The settings snapshot carries names the player chose: a running program is named by its path, and a
+ * project under its solution's folder makes a path longer than any cap. A cap on the wire is a hard
+ * failure that drops the connection, so every string is cut to its cap before it is written, and a
+ * snapshot with a long name still reaches the client, shortened.
+ */
+@GameTestHolder(JsTests.MODID)
+@PrefixGameTestTemplate(false)
+public final class SettingsPayloadGameTests {
+
+    private SettingsPayloadGameTests() {
+    }
+
+    private static final String ARENA = "empty";
+
+    @GameTest(template = ARENA)
+    public static void settingsSnapshot_cutsALongProcessNameInsteadOfDroppingTheConnection(final GameTestHelper helper) {
+        final String longName = "progs/MyVeryLongSolutionName/MyVeryLongSolutionName/build/MyVeryLongSolutionName.asm";
+        final String longDisk = "A removable disk whose label runs well past the forty-eight characters";
+        helper.assertTrue(longName.length() > SettingsSnapshotPayload.LABEL_MAX, "the name under test is over the cap");
+        final SettingsSnapshotPayload snapshot = new SettingsSnapshotPayload(new BlockPos(1, 2, 3),
+                "win11", "A computer name that is also far longer than the cap allows it to be", 0, false, 75, 100,
+                "C", true, "", true, false, 0, SettingsSnapshotPayload.ONE_CPU.with(1), 100,
+                Text.literal("x86-64, 64-bit"), 256, 0, "frames_11", "Frames",
+                List.of("jsc:sgsc"),
+                List.of(new SettingsSnapshotPayload.DiskUse(Text.literal(longDisk), 500, 12, true)),
+                40, List.of(new SettingsSnapshotPayload.RamUse(longName, 12, 3_145_728L, "PROCESS", 7)),
+                List.of(new SettingsSnapshotPayload.ShareRow("pub", "C:\\pub", true)), false,
+                new SettingsSnapshotPayload.Sound(60, true, "speakers", Text.literal("Artisan Tone Blaster Live"), true,
+                        List.of(new SettingsSnapshotPayload.SpeakerRow("Desk left", StereoSide.LEFT))),
+                new SettingsSnapshotPayload.Gpu(Text.literal("Envya Vertex GTX 980 Ti"), 2816, 1000,
+                        "PCI Express 3.0 x16", 6L * 1024L * 1024L, 64L * 1024L, 16L * 1024L, false, 24,
+                        List.of(new SettingsSnapshotPayload.VramRow(Text.literal("Monitor"), 64L * 1024L, true))),
+                new DesktopEffects(List.of("menus", "minimize"), 140, true), new ExperienceIndex(56, 55, 29, 30, 74));
+        final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
+        SettingsSnapshotPayload.STREAM_CODEC.encode(buf, snapshot);
+        final SettingsSnapshotPayload back = SettingsSnapshotPayload.STREAM_CODEC.decode(buf);
+        helper.assertTrue(back.ramUses().size() == 1
+                        && back.ramUses().get(0).label().equals(longName.substring(0, SettingsSnapshotPayload.LABEL_MAX))
+                        && back.ramUses().get(0).id() == 7
+                        && back.ramUses().get(0).heldBytes() == 3_145_728L,
+                "the process arrives with its name cut to the cap, and its number and what it holds intact; got "
+                        + back.ramUses());
+        // A disk's name travels as text, which carries it whole however long a player made it.
+        helper.assertTrue(back.disks().get(0).label().english().equals(longDisk)
+                        && back.disks().get(0).capMb() == 500,
+                "the disk label travels whole; got " + back.disks());
+        // The graphics travel whole, with what holds their memory.
+        helper.assertTrue(back.gpu().equals(snapshot.gpu()), "the graphics arrive as they left; got " + back.gpu());
+        // So do the visual effects switched off on the system's own page, their speed and the basic look.
+        helper.assertTrue(back.effects().equals(snapshot.effects()),
+                "the visual effects arrive as they left; got " + back.effects());
+        helper.assertTrue(back.experience().equals(snapshot.experience()),
+                "the five scores of the experience index arrive as they left; got " + back.experience());
+        /*
+         * A computer's name is not one of the labels cut to the panel's width: it may be as long as a name may
+         * be, which is longer than anything else on this packet, and it is cut at that length instead.
+         */
+        helper.assertTrue(back.computerName().equals(snapshot.computerName())
+                        && back.installed().equals(List.of("jsc:sgsc")) && back.guiScale() == 75,
+                "everything else travels whole; got the name as " + back.computerName());
+        helper.assertTrue(back.cpuArch().english().equals("x86-64, 64-bit"),
+                "the instruction set the screens show travels whole; got " + back.cpuArch());
+        // And a name past even that length is cut to it rather than refused, which would drop the connection.
+        final String pastTheLimit = "n".repeat(InstallerFlow.MOST_NAME_LETTERS + 40);
+        final SettingsSnapshotPayload named = new SettingsSnapshotPayload(new BlockPos(1, 2, 3),
+                "win11", pastTheLimit, 0, false, 75, 100,
+                "C", true, "", true, false, 0, SettingsSnapshotPayload.ONE_CPU.with(1), 100,
+                Text.literal("x86-64, 64-bit"), 256, 0, "frames_11", "Frames",
+                List.of(), List.of(), 40, List.of(), List.of(), false, SettingsSnapshotPayload.Sound.NONE,
+                SettingsSnapshotPayload.Gpu.NONE, DesktopEffects.ALL_ON, ExperienceIndex.NONE);
+        final RegistryFriendlyByteBuf longBuf =
+                new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
+        SettingsSnapshotPayload.STREAM_CODEC.encode(longBuf, named);
+        final SettingsSnapshotPayload cut = SettingsSnapshotPayload.STREAM_CODEC.decode(longBuf);
+        helper.assertTrue(cut.computerName().length() == InstallerFlow.MOST_NAME_LETTERS,
+                "a name past the limit arrives cut to it; got " + cut.computerName().length());
+        helper.assertTrue(back.shares().size() == 1 && back.shares().get(0).path().equals("C:\\pub")
+                        && back.shares().get(0).writable() && !back.remoteAllowed(),
+                "the shares and the remote switch travel too; got " + back.shares());
+        final SettingsSnapshotPayload.Sound sound = back.sound();
+        helper.assertTrue(sound.volume() == 60 && sound.muted() && sound.output().equals("speakers") && sound.plays()
+                        && sound.hardware().english().equals("Artisan Tone Blaster Live")
+                        && sound.speakers().equals(List.of(new SettingsSnapshotPayload.SpeakerRow("Desk left",
+                        StereoSide.LEFT))),
+                "the system's sound travels, its speakers with their names and sides; got " + sound);
+        helper.succeed();
+    }
+}

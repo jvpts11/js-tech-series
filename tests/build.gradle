@@ -56,10 +56,10 @@ def withJade = providers.gradleProperty('withJade').isPresent()
 def withKubeJs = providers.gradleProperty('withKubeJs').isPresent()
 if (withoutComputerCraft) {
     sourceSets.main.java {
-        exclude '**/gametest/ComputerCraftGameTests.java'
-        exclude '**/gametest/GatewayBridgeGameTests.java'
-        exclude '**/gametest/GatewaySigmaGameTests.java'
-        exclude '**/gametest/NetworkGatewayGameTests.java'
+        exclude '**/gametest/computers/ComputerCraftGameTests.java'
+        exclude '**/gametest/computers/GatewayBridgeGameTests.java'
+        exclude '**/gametest/computers/GatewaySigmaGameTests.java'
+        exclude '**/gametest/computers/NetworkGatewayGameTests.java'
     }
 }
 
@@ -99,6 +99,9 @@ neoForge {
                 // -PctOnly=<substring>[,<substring>...] runs only the client tests whose name contains any of
                 // them (case-insensitive), so a few tests can be driven without stealing the mouse for the suite.
                 systemProperty 'jsc.clienttests.only', (providers.gradleProperty('ctOnly').getOrElse(''))
+                // -PctMods=<suite>[,<suite>...] runs only the client tests of those suites (core, computers,
+                // industrial, series; see TestSuites), shared out over the shards as the whole suite is.
+                systemProperty 'jsc.clienttests.mods', (providers.gradleProperty('ctMods').getOrElse(''))
             }
         }
 
@@ -118,6 +121,9 @@ neoForge {
             systemProperty 'jsc.gametests.computercraft', withoutComputerCraft ? 'absent' : 'present'
             // -PgtOnly=<TestClass or word>[,...] runs only those GameTests (see GameTestSelection).
             systemProperty 'jsc.gametests.only', (providers.gradleProperty('gtOnly').getOrElse(''))
+            // -PgtMods=<suite>[,<suite>...] runs only the GameTests of those suites: core, computers, industrial,
+            // series (see TestSuites). With -PgtOnly too, a test runs when it is in one of them and is named.
+            systemProperty 'jsc.gametests.mods', (providers.gradleProperty('gtMods').getOrElse(''))
             systemProperty 'jsc.gametests.ftbteams', withFtbTeams ? 'present' : 'absent'
             systemProperty 'jsc.gametests.kubejs', withKubeJs ? 'present' : 'absent'
             // -Pjfr records the run with Java Flight Recorder, for profiling the scale benchmark. Deep stacks,

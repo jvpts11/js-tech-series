@@ -13,7 +13,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
-import dev.jstech.tests.testkit.TestWorldBuilder;
+import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.Screen;

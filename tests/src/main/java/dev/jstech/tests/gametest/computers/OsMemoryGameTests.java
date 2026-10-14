@@ -1,0 +1,282 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Tech Series.
+ */
+package dev.jstech.tests.gametest.computers;
+
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.machine.ProgramLauncher;
+import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.ItemStackHandler;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * The memory ledger of a computer: the system's own share, the desktop package, the installed services and the
+ * open windows, each weighed under the running system, and the server's trimming of a window layout to what
+ * the RAM holds.
+ */
+@GameTestHolder(JsTests.MODID)
+@PrefixGameTestTemplate(false)
+public final class OsMemoryGameTests {
+
+    private static final String ARENA = "empty";
+    private static final int SETTLE = 4;
+
+    /** The room the program under test asks for, which is more than it will ever hold. */
+    private static final int ROOM_MB = 16;
+
+    /** A program that takes up room and stays up, so there is something to read off the ledger. */
+    private static final String HOLDING = """
+            using System.*;
+            using System.Collections.*;
+            namespace Programs;
+            class Holding : IScript {
+                List<string> room = new List<string>();
+
+                public void OnInit() {
+                    int i = 0;
+                    while (i < 200) {
+                        room.Add("a line of text that takes up room on the heap");
+                        i = i + 1;
+                    }
+                }
+                public void OnTick() { }
+                public void OnDestroy() { }
+            }
+            """;
+
+    private OsMemoryGameTests() {
+    }
+
+    @GameTest(template = ARENA)
+    public static void ramLedger_holdsTheSystemTheServicesAndTheWindows(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = placeLegacyMainframe(helper, new BlockPos(2, 2, 2), id("frames_xp"));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(mainframe.ramTotalMb() == 2048,
+                            "two DDR-1024 modules are 2048 MB; got " + mainframe.ramTotalMb());
+                    // The engine the Mainframe ships with is stopped first, so the system is seen alone.
+                    mainframe.setEngineRunning(false);
+                    helper.assertTrue(mainframe.ramReservedMb() == 128,
+                            "Frames XP holds 128 MB for itself; got " + mainframe.ramReservedMb());
+
+                    mainframe.setEngineRunning(true);
+                    helper.assertTrue(mainframe.ramReservedMb() == 152,
+                            "a running service holds its share on top of the system; got "
+                                    + mainframe.ramReservedMb());
+
+                    mainframe.setOpenWindows(List.of(
+                            new OpenWindow("jsc:files", 40, 30, 200, 140, false, false),
+                            new OpenWindow("jsc:editor", 60, 50, 180, 120, true, false)));
+                    final RamLedger ledger = mainframe.ramLedger();
+                    helper.assertTrue(ledger.usedMb(RamLedger.Kind.WINDOW) == 32,
+                            "two bundled windows weigh 16 MB each on a Legacy machine; got "
+                                    + ledger.usedMb(RamLedger.Kind.WINDOW));
+                    helper.assertTrue(ledger.usedMb() == 184, "the ledger adds up; got " + ledger.usedMb());
+                    helper.assertTrue(mainframe.ramReservedMb() == 152,
+                            "windows are not part of the reserve; got " + mainframe.ramReservedMb());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A service holds memory while it runs and not while it merely sits on the disk. The Engine is the one a
+     * player stops and starts by hand, so it is the one that proves it.
+     */
+    @GameTest(template = ARENA)
+    public static void ramLedger_aStoppedServiceHoldsNothing(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = placeLegacyMainframe(helper, new BlockPos(2, 2, 2), id("frames_xp"));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.setNeedsPost(false);
+                    // The engine the Mainframe ships with, running.
+                    helper.assertTrue(mainframe.ramReservedMb() == 152,
+                            "the Engine holds its 24 MB while it runs; got " + mainframe.ramReservedMb());
+
+                    mainframe.setEngineRunning(false);
+                    helper.assertTrue(mainframe.ramReservedMb() == 128,
+                            "a service that is stopped holds nothing, though it is still installed; got "
+                                    + mainframe.ramReservedMb());
+                    helper.assertTrue(mainframe.installedEngines().containsKey(
+                                    NetworkEngines.MIDSOFT_IQL_SERVER.program()),
+                            "and stopping it did not uninstall it");
+
+                    mainframe.setEngineRunning(true);
+                    helper.assertTrue(mainframe.ramReservedMb() == 152,
+                            "starting it again takes the memory back; got " + mainframe.ramReservedMb());
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void windowsWithinBudget_keepsTheOldestWindowsThatFit(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = placeLegacyMainframe(helper, new BlockPos(2, 2, 2), id("frames_xp"));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.setNeedsPost(false);
+                    /*
+                     * 2048 MB minus the system's 128 and the 24 of the engine it ships with leaves 1896: fourteen
+                     * 128 MB studios fit, the fifteenth does not.
+                     */
+                    final List<OpenWindow> asked = new ArrayList<>();
+                    for (int i = 0; i < 20; i++) {
+                        asked.add(new OpenWindow("jsc:isms", 10 + i, 10, 200, 140, false, false));
+                    }
+                    final List<OpenWindow> kept = mainframe.windowsWithinBudget(asked);
+                    helper.assertTrue(kept.size() == 14, "fourteen studios fit in 1896 MB; kept " + kept.size());
+                    helper.assertTrue(kept.equals(asked.subList(0, 14)), "the oldest windows are the ones kept");
+
+                    mainframe.setOpenWindows(kept);
+                    helper.assertTrue(mainframe.ramLedger().usedMb() == 128 + 24 + 14 * 128,
+                            "the kept layout fills the RAM; got " + mainframe.ramLedger().usedMb());
+                    helper.assertTrue(mainframe.windowsWithinBudget(asked.subList(0, 3)).size() == 3,
+                            "a layout that fits comes back whole");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A running program is listed by both of its sizes: the room the machine promised it, which is what says
+     * whether one more program fits, and what it is really holding, which is what moves while it runs. And a
+     * language's runtime is in memory while it has something to run, not while it merely sits on a disk.
+     */
+    @GameTest(template = ARENA)
+    public static void ramLedger_listsAProgramByWhatItHoldsAndItsRuntimeWhileItRuns(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    computer.console().install("jsc:sigma");
+                    helper.assertTrue(computer.ramLedger().usedMb(RamLedger.Kind.SERVICE) == 0,
+                            "a runtime with nothing to run holds nothing; got "
+                                    + computer.ramLedger().usedMb(RamLedger.Kind.SERVICE));
+                    final ProgramLauncher.Launch launch = ProgramLauncher.launch(computer, "C:\\progs\\hold.sgs",
+                            asked -> ICliComputer.FsResult.ok(HOLDING), List.of(), IProgramParent.NONE,
+                            ProgramPriority.MEDIUM, ROOM_MB);
+                    helper.assertTrue(launch.ok(), "the program starts; got " + launch.message());
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    final RamLedger ledger = computer.ramLedger();
+                    RamLedger.Entry program = null;
+                    for (final RamLedger.Entry entry : ledger.entries()) {
+                        if (entry.kind() == RamLedger.Kind.PROCESS) {
+                            program = entry;
+                        }
+                    }
+                    helper.assertTrue(program != null, "the ledger lists the program; it has " + ledger.entries());
+                    helper.assertTrue(program.mb() == ROOM_MB,
+                            "by the room it was promised; got " + program.mb());
+                    helper.assertTrue(program.heldBytes() > 0 && program.heldBytes() < ROOM_MB * RamLedger.BYTES_PER_MB,
+                            "and by what it is holding of that room; got " + program.heldBytes());
+                    helper.assertTrue(ledger.usedMb(RamLedger.Kind.SERVICE) > 0,
+                            "the runtime is in memory now that it has something to run");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void ramMbOn_weighsEveryProgramByTheEraOfTheMachineItRunsOn(final GameTestHelper helper) {
+        final ProgramSpec files = OsRegistry.getProgram(id("files"));
+        helper.assertTrue(files != null, "the built-in programs are registered");
+        helper.assertTrue(files.ramMbOn(HardwareEra.VINTAGE) == 1 && files.ramMbOn(HardwareEra.LEGACY) == 16
+                        && files.ramMbOn(HardwareEra.ADVANCED) == 2_048,
+                "a tool the system ships holds 16 MB on a Legacy machine, grown with the era; got "
+                        + files.ramMbOn(HardwareEra.VINTAGE) + ", " + files.ramMbOn(HardwareEra.LEGACY) + ", "
+                        + files.ramMbOn(HardwareEra.ADVANCED));
+
+        final ProgramSpec isms = OsRegistry.getProgram(id("isms"));
+        helper.assertTrue(isms != null && isms.ramMbOn(HardwareEra.LEGACY) == 128
+                        && isms.ramMbOn(HardwareEra.STANDARD) == 4_096,
+                "an installable declares what it holds on a Legacy machine, grown with the era");
+
+        final ProgramSpec unstated = ProgramSpec.of(id("addon_tool"), "tool", false,
+                        Set.of(Platform.FRAMES), 8, ProgramKind.APP, 0, HostScope.ANY)
+                .named("Addon Tool").withEra(HardwareEra.STANDARD);
+        helper.assertTrue(unstated.ramMbOn(HardwareEra.LEGACY) == 48,
+                "an installable that said nothing holds what the average program does; got "
+                        + unstated.ramMbOn(HardwareEra.LEGACY));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void ramLedger_countsALinuxDesktopPackageOnTopOfTheSystem(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = placeLegacyMainframe(helper, new BlockPos(2, 2, 2), id("ubuntu"));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.setNeedsPost(false);
+                    // The engine the Mainframe ships with is stopped, so the system and the desktop weigh alone.
+                    mainframe.setEngineRunning(false);
+                    helper.assertTrue(mainframe.ramReservedMb() == 48,
+                            "Ubuntu at the TTY holds 48 MB; got " + mainframe.ramReservedMb());
+                    mainframe.console().install("jsc:kde_plasma");
+                    mainframe.setBootedDesktopId(id("kde_plasma"));
+                    final RamLedger ledger = mainframe.ramLedger();
+                    helper.assertTrue(ledger.usedMb(RamLedger.Kind.DESKTOP) == 80,
+                            "Plasma holds 80 MB once booted on a Legacy machine; got "
+                                    + ledger.usedMb(RamLedger.Kind.DESKTOP));
+                    helper.assertTrue(mainframe.ramReservedMb() == 128,
+                            "the desktop weighs on top of the system; got " + mainframe.ramReservedMb());
+                })
+                .thenSucceed();
+    }
+
+    private static ResourceLocation id(final String path) {
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
+    }
+
+    /** A Legacy Mainframe with 2 GB of DDR in two modules, powered on with {@code osId} installed. */
+    private static MainframeBlockEntity placeLegacyMainframe(final GameTestHelper helper, final BlockPos pos,
+                                                            final ResourceLocation osId) {
+        helper.setBlock(pos, ComputingModule.LEGACY_MAINFRAME.get());
+        if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
+            throw new IllegalStateException("no MainframeBlockEntity at " + pos);
+        }
+        final ItemStackHandler inv = mainframe.getInventory();
+        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT, new ItemStack(HardwareItems.MOTHERBOARD_MTX_LEGACY.get()));
+        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
+                new ItemStack(HardwareItems.CPU_VELOCION_OPTERA_250.get()));
+        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(HardwareItems.RAM_DDR_1024.get()));
+        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START + 1, new ItemStack(HardwareItems.RAM_DDR_1024.get()));
+        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(HardwareItems.PSU_500B.get()));
+        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        mainframe.togglePower();
+        if (!mainframe.installOs(osId)) {
+            throw new IllegalStateException("failed to install " + osId + " on the Legacy Mainframe at " + pos);
+        }
+        return mainframe;
+    }
+}

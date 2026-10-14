@@ -1,0 +1,271 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Tech Series.
+ */
+package dev.jstech.tests.gametest.computers;
+
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.Microarchitectures;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.CpuItem;
+import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.os.MinSpecTooltip;
+import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.tests.JsTests;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.List;
+
+/**
+ * A part's era reads in colour before it reads as a word: the green of a CRT for Vintage, the Legacy
+ * desktop's blue for Legacy, the Standard desktop's accent blue for Standard, on every hardware tooltip
+ * and on the "needs ... hardware" line of an install disc.
+ */
+@GameTestHolder(JsTests.MODID)
+@PrefixGameTestTemplate(false)
+public final class HardwareTooltipGameTests {
+
+    private HardwareTooltipGameTests() {
+    }
+
+    private static final String ARENA = "empty";
+
+    @GameTest(template = ARENA)
+    public static void eraLine_wearsItsErasScreenColour(final GameTestHelper helper) {
+        assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), HardwareEra.VINTAGE);
+        assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_700.get()), HardwareEra.LEGACY);
+        assertEraColour(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C5_4590.get()), HardwareEra.STANDARD);
+        assertEraColour(helper, new ItemStack(HardwareItems.RAM_SIMM_4.get()), HardwareEra.VINTAGE);
+        assertEraColour(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()), HardwareEra.STANDARD);
+        helper.assertTrue(HardwareEra.VINTAGE.screenColor() != HardwareEra.LEGACY.screenColor()
+                        && HardwareEra.LEGACY.screenColor() != HardwareEra.STANDARD.screenColor(),
+                "the three eras tell apart by colour");
+        helper.succeed();
+    }
+
+    /** A disk belongs to the years it sold in, which a kind and a size decide together. */
+    @GameTest(template = ARENA)
+    public static void disks_wearTheEraOfTheYearsTheySoldIn(final GameTestHelper helper) {
+        assertEraColour(helper, disk(StorageTier.HDD, DiskSize.TB_2), HardwareEra.TRANSITION);
+        assertEraColour(helper, disk(StorageTier.HDD, DiskSize.TB_8), HardwareEra.STANDARD);
+        assertEraColour(helper, disk(StorageTier.HDD, DiskSize.TB_12), HardwareEra.ADVANCED);
+        assertEraColour(helper, disk(StorageTier.SSD, DiskSize.TB_4), HardwareEra.STANDARD);
+        assertEraColour(helper, disk(StorageTier.SSD, DiskSize.TB_8), HardwareEra.ADVANCED);
+        assertEraColour(helper, disk(StorageTier.NVME, DiskSize.TB_2), HardwareEra.STANDARD);
+        assertEraColour(helper, disk(StorageTier.NVME, DiskSize.TB_4), HardwareEra.ADVANCED);
+        boolean flashOf12 = true;
+        try {
+            ComputingModule.disk(StorageTier.SSD, DiskSize.TB_12);
+        } catch (final IllegalArgumentException none) {
+            flashOf12 = false;
+        }
+        helper.assertFalse(flashOf12, "the sizes above 8 TB are hard disks only");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void installDiscNeedsLine_coloursTheEraTheSameWay(final GameTestHelper helper) {
+        final List<Component> lines = MinSpecTooltip.osMinSpec(
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "fedora"));
+        helper.assertTrue(!lines.isEmpty() && lines.get(0).getString().equals("Needs Legacy hardware or later"),
+                "the needs line reads as before; got " + (lines.isEmpty() ? "nothing" : lines.get(0).getString()));
+        // The era is the sentence's argument, so a translation can put it wherever its language puts it.
+        final Object era = lines.get(0).getContents() instanceof TranslatableContents sentence
+                && sentence.getArgs().length > 0 ? sentence.getArgs()[0] : null;
+        final TextColor colour = era instanceof Component word ? word.getStyle().getColor() : null;
+        helper.assertTrue(colour != null && colour.getValue() == HardwareEra.LEGACY.screenColor(),
+                "the era word carries the Legacy screen colour; got " + colour);
+        helper.succeed();
+    }
+
+    /**
+     * A processor says what it understands, not only how wide its words are.
+     *
+     * <p>The tooltip is the one place a player reads this before buying into a machine, and nothing about it is
+     * checked by the compiler, so it is checked here.
+     */
+    @GameTest(template = ARENA)
+    public static void cpuTooltip_namesTheInstructionSetAndItsWordSize(final GameTestHelper helper) {
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), "IA-16, 16-bit");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_700.get()), "x86, 32-bit");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C5_4590.get()), "x86-64, 64-bit");
+        helper.succeed();
+    }
+
+    /**
+     * Buses and memory read as a part's sheet writes them ("PCI-e 3.0", "AGP 4x", "DDR3"), never as the code's names
+     * for them.
+     */
+    @GameTest(template = ARENA)
+    public static void partTooltips_writeBusesAndMemoryAsTheirSheetsDo(final GameTestHelper helper) {
+        assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()), "PCI-e 3.0");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()), "DDR3");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()), "PCI-e 3.0");
+        for (final Item item : BuiltInRegistries.ITEM) {
+            if (!JsComputers.MODID.equals(BuiltInRegistries.ITEM.getKey(item).getNamespace())) {
+                continue;
+            }
+            final List<Component> tooltip = new ItemStack(item).getTooltipLines(
+                    Item.TooltipContext.of(helper.getLevel()), null, TooltipFlag.NORMAL);
+            for (final Component line : tooltip) {
+                final String said = line.getString();
+                helper.assertFalse(said.contains("PCIE_") || said.contains("AGP_") || said.matches(".*\\bT\\d_.*"),
+                        BuiltInRegistries.ITEM.getKey(item) + " shows a code name: " + said);
+            }
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A part names the design it is built on, which is what tells two chips of one clock apart; a card whose design
+     * was only ever sold under a brand names its chip, or nothing, rather than the brand.
+     */
+    @GameTest(template = ARENA)
+    public static void partTooltips_nameTheirArchitectureAndCodename(final GameTestHelper helper) {
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get()),
+                "Architecture: Centro Conroe");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C5_4590.get()),
+                "Architecture: Haswell");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()),
+                "Architecture: Kepler GK110");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_3D_BLASTER.get()), "Architecture: V1000");
+        assertTooltipLacks(helper, new ItemStack(HardwareItems.GPU_VOODOO_GFX.get()), "Architecture");
+        helper.succeed();
+    }
+
+    /** Every processor and card the mod brings is built on a design of the table, and counted by it. */
+    @GameTest(template = ARENA)
+    public static void everyPart_isBuiltOnADesignAndCountedByIt(final GameTestHelper helper) {
+        for (final Item item : BuiltInRegistries.ITEM) {
+            final ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+            if (!JsComputers.MODID.equals(id.getNamespace())) {
+                continue;
+            }
+            if (item instanceof CpuItem cpu) {
+                helper.assertTrue(cpu.spec().design().arch() != Microarchitectures.UNSPECIFIED,
+                        id + " says nothing of its design");
+            } else if (item instanceof GpuItem gpu) {
+                helper.assertTrue(gpu.spec().arch() != Microarchitectures.UNSPECIFIED,
+                        id + " says nothing of its design");
+            }
+        }
+        helper.assertTrue(HardwareItems.CPU_INTEGRA_486DX2.get().spec().orchestrationCapacity() == 1,
+                "the 486 design makes a 66 MHz chip one item a tick");
+        helper.assertTrue(HardwareItems.CPU_VELOCION_K6_II.get().spec().orchestrationCapacity() == 11,
+                "a K6-II orchestrates 11");
+        helper.assertTrue(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get().spec().orchestrationCapacity() == 307,
+                "an E6600 orchestrates 307");
+        helper.assertTrue(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get().spec().orchestrationCapacity() == 2074,
+                "a 4790K with two threads a core orchestrates 2,074");
+        helper.assertTrue(HardwareItems.GPU_VERTEX_GTX_780_TI.get().spec().power() == 2520
+                        && HardwareItems.GPU_RADIANCE_HD_6850.get().spec().power() == 744,
+                "the cards' power follows their design");
+        helper.succeed();
+    }
+
+    /**
+     * A sound card says what it plays and the slot it fits; the case, the board and the monitor say where the
+     * sound comes from.
+     */
+    /** The parts of a case's 5.25-inch bay: what each internal drive reads, the hot-swap bay's disk, the bay, the era. */
+    @GameTest(template = ARENA)
+    public static void bayDriveTooltips_sayWhatTheyReadAndThatAnyBayTakesThem(final GameTestHelper helper) {
+        final ItemStack cd = new ItemStack(HardwareItems.INTERNAL_CD_DRIVE.get());
+        assertTooltipHas(helper, cd, "Reads CD");
+        assertTooltipHas(helper, cd, "Fits any 5.25-inch bay");
+        assertEraColour(helper, cd, HardwareEra.LEGACY);
+        final ItemStack dvd = new ItemStack(HardwareItems.INTERNAL_DVD_DRIVE.get());
+        assertTooltipHas(helper, dvd, "Reads DVD, CD");
+        assertEraColour(helper, dvd, HardwareEra.TRANSITION);
+        final ItemStack bluRay = new ItemStack(HardwareItems.INTERNAL_BLU_RAY_DRIVE.get());
+        assertTooltipHas(helper, bluRay, "Reads Blu-ray, DVD, CD");
+        assertEraColour(helper, bluRay, HardwareEra.ADVANCED);
+        final ItemStack hotSwap = new ItemStack(HardwareItems.HOT_SWAP_DRIVE_BAY.get());
+        assertTooltipHas(helper, hotSwap, "Takes a disk at the front, put in or taken out with the computer on or off");
+        assertTooltipHas(helper, hotSwap, "Fits any 5.25-inch bay");
+        assertEraColour(helper, hotSwap, HardwareEra.VINTAGE);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void soundTooltips_sayWhatPlaysAndWhereItFits(final GameTestHelper helper) {
+        final ItemStack isa = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER.get());
+        assertTooltipHas(helper, isa, "FM synthesis, 9 voices");
+        assertTooltipHas(helper, isa, "Recordings: 8-bit mono, 22 kHz");
+        assertTooltipHas(helper, isa, "Fits an ISA slot");
+        assertEraColour(helper, isa, HardwareEra.VINTAGE);
+        final ItemStack pcie = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_HI_FI.get());
+        assertTooltipHas(helper, pcie, "Wavetable, 32 voices");
+        assertTooltipHas(helper, pcie, "Recordings: 16-bit stereo, 44.1 kHz");
+        assertTooltipHas(helper, pcie, "Fits a PCI-e slot");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()),
+                "On-board audio");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get()),
+                "On-board audio");
+        assertTooltipLacks(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()),
+                "On-board audio");
+        assertTooltipLacks(helper, new ItemStack(HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get()), "On-board audio");
+        assertTooltipHas(helper, new ItemStack(ComputingModule.VINTAGE_PERSONAL_COMPUTER.item()),
+                "PC speaker: beeps only");
+        assertTooltipHas(helper, new ItemStack(ComputingModule.PERSONAL_COMPUTER.item()),
+                "Sound on the board: plays everything");
+        assertTooltipHas(helper, new ItemStack(ComputingModule.MONITOR.item()), "Plays the sound of its computer");
+        helper.succeed();
+    }
+
+    private static void assertTooltipLacks(final GameTestHelper helper, final ItemStack stack, final String text) {
+        final List<Component> tooltip = stack.getTooltipLines(Item.TooltipContext.of(helper.getLevel()), null,
+                TooltipFlag.NORMAL);
+        for (final Component line : tooltip) {
+            helper.assertFalse(line.getString().contains(text),
+                    stack.getHoverName().getString() + " should not say '" + text + "'");
+        }
+    }
+
+    private static void assertTooltipHas(final GameTestHelper helper, final ItemStack stack, final String text) {
+        final List<Component> tooltip = stack.getTooltipLines(Item.TooltipContext.of(helper.getLevel()), null,
+                TooltipFlag.NORMAL);
+        for (final Component line : tooltip) {
+            if (line.getString().contains(text)) {
+                return;
+            }
+        }
+        helper.fail(stack.getHoverName().getString() + " says nothing of '" + text + "'; it says "
+                + tooltip.stream().map(Component::getString).toList());
+    }
+
+    private static ItemStack disk(final StorageTier tier, final DiskSize size) {
+        return new ItemStack(ComputingModule.disk(tier, size));
+    }
+
+    private static void assertEraColour(final GameTestHelper helper, final ItemStack stack, final HardwareEra era) {
+        final List<Component> tooltip = stack.getTooltipLines(Item.TooltipContext.of(helper.getLevel()), null,
+                TooltipFlag.NORMAL);
+        for (final Component line : tooltip) {
+            if (line.getString().endsWith(" era")) {
+                final TextColor colour = line.getStyle().getColor();
+                helper.assertTrue(colour != null && colour.getValue() == era.screenColor(),
+                        stack.getHoverName().getString() + ": the era line is " + colour + ", not " + era + "'s colour");
+                return;
+            }
+        }
+        helper.fail(stack.getHoverName().getString() + " has no era line in its tooltip");
+    }
+}

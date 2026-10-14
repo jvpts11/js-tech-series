@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestSuites;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
@@ -41,6 +42,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -61,6 +63,8 @@ public final class ClientTestRunner {
     private static final int SHARDS = Math.max(1, Integer.getInteger("jsc.clienttests.shards", 1));
     /** Optional name substring: when set, only client tests whose name contains it (any case) run. */
     private static final String ONLY = System.getProperty("jsc.clienttests.only", "").trim();
+    /** Optional suites, by mod ({@link TestSuites}): when set, only the client tests of those suites run. */
+    private static final String MODS = System.getProperty("jsc.clienttests.mods", "").trim();
     static final String WORLD_NAME = "jsc-clienttests";
     private static final int AREA_SPACING = 64;
     private static final int SETTLE_TICKS = 40;
@@ -155,9 +159,20 @@ public final class ClientTestRunner {
         // Several names, each a part of a test's name, separated by commas: a test named like any of them runs.
         final List<String> needles = Arrays.stream(ONLY.toLowerCase(java.util.Locale.ROOT).split(","))
                 .map(String::trim).filter(n -> !n.isEmpty()).toList();
+        Set<String> suites;
+        try {
+            suites = TestSuites.asked(MODS);
+        } catch (final IllegalArgumentException wrongName) {
+            // A mistyped suite fails the run below instead of running a smaller battery that reads as passed.
+            LOGGER.error("[JSC-CT] {}", wrongName.getMessage());
+            suites = null;
+        }
+        final Set<String> askedSuites = suites;
         // The names are matched before the suite is split, so the tests asked for are shared out over the shards.
-        tests = ClientTestSuite.shard(SHARD, SHARDS, durations, t -> needles.isEmpty()
-                || needles.stream().anyMatch(t.name().toLowerCase(java.util.Locale.ROOT)::contains));
+        tests = askedSuites == null ? List.of() : ClientTestSuite.shard(SHARD, SHARDS, durations,
+                t -> TestSuites.runs(TestSuites.of(t.method().getDeclaringClass()), askedSuites)
+                        && (needles.isEmpty()
+                        || needles.stream().anyMatch(t.name().toLowerCase(java.util.Locale.ROOT)::contains)));
         LOGGER.info("[JSC-CT] shard {}/{} split {}, expected to take {} ticks", SHARD, SHARDS,
                 durations.isEmpty() ? "round-robin" : "by the ticks each test took last time",
                 ClientTestSuite.expectedTicks(tests, durations));
@@ -166,9 +181,10 @@ public final class ClientTestRunner {
          * used to leave the run with no tests at all and end on "ALL PASSED", which reads exactly like a suite that
          * ran and was fine. With more shards than tests asked for, a shard can be left with none, which is no mistake.
          */
-        if (!needles.isEmpty() && tests.isEmpty() && SHARD == 0) {
+        if (askedSuites == null
+                || ((!needles.isEmpty() || !askedSuites.isEmpty()) && tests.isEmpty() && SHARD == 0)) {
             this.askedForNothing = true;
-            LOGGER.error("[JSC-CT] no test is named like \"{}\"", ONLY);
+            LOGGER.error("[JSC-CT] no test is in the suites \"{}\" and named like \"{}\"", MODS, ONLY);
         }
         LOGGER.info("[JSC-CT] shard {}/{} runs {} tests", SHARD, SHARDS, tests.size());
         deleteOldWorld(mc);

@@ -9,9 +9,9 @@ package dev.jstech.tests;
 
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.connect.IJoinRule;
-import dev.jstech.tests.clienttest.TestClientParts;
 import dev.jstech.tests.clienttest.TestGuideClient;
 import dev.jstech.tests.clienttest.TestHud;
+import dev.jstech.tests.clienttest.computers.TestClientParts;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
