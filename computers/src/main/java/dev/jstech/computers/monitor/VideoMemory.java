@@ -12,7 +12,6 @@ import dev.jstech.computers.block.MonitorPanel;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
-import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.os.GraphicsPrograms;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
@@ -83,7 +82,7 @@ public final class VideoMemory {
      * controller's graphics had.
      */
     public static long totalKb(final ComputerBuild build, final int ramMb) {
-        final long console = build.motherboard().formFactor() == FormFactor.EEB
+        final long console = build.motherboard().hasOwnVideo()
                 ? VramLedger.monitorKbPerBlock(build.motherboard().era(), true) : 0L;
         if (shares(build)) {
             return console + Math.min(ramMb / 4, SHARED_MOST_MB) * VramLedger.KB_PER_MB;

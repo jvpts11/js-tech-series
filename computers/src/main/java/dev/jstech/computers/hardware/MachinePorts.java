@@ -51,7 +51,7 @@ public final class MachinePorts {
      * board's own output when its processor carries graphics on its die, which drives a screen without a card.
      */
     public static int videoOutputs(final ComputerBuild build) {
-        int outputs = build.motherboard().formFactor() == FormFactor.EEB ? 1 : 0;
+        int outputs = build.motherboard().hasOwnVideo() ? 1 : 0;
         for (final GpuSpec gpu : build.gpus()) {
             outputs += videoOutputs(gpu.era());
         }

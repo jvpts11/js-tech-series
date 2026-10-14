@@ -11,7 +11,6 @@ import dev.jstech.computers.block.DataLinkNames;
 import dev.jstech.computers.blockentity.INamedDevice;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
-import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.item.ClusterInterfaceCardItem;
 import dev.jstech.computers.item.CpuItem;
@@ -121,7 +120,7 @@ public final class DeviceMaps {
                                                    final Linked linked) {
         final List<DeviceMap.VideoCard> out = new ArrayList<>();
         final Deque<Long> monitors = linked.ofKind(PortKind.VIDEO);
-        if (build.motherboard().formFactor() == FormFactor.EEB) {
+        if (build.motherboard().hasOwnVideo()) {
             out.add(new DeviceMap.VideoCard(DeviceMap.boardConsole(), outputs(1, monitors, linked)));
         }
         for (final CpuSpec cpu : build.cpus()) {

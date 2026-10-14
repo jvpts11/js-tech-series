@@ -36,6 +36,11 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
     /* A board of two buses: the older bus its slots also take. */
     private static final TextKey OLDER_BUS =
             TextKey.of("jsc.item.motherboard.older_bus", "Its slots take %s cards too");
+    /* Whether a screen can be plugged into the board itself, which decides whether a card slot goes to graphics. */
+    private static final TextKey OWN_VIDEO =
+            TextKey.of("jsc.item.motherboard.own_video", "Has a screen output of its own, for its console");
+    private static final TextKey NO_VIDEO = TextKey.of("jsc.item.motherboard.no_video",
+            "No screen output of its own: a screen needs a graphics card, or a processor with graphics");
 
     public MotherboardItem(final Properties properties, final MotherboardSpec spec) {
         super(properties, spec);
@@ -64,6 +69,7 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
         if (spec.olderBus() != null) {
             tooltip.add(GameText.component(OLDER_BUS.with(spec.olderBus().label())).withStyle(ChatFormatting.GRAY));
         }
+        tooltip.add(GameText.component(spec.hasOwnVideo() ? OWN_VIDEO : NO_VIDEO).withStyle(ChatFormatting.GRAY));
         if (spec.hasOnBoardAudio()) {
             tooltip.add(GameText.component(SoundHardwareTexts.ON_BOARD_AUDIO).withStyle(ChatFormatting.GRAY));
         }

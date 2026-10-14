@@ -52,6 +52,14 @@
           {
             "words": "jsc.guide.motherboards.table1_4_2"
           }
+        ],
+        [
+          {
+            "literal": "Has a screen output of its own, for its console"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_5_2"
+          }
         ]
       ]
     },
@@ -177,6 +185,10 @@
         {
           "fix": "jsc.guide.motherboards.fix2",
           "problem": "jsc.guide.motherboards.problem2"
+        },
+        {
+          "fix": "jsc.guide.motherboards.fix3",
+          "problem": "jsc.guide.motherboards.problem3"
         }
       ]
     },

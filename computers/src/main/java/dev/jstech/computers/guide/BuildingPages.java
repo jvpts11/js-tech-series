@@ -394,7 +394,7 @@ final class BuildingPages {
                         + " case takes it.")
                 .paragraph("Hover a board and its tooltip tells you the rest. It names the board's form factor, its"
                         + " socket, its memory slots and the kinds of memory it takes, its expansion slots and their"
-                        + " bus, whether it has sound of its own, and its era.")
+                        + " bus, whether it has sound of its own, whether it drives a screen by itself, and its era.")
                 .define("Form factor", "The size and mounting standard of a board. It decides which cases take the"
                         + " board.")
                 .table("The lines of the tooltip", "Line", "What it tells you")
@@ -407,6 +407,11 @@ final class BuildingPages {
                         GuideCell.words("Boards from the Transition on have sound of their own."))
                 .row(GuideCell.code("Seats parts of its own era only"),
                         GuideCell.words("The board takes parts of its own era only."))
+                .row(GuideCell.code("Has a screen output of its own, for its console"),
+                        GuideCell.words("A server board drives a monitor by itself, so a server built on it needs no"
+                                + " graphics card and keeps its expansion slots for other cards. Every other board"
+                                + " says it has none: a monitor on it needs a graphics card, or a processor with"
+                                + " graphics."))
                 .paragraph("Each computer takes only some boards. The table shows which ones, and the board's era must"
                         + " match the computer's era too.")
                 .table("The boards each computer takes", "Computer", "Era", "Boards it takes")
@@ -435,7 +440,13 @@ final class BuildingPages {
                 .ifSomethingGoesWrong("It does not go into the case.",
                         "The case takes only some form factors, and only boards of its own era. Check the table above.",
                         "A part sits in the window but does nothing.",
-                        "The board does not offer that slot. Use a board with more slots of that kind.")
+                        "The board does not offer that slot. Use a board with more slots of that kind.",
+                        "A card does not go into a server.",
+                        "The window shows only the expansion slots the board and the server's case wire, and in most"
+                                + " eras a storage server has one. If a graphics card sits in it, the card has nowhere"
+                                + " to go."
+                                + " Build the server on a server board, which has a screen output of its own, and"
+                                + " the slot is free for the card.")
                 .seeAlso("jsc:eras", "jsc:processors", "jsc:memory")
                 .register();
     }

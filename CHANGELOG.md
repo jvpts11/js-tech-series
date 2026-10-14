@@ -9,6 +9,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 
 ## [Unreleased]
 
+### Changed
+- (Computers) Hardware: A motherboard's tooltip says whether it drives a screen by itself: a server board has a screen
+  output of its own, for its console, and every other board needs a graphics card, or a processor with graphics, for
+  a monitor. The manual's page on motherboards says so too, and what to do when a card will not go into a server.
+
 ### Fixed
 - (Computers) Programs: A server in a rack runs Σ# programs as any computer does, each server its own: `sigma run`
   at its prompt starts one there, where it said the machine could not run programs, and a script runs on by itself,

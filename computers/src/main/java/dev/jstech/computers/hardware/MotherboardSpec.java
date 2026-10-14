@@ -73,6 +73,15 @@ public record MotherboardSpec(FormFactor formFactor,
         return era.isAtLeast(HardwareEra.TRANSITION);
     }
 
+    /**
+     * Whether the board drives a screen by itself: a server board carries a management controller with a plain screen
+     * output for its console. Any other board shows a picture only through a graphics card, or through a processor
+     * with graphics on its die.
+     */
+    public boolean hasOwnVideo() {
+        return formFactor == FormFactor.EEB;
+    }
+
     /** Whether {@code card} goes in one of the board's slots: of the board's own bus, or of the older one beside it. */
     public boolean takes(final IExpansionCardSpec card) {
         return card.fits(pcieGeneration) || olderBus != null && card.fits(olderBus);
