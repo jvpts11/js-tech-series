@@ -94,7 +94,7 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
 
 | Group | Machine | Size | What it does |
 | --- | --- | --- | --- |
-| Ore and metals | Crusher | 3x3x3 | ore into crushed ore and its byproducts |
+| Ore and metals | Crusher | 3x3x3 | ore into crushed ore and its byproducts; a toothed double-roll crusher (J's Industrial's Macerator is a jaw crusher) |
 | | Grinder | 2x2x2 | ingots, crystals and glass into dust |
 | | Induction Furnace | 3x3x3 | dusts into ingots and alloys; sand and coke into metallurgical silicon; coke and calcite into calcium carbide |
 | | Electrolytic Cell | 3x2x2 | hydrogen and oxygen from water, chlorine from salt, refined copper, aluminium from alumina |

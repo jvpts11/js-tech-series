@@ -43,6 +43,16 @@ The framework gathers what the machines of Mekanism, Thermal and EnderIO do, in 
   **Sides**, **Redstone**, **Upgrades** and **Protection** (the fuse and the battery, [Energy](energy.md)). The screen
   also sets **who may use it** (private, team or public, [The platform](platform.md#teams-and-owners)) and shows
   **statistics**: items a minute, energy a second and efficiency, with a graph over time.
+- **The screen looks like the machine.** Below, the player's inventory, the game's own, untouched. Above it, the
+  machine's face: drawn to look like that machine, with its plates, meters, lamps, displays and sight glasses, and the
+  process seen through a window, and moving with what the machine does (a crusher's rolls turn and the ore breaks, a
+  needle swings, a lamp says RUN or WAIT). The face's common pieces come from the Core; the drawing of the face and
+  where its pieces sit are the mod's. The tabs look like the machine too: **Sides** shows the machine in 3D from the
+  front and from the rear, each face in its role's colour, with lit pushbuttons for the resource and a rotary selector
+  for the role; **Redstone** has rotary selectors for the mode and for what the comparator reads, and a row of fifteen
+  lamps for the signal coming in; **Upgrades** has cartridge bays and a bank of bars for the effects, around the
+  machine as built; **Protection** has the fuse holder, the battery bay and a key switch for who may use it. Its look
+  follows the player's style ([The interface](interface.md#styles)).
 
 ### Never jammed
 
@@ -62,6 +72,7 @@ The framework gathers what the machines of Mekanism, Thermal and EnderIO do, in 
 
 ### Control
 
+- **An ON/OFF switch** on the machine's face turns it off by hand, whatever the redstone says, and back on.
 - **Redstone**: a machine runs always, with a signal, without one, ignores redstone, or runs **one recipe per pulse**.
 - **The comparator reads what the player picks**: progress, how full the input or the output is, or the energy.
 - **Declared parameters**: a machine says which of its values can be read and set from outside. That is how J's

@@ -61,7 +61,32 @@ The toolkit gathers what owo-ui, LDLib and YACL do, in one place, for any mod.
 - **A flex and grid layout engine**: gaps, margins, smallest and largest sizes, growing; it fits the font, the GUI scale
   and the window. It stays testable: the overlap test runs on the layout worked out.
 - **Binding to data**: a component is bound to a synced value of the menu and follows it, with no hand-written packets.
-- **Style sheets** per mod and per theme, which a resource pack can replace, beside the palettes.
+
+### Styles
+
+Everything on a screen is drawn through a **style**, and the player picks it.
+
+- **No component has a look of its own**: the sprites it is cut from, its colours, the font, the spacing, the corners,
+  the shadows, the motion and the sound of a click all come from the style.
+- **The default style is the game's own**: the game's buttons, sliders, text fields, tabs and check boxes, the
+  tooltip's purple frame, the menus' blurred ground and the separators, cut as the game cuts them and in the game's
+  colours. It is drawn from the game's own sprites, so a resource pack that repaints the game's widgets repaints the
+  Core's too. A machine's screen keeps the game's inventory below the machine's face ([Machines](machines.md)).
+- **Styles that come with the Core**: J's Tech, the series' dark look; high contrast; styles for colour blindness; and
+  the era styles (scanlines on a Vintage screen, glass on an Advanced one).
+- **The player chooses**, under "This player" in the settings: one style for everything and, if they want, another
+  for a given mod, changed at once with a preview. A mod only sets the default of its own screens, and the server
+  imposes nothing. The game's style is the default everywhere, except on the screens of J's Computers' computing
+  blocks, which wear their era's style by default.
+- **Resource packs and add-ons** replace any style or add new ones: a style is a data file with its sprites, beside
+  the palettes.
+- **What a style does not change**: the drawing of a machine's face, which is its mod's art (a resource pack changes it
+  as textures), though the face's common pieces (meters, lamps, displays, switches) follow the style; and the inside of
+  a computer, whose look is the installed system's skin. That look belongs to the machine: everyone sees it the same on
+  the monitor in the world, and it is personalised from that system's own settings (wallpaper, accent colour, light or
+  dark theme), as on a real computer.
+- **Tested in every style**: the overlap and contrast tests run in every installed style, since a style can change the
+  spacing and the colours.
 
 ### For those who make screens
 
@@ -117,8 +142,8 @@ In the spirit of Iceberg:
 
 - **Every control reached by keyboard**, in a focus order, and by game controllers (Controlify).
 - **The game's narrator reads the components.**
-- **Text size apart from the GUI scale**, high-contrast palettes and palettes for colour blindness (contrast is already
-  tested), and a setting for **less motion**.
+- **Text size apart from the GUI scale**, the high-contrast style and the styles for colour blindness
+  ([Styles](#styles); contrast is already tested), and a setting for **less motion**.
 
 ### In the world and on the HUD
 
