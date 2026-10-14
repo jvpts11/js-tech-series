@@ -36,8 +36,8 @@ The rest of this page is J's Energy, the series' use of the kit.
 
 ### J's Energy
 
-The series' energy becomes **J's Energy**, measured in **real units**: joules for energy, watts for power, volts for the
-class of a line. A PC draws 300 W, an arc furnace tens of MW, a nuclear plant a GW.
+The series' energy becomes **J's Energy**, **JE** for short, measured in **real units**: joules for energy, watts for
+power, volts for the class of a line. A PC draws 300 W, an arc furnace tens of MW, a nuclear plant a GW.
 
 - It keeps today's rules: same tick, nothing held in cables, shares that add up exactly.
 - A cable carrying more than its ceiling **saturates without a sound**: the excess just doesn't pass.
@@ -93,7 +93,12 @@ It goes for every block with a port, generators and storage included, and only w
 
 - The **FE converters** are J's Core's blocks, with recipes of vanilla materials, so any mod alone can use them: one per
   class (from 100 kW at low voltage to 12 GW at ultra-high) and a **Configurable Energy Converter** whose class,
-  direction and limits the player sets.
+  direction and limits the player sets. Every converter works both ways, FE to JE or JE to FE, and takes a limit; a
+  fixed one's class and ceiling are the block's, and its limit stays under the ceiling.
+- **A converter's screen** is a converter cabinet's face ([Machines](machines.md)): the FE meter, the bridge seen
+  through a window (copper busbars, power modules, capacitors) with the energy running through it in the chosen
+  direction, red as FE and gold as JE, and the JE meter; the class keys (plates on a fixed converter), the limit on
+  thumbwheels and the direction selector.
 - **1 FE = 1 J** by default: 1 FE a tick is 20 W, so a real 10 kW machine draws 500 FE a tick, the size of other mods'
   machines. The rate is a server setting, never a player's: a converter that changed it would make energy from nothing.
 - A server setting lets J's Energy blocks **take and give FE directly**, with no converter, so the series speaks FE with

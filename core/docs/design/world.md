@@ -177,9 +177,19 @@ from the tick in batches, and sent to the players nearby for the overlays that s
 - **A map** of the chunks kept loaded, for players and operators.
 
 **The Space Persistor** is the series' chunk loader, a block of the Core's shared content, in a technological look (as
-Chicken Chunks' loader): the player sets on the block the area it keeps loaded and the rest, within the owner's number
-of chunks. Whether it costs energy, and how much, is a setting of the Core's. It serves any mod: a quarry far away, a
-station, a starship left in orbit.
+Chicken Chunks' loader). It serves any mod: a quarry far away, a station, a starship left in orbit.
+
+- **The area is the player's**, set on the block: a shape (a square, a circle, a line, or free) with its radius, and on
+  top of it chunks added or taken away with a click on the block's map. It reaches **as far as the player wants**: the
+  radius has no ceiling of its own and the map zooms out; the only limits are the owner's number of chunks and the
+  server's budget.
+- **Energy**: whether it costs energy, and how much, is a setting of the Core's, which can also **turn its energy use
+  off entirely**; then it has no port and no Protection tab.
+- **Its screen** has no inventory, since it holds no items: the window is the face, with a display showing the land
+  around from above in the game's map colours, chunk by chunk (the chunks it keeps outlined, another owner's hatched,
+  the chunk under the pointer named in a tooltip), and beside it the counts (its own, the owner's against their
+  number, the server's against its budget, the power), the shape keys, the radius, the ON/OFF switch and two lamps,
+  keeping and full.
 
 ### Generation that never waits
 
