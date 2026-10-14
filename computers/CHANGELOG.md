@@ -6,6 +6,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+### Fixed
+- Programs: A server in a rack runs Σ# programs as any computer does, each server its own: `sigma run`
+  at its prompt starts one there, where it said the machine could not run programs, and a script runs on by itself,
+  listed and ended by its number with `sigma ps` and `sigma stop`. What a server runs is kept on its Server item with
+  the rest of its run, so it is still running when the world comes back, and it ends when the server is switched off,
+  restarted or pulled out of its rack. A server's programs reach its drives, its network and the operations they ask
+  of it; Gateways, Redstone Interfaces, sound and windows are still a computer's alone.
+
 ## [0.5.0a] - 2026-10-13 - The Start Me Up Update
 
 Codename: Boron.

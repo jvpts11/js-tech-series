@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -31,6 +32,8 @@ final class RackTerminals {
     private final ServerRackBlockEntity rack;
     private final Viewers viewers;
     private final Map<Integer, TerminalFeed> feeds = new HashMap<>();
+    /** What each server's programs print in front of its terminal, sent to whoever is watching that server. */
+    private final Map<Integer, ProgramFeed> programFeeds = new HashMap<>();
 
     RackTerminals(final ServerRackBlockEntity rack) {
         this.rack = rack;
@@ -40,6 +43,16 @@ final class RackTerminals {
     /** One tick of the terminal of the server mounted at that row. */
     void tick(final ServerLevel level, final int row) {
         this.feeds.computeIfAbsent(row, at -> new TerminalFeed(new Unit(at))).tick(level);
+    }
+
+    /** The programs of the server at that row ran a tick: what the one in front of its terminal printed is sent. */
+    void programsRan(final ServerLevel level, final int row) {
+        this.programFeed(row).push(level);
+    }
+
+    /** The program in front of the terminal of the server at that row was ended from outside it, and is said so. */
+    void frontKilled(final ServerLevel level, final int row) {
+        this.programFeed(row).frontKilled(level);
     }
 
     void opened(final ServerPlayer viewer) {
@@ -55,6 +68,10 @@ final class RackTerminals {
         return this.rack.shownRow() == row ? this.viewers.at(level) : List.of();
     }
 
+    private ProgramFeed programFeed(final int row) {
+        return this.programFeeds.computeIfAbsent(row, at -> new ProgramFeed(new Unit(at)));
+    }
+
     /** The terminal of the server at one row, as its feed sees it. */
     private final class Unit implements IFedTerminal {
 
@@ -67,6 +84,12 @@ final class RackTerminals {
         @Override
         public ComputerConsoleState console() {
             return RackTerminals.this.rack.consoleOf(this.row);
+        }
+
+        @Override
+        public MachinePrograms programs() {
+            final ServerRackBlockEntity rack = RackTerminals.this.rack;
+            return rack.asUnit(this.row, rack::programs);
         }
 
         @Override

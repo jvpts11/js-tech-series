@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IHost;
@@ -19,6 +20,7 @@ import dev.jstech.computers.vm.program.ProgramMilestone;
 import dev.jstech.computers.vm.system.MemberId;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -39,7 +41,9 @@ public final class MachineServices implements IHost {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private final AbstractComputerBlockEntity machine;
+    private final IOsHost machine;
+    /** The same machine as a block, which is where it stands in the world. */
+    private final BlockEntity block;
 
     /**
      * The world the shell and the services over it were made for; null until one is first asked for, and while the
@@ -99,38 +103,43 @@ public final class MachineServices implements IHost {
     @Nullable
     private CraftingService crafting;
 
-    public MachineServices(final AbstractComputerBlockEntity machine) {
+    /**
+     * The services of {@code machine}: a computer, or one server in a rack. A rack answers for whichever of its servers
+     * is being addressed, so each server keeps services of its own, and its programs are run with the rack addressing
+     * that server.
+     */
+    public <M extends BlockEntity & IOsHost> MachineServices(final M machine) {
         this.machine = machine;
+        this.block = machine;
     }
 
     /* What a program did, as the advancement it earns whoever works this machine. */
     @Override
     public void reached(final ProgramMilestone milestone) {
         switch (milestone) {
-            case STACK_OVERFLOW -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_HALTED, JscEvents.HALT_STACK);
-            case DIVIDE_BY_ZERO ->
-                    JscEvents.awardOperator(this.machine, JscEvents.SIGMA_HALTED, JscEvents.HALT_DIVIDE);
-            case THREAD_STARTED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_THREAD);
-            case WINDOW_OPENED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_WINDOW);
-            case WATCH_FIRED -> JscEvents.awardOperator(this.machine, JscEvents.SIGMA_WATCH);
+            case STACK_OVERFLOW -> JscEvents.awardOperator(this.block, JscEvents.SIGMA_HALTED, JscEvents.HALT_STACK);
+            case DIVIDE_BY_ZERO -> JscEvents.awardOperator(this.block, JscEvents.SIGMA_HALTED, JscEvents.HALT_DIVIDE);
+            case THREAD_STARTED -> JscEvents.awardOperator(this.block, JscEvents.SIGMA_THREAD);
+            case WINDOW_OPENED -> JscEvents.awardOperator(this.block, JscEvents.SIGMA_WINDOW);
+            case WATCH_FIRED -> JscEvents.awardOperator(this.block, JscEvents.SIGMA_WATCH);
         }
     }
 
     @Override
     public long tick() {
-        final Level level = this.machine.getLevel();
+        final Level level = this.block.getLevel();
         return level == null ? 0 : level.getGameTime();
     }
 
     @Override
     public long dayTime() {
-        final Level level = this.machine.getLevel();
+        final Level level = this.block.getLevel();
         return level == null ? 0 : level.getDayTime() % DAY;
     }
 
     @Override
     public long day() {
-        final Level level = this.machine.getLevel();
+        final Level level = this.block.getLevel();
         return level == null ? 0 : level.getDayTime() / DAY;
     }
 
@@ -144,18 +153,21 @@ public final class MachineServices implements IHost {
         return binding == null ? null : binding.on(this);
     }
 
-    /** Whether the machine boots to a desktop; one in no world, or no person could sit at, has none to open on. */
+    /**
+     * Whether the machine boots to a desktop; one in no world, or no person could sit at, has none to open on. A server
+     * in a rack has none for its programs either: its rack shows its desktop, but sends no program's windows to it.
+     */
     @Override
     public boolean hasDesktop() {
         final ComputerInfoService info = this.computer();
-        return info != null && info.hasDesktop();
+        return this.block instanceof AbstractComputerBlockEntity && info != null && info.hasDesktop();
     }
 
     /** Whether the machine boots to its terminal alone, and so draws a program's windows there in text. */
     @Override
     public boolean textMode() {
         final ComputerInfoService info = this.computer();
-        return info != null && info.textMode();
+        return this.block instanceof AbstractComputerBlockEntity && info != null && info.textMode();
     }
 
     /** Whether this server's settings let a program use components that reach outside the game. */
@@ -174,12 +186,15 @@ public final class MachineServices implements IHost {
     @Override
     public void fault(final String process, final int line, final RuntimeException cause) {
         LOGGER.error("Σ# program '{}' on the machine at {} failed inside the runtime at instruction {}",
-                process, this.machine.getBlockPos(), line, cause);
+                process, this.block.getBlockPos(), line, cause);
     }
 
     @Override
     public void programEnded(final int program) {
-        this.machine.programs().ended(program);
+        final MachinePrograms programs = this.machine.programs();
+        if (programs != null) {
+            programs.ended(program);
+        }
     }
 
     /**
@@ -376,17 +391,17 @@ public final class MachineServices implements IHost {
 
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
-        final Level level = this.machine.getLevel();
+        final Level level = this.block.getLevel();
         if (level == this.shellLevel) {
             return;
         }
         this.shellLevel = level;
-        if (this.machine instanceof IComputerTerminalHost terminal && level instanceof ServerLevel server) {
+        if (this.block instanceof IComputerTerminalHost terminal && level instanceof ServerLevel server) {
             this.shell = new ServerCliComputer(terminal, server);
             // The other machines come first: the drives follow a network path through them.
             this.remotes = new RemoteComputerService(terminal, server);
-            this.files = new FileService(this.machine, server, this.remotes.paths(), this.shell::currentLocation);
-            this.computer = new ComputerInfoService(this.machine, this.shell);
+            this.files = new FileService(this.block, server, this.remotes.paths(), this.shell::currentLocation);
+            this.computer = new ComputerInfoService(this.block, this.machine, this.shell);
             // Operations first: the network hands their rows back when a query asks for them.
             this.operations = new OperationsService(terminal, server, this.shell);
             this.network = new NetworkReadService(terminal, server, this.shell, this.operations);
@@ -396,12 +411,23 @@ public final class MachineServices implements IHost {
             this.packages = new PackageService(terminal, server, this.files, this.iql);
             this.installs = new InstallService(terminal, server, this.packages);
             this.config = new MachineConfigService(terminal, server, this.files);
-            this.programs = new ProgramService(this.machine, terminal, server, this.files, this.remotes);
-            this.gateways = new GatewayBridgeService(this.machine, server);
-            this.sound = new SoundService(this.machine, server);
+            this.programs = new ProgramService(this.block, this.machine, terminal, server, this.files, this.remotes);
             this.buses = new BusService(terminal, server);
-            this.redstone = new RedstoneService(this.machine, server);
             this.crafting = new CraftingService(terminal, server);
+            /*
+             * The Gateways, the Redstone Interfaces and the sound a program plays are served for a computer only. A
+             * server in a rack is served none of them, so a call on one stops its program, as it does on any machine
+             * that cannot reach what was called.
+             */
+            if (this.block instanceof AbstractComputerBlockEntity computer) {
+                this.gateways = new GatewayBridgeService(computer, server);
+                this.sound = new SoundService(computer, server);
+                this.redstone = new RedstoneService(computer, server);
+            } else {
+                this.gateways = null;
+                this.sound = null;
+                this.redstone = null;
+            }
         } else {
             this.shell = null;
             this.files = null;

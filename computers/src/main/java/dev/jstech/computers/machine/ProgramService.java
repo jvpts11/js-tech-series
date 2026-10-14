@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -24,6 +25,7 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,7 +39,9 @@ import org.jetbrains.annotations.Nullable;
 @TextHolder
 public final class ProgramService {
 
-    private final AbstractComputerBlockEntity machine;
+    private final IOsHost machine;
+    /** The same machine as a block, which is where it stands in the world. */
+    private final BlockEntity block;
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
     /** The machine's drives, which is where a program is read from before it is started. */
@@ -61,9 +65,21 @@ public final class ProgramService {
     /** How wide a prompt is taken to be for a line run there. */
     private static final int SHELL_WIDTH = 80;
 
-    public ProgramService(final AbstractComputerBlockEntity machine, final IComputerTerminalHost terminal,
-                          final ServerLevel level, final FileService files, final RemoteComputerService remotes) {
+    /**
+     * The programs of {@code machine}: a computer, or a rack, which answers for whichever of its servers is being
+     * addressed when it is asked.
+     */
+    public <M extends BlockEntity & IOsHost> ProgramService(final M machine, final IComputerTerminalHost terminal,
+                                                            final ServerLevel level, final FileService files,
+                                                            final RemoteComputerService remotes) {
+        this(machine, machine, terminal, level, files, remotes);
+    }
+
+    /** The same, for a caller that holds the machine as its block and as its system apart. */
+    ProgramService(final BlockEntity block, final IOsHost machine, final IComputerTerminalHost terminal,
+                   final ServerLevel level, final FileService files, final RemoteComputerService remotes) {
         this.machine = machine;
+        this.block = block;
         this.terminal = terminal;
         this.level = level;
         this.files = files;
@@ -76,7 +92,8 @@ public final class ProgramService {
      */
     public ProgramLauncher.Launch start(final String path, final List<String> arguments, final IProgramParent parent,
                                         final ProgramPriority priority) {
-        return ProgramLauncher.launch(this.machine, path, this.files::readFile, arguments, parent, priority, 0);
+        return ProgramLauncher.launch(this.block, this.machine, path, this.files::readFile, arguments, parent,
+                priority, 0);
     }
 
     /**
@@ -110,8 +127,9 @@ public final class ProgramService {
 
     /** Stops the program under that number; false when there was none to stop. */
     public boolean kill(final int id, final String host) {
-        final AbstractComputerBlockEntity where = this.machineFor(host);
-        final boolean stopped = where != null && where.programs().stop(id);
+        final IOsHost where = this.machineFor(host);
+        final MachinePrograms programs = where == null ? null : where.programs();
+        final boolean stopped = programs != null && programs.stop(id);
         if (stopped) {
             where.setChanged();
         }
@@ -120,8 +138,9 @@ public final class ProgramService {
 
     /** Sends a line from one program on the machine to another; false when that one has no room for it or is gone. */
     public boolean send(final int from, final int to, final String text) {
-        final long tick = this.machine.getLevel() == null ? 0L : this.machine.getLevel().getGameTime();
-        return this.machine.programs().send(from, to, text, tick);
+        final MachinePrograms programs = this.machine.programs();
+        final long tick = this.block.getLevel() == null ? 0L : this.block.getLevel().getGameTime();
+        return programs != null && programs.send(from, to, text, tick);
     }
 
     /**
@@ -132,7 +151,8 @@ public final class ProgramService {
      */
     @Nullable
     public MachinePrograms foreground() {
-        return this.machine.programs().held() != 0 ? this.machine.programs() : null;
+        final MachinePrograms programs = this.machine.programs();
+        return programs != null && programs.held() != 0 ? programs : null;
     }
 
     /**
@@ -142,8 +162,8 @@ public final class ProgramService {
      * its until it returns. One that is a service does not, and says what it started instead.
      */
     public ICliComputer.OpResult startAtTerminal(final String path, final int heapMb, final List<String> arguments) {
-        final ProgramLauncher.Launch launch = ProgramLauncher.launch(this.machine, path, this.files::readFile,
-                arguments, IProgramParent.NONE, ProgramPriority.MEDIUM, heapMb);
+        final ProgramLauncher.Launch launch = ProgramLauncher.launch(this.block, this.machine, path,
+                this.files::readFile, arguments, IProgramParent.NONE, ProgramPriority.MEDIUM, heapMb);
         if (!launch.ok()) {
             /*
              * Named by the file itself rather than by any one caller's verb: the prompt reaches this from
@@ -156,9 +176,11 @@ public final class ProgramService {
                 case UNREADABLE, NOT_STARTED -> launch.said();
             });
         }
-        final ProgramEntry<IMachineRuntime> one = this.machine.programs().byId(launch.id());
+        // A program that started is on a machine that keeps programs, so the list it went into is there.
+        final MachinePrograms programs = this.machine.programs();
+        final ProgramEntry<IMachineRuntime> one = programs == null ? null : programs.byId(launch.id());
         if (one != null && !one.process().isService()) {
-            this.machine.programs().hold(launch.id());
+            programs.hold(launch.id());
             return ICliComputer.OpResult.ok("");
         }
         return ICliComputer.OpResult.ok(launch.said());
@@ -166,7 +188,8 @@ public final class ProgramService {
 
     /** Stops the program under that number, in the words the prompt answers with. */
     public ICliComputer.OpResult stop(final int id) {
-        if (!this.machine.programs().stop(id)) {
+        final MachinePrograms programs = this.machine.programs();
+        if (programs == null || !programs.stop(id)) {
             return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(Text.literal("sigma"),
                     NOTHING_RUNNING_AS.with(id)));
         }
@@ -176,8 +199,12 @@ public final class ProgramService {
 
     /** Every program running on this machine, as a prompt lists them. */
     public List<ICliComputer.SigmaProcess> processes() {
+        final MachinePrograms programs = this.machine.programs();
+        if (programs == null) {
+            return List.of();
+        }
         final List<ICliComputer.SigmaProcess> running = new ArrayList<>();
-        for (final ProgramView one : this.machine.programs().view()) {
+        for (final ProgramView one : programs.view()) {
             running.add(new ICliComputer.SigmaProcess(one.id(), one.name(), one.state(), one.heldBytes(),
                     one.heapBytes(), one.file()));
         }
@@ -196,16 +223,20 @@ public final class ProgramService {
 
     @Nullable
     private ProgramEntry<IMachineRuntime> find(final int id, final String host) {
-        final AbstractComputerBlockEntity where = this.machineFor(host);
-        return where == null ? null : where.programs().byId(id);
+        final IOsHost where = this.machineFor(host);
+        final MachinePrograms programs = where == null ? null : where.programs();
+        return programs == null ? null : programs.byId(id);
     }
 
     /**
      * The machine a program's number is on: this one when no host is named, or the one of the network the name picks
      * out. Null when that one is not on the network any more, or cannot run programs at all.
+     *
+     * <p>A server in a rack is asked after only by its own programs: from another machine, its rack would answer for
+     * whichever server its switch is turned to, which need not be the one named.
      */
     @Nullable
-    private AbstractComputerBlockEntity machineFor(final String host) {
+    private IOsHost machineFor(final String host) {
         if (host == null || host.isEmpty()) {
             return this.machine;
         }

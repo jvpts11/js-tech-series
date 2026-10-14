@@ -152,6 +152,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final ClientReplication replication = new ClientReplication(this);
     /** What moves the tool in front of its terminal along, and sends what that tool prints. */
     private final TerminalFeed terminalFeed = TerminalFeed.of(this);
+    /** What sends whoever is at its terminal what the program in front of it prints. */
+    private final ProgramFeed programFeed = new ProgramFeed(IFedTerminal.of(this));
     /** What it sounds like as a machine: its power button, its start-up, its hard drive. */
     private final ComputerSounds sounds = new ComputerSounds(this);
     /** What its system's sound plays through, and where it comes out. */
@@ -914,7 +916,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
                             final boolean frontKilled) {
         replication.kernelSays(level, lines);
         if (frontKilled) {
-            replication.frontKilled(level);
+            programFeed.frontKilled(level);
         }
         ClientReplication.windowsEnded(consoleViewers(level), worldPosition, windows);
     }
@@ -1630,11 +1632,13 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /** The Σ# programs this machine is running. */
+    @Override
     public MachinePrograms programs() {
         return host.programs();
     }
 
     /** What the Σ# programs on this machine reach through it. */
+    @Override
     public MachineServices services() {
         return host.services();
     }
@@ -1655,12 +1659,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return host.networkStock(item);
     }
 
-    /** The prompt this machine's shell would show, for giving it back when a program lets go. */
-    String shellPrompt() {
-        return host.shellPrompt();
-    }
-
-    /** The same prompt a run at a time, in the colours the machine's shell gives it. */
+    /** The prompt this machine's shell would show, a run at a time, in the colours the shell gives it. */
     CliLine shellPromptLine() {
         return host.shellPromptLine();
     }
@@ -1699,7 +1698,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             }
             return;
         }
-        replication.pushOutput(server);
+        programFeed.push(server);
         replication.pushWindows(server);
         host.hearGateways();
     }

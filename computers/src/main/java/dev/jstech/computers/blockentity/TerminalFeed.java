@@ -16,8 +16,6 @@ import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.TerminalForeground;
 import dev.jstech.computers.program.cli.CliLine;
-import dev.jstech.computers.program.tty.ITtyProcess;
-import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,32 +43,7 @@ final class TerminalFeed {
 
     /** The feed of a computer, which has the one terminal. */
     static TerminalFeed of(final AbstractComputerBlockEntity machine) {
-        return new TerminalFeed(new IFedTerminal() {
-            @Override
-            public ComputerConsoleState console() {
-                return machine.console();
-            }
-
-            @Override
-            public List<ServerPlayer> watching(final ServerLevel level) {
-                return machine.consoleViewers(level);
-            }
-
-            @Override
-            public CliLine prompt() {
-                return machine.shellPromptLine();
-            }
-
-            @Override
-            public ITtyProcess remake(final ServerLevel level, final String line) {
-                return machine instanceof IComputerTerminalHost host ? TerminalTools.remake(host, level, line) : null;
-            }
-
-            @Override
-            public void changed() {
-                machine.setChanged();
-            }
-        });
+        return new TerminalFeed(IFedTerminal.of(machine));
     }
 
     void tick(final ServerLevel level) {

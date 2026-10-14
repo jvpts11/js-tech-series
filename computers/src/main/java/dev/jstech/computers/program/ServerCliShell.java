@@ -462,7 +462,11 @@ abstract class ServerCliShell implements ICliComputer {
      */
     @Nullable
     protected ProgramService sigma() {
-        return hostBlock instanceof AbstractComputerBlockEntity computer
-                ? new ProgramService(computer, host, level, files(), remotes()) : null;
+        if (hostBlock instanceof AbstractComputerBlockEntity computer) {
+            return new ProgramService(computer, host, level, files(), remotes());
+        }
+        // A server in a rack runs programs as a computer does, each server its own; the rack answers for this one.
+        return hostBlock instanceof ServerRackBlockEntity rack && rack.programs() != null
+                ? new ProgramService(rack, host, level, files(), remotes()) : null;
     }
 }

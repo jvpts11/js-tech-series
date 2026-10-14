@@ -24,6 +24,8 @@ import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
@@ -397,8 +399,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             if (!simulate) {
                 /*
                  * The software state lives with the item: write the running console back onto the
-                 * stack before it leaves, so the machine's history travels between racks with it.
+                 * stack before it leaves, so the machine's history travels between racks with it. A
+                 * server pulled out loses its power, so the programs it was running end first.
                  */
+                final UnitState leaving = unitStates.get(slot);
+                if (leaving != null) {
+                    leaving.host.programs().stopAll();
+                }
                 flushConsole(slot);
             }
             return super.extractItem(slot, amount, simulate);
@@ -479,8 +486,17 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         /** The recipe drafts the Pattern Studio edits on this machine; ride on the Server item like the windows. */
         final PatternWorkbench studio =
                 new PatternWorkbench();
+        /*
+         * The Σ# programs this machine runs and what they reach through it, as on any computer; run with the rack
+         * addressing this machine, and saved on the Server item with the rest of its run.
+         */
+        final ProgramHost host;
+        /** Its programs as the Server item saved them, read back once the machine is in the rack's list. */
+        @Nullable
+        CompoundTag programsMemo;
 
-        UnitState() {
+        UnitState(final ProgramHost host) {
+            this.host = host;
             // A machine that has just been mounted has never tested itself, so it owes one before anything else.
             phases.setNeedsPost(true);
         }
@@ -517,8 +533,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     }
 
     private UnitState unitState(final int slot) {
-        return unitStates.computeIfAbsent(slot, s -> {
-            final UnitState state = new UnitState();
+        final UnitState unit = unitStates.computeIfAbsent(slot, s -> {
+            final UnitState state = new UnitState(new ProgramHost(this));
             final ItemStack stack = servers.getStackInSlot(s);
             final CompoundTag saved =
                     stack.get(ComputingComponents.SERVER_CONSOLE.get());
@@ -555,9 +571,23 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 if (saved.contains("Studio") && getLevel() != null) {
                     state.studio.load(saved.getCompound("Studio"), getLevel().registryAccess());
                 }
+                state.programsMemo = saved;
             }
             return state;
         });
+        /*
+         * Its programs are read back only now that the machine is in the list: a program is bound to what it reaches
+         * through the rack as it is read, and the rack finds that through this machine's state.
+         */
+        if (unit.programsMemo != null) {
+            final CompoundTag saved = unit.programsMemo;
+            unit.programsMemo = null;
+            asUnit(slot, () -> {
+                unit.host.load(saved);
+                return null;
+            });
+        }
+        return unit;
     }
 
     @Override
@@ -708,6 +738,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         ServiceStateNbt.saveMessenger(tag, state.messenger);
         ServiceStateNbt.saveKnot(tag, state.knot);
         state.kernel.save(tag);
+        state.host.save(tag);
         if (getLevel() != null) {
             final CompoundTag studioTag = new CompoundTag();
             state.studio.save(studioTag, getLevel().registryAccess());
@@ -724,7 +755,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     /*
      * A run of the machine at {@code slot} is over, by a restart, a power cut or a crash: its windows close, it leaves
-     * the workspace it was on, a finished installer stops waiting for it, and its kernel forgets what it ended.
+     * the workspace it was on, a finished installer stops waiting for it, its kernel forgets what it ended, and every
+     * program it was running ends, as on any machine.
      */
     private void endRun(final int slot) {
         final UnitState state = unitState(slot);
@@ -732,6 +764,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         state.desktopWorkspace = 0;
         state.pendingInstallSlot = IOsHost.NO_PENDING_INSTALL;
         state.kernel.runEnded();
+        state.host.programs().stopAll();
     }
 
     /*
@@ -1205,6 +1238,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             final ItemStack stack = servers.getStackInSlot(i);
             if (!(stack.getItem() instanceof ServerItem)) {
                 continue;
+            }
+            /*
+             * Its programs run while it does, each server's on its own processors; one that has stopped tells
+             * them so, and they end. What the one in front of its terminal printed goes to whoever watches it.
+             */
+            final ProgramHost programs = unitState(i).host;
+            if (asUnit(i, programs::tick)) {
+                terminals.programsRan(level, i);
             }
             // A Server is a node only when it is a valid, powered computer whose bay switch is on.
             final ComputerBuild build = buildAt(i);
@@ -2004,6 +2045,22 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return slot < 0 ? List.of() : unitState(slot).kernel.memoryLog();
     }
 
+    /** The Σ# programs of the machine the monitor shows, or of the one a caller is addressing; null with none. */
+    @Override
+    @Nullable
+    public MachinePrograms programs() {
+        final int slot = soleComputerSlot();
+        return consoleOf(slot) == null ? null : unitState(slot).host.programs();
+    }
+
+    /** What the programs of that machine reach through it, with the rack addressing it while they run. */
+    @Override
+    @Nullable
+    public MachineServices services() {
+        final int slot = soleComputerSlot();
+        return consoleOf(slot) == null ? null : unitState(slot).host.services();
+    }
+
     @Override
     public boolean serviceEnded(final ResourceLocation service) {
         final int slot = soleComputerSlot();
@@ -2075,6 +2132,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         final List<ServerPlayer> watching = terminals.watching(level, slot);
         ClientReplication.kernelSays(watching, ClientReplication.keyboardOf(unitState(slot).console), lines);
+        if (frontKilled) {
+            terminals.frontKilled(level, slot);
+        }
         ClientReplication.windowsEnded(watching, worldPosition, windows);
     }
 

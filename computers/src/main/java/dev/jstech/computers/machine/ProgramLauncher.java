@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
@@ -15,6 +15,7 @@ import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * The one place a program is started from a file, whoever asks: the prompt, a program starting another, a program on
@@ -68,9 +69,20 @@ public final class ProgramLauncher {
      * @param reader how the caller reads a file: from the machine's own disks, or from another machine's
      * @param heapMb the memory asked for, in megabytes; zero or less takes the default
      */
-    public static Launch launch(final AbstractComputerBlockEntity machine, final String path,
-                                final Function<String, ICliComputer.FsResult> reader, final List<String> args,
-                                final IProgramParent parent, final ProgramPriority priority, final int heapMb) {
+    public static <M extends BlockEntity & IOsHost> Launch launch(final M machine, final String path,
+                                                                  final Function<String, ICliComputer.FsResult> reader,
+                                                                  final List<String> args, final IProgramParent parent,
+                                                                  final ProgramPriority priority, final int heapMb) {
+        return launch(machine, machine, path, reader, args, parent, priority, heapMb);
+    }
+
+    /**
+     * The same, for a caller that holds the machine as its block and as its system apart: the same machine either way.
+     * A server in a rack is reached through its rack, which answers for whichever server is being addressed.
+     */
+    static Launch launch(final BlockEntity block, final IOsHost machine, final String path,
+                         final Function<String, ICliComputer.FsResult> reader, final List<String> args,
+                         final IProgramParent parent, final ProgramPriority priority, final int heapMb) {
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
         final int dot = path.lastIndexOf('.');
@@ -87,11 +99,15 @@ public final class ProgramLauncher {
          * A system that goes down rather than refuse a program does so here, and a Unix kernel ends what holds the most
          * until the program fits; the earliest systems refuse it.
          */
+        final MachinePrograms programs = machine.programs();
+        if (programs == null) {
+            return new Launch(0, name, Refusal.NO_RUNNER, MachinePrograms.NOTHING_RUNS.with(name, extension), 0, 0);
+        }
         if (!machine.ramLedger().fits(room) && !machine.memoryShort(name, room)) {
             return new Launch(0, name, Refusal.NO_MEMORY, Text.EMPTY, room, machine.ramLedger().freeMb());
         }
         final MachinePrograms.Started started =
-                machine.programs().start(name, file.message().english(), room, machine, args, parent, priority);
+                programs.start(name, file.message().english(), room, block, args, parent, priority);
         if (!started.ok()) {
             return new Launch(0, name, Refusal.NOT_STARTED, started.said(), room, 0);
         }

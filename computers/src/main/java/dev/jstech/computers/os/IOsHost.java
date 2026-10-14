@@ -12,6 +12,7 @@ import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.os.boot.IBootingMachine;
 import dev.jstech.computers.os.crash.CrashCause;
@@ -335,6 +336,15 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      */
     @Nullable
     default MachinePrograms programs() {
+        return null;
+    }
+
+    /**
+     * What the programs on this machine reach through it, which is the host they run on; null on a host that runs
+     * none, where a program is given a clock that never moves and nothing else.
+     */
+    @Nullable
+    default MachineServices services() {
         return null;
     }
 

@@ -15,6 +15,7 @@ import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.machine.ServerTickDeadline;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.SshTerminal;
@@ -24,6 +25,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.function.Predicate;
 import java.util.function.ToLongFunction;
@@ -32,11 +34,14 @@ import java.util.function.ToLongFunction;
  * The programs a machine is running and what they reach through it.
  *
  * <p>They live with the machine rather than with its system disk: they are what it is doing, not what it
- * has installed.
+ * has installed. A computer keeps one; a rack keeps one for each server in it, and runs it with the rack
+ * addressing that server, so every server runs its own programs as a computer does.
  */
 final class ProgramHost {
 
-    private final AbstractComputerBlockEntity machine;
+    private final IOsHost machine;
+    /** The same machine as a block, which is where it stands in the world. */
+    private final BlockEntity block;
     private final MachinePrograms programs;
     /** What the programs on this machine reach through it, kept here so a call finds it ready. */
     private final MachineServices services;
@@ -54,8 +59,9 @@ final class ProgramHost {
     private static final long FIVE_NINES_TICKS = 7L * 24_000L;
     private static final long UPTIME_CHECK_TICKS = 1_200L;
 
-    ProgramHost(final AbstractComputerBlockEntity machine) {
+    <M extends BlockEntity & IOsHost> ProgramHost(final M machine) {
         this.machine = machine;
+        this.block = machine;
         this.programs = new MachinePrograms(this::tellRemoteParent);
         this.services = new MachineServices(machine);
     }
@@ -79,15 +85,10 @@ final class ProgramHost {
         return network == null ? 0L : network.stock(item);
     }
 
-    /** The prompt this machine's shell would show, for giving it back when a program lets go. */
-    String shellPrompt() {
-        return this.shellPromptLine().text();
-    }
-
-    /** The same prompt a run at a time, in the colours the machine's shell gives it. */
+    /** The prompt this machine's shell would show, a run at a time, in the colours the shell gives it. */
     CliLine shellPromptLine() {
         if (this.machine instanceof IComputerTerminalHost host
-                && this.machine.getLevel() instanceof ServerLevel server) {
+                && this.block.getLevel() instanceof ServerLevel server) {
             final ServerCliComputer shell = new ServerCliComputer(host, server);
             return SshTerminal.promptLine(shell, shell);
         }
@@ -133,14 +134,14 @@ final class ProgramHost {
          * The server's clock, not this machine's worth, is what bounds the tick: a machine the server has
          * no time for this tick runs nothing and is first next tick.
          */
-        final Level level = this.machine.getLevel();
+        final Level level = this.block.getLevel();
         final long deadline = level instanceof ServerLevel server
-                ? ServerTickDeadline.shared().claim(server, this.machine.getBlockPos())
+                ? ServerTickDeadline.shared().claim(server, this.block.getBlockPos())
                 : Long.MAX_VALUE;
         this.programs.tick(credits(), deadline, this.stockLookup, this.parentWaiting);
         if (level != null && level.getGameTime() % UPTIME_CHECK_TICKS == 0
                 && this.programs.anyUpFor(level.getGameTime(), FIVE_NINES_TICKS)) {
-            JscEvents.awardOperator(this.machine, JscEvents.SIGMA_UPTIME);
+            JscEvents.awardOperator(this.block, JscEvents.SIGMA_UPTIME);
         }
         return true;
     }
@@ -157,10 +158,10 @@ final class ProgramHost {
             return;
         }
         this.gatewayMail = false;
-        if (!(this.machine.getLevel() instanceof ServerLevel server)) {
+        if (!(this.block.getLevel() instanceof ServerLevel server)) {
             return;
         }
-        for (final NetworkGatewayBlockEntity gateway : GatewayManager.gatewaysOf(server, this.machine)) {
+        for (final NetworkGatewayBlockEntity gateway : GatewayManager.gatewaysOf(server, this.block)) {
             for (final NetworkGatewayBlockEntity.Message said : gateway.takeMessages()) {
                 this.programs.deliverGatewayMessage(said.from(), said.text(), said.tick());
             }
@@ -184,7 +185,7 @@ final class ProgramHost {
 
     void load(final CompoundTag tag) {
         if (tag.contains("Σ#")) {
-            this.programs.load(tag.getCompound("Σ#"), this.machine);
+            this.programs.load(tag.getCompound("Σ#"), this.block);
         }
     }
 
@@ -197,7 +198,7 @@ final class ProgramHost {
      * with it, so what was started for them is kept until it can be asked.
      */
     private boolean remoteParentWaiting(final IProgramParent.Remote parent) {
-        if (!(this.machine.getLevel() instanceof ServerLevel server)) {
+        if (!(this.block.getLevel() instanceof ServerLevel server)) {
             return false;
         }
         final BlockPos where = BlockPos.of(parent.machine());
@@ -215,7 +216,7 @@ final class ProgramHost {
      * come back.
      */
     private void tellRemoteParent(final IProgramParent.Remote parent, final int child) {
-        if (!(this.machine.getLevel() instanceof ServerLevel server)) {
+        if (!(this.block.getLevel() instanceof ServerLevel server)) {
             return;
         }
         final BlockPos where = BlockPos.of(parent.machine());

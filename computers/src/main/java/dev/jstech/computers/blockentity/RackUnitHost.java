@@ -9,6 +9,8 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
@@ -279,6 +281,18 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public List<String> memoryLog() {
         return rack.asUnit(row, rack::memoryLog);
+    }
+
+    @Override
+    @Nullable
+    public MachinePrograms programs() {
+        return rack.asUnit(row, rack::programs);
+    }
+
+    @Override
+    @Nullable
+    public MachineServices services() {
+        return rack.asUnit(row, rack::services);
     }
 
     @Override

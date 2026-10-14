@@ -8,10 +8,10 @@
 package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingError;
@@ -125,9 +125,10 @@ public final class MachineListing {
         return problems.isEmpty() ? null : problems.getFirst();
     }
 
-    /** The host a program on that machine runs on: a computer's own services, or a clock that never moves off one. */
+    /** The host a program on that machine runs on: the machine's own services, or a clock that never moves off one. */
     private static IHost hostOf(@Nullable final BlockEntity machine) {
-        return machine instanceof AbstractComputerBlockEntity computer ? computer.services() : IHost.still();
+        final MachineServices services = machine instanceof IOsHost host ? host.services() : null;
+        return services != null ? services : IHost.still();
     }
 
     /**
@@ -163,7 +164,7 @@ public final class MachineListing {
      */
     @Nullable
     private static ListingProblem refusedBy(@Nullable final BlockEntity machine, final AsmProgram program) {
-        if (!(machine instanceof AbstractComputerBlockEntity computer)) {
+        if (!(machine instanceof IOsHost computer)) {
             return null;
         }
         final ComputerBuild build = computer.currentBuild();

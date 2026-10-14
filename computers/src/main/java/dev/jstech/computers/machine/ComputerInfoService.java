@@ -7,17 +7,19 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.boot.BootController;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliFiles;
 import dev.jstech.computers.storage.StorageKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * A machine as what runs on it can read it: what it is called, what it is built from, what it runs and what it holds.
@@ -43,19 +45,22 @@ public final class ComputerInfoService {
     public record Running(int id, String name, String state, long heldBytes) {
     }
 
-    private final AbstractComputerBlockEntity machine;
+    private final IOsHost machine;
+    /** The same machine as a block: a computer, or the rack of a server, which answers for that server. */
+    private final BlockEntity block;
     /** The machine's drives as its shell sees them, which is how they are measured. */
     private final ICliFiles drives;
 
-    ComputerInfoService(final AbstractComputerBlockEntity machine, final ICliFiles drives) {
+    ComputerInfoService(final BlockEntity block, final IOsHost machine, final ICliFiles drives) {
         this.machine = machine;
+        this.block = block;
         this.drives = drives;
     }
 
     /** What the machine is called: the name its owner gave it, or what kind of machine it is. */
     public String name() {
         final String given = this.machine.customName();
-        return given.isEmpty() ? this.machine.getBlockState().getBlock().getName().getString() : given;
+        return given.isEmpty() ? this.block.getBlockState().getBlock().getName().getString() : given;
     }
 
     /** The processors the machine is built with; nothing counted when it has no build. */
@@ -100,12 +105,12 @@ public final class ComputerInfoService {
 
     /** Whether the machine has somewhere to put a window: a system that boots to a desktop. */
     public boolean hasDesktop() {
-        return BootController.targetForComputer(this.machine) == BootController.BootTarget.FULL_DESKTOP;
+        return BootController.targetForComputer(this.block) == BootController.BootTarget.FULL_DESKTOP;
     }
 
     /** Whether the machine boots to its terminal alone, which is where it draws a program's windows, in text. */
     public boolean textMode() {
-        return BootController.targetForComputer(this.machine) == BootController.BootTarget.TERMINAL_ONLY;
+        return BootController.targetForComputer(this.block) == BootController.BootTarget.TERMINAL_ONLY;
     }
 
     /** The machine's drives, each measured the way the shell measures it. */
@@ -121,13 +126,18 @@ public final class ComputerInfoService {
 
     /** The programs installed on the machine. */
     public List<String> programs() {
-        return List.copyOf(this.machine.console().installed());
+        final ComputerConsoleState console = this.machine.console();
+        return console == null ? List.of() : List.copyOf(console.installed());
     }
 
     /** The programs the machine is running. */
     public List<Running> running() {
+        final MachinePrograms programs = this.machine.programs();
+        if (programs == null) {
+            return List.of();
+        }
         final List<Running> all = new ArrayList<>();
-        for (final ProgramView one : this.machine.programs().view()) {
+        for (final ProgramView one : programs.view()) {
             all.add(new Running(one.id(), one.name(), one.state(), one.heldBytes()));
         }
         return all;
