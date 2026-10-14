@@ -10,7 +10,6 @@ package dev.jstech.core.api.client;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What draws a special block on a manual's page: a block of a kind the Core's ready blocks (text, figures, tables,
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.ApiStatus;
  * draws a picture an entry names as a drawing of its kind ({@code {"type": "picture", "drawing": "myaddon:structure",
  * ...}}), in the column's width and the picture's height, numbered and captioned as a figure.
  */
-@ApiStatus.Experimental
 public interface IGuideBlockRenderer {
 
     /**

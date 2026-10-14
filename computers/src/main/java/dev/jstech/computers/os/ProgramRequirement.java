@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @param minVersion   the oldest version of that engine it works with; empty for any version
  * @param capabilities what the running engine must offer
  */
-@ApiStatus.Experimental
 public record ProgramRequirement(@Nullable ResourceLocation engine, String minVersion,
                                  Set<EngineCapability> capabilities) {
 

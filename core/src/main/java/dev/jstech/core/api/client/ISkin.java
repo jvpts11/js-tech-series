@@ -9,7 +9,6 @@ package dev.jstech.core.api.client;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The look every component draws through: the colours of a surface and the primitives a control is made of.
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.ApiStatus;
  * }
  * }</pre>
  */
-@ApiStatus.Experimental
 public interface ISkin {
 
     // colours

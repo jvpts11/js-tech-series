@@ -7,8 +7,6 @@
  */
 package dev.jstech.core.api.client;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * What draws frames onto a surface: a game, a viewer, anything that paints its own picture inside a window.
  *
@@ -41,7 +39,6 @@ import org.jetbrains.annotations.ApiStatus;
  * };
  * }</pre>
  */
-@ApiStatus.Experimental
 public abstract class SurfaceRenderer {
 
     /** The most pixels a surface may be wide or tall; a bigger request is a mistake in the renderer (1024 each way). */

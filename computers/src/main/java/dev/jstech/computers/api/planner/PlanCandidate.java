@@ -13,7 +13,6 @@ import java.util.Objects;
 import java.util.Set;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * <p>A rule or a hint another mod brings may add to the cost or take from it, saying why, or set the plan aside
  * altogether, saying why; the planner shows every reason beside the plan.
  */
-@ApiStatus.Experimental
 public final class PlanCandidate {
 
     private final ResourceLocation result;

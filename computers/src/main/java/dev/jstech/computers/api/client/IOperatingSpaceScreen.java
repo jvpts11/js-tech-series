@@ -10,7 +10,6 @@ package dev.jstech.computers.api.client;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Makes the screen that draws an operating space.
@@ -30,6 +29,5 @@ public interface IOperatingSpaceScreen {
      * @param inventory the player's inventory, as any container screen takes it
      * @param title     the name of the block the monitor is showing
      */
-    @ApiStatus.Experimental
     AbstractContainerScreen<?> open(IOperatingSpace space, Inventory inventory, Component title);
 }

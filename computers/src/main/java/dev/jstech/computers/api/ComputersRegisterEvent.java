@@ -22,7 +22,6 @@ import dev.jstech.computers.os.ProgramSpec;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.event.IModBusEvent;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The one moment anything may be added to what the computers know.
@@ -40,7 +39,6 @@ import org.jetbrains.annotations.ApiStatus;
 public final class ComputersRegisterEvent extends Event implements IModBusEvent {
 
     /** Adds an instruction set architecture, a kind of machine that programs can then be built for. */
-    @ApiStatus.Experimental
     public void isa(final IsaSpec isa) {
         JsComputersApi.registerIsa(isa);
     }
@@ -92,7 +90,6 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
      *
      * @param programId the program's id, as it was registered
      */
-    @ApiStatus.Experimental
     public void graphicsProgram(final ResourceLocation programId) {
         JsComputersApi.registerGraphicsProgram(programId);
     }
@@ -117,31 +114,26 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
      *
      * <p>Register its package as a program too, the way any software is; this says what that package installs.
      */
-    @ApiStatus.Experimental
     public void engine(final EngineDef engine) {
         JsComputersApi.registerEngine(engine);
     }
 
     /** Adds a rule to the planner of the engines that take extensions. */
-    @ApiStatus.Experimental
     public void plannerRule(final IPlannerRule rule) {
         JsComputersApi.registerPlannerRule(rule);
     }
 
     /** Adds a hint to the dialect of the engines that take extensions. */
-    @ApiStatus.Experimental
     public void plannerOperator(final IPlannerOperator operator) {
         JsComputersApi.registerPlannerOperator(operator);
     }
 
     /** Adds a statistic to the planner of the engines that take extensions. */
-    @ApiStatus.Experimental
     public void plannerStatistic(final IPlannerStatistic statistic) {
         JsComputersApi.registerPlannerStatistic(statistic);
     }
 
     /** Adds notes the planners of the engines that take extensions show under a plan's steps. */
-    @ApiStatus.Experimental
     public void explainNode(final IExplainNode node) {
         JsComputersApi.registerExplainNode(node);
     }
@@ -152,7 +144,6 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
      * <p>Register what draws it from your client setup, through {@code ComponentRenderers}; a player without your
      * mod sees a placeholder in its place.
      */
-    @ApiStatus.Experimental
     public void componentKind(final ComponentKind kind) {
         JsComputersApi.registerComponentKind(kind);
     }

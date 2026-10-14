@@ -9,7 +9,6 @@ package dev.jstech.computers.hardware;
 
 import java.util.Objects;
 import java.util.Set;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * An instruction set architecture (ISA): the instructions a machine's processor understands, and whose programs it
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.ApiStatus;
  * @param bits the word size of its programs, which is also how much room an item takes on its machines' disks
  * @param runs every ISA whose programs this one runs, its own id among them: x86-64 runs x86 and IA-16 programs
  */
-@ApiStatus.Experimental
 public record IsaSpec(String id, String name, int bits, Set<String> runs) {
 
     public IsaSpec {

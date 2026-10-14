@@ -7,10 +7,7 @@
  */
 package dev.jstech.computers.api.client;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /** How a component's renderer tells the program what a player did to it. */
-@ApiStatus.Experimental
 @FunctionalInterface
 public interface IComponentActions {
 

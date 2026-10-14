@@ -14,7 +14,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A surface on the graphics card: a render target of its own size a renderer draws into with the game's rendering.
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.ApiStatus;
  * game after this one put rendering behind a layer of their own, and a renderer written against the game's targets
  * moves with it.
  */
-@ApiStatus.Experimental
 public final class GpuSurface implements ISurface {
 
     private final int width;

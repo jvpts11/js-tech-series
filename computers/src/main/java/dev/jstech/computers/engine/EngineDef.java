@@ -13,7 +13,6 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @param versions the version it ships in, by the age of the Mainframe it is installed on
  * @param extras   what it offers beyond what every engine answers
  */
-@ApiStatus.Experimental
 public record EngineDef(ResourceLocation program, String dialect, Map<HardwareEra, String> versions,
                         Set<EngineCapability> extras) {
 

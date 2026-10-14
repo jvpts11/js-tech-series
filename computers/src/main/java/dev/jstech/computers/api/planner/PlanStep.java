@@ -8,7 +8,6 @@
 package dev.jstech.computers.api.planner;
 
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * One step of a craft's plan, as a planner's extensions see it: a recipe run a number of times.
@@ -19,6 +18,5 @@ import org.jetbrains.annotations.ApiStatus;
  * @param machine  whether a machine runs it, rather than a computer at a bench
  * @param estimate how long the planner reckons it takes, in ticks
  */
-@ApiStatus.Experimental
 public record PlanStep(ResourceLocation item, long runs, long made, boolean machine, long estimate) {
 }

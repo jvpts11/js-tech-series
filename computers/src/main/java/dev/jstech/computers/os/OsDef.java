@@ -16,7 +16,6 @@ import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Optional;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Immutable descriptor for an operating system registered with the mod.
@@ -54,7 +53,6 @@ import org.jetbrains.annotations.ApiStatus;
  *                       the family has no order: nothing is newer or older than anything else in it, and a
  *                       program is decided by the platform alone
  */
-@ApiStatus.Experimental
 public record OsDef(
         ResourceLocation id,
         OsCapability capability,

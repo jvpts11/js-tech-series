@@ -11,7 +11,6 @@ import dev.jstech.core.api.client.ISkin;
 import dev.jstech.core.api.client.SurfaceRenderer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * a placeholder in the window, since what the program shows lives on its opener's client alone; unless
  * {@link #worldSafe()} says otherwise.
  */
-@ApiStatus.Experimental
 public abstract class DesktopProgram {
 
     /** What its window's title bar says. */

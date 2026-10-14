@@ -9,14 +9,12 @@ package dev.jstech.computers.api.planner;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A hint another mod adds to the dialect of an engine that takes extensions: words a statement may end with, and
  * a value after them when the hint takes one ({@code PREFER COMPUTER 'Bench A'}). When a statement uses it, every
  * plan the planner weighs for that statement goes past it.
  */
-@ApiStatus.Experimental
 public interface IPlannerOperator {
 
     /** The hint's id. */

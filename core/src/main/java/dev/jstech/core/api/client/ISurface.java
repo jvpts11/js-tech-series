@@ -7,8 +7,6 @@
  */
 package dev.jstech.core.api.client;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * What a {@link SurfaceRenderer} draws its frames into: a rectangle of its own size, which the screen showing it
  * scales into whatever room it has.
@@ -18,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus;
  * card the renderer draws into with the game's own rendering. Neither is ever drawn by a server, and neither outlives
  * the window it is in.
  */
-@ApiStatus.Experimental
 public sealed interface ISurface permits PixelSurface, GpuSurface {
 
     /** How many pixels wide the surface is. */

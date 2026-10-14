@@ -8,7 +8,6 @@
 package dev.jstech.computers.engine;
 
 import dev.jstech.core.id.IStableName;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What a Network Operations Engine offers beyond what every engine answers.
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus;
  * needs one asks the network for the capability, never for an engine by name, so it runs on any engine that offers
  * it, and a program that needs none runs on every engine.
  */
-@ApiStatus.Experimental
 public enum EngineCapability implements IStableName {
     /** Saved views and procedures, kept on the Mainframe and run by name. */
     PROCEDURES_AND_VIEWS("procedures_and_views"),

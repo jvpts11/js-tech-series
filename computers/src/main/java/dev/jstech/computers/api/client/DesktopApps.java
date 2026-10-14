@@ -11,7 +11,6 @@ import dev.jstech.computers.client.os.AddonDesktopApp;
 import dev.jstech.computers.client.os.ProgramClient;
 import dev.jstech.computers.os.GraphicsPrograms;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Which Java program opens which program's window, on the side of the game that has screens.
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.ApiStatus;
  * so the computers can install it and list it; what opens its window goes in here, from client setup. A program
  * registered with no window here has none, and opening it does nothing.
  */
-@ApiStatus.Experimental
 public final class DesktopApps {
 
     private DesktopApps() {

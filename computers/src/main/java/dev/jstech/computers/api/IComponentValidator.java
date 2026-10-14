@@ -7,8 +7,6 @@
  */
 package dev.jstech.computers.api;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * What a kind of component takes, beyond what every component takes.
  *
@@ -19,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus;
  * the keys the program used. Answering false refuses it: a program handing over data the kind refuses is stopped and
  * told, and an action a player's screen sends that the kind refuses never reaches the program.
  */
-@ApiStatus.Experimental
 public interface IComponentValidator {
 
     /** Takes anything within the shared bounds. */

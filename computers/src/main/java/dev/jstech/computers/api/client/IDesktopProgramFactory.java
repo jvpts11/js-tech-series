@@ -9,10 +9,8 @@ package dev.jstech.computers.api.client;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 
 /** Makes a program's window each time it is opened. */
-@ApiStatus.Experimental
 @FunctionalInterface
 public interface IDesktopProgramFactory {
 

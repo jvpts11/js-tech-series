@@ -3,7 +3,7 @@
 # it in the shape written there. Whatever came after the stable version carries
 # @ApiStatus.Experimental until the cycle after its first release. Kept by ApiSurfaceTest,
 # which writes to build/api-photo what this file would have to say when the API changes.
-stable 1
+stable 7
 5 dev.jstech.computers.api.ComponentKind  type record(ResourceLocation id, boolean reachesOutside, IComponentValidator validator)
 5 dev.jstech.computers.api.ComponentKind  new(ResourceLocation)
 1 dev.jstech.computers.api.ComputersRegisterEvent  type final class extends Event implements IModBusEvent

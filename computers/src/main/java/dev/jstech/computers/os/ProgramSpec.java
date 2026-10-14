@@ -18,7 +18,6 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Set;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
  *                     ({@link EraMemory}); 0 means what a program of its kind holds ({@link #legacyMb()})
  * @param requires     what it needs of the network's engine, checked when it is opened
  */
-@ApiStatus.Experimental
 public record ProgramSpec(
         ResourceLocation id,
         String commandName,

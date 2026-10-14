@@ -13,7 +13,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A surface of pixels: an array of colours, one opaque {@code 0xAARRGGBB} each, row by row from the top left.
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus;
  * something was written since; drawing it on the screen scales it by whole pixels where it can, so a picture made
  * pixel by pixel stays sharp. Made by the host of the renderer at the size the renderer asks for.
  */
-@ApiStatus.Experimental
 public final class PixelSurface implements ISurface {
 
     private final int width;

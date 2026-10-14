@@ -11,13 +11,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Something another mod measures that a planner may weigh plans by: it shows among the planner's statistics, and it
  * may say how long a step takes, which the planner then reckons with instead of its own estimate.
  */
-@ApiStatus.Experimental
 public interface IPlannerStatistic {
 
     /** The statistic's id. */

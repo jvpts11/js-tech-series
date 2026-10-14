@@ -10,7 +10,6 @@ package dev.jstech.computers.api.client;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * One opening of a machine's operating space, as the screen that draws it is handed it: which machine and monitor it
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.ApiStatus;
  * player sees and types is the space's. What the network holds and does, the space asks the machine for through its
  * own payloads, as any screen of its own mod does.
  */
-@ApiStatus.Experimental
 public interface IOperatingSpace {
 
     /** The machine's menu, holding the player's inventory as real slots, for the screen to be built on. */

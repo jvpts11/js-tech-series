@@ -28,7 +28,6 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.ComponentKinds;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What J's Computers promises to anything built on it.
@@ -59,7 +58,6 @@ public final class JsComputersApi {
      * <p>A program built for an older machine of the same line runs on it; nothing runs what was built for
      * a machine that came after it.
      */
-    @ApiStatus.Experimental
     public static void registerIsa(final IsaSpec isa) {
         if (isa == null) {
             return;
@@ -124,7 +122,6 @@ public final class JsComputersApi {
      *
      * @param programId the program's id, as it was registered
      */
-    @ApiStatus.Experimental
     public static void registerGraphicsProgram(final ResourceLocation programId) {
         if (programId != null) {
             GraphicsPrograms.register(programId);
@@ -154,7 +151,6 @@ public final class JsComputersApi {
      * <p>Until the engine brings a planner of its own, it plans the way the Midsoft IQL Server does, so a network
      * never runs on an engine that cannot do the work.
      */
-    @ApiStatus.Experimental
     public static void registerEngine(final EngineDef engine) {
         NetworkEngines.register(engine);
     }
@@ -163,25 +159,21 @@ public final class JsComputersApi {
      * Adds a rule to the planner of the engines that take extensions (NextgreIQL among them): it weighs every plan
      * they consider for a craft, and a player switches it on or off for their own Mainframe.
      */
-    @ApiStatus.Experimental
     public static void registerPlannerRule(final IPlannerRule rule) {
         NextgreExtensions.addRule(rule);
     }
 
     /** Adds a hint to the dialect of the engines that take extensions, which changes the plans of the statement. */
-    @ApiStatus.Experimental
     public static void registerPlannerOperator(final IPlannerOperator operator) {
         NextgreExtensions.addOperator(operator);
     }
 
     /** Adds a statistic those planners show, and may reckon a step's time with. */
-    @ApiStatus.Experimental
     public static void registerPlannerStatistic(final IPlannerStatistic statistic) {
         NextgreExtensions.addStatistic(statistic);
     }
 
     /** Adds notes those planners show under the steps of a plan. */
-    @ApiStatus.Experimental
     public static void registerExplainNode(final IExplainNode node) {
         NextgreExtensions.addExplainNode(node);
     }
@@ -192,7 +184,6 @@ public final class JsComputersApi {
      * <p>The kind is named in the namespace of the mod adding it, and a name already taken stops the load. What draws
      * it is registered on the client, through {@code ComponentRenderers}.
      */
-    @ApiStatus.Experimental
     public static void registerComponentKind(final ComponentKind kind) {
         ComponentKinds.register(kind);
     }

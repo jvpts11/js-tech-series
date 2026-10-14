@@ -11,7 +11,6 @@ import com.mojang.logging.LogUtils;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -25,7 +24,6 @@ import org.slf4j.Logger;
  * <p>A kind is registered once: a second renderer for a kind already taken is refused, since which of the two drew it
  * would otherwise depend on the order the mods loaded in.
  */
-@ApiStatus.Experimental
 public final class GuideBlockRenderers {
 
     private static final Logger LOGGER = LogUtils.getLogger();

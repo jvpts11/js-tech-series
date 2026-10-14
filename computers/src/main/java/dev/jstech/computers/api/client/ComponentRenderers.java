@@ -11,7 +11,6 @@ import dev.jstech.computers.JsComputers;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
  * <p>The other half of adding a kind: the kind goes in through the register event, on both sides, and its renderer
  * here, from client setup. A kind with no renderer on a player's game shows a placeholder naming it.
  */
-@ApiStatus.Experimental
 public final class ComponentRenderers {
 
     /* Concurrent because client setup is handed to every mod at once, on as many threads as the loader likes. */

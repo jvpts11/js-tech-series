@@ -10,7 +10,6 @@ package dev.jstech.computers.api.client;
 import dev.jstech.core.api.client.ISkin;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What draws a kind of generic component in a program's window, on the client.
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.ApiStatus;
  * why a component is drawn for everyone. A renderer that throws shows the placeholder from then on, with one line in
  * the log.
  */
-@ApiStatus.Experimental
 public interface IComponentRenderer {
 
     /** How wide the component is when the program asks for no width. */

@@ -3,7 +3,7 @@
 # it in the shape written there. Whatever came after the stable version carries
 # @ApiStatus.Experimental until the cycle after its first release. Kept by ApiSurfaceTest,
 # which writes to build/api-photo what this file would have to say when the API changes.
-stable 1
+stable 4
 1 dev.jstech.core.api.CoreRegisterEvent  type final class extends Event implements IModBusEvent
 1 dev.jstech.core.api.CoreRegisterEvent  LanguageRegistry languages()
 1 dev.jstech.core.api.CoreRegisterEvent  OperationTypeRegistry operations()

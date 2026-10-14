@@ -9,7 +9,6 @@ package dev.jstech.computers.api;
 
 import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A kind of component a mod adds for Σ# programs to put in their windows.
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.ApiStatus;
  *                       it on
  * @param validator      what it takes beyond what every component takes
  */
-@ApiStatus.Experimental
 public record ComponentKind(ResourceLocation id, boolean reachesOutside, IComponentValidator validator) {
 
     public ComponentKind {
