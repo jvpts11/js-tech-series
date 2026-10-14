@@ -9,6 +9,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 
 ## [Unreleased]
 
+## [0.5.1a] - 2026-10-14
+
+Codename: Boron.
+
 ### Changed
 - (Computers) Hardware: A motherboard's tooltip says whether it drives a screen by itself: a server board has a screen
   output of its own, for its console, and every other board needs a graphics card, or a processor with graphics, for

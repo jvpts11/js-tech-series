@@ -6,6 +6,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+## [0.5.1a] - 2026-10-14
+
+Codename: Boron.
+
 ### Changed
 - Hardware: A motherboard's tooltip says whether it drives a screen by itself: a server board has a screen
   output of its own, for its console, and every other board needs a graphics card, or a processor with graphics, for
