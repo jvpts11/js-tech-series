@@ -125,11 +125,12 @@ technical reasoning out.
 - A plain imperative title, no trailing period, followed by an optional body that explains what changed
   and why: `Add the energy network distribution`, `Fix the peripheral cable length clamp`. No type
   prefixes such as `feat:` or `fix:`.
-- Branch names in English, in three parts: the mods the branch touches, the kind of work, and its name:
-  `<mod>-<mod>/<kind>/<name>`. The mods are the subproject names in alphabetical order, joined by
-  hyphens (no subproject name contains one); the kind is `feature`, `fix` or whatever the work is.
-  Examples: `core/fix/payload-streamcodec`, `computers-core/feature/user-software`. The first part says
-  at a glance which jars a branch changes, and the merge commit's message keeps it in the history.
+- Branch names in English, in three parts: the development cycle the work belongs to, the kind of work,
+  and its name: `<cycle>/<kind>/<name>`. The cycle is its codename in lower case (`boron`, `carbon`; the
+  codenames are in [RELEASING.md](RELEASING.md)); the kind is `feature`, `fix` or whatever the work is;
+  the name is in lower case, with hyphens. Examples: `carbon/feature/survival-crypto-and-wireless`,
+  `boron/fix/rack-server-programs`. The first part says at a glance which cycle a branch belongs to,
+  and the merge commit's message keeps it in the history.
 - Commits carry the author's own authorship and nothing else.
 
 ## NeoForge 1.21.1
