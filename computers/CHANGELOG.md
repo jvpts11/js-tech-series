@@ -6,6 +6,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+## [0.5.2a] - 2026-10-14
+
+Codename: Boron.
+
 ### Changed
 - Racks and servers: Every storage server has two expansion slots, so its storage card has room beside a
   graphics card, which a board with no video of its own needs for a monitor. Only the Legacy storage server had two;

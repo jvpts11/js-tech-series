@@ -9,6 +9,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 
 ## [Unreleased]
 
+## [0.5.2a] - 2026-10-14
+
+Codename: Boron.
+
 ### Changed
 - (Computers) Racks and servers: Every storage server has two expansion slots, so its storage card has room beside a
   graphics card, which a board with no video of its own needs for a monitor. Only the Legacy storage server had two;
