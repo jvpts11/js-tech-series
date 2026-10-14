@@ -12360,7 +12360,7 @@
   "jsc.guide.motherboards.definition1": "The size and mounting standard of a board. It decides which cases take the board.",
   "jsc.guide.motherboards.fix1": "The case takes only some form factors, and only boards of its own era. Check the table above.",
   "jsc.guide.motherboards.fix2": "The board does not offer that slot. Use a board with more slots of that kind.",
-  "jsc.guide.motherboards.fix3": "The window shows only the expansion slots the board and the server's case wire, and in most eras a storage server has one. If a graphics card sits in it, the card has nowhere to go. Build the server on a server board, which has a screen output of its own, and the slot is free for the card.",
+  "jsc.guide.motherboards.fix3": "The window shows only the expansion slots the board and the server's case wire, and a small server has only one or two, of which a graphics card takes one. Build the server on a server board, which has a screen output of its own, and its slots stay free for other cards.",
   "jsc.guide.motherboards.problem1": "It does not go into the case.",
   "jsc.guide.motherboards.problem2": "A part sits in the window but does nothing.",
   "jsc.guide.motherboards.problem3": "A card does not go into a server.",

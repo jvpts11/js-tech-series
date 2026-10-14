@@ -26,8 +26,11 @@ public enum RackChassis {
     LEGACY_SERVER(1, 3, 2, 2, RackType.SERVER, HardwareEra.LEGACY),
     /** The Vintage 1U server: a single drive, one socket, one expansion slot. */
     VINTAGE_SERVER(1, 1, 1, 1, RackType.SERVER, HardwareEra.VINTAGE),
-    /** 2U, ten drive bays, storage first. */
-    STORAGE_SERVER(2, 10, 1, 1, RackType.SERVER, HardwareEra.STANDARD),
+    /**
+     * 2U, ten drive bays, storage first; two expansion slots, so its storage card has room beside a graphics card,
+     * which a board with no video of its own needs for a monitor.
+     */
+    STORAGE_SERVER(2, 10, 1, 2, RackType.SERVER, HardwareEra.STANDARD),
     /** 2U, four sockets, compute first. */
     COMPUTE_SERVER(2, 2, 4, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.STANDARD),
     /** 2U node of a supercomputer: one Phi and one GPU, seated only in a Supercomputer Rack. */
@@ -45,17 +48,18 @@ public enum RackChassis {
      * The storage and compute servers of the other eras, 2U like the Standard's: each age's storage server fills
      * more of its front with drives, and each age's compute server takes more processors and cards.
      */
-    /** The Vintage 2U storage server: five full-height drives, one socket, one expansion slot. */
-    VINTAGE_STORAGE_SERVER(2, 5, 1, 1, RackType.SERVER, HardwareEra.VINTAGE),
-    /**
-     * The Legacy 2U storage server: seven drives, one socket, two expansion slots, one for the RAID controller and
-     * one for a graphics card, since its board has no video of its own.
+    /*
+     * Every storage server has two expansion slots, one for its storage card and one for a graphics card, which a
+     * board with no video of its own needs for a monitor.
      */
+    /** The Vintage 2U storage server: five full-height drives, one socket, two expansion slots. */
+    VINTAGE_STORAGE_SERVER(2, 5, 1, 2, RackType.SERVER, HardwareEra.VINTAGE),
+    /** The Legacy 2U storage server: seven drives, one socket, two expansion slots. */
     LEGACY_STORAGE_SERVER(2, 7, 1, 2, RackType.SERVER, HardwareEra.LEGACY),
-    /** The Transition 2U storage server: eight drives, one socket, one expansion slot. */
-    TRANSITION_STORAGE_SERVER(2, 8, 1, 1, RackType.SERVER, HardwareEra.TRANSITION),
-    /** The Advanced 2U storage server: ten NVMe carriers, one socket, one expansion slot. */
-    ADVANCED_STORAGE_SERVER(2, 10, 1, 1, RackType.SERVER, HardwareEra.ADVANCED),
+    /** The Transition 2U storage server: eight drives, one socket, two expansion slots. */
+    TRANSITION_STORAGE_SERVER(2, 8, 1, 2, RackType.SERVER, HardwareEra.TRANSITION),
+    /** The Advanced 2U storage server: ten NVMe carriers, one socket, two expansion slots. */
+    ADVANCED_STORAGE_SERVER(2, 10, 1, 2, RackType.SERVER, HardwareEra.ADVANCED),
     /** The Vintage 2U compute server: two sockets, one drive, one expansion slot. */
     VINTAGE_COMPUTE_SERVER(2, 1, 2, 1, RackType.SERVER, HardwareEra.VINTAGE),
     /** The Legacy 2U compute server: two sockets, two drives, two expansion slots. */

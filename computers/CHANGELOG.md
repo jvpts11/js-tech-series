@@ -6,6 +6,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ## [Unreleased]
 
+### Changed
+- Racks and servers: Every storage server has two expansion slots, so its storage card has room beside a
+  graphics card, which a board with no video of its own needs for a monitor. Only the Legacy storage server had two;
+  the others had one, and a graphics card in it left no room for the Vaultis Array or the Vaultis Cache.
+
 ## [0.5.1a] - 2026-10-14
 
 Codename: Boron.

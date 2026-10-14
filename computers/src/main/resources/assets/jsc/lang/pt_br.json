@@ -16967,7 +16967,7 @@
   "jsc.guide.motherboards.definition1": "O fator de forma de uma placa, ou seja, o tamanho e o padrão de fixação dela. Ele decide quais gabinetes aceitam a placa.",
   "jsc.guide.motherboards.fix1": "O gabinete aceita apenas alguns fatores de forma, e apenas placas da própria era. Confira a tabela acima.",
   "jsc.guide.motherboards.fix2": "A placa não oferece esse slot. Use uma placa com mais slots desse tipo.",
-  "jsc.guide.motherboards.fix3": "A janela mostra só os slots de expansão que a placa e o gabinete do servidor ligam, e na maioria das eras um storage server tem um só. Se uma placa de vídeo estiver nele, a outra placa não tem para onde ir. Monte o servidor numa placa de servidor, que tem saída de vídeo própria, e o slot fica livre para a placa.",
+  "jsc.guide.motherboards.fix3": "A janela mostra só os slots de expansão que a placa e o gabinete do servidor ligam, e um servidor pequeno tem só um ou dois, dos quais uma placa de vídeo ocupa um. Monte o servidor numa placa de servidor, que tem saída de vídeo própria, e os slots ficam livres para outras placas.",
   "jsc.guide.motherboards.problem1": "Ela não cabe no gabinete.",
   "jsc.guide.motherboards.problem2": "Uma peça fica na janela, mas não faz nada.",
   "jsc.guide.motherboards.problem3": "Uma placa não entra num servidor.",

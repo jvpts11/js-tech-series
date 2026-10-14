@@ -442,11 +442,10 @@ final class BuildingPages {
                         "A part sits in the window but does nothing.",
                         "The board does not offer that slot. Use a board with more slots of that kind.",
                         "A card does not go into a server.",
-                        "The window shows only the expansion slots the board and the server's case wire, and in most"
-                                + " eras a storage server has one. If a graphics card sits in it, the card has nowhere"
-                                + " to go."
-                                + " Build the server on a server board, which has a screen output of its own, and"
-                                + " the slot is free for the card.")
+                        "The window shows only the expansion slots the board and the server's case wire, and a small"
+                                + " server has only one or two, of which a graphics card takes one. Build the server"
+                                + " on a server board, which has a screen output of its own, and its slots stay free"
+                                + " for other cards.")
                 .seeAlso("jsc:eras", "jsc:processors", "jsc:memory")
                 .register();
     }
