@@ -117,6 +117,10 @@ harvest, ploughs, placers. A combine harvester drives and harvests at once.
 
 - **A diagram of forces for the player**, not only for debugging: gravity, drag, lift, thrust, buoyancy, levitation and
   magnetism, as separate or summed arrows, with the centre of mass and the total mass, in a view that turns and zooms.
+  It opens with a key, aboard or looking at a structure, and from the helm of whoever pilots it. The view shows the
+  ground below, the height and the axes, in 3D, from the side or from above; each force is a glowing arrow where it
+  acts, labelled in its colour; beside it, every force with its value, a bar of how much it weighs now and **its own
+  switch**, so any one can be hidden; below, the mass, the sum, the climb, the speed and the air.
 - **Physical properties in the tooltip** of each block (mass, lift), with goggles or a key.
 - **Readings for sensors**: altitude, air pressure, speed, tilt on each axis, heading, distance to the ground or to a
   target, given to redstone, to programs and to the network, so an autopilot can be built of redstone.
@@ -124,7 +128,12 @@ harvest, ploughs, placers. A combine harvester drives and harvests at once.
 
 ### Tools and code
 
-- **A creative physics tool** to grab, push and freeze structures.
+- **A physics tool** to grab, push and freeze structures, an item of the Core's shared content, made in survival too (a
+  setting turns its recipe off). In the spirit of Garry's Mod's physics gun: a gun with glowing claws whose blue beam
+  bends from its emitter to the point it holds, the held structure glowing; on the HUD, its three modes and its
+  strength, changed with the mouse wheel. Its model is made in the art pass, from the approved direction.
+- **Every force can be turned off in the game's physics**, one by one, by a setting: gravity, drag, lift, thrust,
+  buoyancy, levitation, magnetism, and the wind.
 - **The API**: making, moving, pushing and asking structures; turning positions between the world and a structure;
   events for collisions, splits and docking; the **physical properties of every block as data** (mass, thrust, lift,
   buoyancy, levitation).

@@ -105,5 +105,6 @@ installed mod declares it uses it.
 The Core has one creative tab, **"J's Tech"**, with only what the installed mods use, in three sections: the
 **materials**, the **fluids and components** of the shared catalogue, and the **shared blocks and tools** (the basic
 lines, battery and wrench, the saw, the Configuration Card, the FE converters, the Space Persistor, the Atmosphere
-Detector, the containment of exotic matter, the Structure Projector, the handheld instruments). Nothing of it is
-repeated in the mods' own tabs, which keep their own content: J's Industrial's shows its machines, not the materials.
+Detector, the containment of exotic matter, the Structure Projector, the handheld instruments, the physics tool).
+Nothing of it is repeated in the mods' own tabs, which keep their own content: J's Industrial's shows its machines,
+not the materials.
