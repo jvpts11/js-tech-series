@@ -13,6 +13,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the rest of its run, so it is still running when the world comes back, and it ends when the server is switched off,
   restarted or pulled out of its rack. A server's programs reach its drives, its network and the operations they ask
   of it; Gateways, Redstone Interfaces, sound and windows are still a computer's alone.
+- Cases: The water cooler of the Advanced High Performance and Advanced Aesthetic cases lays its radiator
+  across the two fans at the front, behind both of them, with its tubes coming down to it from the pump. It stood on
+  end behind one of the fans, well above and below them.
 
 ## [0.5.0a] - 2026-10-13 - The Start Me Up Update
 
