@@ -22,8 +22,10 @@ import dev.jstech.computers.client.MainframeScreen;
 import dev.jstech.computers.client.PersonalComputerScreen;
 import dev.jstech.computers.client.ServerAssemblyScreen;
 import dev.jstech.computers.client.ServerRackScreen;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
@@ -302,6 +304,37 @@ public final class AssemblyScreensClientTests {
                 .thenScreenshot(0, "server-advanced")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    /**
+     * An Advanced Storage Server taken empty into the hand takes its board and then the era's Vaultis Array in its card
+     * slot, each clicked from the hotbar into its seat on the server's screen, as a player builds one; with a server
+     * board of the era and with a workstation board alike.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void serverScreen_seatsTheArrayInAnAdvancedStorageServer(final ClientTestContext ctx) {
+        for (final Item board : List.of(HardwareItems.MOTHERBOARD_EEB_A_SP3.get(),
+                HardwareItems.MOTHERBOARD_EATX_ADVANCED_STR5.get())) {
+            final String label = BuiltInRegistries.ITEM.getKey(board).getPath();
+            ctx.thenGive(0, new ItemStack(ComputingModule.ADVANCED_STORAGE_SERVER.get()), new ItemStack(board),
+                            new ItemStack(ComputingModule.VAULTIS_ARRAY_PCIE4.get()))
+                    .then(SETTLE, () -> ctx.selectHotbar(0))
+                    .then(2, () -> Objects.requireNonNull(ctx.mc().gameMode, "no game mode")
+                            .useItem(ctx.player(), InteractionHand.MAIN_HAND))
+                    .thenAwaitScreen(ServerAssemblyScreen.class, SCREEN_WAIT)
+                    .then(SETTLE, () -> EraJourney.seatFromHotbar(ctx, ServerAssemblyScreen.class, 1,
+                            SeatKind.BOARD, 0))
+                    .thenScreenshot(SETTLE, "storage-advanced-" + label)
+                    .then(0, () -> EraJourney.seatFromHotbar(ctx, ServerAssemblyScreen.class, 2, SeatKind.CARD, 0))
+                    .thenScreenshot(SETTLE, "storage-advanced-" + label + "-array")
+                    .thenWaitUntilServer(level -> !ServerItem.card(ctx.serverPlayer().getInventory().getItem(0),
+                                    ExpansionCardKind.RAID_CONTROLLER).isEmpty(), SCREEN_WAIT,
+                            "the array to sit in the storage server on " + label,
+                            level -> "server=" + ServerItem.hardware(ctx.serverPlayer().getInventory().getItem(0))
+                                    .nonEmptyItems() + " carried=" + ctx.player().containerMenu.getCarried())
+                    .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                    .thenAwaitNoScreen(SCREEN_WAIT);
+        }
     }
 
     /**

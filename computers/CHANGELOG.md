@@ -21,6 +21,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Cases: The water cooler of the Advanced High Performance and Advanced Aesthetic cases lays its radiator
   across the two fans at the front, behind both of them, with its tubes coming down to it from the pump. It stood on
   end behind one of the fans, well above and below them.
+- Assembly: Once a board is in, the window of a computer or a server draws only the slots the board and
+  the case wire. The others were drawn dimmed and looked like slots waiting for a part, but took none, so a card held
+  over one went nowhere without a word: a storage server whose one card slot held a graphics card seemed to have five
+  more. Before a board goes in, every slot still shows dimmed where its part goes.
 
 ## [0.5.0a] - 2026-10-13 - The Start Me Up Update
 

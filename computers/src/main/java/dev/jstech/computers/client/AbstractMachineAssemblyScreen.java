@@ -209,6 +209,14 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         }
         for (final Seat seat : geo.seats()) {
             final Slot slot = seatSlots.get(seat);
+            /*
+             * Once a board is seated, a seat that neither it nor the chassis wires is not drawn at all: dimmed, it
+             * looked like a slot only waiting for its part, and took none. Before a board, every seat shows dimmed
+             * where its part will go.
+             */
+            if (boardIn && slot != null && !slot.isActive()) {
+                continue;
+            }
             AssemblyPainter.drawSeat(g, x, y, seat, slot != null && slot.isActive(), slot == null || !slot.hasItem());
         }
         drawCaptions(g, geo, x, y, era, boardIn);
