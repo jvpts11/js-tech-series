@@ -22,14 +22,22 @@ The game's own redstone. Machines answer redstone and give a comparator signal b
 
 - **Signals by frequency**: transmitters and receivers on a numbered frequency, private or the team's, and **point to
   point pairs**.
+- **One line, one value**: a frequency carries one signal, the strength fed into its transmitter, from 0 to 15; it has
+  no channels. Two signals take two frequencies.
+- **One transmitter, any number of receivers**: every receiver on the frequency gives out the same value. A second
+  transmitter on the same frequency of the same owner is a **conflict**: the receivers give out nothing until one of
+  the two is taken off, and the transmitters and the signal probe show the conflict.
 - **Real radio reach**: by the transmitter's power and the obstacles in the way; between dimensions only through relays
-  (J's Space's satellites). It is communication, not a bonus over a radius.
+  (J's Space's satellites). Within reach the value arrives whole, whatever the distance; beyond it nothing arrives and
+  the receiver gives out 0. It is communication, not a bonus over a radius.
 
 ### Tools and bridges
 
 - **A signal probe**, a handheld instrument of the same family as the network probe ([Cables and
   lines](cables-and-lines.md#seeing-what-flows)): the strength of the signal on a wire, and the frequencies heard where
-  it stands, each with who sends it and how strongly it arrives.
+  it stands, each with whose it is, where it comes from, how well it arrives and the value it carries, conflicts
+  marked; it finds where reception is good enough for a receiver or a relay, and points out a transmitter in the
+  world.
 - **Bridges to J's Computers' network**: redstone in and out of the network.
 - **It works on moving structures and in multipart spaces.**
 - **No storms of updates**: signals by frequency and sensors change only when what they carry changes, so a large build
