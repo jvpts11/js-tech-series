@@ -14,6 +14,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   graphics card, which a board with no video of its own needs for a monitor. Only the Legacy storage server had two;
   the others had one, and a graphics card in it left no room for the Vaultis Array or the Vaultis Cache.
 
+### Fixed
+- (Computers) Redstone Interfaces: A Redstone Interface placed facing up or down stands in its own block, its lens
+  toward the block above or below it, without its feet. It turned on the bottom of its block instead and lay half
+  inside the block under it. Its back is closed too: the gland where the cable plugs in and the bends of its wires
+  showed their insides.
+- (Computers) Cases and parts: The fans of the cases, the coolers, the processors and the graphics cards no longer
+  flicker where their blades cross, and a card or an M.2 drive no longer flickers along the edges of its slot. In the
+  Advanced High Performance and Aesthetic cases, the frames of the two front fans no longer flicker against the water
+  cooler's radiator behind them, and their outer sides are closed.
+- (Computers) Buses: The arrows on the External Storage Bus no longer flicker where the two of them meet.
+
 ## [0.5.1a] - 2026-10-14
 
 Codename: Boron.

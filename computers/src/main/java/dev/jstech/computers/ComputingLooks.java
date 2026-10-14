@@ -70,6 +70,8 @@ public final class ComputingLooks {
     public static final String REDSTONE_LENS_FULL = "lens_15";
     public static final String REDSTONE_LAMP_IN = "mode_in";
     public static final String REDSTONE_LAMP_OUT = "mode_out";
+    /** The two runners a Redstone Interface stands on, drawn only while it faces one of the four sides. */
+    public static final String REDSTONE_FEET = "feet";
     /**
      * The small computers' cases, a model for each machine in each case: the tower of each age, and from the Standard
      * age on the three cases a machine comes in. They share the fans' turning.
