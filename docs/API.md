@@ -5,12 +5,15 @@ working from one release to the next.
 
 ## What the API is
 
-Two packages and what lies under them, and nothing else:
+Each mod's api packages, the packages it lists as promised beside them, and nothing else:
 
 - `dev.jstech.core.api`, for what every mod of the series shares, and `dev.jstech.core.api.client` for what it
   shares on the side of the game that has screens.
 - `dev.jstech.computers.api`, for the computers, `dev.jstech.computers.api.planner` for their planners and
   `dev.jstech.computers.api.client` for what a mod draws on a player's game.
+- The packages listed in `JsCoreApi.PROMISED_PACKAGES`: the Core's kits, each entering the list once it is
+  documented for a reader who knows nothing of it, starting with its package's `package-info`. From then on
+  everything public in it is part of the API, as an api package is.
 
 Everything reachable from those packages is the API. Everything else in either mod is that mod's own
 business and may change in any release with no warning and no note. A mod that reaches into it is a mod
@@ -116,12 +119,21 @@ also when the rest of the series starts building its own on top of them.
 That is not an excuse to break things for no reason. It is a warning that a release may, and a promise
 that it will say so in the changelog when it does.
 
-## What is new is marked
+## Internal, experimental and stable
 
-Anything added or changed in the cycle being built, or in the last release, carries
-`@ApiStatus.Experimental`, from the JetBrains annotations every Minecraft mod already has on its classpath.
-It is the part of the API most likely to move, because no release has yet gone out with mods using it. The
-mark comes off when the next cycle begins; what has not moved by then is as settled as the rest.
+Every part of a mod is at one of three levels:
+
+- **Internal**: not promised. It changes whenever the mod needs it to, with no note.
+- **Experimental**: promised, but it may still change, with a note in the changelog when it does. It carries
+  `@ApiStatus.Experimental`, from the JetBrains annotations every Minecraft mod already has on its classpath.
+  Everything new starts here, because no release has yet gone out with mods using it.
+- **Stable**: promised, and it holds. A part gets here only once two real mods use it, it has real tests, its
+  documentation has an example that compiles, what it saves and what it sends between the server and the players
+  are defined, and it has gone through a whole cycle without its shape changing. The mark comes off when a part
+  meets that bar, not on a date.
+
+What came before that bar was set lost its mark in the cycle after its release, as the rule was then; while
+`JsCoreApi.SETTLED` is false, it too may still change, always with a note.
 
 ## How the API is kept
 
@@ -139,7 +151,13 @@ code with the file on every build, and fails when:
 - the API has a type or member the file does not, or the file has one the API lost;
 - the mod's `VERSION` is not the newest number in the file, so something came in without raising it;
 - something newer than the stable version has no `@ApiStatus.Experimental`, or something as old as it
-  still has one.
+  still has one (the stable version is raised by hand, once what came up to it meets the bar for stable);
+- a public or protected signature of the API names a type of the series that is not part of the API. Every
+  name is followed to where it comes from, and every type of the API is read the same way, so the promise is
+  followed to its end and can hand a mod no type it did not promise. The few such types the API already
+  named when this rule came in are listed one by one in the test, mostly types about to move; no new one can
+  join them, and each comes off the list when it is promised or leaves the signature;
+- a package listed as promised is not the mod's own, holds no type, or has no `package-info` explaining it.
 
 When it fails, it writes what the file would have to say to `core/build/api-photo`, with anything new at
 the next number. Nothing reaches the API, or leaves it, without somebody reading that and deciding it.

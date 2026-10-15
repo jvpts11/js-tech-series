@@ -9,6 +9,21 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 
 ## [Unreleased]
 
+### API
+- (Core) The promise: J's Core's API is at version 5. Beside its api packages, `JsCoreApi.PROMISED_PACKAGES` lists
+  the packages of the Core that are part of the API, each a kit a mod may build on; a kit enters the list once it is
+  documented for a reader who knows nothing of it. Every part of a mod is internal, experimental or stable, and a part
+  is stable only once two real mods use it, it has real tests, an example that compiles, what it saves and sends
+  defined, and a whole cycle without changing shape; `@ApiStatus.Experimental` comes off then, not on a date. The
+  test of the API follows every name a public or protected signature says to where it comes from, so the API can hand
+  a mod no type it does not promise; `docs/API.md` says how.
+
+### Changed
+- (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
+  Energy, the shared content) gets a package of its own, `dev.jstech.core.jstechseries`, and the rest of the Core,
+  the platform any technology mod can build on, never reaches into it. What is new of the series is born there; what
+  the Core already has of it moves there a domain at a time.
+
 ## [0.5.2a] - 2026-10-14
 
 Codename: Boron.

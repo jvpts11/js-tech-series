@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,15 +33,17 @@ import org.junit.jupiter.api.Test;
 /**
  * What the series promises a mod built on it, and nothing more.
  *
- * <p>Everything reachable from an {@code api} package is the promise; everything else in the series is its
- * own business and changes without a word. The danger is a promise made by accident: an API method that
- * hands back or takes something from the inside drags that thing into the promise, and the next release
- * that changes it breaks a mod without anybody having decided to.
+ * <p>The promise is what sits in an {@code api} package, in a package its mod's API class lists as promised, or in
+ * one of the few promised types that live where they belong; everything else in the series is its own business and
+ * changes without a word. The danger is a promise made by accident: a promised method that hands back or takes
+ * something from the inside drags that thing into the promise, and the next release that changes it breaks a mod
+ * without anybody having decided to.
  *
- * <p>So the types an API signature is allowed to name are counted, and they are these: the API's own, the
- * few of ours that are the API even though they live where they belong, the language's, and the game's. A
- * new name in a signature fails here until somebody says which of those it is, which is the point: adding
- * to the promise is a decision, not a side effect.
+ * <p>So every name a promised public or protected face says is followed to where it comes from, and it may only be
+ * the promise's own, the language's or the game's. Every promised type is read the same way, so the promise is
+ * followed to its end. A new name fails here until somebody promises it or takes it out of the signature, which is
+ * the point: adding to the promise is a decision, not a side effect. A promised package has to be its mod's own and
+ * explain itself in its {@code package-info}.
  *
  * <p>The promise is also kept as a photo, one file per mod in {@code src/test/resources/api}: every type and
  * member a mod can reach, each with the version of the API that brought it in the shape written there. The
@@ -71,6 +74,47 @@ class ApiSurfaceTest {
             // the former name of IsaSpec, deprecated for one cycle before it goes
             "ArchitectureSpec");
 
+    /**
+     * What the promise reached before it was followed to its end, each line a promised type and a type of the series
+     * it names without promising: the debts of the promise as it stood, written down so no new one joins them.
+     *
+     * <p>Most of them are types whose place or shape is about to change: the programming languages move to J's
+     * Computers' API, the kinds of Operation and the eras to the series' package, the eras becoming a registry. A
+     * line goes when its type is promised or leaves the signature, and the test fails while a line outlives its leak.
+     */
+    private static final Set<String> KNOWN_LEAKS = Set.of(
+            "dev.jstech.computers.engine.EngineCapability > dev.jstech.core.id.IStableName",
+            "dev.jstech.computers.engine.EngineDef > dev.jstech.core.tier.HardwareEra",
+            "dev.jstech.computers.os.DesktopEnvironmentDef > dev.jstech.computers.os.PanelStyle",
+            "dev.jstech.computers.os.DesktopEnvironmentDef > dev.jstech.core.text.TextKey",
+            "dev.jstech.computers.os.DesktopEnvironmentDef > dev.jstech.computers.os.SoftwareHouse",
+            "dev.jstech.computers.os.KernelDef > dev.jstech.computers.os.SchedulerKind",
+            "dev.jstech.computers.os.KernelDef > dev.jstech.computers.os.FilesystemKind",
+            "dev.jstech.computers.os.KernelDef > dev.jstech.computers.os.ShellFamily",
+            "dev.jstech.computers.os.OperatingSpaceDef > dev.jstech.computers.os.SoftwareHouse",
+            "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.OsCapability",
+            "dev.jstech.computers.os.OsDef > dev.jstech.core.tier.HardwareEra",
+            "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.Platform",
+            "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.ShellKind",
+            "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.PackageManagerKind",
+            "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.InstallMode",
+            "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.SoftwareHouse",
+            "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.install.InstallerStyle",
+            "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.Platform",
+            "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.ProgramKind",
+            "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.HostScope",
+            "dev.jstech.computers.os.ProgramSpec > dev.jstech.core.tier.HardwareEra",
+            "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.SoftwareHouse",
+            "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.ProgramRequirement",
+            "dev.jstech.computers.os.ProgramSpec > dev.jstech.core.text.TextKey",
+            "dev.jstech.core.language.IProgrammingLanguage.Complaint > dev.jstech.core.text.Text",
+            "dev.jstech.core.language.IProgrammingLanguage > dev.jstech.core.language.ILanguageProcess",
+            "dev.jstech.core.language.IProgrammingLanguage > dev.jstech.core.language.IMachineView",
+            "dev.jstech.core.operation.OperationType > dev.jstech.core.operation.OperationCategory",
+            "dev.jstech.core.operation.OperationType > dev.jstech.core.tier.IndustrialTier",
+            "dev.jstech.core.operation.OperationType > dev.jstech.core.network.NetworkCategory",
+            "dev.jstech.core.operation.OperationType > dev.jstech.core.operation.IOperationHandler");
+
     /** What java.lang brings in, which a signature may name with no import at all. */
     private static final Set<String> JAVA_LANG = Set.of("String", "Object", "Integer", "Long", "Double", "Float",
             "Boolean", "Character", "Number", "CharSequence", "Iterable", "Comparable", "Class", "Enum", "Record",
@@ -80,13 +124,12 @@ class ApiSurfaceTest {
     private static final List<String> ELSEWHERE = List.of("java.", "javax.", "net.minecraft.", "net.neoforged.",
             "com.mojang.", "org.slf4j.", "org.jetbrains.");
 
-    /** A member anything outside the mod can reach, with what it gives back and what it takes. */
-    private static final Pattern PUBLIC_MEMBER = Pattern.compile("^\\s{4}public\\s+"
-            + "(?:static\\s+|final\\s+|abstract\\s+)*([A-Za-z0-9_.<>\\[\\], ?]+?)\\s+(\\w+)\\s*\\(([^)]*)\\)");
+    /** How a mod's API class declares the packages it promises beside its api ones. */
+    private static final Pattern PROMISED_PACKAGES =
+            Pattern.compile("\\bPROMISED_PACKAGES\\s*=\\s*List\\.of\\(([^)]*)\\)");
 
-    /** A public field or constant, which is reachable the same way a method is. */
-    private static final Pattern PUBLIC_FIELD = Pattern.compile("^\\s{4}public\\s+"
-            + "(?:static\\s+)?(?:final\\s+)?([A-Za-z0-9_.<>\\[\\], ?]+?)\\s+(\\w+)\\s*[=;]");
+    /** A package's name, written as a string. */
+    private static final Pattern QUOTED = Pattern.compile("\"([\\w.]+)\"");
 
     /** Where the photos are kept, relative to the Core's folder: one file per mod, named after the mod's folder. */
     private static final Path PHOTOS = Path.of("src", "test", "resources", "api");
@@ -104,18 +147,35 @@ class ApiSurfaceTest {
     private static final Pattern VERSION = Pattern.compile("\\bint\\s+VERSION\\s*=\\s*(\\d+)\\s*;");
 
     @Test
-    void api_namesNothingThatIsNotPartOfThePromise() {
-        final List<Path> sources = apiSources();
-        final Set<String> api = new LinkedHashSet<>();
-        for (final Path file : sources) {
-            api.add(file.getFileName().toString().replace(".java", ""));
+    void api_reachesNothingThatIsNotPromised() {
+        final Set<String> promisedTypes = new LinkedHashSet<>();
+        final Map<Path, List<Promise>> byFile = new LinkedHashMap<>();
+        for (final Path file : promisedSources()) {
+            final List<Promise> promises = new SurfaceReader(read(file)).read();
+            byFile.put(file, promises);
+            for (final Promise promise : promises) {
+                if (promise.isType()) {
+                    promisedTypes.add(promise.owner());
+                }
+            }
         }
-        final List<String> leaked = new ArrayList<>();
-        for (final Path file : sources) {
-            leaked.addAll(leakedIn(file, api));
+        final Set<String> leaks = new LinkedHashSet<>();
+        for (final Map.Entry<Path, List<Promise>> file : byFile.entrySet()) {
+            leaks.addAll(new Reach(read(file.getKey()), file.getValue(), promisedTypes).leaks());
+        }
+        final List<String> wrong = new ArrayList<>();
+        for (final String leak : leaks) {
+            if (!KNOWN_LEAKS.contains(leak)) {
+                wrong.add(leak + ": not promised, so promise it too or keep it out of the public face");
+            }
+        }
+        for (final String leak : KNOWN_LEAKS) {
+            if (!leaks.contains(leak)) {
+                wrong.add(leak + ": no longer reached, so it comes off KNOWN_LEAKS");
+            }
         }
 
-        assertEquals(List.of(), leaked, () -> String.join("\n", leaked));
+        assertEquals(List.of(), wrong, () -> String.join("\n", wrong));
     }
 
     @Test
@@ -126,6 +186,34 @@ class ApiSurfaceTest {
         assertTrue(found.stream().anyMatch(path -> path.endsWith("CoreRegisterEvent.java")));
         assertTrue(found.stream().anyMatch(path -> path.endsWith("JsComputersApi.java")));
         assertTrue(found.stream().anyMatch(path -> path.endsWith("ComputersRegisterEvent.java")));
+    }
+
+    @Test
+    void api_promisedPackagesAreTheModsOwnAndExplained() {
+        final List<String> wrong = new ArrayList<>();
+        for (final Path main : mainSourceRoots()) {
+            final Path api = apiClassOf(main);
+            final String root = api == null ? "" : packageOf(main, api.getParent()).replaceFirst("\\.api$", "");
+            final Set<String> seen = new LinkedHashSet<>();
+            for (final String pkg : promisedPackagesOf(main)) {
+                Path folder = main;
+                for (final String part : pkg.split("\\.")) {
+                    folder = folder.resolve(part);
+                }
+                if (!seen.add(pkg)) {
+                    wrong.add(pkg + " is declared twice");
+                } else if (!pkg.startsWith(root + ".") || Set.of(pkg.split("\\.")).contains("api")) {
+                    wrong.add(pkg + " is not one of " + root + "'s own packages beside its api ones");
+                } else if (typesIn(folder).isEmpty()) {
+                    wrong.add(pkg + " holds no type");
+                } else if (!Files.isRegularFile(folder.resolve("package-info.java"))
+                        || !read(folder.resolve("package-info.java")).contains("/**")) {
+                    wrong.add(pkg + " has no package-info.java explaining it to a reader who knows nothing of it");
+                }
+            }
+        }
+
+        assertEquals(List.of(), wrong, () -> String.join("\n", wrong));
     }
 
     @Test
@@ -194,67 +282,6 @@ class ApiSurfaceTest {
         assertEquals(List.of(), wrong, () -> String.join("\n", wrong));
     }
 
-    private static List<String> leakedIn(final Path file, final Set<String> api) {
-        final String text = read(file);
-        final List<String> leaked = new ArrayList<>();
-        for (final String line : text.split("\n")) {
-            final Matcher method = PUBLIC_MEMBER.matcher(line);
-            final Matcher field = PUBLIC_FIELD.matcher(line);
-            final Set<String> named = new LinkedHashSet<>();
-            if (method.find()) {
-                named.addAll(typesIn(method.group(1)));
-                for (final String parameter : method.group(3).split(",")) {
-                    named.addAll(typesIn(parameter.replace("final ", "").trim()));
-                }
-            } else if (field.find()) {
-                named.addAll(typesIn(field.group(1)));
-            } else {
-                continue;
-            }
-            for (final String type : named) {
-                if (!allowed(type, text, api)) {
-                    leaked.add(file.getFileName() + ": " + type + " is named by the API but is not part of it");
-                }
-            }
-        }
-        return leaked;
-    }
-
-    /** The type names written in a piece of a signature, with the generics and the arrays taken apart. */
-    private static Set<String> typesIn(final String written) {
-        final Set<String> found = new LinkedHashSet<>();
-        final Matcher names = Pattern.compile("\\b([A-Z][A-Za-z0-9_]*)\\b").matcher(written);
-        while (names.find()) {
-            found.add(names.group(1));
-        }
-        return found;
-    }
-
-    /**
-     * Whether an API signature may name that type.
-     *
-     * <p>What decides it is where THAT type comes from, not what else the file happens to import. Getting
-     * that wrong is how this test came to pass a deliberate leak the first time it was tried.
-     */
-    private static boolean allowed(final String type, final String text, final Set<String> api) {
-        if (PROMISED.contains(type) || api.contains(type) || JAVA_LANG.contains(type)) {
-            return true;
-        }
-        final String imported = importOf(type, text);
-        if (imported != null) {
-            for (final String outside : ELSEWHERE) {
-                if (imported.startsWith(outside)) {
-                    return true;
-                }
-            }
-            // Imported from inside the series and not spoken for: a promise nobody decided to make.
-            return false;
-        }
-        // Named without an import: something this very file declares, or something java.lang brings in.
-        return text.contains("class " + type) || text.contains("interface " + type)
-                || text.contains("record " + type) || text.contains("enum " + type);
-    }
-
     /** The whole name the file imports that type as, or null when it imports no such type. */
     private static String importOf(final String type, final String text) {
         for (final String line : text.split("\n")) {
@@ -298,6 +325,19 @@ class ApiSurfaceTest {
         }
     }
 
+    /** The types a folder holds itself, not in the folders under it, or none when there is no such folder. */
+    private static List<Path> typesIn(final Path folder) {
+        if (!Files.isDirectory(folder)) {
+            return List.of();
+        }
+        try (Stream<Path> files = Files.list(folder)) {
+            return files.filter(path -> path.toString().endsWith(".java"))
+                    .filter(path -> !path.getFileName().toString().equals("package-info.java")).toList();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     private static List<Path> javaUnder(final Path main) {
         try (Stream<Path> walk = Files.walk(main)) {
             return walk.filter(path -> path.toString().endsWith(".java")).sorted().toList();
@@ -326,22 +366,37 @@ class ApiSurfaceTest {
     }
 
     /**
-     * Every promise of every mod that makes one: what its api packages hold and what its promised types are,
-     * keyed by the mod's folder.
+     * Every promise of every mod that makes one, keyed by the mod's folder: what its promised sources say.
      */
     private static Map<String, List<Promise>> promisesByMod() {
         final Map<String, List<Promise>> byMod = new TreeMap<>();
+        for (final Path file : promisedSources()) {
+            byMod.computeIfAbsent(modOfFile(file), mod -> new ArrayList<>())
+                    .addAll(new SurfaceReader(read(file)).read());
+        }
+        return byMod;
+    }
+
+    /**
+     * Every source whose public face is part of the promise: what sits in an api package, what sits in a package
+     * its mod's API class declares as promised, and the promised types that live where they belong.
+     */
+    private static List<Path> promisedSources() {
+        final List<Path> found = new ArrayList<>();
         final Map<String, Integer> promisedFound = new HashMap<>();
         for (final Path main : mainSourceRoots()) {
+            final List<String> packages = promisedPackagesOf(main);
             for (final Path file : javaUnder(main)) {
                 final String type = file.getFileName().toString().replace(".java", "");
+                if (type.equals("package-info")) {
+                    continue;
+                }
                 final boolean promised = PROMISED.contains(type);
                 if (promised) {
                     promisedFound.merge(type, 1, Integer::sum);
                 }
-                if (promised || insideApi(file)) {
-                    byMod.computeIfAbsent(modOf(main), mod -> new ArrayList<>())
-                            .addAll(new SurfaceReader(read(file)).read());
+                if (promised || insideApi(file) || packages.contains(packageOf(main, file.getParent()))) {
+                    found.add(file);
                 }
             }
         }
@@ -349,7 +404,50 @@ class ApiSurfaceTest {
             assertEquals(1, promisedFound.getOrDefault(type, 0),
                     () -> "the promised type " + type + " has to be found exactly once in the series' sources");
         }
-        return byMod;
+        return found;
+    }
+
+    /** The packages a mod's API class declares as promised beside its api ones, or none when it declares none. */
+    private static List<String> promisedPackagesOf(final Path main) {
+        final Path api = apiClassOf(main);
+        if (api == null) {
+            return List.of();
+        }
+        final Matcher declared = PROMISED_PACKAGES.matcher(read(api));
+        if (!declared.find()) {
+            return List.of();
+        }
+        final List<String> packages = new ArrayList<>();
+        final Matcher name = QUOTED.matcher(declared.group(1));
+        while (name.find()) {
+            packages.add(name.group(1));
+        }
+        return packages;
+    }
+
+    /** A mod's API class, the one saying its VERSION, or null for a mod that makes no promise. */
+    private static Path apiClassOf(final Path main) {
+        for (final Path file : apiSources()) {
+            if (file.startsWith(main) && file.getFileName().toString().matches("Js\\w+Api\\.java")) {
+                return file;
+            }
+        }
+        return null;
+    }
+
+    /** The package a folder of a source tree holds, in Java's dotted words. */
+    private static String packageOf(final Path main, final Path folder) {
+        return main.relativize(folder).toString().replace('\\', '.').replace('/', '.');
+    }
+
+    /** The mod a source file belongs to: the name of the folder its source tree sits in. */
+    private static String modOfFile(final Path file) {
+        for (final Path main : mainSourceRoots()) {
+            if (file.startsWith(main)) {
+                return modOf(main);
+            }
+        }
+        throw new AssertionError(file + " is in no mod's source tree");
     }
 
     /**
@@ -386,15 +484,11 @@ class ApiSurfaceTest {
     /** The mod's API version, as the number its API class says. */
     private static int versionOf(final String mod) {
         for (final Path main : mainSourceRoots()) {
-            if (!modOf(main).equals(mod)) {
-                continue;
-            }
-            for (final Path file : apiSources()) {
-                if (file.startsWith(main) && file.getFileName().toString().matches("Js\\w+Api\\.java")) {
-                    final Matcher version = VERSION.matcher(read(file));
-                    assertTrue(version.find(), () -> file + " says no VERSION");
-                    return Integer.parseInt(version.group(1));
-                }
+            final Path file = modOf(main).equals(mod) ? apiClassOf(main) : null;
+            if (file != null) {
+                final Matcher version = VERSION.matcher(read(file));
+                assertTrue(version.find(), () -> file + " says no VERSION");
+                return Integer.parseInt(version.group(1));
             }
         }
         throw new AssertionError(mod + " makes promises but has no Js*Api class saying their version");
@@ -462,13 +556,164 @@ class ApiSurfaceTest {
         out.append("# The public API of the mod in the folder '").append(mod).append("': every type and member a mod\n")
                 .append("# built on it can reach. The number before a line is the version of the API that brought\n")
                 .append("# it in the shape written there. Whatever came after the stable version carries\n")
-                .append("# @ApiStatus.Experimental until the cycle after its first release. Kept by ApiSurfaceTest,\n")
+                .append("# @ApiStatus.Experimental; the stable version rises only once what came up to\n")
+                .append("# it meets the bar docs/API.md sets for a stable part. Kept by ApiSurfaceTest,\n")
                 .append("# which writes to build/api-photo what this file would have to say when the API changes.\n")
                 .append("stable ").append(stable).append('\n');
         for (final String line : lines) {
             out.append(line).append('\n');
         }
         return out.toString();
+    }
+
+    /**
+     * The names a promised source's public face says, each followed to where it comes from.
+     *
+     * <p>A name of the series that is not promised itself is a promise nobody decided to make. Every promised source
+     * is read this way, so one step from each follows the whole promise to its end: a promised type naming another
+     * holds that one to the promise too, and that one is read in turn.
+     */
+    private static final class Reach {
+
+        private final String text;
+        private final String pkg;
+        private final List<Promise> promises;
+        private final Set<String> promisedTypes;
+        private final Map<String, Set<String>> variablesOfType = new HashMap<>();
+
+        /** A type's name as a signature writes it: capitalized, and not the inner part of a dotted name. */
+        private static final Pattern NAME = Pattern.compile("(?<![\\w.])([A-Z][A-Za-z0-9_]*)\\b");
+        /** The lowercase words a line opens with: its modifiers, and for a type the word for its kind. */
+        private static final Pattern LEADING_WORDS = Pattern.compile("^(?:@?[a-z-]+\\s+)*@?[a-z]*");
+
+        Reach(final String text, final List<Promise> promises, final Set<String> promisedTypes) {
+            this.text = text;
+            final Matcher pkgMatch = Pattern.compile("\\bpackage\\s+([\\w.]+)\\s*;").matcher(text);
+            this.pkg = pkgMatch.find() ? pkgMatch.group(1) : "";
+            this.promises = promises;
+            this.promisedTypes = promisedTypes;
+            for (final Promise promise : promises) {
+                if (promise.isType()) {
+                    this.variablesOfType.put(promise.owner(), variablesDeclared(afterLeadingWords(promise.what())));
+                }
+            }
+        }
+
+        /** Each promised type of the source with a type of the series it names and nobody promised, as "a > b". */
+        Set<String> leaks() {
+            final Set<String> leaked = new LinkedHashSet<>();
+            for (final Promise promise : this.promises) {
+                final Set<String> variables = variablesAround(promise);
+                for (final String name : namedBy(promise)) {
+                    final String unpromised = variables.contains(name) ? null : unpromised(name);
+                    if (unpromised != null) {
+                        leaked.add(promise.owner() + " > " + unpromised);
+                    }
+                }
+            }
+            return leaked;
+        }
+
+        /** The type names a promise's line says, leaving out the name of what it declares. */
+        private static Set<String> namedBy(final Promise promise) {
+            String what = promise.what().replaceFirst("^" + Promise.TYPE, "").replaceFirst("^" + Promise.DEPRECATED,
+                    "");
+            if (!promise.isType()) {
+                final int open = what.indexOf('(');
+                if (open >= 0) {
+                    int start = open;
+                    while (start > 0 && Character.isJavaIdentifierPart(what.charAt(start - 1))) {
+                        start--;
+                    }
+                    what = what.substring(0, start) + what.substring(open);
+                } else if (what.contains(" ")) {
+                    what = what.substring(0, what.lastIndexOf(' '));
+                } else {
+                    // An enum's constant: it names nothing but itself.
+                    return Set.of();
+                }
+            }
+            final Set<String> found = new LinkedHashSet<>();
+            final Matcher names = NAME.matcher(what);
+            while (names.find()) {
+                found.add(names.group(1));
+            }
+            return found;
+        }
+
+        /** The type variables in reach of a promise: its own method's, and those of every type around it. */
+        private Set<String> variablesAround(final Promise promise) {
+            final Set<String> found = new HashSet<>();
+            for (String owner = promise.owner(); owner != null; owner = outerOf(owner)) {
+                found.addAll(this.variablesOfType.getOrDefault(owner, Set.of()));
+            }
+            if (!promise.isType()) {
+                found.addAll(variablesDeclared(afterLeadingWords(promise.what())));
+            }
+            return found;
+        }
+
+        /** What follows a line's modifiers and its kind's word, where a declaration's type variables open. */
+        private static String afterLeadingWords(final String what) {
+            final Matcher words = LEADING_WORDS.matcher(what.replaceFirst("^" + Promise.TYPE, ""));
+            return words.find() ? what.replaceFirst("^" + Promise.TYPE, "").substring(words.end()).strip() : what;
+        }
+
+        /** The type variables a declaration opens with, as in {@code <K, V extends Comparable<V>>}, or none. */
+        private static Set<String> variablesDeclared(final String declaration) {
+            if (!declaration.startsWith("<")) {
+                return Set.of();
+            }
+            int depth = 0;
+            int end = 0;
+            for (int i = 0; i < declaration.length(); i++) {
+                final char c = declaration.charAt(i);
+                if (c == '<') {
+                    depth++;
+                } else if (c == '>' && --depth == 0) {
+                    end = i;
+                    break;
+                }
+            }
+            final Set<String> found = new HashSet<>();
+            for (final String part : SurfaceReader.topLevelParts(declaration.substring(1, end))) {
+                final Matcher name = NAME.matcher(part);
+                if (name.find()) {
+                    found.add(name.group(1));
+                }
+            }
+            return found;
+        }
+
+        /**
+         * Null when a signature may say that name, or the whole name it stands for when that is a type of the series
+         * no one has promised. What decides it is where that very type comes from, not what else the file imports.
+         */
+        private String unpromised(final String name) {
+            if (JAVA_LANG.contains(name)) {
+                return null;
+            }
+            final String imported = importOf(name, this.text);
+            if (imported != null) {
+                for (final String outside : ELSEWHERE) {
+                    if (imported.startsWith(outside)) {
+                        return null;
+                    }
+                }
+                return this.promisedTypes.contains(imported) ? null : imported;
+            }
+            if (Pattern.compile("\\b(class|interface|record|enum)\\s+" + name + "\\b").matcher(this.text).find()) {
+                for (final Promise promise : this.promises) {
+                    if (promise.isType() && (promise.owner().endsWith("." + name) || promise.owner().equals(name))) {
+                        return null;
+                    }
+                }
+                return name + ", declared here but not visible";
+            }
+            // Named with no import and not declared here: the file's own package, where an unknown name also lands.
+            final String samePackage = this.pkg + "." + name;
+            return this.promisedTypes.contains(samePackage) ? null : samePackage;
+        }
     }
 
     /** A mod's photo: the newest version already through a release, and the version of every line. */

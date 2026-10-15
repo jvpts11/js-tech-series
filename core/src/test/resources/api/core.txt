@@ -1,7 +1,8 @@
 # The public API of the mod in the folder 'core': every type and member a mod
 # built on it can reach. The number before a line is the version of the API that brought
 # it in the shape written there. Whatever came after the stable version carries
-# @ApiStatus.Experimental until the cycle after its first release. Kept by ApiSurfaceTest,
+# @ApiStatus.Experimental; the stable version rises only once what came up to
+# it meets the bar docs/API.md sets for a stable part. Kept by ApiSurfaceTest,
 # which writes to build/api-photo what this file would have to say when the API changes.
 stable 4
 1 dev.jstech.core.api.CoreRegisterEvent  type final class extends Event implements IModBusEvent
@@ -9,6 +10,7 @@ stable 4
 1 dev.jstech.core.api.CoreRegisterEvent  OperationTypeRegistry operations()
 1 dev.jstech.core.api.CoreRegisterEvent  new(LanguageRegistry, OperationTypeRegistry)
 1 dev.jstech.core.api.JsCoreApi  type final class
+5 dev.jstech.core.api.JsCoreApi  static final List<String> PROMISED_PACKAGES
 1 dev.jstech.core.api.JsCoreApi  static final boolean SETTLED
 1 dev.jstech.core.api.JsCoreApi  static final int CYCLES_BEFORE_REMOVAL
 1 dev.jstech.core.api.JsCoreApi  static final int VERSION

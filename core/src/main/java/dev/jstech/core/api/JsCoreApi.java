@@ -7,21 +7,26 @@
  */
 package dev.jstech.core.api;
 
+import java.util.List;
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * What the series promises to anything built on it, and the one place that promise is dated.
  *
- * <p>Everything an addon is meant to use is reached from this package or from the event this package
- * carries. Anything else in the Core is the Core's own business and may change in any release without a
- * word, so a mod that reaches into it is a mod that will break.
+ * <p>The promise is this package and the ones under it, the packages listed in {@link #PROMISED_PACKAGES}, and
+ * everything their public faces reach. Anything else in the Core is the Core's own business and may change in any
+ * release without a word, so a mod that reaches into it is a mod that will break.
  *
- * <p>The version below is not the Core's version: it is the number of the shape of this promise. It goes
- * up by one whenever something here is added, and an addon that wants to be sure asks for it. What the
- * number does NOT promise yet is that the shape will hold: see the note on stability.
+ * <p>A part of the promise is at one of three levels. What is not promised at all is <b>internal</b>. What is
+ * promised but may still change, with a note in the changelog when it does, is <b>experimental</b>, and carries
+ * {@code @ApiStatus.Experimental}: everything new starts there. What is promised and holds is <b>stable</b>, and a
+ * part only gets there once two real mods use it, it has real tests, its documentation has an example that compiles,
+ * what it saves and what it sends between the server and the players are defined, and it has gone through a whole
+ * cycle without its shape changing.
  *
- * <p>What is new carries {@code @ApiStatus.Experimental} from the cycle it came in until the cycle after its
- * first release, since until then no mod has used it in a released game and it is the part most likely to
- * move. The promise is also written down line by line, with the version each part came in, and a test holds
- * the code to it; {@code docs/API.md} says how.
+ * <p>The version below is not the Core's version: it is the number of the shape of this promise. It goes up by one
+ * whenever something here is added, and an addon that wants to be sure asks for it. The promise is also written down
+ * line by line, with the version each part came in, and a test holds the code to it; {@code docs/API.md} says how.
  */
 public final class JsCoreApi {
 
@@ -38,7 +43,18 @@ public final class JsCoreApi {
      * }
      * }</pre>
      */
-    public static final int VERSION = 4;
+    public static final int VERSION = 5;
+
+    /**
+     * The Core's packages that are part of the promise beside this one, each a kit a mod may build on.
+     *
+     * <p>A kit enters this list once it is documented for a reader who knows nothing of it, starting with the
+     * {@code package-info} of its package, and from then on everything public in the package, and every type of the
+     * Core its public face reaches, is held to the promise like this package is. What it reaches has to be promised
+     * too, so a promise can never hand a mod a type that is not.
+     */
+    @ApiStatus.Experimental
+    public static final List<String> PROMISED_PACKAGES = List.of();
 
     /**
      * How long something here lives once it is marked as going.
