@@ -69,6 +69,8 @@ import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SimplePath;
+import dev.jstech.core.jstechseries.energy.JsEnergy;
+import dev.jstech.core.jstechseries.energy.JsEnergySettings;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.log.LogCommand;
 import dev.jstech.core.material.CatalogueItems;
@@ -179,8 +181,10 @@ public final class JsCore {
         // What the notifications sound like, one of the game's own sounds for each level.
         NotificationSounds.declare();
         CoreItems.register(modEventBus);
-        // The units energy is counted in, FE first, and the energy an item holds.
+        // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
+        // with its joule and the grids of its voltage classes.
         CoreEnergy.register(modEventBus);
+        JsEnergy.register(modEventBus);
         // The components an item keeps its mode, its fluid and its stacks in.
         ItemStates.register(modEventBus);
         // The Core's own keys, declared before the player's game makes its key bindings.
@@ -197,6 +201,8 @@ public final class JsCore {
         PlayerLimits.register();
         // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
+        // J's Energy's settings: whether it is on, what the wrong voltage does, and how it speaks FE.
+        ConfigFiles.register(JsEnergySettings.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
         // The styles a player chose for the screens of every mod, read on their own game only.

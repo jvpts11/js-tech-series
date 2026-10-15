@@ -11,6 +11,7 @@ import dev.jstech.core.cable.CableType;
 import dev.jstech.core.energy.Energies;
 import dev.jstech.core.energy.EnergyConversion;
 import dev.jstech.core.energy.EnergyDistributionResult;
+import dev.jstech.core.energy.EnergyProtection;
 import dev.jstech.core.energy.EnergyStore;
 import dev.jstech.core.energy.EnergyTooltips;
 import dev.jstech.core.energy.FeBridge;
@@ -22,6 +23,8 @@ import dev.jstech.core.grid.GridKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestEnergies;
 import dev.jstech.tests.TestEnergyEnds;
+import dev.jstech.tests.TestFuses;
+import dev.jstech.tests.TestItems;
 import dev.jstech.tests.testkit.TestCables;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +34,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -43,7 +50,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * whose lines of each class are a grid of their own; energy moved between ports of a line's class, losing its class's
  * share each block; a port of another class burnt one class up, ruined by an arc flash two up, and short of voltage a
  * class down, only while the line is live; the conversion to and from FE, which never makes energy; the tooltips naming
- * a port's class; and a generator that follows its load.
+ * a port's class; a generator that follows its load; and the protection slot, whose fuse blows on what it breaks and
+ * lets an arc jump over it otherwise, and whose battery keeps a machine going when the grid goes down.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -192,6 +200,59 @@ public final class EnergyKitGameTests {
         });
     }
 
+    @GameTest(template = ARENA)
+    public static void fuse_blowsOnOneClassUpAndCutsTheEnergyWithNoDamage(final GameTestHelper helper) {
+        final EnergyProtection protection = new EnergyProtection(() -> { });
+        final EnergyStore store = guarded(protection, TestFuses.ONE_CLASS.get());
+
+        store.meetWrongClass(WrongClass.BURNS, TestEnergies.MEDIUM, 0L);
+        helper.assertTrue(!store.damaged() && protection.cut() && !store.canReceive(),
+                "the fuse blows, cutting the energy, and the machine is unharmed");
+        helper.assertTrue(protection.slots().getStackInSlot(EnergyProtection.FUSE).is(Items.FLINT),
+                "what is left in the slot is the blown fuse");
+        store.meetWrongClass(WrongClass.BURNS, TestEnergies.MEDIUM, 1L);
+        helper.assertTrue(!store.damaged(), "the open circuit lets nothing through");
+        protection.slots().setStackInSlot(EnergyProtection.FUSE, new ItemStack(TestFuses.ONE_CLASS.get()));
+        helper.assertTrue(!protection.cut() && store.canReceive(), "a new fuse brings the energy back");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void fuse_letsAnArcJumpWhatItCannotBreak(final GameTestHelper helper) {
+        final EnergyProtection weak = new EnergyProtection(() -> { });
+        final EnergyStore unsafe = guarded(weak, TestFuses.ONE_CLASS.get());
+        unsafe.meetWrongClass(WrongClass.ARC_FLASH, TestEnergies.HIGH, 0L);
+        helper.assertTrue(unsafe.damaged() && weak.cut(), "a fuse of one class lets an arc two up jump over it");
+
+        final EnergyProtection strong = new EnergyProtection(() -> { });
+        final EnergyStore safe = guarded(strong, TestFuses.ANY_CLASS.get());
+        safe.meetWrongClass(WrongClass.ARC_FLASH, TestEnergies.EXTRA, 0L);
+        helper.assertTrue(!safe.damaged() && strong.cut(), "one that breaks any overvoltage stops it");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void battery_chargesWhileTheStoreIsFullAndPowersItWhenItRunsLow(final GameTestHelper helper) {
+        final EnergyProtection protection = new EnergyProtection(() -> { });
+        final EnergyStore store = new EnergyStore("Test", TestEnergies.VOLTS, TestEnergies.LOW, 1_000L, 1_000L,
+                0L, () -> { });
+        final ItemStack battery = new ItemStack(TestItems.FULL.get());
+        protection.slots().setStackInSlot(EnergyProtection.BATTERY, battery);
+        store.setStored(1_000L);
+
+        protection.tick(store);
+        final IEnergyStorage held = protection.slots().getStackInSlot(EnergyProtection.BATTERY)
+                .getCapability(Capabilities.EnergyStorage.ITEM);
+        // The battery takes 500 FE at a time, a thousand test joules at two to the FE.
+        helper.assertTrue(held != null && held.getEnergyStored() == 500 && store.stored() == 0L,
+                "a full store charges the battery: " + store.stored());
+        protection.tick(store);
+        // It gives 400 FE at a time: eight hundred test joules.
+        helper.assertTrue(store.stored() == 800L && held.getEnergyStored() == 100,
+                "a store below half is powered by the battery: " + store.stored());
+        helper.succeed();
+    }
+
     /* A giving end, a taking end and a run of {@code line} between them, every store empty. */
     private static void ends(final GameTestHelper helper, final Block source, final Block sink,
                              final Supplier<CableType> line) {
@@ -202,6 +263,15 @@ public final class EnergyKitGameTests {
         for (final BlockPos at : RUN) {
             TestCables.lay(helper, at, line);
         }
+    }
+
+    /* A low store taking energy, guarded by {@code protection} with {@code fuse} in its slot. */
+    private static EnergyStore guarded(final EnergyProtection protection, final Item fuse) {
+        final EnergyStore store = new EnergyStore("Test", TestEnergies.VOLTS, TestEnergies.LOW, 1_000L, 1_000L, 0L,
+                () -> { });
+        protection.slots().setStackInSlot(EnergyProtection.FUSE, new ItemStack(fuse));
+        store.guardedBy(protection);
+        return store;
     }
 
     private static EnergyStore store(final GameTestHelper helper, final BlockPos at) {

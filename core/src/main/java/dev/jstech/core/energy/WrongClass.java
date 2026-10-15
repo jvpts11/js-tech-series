@@ -17,6 +17,8 @@ public enum WrongClass {
     NONE,
     /** The block does not start, and says it lacks the voltage; nothing is harmed. */
     UNDERVOLTAGE,
+    /** The block does not start, and says the voltage is too high; nothing is harmed. */
+    OVERVOLTAGE,
     /** The block burns and stops, and stays damaged until it is repaired. */
     BURNS,
     /** An arc flash: the block is destroyed, sets fire around it and burns whoever is close. */

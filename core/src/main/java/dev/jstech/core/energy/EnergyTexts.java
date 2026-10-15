@@ -28,10 +28,14 @@ public final class EnergyTexts {
     public static final TextKey OUTPUT = TextKey.of("jscore.energy.output", "Output: up to %s");
     public static final TextKey OUTPUT_MINIMUM = TextKey.of("jscore.energy.output_minimum",
             "Output: %s to %s");
+    /** A machine whose fuse blew, so its energy is cut. */
+    public static final TextKey FUSE_BLOWN = TextKey.of("jscore.energy.fuse_blown", "Fuse blown: put in a new one");
     /** A store a line of a class too high burnt. */
     public static final TextKey DAMAGED = TextKey.of("jscore.energy.damaged", "Damaged: repair it to run again");
     /** A store a live line of a class below meets. */
     public static final TextKey UNDERVOLTAGE = TextKey.of("jscore.energy.undervoltage", "Undervoltage");
+    /** A store a live line of a class above meets, where its energy lets it refuse to start rather than burn. */
+    public static final TextKey OVERVOLTAGE = TextKey.of("jscore.energy.overvoltage", "Overvoltage");
 
     private EnergyTexts() {
     }

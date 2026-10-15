@@ -85,6 +85,42 @@ public static final Energy VOLTS = Energies.builder(rl("volts"), VOLTS_NAME)
 - **Tooltips.** `EnergyTooltips.port(energy, class)` names a port's class and rating ("Port: Low, 400 V"), and
   `Energy.amount(...)` and `rate(...)` show amounts and power.
 
+### What the wrong class does in the world, and the protection slot
+
+*Added 2026-10-15.*
+
+A block wires its store to `EnergyFaults`, so a burn smokes and sparks and an arc flash destroys the block, sets fire
+round it and sets whoever is within three blocks on fire:
+
+```java
+store.onFault(what -> EnergyFaults.strike(serverLevel, worldPosition, what));
+```
+
+`EnergyProtection` is what a machine's protection tab holds: a fuse slot and a battery slot, saved as a part of the
+block's fields. With `store.guardedBy(protection)`, a fuse (an item that is an `IFuse`, saying how many classes above
+its port it breaks) blows on overvoltage it can break, cutting the energy with no damage until a fuse that works is put
+in; one facing more lets the arc jump over it. `protection.tick(store)` each tick runs the battery as a UPS: it charges
+while the store is full and powers the machine when the store runs below half; a battery holds the machine's energy or
+FE.
+
+### J's Energy
+
+*Added 2026-10-15.*
+
+The series' energy, `JsEnergy.ENERGY` (JE), made only from the kit: counted in joules, shown as power in watts, its
+lines in the five voltage classes (`VoltageClass`: low 400 V, medium 11 kV, high 138 kV, extra-high 500 kV, ultra-high
+±1,100 kV direct current), each a grid of its own. A transformer joins neighbouring classes and an HVDC converter
+station joins extra-high to ultra-high (`VoltageClass.joinedTo`); J's Industrial builds them. Its lines lose by the
+cables they are made of. The server's `jstech-energy.toml` sets:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `energy.enabled` | off | J's Energy on; off, every block of the series speaks FE |
+| `energy.overvoltage_damages` | on | a block on a class too high burns or arcs; off, it only does not start |
+| `energy.accept_any_voltage` | off | every block takes every class |
+| `energy.accept_fe` | off | J's Energy blocks take and give FE directly |
+| `energy.joules_per_fe` | 1 | what a joule is worth in FE; a server's setting, never a player's |
+
 ### Short of energy, and generators that follow the load
 
 *Added 2026-10-15.*

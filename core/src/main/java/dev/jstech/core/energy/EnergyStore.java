@@ -9,9 +9,11 @@ package dev.jstech.core.energy;
 
 import dev.jstech.core.blockentity.IFieldPart;
 import java.util.Objects;
+import java.util.function.Consumer;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.neoforged.neoforge.energy.IEnergyStorage;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A block's store of an energy of a mod's own, in one class: what it holds, what it takes and gives at most in a tick,
@@ -35,7 +37,9 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
     private long stored;
     private boolean damaged;
     private long shortSince = NEVER;
-    private Runnable arcFlash = () -> { };
+    private long overSince = NEVER;
+    private Consumer<WrongClass> fault = what -> { };
+    private @Nullable EnergyProtection guard;
 
     private static final String STORED = "stored";
     private static final String DAMAGED = "damaged";
@@ -83,6 +87,7 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
         if (to != this.portClass) {
             this.portClass = to;
             this.shortSince = NEVER;
+            this.overSince = NEVER;
             this.onChange.run();
         }
     }
@@ -99,12 +104,22 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
 
     @Override
     public boolean canReceive() {
-        return this.maxReceive > 0 && !this.damaged;
+        return this.maxReceive > 0 && !this.damaged && !cutByFuse();
     }
 
     @Override
     public boolean canExtract() {
-        return this.maxExtract > 0 && !this.damaged;
+        return this.maxExtract > 0 && !this.damaged && !cutByFuse();
+    }
+
+    /** Puts its machine's fuse between it and a line of another class ({@link EnergyProtection}). */
+    public void guardedBy(final EnergyProtection protection) {
+        this.guard = Objects.requireNonNull(protection, "protection");
+    }
+
+    /** Whether its machine's fuse blew and cuts it off. */
+    public boolean cutByFuse() {
+        return this.guard != null && this.guard.cut();
     }
 
     @Override
@@ -180,21 +195,43 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
         return gameTime - this.shortSince <= 1;
     }
 
-    /** What its block does when an arc flash hits it, besides the store's being damaged: the block's own ruin. */
-    public void onArcFlash(final Runnable ruin) {
-        this.arcFlash = Objects.requireNonNull(ruin, "ruin");
+    /**
+     * Whether a live line of a class above met it in tick {@code gameTime} or the one before, where its energy lets a
+     * block refuse to start rather than burn.
+     */
+    public boolean overvoltage(final long gameTime) {
+        return gameTime - this.overSince <= 1;
+    }
+
+    /**
+     * What its block does when a line too high burns it or hits it with an arc flash, besides the store's being damaged:
+     * the smoke and sparks, or the block's own ruin ({@link EnergyFaults}).
+     */
+    public void onFault(final Consumer<WrongClass> what) {
+        this.fault = Objects.requireNonNull(what, "what");
     }
 
     @Override
-    public void meetWrongClass(final WrongClass what, final EnergyClass line, final long gameTime) {
+    public void meetWrongClass(final WrongClass met, final EnergyClass line, final long gameTime) {
+        WrongClass what = met;
+        if (this.guard != null && (met == WrongClass.BURNS || met == WrongClass.ARC_FLASH)) {
+            if (this.guard.cut()) {
+                // A blown fuse left the circuit open: nothing reaches the machine through it.
+                return;
+            }
+            what = this.guard.guard(met, this.energy.steps(this.portClass, line));
+        }
         switch (what) {
             case NONE -> {
             }
             case UNDERVOLTAGE -> this.shortSince = gameTime;
-            case BURNS -> burn();
-            case ARC_FLASH -> {
+            case OVERVOLTAGE -> this.overSince = gameTime;
+            case BURNS, ARC_FLASH -> {
+                final boolean first = !this.damaged;
                 burn();
-                this.arcFlash.run();
+                if (first || what == WrongClass.ARC_FLASH) {
+                    this.fault.accept(what);
+                }
             }
         }
     }

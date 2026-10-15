@@ -39,13 +39,17 @@ public final class EnergyTooltips {
         return lines;
     }
 
-    /** The lines of {@code store} in tick {@code gameTime}: its port's, and whether it is damaged or short. */
+    /** The lines of {@code store} in tick {@code gameTime}: its port's, and whether it is damaged, short or over. */
     public static List<Text> store(final EnergyStore store, final long gameTime) {
         final List<Text> lines = port(store);
         if (store.damaged()) {
             lines.add(EnergyTexts.DAMAGED.text());
+        } else if (store.cutByFuse()) {
+            lines.add(EnergyTexts.FUSE_BLOWN.text());
         } else if (store.undervoltage(gameTime)) {
             lines.add(EnergyTexts.UNDERVOLTAGE.text());
+        } else if (store.overvoltage(gameTime)) {
+            lines.add(EnergyTexts.OVERVOLTAGE.text());
         }
         return lines;
     }

@@ -45,6 +45,7 @@ public final class Energy {
     private final ResourceLocation id;
     private final TextKey name;
     private final Supplier<EnergyUnit> unit;
+    private final @Nullable Supplier<EnergyRatio> feRate;
     private final @Nullable TextKey powerSymbol;
     private final List<EnergyClass> classes;
     private final boolean classless;
@@ -60,6 +61,7 @@ public final class Energy {
         this.id = builder.id;
         this.name = builder.name;
         this.unit = builder.unit;
+        this.feRate = builder.feRate;
         this.powerSymbol = builder.powerSymbol;
         this.classless = builder.classes.isEmpty();
         this.classes = this.classless ? List.of(EnergyClass.of(builder.id.getPath(), builder.name))
@@ -142,14 +144,19 @@ public final class Energy {
         return steps == 0 ? WrongClass.NONE : this.rule.at(steps);
     }
 
+    /** What it is worth in FE: its rate where it declares one (a server's setting), its unit's ratio otherwise. */
+    public EnergyRatio ratio() {
+        return this.feRate == null ? unit().ratio() : this.feRate.get();
+    }
+
     /** How many FE {@code amount} of it is worth, rounded down. */
     public long toFe(final long amount) {
-        return unit().toFe(amount);
+        return ratio().toFe(amount);
     }
 
     /** How much of it {@code amount} FE is worth, rounded down. */
     public long fromFe(final long amount) {
-        return unit().fromFe(amount);
+        return ratio().fromFe(amount);
     }
 
     /** {@code amount} of it as a player reads it, at the scale that suits it: "1.5K J". */
@@ -199,6 +206,7 @@ public final class Energy {
         private final ResourceLocation id;
         private final TextKey name;
         private Supplier<EnergyUnit> unit = CoreEnergy.FE;
+        private @Nullable Supplier<EnergyRatio> feRate;
         private @Nullable TextKey powerSymbol;
         private final List<EnergyClass> classes = new ArrayList<>();
         private final Map<String, Integer> loss = new LinkedHashMap<>();
@@ -212,6 +220,15 @@ public final class Energy {
         /** The unit it is counted in; FE unless said. */
         public Builder unit(final Supplier<EnergyUnit> counted) {
             this.unit = Objects.requireNonNull(counted, "counted");
+            return this;
+        }
+
+        /**
+         * What it is worth in FE, asked each time: a rate a server sets, never a player, since a converter that changed
+         * it would make energy from nothing. Its unit's ratio unless said.
+         */
+        public Builder feRate(final Supplier<EnergyRatio> rate) {
+            this.feRate = Objects.requireNonNull(rate, "rate");
             return this;
         }
 

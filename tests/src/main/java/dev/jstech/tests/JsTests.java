@@ -54,6 +54,8 @@ public final class JsTests {
         TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
         TestItems.declare();
+        // Two fuses, to prove the Core's protection slot.
+        TestFuses.declare();
         // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.
         TestFluids.declare();
         // Materials in every form and ores in several rocks, to prove the Core's catalogue and the art it draws.

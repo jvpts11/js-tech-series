@@ -12,6 +12,7 @@ import dev.jstech.core.energy.EnergyPorts;
 import dev.jstech.core.energy.EnergyStore;
 import dev.jstech.core.energy.GeneratorPort;
 import dev.jstech.core.energy.LoadFollower;
+import dev.jstech.core.energy.WrongClass;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,7 +109,11 @@ public final class TestEnergyEnds {
         } else {
             store = taking(TestEnergies.LOW);
         }
-        store.onArcFlash(() -> ARCED.add(end));
+        store.onFault(what -> {
+            if (what == WrongClass.ARC_FLASH) {
+                ARCED.add(end);
+            }
+        });
         return store;
     }
 

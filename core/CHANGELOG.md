@@ -197,6 +197,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   does not start; nothing happens on a dead line. A mod that only wants FE has it with nothing to declare.
 - Generators that follow the load: a generator makes only what its line draws, so it burns only that much, and
   may declare a minimum it always makes and how fast its output changes, as a reactor does.
+- J's Energy: the series' energy, counted in joules and shown in watts, its lines in five voltage classes from
+  400 V to ±1,100 kV direct current, each its own grid; transformers join neighbouring classes and an HVDC station
+  the direct current one. A server's settings turn it on (off until a mod builds on it, when every block of the
+  series speaks FE), let a block on a class too high only refuse to start, let every block take every class, let its
+  blocks take FE directly, and set what a joule is worth in FE.
+- The wrong voltage in the world: a burnt machine smokes and sparks and stays damaged; an arc flash destroys
+  it, sets fire around it and burns whoever is close.
+- The protection slot: a fuse blows on the overvoltage it is rated for, cutting the energy with no damage until
+  a new one is put in, and lets an arc it cannot break jump over it; a battery keeps a machine going as a UPS,
+  charging while the grid has energy and feeding the machine when it runs low.
 
 ### Changed
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
