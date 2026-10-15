@@ -7,22 +7,25 @@
  */
 package dev.jstech.core.material;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.content.ModContent;
-import net.minecraft.world.item.Item;
-import net.neoforged.neoforge.registries.DeferredItem;
-
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.neoforged.neoforge.registries.DeferredItem;
 
 /**
- * Declares one item for every (material, form) pair where {@link ModMaterial#activeModForms()} is non-empty.
+ * The items of the old fixed catalogue, {@link ModMaterial} by {@link MaterialForm}, kept by their ids
+ * ({@code jscore:iron_dust}) as things of the open catalogue of {@link Materials} and {@link Forms}, registered with the
+ * rest of the materials' things and drawn the same way.
  *
- * <p>Call {@link #register(ModContent)} exactly once, with the content that owns the catalogue. Retrieve items via
- * {@link #get(ModMaterial, MaterialForm)}.
+ * @deprecated declare a use with {@link MaterialUses#use} and keep the item it gives
  */
+@Deprecated
 public final class MaterialItems {
 
     private static final Map<ModMaterial, EnumMap<MaterialForm, DeferredItem<Item>>> REGISTRY =
@@ -31,18 +34,17 @@ public final class MaterialItems {
     private MaterialItems() {}
 
     /**
-     * Declares a plain item for every active (material × mod-form) pair, named after the material and the form
-     * ("Iron Dust", "Copper Plate"), so activating a form is enough to have its item named. Must be called before any
-     * field that calls {@link #get}.
+     * Keeps an item for every active (material × mod-form) pair. Must be called before any field that calls
+     * {@link #get}. The content is no longer where they are declared: the materials' things are registered together.
      */
     public static void register(final ModContent content) {
         for (final ModMaterial mat : ModMaterial.values()) {
             if (mat.activeModForms().isEmpty()) continue;
             final EnumMap<MaterialForm, DeferredItem<Item>> formMap = new EnumMap<>(MaterialForm.class);
             for (final MaterialForm form : mat.activeModForms()) {
-                formMap.put(form, content.item(form.itemKey(mat.materialName()), Item::new)
-                        .named(capitalise(mat.materialName()) + " " + capitalise(form.name()))
-                        .register());
+                formMap.put(form, MaterialUses.keep(
+                        ResourceLocation.fromNamespaceAndPath(JsCore.MODID, mat.materialName()),
+                        ResourceLocation.fromNamespaceAndPath(JsCore.MODID, form.name().toLowerCase(Locale.ROOT))));
             }
             REGISTRY.put(mat, formMap);
         }
@@ -69,10 +71,5 @@ public final class MaterialItems {
         final List<DeferredItem<Item>> out = new ArrayList<>();
         REGISTRY.values().forEach(forms -> out.addAll(forms.values()));
         return out;
-    }
-
-    private static String capitalise(final String word) {
-        final String lower = word.toLowerCase(Locale.ROOT);
-        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 }

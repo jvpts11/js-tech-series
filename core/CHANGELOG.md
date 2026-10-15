@@ -136,6 +136,25 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The J's Tech creative tab: the series' one tab of what its mods share, in three sections (materials, fluids
   and components, shared blocks and tools), showing only what the installed mods use; what it shows is left out of the
   other tabs of the mods that declare their uses. It takes the place of the J's Core tab.
+- The open catalogue of materials: materials, forms, properties, mineral families and host rocks are
+  registries any mod adds to. A material has a kind (metal, crystal, gem, non-metal solid, mineral, liquid, gas,
+  exotic matter) that says the forms it can take, the states it can be in, a colour and the real data it carries; it
+  has no tier. The Core brings the 21 base forms, five properties (symbol, atomic number, formula, colour, state at room
+  temperature), eleven mineral families and the game's twelve rocks; the series' catalogue starts with iron, copper,
+  gold, tin and bronze, the game's own ingots, nuggets, blocks, raw ores and ores kept as theirs.
+- Only what is used exists: a mod declares the materials and forms it uses, and the Core registers the union,
+  each thing once, named from its form and its material ("Tin Plate", "Deepslate Tin Ore"), in its common tag and its
+  form's (`c:plates/tin`), each block mined with a pickaxe and with its drops; an ore is declared with the rocks its
+  veins cross, one block in each, every one dropping the same raw item.
+- Art made as the game loads: every thing of a material is drawn in its material's colour as the game loads,
+  from the game's own texture for the forms the game has, recoloured texel by texel, and from the Core's templates for
+  the rest; an ore is its rock's own texture with the specks of one of the game's ores in the mineral's colour. No
+  texture of the game ships in the Core, and a resource pack can replace any of them.
+- A material's data in its tooltip: each property shows always, only with Shift held, or never, as the property
+  says unless the material or a data pack says otherwise, the game's own iron ingot included; a data pack gives values
+  over a material's own, one file per material.
+- Packs made as the game loads: a mod declares a resource pack or a data pack whose files it makes from what the
+  installed mods declared, each made only when first read, always on and below every pack a player or a server adds.
 
 ### Changed
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
@@ -157,6 +176,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Menus in every style: a style draws a menu's ground, its lists and its footer's line, and gives a menu's text
   colours of its own (headings, notices, links, warnings), each falling back to a window's; what is typed in a field
   takes the style's field colour in every style.
+- The fixed catalogue of five metals in seven forms gives way to the open one. Iron dust, iron plate and copper
+  plate keep their ids and are things of the open catalogue, drawn as the game loads instead of from textures of
+  their own; their common tags come from the Core's data made as the server loads, no longer from its generated files.
 
 ## [0.5.2a] - 2026-10-14
 

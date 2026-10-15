@@ -13,15 +13,15 @@ import dev.jstech.core.material.MaterialItems;
 import net.neoforged.bus.api.IEventBus;
 
 /**
- * The items the core registers: the material catalogue (the dusts, plates and other forms the mods of the
- * series process and trade). They are shown in the J's Tech creative tab once a mod says it uses them.
+ * The Core's own content. The things of the materials are not declared here: the Core registers those the installed
+ * mods use, as the game registers its things ({@code MaterialUses}).
  */
 public final class CoreItems {
 
     public static final ModContent CONTENT = new ModContent(JsCore.MODID);
 
     static {
-        // Fills the material catalogue as soon as this class loads, before anything can look an item up.
+        // The old fixed catalogue keeps its things registered by id, before anything can look one up.
         MaterialItems.register(CONTENT);
     }
 

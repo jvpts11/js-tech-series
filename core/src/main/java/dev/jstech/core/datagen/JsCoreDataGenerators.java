@@ -13,7 +13,8 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
  * Entry point for the core's data generation, run via {@code ./gradlew :core:runData}: what its declared content
- * needs, and the common tags of the materials.
+ * needs. The materials' things are not generated here: their art, tags and drops are made as the game loads, for the
+ * things the installed mods use.
  */
 public final class JsCoreDataGenerators {
 
@@ -27,7 +28,6 @@ public final class JsCoreDataGenerators {
 
     public static void onGatherData(final GatherDataEvent event) {
         final ContentData data = ContentData.gather(event, CoreItems.CONTENT);
-        data.server(new JsCoreItemTagsProvider(data.output(), data.lookup(), data.existingFiles()));
         data.check();
     }
 }

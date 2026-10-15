@@ -66,8 +66,16 @@ import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.integration.opac.OpacIntegration;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.jstechseries.JsTechTab;
+import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.log.LogCommand;
+import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.HostRocks;
+import dev.jstech.core.material.MaterialData;
+import dev.jstech.core.material.MaterialProperties;
+import dev.jstech.core.material.MaterialUses;
+import dev.jstech.core.material.MaterialValues;
+import dev.jstech.core.material.MineralFamilies;
 import dev.jstech.core.menu.MenuSync;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.notification.NotificationSettings;
@@ -83,6 +91,7 @@ import dev.jstech.core.protection.ProtectionCommands;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
+import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.StateNetwork;
 import dev.jstech.core.task.Tasks;
@@ -148,6 +157,16 @@ public final class JsCore {
         CoreGuide.declare();
         // The series' one creative tab of what its mods share, showing only what the installed mods use.
         JsTechTab.declare();
+        // The open catalogue every mod adds to: the forms, the properties, the mineral families and the rocks ores sit
+        // in; the series' own materials; the values data packs give them; and the data of the things the installed
+        // mods use, made as the server loads its data.
+        Forms.declare();
+        MaterialProperties.declare();
+        MineralFamilies.declare();
+        HostRocks.declare();
+        SeriesMaterials.declare();
+        MaterialValues.declare();
+        MaterialData.declare();
         // What the manuals sound like: the game's own book and button sounds, in the Manuals channel.
         GuideSounds.declare();
         // What the notifications sound like, one of the game's own sounds for each level.
@@ -232,12 +251,14 @@ public final class JsCore {
         JsCoreDataGenerators.listen(modEventBus);
         JsTechTab.listen(modEventBus);
         KeyActions.listen(modEventBus);
+        MaterialUses.listen(modEventBus);
         MediaNetwork.listen(modEventBus);
         MediaServerEvents.listen();
         Notifications.listen(modEventBus);
         OwnedProtection.listen();
         Protection.listen();
         RuntimeDimensions.listen();
+        RuntimePacks.listen(modEventBus);
         Sections.listen();
         SeriesCommands.listen();
         StateNetwork.listen(modEventBus);

@@ -10,7 +10,7 @@ package dev.jstech.core.jstechseries;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.guide.CoreGuide;
-import dev.jstech.core.material.MaterialItems;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.registry.CoreItems;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,8 @@ public final class JsTechTab {
         BLOCKS_AND_TOOLS.with(() -> CoreGuide.MANUAL);
         // Every player has the series' manual, so the Core itself uses it.
         SharedUses.declare(JsCore.MODID, () -> CoreGuide.MANUAL);
-        MaterialItems.all().forEach(MATERIALS::with);
+        // The things of the materials the installed mods use, which exist only once the game registered them.
+        MATERIALS.withEach(MaterialUses::sharedItems);
     }
 
     private JsTechTab() {
@@ -69,6 +70,7 @@ public final class JsTechTab {
      */
     public static List<Item> leftOutOf(final ResourceLocation tab) {
         if (tab.equals(TAB.id()) || !SharedUses.users().contains(tab.getNamespace())) {
+            // A mod that declared no use of the shared content keeps its tabs as they are.
             return List.of();
         }
         return shown();

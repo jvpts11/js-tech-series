@@ -99,10 +99,12 @@ that gathers what several places declare, and can show only the entries a test l
 
 The series has one creative tab of what its mods share, **J's Tech**, in three sections: the materials, the fluids
 and components of the shared catalogue, and the shared blocks and tools (the series' manual first). It shows only
-what the installed mods use, and a mod declares what it uses once, from its constructor:
+what the installed mods use, and a mod declares what it uses once, from its constructor: a material in a form with
+`MaterialUses` (see [Materials](#materials)), anything else of the shared content with `SharedUses`:
 
 ```java
-SharedUses.declare(MODID, () -> MaterialItems.get(ModMaterial.IRON, MaterialForm.DUST).get());
+public static final Supplier<Item> TIN_PLATE = MaterialUses.use(MODID, SeriesMaterials.TIN, Forms.PLATE);
+SharedUses.declare(MODID, () -> CoreGuide.MANUAL);
 ```
 
 What the J's Tech tab shows is left out of the other tabs of every mod that declared its uses, so nothing shows twice;
@@ -329,17 +331,102 @@ register) and its screen on the client with `RegisterMenuScreensEvent`.
 
 ## Materials
 
-*Added 2026-06-15.*
+*Added 2026-06-15; rewritten 2026-10-15.*
 
-The Core keeps the catalogue of metals the mods process, so every mod trades the same items: a mod that makes
-iron dust and a mod that uses it agree on what iron dust is. A material (`ModMaterial`: iron, copper, gold,
-tin, bronze) comes in forms (`MaterialForm`: ingot, nugget, dust, plate, bolt, rod, gear). The game already has
-some of them (the iron ingot); the Core registers the rest as they are needed, today iron dust, iron plate and
-copper plate, under the `jscore` namespace. Reach one with `MaterialItems.get(ModMaterial.IRON,
-MaterialForm.DUST)`.
+The Core keeps one catalogue of what the world is made of, so every mod trades the same things: a mod that makes tin
+dust and a mod that asks for it agree on what tin dust is, and neither depends on the other. The catalogue is a set of
+registries, every entry known by an id (`namespace:path`) and open to any mod:
 
-Every form is also in the common tag other mods use, `c:<forms>/<material>` (`c:dusts/iron`, `c:plates/copper`,
-`c:ingots/iron`), so a recipe that asks for the tag takes iron dust from any mod.
+| Registry | What it holds | The Core's own |
+| --- | --- | --- |
+| `Materials` | Elements, alloys, minerals, compounds, liquids, gases, exotic matter | none; the series' are in `SeriesMaterials` |
+| `Forms` | What a material is made into: an ingot, a dust, a plate, a block, an ore | 21 forms |
+| `MaterialProperties` | The real data a material carries: never a game rule | symbol, atomic number, formula, colour, state at room temperature |
+| `MineralFamilies` | The chemistry that decides how a mineral is processed | sulfide, oxide, carbonate, silicate, arsenide, native, halide, sulfate, phosphate, arsenate, vanadate |
+| `HostRocks` | The rocks ores sit in | the game's twelve: stone, deepslate, granite, diorite, andesite, tuff, calcite, sandstone, netherrack, basalt, blackstone, end stone |
+
+### A material
+
+A material has a **kind** (`MaterialKind`: metal, crystal, gem, non-metal solid, mineral, liquid, gas, exotic), set by
+its state at room temperature, and the kind says which forms it can take: a metal an ingot, a wire, a gear; a crystal a
+boule and a wafer; a gem a gem. It can take other states besides (a molten metal is a liquid). It has a colour, which
+its things are drawn in, and the values of its properties. It has **no tier**: when it becomes available is for each
+mod's recipes to say. A material declared once, as a static final, from the mod's constructor:
+
+```java
+public static final TextKey MYTHRIL_NAME = TextKey.of("mymod.material.mythril", "Mythril");
+public static final Material MYTHRIL = Materials.material(rl("mythril"), MaterialKind.METAL, MYTHRIL_NAME)
+        .colour(0x8FB8D8).with(MaterialProperties.SYMBOL, "My").also(MatterState.LIQUID).declare();
+```
+
+For a form the game already has a thing for, a material says so (`provided(Forms.INGOT, () -> Items.IRON_INGOT)`,
+`providedOre(HostRocks.DEEPSLATE, () -> Blocks.DEEPSLATE_IRON_ORE)`), and that thing stays the game's: mods that ask
+for the game's iron ore by its id keep working.
+
+### Using a material: only what some mod uses exists
+
+A form of a material has a thing in the game only if an installed mod says it uses it. Mods declare their uses from
+their constructors; the Core registers the union as the game registers its blocks and items, each thing once, under
+the material's namespace (`jscore:tin_plate`):
+
+```java
+public static final Supplier<Item> TIN_PLATE = MaterialUses.use(MODID, SeriesMaterials.TIN, Forms.PLATE);
+MaterialUses.ore(MODID, SeriesMaterials.TIN, HostRocks.STONE, HostRocks.DEEPSLATE);
+```
+
+`use` gives the thing's item, the game's own where the material has one. An ore is declared with the rocks its veins
+cross: a block in each (`jscore:tin_ore` in stone, `jscore:deepslate_tin_ore`, as the game names its own), each
+dropping the same thing, the material's raw form for a metal or a mineral, its gem, its crystal or its dust, and the
+ore itself with Silk Touch. `MaterialUses.item`, `block` and `oreBlock` reach a thing anywhere, and `Materials.of(item)`
+says what material and form an item is, the game's own included. A use declared after the game registered its things,
+a form the material's kind cannot take, or an ore with no rock stops the game loading with a paragraph saying so.
+
+Every thing is in its material's common tag and its form's (`c:plates/tin` in `c:plates`, `c:ores/tin` in `c:ores`,
+an ore in `c:ores_in_ground/<rock>`), every block is mined with a pickaxe, and every block has its drops: all this
+made as the server loads its data, in a data pack of the Core's own, which any data pack can override.
+
+### Names
+
+A thing is named from its form's name with its material's in it ("%s Plate" gives "Tin Plate", "Block of %s" "Block
+of Tin"), and an ore from its rock's ("Deepslate %s Ore"), so a material and its things are translated once, and a
+material renamed names all its things at once.
+
+### Art made as the game loads
+
+No texture of a material's thing ships in the Core: each is drawn as the player's game loads its resources, in the
+material's colour. The forms the game has a picture for come from the game's own texture, recoloured texel by texel,
+its light and shade kept (every ingot is the iron ingot in the material's colour, every dust the glowstone dust, every
+rod the stick); the rest come from the Core's own templates. A material's colour gives a ramp: its shadows cooler and
+deeper, its lights warmer and paler. An ore is its rock's texture with the specks of one of the game's ores laid on it
+(`OreLook`: which ore's specks, a colour of the ore's own when it is not the metal's, and a second colour for the hues
+of a mineral of two). A form a mod adds draws from a grey template of the mod's own:
+`Forms.form(...).art(rl("item/pellet"))`. The models and block states are made the same way, and a resource pack can
+replace any of them.
+
+### Values from a data pack, and tooltips
+
+A data pack gives properties' values over a material's own, one file per material,
+`data/<namespace>/material_values/<material>.json`, and can say when a line shows; the values reach every player.
+
+```json
+{ "values": { "mymod:molar_mass": 55.845 }, "shown": { "jscore:atomic_number": "always" } }
+```
+
+A material's things show its properties in their tooltips, the game's iron ingot included: each property's line
+always, only with Shift held (with a line saying so), or never, as the property says unless the material or a data
+pack says otherwise. A mod registers properties of its own with `MaterialProperties.property(id, codec, name)`.
+
+### Packs made as the game loads
+
+The art and the data above are packs the Core makes as the game loads, and any mod can make its own the same way: a
+`RuntimePacks.declare(id, PackType, title, files)` whose files are made from what the installed mods declared, each
+only when first read. Such a pack is always on, below every pack a player or a server adds.
+
+### The old catalogue
+
+The fixed catalogue of five metals in seven forms (`ModMaterial`, `MaterialForm`, `MaterialItems`) stays, deprecated,
+for J's Industrial until it declares its uses: its three items keep their ids (`jscore:iron_dust`, `jscore:iron_plate`,
+`jscore:copper_plate`) and are now things of the open catalogue, registered, named and drawn as the rest.
 
 ## Ids that are saved
 

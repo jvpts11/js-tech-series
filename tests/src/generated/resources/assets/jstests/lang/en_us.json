@@ -197,6 +197,7 @@
   "jstests.guide.tables.title": "Tables",
   "jstests.guide.tables.use1": "Read the tables.",
   "jstests.guide.tables.what": "An entry of tables: one of commands long enough to run on to the next page, and one too wide for its columns to stand side by side.",
+  "jstests.material.testium": "Testium",
   "jstests.mode.clear": "Clear",
   "jstests.mode.mark": "Mark",
   "jstests.mode.scan": "Scan",

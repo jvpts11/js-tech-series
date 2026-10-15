@@ -40,6 +40,8 @@ import dev.jstech.core.client.input.MenuSwapCursor;
 import dev.jstech.core.client.item.ItemStateClient;
 import dev.jstech.core.client.live.LiveScreens;
 import dev.jstech.core.client.live.TubeFilter;
+import dev.jstech.core.client.material.MaterialArt;
+import dev.jstech.core.client.material.MaterialTooltips;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.client.motion.CoreMotionClient;
 import dev.jstech.core.client.motion.GreyFilter;
@@ -92,6 +94,7 @@ public final class JsCoreClient {
         ItemStateClient.listen(modEventBus);
         KeyActionsClient.listen(modEventBus);
         LiveScreens.listen();
+        MaterialTooltips.listen();
         MediaClientEvents.listen();
         MenuSwapCursor.listen();
         MotionClock.listen();
@@ -111,5 +114,7 @@ public final class JsCoreClient {
         ControlElementBuilders.register();
         ClientRichLine.listen(modEventBus);
         ConfigChoosers.register(StyleSettings.CHOOSER, new StyleChooser());
+        // How the things of the materials the installed mods use look, drawn as the resources load.
+        MaterialArt.declare();
     }
 }

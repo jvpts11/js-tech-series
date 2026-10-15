@@ -126,6 +126,7 @@ import dev.jstech.tests.clienttest.core.CoreStateClientTests;
 import dev.jstech.tests.clienttest.core.DataRegistryClientTests;
 import dev.jstech.tests.clienttest.core.ComponentsClientTests;
 import dev.jstech.tests.clienttest.core.DataScreenClientTests;
+import dev.jstech.tests.clienttest.core.MaterialsClientTests;
 import dev.jstech.tests.clienttest.core.NotificationsClientTests;
 import dev.jstech.tests.clienttest.core.SettingsKitClientTests;
 import dev.jstech.tests.clienttest.core.FluidClientTests;
@@ -256,6 +257,7 @@ public final class ClientTestSuite {
             ComponentsClientTests.class,
             SettingsKitClientTests.class,
             NotificationsClientTests.class,
+            MaterialsClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

@@ -56,6 +56,8 @@ public final class JsTests {
         TestItems.declare();
         // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.
         TestFluids.declare();
+        // Materials in every form and ores in several rocks, to prove the Core's catalogue and the art it draws.
+        TestMaterials.declare();
         // Large values sent either way, in pieces.
         TestBigPayloads.declare();
         // A registry datapacks fill and notes read from datapack files, both sent to the players.

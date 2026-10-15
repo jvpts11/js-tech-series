@@ -10,6 +10,7 @@ package dev.jstech.core.content;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -111,6 +112,7 @@ public final class ContentTab {
 
         private final String modid;
         private final List<Supplier<? extends ItemLike>> entries = new ArrayList<>();
+        private final List<Supplier<? extends Collection<? extends ItemLike>>> gathered = new ArrayList<>();
         private final List<Consumer<CreativeModeTab.Output>> more = new ArrayList<>();
         private final List<TagKey<Item>> tags = new ArrayList<>();
         private @Nullable Comparator<? super Item> order;
@@ -126,6 +128,16 @@ public final class ContentTab {
          */
         public Section with(final Supplier<? extends ItemLike> entry) {
             entries.add(entry);
+            return this;
+        }
+
+        /**
+         * Puts every item {@code entries} gives into the section too, after those put in one by one, asked each time
+         * the section is read: items that exist only once the game registered them, as the things of the materials the
+         * installed mods use.
+         */
+        public Section withEach(final Supplier<? extends Collection<? extends ItemLike>> entries) {
+            gathered.add(entries);
             return this;
         }
 
@@ -179,6 +191,7 @@ public final class ContentTab {
         public List<Item> items() {
             final List<Item> items = new ArrayList<>(entries.size());
             entries.forEach(entry -> items.add(entry.get().asItem()));
+            gathered.forEach(more -> more.get().forEach(entry -> items.add(entry.asItem())));
             return items;
         }
 

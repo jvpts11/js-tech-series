@@ -24,6 +24,8 @@ import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.material.MaterialUses;
+import dev.jstech.core.material.RegisteredThing;
 import dev.jstech.tests.JsTests;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -94,6 +96,13 @@ public final class ContentGameTests {
                 }
             }
             content.declaredItems().forEach(item -> items.add(item.getId()));
+            // The things of the materials' uses are declared as uses and registered by the Core, which checks them.
+            for (final RegisteredThing thing : MaterialUses.registered()) {
+                items.add(thing.id());
+                if (thing.isBlock()) {
+                    blocks.add(thing.id());
+                }
+            }
             BuiltInRegistries.BLOCK.keySet().stream()
                     .filter(id -> id.getNamespace().equals(content.modid()) && !blocks.contains(id))
                     .forEach(id -> wrong.add("block " + id));

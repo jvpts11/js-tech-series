@@ -9,10 +9,13 @@ package dev.jstech.core.guide;
 
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.ModMaterial;
+import dev.jstech.core.material.RegisteredThing;
 import dev.jstech.core.registry.CoreItems;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 
@@ -111,13 +114,11 @@ final class CoreChapter {
                 .register();
     }
 
-    /** The material items the Core registers, in the order of the materials. */
+    /** Every thing the Core registered for the materials the installed mods use, in the order of the materials. */
     private static List<ItemLike> materialItems() {
         final List<ItemLike> items = new ArrayList<>();
-        for (final ModMaterial material : ModMaterial.values()) {
-            for (final MaterialForm form : material.activeModForms()) {
-                items.add(MaterialItems.get(material, form).get());
-            }
+        for (final RegisteredThing thing : MaterialUses.registered()) {
+            items.add(BuiltInRegistries.ITEM.get(thing.id()));
         }
         return items;
     }

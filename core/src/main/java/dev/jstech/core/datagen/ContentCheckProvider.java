@@ -10,6 +10,7 @@ package dev.jstech.core.datagen;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
 import java.io.Reader;
@@ -65,15 +66,18 @@ final class ContentCheckProvider implements DataProvider {
     public CompletableFuture<?> run(final CachedOutput cache) {
         final List<DeclarationError> missing = new ArrayList<>();
         final Set<String> english = english();
+        // The things of the materials' uses are named in code and drawn, tagged and given drops as the game loads.
+        final Set<ResourceLocation> madeAsTheGameLoads = new HashSet<>();
+        MaterialUses.registered().forEach(thing -> madeAsTheGameLoads.add(thing.id()));
         for (final Map.Entry<ResourceKey<Block>, Block> entry : BuiltInRegistries.BLOCK.entrySet()) {
             final ResourceLocation id = entry.getKey().location();
-            if (id.getNamespace().equals(modid)) {
+            if (id.getNamespace().equals(modid) && !madeAsTheGameLoads.contains(id)) {
                 checkBlock(id, entry.getValue(), english, missing);
             }
         }
         for (final Map.Entry<ResourceKey<Item>, Item> entry : BuiltInRegistries.ITEM.entrySet()) {
             final ResourceLocation id = entry.getKey().location();
-            if (id.getNamespace().equals(modid)) {
+            if (id.getNamespace().equals(modid) && !madeAsTheGameLoads.contains(id)) {
                 checkItem(id, entry.getValue(), english, missing);
             }
         }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.jstechseries;
 
+import dev.jstech.core.material.MaterialUses;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -22,8 +23,10 @@ import net.minecraft.world.level.ItemLike;
  * its own tabs, so nothing shows twice. A mod declares its uses once, from its constructor:
  *
  * <pre>{@code
- * SharedUses.declare(MODID, () -> MaterialItems.get(ModMaterial.IRON, MaterialForm.DUST).get());
+ * SharedUses.declare(MODID, () -> CoreGuide.MANUAL);
  * }</pre>
+ *
+ * <p>A material in a form is declared with {@link MaterialUses}, which registers its thing as well.
  */
 public final class SharedUses {
 
@@ -37,8 +40,14 @@ public final class SharedUses {
         USES.add(new Use(Objects.requireNonNull(modid, "modid"), Objects.requireNonNull(thing, "thing")));
     }
 
-    /** Whether some installed mod uses {@code item}. Asked once the game's registries are filled. */
+    /**
+     * Whether some installed mod uses {@code item}, declared here or as a use of a material
+     * ({@link MaterialUses}). Asked once the game's registries are filled.
+     */
     public static boolean used(final Item item) {
+        if (MaterialUses.shared(item)) {
+            return true;
+        }
         for (final Use use : USES) {
             if (use.thing().get().asItem() == item) {
                 return true;
@@ -55,13 +64,19 @@ public final class SharedUses {
                 out.add(use.modid());
             }
         }
+        MaterialUses.thingOf(item).ifPresent(thing -> MaterialUses.all().forEach(use -> {
+            if (use.shared() && use.thing().equals(thing)) {
+                out.add(use.modid());
+            }
+        }));
         return out;
     }
 
-    /** The mods that declared any use. */
+    /** The mods that declared any use, of shared content or of a material. */
     public static Set<String> users() {
         final Set<String> out = new LinkedHashSet<>();
         USES.forEach(use -> out.add(use.modid()));
+        out.addAll(MaterialUses.users());
         return out;
     }
 
