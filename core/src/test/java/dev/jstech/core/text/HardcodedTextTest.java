@@ -205,8 +205,6 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 13,
                     "why a configuration value was set aside, written to the log"),
             data("core/src/main/java/dev/jstech/core/config/ConfigKey.java", 1, SETTINGS_FILE),
-            data("core/src/main/java/dev/jstech/core/multiblock/MultiblockPatterns.java", 2,
-                    "why a pattern file is refused, written to the log"),
             data("core/src/main/java/dev/jstech/core/operation/OperationDispatch.java", 1,
                     "a line for the log, when nobody gives the dispatcher a log of its own"),
             data("core/src/main/java/dev/jstech/core/font/CoreFonts.java", 4,

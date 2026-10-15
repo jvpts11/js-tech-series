@@ -373,6 +373,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Reading mechanical power: every shaft, gear and gearbox is a sensor of its speed for redstone and
   comparators, a torque meter reads the torque through it, Jade shows a part's speed and its network's power, and
   the network probe reads a network of shafts in watts, with its sources, its loads and what friction takes.
+- Multiblock shapes with rules: a place can count its blocks ("from one to four energy hatches") and give the
+  machine a number, as a blast furnace is as hot as its coolest coil; a pattern can be found mirrored or lying on its
+  side, and can grow by a repeated layer, row or column, a tower as tall as the player builds it. Shapes need no
+  drawing at all: any box between a least and a most size with its frame, faces and inside, as a dynamic tank; a
+  floor of any outline with walls round it, as a smeltery; any filled cuboid of units. What stands inside counts,
+  with neighbour rules: a cell gives more beside a moderator, a cooler works only beside a working cell. A failed
+  check names the wrong place of the way the player most likely built it, and every rule goes to the pattern's file,
+  so a data pack changes it with no code.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

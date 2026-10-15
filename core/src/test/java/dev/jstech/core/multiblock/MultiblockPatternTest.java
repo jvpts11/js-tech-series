@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multiblock;
 
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -193,5 +194,65 @@ class MultiblockPatternTest {
                 .build();
         assertEquals("#C", p.rows(0)[0]);
         assertEquals("CC", p.rows(0)[1]);
+    }
+
+    @Test
+    void limit_needsACountSomePlaceKeeps() {
+        var builder = MultiblockPattern.builder("misspelt")
+                .layer("#H")
+                .where('H', Place.of(BlockMatch.blocks("jsc:hatch")).counting("hatch", BlockMatch.blocks("jsc:hatch")))
+                .limit("hatches", 1, 2);
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Test
+    void valued_refusesOneNumberGatheredTwoWays() {
+        var builder = MultiblockPattern.builder("coils")
+                .layer("A#B")
+                .where('A', Place.of(BlockMatch.blocks("jsc:coil")).valued("heat", Map.of("jsc:coil", 1.0),
+                        Place.Gather.LEAST))
+                .where('B', Place.of(BlockMatch.blocks("jsc:coil")).valued("heat", Map.of("jsc:coil", 1.0),
+                        Place.Gather.SUM));
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Test
+    void repeat_refusesTheControllersSliceAndASecondSlice() {
+        assertThrows(IllegalStateException.class, () -> MultiblockPattern.builder("tower")
+                .layer("#").layer("C")
+                .where('C', BlockMatch.blocks("jsc:casing"))
+                .repeatLayer(0, 1, 4)
+                .build());
+        assertThrows(IllegalStateException.class, () -> MultiblockPattern.builder("tower")
+                .layer("#").layer("C")
+                .where('C', BlockMatch.blocks("jsc:casing"))
+                .repeatLayer(1, 1, 4)
+                .repeatLayer(1, 1, 4));
+        assertThrows(IllegalArgumentException.class, () -> new MultiblockPattern.Repeat(MultiblockPattern.AXIS_Y, 1,
+                new Limit(1, MultiblockPattern.Repeat.MOST_TIMES + 1)));
+    }
+
+    @Test
+    void inside_refusesALetterThatIsAlsoAPlace() {
+        assertThrows(IllegalArgumentException.class, () -> MultiblockPattern.builder("tank")
+                .layer("#x")
+                .where('x', BlockMatch.blocks("jsc:casing"))
+                .inside('x', InsideRule.empty()));
+        assertThrows(IllegalArgumentException.class, () -> MultiblockPattern.builder("tank")
+                .layer("#x")
+                .inside('x', InsideRule.empty())
+                .where('x', BlockMatch.blocks("jsc:casing")));
+    }
+
+    @Test
+    void orientations_growWithWhatThePatternDeclares() {
+        var plain = MultiblockPattern.builder("plain").layer("#").build();
+        var mirrored = MultiblockPattern.builder("mirrored").layer("#").mirrors().build();
+        var lying = MultiblockPattern.builder("lying").layer("#").liesDown().build();
+        var both = MultiblockPattern.builder("both").layer("#").mirrors().liesDown().build();
+        assertEquals(4, plain.orientations().size());
+        assertEquals(8, mirrored.orientations().size());
+        assertEquals(24, lying.orientations().size());
+        assertEquals(48, both.orientations().size());
     }
 }

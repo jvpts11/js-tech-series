@@ -8,12 +8,12 @@
 package dev.jstech.core.multiblock;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Algorithm for matching a {@link MultiblockPattern} against a world (abstracted as an {@link IBlockProvider}) at a candidate controller position.
+ * Matches a {@link MultiblockPattern} against a world (abstracted as an {@link IBlockProvider}) at a candidate
+ * controller position, in the older form a controller of four turns reads: the pattern's own {@link
+ * MultiblockPattern#check} says all a formed structure counts and gives.
  */
 public final class PatternMatcher {
 
@@ -21,96 +21,27 @@ public final class PatternMatcher {
         // Utility class, no instances.
     }
 
+    /**
+     * The match: every place of the structure but the controller's, its inside with them, and its ports; or the
+     * wrong place of the attempt that went furthest, the four turns tried first, north first. A structure found
+     * mirrored or lying down reads as north.
+     */
     public static IMatchResult match(
             MultiblockPattern pattern,
             IBlockProvider provider,
             long controllerEncodedPos
     ) {
-        // Try NORTH first; remember its failure for the debug-friendly fallback.
-        IMatchResult.Failure firstFailure = null;
-        for (Rotation rotation : Rotation.values()) {
-            IMatchResult result = matchRotation(pattern, provider, controllerEncodedPos, rotation);
-            if (result instanceof IMatchResult.Success) {
-                return result;
+        return switch (pattern.check(provider, controllerEncodedPos)) {
+            case ShapeMatch.Formed formed -> {
+                final List<Long> slaves = new ArrayList<>(formed.parts());
+                slaves.addAll(formed.inside());
+                yield new IMatchResult.Success(formed.orientation().rotation().orElse(Rotation.NORTH), slaves,
+                        formed.ports());
             }
-            if (firstFailure == null) {
-                firstFailure = (IMatchResult.Failure) result;
-            }
-        }
-        // No rotation matched. Return the NORTH-orientation failure for clarity.
-        return firstFailure;
-    }
-
-    private static IMatchResult matchRotation(
-            MultiblockPattern pattern,
-            IBlockProvider provider,
-            long controllerEncodedPos,
-            Rotation rotation
-    ) {
-        int[] cWorld = decodePosition(controllerEncodedPos);
-        int cwX = cWorld[0], cwY = cWorld[1], cwZ = cWorld[2];
-
-        List<Long> slavePositions = new ArrayList<>();
-        Map<Long, PortKind> ports = new HashMap<>();
-
-        for (int py = 0; py < pattern.sizeY(); py++) {
-            for (int pz = 0; pz < pattern.sizeZ(); pz++) {
-                for (int px = 0; px < pattern.sizeX(); px++) {
-                    char c = pattern.charAt(px, py, pz);
-
-                    // Pattern-local offset from controller.
-                    int relX = px - pattern.controllerX();
-                    int relY = py - pattern.controllerY();
-                    int relZ = pz - pattern.controllerZ();
-
-                    // Apply rotation in the horizontal plane (Y unaffected).
-                    int[] rotated = rotation.transform(relX, relZ);
-                    int worldDx = rotated[0];
-                    int worldDz = rotated[1];
-
-                    int worldX = cwX + worldDx;
-                    int worldY = cwY + relY;
-                    int worldZ = cwZ + worldDz;
-                    long worldEncoded = encodePosition(worldX, worldY, worldZ);
-
-                    if (c == MultiblockPattern.IGNORE_CHAR) {
-                        // Ignored slot, no validation, no slave registration.
-                        continue;
-                    }
-
-                    String actualBlockId = provider.blockAt(worldEncoded);
-                    if (actualBlockId == null) {
-                        actualBlockId = "minecraft:air";
-                    }
-
-                    if (c == MultiblockPattern.CONTROLLER_CHAR) {
-                        // Controller slot, must be at the controller's own
-                        continue;
-                    }
-
-                    // Regular slot, must satisfy the matcher.
-                    IBlockMatcher matcher = pattern.mapping().get(c);
-                    /*
-                     * Builder validation guarantees mapping is present, but
-                     * be defensive in case of ill-constructed patterns.
-                     */
-                    if (matcher == null || !matcher.matchesAt(provider, worldEncoded, actualBlockId)) {
-                        return new IMatchResult.Failure(
-                                relX, relY, relZ,
-                                c,
-                                actualBlockId
-                        );
-                    }
-                    slavePositions.add(worldEncoded);
-                    final PortKind port = pattern.ports().get(c);
-                    if (port != null) {
-                        ports.put(worldEncoded, port);
-                    }
-                }
-            }
-        }
-
-        return new IMatchResult.Success(rotation, slavePositions, ports);
+            case ShapeMatch.Failure failure -> new IMatchResult.Failure(failure.relX(), failure.relY(),
+                    failure.relZ(), failure.wanted().length() == 1 ? failure.wanted().charAt(0) : '?',
+                    failure.found());
+        };
     }
 
     // Position encoding (Phase 0 only)

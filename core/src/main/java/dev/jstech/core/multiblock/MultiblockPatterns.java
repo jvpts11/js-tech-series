@@ -37,7 +37,6 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The multiblock patterns of every mod, by id, as data: each file under {@code data/<namespace>/multiblock/} is one
@@ -59,33 +58,27 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class MultiblockPatterns {
 
-    private static final Codec<BlockMatch> MATCH = RecordCodecBuilder.<RawMatch>create(instance -> instance.group(
-                    Codec.STRING.listOf().optionalFieldOf("blocks", List.of()).forGetter(RawMatch::blocks),
-                    Codec.STRING.listOf().optionalFieldOf("tags", List.of()).forGetter(RawMatch::tags))
-            .apply(instance, RawMatch::new))
-            .flatXmap(raw -> raw.blocks().isEmpty() && raw.tags().isEmpty()
-                            ? DataResult.error(() -> "a slot names at least one block or tag")
-                            : DataResult.success(new BlockMatch(raw.blocks(), raw.tags())).flatMap(match -> {
-                                final String bad = unreadableId(match);
-                                return bad == null ? DataResult.success(match)
-                                        : DataResult.<BlockMatch>error(() -> "a slot names \"" + bad
-                                                + "\", which is not an id");
-                            }),
-                    match -> DataResult.success(new RawMatch(match.blocks(), match.tags())));
-
-    private static final Codec<Character> LETTER = Codec.STRING.flatXmap(
-            text -> text.length() == 1 ? DataResult.success(text.charAt(0))
-                    : DataResult.error(() -> "a key is one letter, not \"" + text + "\""),
-            letter -> DataResult.success(String.valueOf(letter)));
-
     /** A pattern as its file holds it. */
     public static final Codec<MultiblockPattern> CODEC = RecordCodecBuilder.<RawPattern>create(instance ->
                     instance.group(
                             Codec.STRING.optionalFieldOf("name", "multiblock").forGetter(RawPattern::name),
                             Codec.STRING.listOf().listOf().fieldOf("layers").forGetter(RawPattern::layers),
-                            Codec.unboundedMap(LETTER, MATCH).fieldOf("key").forGetter(RawPattern::key),
-                            Codec.unboundedMap(LETTER, StableCodecs.byName(PortKind.class))
-                                    .optionalFieldOf("ports", Map.of()).forGetter(RawPattern::ports))
+                            Codec.unboundedMap(ShapeCodecs.LETTER, ShapeCodecs.PLACE).fieldOf("key")
+                                    .forGetter(RawPattern::key),
+                            Codec.unboundedMap(ShapeCodecs.LETTER, StableCodecs.byName(PortKind.class))
+                                    .optionalFieldOf("ports", Map.of()).forGetter(RawPattern::ports),
+                            Codec.unboundedMap(Codec.STRING, ShapeCodecs.LIMIT).optionalFieldOf("limits", Map.of())
+                                    .forGetter(RawPattern::limits),
+                            Codec.BOOL.optionalFieldOf("mirrors", false).forGetter(RawPattern::mirrors),
+                            Codec.BOOL.optionalFieldOf("lies_down", false).forGetter(RawPattern::liesDown),
+                            ShapeCodecs.REPEAT.optionalFieldOf("repeat").forGetter(RawPattern::repeat),
+                            RecordCodecBuilder.<MultiblockPattern.Inside>create(inside -> inside.group(
+                                            ShapeCodecs.LETTER.fieldOf("letter")
+                                                    .forGetter(MultiblockPattern.Inside::letter),
+                                            ShapeCodecs.INSIDE.fieldOf("rule")
+                                                    .forGetter(MultiblockPattern.Inside::rule))
+                                    .apply(inside, MultiblockPattern.Inside::new)).optionalFieldOf("inside")
+                                    .forGetter(RawPattern::inside))
                             .apply(instance, RawPattern::new))
             .flatXmap(MultiblockPatterns::build, MultiblockPatterns::raw);
 
@@ -112,8 +105,8 @@ public final class MultiblockPatterns {
      *                                  which would otherwise leave the structure unable to form with no message
      */
     public static MultiblockPattern declare(final ResourceLocation id, final MultiblockPattern pattern) {
-        for (final IBlockMatcher matcher : pattern.mapping().values()) {
-            final String bad = matcher instanceof BlockMatch match ? unreadableId(match) : null;
+        for (final BlockMatch match : ShapeCodecs.matchesOf(pattern)) {
+            final String bad = ShapeCodecs.unreadableId(match);
             if (bad != null) {
                 throw new IllegalArgumentException("the multiblock pattern " + id + " names \"" + bad
                         + "\", which is not an id");
@@ -283,22 +276,6 @@ public final class MultiblockPatterns {
         }
     }
 
-    /* The first block or tag id of the match that cannot be read as an id, or null when all of them can. */
-    @Nullable
-    private static String unreadableId(final BlockMatch match) {
-        for (final String id : match.blocks()) {
-            if (ResourceLocation.tryParse(id) == null) {
-                return id;
-            }
-        }
-        for (final String id : match.tags()) {
-            if (ResourceLocation.tryParse(id) == null) {
-                return id;
-            }
-        }
-        return null;
-    }
-
     private static Block blockIn(final BlockGetter level, final long encodedPos) {
         return level.getBlockState(decode(encodedPos)).getBlock();
     }
@@ -320,6 +297,15 @@ public final class MultiblockPatterns {
             }
             raw.key().forEach(builder::where);
             raw.ports().forEach(builder::port);
+            raw.limits().forEach((count, limit) -> builder.limit(count, limit.least(), limit.most()));
+            if (raw.mirrors()) {
+                builder.mirrors();
+            }
+            if (raw.liesDown()) {
+                builder.liesDown();
+            }
+            raw.repeat().ifPresent(builder::repeat);
+            raw.inside().ifPresent(inside -> builder.inside(inside.letter(), inside.rule()));
             return DataResult.success(builder.build());
         } catch (final IllegalArgumentException | IllegalStateException wrong) {
             return DataResult.error(wrong::getMessage);
@@ -327,25 +313,23 @@ public final class MultiblockPatterns {
     }
 
     private static DataResult<RawPattern> raw(final MultiblockPattern pattern) {
-        final Map<Character, BlockMatch> key = new LinkedHashMap<>();
         for (final Map.Entry<Character, IBlockMatcher> slot : pattern.mapping().entrySet()) {
-            if (!(slot.getValue() instanceof BlockMatch match)) {
+            if (!(slot.getValue() instanceof BlockMatch)) {
                 return DataResult.error(() -> "the pattern " + pattern.name() + " fits '" + slot.getKey()
                         + "' with code, which no file can hold; declare it with BlockMatch");
             }
-            key.put(slot.getKey(), match);
         }
         final List<List<String>> layers = new ArrayList<>();
         for (int y = 0; y < pattern.sizeY(); y++) {
             layers.add(List.of(pattern.rows(y)));
         }
-        return DataResult.success(new RawPattern(pattern.name(), layers, key, pattern.ports()));
+        return DataResult.success(new RawPattern(pattern.name(), layers, pattern.places(), pattern.ports(),
+                pattern.limits(), pattern.mirrors(), pattern.liesDown(), pattern.repeat(), pattern.inside()));
     }
 
-    private record RawMatch(List<String> blocks, List<String> tags) {
-    }
-
-    private record RawPattern(String name, List<List<String>> layers, Map<Character, BlockMatch> key,
-                              Map<Character, PortKind> ports) {
+    private record RawPattern(String name, List<List<String>> layers, Map<Character, Place> key,
+                              Map<Character, PortKind> ports, Map<String, Limit> limits, boolean mirrors,
+                              boolean liesDown, Optional<MultiblockPattern.Repeat> repeat,
+                              Optional<MultiblockPattern.Inside> inside) {
     }
 }

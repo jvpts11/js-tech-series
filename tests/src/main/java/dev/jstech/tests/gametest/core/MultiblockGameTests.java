@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.core;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
@@ -15,13 +16,18 @@ import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.multiblock.BlockMatch;
+import dev.jstech.core.multiblock.IBlockMatcher;
 import dev.jstech.core.multiblock.IMatchResult;
+import dev.jstech.core.multiblock.InsidePart;
+import dev.jstech.core.multiblock.InsideRule;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
+import dev.jstech.core.multiblock.Place;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestFurnaceBlockEntity;
 import dev.jstech.tests.TestMultiblocks;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -65,6 +71,46 @@ public final class MultiblockGameTests {
                 "the layers come back as written; got " + back.rows(0)[0]);
         helper.assertTrue(back.ports().equals(TestMultiblocks.FURNACE.ports()),
                 "the ports come back by their letters; got " + back.ports());
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void pattern_writesEveryRuleToItsFileAndReadsItBack(final GameTestHelper helper) {
+        final MultiblockPattern rules = rulesPattern();
+        final JsonElement file = MultiblockPatterns.CODEC.encodeStart(JsonOps.INSTANCE, rules).getOrThrow();
+        final MultiblockPattern back = MultiblockPatterns.CODEC.parse(JsonOps.INSTANCE, file).getOrThrow();
+        helper.assertTrue(back.places().equals(rules.places()), "the places come back with their counts and numbers;"
+                + " got " + back.places());
+        helper.assertTrue(back.limits().equals(rules.limits()), "the limits come back; got " + back.limits());
+        helper.assertTrue(back.mirrors() && back.liesDown(), "the ways it is found come back");
+        helper.assertTrue(back.repeat().equals(rules.repeat()), "the repeated slice comes back; got " + back.repeat());
+        helper.assertTrue(back.inside().equals(rules.inside()), "the inside and its parts come back; got "
+                + back.inside());
+        final JsonObject wrongAxis = file.getAsJsonObject().deepCopy();
+        wrongAxis.getAsJsonObject("repeat").addProperty("axis", "w");
+        helper.assertTrue(MultiblockPatterns.CODEC.parse(JsonOps.INSTANCE, wrongAxis).error().isPresent(),
+                "a slice repeated across an axis there is not is refused");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void pattern_refusesToWriteACountMadeInCode(final GameTestHelper helper) {
+        final MultiblockPattern coded = MultiblockPattern.builder("coded").layer("#A")
+                .where('A', Place.of(BlockMatch.blocks("minecraft:hopper")).counting("hatch", IBlockMatcher.any()))
+                .build();
+        helper.assertTrue(MultiblockPatterns.CODEC.encodeStart(JsonOps.INSTANCE, coded).error().isPresent(),
+                "a count no file can hold is not written as something else");
+        boolean refused = false;
+        try {
+            MultiblockPatterns.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "bad_count"),
+                    MultiblockPattern.builder("bad_count").layer("#A")
+                            .where('A', Place.of(BlockMatch.blocks("minecraft:hopper"))
+                                    .counting("hatch", BlockMatch.tag("Not A Tag")))
+                            .build());
+        } catch (final IllegalArgumentException expected) {
+            refused = true;
+        }
+        helper.assertTrue(refused, "a count naming a tag that is not an id is refused when it is declared");
         helper.succeed();
     }
 
@@ -214,5 +260,32 @@ public final class MultiblockGameTests {
         block.put("pos", ints(x, y, z));
         block.putInt("state", state);
         return block;
+    }
+
+    /*
+     * A pattern using every rule a file holds: a counted place, a valued one with a tag, limits, mirroring and lying
+     * down, a repeated layer, and an inside whose parts give, give more beside logs, and need one another.
+     */
+    private static MultiblockPattern rulesPattern() {
+        return MultiblockPattern.builder("rules")
+                .layer("CHC", "C#C", "CCC")
+                .layer("GGG", "GxG", "GGG")
+                .layer("CCC", "CCC", "CCC")
+                .where('C', Place.of(BlockMatch.blocks("minecraft:iron_block")).valued("heat",
+                        Map.of("minecraft:iron_block", 2.0, "#minecraft:logs", 1.0), Place.Gather.LEAST))
+                .where('H', Place.of(new BlockMatch(List.of("minecraft:hopper"), List.of("minecraft:logs")))
+                        .counting("hatch", BlockMatch.blocks("minecraft:hopper")))
+                .where('G', BlockMatch.blocks("minecraft:glass"))
+                .inside('x', InsideRule.empty()
+                        .with(InsidePart.of("cell", BlockMatch.blocks("minecraft:gold_block")).gives("power", 5)
+                                .bonus("power", InsidePart.Neighbour.block(BlockMatch.tag("minecraft:logs")), 1))
+                        .with(InsidePart.of("cooler", BlockMatch.blocks("minecraft:ice"))
+                                .needs(InsidePart.Neighbour.part("cell"), 1)))
+                .limit("hatch", 1, 4)
+                .limit("cell", 0, 9)
+                .mirrors()
+                .liesDown()
+                .repeatLayer(1, 1, 6)
+                .build();
     }
 }
