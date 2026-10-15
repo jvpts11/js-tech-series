@@ -25,6 +25,8 @@ public enum MachineStatus implements IStableName {
     NO_ENERGY("no_energy", TextKey.of("jscore.machine.status.no_energy", "No energy"), Lamp.FAULT),
     UNDERVOLTAGE("undervoltage", TextKey.of("jscore.machine.status.undervoltage", "Undervoltage"), Lamp.FAULT),
     FUSE_BLOWN("fuse_blown", TextKey.of("jscore.machine.status.fuse_blown", "Fuse blown"), Lamp.FAULT),
+    /** Past the hottest it stands: stopped to cool. */
+    OVERHEATED("overheated", TextKey.of("jscore.machine.status.overheated", "Overheated"), Lamp.FAULT),
     DAMAGED("damaged", TextKey.of("jscore.machine.status.damaged", "Damaged"), Lamp.FAULT),
     OFF_BY_REDSTONE("off_by_redstone", TextKey.of("jscore.machine.status.off_by_redstone", "Off by redstone"),
             Lamp.WAIT),

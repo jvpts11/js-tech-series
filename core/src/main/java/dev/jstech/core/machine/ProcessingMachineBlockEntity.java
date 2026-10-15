@@ -13,8 +13,9 @@ import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.ValueField;
-import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.energy.PartialWork;
+import dev.jstech.core.heat.HeatBody;
+import dev.jstech.core.heat.HeatClimate;
 import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterStack;
@@ -536,15 +537,21 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return share(layout.firstOutput(), layout.firstUpgrade(), outputTanks);
     }
 
-    /** The temperature inside it, in kelvin: its dimension's air, unless it heats or cools itself. */
+    /**
+     * The temperature inside it, in kelvin: its casing's, for a machine that holds heat, and otherwise the air of the
+     * place it stands in.
+     */
     protected double temperature() {
-        return level == null ? ProcessingInput.AMBIENT_KELVIN
-                : DimensionRulesData.of(level).temperature() + 273.15;
+        final HeatBody casing = heatBody();
+        if (casing != null && casing.known()) {
+            return casing.temperature();
+        }
+        return level == null ? ProcessingInput.AMBIENT_KELVIN : HeatClimate.ambient(level, worldPosition);
     }
 
-    /** The pressure inside it, in kilopascals: its dimension's air, unless it holds its own. */
+    /** The pressure inside it, in kilopascals: the air of the place it stands in, unless it holds its own. */
     protected double pressure() {
-        return level == null ? ProcessingInput.AMBIENT_KPA : DimensionRulesData.of(level).pressure();
+        return level == null ? ProcessingInput.AMBIENT_KPA : HeatClimate.pressure(level, worldPosition);
     }
 
     /** What its upgrades do to it. */

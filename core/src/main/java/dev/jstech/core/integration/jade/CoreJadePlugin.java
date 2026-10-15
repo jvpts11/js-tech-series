@@ -8,6 +8,8 @@
 package dev.jstech.core.integration.jade;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.heat.HeatReadings;
+import dev.jstech.core.heat.IHeatHolder;
 import dev.jstech.core.look.IDescribed;
 import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.team.IOwned;
@@ -34,9 +36,9 @@ import snownee.jade.api.config.IPluginConfig;
 
 /**
  * The Core's bridge to Jade, which finds it by its annotation and only when Jade is installed: a block entity that
- * {@link IDescribed describes itself}, or that {@link IOwned is owned}, has its lines written by the server and shown
- * in Jade's tooltip under the block's name. A mod whose block entities say what they do the Core's way writes nothing
- * for Jade of its own.
+ * {@link IDescribed describes itself}, that {@link IOwned is owned} or that {@link IHeatHolder holds heat} has its
+ * lines written by the server and shown in Jade's tooltip under the block's name, its temperature among them. A mod
+ * whose block entities say what they do the Core's way writes nothing for Jade of its own.
  */
 @WailaPlugin(JsCore.MODID)
 public final class CoreJadePlugin implements IWailaPlugin {
@@ -65,6 +67,9 @@ public final class CoreJadePlugin implements IWailaPlugin {
             if (entity instanceof IDescribed described) {
                 described.describe(lines, accessor.showDetails());
             }
+            if (entity instanceof IHeatHolder holder && holder.heatBody() != null && holder.heatBody().known()) {
+                lines.add(HeatReadings.line(holder.heatBody().temperature()));
+            }
             if (entity instanceof IOwned owned && owned.ownership() != null
                     && accessor.getLevel().getServer() != null) {
                 final Ownership ownership = owned.ownership();
@@ -77,7 +82,8 @@ public final class CoreJadePlugin implements IWailaPlugin {
 
         @Override
         public boolean shouldRequestData(final BlockAccessor accessor) {
-            return accessor.getBlockEntity() instanceof IDescribed || accessor.getBlockEntity() instanceof IOwned;
+            return accessor.getBlockEntity() instanceof IDescribed || accessor.getBlockEntity() instanceof IOwned
+                    || accessor.getBlockEntity() instanceof IHeatHolder;
         }
 
         @Override

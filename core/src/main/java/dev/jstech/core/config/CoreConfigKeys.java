@@ -44,7 +44,7 @@ public final class CoreConfigKeys {
     public static final String ELEMENTS = "elements";
     /** The world's hazards: radiation, pollution and the rest. */
     public static final String HAZARDS = "hazards";
-    /** What heat does to the world: pipes that freeze, cold liquids that boil off. */
+    /** What heat does to the world: pipes that freeze, cold liquids that boil off, overheating, fires and burns. */
     public static final String HEAT = "heat";
 
     private static final int MAX_LATENCY_TICKS = 200;
@@ -258,6 +258,22 @@ public final class CoreConfigKeys {
                     + "place's heat leaks into its tank, the faster the worse the tank is insulated.")
             .named("Cold liquids boil off");
 
+    /** Whether a machine past its heat limit loses health. */
+    public static final ConfigKey<Boolean> HEAT_OVERHEATING_DAMAGES = ConfigKey.flag(
+            HEAT + ".overheating_damages", true)
+            .comment("Whether a machine hotter than it stands loses health while it is; it stops to cool either way.")
+            .named("Overheating damages machines");
+
+    /** Whether a block past 300 °C sets alight what burns against it. */
+    public static final ConfigKey<Boolean> HEAT_IGNITES = ConfigKey.flag(HEAT + ".ignites", true)
+            .comment("Whether a block hotter than 300 °C sets alight what burns against it, as fire spreads.")
+            .named("Hot blocks start fires");
+
+    /** Whether a block past 150 °C burns whoever stands against it. */
+    public static final ConfigKey<Boolean> HEAT_HOT_SURFACES_BURN = ConfigKey.flag(HEAT + ".hot_surfaces_burn", true)
+            .comment("Whether a block hotter than 150 °C burns whoever stands against it, unless they resist fire.")
+            .named("Hot surfaces burn");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -273,7 +289,8 @@ public final class CoreConfigKeys {
             .sectionComment(DIAGNOSTICS, "The watchdog, and what the server counts of what it sends each player.")
             .sectionComment(ELEMENTS, "Naming the elements discovered beyond the 118 known.")
             .sectionComment(HAZARDS, "The world's hazards: which of them there are.")
-            .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off.")
+            .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off, "
+                    + "machines that overheat, fires and burns.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
@@ -311,6 +328,9 @@ public final class CoreConfigKeys {
             .key(HAZARDS_NATURAL_RADIOACTIVITY, HazardBalance::setNaturalRadioactivity)
             .key(HEAT_PIPES_FREEZE, HeatBalance::setPipesFreeze)
             .key(HEAT_BOIL_OFF, HeatBalance::setBoilOff)
+            .key(HEAT_OVERHEATING_DAMAGES, HeatBalance::setOverheatingDamages)
+            .key(HEAT_IGNITES, HeatBalance::setIgnites)
+            .key(HEAT_HOT_SURFACES_BURN, HeatBalance::setHotSurfacesBurn)
             .build();
 
     private CoreConfigKeys() {

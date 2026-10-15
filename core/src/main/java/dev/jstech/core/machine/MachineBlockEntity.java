@@ -24,6 +24,11 @@ import dev.jstech.core.client.audio.SoundDirector;
 import dev.jstech.core.energy.EnergyFaults;
 import dev.jstech.core.energy.EnergyProtection;
 import dev.jstech.core.energy.EnergyStore;
+import dev.jstech.core.heat.HeatBody;
+import dev.jstech.core.heat.HeatMath;
+import dev.jstech.core.heat.HeatPorts;
+import dev.jstech.core.heat.HeatReadings;
+import dev.jstech.core.heat.IHeatHolder;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.id.StableNames;
 import dev.jstech.core.inventory.FaceEnergyStorage;
@@ -46,6 +51,7 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -74,7 +80,8 @@ import org.jetbrains.annotations.Nullable;
  * switch and its answer to redstone ({@link MachineControl}), its health, which explosions and burns take and repair
  * kits give back ({@link MachineHealth}), its owner and who else may use it, the values it lets the outside read and
  * set ({@link IMachineParameters}), what a comparator and any reader of sensors read of it ({@link ISignalOutput}),
- * and its sounds and particles as it starts, works and stops.
+ * its sounds and particles as it starts, works and stops, and, for a machine that makes heat, its casing's heat
+ * ({@link MachineHeat}), which stops it to cool past its limit.
  *
  * <p>A machine works only when it has something to do: each tick it is ticked through {@link #serverTick}, which
  * runs {@link #work} unless the machine rests, asleep, waiting on its inventory, its energy, its settings, its
@@ -82,7 +89,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @TextHolder
 public abstract class MachineBlockEntity extends SyncedBlockEntity implements IOwned, IMachineParameters,
-        ISignalOutput, IDescribed, IAudible, IFaceGate {
+        ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder {
 
     private final FieldItemHandler inventory;
     private final @Nullable FieldEnergyStorage energy;
@@ -107,6 +114,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private int lastStrength = -1;
     /* Whether the kit ticks it: a machine that ticks itself keeps no state of the kit's to tell. */
     private boolean ticked;
+    /* Its heat, for a machine that makes heat; declared from its constructor. */
+    private @Nullable MachineHeat heat;
 
     public static final TextKey PARAMETER_ON = TextKey.of("jscore.machine.parameter.on", "On");
     public static final TextKey PARAMETER_PROGRESS = TextKey.of("jscore.machine.parameter.progress", "Progress");
@@ -168,7 +177,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         this.control = MachineControl.in(fields());
         this.health = MachineHealth.in(fields());
         final PartField[] sidesField = new PartField[1];
-        this.sides = new MachineSides(this::resources, () -> {
+        this.sides = new MachineSides(this::sidesFor, () -> {
             sidesField[0].changed();
             if (this.level != null) {
                 this.level.invalidateCapabilities(this.worldPosition);
@@ -223,6 +232,16 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return health;
     }
 
+    /** Its heat, or none for a machine that makes none. */
+    public @Nullable MachineHeat heat() {
+        return heat;
+    }
+
+    @Override
+    public @Nullable HeatBody heatBody() {
+        return heat == null ? null : heat.body();
+    }
+
     /** What each of its faces does with each of its resources, and what it pushes and pulls by itself. */
     public MachineSides sides() {
         return sides;
@@ -241,7 +260,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
         final MachineResource resource = capability == Capabilities.ItemHandler.BLOCK ? MachineResource.ITEMS
                 : capability == Capabilities.FluidHandler.BLOCK ? MachineResource.FLUIDS
-                : capability == Capabilities.EnergyStorage.BLOCK ? MachineResource.ENERGY : null;
+                : capability == Capabilities.EnergyStorage.BLOCK ? MachineResource.ENERGY
+                : capability == HeatPorts.HEAT.block() ? MachineResource.HEAT : null;
         if (resource == null) {
             return whole;
         }
@@ -249,9 +269,11 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return switch (mode) {
             case NONE -> null;
             case BOTH -> whole;
+            // Heat flows by itself from hot to cold: a face open to it at all lets it through both ways.
             case IN, OUT -> switch (resource) {
                 case ITEMS -> (T) new FaceItemHandler((IItemHandler) whole, mode, ItemFilter.EVERYTHING);
                 case FLUIDS -> (T) new FaceFluidHandler((IFluidHandler) whole, mode, ItemFilter.EVERYTHING);
+                case HEAT -> whole;
                 default -> (T) new FaceEnergyStorage((IEnergyStorage) whole, mode);
             };
         };
@@ -349,6 +371,13 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
                     Math.max(1, power.capacity()), power::stored));
             declared.add(MachineParameter.read("health", PARAMETER_HEALTH, null, 0, MachineHealth.FULL,
                     health::health));
+            final MachineHeat holds = heat;
+            if (holds != null) {
+                // Read from freezing up to the hottest it stands, so a full signal says it is about to stop.
+                declared.add(MachineParameter.read("temperature", HeatReadings.TEMPERATURE, HeatReadings.KELVIN,
+                        HeatMath.ZERO_CELSIUS, Math.max(HeatMath.ZERO_CELSIUS + 1.0, holds.limit()),
+                        () -> holds.body().known() ? holds.body().temperature() : HeatMath.ZERO_CELSIUS));
+            }
             declareParameters(declared);
             parameters = List.copyOf(declared);
         }
@@ -565,6 +594,19 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return Set.of(MachineResource.ITEMS, MachineResource.ENERGY);
     }
 
+    /**
+     * Declares that it makes heat, as {@code declared} says: called once from its constructor. Its casing is then
+     * saved and sent to the players who see it, offered to its neighbours through the faces its Sides tab opens to
+     * heat, warmed by its work and cooled by the place around it; past its limit it stops to cool.
+     */
+    protected final void holdsHeat(final MachineHeat declared) {
+        if (heat != null) {
+            throw new IllegalStateException("a machine declares its heat once");
+        }
+        heat = Objects.requireNonNull(declared, "declared");
+        HeatPorts.keep(this, declared.body());
+    }
+
     /** The slots it pulls items into by itself; none unless it says. */
     protected IItemHandler itemsIn() {
         return EmptyItemHandler.INSTANCE;
@@ -606,6 +648,12 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
         capacityShown.set(power.capacity());
         power.tick();
+        if (heat != null) {
+            final int harm = heat.tick(running.get(), effect.heat());
+            if (harm > 0) {
+                damage(harm);
+            }
+        }
         if (health.damaged() && Math.floorMod(now + worldPosition.asLong(), MachineHealth.CRACKS_EVERY) == 0) {
             health.showCracks(server, worldPosition);
         }
@@ -639,7 +687,10 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
     }
 
-    /* What keeps it from working now, in the order a player is told: its switch, redstone, its fuse, its health. */
+    /*
+     * What keeps it from working now, in the order a player is told: its switch, redstone, its fuse, its heat, its
+     * health.
+     */
     private @Nullable MachineStatus stopped(final long now) {
         if (!control.on()) {
             return MachineStatus.SWITCHED_OFF;
@@ -649,6 +700,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
         if (power.fuseBlown()) {
             return MachineStatus.FUSE_BLOWN;
+        }
+        if (heat != null && heat.cutOut()) {
+            return MachineStatus.OVERHEATED;
         }
         if (power.burnt() || health.wrecked()) {
             return MachineStatus.DAMAGED;
@@ -695,5 +749,17 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private void readSignal(final ServerLevel server) {
         signalRead = true;
         control.hear(server.getBestNeighborSignal(worldPosition));
+    }
+
+    /* What its Sides tab sets: what it says goes in and out of it, and heat when it makes heat. */
+    private Set<MachineResource> sidesFor() {
+        final Set<MachineResource> declared = resources();
+        if (heat == null || declared.contains(MachineResource.HEAT)) {
+            return declared;
+        }
+        final Set<MachineResource> withHeat = EnumSet.noneOf(MachineResource.class);
+        withHeat.addAll(declared);
+        withHeat.add(MachineResource.HEAT);
+        return withHeat;
     }
 }

@@ -60,6 +60,8 @@ public final class JsTests {
         TestHeat.declare();
         // A cold store whose places a test chills, to prove what deep cold does.
         TestClimate.declare();
+        // A machine that makes heat and a thermocouple, to prove the machines' heat and its readings.
+        TestHotMachine.declare();
         // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
         TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.

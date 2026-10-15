@@ -97,6 +97,7 @@ Each tick the machine says what it is doing, a `MachineStatus`, which its screen
 | `NO_ENERGY` | FAULT | It has no energy for the tick. |
 | `UNDERVOLTAGE` | FAULT | A line of a class below its port's meets it: it does not start. |
 | `FUSE_BLOWN` | FAULT | Its fuse blew on overvoltage: it is shut down, unharmed, until a good fuse is put in. |
+| `OVERHEATED` | FAULT | It is past the hottest it stands: it stopped to cool, and loses health while it stays past it. |
 | `DAMAGED` | FAULT | It is damaged: it works slower, or not at all with no health left or a burnt port. |
 | `OFF_BY_REDSTONE` | WAIT | Its redstone mode keeps it off. |
 | `SWITCHED_OFF` | WAIT | Its ON/OFF switch is off. |
@@ -133,6 +134,24 @@ Layout.items(1, 1).withMatter(MatterState.GAS, 1, 1, 1_000, 10)   // a gas tank 
 Each state's lines find them through its capability (`MatterCapabilities.GAS`...): they fill the inputs and take
 from the outputs. `matter()` holds them.
 
+### Heat
+
+*Added 2026-10-15.*
+
+A machine that makes heat says so once, from its constructor: its casing, a body that holds heat
+([Heat](HEAT.md)), what its work gives off while it runs, and the hottest it stands.
+
+```java
+holdsHeat(MachineHeat.of(Thermal.of(steel, false), 0.5, 2_000, 600));   // half a cubic metre, 2 kW, up to 600 K
+```
+
+Its casing is then its **heat port**: saved, sent to the players who see it, warmed by its work (times its upgrades'
+`heat`), cooled by the place around it and offered through every face its Sides tab opens to heat, so a heat pipe, a
+radiator or a cooler beside it takes its heat away. Past its limit it stops (`OVERHEATED`) and loses health a second,
+more the hotter it is, unless the server turned that off; it starts again once ten kelvin cooler. Its recipes'
+temperature conditions read its casing's temperature, and a sensor reads it as its `temperature` value, from 0 °C to
+its limit.
+
 ### The switch and redstone
 
 `control()` holds the machine's ON/OFF switch, which turns it off whatever redstone says, and how it answers
@@ -161,8 +180,8 @@ public static final ItemEntry<RepairKitItem> REPAIR_KIT = CONTENT.item("repair_k
 
 A machine says which of its values the outside may read and set (`IMachineParameters`, offered on every side): how
 J's Industrial's Industrial Controller Computer and J's Computers' network command any machine, and what the
-network's tables show. Every machine declares `on` (set), `progress`, `input`, `output`, `energy` and `health`; a
-machine adds its own:
+network's tables show. Every machine declares `on` (set), `progress`, `input`, `output`, `energy` and `health`, one
+that makes heat `temperature`, and a machine adds its own:
 
 ```java
 @Override

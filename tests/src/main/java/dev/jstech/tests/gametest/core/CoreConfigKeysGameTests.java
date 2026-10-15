@@ -52,7 +52,8 @@ public final class CoreConfigKeysGameTests {
                         "protection.audit_entries", "protection.robots_per_player", "diagnostics.stall_millis",
                         "diagnostics.count_network", "diagnostics.warn_operators", "elements.discoverers_name",
                         "elements.require_ium", "elements.longest_name", "hazards.natural_radioactivity",
-                        "heat.pipes_freeze", "heat.boil_off"),
+                        "heat.pipes_freeze", "heat.boil_off", "heat.overheating_damages", "heat.ignites",
+                        "heat.hot_surfaces_burn"),
                 CoreConfigKeys.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the settings declared");
         same(helper, "jstech-balance.toml", CoreConfigKeys.FILE.fileName(), "the file's name");
         helper.succeed();

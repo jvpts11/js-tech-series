@@ -355,6 +355,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   leaks in, the slower the better the tank is insulated; a server can turn either off. Blocks of the world conduct
   heat as their real materials do, so wool keeps a hot block hot and metal draws its heat away, and mods can declare
   places with air of their own.
+- Machines that make heat: a machine's casing warms as it works and is its heat port, through the faces its
+  Sides tab opens to heat; past the hottest it stands it stops to cool and loses health, and starts again once cooler.
+  A block past 300 °C sets alight what burns against it, and one past 150 °C burns whoever stands against it; a
+  server can turn either off. Jade shows every hot block's temperature, and sensors read it as a thermometer or a
+  thermocouple does.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

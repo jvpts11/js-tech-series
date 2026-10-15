@@ -92,13 +92,18 @@ public final class LevelHeat {
             return false;
         }
         final HeatBody body = holder.heatBody();
-        final double ambient = HeatClimate.ambient(level, pos);
+        if (body == null) {
+            return false;
+        }
+        final HeatClimate.Air air = HeatClimate.air(level, pos);
+        final double ambient = air.kelvin();
         if (!body.known()) {
             body.set(ambient);
         }
         final long last = this.lastLook.containsKey(pos.asLong()) ? this.lastLook.get(pos.asLong()) : now - 1;
         final double seconds = Math.min(LONGEST_STEP, Math.max(1L, now - last) * HeatMath.TICK_SECONDS);
         this.lastLook.put(pos.asLong(), now);
+        final boolean hot = body.temperature() > HeatHazards.IGNITION;
         boolean balanced = true;
         double exposed = body.extraArea();
         double ground = 0.0;
@@ -108,8 +113,13 @@ public final class LevelHeat {
                 continue;
             }
             final IHeatPort port = HeatPorts.at(level, beside, face.getOpposite());
+            if (port == null && level.getBlockEntity(beside) instanceof IHeatHolder other
+                    && other.heatBody() != null) {
+                // A neighbour that holds heat but closes this face to it: neither conducts through it.
+                continue;
+            }
             if (port != null) {
-                if (Double.isNaN(port.temperature())) {
+                if (Double.isNaN(port.temperature()) || HeatPorts.port(holder, face) == null) {
                     continue;
                 }
                 if (Math.abs(port.temperature() - body.temperature()) > BALANCE) {
@@ -127,20 +137,23 @@ public final class LevelHeat {
                 continue;
             }
             final BlockState state = level.getBlockState(beside);
+            if (hot) {
+                HeatHazards.ignite(level, beside, state, face.getOpposite(), seconds);
+            }
             if (state.isAir() || !state.getFluidState().isEmpty() || !state.isSolid()) {
                 exposed += 1.0;
             } else {
                 ground += HeatMath.conductance(body.conductivity(), BlockConductivity.of(state));
             }
         }
-        final double pressure = HeatClimate.pressure(level, pos);
-        final double watts = HeatMath.convection(body.temperature(), ambient, pressure, exposed)
+        final double watts = HeatMath.convection(body.temperature(), ambient, air.kiloPascals(), exposed)
                 + HeatMath.radiation(body.temperature(), ambient, body.emissivity(), exposed)
                 + ground * (body.temperature() - ambient);
         final double lost = HeatMath.loss(body.temperature(), body.capacity(), ambient, watts, seconds);
         if (lost != 0.0) {
             body.exchange(-lost);
         }
+        HeatHazards.burn(level, pos, body.temperature());
         final boolean losing = exposed > 0.0 || ground > 0.0;
         return !balanced || losing && Math.abs(body.temperature() - ambient) > BALANCE;
     }

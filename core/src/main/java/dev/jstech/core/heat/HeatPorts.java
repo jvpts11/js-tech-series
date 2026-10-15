@@ -8,6 +8,7 @@
 package dev.jstech.core.heat;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.blockentity.IFaceGate;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.capability.CapabilityKind;
@@ -86,6 +87,15 @@ public final class HeatPorts {
     private static void register(final RegisterCapabilitiesEvent event, final BlockEntityType<?> type) {
         final BlockEntityType<BlockEntity> any = (BlockEntityType<BlockEntity>) type;
         event.registerBlockEntity(HEAT.block(), any, (entity, side) ->
-                entity instanceof IHeatHolder holder ? holder.heatBody() : null);
+                entity instanceof IHeatHolder holder ? port(holder, side) : null);
+    }
+
+    /**
+     * The heat {@code holder} offers through {@code side}: its body, unless it holds none or lets no heat through
+     * that face.
+     */
+    public static @Nullable IHeatPort port(final IHeatHolder holder, final @Nullable Direction side) {
+        final HeatBody body = holder.heatBody();
+        return body != null && holder instanceof IFaceGate gate ? gate.throughFace(HEAT.block(), side, body) : body;
     }
 }

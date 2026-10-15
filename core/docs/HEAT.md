@@ -270,6 +270,51 @@ boilOff.vent(level, pos, tank, gasTank, HeatMath.TICK_SECONDS);   // its gas int
 What boils off goes into the block's tank of gas while it has room, and into the air beyond. It is a setting of
 consequence: `heat.boil_off` in the balance file turns it off.
 
+## Machines that make heat
+
+*Added 2026-10-15.*
+
+A machine of the Core's kit that makes heat declares its casing, what its work gives off and the hottest it stands
+(`MachineHeat`, [Machines](MACHINES.md)). Its casing is its heat port, offered through the faces its Sides tab opens
+to heat; past its limit it stops to cool and loses health while it stays past it, and starts again ten kelvin cooler.
+Taking its heat away is what radiators, heat pipes and coolers are for.
+
+## Too hot to touch
+
+*Added 2026-10-15.*
+
+A block that holds heat does what a hot thing does to what is around it (`HeatHazards`):
+
+- **past 300 °C**, about where wood catches by itself, it sets alight what burns against it, as the game's fire
+  spreads, and only where fire spreads at all;
+- **past 150 °C** it burns whoever stands against it or on it, more the hotter it is, with the Core's heat damage
+  (`jscore:heat`, a kind of fire), which resisting fire stops.
+
+Each is a setting of consequence in the balance file: `heat.ignites`, `heat.hot_surfaces_burn`, and
+`heat.overheating_damages` for machines past their limit.
+
+## Reading it
+
+*Added 2026-10-15.*
+
+Jade shows the temperature of every block that holds heat, in kelvin and in degrees Celsius. A sensor reads it as
+a reading of its own (`HeatReadings`), over the span its kind of instrument has:
+
+| Instrument | Reads from | to |
+| --- | --- | --- |
+| `HeatReadings.thermometer(kelvin)` | −40 °C | 100 °C |
+| `HeatReadings.thermocouple(kelvin)` | −200 °C | 1,350 °C, as a type K thermocouple |
+
+```java
+public List<Reading> readings() {   // a thermocouple against the block under it
+    final IHeatPort below = HeatPorts.at(level, worldPosition.below(), Direction.UP);
+    return below == null ? List.of() : List.of(HeatReadings.thermocouple(below.temperature()));
+}
+```
+
+Like every reading it speaks redstone, 0 at the bottom of its span to 15 at the top, and is read by anything that
+reads sensors.
+
 ## It costs nothing at rest
 
 *Added 2026-10-15.*
@@ -294,3 +339,7 @@ loaded.
   turn `heat.pipes_freeze` off.
 - **A wall of a mod's insulation does nothing.** The block is not in the `jscore:thermal_conductivity` data map, so
   it conducts as stone.
+- **A machine keeps stopping as `OVERHEATED`.** What it gives off is more than leaves it: open a face of its Sides tab
+  to heat and put a radiator, a heat pipe or a cooler there, or take off upgrades that make it give off more.
+- **A hot block starts no fire.** Fire does not spread in that world (the `doFireTick` rule), or the server turned
+  `heat.ignites` off.
