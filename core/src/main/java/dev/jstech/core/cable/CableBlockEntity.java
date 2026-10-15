@@ -13,6 +13,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.Neighbours;
 import dev.jstech.core.grid.CoreGrids;
+import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.grid.IGridMover;
@@ -76,6 +77,8 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     private final PartField wiresField = fields().part(Bundle.KEY, this.bundle).save().toClient();
     private final PartField partsField = fields().part(FaceParts.KEY, this.parts).save().toClient();
     private final PartField linksField = fields().part(LINKS, new LinksPart()).save().toClient();
+    private final CableEnds ends = new CableEnds(this::endsChanged);
+    private final PartField endsField = fields().part(CableEnds.KEY, this.ends).save().toClient();
     private boolean inGrids;
     private @Nullable BundleShape shape;
     private @Nullable VoxelShape voxels;
@@ -163,6 +166,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         this.bundle.remove(type);
         this.links[wire.slot().id()] = 0;
         this.savedNetworks.remove(wire.slot());
+        this.ends.clear(wire.slot());
         if (isEmpty() && this.level != null && !this.level.isClientSide()) {
             // A cable block never stands empty: with its last piece taken out, it goes.
             this.level.removeBlock(this.worldPosition, false);
@@ -219,6 +223,34 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             }
         }
         return through;
+    }
+
+    /** How the wire of {@code type} meets what lies beyond {@code face}; the default when the block holds none. */
+    public CableEnd end(final CableType type, final Direction face) {
+        final Wire wire = this.bundle.of(type);
+        return wire == null ? CableEnd.DEFAULT : this.ends.get(wire.slot(), face);
+    }
+
+    /** How the wire in {@code lane} meets what lies beyond {@code face}. */
+    public CableEnd end(final Lane lane, final Direction face) {
+        return this.ends.get(lane, face);
+    }
+
+    /**
+     * Sets how the wire of {@code type} meets what lies beyond {@code face}, on the server; false when the block holds
+     * none or the end was set so already. An end turned off joins and plugs into nothing; the line's mover hears of
+     * every change before its next tick.
+     */
+    public boolean setEnd(final CableType type, final Direction face, final CableEnd end) {
+        final Wire wire = this.bundle.of(type);
+        if (wire == null || !(this.level instanceof ServerLevel server) || !this.ends.set(wire.slot(), face, end)) {
+            return false;
+        }
+        refreshLinks(true);
+        CoreGrids.mover(server, type.grid()).ifPresent(IGridMover::tapsChanged);
+        setChanged();
+        Neighbours.portsChanged(server, this.worldPosition);
+        return true;
     }
 
     /** Where the wire of {@code type} stands in its grid. */
@@ -518,7 +550,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         for (final Direction face : Direction.values()) {
             final int bit = 1 << face.get3DDataValue();
             final BlockPos next = this.worldPosition.relative(face);
-            if (this.parts.has(face)) {
+            if (this.parts.has(face) || this.ends.get(wire.slot(), face).mode() == EndMode.OFF) {
                 continue;
             }
             if (!server.isLoaded(next)) {
@@ -531,6 +563,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 if (server.getBlockEntity(next) instanceof CableBlockEntity other) {
                     final Wire there = other.bundle.of(wire.type());
                     if (there != null && wire.joins(there) && !other.parts.has(face.getOpposite())
+                            && other.ends.get(there.slot(), face.getOpposite()).mode() != EndMode.OFF
                             && other.roomFor(wire.type(), face.getOpposite())) {
                         linked |= bit;
                     }
@@ -568,6 +601,10 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         final int faces = WireShape.select(type.runsStraight(), type.mostJoins(), linked & FACE_BITS,
                 before & FACE_BITS);
         return faces | (linked & (faces << PLUG_SHIFT));
+    }
+
+    private void endsChanged() {
+        this.endsField.changed();
     }
 
     private void bundleChanged() {

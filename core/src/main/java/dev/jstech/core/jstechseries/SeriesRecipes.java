@@ -10,6 +10,7 @@ package dev.jstech.core.jstechseries;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.jstechseries.tools.SharedTools;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
@@ -25,7 +26,7 @@ import net.neoforged.neoforge.common.conditions.NotCondition;
 /**
  * The recipes of the series' shared content, of the game's own materials, so a mod used alone can make it. The basic
  * cable and battery are J's Industrial's first cable and energy bank when it is installed, and it gives them its own
- * industrial recipes, so these stand only without it; the converters' stand always.
+ * industrial recipes, so these stand only without it; the wrench's and the converters' stand always.
  */
 public final class SeriesRecipes extends RecipeProvider {
 
@@ -53,6 +54,11 @@ public final class SeriesRecipes extends RecipeProvider {
                 .define('W', Items.WATER_BUCKET)
                 .unlockedBy("has_copper_ingot", has(Items.COPPER_INGOT))
                 .save(alone, id("lead_acid_battery_bank"));
+        // An open-ended spanner of iron, its jaws apart at the top.
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, SharedTools.WRENCH.get())
+                .pattern("I I").pattern(" I ").pattern(" I ")
+                .define('I', Items.IRON_INGOT)
+                .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT)).save(output, id("basic_wrench"));
         converters(output);
     }
 

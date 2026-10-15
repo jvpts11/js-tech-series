@@ -8,16 +8,19 @@
 package dev.jstech.core.matter;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableParts;
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalPort;
 import dev.jstech.core.diagnostic.Section;
-import dev.jstech.core.energy.internal.ProportionalSplitter;
 import dev.jstech.core.fluid.CoreFluidTags;
 import dev.jstech.core.grid.CoreGrids;
+import dev.jstech.core.grid.EndMode;
+import dev.jstech.core.grid.EndRouter;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.IGridMover;
+import dev.jstech.core.inventory.NamedSubject;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MatterState;
@@ -25,12 +28,12 @@ import dev.jstech.core.transfer.Batch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,11 +56,12 @@ import org.jetbrains.annotations.Nullable;
  * it holds), between the blocks it meets: the Core's stores of that state, a chemical mod's stores through its bridge
  * (each chemical in the state its bridge says), and, for gases, the tanks of mods that keep gases as fluids.
  *
- * <p>The rounds are the fluid grid's: what gives and would not take it back (a machine's output) feeds what takes and
- * gives nothing of it (a machine's input); what is left fills what both takes and gives it (a tank); and a tank feeds
- * what the inputs still want. Shares follow what is wanted, and each move takes out and puts in as one batch, so
- * nothing is lost on the way. A material linked to a chemical or a fluid ({@link MatterBridges}) passes between them
- * as the same thing; one with no link moves only between stores of its own kind.
+ * <p>The ends share as the fluid grid's do ({@link EndRouter}): what gives and would not take it back (a machine's
+ * output) feeds what takes and gives nothing of it (a machine's input); what is left fills what both takes and gives it
+ * (a tank); and a tank feeds what the inputs still want, each end by its mode, priority, rate, channel and filter. Each
+ * move takes out and puts in as one batch, so nothing is lost on the way. A material linked to a chemical or a fluid
+ * ({@link MatterBridges}) passes between them as the same thing; one with no link moves only between stores of its own
+ * kind.
  */
 public final class LevelMatter implements IGridMover {
 
@@ -69,6 +73,7 @@ public final class LevelMatter implements IGridMover {
     private long builtVersion = -1L;
     private long builtTaps = -1L;
     private long taps;
+    private long turn;
 
     /** What the debug screen calls the time the grids of the states of matter take to move a tick's matter. */
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "matter_grid");
@@ -160,8 +165,11 @@ public final class LevelMatter implements IGridMover {
         }
         final long[] moved = new long[this.parts.size()];
         for (int i = 0; i < moved.length; i++) {
-            moved[i] = this.parts.get(i).tick();
+            final Part part = this.parts.get(i);
+            moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turn,
+                    substance -> true, LevelMatter::move);
         }
+        this.turn++;
         this.lastTick = moved;
     }
 
@@ -174,15 +182,28 @@ public final class LevelMatter implements IGridMover {
                 rate = Math.min(rate, wire.runTooLong() ? 0L : wire.type().throughput());
                 this.partOfWire.put(wire.number(), this.parts.size());
             }
-            final Set<Long> seen = new HashSet<>();
-            final List<Supplier<@Nullable IStore>> ends = new ArrayList<>();
+            final Set<String> seen = new HashSet<>();
+            final List<MatterEnd> ends = new ArrayList<>();
             for (final CableParts.Plug plug : found.plugs()) {
-                if (seen.add(plug.at().asLong())) {
-                    ends.add(end(level, plug.at(), plug.face()));
+                if (plug.end().mode() != EndMode.OFF && seen.add(plug.at().asLong() + "/" + plug.face())) {
+                    ends.add(new MatterEnd(plug.at().asLong(), plug.end(), end(level, plug.at(), plug.face())));
                 }
             }
             this.parts.add(new Part(rate, ends));
         }
+    }
+
+    /* Moves {@code amount} of {@code substance} from one end's store to the other's, all or nothing. */
+    private static long move(final EndRouter.IEnd<Substance> from, final EndRouter.IEnd<Substance> to,
+                             final Substance substance, final long amount) {
+        final IStore source = ((MatterEnd) from).store().get();
+        final IStore target = ((MatterEnd) to).store().get();
+        if (source == null || target == null) {
+            return 0L;
+        }
+        final Batch.Outcome outcome = new Batch().add(new Step(source, substance, amount, false))
+                .add(new Step(target, substance, amount, true)).commit();
+        return outcome.done() ? amount : 0L;
     }
 
     /* The block at {@code at} as a store of this state, found again each tick through cached capabilities. */
@@ -216,15 +237,18 @@ public final class LevelMatter implements IGridMover {
     /* A block a part meets, seen as a store of the line's state whatever mod made it. */
     private interface IStore {
 
-        /* What it would give first, up to {@code most}; null for nothing. */
+        /* What it would give first of what {@code wanted} lets through, up to {@code most}; null for nothing. */
         @Nullable
-        Offer offer(long most);
+        Offer offer(long most, Predicate<Substance> wanted);
 
         /* Puts in up to {@code amount}; how much it took, or would. */
         long take(Substance substance, long amount, boolean simulate);
 
         /* Takes out up to {@code amount}; how much came out, or would. */
         long give(Substance substance, long amount, boolean simulate);
+
+        /* How much of {@code substance} it holds. */
+        long holding(Substance substance);
     }
 
     /*
@@ -274,9 +298,30 @@ public final class LevelMatter implements IGridMover {
     private record MatterStore(IMatterHandler handler) implements IStore {
 
         @Override
-        public @Nullable Offer offer(final long most) {
-            return this.handler.extractAny(most, true).map(stack -> new Offer(Substance.of(stack.material()),
-                    stack.amount())).orElse(null);
+        public @Nullable Offer offer(final long most, final Predicate<Substance> wanted) {
+            for (int tank = 0; tank < this.handler.tanks(); tank++) {
+                final Optional<MatterStack> held = this.handler.stack(tank);
+                if (held.isEmpty() || !wanted.test(Substance.of(held.get().material()))) {
+                    continue;
+                }
+                final long amount = this.handler.extract(held.get().material(), most, true);
+                if (amount > 0) {
+                    return new Offer(Substance.of(held.get().material()), amount);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public long holding(final Substance substance) {
+            long held = 0L;
+            for (int tank = 0; tank < this.handler.tanks(); tank++) {
+                final Optional<MatterStack> stack = this.handler.stack(tank);
+                if (stack.isPresent() && stack.get().material() == substance.material()) {
+                    held += stack.get().amount();
+                }
+            }
+            return held;
         }
 
         @Override
@@ -295,17 +340,26 @@ public final class LevelMatter implements IGridMover {
     private record ChemicalStore(IChemicalPort port, MatterState state) implements IStore {
 
         @Override
-        public @Nullable Offer offer(final long most) {
+        public @Nullable Offer offer(final long most, final Predicate<Substance> wanted) {
             for (final ResourceLocation chemical : this.port.available()) {
                 if (ChemicalBridges.stateOf(chemical).orElse(null) != this.state) {
                     continue;
                 }
+                final Substance substance = Substance.chemical(chemical, this.state);
+                if (!wanted.test(substance)) {
+                    continue;
+                }
                 final long amount = this.port.drain(chemical, most, true);
                 if (amount > 0) {
-                    return new Offer(Substance.chemical(chemical, this.state), amount);
+                    return new Offer(substance, amount);
                 }
             }
             return null;
+        }
+
+        @Override
+        public long holding(final Substance substance) {
+            return give(substance, Long.MAX_VALUE, true);
         }
 
         @Override
@@ -328,19 +382,36 @@ public final class LevelMatter implements IGridMover {
     private record GasFluidStore(IFluidHandler handler) implements IStore {
 
         @Override
-        public @Nullable Offer offer(final long most) {
+        public @Nullable Offer offer(final long most, final Predicate<Substance> wanted) {
             for (int tank = 0; tank < this.handler.getTanks(); tank++) {
                 final FluidStack held = this.handler.getFluidInTank(tank);
                 if (held.isEmpty() || !held.is(CoreFluidTags.GASES)) {
                     continue;
                 }
+                final Substance substance = Substance.fluid(BuiltInRegistries.FLUID.getKey(held.getFluid()));
+                if (!wanted.test(substance)) {
+                    continue;
+                }
                 final int amount = this.handler.drain(held.copyWithAmount(clamp(most)),
                         IFluidHandler.FluidAction.SIMULATE).getAmount();
                 if (amount > 0) {
-                    return new Offer(Substance.fluid(BuiltInRegistries.FLUID.getKey(held.getFluid())), amount);
+                    return new Offer(substance, amount);
                 }
             }
             return null;
+        }
+
+        @Override
+        public long holding(final Substance substance) {
+            final Fluid gas = gas(substance);
+            long held = 0L;
+            for (int tank = 0; tank < this.handler.getTanks(); tank++) {
+                final FluidStack in = this.handler.getFluidInTank(tank);
+                if (gas != Fluids.EMPTY && in.getFluid() == gas) {
+                    held += in.getAmount();
+                }
+            }
+            return held;
         }
 
         @Override
@@ -418,92 +489,73 @@ public final class LevelMatter implements IGridMover {
         }
     }
 
-    /* One connected part of the grid: how much it moves in a tick, and the blocks it meets. */
-    private static final class Part {
+    /* One connected part of the grid: how much it moves in a tick, and the ends it plugs into. */
+    private record Part(long rate, List<MatterEnd> ends) {
+    }
 
-        private final long rate;
-        private final List<Supplier<@Nullable IStore>> ends;
+    /* One end of a part: the block, as a store of the line's state, through the face it meets, as the end is set. */
+    private record MatterEnd(long key, CableEnd end, Supplier<@Nullable IStore> store)
+            implements EndRouter.IEnd<Substance> {
 
-        private Part(final long rate, final List<Supplier<@Nullable IStore>> ends) {
-            this.rate = rate;
-            this.ends = ends;
+        @Override
+        public EndMode mode() {
+            return this.end.mode();
         }
 
-        /* Moves this tick's matter, and says how many millibuckets moved. */
-        private long tick() {
-            if (this.rate <= 0 || this.ends.size() < 2) {
-                return 0L;
-            }
-            final List<IStore> stores = new ArrayList<>(this.ends.size());
-            for (final Supplier<@Nullable IStore> end : this.ends) {
-                final IStore store = end.get();
-                if (store != null) {
-                    stores.add(store);
-                }
-            }
-            final long[] budget = {this.rate};
-            for (final IStore from : stores) {
-                give(from, stores, false, false, budget);
-            }
-            for (final IStore from : stores) {
-                give(from, stores, false, true, budget);
-            }
-            for (final IStore from : stores) {
-                give(from, stores, true, false, budget);
-            }
-            return this.rate - budget[0];
+        @Override
+        public int priority() {
+            return this.end.priority();
         }
 
-        /*
-         * Gives what {@code from} offers to the stores of the round that take it: from one that would not take it back
-         * (or, in the last round, from one that would) to ones that would not give it (or, in the second round, to
-         * ones that would).
-         */
-        private static void give(final IStore from, final List<IStore> stores, final boolean fromStore,
-                                 final boolean toStores, final long[] budget) {
-            if (budget[0] <= 0) {
-                return;
-            }
-            final Offer offer = from.offer(budget[0]);
-            if (offer == null || takes(from, offer.substance()) != fromStore) {
-                return;
-            }
-            final Map<Long, Long> wants = new LinkedHashMap<>();
-            for (int i = 0; i < stores.size(); i++) {
-                final IStore to = stores.get(i);
-                if (to == from || !takes(to, offer.substance()) || gives(to, offer.substance()) != toStores) {
-                    continue;
-                }
-                final long want = to.take(offer.substance(), offer.amount(), true);
-                if (want > 0) {
-                    wants.put((long) i, want);
-                }
-            }
-            if (wants.isEmpty()) {
-                return;
-            }
-            final Map<Long, Long> shares = ProportionalSplitter.split(offer.amount(), wants, Map.of());
-            for (final Long index : wants.keySet()) {
-                final long amount = Math.min(budget[0], shares.getOrDefault(index, 0L));
-                if (amount <= 0) {
-                    continue;
-                }
-                final Batch.Outcome outcome = new Batch()
-                        .add(new Step(from, offer.substance(), amount, false))
-                        .add(new Step(stores.get(index.intValue()), offer.substance(), amount, true))
-                        .commit();
-                if (outcome.done()) {
-                    budget[0] -= amount;
-                }
-            }
+        @Override
+        public long rate() {
+            return this.end.rate();
         }
 
-        private static boolean takes(final IStore store, final Substance substance) {
-            return store.take(substance, 1L, true) > 0;
+        @Override
+        public int channel() {
+            return this.end.channel();
         }
 
-        private static boolean gives(final IStore store, final Substance substance) {
-            return store.give(substance, 1L, true) > 0;
+        @Override
+        public boolean allows(final Substance substance) {
+            return this.end.filter().allows(new NamedSubject(substance.id().toString()));
+        }
+
+        @Override
+        public long keep(final Substance substance) {
+            return this.end.keep(new NamedSubject(substance.id().toString()));
+        }
+
+        @Override
+        public EndRouter.@Nullable Offer<Substance> offer(final long most, final Predicate<Substance> wanted) {
+            final IStore found = this.store.get();
+            final Offer offer = found == null ? null : found.offer(most, wanted);
+            return offer == null ? null : new EndRouter.Offer<>(offer.substance(), offer.amount());
+        }
+
+        @Override
+        public boolean gives(final Substance substance) {
+            final IStore found = this.store.get();
+            return found != null && found.give(substance, 1L, true) > 0;
+        }
+
+        @Override
+        public boolean takes(final Substance substance) {
+            final IStore found = this.store.get();
+            return found != null && found.take(substance, 1L, true) > 0;
+        }
+
+        @Override
+        public long take(final Substance substance, final long most) {
+            final IStore found = this.store.get();
+            return found == null || most <= 0 ? 0L : found.take(substance, most, true);
+        }
+
+        @Override
+        public long holding(final Substance substance) {
+            final IStore found = this.store.get();
+            return found == null ? 0L : found.holding(substance);
         }
     }
 }

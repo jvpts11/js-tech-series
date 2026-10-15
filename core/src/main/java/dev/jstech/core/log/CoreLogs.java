@@ -28,6 +28,10 @@ public final class CoreLogs {
     public static final LogSystem FLUIDS = LogSystems.declare(JsCore.MODID, "fluids");
     /** The grids of the other states of matter in each dimension: gases, slurries, plasma and the rest. */
     public static final LogSystem MATTER = LogSystems.declare(JsCore.MODID, "matter");
+    /** The item grid of each dimension, moving items along the lines that carry them. */
+    public static final LogSystem ITEMS = LogSystems.declare(JsCore.MODID, "items");
+    /** The lines that group the machines they join, each run a group. */
+    public static final LogSystem GROUPS = LogSystems.declare(JsCore.MODID, "groups");
     /** The screens of the mods: their files, their styles and their layout. */
     public static final LogSystem INTERFACE = LogSystems.declare(JsCore.MODID, "interface");
     /** The manuals: their pages, scenes and places. */

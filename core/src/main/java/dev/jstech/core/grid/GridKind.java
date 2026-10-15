@@ -54,6 +54,8 @@ public final class GridKind {
     public static final GridKind PLASMA = declare(core("plasma"), GridPolicies.matter(MatterState.PLASMA));
     /** The conduits of exotic matter, between containments. */
     public static final GridKind EXOTIC = declare(core("exotic"), GridPolicies.matter(MatterState.EXOTIC));
+    /** The lines that carry items, between inventories. */
+    public static final GridKind ITEM = declare(core("item"), GridPolicies.ITEMS);
 
     private GridKind(final ResourceLocation id, final IGridPolicy policy) {
         this.id = id;

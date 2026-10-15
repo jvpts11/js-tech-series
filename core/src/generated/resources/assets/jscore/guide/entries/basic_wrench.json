@@ -1,0 +1,99 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.basic_wrench.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.basic_wrench.for"
+    },
+    {
+      "type": "table",
+      "caption": "jscore.guide.basic_wrench.table1",
+      "rows": [
+        [
+          {
+            "words": "jscore.guide.basic_wrench.table1_1"
+          },
+          {
+            "words": "jscore.guide.basic_wrench.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.basic_wrench.table1_2"
+          },
+          {
+            "words": "jscore.guide.basic_wrench.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.basic_wrench.table1_3"
+          },
+          {
+            "words": "jscore.guide.basic_wrench.value1_3"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.basic_wrench.table1_4"
+          },
+          {
+            "words": "jscore.guide.basic_wrench.value1_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.basic_wrench.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.basic_wrench.use1",
+        "jscore.guide.basic_wrench.use2",
+        "jscore.guide.basic_wrench.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.basic_wrench.fix1",
+          "problem": "jscore.guide.basic_wrench.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:basic_wrench",
+  "id": "jscore:basic_wrench",
+  "items": [
+    "jscore:basic_wrench"
+  ],
+  "order": 10,
+  "section": "cables",
+  "title": "jscore.guide.basic_wrench.title"
+}

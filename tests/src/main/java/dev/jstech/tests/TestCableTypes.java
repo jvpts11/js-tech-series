@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests;
 
+import dev.jstech.core.cable.BreachRules;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.connect.Connection;
@@ -21,9 +22,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * Cables only the tests lay, registered with the Core as any mod's cables are: a long-distance cable, six pixels thick,
- * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, two pipes, a plain
- * one and one that holds pressure, a gas line and a slurry line. Each is laid by a vanilla item and drawn in a jacket and plug the series
- * already has, so the test mod declares no item, texture or model of its own.
+ * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, three pipes, a plain
+ * one, one that holds pressure and one of rubber that bursts when something too hot reaches it, a gas line, a slurry
+ * line, a line of items and a line that groups the machines it joins. Each is laid by a vanilla item and drawn in a
+ * jacket and plug the series already has, so the test mod declares no item, texture or model of its own.
  */
 public final class TestCableTypes {
 
@@ -33,6 +35,9 @@ public final class TestCableTypes {
     public static final int PRESSURE_HOTTEST = 2_000;
     public static final long GAS_RATE = 500L;
     public static final long SLURRY_RATE = 200L;
+    public static final long ITEM_RATE = 8L;
+    public static final int RUBBER_HOTTEST = 500;
+    public static final int RUBBER_BURSTS_AFTER = 20;
     public static final DeferredRegister<CableType> CABLES = DeferredRegister.create(CoreCables.KEY, JsTests.MODID);
     /** A grid of the test mod's own, which shares energy by the Core's policy, as a mod's line of a voltage class. */
     public static final GridKind OWN_POWER = GridKind.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
@@ -92,6 +97,36 @@ public final class TestCableTypes {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/crafting"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/crafting"))
                     .build(() -> Items.CLAY_BALL));
+
+    /** A line of items: eight items a tick. */
+    public static final DeferredHolder<CableType, CableType> ITEM_LINE = CABLES.register("item_line",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "item_line")))
+                    .grid(GridKind.ITEM).alone().carries(ITEM_RATE, 0)
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/crafting"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/crafting"))
+                    .build(() -> Items.HOPPER));
+    /** A grid of the test mod's own whose runs group the machines they join. */
+    public static final GridKind GROUPS = GridKind.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+            "groups"), GridPolicies.GROUP);
+    /** A line that carries nothing and groups the machines it joins. */
+    public static final DeferredHolder<CableType, CableType> GROUP_LINE = CABLES.register("group_line",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "group_line")))
+                    .grid(GROUPS).alone()
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/hbw"))
+                    .build(() -> Items.LEAD));
+    /** A pipe of rubber, which stands nothing above 500 K and bursts after a second of something hotter, spilling it. */
+    public static final DeferredHolder<CableType, CableType> RUBBER_PIPE = CABLES.register("rubber_pipe",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "rubber_pipe")))
+                    .grid(GridKind.FLUID).alone().carries(PLAIN_RATE, 0).withstands(0, RUBBER_HOTTEST)
+                    .beyond(BreachRules.breaksAfter(RUBBER_BURSTS_AFTER,
+                            (level, breach) -> BreachRules.spill(level, breach.at(), breach.what())))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
+                    .build(() -> Items.KELP));
 
     private TestCableTypes() {
     }

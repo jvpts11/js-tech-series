@@ -231,8 +231,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   ever lost; broken, it keeps what it holds in the item it drops, and placed again it holds it again. Antihydrogen
   joins the catalogue, and a material's mark says whether it is antimatter. A matter tank can be set to what it holds,
   as one placed from its item is.
+- The ends of a line: each end where a pipe or a line of items plugs into a block is set on its own: normal, push,
+  pull or off; a priority, the highest filling first and ends of one priority taking turns; a rate; one of sixteen
+  channels; and a filter by item, tag, mod or components, or by fluid, whose amounts keep that much in the block and
+  no more. Every default keeps a pipe from an output to an input working as before; an end offers the first thing some
+  other end would take, so nothing holds the line up.
+- Lines of items: a grid that moves items between inventories as the pipes move fluids, for a mod's tubes.
+- Lines that group: a line that carries nothing, each run of it a group of the machines it joins, which hear
+  the group they are in, as research computers or a ground station's devices; dyed runs stay groups of their own.
+- Beyond a line's limits: a pipe's rule says what follows when a fluid it is not made for reaches it, by
+  default nothing; the Core gives a rule that breaks the pipe after a while and lets the liquid spill.
+- The Basic Wrench: the series' shared wrench, in the common wrench tag; on a cable it goes round the modes of
+  the end it points at, and says which it set. Items can be declared in tags of their own, besides their tab's.
 
 ### Changed
+- Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
+  industrial control link; telemetry becomes a line of its own, which J's Space lays.
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
   Energy, the shared content) gets a package of its own, `dev.jstech.core.jstechseries`, and the rest of the Core,
   the platform any technology mod can build on, never reaches into it. What is new of the series is born there; what

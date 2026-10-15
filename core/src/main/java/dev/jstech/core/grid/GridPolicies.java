@@ -11,6 +11,7 @@ import dev.jstech.core.energy.Energy;
 import dev.jstech.core.energy.EnergyClass;
 import dev.jstech.core.energy.LevelEnergy;
 import dev.jstech.core.fluid.LevelFluids;
+import dev.jstech.core.inventory.LevelItems;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.LevelMatter;
 import dev.jstech.core.matter.MatterCapabilities;
@@ -22,8 +23,9 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 
 /**
  * The Core's policies, which a mod's grid takes unless it brings its own: energy, shared by what each machine asks;
- * fluids, from outputs to inputs and tanks; each other state of matter the same way; the data network, which carries a
- * network's identity; and nothing, for a grid that only joins.
+ * fluids, from outputs to inputs and tanks; each other state of matter, and items, the same way; groups, for a line
+ * that joins machines to work together; the data network, which carries a network's identity; and nothing, for a grid
+ * that only joins.
  */
 public final class GridPolicies {
 
@@ -50,6 +52,35 @@ public final class GridPolicies {
         @Override
         public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
             return level.getCapability(Capabilities.FluidHandler.BLOCK, pos, face) != null;
+        }
+    };
+
+    /** Items, as the game's item handler holds them: each line plugs into any block with an inventory. */
+    public static final IGridPolicy ITEMS = new IGridPolicy() {
+        @Override
+        public Optional<IGridMover> mover(final GridKind kind) {
+            return Optional.of(new LevelItems(kind));
+        }
+
+        @Override
+        public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
+            return level.getCapability(Capabilities.ItemHandler.BLOCK, pos, face) != null;
+        }
+    };
+
+    /**
+     * Nothing carried: each connected run groups the machines it joins ({@link LineGroups}), which plug in by offering
+     * {@link LineGroups#MEMBER}.
+     */
+    public static final IGridPolicy GROUP = new IGridPolicy() {
+        @Override
+        public Optional<IGridMover> mover(final GridKind kind) {
+            return Optional.of(new LineGroups(kind));
+        }
+
+        @Override
+        public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
+            return LineGroups.plugsInto(level, pos, face);
         }
     };
 

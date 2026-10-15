@@ -15,6 +15,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 
@@ -29,14 +30,21 @@ public final class ItemEntry<I extends Item> extends DeferredItem<I> {
     private final IItemLook look;
     private final ItemState state;
     private final List<Default<?>> defaults;
+    private final List<TagKey<Item>> tags;
 
     ItemEntry(final ResourceLocation id, final String english, final IItemLook look, final ItemState state,
-              final List<Default<?>> defaults) {
+              final List<Default<?>> defaults, final List<TagKey<Item>> tags) {
         super(ResourceKey.create(Registries.ITEM, id));
         this.english = english;
         this.look = look;
         this.state = state;
         this.defaults = List.copyOf(defaults);
+        this.tags = List.copyOf(tags);
+    }
+
+    /** The item tags it was declared in, besides those of its tab. */
+    public List<TagKey<Item>> declaredTags() {
+        return tags;
     }
 
     /** What the item is called in English. */

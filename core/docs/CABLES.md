@@ -75,6 +75,8 @@ public static final GridKind MEDIUM_VOLTAGE = GridKind.declare(rl("medium_voltag
 | `GridPolicies.ENERGY` | energy, each machine its share of what it asks | any block that offers the game's energy on that face |
 | `GridPolicies.FLUID` | fluids, from outputs to inputs and tanks | any block that holds fluids on that face |
 | `GridPolicies.matter(state)` | a gas, a supercritical fluid, a slurry, plasma or exotic matter, as fluids are shared | any block that keeps that state on that face, the Core's or another mod's through its bridge |
+| `GridPolicies.ITEMS` | items, from outputs to inputs and inventories, as fluids are shared | any block with an inventory on that face |
+| `GridPolicies.GROUP` | nothing: each connected run groups the machines it joins ([Lines that group](#lines-that-group)) | any block that offers `LineGroups.MEMBER` on that face |
 | `GridPolicies.NETWORK` | the identity of a data network | (the data network's own devices) |
 | `GridPolicies.JOINS_ONLY` | nothing: the grid only joins what it joins, for its mod to read | (its mod's own devices) |
 
@@ -84,6 +86,55 @@ state, so lines of different states never join ([Energy and resources](ENERGY_AN
 An `IGridPolicy` of a mod's own gives an `IGridMover`, which shares what its grid carries in one dimension each tick
 after the machines have ticked, and says what its wires plug into. Each dimension makes one mover for each grid,
 the first time it is asked (`CoreGrids.mover(level, kind)`).
+
+The Core's grid of items is `GridKind.ITEM`; a mod declares the lines that carry items on it.
+
+## The ends of a line
+
+*Added 2026-10-15.*
+
+Where a wire plugs into a block is an **end**, and for lines that carry items, liquids and gases each end is set on its
+own (`CableEnd`); every setting's default keeps a mod's own design, so a pipe from a machine's output to another's input
+just works.
+
+| Setting | What it does |
+| --- | --- |
+| mode | `NORMAL`: as the block says, its output gives, its input takes, a tank both. `PUSH`: the line only fills it. `PULL`: the line only draws from it. `OFF`: the end plugs into nothing, and joins no cable beside it |
+| priority | from -99 to 99: the highest fills first, and ends of one priority take turns, each tick the next served first |
+| rate | the most it gives or takes a tick; 0 for no limit but the line's |
+| channel | from 0 to 15: an end gives and takes only on its own, so one line does the work of several |
+| filter | an `ItemFilter`, by item, tag, mod or components, or a fluid's or a material's id; a rule's amount, in an `ONLY` filter, is how much to keep in the block, filling it no further |
+
+A line shares among its ends as `EndRouter` says: outputs feed inputs, then fill the tanks, and the tanks feed what the
+inputs still want; two tanks never pour into each other unless an end pulls from one, and the same for two chests. An
+end offers the first thing some other end would take, so what nobody wants never holds up what comes after it.
+
+```java
+cable.setEnd(MyCables.PIPE.get(), Direction.EAST, CableEnd.DEFAULT.withMode(EndMode.PULL).withPriority(5));
+```
+
+The series' Basic Wrench goes round an end's modes; `CableEnds.facing` tells which end a player points at, for a
+wrench of a mod's own, and `EndTexts.set` says what was set.
+
+## Lines that group
+
+*Added 2026-10-15.*
+
+A line on a grid of `GridPolicies.GROUP` carries nothing: each connected run is a **group** of the machines it joins,
+and its mod says what the group does (research computers pooling their work, the devices of a ground station). A
+machine joins by offering `LineGroups.MEMBER` on the face the line meets, and hears `joined(group)` and `left(kind)`;
+a mod hears every group that is new, changed or dissolved with `LineGroups.listen(kind, listener)`, and reads them
+with `LineGroups.of(level, kind)`. A dyed run is a group of its own beside a run of another colour.
+
+## Beyond a line's limits
+
+*Added 2026-10-15.*
+
+A pipe is made for some temperatures and marks; when a fluid it is not made for reaches it, its cable's rule says what
+follows, each tick it is so (`CableType.Builder.beyond`). By default it holds and carries none of it.
+`BreachRules.breaksAfter(ticks, then)` breaks the wire once it has been reached that long in a row and lets its mod say
+what follows; `BreachRules.spill` lets a liquid out where the pipe was. `LineBreach` says where, which cable, why (too
+hot, too cold, a mark it is not made for) and what reached it.
 
 ## Rules of joining
 
@@ -119,7 +170,9 @@ plain block model facing north; the block's model is rebuilt only when a part st
 
 - **"two lines in one lane".** Your line took a lane another line owns. Pick a free one.
 - **The cable is refused as declared.** It has neither a lane nor `alone()`, or no jacket or plug, or a thickness
-  over 8.
+  over 6 in a lane or over 12 alone.
+- **Two tanks on one pipe never share.** Both take and give, so neither is an output: set the end of the one to empty
+  to pull.
 - **Two of your cables side by side join when they should not.** Same line, same generation, colours agree: dye
   them apart, or give them different lines.
 - **A run carries nothing at its far end.** It is longer than its range.

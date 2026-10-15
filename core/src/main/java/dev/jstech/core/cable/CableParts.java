@@ -59,7 +59,7 @@ public final class CableParts {
                 if ((plugged & 1 << face.get3DDataValue()) != 0 && level.isLoaded(at)
                         && !(level.getBlockEntity(at) instanceof CableBlockEntity)) {
                     plugs.computeIfAbsent(root, key -> new ArrayList<>())
-                            .add(new Plug(number, at, face.getOpposite()));
+                            .add(new Plug(number, at, face.getOpposite(), cable.end(lane, face)));
                 }
             }
         }
@@ -96,12 +96,13 @@ public final class CableParts {
     }
 
     /**
-     * Where a wire plugs into a block.
+     * Where a wire plugs into a block, and how that end of it is set.
      *
      * @param wire the wire's number in the grid
      * @param at   the block it plugs into
      * @param face the face of that block it meets
+     * @param end  how the end meets it
      */
-    public record Plug(long wire, BlockPos at, Direction face) {
+    public record Plug(long wire, BlockPos at, Direction face, CableEnd end) {
     }
 }

@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Item filters over the game's stacks: whether a stack passes, and how a filter is saved and sent, each rule by its
  * kind ({@code exact} with the item and its components, {@code fuzzy} with the item's id, {@code tag} with the tag's
- * id), in order.
+ * id, {@code mod} with the mod's id), in order.
  */
 public final class ItemFilters {
 
@@ -37,6 +37,10 @@ public final class ItemFilters {
             ResourceLocation.CODEC.fieldOf("tag").forGetter(rule -> ResourceLocation.parse(rule.tag())),
             AMOUNT.optionalFieldOf("amount", 0L).forGetter(ItemFilter.Tag::amount)
     ).apply(instance, (tag, amount) -> new ItemFilter.Tag(tag.toString(), amount)));
+    private static final MapCodec<ItemFilter.Mod> MOD = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.STRING.fieldOf("mod").forGetter(ItemFilter.Mod::mod),
+            AMOUNT.optionalFieldOf("amount", 0L).forGetter(ItemFilter.Mod::amount)
+    ).apply(instance, ItemFilter.Mod::new));
     private static final Codec<ItemFilter.Rule> RULE = Codec.STRING.partialDispatch("kind",
             rule -> DataResult.success(kindOf(rule)), ItemFilters::codecOf);
 
@@ -64,6 +68,7 @@ public final class ItemFilters {
             case ItemFilter.Exact exact -> "exact";
             case ItemFilter.Fuzzy fuzzy -> "fuzzy";
             case ItemFilter.Tag tag -> "tag";
+            case ItemFilter.Mod mod -> "mod";
         };
     }
 
@@ -72,6 +77,7 @@ public final class ItemFilters {
             case "exact" -> DataResult.success(EXACT);
             case "fuzzy" -> DataResult.success(FUZZY);
             case "tag" -> DataResult.success(TAG);
+            case "mod" -> DataResult.success(MOD);
             default -> DataResult.error(() -> "no kind of filter rule is called " + kind);
         };
     }

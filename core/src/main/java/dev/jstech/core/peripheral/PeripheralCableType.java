@@ -8,12 +8,12 @@
 package dev.jstech.core.peripheral;
 
 /**
- * The three peripheral cable systems of the mod.
+ * The point-to-point cable systems: a computer's peripherals, and the industrial control link between a controller and
+ * its machine. Telemetry is no longer one of them: it is a line of its own, which groups what it joins.
  */
 public enum PeripheralCableType {
 
     COMPUTING(16, "peripheral_cable"),
-    TELEMETRY(256, "telemetry_cable"),
     INDUSTRIAL_CONTROL(8, "industrial_peripheral_cable");
 
     private final int maxLength;

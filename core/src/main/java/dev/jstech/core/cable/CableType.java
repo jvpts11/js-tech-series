@@ -68,6 +68,7 @@ public final class CableType {
     private final @Nullable TextKey what;
     private final @Nullable HardwareEra era;
     private final @Nullable TextKey renewal;
+    private final IBreachRule breach;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -95,6 +96,7 @@ public final class CableType {
         this.what = builder.what;
         this.era = builder.era;
         this.renewal = builder.renewal;
+        this.breach = builder.breach;
     }
 
     /** What the cable is for, as its item's tooltip says it; empty for a cable that says nothing. */
@@ -163,6 +165,16 @@ public final class CableType {
     /** What it is made for as a pipe: the temperatures it stands and the marks it takes. */
     public PipeLimits pipe() {
         return this.pipe;
+    }
+
+    /** What befalls a wire of it that something it is not made for reaches; by default it holds. */
+    public IBreachRule breach() {
+        return this.breach;
+    }
+
+    /** Whether something it is not made for does more than stay where it is: its rule is not to hold. */
+    public boolean breaks() {
+        return this.breach != BreachRules.HOLDS;
     }
 
     /** Whether it runs only straight: in a block it joins along one axis, so it never turns a corner. */
@@ -244,11 +256,12 @@ public final class CableType {
         private @Nullable TextKey what;
         private @Nullable HardwareEra era;
         private @Nullable TextKey renewal;
+        private IBreachRule breach = BreachRules.HOLDS;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
-        /* No thicker than half a block, so a junction box still holds it. */
-        private static final int MOST_PIXELS = 8;
+        /* No thicker than three quarters of a block: a pipe alone in its block, as pipes are in every mod. */
+        private static final int MOST_PIXELS = 12;
 
         private Builder(final Connection line) {
             this.line = Objects.requireNonNull(line, "line");
@@ -274,10 +287,14 @@ public final class CableType {
             return this;
         }
 
-        /** How thick it is, in pixels; four unless said. */
+        /**
+         * How thick it is, in pixels; four unless said. A cable that takes a lane is at most six, so wires side by side
+         * never meet; one alone in its block, as a pipe, at most twelve.
+         */
         public Builder thickness(final int pixels) {
             if (pixels <= 0 || pixels > MOST_PIXELS) {
-                throw new IllegalArgumentException("a cable is between 1 and 8 pixels thick, not " + pixels);
+                throw new IllegalArgumentException("a cable is between 1 and " + MOST_PIXELS + " pixels thick, not "
+                        + pixels);
             }
             this.thickness = pixels;
             return this;
@@ -319,6 +336,16 @@ public final class CableType {
         /** As a pipe, it is made for fluids marked {@code mark}: a gas, a corrosive fluid. */
         public Builder takes(final TagKey<Fluid> mark) {
             this.takes.add(Objects.requireNonNull(mark, "mark"));
+            return this;
+        }
+
+        /**
+         * What befalls a wire of it that something it is not made for reaches, each tick it does: a pipe too hot or
+         * too cold for what reaches it, or not made for its mark ({@link BreachRules}); unless said, it holds and
+         * carries none of it.
+         */
+        public Builder beyond(final IBreachRule rule) {
+            this.breach = Objects.requireNonNull(rule, "rule");
             return this;
         }
 

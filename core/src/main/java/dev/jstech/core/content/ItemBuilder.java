@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public final class ItemBuilder<I extends Item> {
     private final String id;
     private final Function<Item.Properties, ? extends I> factory;
     private final List<ItemEntry.Default<?>> defaults = new ArrayList<>();
+    private final List<TagKey<Item>> tags = new ArrayList<>();
     private @Nullable String english;
     private IItemLook look = IItemLook.FLAT;
     private ContentTab.@Nullable Section section;
@@ -59,6 +61,12 @@ public final class ItemBuilder<I extends Item> {
     /** The section of a tab it is shown in. */
     public ItemBuilder<I> tab(final ContentTab.Section inSection) {
         this.section = inSection;
+        return this;
+    }
+
+    /** An item tag it is in, besides those of its tab: a common tag other mods know it by, as c:tools/wrench. */
+    public ItemBuilder<I> tag(final TagKey<Item> in) {
+        this.tags.add(Objects.requireNonNull(in, "in"));
         return this;
     }
 
@@ -119,7 +127,7 @@ public final class ItemBuilder<I extends Item> {
         final ItemEntry<I> entry = new ItemEntry<>(
                 content.itemRegister().register(id, () -> factory.apply(alone ? new Item.Properties().stacksTo(1)
                         : new Item.Properties())).getId(),
-                english, look, state, defaults);
+                english, look, state, defaults, tags);
         if (section != null) {
             section.add(entry);
         }

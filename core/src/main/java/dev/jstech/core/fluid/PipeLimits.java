@@ -7,9 +7,11 @@
  */
 package dev.jstech.core.fluid;
 
+import dev.jstech.core.cable.LineBreach;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
@@ -51,6 +53,23 @@ public record PipeLimits(int coldest, int hottest, Set<TagKey<Fluid>> takes) {
             }
         }
         return true;
+    }
+
+    /** Why it does not carry {@code fluid}: too hot, too cold, or a mark it is not made for; none when it carries it. */
+    public Optional<LineBreach.Reason> beyond(final Fluid fluid) {
+        final int temperature = fluid.getFluidType().getTemperature();
+        if (temperature > this.hottest) {
+            return Optional.of(LineBreach.Reason.TOO_HOT);
+        }
+        if (temperature < this.coldest) {
+            return Optional.of(LineBreach.Reason.TOO_COLD);
+        }
+        for (final TagKey<Fluid> mark : MARKS) {
+            if (fluid.defaultFluidState().is(mark) && !this.takes.contains(mark)) {
+                return Optional.of(LineBreach.Reason.NOT_MADE_FOR);
+            }
+        }
+        return Optional.empty();
     }
 
     /**

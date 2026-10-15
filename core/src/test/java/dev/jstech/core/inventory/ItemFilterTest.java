@@ -45,6 +45,19 @@ class ItemFilterTest {
     }
 
     @Test
+    void mod_namesEverythingInItsNamespace() {
+        final ItemFilter filter = ItemFilter.only(new ItemFilter.Mod("minecraft", 0));
+        final Thing modded = new Thing("jscore:basic_wrench", Set.of(), "");
+
+        assertTrue(filter.allows(IRON));
+        assertFalse(filter.allows(modded));
+        assertTrue(ItemFilter.only(new ItemFilter.Mod("jscore", 0)).allows(modded));
+        assertTrue(ItemFilter.only(new ItemFilter.Mod("minecraft", 0)).allows(new NamedSubject("stone")),
+                "an id with no namespace is the game's own");
+        assertThrows(IllegalArgumentException.class, () -> new ItemFilter.Mod("Not A Mod", 0));
+    }
+
+    @Test
     void exact_tellsAWornItemFromANewOne() {
         final ItemFilter filter = ItemFilter.only(new ItemFilter.Exact(SWORD, 0));
 

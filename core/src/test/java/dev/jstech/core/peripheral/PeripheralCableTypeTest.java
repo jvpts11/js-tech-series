@@ -21,14 +21,6 @@ class PeripheralCableTypeTest {
     }
 
     @Test
-    void telemetry_hasMaxLength256() {
-        // Telemetry cable has a long range for satellite control links.
-        assertEquals(256, PeripheralCableType.TELEMETRY.maxLength());
-        assertEquals("telemetry_cable",
-                PeripheralCableType.TELEMETRY.translationKey());
-    }
-
-    @Test
     void industrialControl_hasMaxLength8() {
         // Industrial control cable has a very short range.
         assertEquals(8, PeripheralCableType.INDUSTRIAL_CONTROL.maxLength());
@@ -37,8 +29,8 @@ class PeripheralCableTypeTest {
     }
 
     @Test
-    void exactlyThreeTypes_existInTheMod() {
-        // There are exactly three peripheral cable systems.
-        assertEquals(3, PeripheralCableType.values().length);
+    void exactlyTwoTypes_existInTheMod() {
+        // Telemetry left the point-to-point systems for a line of its own.
+        assertEquals(2, PeripheralCableType.values().length);
     }
 }

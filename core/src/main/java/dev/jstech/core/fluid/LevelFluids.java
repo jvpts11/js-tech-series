@@ -8,25 +8,34 @@
 package dev.jstech.core.fluid;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableParts;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.LineBreach;
 import dev.jstech.core.diagnostic.Section;
-import dev.jstech.core.energy.internal.ProportionalSplitter;
 import dev.jstech.core.grid.CoreGrids;
+import dev.jstech.core.grid.EndMode;
+import dev.jstech.core.grid.EndRouter;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.GridPlace;
+import dev.jstech.core.grid.GridPlaces;
 import dev.jstech.core.grid.IGridMover;
+import dev.jstech.core.inventory.FluidSubject;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.transfer.Batch;
 import dev.jstech.core.transfer.HandlerSteps;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
@@ -36,16 +45,15 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The fluid grid of one dimension as it moves fluids: each connected part of the grid with the blocks its pipes plug
+ * The fluid grid of one dimension as it moves fluids: each connected part of the grid with the ends its pipes plug
  * into. Pipes are passive: a part moves, each tick, at most what its slowest pipe carries (the pressure it holds), and
  * only the fluids every pipe of it is made for, which the rest leave where they are.
  *
- * <p>A block that gives a fluid and would not take it back (a machine's output) feeds the blocks that take it and give
- * nothing of it (a machine's input); what it has left fills the blocks that both take and give it (a tank); and a tank
- * feeds what the inputs still want. Each share is in proportion to what is wanted, and each move takes out and puts in
- * as one batch, so nothing is lost on the way. Two tanks alone never pour into each other; a tank whose face lets
- * fluid only out gives through that face like a machine's output. The parts are worked out again only when the grid's
- * shape changes or a pipe comes to meet another block.
+ * <p>The ends share what flows as {@link EndRouter} says: a machine's output feeds the inputs, then fills the tanks,
+ * and the tanks feed what the inputs still want; each end by its mode, priority, rate, channel and filter. Each move
+ * takes out and puts in as one batch, so nothing is lost on the way. Two tanks alone never pour into each other unless
+ * an end pulls from one. The parts are worked out again only when the grid's shape changes, a pipe comes to meet
+ * another block, or an end is set.
  */
 public final class LevelFluids implements IGridMover {
 
@@ -56,6 +64,7 @@ public final class LevelFluids implements IGridMover {
     private long builtVersion = -1L;
     private long builtTaps = -1L;
     private long taps;
+    private long turn;
 
     /** What the debug screen calls the time the fluid grid takes to move a tick's fluids. */
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "fluid_grid");
@@ -74,7 +83,7 @@ public final class LevelFluids implements IGridMover {
                 : OptionalLong.of(this.lastTick[part]);
     }
 
-    /** A pipe came to meet a block or stopped meeting one: the parts are worked out again before the next tick. */
+    /** A pipe came to meet a block, stopped meeting one, or an end was set: worked out again before the next tick. */
     @Override
     public void tapsChanged() {
         this.taps++;
@@ -107,129 +116,194 @@ public final class LevelFluids implements IGridMover {
         }
         final long[] moved = new long[this.parts.size()];
         for (int i = 0; i < moved.length; i++) {
-            moved[i] = this.parts.get(i).tick();
+            final Part part = this.parts.get(i);
+            moved[i] = part.rate <= 0 ? 0L : EndRouter.route(part.ends, part.rate, this.turn,
+                    part.carries, LevelFluids::move);
+            if (!part.breakable.isEmpty()) {
+                reach(level, part);
+            }
         }
+        this.turn++;
         this.lastTick = moved;
+    }
+
+    /*
+     * Tells each pipe of {@code part} that breaks what reaches it that it is not made for: what an end offers that the
+     * part does not carry reaches every pipe of it that cannot take it.
+     */
+    private static void reach(final ServerLevel level, final Part part) {
+        for (final FluidEnd end : part.ends) {
+            if (!end.mode().draws()) {
+                continue;
+            }
+            final EndRouter.Offer<FluidStack> offer = end.offer(Math.max(1L, part.rate), fluid -> true);
+            if (offer == null || part.carries.test(offer.resource())) {
+                continue;
+            }
+            final FluidStack fluid = offer.resource();
+            final String what = BuiltInRegistries.FLUID.getKey(fluid.getFluid()).toString();
+            for (final Breakable pipe : part.breakable) {
+                pipe.type().pipe().beyond(fluid.getFluid()).ifPresent(reason -> pipe.type().breach().exposed(level,
+                        new LineBreach(pipe.at(), pipe.type(), reason, what), level.getGameTime()));
+            }
+        }
     }
 
     private void build(final ServerLevel level, final Grid grid) {
         this.parts.clear();
         this.partOfWire.clear();
+        final GridPlaces places = CoreGrids.places(level);
         for (final CableParts.Part found : CableParts.of(level, grid)) {
             long rate = Long.MAX_VALUE;
             PipeLimits limits = null;
+            final List<Breakable> breakable = new ArrayList<>();
             for (final CableParts.WireAt wire : found.wires()) {
                 rate = Math.min(rate, wire.runTooLong() ? 0L : wire.type().throughput());
                 limits = limits == null ? wire.type().pipe() : limits.and(wire.type().pipe());
                 this.partOfWire.put(wire.number(), this.parts.size());
+                final GridPlace place = places.place(wire.number());
+                if (wire.type().breaks() && place != null) {
+                    breakable.add(new Breakable(BlockPos.of(place.pos()), wire.type()));
+                }
             }
             if (limits == null) {
                 continue;
             }
-            final Set<Long> seen = new HashSet<>();
-            final List<BlockCapabilityCache<IFluidHandler, @Nullable Direction>> ends = new ArrayList<>();
+            final Set<String> seen = new HashSet<>();
+            final List<FluidEnd> ends = new ArrayList<>();
             for (final CableParts.Plug plug : found.plugs()) {
-                if (seen.add(plug.at().asLong())) {
-                    ends.add(BlockCapabilityCache.create(Capabilities.FluidHandler.BLOCK, level, plug.at(),
-                            plug.face()));
+                if (plug.end().mode() != EndMode.OFF && seen.add(plug.at().asLong() + "/" + plug.face())) {
+                    ends.add(new FluidEnd(plug.at(), plug.end(), BlockCapabilityCache.create(
+                            Capabilities.FluidHandler.BLOCK, level, plug.at(), plug.face())));
                 }
             }
-            this.parts.add(new Part(rate, limits, ends));
+            final PipeLimits carried = limits;
+            this.parts.add(new Part(rate, fluid -> carried.carries(fluid.getFluid()), ends, breakable));
         }
     }
 
-    /* One connected part of the grid: how much it moves in a tick, what it carries, and the blocks it meets. */
-    private static final class Part {
+    /* Moves {@code amount} of {@code fluid} from one end's block to the other's, all or nothing. */
+    private static long move(final EndRouter.IEnd<FluidStack> from, final EndRouter.IEnd<FluidStack> to,
+                             final FluidStack fluid, final long amount) {
+        final IFluidHandler source = ((FluidEnd) from).handler();
+        final IFluidHandler target = ((FluidEnd) to).handler();
+        if (source == null || target == null) {
+            return 0L;
+        }
+        final FluidStack moving = fluid.copyWithAmount((int) Math.min(Integer.MAX_VALUE, amount));
+        final Batch.Outcome outcome = new Batch().add(HandlerSteps.drain(source, moving))
+                .add(HandlerSteps.fill(target, moving)).commit();
+        return outcome.done() ? moving.getAmount() : 0L;
+    }
 
-        private final long rate;
-        private final PipeLimits limits;
-        private final List<BlockCapabilityCache<IFluidHandler, @Nullable Direction>> ends;
+    /*
+     * One connected part of the grid: how much it moves in a tick, which fluids its pipes carry, the ends it plugs
+     * into, and its pipes that break when something reaches them they are not made for.
+     */
+    private record Part(long rate, Predicate<FluidStack> carries, List<FluidEnd> ends, List<Breakable> breakable) {
+    }
 
-        private Part(final long rate, final PipeLimits limits,
-                     final List<BlockCapabilityCache<IFluidHandler, @Nullable Direction>> ends) {
-            this.rate = rate;
-            this.limits = limits;
-            this.ends = ends;
+    /* A pipe that breaks when something reaches it that it is not made for: where, and of which cable. */
+    private record Breakable(BlockPos at, CableType type) {
+    }
+
+    /* One end of a part: the block's fluids through the face it meets, as the end is set. */
+    private record FluidEnd(BlockPos at, CableEnd end, BlockCapabilityCache<IFluidHandler, @Nullable Direction> cache)
+            implements EndRouter.IEnd<FluidStack> {
+
+        @Nullable
+        IFluidHandler handler() {
+            return this.cache.getCapability();
         }
 
-        /* Moves this tick's fluids, and says how many millibuckets moved. */
-        private long tick() {
-            if (this.rate <= 0 || this.ends.size() < 2) {
-                return 0L;
-            }
-            final List<IFluidHandler> handlers = new ArrayList<>(this.ends.size());
-            for (final BlockCapabilityCache<IFluidHandler, @Nullable Direction> end : this.ends) {
-                final IFluidHandler handler = end.getCapability();
-                if (handler != null) {
-                    handlers.add(handler);
-                }
-            }
-            final long[] budget = {this.rate};
-            for (final IFluidHandler from : handlers) {
-                give(from, handlers, false, false, budget);
-            }
-            for (final IFluidHandler from : handlers) {
-                give(from, handlers, false, true, budget);
-            }
-            for (final IFluidHandler from : handlers) {
-                give(from, handlers, true, false, budget);
-            }
-            return this.rate - budget[0];
+        @Override
+        public long key() {
+            return this.at.asLong();
         }
 
-        /*
-         * Gives what {@code from} offers to the blocks of the round that take it: from a block that would not take it
-         * back (or, in the last round, from one that would) to blocks that would not give it (or, in the second round,
-         * to ones that would).
-         */
-        private void give(final IFluidHandler from, final List<IFluidHandler> handlers, final boolean fromStore,
-                          final boolean toStores, final long[] budget) {
-            if (budget[0] <= 0) {
-                return;
+        @Override
+        public EndMode mode() {
+            return this.end.mode();
+        }
+
+        @Override
+        public int priority() {
+            return this.end.priority();
+        }
+
+        @Override
+        public long rate() {
+            return this.end.rate();
+        }
+
+        @Override
+        public int channel() {
+            return this.end.channel();
+        }
+
+        @Override
+        public boolean allows(final FluidStack fluid) {
+            return this.end.filter().allows(FluidSubject.of(fluid));
+        }
+
+        @Override
+        public long keep(final FluidStack fluid) {
+            return this.end.keep(FluidSubject.of(fluid));
+        }
+
+        @Override
+        public EndRouter.@Nullable Offer<FluidStack> offer(final long most, final Predicate<FluidStack> wanted) {
+            final IFluidHandler handler = handler();
+            if (handler == null || most <= 0) {
+                return null;
             }
-            final FluidStack offer = from.drain((int) Math.min(Integer.MAX_VALUE, budget[0]),
-                    IFluidHandler.FluidAction.SIMULATE);
-            if (offer.isEmpty() || !this.limits.carries(offer.getFluid())
-                    || takes(from, offer) != fromStore) {
-                return;
-            }
-            final Map<Long, Long> wants = new LinkedHashMap<>();
-            for (int i = 0; i < handlers.size(); i++) {
-                final IFluidHandler to = handlers.get(i);
-                if (to == from || !takes(to, offer) || gives(to, offer) != toStores) {
+            final int asked = (int) Math.min(Integer.MAX_VALUE, most);
+            for (int tank = 0; tank < handler.getTanks(); tank++) {
+                final FluidStack held = handler.getFluidInTank(tank);
+                if (held.isEmpty() || !wanted.test(held)) {
                     continue;
                 }
-                final int want = to.fill(offer.copy(), IFluidHandler.FluidAction.SIMULATE);
-                if (want > 0) {
-                    wants.put((long) i, (long) want);
+                final FluidStack given = handler.drain(held.copyWithAmount(asked), IFluidHandler.FluidAction.SIMULATE);
+                if (!given.isEmpty()) {
+                    return new EndRouter.Offer<>(given.copyWithAmount(1), given.getAmount());
                 }
             }
-            if (wants.isEmpty()) {
-                return;
-            }
-            final Map<Long, Long> shares = ProportionalSplitter.split(offer.getAmount(), wants, Map.of());
-            for (final Long index : wants.keySet()) {
-                final int amount = (int) Math.min(budget[0], shares.getOrDefault(index, 0L));
-                if (amount <= 0) {
-                    continue;
-                }
-                final FluidStack moving = offer.copyWithAmount(amount);
-                final Batch.Outcome outcome = new Batch()
-                        .add(HandlerSteps.drain(from, moving))
-                        .add(HandlerSteps.fill(handlers.get(index.intValue()), moving))
-                        .commit();
-                if (outcome.done()) {
-                    budget[0] -= amount;
-                }
-            }
+            return null;
         }
 
-        private static boolean takes(final IFluidHandler handler, final FluidStack fluid) {
-            return handler.fill(fluid.copyWithAmount(1), IFluidHandler.FluidAction.SIMULATE) > 0;
+        @Override
+        public boolean gives(final FluidStack fluid) {
+            final IFluidHandler handler = handler();
+            return handler != null && !handler.drain(fluid.copyWithAmount(1), IFluidHandler.FluidAction.SIMULATE)
+                    .isEmpty();
         }
 
-        private static boolean gives(final IFluidHandler handler, final FluidStack fluid) {
-            return !handler.drain(fluid.copyWithAmount(1), IFluidHandler.FluidAction.SIMULATE).isEmpty();
+        @Override
+        public boolean takes(final FluidStack fluid) {
+            final IFluidHandler handler = handler();
+            return handler != null && handler.fill(fluid.copyWithAmount(1), IFluidHandler.FluidAction.SIMULATE) > 0;
+        }
+
+        @Override
+        public long take(final FluidStack fluid, final long most) {
+            final IFluidHandler handler = handler();
+            return handler == null || most <= 0 ? 0L : handler.fill(fluid.copyWithAmount((int) Math.min(
+                    Integer.MAX_VALUE, most)), IFluidHandler.FluidAction.SIMULATE);
+        }
+
+        @Override
+        public long holding(final FluidStack fluid) {
+            final IFluidHandler handler = handler();
+            long held = 0L;
+            if (handler != null) {
+                for (int tank = 0; tank < handler.getTanks(); tank++) {
+                    final FluidStack in = handler.getFluidInTank(tank);
+                    if (FluidStack.isSameFluidSameComponents(in, fluid)) {
+                        held += in.getAmount();
+                    }
+                }
+            }
+            return held;
         }
     }
 }

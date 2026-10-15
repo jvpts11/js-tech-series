@@ -125,9 +125,9 @@ class PeripheralLinkValidatorTest {
 
     @Test
     void mismatchedCableTypes_returnsCableTypeMismatch() {
-        // Owner declares COMPUTING, endpoint declares TELEMETRY.
+        // Owner declares COMPUTING, endpoint declares INDUSTRIAL_CONTROL.
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
-        TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.TELEMETRY);
+        TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.INDUSTRIAL_CONTROL);
 
         Map<Long, List<Long>> adj = Map.of(
                 OWNER_POS, List.of(ENDPOINT_POS),
@@ -139,14 +139,14 @@ class PeripheralLinkValidatorTest {
         ILinkResult.CableTypeMismatch m = assertInstanceOf(
                 ILinkResult.CableTypeMismatch.class, result);
         assertEquals(PeripheralCableType.COMPUTING, m.expected());
-        assertEquals(PeripheralCableType.TELEMETRY, m.actual());
+        assertEquals(PeripheralCableType.INDUSTRIAL_CONTROL, m.actual());
     }
 
     @Test
     void bfs_ignoresCablesOfWrongType() {
         /*
-         * Path is OWNER -- C1(TELEMETRY) -- ENDPOINT, but owner needs COMPUTING.
-         * Path should fail because BFS won't traverse the TELEMETRY cable.
+         * Path is OWNER -- C1(INDUSTRIAL_CONTROL) -- ENDPOINT, but owner needs COMPUTING.
+         * Path should fail because BFS won't traverse the INDUSTRIAL_CONTROL cable.
          */
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
         TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
@@ -156,7 +156,7 @@ class PeripheralLinkValidatorTest {
                 C1, List.of(OWNER_POS, ENDPOINT_POS),
                 ENDPOINT_POS, List.of(C1));
         Map<Long, PeripheralCableType> cables = Map.of(
-                C1, PeripheralCableType.TELEMETRY);
+                C1, PeripheralCableType.INDUSTRIAL_CONTROL);
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, cables);
         ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
@@ -344,7 +344,7 @@ class PeripheralLinkValidatorTest {
                 ENDPOINT_POS, List.of(C1, C2));
         Map<Long, PeripheralCableType> cables = Map.of(
                 C1, PeripheralCableType.COMPUTING,
-                C2, PeripheralCableType.TELEMETRY);
+                C2, PeripheralCableType.INDUSTRIAL_CONTROL);
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, cables);
         ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
@@ -391,20 +391,20 @@ class PeripheralLinkValidatorTest {
     }
 
     @Test
-    void telemetryCable_supportsLongPaths() {
-        // Build a 50-hop path of TELEMETRY cables, well under max 256.
-        TestOwner owner = new TestOwner(PeripheralCableType.TELEMETRY, 6);
-        TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.TELEMETRY);
+    void computingCable_reachesItsFullLength() {
+        // Build a 16-hop path of COMPUTING cables, exactly its max length.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 6);
+        TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
 
         Map<Long, List<Long>> adj = new HashMap<>();
         Map<Long, PeripheralCableType> cables = new HashMap<>();
         adj.put(OWNER_POS, new ArrayList<>());
         long prev = OWNER_POS;
-        for (int i = 1; i <= 50; i++) {
+        for (int i = 1; i <= 16; i++) {
             long cable = 1000L + i;
             adj.computeIfAbsent(prev, k -> new ArrayList<>()).add(cable);
             adj.computeIfAbsent(cable, k -> new ArrayList<>()).add(prev);
-            cables.put(cable, PeripheralCableType.TELEMETRY);
+            cables.put(cable, PeripheralCableType.COMPUTING);
             prev = cable;
         }
         adj.computeIfAbsent(prev, k -> new ArrayList<>()).add(ENDPOINT_POS);
@@ -414,7 +414,7 @@ class PeripheralLinkValidatorTest {
         ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
         ILinkResult.Established e = assertInstanceOf(ILinkResult.Established.class, result);
-        assertEquals(50, e.pathLength());
+        assertEquals(16, e.pathLength());
     }
 
     @Test

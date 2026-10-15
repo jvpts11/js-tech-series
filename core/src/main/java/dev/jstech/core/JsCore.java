@@ -77,6 +77,8 @@ import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.energy.JsEnergyGuide;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.energy.JsEnergySettings;
+import dev.jstech.core.jstechseries.tools.SharedTools;
+import dev.jstech.core.jstechseries.tools.ToolsGuide;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.log.LogCommand;
 import dev.jstech.core.material.CatalogueItems;
@@ -191,8 +193,10 @@ public final class JsCore {
         SharedEnergy.declare();
         EnergyConverters.declare();
         SharedContainment.declare();
+        SharedTools.declare();
         JsEnergyGuide.declare();
         ContainmentGuide.declare();
+        ToolsGuide.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
         // with its joule and the grids of its voltage classes.

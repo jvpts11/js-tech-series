@@ -16,8 +16,9 @@ import java.util.Optional;
 /**
  * Which items pass: a list of rules, and whether the list says the only items that pass or the only ones that do not.
  * A rule names an item exactly (the same item with the same components, so a worn sword is not a new one), the item
- * whatever its damage and components (fuzzy), or every item of a tag. An empty list lets everything pass, whichever its
- * mode, so a filter nobody set filters nothing.
+ * whatever its damage and components (fuzzy), every item of a tag, or everything a mod adds. An empty list lets
+ * everything pass, whichever its mode, so a filter nobody set filters nothing. The same filter looks at fluids and
+ * materials by their ids and tags ({@link FluidSubject}), as the ends of a line do.
  *
  * <p>Each rule may carry an amount, which the filter only keeps: a bus reads it as how many of the item to keep or to
  * move at most. The first rule that matches an item is the one that speaks for it.
@@ -96,7 +97,7 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
     }
 
     /** One rule of a filter: what it names, and the amount it carries. */
-    public sealed interface Rule permits Exact, Fuzzy, Tag {
+    public sealed interface Rule permits Exact, Fuzzy, Tag, Mod {
 
         /** The amount it carries; 0 for none. */
         long amount();
@@ -161,6 +162,30 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
         @Override
         public boolean matches(final IFilterSubject subject) {
             return subject.hasTag(this.tag);
+        }
+    }
+
+    /**
+     * Everything a mod adds: every item, fluid or material whose id is in the namespace {@code mod}.
+     *
+     * @param mod    the mod's id, the namespace of what it names
+     * @param amount the amount it carries
+     */
+    public record Mod(String mod, long amount) implements Rule {
+
+        public Mod {
+            Objects.requireNonNull(mod, "mod");
+            if (mod.isEmpty() || !mod.chars().allMatch(ItemFilter::isNamespaceChar)) {
+                throw new IllegalArgumentException("not a valid mod id: " + mod);
+            }
+            checkAmount(amount);
+        }
+
+        @Override
+        public boolean matches(final IFilterSubject subject) {
+            final String id = subject.itemId();
+            final int colon = id.indexOf(':');
+            return (colon < 0 ? "minecraft" : id.substring(0, colon)).equals(this.mod);
         }
     }
 
