@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.LevelGrids;
 import dev.jstech.core.heat.LevelHeat;
+import dev.jstech.core.mechanical.LevelMechanics;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
 import dev.jstech.core.persistence.SaveLayout;
@@ -61,6 +62,13 @@ public final class CoreAttachments {
      */
     public static final Supplier<AttachmentType<LevelHeat>> HEAT =
             ATTACHMENT_TYPES.register("heat", () -> AttachmentType.builder(LevelHeat::new).build());
+
+    /**
+     * A dimension's mechanical power: its networks of parts that turn; never saved, since each part's speed is saved
+     * with it and its network is joined again as it loads.
+     */
+    public static final Supplier<AttachmentType<LevelMechanics>> MECHANICS =
+            ATTACHMENT_TYPES.register("mechanics", () -> AttachmentType.builder(LevelMechanics::new).build());
 
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");

@@ -49,6 +49,7 @@ import dev.jstech.core.heat.HeatPorts;
 import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.hologram.Holograms;
 import dev.jstech.core.input.KeyActions;
+import dev.jstech.core.mechanical.MechanicalPorts;
 import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
@@ -303,6 +304,7 @@ public final class JsCore {
         MachineWrench.listen(modEventBus);
         HeatPorts.listen(modEventBus);
         BlockConductivity.listen(modEventBus);
+        MechanicalPorts.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

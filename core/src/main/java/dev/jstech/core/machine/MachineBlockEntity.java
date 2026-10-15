@@ -31,6 +31,9 @@ import dev.jstech.core.heat.HeatReadings;
 import dev.jstech.core.heat.IHeatHolder;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.mechanical.IMechanicalHolder;
+import dev.jstech.core.mechanical.IMechanicalPart;
+import dev.jstech.core.mechanical.MechanicalPorts;
 import dev.jstech.core.inventory.FaceEnergyStorage;
 import dev.jstech.core.inventory.FaceFluidHandler;
 import dev.jstech.core.inventory.FaceItemHandler;
@@ -89,7 +92,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @TextHolder
 public abstract class MachineBlockEntity extends SyncedBlockEntity implements IOwned, IMachineParameters,
-        ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder {
+        ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder, IMechanicalHolder {
 
     private final FieldItemHandler inventory;
     private final @Nullable FieldEnergyStorage energy;
@@ -116,6 +119,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private boolean ticked;
     /* Its heat, for a machine that makes heat; declared from its constructor. */
     private @Nullable MachineHeat heat;
+    /* Its shaft, for a motor or a dynamo; declared from its constructor. */
+    private @Nullable MachineShaft shaft;
 
     public static final TextKey PARAMETER_ON = TextKey.of("jscore.machine.parameter.on", "On");
     public static final TextKey PARAMETER_PROGRESS = TextKey.of("jscore.machine.parameter.progress", "Progress");
@@ -240,6 +245,16 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     @Override
     public @Nullable HeatBody heatBody() {
         return heat == null ? null : heat.body();
+    }
+
+    /** Its shaft, or none for a machine that neither drives nor is driven. */
+    public @Nullable MachineShaft shaft() {
+        return shaft;
+    }
+
+    @Override
+    public @Nullable IMechanicalPart mechanicalPart() {
+        return shaft;
     }
 
     /** What each of its faces does with each of its resources, and what it pushes and pulls by itself. */
@@ -607,6 +622,21 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         HeatPorts.keep(this, declared.body());
     }
 
+    /**
+     * Declares its shaft, a motor's or a dynamo's, as {@code declared} says: called once from its constructor. It joins
+     * the network of mechanical power at its face, saved and sent to the players who see it; the machine's
+     * {@link #work} runs it with {@link MachineShaft#run}, and a stopped machine neither drives nor takes.
+     */
+    protected final void turnsWith(final MachineShaft declared) {
+        if (shaft != null) {
+            throw new IllegalStateException("a machine declares its shaft once");
+        }
+        shaft = Objects.requireNonNull(declared, "declared");
+        declared.on(this);
+        fields().part("Shaft", declared).save().toClient();
+        MechanicalPorts.keep(this);
+    }
+
     /** The slots it pulls items into by itself; none unless it says. */
     protected IItemHandler itemsIn() {
         return EmptyItemHandler.INSTANCE;
@@ -673,6 +703,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         asleep = false;
         drawnThisTick = 0L;
         final MachineStatus stopped = stopped(now);
+        if (stopped != null && shaft != null) {
+            shaft.halt();
+        }
         final MachineStatus result = stopped != null ? stopped : work(server);
         drawn.set(drawnThisTick);
         show(server, result);

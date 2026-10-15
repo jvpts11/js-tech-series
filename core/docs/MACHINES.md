@@ -152,6 +152,25 @@ more the hotter it is, unless the server turned that off; it starts again once t
 temperature conditions read its casing's temperature, and a sensor reads it as its `temperature` value, from 0 °C to
 its limit.
 
+### A shaft: motors and dynamos
+
+*Added 2026-10-15.*
+
+A machine joins a network of mechanical power ([Mechanical power](MECHANICAL_POWER.md)) by declaring its shaft on
+one of its faces, once, from its constructor, and running it from its `work`:
+
+```java
+turnsWith(MachineShaft.motor(TorqueCurve.of(50, 5_000, 1_500), 0.9, RelativeFace.BACK));
+...
+protected MachineStatus work(ServerLevel level) {
+    return shaft().run();
+}
+```
+
+A motor spends from the machine's energy the power its torque gives at its speed, over its efficiency; a dynamo
+brakes the network and makes energy of what it takes, while the machine has room (`MachineShaft.dynamo`). A stopped
+machine (switched off, off by redstone, its fuse blown, overheated, wrecked) neither drives nor takes.
+
 ### The switch and redstone
 
 `control()` holds the machine's ON/OFF switch, which turns it off whatever redstone says, and how it answers

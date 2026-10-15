@@ -363,6 +363,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   A block past 300 °C sets alight what burns against it, and one past 150 °C burns whoever stands against it; a
   server can turn either off. Jade shows every hot block's temperature, and sensors read it as a thermometer or a
   thermocouple does.
+- (Core) Mechanical power in real units: shafts, gears and gearboxes join into networks that turn as one, each part
+  at its ratio, gears trading speed for torque and turning the other way; a network with too little power turns
+  slower, where its sources' torque meets what its loads ask, and one whose gear ratios disagree jams. Sources
+  declare their torque curves, and a machine becomes an electric motor that spends its energy to turn its shaft, or
+  a dynamo that makes energy of a turn. Networks are worked out only when they change, and turned whole each tick.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

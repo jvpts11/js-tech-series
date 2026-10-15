@@ -62,6 +62,8 @@ public final class JsTests {
         TestClimate.declare();
         // A machine that makes heat and a thermocouple, to prove the machines' heat and its readings.
         TestHotMachine.declare();
+        // Shafts, gears, a gearbox, a crank, a load, a motor and a dynamo, to prove the Core's mechanical power.
+        TestMechanical.declare();
         // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
         TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
