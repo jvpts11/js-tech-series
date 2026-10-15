@@ -204,6 +204,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   blocks take FE directly, and set what a joule is worth in FE.
 - The wrong voltage in the world: a burnt machine smokes and sparks and stays damaged; an arc flash destroys
   it, sets fire around it and burns whoever is close.
+- The clamp meter: a handheld instrument that clamps on a wire of a line or on a block. Held, it shows the
+  line's power and which way it runs beside the crosshair; held up, its display gives the details: what crossed
+  since it was clamped, the line's ceiling and whether it is full, the most and the least, or a block's store and what
+  goes in and out of each face, in the energy's own unit or in FE.
+- Energy as a player reads it: amounts in SI, "7.9 kW", "1.92 MJ"; and a store can show its charge on its own
+  model.
 - The protection slot: a fuse blows on the overvoltage it is rated for, cutting the energy with no damage until
   a new one is put in, and lets an arc it cannot break jump over it; a battery keeps a machine going as a UPS,
   charging while the grid has energy and feeding the machine when it runs low.

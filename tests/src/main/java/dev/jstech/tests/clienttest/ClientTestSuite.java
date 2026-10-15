@@ -143,6 +143,7 @@ import dev.jstech.tests.clienttest.industrial.DiagnosticsClientTests;
 import dev.jstech.tests.clienttest.industrial.IndustrialScreensClientTests;
 import dev.jstech.tests.clienttest.industrial.RecipeViewClientTests;
 import dev.jstech.tests.clienttest.series.CableBlockClientTests;
+import dev.jstech.tests.clienttest.series.ClampMeterClientTests;
 import dev.jstech.tests.clienttest.series.ManualClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
 import java.lang.reflect.Method;
@@ -246,6 +247,7 @@ public final class ClientTestSuite {
             MsdClientTests.class,
             MultipartModelClientTests.class,
             CableBlockClientTests.class,
+            ClampMeterClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,

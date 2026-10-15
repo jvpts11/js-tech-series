@@ -14,10 +14,10 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 public final class EnergyTexts {
 
-    /** An amount and its unit: "1.5K J". */
-    public static final TextKey AMOUNT = TextKey.of("jscore.energy.amount", "%s %s");
+    /** An amount, the SI prefix of its scale and its unit: "1.5 kJ". */
+    public static final TextKey AMOUNT = TextKey.of("jscore.energy.amount", "%s %s%s");
     /** An amount a tick: "40 FE/t". */
-    public static final TextKey PER_TICK = TextKey.of("jscore.energy.per_tick", "%s %s/t");
+    public static final TextKey PER_TICK = TextKey.of("jscore.energy.per_tick", "%s %s%s/t");
     /** A port's class: "Port: Low voltage". */
     public static final TextKey PORT = TextKey.of("jscore.energy.port", "Port: %s");
     /** A port's class and its rating: "Port: Low voltage, 400 V". */

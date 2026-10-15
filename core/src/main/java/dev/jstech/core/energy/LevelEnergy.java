@@ -9,11 +9,13 @@ package dev.jstech.core.energy;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableParts;
+import dev.jstech.core.cable.CableType;
 import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.energy.internal.EnergyNetwork;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.grid.IGridMover;
 import dev.jstech.core.log.CoreLogs;
 import java.util.ArrayList;
@@ -21,6 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -49,7 +54,10 @@ public final class LevelEnergy implements IGridMover {
     private final EnergyClass lineClass;
     private final List<EnergyNetwork> parts = new ArrayList<>();
     private final List<List<PortNode>> portsOfParts = new ArrayList<>();
+    private final List<Map<Long, Long>> nodesOfParts = new ArrayList<>();
     private final Map<Long, Integer> partOfWire = new HashMap<>();
+    private final Map<Long, CableType> typeOfWire = new HashMap<>();
+    private final Map<Long, Long> watchedUntil = new HashMap<>();
     private List<EnergyDistributionResult> lastTick = List.of();
     private long builtVersion = -1L;
     private long builtTaps = -1L;
@@ -108,6 +116,70 @@ public final class LevelEnergy implements IGridMover {
                 : Optional.of(this.lastTick.get(part));
     }
 
+    /**
+     * Keeps which way the energy runs through the wire numbered {@code wire} until tick {@code until}, as an instrument
+     * clamped on it asks: only watched wires pay for it.
+     */
+    public void watch(final long wire, final long until) {
+        this.watchedUntil.merge(wire, until, Math::max);
+    }
+
+    /** Which connected part of the grid the wire numbered {@code wire} is in, counted from 0; none for no wire of it. */
+    public OptionalInt partOf(final long wire) {
+        final Integer part = this.partOfWire.get(wire);
+        return part == null ? OptionalInt.empty() : OptionalInt.of(part);
+    }
+
+    /** The cable of the wire numbered {@code wire}, when it is a wire of this grid. */
+    public Optional<CableType> typeOf(final long wire) {
+        return Optional.ofNullable(this.typeOfWire.get(wire));
+    }
+
+    /**
+     * Where the energy through the wire numbered {@code wire} went in the last tick: the block of the wire or the
+     * machine most of it ran toward. Only for a watched wire through which anything ran.
+     */
+    public Optional<BlockPos> towardOf(final ServerLevel level, final long wire) {
+        final Integer part = this.partOfWire.get(wire);
+        final Optional<EnergyDistributionResult> tick = lastTickOf(wire);
+        if (part == null || tick.isEmpty()) {
+            return Optional.empty();
+        }
+        final OptionalLong toward = tick.get().towardOf(wire);
+        if (toward.isEmpty()) {
+            return Optional.empty();
+        }
+        final long next = toward.getAsLong();
+        if (next < 0) {
+            for (final Map.Entry<Long, Long> machine : this.nodesOfParts.get(part).entrySet()) {
+                if (machine.getValue() == next) {
+                    return Optional.of(BlockPos.of(machine.getKey()));
+                }
+            }
+            return Optional.empty();
+        }
+        final GridPlace place = CoreGrids.places(level).place(next);
+        return place == null ? Optional.empty() : Optional.of(BlockPos.of(place.pos()));
+    }
+
+    /**
+     * What the block at {@code pos} took in and gave out in the last tick, through the part of the grid the wire
+     * numbered {@code wire} is in; empty when the wire does not plug into it.
+     */
+    public Optional<Flow> flowAt(final long wire, final BlockPos pos) {
+        final Integer part = this.partOfWire.get(wire);
+        if (part == null || part >= this.lastTick.size()) {
+            return Optional.empty();
+        }
+        final Long node = this.nodesOfParts.get(part).get(pos.asLong());
+        if (node == null) {
+            return Optional.empty();
+        }
+        final EnergyDistributionResult tick = this.lastTick.get(part);
+        return Optional.of(new Flow(tick.perConsumerDelivered().getOrDefault(node, 0L),
+                tick.perSupplierSent().getOrDefault(node, 0L)));
+    }
+
     /** A wire came to meet a machine or stopped meeting one: the parts are worked out again before the next tick. */
     @Override
     public void tapsChanged() {
@@ -121,7 +193,9 @@ public final class LevelEnergy implements IGridMover {
         if (grid.size() == 0) {
             this.parts.clear();
             this.portsOfParts.clear();
+            this.nodesOfParts.clear();
             this.partOfWire.clear();
+            this.typeOfWire.clear();
             this.lastTick = List.of();
             return;
         }
@@ -135,9 +209,12 @@ public final class LevelEnergy implements IGridMover {
             this.builtVersion = grid.version();
             this.builtTaps = this.taps;
         }
+        final long now = level.getGameTime();
+        this.watchedUntil.values().removeIf(until -> until < now);
+        final Set<Long> watched = this.watchedUntil.isEmpty() ? Set.of() : Set.copyOf(this.watchedUntil.keySet());
         final List<EnergyDistributionResult> results = new ArrayList<>(this.parts.size());
         for (int i = 0; i < this.parts.size(); i++) {
-            final EnergyDistributionResult result = this.parts.get(i).tickDistribute();
+            final EnergyDistributionResult result = this.parts.get(i).tickDistribute(watched);
             results.add(result);
             if (result.totalSupply() > 0) {
                 for (final PortNode port : this.portsOfParts.get(i)) {
@@ -155,7 +232,9 @@ public final class LevelEnergy implements IGridMover {
     private void build(final ServerLevel level, final Grid grid) {
         this.parts.clear();
         this.portsOfParts.clear();
+        this.nodesOfParts.clear();
         this.partOfWire.clear();
+        this.typeOfWire.clear();
         final int classLoss = this.energy.lossPerBlock(this.lineClass);
         for (final CableParts.Part part : CableParts.of(level, grid)) {
             final EnergyNetwork network = new EnergyNetwork();
@@ -165,6 +244,7 @@ public final class LevelEnergy implements IGridMover {
                 network.addCable(wire.number(), new WireCable(carries,
                         EnergyLoss.along(wire.type().loss(), classLoss)));
                 this.partOfWire.put(wire.number(), this.parts.size());
+                this.typeOfWire.put(wire.number(), wire.type());
             }
             for (final CableParts.WireAt wire : part.wires()) {
                 for (final long next : grid.neighbours(wire.number())) {
@@ -185,6 +265,7 @@ public final class LevelEnergy implements IGridMover {
             }
             this.parts.add(network);
             this.portsOfParts.add(ports);
+            this.nodesOfParts.add(machines);
         }
     }
 
@@ -198,6 +279,15 @@ public final class LevelEnergy implements IGridMover {
                 plug.face()), this.energy, this.lineClass);
         ports.add(port);
         return port;
+    }
+
+    /**
+     * What a block took in and gave out in a tick through one part of a grid.
+     *
+     * @param in  what it took in
+     * @param out what it gave out
+     */
+    public record Flow(long in, long out) {
     }
 
     /* A wire as a cable of its part: what it carries and what it loses. */

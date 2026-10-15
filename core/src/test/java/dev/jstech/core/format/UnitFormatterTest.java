@@ -30,6 +30,25 @@ class UnitFormatterTest {
     }
 
     @Test
+    void si_givesTheNumberAndThePrefixApart() {
+        UnitFormatter formatter = new UnitFormatter(EN);
+        assertEquals(new UnitFormatter.Scaled("999", ""), formatter.si(999L));
+        assertEquals(new UnitFormatter.Scaled("7.9", "k"), formatter.si(7_900L));
+        assertEquals(new UnitFormatter.Scaled("1.92", "M"), formatter.si(1_920_000L));
+        assertEquals(new UnitFormatter.Scaled("12", "G"), formatter.si(12_000_000_000L));
+    }
+
+    @Test
+    void si_aValueJustUnderTheNextScaleShowsOneOfIt() {
+        assertEquals(new UnitFormatter.Scaled("1", "M"), new UnitFormatter(EN).si(999_999L));
+    }
+
+    @Test
+    void si_followsTheLocalesDecimalMark() {
+        assertEquals(new UnitFormatter.Scaled("7,9", "k"), new UnitFormatter(PT_BR).si(7_900L));
+    }
+
+    @Test
     void full_smallValue_enUS() {
         UnitFormatter formatter = new UnitFormatter(EN);
         assertEquals("0 FE", formatter.full(0L, Unit.FE));

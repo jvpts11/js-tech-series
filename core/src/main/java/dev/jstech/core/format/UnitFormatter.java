@@ -28,6 +28,8 @@ public final class UnitFormatter {
     private static final Scale[] SCALES = {
             new Scale(THOUSAND, "K"), new Scale(MILLION, "M"), new Scale(BILLION, "G"), new Scale(TRILLION, "T")
     };
+    /** The SI prefixes, a thousand apart, from none to exa. */
+    private static final String[] SI_PREFIXES = {"", "k", "M", "G", "T", "P", "E"};
 
     private final Locale locale;
     private final NumberFormat fullFormat;
@@ -53,6 +55,29 @@ public final class UnitFormatter {
     public String compact(final long value, final Unit unit) {
         Objects.requireNonNull(unit, "unit must not be null");
         return compact(value) + unit.suffix();
+    }
+
+    /**
+     * {@code value} at the SI scale that suits it, its number and its prefix apart, so a unit's symbol goes after the
+     * prefix: 7 900 watts are {@code 7.9} and {@code k}, to be written "7.9 kW".
+     */
+    public Scaled si(final long value) {
+        final long abs = value == Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(value);
+        final String sign = value < 0 ? "-" : "";
+        if (abs < THOUSAND) {
+            return new Scaled(sign + abs, "");
+        }
+        int step = 0;
+        double scaled = abs;
+        while (step < SI_PREFIXES.length - 1 && scaled >= THOUSAND) {
+            scaled /= THOUSAND;
+            step++;
+        }
+        if (step < SI_PREFIXES.length - 1 && roundsUpToAThousand(scaled)) {
+            scaled /= THOUSAND;
+            step++;
+        }
+        return new Scaled(sign + compactFormat.format(scaled), SI_PREFIXES[step]);
     }
 
     /** {@code value} at the scale that suits it, with the scale's letter and no unit: {@code 1.5K}. */
@@ -86,6 +111,15 @@ public final class UnitFormatter {
     private static boolean roundsUpToAThousand(final double scaled) {
         return new BigDecimal(scaled).setScale(FRACTION_DIGITS, RoundingMode.HALF_EVEN)
                 .compareTo(BigDecimal.valueOf(THOUSAND)) >= 0;
+    }
+
+    /**
+     * A value at a scale: its number and the SI prefix that says the scale.
+     *
+     * @param number the number, at most two places after the point
+     * @param prefix the prefix, empty below a thousand
+     */
+    public record Scaled(String number, String prefix) {
     }
 
     private record Scale(long divisor, String prefix) {

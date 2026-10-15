@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -64,7 +65,9 @@ public final class EnergyFlowGraph {
             long totalDelivered,
             Map<Long, Long> consumerDelivered,
             Map<Long, Long> cableUsage,
-            long totalLost) {
+            long totalLost,
+            Map<Long, Long> supplierSent,
+            Map<Long, Map<Long, Long>> watchedFlows) {
     }
 
     /** The way from a supplier to a receiver: its cables in order, what it loses, and whether any cable limits it. */
@@ -72,6 +75,14 @@ public final class EnergyFlowGraph {
     }
 
     public FlowResult distribute() {
+        return distribute(Set.of());
+    }
+
+    /**
+     * Shares the tick's energy out, and for each cable in {@code watched} keeps what crossed it toward each of its
+     * neighbours: only for those, so a grid nobody watches pays nothing for it.
+     */
+    public FlowResult distribute(final Set<Long> watched) {
         final Map<Long, Long> supplyLeft = new LinkedHashMap<>();
         final Map<Long, Long> demandLeft = new LinkedHashMap<>();
         long totalSupply = 0L;
@@ -95,10 +106,10 @@ public final class EnergyFlowGraph {
             }
         }
         if (totalSupply == 0L || totalDemand == 0L) {
-            return new FlowResult(totalSupply, totalDemand, 0L, Map.of(), Map.of(), 0L);
+            return new FlowResult(totalSupply, totalDemand, 0L, Map.of(), Map.of(), 0L, Map.of(), Map.of());
         }
 
-        final Tally tally = new Tally(supplyLeft, demandLeft);
+        final Tally tally = new Tally(supplyLeft, demandLeft, watched);
         tally.round(EnergyNodeRole.GENERATOR, EnergyNodeRole.CONSUMER);
         tally.round(EnergyNodeRole.GENERATOR, EnergyNodeRole.STORAGE);
         tally.round(EnergyNodeRole.STORAGE, EnergyNodeRole.CONSUMER);
@@ -110,7 +121,8 @@ public final class EnergyFlowGraph {
             this.nodes.get(got.getKey()).onConsumed(got.getValue());
         }
         return new FlowResult(totalSupply, totalDemand, tally.totalDelivered,
-                Map.copyOf(tally.delivered), Map.copyOf(tally.cableUsage), tally.totalLost);
+                Map.copyOf(tally.delivered), Map.copyOf(tally.cableUsage), tally.totalLost, Map.copyOf(tally.sent),
+                Map.copyOf(tally.watchedFlows));
     }
 
     /* The ways from source to every node it reaches, worked out once while the shape lasts. */
@@ -191,12 +203,15 @@ public final class EnergyFlowGraph {
         private final Map<Long, Long> sent = new LinkedHashMap<>();
         private final Map<Long, Long> delivered = new LinkedHashMap<>();
         private final Map<Long, Long> cableUsage = new HashMap<>();
+        private final Set<Long> watched;
+        private final Map<Long, Map<Long, Long>> watchedFlows = new HashMap<>();
         private long totalDelivered;
         private long totalLost;
 
-        private Tally(final Map<Long, Long> supplyLeft, final Map<Long, Long> demandLeft) {
+        private Tally(final Map<Long, Long> supplyLeft, final Map<Long, Long> demandLeft, final Set<Long> watched) {
             this.supplyLeft = supplyLeft;
             this.demandLeft = demandLeft;
+            this.watched = watched;
         }
 
         private void round(final EnergyNodeRole from, final EnergyNodeRole to) {
@@ -255,12 +270,19 @@ public final class EnergyFlowGraph {
                 if (amount <= 0) {
                     continue;
                 }
-                for (final long cable : route.cables()) {
+                final long[] steps = route.cables();
+                for (int i = 0; i < steps.length; i++) {
+                    final long cable = steps[i];
                     final long left = left(cable);
                     if (left != Long.MAX_VALUE) {
                         this.throughputLeft.put(cable, left - amount);
                     }
                     this.cableUsage.merge(cable, amount, EnergyFlowGraph::saturatingAdd);
+                    if (!this.watched.isEmpty() && this.watched.contains(cable)) {
+                        final long next = i + 1 < steps.length ? steps[i + 1] : receiver;
+                        this.watchedFlows.computeIfAbsent(cable, key -> new HashMap<>())
+                                .merge(next, amount, EnergyFlowGraph::saturatingAdd);
+                    }
                 }
                 final long arrived = EnergyLoss.delivered(amount, route.loss());
                 this.demandLeft.merge(receiver, -arrived, Long::sum);

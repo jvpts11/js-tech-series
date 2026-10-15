@@ -121,6 +121,22 @@ cables they are made of. The server's `jstech-energy.toml` sets:
 | `energy.accept_fe` | off | J's Energy blocks take and give FE directly |
 | `energy.joules_per_fe` | 1 | what a joule is worth in FE; a server's setting, never a player's |
 
+### Seeing the energy
+
+*Added 2026-10-15.*
+
+`EnergyReadings` is what an instrument reads: `line(level, pos, cable)` what crossed a wire in the last tick, which
+way (the face beyond which most of it went, known from the tick after it is first read) and its ceiling;
+`block(level, pos)` what a block holds and what went in and out through each face, and the faces with no port. A
+storage block shows its charge on its own model with `EnergyCharge.level(stored, capacity, steps)`, kept in a block
+state property with `fields().mirror(...)`.
+
+The series' **clamp meter** reads them. Used on a cable it clamps on the energy wire aimed at, on a block it clamps on
+the block; held, its reading shows beside the crosshair; used in the air it is held up, its display giving the line's
+power, which way it runs, what crossed since it was clamped and the line's ceiling, or the block's faces, in the
+energy's own unit or in FE. Its keys hold the reading, show the most and the least, put it on the HUD and light the
+display.
+
 ### Short of energy, and generators that follow the load
 
 *Added 2026-10-15.*

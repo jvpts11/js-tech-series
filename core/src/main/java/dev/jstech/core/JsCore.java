@@ -69,7 +69,9 @@ import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SimplePath;
+import dev.jstech.core.jstechseries.energy.ClampMeter;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
+import dev.jstech.core.jstechseries.energy.JsEnergyGuide;
 import dev.jstech.core.jstechseries.energy.JsEnergySettings;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.log.LogCommand;
@@ -180,6 +182,9 @@ public final class JsCore {
         GuideSounds.declare();
         // What the notifications sound like, one of the game's own sounds for each level.
         NotificationSounds.declare();
+        // The clamp meter, the series' instrument that reads the energy through a line or a block, and its page.
+        ClampMeter.declare();
+        JsEnergyGuide.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
         // with its joule and the grids of its voltage classes.
@@ -246,6 +251,7 @@ public final class JsCore {
         Bandwidth.listen();
         BigPayloads.listen(modEventBus);
         CableBreaking.listen();
+        ClampMeter.listen(modEventBus);
         ClientPayloads.listen();
         ClientUpdates.listen();
         CoreCables.listen(modEventBus);

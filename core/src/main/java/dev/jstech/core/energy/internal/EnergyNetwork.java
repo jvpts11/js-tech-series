@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -78,6 +79,11 @@ public final class EnergyNetwork {
     }
 
     public EnergyDistributionResult tickDistribute() {
+        return tickDistribute(Set.of());
+    }
+
+    /** Shares the tick's energy out, keeping which way it ran through each cable of {@code watched}. */
+    public EnergyDistributionResult tickDistribute(final Set<Long> watched) {
         if (nodes.isEmpty()) {
             return EnergyDistributionResult.empty();
         }
@@ -85,7 +91,7 @@ public final class EnergyNetwork {
         if (graph == null) {
             graph = new EnergyFlowGraph(nodes, cables, adjacency);
         }
-        final EnergyFlowGraph.FlowResult flow = graph.distribute();
+        final EnergyFlowGraph.FlowResult flow = graph.distribute(watched);
 
         final long unsatisfiedDemand = Math.max(
                 0L, flow.totalDemand() - flow.totalDelivered());
@@ -96,7 +102,9 @@ public final class EnergyNetwork {
                 flow.consumerDelivered(),
                 flow.cableUsage(),
                 unsatisfiedDemand,
-                flow.totalLost());
+                flow.totalLost(),
+                flow.supplierSent(),
+                flow.watchedFlows());
     }
 
     public int nodeCount() {

@@ -159,22 +159,28 @@ public final class Energy {
         return ratio().fromFe(amount);
     }
 
-    /** {@code amount} of it as a player reads it, at the scale that suits it: "1.5K J". */
+    /** {@code amount} of it as a player reads it, at the SI scale that suits it: "1.5 kJ". */
     public Text amount(final long amount) {
-        return EnergyTexts.AMOUNT.with(UnitFormatter.forCurrentLocale().compact(amount), unit().symbol());
+        final UnitFormatter.Scaled scaled = UnitFormatter.forCurrentLocale().si(amount);
+        return EnergyTexts.AMOUNT.with(scaled.number(), scaled.prefix(), unit().symbol());
     }
 
     /**
-     * {@code perTick} of it a tick as a player reads it: as power, "300 W", for an energy that declares a unit of
+     * {@code perTick} of it a tick as a player reads it: as power, "7.9 kW", for an energy that declares a unit of
      * power, or so much a tick otherwise.
      */
     public Text rate(final long perTick) {
         if (this.powerSymbol == null) {
-            return EnergyTexts.PER_TICK.with(UnitFormatter.forCurrentLocale().compact(perTick), unit().symbol());
+            final UnitFormatter.Scaled scaled = UnitFormatter.forCurrentLocale().si(perTick);
+            return EnergyTexts.PER_TICK.with(scaled.number(), scaled.prefix(), unit().symbol());
         }
-        final long perSecond = perTick > Long.MAX_VALUE / TICKS_PER_SECOND ? Long.MAX_VALUE
-                : perTick * TICKS_PER_SECOND;
-        return EnergyTexts.AMOUNT.with(UnitFormatter.forCurrentLocale().compact(perSecond), this.powerSymbol.text());
+        final UnitFormatter.Scaled scaled = UnitFormatter.forCurrentLocale().si(perSecond(perTick));
+        return EnergyTexts.AMOUNT.with(scaled.number(), scaled.prefix(), this.powerSymbol.text());
+    }
+
+    /** {@code perTick} a tick, made a second's worth. */
+    public static long perSecond(final long perTick) {
+        return perTick > Long.MAX_VALUE / TICKS_PER_SECOND ? Long.MAX_VALUE : perTick * TICKS_PER_SECOND;
     }
 
     @Override
