@@ -31,6 +31,7 @@ import dev.jstech.core.diagnostic.Bandwidth;
 import dev.jstech.core.diagnostic.CoreHealth;
 import dev.jstech.core.diagnostic.CostMap;
 import dev.jstech.core.diagnostic.DiagnosticCommands;
+import dev.jstech.core.diagnostic.DiagnosticNotifications;
 import dev.jstech.core.diagnostic.DiagnosticReports;
 import dev.jstech.core.diagnostic.Sections;
 import dev.jstech.core.dimension.DimensionEffects;
@@ -64,10 +65,14 @@ import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.integration.opac.OpacIntegration;
 import dev.jstech.core.item.ItemStates;
+import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.log.LogCommand;
 import dev.jstech.core.menu.MenuSync;
 import dev.jstech.core.multiblock.MultiblockPatterns;
+import dev.jstech.core.notification.NotificationSettings;
+import dev.jstech.core.notification.NotificationSounds;
+import dev.jstech.core.notification.Notifications;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.progression.PlayerProgress;
@@ -141,8 +146,12 @@ public final class JsCore {
         CoreFonts.declare();
         // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.
         CoreGuide.declare();
+        // The series' one creative tab of what its mods share, showing only what the installed mods use.
+        JsTechTab.declare();
         // What the manuals sound like: the game's own book and button sounds, in the Manuals channel.
         GuideSounds.declare();
+        // What the notifications sound like, one of the game's own sounds for each level.
+        NotificationSounds.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds.
         CoreEnergy.register(modEventBus);
@@ -166,6 +175,8 @@ public final class JsCore {
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
         // The styles a player chose for the screens of every mod, read on their own game only.
         ConfigFiles.register(StyleSettings.FILE, modEventBus, modContainer);
+        // Where a player's notifications appear and what they silenced, read on their own game only.
+        ConfigFiles.register(NotificationSettings.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();
@@ -185,8 +196,9 @@ public final class JsCore {
         MediaCommand.declare();
         LogCommand.declare();
         DiagnosticCommands.declare();
-        // The Core's part of /jstech health, before any mod adds its own.
+        // The Core's part of /jstech health, before any mod adds its own, and what its operators are notified of.
         CoreHealth.declare();
+        DiagnosticNotifications.declare();
         // The multiblock patterns of every mod, read from data and declared in code.
         MultiblockPatterns.register();
         // What each dimension is like to stand in, read from data.
@@ -218,9 +230,11 @@ public final class JsCore {
         GuideGifts.listen();
         Holograms.listen(modEventBus);
         JsCoreDataGenerators.listen(modEventBus);
+        JsTechTab.listen(modEventBus);
         KeyActions.listen(modEventBus);
         MediaNetwork.listen(modEventBus);
         MediaServerEvents.listen();
+        Notifications.listen(modEventBus);
         OwnedProtection.listen();
         Protection.listen();
         RuntimeDimensions.listen();

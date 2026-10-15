@@ -37,6 +37,7 @@ says what the Core promises and what it does not yet.
 | [Ownership](OWNERSHIP.md) | Teams, owners and access. |
 | [Protection](PROTECTION.md) | Claims, permissions, limits, the audit log and damage between players. |
 | [Diagnostics](DIAGNOSTICS.md) | Sections of work, profilers, the watchdog, budgets, network use, cost, `/jstech health`, crash reports. |
+| [Notifications](NOTIFICATIONS.md) | Notifications on the HUD: levels, alike ones grouped, the history, actions, silencing, do not disturb. |
 | [Progression](PROGRESSION.md) | Eras, tiers, progression axes and advancements. |
 | [Commands](COMMANDS.md) | Commands under `/jstech`. |
 | [Settings](SETTINGS.md) | Settings files, their ranges, and the settings screen. |

@@ -89,6 +89,25 @@ section can also show stacks that are declared elsewhere (`alsoShowing(output ->
 can sort its entries another way than the order they were declared in (`sortedBy(comparator)`). The tab's name
 is written to the language file from the English you give it.
 
+A section can also take an item declared elsewhere as one of its entries (`with(() -> OTHER.get())`), for a tab
+that gathers what several places declare, and can show only the entries a test lets through
+(`shownIf(item -> ...)`), asked each time the tab is filled.
+
+### The J's Tech tab
+
+*Added 2026-10-15.*
+
+The series has one creative tab of what its mods share, **J's Tech**, in three sections: the materials, the fluids
+and components of the shared catalogue, and the shared blocks and tools (the series' manual first). It shows only
+what the installed mods use, and a mod declares what it uses once, from its constructor:
+
+```java
+SharedUses.declare(MODID, () -> MaterialItems.get(ModMaterial.IRON, MaterialForm.DUST).get());
+```
+
+What the J's Tech tab shows is left out of the other tabs of every mod that declared its uses, so nothing shows twice;
+those tabs keep the mod's own content. Until a mod declares its uses, its tabs stay as they are.
+
 ### Item tags from the tabs
 
 *Added 2026-10-12.*

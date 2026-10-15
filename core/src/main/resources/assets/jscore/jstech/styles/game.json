@@ -91,7 +91,11 @@
     "chart": {"kind": "flat", "fill": "chart_ground"},
     "menu_ground": {"kind": "menu"},
     "list_ground": {"kind": "tile", "texture": "minecraft:textures/gui/menu_list_background.png", "size": [32, 32]},
-    "separator_footer": {"kind": "tile", "texture": "minecraft:textures/gui/footer_separator.png", "size": [32, 2]}
+    "separator_footer": {"kind": "tile", "texture": "minecraft:textures/gui/footer_separator.png", "size": [32, 2]},
+    "notification": {"kind": "slice", "texture": "minecraft:textures/gui/sprites/toast/advancement.png",
+      "region": [0, 0, 160, 32], "texture_size": [160, 32], "border": 4},
+    "close": "minecraft:widget/cross_button",
+    "close_hover": "minecraft:widget/cross_button_highlighted"
   },
   "metrics": {"gap": 4, "padding": 7, "row_height": 12, "control_height": 20, "small_scale": 0.75, "title_gap": 3}
 }

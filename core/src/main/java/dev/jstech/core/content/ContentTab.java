@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -113,9 +114,36 @@ public final class ContentTab {
         private final List<Consumer<CreativeModeTab.Output>> more = new ArrayList<>();
         private final List<TagKey<Item>> tags = new ArrayList<>();
         private @Nullable Comparator<? super Item> order;
+        private Predicate<Item> shownIf = item -> true;
 
         private Section(final String modid) {
             this.modid = modid;
+        }
+
+        /**
+         * Puts an item declared elsewhere into the section too: a tab that gathers what several places declare, such
+         * as a tab of content many mods share.
+         */
+        public Section with(final Supplier<? extends ItemLike> entry) {
+            entries.add(entry);
+            return this;
+        }
+
+        /** Shows only the entries {@code shown} lets through, asked each time the tab is filled. */
+        public Section shownIf(final Predicate<Item> shown) {
+            this.shownIf = shown;
+            return this;
+        }
+
+        /** The items the section shows now: its entries the section lets through, in its order. */
+        public List<Item> shown() {
+            final List<Item> items = new ArrayList<>(items());
+            items.removeIf(shownIf.negate());
+            if (order != null) {
+                // A stable sort: entries the order ranks alike keep their declaration order.
+                items.sort(order);
+            }
+            return items;
         }
 
         /** Shows these stacks too, after the declared entries. */
@@ -159,12 +187,7 @@ public final class ContentTab {
         }
 
         private void fill(final CreativeModeTab.Output output) {
-            final List<Item> items = items();
-            if (order != null) {
-                // A stable sort: entries the order ranks alike keep their declaration order.
-                items.sort(order);
-            }
-            items.forEach(output::accept);
+            shown().forEach(output::accept);
             more.forEach(stacks -> stacks.accept(output));
         }
     }

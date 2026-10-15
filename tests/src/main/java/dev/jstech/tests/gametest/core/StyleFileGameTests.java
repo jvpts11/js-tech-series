@@ -100,6 +100,14 @@ public final class StyleFileGameTests {
                     faint.add(id + " button text " + String.format("%.2f", ratio));
                 }
             }
+            // So does a notification drawn flat; the game's toast frame is the sprite's to keep.
+            if (style.piece(StylePiece.NOTIFICATION) instanceof StyleSprite.Flat flat && flat.fill().isPresent()) {
+                final double ratio = ColorContrast.ratio(style.colour(StyleRole.MENU_TEXT),
+                        style.colour(flat.fill().get()));
+                if (ratio < TEXT_CONTRAST) {
+                    faint.add(id + " notification text " + String.format("%.2f", ratio));
+                }
+            }
         });
         helper.assertTrue(faint.isEmpty(), "every text reads on its ground: " + faint);
         helper.succeed();

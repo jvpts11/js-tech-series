@@ -12,6 +12,7 @@ import dev.jstech.core.audio.AudioTexts;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.item.ItemTexts;
+import dev.jstech.core.notification.NotificationTexts;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
@@ -19,8 +20,9 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * The Core's own keys: turning off the last sound heard, which the player's game does alone, changing the mode of
- * the item in the main hand, which the server does, and opening an item's page in the manual. The first two have no
- * key until the player gives them one; the manual's is M, which every manual's tooltip names.
+ * the item in the main hand, which the server does, opening an item's page in the manual, and opening the history of
+ * notifications. The first two have no key until the player gives them one; the manual's is M, which every manual's
+ * tooltip names, and the history's N.
  */
 @TextHolder
 public final class CoreKeys {
@@ -43,6 +45,12 @@ public final class CoreKeys {
     public static final KeyAction OPEN_IN_MANUAL = KeyActions.declare(KeyAction.builder(
                     ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "open_in_manual"), GuideTexts.OPEN_KEY)
             .key(GLFW.GLFW_KEY_M));
+
+    /** Opens the history of notifications. N, until the player changes it. */
+    public static final KeyAction NOTIFICATIONS = KeyActions.declare(KeyAction.builder(
+                    ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "notifications"),
+                    NotificationTexts.HISTORY_KEY)
+            .key(GLFW.GLFW_KEY_N));
 
     private CoreKeys() {
     }

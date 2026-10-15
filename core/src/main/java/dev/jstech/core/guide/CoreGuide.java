@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.guide;
 
-import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.registry.CoreItems;
@@ -19,7 +18,7 @@ import java.util.Map;
  * rings through them, its code and figures in the small terminal font and its pages numbered by chapter, as technical
  * manuals were;
  * and the series' own manual, the Technical Reference, which holds every chapter of every mod there is, handed to
- * each player once as they first join a world and kept in the Core's creative tab.
+ * each player once as they first join a world and kept in the J's Tech creative tab.
  */
 public final class CoreGuide {
 
@@ -36,13 +35,9 @@ public final class CoreGuide {
     public static final int SHEET_WIDTH = 340;
     public static final int SHEET_MARGIN = 15;
 
-    /** The Core's creative tab: the series' manual, and whatever else of the Core a player takes in hand. */
-    public static final ContentTab TAB = CoreItems.CONTENT.tab("core", "J's Core", () -> CoreGuide.MANUAL);
-    private static final ContentTab.Section MANUALS = TAB.section();
-
+    /** The series' manual, shown in the J's Tech creative tab with the rest of what the series' mods share. */
     public static final ItemEntry<ManualItem> MANUAL = CoreItems.CONTENT.item("technical_reference",
-            properties -> new ManualItem(properties, TECHNICAL_REFERENCE)).named("Technical Reference")
-            .tab(MANUALS).register();
+            properties -> new ManualItem(properties, TECHNICAL_REFERENCE)).named("Technical Reference").register();
 
     static {
         CoreItems.CONTENT.guide().style("binder", binder("jscore:guide/binder", false));

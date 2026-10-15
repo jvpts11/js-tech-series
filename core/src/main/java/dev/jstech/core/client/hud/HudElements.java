@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -45,6 +46,17 @@ public final class HudElements {
      * @throws IllegalStateException when an element of that id is declared already
      */
     public static void declare(final ResourceLocation id, final HudStack.Corner corner, final IHudElement element) {
+        declare(id, () -> corner, element);
+    }
+
+    /**
+     * Declares {@code element}, known as {@code id}, in the corner {@code corner} says, asked every frame: an element
+     * whose corner the player chooses.
+     *
+     * @throws IllegalStateException when an element of that id is declared already
+     */
+    public static void declare(final ResourceLocation id, final Supplier<HudStack.Corner> corner,
+                               final IHudElement element) {
         final Declared declared = new Declared(id, corner, element);
         if (BY_ID.putIfAbsent(id, declared) != null) {
             throw DeclarationError.of(id.getNamespace(), "the HUD element " + id, "is declared twice",
@@ -97,7 +109,7 @@ public final class HudElements {
     private static List<Declared> shownIn(final Minecraft minecraft, final HudStack.Corner corner) {
         final List<Declared> shown = new ArrayList<>();
         for (final Declared declared : DECLARED) {
-            if (declared.corner() == corner && declared.element().shown(minecraft)) {
+            if (declared.corner().get() == corner && declared.element().shown(minecraft)) {
                 shown.add(declared);
             }
         }
@@ -108,6 +120,6 @@ public final class HudElements {
         return shown.stream().map(declared -> declared.element().size(minecraft)).toList();
     }
 
-    private record Declared(ResourceLocation id, HudStack.Corner corner, IHudElement element) {
+    private record Declared(ResourceLocation id, Supplier<HudStack.Corner> corner, IHudElement element) {
     }
 }

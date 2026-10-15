@@ -26,5 +26,23 @@
       "item/book/open_flip3"
     ],
     "subtitle": "subtitles.jscore.manual.page"
+  },
+  "notification/alert": {
+    "sounds": [
+      "note/bell"
+    ],
+    "subtitle": "subtitles.jscore.notification.alert"
+  },
+  "notification/info": {
+    "sounds": [
+      "ui/toast/in"
+    ],
+    "subtitle": "subtitles.jscore.notification.info"
+  },
+  "notification/warning": {
+    "sounds": [
+      "note/pling"
+    ],
+    "subtitle": "subtitles.jscore.notification.warning"
   }
 }

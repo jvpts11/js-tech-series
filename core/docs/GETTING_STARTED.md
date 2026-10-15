@@ -234,6 +234,7 @@ data.server(new MyRecipeProvider(data.output(), data.lookup()));
 | [Ownership](OWNERSHIP.md) | Owners, access and teams. |
 | [Protection](PROTECTION.md) | Claims, permissions, limits, the audit log and damage between players. |
 | [Diagnostics](DIAGNOSTICS.md) | Sections of work, profilers, the watchdog, budgets, network use, cost, `/jstech health`, crash reports. |
+| [Notifications](NOTIFICATIONS.md) | Notifications on the HUD: levels, alike ones grouped, the history, actions, silencing, do not disturb. |
 | [Progression](PROGRESSION.md) | Eras, tiers, progression steps and advancements. |
 | [Commands](COMMANDS.md) | Commands under `/jstech`. |
 | [Entities](ENTITIES.md) | Entities, vehicles, robots, projectiles and what a player wears. |

@@ -11,7 +11,9 @@ import dev.jstech.core.content.ModContent;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -60,6 +62,13 @@ public final class MaterialItems {
                     + ". Check activeModForms or call MaterialItems.register() first");
         }
         return formMap.get(form);
+    }
+
+    /** Every material item declared, material by material and form by form. */
+    public static List<DeferredItem<Item>> all() {
+        final List<DeferredItem<Item>> out = new ArrayList<>();
+        REGISTRY.values().forEach(forms -> out.addAll(forms.values()));
+        return out;
     }
 
     private static String capitalise(final String word) {

@@ -42,7 +42,8 @@ A thread of the Core looks at every thread running a section four times a second
 may, one second unless the section or the server says otherwise, is a stall:
 
 - the first stall of each section is written to its system's log, at warning level, with the stack of the thread it
-  runs on, and the operators who hold `jscore.diagnostics.warnings` are told in chat;
+  runs on, and the operators who hold `jscore.diagnostics.warnings` get a notification
+  ([Notifications](NOTIFICATIONS.md));
 - every stall is counted, and its length kept once it ends, for `/jstech health`.
 
 ```java
@@ -159,5 +160,5 @@ sections slowed or stalled, and, when the crash is on the server's thread, the s
   work still runs, timed and watched.
 - **`/jstech bandwidth <player>` says the player is not counted.** They play in their own game, which sends nothing as
   bytes, or the counting is off in the world's settings.
-- **The operators are not told of a stall.** `diagnostics.warn_operators` is off, or they do not hold
-  `jscore.diagnostics.warnings`; the log has it either way.
+- **The operators are not told of a stall.** `diagnostics.warn_operators` is off, they do not hold
+  `jscore.diagnostics.warnings`, or they silenced the kind; the log has it either way.

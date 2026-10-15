@@ -84,7 +84,8 @@ final class Watchdog {
         logger.warn("{} of {} has run for {} ms on the thread {}; the first stall of a section is written down with "
                 + "its stack, and the rest counted for /jstech health", running.section, running.section.system(),
                 millis, slot.thread.getName(), stack);
-        Sections.tellOperators(DiagnosticTexts.STALLED.with(running.section.toString(), millis));
+        Sections.tellOperators(DiagnosticNotifications.STALLED,
+                DiagnosticTexts.STALLED.with(running.section.toString(), millis));
     }
 
     /* The stack a stalled thread was on, written to the log as an exception's would be. */

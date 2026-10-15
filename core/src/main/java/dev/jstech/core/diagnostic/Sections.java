@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.diagnostic;
 
+import dev.jstech.core.notification.Notification;
+import dev.jstech.core.notification.NotificationKind;
+import dev.jstech.core.notification.Notifications;
 import dev.jstech.core.team.CorePermissions;
-import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
@@ -18,7 +20,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -104,16 +105,17 @@ public final class Sections {
         return SLOTS;
     }
 
-    /* Tells the operators who are to be told, on the server's thread, when there is a server. */
-    static void tellOperators(final Text text) {
+    /* Notifies the operators who are to be told, on the server's thread, when there is a server. */
+    static void tellOperators(final NotificationKind kind, final Text text) {
         final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null || !DiagnosticBalance.warnOperators()) {
             return;
         }
+        final Notification notification = kind.of(kind.name().text(), text);
         server.execute(() -> {
             for (final ServerPlayer player : server.getPlayerList().getPlayers()) {
                 if (CorePermissions.has(player, CorePermissions.DIAGNOSTIC_WARNINGS)) {
-                    player.sendSystemMessage(GameText.component(text).withStyle(ChatFormatting.GOLD));
+                    Notifications.send(player, notification);
                 }
             }
         });
@@ -133,10 +135,11 @@ public final class Sections {
                 final String budget = Diagnostics.millis(section.budgetNanos());
                 logger.warn("{} takes {} ms a tick against its budget of {} ms, and slows itself to one tick in {}",
                         section, average, budget, after);
-                tellOperators(DiagnosticTexts.SLOWED.with(section.toString(), average, budget, after));
+                tellOperators(DiagnosticNotifications.SLOWED,
+                        DiagnosticTexts.SLOWED.with(section.toString(), average, budget, after));
             } else if (after == 1) {
                 logger.info("{} is within its budget again, at {} ms a tick, and runs every tick", section, average);
-                tellOperators(DiagnosticTexts.RECOVERED.with(section.toString()));
+                tellOperators(DiagnosticNotifications.RECOVERED, DiagnosticTexts.RECOVERED.with(section.toString()));
             } else {
                 logger.debug("{} takes {} ms a tick and now runs one tick in {}", section, average, after);
             }

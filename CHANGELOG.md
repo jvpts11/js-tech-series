@@ -127,6 +127,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Crash reports and a diagnostic file: a crash report has a section of the Core with what was running, what was
   slowed or stalled and the state of the systems, and `/jstech diagnostics` writes the mods, the settings, the
   timings, the sections, the health, the network use and the log's levels to a file to attach to a bug report.
+- (Core) Notifications on the HUD: a mod declares its kinds of notification once and sends them from the server; each
+  comes in the shape of the game's toast, in the player's style, with its level's icon, colour and sound (information,
+  warning, alert), the count of alike ones, its mod, what a click does and a line that shortens as its time runs out.
+  A click while the chat is open opens a manual's page or shows the place on a map. The operators' warnings of stalls
+  and slowed work come this way.
+- (Core) The history of notifications, on N: filtered by level and by mod, each line clicked to act on it, taken off
+  the list, or, with the right button, its kind or its mod silenced. The player chooses the corner they appear in and
+  can ask not to be disturbed, which holds the game's own toasts too.
+- (Core) The J's Tech creative tab: the series' one tab of what its mods share, in three sections (materials, fluids
+  and components, shared blocks and tools), showing only what the installed mods use; what it shows is left out of the
+  other tabs of the mods that declare their uses. It takes the place of the J's Core tab.
 
 ### Changed
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

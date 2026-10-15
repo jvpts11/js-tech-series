@@ -14,8 +14,7 @@ import net.neoforged.bus.api.IEventBus;
 
 /**
  * The items the core registers: the material catalogue (the dusts, plates and other forms the mods of the
- * series process and trade). The core has no creative tab of its own; a mod that works the materials shows
- * them in its tab.
+ * series process and trade). They are shown in the J's Tech creative tab once a mod says it uses them.
  */
 public final class CoreItems {
 

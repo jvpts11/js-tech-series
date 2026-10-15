@@ -33,6 +33,10 @@ HudElements.declare(rl("oxygen"), HudStack.Corner.TOP_RIGHT, new IHudElement() {
 They are drawn under the chat, 4 pixels from the screen's edge and 2 apart, and hide when the player hides the
 HUD (F1). An element that is not shown takes no room.
 
+An element whose corner the player chooses is declared with a supplier of its corner, asked every frame:
+`HudElements.declare(rl("notifications"), Settings::corner, element)`. The Core's notifications are one
+([Notifications](NOTIFICATIONS.md)).
+
 ## Holograms
 
 *Added 2026-10-05.*

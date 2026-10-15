@@ -104,6 +104,8 @@ public final class StyleFiles {
             case MENU_GROUND -> StyleSprite.Flat.of(StyleRole.SCREEN);
             case LIST_GROUND -> StyleSprite.Flat.of(StyleRole.PANEL, StyleRole.LINE);
             case SEPARATOR_FOOTER -> StyleSprite.Flat.of(StyleRole.LINE);
+            case NOTIFICATION -> StyleSprite.Flat.of(StyleRole.TOOLTIP_GROUND, StyleRole.TOOLTIP_EDGE);
+            case CLOSE, CLOSE_HOVER -> StyleSprite.NONE;
         };
     }
 

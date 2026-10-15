@@ -98,7 +98,13 @@ public enum StylePiece {
     /** The ground of a list on a menu. */
     LIST_GROUND,
     /** The line over a menu's footer. */
-    SEPARATOR_FOOTER;
+    SEPARATOR_FOOTER,
+    /** A notification on the HUD; the game's own is its toast's frame. */
+    NOTIFICATION,
+    /** A small button that takes something away, a cross; a style that draws none leaves a letter x. */
+    CLOSE,
+    /** That button under the pointer. */
+    CLOSE_HOVER;
 
     /** The name a style file sets it by. */
     public String key() {
