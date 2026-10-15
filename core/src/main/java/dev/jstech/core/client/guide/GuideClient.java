@@ -25,6 +25,7 @@ import net.minecraft.Util;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -44,6 +45,7 @@ import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The manuals on a player's game: read from the resource packs whenever they are, opened by a manual item's use, and
@@ -91,6 +93,15 @@ public final class GuideClient {
      * @return whether the manual was found
      */
     public static boolean open(final String manualId, final String entry) {
+        return open(manualId, entry, null);
+    }
+
+    /**
+     * Opens a manual at an entry's page from {@code parent}, which closing the manual goes back to.
+     *
+     * @return whether the manual was found
+     */
+    public static boolean open(final String manualId, final String entry, @Nullable final Screen parent) {
         final GuideLibrary library = GuideLibrary.loaded();
         final Optional<GuideManual> manual = library.manual(manualId);
         if (manual.isEmpty()) {
@@ -100,7 +111,7 @@ public final class GuideClient {
         if (style.isEmpty()) {
             return false;
         }
-        Minecraft.getInstance().setScreen(new ManualScreen(manual.get(), style.get(), entry));
+        Minecraft.getInstance().setScreen(new ManualScreen(manual.get(), style.get(), entry, parent));
         return true;
     }
 

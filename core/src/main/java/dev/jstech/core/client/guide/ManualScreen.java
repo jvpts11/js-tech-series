@@ -82,6 +82,9 @@ public final class ManualScreen extends Screen {
     private final GuideManual manual;
     private final GuideStyle style;
     private final String openAt;
+    /* The screen it was opened from, which closing it goes back to; none for the game itself. */
+    @Nullable
+    private final Screen parent;
     private final GuideRecipes recipes = new GuideRecipes();
     private final GuideFaces faces = new GuideFaces();
     private final Map<String, Integer> colours = new HashMap<>();
@@ -207,11 +210,25 @@ public final class ManualScreen extends Screen {
     private static final Map<String, GuideHistory> HISTORIES = new HashMap<>();
 
     public ManualScreen(final GuideManual manual, final GuideStyle style, final String openAt) {
+        this(manual, style, openAt, null);
+    }
+
+    /** The manual opened from {@code parent}, a settings screen's link, which closing it goes back to. */
+    public ManualScreen(final GuideManual manual, final GuideStyle style, final String openAt,
+                        @Nullable final Screen parent) {
         super(GameText.component(GuideTexts.CONTENTS));
         this.manual = manual;
         this.style = style;
         this.openAt = openAt == null ? "" : openAt;
+        this.parent = parent;
         this.history = HISTORIES.computeIfAbsent(manual.id(), id -> new GuideHistory());
+    }
+
+    @Override
+    public void onClose() {
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(this.parent);
+        }
     }
 
     @Override

@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import net.minecraft.world.level.storage.LevelResource;
+import net.neoforged.fml.loading.FMLConfig;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
@@ -43,7 +44,7 @@ final class KeptConfigFiles {
             }
             case COMMON -> load(file, FMLPaths.CONFIGDIR.get());
             case SERVER -> {
-                NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, event -> load(file,
+                NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, event -> ConfigFiles.loadWorldFile(file,
                         event.getServer().getWorldPath(LevelResource.ROOT).resolve(WORLD_FOLDER)));
                 NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> {
                     file.onSave(() -> { });
@@ -84,6 +85,24 @@ final class KeptConfigFiles {
             write(file, path);
         } catch (final IOException e) {
             JsCore.LOGGER.warn("{} could not be read; the defaults are used", path, e);
+        }
+    }
+
+    /**
+     * A world's file that does not exist yet starts as the modpack's copy, when the game's {@code defaultconfigs}
+     * folder has one, as NeoForge starts its own world settings; it is then read as any other.
+     */
+    static void startFromModpack(final ConfigFile file, final Path folder) {
+        final Path path = folder.resolve(file.fileName());
+        final Path modpack = FMLPaths.GAMEDIR.get().resolve(FMLConfig.defaultConfigPath()).resolve(file.fileName());
+        if (Files.isRegularFile(path) || !Files.isRegularFile(modpack)) {
+            return;
+        }
+        try {
+            writeWhole(path, Files.readAllBytes(modpack));
+            JsCore.LOGGER.info("{} starts as the modpack's copy, {}", path, modpack);
+        } catch (final IOException e) {
+            JsCore.LOGGER.warn("the modpack's {} could not be copied for the world", modpack, e);
         }
     }
 

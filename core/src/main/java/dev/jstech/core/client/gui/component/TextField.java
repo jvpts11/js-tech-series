@@ -159,9 +159,9 @@ public class TextField extends UiComponent {
                     g.fill(sx, textY - 1, ex, textY + 8, ComponentPalette.get().selection());
                 }
             }
-            Draw.text(g, ctx.font(), visible, x() + 3, textY, ctx.skin().text(), ground);
+            Draw.text(g, ctx.font(), visible, x() + 3, textY, ctx.skin().fieldText(), ground);
             final int caretX = x() + 3 + ctx.font().width(shown.substring(offset, caret));
-            g.fill(caretX, textY - 1, caretX + 1, textY + 8, ctx.skin().text());
+            g.fill(caretX, textY - 1, caretX + 1, textY + 8, ctx.skin().fieldText());
             if (!tail.isEmpty()) {
                 Draw.text(g, ctx.font(), tail, x() + 3 + ctx.font().width(visible) + 1, textY, ctx.skin().dim(),
                         ground);
@@ -173,7 +173,7 @@ public class TextField extends UiComponent {
                     ctx.skin().dim(), ground);
         } else {
             Draw.text(g, ctx.font(), Texts.clip(ctx.font(), shown, width() - 6), x() + 3, textY,
-                    ctx.skin().text(), ground);
+                    ctx.skin().fieldText(), ground);
         }
     }
 

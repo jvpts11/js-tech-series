@@ -37,6 +37,7 @@ public final class Styles {
 
     private static final Logger LOGGER = CoreLogs.INTERFACE.logger();
     private static final Map<ResourceLocation, StyleSkin> SKINS = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, StyleSkin> MENU_SKINS = new ConcurrentHashMap<>();
     private static final Map<ResourceLocation, EraTheme> THEMES = new ConcurrentHashMap<>();
     private static final List<String> PROBLEMS = new CopyOnWriteArrayList<>();
     private static final Map<String, ResourceLocation> MOD_DEFAULTS = new ConcurrentHashMap<>();
@@ -93,6 +94,11 @@ public final class Styles {
         return SKINS.computeIfAbsent(style.id(), id -> new StyleSkin(style));
     }
 
+    /** The skin a component draws through in {@code style} on a menu, a screen over the whole game. */
+    public static StyleSkin menuSkin(final Style style) {
+        return MENU_SKINS.computeIfAbsent(style.id(), id -> new StyleSkin(style, true));
+    }
+
     /**
      * {@code style} as the series' era theme, for the screens that still paint through it: its colours by their roles,
      * its finish by its switches.
@@ -120,6 +126,7 @@ public final class Styles {
                 DeclaredPalettes.INSTANCE, problems));
         loaded = Map.copyOf(styles);
         SKINS.clear();
+        MENU_SKINS.clear();
         THEMES.clear();
         PROBLEMS.clear();
         PROBLEMS.addAll(problems);

@@ -132,8 +132,17 @@ and adds new ones:
 ```
 
 A piece is a sprite of the GUI atlas, a `slice` of a texture cut in nine, a `tile` laid side by side, `flat` colours
-(each a role's key or `#AARRGGBB`), or `none`. What a style does not set comes from its `parent`, or from a `palette`
-it names; the rest is drawn flat in its colours. The overlap and contrast checks run in every style the game has.
+(each a role's key or `#AARRGGBB`), `menu` (the game's own ground of a menu: its panorama or the world, blurred), or
+`none`. What a style does not set comes from its `parent`, or from a `palette` it names; the rest is drawn flat in its
+colours. The overlap and contrast checks run in every style the game has.
+
+**A menu**, a screen over the whole game rather than a window (the Core's settings screen is one), is drawn with the
+style's `menu_ground`, `list_ground` and `separator_footer` pieces, and its text takes the menu's roles (*added
+2026-10-15*): `menu_text`, `menu_dim`, `heading` (a group's title), `notice` (what waits for a restart),
+`info` (what takes hold on a reload, a link) and `warning` (a rule broken). Each falls back to the window's role of the
+same kind (`text`, `dim`, `accent`, `amber`, `accent2`, `red`), so a style made before them still reads.
+`Styles.menuSkin(style)` is the skin a component draws through on a menu; `Styles.skin(style)` the one in a window.
+Text typed in a field takes `field_text` in every style, through `ISkin.fieldText()`.
 
 What a style does not change: the drawing of a machine's face, which is its mod's art, and the inside of a computer,
 whose look is the installed system's skin.

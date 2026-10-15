@@ -92,7 +92,13 @@ public enum StylePiece {
     /** The open list of a drop-down. */
     POPUP_LIST,
     /** A chart's ground. */
-    CHART;
+    CHART,
+    /** The ground of a screen drawn over the whole game, a menu's; the game's own blurs what is behind it. */
+    MENU_GROUND,
+    /** The ground of a list on a menu. */
+    LIST_GROUND,
+    /** The line over a menu's footer. */
+    SEPARATOR_FOOTER;
 
     /** The name a style file sets it by. */
     public String key() {

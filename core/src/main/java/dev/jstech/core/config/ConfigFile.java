@@ -12,6 +12,7 @@ import dev.jstech.core.config.format.IConfigFormat;
 import dev.jstech.core.config.format.PlainValues;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.persistence.UpgradeChain;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,8 +22,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * A settings file: its name, whose it is, the format it is written in, the version of its layout, and the settings
@@ -48,7 +53,7 @@ import java.util.function.Consumer;
  * <p>This is the file as the mod sees it, with nothing of the game in it; where it lives and when it is read is
  * {@link ConfigFiles}'s business.
  */
-public final class ConfigFile {
+public final class ConfigFile implements IConfigValues {
 
     private final String name;
     private final ConfigSide side;
@@ -62,10 +67,19 @@ public final class ConfigFile {
     private final UpgradeChain<Map<String, Object>> upgrades;
     private final ConfigValidator validator;
     private final IConfigLogger logger;
+    private final List<ConfigRule> rules;
+    private final List<ConfigPreset> presets;
     /** Each setting's value as read, by its dotted path; a setting not read yet is at its default. */
     private final Map<String, Object> values = new ConcurrentHashMap<>();
+    /** What is told when a setting's value changes, by its dotted path, and what is told of every change. */
+    private final Map<String, List<Consumer<Object>>> watchers = new ConcurrentHashMap<>();
+    private final List<Consumer<ConfigKey<?>>> anyChange = new CopyOnWriteArrayList<>();
+    /** The settings that take hold on a restart and changed since the file was first read, by dotted path. */
+    private final Set<String> restartDue = ConcurrentHashMap.newKeySet();
     private volatile Runnable saver = () -> { };
     private volatile boolean newer;
+    /** Whether the file was read since it was last reset, after which a change is one the game runs without. */
+    private volatile boolean settled;
 
     /** The name every file keeps the version of its layout under, first in the file. */
     public static final String VERSION_KEY = "config_version";
@@ -84,6 +98,8 @@ public final class ConfigFile {
         this.uses = Map.copyOf(builder.uses);
         this.logger = builder.logger;
         this.validator = new ConfigValidator(builder.logger);
+        this.rules = List.copyOf(builder.rules);
+        this.presets = List.copyOf(builder.presets);
     }
 
     /** Starts declaring a file called {@code name} (without its extension), with whose it is and its format. */
@@ -137,7 +153,76 @@ public final class ConfigFile {
         return this.newer;
     }
 
+    /** The rules between the file's settings. */
+    public List<ConfigRule> rules() {
+        return this.rules;
+    }
+
+    /** The rules {@code values} break, in the order they were declared. */
+    public List<ConfigRule> broken(final IConfigValues values) {
+        final List<ConfigRule> out = new ArrayList<>();
+        for (final ConfigRule rule : this.rules) {
+            if (!rule.holds().test(values)) {
+                out.add(rule);
+            }
+        }
+        return out;
+    }
+
+    /** The presets the mod ships with the file, in the order they were declared. */
+    public List<ConfigPreset> presets() {
+        return this.presets;
+    }
+
+    /** The preset the mod ships called {@code name}, or none. */
+    public Optional<ConfigPreset> preset(final String name) {
+        return this.presets.stream().filter(preset -> preset.name().equals(name)).findFirst();
+    }
+
+    /** Whether {@code key} is active with {@code values}: it is unless the setting it is active under says not. */
+    public boolean isActive(final ConfigKey<?> key, final IConfigValues values) {
+        final Optional<ConfigTraits.Condition> condition = key.traits().activeIf();
+        if (condition.isEmpty()) {
+            return true;
+        }
+        final ConfigKey<?> other = this.keys.get(condition.get().path());
+        return other == null || condition.get().holds(other.plain(cast(values.get(other))));
+    }
+
+    /** Whether a settings screen shows {@code key} with {@code values}: unless it hides while it is not active. */
+    public boolean isShown(final ConfigKey<?> key, final IConfigValues values) {
+        final boolean hides = key.traits().activeIf().map(ConfigTraits.Condition::hides).orElse(false);
+        return !hides || isActive(key, values);
+    }
+
+    /**
+     * The settings that take hold on a restart and were changed since the game read the file, by dotted path: what a
+     * settings screen counts as waiting for a restart.
+     */
+    public Set<String> restartDue() {
+        return Set.copyOf(this.restartDue);
+    }
+
+    /** The setting at {@code dottedPath}, or none. */
+    public Optional<ConfigKey<?>> key(final String dottedPath) {
+        return Optional.ofNullable(this.keys.get(dottedPath));
+    }
+
+    /** Has {@code watcher} told whenever {@code key}'s value changes, with its new value. */
+    @SuppressWarnings("unchecked")
+    public <T> void whenChanged(final ConfigKey<T> key, final Consumer<? super T> watcher) {
+        own(key);
+        this.watchers.computeIfAbsent(key.dottedPath(), path -> new CopyOnWriteArrayList<>())
+                .add(value -> watcher.accept((T) value));
+    }
+
+    /** Has {@code watcher} told of every change of any of the file's settings, with the setting that changed. */
+    public void onAnyChange(final Consumer<ConfigKey<?>> watcher) {
+        this.anyChange.add(Objects.requireNonNull(watcher, "watcher"));
+    }
+
     /** The value a setting of this file has now: as last read, or its default before anything was. */
+    @Override
     @SuppressWarnings("unchecked")
     public <T> T get(final ConfigKey<T> key) {
         own(key);
@@ -179,6 +264,8 @@ public final class ConfigFile {
     public void reset() {
         this.values.clear();
         this.newer = false;
+        this.settled = false;
+        this.restartDue.clear();
         for (final ConfigKey<?> key : this.keys.values()) {
             use(key, key.defaultValue());
         }
@@ -210,6 +297,10 @@ public final class ConfigFile {
         }
         corrected |= hasUnknown(plain, List.of());
         this.newer = fromNewer;
+        for (final ConfigRule rule : broken(this)) {
+            this.logger.warn(fileName() + " breaks a rule between its settings: " + rule.message().english());
+        }
+        this.settled = true;
         return new ReadOutcome(found, upgraded, corrected, fromNewer);
     }
 
@@ -270,8 +361,24 @@ public final class ConfigFile {
     }
 
     private <T> void store(final ConfigKey<T> key, final T value) {
-        this.values.put(key.dottedPath(), value);
+        final Object before = this.values.put(key.dottedPath(), value);
         use(key, value);
+        if (!Objects.equals(before == null ? key.defaultValue() : before, value)) {
+            if (this.settled && key.traits().applies() == ConfigApply.RESTART) {
+                this.restartDue.add(key.dottedPath());
+            }
+            for (final Consumer<Object> watcher : this.watchers.getOrDefault(key.dottedPath(), List.of())) {
+                watcher.accept(value);
+            }
+            for (final Consumer<ConfigKey<?>> watcher : this.anyChange) {
+                watcher.accept(key);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T cast(final Object value) {
+        return (T) value;
     }
 
     private void use(final ConfigKey<?> key, final Object value) {
@@ -334,6 +441,8 @@ public final class ConfigFile {
         private final Map<String, ConfigKey<?>> keys = new LinkedHashMap<>();
         private final Map<String, Consumer<Object>> uses = new LinkedHashMap<>();
         private final UpgradeChain.Builder<Map<String, Object>> upgrades;
+        private final List<ConfigRule> rules = new ArrayList<>();
+        private final List<ConfigPreset> presets = new ArrayList<>();
         private List<String> comment = List.of();
         private IConfigLogger logger = CoreLogs.CONFIG.logger()::warn;
 
@@ -399,6 +508,26 @@ public final class ConfigFile {
             return this;
         }
 
+        /**
+         * A rule between the file's settings: {@code holds} says whether the values in hand keep it, and
+         * {@code message} what is said when they do not.
+         */
+        public Builder rule(final TextKey message, final Predicate<IConfigValues> holds) {
+            this.rules.add(new ConfigRule(message, holds));
+            return this;
+        }
+
+        /** A preset the mod ships with the file, which a server owner may pick. */
+        public Builder preset(final ConfigPreset preset) {
+            Objects.requireNonNull(preset, "preset");
+            if (this.presets.stream().anyMatch(other -> other.name().equals(preset.name()))) {
+                throw DeclarationError.of(null, "the preset " + preset.name() + " of " + this.name,
+                        "is added twice", "give each preset of a file a name of its own");
+            }
+            this.presets.add(preset);
+            return this;
+        }
+
         /** Where the file says what it did not take as written; the log, unless told otherwise. */
         public Builder logger(final IConfigLogger log) {
             this.logger = Objects.requireNonNull(log, "log");
@@ -416,6 +545,15 @@ public final class ConfigFile {
                         throw DeclarationError.of(null, "the setting " + path + " of " + this.name,
                                 "is also the section " + other + " sits in",
                                 "rename the setting or the section, so one path is not both");
+                    }
+                }
+            }
+            for (final ConfigPreset preset : this.presets) {
+                for (final String path : preset.values().keySet()) {
+                    if (!this.keys.containsKey(path)) {
+                        throw DeclarationError.of(null, "the preset " + preset.name() + " of " + this.name,
+                                "sets " + path + ", which the file does not hold",
+                                "add that setting to the file, or take it out of the preset");
                     }
                 }
             }

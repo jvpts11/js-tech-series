@@ -27,16 +27,29 @@ import net.minecraft.resources.ResourceLocation;
 public final class StyleSkin implements ISkin {
 
     private final Style style;
+    /* Whether it is worn on a menu, over the whole game, whose text takes the menu's colours rather than a window's. */
+    private final boolean menu;
 
     private static final ResourceLocation DEFAULT_FONT = ResourceLocation.withDefaultNamespace("default");
 
     public StyleSkin(final Style style) {
+        this(style, false);
+    }
+
+    /** The style worn in a window, or on a menu ({@code menu}), whose text takes the menu's colours. */
+    public StyleSkin(final Style style, final boolean menu) {
         this.style = Objects.requireNonNull(style, "style");
+        this.menu = menu;
     }
 
     /** The style worn. */
     public Style style() {
         return style;
+    }
+
+    /** Whether it is worn on a menu. */
+    public boolean onMenu() {
+        return menu;
     }
 
     /** The colour of {@code role} in the style. */
@@ -52,12 +65,17 @@ public final class StyleSkin implements ISkin {
 
     @Override
     public int text() {
-        return style.colour(StyleRole.TEXT);
+        return style.colour(menu ? StyleRole.MENU_TEXT : StyleRole.TEXT);
     }
 
     @Override
     public int dim() {
-        return style.colour(StyleRole.DIM);
+        return style.colour(menu ? StyleRole.MENU_DIM : StyleRole.DIM);
+    }
+
+    @Override
+    public int fieldText() {
+        return style.colour(StyleRole.FIELD_TEXT);
     }
 
     @Override
@@ -92,6 +110,9 @@ public final class StyleSkin implements ISkin {
 
     @Override
     public int listRowText(final boolean selected) {
+        if (menu) {
+            return style.colour(selected ? StyleRole.MENU_TEXT : StyleRole.MENU_DIM);
+        }
         return style.colour(selected ? StyleRole.TAB_LABEL_ON : StyleRole.TEXT);
     }
 

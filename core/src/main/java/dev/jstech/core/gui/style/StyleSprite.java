@@ -105,10 +105,17 @@ public sealed interface StyleSprite {
     record Nothing() implements StyleSprite {
     }
 
+    /**
+     * The game's own ground of a menu, which only the screen itself can draw: the title screen's panorama, or the
+     * world blurred, under the game's menu texture. Drawn as a piece elsewhere, it is nothing.
+     */
+    record GameMenu() implements StyleSprite {
+    }
+
     /** The kinds a piece written as an object may be. */
     final class Kinds {
 
-        private static final List<String> NAMES = List.of("sprite", "slice", "tile", "flat", "none");
+        private static final List<String> NAMES = List.of("sprite", "slice", "tile", "flat", "none", "menu");
 
         private static final MapCodec<Sprite> SPRITE = ResourceLocation.CODEC.fieldOf("id").xmap(Sprite::new,
                 Sprite::id);
@@ -137,6 +144,8 @@ public sealed interface StyleSprite {
 
         private static final MapCodec<Nothing> NOTHING = MapCodec.unit(new Nothing());
 
+        private static final MapCodec<GameMenu> MENU = MapCodec.unit(new GameMenu());
+
         private static final Codec<String> KIND = Codec.STRING.validate(kind -> NAMES.contains(kind)
                 ? DataResult.success(kind)
                 : DataResult.error(() -> "a style piece of the kind \"" + kind + "\": write one of " + NAMES));
@@ -153,6 +162,7 @@ public sealed interface StyleSprite {
                 case Tile ignored -> "tile";
                 case Flat ignored -> "flat";
                 case Nothing ignored -> "none";
+                case GameMenu ignored -> "menu";
             };
         }
 
@@ -162,6 +172,7 @@ public sealed interface StyleSprite {
                 case "slice" -> SLICE;
                 case "tile" -> TILE;
                 case "flat" -> FLAT;
+                case "menu" -> MENU;
                 default -> NOTHING;
             };
         }

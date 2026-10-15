@@ -46,6 +46,7 @@ stable 4
 3 dev.jstech.core.api.client.ISkin  abstract void windowFrame(GuiGraphics, int, int, int, int)
 8 dev.jstech.core.api.client.ISkin  default int chartLine()
 8 dev.jstech.core.api.client.ISkin  default int energyColour()
+9 dev.jstech.core.api.client.ISkin  default int fieldText()
 8 dev.jstech.core.api.client.ISkin  default int popupText(boolean)
 3 dev.jstech.core.api.client.ISkin  default int progressFill()
 8 dev.jstech.core.api.client.ISkin  default int seriesColour(int)

@@ -126,6 +126,7 @@ import dev.jstech.tests.clienttest.core.CoreStateClientTests;
 import dev.jstech.tests.clienttest.core.DataRegistryClientTests;
 import dev.jstech.tests.clienttest.core.ComponentsClientTests;
 import dev.jstech.tests.clienttest.core.DataScreenClientTests;
+import dev.jstech.tests.clienttest.core.SettingsKitClientTests;
 import dev.jstech.tests.clienttest.core.FluidClientTests;
 import dev.jstech.tests.clienttest.core.GridPainterClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
@@ -252,6 +253,7 @@ public final class ClientTestSuite {
             LiveReloadClientTests.class,
             DataScreenClientTests.class,
             ComponentsClientTests.class,
+            SettingsKitClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

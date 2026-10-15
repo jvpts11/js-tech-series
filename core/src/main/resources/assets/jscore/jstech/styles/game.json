@@ -40,7 +40,13 @@
     "chart_2": "#FF55FFFF",
     "chart_3": "#FFFFFF55",
     "chart_4": "#FFA0A0A0",
-    "energy": "#FFFFDD33"
+    "energy": "#FFFFDD33",
+    "menu_text": "#FFFFFFFF",
+    "menu_dim": "#FFA0A0A0",
+    "heading": "#FFFFFF55",
+    "notice": "#FFFFAA00",
+    "info": "#FF55FFFF",
+    "warning": "#FFFF5555"
   },
   "pieces": {
     "window": {"kind": "slice", "texture": "minecraft:textures/gui/demo_background.png",
@@ -82,7 +88,10 @@
     "radio": {"kind": "flat", "fill": "slot_bg", "light": "#FF373737", "dark": "#FFFFFFFF"},
     "radio_hover": {"kind": "flat", "fill": "#FF9B9B9B", "light": "#FF373737", "dark": "#FFFFFFFF"},
     "popup_list": {"kind": "flat", "fill": "#D0000000"},
-    "chart": {"kind": "flat", "fill": "chart_ground"}
+    "chart": {"kind": "flat", "fill": "chart_ground"},
+    "menu_ground": {"kind": "menu"},
+    "list_ground": {"kind": "tile", "texture": "minecraft:textures/gui/menu_list_background.png", "size": [32, 32]},
+    "separator_footer": {"kind": "tile", "texture": "minecraft:textures/gui/footer_separator.png", "size": [32, 2]}
   },
   "metrics": {"gap": 4, "padding": 7, "row_height": 12, "control_height": 20, "small_scale": 0.75, "title_gap": 3}
 }

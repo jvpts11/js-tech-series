@@ -18,6 +18,7 @@ import dev.jstech.core.client.audio.mixer.SoundMixerEntry;
 import dev.jstech.core.client.cable.CableClientEvents;
 import dev.jstech.core.client.cable.CableColours;
 import dev.jstech.core.client.config.ConfigChoosers;
+import dev.jstech.core.client.config.ConfigClient;
 import dev.jstech.core.client.config.CoreConfigScreen;
 import dev.jstech.core.client.data.DataRegistryClient;
 import dev.jstech.core.client.developer.LiveReloadClient;
@@ -74,6 +75,7 @@ public final class JsCoreClient {
         CableClientEvents.listen();
         CableColours.listen(modEventBus);
         ClientStateEvents.listen();
+        ConfigClient.listen();
         CoreFontClient.listen(modEventBus);
         CoreModels.listen(modEventBus);
         CoreMotionClient.listen(modEventBus);

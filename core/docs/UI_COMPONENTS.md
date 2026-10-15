@@ -45,11 +45,11 @@ button on Frames 11 is flat, with no change to the program.
 | Component | What it is |
 |---|---|
 | `Panel` | The container: children in z-order, focus routing, pressed child. |
-| `ScrollPanel` | A panel whose content is taller than it: wheel scrolling, a thumb, clipping. |
+| `ScrollPanel` | A panel whose content is taller than it: wheel scrolling, a thumb, clipping; what a child has open (a drop-down's list) is drawn and clicked outside the clip. |
 | `Popup` | A modal dialog centred in a rectangle: title, layouter for its children, dims what is behind, Escape and an outside click close it. |
 | `Label` | Text with a tone (text, dim, accent) or a colour, an alignment, a scale; clipped to its width. |
-| `Button` | Fires on press; primary or plain; can be disabled. |
-| `Checkbox` | A box with a label, read and toggled through callbacks. |
+| `Button` | Fires on press; primary or plain; can be disabled. `setFocusable(true)` lets the keyboard reach it, and Enter or Space press it; `press()` presses it as a click does. |
+| `Checkbox` | A box with a label, read and toggled through callbacks; `setFocusable(true)` as a button's. |
 | `TextField` | One line of text: shows the committed value, edits on focus, commits on blur, Escape reverts; a placeholder, a suffix that is not edited. |
 | `SearchField` | A field whose text filters something as it is typed. |
 | `TextArea` | Multi-line text with a caret: Enter and Backspace split and join lines, the arrows and a click move the caret. |

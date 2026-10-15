@@ -28,6 +28,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The richer controls in every look: J's Core's API is at version 8. `ISkin` draws a slider, a switch, an
   option button, a drop-down list and its open list, a chart's ground, lines and series, and gives stored energy its
   colour, each with a default for a skin written before; all experimental.
+- (Core) Fields in every look: J's Core's API is at version 9. `ISkin.fieldText()` is the colour of what is typed in a
+  field, the primary text unless a look's fields differ; experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -75,6 +77,23 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lists, a colour picker; trees, tables that sort and filter, line, bar and pie charts, a node graph editor; a 3D view
   of a block, an item or an entity, a map in the game's colours, tank gauges in the fluid's own texture, segmented
   energy bars and ghost slots; and tooltips whose lines hold items and pictures.
+- (Core) Settings for every mod: the settings screen, rebuilt for any mod on the Core, is drawn in the player's style
+  (the game's own by default: its tabs, buttons, sliders, fields and lists over the blurred world). Each kind of
+  value has its control: sliders with the number typed beside them, drop-down lists, a colour picker, editors of
+  lists and maps, and a picker of items, blocks and fluids with a search. Groups fold away, the search looks through
+  every tab, a filter shows only what is off its default, a setting has a button back to its default, Undo and Redo
+  take changes back and again, a description shows its picture and a link into the manual, and the keyboard reaches
+  everything.
+- (Core) Settings that say when they take hold: a setting takes hold at once, on a reload or on a restart, and the
+  screen marks it and counts the changes that wait for a restart. A setting can be active, or shown, only while
+  another is on, and rules between settings say what is wrong over them and keep Done from saving it.
+- (Core) A server's settings from afar: a world's settings reach every player as they join and whenever one changes.
+  An operator changes them on their own game's settings screen, the server checking the permission; other players
+  see them, read only. `/jstech config get`, `set`, `reset` and `preset` change them by command.
+- (Core) Presets and settings as text: a mod ships named presets with a file, a player saves their own and a server
+  owner picks one. Export writes a file's settings as text to share, and Import takes them back. A world's settings
+  file that does not exist yet starts as the modpack's copy in `defaultconfigs`, whatever its format.
+- (Core) Told of a change: a mod is told when a setting changes, at once, wherever the change came from.
 
 ### Changed
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
@@ -90,6 +109,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   too, in place of their era's.
 - (Core) A setting can be picked on a chooser of its own, which shows what each value means, from the settings
   screen.
+- (Core) Menus in every style: a style draws a menu's ground, its lists and its footer's line, and gives a menu's text
+  colours of its own (headings, notices, links, warnings), each falling back to a window's; what is typed in a field
+  takes the style's field colour in every style.
 
 ## [0.5.2a] - 2026-10-14
 

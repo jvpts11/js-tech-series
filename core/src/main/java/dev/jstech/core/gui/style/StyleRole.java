@@ -96,7 +96,19 @@ public enum StyleRole {
     /** A chart's fourth series. */
     CHART_4(DIM),
     /** Stored energy at its brightest, as a gauge fills. */
-    ENERGY(AMBER);
+    ENERGY(AMBER),
+    /** The main text of a screen drawn over the whole game, a menu's, rather than in a window. */
+    MENU_TEXT(TEXT),
+    /** Text that says less on a menu. */
+    MENU_DIM(DIM),
+    /** A heading on a menu: a group's title. */
+    HEADING(ACCENT),
+    /** What a reader should notice on a menu: a change that waits for a restart, a setting that depends on another. */
+    NOTICE(AMBER),
+    /** What tells more on a menu: a change that takes hold on a reload, a link. */
+    INFO(ACCENT2),
+    /** What is wrong on a menu: a rule broken. */
+    WARNING(RED);
 
     private final StyleRole fallback;
 

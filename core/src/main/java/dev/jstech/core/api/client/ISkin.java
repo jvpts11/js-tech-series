@@ -68,6 +68,12 @@ public interface ISkin {
     /** The fill of a text field or an empty cell. */
     int fieldBg();
 
+    /** The text typed in a field, over {@link #fieldBg()}: the primary text, unless the look's fields differ. */
+    @ApiStatus.Experimental
+    default int fieldText() {
+        return text();
+    }
+
     /** The background of a hovered row or cell. */
     int listHover();
 

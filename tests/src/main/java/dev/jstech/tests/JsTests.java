@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
 import dev.jstech.tests.testkit.ChunkLoadWatch;
 import dev.jstech.tests.testkit.TestSettings;
+import dev.jstech.tests.testkit.TestShowcaseSettings;
 import dev.jstech.tests.testkit.TestStates;
 import dev.jstech.tests.testkit.ToyLanguage;
 import dev.jstech.tests.testkit.computers.TestComponents;
@@ -72,6 +73,8 @@ public final class JsTests {
         TestToolkit.register(modEventBus);
         // A menu whose screen is declared in a file, to prove screens as data, values bound by name and styles.
         TestScreens.register(modEventBus);
+        // A player's settings with every kind of control, which the settings screen's tests open.
+        TestShowcaseSettings.register(modEventBus, modContainer);
         if (GameTestHooks.isGametestServer()) {
             /*
              * The language API's tests need a language that is not the series' own, and languages are only taken

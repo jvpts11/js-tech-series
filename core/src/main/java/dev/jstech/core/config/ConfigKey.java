@@ -42,10 +42,12 @@ import java.util.Optional;
  *                     ({@code "KB/s"}, {@code "ticks"}), or empty when it counts nothing nameable
  * @param chooser      the chooser a settings screen opens to pick its value ({@code "jscore:style"}), registered on the
  *                     client, or none when the screen's own control for its kind of value is enough
+ * @param traits       what a settings screen shows of it beyond its value: when a change takes hold, the setting it
+ *                     is active under, a picture, the manual's page, its control
  */
 public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Optional<ConfigKeyRange<?>> range,
                            Optional<List<String>> allowed, List<String> comment, String title, String unit,
-                           Optional<String> chooser) {
+                           Optional<String> chooser, ConfigTraits traits) {
 
     public ConfigKey {
         Objects.requireNonNull(path, "path");
@@ -57,6 +59,7 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(unit, "unit");
         Objects.requireNonNull(chooser, "chooser");
+        Objects.requireNonNull(traits, "traits");
         if (path.isEmpty()) {
             throw DeclarationError.of(null, "a setting", "has no name",
                     "give it its sections and its name as a dotted path, as in \"media.download_speed\"");
@@ -111,25 +114,40 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
     /** A setting of any kind that has a codec, at a dotted path ({@code "section.name"}). */
     public static <T> ConfigKey<T> of(final String path, final Codec<T> codec, final T defaultValue) {
         return new ConfigKey<>(ConfigTree.path(path), codec, defaultValue, Optional.empty(), Optional.empty(),
-                List.of(), "", "", Optional.empty());
+                List.of(), "", "", Optional.empty(), ConfigTraits.NONE);
+    }
+
+    /** A colour, written {@code #RRGGBB} and held to that, changed on a colour picker. */
+    public static ConfigKey<String> colour(final String path, final String defaultValue) {
+        if (ConfigColours.parse(defaultValue).isEmpty()) {
+            throw DeclarationError.of(null, "the colour setting " + path, "starts at " + defaultValue,
+                    "write its default as #RRGGBB, as in \"#39D6C4\"");
+        }
+        return of(path, ConfigColours.CODEC, defaultValue).shownAs(ConfigControl.COLOUR);
+    }
+
+    /** A list of ids of the game's things (items, blocks, fluids), each picked from them on a settings screen. */
+    public static ConfigKey<List<String>> ids(final String path, final List<String> defaultValue,
+                                              final ConfigControl picked) {
+        return of(path, Codec.STRING.listOf(), defaultValue).shownAs(picked);
     }
 
     /** The same setting, a number held to {@code min} and {@code max}, both included. */
     public <N extends Number & Comparable<N>> ConfigKey<T> range(final N min, final N max) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.of(new ConfigKeyRange<>(min, max)),
-                Optional.empty(), this.comment, this.title, this.unit, this.chooser);
+                Optional.empty(), this.comment, this.title, this.unit, this.chooser, this.traits);
     }
 
     /** The same setting, a text held to these words; any other falls back to the default. */
     public ConfigKey<T> allowing(final String... words) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.empty(),
-                Optional.of(List.of(words)), this.comment, this.title, this.unit, this.chooser);
+                Optional.of(List.of(words)), this.comment, this.title, this.unit, this.chooser, this.traits);
     }
 
     /** The same setting, with these lines above it in the file; on a settings screen, they are its tooltip. */
     public ConfigKey<T> comment(final String... lines) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed,
-                Arrays.asList(lines), this.title, this.unit, this.chooser);
+                Arrays.asList(lines), this.title, this.unit, this.chooser, this.traits);
     }
 
     /**
@@ -139,7 +157,7 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
      */
     public ConfigKey<T> choosing(final String id) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
-                this.title, this.unit, Optional.of(id));
+                this.title, this.unit, Optional.of(id), this.traits);
     }
 
     /**
@@ -148,7 +166,7 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
      */
     public ConfigKey<T> named(final String english) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
-                english, this.unit, this.chooser);
+                english, this.unit, this.chooser, this.traits);
     }
 
     /**
@@ -157,7 +175,54 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
      */
     public ConfigKey<T> unit(final String english) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
-                this.title, english, this.chooser);
+                this.title, english, this.chooser, this.traits);
+    }
+
+    /** The same setting, taking hold {@code when}: a settings screen says "on reload" or "needs a restart". */
+    public ConfigKey<T> appliesOn(final ConfigApply when) {
+        return withTraits(this.traits.withApplies(when));
+    }
+
+    /** The same setting, active only while the switch {@code other}, of the same file, is on; greyed while not. */
+    public ConfigKey<T> activeWhen(final ConfigKey<Boolean> other) {
+        return withTraits(this.traits.withActiveIf(new ConfigTraits.Condition(other.dottedPath(),
+                List.of(String.valueOf(true)), false)));
+    }
+
+    /** The same setting, active only while the word {@code other}, of the same file, is one of {@code words}. */
+    public ConfigKey<T> activeWhen(final ConfigKey<String> other, final String... words) {
+        return withTraits(this.traits.withActiveIf(new ConfigTraits.Condition(other.dottedPath(), List.of(words),
+                false)));
+    }
+
+    /** The same setting, shown on a settings screen only while the switch {@code other}, of the same file, is on. */
+    public ConfigKey<T> shownWhen(final ConfigKey<Boolean> other) {
+        return withTraits(this.traits.withActiveIf(new ConfigTraits.Condition(other.dottedPath(),
+                List.of(String.valueOf(true)), true)));
+    }
+
+    /** The same setting, shown only while the word {@code other}, of the same file, is one of {@code words}. */
+    public ConfigKey<T> shownWhen(final ConfigKey<String> other, final String... words) {
+        return withTraits(this.traits.withActiveIf(new ConfigTraits.Condition(other.dottedPath(), List.of(words),
+                true)));
+    }
+
+    /**
+     * The same setting, with the texture {@code texture} ({@code "mymod:textures/gui/config/veins.png"}) beside its
+     * description on a settings screen; a strip of {@code frames} frames, one under the other, is shown in turn.
+     */
+    public ConfigKey<T> pictured(final String texture, final int frames) {
+        return withTraits(this.traits.withPicture(texture, frames));
+    }
+
+    /** The same setting, its description ending in a link to the entry {@code entry} of the manual {@code manual}. */
+    public ConfigKey<T> inManual(final String manual, final String entry) {
+        return withTraits(this.traits.withManual(new ConfigTraits.ManualPage(manual, entry)));
+    }
+
+    /** The same setting, changed with {@code control} on a settings screen. */
+    public ConfigKey<T> shownAs(final ConfigControl control) {
+        return withTraits(this.traits.withControl(control));
     }
 
     /** Where it sits, written with dots: {@code "boot.show_boot_menu"}. */
@@ -192,6 +257,11 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
         this.allowed.ifPresent(words -> out.add("One of: " + String.join(", ", words)));
         out.add("Default: " + plain(this.defaultValue));
         return out;
+    }
+
+    private ConfigKey<T> withTraits(final ConfigTraits changed) {
+        return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
+                this.title, this.unit, this.chooser, changed);
     }
 
     private static void checkRange(final List<String> path, final Object defaultValue, final ConfigKeyRange<?> range) {

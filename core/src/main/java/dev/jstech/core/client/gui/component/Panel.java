@@ -104,12 +104,21 @@ public class Panel extends UiComponent {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
+        renderChildren(g, ctx);
+        renderOpen(g, ctx);
+    }
+
+    /** Draws the children, in order, without what any of them has open over the others. */
+    protected final void renderChildren(final GuiGraphics g, final UiContext ctx) {
         for (final UiComponent child : children) {
             if (child.visible()) {
                 child.render(g, ctx);
             }
         }
-        // What a child has open over the others is drawn over all of them, lifted above the items in slots.
+    }
+
+    /** Draws what the children have open over the others, over all of them, lifted above the items in slots. */
+    protected final void renderOpen(final GuiGraphics g, final UiContext ctx) {
         for (final UiComponent child : children) {
             if (child.visible() && child.overlayOpen()) {
                 g.pose().pushPose();

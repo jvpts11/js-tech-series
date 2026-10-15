@@ -39,6 +39,10 @@ A name another mod declared is refused with an exception, while the game loads.
 | `/jstech media` | level 3 | Shows how many recordings the server keeps and how much room they take. |
 | `/jstech media prune <days>` | level 3 | Deletes recordings nobody used for that many days and nothing keeps ([Sound](SOUND.md#recordings)). |
 | `/jstech log [<system> [<level>]]` | level 3 | Lists how much each system writes to the log, or one system's level, or sets it until the game stops ([While you build](DEVELOPING.md#the-log-one-part-at-a-time)). *Added 2026-10-15.* |
+| `/jstech config get <file> <setting>` | level 2 | Says a setting's value ([Settings](SETTINGS.md#a-servers-settings-from-afar)). *Added 2026-10-15.* |
+| `/jstech config set <file> <setting> <value>` | level 2 | Sets it for every player at once; the value is JSON or plain words. *Added 2026-10-15.* |
+| `/jstech config reset <file> <setting>` | level 2 | Puts it back to its default. *Added 2026-10-15.* |
+| `/jstech config preset <file> <name>` | level 2 | Picks one of the file's presets, shipped or saved on the server. *Added 2026-10-15.* |
 
 ## What can go wrong
 

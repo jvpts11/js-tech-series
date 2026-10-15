@@ -66,7 +66,7 @@ public class ScrollPanel extends Panel {
     public void render(final GuiGraphics g, final UiContext ctx) {
         setScroll(scroll);
         Draw.pushScissor(g, x(), y(), right(), bottom());
-        super.render(g, ctx);
+        renderChildren(g, ctx);
         Draw.popScissor(g);
         final int max = maxScroll();
         if (max > 0) {
@@ -75,16 +75,18 @@ public class ScrollPanel extends Panel {
             final int thumbY = y() + 1 + (trackH - thumbH) * scroll / max;
             ctx.skin().scrollThumb(g, right() - THUMB_W - 1, thumbY, THUMB_W, thumbH);
         }
+        // What a child has open (a drop-down's list) reaches past the window, so it is drawn outside the clip.
+        renderOpen(g, ctx);
     }
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
-        return contains(mx, my) && super.mouseClicked(mx, my, button);
+        return (contains(mx, my) || overlayOpen() && overlayContains(mx, my)) && super.mouseClicked(mx, my, button);
     }
 
     @Override
     public boolean mouseScrolled(final double mx, final double my, final double delta) {
-        if (contains(mx, my) && super.mouseScrolled(mx, my, delta)) {
+        if ((contains(mx, my) || overlayOpen() && overlayContains(mx, my)) && super.mouseScrolled(mx, my, delta)) {
             return true;
         }
         if (maxScroll() == 0) {

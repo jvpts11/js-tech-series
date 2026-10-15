@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests;
 
+import dev.jstech.core.client.config.CoreConfigScreen;
 import dev.jstech.core.client.gui.data.DataScreens;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.connect.IJoinRule;
@@ -17,7 +18,9 @@ import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 /**
@@ -35,7 +38,9 @@ public final class JsTestsClient {
             ResourceLocation.withDefaultNamespace("block/lime_concrete"),
             ResourceLocation.withDefaultNamespace("block/white_concrete"));
 
-    public JsTestsClient(final IEventBus modEventBus) {
+    public JsTestsClient(final IEventBus modEventBus, final ModContainer container) {
+        // Its settings on the Core's settings screen, as a mod of the series hands it to the game.
+        container.registerExtensionPoint(IConfigScreenFactory.class, CoreConfigScreen::new);
         CoreModels.connected(TestBlocks.CONNECTED_PANEL, IJoinRule.sameBlock(), PANEL_TILES);
         // The test machine's screen, declared in a file; its button counts its presses.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> DataScreens.register(event,

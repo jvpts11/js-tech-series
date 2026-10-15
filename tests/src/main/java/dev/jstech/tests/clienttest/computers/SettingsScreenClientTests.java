@@ -11,7 +11,6 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.config.CoreConfigScreen;
-import dev.jstech.core.config.ConfigDraft;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.ConfigKey;
@@ -64,9 +63,8 @@ public final class SettingsScreenClientTests {
                         }
                         for (final ConfigKey<?> key : file.keys()) {
                             final String shown = names.getOrDefault(ConfigTexts.key(modId, key.dottedPath()));
-                            // The worst a card leaves its name: a unit after its number and a Default button.
-                            if (ctx.mc().font.width(shown)
-                                    > ConfigScreenLayout.nameWidth(width, ConfigDraft.controlOf(key), true, true)) {
+                            // The worst a row leaves its name: beside its control and the button back to its default.
+                            if (ctx.mc().font.width(shown) > ConfigScreenLayout.nameWidth(width, true)) {
                                 wide.add(language + " setting " + shown);
                             }
                         }

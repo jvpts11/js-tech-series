@@ -46,11 +46,16 @@ public final class ConfigTexts {
         return modId + ".configuration." + path;
     }
 
-    /** Every key a settings screen shows for {@code modId}'s files, with its English. */
+    /**
+     * Every key a settings screen shows for {@code modId}'s files, with its English: every setting and section of a
+     * TOML file, which NeoForge's screen shows too, and the named ones of a file in another format, which only the
+     * Core's screen shows.
+     */
     public static Map<String, String> english(final String modId) {
         final Map<String, String> out = new LinkedHashMap<>();
         for (final ConfigFile file : ConfigFiles.of(modId)) {
             if (file.format() != ConfigFormats.TOML) {
+                named(modId, file, out);
                 continue;
             }
             for (final String section : sectionsOf(file)) {
@@ -82,6 +87,27 @@ public final class ConfigTexts {
             }
         }
         return out;
+    }
+
+    /* The named settings and sections of a file in a format NeoForge's screen does not show. */
+    private static void named(final String modId, final ConfigFile file, final Map<String, String> out) {
+        file.sectionTitles().forEach((section, title) -> {
+            if (!title.isBlank()) {
+                out.put(key(modId, section), title);
+            }
+        });
+        for (final ConfigKey<?> setting : file.keys()) {
+            if (setting.title().isBlank()) {
+                continue;
+            }
+            out.put(key(modId, setting.dottedPath()), setting.title());
+            if (!setting.comment().isEmpty()) {
+                out.put(key(modId, setting.dottedPath()) + TOOLTIP, String.join("\n", setting.comment()));
+            }
+            if (!setting.unit().isBlank()) {
+                out.put(key(modId, setting.dottedPath()) + UNIT, setting.unit());
+            }
+        }
     }
 
     /** Every section a file's settings sit in, outermost first, each once. */

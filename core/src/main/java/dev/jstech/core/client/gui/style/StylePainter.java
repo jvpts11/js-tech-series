@@ -38,6 +38,9 @@ public final class StylePainter {
             case StyleSprite.Flat flat -> flat(g, style, flat, x, y, w, h);
             case StyleSprite.Nothing ignored -> {
             }
+            // The game's menu ground is the screen's to draw; as a piece of something else it is nothing.
+            case StyleSprite.GameMenu ignored -> {
+            }
         }
     }
 

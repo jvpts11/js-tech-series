@@ -8,6 +8,7 @@
 package dev.jstech.core.client.gui.component;
 
 import net.minecraft.client.gui.GuiGraphics;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -23,6 +24,7 @@ public final class Checkbox extends UiComponent {
     private final Runnable onToggle;
     private float labelScale = 1f;
     private int box = BOX;
+    private boolean focusable;
 
     private static final int BOX = 7;
 
@@ -48,7 +50,7 @@ public final class Checkbox extends UiComponent {
     public void render(final GuiGraphics g, final UiContext ctx) {
         final boolean on = checked.getAsBoolean();
         final int by = y() + (height() - box) / 2;
-        ctx.skin().checkbox(g, ctx.font(), x(), by, box, on, hovered(ctx));
+        ctx.skin().checkbox(g, ctx.font(), x(), by, box, on, hovered(ctx) || isFocused());
         final int textX = x() + box + 4;
         final int fits = (int) ((width() - box - 4) / labelScale);
         final String text = Texts.trim(ctx.font(), label.get(), fits);
@@ -63,5 +65,25 @@ public final class Checkbox extends UiComponent {
         }
         onToggle.run();
         return true;
+    }
+
+    /** Whether the keyboard reaches the box, which Enter or Space then tick; off unless asked for. */
+    public Checkbox setFocusable(final boolean value) {
+        focusable = value;
+        return this;
+    }
+
+    @Override
+    public boolean focusable() {
+        return focusable;
+    }
+
+    @Override
+    public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_SPACE) {
+            onToggle.run();
+            return true;
+        }
+        return false;
     }
 }

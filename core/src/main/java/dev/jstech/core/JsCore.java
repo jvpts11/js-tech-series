@@ -37,7 +37,9 @@ import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
 import dev.jstech.core.robot.CoreRobotTasks;
+import dev.jstech.core.config.ConfigCommands;
 import dev.jstech.core.config.ConfigFiles;
+import dev.jstech.core.config.ConfigSync;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
@@ -164,6 +166,7 @@ public final class JsCore {
         CoreTriggers.register(modEventBus);
         // The series' commands under /jstech: the Core's own, the recordings' upkeep, and the log's levels.
         CoreCommands.declare();
+        ConfigCommands.declare();
         MediaCommand.declare();
         LogCommand.declare();
         // The multiblock patterns of every mod, read from data and declared in code.
@@ -184,6 +187,7 @@ public final class JsCore {
         ClientUpdates.listen();
         CoreCables.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
+        ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);
         CoreStates.listen();
         DataRegistries.listen(modEventBus);

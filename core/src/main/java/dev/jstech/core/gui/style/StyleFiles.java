@@ -101,6 +101,9 @@ public final class StyleFiles {
             case RADIO_HOVER -> StyleSprite.Flat.of(StyleRole.SLOT_BG, StyleRole.ACCENT);
             case POPUP_LIST -> StyleSprite.Flat.of(StyleRole.PANEL, StyleRole.ACCENT);
             case CHART -> StyleSprite.Flat.of(StyleRole.CHART_GROUND, StyleRole.CHART_LINE);
+            case MENU_GROUND -> StyleSprite.Flat.of(StyleRole.SCREEN);
+            case LIST_GROUND -> StyleSprite.Flat.of(StyleRole.PANEL, StyleRole.LINE);
+            case SEPARATOR_FOOTER -> StyleSprite.Flat.of(StyleRole.LINE);
         };
     }
 

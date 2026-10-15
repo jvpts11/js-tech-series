@@ -8,69 +8,82 @@
 package dev.jstech.core.gui.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.core.config.ConfigDraft;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ConfigScreenLayoutTest {
 
-    private static final List<ConfigDraft.Control> EVERY_KIND = List.of(ConfigDraft.Control.TOGGLE,
-            ConfigDraft.Control.NUMBER, ConfigDraft.Control.CHOICE, ConfigDraft.Control.TEXT, ConfigDraft.Control.FIXED,
-            ConfigDraft.Control.NUMBER, ConfigDraft.Control.TOGGLE, ConfigDraft.Control.TEXT);
+    /* The English labels' widths in the game's font: Defaults, Undo, Redo; Export, Import, Done. */
+    private static final List<Integer> LEFT = List.of(43, 24, 24);
+    private static final List<Integer> RIGHT = List.of(34, 34, 24);
+    /* "12 changed, 3 on restart", and the filter's and the presets' labels. */
+    private static final int STATUS = 118;
+    private static final int FILTER = 66;
+    private static final int PRESETS = 50;
 
     @Test
-    void layout_fitsEveryKindOfControlOnTheSmallestScreen() {
-        assertClean(ConfigScreenLayout.layout(ConfigScreenLayout.SMALLEST_WIDTH, ConfigScreenLayout.SMALLEST_HEIGHT,
-                2, EVERY_KIND));
+    void layout_fitsOnTheSmallestScreenWithABanner() {
+        assertClean(layout(ConfigScreenLayout.SMALLEST_WIDTH, ConfigScreenLayout.SMALLEST_HEIGHT, true, 3));
     }
 
     @Test
-    void layout_fitsOnATypicalScreenWithALongNote() {
-        assertClean(ConfigScreenLayout.layout(480, 270, 2, EVERY_KIND));
-        assertClean(ConfigScreenLayout.layout(640, 360, 2, EVERY_KIND));
-    }
-
-    @Test
-    void nameWidth_leavesEveryNameRoomBesideItsControlAndItsDefaultButton() {
-        for (final ConfigDraft.Control control : EVERY_KIND) {
-            assertTrue(ConfigScreenLayout.nameWidth(ConfigScreenLayout.SMALLEST_WIDTH, control, true, true) >= 40,
-                    () -> control + " leaves its name too little room");
+    void layout_fitsOnTypicalScreens() {
+        for (final int[] size : new int[][] {{427, 240}, {480, 270}, {640, 360}, {960, 540}}) {
+            assertClean(layout(size[0], size[1], false, 2));
+            assertClean(layout(size[0], size[1], true, 3));
         }
     }
 
     @Test
-    void railWidth_narrowsOnASmallScreenOnly() {
-        assertEquals(ConfigScreenLayout.NARROW_RAIL_WIDTH, ConfigScreenLayout.railWidth(320));
-        assertEquals(ConfigScreenLayout.RAIL_WIDTH, ConfigScreenLayout.railWidth(480));
+    void footer_putsWhatWaitsOnItsOwnRowOnlyWhenItDoesNotFit() {
+        final ConfigScreenLayout.Footer wide = ConfigScreenLayout.footer(480, 270, LEFT, RIGHT, STATUS);
+        assertEquals(ConfigScreenLayout.FOOTER, wide.height());
+        final ConfigScreenLayout.Footer narrow = ConfigScreenLayout.footer(320, 240, LEFT, RIGHT, STATUS);
+        assertEquals(ConfigScreenLayout.TALL_FOOTER, narrow.height());
+        assertTrue(narrow.statusY() + ConfigScreenLayout.LINE <= narrow.buttonsY());
     }
 
     @Test
-    void cardHeight_growsByALineOfDescription() {
-        assertEquals(ConfigScreenLayout.NOTE_LINE,
-                ConfigScreenLayout.cardHeight(2) - ConfigScreenLayout.cardHeight(1));
+    void topRow_dropsTheFiltersLabelBeforeTheSearchGetsTooNarrow() {
+        assertTrue(ConfigScreenLayout.topRow(480, FILTER, PRESETS).labelled());
+        final ConfigScreenLayout.TopRow narrow = ConfigScreenLayout.topRow(320, FILTER, PRESETS);
+        assertFalse(narrow.labelled());
+        assertTrue(narrow.search().width() >= ConfigScreenLayout.NARROWEST_SEARCH);
+        assertEquals(ConfigScreenLayout.CHECKBOX, narrow.filter().width());
     }
 
     @Test
-    void controls_endAtTheCardsInnerRightEdge() {
-        for (final ConfigDraft.Control control : EVERY_KIND) {
-            assertEquals(ConfigScreenLayout.contentRight(480) - ConfigScreenLayout.CARD_INSET,
-                    ConfigScreenLayout.controlX(480, control, true) + ConfigScreenLayout.controlWidth(control, true));
+    void railWidth_followsTheScreenBetweenItsBounds() {
+        assertEquals(ConfigScreenLayout.NARROW_RAIL, ConfigScreenLayout.railWidth(320));
+        assertEquals(124, ConfigScreenLayout.railWidth(480));
+        assertEquals(ConfigScreenLayout.WIDE_RAIL, ConfigScreenLayout.railWidth(960));
+    }
+
+    @Test
+    void nameWidth_leavesEveryNameRoomOnTheSmallestScreen() {
+        assertTrue(ConfigScreenLayout.nameWidth(ConfigScreenLayout.SMALLEST_WIDTH, true) >= 60,
+                () -> "a name has " + ConfigScreenLayout.nameWidth(ConfigScreenLayout.SMALLEST_WIDTH, true));
+    }
+
+    @Test
+    void tabs_areCentredWithoutOverlapping() {
+        for (final int width : new int[] {320, 480}) {
+            final int last = ConfigScreenLayout.tabX(width, 2, 3) + ConfigScreenLayout.tabWidth(width, 3);
+            assertEquals(width - last, ConfigScreenLayout.tabX(width, 0, 3), 1);
+            assertTrue(ConfigScreenLayout.tabX(width, 0, 3) + ConfigScreenLayout.tabWidth(width, 3)
+                    <= ConfigScreenLayout.tabX(width, 1, 3));
         }
     }
 
-    @Test
-    void tabs_shareTheRailWithoutOverlapping() {
-        for (int tab = 0; tab < 2; tab++) {
-            assertTrue(ConfigScreenLayout.tabX(480, tab, 3) + ConfigScreenLayout.tabWidth(480, 3)
-                    <= ConfigScreenLayout.tabX(480, tab + 1, 3));
-        }
-        assertTrue(ConfigScreenLayout.tabX(480, 2, 3) + ConfigScreenLayout.tabWidth(480, 3)
-                <= ConfigScreenLayout.railWidth(480) - ConfigScreenLayout.TAB_INSET);
+    private static GuiLayout layout(final int width, final int height, final boolean banner, final int tabs) {
+        return ConfigScreenLayout.layout(width, height, banner, tabs, FILTER, PRESETS, LEFT, RIGHT, STATUS);
     }
 
     private static void assertClean(final GuiLayout layout) {
-        assertTrue(layout.isClean(), () -> "overlaps " + layout.overlaps() + ", out of bounds " + layout.outOfBounds());
+        assertTrue(layout.isClean(), () -> layout.width() + "x" + layout.height() + " overlaps " + layout.overlaps()
+                + ", out of bounds " + layout.outOfBounds());
     }
 }
