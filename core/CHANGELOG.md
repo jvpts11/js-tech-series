@@ -340,6 +340,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   fits into another, or into every machine of a box at once.
 - Machines grow in place: the tiers of one machine are declared as one family, and an installer makes a machine
   the next tier without breaking it, its contents and settings kept.
+- Heat with real physics: blocks that hold heat have a temperature in kelvin and a heat capacity from their
+  material, conduct heat to their neighbours by the material's real conductivity, give heat to the air as thick as it
+  is and radiate, so in a vacuum only radiators cool them. Heat pipes carry heat between the blocks they join. The
+  everyday elements carry their real density, specific heat, conductivity, emissivity and melting and boiling points.
+  Only blocks out of balance are worked, a few hundred a tick, and the rest sleep.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

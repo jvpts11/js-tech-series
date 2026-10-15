@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -60,6 +61,7 @@ public final class BlockEntityFields {
     private final List<BiConsumer<ServerLevel, BlockPos>> brokenListeners = new ArrayList<>();
     private final List<BiConsumer<ServerLevel, Direction>> neighbourListeners = new ArrayList<>();
     private final List<ItemStackHandler> spilled = new ArrayList<>();
+    private final List<Consumer<ServerLevel>> loadedListeners = new ArrayList<>();
     private boolean closed;
     /* Set as the block is taken away whole, its contents going with it: then nothing spills. */
     private boolean whole;
@@ -213,6 +215,21 @@ public final class BlockEntityFields {
             for (final BiConsumer<ServerLevel, Direction> listener : neighbourListeners) {
                 listener.accept(server, face);
             }
+        }
+    }
+
+    /**
+     * Runs {@code listener} on the server each time the block entity is in a loaded world: placed, or its chunk loaded
+     * again; heat that must be looked at again, say.
+     */
+    public void whenLoaded(final Consumer<ServerLevel> listener) {
+        loadedListeners.add(Objects.requireNonNull(listener, "listener"));
+    }
+
+    /** The block entity is in a loaded world on the server: what was declared to happen then happens. */
+    public void loaded(final ServerLevel level) {
+        for (final Consumer<ServerLevel> listener : loadedListeners) {
+            listener.accept(level);
         }
     }
 

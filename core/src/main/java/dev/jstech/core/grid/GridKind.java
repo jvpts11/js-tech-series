@@ -40,7 +40,7 @@ public final class GridKind {
 
     public static final GridKind POWER = declare(core("power"), GridPolicies.ENERGY);
     public static final GridKind FLUID = declare(core("fluid"), GridPolicies.FLUID);
-    public static final GridKind HEAT = declare(core("heat"), GridPolicies.JOINS_ONLY);
+    public static final GridKind HEAT = declare(core("heat"), GridPolicies.HEAT);
     public static final GridKind GAS = declare(core("gas"), GridPolicies.matter(MatterState.GAS));
     public static final GridKind MOTION = declare(core("motion"), GridPolicies.JOINS_ONLY);
     public static final GridKind DATA = declare(core("data"), GridPolicies.NETWORK);

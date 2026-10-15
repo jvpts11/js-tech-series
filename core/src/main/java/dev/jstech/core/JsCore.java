@@ -44,6 +44,8 @@ import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.grid.CoreGrids;
+import dev.jstech.core.heat.HeatPorts;
+import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.hologram.Holograms;
 import dev.jstech.core.input.KeyActions;
 import dev.jstech.core.multipart.CoreParts;
@@ -192,6 +194,7 @@ public final class JsCore {
         // mods use, made as the server loads its data.
         Forms.declare();
         MaterialProperties.declare();
+        Thermal.declare();
         MineralFamilies.declare();
         HostRocks.declare();
         MaterialNames.declare();
@@ -297,6 +300,7 @@ public final class JsCore {
         SignalRadio.listen();
         Machines.listen(modEventBus);
         MachineWrench.listen(modEventBus);
+        HeatPorts.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

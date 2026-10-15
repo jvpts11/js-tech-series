@@ -8,6 +8,7 @@
 package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.HostRocks;
 import dev.jstech.core.material.Material;
@@ -93,6 +94,10 @@ public final class Elements {
                 element.nameKey()).colour(element.colour())
                 .with(MaterialProperties.SYMBOL, element.symbol())
                 .with(MaterialProperties.ATOMIC_NUMBER, element.number());
+        ElementHeat.of(element).ifPresent(heat -> builder.with(Thermal.DENSITY, heat.density())
+                .with(Thermal.SPECIFIC_HEAT, heat.specificHeat()).with(Thermal.CONDUCTIVITY, heat.conductivity())
+                .with(Thermal.EMISSIVITY, heat.emissivity()).with(Thermal.MELTING, heat.melting())
+                .with(Thermal.BOILING, heat.boiling()));
         switch (element.kind()) {
             // A metal melts; a gas is liquefied (liquid nitrogen, liquid oxygen as a propellant).
             case METAL, GAS -> builder.also(MatterState.LIQUID);

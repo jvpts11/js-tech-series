@@ -44,8 +44,11 @@ public abstract class SyncedBlockEntity extends BlockEntity {
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level instanceof ServerLevel server && fields.polls()) {
-            ClientUpdates.watch(server, this);
+        if (level instanceof ServerLevel server) {
+            if (fields.polls()) {
+                ClientUpdates.watch(server, this);
+            }
+            fields.loaded(server);
         }
     }
 

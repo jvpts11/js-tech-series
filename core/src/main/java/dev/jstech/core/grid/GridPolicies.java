@@ -11,6 +11,8 @@ import dev.jstech.core.energy.Energy;
 import dev.jstech.core.energy.EnergyClass;
 import dev.jstech.core.energy.LevelEnergy;
 import dev.jstech.core.fluid.LevelFluids;
+import dev.jstech.core.heat.HeatPorts;
+import dev.jstech.core.heat.LevelHeatLines;
 import dev.jstech.core.inventory.LevelItems;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.LevelMatter;
@@ -23,7 +25,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 
 /**
  * The Core's policies, which a mod's grid takes unless it brings its own: energy, shared by what each machine asks;
- * fluids, from outputs to inputs and tanks; each other state of matter, and items, the same way; groups, for a line
+ * fluids, from outputs to inputs and tanks; each other state of matter, and items, the same way; heat, from the hotter
+ * blocks a heat pipe plugs into to the colder; groups, for a line
  * that joins machines to work together; the data network, which carries a network's identity; and nothing, for a grid
  * that only joins.
  */
@@ -91,6 +94,22 @@ public final class GridPolicies {
         @Override
         public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
             return LineGroups.plugsInto(level, pos, face);
+        }
+    };
+
+    /**
+     * Heat, along heat pipes: each line plugs into any block that holds heat, and carries heat between all it plugs
+     * into at once, as a heat pipe does whatever its length ({@link LevelHeatLines}).
+     */
+    public static final IGridPolicy HEAT = new IGridPolicy() {
+        @Override
+        public Optional<IGridMover> mover(final GridKind kind) {
+            return Optional.of(new LevelHeatLines(kind));
+        }
+
+        @Override
+        public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
+            return HeatPorts.at(level, pos, face) != null;
         }
     };
 

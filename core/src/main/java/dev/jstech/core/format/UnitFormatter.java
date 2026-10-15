@@ -104,6 +104,11 @@ public final class UnitFormatter {
         return sign + compactFormat.format((double) abs / SCALES[scale].divisor()) + SCALES[scale].prefix();
     }
 
+    /** {@code value} as it is, grouped, with at most two decimals: a density of {@code 7,874}, a {@code 0.03}. */
+    public String decimal(final double value) {
+        return compactFormat.format(value);
+    }
+
     public Locale locale() {
         return locale;
     }

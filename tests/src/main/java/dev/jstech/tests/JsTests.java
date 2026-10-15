@@ -56,6 +56,8 @@ public final class JsTests {
         TestKitMachine.declare();
         // Upgrades of every effect, some with a limit of how many fit in a machine.
         TestUpgrades.declare();
+        // Litres of copper and iron, a radiator and a heater, to prove the Core's heat.
+        TestHeat.declare();
         // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
         TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.

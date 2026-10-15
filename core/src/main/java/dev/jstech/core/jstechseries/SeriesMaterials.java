@@ -8,6 +8,7 @@
 package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialKind;
 import dev.jstech.core.material.Materials;
@@ -32,10 +33,15 @@ public final class SeriesMaterials {
     public static final Material COPPER = Elements.of(Element.COPPER);
     public static final Material GOLD = Elements.of(Element.GOLD);
     public static final Material TIN = Elements.of(Element.TIN);
-    /* An alloy of copper and tin, whose proportions vary from one bronze to another: it has no one formula. */
+    /*
+     * An alloy of copper and tin, whose proportions vary from one bronze to another: it has no one formula. Its heat
+     * is a tin bronze's, about a tenth of tin.
+     */
     public static final Material BRONZE = Materials.material(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "bronze"), MaterialKind.METAL, BRONZE_NAME)
-            .colour(0xC08436).also(MatterState.LIQUID).declare();
+            .colour(0xC08436).also(MatterState.LIQUID).with(Thermal.DENSITY, 8_800.0)
+            .with(Thermal.SPECIFIC_HEAT, 380.0).with(Thermal.CONDUCTIVITY, 50.0).with(Thermal.EMISSIVITY, 0.2)
+            .with(Thermal.MELTING, 1_223.0).with(Thermal.BOILING, 2_573.0).declare();
 
     private SeriesMaterials() {
     }

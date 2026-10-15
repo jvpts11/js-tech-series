@@ -10,6 +10,7 @@ package dev.jstech.core.registry;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.LevelGrids;
+import dev.jstech.core.heat.LevelHeat;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
 import dev.jstech.core.persistence.SaveLayout;
@@ -53,6 +54,13 @@ public final class CoreAttachments {
      */
     public static final Supplier<AttachmentType<LevelGrids>> GRIDS =
             ATTACHMENT_TYPES.register("grids", () -> AttachmentType.builder(LevelGrids::new).build());
+
+    /**
+     * A dimension's heat: the blocks that hold heat and are not in balance; never saved, since each block's heat is
+     * saved with it and wakes as it loads.
+     */
+    public static final Supplier<AttachmentType<LevelHeat>> HEAT =
+            ATTACHMENT_TYPES.register("heat", () -> AttachmentType.builder(LevelHeat::new).build());
 
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");

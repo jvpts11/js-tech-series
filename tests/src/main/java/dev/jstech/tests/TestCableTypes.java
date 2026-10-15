@@ -36,6 +36,7 @@ public final class TestCableTypes {
     public static final long GAS_RATE = 500L;
     public static final long SLURRY_RATE = 200L;
     public static final long ITEM_RATE = 8L;
+    public static final long HEAT_PIPE_CONDUCTANCE = 200L;
     public static final int RUBBER_HOTTEST = 500;
     public static final int RUBBER_BURSTS_AFTER = 20;
     public static final DeferredRegister<CableType> CABLES = DeferredRegister.create(CoreCables.KEY, JsTests.MODID);
@@ -106,6 +107,14 @@ public final class TestCableTypes {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/crafting"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/crafting"))
                     .build(() -> Items.HOPPER));
+    /** A heat pipe: two hundred watts a kelvin between all the blocks it plugs into, whatever its length. */
+    public static final DeferredHolder<CableType, CableType> HEAT_PIPE = CABLES.register("heat_pipe",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "heat_pipe")))
+                    .grid(GridKind.HEAT).alone().carries(HEAT_PIPE_CONDUCTANCE, 0)
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
+                    .build(() -> Items.BLAZE_ROD));
     /** A grid of the test mod's own whose runs group the machines they join. */
     public static final GridKind GROUPS = GridKind.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
             "groups"), GridPolicies.GROUP);
