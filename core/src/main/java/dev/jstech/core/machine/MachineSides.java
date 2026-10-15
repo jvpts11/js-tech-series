@@ -141,23 +141,15 @@ public final class MachineSides implements IFieldPart {
 
     @Override
     public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
-        final CompoundTag own = new CompoundTag();
-        for (final MachineResource resource : resources()) {
-            final CompoundTag one = new CompoundTag();
-            final Map<RelativeFace, FaceMode> set = this.modes.get(resource);
-            if (set != null && !set.isEmpty()) {
-                FACES_CODEC.encodeStart(NbtOps.INSTANCE, set).result().ifPresent(faces -> one.put(FACES, faces));
-            }
-            final Automation auto = this.automation.get(resource);
-            if (auto != null && !auto.equals(Automation.NONE)) {
-                AUTOMATION_CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), auto).result()
-                        .ifPresent(written -> one.put(AUTOMATIC, written));
-            }
-            if (!one.isEmpty()) {
-                own.put(resource.serializedName(), one);
-            }
-        }
-        tag.put(KEY, own);
+        write(tag, registries, false);
+    }
+
+    /**
+     * Writes every resource it has, set or left as it was, for another machine to {@link #paste}: a copy says of each
+     * resource how it stands, so pasting it leaves nothing of the other machine's own.
+     */
+    public void copyOut(final CompoundTag tag, final HolderLookup.Provider registries) {
+        write(tag, registries, true);
     }
 
     @Override
@@ -186,9 +178,73 @@ public final class MachineSides implements IFieldPart {
         }
     }
 
+    /**
+     * Takes what {@code tag}, written by {@link #save} on another machine, says of each resource this machine has as
+     * well: what each face does with it and what the machine does with it by itself, filters and all. A resource the
+     * other machine did not have is left as it was.
+     */
+    public void paste(final CompoundTag tag, final HolderLookup.Provider registries) {
+        final CompoundTag own = tag.getCompound(KEY);
+        boolean pasted = false;
+        for (final MachineResource resource : resources()) {
+            if (!own.contains(resource.serializedName())) {
+                continue;
+            }
+            final CompoundTag one = own.getCompound(resource.serializedName());
+            final Map<RelativeFace, FaceMode> faces = new EnumMap<>(RelativeFace.class);
+            final Tag written = one.get(FACES);
+            if (written != null) {
+                FACES_CODEC.parse(NbtOps.INSTANCE, written).result().ifPresent(faces::putAll);
+            }
+            this.modes.put(resource, faces);
+            final Tag auto = one.get(AUTOMATIC);
+            this.automation.remove(resource);
+            if (auto != null) {
+                AUTOMATION_CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), auto).result()
+                        .ifPresent(read -> this.automation.put(resource, read));
+            }
+            pasted = true;
+        }
+        if (pasted) {
+            this.changed.run();
+        }
+    }
+
+    /** Whether {@code tag}, written by {@link #save}, says anything of a resource this machine has. */
+    public boolean speaksOf(final CompoundTag tag) {
+        final CompoundTag own = tag.getCompound(KEY);
+        for (final MachineResource resource : resources()) {
+            if (own.contains(resource.serializedName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         save(tag, registries);
+    }
+
+    /* Writes each resource's faces and automation; every resource for {@code all}, only those set otherwise. */
+    private void write(final CompoundTag tag, final HolderLookup.Provider registries, final boolean all) {
+        final CompoundTag own = new CompoundTag();
+        for (final MachineResource resource : resources()) {
+            final CompoundTag one = new CompoundTag();
+            final Map<RelativeFace, FaceMode> set = this.modes.get(resource);
+            if (set != null && !set.isEmpty()) {
+                FACES_CODEC.encodeStart(NbtOps.INSTANCE, set).result().ifPresent(faces -> one.put(FACES, faces));
+            }
+            final Automation auto = this.automation.get(resource);
+            if (auto != null && !auto.equals(Automation.NONE)) {
+                AUTOMATION_CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), auto).result()
+                        .ifPresent(written -> one.put(AUTOMATIC, written));
+            }
+            if (all || !one.isEmpty()) {
+                own.put(resource.serializedName(), one);
+            }
+        }
+        tag.put(KEY, own);
     }
 
     @Override

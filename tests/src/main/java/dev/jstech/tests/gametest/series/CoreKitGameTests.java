@@ -127,8 +127,9 @@ public final class CoreKitGameTests {
         final ContainerData data = machine.fields().menuData();
         machine.getEnergy().setEnergyStored(1_234);
 
-        helper.assertTrue(data.getCount() == 6, "energy, progress, the processing time, what it drew last tick (a "
-                + "long, in two halves) and what it made the last minute, got " + data.getCount());
+        helper.assertTrue(data.getCount() == 8, "energy, progress, the processing time, what it drew last tick and "
+                + "what it holds at most (longs, in two halves each) and what it made the last minute, got "
+                + data.getCount());
         helper.assertTrue(data.get(0) == 1_234, "the menu reads the stored energy");
         data.set(0, 77);
         helper.assertTrue(machine.getEnergy().getEnergyStored() == 77,

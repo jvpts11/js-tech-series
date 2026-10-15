@@ -22,13 +22,18 @@ import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
@@ -66,11 +71,14 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
     private final List<FieldFluidTank> outputTanks = new ArrayList<>();
     private final ValueField<ResourceLocation> chosenRecipe;
     private final SlotLocks locks;
+    /* What its upgrades do together, worked out again only when an upgrade slot changes. */
+    private @Nullable UpgradeEffect effect;
 
     /** How often a machine of several lanes sorts its inputs among them, in ticks. */
     public static final int SORT_EVERY = 10;
     /* The slots on a row of the process window, when the lanes are too many for rows of their own. */
     private static final int ROW = 6;
+    private static final String CHOSEN = "chosen_recipe";
 
     protected ProcessingMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
                                            final Layout layout, final int energyCapacity, final int energyMaxReceive,
@@ -104,7 +112,15 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         this.locks = new SlotLocks(layout.firstOutput(), () -> locksField[0].changed());
         locksField[0] = fields().part("Locks", this.locks).save().toClient();
         getInventory().accepts((slot, stack) -> layout.isInput(slot) && this.locks.allows(slot, stack)
-                || layout.isUpgrade(slot) && stack.getItem() instanceof IUpgrade);
+                || layout.isUpgrade(slot) && stack.getItem() instanceof IUpgrade)
+                .stackLimit((slot, stack) -> layout.isUpgrade(slot) ? upgradeRoom(slot, stack)
+                        : Item.ABSOLUTE_MAX_STACK_SIZE)
+                .onChange(slot -> {
+                    if (layout.isUpgrade(slot)) {
+                        this.effect = null;
+                    }
+                })
+                .onLoad(() -> this.effect = null);
     }
 
     /**
@@ -388,16 +404,42 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return slots;
     }
 
-    /** What the upgrades in the upgrade slots do together. */
+    /**
+     * What the upgrades in the upgrade slots do together: of each upgrade, as many as fit in one machine count, the
+     * first slots first.
+     */
     public UpgradeEffect upgradeEffect() {
+        final UpgradeEffect known = this.effect;
+        if (known != null) {
+            return known;
+        }
         final List<UpgradeEffect.Counted> each = new ArrayList<>();
+        final Map<Item, Integer> seen = new HashMap<>();
         for (int slot = layout.firstUpgrade(); slot < layout.slots(); slot++) {
             final ItemStack stack = getInventory().getStackInSlot(slot);
             if (stack.getItem() instanceof IUpgrade upgrade) {
-                each.add(new UpgradeEffect.Counted(upgrade.effect(stack), stack.getCount()));
+                final int before = seen.getOrDefault(stack.getItem(), 0);
+                final int counted = (int) Math.max(0L, Math.min(stack.getCount(),
+                        (long) upgrade.most(stack) - before));
+                seen.put(stack.getItem(), before + counted);
+                each.add(new UpgradeEffect.Counted(upgrade.effect(stack), counted));
             }
         }
-        return UpgradeEffect.combine(each);
+        final UpgradeEffect combined = UpgradeEffect.combine(each);
+        this.effect = combined;
+        return combined;
+    }
+
+    /** How many of {@code upgrade} its upgrade slots hold together. */
+    public int upgradesOf(final Item upgrade) {
+        int count = 0;
+        for (int slot = layout.firstUpgrade(); slot < layout.slots(); slot++) {
+            final ItemStack stack = getInventory().getStackInSlot(slot);
+            if (stack.is(upgrade)) {
+                count += stack.getCount();
+            }
+        }
+        return count;
     }
 
     /** What the first lane's inputs hold, as its recipes read them. */
@@ -505,6 +547,25 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return level == null ? ProcessingInput.AMBIENT_KPA : DimensionRulesData.of(level).pressure();
     }
 
+    /** What its upgrades do to it. */
+    @Override
+    protected UpgradeEffect effect() {
+        return upgradeEffect();
+    }
+
+    /** Its input locks and the recipe picked, which only a machine of its kind can take. */
+    @Override
+    protected void writeSetup(final CompoundTag setup, final HolderLookup.Provider registries) {
+        locks.save(setup, registries);
+        chosenRecipe().ifPresent(id -> setup.putString(CHOSEN, id.toString()));
+    }
+
+    @Override
+    protected void readSetup(final CompoundTag setup, final HolderLookup.Provider registries) {
+        locks.paste(setup, registries);
+        chooseRecipe(setup.contains(CHOSEN) ? ResourceLocation.tryParse(setup.getString(CHOSEN)) : null);
+    }
+
     /** What the inputs make, and in how long; empty when they make nothing. */
     protected abstract Optional<Processing> process(Level level, ProcessingInput input);
 
@@ -542,6 +603,53 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             }
         }
         return result;
+    }
+
+    /*
+     * How many of {@code stack} upgrade slot {@code slot} takes: as many as fit in one machine, less what its other
+     * upgrade slots hold of it.
+     */
+    private int upgradeRoom(final int slot, final ItemStack stack) {
+        if (!(stack.getItem() instanceof IUpgrade upgrade)) {
+            return 0;
+        }
+        final long elsewhere = upgradesOf(stack.getItem()) - (getInventory().getStackInSlot(slot).is(stack.getItem())
+                ? getInventory().getStackInSlot(slot).getCount() : 0);
+        return (int) Math.max(0L, Math.min(Item.ABSOLUTE_MAX_STACK_SIZE, upgrade.most(stack) - elsewhere));
+    }
+
+    /* {@code amount} for each of {@code times}, held to what a long holds. */
+    private static long saturated(final long amount, final int times) {
+        return amount > Long.MAX_VALUE / Math.max(1, times) ? Long.MAX_VALUE : amount * times;
+    }
+
+    /* {@code count} for each of {@code times}, held to what an int holds. */
+    private static int saturatedInt(final int count, final int times) {
+        return (int) Math.min(Integer.MAX_VALUE, (long) count * times);
+    }
+
+    /* The fluids {@code times} sets make. */
+    private static List<FluidStack> times(final List<FluidStack> fluids, final int times) {
+        if (times == 1) {
+            return fluids;
+        }
+        final List<FluidStack> all = new ArrayList<>(fluids.size());
+        for (final FluidStack fluid : fluids) {
+            all.add(fluid.copyWithAmount(saturatedInt(fluid.getAmount(), times)));
+        }
+        return all;
+    }
+
+    /* The matter {@code times} sets make. */
+    private static List<MatterStack> timesMatter(final List<MatterStack> matter, final int times) {
+        if (times == 1) {
+            return matter;
+        }
+        final List<MatterStack> all = new ArrayList<>(matter.size());
+        for (final MatterStack each : matter) {
+            all.add(each.withAmount(saturated(each.amount(), times)));
+        }
+        return all;
     }
 
     /* Whether {@code a} says more of what the machine is doing than {@code b}. */
@@ -676,12 +784,17 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         private MachineStatus work(final ServerLevel level, final UpgradeEffect effect, final double share) {
             final ProcessingInput input = input(this.index);
             final Optional<Processing> found = input.isEmpty() ? Optional.empty() : process(level, input);
-            if (found.isEmpty() || !outputs().fit(atMost(found.get()), found.get().fluidOutputs(),
-                    found.get().matterOutputs())) {
+            final int held = found.map(each -> setsHeld(each, effect)).orElse(0);
+            if (held <= 0) {
                 reset();
-                return found.isEmpty() ? MachineStatus.WAITING : MachineStatus.OUTPUT_FULL;
+                return MachineStatus.WAITING;
             }
             final Processing work = found.get();
+            final int times = timesThatFit(work, effect, held);
+            if (times <= 0) {
+                reset();
+                return MachineStatus.OUTPUT_FULL;
+            }
             if (this.lastWork != null && !this.lastWork.sameWork(work)) {
                 // The inputs went from one recipe to another with no idle tick between; the old energy was spent
                 // on other work.
@@ -689,8 +802,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             }
             this.lastWork = work;
             this.maxProgress.set((int) Math.min(Integer.MAX_VALUE, Math.ceil(effect.ticks(work.ticks()) / share)));
-            final long perTick = effect.energyPerTick(work.energyPerTick() > 0 ? work.energyPerTick()
-                    : defaultEnergyPerTick);
+            // Several recipes at once spend the energy of each, a tick.
+            final long perTick = saturated(effect.energyPerTick(work.energyPerTick() > 0 ? work.energyPerTick()
+                    : defaultEnergyPerTick), times);
             // Short of energy, it spends what there is and works slower in the same proportion.
             this.payment.restore(this.paid.get());
             final long spent = perTick <= 0 ? 0L : power().spend(perTick);
@@ -703,28 +817,66 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             }
             if (steps > 0) {
                 this.progress.add(steps);
-                if (this.progress.get() >= this.maxProgress.get() && finish(work, level.getRandom())) {
-                    this.progress.set(0);
-                    this.lastWork = null;
-                    control().finishedOne();
-                    int count = 0;
-                    for (final ItemStack output : work.outputs()) {
-                        count += output.getCount();
+                if (this.progress.get() >= this.maxProgress.get()) {
+                    final int made = finish(work, times, effect, level.getRandom());
+                    if (made >= 0) {
+                        this.progress.set(0);
+                        this.lastWork = null;
+                        control().finishedOne();
+                        madeThings(Math.max(1, made), level.getGameTime());
                     }
-                    madeThings(Math.max(1, count), level.getGameTime());
                 }
             }
             return MachineStatus.WORKING;
         }
 
-        /* The most items the work can make: its outputs, and every byproduct as if each came. */
-        private List<ItemStack> atMost(final Processing work) {
-            if (work.byproducts().isEmpty()) {
-                return work.outputs();
+        /*
+         * How many sets of the work the inputs hold, at most the recipes the machine works at once: each input slot's
+         * count, and each tank's fluid and matter as the upgrades spend them.
+         */
+        private int setsHeld(final Processing work, final UpgradeEffect effect) {
+            int sets = effect.recipesAtOnce();
+            for (final Take take : work.takes()) {
+                sets = Math.min(sets, getInventory().getStackInSlot(layout.laneInput(this.index, take.index()))
+                        .getCount() / Math.max(1, take.amount()));
             }
-            final List<ItemStack> all = new ArrayList<>(work.outputs());
+            for (final Take take : work.fluidTakes()) {
+                final long spent = effect.spent(take.amount());
+                if (spent > 0) {
+                    sets = (int) Math.min(sets, inputTanks.get(take.index()).getFluidAmount() / spent);
+                }
+            }
+            final List<MatterTank> matterIn = matterInputs();
+            for (final Take take : work.matterTakes()) {
+                final long spent = effect.spent(take.amount());
+                if (spent > 0) {
+                    sets = (int) Math.min(sets, matterIn.get(take.index()).held().map(MatterStack::amount)
+                            .orElse(0L) / spent);
+                }
+            }
+            return sets;
+        }
+
+        /* The most of {@code held} sets whose outputs, every byproduct and the upgrades' yield counted, find room. */
+        private int timesThatFit(final Processing work, final UpgradeEffect effect, final int held) {
+            final ProcessingOutputs outputs = outputs();
+            for (int times = held; times > 0; times--) {
+                if (outputs.fit(atMost(work, effect, times), times(work.fluidOutputs(), times),
+                        timesMatter(work.matterOutputs(), times))) {
+                    return times;
+                }
+            }
+            return 0;
+        }
+
+        /* The most items {@code times} sets can make: their outputs with the yield, every byproduct as if each came. */
+        private List<ItemStack> atMost(final Processing work, final UpgradeEffect effect, final int times) {
+            final List<ItemStack> all = new ArrayList<>();
+            for (final ItemStack output : work.outputs()) {
+                all.add(output.copyWithCount(saturatedInt(effect.mostMade(output.getCount()), times)));
+            }
             for (final Byproduct byproduct : work.byproducts()) {
-                all.add(byproduct.stack());
+                all.add(byproduct.stack().copyWithCount(saturatedInt(byproduct.stack().getCount(), times)));
             }
             return all;
         }
@@ -743,39 +895,56 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         }
 
         /*
-         * Takes the inputs and puts out what they made, the byproducts that came with them; false, leaving it all,
-         * when another lane took first what the shared tanks held for it.
+         * Takes the inputs of {@code times} sets and puts out what they made, the upgrades' yield and the byproducts
+         * that came with them; how many items it made, or -1, leaving it all, when another lane took first what the
+         * shared tanks held for it.
          */
-        private boolean finish(final Processing work, final RandomSource random) {
+        private int finish(final Processing work, final int times, final UpgradeEffect effect,
+                           final RandomSource random) {
             final List<MatterTank> matterIn = matterInputs();
             for (final Take take : work.fluidTakes()) {
-                if (inputTanks.get(take.index()).getFluidAmount() < take.amount()) {
-                    return false;
+                if (inputTanks.get(take.index()).getFluidAmount() < saturated(effect.spent(take.amount()), times)) {
+                    return -1;
                 }
             }
             for (final Take take : work.matterTakes()) {
-                if (matterIn.get(take.index()).held().map(MatterStack::amount).orElse(0L) < take.amount()) {
-                    return false;
+                if (matterIn.get(take.index()).held().map(MatterStack::amount).orElse(0L)
+                        < saturated(effect.spent(take.amount()), times)) {
+                    return -1;
                 }
             }
             for (final Take take : work.takes()) {
-                getInventory().extractItem(layout.laneInput(this.index, take.index()), take.amount(), false);
+                getInventory().extractItem(layout.laneInput(this.index, take.index()),
+                        saturatedInt(take.amount(), times), false);
             }
             for (final Take take : work.fluidTakes()) {
-                inputTanks.get(take.index()).drain(take.amount(), IFluidHandler.FluidAction.EXECUTE);
+                inputTanks.get(take.index()).drain((int) Math.min(Integer.MAX_VALUE,
+                        saturated(effect.spent(take.amount()), times)), IFluidHandler.FluidAction.EXECUTE);
             }
             for (final Take take : work.matterTakes()) {
                 final MatterTank tank = matterIn.get(take.index());
-                tank.held().ifPresent(held -> tank.extract(held.material(), take.amount(), false));
+                final long spent = saturated(effect.spent(take.amount()), times);
+                tank.held().ifPresent(held -> tank.extract(held.material(), spent, false));
             }
-            final List<ItemStack> made = new ArrayList<>(work.outputs());
-            for (final Byproduct byproduct : work.byproducts()) {
-                if (byproduct.comes(random)) {
-                    made.add(byproduct.stack());
+            final List<ItemStack> made = new ArrayList<>();
+            int count = 0;
+            for (final ItemStack output : work.outputs()) {
+                final int many = effect.made(saturatedInt(output.getCount(), times), random.nextDouble());
+                if (many > 0) {
+                    made.add(output.copyWithCount(many));
+                    count += many;
                 }
             }
-            outputs().put(made, work.fluidOutputs(), work.matterOutputs());
-            return true;
+            for (final Byproduct byproduct : work.byproducts()) {
+                final double chance = effect.byproductChance(byproduct.chance());
+                for (int each = 0; each < times; each++) {
+                    if (random.nextDouble() < chance) {
+                        made.add(byproduct.stack().copy());
+                    }
+                }
+            }
+            outputs().put(made, times(work.fluidOutputs(), times), timesMatter(work.matterOutputs(), times));
+            return count;
         }
     }
 }

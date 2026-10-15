@@ -27,6 +27,7 @@ public final class MachinePower {
     private final @Nullable FieldEnergyStorage fe;
     private final @Nullable EnergyStore store;
     private final @Nullable EnergyProtection protection;
+    private final long builtCapacity;
 
     private MachinePower(final Energy energy, final @Nullable FieldEnergyStorage fe, final @Nullable EnergyStore store,
                          final @Nullable EnergyProtection protection) {
@@ -34,6 +35,7 @@ public final class MachinePower {
         this.fe = fe;
         this.store = store;
         this.protection = protection;
+        this.builtCapacity = fe != null ? fe.getMaxEnergyStored() : Objects.requireNonNull(store).declaredCapacity();
     }
 
     /** A machine's FE store at work. */
@@ -65,6 +67,21 @@ public final class MachinePower {
     /** The most it holds. */
     public long capacity() {
         return this.fe != null ? this.fe.getMaxEnergyStored() : this.store.capacity();
+    }
+
+    /** The most it holds as the machine was built, before upgrades enlarged its buffer. */
+    public long builtCapacity() {
+        return this.builtCapacity;
+    }
+
+    /** Holds as much as {@code effect} makes of what it held as built. */
+    public void enlarge(final UpgradeEffect effect) {
+        final long capacity = effect.storage(this.builtCapacity);
+        if (this.fe != null) {
+            this.fe.setCapacity((int) Math.min(Integer.MAX_VALUE, capacity));
+        } else {
+            this.store.setCapacity(capacity);
+        }
     }
 
     /** Spends up to {@code amount} on the machine's work; how much it spent. */

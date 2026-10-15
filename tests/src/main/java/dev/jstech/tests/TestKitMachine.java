@@ -15,6 +15,8 @@ import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineFamily;
+import dev.jstech.core.machine.MachineInstallerItem;
 import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineParameter;
 import dev.jstech.core.machine.ProcessingInput;
@@ -26,6 +28,7 @@ import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -56,13 +59,33 @@ public final class TestKitMachine {
     public static final int OUT = 2;
     public static final TextKey DIAL = TextKey.of("jstests.kit_machine.dial", "Dial");
 
-    /* Its block state and model are written by hand: the test mod writes no models of its own. */
+    /** Its second tier: a third input and a third upgrade bay, and twice the energy. */
+    public static final ProcessingMachineBlockEntity.Layout LAYOUT_MK2 = ProcessingMachineBlockEntity.Layout
+            .items(3, 2).withMatter(MatterState.GAS, 1, 1, 1_000L, 10L).withUpgrades(3);
+    /** The second tier's first output slot. */
+    public static final int OUT_MK2 = 3;
+
+    /* Its block states and models are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<DeviceBlock> BLOCK = TestSounds.CONTENT.block("test_kit_machine",
             Device.of(() -> TestKitMachine.BLOCK_ENTITY.get()).ticks(MachineBlockEntity::serverTick)
                     .opensMenu(MachineMenu::new)::block)
-            .named("Test kit machine").look(IBlockLook.cubeAll("test_kit_machine")).register();
+            .named("Test kit machine").look(IBlockLook.cubeAll("test_kit_machine")).item()
+            .itemLook(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    public static final BlockEntry<DeviceBlock> BLOCK_MK2 = TestSounds.CONTENT.block("test_kit_machine_mk2",
+            Device.of(() -> TestKitMachine.BLOCK_ENTITY.get()).ticks(MachineBlockEntity::serverTick)
+                    .opensMenu(MachineMenu::new)::block)
+            .named("Test kit machine Mk2").look(IBlockLook.cubeAll("test_kit_machine_mk2")).item()
+            .itemLook(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    /* One block entity for both tiers, which reads its tier from its block. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<KitMachineBlockEntity>> BLOCK_ENTITY =
-            TestSounds.CONTENT.blockEntity("test_kit_machine", KitMachineBlockEntity::new, BLOCK);
+            TestSounds.CONTENT.blockEntity("test_kit_machine", KitMachineBlockEntity::new, BLOCK, BLOCK_MK2);
+    /** The kit machine's two tiers, as one family. */
+    public static final MachineFamily FAMILY = MachineFamily.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+            "test_kit_machine"), List.of(BLOCK, BLOCK_MK2));
+    /** Grows a kit machine into its second tier. */
+    public static final ItemEntry<MachineInstallerItem> INSTALLER = TestSounds.CONTENT.item("test_kit_installer",
+            properties -> new MachineInstallerItem(properties, () -> FAMILY, 1)).named("Test Kit Installer")
+            .look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
     public static final ItemEntry<RepairKitItem> REPAIR_KIT = TestSounds.CONTENT.item("test_repair_kit",
             properties -> new RepairKitItem(properties, KIT_USES, KIT_PER_SECOND)).named("Test Repair Kit")
             .look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
@@ -101,8 +124,8 @@ public final class TestKitMachine {
         private double dial = 1.0;
 
         public KitMachineBlockEntity(final BlockPos pos, final BlockState state) {
-            super(BLOCK_ENTITY.get(), pos, state, LAYOUT, MachineEnergy.of(TestEnergies.VOLTS, TestEnergies.LOW,
-                    CAPACITY, TAKES), SPENDS);
+            super(BLOCK_ENTITY.get(), pos, state, mk2(state) ? LAYOUT_MK2 : LAYOUT, MachineEnergy.of(
+                    TestEnergies.VOLTS, TestEnergies.LOW, mk2(state) ? 2 * CAPACITY : CAPACITY, TAKES), SPENDS);
         }
 
         /** The value of its own the outside may set. */
@@ -118,6 +141,11 @@ public final class TestKitMachine {
         @Override
         protected void declareParameters(final List<MachineParameter> declared) {
             declared.add(MachineParameter.set("dial", DIAL, null, 1, 10, () -> dial, value -> dial = value));
+        }
+
+        /* Whether the block is the second tier. */
+        private static boolean mk2(final BlockState state) {
+            return state.is(BLOCK_MK2.get());
         }
     }
 

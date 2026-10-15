@@ -68,6 +68,64 @@ class UpgradeEffectTest {
     }
 
     @Test
+    void combine_addsTheRecipesAtOnceAndMultipliesTheRest() {
+        final UpgradeEffect effect = UpgradeEffect.combine(List.of(
+                new UpgradeEffect.Counted(UpgradeEffect.NONE.withParallel(2).withYield(1.5), 2),
+                new UpgradeEffect.Counted(UpgradeEffect.NONE.withUse(0.5).withBuffer(4.0), 1)));
+        assertEquals(4, effect.parallel());
+        assertEquals(5, effect.recipesAtOnce());
+        assertEquals(2.25, effect.yield(), 1e-9);
+        assertEquals(0.5, effect.use(), 1e-9);
+        assertEquals(4.0, effect.buffer(), 1e-9);
+    }
+
+    @Test
+    void combine_holdsTheRecipesAtOnceToTheMost() {
+        final UpgradeEffect effect = UpgradeEffect.combine(List.of(
+                new UpgradeEffect.Counted(UpgradeEffect.NONE.withParallel(1_000), 64)));
+        assertEquals(UpgradeEffect.MOST_PARALLEL, effect.parallel());
+    }
+
+    @Test
+    void made_keepsTheWholeAndRollsForTheRest() {
+        final UpgradeEffect effect = UpgradeEffect.NONE.withYield(1.5);
+        assertEquals(1, effect.made(1, 0.9));
+        assertEquals(2, effect.made(1, 0.1));
+        assertEquals(3, effect.made(2, 0.99));
+        assertEquals(2, effect.mostMade(1));
+        assertEquals(0, UpgradeEffect.NONE.withYield(0.0).made(5, 0.0));
+    }
+
+    @Test
+    void spent_roundsUpAndSpendsNothingOfNothing() {
+        final UpgradeEffect effect = UpgradeEffect.NONE.withUse(0.5);
+        assertEquals(50L, effect.spent(100L));
+        assertEquals(1L, effect.spent(1L));
+        assertEquals(0L, effect.spent(0L));
+        assertEquals(0L, UpgradeEffect.NONE.withUse(0.0).spent(100L));
+    }
+
+    @Test
+    void byproductChance_neverPassesACertainty() {
+        assertEquals(0.5, UpgradeEffect.NONE.withByproducts(2.0).byproductChance(0.25), 1e-9);
+        assertEquals(1.0, UpgradeEffect.NONE.withByproducts(10.0).byproductChance(0.25), 1e-9);
+    }
+
+    @Test
+    void storage_neverFallsUnderOne() {
+        assertEquals(20_000L, UpgradeEffect.NONE.withBuffer(2.0).storage(10_000L));
+        assertEquals(1L, UpgradeEffect.NONE.withBuffer(0.0001).storage(10L));
+    }
+
+    @Test
+    void constructor_refusesNegativeFactorsAndRecipes() {
+        assertThrows(IllegalArgumentException.class, () -> UpgradeEffect.NONE.withParallel(-1));
+        assertThrows(IllegalArgumentException.class, () -> UpgradeEffect.NONE.withYield(-0.5));
+        assertThrows(IllegalArgumentException.class, () -> UpgradeEffect.NONE.withBuffer(0.0));
+        assertThrows(IllegalArgumentException.class, () -> UpgradeEffect.NONE.withSound(Double.NaN));
+    }
+
+    @Test
     void constructor_refusesASpeedOfZeroOrANegativeEnergy() {
         assertThrows(IllegalArgumentException.class, () -> new UpgradeEffect(0.0, 1.0));
         assertThrows(IllegalArgumentException.class, () -> new UpgradeEffect(1.0, -0.5));

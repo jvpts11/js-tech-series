@@ -104,6 +104,19 @@ public final class FieldEnergyStorage extends EnergyStorage implements IField {
         return stored;
     }
 
+    /**
+     * Makes it hold up to {@code to}, as an upgrade that enlarges its buffer does; what it held past the new capacity
+     * is lost.
+     */
+    public void setCapacity(final int to) {
+        final int capacityNow = Math.max(0, to);
+        if (capacityNow != capacity) {
+            capacity = capacityNow;
+            energy = Math.min(energy, capacity);
+            flags.changed();
+        }
+    }
+
     /** Sets the stored energy, kept between none and the capacity. */
     public void setEnergyStored(final int amount) {
         final int to = Math.max(0, Math.min(capacity, amount));

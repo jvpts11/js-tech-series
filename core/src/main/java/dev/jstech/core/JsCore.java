@@ -25,6 +25,7 @@ import dev.jstech.core.cable.CableRuns;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.overhead.OverheadLines;
+import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.machine.Machines;
 import dev.jstech.core.signal.SignalRadio;
 import dev.jstech.core.command.CoreCommands;
@@ -177,8 +178,9 @@ public final class JsCore {
         CoreCables.declare();
         EndSettings.declare();
         OverheadLines.declare();
-        // The menu every machine of every mod opens, behind its five tabs.
+        // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.
         Machines.declare();
+        MachineWrench.declare();
         // The fonts every mod can draw in, declared with the licence and credit they come under.
         CoreFonts.declare();
         // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.
@@ -294,6 +296,7 @@ public final class JsCore {
         OverheadLines.listen(modEventBus);
         SignalRadio.listen();
         Machines.listen(modEventBus);
+        MachineWrench.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

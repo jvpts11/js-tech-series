@@ -38,6 +38,11 @@ public interface IPayloadGate<P> {
                 && player.containerMenu.stillValid(player);
     }
 
+    /** Within {@code reach} blocks of the block the payload names, as a player aiming at it in the world is. */
+    static <P> IPayloadGate<P> near(final Function<P, BlockPos> pos, final double reach) {
+        return (player, payload) -> player.distanceToSqr(pos.apply(payload).getCenter()) <= reach * reach;
+    }
+
     /** Admitted by any one of these. */
     @SafeVarargs
     static <P> IPayloadGate<P> anyOf(final IPayloadGate<P>... gates) {

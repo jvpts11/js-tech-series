@@ -42,9 +42,41 @@ public final class ToolsGuide {
                         "On any other line, sneak to go round the modes the other way.",
                         "The line says which end it set and how, above the hotbar.",
                         "While it is in your hand, what flows along the wire you look at, which way and how much, "
-                                + "shows beside the crosshair.")
+                                + "shows beside the crosshair.",
+                        "On a machine, use it on a face to go round what that face does with the resource it shows: "
+                                + "in, out, both or neither. While it is in your hand, each face of the machine you "
+                                + "look at shows in its colour: blue in, amber out, green both, grey neither.",
+                        "Sneak and turn the mouse wheel at a machine to show another of its resources.",
+                        "Sneak and use it on a machine to take the machine away whole: its contents, upgrades, fuse, "
+                                + "battery, settings and the work under way go with it. A pickaxe breaks it instead, "
+                                + "and what it held falls out.")
                 .whatCanGoWrong("Nothing changes.",
-                        "Point at the wire itself, near the end you want; a part on the face closes it.")
+                        "Point at the wire itself, near the end you want; a part on the face closes it.",
+                        "A machine neither changes nor comes away.",
+                        "It is someone else's: only its owner and whom they trust may set it up or take it.")
+                .register();
+        CoreItems.CONTENT.guide().page("configuration_card", CABLES).titled("Configuration Card")
+                .icon(SharedTools.CARD::get).covers(SharedTools.CARD::get)
+                .whatItIs("A card that remembers how a machine is set up.")
+                .whatItIsFor("Setting up many machines alike: a row of furnaces, a wall of crushers.")
+                .table("What it carries")
+                .property("Sides", "What each face does with each resource, and what the machine pushes and pulls "
+                        + "by itself, through which filter")
+                .property("Redstone", "How the machine answers redstone, and what a comparator reads of it")
+                .property("Locks and recipe", "Its input slots' locks and the recipe picked, for a machine of the "
+                        + "same kind only")
+                .howToGetIt("Craft it of a sheet of paper, a redstone dust and a gold nugget.")
+                .howToUseIt("Sneak and use it on a machine to copy its setup.",
+                        "Use it on another machine to paste it: whole into one of the same kind, what fits into "
+                                + "another.",
+                        "Use it on a block that is not a machine, then on the opposite corner of a box: every machine "
+                                + "in the box takes the setup at once.",
+                        "Sneak and use it anywhere else to blank it.")
+                .whatCanGoWrong("A machine takes nothing.",
+                        "It is someone else's, or it has none of the resources copied: copy from a machine of the "
+                                + "same kind.",
+                        "Pasting over a box does nothing.",
+                        "The box holds more than 4,096 blocks: mark a smaller one.")
                 .register();
         CoreItems.CONTENT.guide().page("network_probe", CABLES).titled("Network Probe")
                 .icon(NetworkProbe.ITEM::get).covers(NetworkProbe.ITEM::get)

@@ -352,6 +352,77 @@ ticks), `energy` how many times the energy a tick it spends (1.5 spends half as 
 upgrade slots counts, and their effects multiply: two upgrades of 1.5 speed make a machine 2.25 times as fast.
 A recipe never takes less than one tick, and the energy a tick is rounded up.
 
+*Added 2026-10-15:* an upgrade has nine effects, each a factor of the machine as it was built (1 for no change)
+but `parallel`, which adds recipes at once:
+
+| Effect | What it does |
+| --- | --- |
+| `speed` | How many times as fast it works |
+| `energy` | How many times the energy a tick it spends |
+| `parallel` | How many recipes it works at once besides the first, as its inputs hold sets and its outputs have room; each spends its own energy |
+| `yield` | How many times the items it makes; the part past a whole comes by chance (1.5 makes one, or two half the time) |
+| `byproducts` | How many times as likely its byproducts come, at most always |
+| `use` | How many times the fluid and the matter a recipe spends, rounded up |
+| `heat` | How many times the heat it gives off as it works |
+| `sound` | How loud it is; 0 silences it |
+| `buffer` | How many times the energy it stores; taken out, what is past the old size is lost |
+
+An upgrade also says how many of it fit in one machine (`most`), across all its upgrade slots: a bay takes no more,
+and only that many count. With few slots and limits, a machine is fast or thrifty, hardly both. The Core's
+`UpgradeItem` is an upgrade declared by its effect and its limit, with a tooltip saying both, so an upgrade needs no
+class of its own:
+
+```java
+CONTENT.item("speed_upgrade", properties -> new UpgradeItem(properties,
+        UpgradeEffect.NONE.withSpeed(1.5).withEnergy(1.3), 4)).named("Speed Upgrade").register();
+```
+
+What the upgrades do together is worked out again only when an upgrade slot changes; the Upgrades tab shows each
+effect as a bar.
+
+## Setting up fast
+
+*Added 2026-10-15.*
+
+- **A wrench**, any mod's, every item of the common tag `c:tools/wrench`: used on a face of a machine, it goes round
+  what that face does with the resource it shows (in, out, both, neither). While it is in the player's hand, each
+  face of the machine looked at shows in its colour, and the resource is named under the crosshair; sneaking and
+  turning the mouse wheel shows another of the machine's resources (`MachineWrench.RESOURCE`, kept on the wrench).
+  Sneaking, it takes the machine away whole: its contents, upgrades, fuse, battery, settings and the work under way go
+  into its item, and come back as it is placed again. A pickaxe breaks it instead, and everything it held falls out,
+  fuse and battery too.
+- **The Configuration Card**, the series' shared tool: sneaking, it copies a machine's setup; used on another
+  machine, it pastes it whole into one of the same block, and into another what fits (the sides of the resources both
+  have, the redstone mode, what the comparator reads; the input locks and the recipe picked only into the same kind).
+  Used on two blocks that are not machines, it pastes it into every machine of the box between them, at most
+  `MachineSetup.AREA_MOST` blocks. A machine of your own adds to its setup with `writeSetup` and `readSetup`.
+
+Only whoever may set a machine up changes it, and only whoever may break it takes it away.
+
+## Growing in place
+
+*Added 2026-10-15.*
+
+The variants of one machine, by era or by tier, are one **family**, declared once, lowest first; all its blocks make
+the same block entity, which reads from its block which tier it is:
+
+```java
+public static final MachineFamily CRUSHERS = MachineFamily.of(id("crusher"),
+        List.of(BASIC_CRUSHER, ADVANCED_CRUSHER));
+public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrusherBlockEntity>> CRUSHER =
+        CONTENT.blockEntity("crusher", CrusherBlockEntity::new, BASIC_CRUSHER, ADVANCED_CRUSHER);
+```
+
+A machine grows into the next tier without being broken (`MachineGrowth.grow`), as an installer item does it:
+`MachineInstallerItem`, used on the tier just below its own, is used up and the machine becomes its tier, its energy,
+tanks, settings, owner and work under way kept, its items moved into the slots of the same use (each lane's inputs
+and outputs, the upgrade bays), and what the new tier has no room for given to the player.
+
+```java
+CONTENT.item("advanced_installer", properties -> new MachineInstallerItem(properties, () -> CRUSHERS, 1))
+        .named("Advanced Installer").register();
+```
+
 ## JEI and EMI
 
 *Added 2026-10-05.*

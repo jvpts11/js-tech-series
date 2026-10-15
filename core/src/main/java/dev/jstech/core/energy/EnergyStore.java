@@ -30,7 +30,8 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
     private final String key;
     private final Energy energy;
     private EnergyClass portClass;
-    private final long capacity;
+    private final long declaredCapacity;
+    private long capacity;
     private final long maxReceive;
     private final long maxExtract;
     private final Runnable onChange;
@@ -43,6 +44,7 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
 
     private static final String STORED = "stored";
     private static final String DAMAGED = "damaged";
+    private static final String CAPACITY = "capacity";
     /* No tick at all: the store was never short. */
     private static final long NEVER = Long.MIN_VALUE / 2;
 
@@ -63,6 +65,7 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
             throw new IllegalArgumentException("a store holds, takes and gives no less than nothing");
         }
         this.portClass = portClass;
+        this.declaredCapacity = capacity;
         this.capacity = capacity;
         this.maxReceive = maxReceive;
         this.maxExtract = maxExtract;
@@ -100,6 +103,24 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
     @Override
     public long capacity() {
         return this.capacity;
+    }
+
+    /** What it was declared to hold, before anything enlarged it. */
+    public long declaredCapacity() {
+        return this.declaredCapacity;
+    }
+
+    /**
+     * Makes it hold up to {@code to}, as an upgrade that enlarges its buffer does; what it held past the new capacity
+     * is lost. Saved with it, so what it holds survives a reload.
+     */
+    public void setCapacity(final long to) {
+        final long capacityNow = Math.max(0L, to);
+        if (capacityNow != this.capacity) {
+            this.capacity = capacityNow;
+            this.stored = Math.min(this.stored, capacityNow);
+            this.onChange.run();
+        }
     }
 
     @Override
@@ -246,6 +267,9 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
         final CompoundTag own = new CompoundTag();
         own.putLong(STORED, this.stored);
         own.putBoolean(DAMAGED, this.damaged);
+        if (this.capacity != this.declaredCapacity) {
+            own.putLong(CAPACITY, this.capacity);
+        }
         tag.put(this.key, own);
     }
 
@@ -253,6 +277,7 @@ public class EnergyStore implements IEnergyPort, IFieldPart {
     public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
         if (tag.contains(this.key)) {
             final CompoundTag own = tag.getCompound(this.key);
+            this.capacity = own.contains(CAPACITY) ? Math.max(0L, own.getLong(CAPACITY)) : this.declaredCapacity;
             this.stored = Math.max(0L, Math.min(this.capacity, own.getLong(STORED)));
             this.damaged = own.getBoolean(DAMAGED);
         }

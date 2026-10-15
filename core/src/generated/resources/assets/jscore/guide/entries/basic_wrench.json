@@ -73,7 +73,10 @@
         "jscore.guide.basic_wrench.use2",
         "jscore.guide.basic_wrench.use3",
         "jscore.guide.basic_wrench.use4",
-        "jscore.guide.basic_wrench.use5"
+        "jscore.guide.basic_wrench.use5",
+        "jscore.guide.basic_wrench.use6",
+        "jscore.guide.basic_wrench.use7",
+        "jscore.guide.basic_wrench.use8"
       ]
     },
     {
@@ -86,6 +89,10 @@
         {
           "fix": "jscore.guide.basic_wrench.fix1",
           "problem": "jscore.guide.basic_wrench.problem1"
+        },
+        {
+          "fix": "jscore.guide.basic_wrench.fix2",
+          "problem": "jscore.guide.basic_wrench.problem2"
         }
       ]
     }

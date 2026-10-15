@@ -250,7 +250,7 @@ public final class StandardFace implements IMachineFace {
             label = held.map(stack -> GameText.resolve(stack.material().name())).orElse("");
         } else {
             MachineArt.sightGlass(g, x, y, GLASS_HEIGHT, share(machine.power().stored(),
-                    machine.power().capacity()), MachineArt.PALETTE.get().lampWait(), v.tick(), v.working());
+                    machine.capacityShown()), MachineArt.PALETTE.get().lampWait(), v.tick(), v.working());
             label = GameText.resolve(machine.power().energy().unit().symbol());
         }
         if (!label.isEmpty()) {
@@ -302,7 +302,7 @@ public final class StandardFace implements IMachineFace {
         if (lines.isEmpty()) {
             final Energy energy = machine.power().energy();
             lines.add(GameText.component(MachineScreenTexts.TIP_STORED.with(energy.amount(machine.power().stored()),
-                    energy.amount(machine.power().capacity()))));
+                    energy.amount(machine.capacityShown()))));
         }
         return lines;
     }

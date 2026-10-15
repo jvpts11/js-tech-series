@@ -121,8 +121,16 @@ public final class MachineScreenTexts {
             "A comparator beside it reads %s of 15");
 
     public static final TextKey UPGRADE_BAYS = TextKey.of("jscore.machine.screen.upgrade_bays", "UPGRADE BAYS");
-    public static final TextKey SPEED_AND_ENERGY = TextKey.of("jscore.machine.screen.speed_and_energy",
-            "SPEED x%s   ENERGY x%s");
+    public static final TextKey EFFECT_SPEED = TextKey.of("jscore.machine.screen.effect.speed", "SPEED x%s");
+    public static final TextKey EFFECT_ENERGY = TextKey.of("jscore.machine.screen.effect.energy", "ENERGY x%s");
+    public static final TextKey EFFECT_PARALLEL = TextKey.of("jscore.machine.screen.effect.parallel", "AT ONCE %s");
+    public static final TextKey EFFECT_YIELD = TextKey.of("jscore.machine.screen.effect.yield", "YIELD x%s");
+    public static final TextKey EFFECT_BYPRODUCTS = TextKey.of("jscore.machine.screen.effect.byproducts",
+            "BYPROD x%s");
+    public static final TextKey EFFECT_USE = TextKey.of("jscore.machine.screen.effect.use", "USE x%s");
+    public static final TextKey EFFECT_HEAT = TextKey.of("jscore.machine.screen.effect.heat", "HEAT x%s");
+    public static final TextKey EFFECT_SOUND = TextKey.of("jscore.machine.screen.effect.sound", "SOUND x%s");
+    public static final TextKey EFFECT_BUFFER = TextKey.of("jscore.machine.screen.effect.buffer", "BUFFER x%s");
     public static final TextKey NO_BAYS = TextKey.of("jscore.machine.screen.no_bays", "NO BAYS ON THIS MACHINE");
     public static final TextKey SPD = TextKey.of("jscore.machine.screen.spd", "SPD");
     public static final TextKey PAR = TextKey.of("jscore.machine.screen.par", "PAR");

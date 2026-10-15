@@ -20,6 +20,7 @@ import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -70,6 +71,10 @@ public final class SeriesRecipes extends RecipeProvider {
                 .pattern("I I").pattern(" I ").pattern(" I ")
                 .define('I', Items.IRON_INGOT)
                 .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT)).save(output, id("basic_wrench"));
+        // A card of paper with a gold contact and the redstone that remembers what it was shown.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, SharedTools.CARD.get())
+                .requires(Items.PAPER).requires(Items.REDSTONE).requires(Items.GOLD_NUGGET)
+                .unlockedBy("has_redstone", has(Items.REDSTONE)).save(output, id("configuration_card"));
         converters(output);
     }
 

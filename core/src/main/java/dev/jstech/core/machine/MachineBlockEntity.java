@@ -25,6 +25,7 @@ import dev.jstech.core.energy.EnergyFaults;
 import dev.jstech.core.energy.EnergyProtection;
 import dev.jstech.core.energy.EnergyStore;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.id.StableNames;
 import dev.jstech.core.inventory.FaceEnergyStorage;
 import dev.jstech.core.inventory.FaceFluidHandler;
 import dev.jstech.core.inventory.FaceItemHandler;
@@ -50,7 +51,9 @@ import java.util.Objects;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -92,6 +95,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private final ValueField<Ownership> ownership;
     private final LongField drawn;
     private final IntField perMinute;
+    private final LongField capacityShown;
+    private final IntField loudness;
+    private UpgradeEffect applied = UpgradeEffect.NONE;
     private final Deque<long[]> made = new ArrayDeque<>();
     private long drawnThisTick;
     private @Nullable List<MachineParameter> parameters;
@@ -118,6 +124,11 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     public static final int BURN_DAMAGE = 50;
     private static final int TICKS_A_SECOND = 20;
     private static final int TICKS_A_MINUTE = 1_200;
+    private static final int PERCENT = 100;
+    private static final String REDSTONE_MODE = "redstone_mode";
+    private static final String COMPARATOR_READS = "comparator_reads";
+    private static final StableNames<RedstoneMode> MODES = StableNames.of(RedstoneMode.class);
+    private static final StableNames<ComparatorReads> READINGS = StableNames.of(ComparatorReads.class);
 
     protected MachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
                                  final int inventorySize, final int energyCapacity, final int energyMaxReceive,
@@ -144,6 +155,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
             final PartField[] guarded = new PartField[1];
             final EnergyProtection protection = new EnergyProtection(() -> guarded[0].changed());
             guarded[0] = fields().part("Protection", protection).save().toClient();
+            fields().spills(protection.slots());
             store.guardedBy(protection);
             store.onFault(what -> {
                 damage(BURN_DAMAGE);
@@ -170,6 +182,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         // Shown only on its screen, while it is open: what it drew last tick and what it made the last minute.
         this.drawn = fields().longInteger("Drawn", 0L).toMenu();
         this.perMinute = fields().integer("PerMinute", 0).toMenu();
+        this.capacityShown = fields().longInteger("CapacityShown", this.power.builtCapacity()).toMenu();
+        // How loud its upgrades make it, in hundredths, for the sounds the players near it hear.
+        this.loudness = fields().integer("Loudness", PERCENT).toClient();
         fields().whenNeighbourChanges((server, face) -> readSignal(server));
     }
 
@@ -403,11 +418,64 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return worldPosition.getZ() + 0.5;
     }
 
-    /** Its working sound while it works. */
+    /** Its working sound while it works, as loud as its upgrades make it. */
     @Override
     public List<LoopRequest> loops() {
         final SoundKey loop = sounds().work();
-        return loop != null && running.get() ? List.of(LoopRequest.of(loop)) : List.of();
+        return loop != null && running.get() && loudness.get() > 0
+                ? List.of(new LoopRequest(loop, loudness.get() / (float) PERCENT, 1.0F, null)) : List.of();
+    }
+
+    /** The most energy it holds, as the screen shows it: its upgrades' buffer counted, on the player's side too. */
+    public long capacityShown() {
+        return level != null && level.isClientSide() ? capacityShown.get() : power.capacity();
+    }
+
+    /** What its upgrades do to it; nothing for a machine with no upgrade slots. */
+    public UpgradeEffect upgrades() {
+        return effect();
+    }
+
+    /**
+     * Its setup, for another machine to take ({@link #pasteSetup}): what each face does with each resource, what it
+     * pushes and pulls by itself and through which filter, how it answers redstone and what a comparator reads, and
+     * whatever its kind adds ({@link #writeSetup}).
+     */
+    public CompoundTag copySetup(final HolderLookup.Provider registries) {
+        final CompoundTag setup = new CompoundTag();
+        sides.copyOut(setup, registries);
+        setup.putString(REDSTONE_MODE, control.mode().serializedName());
+        setup.putString(COMPARATOR_READS, control.reads().serializedName());
+        writeSetup(setup, registries);
+        return setup;
+    }
+
+    /**
+     * Takes what of {@code setup}, another machine's, fits it: the faces and the pushing and pulling of each resource
+     * both have, the redstone mode and what the comparator reads; and for a machine of the same kind
+     * ({@code sameKind}) what its kind adds. Whether anything was taken.
+     */
+    public boolean pasteSetup(final CompoundTag setup, final boolean sameKind, final HolderLookup.Provider registries) {
+        boolean taken = false;
+        if (sides.speaksOf(setup)) {
+            sides.paste(setup, registries);
+            taken = true;
+        }
+        final RedstoneMode mode = MODES.find(setup.getString(REDSTONE_MODE));
+        if (mode != null) {
+            control.setMode(mode);
+            taken = true;
+        }
+        final ComparatorReads reads = READINGS.find(setup.getString(COMPARATOR_READS));
+        if (reads != null) {
+            control.setReads(reads);
+            taken = true;
+        }
+        if (sameKind) {
+            readSetup(setup, registries);
+        }
+        wake();
+        return taken;
     }
 
     @Override
@@ -469,6 +537,19 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return MachineSounds.SILENT;
     }
 
+    /** What its upgrades do to it; nothing unless it has upgrade slots ({@link ProcessingMachineBlockEntity}). */
+    protected UpgradeEffect effect() {
+        return UpgradeEffect.NONE;
+    }
+
+    /** Adds to its setup what only a machine of its kind can take: its input locks, the recipe picked. */
+    protected void writeSetup(final CompoundTag setup, final HolderLookup.Provider registries) {
+    }
+
+    /** Takes from a setup of a machine of its own kind what {@link #writeSetup} added. */
+    protected void readSetup(final CompoundTag setup, final HolderLookup.Provider registries) {
+    }
+
     /** Counts {@code amount} of its energy drawn this tick, for its screen. */
     protected void drew(final long amount) {
         drawnThisTick += Math.max(0L, amount);
@@ -517,6 +598,13 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private void tickServer(final ServerLevel server) {
         ticked = true;
         final long now = server.getGameTime();
+        final UpgradeEffect effect = effect();
+        if (!effect.equals(applied)) {
+            applied = effect;
+            power.enlarge(effect);
+            loudness.set((int) Math.min(Integer.MAX_VALUE, Math.round(effect.sound() * PERCENT)));
+        }
+        capacityShown.set(power.capacity());
         power.tick();
         if (health.damaged() && Math.floorMod(now + worldPosition.asLong(), MachineHealth.CRACKS_EVERY) == 0) {
             health.showCracks(server, worldPosition);
@@ -597,8 +685,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     }
 
     private void play(final ServerLevel server, @Nullable final SoundKey sound) {
-        if (sound != null) {
-            Audio.at(server, worldPosition, sound);
+        if (sound != null && loudness.get() > 0) {
+            Audio.at(server, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5,
+                    sound, loudness.get() / (float) PERCENT, 1.0F);
         }
     }
 

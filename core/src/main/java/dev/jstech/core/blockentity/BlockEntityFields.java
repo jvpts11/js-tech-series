@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -58,7 +59,10 @@ public final class BlockEntityFields {
     private final List<StateMirror<?>> mirrors = new ArrayList<>();
     private final List<BiConsumer<ServerLevel, BlockPos>> brokenListeners = new ArrayList<>();
     private final List<BiConsumer<ServerLevel, Direction>> neighbourListeners = new ArrayList<>();
+    private final List<ItemStackHandler> spilled = new ArrayList<>();
     private boolean closed;
+    /* Set as the block is taken away whole, its contents going with it: then nothing spills. */
+    private boolean whole;
     private @Nullable SaveLayout layout;
     private @Nullable MenuData menuData;
     /* What the block offers to pipes and cables, found once when the declarations close: asked on every lookup. */
@@ -213,8 +217,24 @@ public final class BlockEntityFields {
     }
 
     /**
+     * Spills {@code items} on the ground when the block is broken, as an inventory declared {@code dropsWhenBroken()}
+     * does: one kept inside a part of the block entity, as a machine's fuse and battery are.
+     */
+    public void spills(final ItemStackHandler items) {
+        spilled.add(Objects.requireNonNull(items, "items"));
+    }
+
+    /**
+     * The block is about to be taken away whole, its contents and settings going with it, as a wrench takes a machine
+     * or a machine grows into the next in its place: when it is removed, nothing spills.
+     */
+    public void takenWhole() {
+        whole = true;
+    }
+
+    /**
      * The block at {@code pos} was broken or replaced: what was declared to happen then happens, and every inventory
-     * declared {@code dropsWhenBroken()} spills on the ground.
+     * declared {@code dropsWhenBroken()} spills on the ground, unless the block was taken away whole.
      */
     public void broken(final Level level, final BlockPos pos) {
         if (level instanceof ServerLevel server) {
@@ -222,10 +242,16 @@ public final class BlockEntityFields {
                 listener.accept(server, pos);
             }
         }
+        if (whole) {
+            return;
+        }
         for (final IField field : fields) {
             if (field instanceof FieldItemHandler items && items.dropsOnBreak()) {
                 BlockDrops.spill(level, pos, items);
             }
+        }
+        for (final ItemStackHandler items : spilled) {
+            BlockDrops.spill(level, pos, items);
         }
     }
 

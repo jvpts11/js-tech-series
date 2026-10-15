@@ -97,6 +97,12 @@ public final class SlotLocks implements IFieldPart {
         }
     }
 
+    /** Takes the locks {@code tag}, written by {@link #save} on a machine of the same kind, says. */
+    public void paste(final CompoundTag tag, final HolderLookup.Provider registries) {
+        load(tag, registries);
+        this.changed.run();
+    }
+
     @Override
     public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         save(tag, registries);

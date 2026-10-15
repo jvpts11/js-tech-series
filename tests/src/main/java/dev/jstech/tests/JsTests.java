@@ -54,6 +54,8 @@ public final class JsTests {
         TestRadios.declare();
         // A machine on the whole machine kit, with energy of a class and tanks of gas, and a repair kit.
         TestKitMachine.declare();
+        // Upgrades of every effect, some with a limit of how many fit in a machine.
+        TestUpgrades.declare();
         // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
         TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.

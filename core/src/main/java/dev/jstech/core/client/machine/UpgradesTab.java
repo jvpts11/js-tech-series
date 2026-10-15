@@ -22,7 +22,9 @@ import dev.jstech.core.machine.MachineScreenTexts;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.machine.UpgradeEffect;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,22 +32,26 @@ import net.minecraft.network.chat.Component;
 
 /**
  * The Upgrades tab, as the approved design draws it: the machine's upgrade bays, each with its lamp lit while it holds
- * an upgrade, what they make of its speed and its energy, and a bank of LED bars, one an effect, its middle mark the
- * machine as it was built, lit to the right for more and to the left for less.
+ * an upgrade, the effects its upgrades have, and a bank of LED bars, one an effect, its middle mark the machine as it
+ * was built, lit to the right for more and to the left for less.
  */
 public final class UpgradesTab implements IMachineFace {
 
     private static final int TITLE_X = 64;
     private static final int TITLE_Y = 32;
     private static final int SUMMARY_Y = 84;
+    private static final int SUMMARY_PITCH = 8;
+    private static final int SUMMARY_LINES = 2;
     private static final int NO_BAYS_Y = 60;
     private static final int ROW_PITCH = 7;
     private static final int SEGMENTS = 9;
     private static final int SEGMENT_PITCH = 2;
     private static final int MIDDLE = 32;
     private static final double FULL_BAR = 0.5;
+    private static final double FULL_PARALLEL = 8.0;
     private static final int FLICKER = 6;
     private static final int SUMMARY_ROOM = 104;
+    private static final double NEUTRAL = 1e-9;
 
     @Override
     public void draw(final MachineView v) {
@@ -69,10 +75,13 @@ public final class UpgradesTab implements IMachineFace {
                     .getStackInSlot(processing.layout().firstUpgrade() + k).isEmpty();
             MachineArt.lamp(g, bx + 6, by + SLOT + 3, held ? c.lampRun() : MachineArt.rgb(90, 90, 90), held);
         }
-        final UpgradeEffect effect = processing != null ? processing.upgradeEffect() : UpgradeEffect.NONE;
+        final UpgradeEffect effect = v.machine().upgrades();
         if (bays > 0) {
-            MachineArt.engrave(g, v.font(), MachineArt.fit(v.font(), summary(effect), SUMMARY_ROOM), v.x(TITLE_X),
-                    v.y(SUMMARY_Y), false);
+            final List<String> lines = summary(effect);
+            for (int i = 0; i < lines.size(); i++) {
+                MachineArt.engrave(g, v.font(), MachineArt.fit(v.font(), lines.get(i), SUMMARY_ROOM), v.x(TITLE_X),
+                        v.y(SUMMARY_Y + i * SUMMARY_PITCH), false);
+            }
         }
         bank(v, effect);
     }
@@ -85,10 +94,12 @@ public final class UpgradesTab implements IMachineFace {
             }
         }
         if (MachineScreenLayout.on(x, y, BANK_X - 3, BANK_Y - 3, BANK_WIDTH + 6, BANK_HEIGHT + 6)) {
-            final UpgradeEffect effect = v.machine() instanceof ProcessingMachineBlockEntity processing
-                    ? processing.upgradeEffect() : UpgradeEffect.NONE;
-            return List.of(GameText.component(MachineScreenTexts.TIP_BANK), GameText.component(
-                    MachineScreenTexts.SPEED_AND_ENERGY.with(times(effect.speed()), times(effect.energy()))));
+            final List<Component> lines = new ArrayList<>();
+            lines.add(GameText.component(MachineScreenTexts.TIP_BANK));
+            for (final Text each : effects(v.machine().upgrades(), true)) {
+                lines.add(GameText.component(each));
+            }
+            return lines;
         }
         return List.of();
     }
@@ -99,9 +110,41 @@ public final class UpgradesTab implements IMachineFace {
                 ? Math.min(processing.layout().upgrades(), BAYS) : 0;
     }
 
-    private static String summary(final UpgradeEffect effect) {
-        return MachineWords.upper(MachineScreenTexts.SPEED_AND_ENERGY.with(times(effect.speed()),
-                times(effect.energy())));
+    /* The lines under the bays: the effects that change anything, two a line; speed and energy when none does. */
+    private static List<String> summary(final UpgradeEffect effect) {
+        final List<Text> shown = effects(effect, false);
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < shown.size() && lines.size() < SUMMARY_LINES; i += 2) {
+            String line = MachineWords.upper(shown.get(i));
+            if (i + 1 < shown.size()) {
+                line += "   " + MachineWords.upper(shown.get(i + 1));
+            }
+            lines.add(line);
+        }
+        return lines;
+    }
+
+    /* Each effect that changes the machine, or all of them; speed and energy at least. */
+    private static List<Text> effects(final UpgradeEffect effect, final boolean all) {
+        final List<Text> shown = new ArrayList<>();
+        shown.add(MachineScreenTexts.EFFECT_SPEED.with(times(effect.speed())));
+        shown.add(MachineScreenTexts.EFFECT_ENERGY.with(times(effect.energy())));
+        if (all || effect.parallel() > 0) {
+            shown.add(MachineScreenTexts.EFFECT_PARALLEL.with(effect.recipesAtOnce()));
+        }
+        addIf(shown, all, MachineScreenTexts.EFFECT_YIELD, effect.yield());
+        addIf(shown, all, MachineScreenTexts.EFFECT_BYPRODUCTS, effect.byproducts());
+        addIf(shown, all, MachineScreenTexts.EFFECT_USE, effect.use());
+        addIf(shown, all, MachineScreenTexts.EFFECT_HEAT, effect.heat());
+        addIf(shown, all, MachineScreenTexts.EFFECT_SOUND, effect.sound());
+        addIf(shown, all, MachineScreenTexts.EFFECT_BUFFER, effect.buffer());
+        return shown;
+    }
+
+    private static void addIf(final List<Text> shown, final boolean all, final TextKey word, final double factor) {
+        if (all || Math.abs(factor - 1.0) > NEUTRAL) {
+            shown.add(word.with(times(factor)));
+        }
     }
 
     private static String times(final double factor) {
@@ -120,14 +163,17 @@ public final class UpgradesTab implements IMachineFace {
         MachineArt.vline(g, mid, y0 + 1, y0 + BANK_HEIGHT - 1, MachineArt.rgb(110, 110, 110));
         final List<Row> rows = List.of(new Row(MachineScreenTexts.SPD, effect.speed() - 1.0, c.lampRun()),
                 new Row(MachineScreenTexts.NRG, effect.energy() - 1.0, c.lampWait()),
-                new Row(MachineScreenTexts.PAR, 0.0, c.lampRun()), new Row(MachineScreenTexts.YLD, 0.0, c.lampRun()),
-                new Row(MachineScreenTexts.BYP, 0.0, c.lampRun()), new Row(MachineScreenTexts.USE, 0.0, c.lampRun()),
-                new Row(MachineScreenTexts.HEA, 0.0, c.lampRun()), new Row(MachineScreenTexts.SND, 0.0, c.lampRun()),
-                new Row(MachineScreenTexts.BUF, 0.0, c.lampRun()));
+                new Row(MachineScreenTexts.PAR, effect.parallel() / FULL_PARALLEL * FULL_BAR, c.lampRun()),
+                new Row(MachineScreenTexts.YLD, effect.yield() - 1.0, c.lampRun()),
+                new Row(MachineScreenTexts.BYP, effect.byproducts() - 1.0, c.lampRun()),
+                new Row(MachineScreenTexts.USE, effect.use() - 1.0, c.lampWait()),
+                new Row(MachineScreenTexts.HEA, effect.heat() - 1.0, c.lampWait()),
+                new Row(MachineScreenTexts.SND, effect.sound() - 1.0, c.lampWait()),
+                new Row(MachineScreenTexts.BUF, effect.buffer() - 1.0, c.lampRun()));
         for (int k = 0; k < rows.size(); k++) {
             final Row row = rows.get(k);
             final int y = y0 + 2 + k * ROW_PITCH;
-            final boolean moved = Math.abs(row.value()) > 1e-9;
+            final boolean moved = Math.abs(row.value()) > NEUTRAL;
             MachineArt.text(g, v.font(), MachineWords.upper(row.word()), x0 + 2, y,
                     moved ? MachineArt.rgb(150, 156, 164) : MachineArt.rgb(90, 96, 104));
             for (int seg = 0; seg < SEGMENTS; seg++) {

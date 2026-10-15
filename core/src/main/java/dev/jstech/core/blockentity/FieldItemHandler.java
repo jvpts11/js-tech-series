@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntConsumer;
+import java.util.function.ToIntBiFunction;
 
 /**
  * The items a block entity holds, declared with where they go: {@link #save()}, {@link #toClient()}, and two more an
@@ -30,6 +31,7 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
     private final List<Runnable> loadListeners = new ArrayList<>();
     private int slotLimit = STACK;
     private BiPredicate<Integer, ItemStack> accepts = (slot, stack) -> true;
+    private ToIntBiFunction<Integer, ItemStack> stackLimit = (slot, stack) -> STACK;
     private BooleanSupplier locked = () -> false;
     private boolean exposed;
     private boolean drops;
@@ -78,6 +80,15 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
         return this;
     }
 
+    /**
+     * The most of an item a slot holds, besides the slot's own limit: an upgrade slot takes no more of an upgrade than
+     * the machine has room for.
+     */
+    public FieldItemHandler stackLimit(final ToIntBiFunction<Integer, ItemStack> rule) {
+        stackLimit = rule;
+        return this;
+    }
+
     /** Gives nothing out while {@code rule} holds, as a burner keeps the disc it is writing. */
     public FieldItemHandler lockedWhile(final BooleanSupplier rule) {
         locked = rule;
@@ -112,6 +123,11 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
     @Override
     public boolean isItemValid(final int slot, final ItemStack stack) {
         return accepts.test(slot, stack);
+    }
+
+    @Override
+    protected int getStackLimit(final int slot, final ItemStack stack) {
+        return Math.max(0, Math.min(super.getStackLimit(slot, stack), stackLimit.applyAsInt(slot, stack)));
     }
 
     @Override

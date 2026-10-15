@@ -332,6 +332,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   locks an input slot to what it holds.
 - (Core) JEI's "+" and EMI's fill button move a recipe into the open machine: its ingredients from the player's
   inventory into the inputs, once or a stack's worth, and the recipe picked among those its inputs make.
+- (Core) Upgrade effects: besides speed and energy, an upgrade can make a machine work several recipes at once, make
+  more items, make byproducts likelier, spend less fluid and matter, give off more or less heat, run quieter, and store
+  more energy; each upgrade says how many of it fit in one machine. Upgrades are declared with no class of their own,
+  and say what they do in their tooltip.
+- (Core) A wrench on a machine: any mod's wrench turns what the face clicked does with the resource it shows, shows each
+  face of the machine looked at in its colour, and, sneaking, takes the machine away whole, contents and settings
+  going with it in its item.
+- (Core) The Configuration Card copies a machine's setup and pastes it into others, whole into the same kind and what
+  fits into another, or into every machine of a box at once.
+- (Core) Machines grow in place: the tiers of one machine are declared as one family, and an installer makes a machine
+  the next tier without breaking it, its contents and settings kept.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

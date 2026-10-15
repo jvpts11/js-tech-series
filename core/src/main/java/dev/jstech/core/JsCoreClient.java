@@ -45,6 +45,7 @@ import dev.jstech.core.client.item.ItemStateClient;
 import dev.jstech.core.client.live.LiveScreens;
 import dev.jstech.core.client.live.TubeFilter;
 import dev.jstech.core.client.machine.MachineScreen;
+import dev.jstech.core.client.machine.MachineWrenchClient;
 import dev.jstech.core.client.material.MaterialArt;
 import dev.jstech.core.client.material.MaterialTooltips;
 import dev.jstech.core.client.model.CoreModels;
@@ -111,6 +112,7 @@ public final class JsCoreClient {
         KeyActionsClient.listen(modEventBus);
         LiveScreens.listen();
         MachineScreen.listen(modEventBus);
+        MachineWrenchClient.listen(modEventBus);
         MaterialTooltips.listen();
         MediaClientEvents.listen();
         MenuSwapCursor.listen();
