@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.robot;
 
-import com.mojang.authlib.GameProfile;
 import dev.jstech.core.log.CoreLogs;
+import dev.jstech.core.protection.Actor;
+import dev.jstech.core.protection.MachineActors;
+import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.team.IOwned;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.vehicle.DriverInput;
@@ -32,7 +34,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -47,7 +48,8 @@ import org.slf4j.Logger;
  * }</pre>
  *
  * <p>It acts in the world as its owner would: a block a protected place would not let its owner break, it does not
- * break either. It drives a vehicle it sits in the front seat of with the {@link CoreRobotTasks.Drive} task.
+ * break either, for it asks the Core's protection first. A player has as many robots as the server allows. It drives a
+ * vehicle it sits in the front seat of with the {@link CoreRobotTasks.Drive} task.
  */
 public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwned {
 
@@ -55,6 +57,8 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
     private final Deque<IRobotTask> tasks = new ArrayDeque<>();
     private DriverInput driving = DriverInput.NONE;
     private @Nullable UUID owner;
+    /* Whether its owner's limit of robots counts it, which it gives back as it goes. */
+    private boolean counted;
 
     /** How many stacks a robot carries. */
     public static final int INVENTORY_SIZE = 9;
@@ -62,6 +66,7 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
     private static final String SAVED_TASKS = "Tasks";
     private static final String SAVED_INVENTORY = "Inventory";
     private static final String SAVED_OWNER = "Owner";
+    private static final String SAVED_COUNTED = "Counted";
     private static final double WALKING_SPEED = 0.25;
     private static final double HEALTH = 20.0;
 
@@ -98,9 +103,27 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
         return inventory;
     }
 
-    /** Gives it to a player, who owns what it does. */
-    public void setOwner(@Nullable final UUID player) {
+    /**
+     * Gives it to {@code player}, who owns what it does, when they may have one more robot ({@link
+     * PlayerLimits#ROBOTS}); the owner it had before gives one back.
+     *
+     * @return whether it is now theirs; a player at their limit does not get it
+     */
+    public boolean giveTo(final UUID player) {
+        if (player.equals(owner)) {
+            return true;
+        }
+        if (level() instanceof ServerLevel server) {
+            if (!PlayerLimits.take(server.getServer(), player, PlayerLimits.ROBOTS)) {
+                return false;
+            }
+            if (owner != null && counted) {
+                PlayerLimits.giveBack(server.getServer(), owner, PlayerLimits.ROBOTS);
+            }
+            counted = true;
+        }
         this.owner = player;
+        return true;
     }
 
     @Override
@@ -109,13 +132,28 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
         return owner == null ? null : Ownership.of(owner);
     }
 
+    /** Who answers for what it does: its owner, or the world when it is nobody's. */
+    public Actor actor() {
+        return owner == null ? Actor.world(blockPosition()) : Actor.forOwner(owner);
+    }
+
     /**
-     * Who the robot acts as when the world asks who is breaking a block: a stand-in for its owner, so a claim that
-     * keeps out everyone but its owner keeps the robot of anyone else out too.
+     * Who the robot acts as when the world asks who is breaking a block: a stand-in for its owner, under the owner's
+     * id and name, so whatever asks by either finds the owner.
      */
     public Player actingPlayer() {
-        final UUID id = owner == null ? getUUID() : owner;
-        return FakePlayerFactory.get((ServerLevel) level(), new GameProfile(id, getType().toShortString()));
+        return owner == null ? MachineActors.standIn((ServerLevel) level(), getUUID(), getType().toShortString())
+                : MachineActors.standIn((ServerLevel) level(), owner);
+    }
+
+    @Override
+    public void remove(final RemovalReason reason) {
+        // A robot gone for good gives its owner one back; one only unloaded with its chunk is still theirs.
+        if (reason.shouldDestroy() && owner != null && counted && level() instanceof ServerLevel server) {
+            PlayerLimits.giveBack(server.getServer(), owner, PlayerLimits.ROBOTS);
+            counted = false;
+        }
+        super.remove(reason);
     }
 
     @Override
@@ -153,6 +191,7 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
         tag.put(SAVED_INVENTORY, inventory.createTag(registryAccess()));
         if (owner != null) {
             tag.putUUID(SAVED_OWNER, owner);
+            tag.putBoolean(SAVED_COUNTED, counted);
         }
     }
 
@@ -166,6 +205,7 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
         }
         inventory.fromTag(tag.getList(SAVED_INVENTORY, Tag.TAG_COMPOUND), registryAccess());
         owner = tag.hasUUID(SAVED_OWNER) ? tag.getUUID(SAVED_OWNER) : null;
+        counted = owner != null && tag.getBoolean(SAVED_COUNTED);
     }
 
     @Override

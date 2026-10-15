@@ -10,11 +10,11 @@ package dev.jstech.core.team;
 import com.mojang.authlib.GameProfile;
 import dev.jstech.core.log.CoreLogs;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -59,13 +59,13 @@ public final class CoreTeams {
         return SOLO + player;
     }
 
-    /** The name the server last knew {@code player} by, online or not; null when it never knew one. */
-    static @Nullable String lastKnownName(final MinecraftServer server, final UUID player) {
+    /** The name the server last knew {@code player} by, online or not; none when it never knew one. */
+    public static Optional<String> nameOf(final MinecraftServer server, final UUID player) {
         final ServerPlayer online = server.getPlayerList().getPlayer(player);
         if (online != null) {
-            return online.getScoreboardName();
+            return Optional.of(online.getScoreboardName());
         }
         final GameProfileCache profiles = server.getProfileCache();
-        return profiles == null ? null : profiles.get(player).map(GameProfile::getName).orElse(null);
+        return profiles == null ? Optional.empty() : profiles.get(player).map(GameProfile::getName);
     }
 }

@@ -91,7 +91,7 @@ final class ConfigScreenModel {
             return Access.LOCAL;
         }
         if (minecraft.player != null && ConfigSync.fromServer(file)) {
-            return minecraft.player.hasPermissions(ConfigSync.EDIT_LEVEL) ? Access.REMOTE : Access.READ_ONLY;
+            return ConfigSync.mayEditOnServer(file) ? Access.REMOTE : Access.READ_ONLY;
         }
         return Access.READ_ONLY;
     }

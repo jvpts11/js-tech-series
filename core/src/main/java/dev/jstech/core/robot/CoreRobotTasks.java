@@ -10,6 +10,8 @@ package dev.jstech.core.robot;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.protection.ProtectedAction;
+import dev.jstech.core.protection.Protection;
 import dev.jstech.core.vehicle.DriverInput;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -150,6 +152,10 @@ public final class CoreRobotTasks {
             robot.getLookControl().setLookAt(Vec3.atCenterOf(target));
             if (++dug < Math.max(1, (int) Math.ceil(hardness * TICKS_PER_HARDNESS))) {
                 return Status.RUNNING;
+            }
+            // The claims and protections installed weigh its owner; then the game's own event, as for a player.
+            if (!Protection.may(robot.actor(), ProtectedAction.BREAK, level, target)) {
+                return Status.FAILED;
             }
             final BlockEvent.BreakEvent breaking = new BlockEvent.BreakEvent(level, target, state,
                     robot.actingPlayer());

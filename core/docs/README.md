@@ -35,6 +35,7 @@ says what the Core promises and what it does not yet.
 | [World](WORLD.md) | Ores, structures, dimensions and their rules, data over areas, chunk loading. |
 | [State and saves](STATE_AND_SAVES.md) | Values kept with the world, versions of saves, data pack values, batches, schedules, the calendar, timings, the Core's events. |
 | [Ownership](OWNERSHIP.md) | Teams, owners and access. |
+| [Protection](PROTECTION.md) | Claims, permissions, limits, the audit log and damage between players. |
 | [Progression](PROGRESSION.md) | Eras, tiers, progression axes and advancements. |
 | [Commands](COMMANDS.md) | Commands under `/jstech`. |
 | [Settings](SETTINGS.md) | Settings files, their ranges, and the settings screen. |

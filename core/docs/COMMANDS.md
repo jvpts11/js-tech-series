@@ -26,6 +26,10 @@ The permission is who may run it:
 
 A name another mod declared is refused with an exception, while the game loads.
 
+Each command also has a permission node, `jscore.command.<name>` (*added 2026-10-15*): a source at the command's
+level always may run it, and a server's permission mod may grant it to a player below that level
+([Protection](PROTECTION.md#permissions)).
+
 ## The Core's commands
 
 *Added 2026-10-05.*
@@ -43,6 +47,8 @@ A name another mod declared is refused with an exception, while the game loads.
 | `/jstech config set <file> <setting> <value>` | level 2 | Sets it for every player at once; the value is JSON or plain words. *Added 2026-10-15.* |
 | `/jstech config reset <file> <setting>` | level 2 | Puts it back to its default. *Added 2026-10-15.* |
 | `/jstech config preset <file> <name>` | level 2 | Picks one of the file's presets, shipped or saved on the server. *Added 2026-10-15.* |
+| `/jstech dump permissions` | level 3 | Writes every permission of the series, and the LuckPerms groups to paste, into `jstech-permissions/` ([Protection](PROTECTION.md#permissions)). *Added 2026-10-15.* |
+| `/jstech audit [page]`, `audit player <name> [page]`, `audit at <pos> [page]` | level 3 | Reads the audit log, newest first ([Protection](PROTECTION.md#the-audit-log)). *Added 2026-10-15.* |
 
 ## What can go wrong
 

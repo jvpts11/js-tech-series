@@ -32,13 +32,7 @@ public final class ScoreboardTeams implements ITeamSource {
 
     @Override
     public String teamOf(final MinecraftServer server, final UUID player) {
-        final String name = CoreTeams.lastKnownName(server, player);
-        if (name != null) {
-            final PlayerTeam team = server.getScoreboard().getPlayersTeam(name);
-            if (team != null) {
-                return idOf(team);
-            }
-        }
-        return CoreTeams.solo(player);
+        return CoreTeams.nameOf(server, player).map(name -> server.getScoreboard().getPlayersTeam(name))
+                .map(ScoreboardTeams::idOf).orElseGet(() -> CoreTeams.solo(player));
     }
 }

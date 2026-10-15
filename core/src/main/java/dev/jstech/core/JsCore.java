@@ -53,8 +53,10 @@ import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.integration.accessories.AccessoriesIntegration;
 import dev.jstech.core.integration.curios.CuriosIntegration;
+import dev.jstech.core.integration.ftbchunks.FtbChunksIntegration;
 import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
+import dev.jstech.core.integration.opac.OpacIntegration;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.log.LogCommand;
@@ -63,6 +65,10 @@ import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.progression.PlayerProgress;
+import dev.jstech.core.protection.OwnedProtection;
+import dev.jstech.core.protection.PlayerLimits;
+import dev.jstech.core.protection.Protection;
+import dev.jstech.core.protection.ProtectionCommands;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
@@ -76,9 +82,7 @@ import net.neoforged.fml.ModLoader;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
-import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 import org.slf4j.Logger;
 
 /**
@@ -143,10 +147,13 @@ public final class JsCore {
         // Soft integrations: each one checks for its mod and stays a no-op without it.
         MekanismIntegration.bootstrap();
         FtbTeamsIntegration.bootstrap();
+        FtbChunksIntegration.bootstrap();
+        OpacIntegration.bootstrap();
         AccessoriesIntegration.bootstrap();
         CuriosIntegration.bootstrap();
-        // Who may use what others own, asked of the server's permission system.
-        NeoForge.EVENT_BUS.addListener(PermissionGatherEvent.Nodes.class, CorePermissions::onGatherNodes);
+        // The series' permissions, asked of the server's permission system, and what each player may have.
+        CorePermissions.listen();
+        PlayerLimits.register();
         // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
@@ -167,6 +174,7 @@ public final class JsCore {
         // The series' commands under /jstech: the Core's own, the recordings' upkeep, and the log's levels.
         CoreCommands.declare();
         ConfigCommands.declare();
+        ProtectionCommands.declare();
         MediaCommand.declare();
         LogCommand.declare();
         // The multiblock patterns of every mod, read from data and declared in code.
@@ -200,6 +208,8 @@ public final class JsCore {
         KeyActions.listen(modEventBus);
         MediaNetwork.listen(modEventBus);
         MediaServerEvents.listen();
+        OwnedProtection.listen();
+        Protection.listen();
         RuntimeDimensions.listen();
         SeriesCommands.listen();
         StateNetwork.listen(modEventBus);

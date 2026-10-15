@@ -215,6 +215,10 @@ The Core's server settings are in `jstech-balance.toml`, in each world's `server
 | `media.player_quota_megabytes` | 512 | How much one player's recordings may take together; 0 no limit. |
 | `calendar.days_per_season` | 28 | How many days a season lasts; a year is four seasons. |
 | `world.chunks_per_owner` | 25 | How many chunks each owner may keep loaded (0 to 4,096). |
+| `protection.team_damage` | false | Whether players on one team can hurt each other ([Protection](PROTECTION.md#damage-between-players)). |
+| `protection.audit` | false | Whether who used, changed or broke what others own is written down. |
+| `protection.audit_entries` | 10000 | How many entries the audit log keeps (100 to 1,000,000). |
+| `protection.robots_per_player` | 16 | How many robots one player may have at once (0 to 1,024). |
 
 ## What can go wrong
 

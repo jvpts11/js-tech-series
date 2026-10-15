@@ -18,10 +18,11 @@ import net.minecraft.resources.ResourceLocation;
  * A world's settings as the server holds them, sent to a player as they join and again whenever one changes, so their
  * game shows and uses the server's values.
  *
- * @param file   the file's name, without its extension
- * @param values every setting's value, written as JSON
+ * @param file     the file's name, without its extension
+ * @param values   every setting's value, written as JSON
+ * @param editable whether the player it is sent to may change them from their own game
  */
-record ConfigValuesPayload(String file, byte[] values) implements CustomPacketPayload {
+record ConfigValuesPayload(String file, byte[] values, boolean editable) implements CustomPacketPayload {
 
     /** The most a file's values may take, well inside what the server may send in one payload. */
     static final int MOST_BYTES = 1 << 19;
@@ -34,6 +35,7 @@ record ConfigValuesPayload(String file, byte[] values) implements CustomPacketPa
     static final StreamCodec<RegistryFriendlyByteBuf, ConfigValuesPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.stringUtf8(MOST_NAME), ConfigValuesPayload::file,
             ByteBufCodecs.byteArray(MOST_BYTES), ConfigValuesPayload::values,
+            ByteBufCodecs.BOOL, ConfigValuesPayload::editable,
             ConfigValuesPayload::new);
 
     ConfigValuesPayload {

@@ -37,11 +37,18 @@ if (!ownership.mayUse(player)) {
 ```
 
 - `Access`: `PRIVATE` (the owner), `TEAM` (the owner's team), `PUBLIC` (everyone).
+- **Trust by name** (*added 2026-10-15*): beyond its access, an owner trusts players by name, each as far as a level
+  that holds the ones under it: `Trust.USE`, `SET_UP` (use and set up), `BREAK` (use, set up and break).
+  `ownership.withTrust(friend, Trust.SET_UP)`, `withoutTrust(friend)`; `mayUse`, `mayOpen`, `maySetUp` and `mayBreak`
+  ask it.
 - A block entity or entity that has an owner implements `IOwned` and answers `ownership()`; null means it is
-  nobody's, and anyone may use it. Jade shows "Owner: ..." for it ([Overlays](OVERLAYS.md)).
-- `Ownership` has a codec and a stream codec, so it is saved and sent like any value.
-- **Operators pass every lock.** The permission `jscore.ownership.bypass` (operators of level 2 and up, unless a
-  permission mod says otherwise) lets a player use anything; `CorePermissions.mayPassOwners(player)` asks it.
+  nobody's, and anyone may use it. Jade shows "Owner: ..." for it ([Overlays](OVERLAYS.md)). A block whose block entity
+  is owned is broken only by whom its ownership lets break it, and used only by whom it lets use it; an owned entity the
+  same, attacking it standing for breaking it.
+- `Ownership` has a codec and a stream codec, so it is saved and sent like any value, its trust with it.
+- **Operators pass the locks.** The permissions `jscore.owned.use_others`, `open_others`, `set_up_others` and
+  `break_others` (operators of level 2 and up, unless a permission mod says otherwise) let a player do each with what
+  others own ([Protection](PROTECTION.md#permissions)).
 
 ## What can go wrong
 

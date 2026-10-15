@@ -8,10 +8,10 @@
 package dev.jstech.core.config;
 
 import com.mojang.serialization.DataResult;
-import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.config.format.IConfigComments;
+import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -51,7 +51,7 @@ public final class ConfigSync {
     public static final TextKey SAVED = TextKey.of("jscore.config.remote.saved",
             "The server kept %s changed settings of %s");
     public static final TextKey REFUSED = TextKey.of("jscore.config.remote.refused",
-            "Only an operator may change the server's settings");
+            "You may not change the server's settings");
     public static final TextKey NO_FILE = TextKey.of("jscore.config.remote.no_file",
             "The server keeps no world settings file named %s");
     /* The setting's path, and why it was not taken. */
@@ -60,14 +60,14 @@ public final class ConfigSync {
     public static final TextKey NO_SUCH_SETTING = TextKey.of("jscore.config.remote.no_such_setting",
             "the file has no such setting");
 
-    /** Who may change a world's settings from their own game: the operators who may change the game. */
-    public static final int EDIT_LEVEL = SeriesCommands.GAME_MASTERS;
-
     private static final String NETWORK_VERSION = "1";
     /** The world's files with a setting changed since the end of the last tick, sent to every player at its end. */
     private static final Set<ConfigFile> CHANGED = ConcurrentHashMap.newKeySet();
-    /** On a player's game, the world's files whose values came from a server, put back to their defaults on leaving. */
-    private static final Set<ConfigFile> RECEIVED = ConcurrentHashMap.newKeySet();
+    /**
+     * On a player's game, the world's files whose values came from a server, put back to their defaults on leaving,
+     * and whether the server lets this player change each.
+     */
+    private static final Map<ConfigFile, Boolean> RECEIVED = new ConcurrentHashMap<>();
 
     private ConfigSync() {
     }
@@ -91,9 +91,13 @@ public final class ConfigSync {
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> CHANGED.clear());
     }
 
-    /** Whether {@code player} may change the world's settings from their own game. */
+    /**
+     * Whether {@code player} may change the world's settings from their own game: the player who runs it, and whoever
+     * holds {@link CorePermissions#EDIT_SETTINGS}, the operators unless the server's permission mod says otherwise.
+     */
     public static boolean mayEdit(final ServerPlayer player) {
-        return player.hasPermissions(EDIT_LEVEL) || player.server.isSingleplayerOwner(player.getGameProfile());
+        return player.server.isSingleplayerOwner(player.getGameProfile())
+                || CorePermissions.has(player, CorePermissions.EDIT_SETTINGS);
     }
 
     /**
@@ -129,7 +133,7 @@ public final class ConfigSync {
     /** On a player's game leaving a server: the world's settings it was sent go back to their defaults. */
     @ApiStatus.Internal
     public static void forgetServerValues() {
-        for (final ConfigFile file : RECEIVED) {
+        for (final ConfigFile file : RECEIVED.keySet()) {
             file.reset();
         }
         RECEIVED.clear();
@@ -137,7 +141,12 @@ public final class ConfigSync {
 
     /** Whether this game's values of the world's {@code file} came from a server it is playing on. */
     public static boolean fromServer(final ConfigFile file) {
-        return RECEIVED.contains(file);
+        return RECEIVED.containsKey(file);
+    }
+
+    /** Whether the server this game plays on lets its player change the world's {@code file}, as it last said. */
+    public static boolean mayEditOnServer(final ConfigFile file) {
+        return RECEIVED.getOrDefault(file, false);
     }
 
     /** Marks a world's file to be sent to every player at the end of the tick. */
@@ -202,7 +211,7 @@ public final class ConfigSync {
                     file.fileName(), values.length);
             return;
         }
-        PacketDistributor.sendToPlayer(player, new ConfigValuesPayload(file.name(), values));
+        PacketDistributor.sendToPlayer(player, new ConfigValuesPayload(file.name(), values, mayEdit(player)));
     }
 
     /* On a player's game: a server's values of a world's file, taken as the file's own. */
@@ -220,7 +229,7 @@ public final class ConfigSync {
             }
             try {
                 file.get().read(ConfigFormats.JSON.read(payload.values()));
-                RECEIVED.add(file.get());
+                RECEIVED.put(file.get(), payload.editable());
             } catch (final ConfigFormatException e) {
                 ConfigFiles.LOGGER.warn("the server's values of {} could not be read", payload.file(), e);
             }

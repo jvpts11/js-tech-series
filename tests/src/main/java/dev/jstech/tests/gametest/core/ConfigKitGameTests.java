@@ -18,6 +18,7 @@ import dev.jstech.core.config.ConfigSide;
 import dev.jstech.core.config.ConfigSync;
 import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.core.config.format.ConfigFormats;
+import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestSettings;
@@ -203,7 +204,7 @@ public final class ConfigKitGameTests {
         final MinecraftServer server = helper.getLevel().getServer();
         helper.assertFalse(ConfigSync.mayEdit(player), "a player who is no operator may not");
         // The test server makes its operators at level 0, so the entry says the level the game's operators have.
-        server.getPlayerList().getOps().add(new ServerOpListEntry(player.getGameProfile(), ConfigSync.EDIT_LEVEL,
+        server.getPlayerList().getOps().add(new ServerOpListEntry(player.getGameProfile(), CorePermissions.OPERATORS,
                 false));
         try {
             helper.assertTrue(ConfigSync.mayEdit(player), "an operator may");

@@ -16,6 +16,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.core.config.format.ConfigFormats;
+import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -94,7 +95,7 @@ public final class ConfigCommands {
 
     /** Declares the command, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("config", ConfigSync.EDIT_LEVEL, (node, context) -> node
+        SeriesCommands.declare("config", CorePermissions.OPERATORS, (node, context) -> node
                 .then(Commands.literal("get").then(Commands.argument(FILE, StringArgumentType.word()).suggests(FILES)
                         .then(Commands.argument(SETTING, StringArgumentType.word()).suggests(SETTINGS)
                                 .executes(ConfigCommands::get))))

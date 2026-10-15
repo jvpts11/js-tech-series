@@ -11,6 +11,7 @@ import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
+import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.ChunkLoadingBalance;
 import dev.jstech.core.time.WorldCalendar;
 
@@ -31,6 +32,8 @@ public final class CoreConfigKeys {
     public static final String CALENDAR = "calendar";
     /** What the machines of the series may do to the world: how many chunks an owner keeps loaded. */
     public static final String WORLD = "world";
+    /** Who may hurt whom, the audit log, and how many of each thing one player may have. */
+    public static final String PROTECTION = "protection";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -44,6 +47,9 @@ public final class CoreConfigKeys {
     private static final int MAX_MEDIA_FILE_MEGABYTES = 1024;
     private static final int MAX_MEDIA_QUOTA_MEGABYTES = 1_048_576;
     private static final int MAX_CHUNKS_PER_OWNER = 4096;
+    private static final int MIN_AUDIT_ENTRIES = 100;
+    private static final int MAX_AUDIT_ENTRIES = 1_000_000;
+    private static final int MAX_ROBOTS_PER_PLAYER = 1024;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
@@ -154,6 +160,31 @@ public final class CoreConfigKeys {
                     + "0 lets nobody keep any.")
             .named("Loaded chunks per owner").unit("chunks");
 
+    /** Whether players on one team may hurt each other. */
+    public static final ConfigKey<Boolean> PROTECTION_TEAM_DAMAGE = ConfigKey.flag(PROTECTION + ".team_damage", false)
+            .comment("Whether players on one team can hurt each other. While the teams are the game's scoreboard "
+                    + "teams, a team's own friendly fire decides when this is off.")
+            .named("Teammates can hurt each other");
+
+    /** Whether who used, changed or broke what others own is written down. */
+    public static final ConfigKey<Boolean> PROTECTION_AUDIT = ConfigKey.flag(PROTECTION + ".audit", false)
+            .comment("Whether who used, changed or broke what another player owns is written down, for "
+                    + "/jstech audit to read.")
+            .named("Keep the audit log");
+
+    /** How many entries the audit log keeps. */
+    public static final ConfigKey<Integer> PROTECTION_AUDIT_ENTRIES = ConfigKey.whole(PROTECTION + ".audit_entries",
+            ProtectionBalance.DEFAULT_AUDIT_ENTRIES).range(MIN_AUDIT_ENTRIES, MAX_AUDIT_ENTRIES)
+            .comment("How many entries the audit log keeps; the oldest make way for new ones.")
+            .named("Audit log entries").unit("entries").activeWhen(PROTECTION_AUDIT);
+
+    /** How many robots one player may have at once. */
+    public static final ConfigKey<Integer> PROTECTION_ROBOTS_PER_PLAYER = ConfigKey.whole(
+            PROTECTION + ".robots_per_player", ProtectionBalance.DEFAULT_ROBOTS_PER_PLAYER)
+            .range(0, MAX_ROBOTS_PER_PLAYER)
+            .comment("How many robots one player may have at once; 0 lets nobody have any.")
+            .named("Robots per player").unit("robots");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -164,10 +195,13 @@ public final class CoreConfigKeys {
                     + "and how big one may be.")
             .sectionComment(CALENDAR, "The world's calendar: how long its seasons last.")
             .sectionComment(WORLD, "What machines may do to the world: how many chunks an owner keeps loaded.")
+            .sectionComment(PROTECTION, "Who may hurt whom, what is written down of what players do to others' "
+                    + "things, and how many of each thing one player may have.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
             .sectionNamed(WORLD, "World")
+            .sectionNamed(PROTECTION, "Protection")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -183,6 +217,10 @@ public final class CoreConfigKeys {
             .key(MEDIA_PLAYER_QUOTA_MEGABYTES, MediaBalance::setPlayerQuotaMegabytes)
             .key(CALENDAR_DAYS_PER_SEASON, WorldCalendar::setDaysPerSeason)
             .key(WORLD_CHUNKS_PER_OWNER, ChunkLoadingBalance::setLimit)
+            .key(PROTECTION_TEAM_DAMAGE, ProtectionBalance::setTeamDamage)
+            .key(PROTECTION_AUDIT, ProtectionBalance::setAudit)
+            .key(PROTECTION_AUDIT_ENTRIES, ProtectionBalance::setAuditEntries)
+            .key(PROTECTION_ROBOTS_PER_PLAYER, ProtectionBalance::setRobotsPerPlayer)
             .build();
 
     private CoreConfigKeys() {

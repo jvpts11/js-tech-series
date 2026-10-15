@@ -91,6 +91,23 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   owner picks one. Export writes a file's settings as text to share, and Import takes them back. A world's settings
   file that does not exist yet starts as the modpack's copy in `defaultconfigs`, whatever its format.
 - Told of a change: a mod is told when a setting changes, at once, wherever the change came from.
+- One question before changing the world: every mod of the series asks the Core whether an actor may do
+  something to a place (break, place, use, explode, burn, flow, move into, shoot), and every protection installed
+  answers: the game's spawn protection, FTB Chunks and Open Parties and Claims when they are there, and any a mod
+  registers. A machine, a robot or a moving structure is weighed as its owner, online or not, never as a generic fake
+  player; the world's own work stays inside the claim it comes from. Robots ask before they break a block.
+- Permissions for everything: every command of the series, opening, using, setting up and breaking what others
+  own, changing a server's settings from afar, building multiblocks and going past the limits have a permission
+  node, which LuckPerms and FTB Ranks grant or deny; without them the operator levels apply. `/jstech dump permissions`
+  writes them all out, with two LuckPerms groups ready to paste into the console.
+- Trust by name: the owner of a thing trusts players by name to use it, to set it up as well, or to break it as
+  well. An owned block or entity is kept from whoever its owner does not let break or use it.
+- Limits per player: how many of a kind of thing one player may have at once, kept with the world, starting
+  with robots (16 each by default).
+- The audit log: when the server keeps it, who used, changed or broke what another player owns is written down,
+  and `/jstech audit` reads it, of everything, of one player or of one place.
+- Damage between players follows the server's PvP rule, the claim the victim stands in, and the teams:
+  teammates do not hurt each other unless the server lets them, and a machine or robot hurts as its owner would.
 
 ### Changed
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
@@ -106,6 +123,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   too, in place of their era's.
 - A setting can be picked on a chooser of its own, which shows what each value means, from the settings
   screen.
+- Using what others own: the permission that let a player pass every owner, `jscore.ownership.bypass`, is
+  now four, `jscore.owned.use_others`, `open_others`, `set_up_others` and `break_others`, and changing a server's
+  settings from afar asks `jscore.config.edit` rather than the operator level alone.
 - Menus in every style: a style draws a menu's ground, its lists and its footer's line, and gives a menu's text
   colours of its own (headings, notices, links, warnings), each falling back to a window's; what is typed in a field
   takes the style's field colour in every style.
