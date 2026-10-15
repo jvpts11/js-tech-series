@@ -150,6 +150,19 @@ holds an item of the tag `jscore:sees_flow` (the Basic Wrench), or wears one on 
 crosshair what the wire they look at carries, which way and how much a tick, and how the end they point at is set. A mod
 puts its own wrench or goggles in the tag.
 
+## Laying a run at once
+
+*Added 2026-10-15.*
+
+A player lays a whole run by dragging: the click with a cable lays its first block as ever, and while the click is
+held, looking further along outlines the run to the block looked at (up to 32 blocks away), white where it can be laid
+and red where something is in the way. Let go, the server lays it all (`CableRuns.lay`), along the way `RunPath`
+takes: the axis the run covers most first, then the next, then the last; straight along the first for a cable that
+`runsStraight()`; never more than `RunPath.MOST` (64) blocks. Each block joins the one before as any cable does. The
+run stops at the first block it cannot be laid in (something in the way, a place protected against the player, or no
+cable left in hand) and says where. A join the player does not want is turned off afterwards, face by face, as any
+end is, with a wrench set to off.
+
 ## Reading a line
 
 *Added 2026-10-15.*

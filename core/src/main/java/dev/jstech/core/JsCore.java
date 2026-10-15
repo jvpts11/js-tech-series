@@ -21,6 +21,7 @@ import dev.jstech.core.blockentity.ClientUpdates;
 import dev.jstech.core.blockentity.FieldCapabilities;
 import dev.jstech.core.cable.CableBreaking;
 import dev.jstech.core.call.MenuCalls;
+import dev.jstech.core.cable.CableRuns;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.command.CoreCommands;
@@ -279,6 +280,7 @@ public final class JsCore {
         ClientPayloads.listen();
         ClientUpdates.listen();
         CoreCables.listen(modEventBus);
+        CableRuns.listen(modEventBus);
         EndSettings.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);

@@ -18,6 +18,7 @@ import dev.jstech.core.client.audio.mixer.SoundMixerEntry;
 import dev.jstech.core.client.cable.CableClientEvents;
 import dev.jstech.core.client.cable.CableEndScreen;
 import dev.jstech.core.client.cable.CableColours;
+import dev.jstech.core.client.cable.CableDragClient;
 import dev.jstech.core.client.cable.CableFlowRenderer;
 import dev.jstech.core.client.cable.FlowSightClient;
 import dev.jstech.core.client.config.ConfigChoosers;
@@ -82,6 +83,7 @@ public final class JsCoreClient {
         AudioKeys.listen(modEventBus);
         AudioMixer.listen();
         CableClientEvents.listen();
+        CableDragClient.listen();
         ClampMeterClient.listen(modEventBus);
         CableColours.listen(modEventBus);
         CableEndScreen.listen(modEventBus);

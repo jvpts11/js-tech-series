@@ -266,6 +266,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   to the line and by kind, with what each gives or takes), the flow (each second of the last minute, with the most,
   the least and the mean) and the losses. OK outlines the chosen blocks in the world, through walls, for ten seconds;
   HOLD keeps the reading still, SHOW puts it beside the crosshair, LIGHT lights the display and POWER switches it off.
+- (Core) Dragging a run of cable: holding the click with a cable and looking further along outlines the run from the
+  first block to the one looked at, up to 32 blocks away, along the longest axis first, white where it can be laid
+  and red where something is in the way; let go, the whole run is laid at once, each block joined to the next, up to
+  64 blocks. It stops at the first block something is in the way of, a protected place, or when no cable is left in
+  hand, and says where. A cable that runs only straight is dragged straight.
 - (Core) Reading a line: a grid's mover tells what a part of it did in the last tick (`IGridMover.survey`): each block
   it plugs into with what it gave and took, what it moved, what its consumers asked, what it lost and its narrowest
   cable. The energy, fluid, matter and item lines all keep it.
