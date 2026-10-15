@@ -373,6 +373,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   twice as fast by their signal, shear pins that shear under overload and spare the rest, and parts that break past
   their rating where the server lets them. Belts and chains join two pulleys across a distance, the smaller turning
   faster. Machines can be driven by a shaft, working as fast as it turns and stopping below their least speed.
+- (Core) Reading mechanical power: every shaft, gear and gearbox is a sensor of its speed for redstone and
+  comparators, a torque meter reads the torque through it, Jade shows a part's speed and its network's power, and
+  the network probe reads a network of shafts in watts, with its sources, its loads and what friction takes.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

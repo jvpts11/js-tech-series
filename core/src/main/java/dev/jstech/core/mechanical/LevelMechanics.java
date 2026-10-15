@@ -31,8 +31,9 @@ import org.jetbrains.annotations.Nullable;
  * than the torque of its sources and loads and of the rated parts it watches; one with neither, standing still, costs
  * nothing.
  *
- * <p>A part with a rating that every path of its network crosses is watched: the torque through it is what the parts
- * on one side of it drive and ask and take to speed up, and past its rating the part is told it is overloaded.
+ * <p>A part with a rating, or one that measures, that every path of its network crosses is watched: the torque
+ * through it is what the parts on one side of it drive and ask and take to speed up; a part that measures is told it,
+ * and one past its rating is told it is overloaded.
  */
 public final class LevelMechanics {
 
@@ -84,6 +85,8 @@ public final class LevelMechanics {
             final ShaftNetwork network = built.network();
             if (!network.jammed() && (network.rpm() != 0.0 || !built.idle())) {
                 network.step(TICK_SECONDS);
+            } else {
+                network.still();
             }
             final double rpm = network.rpm();
             if (Math.abs(rpm - built.told()) > TELL_STEP || built.fresh()) {
@@ -241,7 +244,7 @@ public final class LevelMechanics {
         final List<ShaftNetwork.Watch> watches = new ArrayList<>();
         for (int p = 0; p < count; p++) {
             final IntArrayList around = beside.get(p);
-            if (parts.get(p).rating() <= 0.0 || around.size() < 2) {
+            if (parts.get(p).rating() <= 0.0 && !parts.get(p).measures() || around.size() < 2) {
                 continue;
             }
             final BitSet side = new BitSet(count);
@@ -310,11 +313,15 @@ public final class LevelMechanics {
             }
         }
 
-        /* Tells each watched part whose torque passed its rating that it is overloaded. */
+        /* Tells each watched part the torque through it, and each past its rating that it is overloaded. */
         private void check(final ServerLevel level) {
             for (final ShaftNetwork.Watch watch : this.network.watches()) {
                 final IMechanicalPart part = this.parts.get(watch.member());
-                if (Math.abs(this.network.through(watch)) > part.rating()) {
+                final double through = this.network.through(watch);
+                if (part.measures()) {
+                    part.carrying(through);
+                }
+                if (part.rating() > 0.0 && Math.abs(through) > part.rating()) {
                     part.overloaded(level, BlockPos.of(this.network.members().get(watch.member()).key()));
                 }
             }

@@ -19,6 +19,7 @@ import dev.jstech.core.text.TextKey;
 import java.util.Objects;
 import java.util.function.Consumer;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -33,8 +34,9 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * The network probe, the handheld instrument of the series that reads a whole line: linked to a wire of any line, it
  * reads the part of the line the wire is in, its blocks by what they are to it (sources, consumers, stores), what
  * flowed each second of the last minute against what its narrowest cable carries, what was asked of it, and what its
- * cables lost. Held up, its display shows it on four pages; OK shows the chosen blocks in the world; HOLD, SHOW,
- * LIGHT and POWER as on the clamp meter, its family.
+ * cables lost. Linked to a part that turns, it reads the part's network of shafts the same way, in watts: its sources
+ * and loads, the power it carries and what friction takes. Held up, its display shows it on four pages; OK shows the
+ * chosen blocks in the world; HOLD, SHOW, LIGHT and POWER as on the clamp meter, its family.
  */
 @TextHolder
 public final class NetworkProbe {
@@ -92,12 +94,21 @@ public final class NetworkProbe {
             "Pipes and tubes lose nothing on the way: what leaves a block reaches another.");
     public static final TextKey RATE_FLUID = TextKey.of("jscore.probe.rate.fluid", "%s mB/t");
     public static final TextKey RATE_ITEMS = TextKey.of("jscore.probe.rate.items", "%s items/t");
+    public static final TextKey RATE_WATTS = TextKey.of("jscore.probe.rate.watts", "%s %sW");
+    public static final TextKey PARTS = TextKey.of("jscore.probe.parts", "%s PARTS");
+    public static final TextKey SHAFTS = TextKey.of("jscore.probe.shafts", "Shafts and gears");
+    public static final TextKey FRICTION = TextKey.of("jscore.probe.friction",
+            "Friction takes it, at every bearing, gear and belt.");
     public static final TextKey CARRIES_NOTHING = TextKey.of("jscore.probe.carries_nothing",
             "This line carries nothing: it only joins");
     public static final TextKey NOT_LINKED = TextKey.of("jscore.probe.not_linked", "Use it on a line to link it");
     public static final TextKey LOST = TextKey.of("jscore.probe.lost", "Nothing to read where it was linked");
     public static final TextKey LINKED_TO = TextKey.of("jscore.probe.linked_to", "Linked to %s");
     public static final TextKey HUD_MEMBERS = TextKey.of("jscore.probe.hud_members", "%s, %s blocks");
+
+    /** What a probe linked to a network of shafts says it is linked to, in place of a cable. */
+    public static final ResourceLocation MECHANICAL = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "mechanical");
 
     /** The wire the probe is linked to. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ProbeLink>> LINK =

@@ -12,6 +12,8 @@ import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.signal.ISignalOutput;
+import dev.jstech.core.signal.Reading;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,26 +33,37 @@ import org.jetbrains.annotations.Nullable;
  * saved and sent to the players who see it, and meets its neighbours as its block's spec and axis say, and as the
  * redstone it gets says for a clutch, a brake or a speed controller. A shear pin keeps whether it sheared, and a
  * pulley the pulley its belt or chain joins it to; breaking a pulley lets the belt go, dropped, and frees the other.
+ * Every part is a sensor of its speed, as a tachometer, and a torque meter of the torque through it too, offered to
+ * whatever reads sensors and to a comparator.
  */
-public class MechanicalPartBlockEntity extends SyncedBlockEntity implements IMechanicalPart {
+public class MechanicalPartBlockEntity extends SyncedBlockEntity implements IMechanicalPart, ISignalOutput {
 
     private final ValueField<Double> rpm;
+    private final ValueField<Double> torque;
     private final IntField signal;
     private final BoolField sheared;
     private final ValueField<BlockPos> linked;
     private final ValueField<ResourceLocation> linkItem;
     private final BoolField chain;
+    private int lastStrength = -1;
 
     /** What a belt holds back on each of its pulleys, in newton-metres: it slips a little. */
     public static final double BELT_FRICTION = 0.5;
     /** What a chain holds back on each of its sprockets, in newton-metres. */
     public static final double CHAIN_FRICTION = 0.2;
+    /** The top of a part's tachometer span, in revolutions a minute, where it gives the full 15. */
+    public static final double TACHOMETER_MOST = 3_000.0;
+    /** The top of a torque meter's span, in newton-metres. */
+    public static final double TORQUE_METER_MOST = 1_000.0;
+    /* How far a torque meter's reading moves, in newton-metres, before it is sent again. */
+    private static final double TORQUE_STEP = 0.01;
     /* What a block that is no part of the kit is taken as: a shaft that weighs and holds back nothing. */
     private static final MechanicalPartSpec NOTHING = MechanicalPartSpec.shaft(0.0, 0.0);
 
     public MechanicalPartBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);
         this.rpm = fields().value("Rpm", Codec.DOUBLE, 0.0).save().toClient();
+        this.torque = fields().value("Torque", Codec.DOUBLE, 0.0).toClient();
         this.signal = fields().integer("Signal", 0).save();
         this.sheared = fields().flag("Sheared", false).save().toClient();
         this.linked = fields().nullable("Linked", BlockPos.CODEC).save().toClient();
@@ -171,6 +184,24 @@ public class MechanicalPartBlockEntity extends SyncedBlockEntity implements IMec
     }
 
     @Override
+    public boolean measures() {
+        return spec().kind() == MechanicalPartSpec.Kind.TORQUE_METER;
+    }
+
+    @Override
+    public void carrying(final double newtonMetres) {
+        if (Math.abs(newtonMetres - this.torque.get()) > TORQUE_STEP) {
+            this.torque.set(newtonMetres);
+            tellComparators();
+        }
+    }
+
+    /** The torque through it as it last measured it, in newton-metres; none for a part that does not measure. */
+    public double torqueThrough() {
+        return this.torque.get();
+    }
+
+    @Override
     public double rpm() {
         return this.rpm.get();
     }
@@ -178,6 +209,24 @@ public class MechanicalPartBlockEntity extends SyncedBlockEntity implements IMec
     @Override
     public void turning(final double rpm) {
         this.rpm.set(rpm);
+        tellComparators();
+    }
+
+    /** What a sensor reads of it: its speed, as a tachometer does, and the torque through a torque meter. */
+    @Override
+    public List<Reading> readings() {
+        final Reading speed = MechanicalReadings.tachometer(rpm(), TACHOMETER_MOST);
+        return measures() ? List.of(speed, MechanicalReadings.torqueMeter(torqueThrough(), TORQUE_METER_MOST))
+                : List.of(speed);
+    }
+
+    /* Tells the comparators beside it when the signal it gives changed. */
+    private void tellComparators() {
+        final int now = strength();
+        if (now != this.lastStrength && this.level != null && !this.level.isClientSide()) {
+            this.lastStrength = now;
+            this.level.updateNeighbourForOutputSignal(this.worldPosition, getBlockState().getBlock());
+        }
     }
 
     /* Hears the redstone it gets; a clutch or a speed controller is joined again by its network's change. */

@@ -111,6 +111,11 @@ public final class ShaftNetwork {
         }
     }
 
+    /** It stands this tick, neither speeding up nor slowing down. */
+    public void still() {
+        this.acceleration = 0.0;
+    }
+
     /** The parts it watches the torque through. */
     public List<Watch> watches() {
         return this.watches;

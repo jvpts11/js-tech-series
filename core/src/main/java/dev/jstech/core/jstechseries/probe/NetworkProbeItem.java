@@ -9,6 +9,7 @@ package dev.jstech.core.jstechseries.probe;
 
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Wire;
+import dev.jstech.core.mechanical.MechanicalPorts;
 import dev.jstech.core.text.GameText;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,7 +26,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The network probe in hand: used on a wire of any line it links to that wire, and reads the part of the line it is
- * in; used in the air it is held up and its display read. While held and on it reads every tick.
+ * in; used on a part that turns, it reads the part's network of shafts; used in the air it is held up and its display
+ * read. While held and on it reads every tick.
  */
 public final class NetworkProbeItem extends Item {
 
@@ -37,6 +39,16 @@ public final class NetworkProbeItem extends Item {
     public InteractionResult useOn(final UseOnContext context) {
         final Level level = context.getLevel();
         final Player player = context.getPlayer();
+        if (player != null && MechanicalPorts.at(level, context.getClickedPos(), null) != null) {
+            // A part that turns: the probe reads its network of shafts.
+            if (level instanceof ServerLevel server) {
+                context.getItemInHand().set(NetworkProbe.LINK.get(), new ProbeLink(server.dimension(),
+                        context.getClickedPos().immutable(), NetworkProbe.MECHANICAL));
+                player.displayClientMessage(GameText.component(NetworkProbe.LINKED_TO.with(
+                        NetworkProbe.SHAFTS.text())), true);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
         if (player == null || !(level.getBlockEntity(context.getClickedPos()) instanceof CableBlockEntity cable)) {
             return InteractionResult.PASS;
         }

@@ -113,6 +113,10 @@ public record ProbeReading(boolean present, Unit unit, Optional<ResourceLocation
                     .orElseGet(() -> Text.literal(String.valueOf(amount)));
             case FLUID -> NetworkProbe.RATE_FLUID.with(UnitFormatter.forCurrentLocale().compact(amount));
             case ITEMS -> NetworkProbe.RATE_ITEMS.with(UnitFormatter.forCurrentLocale().compact(amount));
+            case MECHANICAL -> {
+                final UnitFormatter.Scaled watts = UnitFormatter.forCurrentLocale().si(amount);
+                yield NetworkProbe.RATE_WATTS.with(watts.number(), watts.prefix());
+            }
             case NONE -> Text.literal(String.valueOf(amount));
         };
     }
@@ -224,6 +228,8 @@ public record ProbeReading(boolean present, Unit unit, Optional<ResourceLocation
         FLUID("fluid"),
         /** Items, one by one. */
         ITEMS("items"),
+        /** The power a network of shafts carries, in watts. */
+        MECHANICAL("mechanical"),
         /** Nothing: a line that only joins. */
         NONE("none");
 
@@ -236,6 +242,11 @@ public record ProbeReading(boolean present, Unit unit, Optional<ResourceLocation
         @Override
         public String serializedName() {
             return this.serializedName;
+        }
+
+        /** Whether what it carries loses on the way: energy along its cables, power to the parts' friction. */
+        public boolean loses() {
+            return this == ENERGY || this == MECHANICAL;
         }
     }
 }

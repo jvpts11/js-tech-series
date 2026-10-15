@@ -40,7 +40,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 /**
  * Parts of mechanical power the tests build with, from the Core's kit: an iron shaft, gears of sixteen and thirty-two
  * teeth, a gearbox, a flywheel, a clutch, a brake, a speed controller, a shear pin, a shaft rated as weakly, two
- * pulleys and a belt; a hand crank of a man's arm (20 N·m, 75 W, up to 60 rpm) and a load that asks 15 N·m; and
+ * pulleys and a belt, a torque meter; a hand crank of a man's arm (20 N·m, 75 W, up to 60 rpm) and a load that asks 15 N·m; and
  * machines on the machine kit with their shafts out of their backs: an electric motor, a dynamo, and two mills driven
  * by their shafts, one light enough for the crank and one too heavy.
  */
@@ -100,6 +100,8 @@ public final class TestMechanical {
             "Test small pulley", MechanicalPartSpec.pulley(SMALL_RADIUS, 0.02, 0.1));
     public static final BlockEntry<MechanicalPartBlock> LARGE_PULLEY = part("test_large_pulley",
             "Test large pulley", MechanicalPartSpec.pulley(2 * SMALL_RADIUS, 0.08, 0.1));
+    public static final BlockEntry<MechanicalPartBlock> TORQUE_METER = part("test_torque_meter",
+            "Test torque meter", MechanicalPartSpec.torqueMeter(0.005, 0.0));
     /* Its item model is written by hand. */
     public static final ItemEntry<ShaftLinkItem> BELT = TestSounds.CONTENT.item("test_belt",
             properties -> new ShaftLinkItem(properties, false, BELT_REACH)).named("Test belt")
@@ -115,7 +117,7 @@ public final class TestMechanical {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MechanicalPartBlockEntity>> PART =
             TestSounds.CONTENT.blockEntity("test_mechanical_part", (pos, state) -> new MechanicalPartBlockEntity(
                     TestMechanical.PART.get(), pos, state), SHAFT, SMALL_GEAR, LARGE_GEAR, GEARBOX, FLYWHEEL, CLUTCH,
-                    BRAKE, CONTROLLER, SHEAR_PIN, WEAK_SHAFT, SMALL_PULLEY, LARGE_PULLEY);
+                    BRAKE, CONTROLLER, SHEAR_PIN, WEAK_SHAFT, SMALL_PULLEY, LARGE_PULLEY, TORQUE_METER);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrankBlockEntity>> CRANK_ENTITY =
             TestSounds.CONTENT.blockEntity("test_crank", CrankBlockEntity::new, CRANK);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LoadBlockEntity>> LOAD_ENTITY =

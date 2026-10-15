@@ -9,6 +9,7 @@ package dev.jstech.core.mechanical;
 
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.Neighbours;
+import dev.jstech.core.signal.ISignalOutput;
 import java.util.Objects;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
@@ -70,6 +71,17 @@ public class MechanicalPartBlock extends RotatedPillarBlock implements EntityBlo
         if (face != null && level.getBlockEntity(pos) instanceof SyncedBlockEntity synced) {
             synced.fields().neighbourChanged(level, face);
         }
+    }
+
+    /* A comparator reads the part as a sensor: its speed, or the torque through a torque meter. */
+    @Override
+    protected boolean hasAnalogOutputSignal(final BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getAnalogOutputSignal(final BlockState state, final Level level, final BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof ISignalOutput output ? output.strength() : 0;
     }
 
     /* A sheared pin is pinned again by hand, as a fuse is changed. */

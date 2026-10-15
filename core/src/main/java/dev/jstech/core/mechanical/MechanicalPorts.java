@@ -12,6 +12,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.capability.CapabilityKind;
 import dev.jstech.core.capability.CapabilityKinds;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.signal.Signals;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -86,5 +87,8 @@ public final class MechanicalPorts {
         final BlockEntityType<BlockEntity> any = (BlockEntityType<BlockEntity>) type;
         event.registerBlockEntity(MECHANICAL.block(), any, (entity, side) -> entity instanceof IMechanicalPart part
                 ? part : entity instanceof IMechanicalHolder holder ? holder.mechanicalPart() : null);
+        // A part of the kit is a sensor of its speed, and of its torque for a torque meter.
+        event.registerBlockEntity(Signals.OUTPUT, any, (entity, side) ->
+                entity instanceof MechanicalPartBlockEntity part ? part : null);
     }
 }

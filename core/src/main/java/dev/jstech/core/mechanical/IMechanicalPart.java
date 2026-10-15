@@ -53,6 +53,15 @@ public interface IMechanicalPart {
     default void overloaded(final ServerLevel level, final BlockPos pos) {
     }
 
+    /** Whether it measures the torque through it, as a torque meter does, and is told it each tick. */
+    default boolean measures() {
+        return false;
+    }
+
+    /** Tells a part that measures the torque through it now, in newton-metres, where it can be told. */
+    default void carrying(final double newtonMetres) {
+    }
+
     /** How fast it turns now, in revolutions a minute, as the level's mechanics last told it. */
     double rpm();
 

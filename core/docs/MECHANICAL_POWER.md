@@ -95,6 +95,7 @@ An iron shaft a metre long and five centimetres thick weighs about 0.005 kg·m²
 | `controller(inertia, friction)` | its end towards the positive end of its axis turns up to twice as fast as the other, as its redstone says (15 is twice), and lets go with none |
 | `shearPin(newtonMetres, inertia, friction)` | shears when the torque through it passes its rating, stopping the line and sparing everything else, as a fuse does; using it pins it again |
 | `pulley(metres, inertia, friction)` | a belt or a chain joins it to another pulley across a distance |
+| `torqueMeter(inertia, friction)` | measures the torque through it, for sensors and Jade |
 
 Any part can carry a rating (`spec.rated(newtonMetres)`): when the torque through it passes the rating, it breaks
 and drops, unless the server turned that off (`mechanical.parts_break` in the balance file). The torque through a
@@ -152,6 +153,18 @@ turnsWith(MachineShaft.driven(10, 20, 60, RelativeFace.BACK));   // asks 10 N·m
 While it has work it asks its torque of the network, and works as fast as its shaft turns against its rated speed;
 below its least speed it stops, `TOO_SLOW`, still asking, so a source too weak for it holds it there until a
 stronger one turns it. A processing machine of the kit does all this by itself.
+
+## Reading it
+
+*Added 2026-10-15.*
+
+- **Every part of the kit is a sensor of its speed**, as a tachometer, offered to whatever reads sensors and to a
+  comparator: no signal at a standstill, the full 15 at 3,000 rpm (`MechanicalReadings.tachometer(rpm, most)`).
+- **A torque meter** (`MechanicalPartSpec.torqueMeter`) also reads the torque through it, up to the full 15 at
+  1,000 N·m, where every path of its network crosses it (`MechanicalReadings.torqueMeter(newtonMetres, most)`).
+- **Jade** shows how fast a part turns, a torque meter's torque, and its network's power, or that it is jammed.
+- **The network probe**, used on any part that turns, reads its network of shafts on its own pages, in watts: the
+  power its sources give, its sources and its loads, and what friction takes.
 
 ## What can go wrong
 

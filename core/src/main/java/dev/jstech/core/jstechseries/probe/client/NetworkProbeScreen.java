@@ -238,8 +238,10 @@ public final class NetworkProbeScreen extends Screen {
         g.fill(x(ProbeLayout.DISPLAY_LEFT), y(ProbeLayout.DISPLAY_TOP), x(ProbeLayout.DISPLAY_RIGHT),
                 y(ProbeLayout.DISPLAY_TOP + ProbeLayout.HEADER_HEIGHT), c.head());
         final String rated = rated(reading);
+        final TextKey counted = reading.unit() == ProbeReading.Unit.MECHANICAL ? NetworkProbe.PARTS
+                : NetworkProbe.CABLES;
         final Text right = Text.literal((rated.isEmpty() ? "" : rated + "  ") + GameText.resolve(
-                NetworkProbe.CABLES.with(Text.literal(String.valueOf(reading.cables())))));
+                counted.with(Text.literal(String.valueOf(reading.cables())))));
         final int rightWidth = width(right);
         smallRight(g, right, ProbeLayout.DISPLAY_RIGHT - 3, ProbeLayout.DISPLAY_TOP + 3, c.headText());
         // A long name is drawn smaller, down to the small text, and only then cut where the right side begins.
@@ -299,7 +301,7 @@ public final class NetworkProbeScreen extends Screen {
                     y0 + 72, c.dim());
         }
         small(g, NetworkProbe.LOSSES.text(), x, y0 + 81, c.cyan());
-        small(g, reading.unit() == ProbeReading.Unit.ENERGY ? NetworkProbe.LOSS_LINE.with(rate(reading,
+        small(g, reading.unit().loses() ? NetworkProbe.LOSS_LINE.with(rate(reading,
                 reading.lost()), share(reading.lost(), reading.moved())) : NetworkProbe.NO_LOSS.text(), x, y0 + 88,
                 c.text());
         small(g, NetworkProbe.MEMBERS.text(), x, y0 + 97, c.cyan());
@@ -395,11 +397,14 @@ public final class NetworkProbeScreen extends Screen {
                 figures + 9, c.dim());
     }
 
-    /* What the cables lost, against what the sources sent; a line of pipes or tubes loses nothing. */
+    /*
+     * What the cables lost, or a network of shafts to friction, against what the sources sent; a line of pipes or
+     * tubes loses nothing.
+     */
     private void losses(final GuiGraphics g, final Colours c, final ProbeReading reading) {
         final int x = ProbeLayout.TEXT_LEFT;
         small(g, NetworkProbe.LOSSES.text(), x, ProbeLayout.PAGE_TOP, c.cyan());
-        if (reading.unit() != ProbeReading.Unit.ENERGY) {
+        if (!reading.unit().loses()) {
             wrapped(g, NetworkProbe.LOSES_NOTHING.text(), ProbeLayout.PAGE_TOP + 10, c.text());
             return;
         }
@@ -411,7 +416,11 @@ public final class NetworkProbeScreen extends Screen {
         small(g, NetworkProbe.DELIVERED.with(rate(reading, reading.moved()), rate(reading, Math.max(0L,
                 reading.moved() - reading.lost()))), x, y, c.text());
         y += 10;
-        small(g, NetworkProbe.ALONG.with(Text.literal(String.valueOf(reading.cables()))), x, y, c.dim());
+        if (reading.unit() == ProbeReading.Unit.MECHANICAL) {
+            wrapped(g, NetworkProbe.FRICTION.text(), y, c.dim());
+        } else {
+            small(g, NetworkProbe.ALONG.with(Text.literal(String.valueOf(reading.cables()))), x, y, c.dim());
+        }
     }
 
     /*
@@ -530,6 +539,9 @@ public final class NetworkProbeScreen extends Screen {
 
     private static String cableName(final String cable) {
         final ResourceLocation id = ResourceLocation.tryParse(cable);
+        if (NetworkProbe.MECHANICAL.equals(id)) {
+            return GameText.resolve(NetworkProbe.SHAFTS.text());
+        }
         return id == null ? cable : CoreCables.REGISTRY.getOptional(id).map(type -> type.stack().getHoverName()
                 .getString()).orElse(cable);
     }

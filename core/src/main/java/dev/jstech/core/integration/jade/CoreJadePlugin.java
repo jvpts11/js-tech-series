@@ -12,6 +12,12 @@ import dev.jstech.core.heat.HeatReadings;
 import dev.jstech.core.heat.IHeatHolder;
 import dev.jstech.core.look.IDescribed;
 import dev.jstech.core.look.LookTexts;
+import dev.jstech.core.mechanical.IMechanicalHolder;
+import dev.jstech.core.mechanical.IMechanicalPart;
+import dev.jstech.core.mechanical.LevelMechanics;
+import dev.jstech.core.mechanical.MechanicalPartBlockEntity;
+import dev.jstech.core.mechanical.MechanicalReadings;
+import dev.jstech.core.mechanical.ShaftNetwork;
 import dev.jstech.core.team.IOwned;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.text.GameText;
@@ -22,6 +28,7 @@ import java.util.List;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import snownee.jade.api.BlockAccessor;
@@ -36,9 +43,10 @@ import snownee.jade.api.config.IPluginConfig;
 
 /**
  * The Core's bridge to Jade, which finds it by its annotation and only when Jade is installed: a block entity that
- * {@link IDescribed describes itself}, that {@link IOwned is owned} or that {@link IHeatHolder holds heat} has its
- * lines written by the server and shown in Jade's tooltip under the block's name, its temperature among them. A mod
- * whose block entities say what they do the Core's way writes nothing for Jade of its own.
+ * {@link IDescribed describes itself}, that {@link IOwned is owned}, that {@link IHeatHolder holds heat} or that turns
+ * with mechanical power has its lines written by the server and shown in Jade's tooltip under the block's name: its
+ * temperature, its speed, a torque meter's torque, its network's power. A mod whose block entities say what they do
+ * the Core's way writes nothing for Jade of its own.
  */
 @WailaPlugin(JsCore.MODID)
 public final class CoreJadePlugin implements IWailaPlugin {
@@ -70,6 +78,11 @@ public final class CoreJadePlugin implements IWailaPlugin {
             if (entity instanceof IHeatHolder holder && holder.heatBody() != null && holder.heatBody().known()) {
                 lines.add(HeatReadings.line(holder.heatBody().temperature()));
             }
+            final IMechanicalPart part = entity instanceof IMechanicalPart own ? own
+                    : entity instanceof IMechanicalHolder holder ? holder.mechanicalPart() : null;
+            if (part != null && accessor.getLevel() instanceof ServerLevel server) {
+                turning(lines, server, entity, part);
+            }
             if (entity instanceof IOwned owned && owned.ownership() != null
                     && accessor.getLevel().getServer() != null) {
                 final Ownership ownership = owned.ownership();
@@ -83,7 +96,8 @@ public final class CoreJadePlugin implements IWailaPlugin {
         @Override
         public boolean shouldRequestData(final BlockAccessor accessor) {
             return accessor.getBlockEntity() instanceof IDescribed || accessor.getBlockEntity() instanceof IOwned
-                    || accessor.getBlockEntity() instanceof IHeatHolder;
+                    || accessor.getBlockEntity() instanceof IHeatHolder
+                    || accessor.getBlockEntity() instanceof IMechanicalPart;
         }
 
         @Override
@@ -99,6 +113,20 @@ public final class CoreJadePlugin implements IWailaPlugin {
         @Override
         public ResourceLocation getUid() {
             return UID;
+        }
+
+        /* How fast a part turns, the torque through a torque meter, and its network's power or that it jammed. */
+        private static void turning(final List<Text> lines, final ServerLevel level, final BlockEntity entity,
+                                    final IMechanicalPart part) {
+            lines.add(MechanicalReadings.speedLine(part.rpm()));
+            if (entity instanceof MechanicalPartBlockEntity meter && meter.measures()) {
+                lines.add(MechanicalReadings.torqueLine(meter.torqueThrough()));
+            }
+            final ShaftNetwork network = LevelMechanics.of(level).networkAt(entity.getBlockPos());
+            if (network != null) {
+                lines.add(network.jammed() ? MechanicalReadings.JAMMED_LINE.with()
+                        : MechanicalReadings.powerLine(network.power()));
+            }
         }
     }
 }

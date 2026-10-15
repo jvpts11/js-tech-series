@@ -24,7 +24,9 @@ import net.minecraft.core.Direction;
  *       the other, as the redstone it gets says, and lets go with none;</li>
  *   <li>a <b>shear pin</b>, a shaft that shears when the torque through it passes its rating, stopping the line and
  *       sparing everything else, as a fuse does;</li>
- *   <li>a <b>pulley</b>, a shaft that a belt or a chain joins to another pulley across a distance.</li>
+ *   <li>a <b>pulley</b>, a shaft that a belt or a chain joins to another pulley across a distance;</li>
+ *   <li>a <b>torque meter</b>, a shaft that measures the torque through it, where every path of its network crosses
+ *       it.</li>
  * </ul>
  *
  * <p>Each with what it weighs in turning and holds back by friction, and the most torque it carries before it breaks,
@@ -104,6 +106,11 @@ public record MechanicalPartSpec(Kind kind, int teeth, double inertia, double fr
         return new MechanicalPartSpec(Kind.PULLEY, 0, inertia, friction, 0.0, 0.0, metres);
     }
 
+    /** A torque meter. */
+    public static MechanicalPartSpec torqueMeter(final double inertia, final double friction) {
+        return of(Kind.TORQUE_METER, inertia, friction);
+    }
+
     /** The same, breaking past {@code newtonMetres} through it, where the server lets parts break. */
     public MechanicalPartSpec rated(final double newtonMetres) {
         return new MechanicalPartSpec(this.kind, this.teeth, this.inertia, this.friction, newtonMetres, this.brake,
@@ -117,7 +124,8 @@ public record MechanicalPartSpec(Kind kind, int teeth, double inertia, double fr
     public ShaftContact contact(final Direction.Axis axis, final Direction face, final int signal) {
         final boolean along = face.getAxis() == axis;
         return switch (this.kind) {
-            case SHAFT, FLYWHEEL, BRAKE, SHEAR_PIN, PULLEY -> along ? ShaftContact.axle(axis) : ShaftContact.NONE;
+            case SHAFT, FLYWHEEL, BRAKE, SHEAR_PIN, PULLEY, TORQUE_METER -> along ? ShaftContact.axle(axis)
+                    : ShaftContact.NONE;
             case GEAR -> along ? ShaftContact.axle(axis) : ShaftContact.teeth(axis, this.teeth);
             case GEARBOX -> {
                 if (along) {
@@ -169,6 +177,8 @@ public record MechanicalPartSpec(Kind kind, int teeth, double inertia, double fr
         /** A shaft that shears past its rating. */
         SHEAR_PIN,
         /** A shaft a belt or a chain joins to another. */
-        PULLEY
+        PULLEY,
+        /** A shaft that measures the torque through it. */
+        TORQUE_METER
     }
 }

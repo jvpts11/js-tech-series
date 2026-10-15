@@ -15,6 +15,9 @@ import dev.jstech.core.energy.Energy;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.LineSurvey;
+import dev.jstech.core.mechanical.LevelMechanics;
+import dev.jstech.core.mechanical.RotationMath;
+import dev.jstech.core.mechanical.ShaftNetwork;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -34,6 +37,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What each player's network probe has read since it was linked, kept on the server while the probe is held and on:
@@ -89,8 +93,14 @@ public final class ProbeSessions {
         SESSIONS.remove(player);
     }
 
-    /** What a probe linked as {@code link} reads now: the wire's cable, and its part of the line's last tick. */
+    /**
+     * What a probe linked as {@code link} reads now: the wire's cable, and its part of the line's last tick; or, linked
+     * to a part that turns, its network of shafts.
+     */
     public static Optional<Read> read(final ServerLevel level, final ProbeLink link) {
+        if (NetworkProbe.MECHANICAL.equals(link.cable())) {
+            return shafts(level, link.pos());
+        }
         final Optional<CableType> type = CoreCables.REGISTRY.getOptional(link.cable());
         if (type.isEmpty() || !(level.getBlockEntity(link.pos()) instanceof CableBlockEntity cable)
                 || !cable.holds(type.get())) {
@@ -115,13 +125,40 @@ public final class ProbeSessions {
         return grid.policy().routesEnds() ? ProbeReading.Unit.FLUID : ProbeReading.Unit.NONE;
     }
 
+    /*
+     * The network of shafts the part at {@code pos} turns in, as a line: each part that drives a source of what it
+     * gives, each that asks a consumer of what it takes, in watts, the power the sources give, and what friction takes.
+     */
+    private static Optional<Read> shafts(final ServerLevel level, final BlockPos pos) {
+        final ShaftNetwork network = LevelMechanics.of(level).networkAt(pos);
+        if (network == null) {
+            return Optional.empty();
+        }
+        final double rpm = network.rpm();
+        final List<LineSurvey.Member> members = new ArrayList<>();
+        long given = 0L;
+        for (final ShaftNetwork.Member member : network.members()) {
+            final double own = rpm * member.ratio();
+            final double watts = member.torque() == null ? 0.0
+                    : RotationMath.power(member.torque().torque(own), own);
+            final long rounded = Math.round(Math.abs(watts));
+            members.add(new LineSurvey.Member(member.key(), watts > 0.0 ? LineSurvey.Role.SOURCE
+                    : watts < 0.0 ? LineSurvey.Role.CONSUMER : LineSurvey.Role.IDLE, watts > 0.0 ? rounded : 0L,
+                    watts < 0.0 ? rounded : 0L));
+            given += watts > 0.0 ? rounded : 0L;
+        }
+        final long lost = Math.round(network.friction() * RotationMath.radians(Math.abs(rpm)));
+        return Optional.of(new Read(null, new LineSurvey(members, given, LineSurvey.UNKNOWN, lost,
+                network.members().size(), Optional.empty())));
+    }
+
     /**
-     * One tick's reading of a linked wire.
+     * One tick's reading of a linked wire, or of a network of shafts.
      *
-     * @param cable  its cable
+     * @param cable  the wire's cable; none for a network of shafts
      * @param survey its part of the line's last tick
      */
-    public record Read(CableType cable, LineSurvey survey) {
+    public record Read(@Nullable CableType cable, LineSurvey survey) {
     }
 
     /* One player's probe since it was linked. */
@@ -199,10 +236,10 @@ public final class ProbeSessions {
                 return ProbeReading.nothing();
             }
             final CableType type = read.cable();
-            final GridKind grid = type.grid();
-            final ProbeReading.Unit unit = unitOf(grid);
-            final Optional<Energy> energy = Energies.ofGrid(grid);
-            final String lineClass = energy.filter(found -> !found.classless())
+            final GridKind grid = type == null ? null : type.grid();
+            final ProbeReading.Unit unit = grid == null ? ProbeReading.Unit.MECHANICAL : unitOf(grid);
+            final Optional<Energy> energy = grid == null ? Optional.empty() : Energies.ofGrid(grid);
+            final String lineClass = grid == null ? "" : energy.filter(found -> !found.classless())
                     .flatMap(found -> found.classOf(grid)).map(found -> found.path()).orElse("");
             final boolean rolesKnown = this.wanted != LineSurvey.UNKNOWN;
             final Map<String, GroupSum> groups = new LinkedHashMap<>();
@@ -224,7 +261,7 @@ public final class ProbeSessions {
             for (final GroupSum sum : groups.values()) {
                 out.add(new ProbeReading.Group(sum.role, sum.block, sum.count, sum.perTick, sum.places));
             }
-            final ResourceLocation cable = type.id() == null ? this.link.cable() : type.id();
+            final ResourceLocation cable = type == null || type.id() == null ? this.link.cable() : type.id();
             return new ProbeReading(true, unit, energy.map(Energy::id), lineClass, cable, read.survey().cables(),
                     this.moved, this.wanted, this.lost, read.survey().narrowest(), List.copyOf(this.history), out);
         }
