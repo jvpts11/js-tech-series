@@ -180,6 +180,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   electric motor, LED, sensor, oscillator, antenna, magnetic head), each existing only when a mod uses it, in a
   catalogue any mod adds to. A mod's simpler recipe for one carries a condition that, where J's Industrial is
   installed, the mod's own server rule can close, making the industrial chain the only path.
+- Grids of a mod's own: the seven grids become a registry any mod adds to, each with its policy, how what it
+  carries is shared along a run and what its wires plug into. The Core's energy and fluid policies are the defaults,
+  so a mod's own grid, as a voltage class that never joins another, moves energy or fluids as the Core's grids do.
 
 ### Changed
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

@@ -15,8 +15,10 @@ import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.energy.EnergyDistributionResult;
 import dev.jstech.core.energy.EnergyUnit;
 import dev.jstech.core.energy.ItemEnergyStorage;
+import dev.jstech.core.energy.LevelEnergy;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.GridPolicies;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
@@ -25,6 +27,7 @@ import dev.jstech.tests.TestCableTypes;
 import dev.jstech.tests.testkit.TestCables;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalLong;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -133,6 +136,46 @@ public final class EnergyGridGameTests {
             helper.assertTrue(tick.totalLost() == 258L, "the cables lose three tenths, rounded up: "
                     + tick.totalLost());
         });
+    }
+
+    @GameTest(template = ARENA)
+    public static void aModsOwnGrid_sharesEnergyByTheCoresPolicy(final GameTestHelper helper) {
+        generator(helper);
+        compressor(helper, MACHINE);
+        for (final BlockPos at : RUN) {
+            TestCables.lay(helper, at, TestCableTypes.OWN_GRID_ENERGY);
+        }
+
+        helper.succeedWhen(() -> {
+            final CableBlockEntity first = TestCables.cable(helper, RUN.get(0));
+            final OptionalLong found = CoreGrids.places(helper.getLevel())
+                    .find(first.place(TestCableTypes.OWN_GRID_ENERGY.get()));
+            helper.assertTrue(found.isPresent(), "the first wire has its place in a grid");
+            final long number = found.getAsLong();
+            helper.assertTrue(CoreGrids.of(helper.getLevel(), TestCableTypes.OWN_POWER).contains(number)
+                    && !CoreGrids.of(helper.getLevel(), GridKind.POWER).contains(number),
+                    "the wires are in the mod's own grid, not the Core's");
+            final EnergyDistributionResult tick = CoreGrids.mover(helper.getLevel(), TestCableTypes.OWN_POWER)
+                    .map(mover -> ((LevelEnergy) mover).lastTickOf(number)
+                            .orElseGet(EnergyDistributionResult::empty))
+                    .orElseGet(EnergyDistributionResult::empty);
+            helper.assertTrue(tick.totalDelivered() == 600L, "and carry the energy the machine takes: "
+                    + tick.totalDelivered());
+        });
+    }
+
+    @GameTest(template = ARENA)
+    public static void grids_areARegistryEachWithItsPolicy(final GameTestHelper helper) {
+        helper.assertTrue(GridKind.all().containsAll(List.of(GridKind.POWER, GridKind.FLUID, GridKind.DATA,
+                TestCableTypes.OWN_POWER)), "the Core's grids and a mod's");
+        helper.assertTrue(GridKind.byId(TestCableTypes.OWN_POWER.id()).orElseThrow() == TestCableTypes.OWN_POWER
+                && GridKind.POWER.policy() == GridPolicies.ENERGY && GridKind.FLUID.policy() == GridPolicies.FLUID
+                && GridKind.DATA.carriesNetwork() && !GridKind.PERIPHERAL.carriesNetwork(),
+                "each found by its id, with its policy");
+        helper.assertTrue(CoreGrids.mover(helper.getLevel(), GridKind.PERIPHERAL).isEmpty()
+                && CoreGrids.mover(helper.getLevel(), GridKind.DATA).isEmpty(),
+                "a grid that only joins moves nothing");
+        helper.succeed();
     }
 
     // Industrial's energy cable

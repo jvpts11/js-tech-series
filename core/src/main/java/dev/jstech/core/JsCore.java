@@ -37,7 +37,7 @@ import dev.jstech.core.diagnostic.Sections;
 import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.RuntimeDimensions;
-import dev.jstech.core.fluid.FluidGrids;
+import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.hologram.Holograms;
 import dev.jstech.core.input.KeyActions;
 import dev.jstech.core.multipart.CoreParts;
@@ -252,7 +252,7 @@ public final class JsCore {
         DiagnosticReports.listen();
         DimensionEffects.listen();
         FieldCapabilities.listen(modEventBus);
-        FluidGrids.listen();
+        CoreGrids.listen();
         GuideGifts.listen();
         Holograms.listen(modEventBus);
         JsCoreDataGenerators.listen(modEventBus);

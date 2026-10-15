@@ -10,8 +10,8 @@ package dev.jstech.core.energy;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.CoreGrids;
+import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
-import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.Optional;
@@ -27,8 +27,6 @@ import net.minecraft.world.level.ItemLike;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
@@ -88,9 +86,9 @@ public final class CoreEnergy {
                 (stack, context) -> new ItemEnergyStorage(stack, capacity, maxReceive, maxExtract), items);
     }
 
-    /** How the energy grid of {@code level} moves energy, and what it moved in the last tick. */
+    /** How the Core's energy grid of {@code level} moves energy, and what it moved in the last tick. */
     public static LevelEnergy of(final ServerLevel level) {
-        return level.getData(CoreAttachments.ENERGY);
+        return (LevelEnergy) CoreGrids.mover(level, GridKind.POWER).orElseThrow();
     }
 
     /** What the part of the energy grid the wire at {@code place} is in moved in the last tick; empty for none. */
@@ -102,17 +100,9 @@ public final class CoreEnergy {
     /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor. */
     public static void listen(final IEventBus modBus) {
         modBus.addListener(NewRegistryEvent.class, CoreEnergy::onNewRegistry);
-        NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, CoreEnergy::afterTick);
     }
 
     public static void onNewRegistry(final NewRegistryEvent event) {
         event.register(UNITS);
-    }
-
-    /* After the machines have ticked, the energy they made and want moves through the wires. */
-    public static void afterTick(final LevelTickEvent.Post event) {
-        if (event.getLevel() instanceof ServerLevel level) {
-            of(level).tick(level);
-        }
     }
 }

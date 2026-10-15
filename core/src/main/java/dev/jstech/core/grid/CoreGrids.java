@@ -13,8 +13,11 @@ import dev.jstech.core.registry.CoreAttachments;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import net.minecraft.server.level.ServerLevel;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 /**
  * Where a dimension's grids are found: one of each kind, data's being the data network's own, and the numbers they
@@ -78,7 +81,7 @@ public final class CoreGrids {
             }
         }
         // A device in several grids is one number in each: it is forgotten only when no grid still holds it.
-        for (final GridKind other : GridKind.values()) {
+        for (final GridKind other : GridKind.all()) {
             if (of(level, other).contains(number.getAsLong())) {
                 return;
             }
@@ -90,5 +93,24 @@ public final class CoreGrids {
     public static boolean contains(final ServerLevel level, final GridKind kind, final GridPlace place) {
         final OptionalLong number = places(level).find(place);
         return number.isPresent() && of(level, kind).contains(number.getAsLong());
+    }
+
+    /** The work that shares what the grid of {@code kind} carries in {@code level}, or none for a grid that joins. */
+    public static Optional<IGridMover> mover(final ServerLevel level, final GridKind kind) {
+        return kind.carriesNetwork() ? Optional.empty() : level.getData(CoreAttachments.GRIDS).mover(kind);
+    }
+
+    /** Hands the game's bus the ticking of every grid, once, from the Core's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, CoreGrids::afterTick);
+    }
+
+    /* After the machines have ticked, what each grid carries moves through its wires, the grids in declared order. */
+    private static void afterTick(final LevelTickEvent.Post event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            for (final GridKind kind : GridKind.all()) {
+                mover(level, kind).ifPresent(mover -> mover.tick(level));
+            }
+        }
     }
 }

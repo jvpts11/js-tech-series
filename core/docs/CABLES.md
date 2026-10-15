@@ -44,7 +44,7 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
 
 | Step | What it says |
 | --- | --- |
-| `grid(...)` | Which grid it belongs to: `POWER`, `FLUID`, `HEAT`, `GAS`, `MOTION`, `DATA`, `PERIPHERAL`. Only `DATA` carries a network's identity. |
+| `grid(...)` | Which grid it belongs to: one of the Core's (`POWER`, `FLUID`, `HEAT`, `GAS`, `MOTION`, `DATA`, `PERIPHERAL`) or a mod's own (below). Only `DATA` carries a network's identity. |
 | `lane(...)` or `alone()` | Its lane in the block, or the block to itself. One line owns one lane, and two lines in one lane are refused. |
 | `carries(throughput, range)` | How much it moves a tick, and how many blocks one run reaches before it carries nothing further. |
 | `loses(thousandths)` | What it loses on the way, 0 to 1000. |
@@ -57,6 +57,29 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
 `register()` registers the cable type and the item that lays it. The lanes the series uses: access `TOP_LEFT`,
 backbone `TOP`, peripheral `LEFT`, high compute `MIDDLE`, crafting `RIGHT`, energy `BOTTOM_LEFT`; the long distance
 line holds its block alone. A new line takes a free lane.
+
+## A grid of a mod's own
+
+*Added 2026-10-15.*
+
+Grids are a registry: each has an id and a **policy**, how what it carries is shared along a run and what its wires
+plug into. A mod whose line must never join another's, as an energy cable of one voltage class beside another's,
+declares a grid of its own with one of the Core's policies, or with its own:
+
+```java
+public static final GridKind MEDIUM_VOLTAGE = GridKind.declare(rl("medium_voltage"), GridPolicies.ENERGY);
+```
+
+| Policy | What it shares | What its wires plug into |
+| --- | --- | --- |
+| `GridPolicies.ENERGY` | energy, each machine its share of what it asks | any block that offers the game's energy on that face |
+| `GridPolicies.FLUID` | fluids, from outputs to inputs and tanks | any block that holds fluids on that face |
+| `GridPolicies.NETWORK` | the identity of a data network | (the data network's own devices) |
+| `GridPolicies.JOINS_ONLY` | nothing: the grid only joins what it joins, for its mod to read | (its mod's own devices) |
+
+An `IGridPolicy` of a mod's own gives an `IGridMover`, which shares what its grid carries in one dimension each tick
+after the machines have ticked, and says what its wires plug into. Each dimension makes one mover for each grid,
+the first time it is asked (`CoreGrids.mover(level, kind)`).
 
 ## Rules of joining
 

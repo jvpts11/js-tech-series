@@ -14,6 +14,7 @@ import dev.jstech.core.energy.internal.EnergyNetwork;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.IGridMover;
 import dev.jstech.core.log.CoreLogs;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
  * <p>A machine gives energy when it can give and not take (a generator), takes it when it can take and not give, and
  * holds it when it can do both, as the game's energy capability on the face a wire plugs into says.
  */
-public final class LevelEnergy {
+public final class LevelEnergy implements IGridMover {
 
+    private final GridKind kind;
     private final List<EnergyNetwork> parts = new ArrayList<>();
     private final Map<Long, Integer> partOfWire = new HashMap<>();
     private List<EnergyDistributionResult> lastTick = List.of();
@@ -50,6 +52,11 @@ public final class LevelEnergy {
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "energy_grid");
     /** The work of moving a tick's energy, timed, named in profilers and watched for stalls. */
     public static final Section SECTION = Section.builder(TIMING, CoreLogs.ENERGY).declare();
+
+    /** The work that shares energy along the grid of {@code kind}, one for each dimension. */
+    public LevelEnergy(final GridKind kind) {
+        this.kind = kind;
+    }
 
     /** What each connected part of the grid moved in the last tick. */
     public List<EnergyDistributionResult> lastTick() {
@@ -69,13 +76,15 @@ public final class LevelEnergy {
     }
 
     /** A wire came to meet a machine or stopped meeting one: the parts are worked out again before the next tick. */
+    @Override
     public void tapsChanged() {
         this.taps++;
     }
 
     /** Moves the tick's energy through every part of the grid of {@code level}. */
+    @Override
     public void tick(final ServerLevel level) {
-        final Grid grid = CoreGrids.of(level, GridKind.POWER);
+        final Grid grid = CoreGrids.of(level, this.kind);
         if (grid.size() == 0) {
             this.parts.clear();
             this.partOfWire.clear();

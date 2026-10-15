@@ -148,7 +148,7 @@ public final class CoreHealth {
     private static void grids(final MinecraftServer server, final Health.Report report) {
         for (final ServerLevel level : server.getAllLevels()) {
             long laid = 0L;
-            for (final GridKind kind : GridKind.values()) {
+            for (final GridKind kind : GridKind.all()) {
                 laid += CoreGrids.of(level, kind).size();
             }
             final int networks = NetworkRegistry.of(level).size();

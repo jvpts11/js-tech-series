@@ -12,6 +12,7 @@ import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.fluid.CoreFluidTags;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.GridPolicies;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.IEventBus;
@@ -31,6 +32,17 @@ public final class TestCableTypes {
     public static final long PRESSURE_RATE = 800L;
     public static final int PRESSURE_HOTTEST = 2_000;
     public static final DeferredRegister<CableType> CABLES = DeferredRegister.create(CoreCables.KEY, JsTests.MODID);
+    /** A grid of the test mod's own, which shares energy by the Core's policy, as a mod's line of a voltage class. */
+    public static final GridKind OWN_POWER = GridKind.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+            "own_power"), GridPolicies.ENERGY);
+    /** An energy cable on the test mod's own grid, which never joins the Core's energy cables. */
+    public static final DeferredHolder<CableType, CableType> OWN_GRID_ENERGY = CABLES.register("own_grid_energy",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "own_grid_energy")))
+                    .grid(OWN_POWER).alone().carries(Long.MAX_VALUE, 0)
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
+                    .build(() -> Items.GLOWSTONE_DUST));
     public static final DeferredHolder<CableType, CableType> LONG_DISTANCE = CABLES.register("long_distance",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
                             "long_distance")))

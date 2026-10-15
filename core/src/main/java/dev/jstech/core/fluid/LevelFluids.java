@@ -14,6 +14,7 @@ import dev.jstech.core.energy.internal.ProportionalSplitter;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.IGridMover;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.transfer.Batch;
 import dev.jstech.core.transfer.HandlerSteps;
@@ -46,8 +47,9 @@ import org.jetbrains.annotations.Nullable;
  * fluid only out gives through that face like a machine's output. The parts are worked out again only when the grid's
  * shape changes or a pipe comes to meet another block.
  */
-public final class LevelFluids {
+public final class LevelFluids implements IGridMover {
 
+    private final GridKind kind;
     private final List<Part> parts = new ArrayList<>();
     private final Map<Long, Integer> partOfWire = new HashMap<>();
     private long[] lastTick = new long[0];
@@ -60,6 +62,11 @@ public final class LevelFluids {
     /** The work of moving a tick's fluids, timed, named in profilers and watched for stalls. */
     public static final Section SECTION = Section.builder(TIMING, CoreLogs.FLUIDS).declare();
 
+    /** The work that moves fluids along the grid of {@code kind}, one for each dimension. */
+    public LevelFluids(final GridKind kind) {
+        this.kind = kind;
+    }
+
     /** How many millibuckets the part of the grid the wire numbered {@code wire} is in moved in the last tick. */
     public OptionalLong movedLastTickOf(final long wire) {
         final Integer part = this.partOfWire.get(wire);
@@ -68,13 +75,15 @@ public final class LevelFluids {
     }
 
     /** A pipe came to meet a block or stopped meeting one: the parts are worked out again before the next tick. */
+    @Override
     public void tapsChanged() {
         this.taps++;
     }
 
     /** Moves the tick's fluids through every part of the grid of {@code level}. */
+    @Override
     public void tick(final ServerLevel level) {
-        final Grid grid = CoreGrids.of(level, GridKind.FLUID);
+        final Grid grid = CoreGrids.of(level, this.kind);
         if (grid.size() == 0) {
             this.parts.clear();
             this.partOfWire.clear();

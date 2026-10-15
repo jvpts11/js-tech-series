@@ -12,11 +12,10 @@ import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.Neighbours;
-import dev.jstech.core.energy.CoreEnergy;
-import dev.jstech.core.fluid.FluidGrids;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
+import dev.jstech.core.grid.IGridMover;
 import dev.jstech.core.multipart.FaceParts;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
@@ -29,10 +28,12 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -49,7 +50,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import org.jetbrains.annotations.Nullable;
 
@@ -486,8 +486,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             return false;
         }
         boolean changed = false;
-        boolean energyPlugs = false;
-        boolean fluidPlugs = false;
+        final Set<GridKind> plugsChanged = new HashSet<>();
         for (final Wire wire : this.bundle.wires()) {
             final int lane = wire.slot().id();
             final int before = this.links[lane];
@@ -495,20 +494,16 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             if (now != before) {
                 this.links[lane] = now;
                 changed = true;
-                energyPlugs |= wire.type().grid() == GridKind.POWER;
-                fluidPlugs |= wire.type().grid() == GridKind.FLUID;
+                plugsChanged.add(wire.type().grid());
                 if (ownParts && this.inGrids && (now & FACE_BITS) != (before & FACE_BITS)) {
                     leave(server, wire);
                     enter(server, wire);
                 }
             }
         }
-        // The blocks an energy wire or a pipe plugs into are not in its grid: the grid hears of them here.
-        if (energyPlugs) {
-            CoreEnergy.of(server).tapsChanged();
-        }
-        if (fluidPlugs) {
-            FluidGrids.of(server).tapsChanged();
+        // The blocks a wire plugs into are not in its grid: the work that shares what the grid carries hears of them.
+        for (final GridKind kind : plugsChanged) {
+            CoreGrids.mover(server, kind).ifPresent(IGridMover::tapsChanged);
         }
         if (changed) {
             this.shape = null;
@@ -545,13 +540,9 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             if (state.getBlock() instanceof IFaceConnector device
                     && device.accepts(state, face.getOpposite(), wire.type().line())) {
                 linked |= bit | bit << PLUG_SHIFT;
-            } else if (wire.type().grid() == GridKind.POWER
-                    && server.getCapability(Capabilities.EnergyStorage.BLOCK, next, face.getOpposite()) != null) {
-                // An energy wire plugs into any block that offers the game's energy on that face.
-                linked |= bit | bit << PLUG_SHIFT;
-            } else if (wire.type().grid() == GridKind.FLUID
-                    && server.getCapability(Capabilities.FluidHandler.BLOCK, next, face.getOpposite()) != null) {
-                // And a pipe into any block that holds fluids on that face.
+            } else if (wire.type().grid().policy().plugsInto(server, next, face.getOpposite())) {
+                // A wire plugs into any block that takes what its grid carries: an energy wire into a block that
+                // offers the game's energy on that face, a pipe into one that holds fluids.
                 linked |= bit | bit << PLUG_SHIFT;
             }
         }
