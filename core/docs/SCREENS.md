@@ -1,9 +1,142 @@
 # Screens
 
-How J's Core helps a mod draw: layouts whose overlaps a test can catch, themes and skins that give every screen of
-an era or a system the same look, text drawn one way everywhere, models the Core puts together, screens drawn
-into the world, and keys. Three parts have pages of their own: [UI components](UI_COMPONENTS.md) (buttons, lists,
-fields), [Fonts](FONTS.md) and [Motion](MOTION.md).
+How J's Core helps a mod draw: screens declared in files and laid out by the Core, styles the player picks for every
+screen, layouts whose overlaps a test can catch, themes and skins that give every screen of an era or a system the
+same look, text drawn one way everywhere, models the Core puts together, screens drawn into the world, and keys.
+Three parts have pages of their own: [UI components](UI_COMPONENTS.md) (buttons, lists, fields), [Fonts](FONTS.md)
+and [Motion](MOTION.md).
+
+## Screens declared in files
+
+*Added 2026-10-15.*
+
+A screen is a JSON file in a resource pack, `assets/<mod>/jstech/screens/<name>.json`, that says what the screen
+holds and where. The Java keeps only what the screen does. There is no style sheet: how the screen looks is the
+style the player picked (below).
+
+```json
+{
+  "width": 176,
+  "root": {"type": "column", "gap": 4, "children": [
+    {"type": "title"},
+    {"type": "row", "gap": 6, "align": "center", "children": [
+      {"type": "slot", "slot": 0},
+      {"type": "progress", "bind": "progress", "max": 200, "grow": 1, "height": 8},
+      {"type": "slot", "slot": 1}
+    ]},
+    {"type": "label", "bind": "energy", "format": "screen.mymod.press.energy"},
+    {"type": "button", "text": "screen.mymod.press.start", "action": "start"},
+    {"type": "inventory"}
+  ]}
+}
+```
+
+The screen of a menu is handed to the game from client setup; the last argument says what the file's names do:
+
+```java
+modBus.addListener(RegisterMenuScreensEvent.class, event -> DataScreens.register(event, PRESS_MENU.get(),
+        rl("press"), menu -> screen -> screen.onAction("start", () -> START.send(true))));
+```
+
+A screen with no menu (an instrument's, a block's settings) opens with `DataScreens.open(rl("probe"), title,
+logic)`. The file's namespace is the mod whose style the screen follows.
+
+What a file holds:
+
+- **Boxes that lay others out**: `column`, `row`, `grid` (its `columns` written `"auto"`, `"2fr"` or a width),
+  `stack` (one over another), and `panel` and `well`, which draw the style's raised or sunken ground under what they
+  hold. Each takes `gap`, `padding` (one number, two or four), `align`, `justify` and, for a row, `wrap`.
+- **Components**: `title` (the screen's), `label` (a translation key in `text`, or a value of the menu in `bind`,
+  written through the key in `format`), `button` (its `action`, or a `menu_button` the menu answers), `slot` (by its
+  place among the menu's slots), `slots` (a run of them, `per_row` to a row), `inventory` (the player's, as the game
+  lays it), `progress` (a value of the menu against its `max`), `image` (a sprite), `spacer`, `separator`,
+  `checkbox` and `text_field`.
+- **On every component**: `id` (what the code and the tests find it by), `width`, `height`, the smallest and largest
+  sizes, `grow`, `shrink`, `margin`, `align_self`, `span` in a grid, a `tooltip` key, and `visible_if` and
+  `enabled_if`, each a value's name.
+
+A kind is named by its short name when it is the Core's (`"button"`), by its id when it is another mod's. A mod
+declares its own with `ElementTypes.declare(id, propsCodec, holdsOthers)` and registers what draws it with
+`ElementBuilders.register` from client setup. The menu's slots are moved under the frames the file placed, so a slot
+and its frame never part; the screen is as tall as what it holds needs.
+
+When the file is read again (a resource pack changed, or in a development run the file was saved), the open screen
+is built again from it at once, with no restart. A file that cannot be read says what is wrong in the place of the
+screen, and in the log.
+
+## The layout engine
+
+*Added 2026-10-15.*
+
+`FlexLayout` lays a tree of `FlexBox`es out: rows and columns that share their room by `grow`, give it up by `shrink`
+down to their smallest sizes, wrap when asked, and put what is left where `justify` says; grids whose columns are
+fixed, sized by what they hold, or a share of the rest; stacks laid over each other. Every size is a whole pixel, and
+a share is cut by largest remainder, so the parts always add up. It has no game types: the screens declared in files
+are laid out with it, and a unit test lays out the same tree.
+
+```java
+final FlexBox root = FlexBox.column("root").padding(Insets.of(6)).gap(4)
+        .add(FlexBox.leaf("title", text.of("Kiln")).role(Role.TEXT))
+        .add(FlexBox.row("slots").gap(2)
+                .add(FlexBox.leaf("in", IMeasure.fixed(18, 18)).role(Role.SOLID))
+                .add(FlexBox.leaf("bar", IMeasure.fixed(24, 8)).grow(1).role(Role.SOLID))
+                .add(FlexBox.leaf("out", IMeasure.fixed(18, 18)).role(Role.SOLID)));
+final Placed placed = FlexLayout.layout(root, 176, FlexLayout.preferred(root, 176).height());
+assertTrue(placed.guiLayout(176, placed.height()).isClean());
+```
+
+`placed.overflows()` names the boxes whose contents need more room than they got, even at their smallest.
+
+## Values the menu shows
+
+*Added 2026-10-15.*
+
+A component of a file binds to a value of its menu by name, and no packet is written for it:
+
+```java
+progress = value("progress", () -> press.progress());                       // an int
+ready = flag("ready", () -> press.isReady());                               // yes or no
+energy = synced("energy", ByteBufCodecs.VAR_LONG, 0L, () -> press.energy()); // anything with a codec
+```
+
+`synced` carries a value of any kind its codec writes, a number past what the game's own menu data carries (a short)
+included; all the synced values of every menu travel in one payload of the Core's, sent as the menu opens and then
+only for the values that changed. `menu.bound("energy")` reads one by name, which is what the file's `bind` does.
+
+## Styles
+
+*Added 2026-10-15.*
+
+Everything a screen declared in a file draws comes from a **style**: the sprites its pieces are cut from, its
+colours by role, the font, the spacing, the finish (scanlines, bevels, glass) and the sound of a press. The player
+picks it under **This player** in the Core's settings: one for every screen and, if they want, another for a given
+mod's, changed at once with a preview. The server imposes nothing.
+
+The styles that come with the Core are **Game** (the default: drawn from the game's own widgets, so a resource pack
+that repaints them repaints the Core's too), **J's Tech**, **high contrast**, three for **colour blindness**, and the
+**era styles**. A mod sets only the default of its own screens, `Styles.setModDefault(modid, style)`; J's Computers'
+computing blocks wear their era's.
+
+A style is a file of a resource pack, `assets/<namespace>/jstech/styles/<name>.json`; a pack replaces one by its name
+and adds new ones:
+
+```json
+{
+  "name": "mypack.style.copper",
+  "parent": "jscore:game",
+  "colours": {"accent": "#FFB87333", "title": "#FF3B2414"},
+  "pieces": {"button": "mypack:widget/copper_button", "slot": {"kind": "flat", "fill": "slot_bg", "edge": "line"}},
+  "metrics": {"gap": 5},
+  "finish": {"double_bevel": true}
+}
+```
+
+A piece is a sprite of the GUI atlas, a `slice` of a texture cut in nine, a `tile` laid side by side, `flat` colours
+(each a role's key or `#AARRGGBB`), or `none`. What a style does not set comes from its `parent`, or from a `palette`
+it names; the rest is drawn flat in its colours. The overlap and contrast checks run in every style the game has.
+
+What a style does not change: the drawing of a machine's face, which is its mod's art, and the inside of a computer,
+whose look is the installed system's skin.
 
 ## Layouts you can test
 
@@ -128,6 +261,15 @@ something, and `onPress(SCAN, ...)` runs client code instead.
 
 ## What can go wrong
 
+- **A screen shows "No resource pack has the screen" or a line of what is wrong.** Its file is not at
+  `assets/<mod>/jstech/screens/<name>.json`, or cannot be read; the line and the log say where.
+- **A component shows its kind in brackets.** Nothing on this game draws that kind: the mod that declares it is
+  missing on the client, or registers its builder late.
+- **A button does nothing.** Its `action` was not handed over with `onAction`; the developer's inspector lists the
+  names a file used that nobody handed over.
+- **A bound value shows `null`.** The menu binds no value of that name, or binds it after the screen was built.
+- **A style shows magenta.** It sets a colour role to nothing, and nothing it builds on sets it; the log names the
+  roles.
 - **A test passes but the screen overlaps in the game.** The screen draws from numbers of its own instead of its
   layout class; draw from the layout.
 - **Text runs past a panel.** The font is wider than the layout thought: give the text fewer characters, or clip it

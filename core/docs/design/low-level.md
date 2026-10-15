@@ -27,7 +27,13 @@ Mainframes, racks, drives and encoders) are drawn with GeckoLib, a required depe
 
 #### What the Core reaches
 
-Ten mixins and one access transformer line:
+Ten mixins and three access transformer lines:
+
+- **Slots placed by a screen's file.** A screen declared in a file is laid out on the player's game, from the file,
+  the style and the font, and its menu's slots are moved under the frames it places; a slot's place is final in the
+  game, set once where the menu is built. Two access transformer lines, `public-f` on `Slot#x` and `Slot#y`, for the
+  Core's screens to write; nothing else of the game moves a slot. Test: a slot's place is public, not final, and
+  takes a new value.
 
 - **Worlds open without the warning about experimental settings.** The game marks as experimental every registry
   entry that doesn't come from the vanilla pack (and every mod jar counts as one pack), and every list of dimensions

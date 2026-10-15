@@ -114,7 +114,7 @@ public final class Label extends UiComponent {
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         final String shown = Texts.clip(ctx.font(), text.get(), (int) (width() / scale));
-        final int tw = Math.round(ctx.font().width(shown) * scale);
+        final int tw = Math.round(ctx.skin().textWidth(ctx.font(), shown) * scale);
         final int tx = switch (align) {
             case CENTER -> x() + (width() - tw) / 2;
             case RIGHT -> x() + width() - tw;
@@ -124,9 +124,9 @@ public final class Label extends UiComponent {
         final int lineHeight = Math.round(ctx.font().lineHeight * scale);
         final int ty = height() <= lineHeight ? y() : y() + (height() - lineHeight + 2) / 2;
         if (scale == 1f) {
-            Draw.text(g, ctx.font(), shown, tx, ty, color(ctx));
+            ctx.skin().drawText(g, ctx.font(), shown, tx, ty, color(ctx));
         } else {
-            Draw.textScaled(g, ctx.font(), shown, tx, ty, color(ctx), scale);
+            ctx.skin().drawText(g, ctx.font(), shown, tx, ty, color(ctx), scale);
         }
     }
 }

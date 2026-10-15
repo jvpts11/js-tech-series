@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.api.client;
 
+import dev.jstech.core.client.gui.component.Draw;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The look every component draws through: the colours of a surface and the primitives a control is made of.
@@ -29,6 +31,10 @@ import net.minecraft.client.gui.GuiGraphics;
  * }</pre>
  */
 public interface ISkin {
+
+    /** How big a slot is with its frame, in pixels. */
+    @ApiStatus.Experimental
+    int SLOT_SIZE = 18;
 
     // colours
 
@@ -90,4 +96,82 @@ public interface ISkin {
 
     /** The body and border of a floating panel such as a popup. */
     void windowFrame(GuiGraphics g, int x, int y, int w, int h);
+
+    /** A push button that may be unable to be pressed, which is drawn so; by default the button, faded over. */
+    @ApiStatus.Experimental
+    default void button(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
+                        final String label, final boolean hovered, final boolean pressed, final boolean primary,
+                        final boolean enabled) {
+        button(g, font, x, y, w, h, label, hovered && enabled, pressed && enabled, primary);
+        if (!enabled) {
+            Draw.disabled(g, x, y, w, h);
+        }
+    }
+
+    /** A whole window, a machine's or a dialog's; by default the frame of a floating panel. */
+    @ApiStatus.Experimental
+    default void window(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        windowFrame(g, x, y, w, h);
+    }
+
+    /** An item slot whose item sits at {@code (x, y)}: the frame is drawn a pixel outside it, 18 pixels square. */
+    @ApiStatus.Experimental
+    default void slot(final GuiGraphics g, final int x, final int y) {
+        field(g, x - 1, y - 1, SLOT_SIZE, SLOT_SIZE, false);
+    }
+
+    /** A check box {@code size} pixels square, ticked or not, lit when the pointer is over it. */
+    @ApiStatus.Experimental
+    default void checkbox(final GuiGraphics g, final Font font, final int x, final int y, final int size,
+                          final boolean checked, final boolean hovered) {
+        final int box = checked ? accent() : fieldBg();
+        g.fill(x, y, x + size, y + size, box);
+        Draw.outline(g, x, y, size, size, edge());
+        if (checked) {
+            Draw.checkMark(g, font, x, y, box);
+        }
+    }
+
+    /** A progress bar, filled {@code fraction} of the way, 0 to 1. */
+    @ApiStatus.Experimental
+    default void progress(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                          final double fraction) {
+        panel(g, x, y, w, h);
+        final int filled = (int) Math.round((w - 2) * Math.max(0.0, Math.min(1.0, fraction)));
+        if (filled > 0) {
+            g.fill(x + 1, y + 1, x + 1 + filled, y + h - 1, progressFill());
+        }
+    }
+
+    /** A line between two parts, {@code w} pixels long. */
+    @ApiStatus.Experimental
+    default void separator(final GuiGraphics g, final int x, final int y, final int w) {
+        g.fill(x, y, x + w, y + 1, edge());
+    }
+
+    /** A tooltip's ground and frame. */
+    @ApiStatus.Experimental
+    default void tooltip(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        windowFrame(g, x, y, w, h);
+    }
+
+    /** Draws {@code text} in this look's font and manner (plain, or with a shadow where the look has one). */
+    @ApiStatus.Experimental
+    default void drawText(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                          final int colour) {
+        Draw.text(g, font, text, x, y, colour);
+    }
+
+    /** The same text at {@code scale}, anchored at its top-left corner. */
+    @ApiStatus.Experimental
+    default void drawText(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                          final int colour, final float scale) {
+        Draw.textScaled(g, font, text, x, y, colour, scale);
+    }
+
+    /** How wide {@code text} is in this look's font, at the font's own size. */
+    @ApiStatus.Experimental
+    default int textWidth(final Font font, final String text) {
+        return font.width(text);
+    }
 }

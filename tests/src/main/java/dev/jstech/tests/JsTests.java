@@ -70,6 +70,8 @@ public final class JsTests {
         TestComponents.register(modEventBus);
         // A capability, a part offering it and a screen's call of the test mod's own, to prove the Core's toolkit.
         TestToolkit.register(modEventBus);
+        // A menu whose screen is declared in a file, to prove screens as data, values bound by name and styles.
+        TestScreens.register(modEventBus);
         if (GameTestHooks.isGametestServer()) {
             /*
              * The language API's tests need a language that is not the series' own, and languages are only taken

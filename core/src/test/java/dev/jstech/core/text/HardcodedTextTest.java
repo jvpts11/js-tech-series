@@ -213,6 +213,10 @@ class HardcodedTextTest {
                     "a font's licence and who made it, named as its makers name them"),
             data("core/src/main/java/dev/jstech/core/optional/OptionalDependencyCheck.java", 3,
                     "what a mod's own test reports of an import in the wrong place, for its developer"),
+            data("core/src/main/java/dev/jstech/core/gui/style/StyleFile.java", 3,
+                    "why a style file is refused, written to the log for the resource pack's maker"),
+            data("core/src/main/java/dev/jstech/core/gui/style/StyleFiles.java", 7,
+                    "what is wrong in the styles the resource packs bring, written to the log for their makers"),
             data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"));
 
     /** Who a line for the developer is written through. */

@@ -36,12 +36,8 @@ public final class ProgressBar extends UiComponent {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
-        ctx.skin().panel(g, x(), y(), width(), height());
         final double shown = shown(Math.max(0, Math.min(100, percent.getAsInt())));
-        final int filled = (int) Math.round((width() - 2) * shown / 100.0);
-        if (filled > 0) {
-            g.fill(x() + 1, y() + 1, x() + 1 + filled, bottom() - 1, ctx.skin().progressFill());
-        }
+        ctx.skin().progress(g, x(), y(), width(), height(), shown / 100.0);
     }
 
     /* The amount drawn this frame, on its way to {@code target}. */

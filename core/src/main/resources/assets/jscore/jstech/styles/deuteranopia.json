@@ -1,0 +1,14 @@
+{
+  "name": "jscore.style.deuteranopia",
+  "parent": "jscore:jstech",
+  "colours": {
+    "accent": "#FF56B4E9",
+    "accent2": "#FF0072B2",
+    "green": "#FF56B4E9",
+    "amber": "#FFE69F00",
+    "red": "#FFD55E00",
+    "tab_label_on": "#FF56B4E9",
+    "tooltip_edge": "#FF56B4E9",
+    "link": "#FF56B4E9"
+  }
+}

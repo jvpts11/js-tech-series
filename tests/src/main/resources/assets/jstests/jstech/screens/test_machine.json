@@ -1,0 +1,39 @@
+{
+  "width": 176,
+  "root": {
+    "type": "column",
+    "gap": 4,
+    "children": [
+      {"type": "title", "id": "title"},
+      {
+        "type": "row",
+        "gap": 6,
+        "align": "center",
+        "children": [
+          {"type": "slot", "slot": 0, "id": "input"},
+          {"type": "progress", "bind": "progress", "max": 100, "grow": 1, "height": 8, "id": "bar"},
+          {"type": "slot", "slot": 1, "id": "output"}
+        ]
+      },
+      {
+        "type": "row",
+        "gap": 4,
+        "align": "center",
+        "children": [
+          {"type": "label", "bind": "word", "id": "word", "grow": 1},
+          {"type": "label", "bind": "big", "id": "big"}
+        ]
+      },
+      {
+        "type": "row",
+        "gap": 4,
+        "align": "center",
+        "children": [
+          {"type": "button", "text": "jstests.screen.press", "action": "press", "id": "press"},
+          {"type": "checkbox", "text": "jstests.screen.ready", "bind": "ready", "id": "ready"}
+        ]
+      },
+      {"type": "inventory", "id": "inventory"}
+    ]
+  }
+}

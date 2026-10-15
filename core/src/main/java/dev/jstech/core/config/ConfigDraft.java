@@ -46,6 +46,8 @@ public final class ConfigDraft {
         CHOICE,
         /** A piece of text: typed. */
         TEXT,
+        /** Picked on a chooser of its own, which shows what each value means. */
+        CHOOSE,
         /** Anything else, a list or a map: shown, and changed in the file. */
         FIXED
     }
@@ -56,6 +58,9 @@ public final class ConfigDraft {
 
     /** How {@code key} is changed on a screen. */
     public static Control controlOf(final ConfigKey<?> key) {
+        if (key.chooser().isPresent()) {
+            return Control.CHOOSE;
+        }
         final Object kind = key.defaultValue();
         if (kind instanceof Boolean) {
             return Control.TOGGLE;
@@ -84,6 +89,11 @@ public final class ConfigDraft {
     /** The settings changed and not kept yet, by dotted path. */
     public Set<String> changed() {
         return Set.copyOf(pending.keySet());
+    }
+
+    /** Takes the value a chooser picked for {@code key}, held to what the setting is held to. */
+    public <T> void choose(final ConfigKey<T> key, final T value) {
+        put(key, value);
     }
 
     /** Turns a setting that is on or off the other way. */

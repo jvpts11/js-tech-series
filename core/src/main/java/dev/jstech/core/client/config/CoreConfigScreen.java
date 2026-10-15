@@ -724,6 +724,14 @@ public final class CoreConfigScreen extends Screen {
                         editable ? JsTechTheme.accent() : JsTechTheme.dim());
             }
             case TEXT -> drawField(g, x, y, ConfigScreenLayout.TEXT_WIDTH, focused(key));
+            case CHOOSE -> {
+                final int w = ConfigScreenLayout.CHOICE_WIDTH;
+                JsTechTheme.button(g, x, y, w, ConfigScreenLayout.CONTROL_HEIGHT, editable
+                        && over(mouseX, mouseY, x, y, w, ConfigScreenLayout.CONTROL_HEIGHT));
+                final String shown = ConfigChoosers.describe(key, value).getString();
+                JsTechTheme.textCenter(g, font, Texts.clip(font, shown, w - 8), x + w / 2, y + 3,
+                        editable ? JsTechTheme.accent() : JsTechTheme.dim());
+            }
             case FIXED -> {
                 drawField(g, x, y, ConfigScreenLayout.FIXED_WIDTH, false);
                 JsTechTheme.textS(g, font, Texts.clip(font, GameText.resolve(ConfigScreenTexts.IN_FILE),
@@ -946,6 +954,11 @@ public final class CoreConfigScreen extends Screen {
             }
             case CHOICE -> draft.cycle((ConfigKey<String>) key, x < left + ConfigScreenLayout.CHOICE_WIDTH / 2 ? -1
                     : 1);
+            case CHOOSE -> {
+                if (minecraft != null) {
+                    minecraft.setScreen(ConfigChoosers.open(key, this, draft));
+                }
+            }
             case TEXT, FIXED -> {
                 return false;
             }

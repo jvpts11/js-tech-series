@@ -18,12 +18,13 @@ import java.util.function.Supplier;
  */
 public final class Checkbox extends UiComponent {
 
-    private static final int BOX = 7;
-
     private final Supplier<String> label;
     private final BooleanSupplier checked;
     private final Runnable onToggle;
     private float labelScale = 1f;
+    private int box = BOX;
+
+    private static final int BOX = 7;
 
     public Checkbox(final Supplier<String> label, final BooleanSupplier checked, final Runnable onToggle) {
         this.label = label;
@@ -37,21 +38,22 @@ public final class Checkbox extends UiComponent {
         return this;
     }
 
+    /** How big the box is drawn, as square; the game's own are 20 pixels, the series' dense ones 7. */
+    public Checkbox setBoxSize(final int pixels) {
+        box = Math.max(1, pixels);
+        return this;
+    }
+
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         final boolean on = checked.getAsBoolean();
-        final int by = y() + (height() - BOX) / 2;
-        final int box = on ? ctx.skin().accent() : ctx.skin().fieldBg();
-        g.fill(x(), by, x() + BOX, by + BOX, box);
-        Draw.outline(g, x(), by, BOX, BOX, ctx.skin().edge());
-        if (on) {
-            Draw.text(g, ctx.font(), "x", x() + 1, by - 1, ComponentPalette.get().litText(), box);
-        }
-        final int textX = x() + BOX + 4;
-        final int fits = (int) ((width() - BOX - 4) / labelScale);
+        final int by = y() + (height() - box) / 2;
+        ctx.skin().checkbox(g, ctx.font(), x(), by, box, on, hovered(ctx));
+        final int textX = x() + box + 4;
+        final int fits = (int) ((width() - box - 4) / labelScale);
         final String text = Texts.trim(ctx.font(), label.get(), fits);
         final int th = Math.round(7 * labelScale);
-        Draw.textScaled(g, ctx.font(), text, textX, y() + (height() - th) / 2, ctx.skin().text(), labelScale);
+        ctx.skin().drawText(g, ctx.font(), text, textX, y() + (height() - th) / 2, ctx.skin().text(), labelScale);
     }
 
     @Override

@@ -97,6 +97,15 @@ public final class Draw {
         g.drawString(font, text, x, y, color, false);
     }
 
+    /**
+     * A line of game text in a style's font, with the game's shadow under it only where the style asks for one: the
+     * series' own styles never do, and a style a resource pack brings may.
+     */
+    public static void text(final GuiGraphics g, final Font font, final Component text, final int x, final int y,
+                            final int color, final boolean shadow) {
+        g.drawString(font, text, x, y, color, shadow);
+    }
+
     /** A line already laid out, a wrapped row of game text, on whatever ground was declared under it. */
     public static void text(final GuiGraphics g, final Font font, final FormattedCharSequence text, final int x,
                             final int y, final int color) {
@@ -117,6 +126,11 @@ public final class Draw {
         g.pose().scale(scale, scale, 1.0f);
         g.drawString(font, text, 0, 0, color, false);
         g.pose().popPose();
+    }
+
+    /** The mark in a ticked check box whose top-left corner is at {@code (x, y)}, on a box of that colour. */
+    public static void checkMark(final GuiGraphics g, final Font font, final int x, final int y, final int box) {
+        text(g, font, "x", x + 1, y - 1, ComponentPalette.get().litText(), box);
     }
 
     /** Fades a rectangle out, the way a disabled control is shown. */

@@ -106,6 +106,15 @@ public final class GuiLayout {
     }
 
     /**
+     * Records a line of text already measured, {@code width} by {@code height}: as {@link #text}, apart from the
+     * overlap check and held to the panel, for a layout that knows the text's real size.
+     */
+    public GuiLayout textBox(final String name, final int x, final int y, final int width, final int height) {
+        boxes.add(new Box(name, x, y, width, height, false));
+        return this;
+    }
+
+    /**
      * Names of every pair of <em>solid</em> elements that overlap, formatted "a x b"; empty when no two
      * solids collide. Text lines are not considered here.
      */

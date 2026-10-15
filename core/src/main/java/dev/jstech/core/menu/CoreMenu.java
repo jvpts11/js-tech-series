@@ -8,6 +8,11 @@
 package dev.jstech.core.menu;
 
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.util.DeclarationError;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -17,15 +22,19 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * A menu declared once. Its slots are added in named groups, placed from the screen's layout; where a shift-click in
@@ -35,9 +44,12 @@ import java.util.function.Predicate;
 public abstract class CoreMenu extends AbstractContainerMenu {
 
     private final Predicate<Player> validity;
+    private final Player player;
     private final boolean onClient;
     private final Map<SlotGroup, List<SlotGroup>> shiftClicks = new LinkedHashMap<>();
     private final Map<Integer, Consumer<Player>> buttons = new HashMap<>();
+    private final List<SyncedValue<?>> synced = new ArrayList<>();
+    private final Map<String, Supplier<?>> bound = new LinkedHashMap<>();
 
     /** The gap between the top of the inventory grid and the hotbar, as the game lays it out. */
     private static final int HOTBAR_GAP = 58;
@@ -52,7 +64,39 @@ public abstract class CoreMenu extends AbstractContainerMenu {
                        final Predicate<Player> validity) {
         super(type, containerId);
         this.validity = validity;
+        this.player = inventory.player;
         this.onClient = inventory.player.level().isClientSide();
+    }
+
+    /**
+     * The value bound to {@code name}, declared with {@link #value(String, IntSupplier)}, {@link #flag(String,
+     * BooleanSupplier)} or {@link #synced}: what a screen's file reads when a component says {@code "bind": name}.
+     */
+    public Optional<Supplier<?>> bound(final String name) {
+        return Optional.ofNullable(bound.get(name));
+    }
+
+    /** The names values are bound under, in the order they were declared. */
+    public List<String> boundNames() {
+        return List.copyOf(bound.keySet());
+    }
+
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        sendSynced(false);
+    }
+
+    @Override
+    public void broadcastFullState() {
+        super.broadcastFullState();
+        sendSynced(true);
+    }
+
+    @Override
+    public void sendAllDataToRemote() {
+        super.sendAllDataToRemote();
+        sendSynced(true);
     }
 
     @Override
@@ -190,9 +234,71 @@ public abstract class CoreMenu extends AbstractContainerMenu {
         return value(() -> onServer.getAsBoolean() ? 1 : 0);
     }
 
+    /** An int as {@link #value(IntSupplier)} declares one, bound to {@code name} for a screen's file to read. */
+    protected final MenuValue value(final String name, final IntSupplier onServer) {
+        final MenuValue value = value(onServer);
+        bind(name, value::get);
+        return value;
+    }
+
+    /** A yes or no as {@link #flag(BooleanSupplier)} declares one, bound to {@code name}. */
+    protected final MenuValue flag(final String name, final BooleanSupplier onServer) {
+        final MenuValue value = flag(onServer);
+        bind(name, value::isSet);
+        return value;
+    }
+
+    /**
+     * Declares a value of any kind the menu shows, bound to {@code name}: worked out on the server with
+     * {@code onServer}, written by {@code codec}, and carried to the client's copy of the menu whenever it changes,
+     * {@code initial} until it first arrives. No packet is written for it: every synced value of every menu travels in
+     * one payload of the Core's.
+     */
+    protected final <T> SyncedValue<T> synced(final String name,
+                                              final StreamCodec<? super RegistryFriendlyByteBuf, T> codec,
+                                              final T initial, final Supplier<T> onServer) {
+        final SyncedValue<T> value = new SyncedValue<>(name, codec, initial, onServer, onClient);
+        synced.add(value);
+        bind(name, value::get);
+        return value;
+    }
+
     /** Whether this is the client's copy of the menu. */
     protected final boolean onClient() {
         return onClient;
+    }
+
+    /* Writes the synced values into the client's copy of the menu: those that changed, or all of them. */
+    void receive(final MenuSyncPayload payload, final RegistryAccess access) {
+        for (final MenuSyncPayload.Entry entry : payload.entries()) {
+            if (entry.index() >= 0 && entry.index() < synced.size()) {
+                synced.get(entry.index()).receive(entry.data(), access);
+            }
+        }
+    }
+
+    private void bind(final String name, final Supplier<?> reader) {
+        if (bound.putIfAbsent(name, reader) != null) {
+            throw DeclarationError.of(null, "the menu value " + name + " of " + getClass().getSimpleName(),
+                    "is bound twice", "give each value the menu shows a name of its own");
+        }
+    }
+
+    /* Sends the client the synced values that changed since the last time, or all of them when {@code all}. */
+    private void sendSynced(final boolean all) {
+        if (synced.isEmpty() || !(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        final List<MenuSyncPayload.Entry> entries = new ArrayList<>();
+        for (int i = 0; i < synced.size(); i++) {
+            final byte[] data = synced.get(i).pending(serverPlayer.registryAccess(), all);
+            if (data != null) {
+                entries.add(new MenuSyncPayload.Entry(i, data));
+            }
+        }
+        if (!entries.isEmpty()) {
+            PacketDistributor.sendToPlayer(serverPlayer, new MenuSyncPayload(containerId, entries));
+        }
     }
 
     /* The group the slot belongs to, with the route declared for it; null when its group has none. */

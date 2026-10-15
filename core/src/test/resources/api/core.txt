@@ -45,6 +45,17 @@ stable 4
 3 dev.jstech.core.api.client.ISkin  abstract void tab(GuiGraphics, Font, int, int, int, int, String, boolean)
 3 dev.jstech.core.api.client.ISkin  abstract void windowFrame(GuiGraphics, int, int, int, int)
 3 dev.jstech.core.api.client.ISkin  default int progressFill()
+7 dev.jstech.core.api.client.ISkin  default int textWidth(Font, String)
+7 dev.jstech.core.api.client.ISkin  default void button(GuiGraphics, Font, int, int, int, int, String, boolean, boolean, boolean, boolean)
+7 dev.jstech.core.api.client.ISkin  default void checkbox(GuiGraphics, Font, int, int, int, boolean, boolean)
+7 dev.jstech.core.api.client.ISkin  default void drawText(GuiGraphics, Font, String, int, int, int)
+7 dev.jstech.core.api.client.ISkin  default void drawText(GuiGraphics, Font, String, int, int, int, float)
+7 dev.jstech.core.api.client.ISkin  default void progress(GuiGraphics, int, int, int, int, double)
+7 dev.jstech.core.api.client.ISkin  default void separator(GuiGraphics, int, int, int)
+7 dev.jstech.core.api.client.ISkin  default void slot(GuiGraphics, int, int)
+7 dev.jstech.core.api.client.ISkin  default void tooltip(GuiGraphics, int, int, int, int)
+7 dev.jstech.core.api.client.ISkin  default void window(GuiGraphics, int, int, int, int)
+7 dev.jstech.core.api.client.ISkin  static final int SLOT_SIZE
 3 dev.jstech.core.api.client.ISurface  type sealed interface permits PixelSurface, GpuSurface
 3 dev.jstech.core.api.client.ISurface  abstract int height()
 3 dev.jstech.core.api.client.ISurface  abstract int width()

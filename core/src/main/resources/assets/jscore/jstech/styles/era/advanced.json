@@ -1,0 +1,6 @@
+{
+  "name": "jscore.style.era.advanced",
+  "palette": "jscore:era/advanced",
+  "metrics": {"gap": 4, "padding": 6, "row_height": 11, "control_height": 14},
+  "finish": {"accent_rule": true}
+}

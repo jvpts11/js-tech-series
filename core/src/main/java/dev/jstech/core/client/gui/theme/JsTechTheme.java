@@ -9,6 +9,7 @@ package dev.jstech.core.client.gui.theme;
 
 import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.style.Styles;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -24,14 +25,21 @@ import net.minecraft.client.gui.GuiGraphics;
  */
 public final class JsTechTheme {
 
-    private JsTechTheme() {
-    }
+    /** The mod whose computing screens paint through this theme, wearing their era's style unless the player chose. */
+    private static final String COMPUTING_SCREENS = "jsc";
 
     private static EraTheme active = EraThemes.STANDARD;
 
-    /** Binds the theme for the current render pass. The screen base calls this at the top of {@code render}. */
+    private JsTechTheme() {
+    }
+
+    /**
+     * Binds the theme for the current render pass. The screen base calls this at the top of {@code render}, with its
+     * era's theme; a style the player chose for those screens, or for every screen, is worn in its place.
+     */
     public static void bind(final EraTheme theme) {
-        active = theme == null ? EraThemes.STANDARD : theme;
+        final EraTheme era = theme == null ? EraThemes.STANDARD : theme;
+        active = Styles.chosenFor(COMPUTING_SCREENS).map(Styles::eraTheme).orElse(era);
     }
 
     /** Restores the STANDARD default after a render pass, so any unthemed draw stays on the frozen skin. */

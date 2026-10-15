@@ -22,6 +22,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the tick), `dev.jstech.core.codec` (codecs for records) and `dev.jstech.core.optional` (other mods behind a
   guard). What is marked `@ApiStatus.Internal` in them is public only so the Core can wire itself up, and is no
   promise.
+- (Core) Looks that draw everything: J's Core's API is at version 7. `ISkin` draws a whole window, a slot, a check
+  box, a progress bar, a separator, a tooltip and a button that cannot be pressed, and draws and measures text in its
+  own font, each with a default that keeps a skin written before as it was; all experimental.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -51,6 +54,20 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Other mods behind a guard: `OptionalMod` starts the work with another mod only when it is installed, and
   leaves it out with a line in the log when it fails to start; `OptionalDependencyCheck` lets a mod's own unit test
   fail on an import of the other mod outside its adapters.
+- (Core) Screens declared in files: a screen is a JSON file in a resource pack saying what it holds and where (rows,
+  columns, grids, panels, titles, labels, buttons, slots, the player's inventory, bars, pictures, check boxes,
+  fields), and its Java keeps only what it does. The menu's slots are moved under the frames the file placed. An
+  edited file rebuilds the open screen at once, and one that cannot be read says what is wrong in its place.
+- (Core) A layout engine: rows and columns that share their room and give it up down to their smallest sizes, wrap
+  and justify; grids of fixed, fitted and shared columns; stacks. Every size is a whole pixel, the shares add up, and
+  the overlap check runs on the layout the game draws.
+- (Core) Values a screen shows by name: a menu declares a value under a name and a screen's file binds to it, with
+  no packet written for it; a value of any kind its codec writes, a number past 32767 included, is sent as the menu
+  opens and then only when it changes.
+- (Core) Styles the player picks: everything a screen declared in a file draws comes from a style, chosen under This
+  player for every screen and per mod, with a preview. The Core brings the game's own (the default, drawn from the
+  game's widgets, so a resource pack that repaints them repaints the Core's), J's Tech, high contrast, three for
+  colour blindness and the eras'; a resource pack replaces any of them or adds its own as a file.
 
 ### Changed
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
@@ -62,6 +79,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the constructor says.
 - (Core) Integrations behind one guard: the work with Mekanism, FTB Teams, Accessories and Curios starts through
   `OptionalMod`, so one of them failing to start no longer stops the game.
+- (Core) The style chosen for J's Computers' screens, or for every screen, is worn by its computing blocks' screens
+  too, in place of their era's.
+- (Core) A setting can be picked on a chooser of its own, which shows what each value means, from the settings
+  screen.
 
 ## [0.5.2a] - 2026-10-14
 

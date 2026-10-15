@@ -1,0 +1,5 @@
+{
+  "name": "jscore.style.era.standard",
+  "palette": "jscore:era/standard",
+  "metrics": {"gap": 4, "padding": 6, "row_height": 11, "control_height": 14}
+}

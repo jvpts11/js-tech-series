@@ -186,7 +186,7 @@ public final class ConfigScreenLayout {
             case TOGGLE -> STATE_WIDTH + CONTROL_GAP + SWITCH_WIDTH;
             case NUMBER -> STEP + CONTROL_GAP + NUMBER_FIELD + CONTROL_GAP + STEP
                     + (unit ? CONTROL_GAP + UNIT_WIDTH : 0);
-            case CHOICE -> CHOICE_WIDTH;
+            case CHOICE, CHOOSE -> CHOICE_WIDTH;
             case TEXT -> TEXT_WIDTH;
             case FIXED -> FIXED_WIDTH;
         };

@@ -40,9 +40,12 @@ import java.util.Optional;
  *                     nowhere but its file
  * @param unit         what a number of it counts, in English as a settings screen writes it after the number
  *                     ({@code "KB/s"}, {@code "ticks"}), or empty when it counts nothing nameable
+ * @param chooser      the chooser a settings screen opens to pick its value ({@code "jscore:style"}), registered on the
+ *                     client, or none when the screen's own control for its kind of value is enough
  */
 public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Optional<ConfigKeyRange<?>> range,
-                           Optional<List<String>> allowed, List<String> comment, String title, String unit) {
+                           Optional<List<String>> allowed, List<String> comment, String title, String unit,
+                           Optional<String> chooser) {
 
     public ConfigKey {
         Objects.requireNonNull(path, "path");
@@ -53,6 +56,7 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
         Objects.requireNonNull(comment, "comment");
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(unit, "unit");
+        Objects.requireNonNull(chooser, "chooser");
         if (path.isEmpty()) {
             throw DeclarationError.of(null, "a setting", "has no name",
                     "give it its sections and its name as a dotted path, as in \"media.download_speed\"");
@@ -107,25 +111,35 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
     /** A setting of any kind that has a codec, at a dotted path ({@code "section.name"}). */
     public static <T> ConfigKey<T> of(final String path, final Codec<T> codec, final T defaultValue) {
         return new ConfigKey<>(ConfigTree.path(path), codec, defaultValue, Optional.empty(), Optional.empty(),
-                List.of(), "", "");
+                List.of(), "", "", Optional.empty());
     }
 
     /** The same setting, a number held to {@code min} and {@code max}, both included. */
     public <N extends Number & Comparable<N>> ConfigKey<T> range(final N min, final N max) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.of(new ConfigKeyRange<>(min, max)),
-                Optional.empty(), this.comment, this.title, this.unit);
+                Optional.empty(), this.comment, this.title, this.unit, this.chooser);
     }
 
     /** The same setting, a text held to these words; any other falls back to the default. */
     public ConfigKey<T> allowing(final String... words) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.empty(),
-                Optional.of(List.of(words)), this.comment, this.title, this.unit);
+                Optional.of(List.of(words)), this.comment, this.title, this.unit, this.chooser);
     }
 
     /** The same setting, with these lines above it in the file; on a settings screen, they are its tooltip. */
     public ConfigKey<T> comment(final String... lines) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed,
-                Arrays.asList(lines), this.title, this.unit);
+                Arrays.asList(lines), this.title, this.unit, this.chooser);
+    }
+
+    /**
+     * The same setting, picked on a settings screen with the chooser {@code id} registered on the client: a screen of
+     * its own that shows what each value means (a style with its preview, an item with its picture) and hands the
+     * choice back.
+     */
+    public ConfigKey<T> choosing(final String id) {
+        return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
+                this.title, this.unit, Optional.of(id));
     }
 
     /**
@@ -134,7 +148,7 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
      */
     public ConfigKey<T> named(final String english) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
-                english, this.unit);
+                english, this.unit, this.chooser);
     }
 
     /**
@@ -143,7 +157,7 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
      */
     public ConfigKey<T> unit(final String english) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
-                this.title, english);
+                this.title, english, this.chooser);
     }
 
     /** Where it sits, written with dots: {@code "boot.show_boot_menu"}. */

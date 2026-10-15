@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests;
 
+import dev.jstech.core.client.gui.data.DataScreens;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.tests.clienttest.TestGuideClient;
@@ -15,7 +16,9 @@ import dev.jstech.tests.clienttest.computers.TestClientParts;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 /**
  * The test mod on a player's game: the connected panel drawn from five of the game's concrete colours, one a tile,
@@ -32,8 +35,12 @@ public final class JsTestsClient {
             ResourceLocation.withDefaultNamespace("block/lime_concrete"),
             ResourceLocation.withDefaultNamespace("block/white_concrete"));
 
-    public JsTestsClient() {
+    public JsTestsClient(final IEventBus modEventBus) {
         CoreModels.connected(TestBlocks.CONNECTED_PANEL, IJoinRule.sameBlock(), PANEL_TILES);
+        // The test machine's screen, declared in a file; its button counts its presses.
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event -> DataScreens.register(event,
+                TestScreens.MENU.get(), TestScreens.FILE, menu -> screen -> screen.onAction("press",
+                        TestScreens.PRESSED::incrementAndGet)));
         // The dial's renderer and the picture program's window, as another mod registers them.
         TestClientParts.register();
         // Two HUD elements in one corner, for the HUD kit's test.

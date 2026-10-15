@@ -1,0 +1,6 @@
+{
+  "name": "jscore.style.era.legacy",
+  "palette": "jscore:era/legacy",
+  "metrics": {"gap": 4, "padding": 6, "row_height": 11, "control_height": 14},
+  "finish": {"double_bevel": true}
+}

@@ -78,17 +78,17 @@ public final class Button extends UiComponent {
     public void render(final GuiGraphics g, final UiContext ctx) {
         final String text = label.get();
         if (labelScale == 1f && labelInsetRight == 0) {
-            ctx.skin().button(g, ctx.font(), x(), y(), width(), height(), text, hovered(ctx), pressed, primary);
+            ctx.skin().button(g, ctx.font(), x(), y(), width(), height(), text, hovered(ctx), pressed, primary,
+                    enabled());
         } else {
             // The skin draws the face; the label is centred on what the inset leaves of it, by hand.
-            ctx.skin().button(g, ctx.font(), x(), y(), width(), height(), "", hovered(ctx), pressed, primary);
-            final int tw = Math.round(ctx.font().width(text) * labelScale);
+            ctx.skin().button(g, ctx.font(), x(), y(), width(), height(), "", hovered(ctx), pressed, primary,
+                    enabled());
+            final int tw = Math.round(ctx.skin().textWidth(ctx.font(), text) * labelScale);
             final int th = Math.round(7 * labelScale);
-            Draw.textScaled(g, ctx.font(), text, x() + (width() - labelInsetRight - tw) / 2,
-                    y() + (height() - th) / 2 + (pressed ? 1 : 0), ctx.skin().text(), labelScale);
-        }
-        if (!enabled()) {
-            Draw.disabled(g, x(), y(), width(), height());
+            ctx.skin().drawText(g, ctx.font(), text, x() + (width() - labelInsetRight - tw) / 2,
+                    y() + (height() - th) / 2 + (pressed ? 1 : 0), enabled() ? ctx.skin().text() : ctx.skin().dim(),
+                    labelScale);
         }
     }
 

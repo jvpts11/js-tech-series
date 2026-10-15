@@ -27,6 +27,10 @@ catalogueImageIcon = "${mod_id}_icon.png"
 [[mixins]]
 config = "${mod_id}.mixins.json"
 
+# The access transformer: each line says why it is there.
+[[accessTransformers]]
+file = "META-INF/accesstransformer.cfg"
+
 [[dependencies.${mod_id}]]
 modId = "neoforge"
 type = "required"

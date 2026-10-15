@@ -17,6 +17,7 @@ import dev.jstech.core.client.audio.media.MediaClientEvents;
 import dev.jstech.core.client.audio.mixer.SoundMixerEntry;
 import dev.jstech.core.client.cable.CableClientEvents;
 import dev.jstech.core.client.cable.CableColours;
+import dev.jstech.core.client.config.ConfigChoosers;
 import dev.jstech.core.client.config.CoreConfigScreen;
 import dev.jstech.core.client.data.DataRegistryClient;
 import dev.jstech.core.client.developer.LiveReloadClient;
@@ -24,6 +25,10 @@ import dev.jstech.core.client.diagnostic.DiagnosticsClient;
 import dev.jstech.core.client.fluid.FluidsClient;
 import dev.jstech.core.client.font.CoreFontClient;
 import dev.jstech.core.client.gui.component.Grounds;
+import dev.jstech.core.client.gui.data.CoreElementBuilders;
+import dev.jstech.core.client.gui.data.ScreenFiles;
+import dev.jstech.core.client.gui.style.StyleChooser;
+import dev.jstech.core.client.gui.style.StyleLoader;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.hologram.HologramView;
 import dev.jstech.core.client.hud.HudElements;
@@ -40,6 +45,7 @@ import dev.jstech.core.client.network.TransferClient;
 import dev.jstech.core.client.palette.CorePaletteClient;
 import dev.jstech.core.client.state.ClientStateEvents;
 import dev.jstech.core.client.vehicle.VehicleControls;
+import dev.jstech.core.gui.style.StyleSettings;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -84,12 +90,17 @@ public final class JsCoreClient {
         MediaClientEvents.listen();
         MenuSwapCursor.listen();
         MotionClock.listen();
+        ScreenFiles.listen(modEventBus);
         SoundDirector.listen();
         SoundMixerEntry.listen();
+        StyleLoader.listen(modEventBus);
         TransferClient.listen();
         TubeFilter.listen(modEventBus);
         VehicleControls.listen(modEventBus);
         // In a development run, the mods' assets reloaded as they change.
         LiveReloadClient.listen();
+        // What draws each of the Core's kinds of screen component, and the chooser of the player's styles.
+        CoreElementBuilders.register();
+        ConfigChoosers.register(StyleSettings.CHOOSER, new StyleChooser());
     }
 }

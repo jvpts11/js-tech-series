@@ -1,0 +1,14 @@
+{
+  "name": "jscore.style.tritanopia",
+  "parent": "jscore:jstech",
+  "colours": {
+    "accent": "#FFFF6E6E",
+    "accent2": "#FFCC79A7",
+    "green": "#FF4DD2C8",
+    "amber": "#FFFF9EC8",
+    "red": "#FFFF4040",
+    "tab_label_on": "#FFFF6E6E",
+    "tooltip_edge": "#FFFF6E6E",
+    "link": "#FFCC79A7"
+  }
+}

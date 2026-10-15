@@ -22,6 +22,8 @@ public final class CoreLogs {
     public static final LogSystem DIAGNOSTICS = LogSystems.declare(JsCore.MODID, "diagnostics");
     /** Dimensions made while the game runs, and what each dimension does to those in it. */
     public static final LogSystem DIMENSIONS = LogSystems.declare(JsCore.MODID, "dimensions");
+    /** The screens of the mods: their files, their styles and their layout. */
+    public static final LogSystem INTERFACE = LogSystems.declare(JsCore.MODID, "interface");
     /** The manuals: their pages, scenes and places. */
     public static final LogSystem GUIDE = LogSystems.declare(JsCore.MODID, "guide");
     /** The programming languages and their registry. */

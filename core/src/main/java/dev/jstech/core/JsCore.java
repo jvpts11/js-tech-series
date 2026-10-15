@@ -42,6 +42,8 @@ import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.font.CoreFonts;
+import dev.jstech.core.gui.screen.CoreElements;
+import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideGifts;
 import dev.jstech.core.guide.GuideSounds;
@@ -53,6 +55,7 @@ import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.log.LogCommand;
+import dev.jstech.core.menu.MenuSync;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.persistence.NetworkRegistry;
@@ -145,6 +148,10 @@ public final class JsCore {
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
+        // The styles a player chose for the screens of every mod, read on their own game only.
+        ConfigFiles.register(StyleSettings.FILE, modEventBus, modContainer);
+        // The kinds of component a screen's file may hold, before any file is read.
+        CoreElements.declare();
         // What the Core keeps with a world: each dimension's data networks, and the ledger of its recordings.
         CoreStates.register(NetworkRegistry.NETWORKS);
         MediaLedgers.register();
@@ -190,8 +197,10 @@ public final class JsCore {
         RuntimeDimensions.listen();
         SeriesCommands.listen();
         StateNetwork.listen(modEventBus);
-        // The one payload every screen's call travels in, and the server's work away from the tick.
+        // The one payload every screen's call travels in, the one the menus' values travel in, and the server's work
+        // away from the tick.
         MenuCalls.listen(modEventBus);
+        MenuSync.listen(modEventBus);
         Tasks.listen();
         // In a development run, the mods' data reloaded as it changes.
         LiveReload.listen();

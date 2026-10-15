@@ -1,0 +1,43 @@
+{
+  "name": "jscore.style.high_contrast",
+  "parent": "jscore:jstech",
+  "colours": {
+    "outer": "#FFFFFFFF",
+    "screen": "#FF000000",
+    "rail": "#FF000000",
+    "panel": "#FF000000",
+    "line": "#FFFFFFFF",
+    "track": "#FF000000",
+    "slot_bg": "#FF000000",
+    "slot_edge": "#FFFFFFFF",
+    "accent": "#FFFFFF00",
+    "accent2": "#FF00FFFF",
+    "green": "#FF00FF00",
+    "amber": "#FFFFFF00",
+    "red": "#FFFF5050",
+    "text": "#FFFFFFFF",
+    "dim": "#FFE0E0E0",
+    "tab_on": "#FFFFFF00",
+    "tab_label_on": "#FF000000",
+    "hover": "#FF303030",
+    "bevel_light": "#00000000",
+    "bevel_dark": "#00000000",
+    "title": "#FFFFFFFF",
+    "button_text": "#FFFFFFFF",
+    "button_text_disabled": "#FFB0B0B0",
+    "field_text": "#FFFFFFFF",
+    "tooltip_ground": "#FF000000",
+    "tooltip_edge": "#FFFFFF00",
+    "selection": "#FFFFFF00",
+    "link": "#FF00FFFF"
+  },
+  "pieces": {
+    "button": {"kind": "flat", "fill": "panel", "edge": "text"},
+    "button_hover": {"kind": "flat", "fill": "hover", "edge": "accent"},
+    "button_primary": {"kind": "flat", "fill": "panel", "edge": "accent"},
+    "field": {"kind": "flat", "fill": "slot_bg", "edge": "text"},
+    "field_focused": {"kind": "flat", "fill": "slot_bg", "edge": "accent"},
+    "list_selected": {"kind": "flat", "fill": "panel", "edge": "accent"}
+  },
+  "metrics": {"gap": 5, "padding": 7, "row_height": 12, "control_height": 16}
+}

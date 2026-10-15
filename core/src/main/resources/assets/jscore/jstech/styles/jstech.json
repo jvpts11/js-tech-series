@@ -1,0 +1,15 @@
+{
+  "name": "jscore.style.jstech",
+  "palette": "jscore:era/standard",
+  "colours": {
+    "title": "#FFCDD6E2",
+    "button_text": "#FFCDD6E2",
+    "button_text_disabled": "#FF7D8A9C",
+    "field_text": "#FFCDD6E2",
+    "tooltip_ground": "#F00B0E13",
+    "tooltip_edge": "#FF39D6C4",
+    "selection": "#FF15212A",
+    "link": "#FF2AA7E0"
+  },
+  "metrics": {"gap": 4, "padding": 6, "row_height": 11, "control_height": 14, "small_scale": 0.75, "title_gap": 4}
+}
