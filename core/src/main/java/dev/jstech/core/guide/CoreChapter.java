@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.guide;
 
+import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
+import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.ModMaterial;
 import dev.jstech.core.material.RegisteredThing;
@@ -47,10 +49,13 @@ final class CoreChapter {
         GUIDE.page("shared_materials", materials).titled("Materials")
                 .icon(() -> MaterialItems.get(ModMaterial.IRON, MaterialForm.PLATE).get())
                 .coversAll(CoreChapter::materialItems)
-                .whatItIs("The metals the mods of the series share, in the forms machines make them into: dust, a"
-                        + " metal ground into powder, and plates, a metal pressed flat.")
+                .whatItIs("What the world is made of, which every mod of the series shares: the elements and their"
+                        + " isotopes, alloys, minerals, the exotic forms of matter, the common fuels and the generic"
+                        + " components. A material comes in forms: an ingot, a dust, a plate, a wire, a gear, an ore in"
+                        + " each rock, a liquid. Its tooltip gives its symbol and, with Shift held, more.")
                 .whatItIsFor("Every mod uses the same ones, so the iron plate one mod makes is the iron plate"
-                        + " another asks for. Later machines and parts are made from them.")
+                        + " another asks for. Only the forms some installed mod uses are in the game, and later"
+                        + " machines and parts are made from them.")
                 .figure(() -> MaterialItems.get(ModMaterial.IRON, MaterialForm.PLATE).get(), "Iron Plate")
                 .table("The materials made today")
                 .property("Iron Dust", "From iron ore, raw iron or an ingot, in a Macerator")
@@ -114,12 +119,17 @@ final class CoreChapter {
                 .register();
     }
 
-    /** Every thing the Core registered for the materials the installed mods use, in the order of the materials. */
+    /**
+     * Every thing the Core registered for the materials and the shared catalogue the installed mods use, in the order
+     * of the materials: their forms, their liquids' buckets, the components.
+     */
     private static List<ItemLike> materialItems() {
         final List<ItemLike> items = new ArrayList<>();
         for (final RegisteredThing thing : MaterialUses.registered()) {
             items.add(BuiltInRegistries.ITEM.get(thing.id()));
         }
+        items.addAll(MaterialLiquids.buckets());
+        items.addAll(CatalogueItems.items());
         return items;
     }
 }

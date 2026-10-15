@@ -10,6 +10,7 @@ package dev.jstech.core.config;
 import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.diagnostic.DiagnosticBalance;
+import dev.jstech.core.hazard.HazardBalance;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.material.NamingBalance;
 import dev.jstech.core.operation.OperationBalance;
@@ -40,6 +41,8 @@ public final class CoreConfigKeys {
     public static final String DIAGNOSTICS = "diagnostics";
     /** Naming the elements discovered beyond the known table. */
     public static final String ELEMENTS = "elements";
+    /** The world's hazards: radiation, pollution and the rest. */
+    public static final String HAZARDS = "hazards";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -234,6 +237,12 @@ public final class CoreConfigKeys {
             .comment("How many letters a name given to an element may have.")
             .named("Longest name").unit("letters").activeWhen(ELEMENTS_DISCOVERERS_NAME);
 
+    /** Whether minerals with uranium or thorium in them are naturally radioactive. */
+    public static final ConfigKey<Boolean> HAZARDS_NATURAL_RADIOACTIVITY = ConfigKey.flag(
+            HAZARDS + ".natural_radioactivity", true)
+            .comment("Whether every mineral with uranium or thorium in it is naturally radioactive, at a low rate.")
+            .named("Radioactive minerals");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -248,6 +257,7 @@ public final class CoreConfigKeys {
                     + "things, and how many of each thing one player may have.")
             .sectionComment(DIAGNOSTICS, "The watchdog, and what the server counts of what it sends each player.")
             .sectionComment(ELEMENTS, "Naming the elements discovered beyond the 118 known.")
+            .sectionComment(HAZARDS, "The world's hazards: which of them there are.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
@@ -255,6 +265,7 @@ public final class CoreConfigKeys {
             .sectionNamed(PROTECTION, "Protection")
             .sectionNamed(DIAGNOSTICS, "Diagnostics")
             .sectionNamed(ELEMENTS, "Elements")
+            .sectionNamed(HAZARDS, "Hazards")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -280,6 +291,7 @@ public final class CoreConfigKeys {
             .key(ELEMENTS_DISCOVERERS_NAME, NamingBalance::setDiscoverersName)
             .key(ELEMENTS_REQUIRE_IUM, NamingBalance::setRequireIum)
             .key(ELEMENTS_LONGEST_NAME, NamingBalance::setLongest)
+            .key(HAZARDS_NATURAL_RADIOACTIVITY, HazardBalance::setNaturalRadioactivity)
             .build();
 
     private CoreConfigKeys() {

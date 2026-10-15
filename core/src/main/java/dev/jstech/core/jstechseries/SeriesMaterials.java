@@ -45,5 +45,7 @@ public final class SeriesMaterials {
         Isotopes.declare();
         Superheavies.declare();
         ExoticMatter.declare();
+        SharedCatalogue.declare();
+        NaturalRadioactivity.declare();
     }
 }

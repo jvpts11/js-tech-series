@@ -10,6 +10,8 @@ package dev.jstech.core.datagen;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.jstech.core.material.CatalogueItems;
+import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
@@ -69,6 +71,11 @@ final class ContentCheckProvider implements DataProvider {
         // The things of the materials' uses are named in code and drawn, tagged and given drops as the game loads.
         final Set<ResourceLocation> madeAsTheGameLoads = new HashSet<>();
         MaterialUses.registered().forEach(thing -> madeAsTheGameLoads.add(thing.id()));
+        MaterialLiquids.registered().forEach(liquid -> {
+            madeAsTheGameLoads.add(liquid.id());
+            madeAsTheGameLoads.add(liquid.bucketId());
+        });
+        CatalogueItems.registered().forEach(entry -> madeAsTheGameLoads.add(entry.id()));
         for (final Map.Entry<ResourceKey<Block>, Block> entry : BuiltInRegistries.BLOCK.entrySet()) {
             final ResourceLocation id = entry.getKey().location();
             if (id.getNamespace().equals(modid) && !madeAsTheGameLoads.contains(id)) {

@@ -87,7 +87,7 @@ public final class MaterialUses {
 
     /**
      * Declares that the mod {@code modid} uses {@code material}'s ore in each of {@code rocks}, and so what the ore
-     * drops: its raw form, its gem, its crystal or its dust.
+     * drops: its raw form, its gem, its crystal or its dust; nothing but itself with Silk Touch for a liquid's ore.
      *
      * @throws DeclarationError when the material has no ore, no rock is named, or the game has already registered its
      *                          things
@@ -100,7 +100,7 @@ public final class MaterialUses {
         for (final HostRock rock : rocks) {
             add(new MaterialUse(modid, material, Forms.ORE, rock, true));
         }
-        add(new MaterialUse(modid, material, material.oreDrop(), null, true));
+        material.oreDrop().ifPresent(drop -> add(new MaterialUse(modid, material, drop, null, true)));
     }
 
     /** {@code material}'s item in {@code form}: the Core's, or the one another mod already has. */

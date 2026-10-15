@@ -24,6 +24,9 @@ import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.material.CatalogueItems;
+import dev.jstech.core.material.MaterialLiquid;
+import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.RegisteredThing;
 import dev.jstech.tests.JsTests;
@@ -103,6 +106,11 @@ public final class ContentGameTests {
                     blocks.add(thing.id());
                 }
             }
+            for (final MaterialLiquid liquid : MaterialLiquids.registered()) {
+                blocks.add(liquid.id());
+                items.add(liquid.bucketId());
+            }
+            CatalogueItems.registered().forEach(entry -> items.add(entry.id()));
             BuiltInRegistries.BLOCK.keySet().stream()
                     .filter(id -> id.getNamespace().equals(content.modid()) && !blocks.contains(id))
                     .forEach(id -> wrong.add("block " + id));

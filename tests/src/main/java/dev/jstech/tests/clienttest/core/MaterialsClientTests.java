@@ -10,7 +10,9 @@ package dev.jstech.tests.clienttest.core;
 import dev.jstech.core.client.material.MaterialTooltips;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.HostRocks;
+import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialThing;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.RegisteredThing;
@@ -42,6 +44,8 @@ public final class MaterialsClientTests {
 
     private static final int SETTLE = 4;
     private static final BlockPos WALL = new BlockPos(2, 3, 4);
+    /* In the ground before the wall, as the players stand at y 2. */
+    private static final BlockPos POOL = new BlockPos(3, 1, 6);
     private static final BlockPos VIEW = new BlockPos(5, 2, 9);
 
     private MaterialsClientTests() {
@@ -53,6 +57,8 @@ public final class MaterialsClientTests {
         for (final RegisteredThing thing : MaterialUses.registered()) {
             stacks.add(new ItemStack(BuiltInRegistries.ITEM.get(thing.id())));
         }
+        MaterialLiquids.buckets().forEach(bucket -> stacks.add(new ItemStack(bucket)));
+        CatalogueItems.items().forEach(item -> stacks.add(new ItemStack(item)));
         ctx.then(0, () -> {
                     final BakedModel missing = ctx.mc().getModelManager().getMissingModel();
                     final List<String> broken = new ArrayList<>();
@@ -74,14 +80,21 @@ public final class MaterialsClientTests {
                 MaterialUses.oreBlock(SeriesMaterials.TIN, HostRocks.DEEPSLATE).get(),
                 MaterialUses.oreBlock(SeriesMaterials.TIN, HostRocks.GRANITE).get(),
                 MaterialUses.oreBlock(SeriesMaterials.IRON, HostRocks.TUFF).get(), Blocks.IRON_ORE,
-                MaterialUses.block(SeriesMaterials.TIN, Forms.BLOCK).get());
+                MaterialUses.block(SeriesMaterials.TIN, Forms.BLOCK).get(),
+                MaterialUses.oreBlock(TestMaterials.TESTITE, HostRocks.GRANITE).get());
         ctx.thenBuild(0, world -> {
                     for (int i = 0; i < wall.size(); i++) {
                         world.setBlock(WALL.east(i), wall.get(i));
                     }
+                    // A pool of molten tin before the wall, sunk into the ground, which holds it in.
+                    for (int x = 0; x < 3; x++) {
+                        world.setBlock(POOL.east(x), MaterialLiquids.of(SeriesMaterials.TIN).orElseThrow()
+                                .fluid().defaultFluidState().createLegacyBlock());
+                    }
                 })
                 .thenTeleport(SETTLE, VIEW, Direction.NORTH)
-                .thenScreenshot(SETTLE * 2, "tin-in-stone-deepslate-granite-iron-in-tuff-and-the-games-own-a-block");
+                .thenScreenshot(SETTLE * 2, "tin-in-stone-deepslate-granite-iron-in-tuff-the-games-own-a-block"
+                        + "-a-radioactive-mineral-and-molten-tin");
     }
 
     @ClientTest(timeoutTicks = 200)

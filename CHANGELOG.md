@@ -171,6 +171,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The exotic forms of matter, a kind of their own, each in the state it calls for: metallic hydrogen,
   neutronium, quark-gluon plasma, strange matter, dark matter, Bose-Einstein condensate, negative-mass matter,
   degenerate matter, time crystals, photonic matter and computronium.
+- (Core) Minerals: a mineral knows its main element and its byproducts in fixed shares, the family that decides how it
+  is processed and the rocks its veins cross. Every element mined as such has a generic ore in `c:ores/<element>`.
+- (Core) Naturally radioactive minerals: every mineral with uranium or thorium in it is marked so in its tooltip, and a
+  world's setting turns that off; the dose comes with the Core's radiation. Any mod can give materials marks of its
+  own.
+- (Core) Liquids made from materials: a material's liquid exists only when a mod uses it, molten for a solid,
+  liquefied for a gas, at the temperature the mod says; it pours into the world, fills a bucket and is drawn in its
+  material's colour.
+- (Core) The shared catalogue: the common fuels (gasoline, kerosene, diesel) and the generic components (servomotor,
+  electric motor, LED, sensor, oscillator, antenna, magnetic head), each existing only when a mod uses it, in a
+  catalogue any mod adds to. A mod's simpler recipe for one carries a condition that, where J's Industrial is
+  installed, the mod's own server rule can close, making the industrial chain the only path.
 
 ### Changed
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

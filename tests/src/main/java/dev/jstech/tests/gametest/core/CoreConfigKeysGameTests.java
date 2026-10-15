@@ -51,7 +51,7 @@ public final class CoreConfigKeysGameTests {
                         "world.chunks_per_owner", "protection.team_damage", "protection.audit",
                         "protection.audit_entries", "protection.robots_per_player", "diagnostics.stall_millis",
                         "diagnostics.count_network", "diagnostics.warn_operators", "elements.discoverers_name",
-                        "elements.require_ium", "elements.longest_name"),
+                        "elements.require_ium", "elements.longest_name", "hazards.natural_radioactivity"),
                 CoreConfigKeys.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the settings declared");
         same(helper, "jstech-balance.toml", CoreConfigKeys.FILE.fileName(), "the file's name");
         helper.succeed();

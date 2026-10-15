@@ -236,7 +236,7 @@ public final class MaterialGameTests {
         }
         helper.assertTrue(SeriesMaterials.TIN.fits(Forms.WIRE) && !SeriesMaterials.TIN.fits(Forms.GEM)
                 && !SeriesMaterials.TIN.fits(Forms.WAFER), "a metal takes a wire, not a gem nor a wafer");
-        helper.assertTrue(SeriesMaterials.TIN.oreDrop() == Forms.RAW, "a metal's ore drops its raw form");
+        helper.assertTrue(SeriesMaterials.TIN.oreDrop().orElseThrow() == Forms.RAW, "a metal's ore drops its raw form");
         helper.succeed();
     }
 

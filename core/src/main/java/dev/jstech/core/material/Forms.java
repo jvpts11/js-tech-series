@@ -95,10 +95,10 @@ public final class Forms {
             .fits(MaterialKind.CRYSTAL).declare();
     public static final Form GEM = form("gem", Form.Shape.ITEM, "gems", GEM_NAME)
             .fits(MaterialKind.GEM).declare();
-    /* A mineral's ore, and an element's "X ore" (tin ore), whatever the element's kind. */
+    /* A mineral's ore, and an element's "X ore" (tin ore, mercury ore), whatever the element's kind. */
     public static final Form ORE = form("ore", Form.Shape.ORE, "ores", ORE_NAME)
             .fits(MaterialKind.MINERAL, MaterialKind.METAL, MaterialKind.GEM, MaterialKind.CRYSTAL,
-                    MaterialKind.NONMETAL_SOLID).declare();
+                    MaterialKind.NONMETAL_SOLID, MaterialKind.LIQUID).declare();
     public static final Form RAW = form("raw", Form.Shape.ITEM, "raw_materials", RAW_NAME)
             .fits(MaterialKind.METAL, MaterialKind.MINERAL).declare();
 

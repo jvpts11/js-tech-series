@@ -441,6 +441,52 @@ The series' own materials are in `SeriesMaterials`, which any mod uses as it use
   hydrogen, neutronium, quark-gluon plasma, strange matter, dark matter, Bose-Einstein condensate, negative-mass
   matter, degenerate matter, time crystals, photonic matter and computronium.
 
+### Minerals, their ores and their marks
+
+A mineral is what comes out of the ground (chalcopyrite, not copper), a material of the kind `MINERAL` that knows what
+it contains, its family and the rocks its veins cross:
+
+```java
+Materials.material(rl("chalcopyrite"), MaterialKind.MINERAL, CHALCOPYRITE_NAME).colour(0xC9A43A)
+        .mineral(MineralFamilies.SULFIDE, HostRocks.DEEPSLATE, HostRocks.GRANITE)
+        .contains(Elements.of(Element.COPPER), 0.6).contains(Elements.of(Element.SULFUR), 0.3).declare();
+```
+
+Its main element comes first, then its byproducts, each a share of what processing it yields, the shares adding up to
+the whole at most. Its ores are declared with `MaterialUses.ore(...)` as any material's, and drop its raw form. An
+element mined as such has a generic "X ore" too, in `c:ores/<element>` (`Elements.hasGenericOre(Element.TIN)`); the
+elements that come only as byproducts, the rare earths and those whose ores are their salts have none.
+
+A material's things can bear marks in their tooltips (`MaterialMarks.declare(id, text, which)`): every mineral with
+uranium or thorium in it is marked naturally radioactive, unless the world's setting `hazards.natural_radioactivity`
+turns that off; the dose it gives comes with the Core's radiation.
+
+### Liquids and the shared catalogue
+
+A material's liquid exists only when a mod uses it, at the temperature the mod says, since the pipes that carry it
+have to stand that (where mods differ, the hottest is kept):
+
+```java
+public static final Supplier<Fluid> MOLTEN_TIN = MaterialLiquids.use(MODID, SeriesMaterials.TIN, 505);
+```
+
+A liquid is itself (gasoline), molten for a solid (`jscore:molten_tin`, "Molten Tin") or liquefied for a gas
+(`jscore:liquid_oxygen`). It pours into the world, fills a bucket, is in the common tag of its name (`c:molten_tin`)
+and is drawn as the game's water in its material's colour.
+
+The shared catalogue (`SharedCatalogue`) holds what the series' mods share that is no element: the common fuels
+(gasoline, kerosene, diesel) and the generic components (servomotor, electric motor, LED, sensor, oscillator,
+antenna, magnetic head). A component exists only when a mod uses it, through the catalogue any mod adds to:
+
+```java
+public static final Supplier<Item> MY_LED = CatalogueItems.use(MODID, SharedCatalogue.LED);
+```
+
+Each mod that makes one gives its own recipe. A mod used without J's Industrial gives a simpler path; where J's
+Industrial is installed, the mod's own server rule, off by default, can make the industrial chain the only path. The
+simpler recipe carries the condition `{"type": "jscore:simple_path", "mod": "mymod"}`, and the mod declares its rule
+with `SimplePath.rule(MODID, () -> MySettings.INDUSTRIAL_CHAIN_ONLY.get())`.
+
 ### Naming what is discovered
 
 On a server, the player who first discovers an element beyond the known table gives it its name and its symbol, and

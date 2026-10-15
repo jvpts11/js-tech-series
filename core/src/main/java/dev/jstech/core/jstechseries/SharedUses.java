@@ -7,6 +7,9 @@
  */
 package dev.jstech.core.jstechseries;
 
+import dev.jstech.core.material.CatalogueItems;
+import dev.jstech.core.material.MaterialLiquid;
+import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,7 +48,8 @@ public final class SharedUses {
      * ({@link MaterialUses}). Asked once the game's registries are filled.
      */
     public static boolean used(final Item item) {
-        if (MaterialUses.shared(item)) {
+        if (MaterialUses.shared(item) || item instanceof CatalogueItems.CatalogueItem
+                || item instanceof MaterialLiquid.Bucket) {
             return true;
         }
         for (final Use use : USES) {
@@ -77,6 +81,8 @@ public final class SharedUses {
         final Set<String> out = new LinkedHashSet<>();
         USES.forEach(use -> out.add(use.modid()));
         out.addAll(MaterialUses.users());
+        out.addAll(MaterialLiquids.users());
+        out.addAll(CatalogueItems.users());
         return out;
     }
 

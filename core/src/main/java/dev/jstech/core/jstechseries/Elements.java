@@ -17,8 +17,10 @@ import dev.jstech.core.material.MatterState;
 import dev.jstech.core.material.OreLook;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -31,6 +33,17 @@ import net.minecraft.world.level.block.Blocks;
 public final class Elements {
 
     private static final Map<Element, Material> MATERIALS = new EnumMap<>(Element.class);
+    /*
+     * The elements mined as such, each with a generic "X ore" besides its real minerals: the game's own for iron, copper
+     * and gold, the Core's for the rest. Those that come only as byproducts, the rare earths, and those whose ores are
+     * their salts have none.
+     */
+    private static final Set<Element> GENERIC_ORES = EnumSet.of(Element.IRON, Element.COPPER, Element.GOLD,
+            Element.SILVER, Element.TIN, Element.LEAD, Element.ZINC, Element.ALUMINIUM, Element.NICKEL, Element.COBALT,
+            Element.TITANIUM, Element.CHROMIUM, Element.MANGANESE, Element.TUNGSTEN, Element.MOLYBDENUM,
+            Element.VANADIUM, Element.LITHIUM, Element.BERYLLIUM, Element.BORON, Element.ARSENIC, Element.NIOBIUM,
+            Element.TANTALUM, Element.ANTIMONY, Element.BISMUTH, Element.MERCURY, Element.URANIUM, Element.THORIUM,
+            Element.ZIRCONIUM, Element.PLATINUM, Element.MAGNESIUM, Element.SULFUR);
 
     static {
         for (final Element element : Element.values()) {
@@ -54,6 +67,14 @@ public final class Elements {
     /** Every element's material, by element. */
     public static Map<Element, Material> all() {
         return Collections.unmodifiableMap(MATERIALS);
+    }
+
+    /**
+     * Whether {@code element} is mined as such and so has a generic "X ore", {@code c:ores/<element>}, besides its real
+     * minerals: the game's own for iron, copper and gold, the Core's, once a mod uses it, for the others.
+     */
+    public static boolean hasGenericOre(final Element element) {
+        return GENERIC_ORES.contains(element);
     }
 
     /** The element {@code material} is, or none for a material that is no element of the known table. */

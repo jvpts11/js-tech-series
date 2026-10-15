@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.material;
 
+import dev.jstech.core.material.MaterialMarks;
 import dev.jstech.core.material.MaterialProperty;
 import dev.jstech.core.material.MaterialThing;
 import dev.jstech.core.material.MaterialValues;
@@ -25,8 +26,8 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
  * The lines a material's things show in their tooltips, the game's own iron ingot included: each property the material
- * has a value for, those shown always, and with Shift held those shown only then. When some line waits for Shift, the
- * tooltip says so.
+ * has a value for, those shown always, and with Shift held those shown only then; then the marks it bears
+ * ({@link MaterialMarks}). When some line waits for Shift, the tooltip says so.
  */
 @TextHolder
 public final class MaterialTooltips {
@@ -54,6 +55,9 @@ public final class MaterialTooltips {
             }
             out.add(GameText.component(LINE.with(line.property().name().text(), line.value()))
                     .withStyle(ChatFormatting.GRAY));
+        }
+        for (final MaterialMarks.Mark mark : MaterialMarks.of(thing.material())) {
+            out.add(GameText.component(mark.text()).withStyle(ChatFormatting.YELLOW));
         }
         if (waiting) {
             out.add(GameText.component(MORE).withStyle(ChatFormatting.DARK_GRAY));

@@ -82,8 +82,16 @@ public final class MaterialData implements IRuntimeFiles {
             out.put("data/" + thing.id().getNamespace() + "/loot_table/blocks/" + thing.id().getPath() + ".json",
                     json(loot));
         }
+        // A liquid is in the common tag of its name, c:molten_iron, its flowing fluid with it.
+        final Map<String, Set<String>> fluidTags = new LinkedHashMap<>();
+        for (final MaterialLiquid liquid : MaterialLiquids.registered()) {
+            final String tag = "c:" + liquid.id().getPath();
+            add(fluidTags, tag, liquid.id().toString());
+            add(fluidTags, tag, liquid.id().withPrefix("flowing_").toString());
+        }
         itemTags.forEach((tag, values) -> out.put(tagPath("item", tag), json(tag(values))));
         blockTags.forEach((tag, values) -> out.put(tagPath("block", tag), json(tag(values))));
+        fluidTags.forEach((tag, values) -> out.put(tagPath("fluid", tag), json(tag(values))));
         return out;
     }
 
@@ -113,11 +121,12 @@ public final class MaterialData implements IRuntimeFiles {
         return lootTable(thing, entry, conditions);
     }
 
-    /* As the game's own ores: the ore itself with Silk Touch, otherwise what it drops, more with Fortune. */
+    /*
+     * As the game's own ores: the ore itself with Silk Touch, otherwise what it drops, more with Fortune. A liquid's ore
+     * drops nothing but itself: the mod that makes it spills the liquid.
+     */
     private static JsonObject oreLoot(final RegisteredThing thing) {
         final Material material = thing.thing().material();
-        final ResourceLocation dropped = BuiltInRegistries.ITEM.getKey(MaterialUses.item(material,
-                material.oreDrop()).get());
         final JsonObject silk = item(thing.id().toString());
         final JsonArray silkConditions = new JsonArray();
         final JsonObject matchTool = condition("minecraft:match_tool");
@@ -135,6 +144,11 @@ public final class MaterialData implements IRuntimeFiles {
         matchTool.add("predicate", predicate);
         silkConditions.add(matchTool);
         silk.add("conditions", silkConditions);
+        if (material.oreDrop().isEmpty()) {
+            return lootTable(thing, silk, new JsonArray());
+        }
+        final ResourceLocation dropped = BuiltInRegistries.ITEM.getKey(MaterialUses.item(material,
+                material.oreDrop().get()).get());
         final JsonObject drop = item(dropped.toString());
         final JsonArray functions = new JsonArray();
         final JsonObject fortune = new JsonObject();

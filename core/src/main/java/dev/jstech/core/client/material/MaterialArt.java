@@ -10,6 +10,7 @@ package dev.jstech.core.client.material;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.Form;
 import dev.jstech.core.material.FormArt;
 import dev.jstech.core.material.Forms;
@@ -17,6 +18,8 @@ import dev.jstech.core.material.HostRock;
 import dev.jstech.core.material.HostRocks;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialKind;
+import dev.jstech.core.material.MaterialLiquid;
+import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.OreLook;
 import dev.jstech.core.material.RegisteredThing;
@@ -84,7 +87,44 @@ public final class MaterialArt implements IRuntimeFiles {
                 out.put(assets + "textures/item/" + path + ".png", () -> png(itemTexture(thing, read)));
             }
         }
+        for (final MaterialLiquid liquid : MaterialLiquids.registered()) {
+            final ResourceLocation id = liquid.id();
+            final String assets = "assets/" + id.getNamespace() + "/";
+            out.put(assets + "blockstates/" + id.getPath() + ".json", json(blockState(id)));
+            out.put(assets + "models/block/" + id.getPath() + ".json", json(particleOnly()));
+            out.put(assets + "models/item/" + liquid.bucketId().getPath() + ".json", json(bucket(id)));
+        }
+        for (final CatalogueItems.Entry entry : CatalogueItems.registered()) {
+            out.put("assets/" + entry.id().getNamespace() + "/models/item/" + entry.id().getPath() + ".json",
+                    json(generated(entry.art())));
+        }
         return out;
+    }
+
+    /* A liquid block shows only its fluid, which the game draws; the model gives the particles of breaking it. */
+    private static JsonObject particleOnly() {
+        final JsonObject textures = new JsonObject();
+        textures.addProperty("particle", "minecraft:block/water_still");
+        final JsonObject model = new JsonObject();
+        model.add("textures", textures);
+        return model;
+    }
+
+    /* A bucket with the fluid drawn in it by the game's loader of fluid containers, in the fluid's own tint. */
+    private static JsonObject bucket(final ResourceLocation fluid) {
+        final JsonObject model = parent("neoforge:item/bucket");
+        model.addProperty("loader", "neoforge:fluid_container");
+        model.addProperty("fluid", fluid.toString());
+        model.addProperty("apply_tint", true);
+        return model;
+    }
+
+    private static JsonObject generated(final ResourceLocation texture) {
+        final JsonObject textures = new JsonObject();
+        textures.addProperty("layer0", texture.toString());
+        final JsonObject model = parent("minecraft:item/generated");
+        model.add("textures", textures);
+        return model;
     }
 
     private static int[] itemTexture(final RegisteredThing thing,

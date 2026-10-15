@@ -11,9 +11,12 @@ import dev.jstech.core.config.ConfigColours;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.DeclarationError;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -48,6 +51,7 @@ public final class Material {
     private final @Nullable Isotope isotope;
     private final boolean nameable;
     private final @Nullable IMaterialNamer namer;
+    private final @Nullable Mineral mineral;
 
     /* A material that gives no colour is drawn in a plain grey. */
     private static final int GREY = 0x9A9A9A;
@@ -70,6 +74,8 @@ public final class Material {
         this.isotope = builder.isotope;
         this.nameable = builder.nameable;
         this.namer = builder.namer;
+        this.mineral = builder.family == null ? null
+                : new Mineral(builder.family, builder.contents, builder.rocks);
     }
 
     public ResourceLocation id() {
@@ -195,15 +201,21 @@ public final class Material {
 
     /**
      * The form its ores drop: its raw form for a metal or a mineral, the gem for a gem, the crystal for a crystal, the
-     * dust for any other solid.
+     * dust for any other solid; none for a liquid, whose ore spills it (native mercury), which its mod sees to.
      */
-    public Form oreDrop() {
+    public Optional<Form> oreDrop() {
         return switch (this.kind) {
-            case GEM -> Forms.GEM;
-            case CRYSTAL -> Forms.CRYSTAL;
-            case NONMETAL_SOLID -> Forms.DUST;
-            default -> Forms.RAW;
+            case GEM -> Optional.of(Forms.GEM);
+            case CRYSTAL -> Optional.of(Forms.CRYSTAL);
+            case NONMETAL_SOLID -> Optional.of(Forms.DUST);
+            case METAL, MINERAL -> Optional.of(Forms.RAW);
+            default -> Optional.empty();
         };
+    }
+
+    /** What it contains and where it lies, for a mineral. */
+    public Optional<Mineral> mineral() {
+        return Optional.ofNullable(this.mineral);
     }
 
     /** The element it is an isotope of, with its mass number, for an isotope. */
@@ -252,6 +264,9 @@ public final class Material {
         private @Nullable Isotope isotope;
         private boolean nameable;
         private @Nullable IMaterialNamer namer;
+        private @Nullable MineralFamily family;
+        private final List<Mineral.Content> contents = new ArrayList<>();
+        private final Set<HostRock> rocks = new LinkedHashSet<>();
 
         Builder(final ResourceLocation id, final MaterialKind kind, final Text name, @Nullable final TextKey nameKey) {
             this.id = Objects.requireNonNull(id, "id");
@@ -343,6 +358,22 @@ public final class Material {
             return this;
         }
 
+        /** A mineral of {@code family}, whose veins can cross {@code veinsCross}. */
+        public Builder mineral(final MineralFamily of, final HostRock... veinsCross) {
+            this.family = Objects.requireNonNull(of, "of");
+            this.rocks.addAll(List.of(veinsCross));
+            return this;
+        }
+
+        /**
+         * What the mineral contains, in the order declared, its main element first: {@code material}, in a share of
+         * what processing it yields.
+         */
+        public Builder contains(final Material material, final double share) {
+            this.contents.add(new Mineral.Content(material, share));
+            return this;
+        }
+
         /**
          * Declares the material.
          *
@@ -362,7 +393,31 @@ public final class Material {
                 throw DeclarationError.of(this.id.getNamespace(), "the isotope " + this.id,
                         "has the mass number " + this.isotope.massNumber(), "give it its protons and neutrons");
             }
+            checkMineral();
             return Materials.declare(new Material(this));
+        }
+
+        private void checkMineral() {
+            if (this.family == null && this.contents.isEmpty()) {
+                return;
+            }
+            if (this.kind != MaterialKind.MINERAL || this.family == null) {
+                throw DeclarationError.of(this.id.getNamespace(), "the material " + this.id,
+                        "says what a mineral contains, but is no mineral of a family",
+                        "declare it of the kind MINERAL with mineral(family, rocks...)");
+            }
+            final double[] shares = new double[this.contents.size()];
+            for (int i = 0; i < shares.length; i++) {
+                shares[i] = this.contents.get(i).share();
+            }
+            MineralShares.problem(shares).ifPresent(problem -> {
+                throw DeclarationError.of(this.id.getNamespace(), "the mineral " + this.id, switch (problem) {
+                    case NOTHING -> "contains nothing";
+                    case OUTSIDE_THE_WHOLE -> "has a share that is not between nothing and the whole";
+                    case MORE_THAN_THE_WHOLE -> "has shares adding up to more than the whole";
+                    case BYPRODUCT_OVER_MAIN -> "has a byproduct with a greater share than its main element";
+                }, "give its main element first, then its byproducts, adding up to the whole at most");
+            });
         }
     }
 }
