@@ -9,6 +9,7 @@ package dev.jstech.core.config;
 
 import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
+import dev.jstech.core.diagnostic.DiagnosticBalance;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.protection.ProtectionBalance;
@@ -34,6 +35,8 @@ public final class CoreConfigKeys {
     public static final String WORLD = "world";
     /** Who may hurt whom, the audit log, and how many of each thing one player may have. */
     public static final String PROTECTION = "protection";
+    /** The watchdog, and what the server counts of what it sends. */
+    public static final String DIAGNOSTICS = "diagnostics";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -50,6 +53,8 @@ public final class CoreConfigKeys {
     private static final int MIN_AUDIT_ENTRIES = 100;
     private static final int MAX_AUDIT_ENTRIES = 1_000_000;
     private static final int MAX_ROBOTS_PER_PLAYER = 1024;
+    private static final int MIN_STALL_MILLIS = 50;
+    private static final int MAX_STALL_MILLIS = 60_000;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
@@ -185,6 +190,26 @@ public final class CoreConfigKeys {
             .comment("How many robots one player may have at once; 0 lets nobody have any.")
             .named("Robots per player").unit("robots");
 
+    /** How long a section of the series' work may run before the watchdog writes it down, in milliseconds. */
+    public static final ConfigKey<Integer> DIAGNOSTICS_STALL_MILLIS = ConfigKey.whole(
+            DIAGNOSTICS + ".stall_millis", DiagnosticBalance.DEFAULT_STALL_MILLIS)
+            .range(MIN_STALL_MILLIS, MAX_STALL_MILLIS)
+            .comment("How long one piece of a mod's work may run before the watchdog writes down what it was doing, "
+                    + "in milliseconds.")
+            .named("Stall after").unit("ms");
+
+    /** Whether what the server sends each player is counted. */
+    public static final ConfigKey<Boolean> DIAGNOSTICS_COUNT_NETWORK = ConfigKey.flag(
+            DIAGNOSTICS + ".count_network", true)
+            .comment("Whether what the server sends each player is counted, for /jstech bandwidth.")
+            .named("Count network use");
+
+    /** Whether operators are told in chat when a part of the series stalls or slows itself. */
+    public static final ConfigKey<Boolean> DIAGNOSTICS_WARN_OPERATORS = ConfigKey.flag(
+            DIAGNOSTICS + ".warn_operators", true)
+            .comment("Whether operators are told in chat when a piece of a mod's work stalls or slows itself.")
+            .named("Tell operators of stalls");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -197,11 +222,13 @@ public final class CoreConfigKeys {
             .sectionComment(WORLD, "What machines may do to the world: how many chunks an owner keeps loaded.")
             .sectionComment(PROTECTION, "Who may hurt whom, what is written down of what players do to others' "
                     + "things, and how many of each thing one player may have.")
+            .sectionComment(DIAGNOSTICS, "The watchdog, and what the server counts of what it sends each player.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
             .sectionNamed(WORLD, "World")
             .sectionNamed(PROTECTION, "Protection")
+            .sectionNamed(DIAGNOSTICS, "Diagnostics")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -221,6 +248,9 @@ public final class CoreConfigKeys {
             .key(PROTECTION_AUDIT, ProtectionBalance::setAudit)
             .key(PROTECTION_AUDIT_ENTRIES, ProtectionBalance::setAuditEntries)
             .key(PROTECTION_ROBOTS_PER_PLAYER, ProtectionBalance::setRobotsPerPlayer)
+            .key(DIAGNOSTICS_STALL_MILLIS, DiagnosticBalance::setStallMillis)
+            .key(DIAGNOSTICS_COUNT_NETWORK, DiagnosticBalance::setCountNetwork)
+            .key(DIAGNOSTICS_WARN_OPERATORS, DiagnosticBalance::setWarnOperators)
             .build();
 
     private CoreConfigKeys() {

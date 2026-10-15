@@ -65,6 +65,7 @@ one, the operator level each permission was declared with applies.
 | `jscore.config.edit` | operators (2) | Change a server's settings from the settings screen. |
 | `jscore.multiblock.build` | every player | Build multiblock structures. |
 | `jscore.limits.bypass` | operators (2) | Go past the limits each player has. |
+| `jscore.diagnostics.warnings` | operators (2) | Be told in chat when a part of the series stalls or slows itself ([Diagnostics](DIAGNOSTICS.md)). |
 
 A mod declares its own the same way, from its constructor, and they are written out with the Core's:
 

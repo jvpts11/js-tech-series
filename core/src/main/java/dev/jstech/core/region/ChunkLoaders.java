@@ -152,6 +152,17 @@ public final class ChunkLoaders {
         return count;
     }
 
+    /** How many chunks each owner keeps loaded, across every dimension; an owner who keeps none is not in it. */
+    public static Map<UUID, Integer> loadedPerOwner(final MinecraftServer server) {
+        final Map<UUID, Integer> out = new LinkedHashMap<>();
+        for (final ServerLevel level : server.getAllLevels()) {
+            for (final Source source : ledger(level).sources.values()) {
+                out.merge(source.owner, source.chunks.size(), Integer::sum);
+            }
+        }
+        return out;
+    }
+
     /** The chunks the block at {@code source} keeps loaded. */
     public static Set<ChunkPos> loadedFrom(final ServerLevel level, final BlockPos source) {
         final Source held = ledger(level).sources.get(source);

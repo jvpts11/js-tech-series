@@ -219,6 +219,9 @@ The Core's server settings are in `jstech-balance.toml`, in each world's `server
 | `protection.audit` | false | Whether who used, changed or broke what others own is written down. |
 | `protection.audit_entries` | 10000 | How many entries the audit log keeps (100 to 1,000,000). |
 | `protection.robots_per_player` | 16 | How many robots one player may have at once (0 to 1,024). |
+| `diagnostics.stall_millis` | 1000 | How long a section of a mod's work may run before the watchdog writes down what it was doing, in milliseconds (50 to 60,000) ([Diagnostics](DIAGNOSTICS.md#the-watchdog)). |
+| `diagnostics.count_network` | true | Whether what the server sends each player is counted, for `/jstech bandwidth`. |
+| `diagnostics.warn_operators` | true | Whether operators are told in chat when a section stalls or slows itself. |
 
 ## What can go wrong
 

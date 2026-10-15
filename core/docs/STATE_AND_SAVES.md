@@ -141,6 +141,9 @@ Diagnostics.record(rl("kiln_tick"), start);
 The last 100 timings of each section are kept, and the slowest on average show in the right column of the F3
 screen. `DiagnosticsClient.panel(title, lines)` adds a panel of your own lines there.
 
+A system's regular work is better declared as a `Section`, which is timed here by itself and is also named in
+profilers, watched for stalls and kept to a budget: see [Diagnostics](DIAGNOSTICS.md).
+
 ## The Core's event bus
 
 *Added 2026-06-04.*

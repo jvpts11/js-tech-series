@@ -111,6 +111,22 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and `/jstech audit` reads it, of everything, of one player or of one place.
 - (Core) Damage between players follows the server's PvP rule, the claim the victim stands in, and the teams:
   teammates do not hurt each other unless the server lets them, and a machine or robot hurts as its owner would.
+- (Core) Sections of work: a mod declares a named section and runs its work through it. The section is timed for the
+  F3 screen, runs in a frame of its own name, so Spark and any profiler that samples the threads show it by name,
+  and is watched: a run that goes on too long is written to its system's log with the thread's stack, the first time,
+  and the operators are told. A section with a budget slows itself while it takes more than its budget a tick, to one
+  tick in two, four and so on, says so, and speeds back up once well within it. The energy and fluid grids and the
+  results of work away from the tick are sections.
+- (Core) Network use: what the server sends each player is counted by kind, by mod and by the block whose updates took
+  it, and `/jstech bandwidth` shows the last minute for everyone or one player, with a graph and the biggest senders.
+- (Core) What weighs: `/jstech cost` measures what the series' blocks cost the server for some seconds and lists the
+  worst places with their owners, and the cost of each kind; nothing is measured between measures.
+- (Core) `/jstech health`: the state of the series' systems and their warnings (the ticks, sections slowed or stalled,
+  network use, work away from the tick, each dimension's networks and grids, the chunks each owner keeps loaded, the
+  protections, the audit log, the robots), each mod adding its part.
+- (Core) Crash reports and a diagnostic file: a crash report has a section of the Core with what was running, what was
+  slowed or stalled and the state of the systems, and `/jstech diagnostics` writes the mods, the settings, the
+  timings, the sections, the health, the network use and the log's levels to a file to attach to a bug report.
 
 ### Changed
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

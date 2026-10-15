@@ -27,6 +27,12 @@ import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.datagen.JsCoreDataGenerators;
 import dev.jstech.core.developer.LiveReload;
+import dev.jstech.core.diagnostic.Bandwidth;
+import dev.jstech.core.diagnostic.CoreHealth;
+import dev.jstech.core.diagnostic.CostMap;
+import dev.jstech.core.diagnostic.DiagnosticCommands;
+import dev.jstech.core.diagnostic.DiagnosticReports;
+import dev.jstech.core.diagnostic.Sections;
 import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.RuntimeDimensions;
@@ -171,12 +177,16 @@ public final class JsCore {
         // The manuals each player was handed as they first joined, so each is handed once.
         GuideGifts.register();
         CoreTriggers.register(modEventBus);
-        // The series' commands under /jstech: the Core's own, the recordings' upkeep, and the log's levels.
+        // The series' commands under /jstech: the Core's own, the recordings' upkeep, the log's levels, and what
+        // the server's administrators read of the series' health and cost.
         CoreCommands.declare();
         ConfigCommands.declare();
         ProtectionCommands.declare();
         MediaCommand.declare();
         LogCommand.declare();
+        DiagnosticCommands.declare();
+        // The Core's part of /jstech health, before any mod adds its own.
+        CoreHealth.declare();
         // The multiblock patterns of every mod, read from data and declared in code.
         MultiblockPatterns.register();
         // What each dimension is like to stand in, read from data.
@@ -189,6 +199,7 @@ public final class JsCore {
         // rather than found by a scan for annotations, so what runs is what this list says.
         Advancements.listen();
         AudioNetwork.listen(modEventBus);
+        Bandwidth.listen();
         BigPayloads.listen(modEventBus);
         CableBreaking.listen();
         ClientPayloads.listen();
@@ -198,7 +209,9 @@ public final class JsCore {
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);
         CoreStates.listen();
+        CostMap.listen();
         DataRegistries.listen(modEventBus);
+        DiagnosticReports.listen();
         DimensionEffects.listen();
         FieldCapabilities.listen(modEventBus);
         FluidGrids.listen();
@@ -211,6 +224,7 @@ public final class JsCore {
         OwnedProtection.listen();
         Protection.listen();
         RuntimeDimensions.listen();
+        Sections.listen();
         SeriesCommands.listen();
         StateNetwork.listen(modEventBus);
         // The one payload every screen's call travels in, the one the menus' values travel in, and the server's work

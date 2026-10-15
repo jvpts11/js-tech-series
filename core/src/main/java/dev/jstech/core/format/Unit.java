@@ -14,7 +14,10 @@ public enum Unit {
 
     MB(" MB"),
 
-    IT_PER_TICK(" it/t");
+    IT_PER_TICK(" it/t"),
+
+    /** Bytes a second, as what the server sends over the network is counted: {@code 12.4KB/s}. */
+    BYTES_PER_SECOND("B/s");
 
     private final String suffix;
 

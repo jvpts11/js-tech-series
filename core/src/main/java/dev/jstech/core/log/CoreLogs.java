@@ -18,10 +18,14 @@ public final class CoreLogs {
     public static final LogSystem CONFIG = LogSystems.declare(JsCore.MODID, "config");
     /** The tools for those who make mods: data and assets reloaded as they change. */
     public static final LogSystem DEVELOPER = LogSystems.declare(JsCore.MODID, "developer");
-    /** The debug screen's panels. */
+    /** The debug screen's panels, the watchdog, the cost of the series' work and what it sends over the network. */
     public static final LogSystem DIAGNOSTICS = LogSystems.declare(JsCore.MODID, "diagnostics");
     /** Dimensions made while the game runs, and what each dimension does to those in it. */
     public static final LogSystem DIMENSIONS = LogSystems.declare(JsCore.MODID, "dimensions");
+    /** The energy grid of each dimension, moving energy through the wires. */
+    public static final LogSystem ENERGY = LogSystems.declare(JsCore.MODID, "energy");
+    /** The fluid grid of each dimension, moving fluids through the pipes. */
+    public static final LogSystem FLUIDS = LogSystems.declare(JsCore.MODID, "fluids");
     /** The screens of the mods: their files, their styles and their layout. */
     public static final LogSystem INTERFACE = LogSystems.declare(JsCore.MODID, "interface");
     /** The manuals: their pages, scenes and places. */

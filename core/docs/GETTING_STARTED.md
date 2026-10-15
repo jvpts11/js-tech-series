@@ -233,6 +233,7 @@ data.server(new MyRecipeProvider(data.output(), data.lookup()));
 | [State and saves](STATE_AND_SAVES.md) | Saving, versions of what is saved, data packs, schedules, time and diagnostics. |
 | [Ownership](OWNERSHIP.md) | Owners, access and teams. |
 | [Protection](PROTECTION.md) | Claims, permissions, limits, the audit log and damage between players. |
+| [Diagnostics](DIAGNOSTICS.md) | Sections of work, profilers, the watchdog, budgets, network use, cost, `/jstech health`, crash reports. |
 | [Progression](PROGRESSION.md) | Eras, tiers, progression steps and advancements. |
 | [Commands](COMMANDS.md) | Commands under `/jstech`. |
 | [Entities](ENTITIES.md) | Entities, vehicles, robots, projectiles and what a player wears. |

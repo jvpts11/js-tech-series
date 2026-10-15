@@ -9,11 +9,12 @@ package dev.jstech.core.energy;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableParts;
-import dev.jstech.core.diagnostic.Diagnostics;
+import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.energy.internal.EnergyNetwork;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.log.CoreLogs;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,10 +48,17 @@ public final class LevelEnergy {
 
     /** What the debug screen calls the time the energy grid takes to move a tick's energy. */
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "energy_grid");
+    /** The work of moving a tick's energy, timed, named in profilers and watched for stalls. */
+    public static final Section SECTION = Section.builder(TIMING, CoreLogs.ENERGY).declare();
 
     /** What each connected part of the grid moved in the last tick. */
     public List<EnergyDistributionResult> lastTick() {
         return this.lastTick;
+    }
+
+    /** How many connected parts the grid is in. */
+    public int partCount() {
+        return this.parts.size();
     }
 
     /** What the part of the grid the wire numbered {@code wire} is in moved in the last tick; empty for none. */
@@ -74,18 +82,21 @@ public final class LevelEnergy {
             this.lastTick = List.of();
             return;
         }
+        SECTION.run(() -> move(level, grid));
+    }
+
+    /* The parts worked out again when the grid changed, and the tick's energy shared out through each. */
+    private void move(final ServerLevel level, final Grid grid) {
         if (grid.version() != this.builtVersion || this.taps != this.builtTaps) {
             build(level, grid);
             this.builtVersion = grid.version();
             this.builtTaps = this.taps;
         }
-        final long start = System.nanoTime();
         final List<EnergyDistributionResult> results = new ArrayList<>(this.parts.size());
         for (final EnergyNetwork part : this.parts) {
             results.add(part.tickDistribute());
         }
         this.lastTick = results;
-        Diagnostics.record(TIMING, start);
     }
 
     /*

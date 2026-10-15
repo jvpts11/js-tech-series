@@ -28,9 +28,10 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The permissions the series asks the game's permission system about: one for each command, for opening, using,
- * setting up and breaking what others own, for changing a server's settings from afar, for building multiblocks and
- * for going past the limits each player has. A server's permission mod (LuckPerms, FTB Ranks) grants or denies each;
- * without one, the operator level each was declared with decides. {@code /jstech dump permissions} writes them all out.
+ * setting up and breaking what others own, for changing a server's settings from afar, for building multiblocks, for
+ * going past the limits each player has, and for being told when a part of the series stalls or slows itself. A
+ * server's permission mod (LuckPerms, FTB Ranks) grants or denies each; without one, the operator level each was
+ * declared with decides. {@code /jstech dump permissions} writes them all out.
  */
 @TextHolder
 public final class CorePermissions {
@@ -49,6 +50,8 @@ public final class CorePermissions {
             "Build multiblock structures");
     public static final TextKey PASS_LIMITS_TEXT = TextKey.of("jscore.permission.pass_limits",
             "Go past the limits each player has: robots, moving structures, large edits");
+    public static final TextKey DIAGNOSTIC_WARNINGS_TEXT = TextKey.of("jscore.permission.diagnostic_warnings",
+            "Be told in chat when a part of the series stalls or slows itself");
     /* The command's name. */
     public static final TextKey COMMAND_TEXT = TextKey.of("jscore.permission.command", "Run /jstech %s");
 
@@ -80,6 +83,9 @@ public final class CorePermissions {
     /** Going past the limits each player has. */
     public static final PermissionNode<Boolean> PASS_LIMITS = declare(JsCore.MODID, "limits.bypass", OPERATORS,
             PASS_LIMITS_TEXT);
+    /** Being told when a part of the series stalls or slows itself. */
+    public static final PermissionNode<Boolean> DIAGNOSTIC_WARNINGS = declare(JsCore.MODID, "diagnostics.warnings",
+            OPERATORS, DIAGNOSTIC_WARNINGS_TEXT);
 
     private CorePermissions() {
     }

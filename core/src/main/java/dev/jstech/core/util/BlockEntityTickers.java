@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.util;
 
+import dev.jstech.core.diagnostic.CostMap;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -22,12 +23,19 @@ public final class BlockEntityTickers {
 
     /**
      * Returns {@code ticker} typed for the given block entity type when it is the {@code expected} one, or {@code null} otherwise. The unchecked cast is safe because the equality check guarantees {@code A} is {@code E}.
+     *
+     * <p>The ticker handed back is measured while {@code /jstech cost} measures what the series' blocks cost, and is
+     * the ticker itself, but for one look at a flag, the rest of the time.
      */
     @SuppressWarnings("unchecked")
     @Nullable
     public static <A extends BlockEntity, E extends BlockEntity> BlockEntityTicker<A> create(
             final BlockEntityType<A> given, final BlockEntityType<E> expected,
             final BlockEntityTicker<? super E> ticker) {
-        return expected == given ? (BlockEntityTicker<A>) ticker : null;
+        if (expected != given) {
+            return null;
+        }
+        final BlockEntityTicker<A> typed = (BlockEntityTicker<A>) ticker;
+        return CostMap.measured(typed);
     }
 }

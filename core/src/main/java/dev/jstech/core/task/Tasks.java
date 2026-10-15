@@ -7,9 +7,12 @@
  */
 package dev.jstech.core.task;
 
+import dev.jstech.core.JsCore;
+import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.log.CoreLogs;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -34,6 +37,9 @@ public final class Tasks {
     public static final int BUDGET_MILLIS = 2;
 
     private static final Logger LOGGER = CoreLogs.TASKS.logger();
+    /* The results coming back on the server's thread, timed, named in profilers and watched for stalls. */
+    private static final Section SECTION = Section.builder(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "task_results"), CoreLogs.TASKS).declare();
     private static final long BUDGET_NANOS = BUDGET_MILLIS * 1_000_000L;
     private static final TaskRunner SERVER = TaskRunner.onVirtualThreads();
 
@@ -59,7 +65,11 @@ public final class Tasks {
     /** Hands the game's bus the end of each tick and the server's stop, once, from the Core's constructor. */
     @ApiStatus.Internal
     public static void listen() {
-        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, event -> SERVER.drain(BUDGET_NANOS));
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, event -> {
+            if (SERVER.waiting() > 0) {
+                SECTION.run(() -> SERVER.drain(BUDGET_NANOS));
+            }
+        });
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> SERVER.cancelAll());
     }
 }

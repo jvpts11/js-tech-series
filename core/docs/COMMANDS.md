@@ -49,6 +49,10 @@ level always may run it, and a server's permission mod may grant it to a player 
 | `/jstech config preset <file> <name>` | level 2 | Picks one of the file's presets, shipped or saved on the server. *Added 2026-10-15.* |
 | `/jstech dump permissions` | level 3 | Writes every permission of the series, and the LuckPerms groups to paste, into `jstech-permissions/` ([Protection](PROTECTION.md#permissions)). *Added 2026-10-15.* |
 | `/jstech audit [page]`, `audit player <name> [page]`, `audit at <pos> [page]` | level 3 | Reads the audit log, newest first ([Protection](PROTECTION.md#the-audit-log)). *Added 2026-10-15.* |
+| `/jstech health` | level 3 | The state of the series' systems and their warnings ([Diagnostics](DIAGNOSTICS.md#jstech-health)). *Added 2026-10-15.* |
+| `/jstech bandwidth [<player>]` | level 3 | What the server sent over the last minute, to everyone or one player: a graph, by mod, by kind and the biggest senders ([Diagnostics](DIAGNOSTICS.md#network-use)). *Added 2026-10-15.* |
+| `/jstech cost [<seconds>]` | level 3 | Measures what the series' blocks cost the server for some seconds (10 by default, 60 at most), then lists the worst places with their owners ([Diagnostics](DIAGNOSTICS.md#what-weighs)). *Added 2026-10-15.* |
+| `/jstech diagnostics` | level 3 | Writes the diagnostic file for a bug report into `jstech-diagnostics/` ([Diagnostics](DIAGNOSTICS.md#the-diagnostic-file-and-crash-reports)). *Added 2026-10-15.* |
 
 ## What can go wrong
 

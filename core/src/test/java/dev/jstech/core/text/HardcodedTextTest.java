@@ -217,6 +217,9 @@ class HardcodedTextTest {
                     "why a style file is refused, written to the log for the resource pack's maker"),
             data("core/src/main/java/dev/jstech/core/gui/style/StyleFiles.java", 7,
                     "what is wrong in the styles the resource packs bring, written to the log for their makers"),
+            data("core/src/main/java/dev/jstech/core/diagnostic/DiagnosticReports.java", 16,
+                    "the diagnostic file and the crash report's section, written in English for whoever reads a bug "
+                            + "report, as the log is"),
             data("core/src/main/java/dev/jstech/core/protection/ProtectionCommands.java", 12,
                     "the list of permissions written for a server's administrator, LuckPerms' console commands as "
                             + "LuckPerms reads them, and the pattern of the audit log's dates"),

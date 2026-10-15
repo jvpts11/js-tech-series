@@ -9,11 +9,12 @@ package dev.jstech.core.fluid;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableParts;
-import dev.jstech.core.diagnostic.Diagnostics;
+import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.energy.internal.ProportionalSplitter;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.transfer.Batch;
 import dev.jstech.core.transfer.HandlerSteps;
 import java.util.ArrayList;
@@ -56,6 +57,8 @@ public final class LevelFluids {
 
     /** What the debug screen calls the time the fluid grid takes to move a tick's fluids. */
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "fluid_grid");
+    /** The work of moving a tick's fluids, timed, named in profilers and watched for stalls. */
+    public static final Section SECTION = Section.builder(TIMING, CoreLogs.FLUIDS).declare();
 
     /** How many millibuckets the part of the grid the wire numbered {@code wire} is in moved in the last tick. */
     public OptionalLong movedLastTickOf(final long wire) {
@@ -78,18 +81,26 @@ public final class LevelFluids {
             this.lastTick = new long[0];
             return;
         }
+        SECTION.run(() -> move(level, grid));
+    }
+
+    /** How many connected parts the grid is in. */
+    public int partCount() {
+        return this.parts.size();
+    }
+
+    /* The parts worked out again when the grid changed, and the tick's fluids moved through each. */
+    private void move(final ServerLevel level, final Grid grid) {
         if (grid.version() != this.builtVersion || this.taps != this.builtTaps) {
             build(level, grid);
             this.builtVersion = grid.version();
             this.builtTaps = this.taps;
         }
-        final long start = System.nanoTime();
         final long[] moved = new long[this.parts.size()];
         for (int i = 0; i < moved.length; i++) {
             moved[i] = this.parts.get(i).tick();
         }
         this.lastTick = moved;
-        Diagnostics.record(TIMING, start);
     }
 
     private void build(final ServerLevel level, final Grid grid) {
