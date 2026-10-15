@@ -10,11 +10,17 @@ package dev.jstech.core.content;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.connect.Neighbours;
+import dev.jstech.core.machine.MachineBlockEntity;
+import dev.jstech.core.signal.ISignalOutput;
+import dev.jstech.core.team.Ownership;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -96,6 +102,37 @@ public class DeviceBlock extends HorizontalDirectionalBlock implements EntityBlo
         final Direction face = Neighbours.faceTowards(pos, neighbourPos);
         if (face != null && level.getBlockEntity(pos) instanceof SyncedBlockEntity synced) {
             synced.fields().neighbourChanged(level, face);
+        }
+    }
+
+    /* Whoever places a machine owns it. */
+    @Override
+    public void setPlacedBy(final Level level, final BlockPos pos, final BlockState state,
+                            @Nullable final LivingEntity placer, final ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide() && placer instanceof Player player
+                && level.getBlockEntity(pos) instanceof MachineBlockEntity machine && machine.ownership() == null) {
+            machine.own(Ownership.of(player.getUUID()));
+        }
+    }
+
+    /* A comparator reads what its block entity speaks in redstone, as a sensor or a machine says. */
+    @Override
+    protected boolean hasAnalogOutputSignal(final BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getAnalogOutputSignal(final BlockState state, final Level level, final BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof ISignalOutput output ? output.strength() : 0;
+    }
+
+    /* A working machine shows it, on the player's side. */
+    @Override
+    public void animateTick(final BlockState state, final Level level, final BlockPos pos,
+                            final RandomSource random) {
+        if (level.getBlockEntity(pos) instanceof MachineBlockEntity machine && machine.running()) {
+            machine.animate(level, pos, random);
         }
     }
 

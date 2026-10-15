@@ -25,6 +25,7 @@ import dev.jstech.core.cable.CableRuns;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.overhead.OverheadLines;
+import dev.jstech.core.machine.Machines;
 import dev.jstech.core.signal.SignalRadio;
 import dev.jstech.core.command.CoreCommands;
 import dev.jstech.core.command.SeriesCommands;
@@ -290,6 +291,7 @@ public final class JsCore {
         EndSettings.listen(modEventBus);
         OverheadLines.listen(modEventBus);
         SignalRadio.listen();
+        Machines.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

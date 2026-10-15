@@ -76,6 +76,114 @@ What it does each tick, and why:
   what the machine makes. Its inventory falls out when it is broken.
 - It answers what tools like Jade show about it: "Working: 45%" or "Idle" ([Overlays](OVERLAYS.md)).
 
+## What every machine shares
+
+*Added 2026-10-15.*
+
+Every machine built on `MachineBlockEntity`, a processing machine included, has the same things a player meets on
+every machine of every mod. Tick it with `MachineBlockEntity::serverTick` (`ProcessingMachineBlockEntity::serverTick`
+names the same ticker), and the kit runs them; a machine that ticks itself keeps its own ways.
+
+### Its state, always in view
+
+Each tick the machine says what it is doing, a `MachineStatus`, which its screen and tools like Jade show
+("State: Output full"), and which lights one of the three lamps every machine's face has:
+
+| State | Lamp | When |
+| --- | --- | --- |
+| `WORKING` | RUN | It works. |
+| `WAITING` | WAIT | Nothing in it makes anything. |
+| `OUTPUT_FULL` | WAIT | Its outputs have no room for everything the recipe makes. |
+| `NO_ENERGY` | FAULT | It has no energy for the tick. |
+| `UNDERVOLTAGE` | FAULT | A line of a class below its port's meets it: it does not start. |
+| `FUSE_BLOWN` | FAULT | Its fuse blew on overvoltage: it is shut down, unharmed, until a good fuse is put in. |
+| `DAMAGED` | FAULT | It is damaged: it works slower, or not at all with no health left or a burnt port. |
+| `OFF_BY_REDSTONE` | WAIT | Its redstone mode keeps it off. |
+| `SWITCHED_OFF` | WAIT | Its ON/OFF switch is off. |
+
+In the world a working machine shows it: a puff as it starts, smoke as it works and as it stops, and the sounds its
+mod declares (`MachineSounds`: one as it starts, a loop while it works, one as it stops; a machine that declares none
+is silent). Override `sounds()` and `animate(...)` to change them.
+
+### Energy of a class
+
+A machine runs on FE, as above, or on a mod's own energy ([Energy and resources](ENERGY_AND_RESOURCES.md)) through a
+port of one class:
+
+```java
+super(MyContent.REACTOR_BE.get(), pos, state, LAYOUT,
+        MachineEnergy.of(MyEnergies.VOLTS, MyEnergies.LOW, 100_000, 2_000),    // holds, takes a tick
+        40);                                                                   // spends a tick, by default
+```
+
+Its port is offered by `EnergyPorts.PORT` on every side (and to FE cables as well, where the energy speaks FE), with
+nothing to register. It has the **fuse** and the **battery** of its Protection tab (`power().protection()`): a line a
+class too high blows the fuse and shuts the machine down unharmed; with no fuse, it burns the port and damages the
+machine. `power()` is the machine's energy at work, whichever it runs on: what it holds, what it spends, its faults.
+
+### Tanks of matter
+
+Gases, supercritical fluids, slurries, plasmas and exotic matter go in tanks of their own
+([Energy and resources](ENERGY_AND_RESOURCES.md)), as liquids go in fluid tanks:
+
+```java
+Layout.items(1, 1).withMatter(MatterState.GAS, 1, 1, 1_000, 10)   // a gas tank in and one out, 1000 mB at 10 times
+```
+
+Each state's lines find them through its capability (`MatterCapabilities.GAS`...): they fill the inputs and take
+from the outputs. `matter()` holds them.
+
+### The switch and redstone
+
+`control()` holds the machine's ON/OFF switch, which turns it off whatever redstone says, and how it answers
+redstone (`RedstoneMode`): `IGNORE` (it always runs), `HIGH` (only with a signal), `LOW` (only without one), or
+`PULSE` (one recipe for each pulse). It also holds what a **comparator** reads of it, as the player picks
+(`ComparatorReads`): its progress, how full its inputs or its outputs are, or its energy. The machine's block, a
+`DeviceBlock`, gives that to a comparator, and anything that reads sensors reads it too (`Signals.OUTPUT`).
+
+### Damage and repair
+
+A machine does not wear. It is damaged only by overvoltage (a port burnt by a line too high), an explosion (which
+damages it instead of breaking it), sabotage or overheating (`damage(points)`). A damaged machine shows cracks, and
+works slower: at full speed when whole, half speed just before it stops, and not at all with no health left
+(`MachineHealth.workShare()`).
+
+A **repair kit** mends it, as Factorio's repair packs do: used on the machine and held, it gives back its rate a second,
+spending itself as it goes, until the machine is whole. `RepairKitItem` is one ready to register; any item may be one
+by implementing `IRepairKit`.
+
+```java
+public static final ItemEntry<RepairKitItem> REPAIR_KIT = CONTENT.item("repair_kit",
+        properties -> new RepairKitItem(properties, 200, 20)).register();   // 200 health in all, 20 a second
+```
+
+### Values read and set from outside
+
+A machine says which of its values the outside may read and set (`IMachineParameters`, offered on every side): how
+J's Industrial's Industrial Controller Computer and J's Computers' network command any machine, and what the
+network's tables show. Every machine declares `on` (set), `progress`, `input`, `output`, `energy` and `health`; a
+machine adds its own:
+
+```java
+@Override
+protected void declareParameters(final List<MachineParameter> declared) {
+    declared.add(MachineParameter.set("pressure", PRESSURE, BAR, 1, 10, () -> pressure, value -> pressure = value));
+}
+```
+
+A value set from outside is held to its span, and a value only read is never set.
+
+### Owner
+
+Whoever places a machine owns it; who else may use it is its access ([Ownership](OWNERSHIP.md)).
+
+### It works only when it has something to do
+
+A machine with nothing to do (nothing to work, its output full, no energy, switched or redstoned off) rests: its tick
+returns at once until something it waits on changes. Anything saved that changes wakes it (an item put in or taken
+out, energy arriving, a setting, its health), and so do its neighbours' changes; at the latest it looks again every
+`SLEEP_AT_MOST` ticks. A large factory of idle machines weighs nothing on the server.
+
 ## Recipes
 
 *Added 2026-10-05.*
@@ -169,6 +277,10 @@ returns the rectangles (in screen pixels) that must stay clear, and both viewers
   Empty the output slots.
 - **It stops partway and waits.** It has no energy. A generator or an energy cable must reach it, and it takes
   no more a tick than its most-in-a-tick, so a large cost needs a machine that takes enough.
+- **It says "Off by redstone".** Its redstone mode wants a signal it does not have, or one it has not to have; in
+  one-recipe-a-pulse, it waits for the next pulse.
+- **It says "Fuse blown".** A line of a class too high met it. Put a fuse that works in its Protection tab.
+- **It works slower and shows cracks.** It is damaged: use a repair kit on it.
 - **A recipe file does nothing.** It failed to load: the log says why (no input, no output, an unknown item). A
   data pack's recipe with the same path as one of yours replaces yours.
 - **The kind has no page in JEI or EMI.** Its machine has no item, and a viewer needs one to show what works the

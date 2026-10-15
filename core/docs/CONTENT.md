@@ -285,6 +285,10 @@ public static final BlockEntry<DeviceBlock> KILN = CONTENT.block("kiln",
 second). `opensMenu` takes how to make the menu from `(containerId, playerInventory, blockEntity)`; the device
 also writes the block's position for the player's side, which reads it back with `MenuOpening.blockEntity`.
 
+A comparator reads a device's block entity when it speaks redstone (`ISignalOutput`, [Redstone and
+signals](SIGNALS.md)); a machine belongs to whoever placed it, and a working machine shows it
+([Machines](MACHINES.md#what-every-machine-shares)).
+
 ## Menus
 
 *Added 2026-09-27.*

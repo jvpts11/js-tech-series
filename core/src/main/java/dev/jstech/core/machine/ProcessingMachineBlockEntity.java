@@ -11,13 +11,14 @@ import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.energy.PartialWork;
-import dev.jstech.core.look.IDescribed;
 import dev.jstech.core.look.LookTexts;
+import dev.jstech.core.material.MatterState;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -35,10 +36,11 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
  * <p>What its inputs make is each machine's own: most ask the recipes of their {@link ProcessingKind}, with
  * {@link #byKind}, and a machine that works the game's own recipes, a furnace, asks those instead.
  */
-public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity implements IDescribed {
+public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
 
     private final Layout layout;
-    private final int defaultEnergyPerTick;
+    private final long defaultEnergyPerTick;
+    private final MatterTanks matter;
     private final IntField progress;
     private final IntField maxProgress;
     private final LongField paid;
@@ -52,7 +54,17 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
     protected ProcessingMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
                                            final Layout layout, final int energyCapacity, final int energyMaxReceive,
                                            final int defaultEnergyPerTick) {
-        super(type, pos, state, layout.slots(), energyCapacity, energyMaxReceive, 0);
+        this(type, pos, state, layout, MachineEnergy.fe(energyCapacity, energyMaxReceive, 0), defaultEnergyPerTick);
+    }
+
+    /**
+     * A machine of {@code layout} running on {@code energy}, spending {@code defaultEnergyPerTick} a tick on a recipe
+     * that names no energy of its own.
+     */
+    protected ProcessingMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
+                                           final Layout layout, final MachineEnergy energy,
+                                           final long defaultEnergyPerTick) {
+        super(type, pos, state, layout.slots(), energy);
         this.layout = layout;
         this.defaultEnergyPerTick = defaultEnergyPerTick;
         this.progress = fields().integer("Progress", 0).save().toMenu();
@@ -67,6 +79,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
             outputTanks.add(fields().fluid("FluidOut" + i, layout.tankCapacity()).save().toClient().exposed()
                     .outputOnly());
         }
+        this.matter = MatterTanks.in(fields(), layout.matter());
         getInventory().accepts((slot, stack) -> layout.isInput(slot)
                 || layout.isUpgrade(slot) && stack.getItem() instanceof IUpgrade);
     }
@@ -80,13 +93,22 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
      * @param inputTanks   the fluid input tanks
      * @param outputTanks  the fluid output tanks
      * @param tankCapacity what each tank holds, in millibuckets
+     * @param matter       the tanks of the states of matter that are neither solid nor liquid
      */
-    public record Layout(int inputs, int outputs, int upgrades, int inputTanks, int outputTanks, int tankCapacity) {
+    public record Layout(int inputs, int outputs, int upgrades, int inputTanks, int outputTanks, int tankCapacity,
+                         List<MatterTanks.MatterSpec> matter) {
 
         public Layout {
             if (inputs < 0 || outputs < 0 || upgrades < 0 || inputTanks < 0 || outputTanks < 0 || tankCapacity < 0) {
                 throw new IllegalArgumentException("a machine has no fewer than no slots");
             }
+            matter = List.copyOf(matter);
+        }
+
+        /** A layout with no tanks of matter but liquids. */
+        public Layout(final int inputs, final int outputs, final int upgrades, final int inputTanks,
+                      final int outputTanks, final int tankCapacity) {
+            this(inputs, outputs, upgrades, inputTanks, outputTanks, tankCapacity, List.of());
         }
 
         /** Items only: so many inputs and outputs, no upgrades, no tanks. */
@@ -96,12 +118,24 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
 
         /** The same, with so many upgrade slots. */
         public Layout withUpgrades(final int slots) {
-            return new Layout(inputs, outputs, slots, inputTanks, outputTanks, tankCapacity);
+            return new Layout(inputs, outputs, slots, inputTanks, outputTanks, tankCapacity, matter);
         }
 
         /** The same, with so many tanks in and out, each holding {@code capacity} millibuckets. */
         public Layout withTanks(final int in, final int out, final int capacity) {
-            return new Layout(inputs, outputs, upgrades, in, out, capacity);
+            return new Layout(inputs, outputs, upgrades, in, out, capacity, matter);
+        }
+
+        /**
+         * The same, with so many tanks of {@code state} in and out, each of {@code volume} millibuckets holding
+         * {@code pressure} times the open air's pressure: a gas, a supercritical fluid, a slurry, a plasma or exotic
+         * matter.
+         */
+        public Layout withMatter(final MatterState state, final int in, final int out, final long volume,
+                                 final long pressure) {
+            final List<MatterTanks.MatterSpec> more = new ArrayList<>(matter);
+            more.add(new MatterTanks.MatterSpec(state, in, out, volume, pressure));
+            return new Layout(inputs, outputs, upgrades, inputTanks, outputTanks, tankCapacity, more);
         }
 
         public int slots() {
@@ -202,11 +236,6 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
     public record Take(int index, int amount) {
     }
 
-    public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
-                                  final ProcessingMachineBlockEntity machine) {
-        machine.tick(level);
-    }
-
     public Layout layout() {
         return layout;
     }
@@ -234,6 +263,11 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         return outputTanks.get(index);
     }
 
+    /** Its tanks of gases, supercritical fluids, slurries, plasmas and exotic matter. */
+    public MatterTanks matter() {
+        return matter;
+    }
+
     /** What the upgrades in the upgrade slots do together. */
     public UpgradeEffect upgradeEffect() {
         final List<UpgradeEffect.Counted> each = new ArrayList<>();
@@ -259,7 +293,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         return new ProcessingInput(items, fluids);
     }
 
-    /** How far through its piece of work the machine is, or that it stands idle. */
+    /** How far through its piece of work the machine is or that it stands idle, its speed if low, and its state. */
     @Override
     public void describe(final List<Text> lines, final boolean details) {
         final int max = maxProgress.get();
@@ -269,6 +303,23 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         if (speed.get() < PartialWork.PERCENT) {
             lines.add(LookTexts.LOW_POWER.with(speed.get()));
         }
+        super.describe(lines, details);
+    }
+
+    @Override
+    protected double progressShare() {
+        final int max = maxProgress.get();
+        return max <= 0 ? 0.0 : Math.min(1.0, progress.get() / (double) max);
+    }
+
+    @Override
+    protected double inputShare() {
+        return share(0, layout.inputs(), inputTanks);
+    }
+
+    @Override
+    protected double outputShare() {
+        return share(layout.firstOutput(), layout.firstUpgrade(), outputTanks);
     }
 
     /** What the inputs make, and in how long; empty when they make nothing. */
@@ -280,7 +331,13 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         return kind.find(level, input).flatMap(holder -> Processing.of(holder.value(), input));
     }
 
-    private void tick(final Level level) {
+    /*
+     * One tick of work: nothing to work, or no room for every output at once, sets the progress back; with no energy
+     * it waits, keeping it; otherwise it spends the tick's energy and moves on, slower in proportion when short of
+     * energy and when damaged.
+     */
+    @Override
+    protected MachineStatus work(final ServerLevel level) {
         final ProcessingInput input = input();
         final Optional<Processing> found = input.isEmpty() ? Optional.empty() : process(level, input);
         if (found.isEmpty() || !fits(found.get())) {
@@ -288,7 +345,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
             paid.set(0L);
             speed.set(PartialWork.PERCENT);
             lastWork = null;
-            return;
+            return found.isEmpty() ? MachineStatus.WAITING : MachineStatus.OUTPUT_FULL;
         }
         final Processing work = found.get();
         if (lastWork != null && !lastWork.sameWork(work)) {
@@ -298,26 +355,48 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         }
         lastWork = work;
         final UpgradeEffect effect = upgradeEffect();
-        maxProgress.set(effect.ticks(work.ticks()));
+        final double share = health().workShare();
+        maxProgress.set((int) Math.min(Integer.MAX_VALUE, Math.ceil(effect.ticks(work.ticks()) / share)));
         final long perTick = effect.energyPerTick(work.energyPerTick() > 0 ? work.energyPerTick()
                 : defaultEnergyPerTick);
-        if (perTick > Integer.MAX_VALUE) {
-            return;
-        }
         // Short of energy, it spends what there is and works slower in the same proportion.
         payment.restore(paid.get());
-        final int steps = payment.pay(perTick <= 0 ? 0L : getEnergy().spendUpTo((int) perTick), perTick);
+        final long spent = perTick <= 0 ? 0L : power().spend(perTick);
+        final int steps = payment.pay(spent, perTick);
         paid.set(payment.paid());
         speed.set(payment.lastPercent());
-        if (steps <= 0) {
-            return;
+        if (perTick > 0 && spent <= 0) {
+            return MachineStatus.NO_ENERGY;
         }
-        progress.add(steps);
-        if (progress.get() >= maxProgress.get()) {
-            finish(work);
-            progress.set(0);
-            lastWork = null;
+        if (steps > 0) {
+            progress.add(steps);
+            if (progress.get() >= maxProgress.get()) {
+                finish(work);
+                progress.set(0);
+                lastWork = null;
+                control().finishedOne();
+            }
         }
+        return MachineStatus.WORKING;
+    }
+
+    /*
+     * How full the slots from {@code first} up to {@code end} and {@code tanks} are, from empty to full: the mean of
+     * how full each is, so a tank of thousands of millibuckets counts no more than a slot.
+     */
+    private double share(final int first, final int end, final List<FieldFluidTank> tanks) {
+        double sum = 0.0;
+        int count = 0;
+        for (int slot = first; slot < end; slot++) {
+            final ItemStack stack = getInventory().getStackInSlot(slot);
+            sum += stack.isEmpty() ? 0.0 : stack.getCount() / (double) Math.max(1, slotLimit(slot, stack));
+            count++;
+        }
+        for (final FieldFluidTank tank : tanks) {
+            sum += tank.getCapacity() <= 0 ? 0.0 : tank.getFluidAmount() / (double) tank.getCapacity();
+            count++;
+        }
+        return count == 0 ? 0.0 : Math.min(1.0, sum / count);
     }
 
     /* Takes the inputs and puts out what they made. */

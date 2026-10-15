@@ -304,6 +304,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its number, whose it is, where it comes from, how well it arrives and the value it carries, clashes marked in red,
   and the frequencies of the player's team that are not heard there; on its radio's page one is told in full, and OK
   outlines where it comes from.
+- (Core) What every machine shares: its state always in view (working, waiting for input, output full, no energy,
+  undervoltage, fuse blown, damaged, off by redstone, switched off), on its lamps and in Jade, with a puff as it starts
+  and smoke as it works and stops, and the sounds its mod gives it; an ON/OFF switch; redstone modes (ignore, with a
+  signal, without one, one recipe a pulse); a comparator that reads what the player picks (progress, input, output or
+  energy); energy of a mod's own through a port of a class, with its fuse and battery; tanks of gases,
+  supercritical fluids, slurries, plasmas and exotic matter; damage instead of wear, from overvoltage, explosions
+  (which no longer break a machine) and sabotage, shown as cracks and working slower, mended by a repair kit held on
+  it for a few seconds; values the outside reads and sets, for controllers and networks; its owner, whoever placed it;
+  and rest while it has nothing to do, so idle factories cost the server nothing.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

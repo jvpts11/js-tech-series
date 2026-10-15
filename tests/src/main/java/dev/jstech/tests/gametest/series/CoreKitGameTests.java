@@ -101,8 +101,10 @@ public final class CoreKitGameTests {
 
         final CompoundTag update = machine.getUpdateTag(helper.getLevel().registryAccess());
 
-        helper.assertTrue(update.isEmpty(), "a machine that declares nothing for the players sends them nothing, got "
-                + update);
+        // Every machine sends what its screen shows of it (its state, its switch, its health); never its inventory.
+        helper.assertTrue(!update.contains("Inventory") && !update.contains("Energy") && !update.contains("Progress"),
+                "a machine sends the players only what is declared for them, got " + update);
+        helper.assertTrue(update.contains("Status"), "every machine's state is in view: " + update);
         helper.succeed();
     }
 
