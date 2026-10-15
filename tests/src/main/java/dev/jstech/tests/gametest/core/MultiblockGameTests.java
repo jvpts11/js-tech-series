@@ -9,6 +9,11 @@ package dev.jstech.tests.gametest.core;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
+import dev.jstech.core.jstechseries.Element;
+import dev.jstech.core.jstechseries.Elements;
+import dev.jstech.core.matter.IMatterHandler;
+import dev.jstech.core.matter.MatterCapabilities;
+import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.IMatchResult;
 import dev.jstech.core.multiblock.MultiblockPattern;
@@ -39,7 +44,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 /**
  * The Core's multiblocks: a pattern with ports declared in code, written to its file and read back; one read from a
  * datapack's file alone, with a tag slot; one read from a structure block's file; and a formed structure whose ports
- * pass items and energy to its controller while its plain parts offer nothing.
+ * pass items, energy and gas to its controller while its plain parts offer nothing.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -156,8 +161,8 @@ public final class MultiblockGameTests {
         helper.setBlock(CONTROLLER, TestMultiblocks.CONTROLLER.get());
         final TestFurnaceBlockEntity furnace = helper.getBlockEntity(CONTROLLER);
         final IMatchResult match = furnace.form();
-        helper.assertTrue(match instanceof IMatchResult.Success success && success.ports().size() == 3,
-                "the casing forms with three ports; got " + match);
+        helper.assertTrue(match instanceof IMatchResult.Success success && success.ports().size() == 4,
+                "the casing forms with four ports; got " + match);
         final ServerLevel level = helper.getLevel();
         final IItemHandler input = level.getCapability(Capabilities.ItemHandler.BLOCK,
                 helper.absolutePos(CONTROLLER.north()), null);
@@ -166,8 +171,17 @@ public final class MultiblockGameTests {
         helper.assertTrue(furnace.slots().getStackInSlot(TestFurnaceBlockEntity.INPUT).getCount() == 4,
                 "what goes into the port lands in the controller's input");
         helper.assertTrue(level.getCapability(Capabilities.ItemHandler.BLOCK,
-                        helper.absolutePos(CONTROLLER.east()), null) == null,
+                        helper.absolutePos(CONTROLLER.north().east()), null) == null,
                 "a plain part of the casing offers nothing");
+        final IMatterHandler gas = level.getCapability(MatterCapabilities.GAS,
+                helper.absolutePos(CONTROLLER.east()), null);
+        helper.assertTrue(gas != null && gas.insert(new MatterStack(Elements.of(Element.HYDROGEN), 500L), false)
+                        == 500L && furnace.gas().held().map(MatterStack::amount).orElse(0L) == 500L,
+                "the east part takes gas into the controller's tank");
+        helper.assertTrue(level.getCapability(MatterCapabilities.SLURRY, helper.absolutePos(CONTROLLER.east()),
+                null) == null && level.getCapability(Capabilities.ItemHandler.BLOCK,
+                helper.absolutePos(CONTROLLER.east()), null) == null,
+                "and offers no other state, nor items");
         final IEnergyStorage energy = level.getCapability(Capabilities.EnergyStorage.BLOCK,
                 helper.absolutePos(CONTROLLER.west()), null);
         helper.assertTrue(energy != null && energy.receiveEnergy(100, false) == 100

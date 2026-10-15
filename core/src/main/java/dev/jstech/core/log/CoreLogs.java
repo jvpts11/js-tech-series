@@ -26,6 +26,8 @@ public final class CoreLogs {
     public static final LogSystem ENERGY = LogSystems.declare(JsCore.MODID, "energy");
     /** The fluid grid of each dimension, moving fluids through the pipes. */
     public static final LogSystem FLUIDS = LogSystems.declare(JsCore.MODID, "fluids");
+    /** The grids of the other states of matter in each dimension: gases, slurries, plasma and the rest. */
+    public static final LogSystem MATTER = LogSystems.declare(JsCore.MODID, "matter");
     /** The screens of the mods: their files, their styles and their layout. */
     public static final LogSystem INTERFACE = LogSystems.declare(JsCore.MODID, "interface");
     /** The manuals: their pages, scenes and places. */

@@ -74,8 +74,12 @@ public static final GridKind MEDIUM_VOLTAGE = GridKind.declare(rl("medium_voltag
 | --- | --- | --- |
 | `GridPolicies.ENERGY` | energy, each machine its share of what it asks | any block that offers the game's energy on that face |
 | `GridPolicies.FLUID` | fluids, from outputs to inputs and tanks | any block that holds fluids on that face |
+| `GridPolicies.matter(state)` | a gas, a supercritical fluid, a slurry, plasma or exotic matter, as fluids are shared | any block that keeps that state on that face, the Core's or another mod's through its bridge |
 | `GridPolicies.NETWORK` | the identity of a data network | (the data network's own devices) |
 | `GridPolicies.JOINS_ONLY` | nothing: the grid only joins what it joins, for its mod to read | (its mod's own devices) |
+
+The Core's own grids of matter are `GridKind.GAS`, `SUPERCRITICAL`, `SLURRY`, `PLASMA` and `EXOTIC`, one for each
+state, so lines of different states never join ([Energy and resources](ENERGY_AND_RESOURCES.md#states-of-matter)).
 
 An `IGridPolicy` of a mod's own gives an `IGridMover`, which shares what its grid carries in one dimension each tick
 after the machines have ticked, and says what its wires plug into. Each dimension makes one mover for each grid,

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multiblock;
 
+import dev.jstech.core.matter.IMatterHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The block entity of a multiblock's controller, as the structure's ports reach it: what a pipe or a cable beside a
- * port gets when it asks the port for items, fluid or energy. A port asks only for what its kind moves, and a host
+ * port gets when it asks the port for items, fluid, energy or another state of matter. A port asks only for what its kind moves, and a host
  * answers null for a port it does not serve, or while the structure is not formed.
  */
 public interface IMultiblockPortHost {
@@ -36,6 +37,15 @@ public interface IMultiblockPortHost {
     /** The energy a port of {@code kind} at {@code part} offers on {@code side}, or null. */
     @Nullable
     default IEnergyStorage energyPort(final PortKind kind, final BlockPos part, @Nullable final Direction side) {
+        return null;
+    }
+
+    /**
+     * The store of the state of matter of {@code kind} (a gas, a slurry, plasma) a port at {@code part} offers on
+     * {@code side}, or null.
+     */
+    @Nullable
+    default IMatterHandler matterPort(final PortKind kind, final BlockPos part, @Nullable final Direction side) {
         return null;
     }
 }

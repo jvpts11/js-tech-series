@@ -28,9 +28,9 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
- * A multiblock of the test mod, to prove the Core's: a controller and the casing round it, three of whose parts are
- * ports (items in on the north, items out on the south, energy in on the west), declared as a pattern in code and
- * written to its file by the generator.
+ * A multiblock of the test mod, to prove the Core's: a controller and the casing round it, four of whose parts are
+ * ports (items in on the north, items out on the south, energy in on the west, gas in on the east), declared as a
+ * pattern in code and written to its file by the generator.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class TestMultiblocks {
@@ -51,18 +51,21 @@ public final class TestMultiblocks {
             TestSounds.CONTENT.blockEntity("test_furnace_part", PartBlockEntity::new, PART);
 
     /**
-     * Three wide and deep, the controller in the middle: items in at the north, out at the south, energy at the west.
+     * Three wide and deep, the controller in the middle: items in at the north, out at the south, energy at the west,
+     * gas at the east.
      */
     public static final MultiblockPattern FURNACE = MultiblockPatterns.declare(FURNACE_ID,
             MultiblockPattern.builder("test_furnace")
-                    .layer("PIP", "E#P", "POP")
+                    .layer("PIP", "E#G", "POP")
                     .where('P', BlockMatch.blocks("jstests:test_furnace_part"))
                     .where('I', BlockMatch.blocks("jstests:test_furnace_part"))
                     .where('O', BlockMatch.blocks("jstests:test_furnace_part"))
                     .where('E', BlockMatch.blocks("jstests:test_furnace_part"))
+                    .where('G', BlockMatch.blocks("jstests:test_furnace_part"))
                     .port('I', PortKind.ITEM_INPUT)
                     .port('O', PortKind.ITEM_OUTPUT)
                     .port('E', PortKind.ENERGY_INPUT)
+                    .port('G', PortKind.GAS_INPUT)
                     .build());
 
     private TestMultiblocks() {

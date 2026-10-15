@@ -7,6 +7,9 @@
  */
 package dev.jstech.tests;
 
+import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.IMatterHandler;
+import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.multiblock.IMatchResult;
 import dev.jstech.core.multiblock.IMultiblockPortHost;
 import dev.jstech.core.multiblock.MultiblockPartBlockEntity;
@@ -25,13 +28,14 @@ import net.neoforged.neoforge.items.wrapper.RangedWrapper;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The test furnace's controller: an input slot and an output slot, and some energy, reached only through the ports of
- * its formed structure. It makes nothing; the tests only see what goes through the ports.
+ * The test furnace's controller: an input slot and an output slot, some energy and a tank of gas, reached only through
+ * the ports of its formed structure. It makes nothing; the tests only see what goes through the ports.
  */
 public final class TestFurnaceBlockEntity extends BlockEntity implements IMultiblockPortHost {
 
     private final ItemStackHandler slots = new ItemStackHandler(2);
     private final EnergyStorage energy = new EnergyStorage(10_000);
+    private final MatterTank gas = new MatterTank(MatterState.GAS, 1_000L, 16L, this::setChanged);
     private boolean formed;
 
     public static final int INPUT = 0;
@@ -65,6 +69,10 @@ public final class TestFurnaceBlockEntity extends BlockEntity implements IMultib
         return energy;
     }
 
+    public MatterTank gas() {
+        return gas;
+    }
+
     @Override
     @Nullable
     public IItemHandler itemPort(final PortKind kind, final BlockPos part, @Nullable final Direction side) {
@@ -82,5 +90,11 @@ public final class TestFurnaceBlockEntity extends BlockEntity implements IMultib
     @Nullable
     public IEnergyStorage energyPort(final PortKind kind, final BlockPos part, @Nullable final Direction side) {
         return formed && kind == PortKind.ENERGY_INPUT ? energy : null;
+    }
+
+    @Override
+    @Nullable
+    public IMatterHandler matterPort(final PortKind kind, final BlockPos part, @Nullable final Direction side) {
+        return formed && kind == PortKind.GAS_INPUT ? gas : null;
     }
 }

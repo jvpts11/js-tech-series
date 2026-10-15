@@ -21,8 +21,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * Cables only the tests lay, registered with the Core as any mod's cables are: a long-distance cable, six pixels thick,
- * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, and two pipes, a
- * plain one and one that holds pressure. Each is laid by a vanilla item and drawn in a jacket and plug the series
+ * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, two pipes, a plain
+ * one and one that holds pressure, a gas line and a slurry line. Each is laid by a vanilla item and drawn in a jacket and plug the series
  * already has, so the test mod declares no item, texture or model of its own.
  */
 public final class TestCableTypes {
@@ -31,6 +31,8 @@ public final class TestCableTypes {
     public static final int PLAIN_HOTTEST = 1_000;
     public static final long PRESSURE_RATE = 800L;
     public static final int PRESSURE_HOTTEST = 2_000;
+    public static final long GAS_RATE = 500L;
+    public static final long SLURRY_RATE = 200L;
     public static final DeferredRegister<CableType> CABLES = DeferredRegister.create(CoreCables.KEY, JsTests.MODID);
     /** A grid of the test mod's own, which shares energy by the Core's policy, as a mod's line of a voltage class. */
     public static final GridKind OWN_POWER = GridKind.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
@@ -74,6 +76,22 @@ public final class TestCableTypes {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/crafting"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/crafting"))
                     .build(() -> Items.IRON_BARS));
+    /** A gas line, holding pressure: five hundred millibuckets a tick. */
+    public static final DeferredHolder<CableType, CableType> GAS_LINE = CABLES.register("gas_line",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "gas_line")))
+                    .grid(GridKind.GAS).alone().carries(GAS_RATE, 0)
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
+                    .build(() -> Items.PHANTOM_MEMBRANE));
+    /** A lined line of slurry: two hundred millibuckets a tick. */
+    public static final DeferredHolder<CableType, CableType> SLURRY_LINE = CABLES.register("slurry_line",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "slurry_line")))
+                    .grid(GridKind.SLURRY).alone().carries(SLURRY_RATE, 0)
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/crafting"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/crafting"))
+                    .build(() -> Items.CLAY_BALL));
 
     private TestCableTypes() {
     }

@@ -7,11 +7,14 @@
  */
 package dev.jstech.core.chemical;
 
+import dev.jstech.core.material.MatterState;
 import java.util.Optional;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +29,26 @@ public interface IChemicalBridge {
     /** The chemical port of the block at {@code pos} as seen from {@code side}, if the block has one. */
     Optional<IChemicalPort> portFor(Level level, BlockPos pos, @Nullable Direction side);
 
+    /**
+     * The port of the block at {@code pos} as seen from {@code side}, asked again each time it is read but found
+     * cheaply: what a grid keeps for each block it meets and reads every tick. The bridge of a mod whose capability
+     * can be cached gives a cached one; the others find the port anew.
+     */
+    default Supplier<Optional<IChemicalPort>> portCache(final ServerLevel level, final BlockPos pos,
+                                                        @Nullable final Direction side) {
+        return () -> portFor(level, pos, side);
+    }
+
     /** Whether {@code chemical} is a registered chemical of this bridge's mod. */
     boolean exists(ResourceLocation chemical);
+
+    /**
+     * The state of matter {@code chemical} is in, so a line of each state carries only its own: a gas, a slurry; none
+     * for a chemical that is no state of matter of its own (a pigment, a dye), which no line carries.
+     */
+    default Optional<MatterState> stateOf(final ResourceLocation chemical) {
+        return Optional.empty();
+    }
 
     /** The chemical's display name, as its mod shows it. */
     Component displayName(ResourceLocation chemical);

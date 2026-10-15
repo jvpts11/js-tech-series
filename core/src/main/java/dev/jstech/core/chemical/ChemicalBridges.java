@@ -8,16 +8,20 @@
 package dev.jstech.core.chemical;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.material.MatterState;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +56,37 @@ public final class ChemicalBridges {
             final Optional<IChemicalPort> port = bridge.portFor(level, pos, side);
             if (port.isPresent()) {
                 return port;
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * The chemical port of the block at {@code pos}, kept to be read every tick: each bridge's cached port, the first
+     * that finds one answering.
+     */
+    public static Supplier<Optional<IChemicalPort>> portCache(final ServerLevel level, final BlockPos pos,
+                                                              @Nullable final Direction side) {
+        final List<Supplier<Optional<IChemicalPort>>> caches = new ArrayList<>(BRIDGES.size());
+        for (final IChemicalBridge bridge : BRIDGES) {
+            caches.add(bridge.portCache(level, pos, side));
+        }
+        return () -> {
+            for (final Supplier<Optional<IChemicalPort>> cache : caches) {
+                final Optional<IChemicalPort> port = cache.get();
+                if (port.isPresent()) {
+                    return port;
+                }
+            }
+            return Optional.empty();
+        };
+    }
+
+    /** The state of matter {@code chemical} is in, from the bridge that knows it; none for one no bridge places. */
+    public static Optional<MatterState> stateOf(final ResourceLocation chemical) {
+        for (final IChemicalBridge bridge : BRIDGES) {
+            if (bridge.exists(chemical)) {
+                return bridge.stateOf(chemical);
             }
         }
         return Optional.empty();

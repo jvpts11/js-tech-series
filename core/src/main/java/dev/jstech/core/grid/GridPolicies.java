@@ -9,6 +9,9 @@ package dev.jstech.core.grid;
 
 import dev.jstech.core.energy.LevelEnergy;
 import dev.jstech.core.fluid.LevelFluids;
+import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.LevelMatter;
+import dev.jstech.core.matter.MatterCapabilities;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,8 +20,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 
 /**
  * The Core's policies, which a mod's grid takes unless it brings its own: energy, shared by what each machine asks;
- * fluids, from outputs to inputs and tanks; the data network, which carries a network's identity; and nothing, for a
- * grid that only joins.
+ * fluids, from outputs to inputs and tanks; each other state of matter the same way; the data network, which carries a
+ * network's identity; and nothing, for a grid that only joins.
  */
 public final class GridPolicies {
 
@@ -55,5 +58,29 @@ public final class GridPolicies {
     public static final IGridPolicy JOINS_ONLY = kind -> Optional.empty();
 
     private GridPolicies() {
+    }
+
+    /**
+     * A state of matter that is neither solid nor liquid, as the Core's stores of it hold it, and other mods' through
+     * their bridges: each line plugs into any block that keeps that state.
+     *
+     * @throws IllegalArgumentException for a solid or a liquid, which have the game's own items and fluids
+     */
+    public static IGridPolicy matter(final MatterState state) {
+        if (MatterCapabilities.block(state).isEmpty()) {
+            throw new IllegalArgumentException("a line of matter carries no " + state.serializedName()
+                    + ", which the game's own items and fluids hold");
+        }
+        return new IGridPolicy() {
+            @Override
+            public Optional<IGridMover> mover(final GridKind kind) {
+                return Optional.of(new LevelMatter(kind, state));
+            }
+
+            @Override
+            public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
+                return LevelMatter.plugsInto(state, level, pos, face);
+            }
+        };
     }
 }

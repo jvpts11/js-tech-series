@@ -87,6 +87,50 @@ fluids.
 
 Fluids themselves are declared on `ModContent` with `fluid(id)`, with their bucket and their block.
 
+## States of matter
+
+*Added 2026-10-15.*
+
+Solids are items and liquids are fluids. Each other state of matter (a gas, a supercritical fluid, a slurry, plasma,
+exotic matter) is a kind of storage of its own, with a capability of its own in `MatterCapabilities` (`GAS`,
+`SUPERCRITICAL`, `SLURRY`, `PLASMA`, `EXOTIC`, and an item capability of each), offering an `IMatterHandler`. Amounts
+are in mB as the matter would be at the pressure of the open air, held as a `MatterStack`: a material of the
+catalogue and an amount.
+
+A block keeps a `MatterTank`, which holds one material at a time, its volume times its pressure:
+
+```java
+private final MatterTank tank = new MatterTank(MatterState.GAS, 1_000, 200, this::setChanged);  // 200 000 mB
+
+// Offered by its capability, saved with the block entity:
+event.registerBlockEntity(MatterCapabilities.GAS, MY_TANK_BE.get(), (entity, side) -> entity.tank());
+tank.save(tag);
+tank.load(tag);
+```
+
+A `ContainmentTank` holds plasma or exotic matter while it is powered: its block calls `tick(upkeep)` each tick
+with what pays its upkeep, which it spends for as long as it holds something. Without energy it takes nothing more;
+plasma dissipates, and exotic matter stays sealed in, given to no one, until the energy comes back. A broken
+containment lets plasma out and keeps exotic matter for its block to drop with it.
+
+`MatterRelease.release(level, pos, state, stack)` lets matter out where it is lost: a gas rises, a supercritical
+fluid flashes into gas, a slurry spills, plasma flares. Exotic matter is never let out.
+
+Each state has its own line: a cable of `GridKind.GAS`, `SUPERCRITICAL`, `SLURRY`, `PLASMA` or `EXOTIC` moves
+only that state, shared as fluids are (outputs feed inputs, then tanks, then tanks feed inputs), each move all or
+nothing. Its throughput is the mB it moves a tick, the pressure it holds. A slurry runs only in slurry lines, so no
+other line is worn by one.
+
+Other mods' matter comes in through bridges: a gas line also meets a chemical mod's stores (each chemical in the
+state its bridge says) and the tanks of mods that keep gases as fluids marked `jscore:gases`. `MatterBridges` links
+a material of the catalogue to such a chemical or fluid, by id, so it moves from one to the other as the same
+thing; one with no link moves only between stores of its own kind.
+
+```java
+MatterBridges.chemical(hydrogen, ResourceLocation.fromNamespaceAndPath("mekanism", "hydrogen"));
+MatterBridges.fluid(steam, ResourceLocation.fromNamespaceAndPath("somemod", "steam"));
+```
+
 ## Chemicals
 
 *Added 2026-08-27.*
@@ -126,4 +170,9 @@ each face was set to. An `ItemFilter` lets only some items through: `ItemFilter.
 - **Energy goes missing.** A cable of the run has a loss: it is lost on the way, as said.
 - **A fluid will not enter a pipe.** It is too hot or too cold for some pipe of the run, or marked as a gas or
   corrosive and the pipe does not take that mark.
+- **A tank refuses a gas.** It holds another material already, or it is full, or the material takes no such state
+  (iron is no gas).
+- **A containment takes nothing.** It has no energy for its upkeep.
+- **Another mod's gas will not enter a Core tank.** No `MatterBridges` link makes it a material of the catalogue;
+  unlinked, it moves only between that mod's stores.
 - **A face takes nothing.** Its `FaceConfig` closes it, or the filter turns the item away.

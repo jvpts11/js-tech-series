@@ -8,6 +8,7 @@
 package dev.jstech.core.grid;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.material.MatterState;
 import dev.jstech.core.util.DeclarationError;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +41,19 @@ public final class GridKind {
     public static final GridKind POWER = declare(core("power"), GridPolicies.ENERGY);
     public static final GridKind FLUID = declare(core("fluid"), GridPolicies.FLUID);
     public static final GridKind HEAT = declare(core("heat"), GridPolicies.JOINS_ONLY);
-    public static final GridKind GAS = declare(core("gas"), GridPolicies.JOINS_ONLY);
+    public static final GridKind GAS = declare(core("gas"), GridPolicies.matter(MatterState.GAS));
     public static final GridKind MOTION = declare(core("motion"), GridPolicies.JOINS_ONLY);
     public static final GridKind DATA = declare(core("data"), GridPolicies.NETWORK);
     public static final GridKind PERIPHERAL = declare(core("peripheral"), GridPolicies.JOINS_ONLY);
+    /** The high-pressure lines of supercritical fluids, between pressure vessels. */
+    public static final GridKind SUPERCRITICAL = declare(core("supercritical"),
+            GridPolicies.matter(MatterState.SUPERCRITICAL));
+    /** The lined lines of slurries; no other line carries a slurry, so none is worn by one. */
+    public static final GridKind SLURRY = declare(core("slurry"), GridPolicies.matter(MatterState.SLURRY));
+    /** The conduits of plasma, between magnetic containments. */
+    public static final GridKind PLASMA = declare(core("plasma"), GridPolicies.matter(MatterState.PLASMA));
+    /** The conduits of exotic matter, between containments. */
+    public static final GridKind EXOTIC = declare(core("exotic"), GridPolicies.matter(MatterState.EXOTIC));
 
     private GridKind(final ResourceLocation id, final IGridPolicy policy) {
         this.id = id;

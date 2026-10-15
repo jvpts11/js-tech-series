@@ -9,19 +9,25 @@ package dev.jstech.core.integration.mekanism;
 
 import dev.jstech.core.chemical.IChemicalBridge;
 import dev.jstech.core.chemical.IChemicalPort;
+import dev.jstech.core.material.MatterState;
 import mekanism.api.Action;
 import mekanism.api.MekanismAPI;
 import mekanism.api.chemical.Chemical;
 import mekanism.api.chemical.ChemicalStack;
 import mekanism.api.chemical.IChemicalHandler;
+import mekanism.api.datamaps.IMekanismDataMapTypes;
 import mekanism.api.recipes.ItemStackChemicalToObjectRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.capabilities.BlockCapability;
+import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.ItemCapability;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Mekanism's chemicals (gases, infusions, pigments, slurries, one unified registry since 10.7), moved and stored like
@@ -46,6 +53,11 @@ final class MekanismChemicalBridge implements IChemicalBridge {
     private static final BlockCapability<IChemicalHandler, @Nullable Direction> CHEMICAL_HANDLER =
             BlockCapability.createSided(ResourceLocation.fromNamespaceAndPath("mekanism", "chemical_handler"),
                     IChemicalHandler.class);
+    /* Mekanism's tags of its slurries, before and after they are washed. */
+    private static final TagKey<Chemical> DIRTY = TagKey.create(MekanismAPI.CHEMICAL_REGISTRY_NAME,
+            ResourceLocation.fromNamespaceAndPath("mekanism", "dirty"));
+    private static final TagKey<Chemical> CLEAN = TagKey.create(MekanismAPI.CHEMICAL_REGISTRY_NAME,
+            ResourceLocation.fromNamespaceAndPath("mekanism", "clean"));
 
     @Override
     public Optional<IChemicalPort> portFor(final Level level, final BlockPos pos, @Nullable final Direction side) {
@@ -54,8 +66,31 @@ final class MekanismChemicalBridge implements IChemicalBridge {
     }
 
     @Override
+    public Supplier<Optional<IChemicalPort>> portCache(final ServerLevel level, final BlockPos pos,
+                                                       @Nullable final Direction side) {
+        final BlockCapabilityCache<IChemicalHandler, @Nullable Direction> cache =
+                BlockCapabilityCache.create(CHEMICAL_HANDLER, level, pos, side);
+        return () -> {
+            final IChemicalHandler handler = cache.getCapability();
+            return handler == null ? Optional.empty() : Optional.of(new HandlerPort(handler));
+        };
+    }
+
+    @Override
     public boolean exists(final ResourceLocation chemical) {
         return MekanismAPI.CHEMICAL_REGISTRY.containsKey(chemical);
+    }
+
+    /*
+     * A slurry is one of Mekanism's dirty or clean slurries, or a chemical another mod gives the solid it was made
+     * from; every other chemical is carried as Mekanism's own pressurised tubes carry it, in the gas lines.
+     */
+    @Override
+    public Optional<MatterState> stateOf(final ResourceLocation chemical) {
+        final Optional<Holder.Reference<Chemical>> holder = MekanismAPI.CHEMICAL_REGISTRY.getHolder(chemical);
+        return holder.map(found -> found.is(DIRTY) || found.is(CLEAN)
+                || found.getData(IMekanismDataMapTypes.INSTANCE.chemicalSolidTag()) != null
+                ? MatterState.SLURRY : MatterState.GAS);
     }
 
     @Override

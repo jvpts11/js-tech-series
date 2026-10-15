@@ -47,5 +47,6 @@ public final class SeriesMaterials {
         ExoticMatter.declare();
         SharedCatalogue.declare();
         NaturalRadioactivity.declare();
+        ChemicalLinks.declare();
     }
 }

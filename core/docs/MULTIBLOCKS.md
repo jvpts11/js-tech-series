@@ -82,6 +82,10 @@ modBus.addListener(RegisterCapabilitiesEvent.class,
 pipe against an item input port then reaches the controller's items; against a plain part, nothing. The
 controller says what each port opens onto by implementing `IMultiblockPortHost`.
 
+Ports come for items, fluid and energy, and for each other state of matter (`GAS_INPUT`, `SLURRY_OUTPUT`,
+`PLASMA_INPUT` and the rest); the controller answers the matter ports in `matterPort(kind, part, side)` with the
+store of the port's state.
+
 For the block side, `AbstractMultiblockControllerBlock` holds what every controller block does (its shape, which
 blocks are its own parts, what happens when it breaks), so a mod writes only what differs.
 

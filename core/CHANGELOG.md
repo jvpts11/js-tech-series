@@ -183,6 +183,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Grids of a mod's own: the seven grids become a registry any mod adds to, each with its policy, how what it
   carries is shared along a run and what its wires plug into. The Core's energy and fluid policies are the defaults,
   so a mod's own grid, as a voltage class that never joins another, moves energy or fluids as the Core's grids do.
+- States of matter: gases, supercritical fluids, slurries, plasma and exotic matter are each a kind of storage
+  of their own, with a capability, tanks that hold their volume times their pressure, and a line of their own that
+  never joins another's, moving matter as pipes move fluids and losing nothing. Plasma and exotic matter are held in
+  containments that spend energy while they hold: without it plasma dissipates and exotic matter stays sealed in. A
+  gas let out is lost. A gas line also fills and empties Mekanism's tanks and the tanks of mods that keep gases as
+  fluids, hydrogen being hydrogen in each, and a multiblock's ports pass every state.
 
 ### Changed
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
