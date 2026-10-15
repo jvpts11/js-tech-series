@@ -44,7 +44,7 @@ says what the Core promises and what it does not yet.
 | Page | What it covers |
 | --- | --- |
 | [Screens](SCREENS.md) | Screens declared in files, the layout engine, values bound by name, styles, layouts you can test, themes and skins, drawing text, models, screens in the world, keys. |
-| [UI components](UI_COMPONENTS.md) | The components desktop programs and dialogs are built from. |
+| [UI components](UI_COMPONENTS.md) | The components screens, desktop programs and dialogs are built from: controls, trees, tables, charts, graphs, 3D views, maps, gauges, ghost slots, rich tooltips. |
 | [Fonts](FONTS.md) | Declaring a font from its free source, and the monospace grid painter. |
 | [Motion](MOTION.md) | Curves, motion profiles, and the clock every motion reads. |
 | [Overlays](OVERLAYS.md) | HUD elements, holograms, and what Jade shows. |

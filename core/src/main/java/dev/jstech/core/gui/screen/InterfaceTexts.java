@@ -33,6 +33,12 @@ public final class InterfaceTexts {
     public static final TextKey MISSING_SCREEN = TextKey.of("jscore.screen.missing",
             "No resource pack has the screen %s.");
 
+    /** What a tank's gauge and an energy store's say when the pointer rests on them, unless a file says otherwise. */
+    public static final TextKey TANK_AMOUNT = TextKey.of("jscore.screen.tank_amount", "%s / %s mB");
+    public static final TextKey ENERGY_AMOUNT = TextKey.of("jscore.screen.energy_amount", "%s / %s");
+    /** The letter a map marks north with. */
+    public static final TextKey MAP_NORTH = TextKey.of("jscore.screen.map_north", "N");
+
     /** The chooser of styles. */
     public static final TextKey CHOOSER_TITLE = TextKey.of("jscore.style_chooser.title", "Styles");
     public static final TextKey EVERY_SCREEN = TextKey.of("jscore.style_chooser.every_screen", "Every screen");

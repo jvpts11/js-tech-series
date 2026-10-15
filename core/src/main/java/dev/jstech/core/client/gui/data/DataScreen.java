@@ -103,6 +103,12 @@ public class DataScreen extends Screen implements IDataScreen {
     }
 
     @Override
+    public void removed() {
+        view.dispose();
+        super.removed();
+    }
+
+    @Override
     public void onClose() {
         if (minecraft != null) {
             minecraft.setScreen(parent);

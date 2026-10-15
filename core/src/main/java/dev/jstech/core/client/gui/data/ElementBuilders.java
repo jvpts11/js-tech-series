@@ -53,11 +53,19 @@ public final class ElementBuilders {
     public static BuiltNode build(final ElementSpec spec, final BuildContext context) {
         final IElementBuilder<Object> builder = (IElementBuilder<Object>) BY_TYPE.get(spec.type());
         if (builder == null) {
-            final String said = "[" + spec.type() + "]";
-            final Label missing = new Label(said);
-            return context.node(spec, FlexBox.leaf("missing " + spec.type(), context.text(1f, false).of(said))
-                    .role(Role.TEXT), missing, null, List.of());
+            return missing(spec, context);
         }
         return builder.build(spec, spec.props(), context);
+    }
+
+    /**
+     * A line naming {@code spec}'s kind in brackets, in the place of a component that cannot be built: its kind is
+     * drawn by nothing on this game, or what it is bound to is not what it shows.
+     */
+    public static BuiltNode missing(final ElementSpec spec, final BuildContext context) {
+        final String said = "[" + spec.type() + "]";
+        final Label missing = new Label(said);
+        return context.node(spec, FlexBox.leaf("missing " + spec.type(), context.text(1f, false).of(said))
+                .role(Role.TEXT), missing, null, List.of());
     }
 }

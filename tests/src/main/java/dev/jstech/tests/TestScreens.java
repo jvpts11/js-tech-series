@@ -50,6 +50,25 @@ public final class TestScreens {
     public static final TextKey TITLE = TextKey.of("jstests.screen.test_machine", "Test Machine");
     public static final TextKey PRESS = TextKey.of("jstests.screen.press", "Press");
     public static final TextKey READY = TextKey.of("jstests.screen.ready", "Ready");
+    /** The words of the screens of controls and of views. */
+    public static final TextKey CONTROLS = TextKey.of("jstests.screen.controls", "Controls");
+    public static final TextKey VIEWS = TextKey.of("jstests.screen.views", "Views");
+    public static final TextKey SPEED = TextKey.of("jstests.screen.speed", "Speed: %s%%");
+    public static final TextKey SIGNAL = TextKey.of("jstests.screen.signal", "Signal: %s of 15");
+    public static final TextKey EJECT = TextKey.of("jstests.screen.eject", "Auto-eject");
+    public static final TextKey MODE_ALWAYS = TextKey.of("jstests.screen.mode_always", "Ignore redstone");
+    public static final TextKey MODE_SIGNAL = TextKey.of("jstests.screen.mode_signal", "With a signal");
+    public static final TextKey SORT = TextKey.of("jstests.screen.sort", "Sort: %s");
+    public static final TextKey SORT_AMOUNT = TextKey.of("jstests.screen.sort_amount", "By amount");
+    public static final TextKey SORT_NAME = TextKey.of("jstests.screen.sort_name", "By name");
+    public static final TextKey POWER = TextKey.of("jstests.screen.power", "Power");
+    public static final TextKey MADE = TextKey.of("jstests.screen.made", "Per min");
+    public static final TextKey SHARE = TextKey.of("jstests.screen.share", "Energy");
+    /** The screens of controls and of views, with no menu. */
+    public static final ResourceLocation CONTROLS_FILE = ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+            "test_controls");
+    public static final ResourceLocation VIEWS_FILE = ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+            "test_views");
 
     private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU,
             JsTests.MODID);

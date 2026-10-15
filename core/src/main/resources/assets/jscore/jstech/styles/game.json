@@ -31,7 +31,16 @@
     "tooltip_ground": "#F0100010",
     "tooltip_edge": "#FF5000FF",
     "selection": "#FF4A942E",
-    "link": "#FF2E4FB8"
+    "link": "#FF2E4FB8",
+    "popup_text": "#FFAAAAAA",
+    "popup_chosen": "#FFFFFF00",
+    "chart_ground": "#90000000",
+    "chart_line": "#22FFFFFF",
+    "chart_1": "#FF55FF55",
+    "chart_2": "#FF55FFFF",
+    "chart_3": "#FFFFFF55",
+    "chart_4": "#FFA0A0A0",
+    "energy": "#FFFFDD33"
   },
   "pieces": {
     "window": {"kind": "slice", "texture": "minecraft:textures/gui/demo_background.png",
@@ -69,7 +78,11 @@
     "list_hover": {"kind": "flat", "fill": "#40FFFFFF"},
     "list_selected": {"kind": "flat", "fill": "#FF000000", "edge": "#FFFFFFFF"},
     "progress_track": {"kind": "flat", "fill": "track", "light": "#FF373737", "dark": "#FFFFFFFF"},
-    "progress_fill": {"kind": "flat", "fill": "accent"}
+    "progress_fill": {"kind": "flat", "fill": "accent"},
+    "radio": {"kind": "flat", "fill": "slot_bg", "light": "#FF373737", "dark": "#FFFFFFFF"},
+    "radio_hover": {"kind": "flat", "fill": "#FF9B9B9B", "light": "#FF373737", "dark": "#FFFFFFFF"},
+    "popup_list": {"kind": "flat", "fill": "#D0000000"},
+    "chart": {"kind": "flat", "fill": "chart_ground"}
   },
   "metrics": {"gap": 4, "padding": 7, "row_height": 12, "control_height": 20, "small_scale": 0.75, "title_gap": 3}
 }

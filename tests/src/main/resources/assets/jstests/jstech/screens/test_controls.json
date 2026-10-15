@@ -1,0 +1,43 @@
+{
+  "width": 260,
+  "root": {
+    "type": "column",
+    "gap": 4,
+    "children": [
+      {"type": "title", "id": "title"},
+      {
+        "type": "row",
+        "gap": 6,
+        "children": [
+          {
+            "type": "column",
+            "gap": 4,
+            "grow": 1,
+            "children": [
+              {"type": "slider", "id": "speed", "bind": "speed", "min": 0, "max": 200, "format": "jstests.screen.speed",
+                "action": "speed"},
+              {"type": "slider", "id": "signal", "bind": "signal", "max": 15, "steps": 16,
+                "format": "jstests.screen.signal", "action": "signal"},
+              {"type": "switch", "id": "eject", "text": "jstests.screen.eject", "bind": "eject", "action": "eject"},
+              {"type": "radio", "id": "mode", "options": ["jstests.screen.mode_always", "jstests.screen.mode_signal"],
+                "bind": "mode", "action": "mode"},
+              {"type": "dropdown", "id": "sort", "options": ["jstests.screen.sort_amount", "jstests.screen.sort_name"],
+                "bind": "sort", "format": "jstests.screen.sort", "action": "sort"},
+              {"type": "color", "id": "colour", "bind": "colour", "action": "colour",
+                "swatches": ["#39D6C4", "#EF6A5A", "#F0B23A"]}
+            ]
+          },
+          {
+            "type": "column",
+            "gap": 4,
+            "children": [
+              {"type": "tank", "id": "tank", "bind": "fluid", "capacity": 8000},
+              {"type": "energy", "id": "energy", "bind": "energy", "capacity": 1000},
+              {"type": "ghost_slot", "id": "filter", "bind": "filter", "action": "filter"}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

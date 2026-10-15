@@ -14,8 +14,10 @@ import com.mojang.serialization.JsonOps;
 import dev.jstech.core.gui.flex.Align;
 import dev.jstech.core.gui.flex.Insets;
 import dev.jstech.core.gui.flex.Track;
+import dev.jstech.core.gui.screen.ControlElements;
 import dev.jstech.core.gui.screen.CoreElements;
 import dev.jstech.core.gui.screen.ElementSpec;
+import dev.jstech.core.gui.screen.ElementType;
 import dev.jstech.core.gui.screen.ElementTypes;
 import dev.jstech.core.gui.screen.ScreenFile;
 import dev.jstech.tests.JsTests;
@@ -23,6 +25,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -56,6 +59,26 @@ public final class ScreenFileGameTests {
         helper.assertTrue(all.stream().anyMatch(spec -> spec.common().id().filter("press"::equals).isPresent()
                 && spec.props(CoreElements.BUTTON).action().filter("press"::equals).isPresent()),
                 "its button names the action press");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void codec_readsTheScreensOfEveryKind(final GameTestHelper helper) {
+        final ScreenFile controls = read(helper, file("test_controls.json"));
+        final ScreenFile views = read(helper, file("test_views.json"));
+        final List<ElementType<?>> kinds = new ArrayList<>();
+        controls.root().all().forEach(spec -> kinds.add(spec.type()));
+        views.root().all().forEach(spec -> kinds.add(spec.type()));
+
+        for (final ElementType<?> kind : List.of(ControlElements.SLIDER, ControlElements.SWITCH, ControlElements.RADIO,
+                ControlElements.DROPDOWN, ControlElements.COLOR, ControlElements.TANK, ControlElements.ENERGY,
+                ControlElements.GHOST_SLOT, ControlElements.TREE, ControlElements.TABLE, ControlElements.CHART,
+                ControlElements.GRAPH, ControlElements.MODEL, ControlElements.MAP)) {
+            helper.assertTrue(kinds.contains(kind), "the test screens hold a " + kind);
+        }
+        final ElementSpec signal = controls.root().all().stream().filter(spec -> spec.common().id()
+                .filter("signal"::equals).isPresent()).findFirst().orElseThrow();
+        helper.assertTrue(signal.props(ControlElements.SLIDER).steps() == 16, "a slider in steps keeps its steps");
         helper.succeed();
     }
 
@@ -116,8 +139,12 @@ public final class ScreenFileGameTests {
     }
 
     private static String testMachine() {
+        return file("test_machine.json");
+    }
+
+    private static String file(final String name) {
         final Path file = ModList.get().getModFileById(JsTests.MODID).getFile().findResource("assets",
-                JsTests.MODID, "jstech", "screens", "test_machine.json");
+                JsTests.MODID, "jstech", "screens", name);
         try {
             return Files.readString(file);
         } catch (final IOException e) {

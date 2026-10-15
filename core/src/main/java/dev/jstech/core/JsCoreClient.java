@@ -25,10 +25,12 @@ import dev.jstech.core.client.diagnostic.DiagnosticsClient;
 import dev.jstech.core.client.fluid.FluidsClient;
 import dev.jstech.core.client.font.CoreFontClient;
 import dev.jstech.core.client.gui.component.Grounds;
+import dev.jstech.core.client.gui.data.ControlElementBuilders;
 import dev.jstech.core.client.gui.data.CoreElementBuilders;
 import dev.jstech.core.client.gui.data.ScreenFiles;
 import dev.jstech.core.client.gui.style.StyleChooser;
 import dev.jstech.core.client.gui.style.StyleLoader;
+import dev.jstech.core.client.gui.tooltip.ClientRichLine;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.hologram.HologramView;
 import dev.jstech.core.client.hud.HudElements;
@@ -99,8 +101,11 @@ public final class JsCoreClient {
         VehicleControls.listen(modEventBus);
         // In a development run, the mods' assets reloaded as they change.
         LiveReloadClient.listen();
-        // What draws each of the Core's kinds of screen component, and the chooser of the player's styles.
+        // What draws each of the Core's kinds of screen component, a rich line of a tooltip, and the chooser of the
+        // player's styles.
         CoreElementBuilders.register();
+        ControlElementBuilders.register();
+        ClientRichLine.listen(modEventBus);
         ConfigChoosers.register(StyleSettings.CHOOSER, new StyleChooser());
     }
 }

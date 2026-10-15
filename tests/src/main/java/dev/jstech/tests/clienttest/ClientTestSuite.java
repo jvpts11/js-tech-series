@@ -124,6 +124,7 @@ import dev.jstech.tests.clienttest.core.AudioClientTests;
 import dev.jstech.tests.clienttest.core.BigPayloadClientTests;
 import dev.jstech.tests.clienttest.core.CoreStateClientTests;
 import dev.jstech.tests.clienttest.core.DataRegistryClientTests;
+import dev.jstech.tests.clienttest.core.ComponentsClientTests;
 import dev.jstech.tests.clienttest.core.DataScreenClientTests;
 import dev.jstech.tests.clienttest.core.FluidClientTests;
 import dev.jstech.tests.clienttest.core.GridPainterClientTests;
@@ -250,6 +251,7 @@ public final class ClientTestSuite {
             BigPayloadClientTests.class,
             LiveReloadClientTests.class,
             DataScreenClientTests.class,
+            ComponentsClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

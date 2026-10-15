@@ -1,0 +1,46 @@
+{
+  "width": 320,
+  "root": {
+    "type": "column",
+    "gap": 4,
+    "children": [
+      {"type": "title", "id": "title"},
+      {
+        "type": "row",
+        "gap": 4,
+        "children": [
+          {"type": "tree", "id": "tree", "bind": "tree", "action": "picked", "grow": 1, "height": 60},
+          {"type": "table", "id": "table", "bind": "table", "action": "row", "grow": 1, "height": 60}
+        ]
+      },
+      {
+        "type": "row",
+        "gap": 4,
+        "children": [
+          {"type": "chart", "id": "line", "bind": "power", "kind": "line", "title": "jstests.screen.power",
+            "grow": 1, "height": 60},
+          {"type": "chart", "id": "bars", "bind": "made", "kind": "bar", "title": "jstests.screen.made", "width": 80,
+            "height": 60},
+          {"type": "chart", "id": "pie", "bind": "share", "kind": "pie", "title": "jstests.screen.share", "width": 80,
+            "height": 60}
+        ]
+      },
+      {
+        "type": "row",
+        "gap": 4,
+        "children": [
+          {"type": "graph", "id": "graph", "bind": "graph", "action": "add", "width": 170, "height": 80},
+          {
+            "type": "row",
+            "gap": 4,
+            "grow": 1,
+            "children": [
+              {"type": "model", "id": "model", "bind": "block", "grow": 1, "height": 80},
+              {"type": "map", "id": "map", "bind": "here", "grow": 1, "height": 80}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

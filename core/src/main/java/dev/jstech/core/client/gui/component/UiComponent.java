@@ -191,4 +191,29 @@ public abstract class UiComponent {
     public List<Component> tooltip(final double mx, final double my) {
         return List.of();
     }
+
+    /**
+     * Whether the component has something open over the others (a drop-down's list, a colour picker): its panel then
+     * draws it after every other child and hands it the pointer first, wherever the open part reaches.
+     */
+    public boolean overlayOpen() {
+        return false;
+    }
+
+    /** Whether the open part over the others covers the point; only asked while {@link #overlayOpen()}. */
+    public boolean overlayContains(final double mx, final double my) {
+        return false;
+    }
+
+    /** Draws the open part over the others, after every other child of its panel; only while it is open. */
+    public void renderOverlay(final GuiGraphics g, final UiContext ctx) {
+    }
+
+    /** Closes what is open over the others, as a click outside it or Escape does. */
+    public void closeOverlay() {
+    }
+
+    /** Lets go of what the component holds outside itself (a texture it drew into), when its screen goes away. */
+    public void dispose() {
+    }
 }

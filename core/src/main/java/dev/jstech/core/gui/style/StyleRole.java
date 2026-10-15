@@ -78,7 +78,25 @@ public enum StyleRole {
     /** The ground of chosen text and rows. */
     SELECTION(ACCENT),
     /** A link. */
-    LINK(ACCENT2);
+    LINK(ACCENT2),
+    /** The text of an open list. */
+    POPUP_TEXT(TEXT),
+    /** The chosen line of an open list. */
+    POPUP_CHOSEN(ACCENT),
+    /** A chart's ground. */
+    CHART_GROUND(SLOT_BG),
+    /** A chart's grid lines. */
+    CHART_LINE(LINE),
+    /** A chart's first series. */
+    CHART_1(GREEN),
+    /** A chart's second series. */
+    CHART_2(ACCENT2),
+    /** A chart's third series. */
+    CHART_3(AMBER),
+    /** A chart's fourth series. */
+    CHART_4(DIM),
+    /** Stored energy at its brightest, as a gauge fills. */
+    ENERGY(AMBER);
 
     private final StyleRole fallback;
 

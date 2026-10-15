@@ -22,6 +22,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Looks that draw everything: J's Core's API is at version 7. `ISkin` draws a whole window, a slot, a check
   box, a progress bar, a separator, a tooltip and a button that cannot be pressed, and draws and measures text in its
   own font, each with a default that keeps a skin written before as it was; all experimental.
+- The richer controls in every look: J's Core's API is at version 8. `ISkin` draws a slider, a switch, an
+  option button, a drop-down list and its open list, a chart's ground, lines and series, and gives stored energy its
+  colour, each with a default for a skin written before; all experimental.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -65,6 +68,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   player for every screen and per mod, with a preview. The Core brings the game's own (the default, drawn from the
   game's widgets, so a resource pack that repaints them repaints the Core's), J's Tech, high contrast, three for
   colour blindness and the eras'; a resource pack replaces any of them or adds its own as a file.
+- New components, in code and in screens' files: sliders free or in steps, switches, option buttons, drop-down
+  lists, a colour picker; trees, tables that sort and filter, line, bar and pie charts, a node graph editor; a 3D view
+  of a block, an item or an entity, a map in the game's colours, tank gauges in the fluid's own texture, segmented
+  energy bars and ghost slots; and tooltips whose lines hold items and pictures.
 
 ### Changed
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

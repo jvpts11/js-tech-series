@@ -213,6 +213,80 @@ public final class StyleSkin implements ISkin {
         piece(g, StylePiece.TOOLTIP, x, y, w, h);
     }
 
+    @Override
+    public void slider(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
+                       final double fraction, final String label, final boolean hovered) {
+        piece(g, hovered ? StylePiece.SLIDER_HOVER : StylePiece.SLIDER, x, y, w, h);
+        final int knob = Math.min(HANDLE_WIDTH, w);
+        final int at = x + (int) Math.round((w - knob) * Math.max(0.0, Math.min(1.0, fraction)));
+        piece(g, hovered ? StylePiece.SLIDER_HANDLE_HOVER : StylePiece.SLIDER_HANDLE, at, y, knob, h);
+        label(g, font, label, x, y, w, h, false, StyleRole.BUTTON_TEXT);
+    }
+
+    @Override
+    public void switchControl(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                              final boolean on, final boolean hovered) {
+        piece(g, on ? StylePiece.SWITCH_ON : StylePiece.SWITCH_OFF, x, y, w, h);
+        final int knob = Math.max(2, Math.min(w / 2, h + 2) - 1);
+        final int kx = on ? x + w - 1 - knob : x + 1;
+        piece(g, hovered ? StylePiece.BUTTON_HOVER : StylePiece.BUTTON, kx, y + 1, knob, h - 2);
+    }
+
+    @Override
+    public void radio(final GuiGraphics g, final int x, final int y, final int size, final boolean chosen,
+                      final boolean hovered) {
+        piece(g, hovered ? StylePiece.RADIO_HOVER : StylePiece.RADIO, x, y, size, size);
+        if (chosen) {
+            final int inset = Math.max(2, size / 3);
+            g.fill(x + inset, y + inset, x + size - inset, y + size - inset, style.colour(StyleRole.TEXT));
+        }
+    }
+
+    @Override
+    public void dropdown(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
+                         final String label, final boolean open, final boolean hovered) {
+        piece(g, hovered || open ? StylePiece.BUTTON_HOVER : StylePiece.BUTTON, x, y, w, h);
+        final int ink = style.colour(StyleRole.BUTTON_TEXT);
+        drawText(g, font, label, x + 6, y + (h - 8) / 2, ink);
+        final int cx = x + w - 13;
+        final int cy = y + h / 2 - 1;
+        for (int i = 0; i < 3; i++) {
+            final int row = open ? cy + 1 - i : cy - 1 + i;
+            g.fill(cx + i, row, cx + 6 - i, row + 1, ink);
+        }
+    }
+
+    @Override
+    public void listPopup(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        piece(g, StylePiece.POPUP_LIST, x, y, w, h);
+    }
+
+    @Override
+    public int popupText(final boolean chosen) {
+        return style.colour(chosen ? StyleRole.POPUP_CHOSEN : StyleRole.POPUP_TEXT);
+    }
+
+    @Override
+    public void chartGround(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        piece(g, StylePiece.CHART, x, y, w, h);
+    }
+
+    @Override
+    public int energyColour() {
+        return style.colour(StyleRole.ENERGY);
+    }
+
+    @Override
+    public int chartLine() {
+        return style.colour(StyleRole.CHART_LINE);
+    }
+
+    @Override
+    public int seriesColour(final int index) {
+        final StyleRole[] series = {StyleRole.CHART_1, StyleRole.CHART_2, StyleRole.CHART_3, StyleRole.CHART_4};
+        return style.colour(series[Math.floorMod(index, series.length)]);
+    }
+
     /** A header strip, with the line under it in the accent where the style's finish says so. */
     public void header(final GuiGraphics g, final int x, final int y, final int w, final int h) {
         piece(g, StylePiece.HEADER, x, y, w, h);

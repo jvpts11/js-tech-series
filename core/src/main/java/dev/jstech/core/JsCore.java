@@ -42,6 +42,7 @@ import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.font.CoreFonts;
+import dev.jstech.core.gui.screen.ControlElements;
 import dev.jstech.core.gui.screen.CoreElements;
 import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.guide.CoreGuide;
@@ -152,6 +153,7 @@ public final class JsCore {
         ConfigFiles.register(StyleSettings.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
+        ControlElements.declare();
         // What the Core keeps with a world: each dimension's data networks, and the ledger of its recordings.
         CoreStates.register(NetworkRegistry.NETWORKS);
         MediaLedgers.register();

@@ -69,6 +69,43 @@ Helpers: `FlowLayout` places components in a row or a column; `Texts` clips, tri
 behind the fields and the editor (`TextEditState`, `TextDocument`, `StepperMath`, `ScrollState`) lives in
 `dev.jstech.core.client.gui.logic` and is covered by unit tests.
 
+## Controls, data and views
+
+*Added 2026-10-15.*
+
+Each draws through the skin, so it wears the system's look inside a computer and the player's style on a screen of
+the Core; each also has a kind of its own in a screen's file ([Screens](SCREENS.md#screens-declared-in-files)).
+
+| Component | What it is | In a file |
+|---|---|---|
+| `Slider` | Dragged, clicked or stepped with the arrows; free or in steps, with a tick under each step; its value written on it. | `slider` |
+| `Switch` | On or off, with its label; a click or Space turns it. | `switch` |
+| `RadioGroup` | Option buttons one under the other; a click or the arrows choose. | `radio` |
+| `Dropdown` | A button saying what is chosen; its list opens over everything, the chosen line marked; a long list scrolls. | `dropdown` |
+| `ColorPicker` | A swatch and its `#RRGGBB`; opens a square of saturation and value, a bar of hues, ready colours, and the number typed in. | `color` |
+| `TreeView` | Nodes in rows with dotted guides, opened and closed by their arrow, each with its item and a count. | `tree` |
+| `TableView<R>` | A head of titles that sorts by a click and the other way by a second, rows told apart by shade, filtered by words. | `table` |
+| `ChartView` | Lines over time with their legend and a limit, bars with their values, or a pie with its shares. | `chart` |
+| `GraphEditor` | Nodes and their ports; wires drawn from an output to an input of the same kind; the right button adds a node or takes a wire away. | `graph` |
+| `ModelView` | A 3D view of a block, a few blocks, an item or an entity: dragged to turn, the wheel to zoom, a layer at a time. | `model` |
+| `MapView` | The land round a place in the game's map colours, its places marked, brought closer and taken further. | `map` |
+| `TankGauge` | A fluid's own texture rising in a well, with a scale; the pointer says the fluid and the amount. | `tank` |
+| `EnergyBar` | Segments filled from the bottom in the look's energy colour. | `energy` |
+| `GhostSlot` | An item shown and not held: a click with an item sets it, the right button clears it. | `ghost_slot` |
+
+Something drawn over the others while it is open (a drop-down's list, a colour picker) says so with `overlayOpen`;
+its panel draws it after every other child and hands it the pointer first, and a click outside it or Escape closes
+it. A component that holds something outside itself, a map's picture, lets go of it in `dispose`.
+
+The models behind the data views are pure and tested: `TreeModel`, `TableModel`, `GraphModel`, with `ChartMath`,
+`SliderMath` and `ColorMath`. In a file, a tree, a table, a chart, a graph, a map and a 3D view are bound to what the
+screen's code hands over under their name (`screen.value("tree", () -> tree)`), and what a control hands back goes to
+the handler its `action` names (`screen.onNumber("speed", speed -> ...)`, `onChoice`, `onColour`, `onItem`,
+`onPoint`).
+
+A tooltip's line can hold items and pictures in its text: `RichLine.builder().text(...).item(stack).image(sprite, w,
+h).build()`, handed to a tooltip as the game hands any picture to one.
+
 ## Writing a program
 
 - Create the components in the constructor, add them to the panel in the order they should stack (later
@@ -81,3 +118,12 @@ behind the fields and the editor (`TextEditState`, `TextDocument`, `StepperMath`
 - Give the client tests something to click: a method that returns a component's `center()` in the content's
   coordinates, so a test never hard-codes a position.
 - Ship a new component with a real consumer. A component nothing uses is not finished.
+
+## What can go wrong
+
+- **An open list is drawn under the items of the slots.** It is drawn by hand instead of through `renderOverlay`;
+  the panel lifts what is open over the slots' items.
+- **A map leaks a texture each time its screen opens.** Its screen does not call `dispose` when it closes; the
+  screens of the Core do.
+- **A tree, a table or a chart shows its kind in brackets.** What its name is bound to is not its model: hand over a
+  `TreeModel`, a `TableModel` or a list of `ChartView.Series`.

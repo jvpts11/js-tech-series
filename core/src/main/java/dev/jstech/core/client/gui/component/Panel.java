@@ -10,6 +10,7 @@ package dev.jstech.core.client.gui.component;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +30,9 @@ public class Panel extends UiComponent {
     private UiComponent focusedChild;
     @Nullable
     private UiComponent pressedChild;
+
+    /** How far over the screen what is open over the others is lifted: over the items in slots and their counts. */
+    private static final float OVERLAY_Z = 300f;
 
     /** Adds a child in front of the others; returns it, so a field can be declared and added in one line. */
     public <T extends UiComponent> T add(final T child) {
@@ -105,10 +109,74 @@ public class Panel extends UiComponent {
                 child.render(g, ctx);
             }
         }
+        // What a child has open over the others is drawn over all of them, lifted above the items in slots.
+        for (final UiComponent child : children) {
+            if (child.visible() && child.overlayOpen()) {
+                g.pose().pushPose();
+                g.pose().translate(0, 0, OVERLAY_Z);
+                child.renderOverlay(g, ctx);
+                g.pose().popPose();
+            }
+        }
+    }
+
+    @Override
+    public boolean overlayOpen() {
+        for (final UiComponent child : children) {
+            if (child.visible() && child.overlayOpen()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean overlayContains(final double mx, final double my) {
+        for (final UiComponent child : children) {
+            if (child.visible() && child.overlayOpen() && child.overlayContains(mx, my)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void renderOverlay(final GuiGraphics g, final UiContext ctx) {
+        for (final UiComponent child : children) {
+            if (child.visible() && child.overlayOpen()) {
+                child.renderOverlay(g, ctx);
+            }
+        }
+    }
+
+    @Override
+    public void closeOverlay() {
+        for (final UiComponent child : children) {
+            child.closeOverlay();
+        }
+    }
+
+    @Override
+    public void dispose() {
+        for (final UiComponent child : children) {
+            child.dispose();
+        }
     }
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
+        // An open list or picker takes the click wherever it reaches; a click outside it closes it and goes on.
+        for (int i = children.size() - 1; i >= 0; i--) {
+            final UiComponent child = children.get(i);
+            if (child.visible() && child.overlayOpen()) {
+                if (child.overlayContains(mx, my)) {
+                    pressedChild = child;
+                    child.mouseClicked(mx, my, button);
+                    return true;
+                }
+                child.closeOverlay();
+            }
+        }
         for (int i = children.size() - 1; i >= 0; i--) {
             final UiComponent child = children.get(i);
             if (!child.visible() || !child.enabled() || !child.contains(mx, my)) {
@@ -145,6 +213,12 @@ public class Panel extends UiComponent {
     public boolean mouseScrolled(final double mx, final double my, final double delta) {
         for (int i = children.size() - 1; i >= 0; i--) {
             final UiComponent child = children.get(i);
+            if (child.visible() && child.overlayOpen() && child.overlayContains(mx, my)) {
+                return child.mouseScrolled(mx, my, delta);
+            }
+        }
+        for (int i = children.size() - 1; i >= 0; i--) {
+            final UiComponent child = children.get(i);
             if (child.visible() && child.enabled() && child.contains(mx, my) && child.mouseScrolled(mx, my, delta)) {
                 return true;
             }
@@ -159,6 +233,10 @@ public class Panel extends UiComponent {
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        if (key == GLFW.GLFW_KEY_ESCAPE && overlayOpen()) {
+            closeOverlay();
+            return true;
+        }
         return focusedChild != null && focusedChild.keyPressed(key, scanCode, modifiers);
     }
 

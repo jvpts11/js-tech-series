@@ -109,6 +109,16 @@ public final class BuildContext {
         return found;
     }
 
+    /** What is done with a value a component hands over under {@code name}; noted when nobody handed it over. */
+    public Consumer<Object> handler(final String name) {
+        final Optional<Consumer<Object>> found = wiring.handler(name);
+        if (found.isEmpty()) {
+            unwired.add("handler " + name);
+        }
+        return found.orElse(value -> {
+        });
+    }
+
     /** Presses the menu's button {@code id} on the server, as the game's own screens do. */
     public void pressMenuButton(final int id) {
         final Minecraft minecraft = Minecraft.getInstance();

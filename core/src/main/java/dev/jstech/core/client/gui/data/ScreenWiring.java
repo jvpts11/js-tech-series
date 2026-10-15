@@ -11,8 +11,12 @@ import dev.jstech.core.menu.CoreMenu;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,9 +33,44 @@ public final class ScreenWiring<M> {
     private final Map<String, Runnable> actions = new LinkedHashMap<>();
     private final Map<String, Consumer<String>> texts = new LinkedHashMap<>();
     private final Map<String, Supplier<?>> values = new LinkedHashMap<>();
+    private final Map<String, Consumer<Object>> handlers = new LinkedHashMap<>();
 
     ScreenWiring(@Nullable final M menu) {
         this.menu = menu;
+    }
+
+    /** What is done with a value a component hands over under {@code name}: a number, a choice, an item. */
+    public ScreenWiring<M> on(final String name, final Consumer<Object> handler) {
+        handlers.put(name, handler);
+        return this;
+    }
+
+    /** What is done with a number a slider hands over under {@code name}. */
+    public ScreenWiring<M> onNumber(final String name, final DoubleConsumer handler) {
+        return on(name, value -> handler.accept(((Number) value).doubleValue()));
+    }
+
+    /** What is done with the place of the option chosen in a list or a group named {@code name}. */
+    public ScreenWiring<M> onChoice(final String name, final IntConsumer handler) {
+        return on(name, value -> handler.accept(((Number) value).intValue()));
+    }
+
+    /** What is done with a colour picked on a colour picker named {@code name}. */
+    public ScreenWiring<M> onColour(final String name, final IntConsumer handler) {
+        return onChoice(name, handler);
+    }
+
+    /** What is done with the item a ghost slot named {@code name} is set to, an empty stack when cleared. */
+    public ScreenWiring<M> onItem(final String name, final Consumer<ItemStack> handler) {
+        return on(name, value -> handler.accept((ItemStack) value));
+    }
+
+    /** What is done with the point a graph editor named {@code name} asks a new node for, in its own space. */
+    public ScreenWiring<M> onPoint(final String name, final BiConsumer<Integer, Integer> handler) {
+        return on(name, value -> {
+            final int[] point = (int[]) value;
+            handler.accept(point[0], point[1]);
+        });
     }
 
     /** The screen's menu, or none for a screen with no menu. */
@@ -65,6 +104,11 @@ public final class ScreenWiring<M> {
     /** What is done with the text of {@code name}, or none. */
     Optional<Consumer<String>> text(final String name) {
         return Optional.ofNullable(texts.get(name));
+    }
+
+    /** What is done with a value handed over under {@code name}, or none. */
+    Optional<Consumer<Object>> handler(final String name) {
+        return Optional.ofNullable(handlers.get(name));
     }
 
     /** The value {@code name}: the screen's own, else its menu's, else none. */

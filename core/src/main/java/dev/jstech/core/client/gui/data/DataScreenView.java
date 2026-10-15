@@ -87,6 +87,7 @@ public final class DataScreenView {
     /** Builds the screen from its file as it is now, in the style it wears now. */
     public void build(final Font gameFont) {
         font = gameFont;
+        root.dispose();
         root.clear();
         nodes.clear();
         final Optional<ScreenFile> read = ScreenFiles.get(file);
@@ -192,6 +193,11 @@ public final class DataScreenView {
 
     public boolean charTyped(final char c) {
         return root.charTyped(c);
+    }
+
+    /** Lets go of what the components hold outside themselves, when the screen goes away. */
+    public void dispose() {
+        root.dispose();
     }
 
     /** Whether a component of the screen has the keyboard, so the keys go to it rather than to the game. */

@@ -84,7 +84,15 @@ public enum StylePiece {
     /** The empty part of a progress bar. */
     PROGRESS_TRACK,
     /** The filled part of a progress bar. */
-    PROGRESS_FILL;
+    PROGRESS_FILL,
+    /** An option button, not chosen. */
+    RADIO,
+    /** An option button under the pointer. */
+    RADIO_HOVER,
+    /** The open list of a drop-down. */
+    POPUP_LIST,
+    /** A chart's ground. */
+    CHART;
 
     /** The name a style file sets it by. */
     public String key() {

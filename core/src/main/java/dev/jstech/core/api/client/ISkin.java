@@ -36,6 +36,10 @@ public interface ISkin {
     @ApiStatus.Experimental
     int SLOT_SIZE = 18;
 
+    /** How wide a slider's handle is, in pixels. */
+    @ApiStatus.Experimental
+    int HANDLE_WIDTH = 8;
+
     // colours
 
     /** Primary text. */
@@ -173,5 +177,92 @@ public interface ISkin {
     @ApiStatus.Experimental
     default int textWidth(final Font font, final String text) {
         return font.width(text);
+    }
+
+    /** A slider: its track, its handle {@code fraction} of the way along, and its label over the track. */
+    @ApiStatus.Experimental
+    default void slider(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
+                        final double fraction, final String label, final boolean hovered) {
+        field(g, x, y, w, h, hovered);
+        final int knob = Math.min(HANDLE_WIDTH, w);
+        final int at = x + (int) Math.round((w - knob) * Math.max(0.0, Math.min(1.0, fraction)));
+        panel(g, at, y, knob, h);
+        final int tw = textWidth(font, label);
+        drawText(g, font, label, x + (w - tw) / 2, y + (h - 8) / 2, text());
+    }
+
+    /** A switch, on or off: a track, and a knob at the end it is at. */
+    @ApiStatus.Experimental
+    default void switchControl(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                               final boolean on, final boolean hovered) {
+        g.fill(x, y, x + w, y + h, on ? accent() : fieldBg());
+        Draw.outline(g, x, y, w, h, hovered ? accent() : edge());
+        final int knob = Math.max(2, h - 2);
+        final int kx = on ? x + w - 1 - knob : x + 1;
+        panel(g, kx, y + 1, knob, h - 2);
+    }
+
+    /** An option button {@code size} pixels square, chosen or not. */
+    @ApiStatus.Experimental
+    default void radio(final GuiGraphics g, final int x, final int y, final int size, final boolean chosen,
+                       final boolean hovered) {
+        g.fill(x, y, x + size, y + size, fieldBg());
+        Draw.outline(g, x, y, size, size, hovered ? accent() : edge());
+        if (chosen) {
+            final int inset = Math.max(2, size / 3);
+            g.fill(x + inset, y + inset, x + size - inset, y + size - inset, accent());
+        }
+    }
+
+    /** A drop-down list's button: what is chosen, and a caret pointing down, or up while the list is open. */
+    @ApiStatus.Experimental
+    default void dropdown(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h,
+                          final String label, final boolean open, final boolean hovered) {
+        button(g, font, x, y, w, h, "", hovered || open, false, false);
+        drawText(g, font, label, x + 5, y + (h - 8) / 2, text());
+        final int cx = x + w - 10;
+        final int cy = y + h / 2 - 1;
+        for (int i = 0; i < 3; i++) {
+            final int row = open ? cy + 1 - i : cy - 1 + i;
+            g.fill(cx + i, row, cx + 6 - i, row + 1, text());
+        }
+    }
+
+    /** The open list of a drop-down, or of what a field suggests. */
+    @ApiStatus.Experimental
+    default void listPopup(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        windowFrame(g, x, y, w, h);
+    }
+
+    /** The colour of a line of an open list: the chosen one apart from the others. */
+    @ApiStatus.Experimental
+    default int popupText(final boolean chosen) {
+        return chosen ? accent() : text();
+    }
+
+    /** The ground a chart is drawn on. */
+    @ApiStatus.Experimental
+    default void chartGround(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        g.fill(x, y, x + w, y + h, fieldBg());
+        Draw.outline(g, x, y, w, h, edge());
+    }
+
+    /** The colour of stored energy at its brightest, as a gauge fills. */
+    @ApiStatus.Experimental
+    default int energyColour() {
+        return accent();
+    }
+
+    /** The colour of a chart's grid lines. */
+    @ApiStatus.Experimental
+    default int chartLine() {
+        return edge();
+    }
+
+    /** The colour of a chart's {@code index}th series, the first ones distinct from each other. */
+    @ApiStatus.Experimental
+    default int seriesColour(final int index) {
+        final int[] colours = {accent(), progressFill(), text(), dim()};
+        return colours[Math.floorMod(index, colours.length)];
     }
 }

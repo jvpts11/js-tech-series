@@ -97,6 +97,10 @@ public final class StyleFiles {
             case LIST_HOVER -> StyleSprite.Flat.of(StyleRole.HOVER);
             case LIST_SELECTED -> StyleSprite.Flat.of(StyleRole.TAB_ON);
             case PROGRESS_FILL -> StyleSprite.Flat.of(StyleRole.ACCENT);
+            case RADIO -> StyleSprite.Flat.of(StyleRole.SLOT_BG, StyleRole.SLOT_EDGE);
+            case RADIO_HOVER -> StyleSprite.Flat.of(StyleRole.SLOT_BG, StyleRole.ACCENT);
+            case POPUP_LIST -> StyleSprite.Flat.of(StyleRole.PANEL, StyleRole.ACCENT);
+            case CHART -> StyleSprite.Flat.of(StyleRole.CHART_GROUND, StyleRole.CHART_LINE);
         };
     }
 

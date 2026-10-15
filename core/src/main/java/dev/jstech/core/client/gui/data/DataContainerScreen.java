@@ -67,6 +67,12 @@ public class DataContainerScreen<M extends AbstractContainerMenu> extends CoreCo
     }
 
     @Override
+    public void removed() {
+        view.dispose();
+        super.removed();
+    }
+
+    @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
         return view.mouseClicked(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
     }
