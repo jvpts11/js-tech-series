@@ -23,6 +23,7 @@ import dev.jstech.core.config.format.NbtConfigFormat;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.DeclarationError;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestSettings;
 import java.io.IOException;
@@ -319,7 +320,7 @@ public final class ConfigFileGameTests {
     private static void refused(final GameTestHelper helper, final Runnable declaration, final String what) {
         try {
             declaration.run();
-        } catch (final IllegalArgumentException expected) {
+        } catch (final IllegalArgumentException | DeclarationError expected) {
             return;
         }
         helper.fail(what + " was not refused");

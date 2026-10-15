@@ -14,6 +14,7 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.util.DeclarationError;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
@@ -47,7 +48,9 @@ public final class ContentItemModelProvider extends ItemModelProvider {
         }
         for (final ItemEntry<?> entry : content.declaredItems()) {
             if (entry.look() == IItemLook.OF_BLOCK) {
-                throw new IllegalStateException(entry.getId() + " is not a block's item and has no block to show");
+                throw DeclarationError.of(entry.getId().getNamespace(), "the item " + entry.getId(),
+                        "is drawn as a block's item but is no block's item",
+                        "give it a look of its own with look(...), or declare it as its block's item()");
             }
             model(entry.getId().getPath(), entry.get(), entry.look());
         }
@@ -72,7 +75,8 @@ public final class ContentItemModelProvider extends ItemModelProvider {
     /* The game's bucket with its fluid drawn in, by NeoForge's fluid container model. */
     private void bucket(final String id, final Item item) {
         if (!(item instanceof BucketItem bucket)) {
-            throw new IllegalStateException(id + " is declared to look like a bucket and is none");
+            throw DeclarationError.of(content.modid(), "the item " + content.modid() + ":" + id,
+                    "is drawn as a bucket but is no bucket", "make it a BucketItem, or give it another look");
         }
         getBuilder(id)
                 .parent(new ModelFile.UncheckedModelFile("neoforge:item/bucket"))
@@ -85,7 +89,8 @@ public final class ContentItemModelProvider extends ItemModelProvider {
     /* A length of the cable in its own jacket, from the Core's model of a cable as thick as it is. */
     private void cable(final String id, final Item item) {
         if (!(item instanceof CableItem laid)) {
-            throw new IllegalStateException(id + " is declared to look like a cable and lays none");
+            throw DeclarationError.of(content.modid(), "the item " + content.modid() + ":" + id,
+                    "is drawn as a cable but lays none", "declare it with cable(...), or give it another look");
         }
         final CableType type = laid.type();
         getBuilder(id)

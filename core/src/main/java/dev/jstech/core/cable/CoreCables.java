@@ -13,6 +13,7 @@ import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.registry.CoreItems;
+import dev.jstech.core.util.DeclarationError;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.core.Registry;
@@ -21,8 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
@@ -42,7 +42,6 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
  * <p>The registry is synced, so a player's game knows the same cables as the server and reads a block's wires by the
  * cables' ids.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class CoreCables {
 
     /** The registry's key. */
@@ -94,8 +93,9 @@ public final class CoreCables {
                     final ResourceLocation line = type.line().line();
                     final ResourceLocation before = LANE_LINES.putIfAbsent(lane, line);
                     if (before != null && !before.equals(line)) {
-                        throw new IllegalStateException("the lines " + before + " and " + line
-                                + " were both given the lane " + lane);
+                        throw DeclarationError.of(line.getNamespace(), "the line " + line,
+                                "takes the lane " + lane + ", which the line " + before + " already has",
+                                "give one of the two lines another lane where its cables are declared");
                     }
                 });
             }
@@ -103,7 +103,11 @@ public final class CoreCables {
         }
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(NewRegistryEvent.class, CoreCables::onNewRegistry);
+    }
+
     public static void onNewRegistry(final NewRegistryEvent event) {
         event.register(REGISTRY);
     }

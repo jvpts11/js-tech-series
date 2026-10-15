@@ -7,8 +7,7 @@
  */
 package dev.jstech.core.network.payload;
 
-import com.mojang.logging.LogUtils;
-import dev.jstech.core.JsCore;
+import dev.jstech.core.log.CoreLogs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -17,8 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -36,10 +34,9 @@ import java.util.function.Function;
  * once in a while per player. A payload that acts on the menu the player has open is best registered with
  * {@link #onMenu}, whose handler is handed that menu, already checked, and needs to check nothing again.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class ClientPayloads {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.NETWORK.logger();
     /** How long a player's refused payloads stay out of the log after one is written, in milliseconds. */
     private static final long QUIET_MILLIS = 10_000L;
 
@@ -126,7 +123,11 @@ public final class ClientPayloads {
         });
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, ClientPayloads::loggedOut);
+    }
+
     public static void loggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
         LAST_LOGGED.remove(event.getEntity().getUUID());
     }

@@ -7,23 +7,25 @@
  */
 package dev.jstech.core.fluid;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.registry.CoreAttachments;
 import java.util.OptionalLong;
 import net.minecraft.server.level.ServerLevel;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 /**
  * Where a dimension's fluid grid is found, and the tick that moves its fluids, after the machines have ticked.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class FluidGrids {
 
     private FluidGrids() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, FluidGrids::afterTick);
     }
 
     /** How the fluid grid of {@code level} moves fluids. */
@@ -37,7 +39,6 @@ public final class FluidGrids {
         return number.isEmpty() ? OptionalLong.empty() : of(level).movedLastTickOf(number.getAsLong());
     }
 
-    @SubscribeEvent
     public static void afterTick(final LevelTickEvent.Post event) {
         if (event.getLevel() instanceof ServerLevel level) {
             of(level).tick(level);

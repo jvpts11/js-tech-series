@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.input;
 
-import dev.jstech.core.JsCore;
+import dev.jstech.core.util.DeclarationError;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,8 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -24,7 +23,6 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Every declared {@link KeyAction}, and the way a press reaches the server. Actions are declared while the mods load,
  * before the player's game makes its key bindings from them.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class KeyActions {
 
     private static final String NETWORK_VERSION = "1";
@@ -44,11 +42,13 @@ public final class KeyActions {
     public static KeyAction declare(final KeyAction.Builder builder) {
         final KeyAction action = builder.build();
         if (frozen) {
-            throw new IllegalStateException(
-                    "the key action " + action.id() + " is declared after the key bindings were made");
+            throw DeclarationError.of(action.id().getNamespace(), "the key action " + action.id(),
+                    "comes after the player's game made its key bindings",
+                    "declare it from the mod's constructor, while the mods load");
         }
         if (BY_ID.putIfAbsent(action.id(), action) != null) {
-            throw new IllegalStateException("the key action " + action.id() + " is declared twice");
+            throw DeclarationError.of(action.id().getNamespace(), "the key action " + action.id(),
+                    "is declared twice", "declare it once and keep what declare returns");
         }
         ALL.add(action);
         return action;
@@ -77,7 +77,11 @@ public final class KeyActions {
         byId(action).ifPresent(found -> found.pressedBy(player, shift));
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, KeyActions::onRegisterPayloads);
+    }
+
     public static void onRegisterPayloads(final RegisterPayloadHandlersEvent event) {
         event.registrar(NETWORK_VERSION).playToServer(KeyActionPayload.TYPE, KeyActionPayload.STREAM_CODEC,
                 KeyActions::onPress);

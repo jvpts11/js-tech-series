@@ -7,8 +7,7 @@
  */
 package dev.jstech.core.client.diagnostic;
 
-import com.mojang.logging.LogUtils;
-import dev.jstech.core.JsCore;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.diagnostic.DiagnosticTexts;
 import dev.jstech.core.diagnostic.Diagnostics;
@@ -23,10 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 import net.minecraft.ChatFormatting;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 
 /**
@@ -38,13 +35,12 @@ import org.slf4j.Logger;
  * DiagnosticsClient.panel(SoundMixerTexts.TITLE, AudioDebugLines::lines);
  * }</pre>
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class DiagnosticsClient {
 
     /** How many of the pieces of work timed are shown, the longest first. */
     public static final int TIMINGS_SHOWN = 8;
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.DIAGNOSTICS.logger();
     private static final List<Panel> PANELS = new CopyOnWriteArrayList<>();
     private static final double NANOS_PER_MILLI = 1_000_000.0;
 
@@ -52,6 +48,11 @@ public final class DiagnosticsClient {
     private static final Set<Panel> REPORTED = ConcurrentHashMap.newKeySet();
 
     private DiagnosticsClient() {
+    }
+
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(CustomizeGuiOverlayEvent.DebugText.class, DiagnosticsClient::onDebugText);
     }
 
     /** Adds a panel called {@code title}, whose lines are read each frame the debug screen is open. */
@@ -83,7 +84,6 @@ public final class DiagnosticsClient {
         return out;
     }
 
-    @SubscribeEvent
     public static void onDebugText(final CustomizeGuiOverlayEvent.DebugText event) {
         event.getRight().addAll(lines());
     }

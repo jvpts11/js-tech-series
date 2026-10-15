@@ -9,7 +9,7 @@ package dev.jstech.core.data;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import dev.jstech.core.JsCore;
+import dev.jstech.core.util.DeclarationError;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,8 +22,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -34,7 +34,6 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Every declared {@link DataRegistry}: each is read whenever the server loads its data, and each synced one is sent to
  * the players as they join and after every reload.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class DataRegistries {
 
     private static final String NETWORK_VERSION = "1";
@@ -49,14 +48,19 @@ public final class DataRegistries {
         return List.copyOf(ALL);
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, DataRegistries::onRegisterPayloads);
+        NeoForge.EVENT_BUS.addListener(AddReloadListenerEvent.class, DataRegistries::onAddReloadListeners);
+        NeoForge.EVENT_BUS.addListener(OnDatapackSyncEvent.class, DataRegistries::onDatapackSync);
+    }
+
     public static void onAddReloadListeners(final AddReloadListenerEvent event) {
         for (final DataRegistry<?> registry : ALL) {
             event.addListener(new Listener(registry, event.getRegistryAccess()));
         }
     }
 
-    @SubscribeEvent
     public static void onDatapackSync(final OnDatapackSyncEvent event) {
         send(event.getPlayerList().getServer(), event.getRelevantPlayers());
     }
@@ -66,7 +70,6 @@ public final class DataRegistries {
         send(server, server.getPlayerList().getPlayers().stream());
     }
 
-    @SubscribeEvent
     public static void onRegisterPayloads(final RegisterPayloadHandlersEvent event) {
         event.registrar(NETWORK_VERSION).playToClient(DataRegistryPayload.TYPE, DataRegistryPayload.STREAM_CODEC,
                 DataRegistries::onValues);
@@ -79,7 +82,8 @@ public final class DataRegistries {
 
     static void add(final DataRegistry<?> registry) {
         if (BY_ID.putIfAbsent(registry.id(), registry) != null) {
-            throw new IllegalStateException("the data registry " + registry.id() + " is declared twice");
+            throw DeclarationError.of(registry.id().getNamespace(), "the data registry " + registry.id(),
+                    "is declared twice", "declare it once, in a static field, and use that field");
         }
         ALL.add(registry);
     }

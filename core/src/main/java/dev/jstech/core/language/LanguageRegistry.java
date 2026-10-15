@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.language;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,7 +36,7 @@ import org.slf4j.Logger;
  */
 public final class LanguageRegistry {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.LANGUAGES.logger();
 
     private final Map<ResourceLocation, IProgrammingLanguage> byId = new LinkedHashMap<>();
     /** Every extension a language writes or builds, to that language; worked out again whenever one comes or goes. */

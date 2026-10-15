@@ -22,8 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 /**
@@ -36,7 +35,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
  * <p>A mod names the manual and its item while the game loads, and the Core keeps, for each player of a world, the
  * manuals they were given.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class GuideGifts {
 
     /** The manuals each player was given, by the manual's id. */
@@ -85,7 +83,11 @@ public final class GuideGifts {
         return GIVEN.get(player.server, player.getUUID()).contains(manual);
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, GuideGifts::onLoggedIn);
+    }
+
     public static void onLoggedIn(final PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             welcome(player);

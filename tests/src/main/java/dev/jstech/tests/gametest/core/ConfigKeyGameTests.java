@@ -12,6 +12,7 @@ import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigValidator;
 import dev.jstech.core.config.IConfigLogger;
 import dev.jstech.core.config.IConfigValidationResult;
+import dev.jstech.core.util.DeclarationError;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.List;
@@ -184,7 +185,7 @@ public final class ConfigKeyGameTests {
     private static void refused(final GameTestHelper helper, final Runnable declaration, final String what) {
         try {
             declaration.run();
-        } catch (final IllegalArgumentException expected) {
+        } catch (final IllegalArgumentException | DeclarationError expected) {
             return;
         }
         helper.fail(what + " was not refused");

@@ -26,8 +26,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -42,7 +42,6 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  *
  * <p>A kind of value is declared once, on both sides, while the mods load: see {@link BigPayload}.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class BigPayloads {
 
     /** The most bytes one piece carries, well inside what one message may. */
@@ -103,14 +102,19 @@ public final class BigPayloads {
         return kind.read(assembly.bytes.toByteArray(), registries);
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, BigPayloads::onRegisterPayloads);
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, BigPayloads::afterServerTick);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, BigPayloads::onLoggedOut);
+    }
+
     public static void onRegisterPayloads(final RegisterPayloadHandlersEvent event) {
         event.registrar(NETWORK_VERSION).playBidirectional(BigPiecePayload.TYPE, BigPiecePayload.STREAM_CODEC,
                 BigPayloads::onPiece);
     }
 
     /* Each player is sent a share of their pieces. */
-    @SubscribeEvent
     public static void afterServerTick(final ServerTickEvent.Post event) {
         final MinecraftServer server = event.getServer();
         for (final UUID id : List.copyOf(OUTGOING.keySet())) {
@@ -136,7 +140,6 @@ public final class BigPayloads {
         evictIdle(System.nanoTime());
     }
 
-    @SubscribeEvent
     public static void onLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
         OUTGOING.remove(event.getEntity().getUUID());
         INCOMING.remove(event.getEntity().getUUID());

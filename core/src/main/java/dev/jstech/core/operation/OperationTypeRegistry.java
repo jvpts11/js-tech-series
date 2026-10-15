@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.operation;
 
+import dev.jstech.core.util.DeclarationError;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -21,10 +22,7 @@ import java.util.Optional;
  * kind up:
  *
  * <pre>{@code
- * @SubscribeEvent
- * static void register(CoreRegisterEvent event) {
- *     event.operations().register(COUNT_ITEMS);
- * }
+ * modBus.addListener(CoreRegisterEvent.class, event -> event.operations().register(COUNT_ITEMS));
  * }</pre>
  *
  * <p>Two of the same id is refused rather than one replacing the other: an Operation's id is written into
@@ -61,7 +59,10 @@ public final class OperationTypeRegistry {
             return null;
         }
         if (this.registry.containsKey(type.id())) {
-            throw new IllegalStateException("Operation type already registered: " + type.id());
+            final int colon = type.id().indexOf(':');
+            throw DeclarationError.of(colon < 0 ? null : type.id().substring(0, colon),
+                    "the kind of Operation " + type.id(), "is registered twice",
+                    "register each kind once, under an id in the mod's own namespace");
         }
         this.registry.put(type.id(), type);
         return type;

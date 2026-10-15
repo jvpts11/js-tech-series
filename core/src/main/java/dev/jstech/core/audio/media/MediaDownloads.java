@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.audio.media;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.network.transfer.Pieces;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -29,7 +29,7 @@ import org.slf4j.Logger;
  */
 public final class MediaDownloads {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.MEDIA.logger();
 
     private static final Map<UUID, Deque<Outgoing>> QUEUES = new HashMap<>();
 

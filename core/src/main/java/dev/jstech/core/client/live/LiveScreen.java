@@ -12,7 +12,7 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.gui.Tube;
 import dev.jstech.core.live.LiveRate;
 import net.minecraft.client.Minecraft;
@@ -52,7 +52,7 @@ public final class LiveScreen {
     private Tube tube = Tube.COLOUR;
     private int framesPerSecond;
 
-    private static final Logger LOG = LogUtils.getLogger();
+    private static final Logger LOG = CoreLogs.SCREENS.logger();
     /* The units a picture is laid out in sit this far into the depth the game's own screens use. */
     private static final float GUI_NEAR = 1000.0F;
     private static final float GUI_FAR = 21000.0F;

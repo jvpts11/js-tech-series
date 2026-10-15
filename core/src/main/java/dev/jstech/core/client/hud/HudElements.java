@@ -9,6 +9,7 @@ package dev.jstech.core.client.hud;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.gui.HudStack;
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,9 +20,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
@@ -31,7 +30,6 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
  * the order they were declared, so the mods share the corners without drawing over one another. The layer hides with
  * the rest of the HUD when the player hides it.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class HudElements {
 
     private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "hud_elements");
@@ -49,7 +47,8 @@ public final class HudElements {
     public static void declare(final ResourceLocation id, final HudStack.Corner corner, final IHudElement element) {
         final Declared declared = new Declared(id, corner, element);
         if (BY_ID.putIfAbsent(id, declared) != null) {
-            throw new IllegalStateException("the HUD element " + id + " is declared twice");
+            throw DeclarationError.of(id.getNamespace(), "the HUD element " + id, "is declared twice",
+                    "declare it once, from the mod's client set-up");
         }
         DECLARED.add(declared);
     }
@@ -67,7 +66,11 @@ public final class HudElements {
         return out;
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterGuiLayersEvent.class, HudElements::onRegisterLayers);
+    }
+
     public static void onRegisterLayers(final RegisterGuiLayersEvent event) {
         event.registerBelow(VanillaGuiLayers.CHAT, LAYER, HudElements::render);
     }

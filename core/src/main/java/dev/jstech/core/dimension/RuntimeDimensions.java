@@ -7,8 +7,7 @@
  */
 package dev.jstech.core.dimension;
 
-import com.mojang.logging.LogUtils;
-import dev.jstech.core.JsCore;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.worldgen.WorldGen;
 import java.io.IOException;
@@ -39,8 +38,6 @@ import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.WorldData;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -56,10 +53,9 @@ import org.slf4j.Logger;
  * <p>A dimension made here is a copy of a declared one, its template: of the same kind of place, made the same way,
  * under rules of its own name. What it holds is saved with the world as any dimension's is.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class RuntimeDimensions {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.DIMENSIONS.logger();
     private static final String FILE = "jscore_runtime_dimensions";
 
     /** The template of each dimension made while this server runs, for the rules a copy takes from it. */
@@ -182,8 +178,12 @@ public final class RuntimeDimensions {
         return Map.copyOf(TEMPLATES);
     }
 
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ServerStartedEvent.class, RuntimeDimensions::onServerStarted);
+    }
+
     /** Makes again, as the server starts, every dimension the Core made before. */
-    @SubscribeEvent
     public static void onServerStarted(final ServerStartedEvent event) {
         final MinecraftServer server = event.getServer();
         TEMPLATES.clear();

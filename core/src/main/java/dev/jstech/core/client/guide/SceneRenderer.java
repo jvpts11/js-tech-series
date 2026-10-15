@@ -12,7 +12,7 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import com.mojang.math.Axis;
 import dev.jstech.core.api.client.GpuSurface;
 import dev.jstech.core.guide.GuideBlock;
@@ -48,7 +48,7 @@ import org.slf4j.Logger;
  */
 final class SceneRenderer {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.GUIDE.logger();
     /** How far before and behind its middle a scene may reach, in the surface's pixels. */
     private static final float DEPTH = 10000.0F;
     /** What every block's random choice of model is made with, so a scene looks the same each time it is drawn. */

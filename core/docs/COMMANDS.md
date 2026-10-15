@@ -38,6 +38,7 @@ A name another mod declared is refused with an exception, while the game loads.
 | `/jstech dimension remove <id>` | level 3 | Takes away a dimension made that way; refuses any other. |
 | `/jstech media` | level 3 | Shows how many recordings the server keeps and how much room they take. |
 | `/jstech media prune <days>` | level 3 | Deletes recordings nobody used for that many days and nothing keeps ([Sound](SOUND.md#recordings)). |
+| `/jstech log [<system> [<level>]]` | level 3 | Lists how much each system writes to the log, or one system's level, or sets it until the game stops ([While you build](DEVELOPING.md#the-log-one-part-at-a-time)). *Added 2026-10-15.* |
 
 ## What can go wrong
 

@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.client.audio;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioDebugTexts;
 import dev.jstech.core.audio.SoundKey;
@@ -21,9 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 /**
@@ -31,7 +28,6 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
  * director keeps out of its budget, the rooms, what is muffled and by how many walls, how far the other channels are
  * lowered under an alert, the last sound heard and how many are turned off.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class AudioDebugLines {
 
     private static final int TICKS_PER_SECOND = 20;
@@ -39,7 +35,11 @@ public final class AudioDebugLines {
     private AudioDebugLines() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(FMLClientSetupEvent.class, AudioDebugLines::onClientSetup);
+    }
+
     public static void onClientSetup(final FMLClientSetupEvent event) {
         DiagnosticsClient.panel(SoundMixerTexts.TITLE, AudioDebugLines::lines);
     }

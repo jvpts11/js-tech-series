@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.api.client;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.resources.ResourceLocation;
@@ -26,7 +26,7 @@ import org.slf4j.Logger;
  */
 public final class GuideBlockRenderers {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.GUIDE.logger();
 
     private static final Map<ResourceLocation, IGuideBlockRenderer> RENDERERS = new ConcurrentHashMap<>();
 

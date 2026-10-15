@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.audio.media;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.text.Text;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,7 +35,7 @@ import org.slf4j.Logger;
  */
 public final class MediaUploads {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.MEDIA.logger();
     /** The recordings one player may have on their way at once. */
     private static final int MOST_AT_ONCE = 2;
 

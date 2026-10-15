@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.blockentity;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -32,7 +32,7 @@ public final class ValueField<T> implements IField {
     private final boolean nullable;
     private @Nullable T value;
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.SAVES.logger();
 
     ValueField(final FieldFlags flags, final Codec<T> codec, final @Nullable T initial, final boolean nullable) {
         this.flags = flags;

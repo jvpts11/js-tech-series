@@ -20,13 +20,12 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.live.LiveGraphics;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -40,7 +39,6 @@ import org.lwjgl.opengl.GL11;
  * <p>Without the shader (a graphics card that would not build it) nothing is greyed; {@link #ready} says which, so
  * the caller can lay a veil instead.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class GreyFilter {
 
     @Nullable
@@ -53,7 +51,17 @@ public final class GreyFilter {
     private GreyFilter() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterShadersEvent.class, event -> {
+            try {
+                onRegisterShaders(event);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
     public static void onRegisterShaders(final RegisterShadersEvent event) throws IOException {
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "grey"), DefaultVertexFormat.POSITION_TEX),

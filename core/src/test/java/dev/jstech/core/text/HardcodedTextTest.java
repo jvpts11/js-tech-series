@@ -353,6 +353,8 @@ class HardcodedTextTest {
                     || (this.name != null && KEY_ACCESSORS.contains(this.name))
                     || (this.constructor && this.name != null
                             && (this.name.endsWith("Exception") || this.name.endsWith("Error")))
+                    // A declaration's error is an exception's message too, made by its factory.
+                    || ("DeclarationError".equals(this.receiver) && "of".equals(this.name))
                     // What a null check says when it fails is an exception's message, for whoever reads the log.
                     || ("Objects".equals(this.receiver) && "requireNonNull".equals(this.name))
                     || ("TextKey".equals(this.receiver) && "of".equals(this.name))

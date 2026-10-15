@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.client.audio.mixer;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.SoundMixerTexts;
 import dev.jstech.core.gui.layout.SoundMixerLayout;
 import dev.jstech.core.text.GameText;
@@ -17,10 +16,8 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.options.SoundOptionsScreen;
 import net.minecraft.network.chat.CommonComponents;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Where the Sound Mixer is reached: the footer of the game's own Music and Sound Options, which gains Sound Mixer...
@@ -28,7 +25,6 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
  * that does the same stands beside the new button, both in the screen's own layout, so they keep their places when
  * the window is resized.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class SoundMixerEntry {
 
     /** Between the two buttons of the footer, as the game spaces them. */
@@ -37,7 +33,11 @@ public final class SoundMixerEntry {
     private SoundMixerEntry() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.Init.Post.class, SoundMixerEntry::onInit);
+    }
+
     public static void onInit(final ScreenEvent.Init.Post event) {
         if (!(event.getScreen() instanceof SoundOptionsScreen options)) {
             return;

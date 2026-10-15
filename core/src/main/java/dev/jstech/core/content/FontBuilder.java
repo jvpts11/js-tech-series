@@ -8,6 +8,7 @@
 package dev.jstech.core.content;
 
 import dev.jstech.core.font.CellFont;
+import dev.jstech.core.util.DeclarationError;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,11 +78,12 @@ public final class FontBuilder {
     /**
      * Declares the font.
      *
-     * @throws IllegalStateException when the declaration does not say where the font comes from
+     * @throws DeclarationError when the declaration does not say where the font comes from
      */
     public CellFont register() {
         if (source == null) {
-            throw new IllegalStateException("the font " + content.modid() + ":" + path + " does not say its source");
+            throw DeclarationError.of(content.modid(), "the font " + content.modid() + ":" + path,
+                    "does not say where it comes from", "name its BDF file with bdf(...) before register()");
         }
         final CellFont font = new CellFont(ResourceLocation.fromNamespaceAndPath(content.modid(), path), source,
                 cellWidth, cellHeight, baseline, licence, credit);

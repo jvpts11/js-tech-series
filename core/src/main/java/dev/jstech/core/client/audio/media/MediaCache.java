@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.client.audio.media;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaPiecePayload;
 import dev.jstech.core.audio.media.MediaReceiver;
@@ -38,7 +38,7 @@ import org.slf4j.Logger;
  */
 public final class MediaCache {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.MEDIA.logger();
     /** The most the cache holds before the recordings heard longest ago are thrown away. */
     private static final long LIMIT_BYTES = 512L * 1024 * 1024;
     private static final String FOLDER = "media-cache";

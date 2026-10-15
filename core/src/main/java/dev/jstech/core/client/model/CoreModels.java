@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.client.model;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.connect.ConnectedQuadrants;
@@ -31,9 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ModelEvent;
 
 /**
@@ -48,7 +45,6 @@ import net.neoforged.neoforge.client.event.ModelEvent;
  * <p>The model of every part kind registered with the Core is loaded by itself. A connected texture's tiles have to
  * be on the block atlas, which a texture is when any block model uses it.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class CoreModels {
 
     private static final List<Supplier<? extends Block>> MULTIPART = new CopyOnWriteArrayList<>();
@@ -81,7 +77,12 @@ public final class CoreModels {
         STANDALONE.add(Objects.requireNonNull(model, "model"));
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(ModelEvent.RegisterAdditional.class, CoreModels::onRegisterAdditional);
+        modBus.addListener(ModelEvent.ModifyBakingResult.class, CoreModels::onModifyBakingResult);
+    }
+
     public static void onRegisterAdditional(final ModelEvent.RegisterAdditional event) {
         for (final PartType<?> type : CoreParts.REGISTRY) {
             event.register(ModelResourceLocation.standalone(type.model()));
@@ -99,7 +100,6 @@ public final class CoreModels {
         }
     }
 
-    @SubscribeEvent
     public static void onModifyBakingResult(final ModelEvent.ModifyBakingResult event) {
         MultipartBakedModel.forget();
         CableBakedModel.forget();

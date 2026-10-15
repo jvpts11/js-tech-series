@@ -18,11 +18,29 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   test of the API follows every name a public or protected signature says to where it comes from, so the API can hand
   a mod no type it does not promise; `docs/API.md` says how.
 
+### Added
+- (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
+  default is outside its range, two things under one id), the game stops loading with one paragraph saying which
+  mod, which declaration, what is wrong and how to fix it, from the content builders, the settings, the registries
+  and the data generation alike.
+- (Core) A data run that checks itself: ending a mod's data generation with `check()` makes the run fail, saying what
+  to add, when a block or an item the mod registered has no English name, no block state, no model, a model whose
+  texture is nowhere, or no loot table while it drops something. The Core's own run does.
+- (Core) The log by system: each part of the Core writes to the log under a name of its own (`jscore/media`,
+  `jscore/saves` and the rest), any mod can declare its own, and `/jstech log` lists them and sets how much each
+  writes while the game runs, for the server's administrators.
+- (Core) Live reload in development: a development run watches the `assets` and `data` folders its mods are loaded
+  from and, once changed files stay as they are for a moment, reloads the player's resources and the server's data
+  packs by itself. A packed game watches nothing.
+
 ### Changed
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
   Energy, the shared content) gets a package of its own, `dev.jstech.core.jstechseries`, and the rest of the Core,
   the platform any technology mod can build on, never reaches into it. What is new of the series is born there; what
   the Core already has of it moves there a domain at a time.
+- (Core) Listeners declared: every class of the Core that answers the game's events is handed to the buses from the
+  Core's constructor, through a `listen` method of its own, rather than found by an annotation, so what runs is what
+  the constructor says.
 
 ## [0.5.2a] - 2026-10-14
 

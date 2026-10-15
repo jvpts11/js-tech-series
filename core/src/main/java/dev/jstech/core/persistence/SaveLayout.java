@@ -8,7 +8,7 @@
 package dev.jstech.core.persistence;
 
 import com.mojang.datafixers.util.Pair;
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -49,7 +49,7 @@ public final class SaveLayout {
     public static final String VERSION_KEY = "SaveVersion";
     /** Where a value saved whole sits beside its version. */
     public static final String VALUE_KEY = "Value";
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.SAVES.logger();
 
     /** The layouts the log has already said were written by a newer mod, so it says so once and not every read. */
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();

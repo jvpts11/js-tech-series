@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JavaOps;
 import dev.jstech.core.config.format.PlainValues;
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -53,17 +54,21 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(unit, "unit");
         if (path.isEmpty()) {
-            throw new IllegalArgumentException("a setting needs a name");
+            throw DeclarationError.of(null, "a setting", "has no name",
+                    "give it its sections and its name as a dotted path, as in \"media.download_speed\"");
         }
         for (final String segment : path) {
             if (segment == null || segment.isBlank() || segment.contains(".")) {
-                throw new IllegalArgumentException("each part of a setting's path is a name without dots: " + path);
+                throw DeclarationError.of(null, "the setting " + path, "has a part that is empty or holds a dot",
+                        "write each section and the name as words of their own, without dots inside them");
             }
         }
         path = List.copyOf(path);
         comment = List.copyOf(comment);
         if (range.isPresent() && allowed.isPresent()) {
-            throw new IllegalArgumentException("a setting is held to a range or to a list, not both: " + path);
+            throw DeclarationError.of(null, "the setting " + String.join(".", path),
+                    "is held to a range and to a list of words at once",
+                    "keep range(...) for a number or allowing(...) for a word, not both");
         }
         if (range.isPresent()) {
             checkRange(path, defaultValue, range.get());
@@ -181,12 +186,15 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
          * another class and throw where it should have been pulled into the range.
          */
         if (defaultValue.getClass() != range.min().getClass() || defaultValue.getClass() != range.max().getClass()) {
-            throw new IllegalArgumentException("the range of " + path + " has to be in its own kind of number, "
-                    + defaultValue.getClass().getSimpleName() + ", not " + range.min().getClass().getSimpleName());
+            throw DeclarationError.of(null, "the setting " + String.join(".", path), "is a "
+                    + defaultValue.getClass().getSimpleName() + " held to a range of "
+                    + range.min().getClass().getSimpleName(),
+                    "write the range's ends in the setting's own kind of number, as in 16L for a whole one");
         }
         if (!inside(range, defaultValue)) {
-            throw new IllegalArgumentException("the default of " + path + ", " + defaultValue
-                    + ", is outside its range [" + range.min() + ", " + range.max() + "]");
+            throw DeclarationError.of(null, "the setting " + String.join(".", path), "starts at " + defaultValue
+                    + ", outside its range [" + range.min() + ", " + range.max() + "]",
+                    "move the default into the range, or widen the range");
         }
     }
 
@@ -198,13 +206,17 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
     private static void checkAllowed(final List<String> path, final Object defaultValue, final List<String> words) {
         // A word that falls back to the default has to fall back to a word that is allowed itself.
         if (!(defaultValue instanceof String word)) {
-            throw new IllegalArgumentException("only a text setting can be held to a list of words: " + path);
+            throw DeclarationError.of(null, "the setting " + String.join(".", path),
+                    "is held to a list of words but is not a text setting",
+                    "hold only a text setting to words; a number is held to a range instead");
         }
         if (words.isEmpty()) {
-            throw new IllegalArgumentException("the words " + path + " is held to cannot be none");
+            throw DeclarationError.of(null, "the setting " + String.join(".", path), "is held to a list of no words",
+                    "name the words it may be, the default among them");
         }
         if (!words.contains(word)) {
-            throw new IllegalArgumentException("the default of " + path + ", " + word + ", is not one of " + words);
+            throw DeclarationError.of(null, "the setting " + String.join(".", path), "starts at " + word
+                    + ", which is not one of " + words, "make the default one of the words, or add it to them");
         }
     }
 }

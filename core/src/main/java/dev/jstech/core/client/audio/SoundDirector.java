@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.client.audio;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.AmbientClusters;
 import dev.jstech.core.audio.AmbientField;
 import dev.jstech.core.audio.AmbientFields;
@@ -26,11 +25,9 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Keeps the world's running sounds: every source in the world says what it wants heard, and the director starts,
@@ -40,7 +37,6 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
  * channels (the sounds that matter most and are nearest first), muffles what is behind walls, and leaves out what the
  * player turned off. A source is known by itself, so the same sound of two machines is two sounds.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class SoundDirector {
 
     /** How many ticks apart the director looks again: often enough to follow a machine, and cheap. */
@@ -109,7 +105,12 @@ public final class SoundDirector {
         update(true);
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, SoundDirector::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, SoundDirector::onLoggingOut);
+    }
+
     public static void onClientTick(final ClientTickEvent.Post event) {
         ticks++;
         if (ticks % EVERY_TICKS == 0) {
@@ -120,7 +121,6 @@ public final class SoundDirector {
     }
 
     /* A player leaving a world takes nothing of it into the next. */
-    @SubscribeEvent
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         synchronized (SoundDirector.class) {
             PLAYING.values().forEach(LoopSoundInstance::leave);

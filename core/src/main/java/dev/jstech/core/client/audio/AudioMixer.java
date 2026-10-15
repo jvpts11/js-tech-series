@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.client.audio;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.DuckEnvelope;
 import dev.jstech.core.audio.RecentSounds;
@@ -25,12 +24,10 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.sound.PlaySoundEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -43,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
  * started: from a machine, from the server's packet, from a command a player typed, from another mod. It also keeps
  * what was heard lately, for the player looking for the sound that has just annoyed them.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class AudioMixer {
 
     private static final DuckEnvelope DUCK = DuckEnvelope.standard();
@@ -63,7 +59,13 @@ public final class AudioMixer {
     private AudioMixer() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(PlaySoundEvent.class, AudioMixer::onPlaySound);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, AudioMixer::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, AudioMixer::onLoggingOut);
+    }
+
     public static void onPlaySound(final PlaySoundEvent event) {
         final SoundInstance sound = event.getSound();
         if (sound != null) {
@@ -72,7 +74,6 @@ public final class AudioMixer {
     }
 
     /* Down while an alert plays, back up after; the sounds already playing are told only when the level moves. */
-    @SubscribeEvent
     public static void onClientTick(final ClientTickEvent.Post event) {
         final SoundManager sounds = Minecraft.getInstance().getSoundManager();
         final boolean alerting;
@@ -86,7 +87,6 @@ public final class AudioMixer {
         }
     }
 
-    @SubscribeEvent
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         RECENT.clear();
         lastHeard = null;

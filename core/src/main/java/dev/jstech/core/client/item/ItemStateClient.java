@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.client.item;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.item.ItemStates;
@@ -19,10 +18,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
@@ -31,13 +29,17 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
  * has none of its own until the player gives it one, since the game and the mods beside it already take nearly every
  * key; the tooltip of an item with modes says so.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class ItemStateClient {
 
     private ItemStateClient() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(FMLClientSetupEvent.class, ItemStateClient::onClientSetup);
+        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, ItemStateClient::onTooltip);
+    }
+
     public static void onClientSetup(final FMLClientSetupEvent event) {
         KeyActionsClient.sendsWhen(CoreKeys.CHANGE_ITEM_MODE, () -> {
             final Minecraft minecraft = Minecraft.getInstance();
@@ -45,7 +47,6 @@ public final class ItemStateClient {
         });
     }
 
-    @SubscribeEvent
     public static void onTooltip(final ItemTooltipEvent event) {
         final List<Text> lines = ItemStates.describe(event.getItemStack());
         if (lines.isEmpty()) {

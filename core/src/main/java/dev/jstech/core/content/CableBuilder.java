@@ -11,6 +11,7 @@ import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableItem;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.util.DeclarationError;
 import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -49,7 +50,8 @@ public final class CableBuilder {
     /** Registers the cable and its item. */
     public CableEntry register() {
         if (this.name == null) {
-            throw new IllegalStateException("the cable " + this.id + " has no name");
+            throw DeclarationError.of(this.content.modid(), "the cable " + this.content.modid() + ":" + this.id,
+                    "has no name", "give it its English name with named(...) before register()");
         }
         final ResourceLocation key = ResourceLocation.fromNamespaceAndPath(this.content.modid(), this.id);
         final DeferredHolder<CableType, CableType> cable = DeferredHolder.create(CoreCables.KEY, key);

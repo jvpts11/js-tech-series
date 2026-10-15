@@ -11,8 +11,7 @@ import dev.jstech.core.JsCore;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
 
@@ -28,7 +27,6 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
  * <p>The registry is synced, so a player's game numbers each kind as the server does and a block's parts are sent
  * as small numbers rather than ids.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class CoreParts {
 
     /** The registry's key. */
@@ -40,7 +38,11 @@ public final class CoreParts {
     private CoreParts() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(NewRegistryEvent.class, CoreParts::onNewRegistry);
+    }
+
     public static void onNewRegistry(final NewRegistryEvent event) {
         event.register(REGISTRY);
     }

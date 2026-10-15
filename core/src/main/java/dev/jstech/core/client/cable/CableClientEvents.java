@@ -9,7 +9,6 @@ package dev.jstech.core.client.cable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableBlock;
 import dev.jstech.core.cable.CableBlockEntity;
 import net.minecraft.client.Minecraft;
@@ -19,10 +18,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderHighlightEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
@@ -30,7 +27,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
  * What a player's game does with a cable block: outline the one wire or part looked at rather than the whole block, and
  * not take the whole block away the moment it is struck when the server will take only that piece.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class CableClientEvents {
 
     private static final float OUTLINE_ALPHA = 0.4F;
@@ -39,7 +35,12 @@ public final class CableClientEvents {
     private CableClientEvents() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(PlayerInteractEvent.LeftClickBlock.class, CableClientEvents::onLeftClick);
+        NeoForge.EVENT_BUS.addListener(RenderHighlightEvent.Block.class, CableClientEvents::onBlockHighlight);
+    }
+
     public static void onLeftClick(final PlayerInteractEvent.LeftClickBlock event) {
         final Level level = event.getLevel();
         /*
@@ -57,7 +58,6 @@ public final class CableClientEvents {
         }
     }
 
-    @SubscribeEvent
     public static void onBlockHighlight(final RenderHighlightEvent.Block event) {
         final Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null) {

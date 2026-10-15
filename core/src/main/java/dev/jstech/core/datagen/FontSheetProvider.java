@@ -16,6 +16,7 @@ import dev.jstech.core.font.BdfReader;
 import dev.jstech.core.font.BitmapFont;
 import dev.jstech.core.font.CellFont;
 import dev.jstech.core.font.FontSheet;
+import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.UncheckedIOException;
@@ -85,10 +86,12 @@ public final class FontSheetProvider implements DataProvider {
         }
         if (source.cellWidth() != font.cellWidth() || source.cellHeight() != font.cellHeight()
                 || source.baseline() != font.baseline()) {
-            throw new IllegalStateException("the font " + font.id() + " is declared with a cell " + font.cellWidth()
-                    + " by " + font.cellHeight() + " and a baseline " + font.baseline() + " rows down, but its source "
-                    + "has a cell " + source.cellWidth() + " by " + source.cellHeight() + " and a baseline "
-                    + source.baseline() + " rows down");
+            throw DeclarationError.of(font.id().getNamespace(), "the font " + font.id(),
+                    "has a cell " + font.cellWidth() + " by " + font.cellHeight() + " and a baseline "
+                    + font.baseline() + " rows down, but its source has a cell " + source.cellWidth() + " by "
+                    + source.cellHeight() + " and a baseline " + source.baseline() + " rows down",
+                    "declare what its file has: cell(" + source.cellWidth() + ", " + source.cellHeight()
+                    + ").baseline(" + source.baseline() + ")");
         }
         return source;
     }

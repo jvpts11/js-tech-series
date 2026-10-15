@@ -25,10 +25,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -48,7 +47,6 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
  * }</pre>
  */
 @TextHolder
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class CoreEnergy {
 
     /** The units' registry's key. */
@@ -101,13 +99,17 @@ public final class CoreEnergy {
         return number.isEmpty() ? Optional.empty() : of(level).lastTickOf(number.getAsLong());
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(NewRegistryEvent.class, CoreEnergy::onNewRegistry);
+        NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, CoreEnergy::afterTick);
+    }
+
     public static void onNewRegistry(final NewRegistryEvent event) {
         event.register(UNITS);
     }
 
     /* After the machines have ticked, the energy they made and want moves through the wires. */
-    @SubscribeEvent
     public static void afterTick(final LevelTickEvent.Post event) {
         if (event.getLevel() instanceof ServerLevel level) {
             of(level).tick(level);

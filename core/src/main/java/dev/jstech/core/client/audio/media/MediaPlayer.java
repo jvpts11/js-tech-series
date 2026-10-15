@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.client.audio.media;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundKeys;
 import dev.jstech.core.audio.SoundSpace;
@@ -42,7 +42,7 @@ import org.slf4j.Logger;
  */
 public final class MediaPlayer {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.MEDIA.logger();
 
     private static final Map<String, Playing> PLAYING = new HashMap<>();
     /** How often each key was started or stopped, so a recording that arrives late knows it is no longer wanted. */

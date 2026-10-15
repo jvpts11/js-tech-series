@@ -73,10 +73,9 @@ A part block entity extends `MultiblockPartBlockEntity`; register its capabiliti
 ports pass pipes and cables through to the controller:
 
 ```java
-@SubscribeEvent
-static void capabilities(RegisterCapabilitiesEvent event) {
-    MultiblockPorts.register(event, MyContent.FURNACE_PART_BE.get());
-}
+// In your mod's constructor:
+modBus.addListener(RegisterCapabilitiesEvent.class,
+        event -> MultiblockPorts.register(event, MyContent.FURNACE_PART_BE.get()));
 ```
 
 `MultiblockPorts.stamp(level, formed)` marks each part with the port the pattern gives it, or as a plain part. A

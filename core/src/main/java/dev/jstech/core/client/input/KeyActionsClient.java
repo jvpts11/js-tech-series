@@ -8,7 +8,6 @@
 package dev.jstech.core.client.input;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.input.KeyAction;
 import dev.jstech.core.input.KeyActionPayload;
 import dev.jstech.core.input.KeyActions;
@@ -19,11 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.Screen;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -36,7 +34,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * KeyActionsClient.sendsWhen(CoreKeys.CHANGE_ITEM_MODE, () -> holdsItemWithModes());
  * }</pre>
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class KeyActionsClient {
 
     private static final Map<KeyAction, KeyMapping> MAPPINGS = new LinkedHashMap<>();
@@ -81,7 +78,12 @@ public final class KeyActionsClient {
         }
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterKeyMappingsEvent.class, KeyActionsClient::onRegisterKeys);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, KeyActionsClient::onClientTick);
+    }
+
     public static void onRegisterKeys(final RegisterKeyMappingsEvent event) {
         KeyActions.freeze();
         for (final KeyAction action : KeyActions.all()) {
@@ -93,7 +95,6 @@ public final class KeyActionsClient {
         }
     }
 
-    @SubscribeEvent
     public static void onClientTick(final ClientTickEvent.Post event) {
         for (final Map.Entry<KeyAction, KeyMapping> entry : MAPPINGS.entrySet()) {
             while (entry.getValue().consumeClick()) {

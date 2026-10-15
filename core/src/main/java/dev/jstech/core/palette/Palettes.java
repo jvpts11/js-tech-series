@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.palette;
 
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -52,7 +53,8 @@ public final class Palettes {
         }
         final Palette<P> palette = new Palette<>(namespace, path, colours);
         if (BY_ID.putIfAbsent(palette.id(), palette) != null) {
-            throw new IllegalStateException("the palette " + palette.id() + " is declared twice");
+            throw DeclarationError.of(namespace, "the palette " + palette.id(), "is declared twice",
+                    "declare it once, as a static final of a palette holder, and use that field");
         }
         return palette;
     }

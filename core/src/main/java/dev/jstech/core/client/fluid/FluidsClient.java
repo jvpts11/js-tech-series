@@ -7,15 +7,12 @@
  */
 package dev.jstech.core.client.fluid;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.content.FluidEntry;
 import dev.jstech.core.content.ModContent;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
@@ -26,13 +23,18 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
  * The declared fluids on a player's game: each drawn with the textures and the tint it was declared with, in the
  * world and in its bucket, and a liquid poured into the world drawn see-through, as the game's water is.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class FluidsClient {
 
     private FluidsClient() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterClientExtensionsEvent.class, FluidsClient::onClientExtensions);
+        modBus.addListener(RegisterColorHandlersEvent.Item.class, FluidsClient::onItemColours);
+        modBus.addListener(FMLClientSetupEvent.class, FluidsClient::onClientSetup);
+    }
+
     public static void onClientExtensions(final RegisterClientExtensionsEvent event) {
         for (final ModContent content : ModContent.all()) {
             for (final FluidEntry fluid : content.declaredFluids()) {
@@ -58,7 +60,6 @@ public final class FluidsClient {
     }
 
     /* A bucket's fluid is drawn in the fluid's own tint. */
-    @SubscribeEvent
     public static void onItemColours(final RegisterColorHandlersEvent.Item event) {
         for (final ModContent content : ModContent.all()) {
             for (final FluidEntry fluid : content.declaredFluids()) {
@@ -68,7 +69,6 @@ public final class FluidsClient {
         }
     }
 
-    @SubscribeEvent
     public static void onClientSetup(final FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             for (final ModContent content : ModContent.all()) {

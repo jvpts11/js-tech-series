@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.hologram;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.hologram.HologramView;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -18,8 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -36,7 +34,6 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * record of what is standing, so a player who arrives later sees it only when the mod shows it again, as a machine
  * does on a timer or whenever its state changes.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class Holograms {
 
     private static final String NETWORK_VERSION = "1";
@@ -63,7 +60,11 @@ public final class Holograms {
                 new HologramPayload(id, at.x, at.y, at.z, List.of(), 0));
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, Holograms::onRegisterPayloads);
+    }
+
     public static void onRegisterPayloads(final RegisterPayloadHandlersEvent event) {
         event.registrar(NETWORK_VERSION).playToClient(HologramPayload.TYPE, HologramPayload.STREAM_CODEC,
                 Holograms::onHologram);

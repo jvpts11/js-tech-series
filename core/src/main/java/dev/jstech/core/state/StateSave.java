@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.state;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 import dev.jstech.core.persistence.SaveLayout;
@@ -47,7 +47,7 @@ public final class StateSave<V> extends SavedData {
     /** The value as last written or read, written again should the value ever fail to encode. */
     private @Nullable Tag lastWritten;
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.SAVES.logger();
 
     private StateSave(final String name, final Codec<V> codec, final SaveLayout layout, final V value) {
         this.name = name;

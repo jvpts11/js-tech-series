@@ -12,6 +12,7 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
+import dev.jstech.core.util.DeclarationError;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -58,7 +59,8 @@ public final class ProgressionAxes {
      */
     public static void register(final ProgressionAxis<?> axis) {
         if (BY_ID.putIfAbsent(axis.id(), axis) != null) {
-            throw new IllegalStateException("the progression axis " + axis.id() + " is registered twice");
+            throw DeclarationError.of(axis.id().getNamespace(), "the progression axis " + axis.id(),
+                    "is registered twice", "register it once, from the constructor of the mod that adds it");
         }
     }
 

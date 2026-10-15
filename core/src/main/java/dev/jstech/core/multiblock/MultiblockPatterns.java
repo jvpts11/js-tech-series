@@ -13,6 +13,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.data.DataRegistry;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -119,7 +120,8 @@ public final class MultiblockPatterns {
             }
         }
         if (DECLARED.putIfAbsent(id, pattern) != null) {
-            throw new IllegalStateException("the multiblock pattern " + id + " is declared twice");
+            throw DeclarationError.of(id.getNamespace(), "the multiblock pattern " + id, "is declared twice",
+                    "declare it once; a file of the same id in a data pack replaces it without a second declaration");
         }
         return pattern;
     }

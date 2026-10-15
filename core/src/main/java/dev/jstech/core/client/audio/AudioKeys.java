@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.client.audio;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.AudioTexts;
 import dev.jstech.core.audio.LastSoundToggle;
 import dev.jstech.core.client.input.KeyActionsClient;
@@ -20,9 +19,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * It has no key of its own until the player gives it one, since the game and the mods beside it already take nearly
  * every key.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class AudioKeys {
 
     private static final LastSoundToggle TOGGLE = new LastSoundToggle(LastSoundToggle.DEFAULT_UNDO_MILLIS);
@@ -45,7 +41,11 @@ public final class AudioKeys {
         return KeyActionsClient.mapping(CoreKeys.TURN_OFF_LAST_SOUND);
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(FMLClientSetupEvent.class, AudioKeys::onClientSetup);
+    }
+
     public static void onClientSetup(final FMLClientSetupEvent event) {
         KeyActionsClient.onPress(CoreKeys.TURN_OFF_LAST_SOUND, AudioKeys::turnOffLastSound);
     }

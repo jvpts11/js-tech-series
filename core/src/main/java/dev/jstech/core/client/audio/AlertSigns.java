@@ -21,19 +21,17 @@ import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Alerts on screen, for a player who asked for them: when an alert plays, a sign comes up at the top of the screen
  * with what the alert is and an arrow to where it comes from, the way the game's subtitles point. It blinks three
  * times as it comes up and goes after four seconds.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class AlertSigns {
 
     private static final AlertSignBoard BOARD = new AlertSignBoard();
@@ -49,12 +47,16 @@ public final class AlertSigns {
     private AlertSigns() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterGuiLayersEvent.class, AlertSigns::onRegisterLayers);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, AlertSigns::onLoggingOut);
+    }
+
     public static void onRegisterLayers(final RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, LAYER, AlertSigns::render);
     }
 
-    @SubscribeEvent
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         BOARD.clear();
     }

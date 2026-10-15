@@ -28,16 +28,14 @@ on your mod's event bus:
 public record CountItemsArgs(String item) implements IOperationArgs {
 }
 
-@SubscribeEvent
-static void register(CoreRegisterEvent event) {
-    event.operations().register(new OperationType<>(
-            "myaddon:count_items",         // saved in worlds: never change it
-            CountItemsArgs.class,           // what the request carries
-            OperationCategory.STORAGE,      // the family it belongs to
-            IndustrialTier.T1,              // the lowest tier that can run it
-            EnumSet.of(NetworkCategory.C),  // who may run it: the computers
-            new CountItemsHandler()));      // the code that does the work
-}
+// In your mod's constructor:
+modBus.addListener(CoreRegisterEvent.class, event -> event.operations().register(new OperationType<>(
+        "myaddon:count_items",         // saved in worlds: never change it
+        CountItemsArgs.class,           // what the request carries
+        OperationCategory.STORAGE,      // the family it belongs to
+        IndustrialTier.T1,              // the lowest tier that can run it
+        EnumSet.of(NetworkCategory.C),  // who may run it: the computers
+        new CountItemsHandler())));     // the code that does the work
 ```
 
 After the game has loaded, the list closes and `register` returns `null` instead of adding. That is on purpose: a

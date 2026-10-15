@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.advancement;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.progression.AxisStepReachedEvent;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionAxes;
@@ -15,8 +14,7 @@ import dev.jstech.core.progression.ProgressionAxis;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * the progression axes: at once when the player is here, and again each time they join, so a step reached while they
  * were away, or an advancement added since, is earned all the same.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class Advancements {
 
     private Advancements() {
@@ -45,7 +42,12 @@ public final class Advancements {
         }
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(AxisStepReachedEvent.class, Advancements::onStepReached);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, Advancements::onLoggedIn);
+    }
+
     public static void onStepReached(final AxisStepReachedEvent event) {
         final ServerPlayer player = event.server().getPlayerList().getPlayer(event.player());
         if (player != null) {
@@ -53,7 +55,6 @@ public final class Advancements {
         }
     }
 
-    @SubscribeEvent
     public static void onLoggedIn(final PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && !(player instanceof FakePlayer)) {
             for (final ProgressionAxis<?> axis : ProgressionAxes.all()) {

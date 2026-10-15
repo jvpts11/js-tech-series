@@ -10,6 +10,7 @@ package dev.jstech.core.config;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,8 +56,9 @@ public final class ConfigTexts {
             for (final String section : sectionsOf(file)) {
                 final String title = file.sectionTitles().get(section);
                 if (title == null || title.isBlank()) {
-                    throw new IllegalStateException("the section " + section + " of " + file.fileName()
-                            + " is shown on the settings screen and has no name; give it one with sectionNamed");
+                    throw DeclarationError.of(modId, "the section " + section + " of " + file.fileName(),
+                            "is shown on the settings screen and has no name",
+                            "give it its English name with sectionNamed(\"" + section + "\", ...) on the file");
                 }
                 out.put(key(modId, section), title);
                 final List<String> comment = file.sections().getOrDefault(section, List.of());
@@ -66,8 +68,9 @@ public final class ConfigTexts {
             }
             for (final ConfigKey<?> setting : file.keys()) {
                 if (setting.title().isBlank()) {
-                    throw new IllegalStateException("the setting " + setting.dottedPath() + " of " + file.fileName()
-                            + " is shown on the settings screen and has no name; give it one with named");
+                    throw DeclarationError.of(modId, "the setting " + setting.dottedPath() + " of "
+                            + file.fileName(), "is shown on the settings screen and has no name",
+                            "give it its English name with named(...) where it is declared");
                 }
                 out.put(key(modId, setting.dottedPath()), setting.title());
                 if (!setting.comment().isEmpty()) {

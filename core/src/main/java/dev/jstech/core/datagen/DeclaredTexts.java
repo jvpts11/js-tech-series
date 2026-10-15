@@ -9,6 +9,7 @@ package dev.jstech.core.datagen;
 
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.DeclarationError;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -52,8 +53,9 @@ public final class DeclaredTexts {
             for (final TextKey key : declaredIn(holder)) {
                 final TextKey before = found.putIfAbsent(key.key(), key);
                 if (before != null && !before.english().equals(key.english())) {
-                    throw new IllegalStateException("the sentence " + key.key() + " is declared twice with different"
-                            + " English: \"" + before.english() + "\" and \"" + key.english() + "\"");
+                    throw DeclarationError.of(modid, "the sentence " + key.key(), "is declared twice, as \""
+                            + before.english() + "\" and as \"" + key.english() + "\"",
+                            "keep one declaration, or give the other sentence a key of its own");
                 }
             }
         }

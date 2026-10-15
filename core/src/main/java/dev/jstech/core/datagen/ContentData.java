@@ -25,27 +25,31 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
  * the mod adds only what is its own on top.
  *
  * <pre>{@code
- * @SubscribeEvent
+ * modBus.addListener(GatherDataEvent.class, MyDataGenerators::onGatherData);  // in the mod's constructor
+ *
  * public static void onGatherData(final GatherDataEvent event) {
  *     final ContentData data = ContentData.gather(event, MyMod.CONTENT);
  *     data.server(new MyRecipeProvider(data.output(), data.lookup()));
+ *     data.check();
  * }
  * }</pre>
  */
 public final class ContentData {
 
     private final GatherDataEvent event;
+    private final String modid;
     private final ContentLanguageProvider language;
 
-    private ContentData(final GatherDataEvent event, final ContentLanguageProvider language) {
+    private ContentData(final GatherDataEvent event, final String modid, final ContentLanguageProvider language) {
         this.event = event;
+        this.modid = modid;
         this.language = language;
     }
 
     /** Adds the providers every declared block and item needs, and hands back the rest of the mod's data. */
     public static ContentData gather(final GatherDataEvent event, final ModContent content) {
         final PackOutput output = event.getGenerator().getPackOutput();
-        final ContentData data = new ContentData(event, new ContentLanguageProvider(output, content));
+        final ContentData data = new ContentData(event, content.modid(), new ContentLanguageProvider(output, content));
         data.client(new ContentBlockStateProvider(output, content, data.existingFiles()));
         data.client(new ContentItemModelProvider(output, content, data.existingFiles()));
         data.client(data.language);
@@ -88,6 +92,17 @@ public final class ContentData {
     public ContentData server(final DataProvider provider) {
         event.getGenerator().addProvider(event.includeServer(), provider);
         return this;
+    }
+
+    /**
+     * Adds, after everything the mod added, the check that fails the build when a block or an item the mod registered
+     * has no English name, no block state, no model, a model whose texture is nowhere, or no loot table while it
+     * drops something. Call it last: the steps run in the order they were added, and it reads what they wrote.
+     */
+    public void check() {
+        if (event.includeClient() && event.includeServer()) {
+            event.getGenerator().addProvider(true, new ContentCheckProvider(output(), existingFiles(), modid));
+        }
     }
 
     public PackOutput output() {

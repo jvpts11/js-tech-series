@@ -51,10 +51,11 @@ says what the Core promises and what it does not yet.
 | [Manuals](MANUALS.md) | Chapters, entries, manuals and styles, special blocks, and the manual key. |
 | [Sound](SOUND.md) | Sounds declared once, channels, cues, sounds made as they play, recordings. |
 
-## Testing
+## Building and testing
 
 | Page | What it covers |
 | --- | --- |
+| [While you build](DEVELOPING.md) | Listeners handed to the buses, errors that say how to fix them, the data run's check, the log one part at a time, data and assets reloaded as they change. |
 | [Testing](TESTING.md) | Unit tests and GameTests for a mod on the Core, and the kit. |
 
 ## How to read these pages

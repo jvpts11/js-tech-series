@@ -8,15 +8,12 @@
 package dev.jstech.core.client.input;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.menu.CoreMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -29,7 +26,6 @@ import org.lwjgl.glfw.GLFW;
  * its start, a restart, the next page of an installer) had the cursor pulled from under the hand every time. So when a
  * Core window closes and another opens within a few ticks, the cursor goes back to where it was.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class MenuSwapCursor {
 
     /** How soon after a Core window closes the next one counts as taking its place, in client ticks. */
@@ -42,7 +38,12 @@ public final class MenuSwapCursor {
     private MenuSwapCursor() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.Closing.class, MenuSwapCursor::onClosing);
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.Init.Post.class, MenuSwapCursor::onInit);
+    }
+
     public static void onClosing(final ScreenEvent.Closing event) {
         if (!isCoreWindow(event.getScreen())) {
             return;
@@ -58,7 +59,6 @@ public final class MenuSwapCursor {
         closed = new Closed(x[0], y[0], minecraft.gui.getGuiTicks());
     }
 
-    @SubscribeEvent
     public static void onInit(final ScreenEvent.Init.Post event) {
         final Closed last = closed;
         if (last == null) {

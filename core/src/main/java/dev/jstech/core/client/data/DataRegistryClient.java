@@ -7,21 +7,21 @@
  */
 package dev.jstech.core.client.data;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.data.DataRegistries;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /** A player's game forgets what a server's data registries sent it as it leaves that server. */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class DataRegistryClient {
 
     private DataRegistryClient() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, DataRegistryClient::onLoggingOut);
+    }
+
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         DataRegistries.forgetClientValues();
     }

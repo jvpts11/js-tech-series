@@ -7,13 +7,11 @@
  */
 package dev.jstech.core.audio.media;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.audio.media.MediaCache;
 import dev.jstech.core.client.audio.media.MediaPlayer;
 import dev.jstech.core.client.audio.media.MediaUploader;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -22,7 +20,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  * What the recordings send over the network: a client asking for one and the server sending it in pieces, a player
  * offering one and sending it, and a recording starting and stopping near a player.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class MediaNetwork {
 
     private static final String VERSION = "1";
@@ -30,7 +27,11 @@ public final class MediaNetwork {
     private MediaNetwork() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, MediaNetwork::onRegisterPayloads);
+    }
+
     public static void onRegisterPayloads(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(VERSION);
         registrar.playToServer(MediaWantPayload.TYPE, MediaWantPayload.STREAM_CODEC, MediaNetwork::onWant);

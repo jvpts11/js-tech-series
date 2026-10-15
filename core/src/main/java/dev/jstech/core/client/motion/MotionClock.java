@@ -7,15 +7,12 @@
  */
 package dev.jstech.core.client.motion;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.motion.Motion;
 import dev.jstech.core.motion.MotionSpec;
 import dev.jstech.core.motion.Rhythm;
 import net.minecraft.client.Minecraft;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The one clock every motion on the screen is read against: the client's ticks, and how far the frame is into the
@@ -26,7 +23,6 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
  * motion started is already over: whatever moves is drawn where it ends, at once, which is also what the client tests
  * draw against.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class MotionClock {
 
     /** How long a tick lasts, in milliseconds. */
@@ -79,7 +75,11 @@ public final class MotionClock {
         reduced = value;
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, MotionClock::onClientTick);
+    }
+
     public static void onClientTick(final ClientTickEvent.Post event) {
         ticks++;
     }

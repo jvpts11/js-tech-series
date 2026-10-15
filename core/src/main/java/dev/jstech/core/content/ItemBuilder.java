@@ -9,6 +9,7 @@ package dev.jstech.core.content;
 
 import dev.jstech.core.item.ItemMode;
 import dev.jstech.core.item.ItemState;
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -107,11 +108,12 @@ public final class ItemBuilder<I extends Item> {
     /**
      * Registers the item and keeps what was declared. An item that keeps anything inside stacks alone.
      *
-     * @throws IllegalStateException when the item was given no name
+     * @throws DeclarationError when the item was given no name
      */
     public ItemEntry<I> register() {
         if (english == null) {
-            throw new IllegalStateException(content.modid() + ":" + id + " needs a name");
+            throw DeclarationError.of(content.modid(), "the item " + content.modid() + ":" + id, "has no name",
+                    "give it its English name with named(...) before register()");
         }
         final boolean alone = state.stacksAlone();
         final ItemEntry<I> entry = new ItemEntry<>(

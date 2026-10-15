@@ -9,7 +9,7 @@ package dev.jstech.core.client.guide;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.guide.GuideChapter;
@@ -41,7 +41,7 @@ import org.slf4j.Logger;
  */
 public final class GuideReloadListener extends SimplePreparableReloadListener<GuideLibrary> {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.GUIDE.logger();
     private static final String ROOT = "guide";
 
     @Override

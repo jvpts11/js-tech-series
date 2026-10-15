@@ -7,21 +7,21 @@
  */
 package dev.jstech.core.client.state;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.state.ClientStates;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /** Lets every state's value go when the player leaves a server, so the next server's start from their defaults. */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class ClientStateEvents {
 
     private ClientStateEvents() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, ClientStateEvents::onLoggingOut);
+    }
+
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         ClientStates.clear();
     }

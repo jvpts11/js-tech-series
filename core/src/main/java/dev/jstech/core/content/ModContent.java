@@ -20,6 +20,7 @@ import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -120,7 +121,8 @@ public final class ModContent {
         this.tabs = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, modid);
         this.sounds = DeferredRegister.create(Registries.SOUND_EVENT, modid);
         if (BY_MOD.putIfAbsent(modid, this) != null) {
-            throw new IllegalStateException("the content of " + modid + " is declared twice");
+            throw DeclarationError.of(modid, "its content", "is declared twice",
+                    "make one ModContent for the mod, in one static field, and declare everything through it");
         }
     }
 
@@ -139,7 +141,8 @@ public final class ModContent {
     public static ModContent of(final String modid) {
         final ModContent content = BY_MOD.get(modid);
         if (content == null) {
-            throw new IllegalStateException(modid + " declared no content");
+            throw DeclarationError.of(null, "the mod " + modid, "declared no content",
+                    "make its ModContent with new ModContent(\"" + modid + "\") before anything asks for it");
         }
         return content;
     }
@@ -320,7 +323,9 @@ public final class ModContent {
         for (final ModContent content : all()) {
             for (final ScriptBinding declared : content.declaredScriptBindings) {
                 if (declared.name().equals(name)) {
-                    throw new IllegalStateException(content.modid + " already gives scripts a binding named " + name);
+                    throw DeclarationError.of(modid, "the script binding " + name,
+                            "is already given by " + content.modid,
+                            "give it a name of its own, such as one that starts with the mod's name");
                 }
             }
         }
@@ -468,7 +473,8 @@ public final class ModContent {
 
     void declare(final CellFont font) {
         if (declaredFonts.stream().anyMatch(declared -> declared.id().equals(font.id()))) {
-            throw new IllegalStateException("the font " + font.id() + " is declared twice");
+            throw DeclarationError.of(modid, "the font " + font.id(), "is declared twice",
+                    "declare it once and use what that declaration returns");
         }
         declaredFonts.add(font);
     }

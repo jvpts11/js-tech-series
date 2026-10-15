@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.persistence;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,7 +23,7 @@ import org.slf4j.Logger;
  */
 public final class SaveFiles {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.SAVES.logger();
     private static final String EXTENSION = ".dat";
 
     private SaveFiles() {

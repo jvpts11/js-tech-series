@@ -8,14 +8,33 @@
 package dev.jstech.core;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.advancement.Advancements;
 import dev.jstech.core.advancement.CoreTriggers;
 import dev.jstech.core.api.CoreRegisterEvent;
+import dev.jstech.core.audio.AudioNetwork;
 import dev.jstech.core.audio.AudioSettings;
 import dev.jstech.core.audio.media.MediaCommand;
 import dev.jstech.core.audio.media.MediaLedgers;
+import dev.jstech.core.audio.media.MediaNetwork;
+import dev.jstech.core.audio.media.MediaServerEvents;
+import dev.jstech.core.blockentity.ClientUpdates;
+import dev.jstech.core.blockentity.FieldCapabilities;
+import dev.jstech.core.cable.CableBreaking;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.command.CoreCommands;
+import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.data.DataRegistries;
+import dev.jstech.core.datagen.JsCoreDataGenerators;
+import dev.jstech.core.developer.LiveReload;
+import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.dimension.RuntimeDimensions;
+import dev.jstech.core.fluid.FluidGrids;
+import dev.jstech.core.hologram.Holograms;
+import dev.jstech.core.input.KeyActions;
+import dev.jstech.core.multipart.CoreParts;
+import dev.jstech.core.network.payload.ClientPayloads;
+import dev.jstech.core.network.transfer.BigPayloads;
 import dev.jstech.core.robot.CoreRobotTasks;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.CoreConfigKeys;
@@ -32,6 +51,7 @@ import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.language.LanguageRegistry;
+import dev.jstech.core.log.LogCommand;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.persistence.NetworkRegistry;
@@ -40,6 +60,7 @@ import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.state.CoreStates;
+import dev.jstech.core.state.StateNetwork;
 import dev.jstech.core.team.CorePermissions;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -130,9 +151,10 @@ public final class JsCore {
         // The manuals each player was handed as they first joined, so each is handed once.
         GuideGifts.register();
         CoreTriggers.register(modEventBus);
-        // The series' commands under /jstech: the Core's own, and the recordings' upkeep.
+        // The series' commands under /jstech: the Core's own, the recordings' upkeep, and the log's levels.
         CoreCommands.declare();
         MediaCommand.declare();
+        LogCommand.declare();
         // The multiblock patterns of every mod, read from data and declared in code.
         MultiblockPatterns.register();
         // What each dimension is like to stand in, read from data.
@@ -141,6 +163,33 @@ public final class JsCore {
         CoreRobotTasks.declare();
         // The chunks machines keep loaded for their owners, under the game's own forced-chunk file.
         modEventBus.addListener(RegisterTicketControllersEvent.class, ChunkLoaders::onRegisterControllers);
+        // What each part of the Core answers on the mod's bus and the game's, declared here one class at a time
+        // rather than found by a scan for annotations, so what runs is what this list says.
+        Advancements.listen();
+        AudioNetwork.listen(modEventBus);
+        BigPayloads.listen(modEventBus);
+        CableBreaking.listen();
+        ClientPayloads.listen();
+        ClientUpdates.listen();
+        CoreCables.listen(modEventBus);
+        CoreEnergy.listen(modEventBus);
+        CoreParts.listen(modEventBus);
+        CoreStates.listen();
+        DataRegistries.listen(modEventBus);
+        DimensionEffects.listen();
+        FieldCapabilities.listen(modEventBus);
+        FluidGrids.listen();
+        GuideGifts.listen();
+        Holograms.listen(modEventBus);
+        JsCoreDataGenerators.listen(modEventBus);
+        KeyActions.listen(modEventBus);
+        MediaNetwork.listen(modEventBus);
+        MediaServerEvents.listen();
+        RuntimeDimensions.listen();
+        SeriesCommands.listen();
+        StateNetwork.listen(modEventBus);
+        // In a development run, the mods' data reloaded as it changes.
+        LiveReload.listen();
         /*
          * One moment for anything to be added, and one for the door to close. Everything of the series adds
          * itself through the same event an addon does, so the way in is the one that is tested every time

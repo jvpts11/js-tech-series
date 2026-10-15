@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.content;
 
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -115,16 +116,23 @@ public final class BlockBuilder<B extends Block> {
     /**
      * Registers the block, and its item if it has one, and keeps what was declared.
      *
-     * @throws IllegalStateException when the declaration misses what every block needs (a name and a look), or asks
-     *                               for something only an item can have
+     * @throws DeclarationError when the declaration misses what every block needs (a name and a look), or asks for
+     *                          something only an item can have
      */
     public BlockEntry<B> register() {
-        if (english == null || look == null) {
-            throw new IllegalStateException(content.modid() + ":" + id + " needs a name and a look");
+        if (english == null) {
+            throw DeclarationError.of(content.modid(), "the block " + content.modid() + ":" + id, "has no name",
+                    "give it its English name with named(...) before register()");
+        }
+        if (look == null) {
+            throw DeclarationError.of(content.modid(), "the block " + content.modid() + ":" + id, "has no look",
+                    "say how it is drawn with look(...) before register()");
         }
         final Drops dropped = drops != null ? drops : itemFactory != null ? Drops.SELF : Drops.NONE;
         if (itemFactory == null && (dropped != Drops.NONE || section != null || itemLook != null)) {
-            throw new IllegalStateException(content.modid() + ":" + id + " has no item to drop, show or draw");
+            throw DeclarationError.of(content.modid(), "the block " + content.modid() + ":" + id,
+                    "drops itself, sits in a creative tab or has an item look, but has no item",
+                    "give it one with item(), or take away its drops(...), tab(...) and itemLook(...)");
         }
         final BlockBehaviour.Properties madeWith = properties;
         final DeferredBlock<B> block = content.blockRegister().register(id, () -> factory.apply(madeWith));

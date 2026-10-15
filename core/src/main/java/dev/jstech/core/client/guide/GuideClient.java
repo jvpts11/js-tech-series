@@ -9,7 +9,6 @@ package dev.jstech.core.client.guide;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.datafixers.util.Either;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.guide.GuideHooks;
 import dev.jstech.core.guide.GuideManual;
@@ -35,9 +34,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
@@ -45,6 +42,7 @@ import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactori
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
@@ -53,7 +51,6 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
  * over the item in the main hand. An item with a page says so at the foot of its tooltip, and while the key is held a
  * small bar fills, in the look of the manual it opens: in the tooltip, under that line, or under the crosshair.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class GuideClient {
 
     /** How long the key is held over an item before its page opens, so a stray press opens nothing. */
@@ -67,12 +64,23 @@ public final class GuideClient {
     private GuideClient() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus and the game's what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterClientReloadListenersEvent.class, GuideClient::onRegisterReloadListeners);
+        modBus.addListener(FMLClientSetupEvent.class, GuideClient::onClientSetup);
+        modBus.addListener(RegisterClientTooltipComponentFactoriesEvent.class, GuideClient::onRegisterTooltips);
+        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, GuideClient::onTooltip);
+        NeoForge.EVENT_BUS.addListener(RenderTooltipEvent.GatherComponents.class, GuideClient::onTooltipGathered);
+        NeoForge.EVENT_BUS.addListener(RenderTooltipEvent.Pre.class, GuideClient::onTooltipShown);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, GuideClient::onClientTick);
+        NeoForge.EVENT_BUS.addListener(RenderGuiEvent.Post.class, GuideClient::onHudDrawn);
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, GuideClient::onScreenDrawn);
+    }
+
     public static void onRegisterReloadListeners(final RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(new GuideReloadListener());
     }
 
-    @SubscribeEvent
     public static void onClientSetup(final FMLClientSetupEvent event) {
         GuideHooks.useOpener((manual, entry) -> Minecraft.getInstance().execute(() -> open(manual, entry)));
     }
@@ -115,12 +123,10 @@ public final class GuideClient {
         return HOLD.progress(Util.getMillis());
     }
 
-    @SubscribeEvent
     public static void onRegisterTooltips(final RegisterClientTooltipComponentFactoriesEvent event) {
         event.register(HoldBarTooltip.class, bar -> bar);
     }
 
-    @SubscribeEvent
     public static void onTooltip(final ItemTooltipEvent event) {
         if (pageFor(event.getItemStack()).isEmpty()) {
             return;
@@ -129,7 +135,6 @@ public final class GuideClient {
     }
 
     /* While the key is held over the item, its bar fills in the tooltip, right under the line that says to hold it. */
-    @SubscribeEvent
     public static void onTooltipGathered(final RenderTooltipEvent.GatherComponents event) {
         final String entry = pageFor(event.getItemStack());
         final Optional<Component> line = holdLine();
@@ -151,7 +156,6 @@ public final class GuideClient {
      * The bar runs from one side of the tooltip to the other: the lines are final here, wrapped to the screen, so the
      * widest of them is the width the tooltip is drawn at.
      */
-    @SubscribeEvent
     public static void onTooltipShown(final RenderTooltipEvent.Pre event) {
         HoldBarTooltip bar = null;
         int widest = 0;
@@ -168,7 +172,6 @@ public final class GuideClient {
     }
 
     /* Out of every screen, the key is held over the item in the main hand. */
-    @SubscribeEvent
     public static void onClientTick(final ClientTickEvent.Post event) {
         final Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen != null || minecraft.player == null) {
@@ -180,7 +183,6 @@ public final class GuideClient {
         }
     }
 
-    @SubscribeEvent
     public static void onHudDrawn(final RenderGuiEvent.Post event) {
         final Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen != null || HOLD.over().isEmpty()) {
@@ -195,7 +197,6 @@ public final class GuideClient {
      * In an inventory, the key is held over the item under the pointer; any other screen only lets it go. The bar
      * itself is a line of that item's tooltip.
      */
-    @SubscribeEvent
     public static void onScreenDrawn(final ScreenEvent.Render.Post event) {
         final long now = Util.getMillis();
         if (!(event.getScreen() instanceof AbstractContainerScreen<?> screen)) {

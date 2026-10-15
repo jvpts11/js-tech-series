@@ -23,11 +23,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.joml.Matrix4f;
 
 /**
@@ -39,7 +37,6 @@ import org.joml.Matrix4f;
  * before the world, a few a frame at most so a room full of screens never costs a frame its time; one nobody has asked
  * for in a while is let go with its textures. Nothing here runs on the server: a picture costs the player who looks.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class LiveScreens {
 
     /* A picture nobody has asked for in this long gives its textures back. */
@@ -87,7 +84,12 @@ public final class LiveScreens {
         return SCREENS.size();
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Pre.class, LiveScreens::onFrame);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, LiveScreens::onLeave);
+    }
+
     public static void onFrame(final RenderFrameEvent.Pre event) {
         if (SCREENS.isEmpty()) {
             return;
@@ -118,7 +120,6 @@ public final class LiveScreens {
         }
     }
 
-    @SubscribeEvent
     public static void onLeave(final ClientPlayerNetworkEvent.LoggingOut event) {
         for (final LiveScreen screen : SCREENS.values()) {
             screen.close();

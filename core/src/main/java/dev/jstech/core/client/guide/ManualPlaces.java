@@ -10,7 +10,7 @@ package dev.jstech.core.client.guide;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +28,7 @@ import org.slf4j.Logger;
  */
 public final class ManualPlaces {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.GUIDE.logger();
     private static final String FOLDER = "jstech";
     private static final String FILE = "manuals.json";
     private static final String AT = "at";

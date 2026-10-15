@@ -167,18 +167,30 @@ Core writes those files from your declarations in a step called **data generatio
 no world and saves the files into your project. Hook it up once:
 
 ```java
-@EventBusSubscriber(modid = MyMod.MODID)
 public final class MyDataGenerators {
 
-    @SubscribeEvent
-    public static void onGatherData(final GatherDataEvent event) {
-        ContentData.gather(event, MyContent.CONTENT);
+    /** Called once from your mod's constructor, with the event bus the constructor is handed. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(GatherDataEvent.class, MyDataGenerators::onGatherData);
+    }
+
+    private static void onGatherData(final GatherDataEvent event) {
+        final ContentData data = ContentData.gather(event, MyContent.CONTENT);
+        data.check();
     }
 }
 ```
 
+The series hands every listener to the bus from its mod's constructor, as here, rather than marking classes for
+the game to find: what runs is what the constructor says. *Changed 2026-10-15.*
+
 Then run your project's data run (in a project built like the series, `./gradlew runData`). The files land in
 `src/generated/resources`, which your build must include as a resource folder; commit them with your code.
+
+`data.check()`, the last line, makes the run fail when a block or an item your mod registered has no English
+name, no block state, no model, a model whose texture is nowhere, or no loot table while it drops something, and
+it says which and how to put it right. Call it after every provider you add, since it reads what they wrote.
+*Added 2026-10-15.*
 
 Run it again every time you add or change a declaration, a name, a look, a palette or a recipe. Nothing else
 writes these files, so a block declared but not generated is a magenta and black cube with an untranslated

@@ -7,10 +7,8 @@
  */
 package dev.jstech.core.audio;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.client.audio.AudioEngine;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -20,7 +18,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
  * notes of a synthesised sound, which each client that hears them makes into samples, and cues, whose sound each
  * client picks from its own packs.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class AudioNetwork {
 
     private static final String VERSION = "1";
@@ -28,7 +25,11 @@ public final class AudioNetwork {
     private AudioNetwork() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterPayloadHandlersEvent.class, AudioNetwork::onRegisterPayloads);
+    }
+
     public static void onRegisterPayloads(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(VERSION);
         registrar.playToClient(ScreenSoundPayload.TYPE, ScreenSoundPayload.STREAM_CODEC, AudioNetwork::onScreenSound);

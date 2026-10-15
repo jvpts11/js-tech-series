@@ -8,7 +8,7 @@
 package dev.jstech.core.client.guide;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.guide.GuideBlock;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,7 +56,7 @@ final class SceneLevel implements BlockAndTintGetter {
     private final int tall;
     private int shown;
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.GUIDE.logger();
     /** The brightest light there is, which every place of a scene has. */
     private static final int FULL = 15;
     /** A tint that leaves a colour as it is: every channel at its brightest. */

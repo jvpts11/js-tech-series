@@ -10,7 +10,9 @@ package dev.jstech.core.config;
 import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.core.config.format.IConfigFormat;
 import dev.jstech.core.config.format.PlainValues;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.persistence.UpgradeChain;
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,7 +23,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import org.slf4j.LoggerFactory;
 
 /**
  * A settings file: its name, whose it is, the format it is written in, the version of its layout, and the settings
@@ -250,7 +251,9 @@ public final class ConfigFile {
 
     private void own(final ConfigKey<?> key) {
         if (this.keys.get(key.dottedPath()) != key) {
-            throw new IllegalArgumentException(key.dottedPath() + " is not a setting of " + fileName());
+            throw DeclarationError.of(null, "the setting " + key.dottedPath(), "is asked of " + fileName()
+                    + ", which does not hold it", "add it to that file with key(...) before build(), or ask the file"
+                    + " that holds it");
         }
     }
 
@@ -332,12 +335,12 @@ public final class ConfigFile {
         private final Map<String, Consumer<Object>> uses = new LinkedHashMap<>();
         private final UpgradeChain.Builder<Map<String, Object>> upgrades;
         private List<String> comment = List.of();
-        private IConfigLogger logger = LoggerFactory.getLogger(ConfigFile.class)::warn;
+        private IConfigLogger logger = CoreLogs.CONFIG.logger()::warn;
 
         private Builder(final String name, final ConfigSide side, final IConfigFormat format) {
             if (name == null || name.isBlank() || name.contains("/") || name.contains("\\") || name.contains(".")) {
-                throw new IllegalArgumentException("a settings file's name is one word, without its extension: "
-                        + name);
+                throw DeclarationError.of(null, "the settings file " + name, "is not named by one word",
+                        "name it by one word with no folder and no extension, as in \"mymod-common\"");
             }
             this.name = name;
             this.side = Objects.requireNonNull(side, "side");
@@ -372,7 +375,8 @@ public final class ConfigFile {
         /** A setting, read for whoever asks the file for it. */
         public <T> Builder key(final ConfigKey<T> key) {
             if (this.keys.putIfAbsent(key.dottedPath(), key) != null) {
-                throw new IllegalArgumentException("two settings at " + key.dottedPath() + " in " + this.name);
+                throw DeclarationError.of(null, "the setting " + key.dottedPath() + " of " + this.name,
+                        "is added twice", "add each setting once, or give the second its own path");
             }
             return this;
         }
@@ -404,12 +408,14 @@ public final class ConfigFile {
         public ConfigFile build() {
             for (final String path : this.keys.keySet()) {
                 if (path.equals(VERSION_KEY)) {
-                    throw new IllegalArgumentException(VERSION_KEY + " is the file's own, not a setting's");
+                    throw DeclarationError.of(null, "the setting " + path + " of " + this.name,
+                            "takes the name the file keeps its layout's version under", "give it another name");
                 }
                 for (final String other : this.keys.keySet()) {
                     if (other.startsWith(path + ".")) {
-                        throw new IllegalArgumentException(path + " is a setting and a section at once in "
-                                + this.name);
+                        throw DeclarationError.of(null, "the setting " + path + " of " + this.name,
+                                "is also the section " + other + " sits in",
+                                "rename the setting or the section, so one path is not both");
                     }
                 }
             }

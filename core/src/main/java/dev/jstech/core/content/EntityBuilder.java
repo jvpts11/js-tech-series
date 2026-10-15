@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.content;
 
+import dev.jstech.core.util.DeclarationError;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -89,11 +90,12 @@ public final class EntityBuilder<E extends Entity> {
     /**
      * Registers the entity type and keeps the declaration.
      *
-     * @throws IllegalStateException when it was not named
+     * @throws DeclarationError when it was not named
      */
     public EntityEntry<E> register() {
         if (english == null) {
-            throw new IllegalStateException("the entity " + content.modid() + ":" + id + " is named in English");
+            throw DeclarationError.of(content.modid(), "the entity " + content.modid() + ":" + id, "has no name",
+                    "give it its English name with named(...) before register()");
         }
         final ResourceLocation key = ResourceLocation.fromNamespaceAndPath(content.modid(), id);
         final EntityEntry<E> entry = new EntityEntry<>(key, english, attributes, holdsEnergy);

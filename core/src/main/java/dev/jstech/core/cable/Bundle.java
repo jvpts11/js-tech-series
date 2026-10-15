@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.cable;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.persistence.SavedValue;
@@ -36,7 +36,7 @@ public final class Bundle implements IFieldPart {
     /** Where the bundle is saved. */
     public static final String KEY = "Wires";
     private static final Codec<List<Wire>> CODEC = Wire.CODEC.listOf();
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.CABLES.logger();
 
     /** A bundle that runs {@code changed} each time a wire is laid, dyed or taken out. */
     public Bundle(final Runnable changed) {

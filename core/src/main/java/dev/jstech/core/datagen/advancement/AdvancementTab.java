@@ -12,6 +12,7 @@ import dev.jstech.core.advancement.AxisStepTrigger;
 import dev.jstech.core.advancement.EventTrigger;
 import dev.jstech.core.progression.IAxisStep;
 import dev.jstech.core.progression.ProgressionAxis;
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -166,8 +167,9 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
     /* A parent that was not written down earlier in this tab would be written out and then skipped by the game. */
     private void requireParent(final String name, final String parent) {
         if (parent != null && this.specs.stream().noneMatch(spec -> spec.name().equals(parent))) {
-            throw new IllegalArgumentException("The advancement " + name + " of the tab " + this.tab
-                    + " names the parent " + parent + ", which is not an earlier advancement of the tab");
+            throw DeclarationError.of(null, "the advancement " + name + " of the tab " + this.tab,
+                    "names the parent " + parent + ", which is not an earlier advancement of the tab",
+                    "write the parent before it in the tab, or name one written earlier");
         }
     }
 

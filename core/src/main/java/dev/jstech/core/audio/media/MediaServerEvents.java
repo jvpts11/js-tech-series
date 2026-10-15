@@ -7,13 +7,11 @@
  */
 package dev.jstech.core.audio.media;
 
-import com.mojang.logging.LogUtils;
-import dev.jstech.core.JsCore;
+import dev.jstech.core.log.CoreLogs;
 import java.io.IOException;
 import java.nio.file.Path;
 import net.minecraft.world.level.storage.LevelResource;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -26,17 +24,24 @@ import org.slf4j.Logger;
  * starts and closes when it stops, and every tick sends each player their share of what they wait for and keeps the
  * recordings playing in the world heard by whoever is near them.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class MediaServerEvents {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.MEDIA.logger();
     /** How often the ledger goes to the world when something in it changed: once a minute. */
     private static final int FLUSH_EVERY = 1200;
 
     private MediaServerEvents() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ServerStartingEvent.class, MediaServerEvents::onServerStarting);
+        NeoForge.EVENT_BUS.addListener(ServerStoppingEvent.class, MediaServerEvents::onServerStopping);
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, MediaServerEvents::onServerStopped);
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, MediaServerEvents::onServerTick);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, MediaServerEvents::onLoggedOut);
+    }
+
     public static void onServerStarting(final ServerStartingEvent event) {
         final Path root = event.getServer().getWorldPath(LevelResource.ROOT).resolve("jstech").resolve("media");
         try {
@@ -51,18 +56,15 @@ public final class MediaServerEvents {
     }
 
     /* The ledger goes to the world before the world is saved for the last time. */
-    @SubscribeEvent
     public static void onServerStopping(final ServerStoppingEvent event) {
         MediaStore.current().ifPresent(MediaStore::flush);
     }
 
-    @SubscribeEvent
     public static void onServerStopped(final ServerStoppedEvent event) {
         MediaStore.use(null);
         MediaSessions.clear();
     }
 
-    @SubscribeEvent
     public static void onServerTick(final ServerTickEvent.Post event) {
         MediaDownloads.tick(event.getServer());
         MediaSessions.tick(event.getServer());
@@ -71,7 +73,6 @@ public final class MediaServerEvents {
         }
     }
 
-    @SubscribeEvent
     public static void onLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
         MediaDownloads.forget(event.getEntity().getUUID());
         MediaUploads.forget(event.getEntity().getUUID());

@@ -7,12 +7,10 @@
  */
 package dev.jstech.core.blockentity;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.content.ModContent;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
@@ -21,13 +19,16 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
  * for every block entity type any mod of the series declares, so no mod registers them one by one. A block entity
  * that exposes nothing answers none, and any capability a mod registers itself still stands beside these.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class FieldCapabilities {
 
     private FieldCapabilities() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterCapabilitiesEvent.class, FieldCapabilities::register);
+    }
+
     public static void register(final RegisterCapabilitiesEvent event) {
         for (final ModContent content : ModContent.all()) {
             for (final BlockEntityType<?> type : content.declaredBlockEntityTypes()) {

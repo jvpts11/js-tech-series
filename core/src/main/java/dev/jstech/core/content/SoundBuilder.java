@@ -13,6 +13,7 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundSpace;
 import dev.jstech.core.audio.SoundSpec;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -137,17 +138,19 @@ public final class SoundBuilder {
     /**
      * Registers the sound's event, unless it is made as it plays and so has none, and keeps what was declared.
      *
-     * @throws IllegalStateException when the sound was given no subtitle, or several variants together with files of
-     *         its own or no file at all
+     * @throws DeclarationError when the sound was given no subtitle, or several variants together with files of its
+     *         own or no file at all
      */
     public SoundKey register() {
         final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(content.modid(), path);
         if (english == null) {
-            throw new IllegalStateException(id + " needs a subtitle");
+            throw DeclarationError.of(content.modid(), "the sound " + id, "has no subtitle",
+                    "give it the English a player reads for it with subtitle(...) before register()");
         }
         if (variants > 1 && (made || !files.isEmpty())) {
-            throw new IllegalStateException(
-                    id + " asks for " + variants + " variants but has its own files or is made");
+            throw DeclarationError.of(content.modid(), "the sound " + id,
+                    "asks for " + variants + " variants but names its files or is made as it plays",
+                    "drop variants(...), or drop file(...) and made() so it plays its own files, numbered from _1");
         }
         // Resolved here so the order of onScreen(), world() and channel() in the declaration does not matter.
         final AudioChannel mixed = channel != null ? channel

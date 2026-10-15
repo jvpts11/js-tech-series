@@ -8,7 +8,6 @@
 package dev.jstech.core.client.hologram;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.hologram.HologramPayload;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,18 +21,15 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The holograms this player's game was told of, drawn in the world each frame: every line turned to face the camera,
  * on a dim ground, the way a name over a player's head is drawn. A hologram goes when the server takes it down, when
  * its time runs out, when the player goes further than {@link #RANGE}, or when the player leaves the world.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class HologramView {
 
     /** Further than this, in blocks, a hologram is not drawn: past it the words are too small to read. */
@@ -65,7 +61,13 @@ public final class HologramView {
         return shown == null ? List.of() : shown.lines();
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, HologramView::onRender);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, HologramView::onLoggingOut);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.Clone.class, HologramView::onPlayerReplaced);
+    }
+
     public static void onRender(final RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS || SHOWN.isEmpty()) {
             return;
@@ -87,14 +89,12 @@ public final class HologramView {
         buffers.endBatch();
     }
 
-    @SubscribeEvent
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         SHOWN.clear();
     }
 
     /* Fires on respawn and on a change of dimension, where the game does not log out: the words of the old level
        must not be drawn at their old coordinates in the new one. */
-    @SubscribeEvent
     public static void onPlayerReplaced(final ClientPlayerNetworkEvent.Clone event) {
         SHOWN.clear();
     }

@@ -8,7 +8,7 @@
 package dev.jstech.core.team;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import java.util.Objects;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
@@ -25,7 +25,7 @@ import org.slf4j.Logger;
  */
 public final class CoreTeams {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.TEAMS.logger();
     /** What the id of a player's team of their own starts with. */
     private static final String SOLO = "player:";
 

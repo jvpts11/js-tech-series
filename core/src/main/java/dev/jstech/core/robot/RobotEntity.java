@@ -8,7 +8,7 @@
 package dev.jstech.core.robot;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.team.IOwned;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.vehicle.DriverInput;
@@ -58,7 +58,7 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
 
     /** How many stacks a robot carries. */
     public static final int INVENTORY_SIZE = 9;
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.ROBOTS.logger();
     private static final String SAVED_TASKS = "Tasks";
     private static final String SAVED_INVENTORY = "Inventory";
     private static final String SAVED_OWNER = "Owner";

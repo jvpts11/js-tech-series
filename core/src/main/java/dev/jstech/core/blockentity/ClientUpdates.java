@@ -7,13 +7,11 @@
  */
 package dev.jstech.core.blockentity;
 
-import dev.jstech.core.JsCore;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
@@ -28,7 +26,6 @@ import java.util.Set;
  * changed during it, and checks the worked-out values the players see for a change first. The work is in proportion
  * to what changed and to the block entities that show worked-out values, never to every block entity loaded.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class ClientUpdates {
 
     private static final Map<ServerLevel, Pending> PENDING = new IdentityHashMap<>();
@@ -36,7 +33,12 @@ public final class ClientUpdates {
     private ClientUpdates() {
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, ClientUpdates::afterTick);
+        NeoForge.EVENT_BUS.addListener(LevelEvent.Unload.class, ClientUpdates::unload);
+    }
+
     public static void afterTick(final LevelTickEvent.Post event) {
         if (event.getLevel() instanceof ServerLevel level) {
             final Pending pending = PENDING.get(level);
@@ -46,7 +48,6 @@ public final class ClientUpdates {
         }
     }
 
-    @SubscribeEvent
     public static void unload(final LevelEvent.Unload event) {
         PENDING.remove(event.getLevel());
     }

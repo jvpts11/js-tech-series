@@ -20,13 +20,12 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.gui.Tube;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -40,7 +39,6 @@ import org.lwjgl.opengl.GL11;
  * <p>Used two ways: a screen on the player's monitor has its glass repainted once it is drawn, so everything on it
  * goes through the tube whoever drew it; and a picture drawn into a texture for the world is copied through it.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class TubeFilter {
 
     private static final int MODE_COPY = 0;
@@ -57,7 +55,17 @@ public final class TubeFilter {
     private TubeFilter() {
     }
 
-    @SubscribeEvent
+    /** Hands the mod's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen(final IEventBus modBus) {
+        modBus.addListener(RegisterShadersEvent.class, event -> {
+            try {
+                onRegisterShaders(event);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
     public static void onRegisterShaders(final RegisterShadersEvent event) throws IOException {
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "tube"), DefaultVertexFormat.POSITION_TEX),

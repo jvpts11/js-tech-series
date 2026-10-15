@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.content;
 
+import dev.jstech.core.util.DeclarationError;
 import java.util.Objects;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -134,11 +135,12 @@ public final class FluidBuilder {
     /**
      * Registers the fluid and keeps what was declared.
      *
-     * @throws IllegalStateException when the fluid was given no name
+     * @throws DeclarationError when the fluid was given no name
      */
     public FluidEntry register() {
         if (this.english == null) {
-            throw new IllegalStateException(this.content.modid() + ":" + this.id + " needs a name");
+            throw DeclarationError.of(this.content.modid(), "the fluid " + this.content.modid() + ":" + this.id,
+                    "has no name", "give it its English name with named(...) before register()");
         }
         final String name = this.english;
         final ResourceLocation key = ResourceLocation.fromNamespaceAndPath(this.content.modid(), this.id);

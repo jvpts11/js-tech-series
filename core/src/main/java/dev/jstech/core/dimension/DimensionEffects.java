@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.dimension;
 
-import com.mojang.logging.LogUtils;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.JsCore;
 import java.lang.reflect.Field;
 import java.util.EnumSet;
@@ -27,8 +27,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DerivedLevelData;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
@@ -43,10 +41,9 @@ import org.slf4j.Logger;
  * not made for them suffers, each a {@link DimensionHazardEvent} another mod may cancel. The hazards are weighed once
  * a second and their harm dealt each tick, so a choking player's air runs down as smoothly as under water.
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class DimensionEffects {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = CoreLogs.DIMENSIONS.logger();
     /** What a dimension's pull is kept under on every living thing, so it is taken off when the thing leaves. */
     private static final ResourceLocation GRAVITY = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "dimension_gravity");
@@ -113,7 +110,14 @@ public final class DimensionEffects {
         }
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(PlayerTickEvent.Post.class, DimensionEffects::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, DimensionEffects::onJoinLevel);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, DimensionEffects::onLoggedOut);
+        NeoForge.EVENT_BUS.addListener(LevelEvent.Load.class, DimensionEffects::onLevelLoad);
+    }
+
     public static void onPlayerTick(final PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
@@ -131,7 +135,6 @@ public final class DimensionEffects {
         }
     }
 
-    @SubscribeEvent
     public static void onJoinLevel(final EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide() && event.getEntity() instanceof LivingEntity living) {
             applyGravity(living);
@@ -139,7 +142,6 @@ public final class DimensionEffects {
         }
     }
 
-    @SubscribeEvent
     public static void onLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
         SUFFERING.remove(event.getEntity().getUUID());
     }
@@ -148,7 +150,6 @@ public final class DimensionEffects {
      * A dimension the datapacks made reads the overworld's weather; the Core hands it weather of its own, which its
      * rules may hold. One the Core made at runtime already has it.
      */
-    @SubscribeEvent
     public static void onLevelLoad(final LevelEvent.Load event) {
         if (event.getLevel() instanceof ServerLevel level && level.dimension() != Level.OVERWORLD
                 && level.getLevelData() instanceof DerivedLevelData

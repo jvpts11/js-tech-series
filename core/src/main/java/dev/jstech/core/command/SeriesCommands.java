@@ -8,7 +8,7 @@
 package dev.jstech.core.command;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import dev.jstech.core.JsCore;
+import dev.jstech.core.util.DeclarationError;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,8 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
@@ -30,7 +29,6 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  *         .executes(source -> held(source.getSource())));
  * }</pre>
  */
-@EventBusSubscriber(modid = JsCore.MODID)
 public final class SeriesCommands {
 
     /** Anybody may run it. */
@@ -67,7 +65,8 @@ public final class SeriesCommands {
     public static void declare(final String name, final int permission, final IBuilder builder) {
         final Declared declared = new Declared(name, permission, builder);
         if (BY_NAME.putIfAbsent(name, declared) != null) {
-            throw new IllegalStateException("the command /" + ROOT + " " + name + " is declared twice");
+            throw DeclarationError.of(null, "the command /" + ROOT + " " + name, "is declared twice",
+                    "declare it once; a mod's own commands take names of their own under /" + ROOT);
         }
         DECLARED.add(declared);
     }
@@ -77,7 +76,11 @@ public final class SeriesCommands {
         return DECLARED.stream().map(Declared::name).toList();
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RegisterCommandsEvent.class, SeriesCommands::onRegisterCommands);
+    }
+
     public static void onRegisterCommands(final RegisterCommandsEvent event) {
         final LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(ROOT);
         for (final Declared declared : DECLARED) {

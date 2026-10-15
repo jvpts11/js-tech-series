@@ -7,14 +7,11 @@
  */
 package dev.jstech.core.client.gui.component;
 
-import dev.jstech.core.JsCore;
 import dev.jstech.core.gui.GroundMap;
 import dev.jstech.core.gui.TextShadow;
 import net.minecraft.client.gui.GuiGraphics;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.joml.Matrix4f;
 
 /**
@@ -32,7 +29,6 @@ import org.joml.Matrix4f;
  * translated or scaled pose still finds the panel it sits on. Where nothing was declared, the text is taken to be on
  * the ground it reads best on ({@link TextShadow#assumedGround}). Every frame starts with none.
  */
-@EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class Grounds {
 
     private static final GroundMap PAINTED = new GroundMap();
@@ -76,7 +72,11 @@ public final class Grounds {
         PAINTED.clear();
     }
 
-    @SubscribeEvent
+    /** Hands the game's bus what this answers, once, from the mod's constructor on a player's game. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Pre.class, Grounds::onFrameStart);
+    }
+
     public static void onFrameStart(final RenderFrameEvent.Pre event) {
         clear();
     }

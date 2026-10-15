@@ -55,6 +55,27 @@ class SourceHygieneTest {
             "Palettes\\.declare\\(\\s*(\\w+)\\.MODID\\s*,\\s*\"([^\"]+)\"");
     private static final Pattern KEY_DECLARED = Pattern.compile("TextKey\\.of\\(\\s*\"([^\"]+)\"");
 
+    /**
+     * The modules whose every listener is declared from their mod's constructor, so that what runs is what the
+     * constructor says; the other mods join as they are moved onto the Core.
+     */
+    private static final List<String> DECLARED_LISTENERS = List.of("core");
+
+    /** The annotation by which a class registers itself, written in two halves so this file does not hold it. */
+    private static final String SELF_REGISTERING = "@EventBus" + "Subscriber";
+
+    @Test
+    void noClassRegistersItselfByAnAnnotation() {
+        final List<String> wrong = new ArrayList<>();
+        forEachSource(DECLARED_LISTENERS, (module, file, text) -> {
+            if (text.contains(SELF_REGISTERING)) {
+                wrong.add(file);
+            }
+        });
+        assertTrue(wrong.isEmpty(), () -> "these register themselves by an annotation; give each a listen method and"
+                + " call it from the mod's constructor:\n" + String.join("\n", wrong));
+    }
+
     @Test
     void everySourceStartsWithTheHeaderOfItsMod() {
         final List<String> wrong = new ArrayList<>();
