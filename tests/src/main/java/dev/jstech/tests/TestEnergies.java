@@ -47,6 +47,10 @@ public final class TestEnergies {
     /** The millionths each block of a low line loses. */
     public static final int LOW_LOSS = 1_000;
     public static final long LINE_RATE = 100_000L;
+    /** The longest span of the hung line, in blocks. */
+    public static final int HUNG_SPAN = 16;
+    /** What touching a live bare wire of the low class does. */
+    public static final float LOW_SHOCK = 4F;
 
     public static final DeferredRegister<EnergyUnit> UNITS = DeferredRegister.create(CoreEnergy.UNITS_KEY,
             JsTests.MODID);
@@ -61,7 +65,7 @@ public final class TestEnergies {
     public static final EnergyClass EXTRA = EnergyClass.of("extra", EXTRA_NAME);
     public static final Energy VOLTS = Energies.builder(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
                     "test_volts"), VOLTS_NAME).unit(JOULE).power(WATT_SYMBOL).classes(LOW, MEDIUM, HIGH, EXTRA)
-            .loss(LOW, LOW_LOSS).wrongClass(IWrongClassRule.STANDARD).declare();
+            .loss(LOW, LOW_LOSS).wrongClass(IWrongClassRule.STANDARD).shock(LOW, LOW_SHOCK).declare();
 
     /** A line of the low class. */
     public static final DeferredHolder<CableType, CableType> LOW_LINE = CABLES.register("volts_low_line",
@@ -71,6 +75,14 @@ public final class TestEnergies {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
                     .build(() -> Items.LIGHTNING_ROD));
+    /** A line of the low class whose wire is also hung, across sixteen blocks at most. */
+    public static final DeferredHolder<CableType, CableType> HUNG_LINE = CABLES.register("volts_hung_line",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "volts_hung_line")))
+                    .grid(VOLTS.grid(LOW)).alone().carries(LINE_RATE, 0).hangs(HUNG_SPAN)
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
+                    .build(() -> Items.STRING));
     /** A line of the high class. */
     public static final DeferredHolder<CableType, CableType> HIGH_LINE = CABLES.register("volts_high_line",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,

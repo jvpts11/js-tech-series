@@ -71,6 +71,7 @@ public final class CableType {
     private final IBreachRule breach;
     private final @Nullable ResourceLocation window;
     private final @Nullable ResourceLocation fitting;
+    private final int span;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -101,6 +102,7 @@ public final class CableType {
         this.breach = builder.breach;
         this.window = builder.window;
         this.fitting = builder.fitting;
+        this.span = builder.span;
     }
 
     /** What the cable is for, as its item's tooltip says it; empty for a cable that says nothing. */
@@ -199,6 +201,16 @@ public final class CableType {
         return this.straight;
     }
 
+    /** Whether its wire can be hung between insulators, as an overhead line. */
+    public boolean hangs() {
+        return this.span > 0;
+    }
+
+    /** The longest span its wire is hung across, in blocks, from insulator to insulator; 0 for a cable never hung. */
+    public int span() {
+        return this.span;
+    }
+
     /** The most faces it joins in a block; 0 for no limit. */
     public int mostJoins() {
         return this.mostJoins;
@@ -276,6 +288,7 @@ public final class CableType {
         private IBreachRule breach = BreachRules.HOLDS;
         private @Nullable ResourceLocation window;
         private @Nullable ResourceLocation fitting;
+        private int span;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -365,6 +378,19 @@ public final class CableType {
          */
         public Builder beyond(final IBreachRule rule) {
             this.breach = Objects.requireNonNull(rule, "rule");
+            return this;
+        }
+
+        /**
+         * Its wire is also hung between insulators, as an overhead line, across at most {@code longestSpan} blocks from
+         * one insulator to the next; its item hangs it when used on an insulator. Each line that hangs is its mod's
+         * decision.
+         */
+        public Builder hangs(final int longestSpan) {
+            if (longestSpan <= 0) {
+                throw new IllegalArgumentException("a hung wire spans at least a block, not " + longestSpan);
+            }
+            this.span = longestSpan;
             return this;
         }
 

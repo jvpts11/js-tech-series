@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.cable;
 
+import dev.jstech.core.overhead.OverheadLines;
 import dev.jstech.core.text.GameText;
 import java.util.List;
 import java.util.Objects;
@@ -31,7 +32,8 @@ import net.minecraft.world.level.gameevent.GameEvent;
 /**
  * The item that lays a cable. Used on a cable block it lays its wire there, when the block takes it (its lane is free
  * and neither it nor what is there never shares a block); otherwise, or while sneaking, it lays a new cable block
- * against the face clicked, holding its wire alone.
+ * against the face clicked, holding its wire alone. The item of a line that hangs, used on a block with insulators,
+ * hangs its wire from them instead ({@link OverheadLines}).
  */
 public final class CableItem extends Item {
 
@@ -88,6 +90,10 @@ public final class CableItem extends Item {
         final Level level = context.getLevel();
         final BlockPos clicked = context.getClickedPos();
         final Player player = context.getPlayer();
+        // A line that hangs is hung from a block's insulators, rather than laid against it.
+        if (type().hangs() && level.getCapability(OverheadLines.ANCHORS, clicked, null) != null) {
+            return OverheadLines.useOn(context, type());
+        }
         final boolean sneaking = player != null && player.isSecondaryUseActive();
         final Wire wire = Wire.of(type());
         BlockPos target = null;

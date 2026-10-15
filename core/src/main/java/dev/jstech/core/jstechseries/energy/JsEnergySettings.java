@@ -52,6 +52,18 @@ public final class JsEnergySettings {
             .comment("How many joules one FE is worth. At one, an FE a tick is 20 watts.")
             .named("Joules per FE").unit("J").activeWhen(ENABLED);
 
+    /** Whether touching a live overhead wire hurts. */
+    public static final ConfigKey<Boolean> ELECTRIC_SHOCK = ConfigKey.flag(ENERGY + ".electric_shock", true)
+            .comment("Whether touching the bare wire of a live overhead line hurts, more the higher its class, and "
+                    + "kills on high voltage and above.")
+            .named("Electric shock").activeWhen(ENABLED);
+
+    /** Whether lightning on an overhead line sends a surge along it. */
+    public static final ConfigKey<Boolean> LIGHTNING_SURGES = ConfigKey.flag(ENERGY + ".lightning_surges", true)
+            .comment("Whether lightning on an overhead line or its pole sends a surge along the line, which burns the "
+                    + "machines on it unless a fuse or a surge arrester stops it.")
+            .named("Lightning surges").activeWhen(ENABLED);
+
     /** The file, each setting passed into what it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-energy", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("J's Energy: whether it is on, what a block on the wrong voltage suffers, and how it speaks FE.",
@@ -63,6 +75,8 @@ public final class JsEnergySettings {
             .key(ACCEPT_ANY_VOLTAGE, JsEnergySettings::setAcceptAnyVoltage)
             .key(ACCEPT_FE, JsEnergySettings::setAcceptFe)
             .key(JOULES_PER_FE, JsEnergySettings::setJoulesPerFe)
+            .key(ELECTRIC_SHOCK, JsEnergySettings::setElectricShock)
+            .key(LIGHTNING_SURGES, JsEnergySettings::setLightningSurges)
             .build();
 
     private static volatile boolean enabled;
@@ -70,6 +84,8 @@ public final class JsEnergySettings {
     private static volatile boolean acceptAnyVoltage;
     private static volatile boolean acceptFe;
     private static volatile EnergyRatio feRate = EnergyRatio.ONE;
+    private static volatile boolean electricShock = true;
+    private static volatile boolean lightningSurges = true;
 
     private JsEnergySettings() {
     }
@@ -97,6 +113,24 @@ public final class JsEnergySettings {
     /** What a joule is worth in FE. */
     public static EnergyRatio feRate() {
         return feRate;
+    }
+
+    /** Whether touching a live overhead wire hurts: only while J's Energy is on, whose wires are bare. */
+    public static boolean electricShock() {
+        return enabled && electricShock;
+    }
+
+    /** Whether lightning on an overhead line sends a surge along it: only while J's Energy is on. */
+    public static boolean lightningSurges() {
+        return enabled && lightningSurges;
+    }
+
+    public static void setElectricShock(final boolean value) {
+        electricShock = value;
+    }
+
+    public static void setLightningSurges(final boolean value) {
+        lightningSurges = value;
     }
 
     public static void setEnabled(final boolean value) {

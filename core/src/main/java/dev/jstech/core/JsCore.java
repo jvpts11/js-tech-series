@@ -24,6 +24,7 @@ import dev.jstech.core.call.MenuCalls;
 import dev.jstech.core.cable.CableRuns;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
+import dev.jstech.core.overhead.OverheadLines;
 import dev.jstech.core.command.CoreCommands;
 import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.data.DataRegistries;
@@ -172,6 +173,7 @@ public final class JsCore {
         // The cable block every mod's cables are laid in, and the screen of a line's end, are the Core's own content.
         CoreCables.declare();
         EndSettings.declare();
+        OverheadLines.declare();
         // The fonts every mod can draw in, declared with the licence and credit they come under.
         CoreFonts.declare();
         // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.
@@ -282,6 +284,7 @@ public final class JsCore {
         CoreCables.listen(modEventBus);
         CableRuns.listen(modEventBus);
         EndSettings.listen(modEventBus);
+        OverheadLines.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

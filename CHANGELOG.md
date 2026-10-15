@@ -266,6 +266,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   to the line and by kind, with what each gives or takes), the flow (each second of the last minute, with the most,
   the least and the mean) and the losses. OK outlines the chosen blocks in the world, through walls, for ten seconds;
   HOLD keeps the reading still, SHOW puts it beside the crosshair, LIGHT lights the display and POWER switches it off.
+- (Core) Overhead lines, as in Immersive Engineering: bare wire hung from insulator to insulator, within the line's
+  longest span and along a way nothing stands in, by using the line's item on one insulator and then the next. Any
+  line can be hung, as its mod decides. Connectors hand what the wire carries to their block, relays pass it along,
+  and a feedthrough takes it through a wall. A hung wire is drawn sagging along its curve, loses as much as its length,
+  and falls when its insulator goes. Blocks offer their insulators through `OverheadLines.ANCHORS`; the poles, towers
+  and insulators are a mod's.
+- (Core) Shocks and surges: touching a live overhead wire hurts, more the higher its class, and kills from high voltage
+  up, with the Core's electric damage, which no armour stops; lightning on an overhead line or its insulator sends a
+  surge along it that burns the machines on it, unless a fuse in each blows first or a surge arrester on the line
+  takes it to earth. Each can be turned off in `jstech-energy.toml`.
 - (Core) Dragging a run of cable: holding the click with a cable and looking further along outlines the run from the
   first block to the one looked at, up to 32 blocks away, along the longest axis first, white where it can be laid
   and red where something is in the way; let go, the whole run is laid at once, each block joined to the next, up to

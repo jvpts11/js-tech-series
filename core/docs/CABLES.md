@@ -163,6 +163,32 @@ run stops at the first block it cannot be laid in (something in the way, a place
 cable left in hand) and says where. A join the player does not want is turned off afterwards, face by face, as any
 end is, with a wrench set to off.
 
+## Overhead lines
+
+*Added 2026-10-15.*
+
+From medium voltage up, energy also travels in bare wire hung between insulators on poles and towers, as in Immersive
+Engineering: the only link outside the cable block. **Any line can be hung**, each by its mod's decision: a cable type
+that `hangs(longestSpan)` is hung by using its item on one insulator and then the next (the same one again lets the
+wire go). The wire is checked when it is hung: within the line's longest span, along a way nothing solid stands in, its
+sag included, and a block of wire taken from the stack for each block of its length.
+
+A block offers its insulators with `OverheadLines.ANCHORS` (`IWireAnchors`): each a `WireAnchor`, where on the block the
+wire is fastened, the face it meets, how many wires it holds, and its role:
+
+| Role | What it does with what the wire carries |
+| --- | --- |
+| `CONNECTOR` | hands it to its block through the face it meets: a machine's insulator, a substation's, the insulator where a line ends at a consumer that takes high voltage directly |
+| `RELAY` | only passes it from one wire to the next: a pole's or a tower's |
+| `FEEDTHROUGH` | takes the wire through a wall one block thick: the feedthroughs of one block are joined through it |
+
+The wires of a dimension are kept with it (`OverheadLines.WIRES`) and sent to its players, who see each sag along its
+curve (`Catenary`). A wire goes in its line's grid while its two insulators are loaded, as a cable as long as itself,
+so what the line loses counts its length in blocks; its insulators stand in the grid as cables of no length. A wire
+whose insulator is gone falls, and its wire is left there. The Core gives the hanging, the spans, the sag and the touch
+of a live wire ([Shocks and surges](ENERGY_AND_RESOURCES.md#shocks-and-surges)); a mod gives its poles, towers and
+insulators.
+
 ## Reading a line
 
 *Added 2026-10-15.*

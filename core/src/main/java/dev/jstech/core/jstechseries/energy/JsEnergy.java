@@ -54,6 +54,10 @@ public final class JsEnergy {
     public static final TextKey ULTRA_HIGH_RATING = TextKey.of("jscore.energy.class.ultra_high.rating",
             "±1,100 kV DC");
 
+    /** What touching a live bare wire of the low and the medium class does, in the game's points of damage. */
+    public static final float LOW_SHOCK = 4F;
+    public static final float MEDIUM_SHOCK = 12F;
+
     private static final DeferredRegister<EnergyUnit> UNITS = DeferredRegister.create(CoreEnergy.UNITS_KEY,
             JsCore.MODID);
     /** The joule, J's Energy's unit, worth one FE as it is registered; the server's rate decides at run time. */
@@ -72,7 +76,11 @@ public final class JsEnergy {
     /** J's Energy. */
     public static final Energy ENERGY = Energies.builder(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "je"),
                     NAME).unit(JOULE).power(WATT_SYMBOL).classes(LOW, MEDIUM, HIGH, EXTRA_HIGH, ULTRA_HIGH)
-            .feRate(JsEnergySettings::feRate).acceptsFe(JsEnergy::speaksFe).wrongClass(JsEnergy::meeting).declare();
+            .feRate(JsEnergySettings::feRate).acceptsFe(JsEnergy::speaksFe).wrongClass(JsEnergy::meeting)
+            // A bare wire hurts more the higher its class, and from high voltage up it kills.
+            .shock(LOW, LOW_SHOCK).shock(MEDIUM, MEDIUM_SHOCK).shock(HIGH, Energy.KILLS)
+            .shock(EXTRA_HIGH, Energy.KILLS).shock(ULTRA_HIGH, Energy.KILLS)
+            .shocks(JsEnergySettings::electricShock).surges(JsEnergySettings::lightningSurges).declare();
 
     private static final Map<VoltageClass, EnergyClass> CLASSES = new EnumMap<>(Map.of(VoltageClass.LOW, LOW,
             VoltageClass.MEDIUM, MEDIUM, VoltageClass.HIGH, HIGH, VoltageClass.EXTRA_HIGH, EXTRA_HIGH,

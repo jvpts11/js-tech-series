@@ -53,11 +53,16 @@ public final class Energy {
     private final boolean classless;
     private final Map<String, Integer> loss;
     private final IWrongClassRule rule;
+    private final Map<String, Float> shock;
+    private final BooleanSupplier shocks;
+    private final BooleanSupplier surges;
     private final Map<String, GridKind> grids = new HashMap<>();
     private final Map<GridKind, EnergyClass> classOfGrid = new HashMap<>();
 
     /** How many ticks make a second, for an energy shown as power. */
     public static final int TICKS_PER_SECOND = 20;
+    /** The shock of a class that kills whoever touches its bare wire. */
+    public static final float KILLS = Float.MAX_VALUE;
 
     private Energy(final Builder builder) {
         this.id = builder.id;
@@ -71,6 +76,9 @@ public final class Energy {
                 : List.copyOf(builder.classes);
         this.loss = Map.copyOf(builder.loss);
         this.rule = builder.rule;
+        this.shock = Map.copyOf(builder.shock);
+        this.shocks = builder.shocks;
+        this.surges = builder.surges;
     }
 
     public ResourceLocation id() {
@@ -115,6 +123,22 @@ public final class Energy {
     /** The millionths of what crosses it that each block of a line of {@code of} loses by distance. */
     public int lossPerBlock(final EnergyClass of) {
         return this.loss.getOrDefault(checked(of).path(), 0);
+    }
+
+    /**
+     * What touching a live bare wire of a line of {@code of} does to whoever touches it, in the game's points of damage:
+     * nothing, so much, or {@link #KILLS}; nothing when the server turned shocks off. Insulated cables never shock.
+     */
+    public float shock(final EnergyClass of) {
+        return this.shocks.getAsBoolean() ? this.shock.getOrDefault(checked(of).path(), 0F) : 0F;
+    }
+
+    /**
+     * Whether lightning on one of its overhead lines, or on a pole of one, sends a surge along the line that burns the
+     * machines on it, as the server's settings say.
+     */
+    public boolean surges() {
+        return this.surges.getAsBoolean();
     }
 
     /** The grid the lines of {@code of} make, which joins no line of another class. */
@@ -229,6 +253,9 @@ public final class Energy {
         private final List<EnergyClass> classes = new ArrayList<>();
         private final Map<String, Integer> loss = new LinkedHashMap<>();
         private IWrongClassRule rule = IWrongClassRule.STANDARD;
+        private final Map<String, Float> shock = new LinkedHashMap<>();
+        private BooleanSupplier shocks = () -> true;
+        private BooleanSupplier surges = () -> true;
 
         Builder(final ResourceLocation id, final TextKey name) {
             this.id = Objects.requireNonNull(id, "id");
@@ -300,6 +327,34 @@ public final class Energy {
         }
 
         /**
+         * What touching a live bare wire of a line of {@code of} does, in the game's points of damage, or
+         * {@link Energy#KILLS}; nothing unless said.
+         */
+        public Builder shock(final EnergyClass of, final float damage) {
+            if (!(damage >= 0)) {
+                throw DeclarationError.of(this.id.getNamespace(), "the energy " + this.id,
+                        "shocks " + damage + " on " + of.path(), "give a shock of nothing or more");
+            }
+            this.shock.put(of.path(), damage);
+            return this;
+        }
+
+        /** Whether its bare wires shock, asked each time: a server's setting. Always unless said. */
+        public Builder shocks(final BooleanSupplier when) {
+            this.shocks = Objects.requireNonNull(when, "when");
+            return this;
+        }
+
+        /**
+         * Whether lightning on its overhead lines sends surges, asked each time: a server's setting. Always unless
+         * said.
+         */
+        public Builder surges(final BooleanSupplier when) {
+            this.surges = Objects.requireNonNull(when, "when");
+            return this;
+        }
+
+        /**
          * The energy, registered and with a grid for each class.
          *
          * @throws DeclarationError when an energy of that id is declared already, or a loss names no class of it
@@ -311,6 +366,14 @@ public final class Energy {
                     throw DeclarationError.of(this.id.getNamespace(), "the energy " + this.id,
                             "gives a loss to " + lossy + ", which is none of its classes",
                             "declare the classes before their losses");
+                }
+            }
+            for (final String shocking : this.shock.keySet()) {
+                final boolean ofTheOneClass = this.classes.isEmpty() && shocking.equals(this.id.getPath());
+                if (!ofTheOneClass && this.classes.stream().noneMatch(each -> each.path().equals(shocking))) {
+                    throw DeclarationError.of(this.id.getNamespace(), "the energy " + this.id,
+                            "gives a shock to " + shocking + ", which is none of its classes",
+                            "declare the classes before their shocks");
                 }
             }
             return Energies.register(new Energy(this), null);

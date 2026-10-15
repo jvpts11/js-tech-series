@@ -96,6 +96,10 @@ public final class LevelEnergy implements IGridMover {
         if (energy == Energies.FE) {
             return level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, face) != null;
         }
+        // A surge arrester stands on a line as a machine does, to take its surges to earth.
+        if (level.getCapability(SurgeArresters.ARRESTER, pos, face) != null) {
+            return true;
+        }
         final IEnergyPort port = level.getCapability(EnergyPorts.PORT, pos, face);
         if (port != null) {
             return port.energy() == energy;
@@ -193,6 +197,36 @@ public final class LevelEnergy implements IGridMover {
     @Override
     public void tapsChanged() {
         this.taps++;
+    }
+
+    /** Whether the part of the grid the wire numbered {@code wire} is in had energy to give in the last tick. */
+    @Override
+    public boolean live(final long wire) {
+        return lastTickOf(wire).map(tick -> tick.totalSupply() > 0).orElse(false);
+    }
+
+    /**
+     * A lightning surge along the part of the grid the wire numbered {@code wire} is in: a surge arrester on the part
+     * takes it to earth; otherwise it burns every machine on the part, unless the fuse in its protection slot blows
+     * first. Whether it reached the machines.
+     */
+    public boolean surge(final ServerLevel level, final long wire) {
+        final Integer part = this.partOfWire.get(wire);
+        if (part == null || part >= this.portsOfParts.size()) {
+            return false;
+        }
+        for (final long at : this.nodesOfParts.get(part).keySet()) {
+            final BlockPos pos = BlockPos.of(at);
+            final SurgeArresters.ISurgeArrester arrester = level.getCapability(SurgeArresters.ARRESTER, pos, null);
+            if (arrester != null) {
+                arrester.took(level, pos);
+                return false;
+            }
+        }
+        for (final PortNode port : this.portsOfParts.get(part)) {
+            port.surge(level.getGameTime());
+        }
+        return true;
     }
 
     /**
@@ -294,8 +328,9 @@ public final class LevelEnergy implements IGridMover {
             final NarrowestWire narrowest = new NarrowestWire();
             for (final CableParts.WireAt wire : part.wires()) {
                 final long carries = wire.runTooLong() ? 0L : wire.type().throughput();
-                network.addCable(wire.number(), new WireCable(carries,
-                        EnergyLoss.along(wire.type().loss(), classLoss)));
+                // A hung wire loses as many blocks' worth as it is long; the insulator it hangs from loses nothing.
+                final long lost = (long) EnergyLoss.along(wire.type().loss(), classLoss) * wire.blocks();
+                network.addCable(wire.number(), new WireCable(carries, (int) Math.min(EnergyLoss.WHOLE, lost)));
                 this.partOfWire.put(wire.number(), this.parts.size());
                 this.typeOfWire.put(wire.number(), wire.type());
                 narrowest.consider(places.place(wire.number()), wire);
@@ -512,6 +547,14 @@ public final class LevelEnergy implements IGridMover {
             final IEnergyPort port = working();
             if (port != null && amount > 0) {
                 port.receive(amount, false);
+            }
+        }
+
+        /* A lightning surge reaches the port: it burns, unless its fuse blows first. */
+        private void surge(final long gameTime) {
+            final IEnergyPort port = this.cache.getCapability();
+            if (port != null && port.energy() == this.energy) {
+                port.meetWrongClass(WrongClass.BURNS, this.lineClass, gameTime);
             }
         }
 

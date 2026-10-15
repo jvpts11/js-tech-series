@@ -29,4 +29,12 @@ public interface IGridMover {
     default Optional<LineSurvey> survey(final long wire) {
         return Optional.empty();
     }
+
+    /**
+     * Whether the part of the grid the wire numbered {@code wire} is in is live: something on it gave what the grid
+     * carries in the last tick, so its bare wire shocks. Never, for a grid that carries no energy.
+     */
+    default boolean live(final long wire) {
+        return false;
+    }
 }

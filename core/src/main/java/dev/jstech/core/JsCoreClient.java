@@ -52,6 +52,7 @@ import dev.jstech.core.client.motion.GreyFilter;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.client.network.TransferClient;
 import dev.jstech.core.client.notification.NotificationsClient;
+import dev.jstech.core.client.overhead.OverheadWireRenderer;
 import dev.jstech.core.client.palette.CorePaletteClient;
 import dev.jstech.core.client.state.ClientStateEvents;
 import dev.jstech.core.client.vehicle.VehicleControls;
@@ -113,6 +114,7 @@ public final class JsCoreClient {
         MotionClock.listen();
         NetworkProbeClient.listen(modEventBus);
         NotificationsClient.listen(modEventBus);
+        OverheadWireRenderer.listen();
         ScreenFiles.listen(modEventBus);
         SoundDirector.listen();
         SoundMixerEntry.listen();

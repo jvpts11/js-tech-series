@@ -11,9 +11,12 @@ import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.grid.GridPlaces;
+import dev.jstech.core.overhead.OverheadLines;
+import dev.jstech.core.overhead.WireAnchor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import net.minecraft.core.BlockPos;
@@ -40,6 +43,10 @@ public final class CableParts {
             if (place == null || place.lane() == GridPlace.WHOLE) {
                 continue;
             }
+            if (place.isHung() || place.isAnchor()) {
+                overhead(level, grid, place, number, wires, plugs);
+                continue;
+            }
             final BlockPos pos = BlockPos.of(place.pos());
             if (!level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof CableBlockEntity cable)) {
                 continue;
@@ -51,7 +58,7 @@ public final class CableParts {
             }
             final int root = grid.rootOf(number);
             wires.computeIfAbsent(root, key -> new ArrayList<>())
-                    .add(new WireAt(number, wire.type(), grid.runTooLong(number)));
+                    .add(new WireAt(number, wire.type(), grid.runTooLong(number), 1));
             final int plugged = cable.plugs(lane);
             for (final Direction face : Direction.values()) {
                 final BlockPos at = pos.relative(face);
@@ -68,6 +75,29 @@ public final class CableParts {
             parts.add(new Part(part.getKey(), part.getValue(), plugs.getOrDefault(part.getKey(), List.of())));
         }
         return parts;
+    }
+
+    /*
+     * An overhead line's place in a part: a hung wire, a cable as long as itself; an insulator, a cable of no length,
+     * which a connector's block is plugged into on the face the insulator meets.
+     */
+    private static void overhead(final ServerLevel level, final Grid grid, final GridPlace place, final long number,
+                                 final Map<Integer, List<WireAt>> wires, final Map<Integer, List<Plug>> plugs) {
+        final int root = grid.rootOf(number);
+        if (place.isHung()) {
+            OverheadLines.wireAt(level, place).ifPresent(wire -> CoreCables.REGISTRY.getOptional(wire.cable())
+                    .ifPresent(type -> wires.computeIfAbsent(root, key -> new ArrayList<>())
+                            .add(new WireAt(number, type, false, wire.blocks()))));
+            return;
+        }
+        final Optional<CableType> line = OverheadLines.lineAt(level, place);
+        if (line.isEmpty()) {
+            return;
+        }
+        wires.computeIfAbsent(root, key -> new ArrayList<>()).add(new WireAt(number, line.get(), false, 0));
+        OverheadLines.anchorAt(level, place).filter(anchor -> anchor.role() == WireAnchor.Role.CONNECTOR)
+                .ifPresent(anchor -> plugs.computeIfAbsent(root, key -> new ArrayList<>())
+                        .add(new Plug(number, BlockPos.of(place.pos()), anchor.face(), CableEnd.DEFAULT)));
     }
 
     /**
@@ -91,8 +121,10 @@ public final class CableParts {
      * @param number     its number in the grid
      * @param type       its cable
      * @param runTooLong whether the run it is on is longer than its cable reaches, so it carries nothing across
+     * @param blocks     how many blocks of cable it stands for, as what it loses counts them: one for a wire in a cable
+     *                   block, its length for a hung wire, none for the insulator it is hung from
      */
-    public record WireAt(long number, CableType type, boolean runTooLong) {
+    public record WireAt(long number, CableType type, boolean runTooLong, int blocks) {
     }
 
     /**

@@ -103,6 +103,22 @@ in; one facing more lets the arc jump over it. `protection.tick(store)` each tic
 while the store is full and powers the machine when the store runs below half; a battery holds the machine's energy or
 FE.
 
+### Shocks and surges
+
+*Added 2026-10-15.*
+
+An energy declares what touching a live bare wire of each class does (`Energy.Builder.shock(class, damage)`, in the
+game's points of damage, or `Energy.KILLS`), and whether shocks and lightning surges happen, asked each time
+(`shocks(...)`, `surges(...)`, a server's settings). Only overhead wires are bare: a living thing whose middle or eyes
+touch one whose part had energy to give is hurt with the Core's electric damage (`EnergyDamage.ELECTRIC`, a data
+damage type no armour stops) every few ticks. Insulated cables never shock.
+
+Lightning that strikes within a few blocks of an overhead wire or its insulator sends a surge along that part of its
+line (`LevelEnergy.surge`): every machine on it burns, as a port one class too high does, unless the fuse in its
+protection slot blows first. A **surge arrester** on the line takes the surge to earth and spares them all: a block
+that offers `SurgeArresters.ARRESTER` on the face a line meets it, which the line plugs into as into a machine; a mod
+gives its arresters.
+
 ### J's Energy
 
 *Added 2026-10-15.*
@@ -120,6 +136,8 @@ cables they are made of. The server's `jstech-energy.toml` sets:
 | `energy.accept_any_voltage` | off | every block takes every class |
 | `energy.accept_fe` | off | J's Energy blocks take and give FE directly |
 | `energy.joules_per_fe` | 1 | what a joule is worth in FE; a server's setting, never a player's |
+| `energy.electric_shock` | on | touching a live overhead wire hurts: 2 hearts at low voltage, 6 at medium, death from high voltage up |
+| `energy.lightning_surges` | on | lightning on an overhead line sends a surge that burns the machines on it |
 
 ### Seeing the energy
 
