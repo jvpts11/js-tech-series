@@ -152,7 +152,10 @@ public final class CableType {
         return this.range;
     }
 
-    /** The thousandths of what crosses one block of it that it loses; 0 for a cable that loses nothing. */
+    /**
+     * The millionths of what crosses one block of it that it loses besides its class's loss by distance; 0 for a cable
+     * that loses nothing of its own.
+     */
     public int loss() {
         return this.loss;
     }
@@ -290,13 +293,16 @@ public final class CableType {
             return this;
         }
 
-        /** The thousandths of what crosses one block of it that it loses; nothing unless said. */
-        public Builder loses(final int thousandths) {
-            if (thousandths < 0 || thousandths > EnergyLoss.WHOLE) {
+        /**
+         * The millionths of what crosses one block of it that it loses besides its class's loss by distance; nothing
+         * unless said.
+         */
+        public Builder loses(final int millionths) {
+            if (millionths < 0 || millionths > EnergyLoss.WHOLE) {
                 throw new IllegalArgumentException("a cable loses between 0 and " + EnergyLoss.WHOLE
-                        + " thousandths, not " + thousandths);
+                        + " millionths, not " + millionths);
             }
-            this.loss = thousandths;
+            this.loss = millionths;
             return this;
         }
 

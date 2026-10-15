@@ -84,6 +84,16 @@ public final class FieldEnergyStorage extends EnergyStorage implements IField {
         return true;
     }
 
+    /** Spends up to {@code amount} FE, as much as there is, and says how much. */
+    public int spendUpTo(final int amount) {
+        final int spent = Math.max(0, Math.min(amount, energy));
+        if (spent > 0) {
+            energy -= spent;
+            flags.changed();
+        }
+        return spent;
+    }
+
     /** Makes up to {@code amount} FE, as much as there is room for, and says how much. */
     public int generate(final int amount) {
         final int stored = Math.min(amount, capacity - energy);

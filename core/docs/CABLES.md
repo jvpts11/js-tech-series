@@ -32,7 +32,7 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
                 .lane(Lane.BOTTOM_RIGHT)              // its lane, the same for every generation of the line
                 .thickness(4)                         // pixels, 1 to 8
                 .carries(500, 64)                     // 500 a tick, 64 blocks a run (0: any length)
-                .loses(0)                             // thousandths lost on the way
+                .loses(0)                             // millionths lost each block
                 .withstands(273, 900)                 // pipes: the coldest and hottest fluid, in kelvin
                 .describe(MyTexts.STEAM_PIPE_JOB, null)
                 .jacket(rl("block/cable/steam_pipe")) // its texture, 32 by 32
@@ -44,10 +44,10 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
 
 | Step | What it says |
 | --- | --- |
-| `grid(...)` | Which grid it belongs to: one of the Core's (`POWER`, `FLUID`, `HEAT`, `GAS`, `MOTION`, `DATA`, `PERIPHERAL`) or a mod's own (below). Only `DATA` carries a network's identity. |
+| `grid(...)` | Which grid it belongs to: one of the Core's (`POWER`, `FLUID`, `HEAT`, `GAS`, `MOTION`, `DATA`, `PERIPHERAL`, the other states of matter), a class of an energy's (`energy.grid(energyClass)`) or a mod's own (below). Only `DATA` carries a network's identity. |
 | `lane(...)` or `alone()` | Its lane in the block, or the block to itself. One line owns one lane, and two lines in one lane are refused. |
 | `carries(throughput, range)` | How much it moves a tick, and how many blocks one run reaches before it carries nothing further. |
-| `loses(thousandths)` | What it loses on the way, 0 to 1000. |
+| `loses(millionths)` | What each block of it loses besides its energy class's loss by distance, 0 to 1,000,000. |
 | `withstands(cold, hot)`, `takes(tag)` | For pipes: the temperatures and marks of the fluids it carries. |
 | `runsStraight()` | It cannot turn inside a block; something else turns it. |
 | `joinsAtMost(faces)` | The most neighbours it joins, 1 to 6 (2 for a line between two ends). |

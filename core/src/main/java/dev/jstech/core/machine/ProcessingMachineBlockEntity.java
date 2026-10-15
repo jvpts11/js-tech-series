@@ -9,6 +9,8 @@ package dev.jstech.core.machine;
 
 import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.IntField;
+import dev.jstech.core.blockentity.LongField;
+import dev.jstech.core.energy.PartialWork;
 import dev.jstech.core.look.IDescribed;
 import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.text.Text;
@@ -26,6 +28,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 /**
  * A machine that works its inputs into its outputs: while what its inputs hold makes something and its outputs have
  * room for it, it spends energy each tick and, once the work's time has run, takes the inputs and puts out the result.
+ * Short of energy, it spends what there is and works slower in the same proportion ({@link PartialWork}).
  * Its slots are its inputs, then its outputs, then its upgrades; its tanks its fluid inputs, then its fluid outputs.
  * Pipes put into its inputs and its upgrade slots and take from anywhere; only the machine puts into its outputs.
  *
@@ -38,6 +41,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
     private final int defaultEnergyPerTick;
     private final IntField progress;
     private final IntField maxProgress;
+    private final LongField paid;
+    private final IntField speed;
+    private final PartialWork payment = new PartialWork();
     private final List<FieldFluidTank> inputTanks = new ArrayList<>();
     private final List<FieldFluidTank> outputTanks = new ArrayList<>();
     /* The work in hand last tick; empty after a load, when the saved progress is taken as belonging to it. */
@@ -51,6 +57,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         this.defaultEnergyPerTick = defaultEnergyPerTick;
         this.progress = fields().integer("Progress", 0).save().toMenu();
         this.maxProgress = fields().integer("MaxProgress", 0).toMenu();
+        this.paid = fields().longInteger("Paid", 0L).save();
+        // Read on the server, where what a machine says to whoever looks at it is written.
+        this.speed = fields().integer("Speed", PartialWork.PERCENT);
         for (int i = 0; i < layout.inputTanks(); i++) {
             inputTanks.add(fields().fluid("FluidIn" + i, layout.tankCapacity()).save().toClient().exposed());
         }
@@ -210,6 +219,11 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         return maxProgress.get();
     }
 
+    /** How fast it worked last tick, in percent of its full speed: below a hundred while it is short of energy. */
+    public int speed() {
+        return speed.get();
+    }
+
     /** The fluid input tank {@code index}. */
     public FieldFluidTank inputTank(final int index) {
         return inputTanks.get(index);
@@ -252,6 +266,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         final int done = progress.get();
         lines.add(done > 0 && max > 0 ? LookTexts.WORKING.with((int) Math.min(100L, done * 100L / max))
                 : LookTexts.IDLE.text());
+        if (speed.get() < PartialWork.PERCENT) {
+            lines.add(LookTexts.LOW_POWER.with(speed.get()));
+        }
     }
 
     /** What the inputs make, and in how long; empty when they make nothing. */
@@ -268,6 +285,8 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         final Optional<Processing> found = input.isEmpty() ? Optional.empty() : process(level, input);
         if (found.isEmpty() || !fits(found.get())) {
             progress.set(0);
+            paid.set(0L);
+            speed.set(PartialWork.PERCENT);
             lastWork = null;
             return;
         }
@@ -282,10 +301,18 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         maxProgress.set(effect.ticks(work.ticks()));
         final long perTick = effect.energyPerTick(work.energyPerTick() > 0 ? work.energyPerTick()
                 : defaultEnergyPerTick);
-        if (perTick > Integer.MAX_VALUE || perTick > 0 && !getEnergy().consume((int) perTick)) {
+        if (perTick > Integer.MAX_VALUE) {
             return;
         }
-        progress.add(1);
+        // Short of energy, it spends what there is and works slower in the same proportion.
+        payment.restore(paid.get());
+        final int steps = payment.pay(perTick <= 0 ? 0L : getEnergy().spendUpTo((int) perTick), perTick);
+        paid.set(payment.paid());
+        speed.set(payment.lastPercent());
+        if (steps <= 0) {
+            return;
+        }
+        progress.add(steps);
         if (progress.get() >= maxProgress.get()) {
             finish(work);
             progress.set(0);

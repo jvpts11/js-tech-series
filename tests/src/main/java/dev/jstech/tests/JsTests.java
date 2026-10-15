@@ -67,6 +67,8 @@ public final class JsTests {
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);
+        // An energy of the test mod's own with four classes and a unit, to prove the Core's energy kit.
+        TestEnergies.register(modEventBus);
         // A state of every scope, on both sides, since the client tests watch them arrive.
         TestStates.register();
         // Two kinds of component for programs' windows, the way another mod adds them, on both sides.

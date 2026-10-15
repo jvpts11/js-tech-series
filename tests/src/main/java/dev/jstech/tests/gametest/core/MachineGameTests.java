@@ -79,6 +79,32 @@ public final class MachineGameTests {
         });
     }
 
+    /**
+     * Ten energy at four a tick: two whole ticks of work and half of a third, all of it spent, where a machine that
+     * waited for a whole tick's energy would keep the last two forever.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 60)
+    public static void press_shortOfEnergyWorksSlowerInProportion(final GameTestHelper helper) {
+        final TestPressBlockEntity press = placeLoaded(helper);
+        press.getEnergy().setEnergyStored(10);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(press.getEnergy().getEnergyStored() == 0,
+                        "it spends every bit of energy there is"))
+                .thenExecuteAfter(1, () -> {
+                    helper.assertTrue(press.getProgress() == 2, "two ticks of work for eight; got "
+                            + press.getProgress());
+                    helper.assertTrue(press.speed() < 100, "it says it works slower: " + press.speed());
+                    final List<Text> lines = new ArrayList<>();
+                    press.describe(lines, false);
+                    helper.assertTrue(lines.stream().anyMatch(line -> line instanceof Text.Translated said
+                            && said.key().equals(LookTexts.LOW_POWER)), "and tells whoever looks: " + lines);
+                    press.getEnergy().setEnergyStored(2);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(press.getProgress() == 3,
+                        "the two left over and two more make a third tick of work"))
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 60)
     public static void press_stopsWhenItsOutputHasNoRoom(final GameTestHelper helper) {
         final TestPressBlockEntity press = placeLoaded(helper);

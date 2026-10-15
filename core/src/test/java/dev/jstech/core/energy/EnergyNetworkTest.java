@@ -362,7 +362,7 @@ class EnergyNetworkTest {
         TestNode gen = TestNode.generator(1000L);
         TestNode cons = TestNode.consumer(500L);
         net.addNode(GEN_A, gen);
-        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 100));
+        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 100_000));
         net.addNode(CONS_A, cons);
         net.connect(GEN_A, CABLE_1);
         net.connect(CABLE_1, CONS_A);
@@ -382,8 +382,8 @@ class EnergyNetworkTest {
         TestNode gen = TestNode.generator(100L);
         TestNode cons = TestNode.consumer(1000L);
         net.addNode(GEN_A, gen);
-        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 100));
-        net.addCable(CABLE_2, new LossyCable(Long.MAX_VALUE, 150));
+        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 100_000));
+        net.addCable(CABLE_2, new LossyCable(Long.MAX_VALUE, 150_000));
         net.addNode(CONS_A, cons);
         net.connect(GEN_A, CABLE_1);
         net.connect(CABLE_1, CABLE_2);
@@ -400,7 +400,7 @@ class EnergyNetworkTest {
         EnergyNetwork net = new EnergyNetwork();
         TestNode cons = TestNode.consumer(100L);
         net.addNode(GEN_A, TestNode.generator(1000L));
-        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 200));
+        net.addCable(CABLE_1, new LossyCable(Long.MAX_VALUE, 200_000));
         net.addCable(CABLE_2, new LossyCable(Long.MAX_VALUE, 0));
         net.addCable(CABLE_3, new LossyCable(Long.MAX_VALUE, 0));
         net.addNode(CONS_A, cons);
@@ -565,7 +565,7 @@ class EnergyNetworkTest {
     }
 
     /**
-     * Test-only IEnergyCable that loses thousandths of what crosses it.
+     * Test-only IEnergyCable that loses millionths of what crosses it.
      */
     private record LossyCable(long maxThroughput, int loss) implements IEnergyCable {
     }

@@ -189,6 +189,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   containments that spend energy while they hold: without it plasma dissipates and exotic matter stays sealed in. A
   gas let out is lost. A gas line also fills and empties Mekanism's tanks and the tanks of mods that keep gases as
   fluids, hydrogen being hydrogen in each, and a multiblock's ports pass every state.
+- The energy kit: a mod declares its energy in a few lines (its unit and what it is worth in FE, its classes of
+  line with their ratings, what each class loses by distance, and what befalls a port of another class) and gets the
+  rest: a grid for each class whose lines never join another's, stores and ports, the sharing along the lines, the
+  conversion to and from FE that never makes energy, and tooltips naming a port's class. A port one class below a
+  live line burns and stays damaged, two or more below is hit by an arc flash, and one above is short of voltage and
+  does not start; nothing happens on a dead line. A mod that only wants FE has it with nothing to declare.
+- Generators that follow the load: a generator makes only what its line draws, so it burns only that much, and
+  may declare a minimum it always makes and how fast its output changes, as a reactor does.
 
 ### Changed
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
@@ -213,6 +221,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The fixed catalogue of five metals in seven forms gives way to the open one. Iron dust, iron plate and copper
   plate keep their ids and are things of the open catalogue, drawn as the game loads instead of from textures of
   their own; their common tags come from the Core's data made as the server loads, no longer from its generated files.
+- Loss by distance in millionths: a cable's loss is now counted in millionths of what crosses each block, so a
+  line can lose as little as a hundredth of a percent over a hundred blocks; a cable that lost a tenth now says
+  `loses(100_000)`.
+- Machines short of energy work slower in the same proportion, spending what there is, instead of waiting for a
+  whole tick's energy; looked at, they say they run on low power.
 
 ## [0.5.2a] - 2026-10-14
 

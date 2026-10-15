@@ -121,7 +121,7 @@ public final class EnergyGridGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void lossyCables_loseTheirThousandthsOnTheWay(final GameTestHelper helper) {
+    public static void lossyCables_loseTheirShareOnTheWay(final GameTestHelper helper) {
         generator(helper);
         compressor(helper, MACHINE);
         for (final BlockPos at : RUN) {

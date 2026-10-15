@@ -8,49 +8,50 @@
 package dev.jstech.core.energy;
 
 /**
- * What a cable loses of the energy it carries: a cable of a tier loses a number of thousandths of what crosses it, and
- * a way through many cables loses the sum of theirs, never more than all of it. What is lost is rounded up, so a loss
- * never rounds to nothing while energy still crosses a lossy cable, and what arrives is never more than what was sent.
+ * What a line loses of the energy it carries by distance: every block of it loses a number of millionths of what
+ * crosses it, and a way through many blocks loses the sum of theirs, never more than all of it, so a line can lose as
+ * little as a hundredth of a percent over a hundred blocks. What is lost is rounded up, so a loss never rounds to
+ * nothing while energy still crosses a lossy line, and what arrives is never more than what was sent.
  */
 public final class EnergyLoss {
 
-    /** The thousandths that make the whole. */
-    public static final int WHOLE = 1000;
+    /** The millionths that make the whole. */
+    public static final int WHOLE = 1_000_000;
 
     private EnergyLoss() {
     }
 
-    /** The loss of a way through cables that lose {@code first} and then {@code then} thousandths. */
+    /** The loss of a way through blocks that lose {@code first} and then {@code then} millionths. */
     public static int along(final int first, final int then) {
-        return Math.min(WHOLE, check(first) + check(then));
+        return (int) Math.min(WHOLE, (long) check(first) + check(then));
     }
 
-    /** What arrives of {@code sent} over a way that loses {@code thousandths}. */
-    public static long delivered(final long sent, final int thousandths) {
+    /** What arrives of {@code sent} over a way that loses {@code millionths}. */
+    public static long delivered(final long sent, final int millionths) {
         if (sent < 0) {
             throw new IllegalArgumentException("an amount of energy is never below nothing: " + sent);
         }
-        return sent - lost(sent, thousandths);
+        return sent - lost(sent, millionths);
     }
 
-    /** What is lost of {@code sent} over a way that loses {@code thousandths}, rounded up. */
-    public static long lost(final long sent, final int thousandths) {
-        final int loss = check(thousandths);
+    /** What is lost of {@code sent} over a way that loses {@code millionths}, rounded up. */
+    public static long lost(final long sent, final int millionths) {
+        final int loss = check(millionths);
         if (loss == 0 || sent == 0) {
             return 0L;
         }
         if (loss == WHOLE) {
             return sent;
         }
-        // sent * loss / 1000 rounded up, without overflowing for any sent a long holds.
+        // sent * loss / WHOLE rounded up, without overflowing for any sent a long holds.
         final long whole = sent / WHOLE * loss;
         final long part = sent % WHOLE * loss;
         return whole + (part + WHOLE - 1) / WHOLE;
     }
 
-    /** What has to be sent for {@code wanted} to arrive over a way that loses {@code thousandths}. */
-    public static long toSend(final long wanted, final int thousandths) {
-        final int loss = check(thousandths);
+    /** What has to be sent for {@code wanted} to arrive over a way that loses {@code millionths}. */
+    public static long toSend(final long wanted, final int millionths) {
+        final int loss = check(millionths);
         if (wanted <= 0) {
             return 0L;
         }
@@ -70,10 +71,10 @@ public final class EnergyLoss {
         return times * WHOLE + (rest * WHOLE + keep - 1) / keep;
     }
 
-    private static int check(final int thousandths) {
-        if (thousandths < 0 || thousandths > WHOLE) {
-            throw new IllegalArgumentException("a loss is between 0 and " + WHOLE + " thousandths, not " + thousandths);
+    private static int check(final int millionths) {
+        if (millionths < 0 || millionths > WHOLE) {
+            throw new IllegalArgumentException("a loss is between 0 and " + WHOLE + " millionths, not " + millionths);
         }
-        return thousandths;
+        return millionths;
     }
 }

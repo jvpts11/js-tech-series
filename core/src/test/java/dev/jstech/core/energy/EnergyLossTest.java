@@ -21,11 +21,22 @@ class EnergyLossTest {
     }
 
     @Test
-    void lost_takesItsThousandthsRoundedUp() {
-        assertEquals(50L, EnergyLoss.lost(1_000L, 50));
-        // 7 thousandths of 100 is 0.7, which rounds up to one lost.
-        assertEquals(1L, EnergyLoss.lost(100L, 7));
-        assertEquals(99L, EnergyLoss.delivered(100L, 7));
+    void lost_takesItsMillionthsRoundedUp() {
+        assertEquals(50L, EnergyLoss.lost(1_000L, 50_000));
+        // 7 millionths of 100 000 is 0.7, which rounds up to one lost.
+        assertEquals(1L, EnergyLoss.lost(100_000L, 7));
+        assertEquals(99_999L, EnergyLoss.delivered(100_000L, 7));
+    }
+
+    @Test
+    void lost_isAHundredthOfAPercentOverAHundredBlocksOfOneMillionth() {
+        int way = 0;
+        for (int block = 0; block < 100; block++) {
+            way = EnergyLoss.along(way, 1);
+        }
+
+        assertEquals(100, way);
+        assertEquals(1_000L, EnergyLoss.lost(10_000_000L, way));
     }
 
     @Test
@@ -35,29 +46,29 @@ class EnergyLossTest {
 
     @Test
     void lost_neverOverflowsForTheLargestAmount() {
-        final long lost = EnergyLoss.lost(Long.MAX_VALUE, 999);
+        final long lost = EnergyLoss.lost(Long.MAX_VALUE, EnergyLoss.WHOLE - 1);
 
         assertTrue(lost > 0 && lost <= Long.MAX_VALUE);
-        assertTrue(EnergyLoss.delivered(Long.MAX_VALUE, 999) >= 0);
+        assertTrue(EnergyLoss.delivered(Long.MAX_VALUE, EnergyLoss.WHOLE - 1) >= 0);
     }
 
     @Test
-    void along_addsTheCablesLossesUpToTheWhole() {
+    void along_addsTheBlocksLossesUpToTheWhole() {
         assertEquals(30, EnergyLoss.along(10, 20));
-        assertEquals(EnergyLoss.WHOLE, EnergyLoss.along(600, 700));
+        assertEquals(EnergyLoss.WHOLE, EnergyLoss.along(600_000, 700_000));
     }
 
     @Test
     void toSend_isWhatArrivesAsWantedAfterTheLoss() {
-        final long send = EnergyLoss.toSend(1_000L, 100);
+        final long send = EnergyLoss.toSend(1_000L, 100_000);
 
-        assertTrue(EnergyLoss.delivered(send, 100) >= 1_000L);
-        assertTrue(EnergyLoss.delivered(send - 1, 100) < 1_000L);
+        assertTrue(EnergyLoss.delivered(send, 100_000) >= 1_000L);
+        assertTrue(EnergyLoss.delivered(send - 1, 100_000) < 1_000L);
         assertEquals(1_000L, EnergyLoss.toSend(1_000L, 0));
     }
 
     @Test
-    void losses_refuseAThousandthsOutsideTheWhole() {
+    void losses_refuseMillionthsOutsideTheWhole() {
         assertThrows(IllegalArgumentException.class, () -> EnergyLoss.lost(10L, -1));
         assertThrows(IllegalArgumentException.class, () -> EnergyLoss.lost(10L, EnergyLoss.WHOLE + 1));
     }

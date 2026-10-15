@@ -37,17 +37,71 @@ the Core shares what the generators on a run give among what its consumers want:
 - each consumer gets its share in proportion to what it wants, never more than it can take;
 - the shares are whole numbers that add up exactly to what was given: what is left after rounding down goes, one FE
   at a time, to those whose share was rounded down the most, so no energy is ever made or lost by rounding;
-- a cable carries at most its throughput a tick, and the narrowest cable of a run limits all of it;
-- a cable with a loss loses that many thousandths of what it carries, rounded up, so a lossy cable never carries
-  energy for free.
+- a cable carries at most its throughput a tick, and the narrowest cable of a run limits all of it; past that it
+  saturates without a sound, the excess just not passing;
+- each block of a cable loses so many millionths of what it carries, its own share and its energy class's loss by
+  distance together, added up along the way and rounded up, so a lossy cable never carries energy for free and a line
+  can lose as little as a hundredth of a percent over a hundred blocks.
 
 ```java
 CableType.builder(MY_ENERGY_LINE)
         .grid(GridKind.POWER)
         .lane(Lane.BOTTOM_LEFT)
         .carries(2_000, 0)     // 2,000 FE a tick, any length
-        .loses(5)              // 0.5% lost
+        .loses(5_000)          // 0.5% lost each block
         // the jacket, the plug, its name...
+```
+
+### An energy of a mod's own
+
+*Added 2026-10-15.*
+
+A mod that wants more than FE declares its energy once, and the Core gives it the rest:
+
+```java
+public static final EnergyClass LOW = EnergyClass.rated("low", LOW_NAME, LOW_RATING);    // "Low", "400 V"
+public static final EnergyClass HIGH = EnergyClass.rated("high", HIGH_NAME, HIGH_RATING);
+public static final Energy VOLTS = Energies.builder(rl("volts"), VOLTS_NAME)
+        .unit(JOULE)                        // an EnergyUnit, whose ratio says what it is worth in FE
+        .power(WATT_SYMBOL)                 // a rate shown as power, twenty ticks to the second
+        .classes(LOW, HIGH)                 // lowest first; none for an energy with no classes
+        .loss(LOW, 100).loss(HIGH, 1)       // millionths lost each block, by class
+        .wrongClass(IWrongClassRule.STANDARD)
+        .declare();
+```
+
+- **Each class has a grid of its own** (`VOLTS.grid(LOW)`), so lines of different classes never join; a cable of a
+  class is a cable of that grid.
+- **A block's port** is an `IEnergyPort` offered by `EnergyPorts.PORT`: an `EnergyStore` (what it holds, takes and
+  gives a tick, saved as a part of the block's fields) or a `GeneratorPort`. Every port is of one class.
+- **The wrong class.** A port of another class takes and gives nothing on a line, and, each tick the line is live,
+  learns what befalls it by the energy's rule: `IWrongClassRule.STANDARD` burns a port one class below the line
+  (its store stays damaged until repaired), hits one two or more below with an arc flash (damaged, and its block's
+  `onArcFlash` ruin runs), and leaves one above short of voltage (`undervoltage(gameTime)`, so its block does not
+  start). `REFUSES` harms nothing; `ANY` lets every class through.
+- **FE.** `Energies.FE` is the game's own energy, whose one grid is `POWER`; a mod that only wants FE needs nothing
+  else. A port's `asFe()` (`FeBridge`) is what an FE-only mod sees of it, and `EnergyConversion.convert` is how a
+  converter works either way; both round down, so no energy is made.
+- **Tooltips.** `EnergyTooltips.port(energy, class)` names a port's class and rating ("Port: Low, 400 V"), and
+  `Energy.amount(...)` and `rate(...)` show amounts and power.
+
+### Short of energy, and generators that follow the load
+
+*Added 2026-10-15.*
+
+When a run has less than its consumers want, each gets its share in proportion, and a machine spends what it has
+and works slower in the same proportion (`PartialWork`), never in fits and starts; the Core's processing machines
+do this and say "Low power" when looked at.
+
+A generator with a `LoadFollower` makes only what its grid draws, so it burns only that much. It may declare a
+minimum it always makes and a ramp, the most its output changes in a tick, as reactors do:
+
+```java
+private final GeneratorPort port = new GeneratorPort(VOLTS, LOW, new LoadFollower(5_000, 1_000, 200));
+
+// Each tick, in the block entity:
+final long made = port.follower().settle();    // what the grid drew last tick, or the floor, if more
+burnFuelFor(made);
 ```
 
 ### Energy in items and entities
@@ -59,7 +113,8 @@ CableType.builder(MY_ENERGY_LINE)
 ### Other units
 
 A mod that counts energy in a unit of its own registers an `EnergyUnit` in `CoreEnergy.UNITS`, with its name, its
-symbol and its ratio to FE; conversions round down, so converting never makes energy. Underneath, everything is FE.
+symbol and its ratio to FE; conversions round down, so converting never makes energy. An energy of a mod's own
+(above) moves along its lines in its own unit, and meets FE only through a converter or a port's FE view.
 
 ## Fluids
 

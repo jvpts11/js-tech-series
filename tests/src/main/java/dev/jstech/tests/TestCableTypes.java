@@ -55,7 +55,7 @@ public final class TestCableTypes {
     public static final DeferredHolder<CableType, CableType> LOSSY_ENERGY = CABLES.register("lossy_energy",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
                             "lossy_energy")))
-                    .grid(GridKind.POWER).alone().carries(Long.MAX_VALUE, 0).loses(100)
+                    .grid(GridKind.POWER).alone().carries(Long.MAX_VALUE, 0).loses(100_000)
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/energy"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsindustrial", "block/cable/plug/energy"))
                     .build(() -> Items.REDSTONE));

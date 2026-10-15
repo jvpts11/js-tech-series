@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.grid;
 
+import dev.jstech.core.energy.Energy;
+import dev.jstech.core.energy.EnergyClass;
 import dev.jstech.core.energy.LevelEnergy;
 import dev.jstech.core.fluid.LevelFluids;
 import dev.jstech.core.material.MatterState;
@@ -58,6 +60,24 @@ public final class GridPolicies {
     public static final IGridPolicy JOINS_ONLY = kind -> Optional.empty();
 
     private GridPolicies() {
+    }
+
+    /**
+     * A mod's own energy, along the lines of one of its classes: each line plugs into any block with a port of that
+     * energy, of any class, so a port of another class is told what befalls it.
+     */
+    public static IGridPolicy energy(final Energy energy, final EnergyClass lineClass) {
+        return new IGridPolicy() {
+            @Override
+            public Optional<IGridMover> mover(final GridKind kind) {
+                return Optional.of(new LevelEnergy(kind, energy, lineClass));
+            }
+
+            @Override
+            public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
+                return LevelEnergy.plugsInto(energy, level, pos, face);
+            }
+        };
     }
 
     /**

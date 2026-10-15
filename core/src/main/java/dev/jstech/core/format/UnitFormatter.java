@@ -52,6 +52,11 @@ public final class UnitFormatter {
 
     public String compact(final long value, final Unit unit) {
         Objects.requireNonNull(unit, "unit must not be null");
+        return compact(value) + unit.suffix();
+    }
+
+    /** {@code value} at the scale that suits it, with the scale's letter and no unit: {@code 1.5K}. */
+    public String compact(final long value) {
         /*
          * Math.abs(Long.MIN_VALUE) stays negative (it overflows back to itself), which would print a
          * stray leading "-" on top of the sign prefix; clamp it to Long.MAX_VALUE so the magnitude is
@@ -61,7 +66,7 @@ public final class UnitFormatter {
         final String sign = value < 0 ? "-" : "";
 
         if (abs < THOUSAND) {
-            return sign + abs + unit.suffix();
+            return sign + abs;
         }
         int scale = 0;
         while (scale < SCALES.length - 1 && abs >= SCALES[scale + 1].divisor()) {
@@ -71,8 +76,7 @@ public final class UnitFormatter {
         if (scale < SCALES.length - 1 && roundsUpToAThousand((double) abs / SCALES[scale].divisor())) {
             scale++;
         }
-        return sign + compactFormat.format((double) abs / SCALES[scale].divisor()) + SCALES[scale].prefix()
-                + unit.suffix();
+        return sign + compactFormat.format((double) abs / SCALES[scale].divisor()) + SCALES[scale].prefix();
     }
 
     public Locale locale() {

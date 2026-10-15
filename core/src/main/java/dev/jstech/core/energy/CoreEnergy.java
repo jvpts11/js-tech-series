@@ -56,7 +56,7 @@ public final class CoreEnergy {
     private static final DeferredRegister<EnergyUnit> CORE_UNITS = DeferredRegister.create(UNITS_KEY, JsCore.MODID);
     private static final DeferredRegister.DataComponents COMPONENTS =
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, JsCore.MODID);
-    private static final TextKey FE_NAME = TextKey.of("jscore.energy.fe", "Forge Energy");
+    static final TextKey FE_NAME = TextKey.of("jscore.energy.fe", "Forge Energy");
     private static final TextKey FE_SYMBOL = TextKey.of("jscore.energy.fe.symbol", "FE");
 
     /** Forge Energy, the game's own unit, which every other is worth so many of. */

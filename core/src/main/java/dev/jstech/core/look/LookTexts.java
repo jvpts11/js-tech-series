@@ -18,6 +18,8 @@ public final class LookTexts {
     public static final TextKey WORKING = TextKey.of("jscore.look.working", "Working: %s%%");
     /** A machine with nothing to work on, or no room for what it would make. */
     public static final TextKey IDLE = TextKey.of("jscore.look.idle", "Idle");
+    /** A machine short of energy, working slower in the same proportion: "Low power: 50% speed". */
+    public static final TextKey LOW_POWER = TextKey.of("jscore.look.low_power", "Low power: %s%% speed");
     /** Whose a thing is. */
     public static final TextKey OWNER = TextKey.of("jscore.look.owner", "Owner: %s");
     /** The switch in Jade's settings for the lines above, under the key Jade reads it from. */
