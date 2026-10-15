@@ -184,6 +184,7 @@ public final class StandardFace implements IMachineFace {
             case NO_ENERGY -> MachineScreenTexts.LCD_NO_ENERGY;
             case UNDERVOLTAGE -> MachineScreenTexts.LCD_UNDERVOLTAGE;
             case FUSE_BLOWN -> MachineScreenTexts.LCD_FUSE_BLOWN;
+            case TOO_SLOW -> MachineScreenTexts.LCD_TOO_SLOW;
             case OVERHEATED -> MachineScreenTexts.LCD_OVERHEATED;
             case DAMAGED -> MachineScreenTexts.LCD_DAMAGED;
             case OFF_BY_REDSTONE -> MachineScreenTexts.LCD_OFF_BY_REDSTONE;

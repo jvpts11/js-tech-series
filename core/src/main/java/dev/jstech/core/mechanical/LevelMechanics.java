@@ -8,11 +8,15 @@
 package dev.jstech.core.mechanical;
 
 import dev.jstech.core.registry.CoreAttachments;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,7 +28,11 @@ import org.jetbrains.annotations.Nullable;
  * The mechanical power of one dimension: its parts joined into networks, each worked out again only when one of its
  * parts is placed, broken, loaded or changes how it meets its neighbours, and each turned once a tick as a whole, never
  * shaft by shaft. A network is told to its parts only when its speed changes, so a network at its speed costs no more
- * than the torque of its sources and loads; one with neither, standing still, costs nothing.
+ * than the torque of its sources and loads and of the rated parts it watches; one with neither, standing still, costs
+ * nothing.
+ *
+ * <p>A part with a rating that every path of its network crosses is watched: the torque through it is what the parts
+ * on one side of it drive and ask and take to speed up, and past its rating the part is told it is overloaded.
  */
 public final class LevelMechanics {
 
@@ -64,7 +72,10 @@ public final class LevelMechanics {
         return this.networks.size();
     }
 
-    /** Works out the changed networks again, then turns every network for a tick and tells its parts. */
+    /**
+     * Works out the changed networks again, then turns every network for a tick, tells its parts, and tells each
+     * watched part when the torque through it passes its rating.
+     */
     public void tick(final ServerLevel level) {
         if (!this.changed.isEmpty()) {
             rebuild(level);
@@ -77,6 +88,9 @@ public final class LevelMechanics {
             final double rpm = network.rpm();
             if (Math.abs(rpm - built.told()) > TELL_STEP || built.fresh()) {
                 built.tell(rpm);
+            }
+            if (!network.jammed()) {
+                built.check(level);
             }
         }
     }
@@ -115,7 +129,10 @@ public final class LevelMechanics {
         }
     }
 
-    /* Joins every part reached from the part at {@code root} into one network, by the ratio each turns at. */
+    /*
+     * Joins every part reached from the part at {@code root}, face to face and by its belts and chains, into one
+     * network, by the ratio each turns at, and watches its rated parts that every path crosses.
+     */
     private void build(final ServerLevel level, final BlockPos root) {
         if (!level.isLoaded(root)) {
             return;
@@ -125,10 +142,12 @@ public final class LevelMechanics {
             return;
         }
         final Long2DoubleOpenHashMap ratios = new Long2DoubleOpenHashMap();
+        final Long2IntOpenHashMap index = new Long2IntOpenHashMap();
         final List<ShaftNetwork.Member> members = new ArrayList<>();
         final List<IMechanicalPart> parts = new ArrayList<>();
+        final LongArrayList edges = new LongArrayList();
         final LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
-        boolean jammed = false;
+        final boolean[] jammed = {false};
         ratios.put(root.asLong(), 1.0);
         queue.enqueue(root.asLong());
         while (!queue.isEmpty() && members.size() < MOST_PARTS) {
@@ -139,37 +158,115 @@ public final class LevelMechanics {
                 continue;
             }
             final double ratio = ratios.get(at);
+            index.put(at, members.size());
             members.add(new ShaftNetwork.Member(at, ratio, part.inertia(), part.friction(), part.torque()));
             parts.add(part);
             for (final Direction face : Direction.values()) {
                 final ShaftContact contact = part.contact(face);
-                if (contact.kind() == ShaftContact.Kind.NONE) {
-                    continue;
-                }
                 final BlockPos beside = pos.relative(face);
-                if (!level.isLoaded(beside)) {
+                if (contact.kind() == ShaftContact.Kind.NONE || !level.isLoaded(beside)) {
                     continue;
                 }
                 final IMechanicalPart neighbour = MechanicalPorts.at(level, beside, face.getOpposite());
                 final Double turn = neighbour == null ? null : contact.ratioTo(neighbour.contact(face.getOpposite()));
-                if (turn == null) {
-                    continue;
+                if (turn != null) {
+                    reach(at, beside.asLong(), ratio * turn, ratios, queue, edges, jammed);
                 }
-                final double theirs = ratio * turn;
-                final long next = beside.asLong();
-                if (ratios.containsKey(next)) {
-                    jammed |= Math.abs(ratios.get(next) - theirs) > AGREE * Math.max(1.0, Math.abs(theirs));
-                } else {
-                    ratios.put(next, theirs);
-                    queue.enqueue(next);
+            }
+            for (final ShaftJoin join : part.joins()) {
+                if (level.isLoaded(join.target()) && joinedBack(level, join.target(), pos)) {
+                    reach(at, join.target().asLong(), ratio * join.ratio(), ratios, queue, edges, jammed);
                 }
             }
         }
-        final Built built = new Built(new ShaftNetwork(members, first.rpm(), jammed), parts);
+        final ShaftNetwork network = new ShaftNetwork(members, first.rpm(), jammed[0],
+                watches(members.size(), parts, index, edges));
+        final Built built = new Built(network, parts);
         this.networks.add(built);
         for (final ShaftNetwork.Member member : members) {
             this.networkAt.put(member.key(), built);
         }
+    }
+
+    /* Reaches the part at {@code next}, turning at {@code theirs}, from the part at {@code from}. */
+    private static void reach(final long from, final long next, final double theirs,
+                              final Long2DoubleOpenHashMap ratios, final LongArrayFIFOQueue queue,
+                              final LongArrayList edges, final boolean[] jammed) {
+        edges.add(from);
+        edges.add(next);
+        if (ratios.containsKey(next)) {
+            jammed[0] |= Math.abs(ratios.get(next) - theirs) > AGREE * Math.max(1.0, Math.abs(theirs));
+        } else {
+            ratios.put(next, theirs);
+            queue.enqueue(next);
+        }
+    }
+
+    /* Whether the part at {@code target} says it is joined to {@code pos}: a join only one side says is none. */
+    private static boolean joinedBack(final ServerLevel level, final BlockPos target, final BlockPos pos) {
+        final IMechanicalPart other = MechanicalPorts.at(level, target, null);
+        if (other == null) {
+            return false;
+        }
+        for (final ShaftJoin back : other.joins()) {
+            if (back.target().equals(pos)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+     * The rated parts every path of the network crosses, each with the parts on one side of it: a rated part with two
+     * neighbours or more whose first neighbour reaches none of the others without it.
+     */
+    private static List<ShaftNetwork.Watch> watches(final int count, final List<IMechanicalPart> parts,
+                                                    final Long2IntOpenHashMap index, final LongArrayList edges) {
+        final List<IntArrayList> beside = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            beside.add(new IntArrayList());
+        }
+        for (int e = 0; e + 1 < edges.size(); e += 2) {
+            final long a = edges.getLong(e);
+            final long b = edges.getLong(e + 1);
+            if (index.containsKey(a) && index.containsKey(b)) {
+                final int i = index.get(a);
+                final int j = index.get(b);
+                if (!beside.get(i).contains(j)) {
+                    beside.get(i).add(j);
+                    beside.get(j).add(i);
+                }
+            }
+        }
+        final List<ShaftNetwork.Watch> watches = new ArrayList<>();
+        for (int p = 0; p < count; p++) {
+            final IntArrayList around = beside.get(p);
+            if (parts.get(p).rating() <= 0.0 || around.size() < 2) {
+                continue;
+            }
+            final BitSet side = new BitSet(count);
+            final IntArrayList stack = new IntArrayList();
+            side.set(around.getInt(0));
+            stack.add(around.getInt(0));
+            while (!stack.isEmpty()) {
+                final int at = stack.removeInt(stack.size() - 1);
+                for (int k = 0; k < beside.get(at).size(); k++) {
+                    final int next = beside.get(at).getInt(k);
+                    if (next != p && !side.get(next)) {
+                        side.set(next);
+                        stack.add(next);
+                    }
+                }
+            }
+            boolean bridge = true;
+            for (int k = 1; k < around.size(); k++) {
+                bridge &= !side.get(around.getInt(k));
+            }
+            if (bridge) {
+                watches.add(new ShaftNetwork.Watch(p, side));
+            }
+        }
+        return watches;
     }
 
     /* A network and the parts it tells its speed, by the ratio of each. */
@@ -210,6 +307,16 @@ public final class LevelMechanics {
             final List<ShaftNetwork.Member> members = this.network.members();
             for (int i = 0; i < members.size(); i++) {
                 this.parts.get(i).turning(rpm * members.get(i).ratio());
+            }
+        }
+
+        /* Tells each watched part whose torque passed its rating that it is overloaded. */
+        private void check(final ServerLevel level) {
+            for (final ShaftNetwork.Watch watch : this.network.watches()) {
+                final IMechanicalPart part = this.parts.get(watch.member());
+                if (Math.abs(this.network.through(watch)) > part.rating()) {
+                    part.overloaded(level, BlockPos.of(this.network.members().get(watch.member()).key()));
+                }
             }
         }
     }

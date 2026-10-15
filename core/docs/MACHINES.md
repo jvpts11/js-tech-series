@@ -97,6 +97,7 @@ Each tick the machine says what it is doing, a `MachineStatus`, which its screen
 | `NO_ENERGY` | FAULT | It has no energy for the tick. |
 | `UNDERVOLTAGE` | FAULT | A line of a class below its port's meets it: it does not start. |
 | `FUSE_BLOWN` | FAULT | Its fuse blew on overvoltage: it is shut down, unharmed, until a good fuse is put in. |
+| `TOO_SLOW` | FAULT | Driven by a shaft that turns slower than the least it works at. |
 | `OVERHEATED` | FAULT | It is past the hottest it stands: it stopped to cool, and loses health while it stays past it. |
 | `DAMAGED` | FAULT | It is damaged: it works slower, or not at all with no health left or a burnt port. |
 | `OFF_BY_REDSTONE` | WAIT | Its redstone mode keeps it off. |
@@ -170,6 +171,10 @@ protected MachineStatus work(ServerLevel level) {
 A motor spends from the machine's energy the power its torque gives at its speed, over its efficiency; a dynamo
 brakes the network and makes energy of what it takes, while the machine has room (`MachineShaft.dynamo`). A stopped
 machine (switched off, off by redstone, its fuse blown, overheated, wrecked) neither drives nor takes.
+
+A machine **driven** by its shaft (`MachineShaft.driven(torque, leastRpm, ratedRpm, face)`) asks its torque while it
+has work and works as fast as its shaft turns against its rated speed; below its least speed it stops, `TOO_SLOW`. A
+processing machine of the kit does this with no code of its own.
 
 ### The switch and redstone
 

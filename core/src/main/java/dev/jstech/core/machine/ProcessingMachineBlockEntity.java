@@ -600,14 +600,23 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         if (lanes.size() > 1 && level.getGameTime() % SORT_EVERY == 0) {
             sortInputs();
         }
+        // A machine driven by a shaft waits for it to turn fast enough, still asking its torque, and works as fast as
+        // it turns.
+        final MachineShaft driven = shaft() != null && shaft().drives() ? shaft() : null;
+        if (driven != null && driven.tooSlow()) {
+            return MachineStatus.TOO_SLOW;
+        }
         final UpgradeEffect effect = upgradeEffect();
-        final double share = health().workShare();
+        final double share = health().workShare() * (driven == null ? 1.0 : driven.share());
         MachineStatus result = MachineStatus.WAITING;
         for (final Lane lane : lanes) {
             final MachineStatus worked = lane.work(level, effect, share);
             if (busier(worked, result)) {
                 result = worked;
             }
+        }
+        if (driven != null) {
+            driven.loaded(result == MachineStatus.WORKING);
         }
         return result;
     }

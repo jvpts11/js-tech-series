@@ -12,26 +12,37 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.content.IItemLook;
+import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineShaft;
 import dev.jstech.core.machine.MachineStatus;
+import dev.jstech.core.machine.ProcessingInput;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.mechanical.ITorque;
 import dev.jstech.core.mechanical.MechanicalPartBlock;
 import dev.jstech.core.mechanical.MechanicalPartBlockEntity;
 import dev.jstech.core.mechanical.MechanicalPartSpec;
+import dev.jstech.core.mechanical.ShaftLinkItem;
 import dev.jstech.core.mechanical.TorqueCurve;
 import java.util.Objects;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * Parts of mechanical power the tests build with, from the Core's kit: an iron shaft, gears of sixteen and thirty-two
- * teeth, a gearbox, a hand crank of a man's arm (20 N·m, 75 W, up to 60 rpm), a load that asks 15 N·m, and two
- * machines on the machine kit: an electric motor and a dynamo, their shafts out of their backs.
+ * teeth, a gearbox, a flywheel, a clutch, a brake, a speed controller, a shear pin, a shaft rated as weakly, two
+ * pulleys and a belt; a hand crank of a man's arm (20 N·m, 75 W, up to 60 rpm) and a load that asks 15 N·m; and
+ * machines on the machine kit with their shafts out of their backs: an electric motor, a dynamo, and two mills driven
+ * by their shafts, one light enough for the crank and one too heavy.
  */
 public final class TestMechanical {
 
@@ -47,6 +58,22 @@ public final class TestMechanical {
     public static final int ENERGY = 1_000_000;
     public static final int SMALL_TEETH = 16;
     public static final int LARGE_TEETH = 32;
+    /** The flywheel's inertia, in kilogram square metres: enough to coast for seconds on its friction. */
+    public static final double FLYWHEEL_INERTIA = 2.0;
+    /** The brake's torque at full redstone: more than the crank's. */
+    public static final double BRAKE_TORQUE = 30.0;
+    /** The shear pin's rating, and the weak shaft's: less than the load asks. */
+    public static final double PIN_RATING = 10.0;
+    /** The small pulley's radius, in metres; the large one's is twice it. */
+    public static final double SMALL_RADIUS = 0.1;
+    public static final int BELT_REACH = 8;
+    /** The mill: it asks 10 N·m, stops below 20 rpm, and works at its whole speed from 60. */
+    public static final double MILL_TORQUE = 10.0;
+    public static final double MILL_LEAST = 20.0;
+    public static final double MILL_RATED = 60.0;
+    /** The heavy mill asks more than the crank can give above the least speed. */
+    public static final double HEAVY_MILL_TORQUE = 18.0;
+    public static final int MILL_TICKS = 20;
 
     /* Their block states and models are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<MechanicalPartBlock> SHAFT = part("test_shaft", "Test shaft",
@@ -57,6 +84,26 @@ public final class TestMechanical {
             MechanicalPartSpec.gear(LARGE_TEETH, 0.2, 0.3));
     public static final BlockEntry<MechanicalPartBlock> GEARBOX = part("test_gearbox", "Test gearbox",
             MechanicalPartSpec.gearbox(0.05, 0.3));
+    public static final BlockEntry<MechanicalPartBlock> FLYWHEEL = part("test_flywheel", "Test flywheel",
+            MechanicalPartSpec.flywheel(FLYWHEEL_INERTIA, 0.1));
+    public static final BlockEntry<MechanicalPartBlock> CLUTCH = part("test_clutch", "Test clutch",
+            MechanicalPartSpec.clutch(0.01, 0.1));
+    public static final BlockEntry<MechanicalPartBlock> BRAKE = part("test_brake", "Test brake",
+            MechanicalPartSpec.brake(BRAKE_TORQUE, 0.01, 0.1));
+    public static final BlockEntry<MechanicalPartBlock> CONTROLLER = part("test_speed_controller",
+            "Test speed controller", MechanicalPartSpec.controller(0.01, 0.1));
+    public static final BlockEntry<MechanicalPartBlock> SHEAR_PIN = part("test_shear_pin", "Test shear pin",
+            MechanicalPartSpec.shearPin(PIN_RATING, 0.005, 0.1));
+    public static final BlockEntry<MechanicalPartBlock> WEAK_SHAFT = part("test_weak_shaft", "Test weak shaft",
+            MechanicalPartSpec.shaft(0.005, 0.1).rated(PIN_RATING));
+    public static final BlockEntry<MechanicalPartBlock> SMALL_PULLEY = part("test_small_pulley",
+            "Test small pulley", MechanicalPartSpec.pulley(SMALL_RADIUS, 0.02, 0.1));
+    public static final BlockEntry<MechanicalPartBlock> LARGE_PULLEY = part("test_large_pulley",
+            "Test large pulley", MechanicalPartSpec.pulley(2 * SMALL_RADIUS, 0.08, 0.1));
+    /* Its item model is written by hand. */
+    public static final ItemEntry<ShaftLinkItem> BELT = TestSounds.CONTENT.item("test_belt",
+            properties -> new ShaftLinkItem(properties, false, BELT_REACH)).named("Test belt")
+            .look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
     public static final BlockEntry<MechanicalPartBlock> CRANK = TestSounds.CONTENT.block("test_crank",
             properties -> new MechanicalPartBlock(properties, MechanicalPartSpec.shaft(0.01, 0.0),
                     () -> TestMechanical.CRANK_ENTITY.get())).named("Test crank")
@@ -67,7 +114,8 @@ public final class TestMechanical {
             .look(IBlockLook.cubeAll("test_motion_load")).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MechanicalPartBlockEntity>> PART =
             TestSounds.CONTENT.blockEntity("test_mechanical_part", (pos, state) -> new MechanicalPartBlockEntity(
-                    TestMechanical.PART.get(), pos, state), SHAFT, SMALL_GEAR, LARGE_GEAR, GEARBOX);
+                    TestMechanical.PART.get(), pos, state), SHAFT, SMALL_GEAR, LARGE_GEAR, GEARBOX, FLYWHEEL, CLUTCH,
+                    BRAKE, CONTROLLER, SHEAR_PIN, WEAK_SHAFT, SMALL_PULLEY, LARGE_PULLEY);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrankBlockEntity>> CRANK_ENTITY =
             TestSounds.CONTENT.blockEntity("test_crank", CrankBlockEntity::new, CRANK);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LoadBlockEntity>> LOAD_ENTITY =
@@ -81,6 +129,15 @@ public final class TestMechanical {
     /* One block entity for both machines, which reads from its block which it is. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ShaftMachineBlockEntity>> SHAFT_MACHINE =
             TestSounds.CONTENT.blockEntity("test_shaft_machine", ShaftMachineBlockEntity::new, MOTOR, DYNAMO);
+    public static final BlockEntry<DeviceBlock> MILL = TestSounds.CONTENT.block("test_mill",
+            Device.of(() -> TestMechanical.MILL_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
+            .named("Test mill").look(IBlockLook.cubeAll("test_mill")).register();
+    public static final BlockEntry<DeviceBlock> HEAVY_MILL = TestSounds.CONTENT.block("test_heavy_mill",
+            Device.of(() -> TestMechanical.MILL_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
+            .named("Test heavy mill").look(IBlockLook.cubeAll("test_heavy_mill")).register();
+    /* One block entity for both mills, which reads from its block how much it asks. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MillBlockEntity>> MILL_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_mill", MillBlockEntity::new, MILL, HEAVY_MILL);
 
     private TestMechanical() {
     }
@@ -134,6 +191,23 @@ public final class TestMechanical {
         @Override
         protected MachineStatus work(final ServerLevel level) {
             return Objects.requireNonNull(shaft()).run();
+        }
+    }
+
+    /** A mill driven by its shaft: cobblestone into gravel, as fast as its shaft turns. */
+    public static final class MillBlockEntity extends ProcessingMachineBlockEntity {
+
+        public MillBlockEntity(final BlockPos pos, final BlockState state) {
+            super(MILL_ENTITY.get(), pos, state, ProcessingMachineBlockEntity.Layout.items(1, 1),
+                    MachineEnergy.fe(0, 0, 0), 0L);
+            turnsWith(MachineShaft.driven(state.is(HEAVY_MILL.get()) ? HEAVY_MILL_TORQUE : MILL_TORQUE, MILL_LEAST,
+                    MILL_RATED, RelativeFace.BACK));
+        }
+
+        @Override
+        protected Optional<Processing> process(final Level level, final ProcessingInput input) {
+            return input.items().getFirst().is(Items.COBBLESTONE) ? Optional.of(Processing.single(0,
+                    new ItemStack(Items.GRAVEL), MILL_TICKS)) : Optional.empty();
         }
     }
 }

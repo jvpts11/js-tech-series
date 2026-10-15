@@ -12,6 +12,7 @@ import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.diagnostic.DiagnosticBalance;
 import dev.jstech.core.hazard.HazardBalance;
 import dev.jstech.core.heat.HeatBalance;
+import dev.jstech.core.mechanical.MechanicalBalance;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.material.NamingBalance;
 import dev.jstech.core.operation.OperationBalance;
@@ -46,6 +47,8 @@ public final class CoreConfigKeys {
     public static final String HAZARDS = "hazards";
     /** What heat does to the world: pipes that freeze, cold liquids that boil off, overheating, fires and burns. */
     public static final String HEAT = "heat";
+    /** What mechanical power does to the world: parts that break under overload. */
+    public static final String MECHANICAL = "mechanical";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -274,6 +277,12 @@ public final class CoreConfigKeys {
             .comment("Whether a block hotter than 150 °C burns whoever stands against it, unless they resist fire.")
             .named("Hot surfaces burn");
 
+    /** Whether a part with a rating breaks when the torque through it passes the rating. */
+    public static final ConfigKey<Boolean> MECHANICAL_PARTS_BREAK = ConfigKey.flag(MECHANICAL + ".parts_break", true)
+            .comment("Whether a shaft, a gear or another part with a rating breaks when the torque through it passes "
+                    + "the rating. A shear pin shears either way.")
+            .named("Parts break under overload");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -291,6 +300,7 @@ public final class CoreConfigKeys {
             .sectionComment(HAZARDS, "The world's hazards: which of them there are.")
             .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off, "
                     + "machines that overheat, fires and burns.")
+            .sectionComment(MECHANICAL, "What mechanical power does to the world: parts that break under overload.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
@@ -300,6 +310,7 @@ public final class CoreConfigKeys {
             .sectionNamed(ELEMENTS, "Elements")
             .sectionNamed(HAZARDS, "Hazards")
             .sectionNamed(HEAT, "Heat")
+            .sectionNamed(MECHANICAL, "Mechanical power")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -331,6 +342,7 @@ public final class CoreConfigKeys {
             .key(HEAT_OVERHEATING_DAMAGES, HeatBalance::setOverheatingDamages)
             .key(HEAT_IGNITES, HeatBalance::setIgnites)
             .key(HEAT_HOT_SURFACES_BURN, HeatBalance::setHotSurfacesBurn)
+            .key(MECHANICAL_PARTS_BREAK, MechanicalBalance::setPartsBreak)
             .build();
 
     private CoreConfigKeys() {

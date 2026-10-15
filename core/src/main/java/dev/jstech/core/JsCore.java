@@ -50,6 +50,7 @@ import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.hologram.Holograms;
 import dev.jstech.core.input.KeyActions;
 import dev.jstech.core.mechanical.MechanicalPorts;
+import dev.jstech.core.mechanical.ShaftLinkItem;
 import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
@@ -204,6 +205,8 @@ public final class JsCore {
         ElementNaming.declare();
         MaterialValues.declare();
         MaterialData.declare();
+        // Where a belt or a chain remembers the first pulley it was used on.
+        ShaftLinkItem.declare();
         // What the manuals sound like: the game's own book and button sounds, in the Manuals channel.
         GuideSounds.declare();
         // What the notifications sound like, one of the game's own sounds for each level.

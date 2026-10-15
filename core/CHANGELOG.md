@@ -365,6 +365,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   slower, where its sources' torque meets what its loads ask, and one whose gear ratios disagree jams. Sources
   declare their torque curves, and a machine becomes an electric motor that spends its energy to turn its shaft, or
   a dynamo that makes energy of a turn. Networks are worked out only when they change, and turned whole each tick.
+- The rest of the mechanical kit: flywheels that smooth a line and coast after the power is cut, clutches that
+  let go while powered, brakes that hold as hard as their redstone says, speed controllers whose end turns up to
+  twice as fast by their signal, shear pins that shear under overload and spare the rest, and parts that break past
+  their rating where the server lets them. Belts and chains join two pulleys across a distance, the smaller turning
+  faster. Machines can be driven by a shaft, working as fast as it turns and stopping below their least speed.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

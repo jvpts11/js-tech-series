@@ -27,6 +27,10 @@ import org.jetbrains.annotations.Nullable;
  * its rated speed (the curve's free speed), and makes energy of what it takes, at its efficiency, while the machine
  * has room. A joule of energy is an FE, and a mod's energy counts at its worth in FE.
  *
+ * <p>A machine driven by a shaft asks its torque of the network while it has work, and works as fast as the shaft
+ * turns against its rated speed, up to its whole speed there; below the least speed it works at, it stops, turning too
+ * slowly.
+ *
  * <pre>{@code
  * turnsWith(MachineShaft.motor(TorqueCurve.of(50, 5_000, 1_500), 0.9, RelativeFace.BACK));   // in the constructor
  * ...
@@ -43,6 +47,9 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
     private final RelativeFace face;
     private final double inertia;
     private final double friction;
+    private final double load;
+    private final double least;
+    private final double rated;
     private @Nullable MachineBlockEntity machine;
     private double rpm;
     private double share;
@@ -60,9 +67,14 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
     private static final double STANDING = 0.01;
     private static final double TICK_SECONDS = 0.05;
 
-    private MachineShaft(final Kind kind, final TorqueCurve curve, final double efficiency, final RelativeFace face) {
+    private MachineShaft(final Kind kind, final TorqueCurve curve, final double efficiency, final RelativeFace face,
+                         final double load, final double least, final double rated) {
         if (!(efficiency > 0.0) || efficiency > 1.0) {
             throw new IllegalArgumentException("an efficiency is above nothing and no more than whole: " + efficiency);
+        }
+        if (!(load >= 0.0) || !(least >= 0.0) || kind == Kind.DRIVEN && !(rated >= least && rated > 0.0)) {
+            throw new IllegalArgumentException("a driven machine asks no less than none, and its rated speed is above "
+                    + "none and no less than its least");
         }
         this.kind = kind;
         this.curve = Objects.requireNonNull(curve, "curve");
@@ -70,21 +82,55 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
         this.face = Objects.requireNonNull(face, "face");
         this.inertia = ROTOR;
         this.friction = BEARINGS;
+        this.load = load;
+        this.least = least;
+        this.rated = rated;
     }
 
     /** An electric motor of {@code curve}, at {@code efficiency}, its shaft out of {@code face}. */
     public static MachineShaft motor(final TorqueCurve curve, final double efficiency, final RelativeFace face) {
-        return new MachineShaft(Kind.MOTOR, curve, efficiency, face);
+        return new MachineShaft(Kind.MOTOR, curve, efficiency, face, 0.0, 0.0, 0.0);
     }
 
     /** A dynamo that takes up to {@code curve}, at {@code efficiency}, its shaft in from {@code face}. */
     public static MachineShaft dynamo(final TorqueCurve curve, final double efficiency, final RelativeFace face) {
-        return new MachineShaft(Kind.DYNAMO, curve, efficiency, face);
+        return new MachineShaft(Kind.DYNAMO, curve, efficiency, face, 0.0, 0.0, 0.0);
     }
 
-    /** Whether it is a motor; a dynamo otherwise. */
+    /**
+     * A machine driven by its shaft in from {@code face}: it asks {@code newtonMetres} while it has work, stops below
+     * {@code leastRpm}, and works at its whole speed from {@code ratedRpm}.
+     */
+    public static MachineShaft driven(final double newtonMetres, final double leastRpm, final double ratedRpm,
+                                      final RelativeFace face) {
+        return new MachineShaft(Kind.DRIVEN, TorqueCurve.NONE, 1.0, face, newtonMetres, leastRpm, ratedRpm);
+    }
+
+    /** Whether it is a motor. */
     public boolean motor() {
         return this.kind == Kind.MOTOR;
+    }
+
+    /** Whether it drives its machine, which works as fast as it turns. */
+    public boolean drives() {
+        return this.kind == Kind.DRIVEN;
+    }
+
+    /** Whether it drives its machine and turns slower than the least it works at. */
+    public boolean tooSlow() {
+        return this.kind == Kind.DRIVEN && Math.abs(this.rpm) < this.least;
+    }
+
+    /** How fast it lets its machine work, from none to whole: how it turns against its rated speed, when it drives. */
+    public double share() {
+        return this.kind == Kind.DRIVEN ? Math.min(1.0, Math.abs(this.rpm) / this.rated) : 1.0;
+    }
+
+    /** Tells a driving shaft whether its machine has work, and so asks its torque of the network. */
+    public void loaded(final boolean working) {
+        if (this.kind == Kind.DRIVEN) {
+            this.asked = working ? this.load : 0.0;
+        }
     }
 
     /** The face its shaft comes out of. */
@@ -100,6 +146,9 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
     public MachineStatus run() {
         final MachineBlockEntity on = Objects.requireNonNull(this.machine, "a machine's shaft is declared on it");
         final double turning = Math.abs(this.rpm);
+        if (this.kind == Kind.DRIVEN) {
+            return tooSlow() ? MachineStatus.TOO_SLOW : MachineStatus.WORKING;
+        }
         if (this.kind == Kind.MOTOR) {
             if (on.power().stored() <= 0L) {
                 this.share = 0.0;
@@ -134,7 +183,7 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
         return MachineStatus.WORKING;
     }
 
-    /** Its machine stopped: a motor gives no torque and a dynamo asks none. */
+    /** Its machine stopped: a motor gives no torque, and a dynamo or a driven machine asks none. */
     public void halt() {
         this.share = 0.0;
         this.asked = 0.0;
@@ -173,9 +222,11 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
 
     @Override
     public void turning(final double rpm) {
-        final boolean started = Math.abs(this.rpm) < STANDING && Math.abs(rpm) >= STANDING;
+        // A machine resting for want of a turn wakes as its shaft starts, or passes the least speed it works at.
+        final boolean woke = crossed(this.rpm, rpm, STANDING) || this.kind == Kind.DRIVEN
+                && crossed(this.rpm, rpm, this.least);
         this.rpm = rpm;
-        if (started && this.machine != null) {
+        if (woke && this.machine != null) {
             this.machine.wake();
         }
     }
@@ -212,9 +263,15 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
         this.machine = owner;
     }
 
+    /* Whether a speed went from below {@code mark} to at or above it. */
+    private static boolean crossed(final double from, final double to, final double mark) {
+        return Math.abs(from) < mark && Math.abs(to) >= mark;
+    }
+
     /* What a machine's shaft does. */
     private enum Kind {
         MOTOR,
-        DYNAMO
+        DYNAMO,
+        DRIVEN
     }
 }

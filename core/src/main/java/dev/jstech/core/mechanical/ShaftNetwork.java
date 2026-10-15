@@ -8,6 +8,7 @@
 package dev.jstech.core.mechanical;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,16 +24,25 @@ public final class ShaftNetwork {
 
     private final List<Member> members;
     private final List<Member> working = new ArrayList<>();
+    private final List<Watch> watches;
     private final double inertia;
     private final double friction;
     private final boolean jammed;
     private double speed;
+    private double acceleration;
 
     /**
      * A network of {@code members}, starting at {@code rpm} at its first part; {@code jammed} when their ratios
      * disagree.
      */
     public ShaftNetwork(final List<Member> members, final double rpm, final boolean jammed) {
+        this(members, rpm, jammed, List.of());
+    }
+
+    /** The same, watching the torque through the parts {@code watches} names. */
+    public ShaftNetwork(final List<Member> members, final double rpm, final boolean jammed,
+                        final List<Watch> watches) {
+        this.watches = List.copyOf(watches);
         this.members = List.copyOf(members);
         double held = 0.0;
         double drag = 0.0;
@@ -94,9 +104,38 @@ public final class ShaftNetwork {
 
     /** Turns for {@code seconds}: faster or slower by its net torque, towards the balance; a jammed one stays put. */
     public void step(final double seconds) {
-        if (!this.jammed) {
+        if (!this.jammed && seconds > 0.0) {
+            final double before = this.speed;
             this.speed = RotationMath.step(this.speed, this.inertia, this::torque, seconds);
+            this.acceleration = (this.speed - before) / seconds;
         }
+    }
+
+    /** The parts it watches the torque through. */
+    public List<Watch> watches() {
+        return this.watches;
+    }
+
+    /**
+     * The torque through the part {@code watch} names, in newton-metres at its own shaft: what the parts on one side
+     * of it drive and ask, less their friction, less what it takes to speed them up as fast as they speed up now.
+     */
+    public double through(final Watch watch) {
+        final double rpm = rpm();
+        double driven = 0.0;
+        double held = 0.0;
+        double weighs = 0.0;
+        final BitSet side = watch.side();
+        for (int i = side.nextSetBit(0); i >= 0; i = side.nextSetBit(i + 1)) {
+            final Member member = this.members.get(i);
+            if (member.torque() != null) {
+                driven += member.ratio() * member.torque().torque(rpm * member.ratio());
+            }
+            held += member.friction() * Math.abs(member.ratio());
+            weighs += member.inertia() * member.ratio() * member.ratio();
+        }
+        final double base = weighs * this.acceleration - (driven - Math.signum(this.speed) * held);
+        return base / Math.abs(this.members.get(watch.member()).ratio());
     }
 
     /** The power its parts drive in now, in watts: what the sources give, before what the rest takes. */
@@ -132,6 +171,25 @@ public final class ShaftNetwork {
         public static Member turning(final long key, final double ratio, final double inertia,
                                      final double friction) {
             return new Member(key, ratio, inertia, friction, null);
+        }
+    }
+
+    /**
+     * A part every path of the network crosses, whose torque is watched: the parts on one side of it, by their place
+     * among the network's members.
+     *
+     * @param member the part, by its place among the members
+     * @param side   the parts on one side of it
+     */
+    public record Watch(int member, BitSet side) {
+
+        public Watch {
+            side = (BitSet) side.clone();
+        }
+
+        @Override
+        public BitSet side() {
+            return (BitSet) this.side.clone();
         }
     }
 }

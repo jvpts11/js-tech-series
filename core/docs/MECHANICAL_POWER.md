@@ -85,6 +85,39 @@ public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<Mechanica
 An iron shaft a metre long and five centimetres thick weighs about 0.005 kg·m² in turning and holds back about
 0.1 N·m in its bearings.
 
+*Added 2026-10-15:* the rest of the kit, each a shaft along its axis but for what it does:
+
+| Part | What it does |
+| --- | --- |
+| `flywheel(inertia, friction)` | weighs much in turning: it smooths its network, takes time to start, and keeps turning after the power is cut |
+| `clutch(inertia, friction)` | lets go while redstone powers it, splitting the line in two |
+| `brake(newtonMetres, inertia, friction)` | holds back as much as the redstone it gets says, up to its braking torque at 15 |
+| `controller(inertia, friction)` | its end towards the positive end of its axis turns up to twice as fast as the other, as its redstone says (15 is twice), and lets go with none |
+| `shearPin(newtonMetres, inertia, friction)` | shears when the torque through it passes its rating, stopping the line and sparing everything else, as a fuse does; using it pins it again |
+| `pulley(metres, inertia, friction)` | a belt or a chain joins it to another pulley across a distance |
+
+Any part can carry a rating (`spec.rated(newtonMetres)`): when the torque through it passes the rating, it breaks
+and drops, unless the server turned that off (`mechanical.parts_break` in the balance file). The torque through a
+part can be told only where every path of its network crosses it; there it is what the parts on one side of it
+drive and ask, less their friction, less what it takes to speed them up.
+
+## Belts and chains
+
+*Added 2026-10-15.*
+
+A `ShaftLinkItem` is a belt or a chain: used on one pulley, then on another turning on the same axis beside it,
+within its reach, it joins them, and the two turn the same way, the smaller the faster (a pulley of 0.1 m turns
+twice as fast as one of 0.2 m). A belt slips a little and holds back 0.5 N·m on each pulley, a chain 0.2. Breaking
+either pulley drops the belt and frees the other.
+
+```java
+ItemEntry<ShaftLinkItem> BELT = CONTENT.item("belt", properties -> new ShaftLinkItem(properties, false, 16))
+        .named("Belt").register();   // a belt reaching 16 blocks; true for a chain
+```
+
+A part of a mod's own joins across a distance by saying its `joins()`: each the other part's place and the ratio it
+turns at. A join only one of the two says is none.
+
 A part of a mod's own (a water wheel, a windmill, a machine that turns) implements `IMechanicalPart`: how each face
 meets its neighbour, its inertia and friction, what it drives or asks at each of its own speeds (`ITorque`: positive
 drives, a load asks against the way it turns), and its speed as the network tells it. It calls
@@ -110,9 +143,25 @@ energy, whatever energy that is, a joule to an FE. A **dynamo** brakes the netwo
 to its curve at its rated speed, and makes energy of what it takes, at its efficiency, while the machine has room. A
 stopped machine neither drives nor takes.
 
+*Added 2026-10-15:* a machine can also be **driven** by its shaft, as a mill turned by a water wheel is:
+
+```java
+turnsWith(MachineShaft.driven(10, 20, 60, RelativeFace.BACK));   // asks 10 N·m; stops below 20 rpm; whole at 60
+```
+
+While it has work it asks its torque of the network, and works as fast as its shaft turns against its rated speed;
+below its least speed it stops, `TOO_SLOW`, still asking, so a source too weak for it holds it there until a
+stronger one turns it. A processing machine of the kit does all this by itself.
+
 ## What can go wrong
 
 - **Nothing turns.** The network is jammed (its ratios disagree), its sources give less than its friction, or a face
   meets nothing: a shaft turns only its neighbours along its axis, and gears mesh only on parallel axes.
 - **It turns slower than the source's free speed.** It is meant to: it turns where the torque meets what it is asked.
 - **A motor spends nothing.** It stands still against a load stronger than its stall torque, which takes no power.
+- **A machine stays `TOO_SLOW`.** Its source cannot turn it at its least speed against the torque it asks: give it a
+  stronger source, or gear the line so the source turns faster where the machine is.
+- **A pin shears again at once.** The load beyond it still asks more than its rating: take load off, or fit a
+  stronger pin.
+- **Two pulleys will not join.** They must turn on one axis, side by side (no offset along the axis), within the
+  belt's reach, and neither may be joined already.
