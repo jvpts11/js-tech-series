@@ -17,6 +17,7 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.Bounds;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
+import dev.jstech.core.machine.Machines;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.text.GameText;
@@ -30,8 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The Core's bridge to EMI, which finds it by its annotation and only when EMI is installed: the same as the bridge to
- * JEI, a category for every mod's processing machines with the machines as its workstations, and the areas screens
- * name kept clear of EMI's lists.
+ * JEI, a category for every mod's processing machines with the machines as its workstations, the fill button that
+ * moves a recipe into the open machine, and the areas screens name kept clear of EMI's lists.
  */
 @EmiEntrypoint
 public final class CoreEmiPlugin implements EmiPlugin {
@@ -51,6 +52,7 @@ public final class CoreEmiPlugin implements EmiPlugin {
                 registry.addRecipe(new ProcessingEmiRecipe(category, holder));
             }
         }
+        registry.addRecipeHandler(Machines.MENU.get(), new MachineRecipeHandler());
         registry.addGenericExclusionArea((screen, areas) -> {
             if (screen instanceof IKeepsViewersClear keeps) {
                 for (final Rect2i area : keeps.areasKeptClear()) {

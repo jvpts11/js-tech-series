@@ -22,6 +22,7 @@ import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
+import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -34,9 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The Core's bridge to JEI, which finds it by its annotation and only when JEI is installed: every mod's processing
- * machines get a category of their recipes, with the machines that work them beside it, and every screen that names
- * areas to keep clear has the ingredient list kept off them. A mod that declares its machines and its screens the
- * Core's way writes nothing for JEI of its own.
+ * machines get a category of their recipes, with the machines that work them beside it and the "+" that moves a recipe
+ * into the open machine, and every screen that names areas to keep clear has the ingredient list kept off them. A mod
+ * that declares its machines and its screens the Core's way writes nothing for JEI of its own.
  */
 @JeiPlugin
 public final class CoreJeiPlugin implements IModPlugin {
@@ -72,6 +73,15 @@ public final class CoreJeiPlugin implements IModPlugin {
             for (final ItemStack machine : ProcessingRecipeViews.machineStacks(kind)) {
                 registration.addRecipeCatalyst(machine, ProcessingCategory.typeOf(kind));
             }
+        }
+    }
+
+    /** The "+" that moves a recipe into the open machine, for every kind of machine. */
+    @Override
+    public void registerRecipeTransferHandlers(final IRecipeTransferRegistration registration) {
+        for (final ProcessingKind kind : ProcessingRecipeViews.kinds()) {
+            registration.addRecipeTransferHandler(new MachineTransferHandler(kind, registration.getTransferHelper()),
+                    ProcessingCategory.typeOf(kind));
         }
     }
 

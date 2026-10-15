@@ -69,6 +69,8 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
 
     /** How often a machine of several lanes sorts its inputs among them, in ticks. */
     public static final int SORT_EVERY = 10;
+    /* The slots on a row of the process window, when the lanes are too many for rows of their own. */
+    private static final int ROW = 6;
 
     protected ProcessingMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
                                            final Layout layout, final int energyCapacity, final int energyMaxReceive,
@@ -354,6 +356,36 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
     /** Picks the recipe named {@code id} among those its inputs make; none goes back to the first that fits. */
     public void chooseRecipe(final @Nullable ResourceLocation id) {
         chosenRecipe.set(id);
+    }
+
+    /**
+     * Its inputs and outputs where the standard face shows them: each lane a row of the process window, its inputs,
+     * an arrow and its outputs; on rows of six in the window when they are too many for that.
+     */
+    @Override
+    public List<FaceSlot> mainSlots() {
+        final List<FaceSlot> slots = new ArrayList<>();
+        if (MachineScreenLayout.fits(layout.lanes(), layout.inputs(), layout.outputs())) {
+            for (int lane = 0; lane < layout.lanes(); lane++) {
+                for (int i = 0; i < layout.inputs(); i++) {
+                    final var at = MachineScreenLayout.laneSlot(lane, layout.lanes(), i, false, layout.inputs());
+                    slots.add(new FaceSlot(layout.laneInput(lane, i), at.x(), at.y(), false));
+                }
+                for (int i = 0; i < layout.outputs(); i++) {
+                    final var at = MachineScreenLayout.laneSlot(lane, layout.lanes(), i, true, layout.inputs());
+                    slots.add(new FaceSlot(layout.laneOutput(lane, i), at.x(), at.y(), true));
+                }
+            }
+            return slots;
+        }
+        for (int slot = 0; slot < layout.firstUpgrade(); slot++) {
+            final int x = MachineScreenLayout.faceX(MachineScreenLayout.PROCESS_X + 6 + slot % ROW
+                    * MachineScreenLayout.SLOT) + 1;
+            final int y = MachineScreenLayout.faceY(MachineScreenLayout.PROCESS_Y + 1 + slot / ROW
+                    * MachineScreenLayout.SLOT) + 1;
+            slots.add(new FaceSlot(slot, x, y, layout.isOutput(slot)));
+        }
+        return slots;
     }
 
     /** What the upgrades in the upgrade slots do together. */
@@ -662,6 +694,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             // Short of energy, it spends what there is and works slower in the same proportion.
             this.payment.restore(this.paid.get());
             final long spent = perTick <= 0 ? 0L : power().spend(perTick);
+            drew(spent);
             final int steps = this.payment.pay(spent, perTick);
             this.paid.set(this.payment.paid());
             this.speed.set(this.payment.lastPercent());
@@ -674,6 +707,11 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                     this.progress.set(0);
                     this.lastWork = null;
                     control().finishedOne();
+                    int count = 0;
+                    for (final ItemStack output : work.outputs()) {
+                        count += output.getCount();
+                    }
+                    madeThings(Math.max(1, count), level.getGameTime());
                 }
             }
             return MachineStatus.WORKING;

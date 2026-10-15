@@ -16,10 +16,14 @@ import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.FaceMatterHandler;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
+import dev.jstech.core.network.payload.ClientPayloads;
+import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.signal.Signals;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -29,6 +33,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,12 +44,28 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Machines {
 
+    /** The menu every machine opens, behind its five tabs. */
+    public static final DeferredHolder<MenuType<?>, MenuType<MachineMenu>> MENU = CoreItems.CONTENT.menu("machine",
+            MachineMenu::new);
+    private static final String NETWORK_VERSION = "1";
+
     private Machines() {
+    }
+
+    /** Declares the machines' menu, from the Core's constructor, while the Core's content is declared. */
+    public static void declare() {
+        // Loading the class declares it.
     }
 
     /** Hands the mod's bus and the game's what this answers, once, from the Core's constructor. */
     public static void listen(final IEventBus modBus) {
         modBus.addListener(RegisterCapabilitiesEvent.class, Machines::onRegisterCapabilities);
+        modBus.addListener(RegisterPayloadHandlersEvent.class, event -> ClientPayloads.onMenu(
+                event.registrar(NETWORK_VERSION), MachineRecipePayload.TYPE, MachineRecipePayload.STREAM_CODEC,
+                MachineMenu.class, (payload, menu, player, level) -> level.getRecipeManager().byKey(payload.recipe())
+                        .filter(holder -> holder.value() instanceof ProcessingRecipe)
+                        .ifPresent(holder -> MachineFill.fill(player, menu.machine(), processing(holder),
+                                payload.all()))));
         NeoForge.EVENT_BUS.addListener(ExplosionEvent.Detonate.class, Machines::onExplosion);
     }
 
@@ -73,6 +95,12 @@ public final class Machines {
             }
             return false;
         });
+    }
+
+    /* A recipe already known to be a processing machine's. */
+    @SuppressWarnings("unchecked")
+    private static RecipeHolder<ProcessingRecipe> processing(final RecipeHolder<?> holder) {
+        return (RecipeHolder<ProcessingRecipe>) holder;
     }
 
     @SuppressWarnings("unchecked")

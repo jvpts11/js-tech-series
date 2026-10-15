@@ -322,6 +322,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The whole recipe format for machines: catalysts that are not used up, gases and the other states of matter in
   and out, byproducts by chance, and the temperature and pressure a recipe runs between, all in the recipe files and
   shown in JEI and EMI.
+- (Core) The machine screen: every machine of every mod opens the same screen, in the game's own look, five tabs over a
+  steel face with the machine's name, class and lamps. Main shows the machine's own face, or the standard one (a meter
+  of what it draws, an LCD of what it made the last minute, the process window with each lane's arrow, its switch and
+  a sight glass of its first tank); Sides shows the machine as two cubes whose faces are picked and turned, with the
+  switches, thumbwheels and filter of what it pushes and pulls; Redstone has the knobs of how it answers redstone and
+  what a comparator reads, the lamps of the signal in and the meter out; Upgrades has its bays and the bars of what
+  they do; Protection has its port and line, its fuse, its battery and the key of who may use it. Ctrl and a click
+  locks an input slot to what it holds.
+- (Core) JEI's "+" and EMI's fill button move a recipe into the open machine: its ingredients from the player's
+  inventory into the inputs, once or a stack's worth, and the recipe picked among those its inputs make.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

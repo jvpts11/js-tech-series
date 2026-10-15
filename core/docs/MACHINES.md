@@ -220,6 +220,57 @@ out, energy arriving, a setting, its health), and so do its neighbours' changes;
   itself, as even as it goes. The tanks serve every lane. `laneInput(lane, i)` and `laneOutput(lane, i)` say which slot
   is which.
 
+## The screen
+
+*Added 2026-10-15.*
+
+Every machine opens the same screen, in the game's own look: five tabs along the top of a window that holds the
+machine's steel face, and the player's inventory below in a window of its own. On every tab the face carries the
+machine's name on an aluminium plate, its class (or FE) on a yellow one, and its three lamps, RUN, WAIT and FAULT,
+lit by its state. A machine opens it by giving its device the Core's menu:
+
+```java
+Device.of(() -> MY_MACHINE.get()).ticks(MachineBlockEntity::serverTick).opensMenu(MachineMenu::new)
+```
+
+- **Main** shows the machine's own face. Unless its mod gives it one, that is the standard face: a panel meter of
+  the energy it draws (its scale ranges itself to the most it has drawn, each mark worth what is engraved beneath),
+  an LCD of what it made the last minute and how far through its work it is, or what keeps it waiting, the process
+  window with its slots and each lane's arrow lit as far as its work has gone, its ON/OFF rocker, and a sight glass
+  of its first tank (or of its stored energy, for a machine with none). Ctrl and a click on an input slot locks it to
+  what it holds, or unlocks it; a locked empty slot shows its item faded.
+- **Sides** shows the machine as two cubes, from the front and from the back, each face tinted and named by what it
+  does with the resource picked on the buttons at the left (blue in, amber out, green both, grey neither). A click
+  picks a face, a right-click turns it; the knob on the right turns the face picked. Below, the switches of what it
+  pushes and pulls by itself, the thumbwheels of how much a second (items one by one, fluids and energy in hundreds;
+  a click on a drum's top turns it up, on its bottom down, and so does the mouse wheel), and the filter: a click
+  holding a thing lets only that pass, with an empty hand everything. A machine with more than five resources keeps
+  its states of matter behind one button, which steps through them.
+- **Redstone**: the knob of how it answers redstone (ignore, run with a signal, without one, one recipe a pulse), the
+  knob of what a comparator reads (progress, input, output, energy), fifteen lamps of the signal coming in, and the
+  meter of what a comparator beside it reads.
+- **Upgrades**: its upgrade bays, each lamp lit while it holds one, what they make of its speed and energy, and a bank
+  of bars, one an effect, the middle mark the machine as it was built.
+- **Protection**: its port's class and an LCD of the line meeting it, a lamp flashing while a line too high has struck;
+  the fuse holder, its fuse's rating and what it did; the battery bay, its charge, the share left and how long it lasts
+  at what the machine draws; and the key switch of who may use the machine besides its owner, whose name is on the
+  plate beneath. Only the owner turns the key; only whoever may set the machine up changes the rest.
+
+Every control is a button of the menu, which the server answers (`MachineMenu.SWITCH`, `sideButton(...)`,
+`automationButton(...)`, and so on), so a test or a mod presses them the way the screen does.
+
+A machine of your own with a face of its own registers it on the player's side and puts its slots where its face
+draws them, overriding `mainSlots()`; the face draws with `MachineArt`, so its parts match every other machine's:
+
+```java
+MachineFaces.register(MY_CRUSHER.get(), machine -> new CrusherFace());   // from your client setup
+
+@Override
+public List<FaceSlot> mainSlots() {
+    return List.of(new FaceSlot(0, 60, 54, false), new FaceSlot(1, 60, 124, true));
+}
+```
+
 ## Recipes
 
 *Added 2026-10-05.*
@@ -309,6 +360,13 @@ JEI and EMI are mods that show players every recipe in the game. When either is 
 declared on the Core gets a page of its own, with no code of yours: the inputs, an arrow with the time and the
 energy, the outputs, and the machines that work it (so looking up "how is this used" on a machine lists its
 recipes). The Core's integration only loads when the viewer is there, so neither is a dependency of your mod.
+
+With a machine's screen open, JEI's "+" (and EMI's fill button) on a recipe the machine works moves it in: the
+recipe's inputs from the player's inventory into the machine's first lane, each in the slot of its place in the
+recipe and its catalysts after them, once or (with Shift) as many as a stack holds; whatever the slots held that the
+recipe does not take goes back to the player, and the recipe is picked among those its inputs make. The button is
+greyed out, saying why, on a recipe of another kind, one with more ingredients than the machine has inputs, or one the
+player does not hold a set of.
 
 Screens can keep the viewers' item lists from covering them: a screen that implements `IKeepsViewersClear`
 returns the rectangles (in screen pixels) that must stay clear, and both viewers keep off them.

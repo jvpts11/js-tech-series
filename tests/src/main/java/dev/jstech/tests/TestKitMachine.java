@@ -15,6 +15,7 @@ import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineParameter;
 import dev.jstech.core.machine.ProcessingInput;
 import dev.jstech.core.machine.ProcessingKind;
@@ -50,14 +51,15 @@ public final class TestKitMachine {
     public static final int KIT_USES = 100;
     public static final int KIT_PER_SECOND = 25;
     public static final ProcessingMachineBlockEntity.Layout LAYOUT = ProcessingMachineBlockEntity.Layout.items(2, 2)
-            .withMatter(MatterState.GAS, 1, 1, 1_000L, 10L);
+            .withMatter(MatterState.GAS, 1, 1, 1_000L, 10L).withUpgrades(2);
     /** Its first output slot. */
     public static final int OUT = 2;
     public static final TextKey DIAL = TextKey.of("jstests.kit_machine.dial", "Dial");
 
     /* Its block state and model are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<DeviceBlock> BLOCK = TestSounds.CONTENT.block("test_kit_machine",
-            Device.of(() -> TestKitMachine.BLOCK_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
+            Device.of(() -> TestKitMachine.BLOCK_ENTITY.get()).ticks(MachineBlockEntity::serverTick)
+                    .opensMenu(MachineMenu::new)::block)
             .named("Test kit machine").look(IBlockLook.cubeAll("test_kit_machine")).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<KitMachineBlockEntity>> BLOCK_ENTITY =
             TestSounds.CONTENT.blockEntity("test_kit_machine", KitMachineBlockEntity::new, BLOCK);
@@ -73,7 +75,8 @@ public final class TestKitMachine {
     /** A factory of three lanes, which sorts its inputs among them. */
     public static final int LANES = 3;
     public static final BlockEntry<DeviceBlock> FACTORY = TestSounds.CONTENT.block("test_factory",
-            Device.of(() -> TestKitMachine.FACTORY_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
+            Device.of(() -> TestKitMachine.FACTORY_ENTITY.get()).ticks(MachineBlockEntity::serverTick)
+                    .opensMenu(MachineMenu::new)::block)
             .named("Test factory").look(IBlockLook.cubeAll("test_factory")).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FactoryBlockEntity>> FACTORY_ENTITY =
             TestSounds.CONTENT.blockEntity("test_factory", FactoryBlockEntity::new, FACTORY);

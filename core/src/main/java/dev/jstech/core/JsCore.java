@@ -177,6 +177,8 @@ public final class JsCore {
         CoreCables.declare();
         EndSettings.declare();
         OverheadLines.declare();
+        // The menu every machine of every mod opens, behind its five tabs.
+        Machines.declare();
         // The fonts every mod can draw in, declared with the licence and credit they come under.
         CoreFonts.declare();
         // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.

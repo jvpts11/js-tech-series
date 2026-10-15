@@ -135,6 +135,7 @@ import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
 import dev.jstech.tests.clienttest.core.LiveReloadClientTests;
+import dev.jstech.tests.clienttest.core.MachineScreenClientTests;
 import dev.jstech.tests.clienttest.core.MediaClientTests;
 import dev.jstech.tests.clienttest.core.RenderTargetsClientTests;
 import dev.jstech.tests.clienttest.core.SoundMixerClientTests;
@@ -243,6 +244,7 @@ public final class ClientTestSuite {
             InteracTuiClientTests.class,
             LeftoverProgramsClientTests.class,
             LiveInstallClientTests.class,
+            MachineScreenClientTests.class,
             McNetSpaceClientTests.class,
             MotionClientTests.class,
             MenuSwapCursorClientTests.class,

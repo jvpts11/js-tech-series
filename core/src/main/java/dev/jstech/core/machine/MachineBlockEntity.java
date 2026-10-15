@@ -15,6 +15,8 @@ import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.FieldEnergyStorage;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.IFaceGate;
+import dev.jstech.core.blockentity.IntField;
+import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
@@ -34,12 +36,15 @@ import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.signal.ISignalOutput;
 import dev.jstech.core.signal.Reading;
+import dev.jstech.core.team.Access;
 import dev.jstech.core.team.IOwned;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -85,6 +90,10 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private final ValueField<MachineStatus> status;
     private final BoolField running;
     private final ValueField<Ownership> ownership;
+    private final LongField drawn;
+    private final IntField perMinute;
+    private final Deque<long[]> made = new ArrayDeque<>();
+    private long drawnThisTick;
     private @Nullable List<MachineParameter> parameters;
     private boolean asleep;
     private long wakeAt;
@@ -107,6 +116,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     public static final int EXPLOSION_DAMAGE = 50;
     /** What a line too high takes of a machine's health as it burns its port. */
     public static final int BURN_DAMAGE = 50;
+    private static final int TICKS_A_SECOND = 20;
+    private static final int TICKS_A_MINUTE = 1_200;
 
     protected MachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
                                  final int inventorySize, final int energyCapacity, final int energyMaxReceive,
@@ -156,6 +167,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
                 .toClient();
         this.running = fields().flag("Running", false).toClient();
         this.ownership = fields().nullable("Owner", Ownership.CODEC).save().toClient();
+        // Shown only on its screen, while it is open: what it drew last tick and what it made the last minute.
+        this.drawn = fields().longInteger("Drawn", 0L).toMenu();
+        this.perMinute = fields().integer("PerMinute", 0).toMenu();
         fields().whenNeighbourChanges((server, face) -> readSignal(server));
     }
 
@@ -258,6 +272,32 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     /** Hands it to {@code to}, or to nobody for none: whoever placed it, by default. */
     public void own(@Nullable final Ownership to) {
         ownership.set(to);
+    }
+
+    /** Lets {@code to} use it besides its owner: nobody else, the owner's team, or everyone. Nobody's stays so. */
+    public void setAccess(final Access to) {
+        final Ownership owned = ownership.get();
+        if (owned != null) {
+            ownership.set(owned.withAccess(to));
+        }
+    }
+
+    /** What it drew of its energy last tick, as its screen shows it while it is open. */
+    public long drawn() {
+        return drawn.get();
+    }
+
+    /** How many things it made the last minute, as its screen shows it while it is open. */
+    public int perMinute() {
+        return perMinute.get();
+    }
+
+    /**
+     * Its slots its Main tab shows, and where: none unless it says. A machine with a face of its own puts each where
+     * its face draws it.
+     */
+    public List<FaceSlot> mainSlots() {
+        return List.of();
     }
 
     /** Gives back {@code points} of its health, mending a burnt port once it is whole; how much it gave back. */
@@ -429,6 +469,16 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return MachineSounds.SILENT;
     }
 
+    /** Counts {@code amount} of its energy drawn this tick, for its screen. */
+    protected void drew(final long amount) {
+        drawnThisTick += Math.max(0L, amount);
+    }
+
+    /** Counts {@code count} things it made in tick {@code gameTime}, for its screen's rate a minute. */
+    protected void madeThings(final int count, final long gameTime) {
+        made.addLast(new long[] {gameTime, count});
+    }
+
     /** What goes in and out of it, which its Sides tab sets face by face: items and energy, and whatever it adds. */
     protected Set<MachineResource> resources() {
         return Set.of(MachineResource.ITEMS, MachineResource.ENERGY);
@@ -477,12 +527,18 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         if (sides.automatic() && Math.floorMod(now + worldPosition.asLong(), MachineTransfers.EVERY) == 0) {
             MachineTransfers.run(server, this);
         }
+        if (now % TICKS_A_SECOND == 0) {
+            countMinute(now);
+        }
         if (asleep && now < wakeAt) {
+            drawn.set(0L);
             return;
         }
         asleep = false;
+        drawnThisTick = 0L;
         final MachineStatus stopped = stopped(now);
         final MachineStatus result = stopped != null ? stopped : work(server);
+        drawn.set(drawnThisTick);
         show(server, result);
         if (result.restful()) {
             asleep = true;
@@ -526,6 +582,18 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
         running.set(nowRunning);
         status.set(nowRunning && health.damaged() ? MachineStatus.DAMAGED : result);
+    }
+
+    /* Forgets what was made more than a minute ago, and counts the rest. */
+    private void countMinute(final long now) {
+        while (!made.isEmpty() && now - made.peekFirst()[0] > TICKS_A_MINUTE) {
+            made.removeFirst();
+        }
+        long count = 0L;
+        for (final long[] each : made) {
+            count += each[1];
+        }
+        perMinute.set((int) Math.min(Integer.MAX_VALUE, count));
     }
 
     private void play(final ServerLevel server, @Nullable final SoundKey sound) {
