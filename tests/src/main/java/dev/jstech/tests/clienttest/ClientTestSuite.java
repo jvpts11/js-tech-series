@@ -150,6 +150,7 @@ import dev.jstech.tests.clienttest.series.EnergyConverterClientTests;
 import dev.jstech.tests.clienttest.series.NetworkProbeClientTests;
 import dev.jstech.tests.clienttest.series.OverheadLinesClientTests;
 import dev.jstech.tests.clienttest.series.PipeClientTests;
+import dev.jstech.tests.clienttest.series.SignalProbeClientTests;
 import dev.jstech.tests.clienttest.series.ManualClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
 import java.lang.reflect.Method;
@@ -260,6 +261,7 @@ public final class ClientTestSuite {
             NetworkProbeClientTests.class,
             CableDragClientTests.class,
             OverheadLinesClientTests.class,
+            SignalProbeClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,

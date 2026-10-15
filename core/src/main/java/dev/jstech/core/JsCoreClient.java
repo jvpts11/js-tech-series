@@ -60,6 +60,7 @@ import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.jstechseries.energy.client.ClampMeterClient;
 import dev.jstech.core.jstechseries.energy.client.EnergyConvertersClient;
 import dev.jstech.core.jstechseries.probe.client.NetworkProbeClient;
+import dev.jstech.core.jstechseries.probe.client.SignalProbeClient;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -113,6 +114,7 @@ public final class JsCoreClient {
         MenuSwapCursor.listen();
         MotionClock.listen();
         NetworkProbeClient.listen(modEventBus);
+        SignalProbeClient.listen(modEventBus);
         NotificationsClient.listen(modEventBus);
         OverheadWireRenderer.listen();
         ScreenFiles.listen(modEventBus);

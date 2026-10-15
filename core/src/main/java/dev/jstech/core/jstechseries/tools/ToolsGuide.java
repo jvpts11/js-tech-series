@@ -9,9 +9,13 @@ package dev.jstech.core.jstechseries.tools;
 
 import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.jstechseries.probe.NetworkProbe;
+import dev.jstech.core.jstechseries.probe.SignalProbe;
 import dev.jstech.core.registry.CoreItems;
 
-/** The pages of the series' shared tools in the Core's chapter of the manual: the Basic Wrench and the Network Probe. */
+/**
+ * The pages of the series' shared tools in the Core's chapter of the manual: the Basic Wrench, the Network Probe and
+ * the Signal Probe.
+ */
 public final class ToolsGuide {
 
     /* The Core's chapter's section on cables, where the wrench's page goes. */
@@ -65,6 +69,37 @@ public final class ToolsGuide {
                                 + "lights the display and POWER switches it off.")
                 .whatCanGoWrong("The display says there is nothing to read.",
                         "The wire it was linked to was taken out, or its chunk is far away; link it again.")
+                .register();
+        CoreItems.CONTENT.guide().page("signal_probe", CABLES).titled("Signal Probe")
+                .icon(SignalProbe.ITEM::get).covers(SignalProbe.ITEM::get)
+                .whatItIs("A handheld instrument of the network probe's family, for redstone and for signals sent "
+                        + "without wire by frequency.")
+                .whatItIsFor("Reading the redstone on a wire, and finding which frequencies are heard where you "
+                        + "stand: whose they are, where they come from, how well they arrive and what they carry.")
+                .table("Its pages")
+                .property("Here", "The strength on the wire it reads, out of 15, with its peak since you linked it, "
+                        + "and the frequencies heard where you stand")
+                .property("Radio", "The frequencies again, one chosen and told in full: its owner, where it comes "
+                        + "from, its bars and its value")
+                .table("What a frequency shows")
+                .property("Bars", "How well it arrives, from one at the edge of its reach to four close by; the "
+                        + "value arrives whole with any bar")
+                .property("Clash", "Two transmitters of one owner on one frequency: its receivers give nothing "
+                        + "until one is taken off")
+                .property("Lost", "A frequency of your team that is not heard where you stand")
+                .howToGetIt("Take it from the creative tab J's Tech.")
+                .howToUseIt("Use it on a block, a redstone wire or any other, to read the redstone on it.",
+                        "Use it in the air to hold it up and read its display; the keys under the display turn its "
+                                + "pages.",
+                        "Walk with it to find where a receiver or a relay will hear a frequency well: each solid "
+                                + "block in the way shortens a transmitter's reach.",
+                        "On the radio's page, choose a frequency with the pad and press OK: where it comes from is "
+                                + "outlined in the world, through walls, for ten seconds.",
+                        "HOLD keeps the reading still, SHOW puts it beside the crosshair while you hold it, LIGHT "
+                                + "lights the display and POWER switches it off.")
+                .whatCanGoWrong("A frequency you expect is not listed.",
+                        "Its transmitter is too far, behind too much wall, or its chunk is not loaded; frequencies of "
+                                + "your team show as lost, others are not listed at all.")
                 .register();
     }
 }

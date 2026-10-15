@@ -285,6 +285,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   for cryogenic liquids, thick pipes with sight glasses and solid fittings, made of the game's own materials so a mod
   used alone carries liquids and gases. A pipe carrying a liquid hotter or colder than it stands bursts after five
   seconds and spills it. With J's Industrial installed they are its pipes, made with its recipes.
+- Sensors that speak redstone: a sensor or a machine says what it reads as readings, each with its span, and
+  gives the one chosen in redstone through one capability, `Signals.OUTPUT`, which anything that reads sensors asks; a
+  comparator reads it too. A sensor's neighbours are told only when what it gives changes. A mod writes only what its
+  sensor reads.
+- Signals by frequency, redstone without wire: a transmitter sends what is fed into it, from 0 to 15, on a
+  numbered frequency of its owner's or of its owner's team, or to a pair of its own, and every receiver on it gives it
+  out. Two transmitters of one owner on one frequency clash, and their receivers give nothing until one is taken off.
+  A transmitter is heard as far as its power, less four blocks for every solid block in the way, its value whole
+  within and nothing beyond; a relay of its team sends it again, and a relay's partner sends it again elsewhere, in
+  another dimension too. Nothing is worked out on every tick, and a receiver's neighbours are told only of a change.
+  The transmitters, receivers and relays are a mod's, on the Core's kit.
+- The signal probe: a handheld instrument of the network probe's family. Used on a block it reads the redstone
+  on it, now and its peak since; held up, its display lists the frequencies heard where the player stands, each with
+  its number, whose it is, where it comes from, how well it arrives and the value it carries, clashes marked in red,
+  and the frequencies of the player's team that are not heard there; on its radio's page one is told in full, and OK
+  outlines where it comes from.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

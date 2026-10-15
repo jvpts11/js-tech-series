@@ -25,6 +25,7 @@ says what the Core promises and what it does not yet.
 | --- | --- |
 | [Energy and resources](ENERGY_AND_RESOURCES.md) | Energy, fluids, chemicals and items between blocks; faces and filters. |
 | [Cables](CABLES.md) | The one cable block, your own cable types, and parts on cables. |
+| [Redstone and signals](SIGNALS.md) | Sensors that speak redstone, signals by frequency, relays, the signal probe. |
 | [Networks](NETWORKS.md) | The data network and its members, and peripheral links. |
 | [Operations](OPERATIONS.md) | Requests a network carries out, and adding a kind of your own. |
 

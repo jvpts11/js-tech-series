@@ -50,6 +50,8 @@ public final class JsTests {
         TestWorldGen.declare();
         // A press of two inputs, two outputs, two tanks and an upgrade slot, to prove the Core's machines.
         TestPress.declare();
+        // A transmitter, a receiver, a relay and a light sensor, to prove the Core's redstone and signals.
+        TestRadios.declare();
         // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
         TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.

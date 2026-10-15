@@ -8,10 +8,12 @@
 package dev.jstech.core.capability;
 
 import dev.jstech.core.network.NetworkCategory;
+import dev.jstech.core.signal.Reading;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -28,6 +30,7 @@ class IMonitorableTest {
         @Override public NodeUuid getNodeUuid() { return nodeUuid; }
         @Override public Optional<NetworkUuid> getNetworkUuid() { return Optional.empty(); }
         @Override public NetworkCategory getCategory() { return NetworkCategory.B; }
+        @Override public List<Reading> readings() { return List.of(); }
     }
 
     @Test
