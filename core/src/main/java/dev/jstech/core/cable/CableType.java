@@ -69,6 +69,8 @@ public final class CableType {
     private final @Nullable HardwareEra era;
     private final @Nullable TextKey renewal;
     private final IBreachRule breach;
+    private final @Nullable ResourceLocation window;
+    private final @Nullable ResourceLocation fitting;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -97,6 +99,8 @@ public final class CableType {
         this.era = builder.era;
         this.renewal = builder.renewal;
         this.breach = builder.breach;
+        this.window = builder.window;
+        this.fitting = builder.fitting;
     }
 
     /** What the cable is for, as its item's tooltip says it; empty for a cable that says nothing. */
@@ -165,6 +169,19 @@ public final class CableType {
     /** What it is made for as a pipe: the temperatures it stands and the marks it takes. */
     public PipeLimits pipe() {
         return this.pipe;
+    }
+
+    /**
+     * The glass in its windows, in its jacket's layout: a pipe or a tube whose jacket's texture leaves windows clear
+     * shows through them what flows inside it; none for a cable that shows nothing.
+     */
+    public Optional<ResourceLocation> window() {
+        return Optional.ofNullable(this.window);
+    }
+
+    /** The texture of the solid fitting it turns and branches in, in its jacket's layout; none for its jacket's. */
+    public Optional<ResourceLocation> fitting() {
+        return Optional.ofNullable(this.fitting);
     }
 
     /** What befalls a wire of it that something it is not made for reaches; by default it holds. */
@@ -257,6 +274,8 @@ public final class CableType {
         private @Nullable HardwareEra era;
         private @Nullable TextKey renewal;
         private IBreachRule breach = BreachRules.HOLDS;
+        private @Nullable ResourceLocation window;
+        private @Nullable ResourceLocation fitting;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -388,6 +407,21 @@ public final class CableType {
         /** Its jacket's texture. */
         public Builder jacket(final ResourceLocation texture) {
             this.jacket = Objects.requireNonNull(texture, "texture");
+            return this;
+        }
+
+        /**
+         * Its jacket leaves windows clear, and {@code glass}, a texture in the jacket's layout, fills them: through them
+         * a pipe shows its fluid at its level, and a tube its items moving.
+         */
+        public Builder windows(final ResourceLocation glass) {
+            this.window = Objects.requireNonNull(glass, "glass");
+            return this;
+        }
+
+        /** It turns and branches in a solid fitting of {@code texture}, in the jacket's layout, as a pipe does. */
+        public Builder fitting(final ResourceLocation texture) {
+            this.fitting = Objects.requireNonNull(texture, "texture");
             return this;
         }
 

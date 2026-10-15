@@ -245,7 +245,24 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Beyond a line's limits: a pipe's rule says what follows when a fluid it is not made for reaches it, by
   default nothing; the Core gives a rule that breaks the pipe after a while and lets the liquid spill.
 - (Core) The Basic Wrench: the series' shared wrench, in the common wrench tag; on a cable it goes round the modes of
-  the end it points at, and says which it set. Items can be declared in tags of their own, besides their tab's.
+  the end it points at, and says which it set; sneaking, it opens the end's screen. Items can be declared in tags of
+  their own, besides their tab's.
+- (Core) The screen of a line's end: on an end of a pipe or a line of items, a screen in the game's own look sets
+  everything the end has: its mode; its priority and its rate, typed or stepped, ten at a time with Shift; its channel,
+  one of sixteen in the dyes' colours; and its filter, only or all but, whose nine slots take a stack clicked onto them
+  (the item itself, the liquid in a bucket or a tank, the gas in a cylinder), go round the thing, its tags and its mod
+  with a right-click, and keep in the block the amount set by scrolling on them. A line under the filter says what
+  the end does. Any mod's wrench opens it with `EndSettings.open`. A filter's rules can be replaced, removed and given
+  amounts one by one, and a grid's policy says whether its ends are set one by one (`routesEnds`).
+- (Core) Seeing what flows: each wire of a pipe or a line knows what it carries, which way and how full it is. A pipe
+  with sight glasses shows its liquid or gas moving through them at its level, and a line of items with windows its
+  items sliding through; a player holding a wrench, or wearing goggles of the `jscore:sees_flow` tag, reads beside the
+  crosshair what the wire they look at carries, which way, how much a tick, and how its end is set. A cable type can
+  have windows and a fitting of its own at its joints.
+- (Core) The basic pipes: the Copper Pipe for liquids up to 200 °C, the Iron Gas Pipe, and the Vacuum-Jacketed Pipe
+  for cryogenic liquids, thick pipes with sight glasses and solid fittings, made of the game's own materials so a mod
+  used alone carries liquids and gases. A pipe carrying a liquid hotter or colder than it stands bursts after five
+  seconds and spills it. With J's Industrial installed they are its pipes, made with its recipes.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

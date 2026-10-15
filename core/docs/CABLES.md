@@ -30,7 +30,7 @@ public static final Connection STEAM_LINE = Connection.of(rl("steam"));        /
 public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableType.builder(STEAM_LINE)
                 .grid(GridKind.FLUID)                 // which grid moves what it carries
                 .lane(Lane.BOTTOM_RIGHT)              // its lane, the same for every generation of the line
-                .thickness(4)                         // pixels, 1 to 8
+                .thickness(4)                         // pixels: up to 6 in a lane, 12 alone
                 .carries(500, 64)                     // 500 a tick, 64 blocks a run (0: any length)
                 .loses(0)                             // millionths lost each block
                 .withstands(273, 900)                 // pipes: the coldest and hottest fluid, in kelvin
@@ -53,6 +53,9 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
 | `joinsAtMost(faces)` | The most neighbours it joins, 1 to 6 (2 for a line between two ends). |
 | `describe(job, era)` | The tooltip line saying what it is for. |
 | `jacket(texture)`, `plug(model)` | Its look; both are required. `plug(portKind, model)` gives another plug where it meets a port of that kind. |
+| `windows(glass)` | Its jacket leaves windows clear and `glass` fills them: a pipe shows its liquid or gas moving through them at its level, a line of items its items sliding through ([Seeing what flows](#seeing-what-flows)). |
+| `fitting(texture)` | It turns and branches in a solid fitting of that texture, as a pipe does, rather than in its jacket. |
+| `beyond(rule)` | What befalls it when a fluid it is not made for reaches it ([Beyond a line's limits](#beyond-a-lines-limits)). |
 
 `register()` registers the cable type and the item that lays it. The lanes the series uses: access `TOP_LEFT`,
 backbone `TOP`, peripheral `LEFT`, high compute `MIDDLE`, crafting `RIGHT`, energy `BOTTOM_LEFT`; the long distance
@@ -115,6 +118,48 @@ cable.setEnd(MyCables.PIPE.get(), Direction.EAST, CableEnd.DEFAULT.withMode(EndM
 
 The series' Basic Wrench goes round an end's modes; `CableEnds.facing` tells which end a player points at, for a
 wrench of a mod's own, and `EndTexts.set` says what was set.
+
+### The end's screen
+
+Sneaking with the Basic Wrench on an end of a line whose grid routes its ends (`IGridPolicy.routesEnds`: the Core's
+fluid, matter and item grids) opens the end's screen, in the game's own look. It sets the mode with four keys, the
+priority and the rate with a field each, typed or stepped (Shift steps ten), the channel with sixteen keys in the dyes'
+colours, and the filter: its key turns it between only and all but, and its nine slots hold its rules.
+
+| On a filter slot | What it does |
+| --- | --- |
+| click with a stack | names what a wire of the line carries of it: the item itself, the liquid in a bucket or a tank, the gas in a cylinder; a stack that holds nothing the line carries is refused. The first rule of an empty filter turns it to only |
+| click with nothing | clears the slot |
+| right-click | goes round the thing, each of its tags and its mod (`EndFilters.next`) |
+| scroll | keeps more or less of it in the block: an item or a hundred millibuckets a step, sixteen or a bucket with Shift |
+
+A wrench of a mod's own opens it with `EndSettings.open(player, cable, wire, face)`, after
+`EndSettings.hasScreen(wire)`.
+
+## Seeing what flows
+
+*Added 2026-10-15.*
+
+Each wire of a pipe or a line knows what it carries (`CableBlockEntity.flow(lane)`, a `WireFlow`): what it is, by its
+id; toward which face of its block; how much a tick; and how full, in four steps. Its mover traces where what it moved
+went, over the last half second, so the wires along the way show it, and a wire nothing crossed shows nothing.
+
+A cable type with `windows(...)` shows it: a pipe's liquid or gas through its sight glasses, at its level, in the
+liquid's own colours or a material's; a line of items its items sliding through, as many as it is full. A player who
+holds an item of the tag `jscore:sees_flow` (the Basic Wrench), or wears one on the head (goggles), reads beside the
+crosshair what the wire they look at carries, which way and how much a tick, and how the end they point at is set. A mod
+puts its own wrench or goggles in the tag.
+
+## The basic pipes
+
+*Added 2026-10-15.*
+
+The series shares three pipes, so a mod used alone carries liquids and gases: the **Copper Pipe**, for liquids up to
+200 °C, 100 mB a tick; the **Iron Gas Pipe**, for gases at low pressure, 100 mB a tick; and the **Vacuum-Jacketed
+Pipe**, double-walled, for cryogenic liquids, 400 mB a tick. Each holds its block alone, ten pixels thick, with sight
+glasses and solid fittings. A liquid hotter or colder than a pipe stands bursts it after five seconds, spilling the
+liquid. They are made of copper or iron and glass panes, obsidian for the vacuum jacket; with J's Industrial installed
+they are its pipes, made with its recipes.
 
 ## Lines that group
 

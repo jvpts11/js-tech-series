@@ -8,6 +8,7 @@
 package dev.jstech.core.jstechseries.tools;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.cable.FlowSight;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SharedUses;
@@ -30,7 +31,7 @@ public final class SharedTools {
     /** The Basic Wrench. */
     public static final ItemEntry<BasicWrenchItem> WRENCH = CoreItems.CONTENT.item("basic_wrench",
                     properties -> new BasicWrenchItem(properties.stacksTo(1))).named("Basic Wrench")
-            .tag(WRENCHES).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+            .tag(WRENCHES).tag(FlowSight.SEES_FLOW).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
 
     static {
         // Every mod of the series sets its lines' ends with it, so the Core itself uses it.

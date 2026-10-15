@@ -29,4 +29,12 @@ public interface IGridPolicy {
     default boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
         return false;
     }
+
+    /**
+     * Whether its wires' ends are set one by one, each with its priority, rate, channel and filter, as a line of items,
+     * liquids or gases routes what it carries; a line that only shares or joins has only an end's mode.
+     */
+    default boolean routesEnds() {
+        return false;
+    }
 }

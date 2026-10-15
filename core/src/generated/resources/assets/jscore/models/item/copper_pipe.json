@@ -1,0 +1,7 @@
+{
+  "parent": "jscore:block/cable/item_10",
+  "textures": {
+    "glass": "jscore:block/cable/copper_pipe_glass",
+    "jacket": "jscore:block/cable/copper_pipe"
+  }
+}

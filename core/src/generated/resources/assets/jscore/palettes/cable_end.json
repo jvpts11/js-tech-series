@@ -1,0 +1,13 @@
+{
+  "chosen": "#FFFFFFFF",
+  "dark": "#FF555555",
+  "ground": "#FFC6C6C6",
+  "hint": "#FF646464",
+  "keep": "#FFFFFFA0",
+  "light": "#FFFFFFFF",
+  "outline": "#FF000000",
+  "slot": "#FF8B8B8B",
+  "slotDark": "#FF373737",
+  "title": "#FF404040",
+  "veil": "#808B8B8B"
+}

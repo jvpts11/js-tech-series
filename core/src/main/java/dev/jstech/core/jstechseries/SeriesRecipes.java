@@ -8,8 +8,10 @@
 package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
+import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
@@ -19,14 +21,15 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import net.neoforged.neoforge.common.conditions.NotCondition;
 
 /**
  * The recipes of the series' shared content, of the game's own materials, so a mod used alone can make it. The basic
- * cable and battery are J's Industrial's first cable and energy bank when it is installed, and it gives them its own
- * industrial recipes, so these stand only without it; the wrench's and the converters' stand always.
+ * cable, pipes and battery are J's Industrial's first cable, pipes and energy bank when it is installed, and it gives
+ * them its own industrial recipes, so these stand only without it; the wrench's and the converters' stand always.
  */
 public final class SeriesRecipes extends RecipeProvider {
 
@@ -54,6 +57,14 @@ public final class SeriesRecipes extends RecipeProvider {
                 .define('W', Items.WATER_BUCKET)
                 .unlockedBy("has_copper_ingot", has(Items.COPPER_INGOT))
                 .save(alone, id("lead_acid_battery_bank"));
+        // Each pipe: its metal round a row of glass panes, the sight glasses.
+        pipe(alone, SharedPipes.COPPER_PIPE, Items.COPPER_INGOT, Items.GLASS_PANE, "copper_pipe");
+        pipe(alone, SharedPipes.IRON_GAS_PIPE, Items.IRON_INGOT, Items.GLASS_PANE, "iron_gas_pipe");
+        // The cryogenic pipe's two walls hold a vacuum, sealed with obsidian.
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, SharedPipes.VACUUM_JACKETED_PIPE, 4)
+                .pattern("III").pattern("GOG").pattern("III")
+                .define('I', Items.IRON_INGOT).define('G', Items.GLASS_PANE).define('O', Items.OBSIDIAN)
+                .unlockedBy("has_obsidian", has(Items.OBSIDIAN)).save(alone, id("vacuum_jacketed_pipe"));
         // An open-ended spanner of iron, its jaws apart at the top.
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, SharedTools.WRENCH.get())
                 .pattern("I I").pattern(" I ").pattern(" I ")
@@ -97,6 +108,14 @@ public final class SeriesRecipes extends RecipeProvider {
                 .define('X', EnergyConverters.ULTRA_HIGH.get())
                 .unlockedBy("has_converter", has(EnergyConverters.ULTRA_HIGH.get()))
                 .save(output, id("configurable_energy_converter"));
+    }
+
+    private void pipe(final RecipeOutput output, final CableEntry pipe, final Item metal, final Item glass,
+                      final String path) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, pipe, CABLES_A_CRAFT)
+                .pattern("MMM").pattern("GGG").pattern("MMM")
+                .define('M', metal).define('G', glass)
+                .unlockedBy("has_metal", has(metal)).save(output, id(path));
     }
 
     private static ResourceLocation id(final String path) {

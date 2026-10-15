@@ -10,11 +10,13 @@ package dev.jstech.core.jstechseries.tools;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableEnds;
+import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.cable.EndTexts;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.text.GameText;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -23,7 +25,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The Basic Wrench, the series' shared wrench: on a cable, it sets how the end of the wire it points at meets the block
- * beyond, going round normal, push, pull and off, or back round when sneaking, and says what it set.
+ * beyond, going round normal, push, pull and off, and says what it set. Sneaking, it opens the end's screen, where
+ * everything the end has is set, on a line that routes what it carries; on any other it goes back round.
  */
 public final class BasicWrenchItem extends Item {
 
@@ -49,6 +52,10 @@ public final class BasicWrenchItem extends Item {
         }
         final Direction face = CableEnds.facing(context.getClickedPos(), context.getClickLocation(),
                 context.getClickedFace());
+        if (player.isShiftKeyDown() && EndSettings.hasScreen(wire) && player instanceof ServerPlayer server) {
+            EndSettings.open(server, cable, wire, face);
+            return InteractionResult.CONSUME;
+        }
         final CableEnd before = cable.end(wire.type(), face);
         final CableEnd after = before.withMode(player.isShiftKeyDown() ? previous(before.mode())
                 : before.mode().next());

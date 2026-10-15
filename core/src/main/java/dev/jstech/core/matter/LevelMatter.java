@@ -10,6 +10,7 @@ package dev.jstech.core.matter;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableParts;
+import dev.jstech.core.cable.LineFlows;
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalPort;
 import dev.jstech.core.diagnostic.Section;
@@ -17,6 +18,7 @@ import dev.jstech.core.fluid.CoreFluidTags;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.grid.EndRouter;
+import dev.jstech.core.grid.FlowTrace;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.IGridMover;
@@ -74,6 +76,7 @@ public final class LevelMatter implements IGridMover {
     private long builtTaps = -1L;
     private long taps;
     private long turn;
+    private final LineFlows flows = new LineFlows();
 
     /** What the debug screen calls the time the grids of the states of matter take to move a tick's matter. */
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "matter_grid");
@@ -164,13 +167,17 @@ public final class LevelMatter implements IGridMover {
             this.builtTaps = this.taps;
         }
         final long[] moved = new long[this.parts.size()];
+        final List<FlowTrace> traces = new ArrayList<>(this.parts.size());
         for (int i = 0; i < moved.length; i++) {
             final Part part = this.parts.get(i);
             moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turn,
-                    substance -> true, LevelMatter::move);
+                    substance -> true, (from, to, substance, amount) -> move(part.trace(), from, to, substance,
+                            amount));
+            traces.add(part.trace());
         }
         this.turn++;
         this.lastTick = moved;
+        this.flows.tick(level, traces);
     }
 
     private void build(final ServerLevel level, final Grid grid) {
@@ -186,24 +193,34 @@ public final class LevelMatter implements IGridMover {
             final List<MatterEnd> ends = new ArrayList<>();
             for (final CableParts.Plug plug : found.plugs()) {
                 if (plug.end().mode() != EndMode.OFF && seen.add(plug.at().asLong() + "/" + plug.face())) {
-                    ends.add(new MatterEnd(plug.at().asLong(), plug.end(), end(level, plug.at(), plug.face())));
+                    ends.add(new MatterEnd(plug.at().asLong(), plug.wire(), plug.face().getOpposite(), plug.end(),
+                            end(level, plug.at(), plug.face())));
                 }
             }
-            this.parts.add(new Part(rate, ends));
+            this.parts.add(new Part(rate, ends, LineFlows.traceOf(level, grid, found)));
         }
     }
 
-    /* Moves {@code amount} of {@code substance} from one end's store to the other's, all or nothing. */
-    private static long move(final EndRouter.IEnd<Substance> from, final EndRouter.IEnd<Substance> to,
-                             final Substance substance, final long amount) {
-        final IStore source = ((MatterEnd) from).store().get();
-        final IStore target = ((MatterEnd) to).store().get();
-        if (source == null || target == null) {
+    /*
+     * Moves {@code amount} of {@code substance} from one end's store to the other's, all or nothing, and has
+     * {@code trace} follow it.
+     */
+    private static long move(final FlowTrace trace, final EndRouter.IEnd<Substance> from,
+                             final EndRouter.IEnd<Substance> to, final Substance substance, final long amount) {
+        final MatterEnd source = (MatterEnd) from;
+        final MatterEnd target = (MatterEnd) to;
+        final IStore given = source.store().get();
+        final IStore taken = target.store().get();
+        if (given == null || taken == null) {
             return 0L;
         }
-        final Batch.Outcome outcome = new Batch().add(new Step(source, substance, amount, false))
-                .add(new Step(target, substance, amount, true)).commit();
-        return outcome.done() ? amount : 0L;
+        final Batch.Outcome outcome = new Batch().add(new Step(given, substance, amount, false))
+                .add(new Step(taken, substance, amount, true)).commit();
+        if (!outcome.done()) {
+            return 0L;
+        }
+        trace.moved(source.wire(), target.wire(), target.into(), substance.id().toString(), amount);
+        return amount;
     }
 
     /* The block at {@code at} as a store of this state, found again each tick through cached capabilities. */
@@ -489,12 +506,15 @@ public final class LevelMatter implements IGridMover {
         }
     }
 
-    /* One connected part of the grid: how much it moves in a tick, and the ends it plugs into. */
-    private record Part(long rate, List<MatterEnd> ends) {
+    /* One connected part of the grid: how much it moves in a tick, the ends it plugs into, where what it moves goes. */
+    private record Part(long rate, List<MatterEnd> ends, FlowTrace trace) {
     }
 
-    /* One end of a part: the block, as a store of the line's state, through the face it meets, as the end is set. */
-    private record MatterEnd(long key, CableEnd end, Supplier<@Nullable IStore> store)
+    /*
+     * One end of a part: the block, as a store of the line's state, through the face it meets, as the end is set; the
+     * wire it is the end of, and the face of that wire's block it goes into the block through.
+     */
+    private record MatterEnd(long key, long wire, Direction into, CableEnd end, Supplier<@Nullable IStore> store)
             implements EndRouter.IEnd<Substance> {
 
         @Override

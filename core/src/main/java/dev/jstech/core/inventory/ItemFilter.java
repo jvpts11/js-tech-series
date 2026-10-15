@@ -77,6 +77,38 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
         return new ItemFilter(this.mode, more);
     }
 
+    /**
+     * The same filter with {@code rule} in place of the rule at {@code index}, or added at the end when {@code index}
+     * is past the last.
+     */
+    public ItemFilter withRule(final int index, final Rule rule) {
+        Objects.requireNonNull(rule, "rule");
+        if (index < 0) {
+            throw new IndexOutOfBoundsException("a filter has no rule " + index);
+        }
+        if (index >= this.rules.size()) {
+            return with(rule);
+        }
+        final List<Rule> changed = new ArrayList<>(this.rules);
+        changed.set(index, rule);
+        return new ItemFilter(this.mode, changed);
+    }
+
+    /** The same filter without the rule at {@code index}; the same filter when it has none there. */
+    public ItemFilter without(final int index) {
+        if (index < 0 || index >= this.rules.size()) {
+            return this;
+        }
+        final List<Rule> fewer = new ArrayList<>(this.rules);
+        fewer.remove(index);
+        return new ItemFilter(this.mode, fewer);
+    }
+
+    /** The same rules, naming what passes or what does not as {@code to} says. */
+    public ItemFilter withMode(final Mode to) {
+        return new ItemFilter(to, this.rules);
+    }
+
     /** Whether the rules name what passes or what does not. */
     public enum Mode implements IStableName {
         /** Only what the rules name passes. */
@@ -104,6 +136,9 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
 
         /** Whether it names {@code subject}. */
         boolean matches(IFilterSubject subject);
+
+        /** The same rule carrying {@code to}. */
+        Rule withAmount(long to);
     }
 
     /**
@@ -122,6 +157,11 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
         @Override
         public boolean matches(final IFilterSubject subject) {
             return this.pattern.sameAs(subject);
+        }
+
+        @Override
+        public Exact withAmount(final long to) {
+            return new Exact(this.pattern, to);
         }
     }
 
@@ -143,6 +183,11 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
         public boolean matches(final IFilterSubject subject) {
             return this.item.equals(subject.itemId());
         }
+
+        @Override
+        public Fuzzy withAmount(final long to) {
+            return new Fuzzy(this.item, to);
+        }
     }
 
     /**
@@ -162,6 +207,11 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
         @Override
         public boolean matches(final IFilterSubject subject) {
             return subject.hasTag(this.tag);
+        }
+
+        @Override
+        public Tag withAmount(final long to) {
+            return new Tag(this.tag, to);
         }
     }
 
@@ -186,6 +236,11 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
             final String id = subject.itemId();
             final int colon = id.indexOf(':');
             return (colon < 0 ? "minecraft" : id.substring(0, colon)).equals(this.mod);
+        }
+
+        @Override
+        public Mod withAmount(final long to) {
+            return new Mod(this.mod, to);
         }
     }
 

@@ -12,10 +12,12 @@ import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableParts;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.LineBreach;
+import dev.jstech.core.cable.LineFlows;
 import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.grid.EndRouter;
+import dev.jstech.core.grid.FlowTrace;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
@@ -65,6 +67,7 @@ public final class LevelFluids implements IGridMover {
     private long builtTaps = -1L;
     private long taps;
     private long turn;
+    private final LineFlows flows = new LineFlows();
 
     /** What the debug screen calls the time the fluid grid takes to move a tick's fluids. */
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "fluid_grid");
@@ -115,16 +118,19 @@ public final class LevelFluids implements IGridMover {
             this.builtTaps = this.taps;
         }
         final long[] moved = new long[this.parts.size()];
+        final List<FlowTrace> traces = new ArrayList<>(this.parts.size());
         for (int i = 0; i < moved.length; i++) {
             final Part part = this.parts.get(i);
             moved[i] = part.rate <= 0 ? 0L : EndRouter.route(part.ends, part.rate, this.turn,
-                    part.carries, LevelFluids::move);
+                    part.carries, (from, to, fluid, amount) -> move(part.trace, from, to, fluid, amount));
             if (!part.breakable.isEmpty()) {
                 reach(level, part);
             }
+            traces.add(part.trace);
         }
         this.turn++;
         this.lastTick = moved;
+        this.flows.tick(level, traces);
     }
 
     /*
@@ -173,42 +179,59 @@ public final class LevelFluids implements IGridMover {
             final List<FluidEnd> ends = new ArrayList<>();
             for (final CableParts.Plug plug : found.plugs()) {
                 if (plug.end().mode() != EndMode.OFF && seen.add(plug.at().asLong() + "/" + plug.face())) {
-                    ends.add(new FluidEnd(plug.at(), plug.end(), BlockCapabilityCache.create(
-                            Capabilities.FluidHandler.BLOCK, level, plug.at(), plug.face())));
+                    ends.add(new FluidEnd(plug.at(), plug.wire(), plug.face().getOpposite(), plug.end(),
+                            BlockCapabilityCache.create(Capabilities.FluidHandler.BLOCK, level, plug.at(),
+                                    plug.face())));
                 }
             }
             final PipeLimits carried = limits;
-            this.parts.add(new Part(rate, fluid -> carried.carries(fluid.getFluid()), ends, breakable));
+            this.parts.add(new Part(rate, fluid -> carried.carries(fluid.getFluid()), ends, breakable,
+                    LineFlows.traceOf(level, grid, found)));
         }
     }
 
-    /* Moves {@code amount} of {@code fluid} from one end's block to the other's, all or nothing. */
-    private static long move(final EndRouter.IEnd<FluidStack> from, final EndRouter.IEnd<FluidStack> to,
-                             final FluidStack fluid, final long amount) {
-        final IFluidHandler source = ((FluidEnd) from).handler();
-        final IFluidHandler target = ((FluidEnd) to).handler();
-        if (source == null || target == null) {
+    /*
+     * Moves {@code amount} of {@code fluid} from one end's block to the other's, all or nothing, and has
+     * {@code trace} follow it.
+     */
+    private static long move(final FlowTrace trace, final EndRouter.IEnd<FluidStack> from,
+                             final EndRouter.IEnd<FluidStack> to, final FluidStack fluid, final long amount) {
+        final FluidEnd source = (FluidEnd) from;
+        final FluidEnd target = (FluidEnd) to;
+        final IFluidHandler drained = source.handler();
+        final IFluidHandler filled = target.handler();
+        if (drained == null || filled == null) {
             return 0L;
         }
         final FluidStack moving = fluid.copyWithAmount((int) Math.min(Integer.MAX_VALUE, amount));
-        final Batch.Outcome outcome = new Batch().add(HandlerSteps.drain(source, moving))
-                .add(HandlerSteps.fill(target, moving)).commit();
-        return outcome.done() ? moving.getAmount() : 0L;
+        final Batch.Outcome outcome = new Batch().add(HandlerSteps.drain(drained, moving))
+                .add(HandlerSteps.fill(filled, moving)).commit();
+        if (!outcome.done()) {
+            return 0L;
+        }
+        trace.moved(source.wire(), target.wire(), target.into(),
+                BuiltInRegistries.FLUID.getKey(fluid.getFluid()).toString(), moving.getAmount());
+        return moving.getAmount();
     }
 
     /*
      * One connected part of the grid: how much it moves in a tick, which fluids its pipes carry, the ends it plugs
-     * into, and its pipes that break when something reaches them they are not made for.
+     * into, its pipes that break when something reaches them they are not made for, and where what it moves goes.
      */
-    private record Part(long rate, Predicate<FluidStack> carries, List<FluidEnd> ends, List<Breakable> breakable) {
+    private record Part(long rate, Predicate<FluidStack> carries, List<FluidEnd> ends, List<Breakable> breakable,
+                        FlowTrace trace) {
     }
 
     /* A pipe that breaks when something reaches it that it is not made for: where, and of which cable. */
     private record Breakable(BlockPos at, CableType type) {
     }
 
-    /* One end of a part: the block's fluids through the face it meets, as the end is set. */
-    private record FluidEnd(BlockPos at, CableEnd end, BlockCapabilityCache<IFluidHandler, @Nullable Direction> cache)
+    /*
+     * One end of a part: the block's fluids through the face it meets, as the end is set; the wire it is the end of,
+     * and the face of that wire's block it goes into the block through.
+     */
+    private record FluidEnd(BlockPos at, long wire, Direction into, CableEnd end,
+                            BlockCapabilityCache<IFluidHandler, @Nullable Direction> cache)
             implements EndRouter.IEnd<FluidStack> {
 
         @Nullable

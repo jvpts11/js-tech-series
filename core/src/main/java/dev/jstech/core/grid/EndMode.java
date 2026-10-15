@@ -10,6 +10,7 @@ package dev.jstech.core.grid;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 
 /**
  * How one end of a line meets the block it plugs into: as the block itself says (normal: a machine's output gives, its
@@ -50,6 +51,11 @@ public enum EndMode implements IStableName {
     /** Whether the line may fill the block. */
     public boolean fills() {
         return this == NORMAL || this == PUSH;
+    }
+
+    /** The modes in the order a wrench goes round them, as an end's screen shows them. */
+    public static List<EndMode> round() {
+        return List.of(NORMAL, PUSH, PULL, OFF);
     }
 
     /** The next mode, as a wrench that goes round them sets it: normal, push, pull, off, normal. */

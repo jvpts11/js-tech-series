@@ -19,6 +19,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.model.generators.ItemModelBuilder;
 import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
 import net.neoforged.neoforge.client.model.generators.ModelFile;
 import net.neoforged.neoforge.client.model.generators.loaders.DynamicFluidContainerModelBuilder;
@@ -31,6 +32,9 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 public final class ContentItemModelProvider extends ItemModelProvider {
 
     private final ModContent content;
+
+    /* The Core's item model of a cable this thick draws its windows, so it is given glass. */
+    private static final int WINDOWED_THICKNESS = 10;
 
     public ContentItemModelProvider(final PackOutput output, final ModContent content,
                                     final ExistingFileHelper existingFiles) {
@@ -93,9 +97,13 @@ public final class ContentItemModelProvider extends ItemModelProvider {
                     "is drawn as a cable but lays none", "declare it with cable(...), or give it another look");
         }
         final CableType type = laid.type();
-        getBuilder(id)
+        // A pipe's item shows its glass in its windows; a cable with none fills them with its jacket.
+        final ItemModelBuilder model = getBuilder(id)
                 .parent(new ModelFile.UncheckedModelFile(JsCore.MODID + ":block/cable/item_" + type.thickness()))
                 .texture("jacket", type.jacket());
+        if (type.window().isPresent() || type.thickness() == WINDOWED_THICKNESS) {
+            model.texture("glass", type.window().orElse(type.jacket()));
+        }
     }
 
     /**

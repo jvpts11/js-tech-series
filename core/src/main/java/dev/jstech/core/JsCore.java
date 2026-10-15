@@ -22,6 +22,7 @@ import dev.jstech.core.blockentity.FieldCapabilities;
 import dev.jstech.core.cable.CableBreaking;
 import dev.jstech.core.call.MenuCalls;
 import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.command.CoreCommands;
 import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.data.DataRegistries;
@@ -77,6 +78,8 @@ import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.energy.JsEnergyGuide;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.energy.JsEnergySettings;
+import dev.jstech.core.jstechseries.lines.LinesGuide;
+import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.core.jstechseries.tools.ToolsGuide;
 import dev.jstech.core.language.LanguageRegistry;
@@ -164,8 +167,9 @@ public final class JsCore {
         LOGGER.info("J's Core {} loaded.", modContainer.getModInfo().getVersion());
         // The data network lives on the level and the chunks as attachments the core owns.
         CoreAttachments.register(modEventBus);
-        // The cable block every mod's cables are laid in is the Core's own content.
+        // The cable block every mod's cables are laid in, and the screen of a line's end, are the Core's own content.
         CoreCables.declare();
+        EndSettings.declare();
         // The fonts every mod can draw in, declared with the licence and credit they come under.
         CoreFonts.declare();
         // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.
@@ -194,9 +198,11 @@ public final class JsCore {
         EnergyConverters.declare();
         SharedContainment.declare();
         SharedTools.declare();
+        SharedPipes.declare();
         JsEnergyGuide.declare();
         ContainmentGuide.declare();
         ToolsGuide.declare();
+        LinesGuide.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
         // with its joule and the grids of its voltage classes.
@@ -270,6 +276,7 @@ public final class JsCore {
         ClientPayloads.listen();
         ClientUpdates.listen();
         CoreCables.listen(modEventBus);
+        EndSettings.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

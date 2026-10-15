@@ -10,6 +10,7 @@ package dev.jstech.core.client.model;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.BundleShape;
 import dev.jstech.core.cable.CableDrawing;
+import dev.jstech.core.cable.CableFlowView;
 import dev.jstech.core.cable.CablePlugs;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.connect.ConnectedFaces;
@@ -50,7 +51,11 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
 
     /** Each set of wires' quads, kept until the models are baked again. */
     private static final Map<CableDrawing, List<BakedQuad>> WIRES = new ConcurrentHashMap<>();
+    /** The quads of each set of wires' windows with what flows in them, kept until the models are baked again. */
+    private static final Map<CableWindows.Key, List<BakedQuad>> WINDOWS = new ConcurrentHashMap<>();
     private static final ChunkRenderTypeSet CUTOUT = ChunkRenderTypeSet.of(RenderType.cutout());
+    private static final ChunkRenderTypeSet CUTOUT_AND_TRANSLUCENT = ChunkRenderTypeSet.of(RenderType.cutout(),
+            RenderType.translucent());
     /** The Core's housing texture: the housing, its seam, the screws and the white of a ring, a quarter each. */
     private static final ResourceLocation HOUSING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "block/cable/housing");
@@ -61,6 +66,8 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
     private static final float SWATCH_INSET = 2F;
     private static final float SWATCH_SPAN = 4F;
     private static final int NO_TINT = -1;
+    private static final int WHITE = 0xFF << 24 | 0xFFFFFF;
+    private static final int BYTE = 0xFF;
     private static final int X = 0;
     private static final int Y = 1;
     private static final int Z = 2;
@@ -73,6 +80,7 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
     /** Forgets the quads it made, as the models are baked again. */
     public static void forget() {
         WIRES.clear();
+        WINDOWS.clear();
     }
 
     @Override
@@ -81,8 +89,20 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
                                     @Nullable final RenderType renderType) {
         final List<BakedQuad> own = super.getQuads(state, side, random, data, renderType);
         final CableDrawing drawing = data.get(CableDrawing.PROPERTY);
-        if (drawing == null || drawing.isEmpty() || side != null
-                || renderType != null && renderType != RenderType.cutout()) {
+        if (drawing == null || drawing.isEmpty() || side != null) {
+            return own;
+        }
+        if (renderType == RenderType.translucent()) {
+            if (!windowed(drawing)) {
+                return own;
+            }
+            final CableFlowView view = data.get(CableFlowView.PROPERTY);
+            final List<BakedQuad> out = new ArrayList<>(own);
+            out.addAll(WINDOWS.computeIfAbsent(new CableWindows.Key(drawing, view == null ? CableFlowView.NONE
+                    : view), CableWindows::make));
+            return out;
+        }
+        if (renderType != null && renderType != RenderType.cutout()) {
             return own;
         }
         final List<BakedQuad> out = new ArrayList<>(own);
@@ -100,7 +120,19 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
     @Override
     public ChunkRenderTypeSet getRenderTypes(final BlockState state, final RandomSource random,
                                              final ModelData data) {
-        return ChunkRenderTypeSet.union(super.getRenderTypes(state, random, data), CUTOUT);
+        final CableDrawing drawing = data.get(CableDrawing.PROPERTY);
+        return ChunkRenderTypeSet.union(super.getRenderTypes(state, random, data),
+                drawing != null && windowed(drawing) ? CUTOUT_AND_TRANSLUCENT : CUTOUT);
+    }
+
+    /* Whether a wire it draws has windows. */
+    private static boolean windowed(final CableDrawing drawing) {
+        for (final Wire wire : drawing.wires()) {
+            if (wire.type().window().isPresent()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* Every box of the wires, the junction box and the rings, each face a quad. */
@@ -117,7 +149,10 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
                 out.add(switch (piece.kind()) {
                     case JACKET -> {
                         final Wire wire = drawing.wires().get(piece.strand());
-                        yield jacket(piece, face, atlas.getSprite(wire.type().jacket()), wire.type().thickness());
+                        // Where a pipe turns or branches, its core is a solid fitting of its own.
+                        final ResourceLocation texture = CableWindows.isCore(piece, wire.type().thickness())
+                                ? wire.type().fitting().orElse(wire.type().jacket()) : wire.type().jacket();
+                        yield jacket(piece, face, atlas.getSprite(texture), wire.type().thickness());
                     }
                     case RING -> flat(piece.box(), face, housing, 1, 1,
                             drawing.wires().get(piece.strand()).colour().map(dye -> dye.getId()).orElse(NO_TINT));
@@ -135,8 +170,8 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
      * a side with the length along u takes the top left strip, one with the length along v the strip beside it, both
      * at the length's own place in the block; an end takes the corner square.
      */
-    private static BakedQuad jacket(final BundleShape.Piece piece, final Direction face,
-                                    final TextureAtlasSprite sprite, final int thickness) {
+    static BakedQuad jacket(final BundleShape.Piece piece, final Direction face, final TextureAtlasSprite sprite,
+                            final int thickness) {
         final int axis = piece.axis();
         final BundleShape.Box box = piece.box();
         final int normalAxis = index(face.getAxis());
@@ -169,6 +204,12 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
      */
     private static BakedQuad quad(final BundleShape.Box box, final Direction face, final TextureAtlasSprite sprite,
                                   final int tint, final ICornerUv uv, final float size) {
+        return quad(box, face, sprite, tint, uv, size, WHITE);
+    }
+
+    /* The same, its corners in {@code colour}, as {@code 0xAARRGGBB}: a fluid in its own colour, see-through. */
+    static BakedQuad quad(final BundleShape.Box box, final Direction face, final TextureAtlasSprite sprite,
+                          final int tint, final ICornerUv uv, final float size, final int colour) {
         final Vec3i normal = face.getNormal();
         final Direction up = ConnectedFaces.up(face);
         final Direction right = ConnectedFaces.right(face);
@@ -189,7 +230,7 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
             along(position, box, up, corner[1]);
             final float[] place = uv.at(corner, position);
             baker.addVertex((float) position[0] * PIXEL, (float) position[1] * PIXEL, (float) position[2] * PIXEL)
-                    .setColor(255, 255, 255, 255)
+                    .setColor(colour >> 16 & BYTE, colour >> 8 & BYTE, colour & BYTE, colour >>> 24)
                     .setUv(sprite.getU0() + (sprite.getU1() - sprite.getU0()) * place[0] / size,
                             sprite.getV0() + (sprite.getV1() - sprite.getV0()) * place[1] / size)
                     .setUv2(0, 0)
@@ -210,12 +251,12 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     /* The axis a face's texture runs u along, as a jacket's texture is drawn: x on every face but east and west. */
-    private static int uAxis(final Direction face) {
+    static int uAxis(final Direction face) {
         return face.getAxis() == Direction.Axis.X ? Z : X;
     }
 
     /* An axis as the shape numbers it: x 0, y 1, z 2. */
-    private static int index(final Direction.Axis axis) {
+    static int index(final Direction.Axis axis) {
         return switch (axis) {
             case X -> X;
             case Y -> Y;
@@ -225,7 +266,7 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
 
     /** Where a corner of a face takes its texture from, in pixels of the texture. */
     @FunctionalInterface
-    private interface ICornerUv {
+    interface ICornerUv {
 
         /**
          * @param corner   the corner, right then up, each 0 or 1

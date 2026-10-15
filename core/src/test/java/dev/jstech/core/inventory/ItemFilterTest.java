@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -98,6 +99,50 @@ class ItemFilterTest {
 
         assertEquals(1, filter.rules().size());
         assertTrue(filter.allows(OAK));
+    }
+
+    @Test
+    void withRule_replacesARuleOrAddsOnePastTheLast() {
+        final ItemFilter filter = ItemFilter.only(new ItemFilter.Fuzzy("minecraft:iron_ingot", 5));
+
+        final ItemFilter replaced = filter.withRule(0, new ItemFilter.Tag("minecraft:logs", 0));
+        final ItemFilter added = filter.withRule(4, new ItemFilter.Tag("minecraft:logs", 0));
+
+        assertEquals(1, replaced.rules().size());
+        assertTrue(replaced.allows(OAK));
+        assertFalse(replaced.allows(IRON));
+        assertEquals(2, added.rules().size(), "a slot past the last adds the rule at the end");
+        assertThrows(IndexOutOfBoundsException.class, () -> filter.withRule(-1, new ItemFilter.Mod("jscore", 0)));
+    }
+
+    @Test
+    void without_dropsTheRuleAtItsPlace() {
+        final ItemFilter filter = ItemFilter.only(new ItemFilter.Fuzzy("minecraft:iron_ingot", 0),
+                new ItemFilter.Tag("minecraft:logs", 0));
+
+        assertEquals(List.of(new ItemFilter.Tag("minecraft:logs", 0)), filter.without(0).rules());
+        assertEquals(filter, filter.without(7), "a slot with no rule leaves the filter as it is");
+    }
+
+    @Test
+    void withMode_keepsTheRules() {
+        final ItemFilter filter = ItemFilter.only(new ItemFilter.Fuzzy("minecraft:iron_ingot", 0));
+
+        final ItemFilter turned = filter.withMode(ItemFilter.Mode.ALL_BUT);
+
+        assertEquals(filter.rules(), turned.rules());
+        assertFalse(turned.allows(IRON));
+        assertTrue(turned.allows(OAK));
+    }
+
+    @Test
+    void withAmount_keepsWhatEachKindOfRuleNames() {
+        assertEquals(new ItemFilter.Fuzzy("minecraft:stone", 9), new ItemFilter.Fuzzy("minecraft:stone", 0)
+                .withAmount(9));
+        assertEquals(new ItemFilter.Tag("minecraft:logs", 9), new ItemFilter.Tag("minecraft:logs", 1).withAmount(9));
+        assertEquals(new ItemFilter.Mod("jscore", 9), new ItemFilter.Mod("jscore", 2).withAmount(9));
+        assertEquals(new ItemFilter.Exact(SWORD, 9), new ItemFilter.Exact(SWORD, 3).withAmount(9));
+        assertThrows(IllegalArgumentException.class, () -> new ItemFilter.Mod("jscore", 0).withAmount(-1));
     }
 
     @Test

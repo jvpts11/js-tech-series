@@ -28,6 +28,7 @@ import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
@@ -79,11 +80,15 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     private final PartField linksField = fields().part(LINKS, new LinksPart()).save().toClient();
     private final CableEnds ends = new CableEnds(this::endsChanged);
     private final PartField endsField = fields().part(CableEnds.KEY, this.ends).save().toClient();
+    /* What each lane's wire carries, as its players see it: worked out by its line, never saved. */
+    private final WireFlow[] flows = new WireFlow[Lane.COUNT];
+    private final PartField flowsField = fields().part(FLOWS, new FlowsPart()).toClient();
     private boolean inGrids;
     private @Nullable BundleShape shape;
     private @Nullable VoxelShape voxels;
 
     private static final String LINKS = "Links";
+    private static final String FLOWS = "Flows";
     private static final String NETWORKS = "Networks";
     private static final String LANE = "Lane";
     private static final String NETWORK = "Network";
@@ -251,6 +256,20 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         setChanged();
         Neighbours.portsChanged(server, this.worldPosition);
         return true;
+    }
+
+    /** What the wire in {@code lane} carries, as its line last said. */
+    public WireFlow flow(final Lane lane) {
+        final WireFlow flow = this.flows[lane.id()];
+        return flow == null ? WireFlow.EMPTY : flow;
+    }
+
+    /** Shows what the wire in {@code lane} carries, on the server, telling the players who see it when it changed. */
+    public void showFlow(final Lane lane, final WireFlow flow) {
+        if (!flow(lane).equals(flow)) {
+            this.flows[lane.id()] = flow;
+            this.flowsField.changed();
+        }
     }
 
     /** Where the wire of {@code type} stands in its grid. */
@@ -466,10 +485,17 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         for (final BundleShape.Plug plug : shape().plugs()) {
             sockets.add(socket(wires.get(plug.strand()).type(), plug));
         }
+        final List<WireFlow> shown = new ArrayList<>(wires.size());
+        boolean windows = false;
+        for (final Wire wire : wires) {
+            shown.add(flow(wire.slot()));
+            windows |= wire.type().window().isPresent();
+        }
         return ModelData.builder()
                 .with(ModelLayout.PROPERTY, parts.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(parts))
                 .with(CablePlugs.PROPERTY, sockets.isEmpty() ? CablePlugs.NONE : new CablePlugs(sockets))
                 .with(CableDrawing.PROPERTY, drawing())
+                .with(CableFlowView.PROPERTY, windows ? new CableFlowView(shown) : CableFlowView.NONE)
                 .build();
     }
 
@@ -689,6 +715,46 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         /** Whether it picks nothing. */
         public boolean isNothing() {
             return this.part == null && this.wire == null;
+        }
+    }
+
+    /** What each lane's wire carries, sent to the players who see the block and never saved. */
+    private final class FlowsPart implements IFieldPart {
+
+        @Override
+        public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
+            // Worked out again by the lines as soon as the block loads.
+        }
+
+        @Override
+        public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
+            // Nothing is saved.
+        }
+
+        @Override
+        public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            final ListTag list = new ListTag();
+            for (final Lane lane : Lane.values()) {
+                final WireFlow flow = flow(lane);
+                if (!flow.isEmpty()) {
+                    final CompoundTag one = flow.write();
+                    one.putString(LANE, lane.serializedName());
+                    list.add(one);
+                }
+            }
+            tag.put(FLOWS, list);
+        }
+
+        @Override
+        public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+            Arrays.fill(CableBlockEntity.this.flows, null);
+            for (final Tag element : tag.getList(FLOWS, Tag.TAG_COMPOUND)) {
+                final CompoundTag one = (CompoundTag) element;
+                final Lane lane = Lane.byName(one.getString(LANE));
+                if (lane != null) {
+                    CableBlockEntity.this.flows[lane.id()] = WireFlow.read(one);
+                }
+            }
         }
     }
 

@@ -10,10 +10,12 @@ package dev.jstech.core.inventory;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableParts;
+import dev.jstech.core.cable.LineFlows;
 import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.grid.EndRouter;
+import dev.jstech.core.grid.FlowTrace;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.IGridMover;
@@ -30,6 +32,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -56,6 +59,7 @@ public final class LevelItems implements IGridMover {
     private long builtTaps = -1L;
     private long taps;
     private long turn;
+    private final LineFlows flows = new LineFlows();
 
     /** What the debug screen calls the time the item grid takes to move a tick's items. */
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "item_grid");
@@ -104,13 +108,16 @@ public final class LevelItems implements IGridMover {
             this.builtTaps = this.taps;
         }
         final long[] moved = new long[this.parts.size()];
+        final List<FlowTrace> traces = new ArrayList<>(this.parts.size());
         for (int i = 0; i < moved.length; i++) {
             final Part part = this.parts.get(i);
             moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turn, stack -> true,
-                    LevelItems::move);
+                    (from, to, item, amount) -> move(part.trace(), from, to, item, amount));
+            traces.add(part.trace());
         }
         this.turn++;
         this.lastTick = moved;
+        this.flows.tick(level, traces);
     }
 
     private void build(final ServerLevel level, final Grid grid) {
@@ -126,34 +133,49 @@ public final class LevelItems implements IGridMover {
             final List<ItemEnd> ends = new ArrayList<>();
             for (final CableParts.Plug plug : found.plugs()) {
                 if (plug.end().mode() != EndMode.OFF && seen.add(plug.at().asLong() + "/" + plug.face())) {
-                    ends.add(new ItemEnd(plug.at(), plug.end(), BlockCapabilityCache.create(
-                            Capabilities.ItemHandler.BLOCK, level, plug.at(), plug.face())));
+                    ends.add(new ItemEnd(plug.at(), plug.wire(), plug.face().getOpposite(), plug.end(),
+                            BlockCapabilityCache.create(Capabilities.ItemHandler.BLOCK, level, plug.at(),
+                                    plug.face())));
                 }
             }
-            this.parts.add(new Part(rate, ends));
+            this.parts.add(new Part(rate, ends, LineFlows.traceOf(level, grid, found)));
         }
     }
 
-    /* Moves {@code amount} of {@code item} from one end's inventory to the other's, all or nothing. */
-    private static long move(final EndRouter.IEnd<ItemStack> from, final EndRouter.IEnd<ItemStack> to,
-                             final ItemStack item, final long amount) {
-        final IItemHandler source = ((ItemEnd) from).handler();
-        final IItemHandler target = ((ItemEnd) to).handler();
-        if (source == null || target == null) {
+    /*
+     * Moves {@code amount} of {@code item} from one end's inventory to the other's, all or nothing, and has
+     * {@code trace} follow it.
+     */
+    private static long move(final FlowTrace trace, final EndRouter.IEnd<ItemStack> from,
+                             final EndRouter.IEnd<ItemStack> to, final ItemStack item, final long amount) {
+        final ItemEnd source = (ItemEnd) from;
+        final ItemEnd target = (ItemEnd) to;
+        final IItemHandler given = source.handler();
+        final IItemHandler taken = target.handler();
+        if (given == null || taken == null) {
             return 0L;
         }
         final int count = (int) Math.min(Integer.MAX_VALUE, amount);
-        final Batch.Outcome outcome = new Batch().add(HandlerSteps.extract(source, item, count))
-                .add(HandlerSteps.insert(target, item.copyWithCount(count))).commit();
-        return outcome.done() ? count : 0L;
+        final Batch.Outcome outcome = new Batch().add(HandlerSteps.extract(given, item, count))
+                .add(HandlerSteps.insert(taken, item.copyWithCount(count))).commit();
+        if (!outcome.done()) {
+            return 0L;
+        }
+        trace.moved(source.wire(), target.wire(), target.into(),
+                BuiltInRegistries.ITEM.getKey(item.getItem()).toString(), count);
+        return count;
     }
 
-    /* One connected part of the grid: how many items it moves in a tick, and the ends it plugs into. */
-    private record Part(long rate, List<ItemEnd> ends) {
+    /* One connected part of the grid: how many items it moves in a tick, its ends, and where what it moves goes. */
+    private record Part(long rate, List<ItemEnd> ends, FlowTrace trace) {
     }
 
-    /* One end of a part: the block's inventory through the face it meets, as the end is set. */
-    private record ItemEnd(BlockPos at, CableEnd end, BlockCapabilityCache<IItemHandler, @Nullable Direction> cache)
+    /*
+     * One end of a part: the block's inventory through the face it meets, as the end is set; the wire it is the end
+     * of, and the face of that wire's block it goes into the block through.
+     */
+    private record ItemEnd(BlockPos at, long wire, Direction into, CableEnd end,
+                           BlockCapabilityCache<IItemHandler, @Nullable Direction> cache)
             implements EndRouter.IEnd<ItemStack> {
 
         @Nullable

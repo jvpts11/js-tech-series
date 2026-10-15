@@ -53,6 +53,11 @@ public final class GridPolicies {
         public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
             return level.getCapability(Capabilities.FluidHandler.BLOCK, pos, face) != null;
         }
+
+        @Override
+        public boolean routesEnds() {
+            return true;
+        }
     };
 
     /** Items, as the game's item handler holds them: each line plugs into any block with an inventory. */
@@ -65,6 +70,11 @@ public final class GridPolicies {
         @Override
         public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
             return level.getCapability(Capabilities.ItemHandler.BLOCK, pos, face) != null;
+        }
+
+        @Override
+        public boolean routesEnds() {
+            return true;
         }
     };
 
@@ -131,6 +141,11 @@ public final class GridPolicies {
             @Override
             public boolean plugsInto(final ServerLevel level, final BlockPos pos, final Direction face) {
                 return LevelMatter.plugsInto(state, level, pos, face);
+            }
+
+            @Override
+            public boolean routesEnds() {
+                return true;
             }
         };
     }

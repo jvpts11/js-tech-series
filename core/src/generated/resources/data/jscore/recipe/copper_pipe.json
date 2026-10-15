@@ -1,0 +1,30 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:mod_loaded",
+        "modid": "jsindustrial"
+      }
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "M": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "MMM",
+    "GGG",
+    "MMM"
+  ],
+  "result": {
+    "count": 6,
+    "id": "jscore:copper_pipe"
+  }
+}
