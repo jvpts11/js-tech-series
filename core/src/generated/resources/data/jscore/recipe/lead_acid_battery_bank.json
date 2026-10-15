@@ -1,0 +1,36 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:mod_loaded",
+        "modid": "jsindustrial"
+      }
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "W": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "RWR",
+    "ICI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:lead_acid_battery_bank"
+  }
+}

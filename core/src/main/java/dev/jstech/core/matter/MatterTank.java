@@ -127,6 +127,21 @@ public class MatterTank implements IMatterHandler {
         return given > 0 ? Optional.of(new MatterStack(material, given)) : Optional.empty();
     }
 
+    /**
+     * Sets what it holds, none for empty, as a tank placed from the item that kept its matter does, whatever it held
+     * before gone; more than it holds is cut to what it holds. A material its state does not take is refused, and it
+     * says whether it was set.
+     */
+    public boolean set(final @Nullable MatterStack stack) {
+        if (stack != null && !stack.material().takes(this.state)) {
+            return false;
+        }
+        this.held = stack == null || stack.amount() <= 0 ? null
+                : stack.withAmount(Math.min(stack.amount(), capacity()));
+        this.onChange.run();
+        return true;
+    }
+
     /** Empties it, and says what it held: what a broken tank lets out. */
     public Optional<MatterStack> release() {
         final Optional<MatterStack> out = held();

@@ -1,0 +1,79 @@
+{
+  "variants": {
+    "facing=east,voltage=1": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 90
+    },
+    "facing=east,voltage=2": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 90
+    },
+    "facing=east,voltage=3": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 90
+    },
+    "facing=east,voltage=4": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 90
+    },
+    "facing=east,voltage=5": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 90
+    },
+    "facing=north,voltage=1": {
+      "model": "jscore:block/fe_converter_hv"
+    },
+    "facing=north,voltage=2": {
+      "model": "jscore:block/fe_converter_hv"
+    },
+    "facing=north,voltage=3": {
+      "model": "jscore:block/fe_converter_hv"
+    },
+    "facing=north,voltage=4": {
+      "model": "jscore:block/fe_converter_hv"
+    },
+    "facing=north,voltage=5": {
+      "model": "jscore:block/fe_converter_hv"
+    },
+    "facing=south,voltage=1": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 180
+    },
+    "facing=south,voltage=2": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 180
+    },
+    "facing=south,voltage=3": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 180
+    },
+    "facing=south,voltage=4": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 180
+    },
+    "facing=south,voltage=5": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 180
+    },
+    "facing=west,voltage=1": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 270
+    },
+    "facing=west,voltage=2": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 270
+    },
+    "facing=west,voltage=3": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 270
+    },
+    "facing=west,voltage=4": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 270
+    },
+    "facing=west,voltage=5": {
+      "model": "jscore:block/fe_converter_hv",
+      "y": 270
+    }
+  }
+}

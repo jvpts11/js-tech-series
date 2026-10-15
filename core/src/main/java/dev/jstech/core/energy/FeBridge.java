@@ -25,6 +25,15 @@ public final class FeBridge {
         return new View(Objects.requireNonNull(port, "port"));
     }
 
+    /**
+     * The game's FE storage {@code storage} as a port of {@code energy} in {@code portClass}: what a line of an energy
+     * that takes FE sees of a block that speaks only FE. Both ways round down, as the view does.
+     */
+    public static IEnergyPort port(final IEnergyStorage storage, final Energy energy, final EnergyClass portClass) {
+        return new Port(Objects.requireNonNull(storage, "storage"), Objects.requireNonNull(energy, "energy"),
+                Objects.requireNonNull(portClass, "portClass"));
+    }
+
     /* A port seen as the game's FE storage. */
     private record View(IEnergyPort port) implements IEnergyStorage {
 
@@ -68,6 +77,47 @@ public final class FeBridge {
         @Override
         public boolean canReceive() {
             return this.port.canReceive();
+        }
+    }
+
+    /* An FE storage seen as a port of an energy, in a class. */
+    private record Port(IEnergyStorage storage, Energy energy, EnergyClass portClass) implements IEnergyPort {
+
+        @Override
+        public long stored() {
+            return this.energy.fromFe(this.storage.getEnergyStored());
+        }
+
+        @Override
+        public long capacity() {
+            return this.energy.fromFe(this.storage.getMaxEnergyStored());
+        }
+
+        @Override
+        public boolean canReceive() {
+            return this.storage.canReceive();
+        }
+
+        @Override
+        public boolean canExtract() {
+            return this.storage.canExtract();
+        }
+
+        @Override
+        public long receive(final long amount, final boolean simulate) {
+            final int fe = (int) Math.min(Integer.MAX_VALUE, this.energy.toFe(Math.max(0L, amount)));
+            return this.energy.fromFe(this.storage.receiveEnergy(fe, simulate));
+        }
+
+        @Override
+        public long extract(final long amount, final boolean simulate) {
+            final int fe = (int) Math.min(Integer.MAX_VALUE, this.energy.toFe(Math.max(0L, amount)));
+            return this.energy.fromFe(this.storage.extractEnergy(fe, simulate));
+        }
+
+        @Override
+        public void meetWrongClass(final WrongClass what, final EnergyClass line, final long gameTime) {
+            // A block that speaks FE has no class, so no line is the wrong one for it.
         }
     }
 }

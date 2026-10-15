@@ -1,0 +1,79 @@
+{
+  "variants": {
+    "charge=0,facing=east": {
+      "model": "jscore:block/lead_acid_battery_bank_0",
+      "y": 90
+    },
+    "charge=0,facing=north": {
+      "model": "jscore:block/lead_acid_battery_bank_0"
+    },
+    "charge=0,facing=south": {
+      "model": "jscore:block/lead_acid_battery_bank_0",
+      "y": 180
+    },
+    "charge=0,facing=west": {
+      "model": "jscore:block/lead_acid_battery_bank_0",
+      "y": 270
+    },
+    "charge=1,facing=east": {
+      "model": "jscore:block/lead_acid_battery_bank_1",
+      "y": 90
+    },
+    "charge=1,facing=north": {
+      "model": "jscore:block/lead_acid_battery_bank_1"
+    },
+    "charge=1,facing=south": {
+      "model": "jscore:block/lead_acid_battery_bank_1",
+      "y": 180
+    },
+    "charge=1,facing=west": {
+      "model": "jscore:block/lead_acid_battery_bank_1",
+      "y": 270
+    },
+    "charge=2,facing=east": {
+      "model": "jscore:block/lead_acid_battery_bank_2",
+      "y": 90
+    },
+    "charge=2,facing=north": {
+      "model": "jscore:block/lead_acid_battery_bank_2"
+    },
+    "charge=2,facing=south": {
+      "model": "jscore:block/lead_acid_battery_bank_2",
+      "y": 180
+    },
+    "charge=2,facing=west": {
+      "model": "jscore:block/lead_acid_battery_bank_2",
+      "y": 270
+    },
+    "charge=3,facing=east": {
+      "model": "jscore:block/lead_acid_battery_bank_3",
+      "y": 90
+    },
+    "charge=3,facing=north": {
+      "model": "jscore:block/lead_acid_battery_bank_3"
+    },
+    "charge=3,facing=south": {
+      "model": "jscore:block/lead_acid_battery_bank_3",
+      "y": 180
+    },
+    "charge=3,facing=west": {
+      "model": "jscore:block/lead_acid_battery_bank_3",
+      "y": 270
+    },
+    "charge=4,facing=east": {
+      "model": "jscore:block/lead_acid_battery_bank_4",
+      "y": 90
+    },
+    "charge=4,facing=north": {
+      "model": "jscore:block/lead_acid_battery_bank_4"
+    },
+    "charge=4,facing=south": {
+      "model": "jscore:block/lead_acid_battery_bank_4",
+      "y": 180
+    },
+    "charge=4,facing=west": {
+      "model": "jscore:block/lead_acid_battery_bank_4",
+      "y": 270
+    }
+  }
+}

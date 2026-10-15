@@ -213,6 +213,24 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The protection slot: a fuse blows on the overvoltage it is rated for, cutting the energy with no damage until
   a new one is put in, and lets an arc it cannot break jump over it; a battery keeps a machine going as a UPS,
   charging while the grid has energy and feeding the machine when it runs low.
+- The basic cable and battery: the Insulated Copper Cable, a low voltage line of J's Energy carrying 10 kW and
+  losing a tenth over a hundred blocks, and the Lead-Acid Battery Bank, 50 MJ, its charge on the gauge of its sides,
+  both made of the game's own materials, so a mod used alone can carry and keep energy; with J's Industrial installed
+  they are its first cable and energy bank, made with its recipes. While J's Energy is off they carry and keep FE for
+  any mod's machine.
+- The FE converters: a cabinet for each voltage class, from 100 kW at low voltage to 12 GW at ultra-high, and
+  the Configurable Energy Converter, whose class the player sets. Each turns FE into J's Energy or J's Energy into FE,
+  FE on the left of whoever faces it and J's Energy on the right, up to a limit set on its thumbwheels that never
+  goes above its class's ceiling, and never makes energy. Its screen is the cabinet's face: the display, the RUN,
+  LIMIT and FAULT lamps, the FE and J's Energy meters, the bridge seen through a window with the energy running
+  through it, the class keys or the ceiling, the knob that sets the way and the switch. A line of the wrong class
+  stops it. A mod declares a menu its blocks open with `ModContent.menu`.
+- The containment of exotic matter and the Antimatter Trap: the Core's shared blocks where the series' mods keep
+  exotic matter, the containment every exotic form but antimatter and the trap, a Penning trap, antimatter alone. Each
+  spends energy for as long as it holds something; without energy it takes nothing and lets nothing out, so nothing is
+  ever lost; broken, it keeps what it holds in the item it drops, and placed again it holds it again. Antihydrogen
+  joins the catalogue, and a material's mark says whether it is antimatter. A matter tank can be set to what it holds,
+  as one placed from its item is.
 
 ### Changed
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

@@ -1,0 +1,13 @@
+{
+  "values": [
+    "jscore:lead_acid_battery_bank",
+    "jscore:fe_converter_lv",
+    "jscore:fe_converter_mv",
+    "jscore:fe_converter_hv",
+    "jscore:fe_converter_ehv",
+    "jscore:fe_converter_uhv",
+    "jscore:configurable_energy_converter",
+    "jscore:exotic_matter_containment",
+    "jscore:antimatter_trap"
+  ]
+}

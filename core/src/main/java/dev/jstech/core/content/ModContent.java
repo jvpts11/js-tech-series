@@ -44,6 +44,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -57,9 +59,11 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.network.IContainerFactory;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -69,7 +73,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What one mod puts in the game, declared in one place: its blocks, its items and the components they carry, the
- * block entities its blocks make, its creative tabs, its sounds and fonts, and the registries datapacks fill.
+ * block entities its blocks make and the menus they open, its creative tabs, its sounds and fonts, and the registries datapacks fill.
  *
  * <p>A block or an item is declared once, with everything about it, and nothing else lists it again: the
  * generator writes its block state, models, name, loot and tags from the declaration, the tab shows it from the
@@ -103,6 +107,7 @@ public final class ModContent {
     private @Nullable DeferredRegister<RecipeSerializer<?>> recipeSerializers;
     private final List<ProcessingKind> declaredProcessing = new ArrayList<>();
     private @Nullable DeferredRegister<EntityType<?>> entityTypes;
+    private @Nullable DeferredRegister<MenuType<?>> menus;
     private final List<EntityEntry<?>> declaredEntities = new ArrayList<>();
     private final Map<String, ModGuide> guides = new LinkedHashMap<>();
     private final List<ScriptBinding> declaredScriptBindings = new ArrayList<>();
@@ -206,6 +211,18 @@ public final class ModContent {
                         makers.stream().map(DeferredBlock::get).toArray(Block[]::new)).build(null));
         declaredBlockEntities.add(type);
         return type;
+    }
+
+    /**
+     * Declares a menu the mod's blocks open, which the client makes with {@code factory} from what the server sent as
+     * it opened.
+     */
+    public <M extends AbstractContainerMenu> DeferredHolder<MenuType<?>, MenuType<M>> menu(
+            final String id, final IContainerFactory<M> factory) {
+        if (menus == null) {
+            menus = DeferredRegister.create(Registries.MENU, modid);
+        }
+        return menus.register(id, () -> IMenuTypeExtension.create(factory));
     }
 
     /** The block entity types this mod declared, once they are registered. */
@@ -383,6 +400,9 @@ public final class ModContent {
         }
         if (components != null) {
             components.register(modEventBus);
+        }
+        if (menus != null) {
+            menus.register(modEventBus);
         }
         if (fluidTypes != null) {
             fluidTypes.register(modEventBus);

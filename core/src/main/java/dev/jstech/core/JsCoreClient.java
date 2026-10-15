@@ -53,6 +53,7 @@ import dev.jstech.core.client.state.ClientStateEvents;
 import dev.jstech.core.client.vehicle.VehicleControls;
 import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.jstechseries.energy.client.ClampMeterClient;
+import dev.jstech.core.jstechseries.energy.client.EnergyConvertersClient;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -80,6 +81,7 @@ public final class JsCoreClient {
         ClampMeterClient.listen(modEventBus);
         CableColours.listen(modEventBus);
         ClientStateEvents.listen();
+        EnergyConvertersClient.listen(modEventBus);
         ConfigClient.listen();
         CoreFontClient.listen(modEventBus);
         CoreModels.listen(modEventBus);

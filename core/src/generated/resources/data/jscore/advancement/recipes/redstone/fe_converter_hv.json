@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_converter": {
+      "conditions": {
+        "items": [
+          {
+            "items": "jscore:fe_converter_mv"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "jscore:fe_converter_hv"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_converter"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "jscore:fe_converter_hv"
+    ]
+  }
+}

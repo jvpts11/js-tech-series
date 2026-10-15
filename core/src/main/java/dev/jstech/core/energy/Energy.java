@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,7 @@ public final class Energy {
     private final TextKey name;
     private final Supplier<EnergyUnit> unit;
     private final @Nullable Supplier<EnergyRatio> feRate;
+    private final BooleanSupplier acceptsFe;
     private final @Nullable TextKey powerSymbol;
     private final List<EnergyClass> classes;
     private final boolean classless;
@@ -62,6 +64,7 @@ public final class Energy {
         this.name = builder.name;
         this.unit = builder.unit;
         this.feRate = builder.feRate;
+        this.acceptsFe = builder.acceptsFe;
         this.powerSymbol = builder.powerSymbol;
         this.classless = builder.classes.isEmpty();
         this.classes = this.classless ? List.of(EnergyClass.of(builder.id.getPath(), builder.name))
@@ -144,6 +147,14 @@ public final class Energy {
         return steps == 0 ? WrongClass.NONE : this.rule.at(steps);
     }
 
+    /**
+     * Whether its lines take and give FE now: whether a block with only the game's energy capability is met by its lines
+     * as a port of any class, at its worth in FE.
+     */
+    public boolean acceptsFe() {
+        return this.acceptsFe.getAsBoolean();
+    }
+
     /** What it is worth in FE: its rate where it declares one (a server's setting), its unit's ratio otherwise. */
     public EnergyRatio ratio() {
         return this.feRate == null ? unit().ratio() : this.feRate.get();
@@ -213,6 +224,7 @@ public final class Energy {
         private final TextKey name;
         private Supplier<EnergyUnit> unit = CoreEnergy.FE;
         private @Nullable Supplier<EnergyRatio> feRate;
+        private BooleanSupplier acceptsFe = () -> false;
         private @Nullable TextKey powerSymbol;
         private final List<EnergyClass> classes = new ArrayList<>();
         private final Map<String, Integer> loss = new LinkedHashMap<>();
@@ -235,6 +247,15 @@ public final class Energy {
          */
         public Builder feRate(final Supplier<EnergyRatio> rate) {
             this.feRate = Objects.requireNonNull(rate, "rate");
+            return this;
+        }
+
+        /**
+         * Whether its lines take and give FE, asked each time: a block with only the game's energy capability is then a
+         * port of any class to them, so the energy speaks FE with the rest of a pack. Never unless said.
+         */
+        public Builder acceptsFe(final BooleanSupplier when) {
+            this.acceptsFe = Objects.requireNonNull(when, "when");
             return this;
         }
 

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.datagen;
 
+import dev.jstech.core.jstechseries.SeriesRecipes;
 import dev.jstech.core.registry.CoreItems;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
@@ -28,6 +29,8 @@ public final class JsCoreDataGenerators {
 
     public static void onGatherData(final GatherDataEvent event) {
         final ContentData data = ContentData.gather(event, CoreItems.CONTENT);
+        // The series' shared content is made of the game's own materials, so a mod used alone can make it.
+        data.server(new SeriesRecipes(data.output(), data.lookup()));
         data.check();
     }
 }

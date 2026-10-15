@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "RGR",
+    "ICI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:fe_converter_lv"
+  }
+}

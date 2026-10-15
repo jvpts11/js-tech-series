@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "E": {
+      "item": "minecraft:emerald"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "X": {
+      "item": "jscore:fe_converter_hv"
+    }
+  },
+  "pattern": [
+    "EOE",
+    "OXO",
+    "EOE"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:fe_converter_ehv"
+  }
+}

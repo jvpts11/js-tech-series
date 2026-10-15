@@ -16,6 +16,17 @@ import org.junit.jupiter.api.Test;
 class VoltageClassTest {
 
     @Test
+    void ofRank_findsEachClassByItsRankAndNoneBeyond() {
+        for (final VoltageClass each : VoltageClass.values()) {
+            assertEquals(Optional.of(each), VoltageClass.ofRank(each.rank()));
+        }
+        assertEquals(1, VoltageClass.LOW.rank());
+        assertEquals(5, VoltageClass.ULTRA_HIGH.rank());
+        assertEquals(Optional.empty(), VoltageClass.ofRank(0));
+        assertEquals(Optional.empty(), VoltageClass.ofRank(6));
+    }
+
+    @Test
     void joinedTo_neighbouringAlternatingClassesNeedATransformer() {
         assertEquals(Optional.of(GridEquipment.TRANSFORMER), VoltageClass.LOW.joinedTo(VoltageClass.MEDIUM));
         assertEquals(Optional.of(GridEquipment.TRANSFORMER), VoltageClass.HIGH.joinedTo(VoltageClass.MEDIUM));

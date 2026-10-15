@@ -39,9 +39,24 @@ public enum VoltageClass {
         this.directCurrent = directCurrent;
     }
 
+    /** The class whose rank is {@code rank}, 1 for the low class to 5 for the ultra-high one. */
+    public static Optional<VoltageClass> ofRank(final int rank) {
+        for (final VoltageClass each : values()) {
+            if (each.rank == rank) {
+                return Optional.of(each);
+            }
+        }
+        return Optional.empty();
+    }
+
     /** Its name in ids, as its grid is named. */
     public String path() {
         return this.path;
+    }
+
+    /** Where it stands among the classes: 1 for the low class, up to 5 for the ultra-high one. */
+    public int rank() {
+        return this.rank;
     }
 
     /** Its nominal voltage, in volts. */

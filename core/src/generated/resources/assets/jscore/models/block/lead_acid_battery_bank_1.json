@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "jscore:block/battery/lead_acid_top",
+    "side": "jscore:block/battery/lead_acid_side_1"
+  }
+}

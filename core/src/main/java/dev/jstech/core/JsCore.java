@@ -69,9 +69,13 @@ import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SimplePath;
+import dev.jstech.core.jstechseries.containment.ContainmentGuide;
+import dev.jstech.core.jstechseries.containment.SharedContainment;
 import dev.jstech.core.jstechseries.energy.ClampMeter;
+import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.energy.JsEnergyGuide;
+import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.energy.JsEnergySettings;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.log.LogCommand;
@@ -184,7 +188,11 @@ public final class JsCore {
         NotificationSounds.declare();
         // The clamp meter, the series' instrument that reads the energy through a line or a block, and its page.
         ClampMeter.declare();
+        SharedEnergy.declare();
+        EnergyConverters.declare();
+        SharedContainment.declare();
         JsEnergyGuide.declare();
+        ContainmentGuide.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
         // with its joule and the grids of its voltage classes.
@@ -252,6 +260,9 @@ public final class JsCore {
         BigPayloads.listen(modEventBus);
         CableBreaking.listen();
         ClampMeter.listen(modEventBus);
+        SharedEnergy.listen(modEventBus);
+        EnergyConverters.listen(modEventBus);
+        SharedContainment.listen(modEventBus);
         ClientPayloads.listen();
         ClientUpdates.listen();
         CoreCables.listen(modEventBus);

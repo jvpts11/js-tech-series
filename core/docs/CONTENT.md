@@ -326,8 +326,15 @@ public class KilnMenu extends CoreMenu {
   player walked away; `block(level, pos, BlockClass.class)` for any block of a family (a menu shared by several
   variants of a block must check the family, or it opens and closes in the same tick); `near(level, pos, blocks)`.
 
-Register the menu type with NeoForge as usual (`IMenuTypeExtension.create(KilnMenu::new)` in your mod's menu
-register) and its screen on the client with `RegisterMenuScreensEvent`.
+Declare the menu type with the rest of your content, and its screen on the client with `RegisterMenuScreensEvent`:
+
+```java
+public static final DeferredHolder<MenuType<?>, MenuType<KilnMenu>> KILN =
+        CONTENT.menu("kiln", KilnMenu::new);
+```
+
+`CONTENT.menu` registers it under your mod's id when `CONTENT.register(modEventBus)` runs; the factory is the
+constructor that reads the block's position from what the server sent.
 
 ## Materials
 

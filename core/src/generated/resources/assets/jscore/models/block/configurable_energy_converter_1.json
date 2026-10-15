@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "jscore:block/converter/bottom",
+    "east": "jscore:block/converter/fe",
+    "north": "jscore:block/converter/front_configurable",
+    "particle": "jscore:block/converter/back",
+    "south": "jscore:block/converter/back",
+    "up": "jscore:block/converter/top",
+    "west": "jscore:block/converter/je_lv"
+  }
+}

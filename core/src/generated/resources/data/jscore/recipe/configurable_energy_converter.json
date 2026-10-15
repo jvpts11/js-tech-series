@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "minecraft:comparator"
+    },
+    "R": {
+      "item": "minecraft:repeater"
+    },
+    "X": {
+      "item": "jscore:fe_converter_uhv"
+    }
+  },
+  "pattern": [
+    " C ",
+    "RXR",
+    " C "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:configurable_energy_converter"
+  }
+}

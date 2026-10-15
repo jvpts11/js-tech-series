@@ -1,0 +1,79 @@
+{
+  "variants": {
+    "facing=east,voltage=1": {
+      "model": "jscore:block/configurable_energy_converter_1",
+      "y": 90
+    },
+    "facing=east,voltage=2": {
+      "model": "jscore:block/configurable_energy_converter_2",
+      "y": 90
+    },
+    "facing=east,voltage=3": {
+      "model": "jscore:block/configurable_energy_converter_3",
+      "y": 90
+    },
+    "facing=east,voltage=4": {
+      "model": "jscore:block/configurable_energy_converter_4",
+      "y": 90
+    },
+    "facing=east,voltage=5": {
+      "model": "jscore:block/configurable_energy_converter_5",
+      "y": 90
+    },
+    "facing=north,voltage=1": {
+      "model": "jscore:block/configurable_energy_converter_1"
+    },
+    "facing=north,voltage=2": {
+      "model": "jscore:block/configurable_energy_converter_2"
+    },
+    "facing=north,voltage=3": {
+      "model": "jscore:block/configurable_energy_converter_3"
+    },
+    "facing=north,voltage=4": {
+      "model": "jscore:block/configurable_energy_converter_4"
+    },
+    "facing=north,voltage=5": {
+      "model": "jscore:block/configurable_energy_converter_5"
+    },
+    "facing=south,voltage=1": {
+      "model": "jscore:block/configurable_energy_converter_1",
+      "y": 180
+    },
+    "facing=south,voltage=2": {
+      "model": "jscore:block/configurable_energy_converter_2",
+      "y": 180
+    },
+    "facing=south,voltage=3": {
+      "model": "jscore:block/configurable_energy_converter_3",
+      "y": 180
+    },
+    "facing=south,voltage=4": {
+      "model": "jscore:block/configurable_energy_converter_4",
+      "y": 180
+    },
+    "facing=south,voltage=5": {
+      "model": "jscore:block/configurable_energy_converter_5",
+      "y": 180
+    },
+    "facing=west,voltage=1": {
+      "model": "jscore:block/configurable_energy_converter_1",
+      "y": 270
+    },
+    "facing=west,voltage=2": {
+      "model": "jscore:block/configurable_energy_converter_2",
+      "y": 270
+    },
+    "facing=west,voltage=3": {
+      "model": "jscore:block/configurable_energy_converter_3",
+      "y": 270
+    },
+    "facing=west,voltage=4": {
+      "model": "jscore:block/configurable_energy_converter_4",
+      "y": 270
+    },
+    "facing=west,voltage=5": {
+      "model": "jscore:block/configurable_energy_converter_5",
+      "y": 270
+    }
+  }
+}

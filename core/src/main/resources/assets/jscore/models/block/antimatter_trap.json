@@ -1,0 +1,47 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "base": "jscore:block/containment/trap_base",
+    "body": "jscore:block/containment/trap_body",
+    "cap": "jscore:block/containment/trap_cap",
+    "particle": "jscore:block/containment/trap_body"
+  },
+  "elements": [
+    {
+      "from": [1, 0, 1],
+      "to": [15, 2, 15],
+      "faces": {
+        "north": {"uv": [0, 0, 14, 2], "texture": "#base"},
+        "south": {"uv": [0, 0, 14, 2], "texture": "#base"},
+        "east": {"uv": [0, 0, 14, 2], "texture": "#base"},
+        "west": {"uv": [0, 0, 14, 2], "texture": "#base"},
+        "up": {"uv": [0, 0, 14, 14], "texture": "#base"},
+        "down": {"uv": [0, 0, 14, 14], "texture": "#base", "cullface": "down"}
+      }
+    },
+    {
+      "from": [3, 2, 3],
+      "to": [13, 13, 13],
+      "faces": {
+        "north": {"uv": [0, 0, 10, 11], "texture": "#body"},
+        "south": {"uv": [0, 0, 10, 11], "texture": "#body"},
+        "east": {"uv": [0, 0, 10, 11], "texture": "#body"},
+        "west": {"uv": [0, 0, 10, 11], "texture": "#body"},
+        "up": {"uv": [0, 0, 10, 10], "texture": "#cap"},
+        "down": {"uv": [0, 0, 10, 10], "texture": "#cap"}
+      }
+    },
+    {
+      "from": [2, 13, 2],
+      "to": [14, 15, 14],
+      "faces": {
+        "north": {"uv": [0, 0, 12, 2], "texture": "#cap"},
+        "south": {"uv": [0, 0, 12, 2], "texture": "#cap"},
+        "east": {"uv": [0, 0, 12, 2], "texture": "#cap"},
+        "west": {"uv": [0, 0, 12, 2], "texture": "#cap"},
+        "up": {"uv": [0, 0, 12, 12], "texture": "#cap"},
+        "down": {"uv": [0, 0, 12, 12], "texture": "#cap"}
+      }
+    }
+  ]
+}

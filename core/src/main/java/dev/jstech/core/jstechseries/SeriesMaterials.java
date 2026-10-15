@@ -19,7 +19,8 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * The series' catalogue of what the world is made of, which every mod of the series and any other shares: the 118
  * known elements ({@link Elements}), their isotopes ({@link Isotopes}), the elements beyond the known table
- * ({@link Superheavies}), the exotic forms of matter ({@link ExoticMatter}) and the alloys. The metals the mods name
+ * ({@link Superheavies}), the exotic forms of matter ({@link ExoticMatter}), antimatter ({@link Antimatter}) and the
+ * alloys. The metals the mods name
  * most are here by name.
  */
 @TextHolder
@@ -45,6 +46,7 @@ public final class SeriesMaterials {
         Isotopes.declare();
         Superheavies.declare();
         ExoticMatter.declare();
+        Antimatter.declare();
         SharedCatalogue.declare();
         NaturalRadioactivity.declare();
         ChemicalLinks.declare();

@@ -91,7 +91,10 @@ public final class LevelEnergy implements IGridMover {
             return level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, face) != null;
         }
         final IEnergyPort port = level.getCapability(EnergyPorts.PORT, pos, face);
-        return port != null && port.energy() == energy;
+        if (port != null) {
+            return port.energy() == energy;
+        }
+        return energy.acceptsFe() && level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, face) != null;
     }
 
     /** The energy it moves. */
@@ -276,6 +279,7 @@ public final class LevelEnergy implements IGridMover {
                     plug.face()));
         }
         final PortNode port = new PortNode(BlockCapabilityCache.create(EnergyPorts.PORT, level, plug.at(),
+                plug.face()), BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, level, plug.at(),
                 plug.face()), this.energy, this.lineClass);
         ports.add(port);
         return port;
@@ -359,12 +363,15 @@ public final class LevelEnergy implements IGridMover {
     private static final class PortNode implements IEnergyNode {
 
         private final BlockCapabilityCache<IEnergyPort, @Nullable Direction> cache;
+        private final BlockCapabilityCache<IEnergyStorage, @Nullable Direction> fe;
         private final Energy energy;
         private final EnergyClass lineClass;
 
-        private PortNode(final BlockCapabilityCache<IEnergyPort, @Nullable Direction> cache, final Energy energy,
+        private PortNode(final BlockCapabilityCache<IEnergyPort, @Nullable Direction> cache,
+                         final BlockCapabilityCache<IEnergyStorage, @Nullable Direction> fe, final Energy energy,
                          final EnergyClass lineClass) {
             this.cache = cache;
+            this.fe = fe;
             this.energy = energy;
             this.lineClass = lineClass;
         }
@@ -420,10 +427,17 @@ public final class LevelEnergy implements IGridMover {
             }
         }
 
-        /* The port, when it is of this energy and works on this line: of its class, or let by the rule. */
+        /*
+         * The port, when it is of this energy and works on this line: of its class, or let by the rule; or, while the
+         * energy takes FE, a block with only the game's energy capability, at its worth in FE.
+         */
         private @Nullable IEnergyPort working() {
             final IEnergyPort port = this.cache.getCapability();
-            if (port == null || port.energy() != this.energy) {
+            if (port == null) {
+                final IEnergyStorage storage = this.energy.acceptsFe() ? this.fe.getCapability() : null;
+                return storage == null ? null : FeBridge.port(storage, this.energy, this.lineClass);
+            }
+            if (port.energy() != this.energy) {
                 return null;
             }
             return port.portClass() == this.lineClass

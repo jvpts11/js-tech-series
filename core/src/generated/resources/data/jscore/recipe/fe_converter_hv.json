@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "minecraft:redstone_block"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "X": {
+      "item": "jscore:fe_converter_mv"
+    }
+  },
+  "pattern": [
+    "DBD",
+    "BXB",
+    "DBD"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:fe_converter_hv"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "jscore:block/containment/exotic_top",
+    "side": "jscore:block/containment/exotic_side"
+  }
+}

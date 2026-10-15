@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "X": {
+      "item": "jscore:fe_converter_lv"
+    }
+  },
+  "pattern": [
+    "GQG",
+    "QXQ",
+    "GQG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:fe_converter_mv"
+  }
+}

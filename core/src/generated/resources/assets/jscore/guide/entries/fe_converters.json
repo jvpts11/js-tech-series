@@ -1,0 +1,126 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fe_converters.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fe_converters.for"
+    },
+    {
+      "type": "table",
+      "caption": "jscore.guide.fe_converters.table1",
+      "rows": [
+        [
+          {
+            "words": "jscore.guide.fe_converters.table1_1"
+          },
+          {
+            "words": "jscore.guide.fe_converters.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.fe_converters.table1_2"
+          },
+          {
+            "words": "jscore.guide.fe_converters.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.fe_converters.table1_3"
+          },
+          {
+            "words": "jscore.guide.fe_converters.value1_3"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.fe_converters.table1_4"
+          },
+          {
+            "words": "jscore.guide.fe_converters.value1_4"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.fe_converters.table1_5"
+          },
+          {
+            "words": "jscore.guide.fe_converters.value1_5"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.fe_converters.table1_6"
+          },
+          {
+            "words": "jscore.guide.fe_converters.value1_6"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fe_converters.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.fe_converters.use1",
+        "jscore.guide.fe_converters.use2",
+        "jscore.guide.fe_converters.use3",
+        "jscore.guide.fe_converters.use4",
+        "jscore.guide.fe_converters.use5"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.fe_converters.fix1",
+          "problem": "jscore.guide.fe_converters.problem1"
+        },
+        {
+          "fix": "jscore.guide.fe_converters.fix2",
+          "problem": "jscore.guide.fe_converters.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:configurable_energy_converter",
+  "id": "jscore:fe_converters",
+  "items": [
+    "jscore:fe_converter_lv",
+    "jscore:fe_converter_mv",
+    "jscore:fe_converter_hv",
+    "jscore:fe_converter_ehv",
+    "jscore:fe_converter_uhv",
+    "jscore:configurable_energy_converter"
+  ],
+  "order": 7,
+  "section": "energy",
+  "title": "jscore.guide.fe_converters.title"
+}

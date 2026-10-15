@@ -72,7 +72,7 @@ public final class JsEnergy {
     /** J's Energy. */
     public static final Energy ENERGY = Energies.builder(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "je"),
                     NAME).unit(JOULE).power(WATT_SYMBOL).classes(LOW, MEDIUM, HIGH, EXTRA_HIGH, ULTRA_HIGH)
-            .feRate(JsEnergySettings::feRate).wrongClass(JsEnergy::meeting).declare();
+            .feRate(JsEnergySettings::feRate).acceptsFe(JsEnergy::speaksFe).wrongClass(JsEnergy::meeting).declare();
 
     private static final Map<VoltageClass, EnergyClass> CLASSES = new EnumMap<>(Map.of(VoltageClass.LOW, LOW,
             VoltageClass.MEDIUM, MEDIUM, VoltageClass.HIGH, HIGH, VoltageClass.EXTRA_HIGH, EXTRA_HIGH,
