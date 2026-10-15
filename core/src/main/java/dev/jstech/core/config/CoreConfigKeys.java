@@ -11,6 +11,7 @@ import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.diagnostic.DiagnosticBalance;
 import dev.jstech.core.language.ExecutionBalance;
+import dev.jstech.core.material.NamingBalance;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.ChunkLoadingBalance;
@@ -37,6 +38,8 @@ public final class CoreConfigKeys {
     public static final String PROTECTION = "protection";
     /** The watchdog, and what the server counts of what it sends. */
     public static final String DIAGNOSTICS = "diagnostics";
+    /** Naming the elements discovered beyond the known table. */
+    public static final String ELEMENTS = "elements";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -55,6 +58,8 @@ public final class CoreConfigKeys {
     private static final int MAX_ROBOTS_PER_PLAYER = 1024;
     private static final int MIN_STALL_MILLIS = 50;
     private static final int MAX_STALL_MILLIS = 60_000;
+    private static final int SHORTEST_LONGEST_NAME = 4;
+    private static final int LONGEST_LONGEST_NAME = 40;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
@@ -210,6 +215,25 @@ public final class CoreConfigKeys {
             .comment("Whether operators are told in chat when a piece of a mod's work stalls or slows itself.")
             .named("Tell operators of stalls");
 
+    /** Whether the discoverer of an element beyond the known table gives it its name and its symbol. */
+    public static final ConfigKey<Boolean> ELEMENTS_DISCOVERERS_NAME = ConfigKey.flag(
+            ELEMENTS + ".discoverers_name", true)
+            .comment("Whether the player who first discovers an element beyond the 118 known gives it its name and "
+                    + "its symbol, for everyone; when off, the series' own names are used.")
+            .named("Discoverers name elements");
+
+    /** Whether an element's name must end in "-ium". */
+    public static final ConfigKey<Boolean> ELEMENTS_REQUIRE_IUM = ConfigKey.flag(ELEMENTS + ".require_ium", false)
+            .comment("Whether a name given to an element must end in -ium, as the elements' names do.")
+            .named("Names end in -ium").activeWhen(ELEMENTS_DISCOVERERS_NAME);
+
+    /** How many letters a name given to an element may have. */
+    public static final ConfigKey<Integer> ELEMENTS_LONGEST_NAME = ConfigKey.whole(
+            ELEMENTS + ".longest_name", NamingBalance.DEFAULT_LONGEST)
+            .range(SHORTEST_LONGEST_NAME, LONGEST_LONGEST_NAME)
+            .comment("How many letters a name given to an element may have.")
+            .named("Longest name").unit("letters").activeWhen(ELEMENTS_DISCOVERERS_NAME);
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -223,12 +247,14 @@ public final class CoreConfigKeys {
             .sectionComment(PROTECTION, "Who may hurt whom, what is written down of what players do to others' "
                     + "things, and how many of each thing one player may have.")
             .sectionComment(DIAGNOSTICS, "The watchdog, and what the server counts of what it sends each player.")
+            .sectionComment(ELEMENTS, "Naming the elements discovered beyond the 118 known.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
             .sectionNamed(WORLD, "World")
             .sectionNamed(PROTECTION, "Protection")
             .sectionNamed(DIAGNOSTICS, "Diagnostics")
+            .sectionNamed(ELEMENTS, "Elements")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -251,6 +277,9 @@ public final class CoreConfigKeys {
             .key(DIAGNOSTICS_STALL_MILLIS, DiagnosticBalance::setStallMillis)
             .key(DIAGNOSTICS_COUNT_NETWORK, DiagnosticBalance::setCountNetwork)
             .key(DIAGNOSTICS_WARN_OPERATORS, DiagnosticBalance::setWarnOperators)
+            .key(ELEMENTS_DISCOVERERS_NAME, NamingBalance::setDiscoverersName)
+            .key(ELEMENTS_REQUIRE_IUM, NamingBalance::setRequireIum)
+            .key(ELEMENTS_LONGEST_NAME, NamingBalance::setLongest)
             .build();
 
     private CoreConfigKeys() {

@@ -50,7 +50,8 @@ public final class CoreConfigKeysGameTests {
                         "media.max_file_megabytes", "media.player_quota_megabytes", "calendar.days_per_season",
                         "world.chunks_per_owner", "protection.team_damage", "protection.audit",
                         "protection.audit_entries", "protection.robots_per_player", "diagnostics.stall_millis",
-                        "diagnostics.count_network", "diagnostics.warn_operators"),
+                        "diagnostics.count_network", "diagnostics.warn_operators", "elements.discoverers_name",
+                        "elements.require_ium", "elements.longest_name"),
                 CoreConfigKeys.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the settings declared");
         same(helper, "jstech-balance.toml", CoreConfigKeys.FILE.fileName(), "the file's name");
         helper.succeed();

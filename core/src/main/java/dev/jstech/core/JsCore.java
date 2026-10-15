@@ -65,6 +65,7 @@ import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.integration.opac.OpacIntegration;
 import dev.jstech.core.item.ItemStates;
+import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.language.LanguageRegistry;
@@ -72,6 +73,7 @@ import dev.jstech.core.log.LogCommand;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.HostRocks;
 import dev.jstech.core.material.MaterialData;
+import dev.jstech.core.material.MaterialNames;
 import dev.jstech.core.material.MaterialProperties;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.MaterialValues;
@@ -164,7 +166,9 @@ public final class JsCore {
         MaterialProperties.declare();
         MineralFamilies.declare();
         HostRocks.declare();
+        MaterialNames.declare();
         SeriesMaterials.declare();
+        ElementNaming.declare();
         MaterialValues.declare();
         MaterialData.declare();
         // What the manuals sound like: the game's own book and button sounds, in the Manuals channel.

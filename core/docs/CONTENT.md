@@ -422,6 +422,43 @@ The art and the data above are packs the Core makes as the game loads, and any m
 `RuntimePacks.declare(id, PackType, title, files)` whose files are made from what the installed mods declared, each
 only when first read. Such a pack is always on, below every pack a player or a server adds.
 
+### The series' catalogue
+
+The series' own materials are in `SeriesMaterials`, which any mod uses as it uses its own:
+
+- **The 118 known elements** (`Element`, `Elements.of(Element.URANIUM)`), as data: atomic number, symbol, the kind each
+  is at room temperature (bromine and mercury liquids, silicon and germanium crystals, the rest metals, non-metal
+  solids or gases), and a colour near the pure element's. A metal can be molten, a gas liquefied, hydrogen and helium
+  a plasma. Iron, copper and gold keep the game's ingots, nuggets, blocks, raw ores and ores.
+- **Isotopes** (`Isotopes`), materials of their own tied to their element by their mass number
+  (`material.isotope()`), named after it ("Uranium-235") and written as chemists write them (²³⁵U): deuterium,
+  tritium, helium-3, the reactor's fuels and targets, the sources of radiation, and the stable, neutron-rich isotope
+  of each superheavy element from rutherfordium to oganesson, near the island of stability's 184 neutrons. A mod adds
+  its own with `Materials.isotope(id, element, massNumber)`.
+- **The elements beyond the known table** (`Superheavies`, 119 to 250), each known by its systematic name
+  (`jscore:ununennium`, symbol Uue), which it shows until it is discovered.
+- **The exotic forms of matter** (`ExoticMatter`), a kind of their own, each in the state it calls for: metallic
+  hydrogen, neutronium, quark-gluon plasma, strange matter, dark matter, Bose-Einstein condensate, negative-mass
+  matter, degenerate matter, time crystals, photonic matter and computronium.
+
+### Naming what is discovered
+
+On a server, the player who first discovers an element beyond the known table gives it its name and its symbol, and
+the element and all its things take them, for everyone and in every language. A mod says when an element is
+discovered, at its first synthesis:
+
+```java
+ElementNaming.discover(player, Superheavies.of(119));
+```
+
+The discoverer is told how to name it, `/jstech name_element 119 <name> <symbol>`. A name holds letters only, no more
+than the world allows, repeats no other element's name and, where the world asks, ends in "-ium"; a symbol has one or
+two letters and repeats none. Once given a name is not changed, but an operator can take one back,
+`/jstech unname_element 119`, and its discoverer names it again. The names are kept with the world and sent to every
+player (`MaterialNames`, which any mod can use for materials of its own that a world names). In a world whose
+settings turn naming off, an element takes the series' own name when discovered (Genevium, Teslium... Aeternium, for
+seventeen of them), or keeps its systematic one. The settings are in `jstech-balance.toml`, section `elements`.
+
 ### The old catalogue
 
 The fixed catalogue of five metals in seven forms (`ModMaterial`, `MaterialForm`, `MaterialItems`) stays, deprecated,

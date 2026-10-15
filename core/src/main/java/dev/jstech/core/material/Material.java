@@ -22,26 +22,32 @@ import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * What the world is made of: an element, an alloy, a mineral, a compound, a liquid, a gas, an exotic form of matter.
- * A material has a kind, which says the forms it can take; the state it is in at room temperature and the others it
- * may take (a molten metal is a liquid); its colour, which its things are drawn in; and the real data it carries, its
- * properties. It has no tier: when it becomes available is for each mod's recipes to say. Declared once, with
- * {@link Materials}.
+ * What the world is made of: an element, an isotope, an alloy, a mineral, a compound, a liquid, a gas, an exotic form
+ * of matter. A material has a kind, which says the forms it can take; the state it is in at room temperature and the
+ * others it may take (a molten metal is a liquid); its colour, which its things are drawn in; and the real data it
+ * carries, its properties. It has no tier: when it becomes available is for each mod's recipes to say. Declared once,
+ * with {@link Materials}.
  */
 public final class Material {
 
     private final ResourceLocation id;
     private final MaterialKind kind;
-    private final TextKey name;
+    private final Text name;
+    private final @Nullable TextKey nameKey;
     private final int colour;
+    private final MatterState roomState;
     private final Set<MatterState> states;
     private final Map<MaterialProperty<?>, Object> values;
     private final Map<MaterialProperty<?>, MaterialProperty.Shown> shown;
     private final Map<Form, Supplier<? extends ItemLike>> provided;
     private final Map<HostRock, Supplier<? extends Block>> providedOres;
     private final OreLook oreLook;
+    private final @Nullable Isotope isotope;
+    private final boolean nameable;
+    private final @Nullable IMaterialNamer namer;
 
     /* A material that gives no colour is drawn in a plain grey. */
     private static final int GREY = 0x9A9A9A;
@@ -50,8 +56,10 @@ public final class Material {
         this.id = builder.id;
         this.kind = builder.kind;
         this.name = builder.name;
+        this.nameKey = builder.nameKey;
         this.colour = builder.colour;
-        final Set<MatterState> all = EnumSet.of(builder.kind.roomState());
+        this.roomState = builder.roomState;
+        final Set<MatterState> all = EnumSet.of(builder.roomState);
         all.addAll(builder.states);
         this.states = Collections.unmodifiableSet(all);
         this.values = Collections.unmodifiableMap(new LinkedHashMap<>(builder.values));
@@ -59,6 +67,9 @@ public final class Material {
         this.provided = Collections.unmodifiableMap(new LinkedHashMap<>(builder.provided));
         this.providedOres = Collections.unmodifiableMap(new LinkedHashMap<>(builder.providedOres));
         this.oreLook = builder.oreLook;
+        this.isotope = builder.isotope;
+        this.nameable = builder.nameable;
+        this.namer = builder.namer;
     }
 
     public ResourceLocation id() {
@@ -69,14 +80,36 @@ public final class Material {
         return this.kind;
     }
 
-    /** What it is called: "Iron". */
+    /**
+     * What it is called: "Iron"; the name it was given in this world, for a material that can be named
+     * ({@link MaterialNames}); for an isotope, its element's name and its mass number, "Uranium-235".
+     */
     public Text name() {
-        return this.name.text();
+        if (this.namer != null) {
+            final Optional<Text> now = this.namer.name(this);
+            if (now.isPresent()) {
+                return now.get();
+            }
+        } else if (this.nameable) {
+            final Optional<MaterialNames.Given> given = MaterialNames.given(this);
+            if (given.isPresent()) {
+                return Text.literal(given.get().name());
+            }
+        }
+        if (this.isotope != null && this.nameKey == null) {
+            return MaterialTexts.ISOTOPE.with(this.isotope.element().name(), this.isotope.massNumber());
+        }
+        return this.name;
     }
 
-    /** The key of its name, as it was declared. */
-    public TextKey nameKey() {
+    /** What it was called as it was declared, before any name given in a world. */
+    public Text declaredName() {
         return this.name;
+    }
+
+    /** The key of its name, for a name declared as a sentence; none for a name that is the same in every language. */
+    public Optional<TextKey> nameKey() {
+        return Optional.ofNullable(this.nameKey);
     }
 
     /** Its colour, as {@code 0xRRGGBB}: what its things are drawn in. */
@@ -86,7 +119,7 @@ public final class Material {
 
     /** The state it is in at room temperature. */
     public MatterState roomState() {
-        return this.kind.roomState();
+        return this.roomState;
     }
 
     /** Every state it can take, the one at room temperature among them. */
@@ -105,11 +138,23 @@ public final class Material {
     }
 
     /**
-     * The value its declaration gives {@code property}, or none. A data pack may give another, which
-     * {@link MaterialValues} reads over this one.
+     * The value its declaration gives {@code property}, or none; the symbol given in this world for a material named
+     * in it. A data pack may give another, which {@link MaterialValues} reads over this one.
      */
     @SuppressWarnings("unchecked")
     public <T> Optional<T> value(final MaterialProperty<T> property) {
+        if (property == MaterialProperties.SYMBOL) {
+            final Optional<String> now = this.namer != null ? this.namer.symbol(this)
+                    : MaterialNames.given(this).map(MaterialNames.Given::symbol);
+            if (now.isPresent()) {
+                return Optional.of((T) now.get());
+            }
+            // An isotope is written as chemists write it, after its element's symbol as that symbol is now: ²³⁵U.
+            if (this.isotope != null && !this.values.containsKey(property)) {
+                return this.isotope.element().value(MaterialProperties.SYMBOL)
+                        .map(symbol -> (T) (Materials.superscript(this.isotope.massNumber()) + symbol));
+            }
+        }
         return Optional.ofNullable((T) this.values.get(property));
     }
 
@@ -161,9 +206,32 @@ public final class Material {
         };
     }
 
+    /** The element it is an isotope of, with its mass number, for an isotope. */
+    public Optional<Isotope> isotope() {
+        return Optional.ofNullable(this.isotope);
+    }
+
+    /** Whether a player can give it a name in a world, as the discoverer of an element names it. */
+    public boolean nameable() {
+        return this.nameable;
+    }
+
     @Override
     public String toString() {
         return this.id.toString();
+    }
+
+    /**
+     * What an isotope is of: its element, and its mass number, its protons and neutrons together.
+     *
+     * @param element    the element
+     * @param massNumber its mass number: 235 for uranium-235
+     */
+    public record Isotope(Material element, int massNumber) {
+
+        public Isotope {
+            Objects.requireNonNull(element, "element");
+        }
     }
 
     /** How a material is declared. */
@@ -171,27 +239,44 @@ public final class Material {
 
         private final ResourceLocation id;
         private final MaterialKind kind;
-        private final TextKey name;
+        private final Text name;
+        private final @Nullable TextKey nameKey;
         private final Set<MatterState> states = EnumSet.noneOf(MatterState.class);
         private final Map<MaterialProperty<?>, Object> values = new LinkedHashMap<>();
         private final Map<MaterialProperty<?>, MaterialProperty.Shown> shown = new LinkedHashMap<>();
         private final Map<Form, Supplier<? extends ItemLike>> provided = new LinkedHashMap<>();
         private final Map<HostRock, Supplier<? extends Block>> providedOres = new LinkedHashMap<>();
         private int colour = GREY;
+        private MatterState roomState;
         private OreLook oreLook = OreLook.PLAIN;
+        private @Nullable Isotope isotope;
+        private boolean nameable;
+        private @Nullable IMaterialNamer namer;
 
-        Builder(final ResourceLocation id, final MaterialKind kind, final TextKey name) {
+        Builder(final ResourceLocation id, final MaterialKind kind, final Text name, @Nullable final TextKey nameKey) {
             this.id = Objects.requireNonNull(id, "id");
             this.kind = Objects.requireNonNull(kind, "kind");
             this.name = Objects.requireNonNull(name, "name");
+            this.nameKey = nameKey;
+            this.roomState = kind.roomState();
             // Its kind says its state at room temperature, and every material has one.
-            this.values.put(MaterialProperties.ROOM_STATE, kind.roomState());
+            this.values.put(MaterialProperties.ROOM_STATE, this.roomState);
         }
 
         /** Its colour, as {@code 0xRRGGBB}. */
         public Builder colour(final int rgb) {
             this.colour = rgb & 0xFFFFFF;
             this.values.put(MaterialProperties.COLOUR, ConfigColours.write(this.colour));
+            return this;
+        }
+
+        /**
+         * The state it is in at room temperature, when not the one its kind says: an exotic form of matter in the
+         * state it calls for, a time crystal solid.
+         */
+        public Builder at(final MatterState state) {
+            this.roomState = Objects.requireNonNull(state, "state");
+            this.values.put(MaterialProperties.ROOM_STATE, state);
             return this;
         }
 
@@ -235,10 +320,34 @@ public final class Material {
         }
 
         /**
+         * An isotope of {@code element}, of mass number {@code massNumber}: named after its element ("Uranium-235")
+         * unless it was declared with a name of its own, as deuterium.
+         */
+        public Builder isotopeOf(final Material element, final int massNumber) {
+            this.isotope = new Isotope(element, massNumber);
+            return this;
+        }
+
+        /**
+         * A player can give it a name in a world: an element beyond the known table, named by its discoverer. Unless
+         * a namer says otherwise, the name given in the world ({@link MaterialNames}) is its name.
+         */
+        public Builder nameable() {
+            this.nameable = true;
+            return this;
+        }
+
+        /** What it is called as a world goes on, asked before its declaration each time its name is read. */
+        public Builder namedBy(final IMaterialNamer now) {
+            this.namer = Objects.requireNonNull(now, "now");
+            return this;
+        }
+
+        /**
          * Declares the material.
          *
-         * @throws DeclarationError when a material of that id is declared already, or it is given a thing for a form
-         *                          its kind cannot take
+         * @throws DeclarationError when a material of that id is declared already, it is given a thing for a form its
+         *                          kind cannot take, or it is an isotope of no element
          */
         public Material declare() {
             for (final Form form : this.provided.keySet()) {
@@ -248,6 +357,10 @@ public final class Material {
                                     + " cannot take",
                             "give things only for the forms its kind takes");
                 }
+            }
+            if (this.isotope != null && this.isotope.massNumber() <= 0) {
+                throw DeclarationError.of(this.id.getNamespace(), "the isotope " + this.id,
+                        "has the mass number " + this.isotope.massNumber(), "give it its protons and neutrons");
             }
             return Materials.declare(new Material(this));
         }

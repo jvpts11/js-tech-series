@@ -158,6 +158,19 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   over a material's own, one file per material.
 - (Core) Packs made as the game loads: a mod declares a resource pack or a data pack whose files it makes from what the
   installed mods declared, each made only when first read, always on and below every pack a player or a server adds.
+- (Core) The 118 elements: every known element is a material of the series' catalogue, with its symbol, its atomic
+  number, the kind it is at room temperature and the states it can take; their forms exist only when a mod uses them.
+- (Core) Isotopes: materials of their own tied to their element by their mass number, named after it ("Uranium-235")
+  and written as chemists write them (²³⁵U); deuterium, tritium, helium-3, the reactor's fuels and targets, the
+  sources of radiation, and the stable isotope of each superheavy element of the known table.
+- (Core) Beyond the known table: the elements 119 to 250, under their systematic names (ununennium, Uue) until they
+  are discovered. On a server, the player who first discovers one gives it its name and its symbol, for everyone and
+  in every language, kept with the world; a name holds letters only, repeats no other and can be asked to end in
+  "-ium", a symbol has one or two letters, and an operator can take a name back. Where discoverers do not name them,
+  seventeen take the series' own names, Genevium to Aeternium.
+- (Core) The exotic forms of matter, a kind of their own, each in the state it calls for: metallic hydrogen,
+  neutronium, quark-gluon plasma, strange matter, dark matter, Bose-Einstein condensate, negative-mass matter,
+  degenerate matter, time crystals, photonic matter and computronium.
 
 ### Changed
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

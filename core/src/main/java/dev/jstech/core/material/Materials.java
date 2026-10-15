@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.material;
 
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.DeclarationError;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public final class Materials {
 
     private static final Map<ResourceLocation, Material> BY_ID = new ConcurrentHashMap<>();
     private static final List<Material> ALL = new CopyOnWriteArrayList<>();
+    private static final String SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 
     private static volatile @Nullable Map<Item, MaterialThing> providedThings;
     private static volatile int providedCount;
@@ -41,7 +43,40 @@ public final class Materials {
 
     /** A material called {@code id}, of {@code kind}, named {@code name}. */
     public static Material.Builder material(final ResourceLocation id, final MaterialKind kind, final TextKey name) {
-        return new Material.Builder(id, kind, name);
+        return new Material.Builder(id, kind, name.text(), name);
+    }
+
+    /**
+     * A material whose name is the same in every language, as a name is: an element beyond the known table under its
+     * systematic name. An isotope is named after its element unless it is given a name of its own.
+     */
+    public static Material.Builder material(final ResourceLocation id, final MaterialKind kind, final Text name) {
+        return new Material.Builder(id, kind, name, null);
+    }
+
+    /**
+     * An isotope of {@code element} of mass number {@code massNumber}, called {@code id}: of its element's kind, colour
+     * and atomic number, named after it ("Uranium-235") and written as chemists write it (²³⁵U), unless the builder
+     * says otherwise.
+     */
+    public static Material.Builder isotope(final ResourceLocation id, final Material element, final int massNumber) {
+        final Material.Builder builder = new Material.Builder(id, element.kind(), Text.EMPTY, null)
+                .isotopeOf(element, massNumber).colour(element.colour());
+        element.value(MaterialProperties.ATOMIC_NUMBER).ifPresent(z -> builder.with(MaterialProperties.ATOMIC_NUMBER,
+                z));
+        element.states().forEach(builder::also);
+        return builder;
+    }
+
+    /** An isotope with a name of its own, as deuterium and tritium have. */
+    public static Material.Builder isotope(final ResourceLocation id, final Material element, final int massNumber,
+                                           final TextKey name) {
+        final Material.Builder builder = new Material.Builder(id, element.kind(), name.text(), name)
+                .isotopeOf(element, massNumber).colour(element.colour());
+        element.value(MaterialProperties.ATOMIC_NUMBER).ifPresent(z -> builder.with(MaterialProperties.ATOMIC_NUMBER,
+                z));
+        element.states().forEach(builder::also);
+        return builder;
     }
 
     /** Every material declared, in the order they were. */
@@ -82,6 +117,15 @@ public final class Materials {
         providedCount = ALL.size();
         providedThings = Map.copyOf(built);
         return providedThings;
+    }
+
+    /** {@code number} in superscript digits, as a mass number is written before a symbol: 235 as ²³⁵. */
+    public static String superscript(final int number) {
+        final StringBuilder out = new StringBuilder();
+        for (final char digit : Integer.toString(number).toCharArray()) {
+            out.append(SUPERSCRIPT.charAt(digit - '0'));
+        }
+        return out.toString();
     }
 
     static Material declare(final Material material) {

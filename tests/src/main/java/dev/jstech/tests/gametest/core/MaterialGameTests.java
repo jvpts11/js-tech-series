@@ -11,6 +11,7 @@ import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.material.Form;
 import dev.jstech.core.material.Forms;
@@ -92,13 +93,13 @@ public final class MaterialGameTests {
     @GameTest(template = ARENA)
     public static void declarations_thatCannotBeAreRefused(final GameTestHelper helper) {
         helper.assertTrue(refused(() -> Materials.material(SeriesMaterials.TIN.id(), MaterialKind.METAL,
-                SeriesMaterials.TIN_NAME).declare()), "a material declared twice");
+                Element.TIN.nameKey()).declare()), "a material declared twice");
         helper.assertTrue(refused(() -> MaterialUses.use(JsTests.MODID, SeriesMaterials.TIN, Forms.PLATE)),
                 "a use declared after the game registered its things");
         helper.assertTrue(refused(() -> MaterialUses.use(JsTests.MODID, SeriesMaterials.TIN, Forms.ORE)),
                 "an ore declared without its rocks");
         helper.assertTrue(refused(() -> Materials.material(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
-                        "wrong"), MaterialKind.GEM, SeriesMaterials.TIN_NAME)
+                        "wrong"), MaterialKind.GEM, Element.TIN.nameKey())
                 .provided(Forms.INGOT, () -> Items.IRON_INGOT).declare()), "a gem given an ingot");
         helper.succeed();
     }
