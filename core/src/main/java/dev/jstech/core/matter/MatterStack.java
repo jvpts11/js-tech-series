@@ -17,7 +17,8 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * An amount of a material in a state that is neither a solid nor a liquid: a gas, a supercritical fluid, a slurry, a
  * plasma, exotic matter. The amount is in millibuckets as the matter would be at the pressure of the open air, so a
- * tank that holds its volume at ten times that pressure holds ten times its volume.
+ * tank that holds its volume at ten times that pressure holds ten times its volume; a gas is counted at 0 °C, a mole of
+ * it to 22.4 millibuckets, which are litres.
  *
  * @param material the material
  * @param amount   how much, in millibuckets at the pressure of the open air; above nothing

@@ -14,12 +14,15 @@ import java.util.Optional;
 
 /**
  * What the elements do with heat, as data: each one's density, specific heat and thermal conductivity near room
- * temperature, how well its surface radiates, and where it melts and boils at the open air's pressure. The elements
- * of every day are here; one that is not is taken as its kind is on the whole.
+ * temperature, how well its surface radiates, and where it melts and boils at the open air's pressure; and, for the
+ * liquids that are kept and boiled, what a kilogram takes to boil, what a mole weighs and how dense the liquid is. The
+ * elements of every day are here; one that is not is taken as its kind is on the whole.
  */
 final class ElementHeat {
 
     private static final Map<Element, Thermal> HEAT = new EnumMap<>(Element.class);
+    /* Joules in a kilojoule, grams in a kilogram. */
+    private static final double KILO = 1_000.0;
 
     static {
         gas(Element.HYDROGEN, 0.0899, 14_304, 0.1805, 14.01, 20.28);
@@ -96,6 +99,20 @@ final class ElementHeat {
         put(Element.THORIUM, 11_700, 113, 54.0, 0.3, 2_023, 5_061);
         put(Element.URANIUM, 19_100, 116, 27.5, 0.3, 1_405.3, 4_404);
         put(Element.PLUTONIUM, 19_816, 130, 6.74, 0.3, 912.5, 3_505);
+        // The liquids that are kept and boiled: the gases liquefied, and the two elements liquid in the open air.
+        boils(Element.HYDROGEN, 446, 2.016, 70.85);
+        boils(Element.HELIUM, 20.7, 4.003, 125);
+        boils(Element.NITROGEN, 199.2, 28.014, 806.1);
+        boils(Element.OXYGEN, 213.1, 31.998, 1_141);
+        boils(Element.FLUORINE, 166, 37.997, 1_505);
+        boils(Element.NEON, 85.8, 20.18, 1_207);
+        boils(Element.CHLORINE, 287.8, 70.90, 1_562.5);
+        boils(Element.ARGON, 161.1, 39.948, 1_395.4);
+        boils(Element.KRYPTON, 108.4, 83.798, 2_413);
+        boils(Element.XENON, 96.3, 131.293, 2_942);
+        boils(Element.RADON, 81.5, 222, 4_400);
+        boils(Element.BROMINE, 187, 159.808, 3_102.8);
+        boils(Element.MERCURY, 295, 200.59, 13_534);
     }
 
     private ElementHeat() {
@@ -110,6 +127,15 @@ final class ElementHeat {
                             final double conductivity, final double emissivity, final double melting,
                             final double boiling) {
         HEAT.put(element, new Thermal(density, specificHeat, conductivity, emissivity, melting, boiling));
+    }
+
+    /*
+     * How its liquid boils: the kilojoules a kilogram takes, the grams a mole of its gas's molecules weighs (two atoms
+     * of nitrogen to a molecule), and the kilograms a cubic metre of the liquid weighs.
+     */
+    private static void boils(final Element element, final double kiloJoules, final double grams,
+                              final double liquid) {
+        HEAT.computeIfPresent(element, (key, heat) -> heat.boils(kiloJoules * KILO, grams / KILO, liquid));
     }
 
     /* A gas at the open air's pressure, which radiates nothing to speak of. */

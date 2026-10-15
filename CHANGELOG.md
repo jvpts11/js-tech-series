@@ -348,6 +348,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   is and radiate, so in a vacuum only radiators cool them. Heat pipes carry heat between the blocks they join. The
   everyday elements carry their real density, specific heat, conductivity, emissivity and melting and boiling points.
   Only blocks out of balance are worked, a few hundred a tick, and the rest sleep.
+- (Core) Boilers with the real enthalpy: a hot wall boils water into steam, each litre taking the heat that brings it
+  to its boiling point and then 2.26 MJ a kilogram, and lower where the air is thin or higher in a pressure vessel.
+  Heaters and coolers run at their power up to their limit, and a loop's liquid in its cool and hot forms passes
+  through a wall to give or take its heat, so two passes make a heat exchanger. The game's water is the series' water,
+  and water and the liquefied gases carry their real heat of boiling and molar mass.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

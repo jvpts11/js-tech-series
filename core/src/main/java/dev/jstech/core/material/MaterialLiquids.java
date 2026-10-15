@@ -13,7 +13,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -23,6 +25,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
@@ -50,6 +53,7 @@ import org.jetbrains.annotations.ApiStatus;
 public final class MaterialLiquids {
 
     private static final List<Use> USES = new CopyOnWriteArrayList<>();
+    private static final Map<ResourceLocation, Material> LINKS = new ConcurrentHashMap<>();
 
     /** The temperature of a liquid at room temperature, in kelvin, as the game's water. */
     public static final int ROOM = 300;
@@ -84,8 +88,36 @@ public final class MaterialLiquids {
             throw DeclarationError.of(modid, "the use of " + material + " as a liquid",
                     "is at " + kelvin + " K, colder than nothing can be", "give its temperature in kelvin");
         }
+        if (LINKS.containsValue(material)) {
+            throw DeclarationError.of(modid, "the use of " + material + " as a liquid",
+                    "is of a material whose liquid the game or another mod has already", "use that liquid");
+        }
         USES.add(new Use(modid, material, kelvin));
         return fluid(material);
+    }
+
+    /**
+     * Declares that the liquid {@code fluid}, the game's own or another mod's, is {@code material}: the game's water is
+     * the series' water. The Core registers no liquid of its own for the material, and what heat does to the liquid
+     * is the material's. The fluid is named by id alone, so a link to an absent mod's liquid sleeps.
+     *
+     * @throws DeclarationError when the fluid is linked to a material already
+     */
+    public static void link(final Material material, final ResourceLocation fluid) {
+        Objects.requireNonNull(material, "material");
+        if (LINKS.putIfAbsent(Objects.requireNonNull(fluid, "fluid"), material) != null) {
+            throw DeclarationError.of(fluid.getNamespace(), "the liquid " + fluid, "is linked to a material twice",
+                    "link it once");
+        }
+    }
+
+    /** The material the liquid {@code fluid} is: a material's liquid's own, or the one linked to it; none otherwise. */
+    public static Optional<Material> materialOf(final Fluid fluid) {
+        if (fluid.getFluidType() instanceof MaterialLiquid.Type type) {
+            return Optional.of(type.liquid().material());
+        }
+        final Fluid source = fluid instanceof FlowingFluid flowing ? flowing.getSource() : fluid;
+        return Optional.ofNullable(LINKS.get(BuiltInRegistries.FLUID.getKey(source)));
     }
 
     /** {@code material}'s liquid, once registered. */

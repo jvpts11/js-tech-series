@@ -36,6 +36,17 @@ public final class HeatMath {
     public static final double ZERO_CELSIUS = 273.15;
     /** The seconds in a tick. */
     public static final double TICK_SECONDS = 0.05;
+    /** The gas constant, in joules a mole a kelvin. */
+    public static final double GAS_CONSTANT = 8.314_462_618;
+    /**
+     * Trouton's rule: what a mole of most liquids takes to boil, in joules for each kelvin of its boiling point, for a
+     * material whose own heat of boiling is not known.
+     */
+    public static final double TROUTON = 88.0;
+    /** The litres a mole of gas takes at 0 °C and the open air's pressure, which is how a gas's amount is counted. */
+    public static final double LITRES_PER_MOLE = 22.414;
+    /* The thinnest air a boiling point is worked out for, in kilopascals: below it, a vacuum's. */
+    private static final double THINNEST_KPA = 1e-6;
 
     private HeatMath() {
     }
@@ -114,5 +125,24 @@ public final class HeatMath {
         final double lost = watts * seconds;
         final double toAmbient = (temperature - ambient) * capacity;
         return toAmbient >= 0.0 ? Math.max(0.0, Math.min(lost, toAmbient)) : Math.min(0.0, Math.max(lost, toAmbient));
+    }
+
+    /**
+     * Where a liquid that boils at {@code boiling} kelvin in the overworld's air boils under {@code kiloPascals}, by
+     * Clausius and Clapeyron, from what a mole of it takes to boil ({@code molarEnthalpy}, in joules): water boils
+     * lower on a mountain and lower still in the thin air of Mars, and higher in a pressure vessel.
+     */
+    public static double boilingAt(final double boiling, final double molarEnthalpy, final double kiloPascals) {
+        if (!(boiling > 0.0) || !(molarEnthalpy > 0.0)) {
+            return boiling;
+        }
+        final double pressure = Math.max(THINNEST_KPA, kiloPascals);
+        final double inverse = 1.0 / boiling - GAS_CONSTANT * Math.log(pressure / SEA_LEVEL_KPA) / molarEnthalpy;
+        return inverse > 0.0 ? 1.0 / inverse : Double.POSITIVE_INFINITY;
+    }
+
+    /** The litres {@code kilograms} of a gas whose mole weighs {@code molarMass} kilograms counts as. */
+    public static double gasLitres(final double kilograms, final double molarMass) {
+        return molarMass > 0.0 ? Math.max(0.0, kilograms) / molarMass * LITRES_PER_MOLE : 0.0;
     }
 }

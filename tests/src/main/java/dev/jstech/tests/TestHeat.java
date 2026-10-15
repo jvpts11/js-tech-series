@@ -12,21 +12,30 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.heat.Boiler;
+import dev.jstech.core.heat.FluidPass;
 import dev.jstech.core.heat.HeatBody;
+import dev.jstech.core.heat.HeatMath;
 import dev.jstech.core.heat.HeatPorts;
+import dev.jstech.core.heat.HeatSource;
 import dev.jstech.core.heat.IHeatHolder;
 import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
+import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.MatterTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * Blocks of the test mod that hold heat, to prove the Core's heat: a litre of copper, a litre of iron, the same litre
- * of copper with ten square metres of fins as a radiator, and a heater that puts fifty kilowatts into a litre of iron.
+ * of copper with ten square metres of fins as a radiator, and a heater that puts fifty kilowatts into a litre of iron
+ * up to its limit; and vessels with a cubic metre of iron for a wall, a boiler in the open air, a boiler of low
+ * pressure and a heat exchanger whose oil passes through the wall.
  */
 public final class TestHeat {
 
@@ -36,6 +45,16 @@ public final class TestHeat {
     public static final double FINS = 10.0;
     /** What the heater puts in, in watts: enough to warm a litre of copper beside it within seconds. */
     public static final double HEATER_WATTS = 50_000.0;
+    /** The hottest the heater makes itself, in kelvin. */
+    public static final double HEATER_LIMIT = 700.0;
+    /** What a vessel's wall passes to what boils or flows through it, in watts a kelvin. */
+    public static final double VESSEL_CONDUCTANCE = 100_000.0;
+    /** The pressure the low-pressure boiler holds, in kilopascals: water boils there at about 44 °C. */
+    public static final double LOW_PRESSURE = 10.0;
+    /** How much each of a vessel's liquid tanks holds, in millibuckets. */
+    public static final int VESSEL_TANK = 8_000;
+    /** How much a vessel's gas tank holds, in millibuckets at the open air's pressure. */
+    public static final long VESSEL_GAS = 10_000_000L;
 
     /* Their block states and models are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<DeviceBlock> COPPER = TestSounds.CONTENT.block("test_heat_copper",
@@ -50,9 +69,22 @@ public final class TestHeat {
     public static final BlockEntry<DeviceBlock> HEATER = TestSounds.CONTENT.block("test_heater",
             Device.of(() -> TestHeat.BLOCK_ENTITY.get()).ticks(HeatBlockEntity::tick)::block)
             .named("Test heater").look(IBlockLook.cubeAll("test_heater")).register();
-    /* One block entity for all four, which reads from its block what it is. */
+    public static final BlockEntry<DeviceBlock> BOILER = TestSounds.CONTENT.block("test_boiler",
+            Device.of(() -> TestHeat.VESSEL.get()).ticks(VesselBlockEntity::tick)::block)
+            .named("Test boiler").look(IBlockLook.cubeAll("test_boiler")).register();
+    public static final BlockEntry<DeviceBlock> LOW_BOILER = TestSounds.CONTENT.block("test_low_boiler",
+            Device.of(() -> TestHeat.VESSEL.get()).ticks(VesselBlockEntity::tick)::block)
+            .named("Test low-pressure boiler").look(IBlockLook.cubeAll("test_low_boiler")).register();
+    public static final BlockEntry<DeviceBlock> EXCHANGER = TestSounds.CONTENT.block("test_exchanger",
+            Device.of(() -> TestHeat.VESSEL.get()).ticks(VesselBlockEntity::tick)::block)
+            .named("Test heat exchanger").look(IBlockLook.cubeAll("test_exchanger")).register();
+    /* One block entity for the four that hold heat, which reads from its block what it is; another for the vessels. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HeatBlockEntity>> BLOCK_ENTITY =
             TestSounds.CONTENT.blockEntity("test_heat", HeatBlockEntity::new, COPPER, IRON, RADIATOR, HEATER);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VesselBlockEntity>> VESSEL =
+            TestSounds.CONTENT.blockEntity("test_vessel", VesselBlockEntity::new, BOILER, LOW_BOILER, EXCHANGER);
+
+    private static final HeatSource HEATING = HeatSource.heater(HEATER_WATTS, HEATER_LIMIT);
 
     private TestHeat() {
     }
@@ -75,17 +107,77 @@ public final class TestHeat {
             HeatPorts.keep(this, this.heat);
         }
 
-        /** The heater puts its watts in, each tick. */
+        /** The heater puts its watts in, each tick, up to its limit. */
         public static void tick(final Level level, final BlockPos pos, final BlockState state,
                                 final HeatBlockEntity heater) {
-            if (heater.heat.known()) {
-                heater.heat.exchange(HEATER_WATTS / 20.0);
+            HEATING.apply(heater.heat, HeatMath.TICK_SECONDS);
+        }
+
+        @Override
+        public HeatBody heatBody() {
+            return this.heat;
+        }
+    }
+
+    /**
+     * A vessel: a cubic metre of iron for its wall, a tank for the liquid that goes in, one for the liquid that comes
+     * out and one of gas. A boiler boils what goes in into the gas, the low-pressure one at its own pressure; the
+     * exchanger passes what goes in through its wall into its other form.
+     */
+    public static final class VesselBlockEntity extends SyncedBlockEntity implements IHeatHolder {
+
+        private final HeatBody heat = HeatBody.of(Thermal.of(Elements.of(Element.IRON), false), 1.0);
+        private final FluidTank in = new FluidTank(VESSEL_TANK);
+        private final FluidTank out = new FluidTank(VESSEL_TANK);
+        private final MatterTank gas = new MatterTank(MatterState.GAS, VESSEL_GAS, 1L, () -> { });
+        private final Boiler boiler = Boiler.of(VESSEL_CONDUCTANCE);
+        private final FluidPass pass = FluidPass.of(VESSEL_CONDUCTANCE);
+        private final boolean boils;
+
+        public VesselBlockEntity(final BlockPos pos, final BlockState state) {
+            super(VESSEL.get(), pos, state);
+            this.boils = !state.is(EXCHANGER.get());
+            if (state.is(LOW_BOILER.get())) {
+                this.boiler.at(LOW_PRESSURE);
+            }
+            HeatPorts.keep(this, this.heat);
+            fields().part("Boiler", this.boiler).save();
+            fields().part("Pass", this.pass).save();
+        }
+
+        /** A boiler boils, and the exchanger passes its liquid through its wall, each tick. */
+        public static void tick(final Level level, final BlockPos pos, final BlockState state,
+                                final VesselBlockEntity vessel) {
+            if (vessel.boils) {
+                vessel.boiler.boil(level, pos, vessel.heat, vessel.in, vessel.gas, HeatMath.TICK_SECONDS);
+            } else {
+                vessel.pass.run(vessel.heat, vessel.in, vessel.out, HeatMath.TICK_SECONDS);
             }
         }
 
         @Override
         public HeatBody heatBody() {
             return this.heat;
+        }
+
+        /** The tank the liquid goes in. */
+        public FluidTank in() {
+            return this.in;
+        }
+
+        /** The tank the exchanger's liquid comes out in. */
+        public FluidTank out() {
+            return this.out;
+        }
+
+        /** The tank a boiler's gas comes out in. */
+        public MatterTank gas() {
+            return this.gas;
+        }
+
+        /** The boiler. */
+        public Boiler boiler() {
+            return this.boiler;
         }
     }
 }

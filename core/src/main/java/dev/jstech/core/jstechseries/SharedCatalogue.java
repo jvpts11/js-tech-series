@@ -8,9 +8,12 @@
 package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialKind;
+import dev.jstech.core.material.MaterialLiquids;
+import dev.jstech.core.material.MaterialProperties;
 import dev.jstech.core.material.Materials;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.text.TextHolder;
@@ -28,6 +31,7 @@ import net.minecraft.resources.ResourceLocation;
 @TextHolder
 public final class SharedCatalogue {
 
+    public static final TextKey WATER_NAME = TextKey.of("jscore.material.water", "Water");
     public static final TextKey GASOLINE_NAME = TextKey.of("jscore.material.gasoline", "Gasoline");
     public static final TextKey KEROSENE_NAME = TextKey.of("jscore.material.kerosene", "Kerosene");
     public static final TextKey DIESEL_NAME = TextKey.of("jscore.material.diesel", "Diesel");
@@ -39,6 +43,18 @@ public final class SharedCatalogue {
     public static final TextKey OSCILLATOR_NAME = TextKey.of("item.jscore.oscillator", "Oscillator");
     public static final TextKey ANTENNA_NAME = TextKey.of("item.jscore.antenna", "Antenna");
     public static final TextKey MAGNETIC_HEAD_NAME = TextKey.of("item.jscore.magnetic_head", "Magnetic Head");
+
+    /*
+     * Water, whose liquid is the game's own: steam is its gas and ice its solid, and a boiler boils it by its real
+     * enthalpy. Its values are liquid water's at 20 °C.
+     */
+    public static final Material WATER = Materials.material(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "water"), MaterialKind.LIQUID, WATER_NAME)
+            .colour(0x3F76E4).also(MatterState.GAS, MatterState.SOLID).with(MaterialProperties.FORMULA, "H2O")
+            .with(Thermal.DENSITY, 998.0).with(Thermal.SPECIFIC_HEAT, 4_184.0).with(Thermal.CONDUCTIVITY, 0.6)
+            .with(Thermal.EMISSIVITY, 0.96).with(Thermal.MELTING, 273.15).with(Thermal.BOILING, 373.15)
+            .with(Thermal.LATENT_HEAT, 2_257_000.0).with(Thermal.MOLAR_MASS, 0.018_015)
+            .with(Thermal.LIQUID_DENSITY, 998.0).declare();
 
     /* Mixtures of hydrocarbons, whose make-up varies: they have no one formula. */
     public static final Material GASOLINE = fuel("gasoline", GASOLINE_NAME, 0xE9D59A);
@@ -56,9 +72,9 @@ public final class SharedCatalogue {
     private SharedCatalogue() {
     }
 
-    /** Declares the catalogue, from the Core's constructor. */
+    /** Declares the catalogue, from the Core's constructor: the game's water is the series' water. */
     public static void declare() {
-        // Loading the class declares it.
+        MaterialLiquids.link(WATER, ResourceLocation.withDefaultNamespace("water"));
     }
 
     /** The common fuels. */
