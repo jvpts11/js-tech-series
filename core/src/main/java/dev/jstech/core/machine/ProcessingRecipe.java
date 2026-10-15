@@ -11,6 +11,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.matter.MatterStack;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
 import net.minecraft.core.HolderLookup;
@@ -30,14 +32,17 @@ import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A recipe of a processing machine: items taken by the count, fluids by the millibucket, and what comes out, in so
- * many ticks at so much energy a tick. Every mod's processing machines share it; what tells a grinder's recipes from a
- * press's is their {@link ProcessingKind}, the recipe type each mod declares.
+ * A recipe of a processing machine: items taken by the count, fluids by the millibucket, matter of every other state by
+ * the millibucket at the open air's pressure, and what comes out, in so many ticks at so much energy a tick; catalysts
+ * that must be in the machine but are not used up; byproducts that come by chance; and the temperature and pressure it
+ * runs between. Every mod's processing machines share it; what tells a grinder's recipes from a press's is their
+ * {@link ProcessingKind}, the recipe type each mod declares.
  *
  * <pre>{@code
  * {"type": "jsindustrial:macerating",
  *  "inputs": [{"tag": "c:ores/iron", "count": 1}],
  *  "outputs": [{"id": "jscore:iron_dust", "count": 2}],
+ *  "byproducts": [{"item": {"id": "jscore:gold_dust"}, "chance": 0.1}],
  *  "ticks": 200, "energy_per_tick": 40}
  * }</pre>
  *
@@ -48,44 +53,83 @@ import org.jetbrains.annotations.Nullable;
  * @param fluidOutputs  the fluids it makes
  * @param ticks         how long it takes, before upgrades
  * @param energyPerTick what it spends each tick, before upgrades
+ * @param catalysts     the items that must be in the machine, each in a slot of its own, and are not used up
+ * @param matterInputs  the matter it takes from the machine's tanks of gas and the other states
+ * @param matterOutputs the matter it makes
+ * @param byproducts    what it may make besides, by chance
+ * @param conditions    the temperature and the pressure it runs between
  */
 public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs,
                                List<SizedFluidIngredient> fluidInputs, List<ItemStack> outputs,
-                               List<FluidStack> fluidOutputs, int ticks, int energyPerTick)
+                               List<FluidStack> fluidOutputs, int ticks, int energyPerTick,
+                               List<SizedIngredient> catalysts, List<MatterStack> matterInputs,
+                               List<MatterStack> matterOutputs, List<Byproduct> byproducts,
+                               RecipeConditions conditions)
         implements Recipe<ProcessingInput> {
 
     /** How long a recipe takes when its file does not say. */
     public static final int DEFAULT_TICKS = 200;
+    private static final StreamCodec<RegistryFriendlyByteBuf, MatterStack> MATTER_STREAM =
+            ByteBufCodecs.fromCodecWithRegistries(MatterStack.CODEC);
 
     public ProcessingRecipe {
         inputs = List.copyOf(inputs);
         fluidInputs = List.copyOf(fluidInputs);
         outputs = List.copyOf(outputs);
         fluidOutputs = List.copyOf(fluidOutputs);
+        catalysts = List.copyOf(catalysts);
+        matterInputs = List.copyOf(matterInputs);
+        matterOutputs = List.copyOf(matterOutputs);
+        byproducts = List.copyOf(byproducts);
+    }
+
+    /** A recipe of items and liquids only, with no catalyst, byproduct or condition. */
+    public ProcessingRecipe(final ProcessingKind kind, final List<SizedIngredient> inputs,
+                            final List<SizedFluidIngredient> fluidInputs, final List<ItemStack> outputs,
+                            final List<FluidStack> fluidOutputs, final int ticks, final int energyPerTick) {
+        this(kind, inputs, fluidInputs, outputs, fluidOutputs, ticks, energyPerTick, List.of(), List.of(), List.of(),
+                List.of(), RecipeConditions.ANY);
     }
 
     /**
-     * Whether the machine's inputs hold everything the recipe takes: each item input in a slot of its own, with at
-     * least its count, and each fluid input in a tank of its own, with at least its amount.
+     * Whether the machine holds everything the recipe takes, each item input and each catalyst in a slot of its own,
+     * each fluid and each matter in a tank of its own, with at least its amount; and whether the temperature and the
+     * pressure inside the machine are within the recipe's.
      */
     @Override
     public boolean matches(final ProcessingInput input, final Level level) {
-        return assign(inputs, input.items()) != null && assignFluids(fluidInputs, input.fluids()) != null;
+        return slotsFor(input) != null && tanksFor(input) != null && matterTanksFor(input) != null
+                && conditions.holds(input.temperature(), input.pressure());
     }
 
     /**
      * The input slot each item input is taken from, in the order of {@link #inputs()}, or null when the slots do not
-     * hold them: what a machine takes from when it finishes the recipe.
+     * hold them (and the catalysts beside them): what a machine takes from when it finishes the recipe.
      */
     @Nullable
     public int[] slotsFor(final ProcessingInput input) {
-        return assign(inputs, input.items());
+        final List<SizedIngredient> wanted = new ArrayList<>(inputs);
+        wanted.addAll(catalysts);
+        final int[] all = assignAll(wanted, input.items(), SizedIngredient::test);
+        if (all == null) {
+            return null;
+        }
+        final int[] taken = new int[inputs.size()];
+        System.arraycopy(all, 0, taken, 0, taken.length);
+        return taken;
     }
 
     /** The input tank each fluid input is taken from, or null when the tanks do not hold them. */
     @Nullable
     public int[] tanksFor(final ProcessingInput input) {
-        return assignFluids(fluidInputs, input.fluids());
+        return assignAll(fluidInputs, input.fluids(), SizedFluidIngredient::test);
+    }
+
+    /** The input tank of matter each matter input is taken from, or null when the tanks do not hold them. */
+    @Nullable
+    public int[] matterTanksFor(final ProcessingInput input) {
+        return assignAll(matterInputs, input.matter(), (wanted, held) -> held.isPresent()
+                && held.get().material() == wanted.material() && held.get().amount() >= wanted.amount());
     }
 
     @Override
@@ -103,12 +147,15 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
         return outputs.isEmpty() ? ItemStack.EMPTY : outputs.getFirst();
     }
 
-    /** The item inputs, each once whatever its count, for the recipe viewers and the autocraft planners. */
+    /** The item inputs and the catalysts, each once whatever its count, for the recipe viewers and planners. */
     @Override
     public NonNullList<Ingredient> getIngredients() {
         final NonNullList<Ingredient> list = NonNullList.create();
         for (final SizedIngredient input : inputs) {
             list.add(input.ingredient());
+        }
+        for (final SizedIngredient catalyst : catalysts) {
+            list.add(catalyst.ingredient());
         }
         return list;
     }
@@ -142,45 +189,66 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
                         Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("ticks", DEFAULT_TICKS)
                                 .forGetter(ProcessingRecipe::ticks),
                         Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("energy_per_tick", 0)
-                                .forGetter(ProcessingRecipe::energyPerTick))
-                .apply(instance, (in, fluidIn, out, fluidOut, ticks, energy) ->
-                        new ProcessingRecipe(kind, in, fluidIn, out, fluidOut, ticks, energy)))
+                                .forGetter(ProcessingRecipe::energyPerTick),
+                        SizedIngredient.FLAT_CODEC.listOf().optionalFieldOf("catalysts", List.of())
+                                .forGetter(ProcessingRecipe::catalysts),
+                        MatterStack.CODEC.listOf().optionalFieldOf("matter_inputs", List.of())
+                                .forGetter(ProcessingRecipe::matterInputs),
+                        MatterStack.CODEC.listOf().optionalFieldOf("matter_outputs", List.of())
+                                .forGetter(ProcessingRecipe::matterOutputs),
+                        Byproduct.CODEC.listOf().optionalFieldOf("byproducts", List.of())
+                                .forGetter(ProcessingRecipe::byproducts),
+                        RecipeConditions.CODEC.optionalFieldOf("conditions", RecipeConditions.ANY)
+                                .forGetter(ProcessingRecipe::conditions))
+                .apply(instance, (in, fluidIn, out, fluidOut, ticks, energy, catalysts, matterIn, matterOut,
+                                  byproducts, conditions) -> new ProcessingRecipe(kind, in, fluidIn, out, fluidOut,
+                        ticks, energy, catalysts, matterIn, matterOut, byproducts, conditions)))
                 .validate(recipe -> recipe.inputs().isEmpty() && recipe.fluidInputs().isEmpty()
+                        && recipe.matterInputs().isEmpty()
                         ? DataResult.error(() -> "a processing recipe takes something")
                         : recipe.outputs().isEmpty() && recipe.fluidOutputs().isEmpty()
+                        && recipe.matterOutputs().isEmpty() && recipe.byproducts().isEmpty()
                         ? DataResult.error(() -> "a processing recipe makes something")
                         : DataResult.success(recipe));
     }
 
     /** How a recipe of {@code kind} is sent to the players. */
     static StreamCodec<RegistryFriendlyByteBuf, ProcessingRecipe> streamCodec(final ProcessingKind kind) {
-        return StreamCodec.composite(
-                SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()), ProcessingRecipe::inputs,
-                SizedFluidIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()), ProcessingRecipe::fluidInputs,
-                ItemStack.STREAM_CODEC.apply(ByteBufCodecs.list()), ProcessingRecipe::outputs,
-                FluidStack.STREAM_CODEC.apply(ByteBufCodecs.list()), ProcessingRecipe::fluidOutputs,
-                ByteBufCodecs.VAR_INT, ProcessingRecipe::ticks,
-                ByteBufCodecs.VAR_INT, ProcessingRecipe::energyPerTick,
-                (in, fluidIn, out, fluidOut, ticks, energy) ->
-                        new ProcessingRecipe(kind, in, fluidIn, out, fluidOut, ticks, energy));
+        final StreamCodec<RegistryFriendlyByteBuf, List<SizedIngredient>> ingredients =
+                SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list());
+        final StreamCodec<RegistryFriendlyByteBuf, List<SizedFluidIngredient>> fluidIngredients =
+                SizedFluidIngredient.STREAM_CODEC.apply(ByteBufCodecs.list());
+        final StreamCodec<RegistryFriendlyByteBuf, List<ItemStack>> stacks =
+                ItemStack.STREAM_CODEC.apply(ByteBufCodecs.list());
+        final StreamCodec<RegistryFriendlyByteBuf, List<FluidStack>> fluids =
+                FluidStack.STREAM_CODEC.apply(ByteBufCodecs.list());
+        final StreamCodec<RegistryFriendlyByteBuf, List<MatterStack>> matter = MATTER_STREAM.apply(
+                ByteBufCodecs.list());
+        final StreamCodec<RegistryFriendlyByteBuf, List<Byproduct>> byproducts = Byproduct.STREAM_CODEC.apply(
+                ByteBufCodecs.list());
+        return StreamCodec.of((buf, recipe) -> {
+            ingredients.encode(buf, recipe.inputs());
+            fluidIngredients.encode(buf, recipe.fluidInputs());
+            stacks.encode(buf, recipe.outputs());
+            fluids.encode(buf, recipe.fluidOutputs());
+            ByteBufCodecs.VAR_INT.encode(buf, recipe.ticks());
+            ByteBufCodecs.VAR_INT.encode(buf, recipe.energyPerTick());
+            ingredients.encode(buf, recipe.catalysts());
+            matter.encode(buf, recipe.matterInputs());
+            matter.encode(buf, recipe.matterOutputs());
+            byproducts.encode(buf, recipe.byproducts());
+            RecipeConditions.STREAM_CODEC.encode(buf, recipe.conditions());
+        }, buf -> new ProcessingRecipe(kind, ingredients.decode(buf), fluidIngredients.decode(buf),
+                stacks.decode(buf), fluids.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+                ByteBufCodecs.VAR_INT.decode(buf), ingredients.decode(buf), matter.decode(buf), matter.decode(buf),
+                byproducts.decode(buf), RecipeConditions.STREAM_CODEC.decode(buf)));
     }
 
     /*
-     * Gives each input a slot of its own that satisfies it, trying the inputs in order and each slot not yet taken;
-     * a later input that finds no slot sends the search back to try the earlier ones elsewhere. A recipe has a handful
-     * of inputs, so the search stays small.
+     * Gives each wanted thing a slot or tank of its own that satisfies it, trying them in order and each place not yet
+     * taken; a later one that finds no place sends the search back to try the earlier ones elsewhere. A recipe has a
+     * handful of inputs, so the search stays small.
      */
-    @Nullable
-    private static int[] assign(final List<SizedIngredient> wanted, final List<ItemStack> slots) {
-        return assignAll(wanted, slots, SizedIngredient::test);
-    }
-
-    /* The same search for the fluids: an input that accepts two tanks must not claim the one a later input needs. */
-    @Nullable
-    private static int[] assignFluids(final List<SizedFluidIngredient> wanted, final List<FluidStack> tanks) {
-        return assignAll(wanted, tanks, SizedFluidIngredient::test);
-    }
-
     @Nullable
     private static <W, C> int[] assignAll(final List<W> wanted, final List<C> contents,
                                           final BiPredicate<W, C> accepts) {

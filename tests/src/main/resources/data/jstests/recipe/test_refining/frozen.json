@@ -1,0 +1,11 @@
+{
+  "type": "jstests:test_refining",
+  "inputs": [
+    {"item": "minecraft:copper_ingot", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:copper_block", "count": 1}
+  ],
+  "conditions": {"max_temperature": 100},
+  "ticks": 10
+}

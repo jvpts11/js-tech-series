@@ -7,31 +7,51 @@
  */
 package dev.jstech.core.machine;
 
+import dev.jstech.core.blockentity.CombinedTanks;
 import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.LongField;
+import dev.jstech.core.blockentity.PartField;
+import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.energy.PartialWork;
 import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.wrapper.RangedWrapper;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A machine that works its inputs into its outputs: while what its inputs hold makes something and its outputs have
- * room for it, it spends energy each tick and, once the work's time has run, takes the inputs and puts out the result.
- * Short of energy, it spends what there is and works slower in the same proportion ({@link PartialWork}).
- * Its slots are its inputs, then its outputs, then its upgrades; its tanks its fluid inputs, then its fluid outputs.
- * Pipes put into its inputs and its upgrade slots and take from anywhere; only the machine puts into its outputs.
+ * room for it, byproducts and all, it spends energy each tick and, once the work's time has run, takes the inputs and
+ * puts out the result. Short of energy, it spends what there is and works slower in the same proportion
+ * ({@link PartialWork}); damaged, it works slower too.
+ *
+ * <p>Its slots are its inputs, then its outputs, then its upgrades; with several lanes, each lane's inputs, then each
+ * lane's outputs. Each lane works on its own, as Mekanism's factories do, and the machine sorts what is put into its
+ * inputs among its lanes by itself. Its tanks, of liquids and of the other states of matter, serve every lane. Pipes
+ * put into its inputs and its upgrade slots and take from anywhere; only the machine puts into its outputs. An input
+ * slot may be locked to an item, so automation never fills it with the wrong thing; and when its inputs make several
+ * recipes, the player picks which.
  *
  * <p>What its inputs make is each machine's own: most ask the recipes of their {@link ProcessingKind}, with
  * {@link #byKind}, and a machine that works the game's own recipes, a furnace, asks those instead.
@@ -41,15 +61,14 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
     private final Layout layout;
     private final long defaultEnergyPerTick;
     private final MatterTanks matter;
-    private final IntField progress;
-    private final IntField maxProgress;
-    private final LongField paid;
-    private final IntField speed;
-    private final PartialWork payment = new PartialWork();
+    private final List<Lane> lanes = new ArrayList<>();
     private final List<FieldFluidTank> inputTanks = new ArrayList<>();
     private final List<FieldFluidTank> outputTanks = new ArrayList<>();
-    /* The work in hand last tick; empty after a load, when the saved progress is taken as belonging to it. */
-    private Processing lastWork;
+    private final ValueField<ResourceLocation> chosenRecipe;
+    private final SlotLocks locks;
+
+    /** How often a machine of several lanes sorts its inputs among them, in ticks. */
+    public static final int SORT_EVERY = 10;
 
     protected ProcessingMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
                                            final Layout layout, final int energyCapacity, final int energyMaxReceive,
@@ -67,11 +86,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         super(type, pos, state, layout.slots(), energy);
         this.layout = layout;
         this.defaultEnergyPerTick = defaultEnergyPerTick;
-        this.progress = fields().integer("Progress", 0).save().toMenu();
-        this.maxProgress = fields().integer("MaxProgress", 0).toMenu();
-        this.paid = fields().longInteger("Paid", 0L).save();
-        // Read on the server, where what a machine says to whoever looks at it is written.
-        this.speed = fields().integer("Speed", PartialWork.PERCENT);
+        for (int lane = 0; lane < layout.lanes(); lane++) {
+            this.lanes.add(new Lane(lane));
+        }
         for (int i = 0; i < layout.inputTanks(); i++) {
             inputTanks.add(fields().fluid("FluidIn" + i, layout.tankCapacity()).save().toClient().exposed());
         }
@@ -80,35 +97,43 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                     .outputOnly());
         }
         this.matter = MatterTanks.in(fields(), layout.matter());
-        getInventory().accepts((slot, stack) -> layout.isInput(slot)
+        this.chosenRecipe = fields().nullable("ChosenRecipe", ResourceLocation.CODEC).save().toClient();
+        final PartField[] locksField = new PartField[1];
+        this.locks = new SlotLocks(layout.firstOutput(), () -> locksField[0].changed());
+        locksField[0] = fields().part("Locks", this.locks).save().toClient();
+        getInventory().accepts((slot, stack) -> layout.isInput(slot) && this.locks.allows(slot, stack)
                 || layout.isUpgrade(slot) && stack.getItem() instanceof IUpgrade);
     }
 
     /**
      * How a processing machine's slots and tanks are laid out.
      *
-     * @param inputs       the input slots
-     * @param outputs      the output slots
+     * @param inputs       the input slots of each lane
+     * @param outputs      the output slots of each lane
      * @param upgrades     the upgrade slots
      * @param inputTanks   the fluid input tanks
      * @param outputTanks  the fluid output tanks
      * @param tankCapacity what each tank holds, in millibuckets
      * @param matter       the tanks of the states of matter that are neither solid nor liquid
+     * @param lanes        how many lanes work side by side, each with its own inputs and outputs
      */
     public record Layout(int inputs, int outputs, int upgrades, int inputTanks, int outputTanks, int tankCapacity,
-                         List<MatterTanks.MatterSpec> matter) {
+                         List<MatterTanks.MatterSpec> matter, int lanes) {
 
         public Layout {
             if (inputs < 0 || outputs < 0 || upgrades < 0 || inputTanks < 0 || outputTanks < 0 || tankCapacity < 0) {
                 throw new IllegalArgumentException("a machine has no fewer than no slots");
             }
+            if (lanes < 1) {
+                throw new IllegalArgumentException("a machine works in one lane at least");
+            }
             matter = List.copyOf(matter);
         }
 
-        /** A layout with no tanks of matter but liquids. */
+        /** A layout of one lane with no tanks of matter but liquids. */
         public Layout(final int inputs, final int outputs, final int upgrades, final int inputTanks,
                       final int outputTanks, final int tankCapacity) {
-            this(inputs, outputs, upgrades, inputTanks, outputTanks, tankCapacity, List.of());
+            this(inputs, outputs, upgrades, inputTanks, outputTanks, tankCapacity, List.of(), 1);
         }
 
         /** Items only: so many inputs and outputs, no upgrades, no tanks. */
@@ -118,12 +143,12 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
 
         /** The same, with so many upgrade slots. */
         public Layout withUpgrades(final int slots) {
-            return new Layout(inputs, outputs, slots, inputTanks, outputTanks, tankCapacity, matter);
+            return new Layout(inputs, outputs, slots, inputTanks, outputTanks, tankCapacity, matter, lanes);
         }
 
         /** The same, with so many tanks in and out, each holding {@code capacity} millibuckets. */
         public Layout withTanks(final int in, final int out, final int capacity) {
-            return new Layout(inputs, outputs, upgrades, in, out, capacity, matter);
+            return new Layout(inputs, outputs, upgrades, in, out, capacity, matter, lanes);
         }
 
         /**
@@ -135,52 +160,80 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                                  final long pressure) {
             final List<MatterTanks.MatterSpec> more = new ArrayList<>(matter);
             more.add(new MatterTanks.MatterSpec(state, in, out, volume, pressure));
-            return new Layout(inputs, outputs, upgrades, inputTanks, outputTanks, tankCapacity, more);
+            return new Layout(inputs, outputs, upgrades, inputTanks, outputTanks, tankCapacity, more, lanes);
+        }
+
+        /** The same, working {@code count} lanes side by side, each with its own inputs and outputs. */
+        public Layout withLanes(final int count) {
+            return new Layout(inputs, outputs, upgrades, inputTanks, outputTanks, tankCapacity, matter, count);
         }
 
         public int slots() {
-            return inputs + outputs + upgrades;
+            return lanes * (inputs + outputs) + upgrades;
         }
 
         public int firstOutput() {
-            return inputs;
+            return lanes * inputs;
         }
 
         public int firstUpgrade() {
-            return inputs + outputs;
+            return lanes * (inputs + outputs);
         }
 
         public boolean isInput(final int slot) {
-            return slot >= 0 && slot < inputs;
+            return slot >= 0 && slot < firstOutput();
         }
 
         public boolean isOutput(final int slot) {
-            return slot >= inputs && slot < inputs + outputs;
+            return slot >= firstOutput() && slot < firstUpgrade();
         }
 
         public boolean isUpgrade(final int slot) {
-            return slot >= inputs + outputs && slot < slots();
+            return slot >= firstUpgrade() && slot < slots();
+        }
+
+        /** The slot of input {@code index} of lane {@code lane}. */
+        public int laneInput(final int lane, final int index) {
+            return lane * inputs + index;
+        }
+
+        /** The slot of output {@code index} of lane {@code lane}. */
+        public int laneOutput(final int lane, final int index) {
+            return firstOutput() + lane * outputs + index;
         }
     }
 
     /**
      * One piece of work: what it takes from which slots and tanks, what it makes, in how long, at what energy a tick.
      *
-     * @param takes         how many items each input slot gives up
+     * @param takes         how many items each input slot of the lane gives up
      * @param fluidTakes    how many millibuckets each input tank gives up
      * @param outputs       what it makes
      * @param fluidOutputs  the fluids it makes
      * @param ticks         how long it takes, before upgrades
      * @param energyPerTick what it spends each tick, before upgrades; 0 for the machine's own
+     * @param matterTakes   how many millibuckets each input tank of matter gives up, counted across every state's
+     * @param matterOutputs the matter it makes
+     * @param byproducts    what it may make besides, by chance
      */
     public record Processing(List<Take> takes, List<Take> fluidTakes, List<ItemStack> outputs,
-                             List<FluidStack> fluidOutputs, int ticks, int energyPerTick) {
+                             List<FluidStack> fluidOutputs, int ticks, int energyPerTick, List<Take> matterTakes,
+                             List<MatterStack> matterOutputs, List<Byproduct> byproducts) {
 
         public Processing {
             takes = List.copyOf(takes);
             fluidTakes = List.copyOf(fluidTakes);
             outputs = outputs.stream().map(ItemStack::copy).toList();
             fluidOutputs = fluidOutputs.stream().map(FluidStack::copy).toList();
+            matterTakes = List.copyOf(matterTakes);
+            matterOutputs = List.copyOf(matterOutputs);
+            byproducts = List.copyOf(byproducts);
+        }
+
+        /** Work of items and liquids only, with no byproduct. */
+        public Processing(final List<Take> takes, final List<Take> fluidTakes, final List<ItemStack> outputs,
+                          final List<FluidStack> fluidOutputs, final int ticks, final int energyPerTick) {
+            this(takes, fluidTakes, outputs, fluidOutputs, ticks, energyPerTick, List.of(), List.of(), List.of());
         }
 
         /**
@@ -190,6 +243,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         public boolean sameWork(final Processing other) {
             if (this.ticks != other.ticks || this.energyPerTick != other.energyPerTick
                     || !this.takes.equals(other.takes) || !this.fluidTakes.equals(other.fluidTakes)
+                    || !this.matterTakes.equals(other.matterTakes) || !this.matterOutputs.equals(other.matterOutputs)
                     || !ItemStack.listMatches(this.outputs, other.outputs)
                     || this.fluidOutputs.size() != other.fluidOutputs.size()) {
                 return false;
@@ -211,7 +265,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         public static Optional<Processing> of(final ProcessingRecipe recipe, final ProcessingInput input) {
             final int[] slots = recipe.slotsFor(input);
             final int[] tanks = recipe.tanksFor(input);
-            if (slots == null || tanks == null) {
+            final int[] matterTanks = recipe.matterTanksFor(input);
+            if (slots == null || tanks == null || matterTanks == null
+                    || !recipe.conditions().holds(input.temperature(), input.pressure())) {
                 return Optional.empty();
             }
             final List<Take> takes = new ArrayList<>();
@@ -222,15 +278,21 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             for (int i = 0; i < tanks.length; i++) {
                 fluidTakes.add(new Take(tanks[i], recipe.fluidInputs().get(i).amount()));
             }
+            final List<Take> matterTakes = new ArrayList<>();
+            for (int i = 0; i < matterTanks.length; i++) {
+                matterTakes.add(new Take(matterTanks[i], (int) Math.min(Integer.MAX_VALUE,
+                        recipe.matterInputs().get(i).amount())));
+            }
             return Optional.of(new Processing(takes, fluidTakes, recipe.outputs(), recipe.fluidOutputs(),
-                    recipe.ticks(), recipe.energyPerTick()));
+                    recipe.ticks(), recipe.energyPerTick(), matterTakes, recipe.matterOutputs(),
+                    recipe.byproducts()));
         }
     }
 
     /**
      * So much taken from a slot or a tank.
      *
-     * @param index  the input slot or input tank, counted from the first input
+     * @param index  the input slot of the lane or the input tank, counted from the first
      * @param amount how many items or millibuckets
      */
     public record Take(int index, int amount) {
@@ -240,17 +302,28 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return layout;
     }
 
+    /** How far through its work its first lane is, in ticks. */
     public int getProgress() {
-        return progress.get();
+        return lanes.getFirst().progress.get();
     }
 
+    /** How long its first lane's work takes, in ticks. */
     public int getMaxProgress() {
-        return maxProgress.get();
+        return lanes.getFirst().maxProgress.get();
+    }
+
+    /** How far through its work lane {@code lane} is, and how long it takes, in ticks. */
+    public int progress(final int lane) {
+        return lanes.get(lane).progress.get();
+    }
+
+    public int maxProgress(final int lane) {
+        return lanes.get(lane).maxProgress.get();
     }
 
     /** How fast it worked last tick, in percent of its full speed: below a hundred while it is short of energy. */
     public int speed() {
-        return speed.get();
+        return lanes.getFirst().speed.get();
     }
 
     /** The fluid input tank {@code index}. */
@@ -268,6 +341,21 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return matter;
     }
 
+    /** Its input slots locked to an item. */
+    public SlotLocks locks() {
+        return locks;
+    }
+
+    /** The recipe the player picked, when its inputs make several; none for the first that fits. */
+    public Optional<ResourceLocation> chosenRecipe() {
+        return Optional.ofNullable(chosenRecipe.get());
+    }
+
+    /** Picks the recipe named {@code id} among those its inputs make; none goes back to the first that fits. */
+    public void chooseRecipe(final @Nullable ResourceLocation id) {
+        chosenRecipe.set(id);
+    }
+
     /** What the upgrades in the upgrade slots do together. */
     public UpgradeEffect upgradeEffect() {
         final List<UpgradeEffect.Counted> each = new ArrayList<>();
@@ -280,41 +368,93 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return UpgradeEffect.combine(each);
     }
 
-    /** What the machine's inputs hold, as its recipes read them. */
+    /** What the first lane's inputs hold, as its recipes read them. */
     public ProcessingInput input() {
+        return input(0);
+    }
+
+    /** What lane {@code lane}'s inputs hold, with the tanks every lane shares, as its recipes read them. */
+    public ProcessingInput input(final int lane) {
         final List<ItemStack> items = new ArrayList<>(layout.inputs());
-        for (int slot = 0; slot < layout.inputs(); slot++) {
-            items.add(getInventory().getStackInSlot(slot));
+        for (int index = 0; index < layout.inputs(); index++) {
+            items.add(getInventory().getStackInSlot(layout.laneInput(lane, index)));
         }
         final List<FluidStack> fluids = new ArrayList<>(inputTanks.size());
         for (final FieldFluidTank tank : inputTanks) {
             fluids.add(tank.getFluid());
         }
-        return new ProcessingInput(items, fluids);
+        final List<Optional<MatterStack>> held = new ArrayList<>();
+        for (final MatterTank tank : matterInputs()) {
+            held.add(tank.held());
+        }
+        return new ProcessingInput(items, fluids, held, temperature(), pressure());
     }
 
     /** How far through its piece of work the machine is or that it stands idle, its speed if low, and its state. */
     @Override
     public void describe(final List<Text> lines, final boolean details) {
-        final int max = maxProgress.get();
-        final int done = progress.get();
+        final int max = getMaxProgress();
+        final int done = getProgress();
         lines.add(done > 0 && max > 0 ? LookTexts.WORKING.with((int) Math.min(100L, done * 100L / max))
                 : LookTexts.IDLE.text());
-        if (speed.get() < PartialWork.PERCENT) {
-            lines.add(LookTexts.LOW_POWER.with(speed.get()));
+        if (speed() < PartialWork.PERCENT) {
+            lines.add(LookTexts.LOW_POWER.with(speed()));
         }
         super.describe(lines, details);
     }
 
+    /** Items and energy, and its fluids and each state of matter it has tanks of. */
+    @Override
+    protected Set<MachineResource> resources() {
+        final Set<MachineResource> resources = EnumSet.of(MachineResource.ITEMS, MachineResource.ENERGY);
+        if (!inputTanks.isEmpty() || !outputTanks.isEmpty()) {
+            resources.add(MachineResource.FLUIDS);
+        }
+        for (final MatterTanks.MatterSpec spec : layout.matter()) {
+            MachineResource.of(spec.state()).ifPresent(resources::add);
+        }
+        return resources;
+    }
+
+    @Override
+    protected IItemHandler itemsIn() {
+        return new RangedWrapper(getInventory(), 0, layout.firstOutput());
+    }
+
+    @Override
+    protected IItemHandler itemsOut() {
+        return new RangedWrapper(getInventory(), layout.firstOutput(), layout.firstUpgrade());
+    }
+
+    @Override
+    protected @Nullable IFluidHandler fluidsIn() {
+        return inputTanks.isEmpty() ? null : new CombinedTanks(inputTanks);
+    }
+
+    @Override
+    protected @Nullable IFluidHandler fluidsOut() {
+        return outputTanks.isEmpty() ? null : new CombinedTanks(outputTanks);
+    }
+
+    @Override
+    protected List<MatterTank> matterIn(final MatterState state) {
+        return matter.inputs(state);
+    }
+
+    @Override
+    protected List<MatterTank> matterOut(final MatterState state) {
+        return matter.outputs(state);
+    }
+
     @Override
     protected double progressShare() {
-        final int max = maxProgress.get();
-        return max <= 0 ? 0.0 : Math.min(1.0, progress.get() / (double) max);
+        final int max = getMaxProgress();
+        return max <= 0 ? 0.0 : Math.min(1.0, getProgress() / (double) max);
     }
 
     @Override
     protected double inputShare() {
-        return share(0, layout.inputs(), inputTanks);
+        return share(0, layout.firstOutput(), inputTanks);
     }
 
     @Override
@@ -322,62 +462,136 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return share(layout.firstOutput(), layout.firstUpgrade(), outputTanks);
     }
 
+    /** The temperature inside it, in kelvin: its dimension's air, unless it heats or cools itself. */
+    protected double temperature() {
+        return level == null ? ProcessingInput.AMBIENT_KELVIN
+                : DimensionRulesData.of(level).temperature() + 273.15;
+    }
+
+    /** The pressure inside it, in kilopascals: its dimension's air, unless it holds its own. */
+    protected double pressure() {
+        return level == null ? ProcessingInput.AMBIENT_KPA : DimensionRulesData.of(level).pressure();
+    }
+
     /** What the inputs make, and in how long; empty when they make nothing. */
     protected abstract Optional<Processing> process(Level level, ProcessingInput input);
 
-    /** What the inputs make by the recipes of {@code kind}: the usual answer to {@link #process}. */
-    protected static Optional<Processing> byKind(final Level level, final ProcessingKind kind,
-                                                 final ProcessingInput input) {
-        return kind.find(level, input).flatMap(holder -> Processing.of(holder.value(), input));
+    /**
+     * What the inputs make by the recipes of {@code kind}: the usual answer to {@link #process}. When they make
+     * several, the one the player picked, or the first.
+     */
+    protected Optional<Processing> byKind(final Level level, final ProcessingKind kind, final ProcessingInput input) {
+        final List<RecipeHolder<ProcessingRecipe>> all = kind.findAll(level, input);
+        if (all.isEmpty()) {
+            return Optional.empty();
+        }
+        final ResourceLocation chosen = chosenRecipe.get();
+        final RecipeHolder<ProcessingRecipe> picked = chosen == null ? all.getFirst()
+                : all.stream().filter(holder -> holder.id().equals(chosen)).findFirst().orElse(all.getFirst());
+        return Processing.of(picked.value(), input);
     }
 
     /*
-     * One tick of work: nothing to work, or no room for every output at once, sets the progress back; with no energy
-     * it waits, keeping it; otherwise it spends the tick's energy and moves on, slower in proportion when short of
-     * energy and when damaged.
+     * One tick of work: each lane works on its own, and the machine is as busy as its busiest lane: working, else
+     * waiting for energy, else with its output full, else waiting for input.
      */
     @Override
     protected MachineStatus work(final ServerLevel level) {
-        final ProcessingInput input = input();
-        final Optional<Processing> found = input.isEmpty() ? Optional.empty() : process(level, input);
-        if (found.isEmpty() || !fits(found.get())) {
-            progress.set(0);
-            paid.set(0L);
-            speed.set(PartialWork.PERCENT);
-            lastWork = null;
-            return found.isEmpty() ? MachineStatus.WAITING : MachineStatus.OUTPUT_FULL;
+        if (lanes.size() > 1 && level.getGameTime() % SORT_EVERY == 0) {
+            sortInputs();
         }
-        final Processing work = found.get();
-        if (lastWork != null && !lastWork.sameWork(work)) {
-            // The inputs went from one recipe to another with no idle tick between; the old energy was spent on
-            // other work.
-            progress.set(0);
-        }
-        lastWork = work;
         final UpgradeEffect effect = upgradeEffect();
         final double share = health().workShare();
-        maxProgress.set((int) Math.min(Integer.MAX_VALUE, Math.ceil(effect.ticks(work.ticks()) / share)));
-        final long perTick = effect.energyPerTick(work.energyPerTick() > 0 ? work.energyPerTick()
-                : defaultEnergyPerTick);
-        // Short of energy, it spends what there is and works slower in the same proportion.
-        payment.restore(paid.get());
-        final long spent = perTick <= 0 ? 0L : power().spend(perTick);
-        final int steps = payment.pay(spent, perTick);
-        paid.set(payment.paid());
-        speed.set(payment.lastPercent());
-        if (perTick > 0 && spent <= 0) {
-            return MachineStatus.NO_ENERGY;
-        }
-        if (steps > 0) {
-            progress.add(steps);
-            if (progress.get() >= maxProgress.get()) {
-                finish(work);
-                progress.set(0);
-                lastWork = null;
-                control().finishedOne();
+        MachineStatus result = MachineStatus.WAITING;
+        for (final Lane lane : lanes) {
+            final MachineStatus worked = lane.work(level, effect, share);
+            if (busier(worked, result)) {
+                result = worked;
             }
         }
-        return MachineStatus.WORKING;
+        return result;
+    }
+
+    /* Whether {@code a} says more of what the machine is doing than {@code b}. */
+    private static boolean busier(final MachineStatus a, final MachineStatus b) {
+        return rank(a) > rank(b);
+    }
+
+    private static int rank(final MachineStatus status) {
+        return switch (status) {
+            case WORKING -> 3;
+            case NO_ENERGY -> 2;
+            case OUTPUT_FULL -> 1;
+            default -> 0;
+        };
+    }
+
+    /* Its input tanks of matter, every state's in the order of the states, as its recipes count them. */
+    private List<MatterTank> matterInputs() {
+        final List<MatterTank> all = new ArrayList<>();
+        for (final MatterState state : MatterState.values()) {
+            all.addAll(matter.inputs(state));
+        }
+        return all;
+    }
+
+    /* Its output tanks of matter, every state's. */
+    private List<MatterTank> matterOutputs() {
+        final List<MatterTank> all = new ArrayList<>();
+        for (final MatterState state : MatterState.values()) {
+            all.addAll(matter.outputs(state));
+        }
+        return all;
+    }
+
+    /*
+     * Sorts what its lanes hold of each input among them, as even as it goes, the first lanes taking what is left over:
+     * only when every lane that holds anything there holds the same item, and only into lanes not locked to another.
+     */
+    private void sortInputs() {
+        for (int index = 0; index < layout.inputs(); index++) {
+            ItemStack kind = ItemStack.EMPTY;
+            int total = 0;
+            boolean mixed = false;
+            for (int lane = 0; lane < lanes.size() && !mixed; lane++) {
+                final ItemStack held = getInventory().getStackInSlot(layout.laneInput(lane, index));
+                if (held.isEmpty()) {
+                    continue;
+                }
+                if (kind.isEmpty()) {
+                    kind = held;
+                } else if (!ItemStack.isSameItemSameComponents(kind, held)) {
+                    mixed = true;
+                }
+                total += held.getCount();
+            }
+            if (mixed || kind.isEmpty()) {
+                continue;
+            }
+            final List<Integer> open = new ArrayList<>();
+            for (int lane = 0; lane < lanes.size(); lane++) {
+                final int slot = layout.laneInput(lane, index);
+                if (!getInventory().getStackInSlot(slot).isEmpty() || locks.allows(slot, kind)) {
+                    open.add(slot);
+                }
+            }
+            if (open.size() < 2) {
+                continue;
+            }
+            final ItemStack sample = kind.copy();
+            final int each = total / open.size();
+            int extra = total % open.size();
+            for (final int slot : open) {
+                final int count = Math.min(sample.getMaxStackSize(), each + (extra > 0 ? 1 : 0));
+                if (extra > 0) {
+                    extra--;
+                }
+                final ItemStack now = getInventory().getStackInSlot(slot);
+                if (now.getCount() != count || count > 0 && now.isEmpty()) {
+                    getInventory().setStackInSlot(slot, count <= 0 ? ItemStack.EMPTY : sample.copyWithCount(count));
+                }
+            }
+        }
     }
 
     /*
@@ -389,7 +603,8 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         int count = 0;
         for (int slot = first; slot < end; slot++) {
             final ItemStack stack = getInventory().getStackInSlot(slot);
-            sum += stack.isEmpty() ? 0.0 : stack.getCount() / (double) Math.max(1, slotLimit(slot, stack));
+            sum += stack.isEmpty() ? 0.0 : stack.getCount()
+                    / (double) Math.max(1, Math.min(getInventory().getSlotLimit(slot), stack.getMaxStackSize()));
             count++;
         }
         for (final FieldFluidTank tank : tanks) {
@@ -399,119 +614,130 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return count == 0 ? 0.0 : Math.min(1.0, sum / count);
     }
 
-    /* Takes the inputs and puts out what they made. */
-    private void finish(final Processing work) {
-        for (final Take take : work.takes()) {
-            getInventory().extractItem(take.index(), take.amount(), false);
-        }
-        for (final Take take : work.fluidTakes()) {
-            inputTanks.get(take.index()).drain(take.amount(), IFluidHandler.FluidAction.EXECUTE);
-        }
-        for (final ItemStack output : work.outputs()) {
-            ItemStack left = output.copy();
-            for (int slot = layout.firstOutput(); slot < layout.firstUpgrade() && !left.isEmpty(); slot++) {
-                left = putInto(slot, left);
-            }
-        }
-        for (final FluidStack output : work.fluidOutputs()) {
-            int left = output.getAmount();
-            for (final FieldFluidTank tank : outputTanks) {
-                if (left <= 0) {
-                    break;
-                }
-                left -= tank.fillInside(output.copyWithAmount(left), IFluidHandler.FluidAction.EXECUTE);
-            }
-        }
-    }
+    /* One lane of the machine: its own inputs and outputs, its own progress, its own payment. */
+    private final class Lane {
 
-    /* Puts what it can of {@code stack} into the output slot, and gives back what is left. */
-    private ItemStack putInto(final int slot, final ItemStack stack) {
-        final ItemStack held = getInventory().getStackInSlot(slot);
-        final int moved = room(held, stack, slotLimit(slot, stack));
-        if (moved <= 0) {
-            return stack;
-        }
-        getInventory().setStackInSlot(slot, held.isEmpty() ? stack.copyWithCount(moved)
-                : held.copyWithCount(held.getCount() + moved));
-        return stack.copyWithCount(stack.getCount() - moved);
-    }
+        private final int index;
+        private final IntField progress;
+        private final IntField maxProgress;
+        private final LongField paid;
+        private final IntField speed;
+        private final PartialWork payment = new PartialWork();
+        /* The work in hand last tick; empty after a load, when the saved progress is taken as belonging to it. */
+        private @Nullable Processing lastWork;
 
-    /* The most of {@code stack} an output slot holds: its own limit, and the stack's size. */
-    private int slotLimit(final int slot, final ItemStack stack) {
-        return Math.min(getInventory().getSlotLimit(slot), stack.getMaxStackSize());
-    }
+        private Lane(final int index) {
+            this.index = index;
+            final String suffix = index == 0 ? "" : String.valueOf(index);
+            this.progress = fields().integer("Progress" + suffix, 0).save().toMenu();
+            this.maxProgress = fields().integer("MaxProgress" + suffix, 0).toMenu();
+            this.paid = fields().longInteger("Paid" + suffix, 0L).save();
+            // Read on the server, where what a machine says to whoever looks at it is written.
+            this.speed = fields().integer("Speed" + suffix, PartialWork.PERCENT);
+        }
 
-    /* How many of {@code incoming} fit on {@code held} up to {@code limit}; the insert and the dry run share it. */
-    private static int room(final ItemStack held, final ItemStack incoming, final int limit) {
-        if (held.isEmpty()) {
-            return Math.min(limit, incoming.getCount());
+        /*
+         * One tick of the lane: nothing to work, or no room for everything it makes at once, sets its progress back;
+         * with no energy it waits, keeping it; otherwise it spends the tick's energy and moves on, slower in
+         * proportion when short of energy and when the machine is damaged.
+         */
+        private MachineStatus work(final ServerLevel level, final UpgradeEffect effect, final double share) {
+            final ProcessingInput input = input(this.index);
+            final Optional<Processing> found = input.isEmpty() ? Optional.empty() : process(level, input);
+            if (found.isEmpty() || !outputs().fit(atMost(found.get()), found.get().fluidOutputs(),
+                    found.get().matterOutputs())) {
+                reset();
+                return found.isEmpty() ? MachineStatus.WAITING : MachineStatus.OUTPUT_FULL;
+            }
+            final Processing work = found.get();
+            if (this.lastWork != null && !this.lastWork.sameWork(work)) {
+                // The inputs went from one recipe to another with no idle tick between; the old energy was spent
+                // on other work.
+                this.progress.set(0);
+            }
+            this.lastWork = work;
+            this.maxProgress.set((int) Math.min(Integer.MAX_VALUE, Math.ceil(effect.ticks(work.ticks()) / share)));
+            final long perTick = effect.energyPerTick(work.energyPerTick() > 0 ? work.energyPerTick()
+                    : defaultEnergyPerTick);
+            // Short of energy, it spends what there is and works slower in the same proportion.
+            this.payment.restore(this.paid.get());
+            final long spent = perTick <= 0 ? 0L : power().spend(perTick);
+            final int steps = this.payment.pay(spent, perTick);
+            this.paid.set(this.payment.paid());
+            this.speed.set(this.payment.lastPercent());
+            if (perTick > 0 && spent <= 0) {
+                return MachineStatus.NO_ENERGY;
+            }
+            if (steps > 0) {
+                this.progress.add(steps);
+                if (this.progress.get() >= this.maxProgress.get() && finish(work, level.getRandom())) {
+                    this.progress.set(0);
+                    this.lastWork = null;
+                    control().finishedOne();
+                }
+            }
+            return MachineStatus.WORKING;
         }
-        if (!ItemStack.isSameItemSameComponents(held, incoming)) {
-            return 0;
-        }
-        return Math.max(0, Math.min(limit - held.getCount(), incoming.getCount()));
-    }
 
-    /* How many millibuckets of {@code incoming} fit in a tank holding {@code held} up to {@code capacity}. */
-    private static int fluidRoom(final FluidStack held, final FluidStack incoming, final int capacity) {
-        if (held.isEmpty()) {
-            return Math.min(capacity, incoming.getAmount());
+        /* The most items the work can make: its outputs, and every byproduct as if each came. */
+        private List<ItemStack> atMost(final Processing work) {
+            if (work.byproducts().isEmpty()) {
+                return work.outputs();
+            }
+            final List<ItemStack> all = new ArrayList<>(work.outputs());
+            for (final Byproduct byproduct : work.byproducts()) {
+                all.add(byproduct.stack());
+            }
+            return all;
         }
-        if (!FluidStack.isSameFluidSameComponents(held, incoming)) {
-            return 0;
-        }
-        return Math.max(0, Math.min(capacity - held.getAmount(), incoming.getAmount()));
-    }
 
-    /* Whether every output, item and fluid, finds room, as if all of them were put out at once. */
-    private boolean fits(final Processing work) {
-        final List<ItemStack> slots = new ArrayList<>();
-        for (int slot = layout.firstOutput(); slot < layout.firstUpgrade(); slot++) {
-            slots.add(getInventory().getStackInSlot(slot).copy());
+        private void reset() {
+            this.progress.set(0);
+            this.paid.set(0L);
+            this.speed.set(PartialWork.PERCENT);
+            this.lastWork = null;
         }
-        for (final ItemStack output : work.outputs()) {
-            int left = output.getCount();
-            for (int i = 0; i < slots.size() && left > 0; i++) {
-                final ItemStack held = slots.get(i);
-                final int limit = slotLimit(layout.firstOutput() + i, output);
-                final int moved = room(held, output.copyWithCount(left), limit);
-                if (moved <= 0) {
-                    continue;
-                }
-                if (held.isEmpty()) {
-                    slots.set(i, output.copyWithCount(moved));
-                } else {
-                    held.grow(moved);
-                }
-                left -= moved;
-            }
-            if (left > 0) {
-                return false;
-            }
+
+        /* Where this lane's work goes. */
+        private ProcessingOutputs outputs() {
+            return new ProcessingOutputs(getInventory(), layout.laneOutput(this.index, 0),
+                    layout.laneOutput(this.index, 0) + layout.outputs(), outputTanks, matterOutputs());
         }
-        final List<FluidStack> tanks = new ArrayList<>();
-        for (final FieldFluidTank tank : outputTanks) {
-            tanks.add(tank.getFluid().copy());
-        }
-        for (final FluidStack output : work.fluidOutputs()) {
-            int left = output.getAmount();
-            for (int i = 0; i < tanks.size() && left > 0; i++) {
-                final FluidStack held = tanks.get(i);
-                final int moved = fluidRoom(held, output.copyWithAmount(left), outputTanks.get(i).getCapacity());
-                if (moved <= 0) {
-                    continue;
+
+        /*
+         * Takes the inputs and puts out what they made, the byproducts that came with them; false, leaving it all,
+         * when another lane took first what the shared tanks held for it.
+         */
+        private boolean finish(final Processing work, final RandomSource random) {
+            final List<MatterTank> matterIn = matterInputs();
+            for (final Take take : work.fluidTakes()) {
+                if (inputTanks.get(take.index()).getFluidAmount() < take.amount()) {
+                    return false;
                 }
-                if (held.isEmpty()) {
-                    tanks.set(i, output.copyWithAmount(moved));
-                } else {
-                    held.grow(moved);
+            }
+            for (final Take take : work.matterTakes()) {
+                if (matterIn.get(take.index()).held().map(MatterStack::amount).orElse(0L) < take.amount()) {
+                    return false;
                 }
-                left -= moved;
             }
-            if (left > 0) {
-                return false;
+            for (final Take take : work.takes()) {
+                getInventory().extractItem(layout.laneInput(this.index, take.index()), take.amount(), false);
             }
+            for (final Take take : work.fluidTakes()) {
+                inputTanks.get(take.index()).drain(take.amount(), IFluidHandler.FluidAction.EXECUTE);
+            }
+            for (final Take take : work.matterTakes()) {
+                final MatterTank tank = matterIn.get(take.index());
+                tank.held().ifPresent(held -> tank.extract(held.material(), take.amount(), false));
+            }
+            final List<ItemStack> made = new ArrayList<>(work.outputs());
+            for (final Byproduct byproduct : work.byproducts()) {
+                if (byproduct.comes(random)) {
+                    made.add(byproduct.stack());
+                }
+            }
+            outputs().put(made, work.fluidOutputs(), work.matterOutputs());
+            return true;
         }
-        return true;
     }
 }

@@ -313,6 +313,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   (which no longer break a machine) and sabotage, shown as cracks and working slower, mended by a repair kit held on
   it for a few seconds; values the outside reads and sets, for controllers and networks; its owner, whoever placed it;
   and rest while it has nothing to do, so idle factories cost the server nothing.
+- (Core) Machine sides: each face of a machine takes in, gives out, does both or nothing with each of its resources
+  (items, fluids, each state of matter, energy), and pipes, cables and hoppers find only what the face lets through. A
+  machine pushes what it makes into the block beside its giving faces and pulls what it works from the block beside its
+  taking faces by itself, at a rate and through a filter.
+- (Core) Machines that never jam: an input slot locked to an item takes nothing else; the player picks the recipe when
+  the inputs make several; and factories of several lanes work side by side, sorting what is put in among them.
+- (Core) The whole recipe format for machines: catalysts that are not used up, gases and the other states of matter in
+  and out, byproducts by chance, and the temperature and pressure a recipe runs between, all in the recipe files and
+  shown in JEI and EMI.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

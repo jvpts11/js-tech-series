@@ -84,6 +84,11 @@ public final class ProcessingKind {
         return level.getRecipeManager().getRecipeFor(type(), input, level);
     }
 
+    /** Every recipe of this kind the input makes, in the order the game knows them. */
+    public List<RecipeHolder<ProcessingRecipe>> findAll(final Level level, final ProcessingInput input) {
+        return level.getRecipeManager().getRecipesFor(type(), input, level);
+    }
+
     /** Every recipe of this kind the level knows. */
     public List<RecipeHolder<ProcessingRecipe>> all(final Level level) {
         return level.getRecipeManager().getAllRecipesFor(type());

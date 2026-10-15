@@ -1,0 +1,23 @@
+{
+  "type": "jstests:test_refining",
+  "inputs": [
+    {"item": "minecraft:iron_ingot", "count": 1}
+  ],
+  "catalysts": [
+    {"item": "minecraft:blaze_rod", "count": 1}
+  ],
+  "matter_inputs": [
+    {"material": "jscore:hydrogen", "amount": 100}
+  ],
+  "outputs": [
+    {"id": "minecraft:iron_nugget", "count": 9}
+  ],
+  "matter_outputs": [
+    {"material": "jscore:oxygen", "amount": 50}
+  ],
+  "byproducts": [
+    {"item": {"id": "minecraft:gold_nugget"}, "chance": 1.0}
+  ],
+  "conditions": {"min_pressure": 50},
+  "ticks": 10
+}

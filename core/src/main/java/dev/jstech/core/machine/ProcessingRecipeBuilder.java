@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.machine;
 
+import dev.jstech.core.material.Material;
+import dev.jstech.core.matter.MatterStack;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.data.recipes.RecipeOutput;
@@ -36,6 +38,11 @@ public final class ProcessingRecipeBuilder {
     private final List<SizedFluidIngredient> fluidInputs = new ArrayList<>();
     private final List<ItemStack> outputs = new ArrayList<>();
     private final List<FluidStack> fluidOutputs = new ArrayList<>();
+    private final List<SizedIngredient> catalysts = new ArrayList<>();
+    private final List<MatterStack> matterInputs = new ArrayList<>();
+    private final List<MatterStack> matterOutputs = new ArrayList<>();
+    private final List<Byproduct> byproducts = new ArrayList<>();
+    private RecipeConditions conditions = RecipeConditions.ANY;
     private int ticks = ProcessingRecipe.DEFAULT_TICKS;
     private int energyPerTick;
 
@@ -88,6 +95,36 @@ public final class ProcessingRecipeBuilder {
         return this;
     }
 
+    /** An item that must be in the machine, in a slot of its own, and is not used up. */
+    public ProcessingRecipeBuilder catalyst(final Ingredient ingredient, final int count) {
+        catalysts.add(new SizedIngredient(ingredient, count));
+        return this;
+    }
+
+    /** So many millibuckets of {@code material}, at the open air's pressure, taken from a tank of matter. */
+    public ProcessingRecipeBuilder matterInput(final Material material, final long millibuckets) {
+        matterInputs.add(new MatterStack(material, millibuckets));
+        return this;
+    }
+
+    /** So many millibuckets of {@code material} made into a tank of matter. */
+    public ProcessingRecipeBuilder matterOutput(final Material material, final long millibuckets) {
+        matterOutputs.add(new MatterStack(material, millibuckets));
+        return this;
+    }
+
+    /** {@code stack} made besides, by {@code chance}, from above none to always. */
+    public ProcessingRecipeBuilder byproduct(final ItemStack stack, final float chance) {
+        byproducts.add(new Byproduct(stack, chance));
+        return this;
+    }
+
+    /** The temperature, in kelvin, and the pressure, in kilopascals, the recipe runs between. */
+    public ProcessingRecipeBuilder conditions(final RecipeConditions value) {
+        this.conditions = value;
+        return this;
+    }
+
     public ProcessingRecipeBuilder ticks(final int value) {
         this.ticks = value;
         return this;
@@ -100,7 +137,8 @@ public final class ProcessingRecipeBuilder {
 
     /** The recipe as it stands. */
     public ProcessingRecipe build() {
-        return new ProcessingRecipe(kind, inputs, fluidInputs, outputs, fluidOutputs, ticks, energyPerTick);
+        return new ProcessingRecipe(kind, inputs, fluidInputs, outputs, fluidOutputs, ticks, energyPerTick, catalysts,
+                matterInputs, matterOutputs, byproducts, conditions);
     }
 
     /**
@@ -109,7 +147,8 @@ public final class ProcessingRecipeBuilder {
      * @throws IllegalStateException when it takes nothing or makes nothing, or its time or energy is out of range
      */
     public void save(final RecipeOutput output, final ResourceLocation id) {
-        if (inputs.isEmpty() && fluidInputs.isEmpty() || outputs.isEmpty() && fluidOutputs.isEmpty()) {
+        if (inputs.isEmpty() && fluidInputs.isEmpty() && matterInputs.isEmpty()
+                || outputs.isEmpty() && fluidOutputs.isEmpty() && matterOutputs.isEmpty() && byproducts.isEmpty()) {
             throw new IllegalStateException("the processing recipe " + id + " takes something and makes something");
         }
         if (ticks < 1 || energyPerTick < 0) {

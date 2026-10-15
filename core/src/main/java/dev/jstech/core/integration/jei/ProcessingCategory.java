@@ -9,6 +9,7 @@ package dev.jstech.core.integration.jei;
 
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.client.recipeview.RecipeViewPalette;
+import dev.jstech.core.machine.Byproduct;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.ProcessingViewLayout;
@@ -98,6 +99,12 @@ final class ProcessingCategory implements IRecipeCategory<RecipeHolder<Processin
                     .setFluidRenderer(input.amount(), false, FLUID_SIZE, FLUID_SIZE)
                     .addIngredients(NeoForgeTypes.FLUID_STACK, List.of(input.getFluids()));
         }
+        for (final SizedIngredient catalyst : recipe.catalysts()) {
+            final ProcessingViewLayout.Point at = layout.input(index++);
+            builder.addInputSlot(at.x() + SLOT_INSET, at.y() + SLOT_INSET).setStandardSlotBackground()
+                    .addItemStacks(List.of(catalyst.getItems()))
+                    .addRichTooltipCallback((view, tooltip) -> tooltip.add(ProcessingRecipeViews.catalyst()));
+        }
         /*
          * The outputs wear the same plain slot as the inputs: JEI's large output slot reaches five pixels past its
          * item, onto the next output and the line under the recipe.
@@ -114,6 +121,13 @@ final class ProcessingCategory implements IRecipeCategory<RecipeHolder<Processin
                     .setFluidRenderer(output.getAmount(), false, FLUID_SIZE, FLUID_SIZE)
                     .addIngredient(NeoForgeTypes.FLUID_STACK, output);
         }
+        for (final Byproduct byproduct : recipe.byproducts()) {
+            final ProcessingViewLayout.Point at = layout.output(index++);
+            builder.addOutputSlot(at.x() + SLOT_INSET, at.y() + SLOT_INSET).setStandardSlotBackground()
+                    .addItemStack(byproduct.stack())
+                    .addRichTooltipCallback((view, tooltip) -> tooltip.add(ProcessingRecipeViews.chance(
+                            byproduct.chance())));
+        }
     }
 
     @Override
@@ -125,6 +139,12 @@ final class ProcessingCategory implements IRecipeCategory<RecipeHolder<Processin
         builder.addText(ProcessingRecipeViews.workLine(recipe), size.width(), ProcessingViewLayout.TEXT_LINE)
                 .setPosition(layout.textLine().x(), layout.textLine().y())
                 .setColor(RecipeViewPalette.get().text());
+        final List<Component> lines = ProcessingRecipeViews.lines(recipe);
+        for (int line = 0; line < lines.size(); line++) {
+            final ProcessingViewLayout.Point at = layout.textLine(line + 1);
+            builder.addText(lines.get(line), size.width(), ProcessingViewLayout.TEXT_LINE)
+                    .setPosition(at.x(), at.y()).setColor(RecipeViewPalette.get().text());
+        }
     }
 
     @Override

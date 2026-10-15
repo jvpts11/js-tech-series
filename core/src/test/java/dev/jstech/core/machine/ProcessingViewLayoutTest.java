@@ -87,6 +87,17 @@ class ProcessingViewLayoutTest {
     @Test
     void constructor_refusesNegativeCounts() {
         assertThrows(IllegalArgumentException.class, () -> new ProcessingViewLayout(-1, 1));
+        assertThrows(IllegalArgumentException.class, () -> new ProcessingViewLayout(1, 1, 0));
+    }
+
+    @Test
+    void lines_stackUnderTheSlotsAndGrowTheHeight() {
+        final ProcessingViewLayout one = new ProcessingViewLayout(1, 1);
+        final ProcessingViewLayout three = new ProcessingViewLayout(1, 1, 3);
+        assertEquals(one.height() + 2 * ProcessingViewLayout.TEXT_LINE, three.height());
+        assertEquals(one.textLine(), three.textLine(0));
+        assertEquals(three.textLine(0).y() + 2 * ProcessingViewLayout.TEXT_LINE, three.textLine(2).y());
+        assertThrows(IndexOutOfBoundsException.class, () -> three.textLine(3));
     }
 
     private static int[] box(final ProcessingViewLayout.Point at, final int width, final int height) {

@@ -14,6 +14,7 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.FieldEnergyStorage;
 import dev.jstech.core.blockentity.FieldItemHandler;
+import dev.jstech.core.blockentity.IFaceGate;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
@@ -22,7 +23,14 @@ import dev.jstech.core.energy.EnergyFaults;
 import dev.jstech.core.energy.EnergyProtection;
 import dev.jstech.core.energy.EnergyStore;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.inventory.FaceEnergyStorage;
+import dev.jstech.core.inventory.FaceFluidHandler;
+import dev.jstech.core.inventory.FaceItemHandler;
+import dev.jstech.core.inventory.FaceMode;
+import dev.jstech.core.inventory.ItemFilter;
 import dev.jstech.core.look.IDescribed;
+import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.signal.ISignalOutput;
 import dev.jstech.core.signal.Reading;
@@ -34,13 +42,21 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.BlockCapability;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.wrapper.EmptyItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -58,13 +74,14 @@ import org.jetbrains.annotations.Nullable;
  */
 @TextHolder
 public abstract class MachineBlockEntity extends SyncedBlockEntity implements IOwned, IMachineParameters,
-        ISignalOutput, IDescribed, IAudible {
+        ISignalOutput, IDescribed, IAudible, IFaceGate {
 
     private final FieldItemHandler inventory;
     private final @Nullable FieldEnergyStorage energy;
     private final MachinePower power;
     private final MachineControl control;
     private final MachineHealth health;
+    private final MachineSides sides;
     private final ValueField<MachineStatus> status;
     private final BoolField running;
     private final ValueField<Ownership> ownership;
@@ -127,6 +144,14 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
         this.control = MachineControl.in(fields());
         this.health = MachineHealth.in(fields());
+        final PartField[] sidesField = new PartField[1];
+        this.sides = new MachineSides(this::resources, () -> {
+            sidesField[0].changed();
+            if (this.level != null) {
+                this.level.invalidateCapabilities(this.worldPosition);
+            }
+        });
+        sidesField[0] = fields().part("Sides", this.sides).save().toClient();
         this.status = fields().value("Status", StableCodecs.byName(MachineStatus.class), MachineStatus.WAITING)
                 .toClient();
         this.running = fields().flag("Running", false).toClient();
@@ -167,6 +192,40 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     /** How whole it is. */
     public MachineHealth health() {
         return health;
+    }
+
+    /** What each of its faces does with each of its resources, and what it pushes and pulls by itself. */
+    public MachineSides sides() {
+        return sides;
+    }
+
+    /**
+     * What it offers on {@code side} of {@code whole}: as its Sides tab sets the face for the resource, the whole, a
+     * part that only takes in or only gives out, or nothing; from inside the block, the whole.
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> @Nullable T throughFace(final BlockCapability<T, ?> capability, final @Nullable Direction side,
+                                       final @Nullable T whole) {
+        if (whole == null || side == null) {
+            return whole;
+        }
+        final MachineResource resource = capability == Capabilities.ItemHandler.BLOCK ? MachineResource.ITEMS
+                : capability == Capabilities.FluidHandler.BLOCK ? MachineResource.FLUIDS
+                : capability == Capabilities.EnergyStorage.BLOCK ? MachineResource.ENERGY : null;
+        if (resource == null) {
+            return whole;
+        }
+        final FaceMode mode = sides.mode(resource, getBlockState(), side);
+        return switch (mode) {
+            case NONE -> null;
+            case BOTH -> whole;
+            case IN, OUT -> switch (resource) {
+                case ITEMS -> (T) new FaceItemHandler((IItemHandler) whole, mode, ItemFilter.EVERYTHING);
+                case FLUIDS -> (T) new FaceFluidHandler((IFluidHandler) whole, mode, ItemFilter.EVERYTHING);
+                default -> (T) new FaceEnergyStorage((IEnergyStorage) whole, mode);
+            };
+        };
     }
 
     /** What it is doing, as its screen and whoever looks at it see. */
@@ -370,6 +429,41 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return MachineSounds.SILENT;
     }
 
+    /** What goes in and out of it, which its Sides tab sets face by face: items and energy, and whatever it adds. */
+    protected Set<MachineResource> resources() {
+        return Set.of(MachineResource.ITEMS, MachineResource.ENERGY);
+    }
+
+    /** The slots it pulls items into by itself; none unless it says. */
+    protected IItemHandler itemsIn() {
+        return EmptyItemHandler.INSTANCE;
+    }
+
+    /** The slots it pushes items out of by itself; none unless it says. */
+    protected IItemHandler itemsOut() {
+        return EmptyItemHandler.INSTANCE;
+    }
+
+    /** The tanks it pulls liquids into by itself; none unless it says. */
+    protected @Nullable IFluidHandler fluidsIn() {
+        return null;
+    }
+
+    /** The tanks it pushes liquids out of by itself; none unless it says. */
+    protected @Nullable IFluidHandler fluidsOut() {
+        return null;
+    }
+
+    /** Its input tanks of {@code state}; none unless it says. */
+    protected List<MatterTank> matterIn(final MatterState state) {
+        return List.of();
+    }
+
+    /** Its output tanks of {@code state}; none unless it says. */
+    protected List<MatterTank> matterOut(final MatterState state) {
+        return List.of();
+    }
+
     private void tickServer(final ServerLevel server) {
         ticked = true;
         final long now = server.getGameTime();
@@ -379,6 +473,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
         if (!signalRead) {
             readSignal(server);
+        }
+        if (sides.automatic() && Math.floorMod(now + worldPosition.asLong(), MachineTransfers.EVERY) == 0) {
+            MachineTransfers.run(server, this);
         }
         if (asleep && now < wakeAt) {
             return;

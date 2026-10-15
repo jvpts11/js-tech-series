@@ -97,7 +97,10 @@ public final class MachineKitGameTests {
                 .thenExecute(() -> store(machine).setStored(TestKitMachine.CAPACITY))
                 .thenExecuteAfter(2, () -> helper.assertTrue(machine.status() == MachineStatus.WORKING,
                         "with energy it works: " + machine.status()))
-                .thenExecute(() -> machine.getInventory().setStackInSlot(1, new ItemStack(Items.DIRT, 64)))
+                .thenExecute(() -> {
+                    machine.getInventory().setStackInSlot(TestKitMachine.OUT, new ItemStack(Items.DIRT, 64));
+                    machine.getInventory().setStackInSlot(TestKitMachine.OUT + 1, new ItemStack(Items.DIRT, 64));
+                })
                 .thenExecuteAfter(2, () -> helper.assertTrue(machine.status() == MachineStatus.OUTPUT_FULL,
                         "with no room for its work, its output is full: " + machine.status()))
                 .thenSucceed();
@@ -109,10 +112,10 @@ public final class MachineKitGameTests {
         machine.control().setOn(false);
         helper.runAfterDelay(TestKitMachine.TICKS + 5, () -> {
             helper.assertTrue(machine.status() == MachineStatus.SWITCHED_OFF, "switched off: " + machine.status());
-            helper.assertTrue(machine.getInventory().getStackInSlot(1).isEmpty(), "it made nothing");
+            helper.assertTrue(machine.getInventory().getStackInSlot(TestKitMachine.OUT).isEmpty(), "it made nothing");
             machine.control().setOn(true);
             helper.runAfterDelay(TestKitMachine.TICKS + 5, () -> {
-                helper.assertTrue(machine.getInventory().getStackInSlot(1).is(Items.STONE),
+                helper.assertTrue(machine.getInventory().getStackInSlot(TestKitMachine.OUT).is(Items.STONE),
                         "switched on, it works again");
                 helper.succeed();
             });
@@ -143,7 +146,7 @@ public final class MachineKitGameTests {
                 .thenExecuteAfter(2, () -> helper.setBlock(MACHINE.west(), Blocks.REDSTONE_BLOCK))
                 .thenExecuteAfter(2, () -> helper.setBlock(MACHINE.west(), Blocks.AIR))
                 .thenExecuteAfter(TestKitMachine.TICKS * 3, () -> {
-                    final ItemStack made = machine.getInventory().getStackInSlot(1);
+                    final ItemStack made = machine.getInventory().getStackInSlot(TestKitMachine.OUT);
                     helper.assertTrue(made.is(Items.STONE) && made.getCount() == 1, "one pulse, one recipe: " + made);
                     helper.assertTrue(machine.status() == MachineStatus.OFF_BY_REDSTONE,
                             "and it waits for the next pulse: " + machine.status());
@@ -158,7 +161,8 @@ public final class MachineKitGameTests {
         helper.setBlock(comparatorAt, Blocks.COMPARATOR.defaultBlockState().setValue(ComparatorBlock.FACING,
                 Direction.NORTH));
         machine.control().setReads(ComparatorReads.INPUT);
-        machine.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 32));
+        // One of its two inputs full: half full.
+        machine.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 64));
         helper.runAfterDelay(6, () -> {
             helper.assertTrue(machine.strength() == 8, "half full, it speaks 8 of 15: " + machine.strength());
             final ComparatorBlockEntity comparator = (ComparatorBlockEntity) helper.getLevel().getBlockEntity(
@@ -266,7 +270,8 @@ public final class MachineKitGameTests {
             machine.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE));
             helper.assertTrue(!machine.asleep(), "something put in wakes it");
             helper.runAfterDelay(TestKitMachine.TICKS + 3, () -> {
-                helper.assertTrue(machine.getInventory().getStackInSlot(1).is(Items.STONE), "and it works");
+                helper.assertTrue(machine.getInventory().getStackInSlot(TestKitMachine.OUT).is(Items.STONE),
+                        "and it works");
                 helper.succeed();
             });
         });
@@ -279,8 +284,8 @@ public final class MachineKitGameTests {
                 helper.absolutePos(MACHINE), null);
         helper.assertTrue(values.read("health").orElse(-1) == MachineHealth.FULL, "every machine's own are read");
         helper.assertTrue(values.write("on", 0) && !machine.control().on(), "its switch is set from outside");
-        helper.assertTrue(values.write("pressure", 50) && machine.pressure() == 10,
-                "its own value is set, held to its span: " + machine.pressure());
+        helper.assertTrue(values.write("dial", 50) && machine.dial() == 10,
+                "its own value is set, held to its span: " + machine.dial());
         helper.assertTrue(!values.write("progress", 1) && !values.write("nothing", 1),
                 "a value only read, or none, is not set");
         helper.succeed();

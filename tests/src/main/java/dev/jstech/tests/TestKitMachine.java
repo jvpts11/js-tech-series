@@ -17,6 +17,7 @@ import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineParameter;
 import dev.jstech.core.machine.ProcessingInput;
+import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.machine.RepairKitItem;
 import dev.jstech.core.material.MatterState;
@@ -34,7 +35,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 /**
  * A machine of the test mod built on the whole of the Core's machine kit: a device block, energy of the test mod's
  * own through a port of the low class with a fuse and a battery, a tank of gas in and one out, a value of its own the
- * outside may set; it turns cobblestone into stone in twenty ticks. And a repair kit for it.
+ * outside may set; it turns cobblestone into stone in twenty ticks, and works the refining recipes. A repair kit for
+ * it. And a factory of three lanes on FE, working the choosing recipes.
  */
 public final class TestKitMachine {
 
@@ -47,9 +49,11 @@ public final class TestKitMachine {
     /** What the test repair kit holds and gives back a second. */
     public static final int KIT_USES = 100;
     public static final int KIT_PER_SECOND = 25;
-    public static final ProcessingMachineBlockEntity.Layout LAYOUT = ProcessingMachineBlockEntity.Layout.items(1, 1)
+    public static final ProcessingMachineBlockEntity.Layout LAYOUT = ProcessingMachineBlockEntity.Layout.items(2, 2)
             .withMatter(MatterState.GAS, 1, 1, 1_000L, 10L);
-    public static final TextKey PRESSURE = TextKey.of("jstests.kit_machine.pressure", "Pressure");
+    /** Its first output slot. */
+    public static final int OUT = 2;
+    public static final TextKey DIAL = TextKey.of("jstests.kit_machine.dial", "Dial");
 
     /* Its block state and model are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<DeviceBlock> BLOCK = TestSounds.CONTENT.block("test_kit_machine",
@@ -60,6 +64,19 @@ public final class TestKitMachine {
     public static final ItemEntry<RepairKitItem> REPAIR_KIT = TestSounds.CONTENT.item("test_repair_kit",
             properties -> new RepairKitItem(properties, KIT_USES, KIT_PER_SECOND)).named("Test Repair Kit")
             .look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    /** The kit machine's recipes: a catalyst, a gas in and out, a byproduct, the pressure and temperature it needs. */
+    public static final ProcessingKind REFINING = TestSounds.CONTENT.processing("test_refining", "Test Refining",
+            () -> TestKitMachine.BLOCK);
+    /** Two recipes of the same input, gravel, for the player to pick between. */
+    public static final ProcessingKind CHOOSING = TestSounds.CONTENT.processing("test_choosing", "Test Choosing",
+            () -> TestKitMachine.FACTORY);
+    /** A factory of three lanes, which sorts its inputs among them. */
+    public static final int LANES = 3;
+    public static final BlockEntry<DeviceBlock> FACTORY = TestSounds.CONTENT.block("test_factory",
+            Device.of(() -> TestKitMachine.FACTORY_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
+            .named("Test factory").look(IBlockLook.cubeAll("test_factory")).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FactoryBlockEntity>> FACTORY_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_factory", FactoryBlockEntity::new, FACTORY);
 
     private TestKitMachine() {
     }
@@ -69,10 +86,16 @@ public final class TestKitMachine {
         // Loading the class declares them.
     }
 
+    /* Cobblestone into stone, in twenty ticks. */
+    private static Optional<ProcessingMachineBlockEntity.Processing> stone(final ProcessingInput input) {
+        return input.items().getFirst().is(Items.COBBLESTONE) ? Optional.of(ProcessingMachineBlockEntity.Processing
+                .single(0, new ItemStack(Items.STONE), TICKS)) : Optional.empty();
+    }
+
     /** The machine at work. */
     public static final class KitMachineBlockEntity extends ProcessingMachineBlockEntity {
 
-        private double pressure = 1.0;
+        private double dial = 1.0;
 
         public KitMachineBlockEntity(final BlockPos pos, final BlockState state) {
             super(BLOCK_ENTITY.get(), pos, state, LAYOUT, MachineEnergy.of(TestEnergies.VOLTS, TestEnergies.LOW,
@@ -80,20 +103,32 @@ public final class TestKitMachine {
         }
 
         /** The value of its own the outside may set. */
-        public double pressure() {
-            return pressure;
+        public double dial() {
+            return dial;
         }
 
         @Override
         protected Optional<Processing> process(final Level level, final ProcessingInput input) {
-            return input.items().getFirst().is(Items.COBBLESTONE)
-                    ? Optional.of(Processing.single(0, new ItemStack(Items.STONE), TICKS)) : Optional.empty();
+            return byKind(level, REFINING, input).or(() -> stone(input));
         }
 
         @Override
         protected void declareParameters(final List<MachineParameter> declared) {
-            declared.add(MachineParameter.set("pressure", PRESSURE, null, 1, 10, () -> pressure,
-                    value -> pressure = value));
+            declared.add(MachineParameter.set("dial", DIAL, null, 1, 10, () -> dial, value -> dial = value));
+        }
+    }
+
+    /** The factory at work: the choosing recipes, and cobblestone into stone, in each of its lanes. */
+    public static final class FactoryBlockEntity extends ProcessingMachineBlockEntity {
+
+        public FactoryBlockEntity(final BlockPos pos, final BlockState state) {
+            super(FACTORY_ENTITY.get(), pos, state, ProcessingMachineBlockEntity.Layout.items(1, 1).withLanes(LANES),
+                    MachineEnergy.fe((int) CAPACITY, (int) TAKES, 0), SPENDS);
+        }
+
+        @Override
+        protected Optional<Processing> process(final Level level, final ProcessingInput input) {
+            return byKind(level, CHOOSING, input).or(() -> stone(input));
         }
     }
 }

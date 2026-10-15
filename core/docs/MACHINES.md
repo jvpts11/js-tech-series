@@ -173,6 +173,29 @@ protected void declareParameters(final List<MachineParameter> declared) {
 
 A value set from outside is held to its span, and a value only read is never set.
 
+### Sides
+
+*Added 2026-10-15.*
+
+Each face of a machine does, with each of its resources, what its Sides tab sets (`sides()`, a `MachineSides`): takes
+in, gives out, both, or nothing (`FaceMode`). The resources are items, fluids, each state of matter it has tanks of,
+energy and heat (`MachineResource`); a face is named from the machine's own point of view (front, back, left,
+right, top, bottom), so turning the machine keeps what each face does. Every face does both until it is set. What a
+pipe, a cable or a hopper finds on a face is cut to it: nothing on a closed face, only putting in on a face that takes
+in, only taking out on one that gives out.
+
+A machine also moves things by itself, through its faces (`MachineSides.Automation`): it **pushes** what it makes
+into the block beside each face that gives out, and **pulls** what it works from the block beside each face that takes
+in, each resource at most its rate a second and only what its filter lets pass (`ItemFilter`, the cable ends' filter):
+
+```java
+machine.sides().set(MachineResource.ITEMS, RelativeFace.BACK, FaceMode.OUT);
+machine.sides().setAutomation(MachineResource.ITEMS, Automation.NONE.pushing(true, 64));   // 64 a second
+```
+
+A machine of your own says which slots and tanks it pushes from and pulls into by overriding `itemsIn()`,
+`itemsOut()`, `fluidsIn()`, `fluidsOut()`, `matterIn(state)` and `matterOut(state)`; a processing machine already does.
+
 ### Owner
 
 Whoever places a machine owns it; who else may use it is its access ([Ownership](OWNERSHIP.md)).
@@ -183,6 +206,19 @@ A machine with nothing to do (nothing to work, its output full, no energy, switc
 returns at once until something it waits on changes. Anything saved that changes wakes it (an item put in or taken
 out, energy arriving, a setting, its health), and so do its neighbours' changes; at the latest it looks again every
 `SLEEP_AT_MOST` ticks. A large factory of idle machines weighs nothing on the server.
+
+## Never jammed
+
+*Added 2026-10-15.*
+
+- **A slot locked to an item** (`locks().lock(slot, stack)`) takes only that item, so automation never fills it with
+  the wrong thing; the screen shows the item as a ghost while the slot is empty.
+- **The player picks the recipe** when the inputs make several (`chooseRecipe(id)`); `byKind` works the one picked,
+  or the first that fits when none is.
+- **Factories of several lanes** (`Layout.items(1, 1).withLanes(3)`): each lane has its own inputs and outputs and
+  works on its own, side by side, as Mekanism's factories do; what is put into the inputs is sorted among the lanes by
+  itself, as even as it goes. The tanks serve every lane. `laneInput(lane, i)` and `laneOutput(lane, i)` say which slot
+  is which.
 
 ## Recipes
 
@@ -211,6 +247,14 @@ packs, with no code.
 | `fluid_outputs` | Fluids made, each `{"id": id, "amount": mb}`. | none |
 | `ticks` | How long it takes, at least 1. | 200 |
 | `energy_per_tick` | FE spent each tick; 0 means the machine's own default. | 0 |
+| `catalysts` | Items that must be in the machine, each in a slot of its own, and are not used up. | none |
+| `matter_inputs` | Matter taken from the machine's tanks of gas and the other states, each `{"material": id, "amount": mB}`, at the open air's pressure. | none |
+| `matter_outputs` | Matter made into those tanks, the same way. | none |
+| `byproducts` | Items made besides, by chance, each `{"item": {"id": id, "count": n}, "chance": 0.1}`; the machine starts only with room for all of them. | none |
+| `conditions` | The temperature and pressure inside the machine it runs between: `min_temperature`, `max_temperature` (kelvin), `min_pressure`, `max_pressure` (kilopascals). A machine is at its dimension's air unless it says otherwise (`temperature()`, `pressure()`). | any |
+
+JEI and EMI show every part: the catalysts beside the inputs ("Not used up"), the byproducts beside the outputs with
+their chance, and the matter and the conditions as lines under the recipe.
 
 A recipe takes at least one input (item or fluid) and makes at least one output, or it is refused with a line
 in the log when the data loads. Asking for a tag (`c:ingots/iron`) rather than an item lets the recipe take the

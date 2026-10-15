@@ -1,6 +1,7 @@
 {
   "block.jstests.connected_panel": "Connected panel",
   "block.jstests.test_acid": "Test Acid",
+  "block.jstests.test_factory": "Test factory",
   "block.jstests.test_furnace_controller": "Test furnace controller",
   "block.jstests.test_furnace_part": "Test furnace part",
   "block.jstests.test_kiln": "Test kiln",
@@ -223,7 +224,9 @@
   "jstests.mode.clear": "Clear",
   "jstests.mode.mark": "Mark",
   "jstests.mode.scan": "Scan",
+  "jstests.recipe_kind.test_choosing": "Test Choosing",
   "jstests.recipe_kind.test_pressing": "Test Pressing",
+  "jstests.recipe_kind.test_refining": "Test Refining",
   "jstests.screen.controls": "Controls",
   "jstests.screen.eject": "Auto-eject",
   "jstests.screen.made": "Per min",

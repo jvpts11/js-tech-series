@@ -18,8 +18,9 @@ import java.math.BigDecimal;
  *
  * @param inputs  how many inputs, items and fluids together
  * @param outputs how many outputs, items and fluids together
+ * @param lines   how many lines of text under the slots: the time and the energy, then what a recipe says besides
  */
-public record ProcessingViewLayout(int inputs, int outputs) {
+public record ProcessingViewLayout(int inputs, int outputs, int lines) {
 
     /** A slot's side, border included. */
     public static final int SLOT = 18;
@@ -38,6 +39,14 @@ public record ProcessingViewLayout(int inputs, int outputs) {
         if (inputs < 0 || outputs < 0) {
             throw new IllegalArgumentException("a recipe has no fewer than no inputs and outputs");
         }
+        if (lines < 1) {
+            throw new IllegalArgumentException("a recipe has its line of time under it");
+        }
+    }
+
+    /** A recipe with only the line of time and energy under it. */
+    public ProcessingViewLayout(final int inputs, final int outputs) {
+        this(inputs, outputs, 1);
     }
 
     /**
@@ -54,7 +63,7 @@ public record ProcessingViewLayout(int inputs, int outputs) {
     }
 
     public int height() {
-        return slotsHeight() + TEXT_LINE;
+        return slotsHeight() + TEXT_LINE * lines;
     }
 
     /** Where input {@code index} goes, counting the items first and the fluids after them. */
@@ -74,7 +83,15 @@ public record ProcessingViewLayout(int inputs, int outputs) {
 
     /** Where the line of time and energy starts. */
     public Point textLine() {
-        return new Point(0, slotsHeight() + 1);
+        return textLine(0);
+    }
+
+    /** Where line {@code index} under the slots starts, the line of time and energy the first. */
+    public Point textLine(final int index) {
+        if (index < 0 || index >= lines) {
+            throw new IndexOutOfBoundsException("line " + index + " of " + lines);
+        }
+        return new Point(0, slotsHeight() + 1 + index * TEXT_LINE);
     }
 
     /**

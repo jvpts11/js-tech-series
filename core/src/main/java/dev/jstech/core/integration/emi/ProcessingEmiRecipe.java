@@ -16,8 +16,11 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.client.recipeview.RecipeViewPalette;
+import dev.jstech.core.machine.Byproduct;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.ProcessingViewLayout;
+import java.util.List;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
@@ -56,6 +59,13 @@ final class ProcessingEmiRecipe extends BasicEmiRecipe {
         for (final FluidStack output : recipe.fluidOutputs()) {
             outputs.add(NeoForgeEmiStack.of(output));
         }
+        // EMI's catalysts are what it is: in the machine, not used up.
+        for (final SizedIngredient catalyst : recipe.catalysts()) {
+            catalysts.add(NeoForgeEmiIngredient.of(catalyst));
+        }
+        for (final Byproduct byproduct : recipe.byproducts()) {
+            outputs.add(EmiStack.of(byproduct.stack()).setChance(byproduct.chance()));
+        }
     }
 
     @Override
@@ -64,6 +74,10 @@ final class ProcessingEmiRecipe extends BasicEmiRecipe {
         for (final EmiIngredient input : inputs) {
             final ProcessingViewLayout.Point at = layout.input(index++);
             widgets.addSlot(input, at.x(), at.y());
+        }
+        for (final EmiIngredient catalyst : catalysts) {
+            final ProcessingViewLayout.Point at = layout.input(index++);
+            widgets.addSlot(catalyst, at.x(), at.y()).catalyst(true);
         }
         index = 0;
         for (final EmiStack output : outputs) {
@@ -75,6 +89,11 @@ final class ProcessingEmiRecipe extends BasicEmiRecipe {
         widgets.addFillingArrow(layout.arrow().x(), layout.arrow().y(), millis);
         widgets.addText(ProcessingRecipeViews.workLine(recipe), layout.textLine().x(), layout.textLine().y(),
                 RecipeViewPalette.get().text(), false);
+        final List<Component> lines = ProcessingRecipeViews.lines(recipe);
+        for (int line = 0; line < lines.size(); line++) {
+            final ProcessingViewLayout.Point at = layout.textLine(line + 1);
+            widgets.addText(lines.get(line), at.x(), at.y(), RecipeViewPalette.get().text(), false);
+        }
     }
 
     @Override

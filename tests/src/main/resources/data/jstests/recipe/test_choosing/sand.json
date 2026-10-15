@@ -1,0 +1,10 @@
+{
+  "type": "jstests:test_choosing",
+  "inputs": [
+    {"item": "minecraft:gravel", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:sand", "count": 1}
+  ],
+  "ticks": 10
+}

@@ -16,11 +16,12 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
  * one that drains draws from the first that holds it, in the order the tanks were declared. A tank only a machine
  * fills refuses pipes that fill.
  */
-final class CombinedTanks implements IFluidHandler {
+public final class CombinedTanks implements IFluidHandler {
 
     private final List<FieldFluidTank> tanks;
 
-    CombinedTanks(final List<FieldFluidTank> tanks) {
+    /** {@code tanks} offered as one, in their order. */
+    public CombinedTanks(final List<FieldFluidTank> tanks) {
         this.tanks = List.copyOf(tanks);
     }
 

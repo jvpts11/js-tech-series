@@ -10,7 +10,10 @@ package dev.jstech.core.machine;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.energy.EnergyPorts;
 import dev.jstech.core.energy.EnergyStore;
+import dev.jstech.core.inventory.FaceMode;
+import dev.jstech.core.inventory.ItemFilter;
 import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.FaceMatterHandler;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
 import dev.jstech.core.signal.Signals;
@@ -76,13 +79,15 @@ public final class Machines {
     private static void register(final RegisterCapabilitiesEvent event, final BlockEntityType<?> type) {
         final BlockEntityType<BlockEntity> any = (BlockEntityType<BlockEntity>) type;
         event.registerBlockEntity(EnergyPorts.PORT, any, (entity, side) ->
-                entity instanceof MachineBlockEntity machine ? machine.power().portStore() : null);
+                entity instanceof MachineBlockEntity machine && open(machine, MachineResource.ENERGY, side)
+                        ? machine.power().portStore() : null);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, any, (entity, side) -> {
             if (!(entity instanceof MachineBlockEntity machine)) {
                 return null;
             }
             final EnergyStore store = machine.power().portStore();
-            return store != null && store.energy().acceptsFe() ? store.asFe() : null;
+            return store != null && store.energy().acceptsFe()
+                    ? machine.throughFace(Capabilities.EnergyStorage.BLOCK, side, store.asFe()) : null;
         });
         event.registerBlockEntity(IMachineParameters.CAPABILITY, any, (entity, side) ->
                 entity instanceof MachineBlockEntity machine ? machine : null);
@@ -92,7 +97,29 @@ public final class Machines {
             final Optional<BlockCapability<IMatterHandler, @Nullable Direction>> capability =
                     MatterCapabilities.block(state);
             capability.ifPresent(found -> event.registerBlockEntity(found, any, (entity, side) ->
-                    entity instanceof ProcessingMachineBlockEntity machine ? machine.matter().outside(state) : null));
+                    entity instanceof ProcessingMachineBlockEntity machine ? matterOn(machine, state, side) : null));
         }
+    }
+
+    /* Whether {@code side} of {@code machine} lets {@code resource} through at all; from inside, always. */
+    private static boolean open(final MachineBlockEntity machine, final MachineResource resource,
+                                final @Nullable Direction side) {
+        return side == null || machine.sides().mode(resource, machine.getBlockState(), side) != FaceMode.NONE;
+    }
+
+    /* A machine's tanks of {@code state} as its {@code side} gives them out. */
+    private static @Nullable IMatterHandler matterOn(final ProcessingMachineBlockEntity machine,
+                                                     final MatterState state, final @Nullable Direction side) {
+        final IMatterHandler whole = machine.matter().outside(state);
+        final Optional<MachineResource> resource = MachineResource.of(state);
+        if (whole == null || side == null || resource.isEmpty()) {
+            return whole;
+        }
+        final FaceMode mode = machine.sides().mode(resource.get(), machine.getBlockState(), side);
+        return switch (mode) {
+            case NONE -> null;
+            case BOTH -> whole;
+            case IN, OUT -> new FaceMatterHandler(whole, mode, ItemFilter.EVERYTHING);
+        };
     }
 }
