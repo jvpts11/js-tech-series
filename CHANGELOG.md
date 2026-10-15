@@ -259,6 +259,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   items sliding through; a player holding a wrench, or wearing goggles of the `jscore:sees_flow` tag, reads beside the
   crosshair what the wire they look at carries, which way, how much a tick, and how its end is set. A cable type can
   have windows and a fitting of its own at its joints.
+- (Core) The network probe: a handheld instrument of the clamp meter's family that reads a whole line of any kind.
+  Linked to a wire, held up, its display shows the line on four pages: the summary (the flow of the last minute
+  against the narrowest cable and whether it runs full, what the consumers want and how much of it they get, the
+  losses, and how many sources, consumers and stores it joins), the members (every block it plugs into, by what it is
+  to the line and by kind, with what each gives or takes), the flow (each second of the last minute, with the most,
+  the least and the mean) and the losses. OK outlines the chosen blocks in the world, through walls, for ten seconds;
+  HOLD keeps the reading still, SHOW puts it beside the crosshair, LIGHT lights the display and POWER switches it off.
+- (Core) Reading a line: a grid's mover tells what a part of it did in the last tick (`IGridMover.survey`): each block
+  it plugs into with what it gave and took, what it moved, what its consumers asked, what it lost and its narrowest
+  cable. The energy, fluid, matter and item lines all keep it.
 - (Core) The basic pipes: the Copper Pipe for liquids up to 200 °C, the Iron Gas Pipe, and the Vacuum-Jacketed Pipe
   for cryogenic liquids, thick pipes with sight glasses and solid fittings, made of the game's own materials so a mod
   used alone carries liquids and gases. A pipe carrying a liquid hotter or colder than it stands bursts after five

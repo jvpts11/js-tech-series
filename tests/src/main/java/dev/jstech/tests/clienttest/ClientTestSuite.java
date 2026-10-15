@@ -146,6 +146,7 @@ import dev.jstech.tests.clienttest.series.CableBlockClientTests;
 import dev.jstech.tests.clienttest.series.ClampMeterClientTests;
 import dev.jstech.tests.clienttest.series.EndScreenClientTests;
 import dev.jstech.tests.clienttest.series.EnergyConverterClientTests;
+import dev.jstech.tests.clienttest.series.NetworkProbeClientTests;
 import dev.jstech.tests.clienttest.series.PipeClientTests;
 import dev.jstech.tests.clienttest.series.ManualClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
@@ -254,6 +255,7 @@ public final class ClientTestSuite {
             EnergyConverterClientTests.class,
             PipeClientTests.class,
             EndScreenClientTests.class,
+            NetworkProbeClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,

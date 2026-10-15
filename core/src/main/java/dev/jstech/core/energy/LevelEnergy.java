@@ -10,13 +10,16 @@ package dev.jstech.core.energy;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableParts;
 import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.NarrowestWire;
 import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.energy.internal.EnergyNetwork;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
+import dev.jstech.core.grid.GridPlaces;
 import dev.jstech.core.grid.IGridMover;
+import dev.jstech.core.grid.LineSurvey;
 import dev.jstech.core.log.CoreLogs;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +58,9 @@ public final class LevelEnergy implements IGridMover {
     private final List<EnergyNetwork> parts = new ArrayList<>();
     private final List<List<PortNode>> portsOfParts = new ArrayList<>();
     private final List<Map<Long, Long>> nodesOfParts = new ArrayList<>();
+    private final List<Map<Long, Asked>> nodeObjectsOfParts = new ArrayList<>();
+    private final List<Integer> cablesOfParts = new ArrayList<>();
+    private final List<Optional<LineSurvey.Narrowest>> narrowestOfParts = new ArrayList<>();
     private final Map<Long, Integer> partOfWire = new HashMap<>();
     private final Map<Long, CableType> typeOfWire = new HashMap<>();
     private final Map<Long, Long> watchedUntil = new HashMap<>();
@@ -189,6 +195,42 @@ public final class LevelEnergy implements IGridMover {
         this.taps++;
     }
 
+    /**
+     * What the part of the grid the wire numbered {@code wire} is in did in the last tick: each block it plugs into as
+     * a generator, a consumer or a store, with what it gave and took; what the generators sent, what was asked, and what
+     * the cables lost.
+     */
+    @Override
+    public Optional<LineSurvey> survey(final long wire) {
+        final Integer part = this.partOfWire.get(wire);
+        if (part == null || part >= this.lastTick.size()) {
+            return Optional.empty();
+        }
+        final EnergyDistributionResult tick = this.lastTick.get(part);
+        final Map<Long, Asked> objects = this.nodeObjectsOfParts.get(part);
+        final List<LineSurvey.Member> members = new ArrayList<>();
+        long wanted = 0L;
+        for (final Map.Entry<Long, Long> machine : this.nodesOfParts.get(part).entrySet()) {
+            final long node = machine.getValue();
+            final long gave = tick.perSupplierSent().getOrDefault(node, 0L);
+            final long took = tick.perConsumerDelivered().getOrDefault(node, 0L);
+            final Asked object = objects.get(node);
+            final LineSurvey.Role role = object == null ? LineSurvey.Role.of(gave > 0, took > 0)
+                    : switch (object.role()) {
+                        case GENERATOR -> LineSurvey.Role.SOURCE;
+                        case CONSUMER -> LineSurvey.Role.CONSUMER;
+                        case STORAGE -> LineSurvey.Role.STORE;
+                    };
+            // What the consumers asked: a store that wants charging asks for no work to be done.
+            if (object != null && role == LineSurvey.Role.CONSUMER) {
+                wanted += object.asked();
+            }
+            members.add(new LineSurvey.Member(machine.getKey(), role, gave, took));
+        }
+        return Optional.of(new LineSurvey(members, tick.totalDelivered() + tick.totalLost(), wanted,
+                tick.totalLost(), this.cablesOfParts.get(part), this.narrowestOfParts.get(part)));
+    }
+
     /** Moves the tick's energy through every part of the grid of {@code level}. */
     @Override
     public void tick(final ServerLevel level) {
@@ -197,6 +239,9 @@ public final class LevelEnergy implements IGridMover {
             this.parts.clear();
             this.portsOfParts.clear();
             this.nodesOfParts.clear();
+            this.nodeObjectsOfParts.clear();
+            this.cablesOfParts.clear();
+            this.narrowestOfParts.clear();
             this.partOfWire.clear();
             this.typeOfWire.clear();
             this.lastTick = List.of();
@@ -236,18 +281,24 @@ public final class LevelEnergy implements IGridMover {
         this.parts.clear();
         this.portsOfParts.clear();
         this.nodesOfParts.clear();
+        this.nodeObjectsOfParts.clear();
+        this.cablesOfParts.clear();
+        this.narrowestOfParts.clear();
         this.partOfWire.clear();
         this.typeOfWire.clear();
         final int classLoss = this.energy.lossPerBlock(this.lineClass);
+        final GridPlaces places = CoreGrids.places(level);
         for (final CableParts.Part part : CableParts.of(level, grid)) {
             final EnergyNetwork network = new EnergyNetwork();
             final List<PortNode> ports = new ArrayList<>();
+            final NarrowestWire narrowest = new NarrowestWire();
             for (final CableParts.WireAt wire : part.wires()) {
                 final long carries = wire.runTooLong() ? 0L : wire.type().throughput();
                 network.addCable(wire.number(), new WireCable(carries,
                         EnergyLoss.along(wire.type().loss(), classLoss)));
                 this.partOfWire.put(wire.number(), this.parts.size());
                 this.typeOfWire.put(wire.number(), wire.type());
+                narrowest.consider(places.place(wire.number()), wire);
             }
             for (final CableParts.WireAt wire : part.wires()) {
                 for (final long next : grid.neighbours(wire.number())) {
@@ -257,18 +308,24 @@ public final class LevelEnergy implements IGridMover {
                 }
             }
             final Map<Long, Long> machines = new HashMap<>();
+            final Map<Long, Asked> objects = new HashMap<>();
             for (final CableParts.Plug plug : part.plugs()) {
                 Long node = machines.get(plug.at().asLong());
                 if (node == null) {
                     node = -(machines.size() + 1L);
                     machines.put(plug.at().asLong(), node);
-                    network.addNode(node, node(level, plug, ports));
+                    final Asked made = new Asked(node(level, plug, ports));
+                    network.addNode(node, made);
+                    objects.put(node, made);
                 }
                 network.connect(plug.wire(), node);
             }
             this.parts.add(network);
             this.portsOfParts.add(ports);
             this.nodesOfParts.add(machines);
+            this.nodeObjectsOfParts.add(objects);
+            this.cablesOfParts.add(part.wires().size());
+            this.narrowestOfParts.add(narrowest.found());
         }
     }
 
@@ -296,6 +353,48 @@ public final class LevelEnergy implements IGridMover {
 
     /* A wire as a cable of its part: what it carries and what it loses. */
     private record WireCable(long maxThroughput, int loss) implements IEnergyCable {
+    }
+
+    /* A block's node as its part shares the energy, keeping what it asked for in the last tick, for an instrument. */
+    private static final class Asked implements IEnergyNode {
+
+        private final IEnergyNode node;
+        private long asked;
+
+        private Asked(final IEnergyNode node) {
+            this.node = node;
+        }
+
+        @Override
+        public EnergyNodeRole role() {
+            return this.node.role();
+        }
+
+        @Override
+        public long supply() {
+            return this.node.supply();
+        }
+
+        @Override
+        public long demand() {
+            this.asked = this.node.demand();
+            return this.asked;
+        }
+
+        @Override
+        public void onSupplied(final long amount) {
+            this.node.onSupplied(amount);
+        }
+
+        @Override
+        public void onConsumed(final long amount) {
+            this.node.onConsumed(amount);
+        }
+
+        /* What it asked for when its part last shared the energy. */
+        private long asked() {
+            return this.asked;
+        }
     }
 
     /* A machine a wire plugs into, seen through the game's energy capability on the face the wire meets. */

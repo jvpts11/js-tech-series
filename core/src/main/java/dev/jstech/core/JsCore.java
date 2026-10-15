@@ -80,6 +80,7 @@ import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.energy.JsEnergySettings;
 import dev.jstech.core.jstechseries.lines.LinesGuide;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
+import dev.jstech.core.jstechseries.probe.NetworkProbe;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.core.jstechseries.tools.ToolsGuide;
 import dev.jstech.core.language.LanguageRegistry;
@@ -198,6 +199,7 @@ public final class JsCore {
         EnergyConverters.declare();
         SharedContainment.declare();
         SharedTools.declare();
+        NetworkProbe.declare();
         SharedPipes.declare();
         JsEnergyGuide.declare();
         ContainmentGuide.declare();
@@ -270,6 +272,7 @@ public final class JsCore {
         BigPayloads.listen(modEventBus);
         CableBreaking.listen();
         ClampMeter.listen(modEventBus);
+        NetworkProbe.listen(modEventBus);
         SharedEnergy.listen(modEventBus);
         EnergyConverters.listen(modEventBus);
         SharedContainment.listen(modEventBus);

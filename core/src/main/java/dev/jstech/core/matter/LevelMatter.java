@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableParts;
 import dev.jstech.core.cable.LineFlows;
+import dev.jstech.core.cable.NarrowestWire;
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalPort;
 import dev.jstech.core.diagnostic.Section;
@@ -21,7 +22,10 @@ import dev.jstech.core.grid.EndRouter;
 import dev.jstech.core.grid.FlowTrace;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.GridPlaces;
 import dev.jstech.core.grid.IGridMover;
+import dev.jstech.core.grid.LineSurvey;
+import dev.jstech.core.grid.PartTally;
 import dev.jstech.core.inventory.NamedSubject;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.material.Material;
@@ -130,6 +134,13 @@ public final class LevelMatter implements IGridMover {
     }
 
     @Override
+    public Optional<LineSurvey> survey(final long wire) {
+        final Integer part = this.partOfWire.get(wire);
+        return part == null || part >= this.parts.size() ? Optional.empty()
+                : Optional.of(this.parts.get(part).tally().survey());
+    }
+
+    @Override
     public void tick(final ServerLevel level) {
         final Grid grid = CoreGrids.of(level, this.kind);
         if (grid.size() == 0) {
@@ -170,9 +181,10 @@ public final class LevelMatter implements IGridMover {
         final List<FlowTrace> traces = new ArrayList<>(this.parts.size());
         for (int i = 0; i < moved.length; i++) {
             final Part part = this.parts.get(i);
+            part.tally().reset();
             moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turn,
-                    substance -> true, (from, to, substance, amount) -> move(part.trace(), from, to, substance,
-                            amount));
+                    substance -> true, (from, to, substance, amount) -> part.tally().moved(from.key(), to.key(),
+                            move(part.trace(), from, to, substance, amount)));
             traces.add(part.trace());
         }
         this.turn++;
@@ -183,11 +195,14 @@ public final class LevelMatter implements IGridMover {
     private void build(final ServerLevel level, final Grid grid) {
         this.parts.clear();
         this.partOfWire.clear();
+        final GridPlaces places = CoreGrids.places(level);
         for (final CableParts.Part found : CableParts.of(level, grid)) {
             long rate = Long.MAX_VALUE;
+            final NarrowestWire narrowest = new NarrowestWire();
             for (final CableParts.WireAt wire : found.wires()) {
                 rate = Math.min(rate, wire.runTooLong() ? 0L : wire.type().throughput());
                 this.partOfWire.put(wire.number(), this.parts.size());
+                narrowest.consider(places.place(wire.number()), wire);
             }
             final Set<String> seen = new HashSet<>();
             final List<MatterEnd> ends = new ArrayList<>();
@@ -197,7 +212,8 @@ public final class LevelMatter implements IGridMover {
                             end(level, plug.at(), plug.face())));
                 }
             }
-            this.parts.add(new Part(rate, ends, LineFlows.traceOf(level, grid, found)));
+            this.parts.add(new Part(rate, ends, LineFlows.traceOf(level, grid, found), new PartTally(
+                    found.wires().size(), narrowest.found(), ends.stream().map(MatterEnd::key).toList())));
         }
     }
 
@@ -507,7 +523,7 @@ public final class LevelMatter implements IGridMover {
     }
 
     /* One connected part of the grid: how much it moves in a tick, the ends it plugs into, where what it moves goes. */
-    private record Part(long rate, List<MatterEnd> ends, FlowTrace trace) {
+    private record Part(long rate, List<MatterEnd> ends, FlowTrace trace, PartTally tally) {
     }
 
     /*

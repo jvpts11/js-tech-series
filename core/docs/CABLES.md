@@ -150,6 +150,22 @@ holds an item of the tag `jscore:sees_flow` (the Basic Wrench), or wears one on 
 crosshair what the wire they look at carries, which way and how much a tick, and how the end they point at is set. A mod
 puts its own wrench or goggles in the tag.
 
+## Reading a line
+
+*Added 2026-10-15.*
+
+What a part of a line did in the last tick is read from its grid's mover, `CoreGrids.mover(level, kind)
+.flatMap(mover -> mover.survey(wire))`, the wire numbered as `CoreGrids.places(level).find(cable.place(type))` says. A
+`LineSurvey` holds each block the part plugs into, with what it is to the line (a source, a consumer, a store, or
+idle) and what it gave and took; what the part moved; what its consumers asked (a store that wants charging asks for
+no work, and a routed line cannot tell, `LineSurvey.UNKNOWN`); what it lost on the way; how many cables it has; and its
+narrowest cable, which the whole part moves no more than. The Core's energy, fluid, matter and item lines keep one; a
+mod's own mover keeps one with a `PartTally` for each part, counting what each move took from one block to another,
+and a `NarrowestWire` found as it goes through the part's wires.
+
+The series' **Network Probe** reads it: linked to a wire, it shows the line on four pages (the summary, the members,
+the flow of the last minute and the losses), and outlines the blocks of a row of its members in the world.
+
 ## The basic pipes
 
 *Added 2026-10-15.*

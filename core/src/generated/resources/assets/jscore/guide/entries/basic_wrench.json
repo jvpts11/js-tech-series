@@ -71,7 +71,9 @@
       "steps": [
         "jscore.guide.basic_wrench.use1",
         "jscore.guide.basic_wrench.use2",
-        "jscore.guide.basic_wrench.use3"
+        "jscore.guide.basic_wrench.use3",
+        "jscore.guide.basic_wrench.use4",
+        "jscore.guide.basic_wrench.use5"
       ]
     },
     {

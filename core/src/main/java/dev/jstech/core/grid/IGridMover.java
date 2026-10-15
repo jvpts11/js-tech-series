@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.grid;
 
+import java.util.Optional;
 import net.minecraft.server.level.ServerLevel;
 
 /**
@@ -20,4 +21,12 @@ public interface IGridMover {
 
     /** A wire came to meet a block or stopped meeting one: the runs are worked out again before the next tick. */
     void tapsChanged();
+
+    /**
+     * What the part of the grid the wire numbered {@code wire} is in did in the last tick, as an instrument reads it;
+     * none for a wire of no part, or a grid that keeps no such account.
+     */
+    default Optional<LineSurvey> survey(final long wire) {
+        return Optional.empty();
+    }
 }

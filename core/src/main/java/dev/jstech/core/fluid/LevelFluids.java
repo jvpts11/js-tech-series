@@ -13,6 +13,7 @@ import dev.jstech.core.cable.CableParts;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.LineBreach;
 import dev.jstech.core.cable.LineFlows;
+import dev.jstech.core.cable.NarrowestWire;
 import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.EndMode;
@@ -23,6 +24,8 @@ import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.grid.GridPlaces;
 import dev.jstech.core.grid.IGridMover;
+import dev.jstech.core.grid.LineSurvey;
+import dev.jstech.core.grid.PartTally;
 import dev.jstech.core.inventory.FluidSubject;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.transfer.Batch;
@@ -32,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -92,6 +96,13 @@ public final class LevelFluids implements IGridMover {
         this.taps++;
     }
 
+    @Override
+    public Optional<LineSurvey> survey(final long wire) {
+        final Integer part = this.partOfWire.get(wire);
+        return part == null || part >= this.parts.size() ? Optional.empty()
+                : Optional.of(this.parts.get(part).tally().survey());
+    }
+
     /** Moves the tick's fluids through every part of the grid of {@code level}. */
     @Override
     public void tick(final ServerLevel level) {
@@ -121,8 +132,10 @@ public final class LevelFluids implements IGridMover {
         final List<FlowTrace> traces = new ArrayList<>(this.parts.size());
         for (int i = 0; i < moved.length; i++) {
             final Part part = this.parts.get(i);
+            part.tally.reset();
             moved[i] = part.rate <= 0 ? 0L : EndRouter.route(part.ends, part.rate, this.turn,
-                    part.carries, (from, to, fluid, amount) -> move(part.trace, from, to, fluid, amount));
+                    part.carries, (from, to, fluid, amount) -> part.tally.moved(from.key(), to.key(),
+                            move(part.trace, from, to, fluid, amount)));
             if (!part.breakable.isEmpty()) {
                 reach(level, part);
             }
@@ -163,11 +176,13 @@ public final class LevelFluids implements IGridMover {
             long rate = Long.MAX_VALUE;
             PipeLimits limits = null;
             final List<Breakable> breakable = new ArrayList<>();
+            final NarrowestWire narrowest = new NarrowestWire();
             for (final CableParts.WireAt wire : found.wires()) {
                 rate = Math.min(rate, wire.runTooLong() ? 0L : wire.type().throughput());
                 limits = limits == null ? wire.type().pipe() : limits.and(wire.type().pipe());
                 this.partOfWire.put(wire.number(), this.parts.size());
                 final GridPlace place = places.place(wire.number());
+                narrowest.consider(place, wire);
                 if (wire.type().breaks() && place != null) {
                     breakable.add(new Breakable(BlockPos.of(place.pos()), wire.type()));
                 }
@@ -186,7 +201,8 @@ public final class LevelFluids implements IGridMover {
             }
             final PipeLimits carried = limits;
             this.parts.add(new Part(rate, fluid -> carried.carries(fluid.getFluid()), ends, breakable,
-                    LineFlows.traceOf(level, grid, found)));
+                    LineFlows.traceOf(level, grid, found), new PartTally(found.wires().size(), narrowest.found(),
+                            ends.stream().map(FluidEnd::key).toList())));
         }
     }
 
@@ -219,7 +235,7 @@ public final class LevelFluids implements IGridMover {
      * into, its pipes that break when something reaches them they are not made for, and where what it moves goes.
      */
     private record Part(long rate, Predicate<FluidStack> carries, List<FluidEnd> ends, List<Breakable> breakable,
-                        FlowTrace trace) {
+                        FlowTrace trace, PartTally tally) {
     }
 
     /* A pipe that breaks when something reaches it that it is not made for: where, and of which cable. */
