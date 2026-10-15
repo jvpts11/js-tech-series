@@ -30,8 +30,8 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 /**
  * The Core's settings screen, reached from the mods list, for the series' mods: each opens it, its world's and its
  * player's settings are there, every section and setting under its own name rather than the key it is translated by
- * and short enough to be read whole in every language the series ships, and a change is kept by Done and dropped by
- * Cancel.
+ * and short enough to be read whole, in the two lines a long name is given, in every language the series ships, and a
+ * change is kept by Done and dropped by Cancel.
  */
 public final class SettingsScreenClientTests {
 
@@ -57,14 +57,14 @@ public final class SettingsScreenClientTests {
                         }
                         for (final String section : ConfigTexts.sectionsOf(file)) {
                             final String shown = names.getOrDefault(ConfigTexts.key(modId, section));
-                            if (ctx.mc().font.width(shown) > ConfigScreenLayout.railLabelWidth(width)) {
+                            if (!fits(ctx, shown, ConfigScreenLayout.railLabelWidth(width))) {
                                 wide.add(language + " section " + shown);
                             }
                         }
                         for (final ConfigKey<?> key : file.keys()) {
                             final String shown = names.getOrDefault(ConfigTexts.key(modId, key.dottedPath()));
                             // The worst a row leaves its name: beside its control and the button back to its default.
-                            if (ctx.mc().font.width(shown) > ConfigScreenLayout.nameWidth(width, true)) {
+                            if (!fits(ctx, shown, ConfigScreenLayout.nameWidth(width, true))) {
                                 wide.add(language + " setting " + shown);
                             }
                         }
@@ -170,5 +170,15 @@ public final class SettingsScreenClientTests {
 
     private static List<String> untranslated(final List<String> labels) {
         return labels.stream().filter(label -> label.contains(RAW_KEY)).toList();
+    }
+
+    /* Whether {@code name} is read whole in {@code room}: on one line, or on the two the screen gives a long one. */
+    private static boolean fits(final ClientTestContext ctx, final String name, final int room) {
+        for (final String line : ConfigScreenLayout.nameLines(name, room, ctx.mc().font::width)) {
+            if (ctx.mc().font.width(line) > room) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -44,7 +44,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   writes while the game runs, for the server's administrators.
 - (Core) Live reload in development: a development run watches the `assets` and `data` folders its mods are loaded
   from and, once changed files stay as they are for a moment, reloads the player's resources and the server's data
-  packs by itself. A packed game watches nothing.
+  packs by itself. A file whose name carries a run's mark (`LiveReload.ownFile`) is that run's alone, so runs that
+  share the folders, as test clients side by side, do not reload for one another's. A packed game watches nothing.
 - (Core) Capabilities of your own: `CapabilityKinds.declare` makes a capability for blocks, items and entities in one
   line, and `CapabilityCache` keeps a neighbour's answer between ticks, worked out again only when the game says it
   changed. A part on a cable answers capabilities on its face by overriding one method, and any block that holds
@@ -83,7 +84,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lists and maps, and a picker of items, blocks and fluids with a search. Groups fold away, the search looks through
   every tab, a filter shows only what is off its default, a setting has a button back to its default, Undo and Redo
   take changes back and again, a description shows its picture and a link into the manual, and the keyboard reaches
-  everything.
+  everything. A name too long for one line, on a small screen or in a longer language, takes two.
 - (Core) Settings that say when they take hold: a setting takes hold at once, on a reload or on a restart, and the
   screen marks it and counts the changes that wait for a restart. A setting can be active, or shown, only while
   another is on, and rules between settings say what is wrong over them and keep Done from saving it.
@@ -130,8 +131,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Notifications on the HUD: a mod declares its kinds of notification once and sends them from the server; each
   comes in the shape of the game's toast, in the player's style, with its level's icon, colour and sound (information,
   warning, alert), the count of alike ones, its mod, what a click does and a line that shortens as its time runs out.
-  A click while the chat is open opens a manual's page or shows the place on a map. The operators' warnings of stalls
-  and slowed work come this way.
+  A click while the chat is open opens a manual's page or shows the place on a map. In the top right corner they stand
+  below the game's own toasts. The operators' warnings of stalls and slowed work come this way.
 - (Core) The history of notifications, on N: filtered by level and by mod, each line clicked to act on it, taken off
   the list, or, with the right button, its kind or its mod silenced. The player chooses the corner they appear in and
   can ask not to be disturbed, which holds the game's own toasts too.

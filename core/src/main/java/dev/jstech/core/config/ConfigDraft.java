@@ -36,6 +36,8 @@ public final class ConfigDraft implements IConfigValues {
     private final Deque<Map<String, Object>> redone = new ArrayDeque<>();
     /* The setting a drag is moving, whose moves are one step; none between drags. */
     private String sliding;
+    /* How many times the changes changed, so what is built from them knows to build again. */
+    private long revision;
 
     /** A step of a whole number, and of one with a fraction; a big step is ten of them. */
     private static final long WHOLE_STEP = 1L;
@@ -357,6 +359,19 @@ public final class ConfigDraft implements IConfigValues {
         sliding = null;
     }
 
+    /** Whether a drag is moving a setting now. */
+    public boolean sliding() {
+        return sliding != null;
+    }
+
+    /**
+     * How many times the changes changed, however they did (a control, undo, a preset, a test): a screen built from the
+     * draft builds again when this moved, so what shows under a setting comes and goes with it.
+     */
+    public long revision() {
+        return revision;
+    }
+
     /** The changes not kept yet, each by its dotted path, written as a file writes it: what is sent to a server. */
     public Map<String, Object> pendingPlain() {
         final Map<String, Object> out = new LinkedHashMap<>();
@@ -372,6 +387,7 @@ public final class ConfigDraft implements IConfigValues {
         undone.clear();
         redone.clear();
         sliding = null;
+        revision++;
     }
 
     /** Turns a setting that is on or off the other way. */
@@ -501,6 +517,7 @@ public final class ConfigDraft implements IConfigValues {
     private void restore(final Map<String, Object> changes) {
         pending.clear();
         pending.putAll(changes);
+        revision++;
     }
 
     private <T> boolean takeOne(final ConfigKey<T> key, final Object raw) {
@@ -530,6 +547,7 @@ public final class ConfigDraft implements IConfigValues {
         } else {
             pending.put(key.dottedPath(), held);
         }
+        revision++;
     }
 
     private <T> void holdDefault(final ConfigKey<T> key) {

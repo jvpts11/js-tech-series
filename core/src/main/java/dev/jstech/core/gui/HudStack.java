@@ -81,8 +81,17 @@ public final class HudStack {
      */
     public static List<Point> place(final Corner corner, final int screenWidth, final int screenHeight,
                                     final List<Size> sizes) {
+        return place(corner, screenWidth, screenHeight, sizes, 0);
+    }
+
+    /**
+     * The same, with {@code reserved} pixels at the corner already taken by something the corner does not stack (the
+     * game's own toasts in the top right): the first element goes under them.
+     */
+    public static List<Point> place(final Corner corner, final int screenWidth, final int screenHeight,
+                                    final List<Size> sizes, final int reserved) {
         final List<Point> points = new ArrayList<>(sizes.size());
-        int along = MARGIN;
+        int along = reserved > 0 ? reserved + GAP : MARGIN;
         for (final Size size : sizes) {
             final int x = corner.right() ? screenWidth - MARGIN - size.width() : MARGIN;
             final int y = corner.bottom() ? screenHeight - along - size.height() : along;

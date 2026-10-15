@@ -44,6 +44,12 @@ public final class LiveReload {
     private static final AtomicInteger DATA_RELOADS = new AtomicInteger();
     /* What each watched folder holds, assets or data, by the key the watch service hands back for it. */
     private static final Map<WatchKey, Boolean> HOLDS_ASSETS = new ConcurrentHashMap<>();
+    /*
+     * Several runs can share the mods' folders (test clients side by side). A file one of them writes to see itself
+     * reload carries that run's mark in its name, and the other runs pay it no mind.
+     */
+    private static final String RUN_MARK = ".run-";
+    private static final String OWN_MARK = RUN_MARK + ProcessHandle.current().pid() + ".";
 
     private static volatile boolean watching;
 
@@ -91,6 +97,14 @@ public final class LiveReload {
         return DATA_RELOADS.get();
     }
 
+    /**
+     * The name of a file only this run reloads for, {@code base} and {@code extension} with the run's mark between
+     * ({@code live_screen.run-1234.json}): other runs that share the mods' folders leave it alone.
+     */
+    public static String ownFile(final String base, final String extension) {
+        return base + OWN_MARK + extension;
+    }
+
     private static void afterServerTick(final ServerTickEvent.Post event) {
         final int changed = DATA.take(System.currentTimeMillis());
         if (changed > 0) {
@@ -129,6 +143,12 @@ public final class LiveReload {
                     continue;
                 }
                 final Path changed = ((Path) key.watchable()).resolve((Path) event.context());
+                final String name = changed.getFileName().toString();
+                // A folder "modified" is a file in it changing, which that folder's own watch reports.
+                if (name.contains(RUN_MARK) && !name.contains(OWN_MARK)
+                        || event.kind() == StandardWatchEventKinds.ENTRY_MODIFY && Files.isDirectory(changed)) {
+                    continue;
+                }
                 if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE && Files.isDirectory(changed)) {
                     try {
                         register(service, changed, assets);

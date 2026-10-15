@@ -19,6 +19,7 @@ import dev.jstech.core.client.gui.style.Styles;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.config.ConfigDraft;
+import dev.jstech.core.developer.LiveReload;
 import dev.jstech.core.developer.ModFolders;
 import dev.jstech.core.gui.flex.Placed;
 import dev.jstech.core.gui.style.Style;
@@ -46,7 +47,8 @@ import net.minecraft.world.inventory.Slot;
  */
 public final class DataScreenClientTests {
 
-    private static final String LIVE_FILE = "live_screen.json";
+    /* Marked as this run's, so the clients of a battery that share the tests mod's folders do not reload for it. */
+    private static final String LIVE_FILE = LiveReload.ownFile("live_screen", "json");
 
     private DataScreenClientTests() {
     }
@@ -92,7 +94,8 @@ public final class DataScreenClientTests {
             before[0] = TestScreens.PRESSED.get();
             final BuiltNode press = ctx.screen(DataContainerScreen.class).find("press").orElseThrow();
             final int[] centre = press.component().center();
-            ctx.clickGui(centre[0], centre[1]);
+            // A component's centre is where it stands on the screen, not inside the window.
+            ctx.click(centre[0], centre[1]);
         }).thenAssert(2, () -> TestScreens.PRESSED.get() == before[0] + 1, "the button's action ran once");
     }
 
@@ -140,7 +143,8 @@ public final class DataScreenClientTests {
     public static void editedFile_rebuildsTheOpenScreen(final ClientTestContext ctx) {
         final Path file = resourceRoot().resolve("assets").resolve(JsTests.MODID).resolve("jstech")
                 .resolve("screens").resolve(LIVE_FILE);
-        final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "live_screen");
+        final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                LIVE_FILE.substring(0, LIVE_FILE.length() - ".json".length()));
         ctx.afterTest(() -> delete(file));
         ctx.then(0, () -> write(file, "first"))
                 .thenWaitUntil(() -> ctx.mc().getOverlay() == null && ScreenFiles.get(id).isPresent(), 600,

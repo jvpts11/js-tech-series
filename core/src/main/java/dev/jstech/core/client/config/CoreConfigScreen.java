@@ -101,6 +101,8 @@ public final class CoreConfigScreen extends Screen {
     private String query = "";
     private boolean onlyChanged;
     private boolean rebuildDue = true;
+    /* The drafts' revisions the rows were built from. */
+    private long builtRevision = -1L;
     private int mouseX;
     private int mouseY;
 
@@ -539,12 +541,25 @@ public final class CoreConfigScreen extends Screen {
         rebuildDue = true;
     }
 
-    /* Builds the rail and the list again when what they show changed. */
+    /*
+     * Builds the rail and the list again when what they show changed: a section opened, a search, or a change of a
+     * setting, which can show or hide those under it; a drag in progress waits for its end, keeping its control.
+     */
     private void refresh() {
+        long revision = 0L;
+        boolean dragging = false;
+        for (final ConfigDraft draft : model.drafts().values()) {
+            revision += draft.revision();
+            dragging |= draft.sliding();
+        }
+        if (revision != builtRevision && !dragging) {
+            rebuildDue = true;
+        }
         if (!rebuildDue || skin == null) {
             return;
         }
         rebuildDue = false;
+        builtRevision = revision;
         rail.clear();
         openScope().ifPresent(one -> {
             for (int i = 0; i < one.sections().size(); i++) {

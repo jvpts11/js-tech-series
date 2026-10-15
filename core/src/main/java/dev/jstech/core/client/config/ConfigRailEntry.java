@@ -13,6 +13,7 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.ConfigScreenLayout;
 import dev.jstech.core.gui.style.StyleRole;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -70,9 +71,16 @@ final class ConfigRailEntry extends UiComponent {
         final String count = String.valueOf(section.count());
         final int countWidth = ctx.skin().textWidth(ctx.font(), count);
         final int textY = y() + (height() - 8) / 2;
-        ctx.skin().drawText(g, ctx.font(), Texts.clip(ctx.font(), section.title().getString(),
-                width() - 2 * ConfigScreenLayout.RAIL_INSET - ConfigScreenLayout.RAIL_COUNT),
-                x() + ConfigScreenLayout.RAIL_INSET - 2, textY, ctx.skin().listRowText(lit));
+        // A name too long for one line takes two, which the entry is tall enough for; what is left is cut short.
+        final int room = width() - 2 * ConfigScreenLayout.RAIL_INSET - ConfigScreenLayout.RAIL_COUNT;
+        final List<String> lines = ConfigScreenLayout.nameLines(section.title().getString(), room,
+                text -> ctx.skin().textWidth(ctx.font(), text));
+        final int firstY = y() + (height() - 8 - (lines.size() - 1) * ConfigScreenLayout.LINE) / 2;
+        for (int i = 0; i < lines.size(); i++) {
+            ctx.skin().drawText(g, ctx.font(), Texts.clip(ctx.font(), lines.get(i), room),
+                    x() + ConfigScreenLayout.RAIL_INSET - 2, firstY + i * ConfigScreenLayout.LINE,
+                    ctx.skin().listRowText(lit));
+        }
         ctx.skin().drawText(g, ctx.font(), count, right() - 6 - countWidth, textY, ctx.skin().dim());
         if (changed.getAsBoolean()) {
             final int mark = right() - CHANGED_MARK;

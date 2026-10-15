@@ -36,6 +36,7 @@ public final class TestControlScreens {
     public static final int[] COLOUR = {0xFF39D6C4};
     public static final ItemStack[] FILTER = {ItemStack.EMPTY};
     public static final String[] PICKED = {""};
+    public static final String[] ROW = {""};
     public static final int[] ADDED = {0};
 
     private TestControlScreens() {
@@ -73,7 +74,7 @@ public final class TestControlScreens {
                         List.of(new GraphModel.Port("in", "Ores", "items")), List.of()));
         return screen -> screen
                 .value("tree", () -> tree).on("picked", id -> PICKED[0] = String.valueOf(id))
-                .value("table", () -> table)
+                .value("table", () -> table).on("row", row -> ROW[0] = String.valueOf(row))
                 .value("power", () -> List.of(new ChartView.Series("Crushers", new double[] {2.4, 2.8, 2.1, 3.2}),
                         new ChartView.Series("Furnaces", new double[] {1.3, 1.2, 1.5, 1.4})))
                 .value("made", () -> List.of(ChartView.Series.of("C1", 21), ChartView.Series.of("F1", 16)))

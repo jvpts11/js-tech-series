@@ -59,9 +59,12 @@ final class NotificationToasts implements IHudElement {
         this.board = board;
     }
 
+    /* Not under the history or the map of a place, which show the same notifications already. */
     @Override
     public boolean shown(final Minecraft minecraft) {
-        return !this.board.showing(Util.getMillis()).isEmpty();
+        return !(minecraft.screen instanceof NotificationHistoryScreen)
+                && !(minecraft.screen instanceof NotificationPlaceScreen)
+                && !this.board.showing(Util.getMillis()).isEmpty();
     }
 
     @Override

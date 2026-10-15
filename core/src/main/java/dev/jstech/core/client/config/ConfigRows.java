@@ -343,6 +343,7 @@ final class ConfigRows {
         private final List<UiComponent> controls = new ArrayList<>();
         private final List<int[]> spans = new ArrayList<>();
         private final boolean editable;
+        private final int nameLines;
 
         SettingRow(final Host host, final ConfigFile file, final ConfigDraft draft, final ConfigKey<?> key) {
             this.key = key;
@@ -359,6 +360,9 @@ final class ConfigRows {
                 marks.add(new ConfigWidgets.Mark(GameText.resolve(ConfigScreenTexts.ON_RELOAD), StyleRole.INFO));
             }
             final Component title = host.model().name(key);
+            // Measured beside the button back to the default, so the row keeps its height as the button comes and goes.
+            this.nameLines = ConfigScreenLayout.nameLines(title.getString(), ConfigScreenLayout.nameWidth(width, true),
+                    text -> host.skin().textWidth(host.font(), text)).size();
             this.name = add(new ConfigWidgets.SettingName(title::getString, marks, note, () -> draft.isActive(key),
                     () -> draft.isChanged(key), () -> host.describe(key)));
             this.reset = add(new Button(RESET_MARK, () -> draft.toDefault(key)).setFocusable(true));
@@ -367,7 +371,7 @@ final class ConfigRows {
 
         @Override
         int height() {
-            return ConfigScreenLayout.rowHeight(noted);
+            return ConfigScreenLayout.rowHeight(noted, nameLines);
         }
 
         @Override

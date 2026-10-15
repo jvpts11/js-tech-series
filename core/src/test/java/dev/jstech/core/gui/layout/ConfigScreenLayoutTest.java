@@ -69,6 +69,31 @@ class ConfigScreenLayoutTest {
     }
 
     @Test
+    void nameLines_breaksALongNameIntoTwoBetweenWords() {
+        // Six texels a letter, as the game's font draws most of them.
+        assertEquals(List.of("Teammates can", "hurt each other"),
+                ConfigScreenLayout.nameLines("Teammates can hurt each other", 100, text -> 6 * text.length()));
+        assertEquals(List.of("Short"), ConfigScreenLayout.nameLines("Short", 100, text -> 6 * text.length()));
+    }
+
+    @Test
+    void nameLines_leavesWhatTwoLinesCannotHoldOnTheSecond() {
+        final List<String> lines = ConfigScreenLayout.nameLines("one two three four five six", 30,
+                text -> 6 * text.length());
+        assertEquals(ConfigScreenLayout.NAME_LINES, lines.size());
+        assertEquals("one", lines.get(0));
+        assertEquals("two three four five six", lines.get(1));
+    }
+
+    @Test
+    void rowHeight_growsALineForANameInTwo() {
+        assertEquals(ConfigScreenLayout.ROW + ConfigScreenLayout.LINE, ConfigScreenLayout.rowHeight(false, 2));
+        assertEquals(ConfigScreenLayout.NOTED_ROW, ConfigScreenLayout.rowHeight(true, 1));
+        assertEquals(ConfigScreenLayout.ROW + ConfigScreenLayout.LINE, ConfigScreenLayout.rowHeight(false, 5),
+                "never past the lines a name is given");
+    }
+
+    @Test
     void tabs_areCentredWithoutOverlapping() {
         for (final int width : new int[] {320, 480}) {
             final int last = ConfigScreenLayout.tabX(width, 2, 3) + ConfigScreenLayout.tabWidth(width, 3);

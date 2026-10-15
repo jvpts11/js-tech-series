@@ -63,6 +63,20 @@ class HudStackTest {
     }
 
     @Test
+    void place_startsUnderWhatTheCornerHasReserved() {
+        final List<HudStack.Point> points = HudStack.place(HudStack.Corner.TOP_RIGHT, WIDTH, HEIGHT,
+                List.of(new HudStack.Size(50, 10), new HudStack.Size(30, 20)), 64);
+        assertEquals(64 + HudStack.GAP, points.get(0).y());
+        assertEquals(64 + HudStack.GAP + 10 + HudStack.GAP, points.get(1).y());
+    }
+
+    @Test
+    void place_withNothingReservedStartsAtTheMargin() {
+        assertEquals(HudStack.MARGIN, HudStack.place(HudStack.Corner.TOP_RIGHT, WIDTH, HEIGHT,
+                List.of(new HudStack.Size(50, 10)), 0).get(0).y());
+    }
+
+    @Test
     void size_refusesANegativeSide() {
         assertThrows(IllegalArgumentException.class, () -> new HudStack.Size(-1, 4));
     }

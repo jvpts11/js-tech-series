@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.gui.layout;
 
+import dev.jstech.core.guide.TextTable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.ToIntFunction;
 
 /**
  * Where everything on the Core's settings screen sits, a menu over the whole game. Across the top, a tab for each kind
@@ -78,6 +80,11 @@ public final class ConfigScreenLayout {
     public static final int CHECKBOX = 20;
     /** How tall a line of text is. */
     public static final int LINE = 9;
+    /**
+     * The most lines a setting's name or a section's takes, on a screen too narrow for it in one; what still does not
+     * fit is cut short on the last.
+     */
+    public static final int NAME_LINES = 2;
 
     private ConfigScreenLayout() {
     }
@@ -162,6 +169,25 @@ public final class ConfigScreenLayout {
     /** How tall a setting's row is, with a line under its name or without. */
     public static int rowHeight(final boolean noted) {
         return noted ? NOTED_ROW : ROW;
+    }
+
+    /** How tall a setting's row is, its name in {@code nameLines} lines: a line taller for each past the first. */
+    public static int rowHeight(final boolean noted, final int nameLines) {
+        return rowHeight(noted) + (Math.max(1, Math.min(NAME_LINES, nameLines)) - 1) * LINE;
+    }
+
+    /**
+     * {@code name} broken into the lines it takes in {@code room}, between words, at most {@link #NAME_LINES}; the
+     * last line holds whatever is left, for the screen to cut short.
+     */
+    public static List<String> nameLines(final String name, final int room, final ToIntFunction<String> measure) {
+        final List<String> lines = TextTable.wrap(name, room, measure);
+        if (lines.size() <= NAME_LINES) {
+            return lines.isEmpty() ? List.of(name) : lines;
+        }
+        final List<String> out = new ArrayList<>(lines.subList(0, NAME_LINES - 1));
+        out.add(String.join(" ", lines.subList(NAME_LINES - 1, lines.size())));
+        return out;
     }
 
     /** Where a control sits down a row of {@code height}. */

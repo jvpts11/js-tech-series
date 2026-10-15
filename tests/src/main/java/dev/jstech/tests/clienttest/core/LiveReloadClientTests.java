@@ -26,16 +26,19 @@ import java.util.List;
  */
 public final class LiveReloadClientTests {
 
-    private static final String PROBE = "live_reload_probe.json";
-
     private LiveReloadClientTests() {
     }
 
+    /*
+     * The probe is named for this run, so the clients of a battery that share the tests mod's folders do not reload
+     * for it in the middle of their own tests.
+     */
     @ClientTest(timeoutTicks = 1200)
     public static void changedFiles_areReloadedByThemselves(final ClientTestContext ctx) {
         final Path root = resourceRoot();
-        final Path asset = root.resolve("assets").resolve(JsTests.MODID).resolve(PROBE);
-        final Path data = root.resolve("data").resolve(JsTests.MODID).resolve(PROBE);
+        final String probe = LiveReload.ownFile("live_reload_probe", "json");
+        final Path asset = root.resolve("assets").resolve(JsTests.MODID).resolve(probe);
+        final Path data = root.resolve("data").resolve(JsTests.MODID).resolve(probe);
         final int[] before = new int[2];
         ctx.afterTest(() -> {
             delete(asset);

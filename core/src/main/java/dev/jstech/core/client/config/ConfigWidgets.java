@@ -12,6 +12,7 @@ import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.style.StyleSkin;
+import dev.jstech.core.gui.layout.ConfigScreenLayout;
 import dev.jstech.core.gui.style.StyleRole;
 import java.util.List;
 import java.util.Objects;
@@ -153,9 +154,18 @@ final class ConfigWidgets {
             if (changed.getAsBoolean()) {
                 g.fill(x() - 4, y() + 2, x() - 2, bottom() - 2, colour(skin, StyleRole.NOTICE));
             }
-            final int nameY = note.isEmpty() ? y() + (height() - 8) / 2 : y() + 4;
-            final String shown = Texts.clip(ctx.font(), name.get(), width());
-            skin.drawText(g, ctx.font(), shown, x(), nameY, on ? skin.text() : skin.dim());
+            // A name too long for one line takes two, and the row is a line taller for it; what is left is cut short.
+            final List<String> lines = ConfigScreenLayout.nameLines(name.get(), width(),
+                    text -> skin.textWidth(ctx.font(), text));
+            final int block = 8 + (lines.size() - 1) * ConfigScreenLayout.LINE;
+            final int nameY = note.isEmpty() ? y() + (height() - block) / 2 : y() + 4;
+            String shown = "";
+            for (int i = 0; i < lines.size(); i++) {
+                shown = Texts.clip(ctx.font(), lines.get(i), width());
+                skin.drawText(g, ctx.font(), shown, x(), nameY + i * ConfigScreenLayout.LINE,
+                        on ? skin.text() : skin.dim());
+            }
+            final int lastY = nameY + (lines.size() - 1) * ConfigScreenLayout.LINE;
             int markX = x() + skin.textWidth(ctx.font(), shown) + SPACE + 2;
             for (final Mark mark : marks) {
                 final int room = right() - markX;
@@ -163,11 +173,11 @@ final class ConfigWidgets {
                 if (w > room) {
                     break;
                 }
-                skin.drawText(g, ctx.font(), mark.text(), markX, nameY, colour(skin, mark.role()));
+                skin.drawText(g, ctx.font(), mark.text(), markX, lastY, colour(skin, mark.role()));
                 markX += w + SPACE + 2;
             }
             if (!note.isEmpty()) {
-                skin.drawText(g, ctx.font(), Texts.clip(ctx.font(), note, width()), x(), nameY + 11,
+                skin.drawText(g, ctx.font(), Texts.clip(ctx.font(), note, width()), x(), lastY + 11,
                         colour(skin, StyleRole.NOTICE));
             }
         }

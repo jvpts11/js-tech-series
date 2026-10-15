@@ -28,12 +28,15 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 /**
  * Every mod's HUD elements, declared once from the mod's client set-up and drawn by the Core in one layer of the
  * game's HUD, under the chat: in each corner, the elements that show this frame are stacked from the corner inwards in
- * the order they were declared, so the mods share the corners without drawing over one another. The layer hides with
- * the rest of the HUD when the player hides it.
+ * the order they were declared, so the mods share the corners without drawing over one another; in the top right they
+ * start under the game's own toasts while there are any. The layer hides with the rest of the HUD when the player
+ * hides it.
  */
 public final class HudElements {
 
     private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "hud_elements");
+    /** How tall a slot of the game's toasts is. */
+    private static final int TOAST_SLOT = 32;
     private static final List<Declared> DECLARED = new CopyOnWriteArrayList<>();
     private static final Map<ResourceLocation, Declared> BY_ID = new ConcurrentHashMap<>();
 
@@ -70,7 +73,7 @@ public final class HudElements {
         final Minecraft minecraft = Minecraft.getInstance();
         final List<Declared> shown = shownIn(minecraft, corner);
         final List<HudStack.Point> points = HudStack.place(corner, minecraft.getWindow().getGuiScaledWidth(),
-                minecraft.getWindow().getGuiScaledHeight(), sizes(minecraft, shown));
+                minecraft.getWindow().getGuiScaledHeight(), sizes(minecraft, shown), reserved(minecraft, corner));
         final Map<ResourceLocation, HudStack.Point> out = new LinkedHashMap<>();
         for (int i = 0; i < shown.size(); i++) {
             out.put(shown.get(i).id(), points.get(i));
@@ -99,7 +102,7 @@ public final class HudElements {
                 continue;
             }
             final List<HudStack.Point> points = HudStack.place(corner, graphics.guiWidth(), graphics.guiHeight(),
-                    sizes(minecraft, shown));
+                    sizes(minecraft, shown), reserved(minecraft, corner));
             for (int i = 0; i < shown.size(); i++) {
                 shown.get(i).element().render(graphics, delta, points.get(i).x(), points.get(i).y());
             }
@@ -114,6 +117,14 @@ public final class HudElements {
             }
         }
         return shown;
+    }
+
+    /* The top right corner's slots the game's own toasts hold now, each a toast's height; nothing elsewhere. */
+    private static int reserved(final Minecraft minecraft, final HudStack.Corner corner) {
+        if (corner != HudStack.Corner.TOP_RIGHT || minecraft.options.hideGui) {
+            return 0;
+        }
+        return minecraft.getToasts().occupiedSlots.length() * TOAST_SLOT;
     }
 
     private static List<HudStack.Size> sizes(final Minecraft minecraft, final List<Declared> shown) {
