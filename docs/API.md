@@ -15,9 +15,10 @@ Each mod's api packages, the packages it lists as promised beside them, and noth
   documented for a reader who knows nothing of it, starting with its package's `package-info`. From then on
   everything public in it is part of the API, as an api package is.
 
-Everything reachable from those packages is the API. Everything else in either mod is that mod's own
-business and may change in any release with no warning and no note. A mod that reaches into it is a mod
-that will break, and no release will be held back to avoid breaking it.
+Everything reachable from those packages is the API, save what is marked `@ApiStatus.Internal`: public only so
+the mod can wire itself up, and no promise. Everything else in either mod is that mod's own business and may
+change in any release with no warning and no note. A mod that reaches into it is a mod that will break, and no
+release will be held back to avoid breaking it.
 
 A few types live where they belong rather than in those packages, and are part of the API all the same,
 because a mod cannot add anything without holding them:

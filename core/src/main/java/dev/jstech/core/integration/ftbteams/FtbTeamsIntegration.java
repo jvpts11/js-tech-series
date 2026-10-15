@@ -7,8 +7,8 @@
  */
 package dev.jstech.core.integration.ftbteams;
 
+import dev.jstech.core.optional.OptionalMod;
 import dev.jstech.core.team.CoreTeams;
-import net.neoforged.fml.ModList;
 
 /**
  * Soft integration with FTB Teams: when the mod is present, the Core's teams are its teams, so the machines a player
@@ -18,19 +18,19 @@ import net.neoforged.fml.ModList;
 public final class FtbTeamsIntegration {
 
     public static final String MOD_ID = "ftbteams";
+    /** FTB Teams, behind its guard. */
+    public static final OptionalMod MOD = OptionalMod.of(MOD_ID);
 
     private FtbTeamsIntegration() {
     }
 
     public static boolean isLoaded() {
-        return ModList.get().isLoaded(MOD_ID);
+        return MOD.isLoaded();
     }
 
     /** Hands the Core FTB Teams as its source of teams; a no-op when FTB Teams is absent. */
     public static void bootstrap() {
-        if (isLoaded()) {
-            useFtbTeams();
-        }
+        MOD.ifLoaded(() -> FtbTeamsIntegration::useFtbTeams);
     }
 
     // Kept in its own method so the source class (and the FTB Teams API behind it) is only loaded here.

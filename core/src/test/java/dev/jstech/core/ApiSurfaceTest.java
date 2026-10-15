@@ -120,9 +120,9 @@ class ApiSurfaceTest {
             "Boolean", "Character", "Number", "CharSequence", "Iterable", "Comparable", "Class", "Enum", "Record",
             "Runnable", "Exception", "RuntimeException", "Throwable", "Void");
 
-    /** Whose names an API signature may always say: the language's own and the game's. */
+    /** Whose names an API signature may always say: the language's own, and the game's with its own libraries. */
     private static final List<String> ELSEWHERE = List.of("java.", "javax.", "net.minecraft.", "net.neoforged.",
-            "com.mojang.", "org.slf4j.", "org.jetbrains.");
+            "com.mojang.", "org.slf4j.", "org.jetbrains.", "io.netty.");
 
     /** How a mod's API class declares the packages it promises beside its api ones. */
     private static final Pattern PROMISED_PACKAGES =
@@ -973,8 +973,8 @@ class ApiSurfaceTest {
         private Scope type(final Scope owner, final Head head, final Matcher type) {
             final String kind = type.group(1);
             final String name = owner.name().isEmpty() ? type.group(2) : owner.name() + "." + type.group(2);
-            final boolean visible = owner.kind().equals(FILE) ? head.has("public") : owner.visible()
-                    && visible(owner, head);
+            final boolean visible = !head.internal() && (owner.kind().equals(FILE) ? head.has("public")
+                    : owner.visible() && visible(owner, head));
             final boolean experimental = owner.experimental() || head.experimental();
             if (visible) {
                 final String tail = normal(type.group(3));
@@ -992,7 +992,7 @@ class ApiSurfaceTest {
             }
             final Head head = Head.of(text);
             final String rest = head.rest();
-            if (rest.isEmpty() || !visible(owner, head)) {
+            if (rest.isEmpty() || head.internal() || !visible(owner, head)) {
                 return;
             }
             final boolean inInterface = owner.kind().equals("interface") || owner.kind().equals("@interface");
@@ -1142,14 +1142,19 @@ class ApiSurfaceTest {
         private record Segment(String head, char end) {
         }
 
-        /** A head taken apart: its modifiers, the marks the photo cares about, and what is declared. */
-        private record Head(Set<String> modifiers, boolean deprecated, boolean experimental, String rest) {
+        /**
+         * A head taken apart: its modifiers, the marks the photo cares about (internal being public only for the mod's
+         * own wiring, and so no promise), and what is declared.
+         */
+        private record Head(Set<String> modifiers, boolean deprecated, boolean experimental, boolean internal,
+                            String rest) {
 
             static Head of(final String text) {
                 String rest = text.strip();
                 final Set<String> modifiers = new LinkedHashSet<>();
                 boolean deprecated = false;
                 boolean experimental = false;
+                boolean internal = false;
                 while (!rest.isEmpty()) {
                     if (rest.startsWith("@") && !rest.startsWith("@interface")) {
                         int end = 1;
@@ -1166,6 +1171,7 @@ class ApiSurfaceTest {
                                 ? closing(rest, after) + 1 : end;
                         deprecated |= name.equals("Deprecated");
                         experimental |= name.equals("ApiStatus.Experimental") || name.equals("Experimental");
+                        internal |= name.equals("ApiStatus.Internal");
                         rest = rest.substring(Math.min(next, rest.length())).strip();
                         continue;
                     }
@@ -1177,7 +1183,7 @@ class ApiSurfaceTest {
                     }
                     break;
                 }
-                return new Head(modifiers, deprecated, experimental, rest.replaceAll("\\s+", " "));
+                return new Head(modifiers, deprecated, experimental, internal, rest.replaceAll("\\s+", " "));
             }
 
             boolean has(final String modifier) {

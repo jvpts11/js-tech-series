@@ -8,7 +8,7 @@
 package dev.jstech.core.integration.mekanism;
 
 import dev.jstech.core.chemical.ChemicalBridges;
-import net.neoforged.fml.ModList;
+import dev.jstech.core.optional.OptionalMod;
 
 /**
  * Soft integration with Mekanism: when the mod is present, its chemicals can be moved and stored like fluids through a
@@ -18,19 +18,19 @@ import net.neoforged.fml.ModList;
 public final class MekanismIntegration {
 
     public static final String MOD_ID = "mekanism";
+    /** Mekanism, behind its guard. */
+    public static final OptionalMod MOD = OptionalMod.of(MOD_ID);
 
     private MekanismIntegration() {
     }
 
     public static boolean isLoaded() {
-        return ModList.get().isLoaded(MOD_ID);
+        return MOD.isLoaded();
     }
 
     /** Registers the chemical bridge; a no-op when Mekanism is absent. */
     public static void bootstrap() {
-        if (isLoaded()) {
-            registerBridge();
-        }
+        MOD.ifLoaded(() -> MekanismIntegration::registerBridge);
     }
 
     // Kept in its own method so the bridge class (and the Mekanism API behind it) is only loaded here.

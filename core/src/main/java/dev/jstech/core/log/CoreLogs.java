@@ -36,6 +36,10 @@ public final class CoreLogs {
     public static final LogSystem SAVES = LogSystems.declare(JsCore.MODID, "saves");
     /** The pictures shown in the world on screens. */
     public static final LogSystem SCREENS = LogSystems.declare(JsCore.MODID, "screens");
+    /** Work done away from the tick. */
+    public static final LogSystem TASKS = LogSystems.declare(JsCore.MODID, "tasks");
+    /** The mods the Core works with when they are installed. */
+    public static final LogSystem INTEGRATIONS = LogSystems.declare(JsCore.MODID, "integrations");
     /** Teams, owners and who may use what. */
     public static final LogSystem TEAMS = LogSystems.declare(JsCore.MODID, "teams");
 

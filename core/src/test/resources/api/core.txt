@@ -74,6 +74,29 @@ stable 4
 3 dev.jstech.core.api.client.SurfaceRenderer  int frameCap()
 3 dev.jstech.core.api.client.SurfaceRenderer  new(int, int, boolean)
 3 dev.jstech.core.api.client.SurfaceRenderer  void closed()
+6 dev.jstech.core.call.IMenuCallHandler  type interface<M extends AbstractContainerMenu, A>
+6 dev.jstech.core.call.IMenuCallHandler  abstract void handle(M, ServerPlayer, A)
+6 dev.jstech.core.call.MenuCall  type final class<M extends AbstractContainerMenu, A>
+6 dev.jstech.core.call.MenuCall  Class<M> menu()
+6 dev.jstech.core.call.MenuCall  ResourceLocation id()
+6 dev.jstech.core.call.MenuCall  String toString()
+6 dev.jstech.core.call.MenuCall  boolean admits(ServerPlayer)
+6 dev.jstech.core.call.MenuCall  boolean receive(ServerPlayer, A)
+6 dev.jstech.core.call.MenuCall  void send(A)
+6 dev.jstech.core.call.MenuCalls  type final class
+6 dev.jstech.core.call.MenuCalls  static <M extends AbstractContainerMenu, A> MenuCall<M, A> declare(ResourceLocation, Class<M>, StreamCodec<? super RegistryFriendlyByteBuf, A>, IMenuCallHandler<M, A>)
+6 dev.jstech.core.call.MenuCalls  static List<MenuCall<?, ?>> all()
+6 dev.jstech.core.call.MenuCalls  static Optional<MenuCall<?, ?>> byId(ResourceLocation)
+6 dev.jstech.core.codec.NetworkCodecs  type final class
+6 dev.jstech.core.codec.NetworkCodecs  static <T> StreamCodec<ByteBuf, T> fromSaveWithoutRegistries(Codec<T>)
+6 dev.jstech.core.codec.NetworkCodecs  static <T> StreamCodec<RegistryFriendlyByteBuf, T> fromSave(Codec<T>)
+6 dev.jstech.core.codec.RecordCodecs  type final class
+6 dev.jstech.core.codec.RecordCodecs  static <R extends Record> Builder<R> of(Class<R>)
+6 dev.jstech.core.codec.RecordCodecs.Builder  type static final class<R extends Record>
+6 dev.jstech.core.codec.RecordCodecs.Builder  <F> Builder<R> field(String, Codec<F>)
+6 dev.jstech.core.codec.RecordCodecs.Builder  <F> Builder<R> optional(String, Codec<F>, F)
+6 dev.jstech.core.codec.RecordCodecs.Builder  Codec<R> build()
+6 dev.jstech.core.codec.RecordCodecs.Builder  MapCodec<R> mapCodec()
 1 dev.jstech.core.language.IProgrammingLanguage  type interface
 1 dev.jstech.core.language.IProgrammingLanguage  abstract CompileResult compile(List<SourceText>)
 1 dev.jstech.core.language.IProgrammingLanguage  abstract List<Token> tokenize(String)
@@ -129,3 +152,30 @@ stable 4
 1 dev.jstech.core.operation.OperationTypeRegistry  boolean isFrozen()
 1 dev.jstech.core.operation.OperationTypeRegistry  int size()
 1 dev.jstech.core.operation.OperationTypeRegistry  void freeze()
+6 dev.jstech.core.optional.OptionalDependencyCheck  type final class
+6 dev.jstech.core.optional.OptionalDependencyCheck  List<String> violations(Collection<Path>)
+6 dev.jstech.core.optional.OptionalDependencyCheck  static OptionalDependencyCheck of(List<String>)
+6 dev.jstech.core.optional.OptionalMod  type final class
+6 dev.jstech.core.optional.OptionalMod  String modid()
+6 dev.jstech.core.optional.OptionalMod  String toString()
+6 dev.jstech.core.optional.OptionalMod  boolean ifLoaded(Supplier<Runnable>)
+6 dev.jstech.core.optional.OptionalMod  boolean isLoaded()
+6 dev.jstech.core.optional.OptionalMod  static OptionalMod of(String)
+6 dev.jstech.core.optional.OptionalMod  static OptionalMod of(String, Predicate<String>)
+6 dev.jstech.core.task.Task  type final class<T>
+6 dev.jstech.core.task.Task  boolean cancelled()
+6 dev.jstech.core.task.Task  boolean over()
+6 dev.jstech.core.task.Task  void cancel()
+6 dev.jstech.core.task.TaskRunner  type final class
+6 dev.jstech.core.task.TaskRunner  <T> Task<T> submit(Callable<? extends T>, Consumer<? super T>, Consumer<? super Throwable>)
+6 dev.jstech.core.task.TaskRunner  int drain(long)
+6 dev.jstech.core.task.TaskRunner  int live()
+6 dev.jstech.core.task.TaskRunner  int waiting()
+6 dev.jstech.core.task.TaskRunner  new(ExecutorService, LongSupplier)
+6 dev.jstech.core.task.TaskRunner  static TaskRunner onVirtualThreads()
+6 dev.jstech.core.task.TaskRunner  void cancelAll()
+6 dev.jstech.core.task.Tasks  type final class
+6 dev.jstech.core.task.Tasks  static <T> Task<T> onServer(Callable<? extends T>, Consumer<? super T>)
+6 dev.jstech.core.task.Tasks  static <T> Task<T> onServer(Callable<? extends T>, Consumer<? super T>, Consumer<? super Throwable>)
+6 dev.jstech.core.task.Tasks  static TaskRunner server()
+6 dev.jstech.core.task.Tasks  static final int BUDGET_MILLIS

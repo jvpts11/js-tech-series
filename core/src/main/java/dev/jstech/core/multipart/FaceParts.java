@@ -102,6 +102,7 @@ public final class FaceParts implements IFieldPart {
         this.parts[face.get3DDataValue()] = part;
         this.kinds[face.get3DDataValue()] = kind;
         this.host.partChanged();
+        offersChanged();
     }
 
     /** Takes the part off {@code face} and gives it back; null when there was none. */
@@ -113,8 +114,17 @@ public final class FaceParts implements IFieldPart {
         this.kinds[index] = NONE;
         if (had) {
             this.host.partChanged();
+            offersChanged();
         }
         return removed;
+    }
+
+    /* What the block offers on a face comes with the part there, so whoever kept the old answer has to ask again. */
+    private void offersChanged() {
+        final ServerLevel level = this.host.partServerLevel();
+        if (level != null) {
+            level.invalidateCapabilities(this.host.partPos());
+        }
     }
 
     /** Runs every part's tick, on the server. */

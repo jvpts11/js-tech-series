@@ -8,8 +8,8 @@
 package dev.jstech.core.integration.curios;
 
 import dev.jstech.core.integration.accessories.AccessoriesIntegration;
+import dev.jstech.core.optional.OptionalMod;
 import dev.jstech.core.worn.WornItems;
-import net.neoforged.fml.ModList;
 
 /**
  * Soft integration with Curios: when the mod is present, what a player wears in its slots counts as worn for every
@@ -20,18 +20,20 @@ import net.neoforged.fml.ModList;
 public final class CuriosIntegration {
 
     public static final String MOD_ID = "curios";
+    /** Curios, behind its guard. */
+    public static final OptionalMod MOD = OptionalMod.of(MOD_ID);
 
     private CuriosIntegration() {
     }
 
     public static boolean isLoaded() {
-        return ModList.get().isLoaded(MOD_ID);
+        return MOD.isLoaded();
     }
 
     /** Hands the Core Curios as a source of worn things; a no-op when Curios is absent or Accessories present. */
     public static void bootstrap() {
-        if (isLoaded() && !AccessoriesIntegration.isLoaded()) {
-            useCurios();
+        if (!AccessoriesIntegration.isLoaded()) {
+            MOD.ifLoaded(() -> CuriosIntegration::useCurios);
         }
     }
 

@@ -211,6 +211,8 @@ class HardcodedTextTest {
                     "a line for the log, when nobody gives the dispatcher a log of its own"),
             data("core/src/main/java/dev/jstech/core/font/CoreFonts.java", 4,
                     "a font's licence and who made it, named as its makers name them"),
+            data("core/src/main/java/dev/jstech/core/optional/OptionalDependencyCheck.java", 3,
+                    "what a mod's own test reports of an import in the wrong place, for its developer"),
             data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"));
 
     /** Who a line for the developer is written through. */

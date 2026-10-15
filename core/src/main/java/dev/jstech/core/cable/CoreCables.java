@@ -12,6 +12,7 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.multipart.PartCapabilities;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.util.DeclarationError;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
@@ -106,6 +108,9 @@ public final class CoreCables {
     /** Hands the mod's bus what this answers, once, from the mod's constructor. */
     public static void listen(final IEventBus modBus) {
         modBus.addListener(NewRegistryEvent.class, CoreCables::onNewRegistry);
+        // A cable block answers on each face with what the part mounted there offers.
+        modBus.addListener(RegisterCapabilitiesEvent.class,
+                event -> PartCapabilities.register(event, BLOCK_ENTITY.get(), CableBlockEntity::parts));
     }
 
     public static void onNewRegistry(final NewRegistryEvent event) {

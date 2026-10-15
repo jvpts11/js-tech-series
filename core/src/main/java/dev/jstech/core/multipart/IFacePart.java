@@ -13,6 +13,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.capabilities.BlockCapability;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A thin device mounted on one face of a block, which it shares with the block's other parts and with what runs
@@ -60,5 +62,14 @@ public interface IFacePart {
      */
     default boolean use(final ServerPlayer player) {
         return false;
+    }
+
+    /**
+     * What the part offers on its own face as {@code capability}: a bus the inventory it reaches, a tank its fluid. The
+     * block the part sits on answers with it on that face, for the game's items, fluids and energy and for every
+     * capability declared with the Core; nothing, unless the part says.
+     */
+    default <T> @Nullable T capability(final BlockCapability<T, @Nullable Direction> capability) {
+        return null;
     }
 }

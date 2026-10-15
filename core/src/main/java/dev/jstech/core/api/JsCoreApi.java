@@ -43,7 +43,7 @@ public final class JsCoreApi {
      * }
      * }</pre>
      */
-    public static final int VERSION = 5;
+    public static final int VERSION = 6;
 
     /**
      * The Core's packages that are part of the promise beside this one, each a kit a mod may build on.
@@ -54,7 +54,8 @@ public final class JsCoreApi {
      * too, so a promise can never hand a mod a type that is not.
      */
     @ApiStatus.Experimental
-    public static final List<String> PROMISED_PACKAGES = List.of();
+    public static final List<String> PROMISED_PACKAGES = List.of("dev.jstech.core.call", "dev.jstech.core.codec",
+            "dev.jstech.core.optional", "dev.jstech.core.task");
 
     /**
      * How long something here lives once it is marked as going.

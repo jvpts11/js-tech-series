@@ -20,6 +20,7 @@ import dev.jstech.core.audio.media.MediaServerEvents;
 import dev.jstech.core.blockentity.ClientUpdates;
 import dev.jstech.core.blockentity.FieldCapabilities;
 import dev.jstech.core.cable.CableBreaking;
+import dev.jstech.core.call.MenuCalls;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.command.CoreCommands;
 import dev.jstech.core.command.SeriesCommands;
@@ -61,6 +62,7 @@ import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.StateNetwork;
+import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -188,6 +190,9 @@ public final class JsCore {
         RuntimeDimensions.listen();
         SeriesCommands.listen();
         StateNetwork.listen(modEventBus);
+        // The one payload every screen's call travels in, and the server's work away from the tick.
+        MenuCalls.listen(modEventBus);
+        Tasks.listen();
         // In a development run, the mods' data reloaded as it changes.
         LiveReload.listen();
         /*

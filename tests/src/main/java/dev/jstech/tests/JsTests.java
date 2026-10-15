@@ -68,6 +68,8 @@ public final class JsTests {
         TestStates.register();
         // Two kinds of component for programs' windows, the way another mod adds them, on both sides.
         TestComponents.register(modEventBus);
+        // A capability, a part offering it and a screen's call of the test mod's own, to prove the Core's toolkit.
+        TestToolkit.register(modEventBus);
         if (GameTestHooks.isGametestServer()) {
             /*
              * The language API's tests need a language that is not the series' own, and languages are only taken

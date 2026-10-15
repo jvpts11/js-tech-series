@@ -17,6 +17,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   defined, and a whole cycle without changing shape; `@ApiStatus.Experimental` comes off then, not on a date. The
   test of the API follows every name a public or protected signature says to where it comes from, so the API can hand
   a mod no type it does not promise; `docs/API.md` says how.
+- (Core) The first kits promised: J's Core's API is at version 6, and four of the Core's packages join the promise,
+  experimental: `dev.jstech.core.call` (calls from a screen to the server), `dev.jstech.core.task` (work away from
+  the tick), `dev.jstech.core.codec` (codecs for records) and `dev.jstech.core.optional` (other mods behind a
+  guard). What is marked `@ApiStatus.Internal` in them is public only so the Core can wire itself up, and is no
+  promise.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -32,6 +37,20 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Live reload in development: a development run watches the `assets` and `data` folders its mods are loaded
   from and, once changed files stay as they are for a moment, reloads the player's resources and the server's data
   packs by itself. A packed game watches nothing.
+- (Core) Capabilities of your own: `CapabilityKinds.declare` makes a capability for blocks, items and entities in one
+  line, and `CapabilityCache` keeps a neighbour's answer between ticks, worked out again only when the game says it
+  changed. A part on a cable answers capabilities on its face by overriding one method, and any block that holds
+  parts gets the same with one line.
+- (Core) Calls from a screen to the server: a call is declared once with what it carries and what the server does
+  with it, and the server handles it only while the player still has that kind of menu open and in reach, all in
+  one payload the Core registers.
+- (Core) Work away from the tick: `Tasks.onServer` runs long work on a virtual thread and hands its result back on
+  the server's thread, within 2 ms of each tick; whatever is still out when the server stops is cancelled.
+- (Core) Codecs for records: a record's codec is written one line a component, with no limit on how many, its
+  names checked against the record's as the game loads, and the codec it travels the network with is taken from it.
+- (Core) Other mods behind a guard: `OptionalMod` starts the work with another mod only when it is installed, and
+  leaves it out with a line in the log when it fails to start; `OptionalDependencyCheck` lets a mod's own unit test
+  fail on an import of the other mod outside its adapters.
 
 ### Changed
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
@@ -41,6 +60,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Listeners declared: every class of the Core that answers the game's events is handed to the buses from the
   Core's constructor, through a `listen` method of its own, rather than found by an annotation, so what runs is what
   the constructor says.
+- (Core) Integrations behind one guard: the work with Mekanism, FTB Teams, Accessories and Curios starts through
+  `OptionalMod`, so one of them failing to start no longer stops the game.
 
 ## [0.5.2a] - 2026-10-14
 

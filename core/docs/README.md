@@ -55,6 +55,7 @@ says what the Core promises and what it does not yet.
 
 | Page | What it covers |
 | --- | --- |
+| [The toolkit](TOOLKIT.md) | Capabilities of your own and their cache, calls from a screen to the server, work away from the tick, codecs for records, other mods behind a guard. |
 | [While you build](DEVELOPING.md) | Listeners handed to the buses, errors that say how to fix them, the data run's check, the log one part at a time, data and assets reloaded as they change. |
 | [Testing](TESTING.md) | Unit tests and GameTests for a mod on the Core, and the kit. |
 
