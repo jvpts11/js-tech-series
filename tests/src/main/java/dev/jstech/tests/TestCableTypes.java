@@ -22,10 +22,11 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * Cables only the tests lay, registered with the Core as any mod's cables are: a long-distance cable, six pixels thick,
- * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, three pipes, a plain
- * one, one that holds pressure and one of rubber that bursts when something too hot reaches it, a gas line, a slurry
- * line, a line of items and a line that groups the machines it joins. Each is laid by a vanilla item and drawn in a
- * jacket and plug the series already has, so the test mod declares no item, texture or model of its own.
+ * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, four pipes, a plain
+ * one, the same insulated, one that holds pressure and one of rubber that bursts when something too hot reaches it, a
+ * gas line, a slurry line, a line of items and a line that groups the machines it joins. Each is laid by a vanilla
+ * item and drawn in a jacket and plug the series already has, so the test mod declares no item, texture or model of
+ * its own.
  */
 public final class TestCableTypes {
 
@@ -73,6 +74,14 @@ public final class TestCableTypes {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
                     .build(() -> Items.BUCKET));
+    /** The plain pipe insulated: what it carries never freezes in it. */
+    public static final DeferredHolder<CableType, CableType> INSULATED_PIPE = CABLES.register("insulated_pipe",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "insulated_pipe")))
+                    .grid(GridKind.FLUID).alone().carries(PLAIN_RATE, 0).withstands(0, PLAIN_HOTTEST).insulated()
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
+                    .build(() -> Items.WHITE_WOOL));
     /** A pipe that holds pressure: eight hundred millibuckets a tick, up to 2000 K, gases and corrosives. */
     public static final DeferredHolder<CableType, CableType> PRESSURE_PIPE = CABLES.register("pressure_pipe",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,

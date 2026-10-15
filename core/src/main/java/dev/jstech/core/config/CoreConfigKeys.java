@@ -11,6 +11,7 @@ import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.diagnostic.DiagnosticBalance;
 import dev.jstech.core.hazard.HazardBalance;
+import dev.jstech.core.heat.HeatBalance;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.material.NamingBalance;
 import dev.jstech.core.operation.OperationBalance;
@@ -43,6 +44,8 @@ public final class CoreConfigKeys {
     public static final String ELEMENTS = "elements";
     /** The world's hazards: radiation, pollution and the rest. */
     public static final String HAZARDS = "hazards";
+    /** What heat does to the world: pipes that freeze, cold liquids that boil off. */
+    public static final String HEAT = "heat";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -243,6 +246,18 @@ public final class CoreConfigKeys {
             .comment("Whether every mineral with uranium or thorium in it is naturally radioactive, at a low rate.")
             .named("Radioactive minerals");
 
+    /** Whether a pipe of a liquid freezes where the place is colder than the liquid's melting point. */
+    public static final ConfigKey<Boolean> HEAT_PIPES_FREEZE = ConfigKey.flag(HEAT + ".pipes_freeze", true)
+            .comment("Whether a pipe of a liquid freezes and carries none of it where the place is colder than the "
+                    + "liquid's melting point, unless the pipe is insulated.")
+            .named("Pipes freeze");
+
+    /** Whether the cold liquids kept in tanks boil off as the heat of the place leaks in. */
+    public static final ConfigKey<Boolean> HEAT_BOIL_OFF = ConfigKey.flag(HEAT + ".boil_off", true)
+            .comment("Whether a liquid kept colder than the place it is in, as liquid nitrogen is, boils off as the "
+                    + "place's heat leaks into its tank, the faster the worse the tank is insulated.")
+            .named("Cold liquids boil off");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -258,6 +273,7 @@ public final class CoreConfigKeys {
             .sectionComment(DIAGNOSTICS, "The watchdog, and what the server counts of what it sends each player.")
             .sectionComment(ELEMENTS, "Naming the elements discovered beyond the 118 known.")
             .sectionComment(HAZARDS, "The world's hazards: which of them there are.")
+            .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
@@ -266,6 +282,7 @@ public final class CoreConfigKeys {
             .sectionNamed(DIAGNOSTICS, "Diagnostics")
             .sectionNamed(ELEMENTS, "Elements")
             .sectionNamed(HAZARDS, "Hazards")
+            .sectionNamed(HEAT, "Heat")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -292,6 +309,8 @@ public final class CoreConfigKeys {
             .key(ELEMENTS_REQUIRE_IUM, NamingBalance::setRequireIum)
             .key(ELEMENTS_LONGEST_NAME, NamingBalance::setLongest)
             .key(HAZARDS_NATURAL_RADIOACTIVITY, HazardBalance::setNaturalRadioactivity)
+            .key(HEAT_PIPES_FREEZE, HeatBalance::setPipesFreeze)
+            .key(HEAT_BOIL_OFF, HeatBalance::setBoilOff)
             .build();
 
     private CoreConfigKeys() {

@@ -109,12 +109,58 @@ Each face of a block that holds heat meets one of three things:
 - **another block that holds heat**: heat flows through the face by the two materials' conductivity;
 - **the air, a liquid or anything that is not solid**: the face gives heat to the air by convection, as thick as the
   air is, and radiates;
-- **a solid block of the world**: heat flows into it, the world's blocks holding the place's temperature, at stone's
-  conductivity.
+- **a solid block of the world**: heat flows into it as that block conducts (below), the world's blocks holding the
+  place's temperature.
 
 The place's temperature and air pressure come from the dimension's rules (`HeatClimate`); in a vacuum (below
 0.1 kPa) nothing carries heat off but radiation, so a ship or a base in space needs radiators. The biome's climate,
 the altitude and a sealed room's air come to it as each is built.
+
+*Added 2026-10-15:* a place's own air comes from the sources declared for it, the first that speaks of a place
+giving its temperature and pressure, and the dimension's rules where none does. A sealed room is one; a cold store a
+mod builds is another.
+
+```java
+HeatClimate.source((level, pos) -> coldStore.contains(pos) ? new HeatClimate.Air(243.15, 101.3) : null);
+```
+
+## Insulation
+
+*Added 2026-10-15.*
+
+How well each block of the world conducts heat is a data map of blocks, `jscore:thermal_conductivity`, in watts a
+metre a kelvin, which a mod or a data pack fills (`BlockConductivity`). The Core gives the game's own blocks near
+their real values; a block it says nothing of conducts as stone, 2.5.
+
+| Blocks | W/(m·K) |
+| --- | --- |
+| wool | 0.04 |
+| hay | 0.07 |
+| planks and logs | 0.15 |
+| snow | 0.16 |
+| sand, dirt, gravel | 0.3, 0.5, 0.7 |
+| bricks, terracotta, glass | 0.7, 0.8, 1.0 |
+| clay, obsidian, concrete, sandstone, basalt | 1.3 to 2.0 |
+| ice | 2.2 |
+| iron, gold, copper, diamond blocks | 80, 318, 401, 2,200 |
+
+A hot block walled in wool keeps its heat; walled in stone it loses it, and against iron faster still. A mod's
+insulation, rock wool or aerogel, adds itself:
+
+```json
+{ "values": { "mymod:rock_wool": 0.04, "mymod:aerogel": 0.015 } }
+```
+
+A pipe is insulated against the cold by its cable's `CableType.Builder.insulated()`.
+
+## Pipes that freeze
+
+*Added 2026-10-15.*
+
+A pipe of a liquid freezes where the place is colder than the liquid's melting point, and the part of the grid it is
+in carries none of that liquid until the place warms or the pipe is changed for an insulated one. Only liquids at
+room temperature freeze so, water first; a molten metal or a liquefied gas is held by pipes made for it. It is a
+setting of consequence: `heat.pipes_freeze` in the balance file turns it off.
 
 ## Heat pipes
 
@@ -198,6 +244,32 @@ For sizing an exchanger by hand, `HeatExchanger` gives the effectiveness method 
 streams running against each other (`counterflow`), and between a wall and a stream (`wall`), neither stream ever
 coming out past where the other went in.
 
+## Cold liquids boil off
+
+*Added 2026-10-15.*
+
+A liquid kept colder than the place it is in, liquid nitrogen or liquid hydrogen, sits at its boiling point and boils
+off as the place's heat leaks into its tank. A `BoilOff` is the tank's insulation, in watts a square metre a kelvin,
+over its surface: the leak is that times how much warmer the place is than where the liquid boils at the place's
+pressure, and each millibucket that boils off takes its heat of boiling.
+
+| Insulation | W/(m²·K) | A cubic metre of liquid nitrogen in the overworld lasts |
+| --- | --- | --- |
+| `BoilOff.BARE` | 10 | three and a half hours |
+| `BoilOff.INSULATED` | 0.5 | three days |
+| `BoilOff.VACUUM_JACKETED` | 0.02 | over two months |
+
+```java
+private final BoilOff boilOff = BoilOff.of(BoilOff.INSULATED, 6.0);   // a cubic metre's six square metres
+...
+fields().part("BoilOff", boilOff).save();
+...
+boilOff.vent(level, pos, tank, gasTank, HeatMath.TICK_SECONDS);   // its gas into a tank, or the air with null
+```
+
+What boils off goes into the block's tank of gas while it has room, and into the air beyond. It is a setting of
+consequence: `heat.boil_off` in the balance file turns it off.
+
 ## It costs nothing at rest
 
 *Added 2026-10-15.*
@@ -218,3 +290,7 @@ loaded.
 - **An exchanger passes nothing.** The liquid has no other form declared, the wall cannot take it to that form's
   temperature (a hot form needs a wall colder than its cool form, a cool form one hotter than its hot form), or the
   tank it goes to is full.
+- **Water stops in a pipe.** A pipe of the part runs where the place is below 0 °C: insulate it, warm the place, or
+  turn `heat.pipes_freeze` off.
+- **A wall of a mod's insulation does nothing.** The block is not in the `jscore:thermal_conductivity` data map, so
+  it conducts as stone.

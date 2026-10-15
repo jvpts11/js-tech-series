@@ -12,6 +12,7 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.heat.BoilOff;
 import dev.jstech.core.heat.Boiler;
 import dev.jstech.core.heat.FluidPass;
 import dev.jstech.core.heat.HeatBody;
@@ -35,7 +36,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * Blocks of the test mod that hold heat, to prove the Core's heat: a litre of copper, a litre of iron, the same litre
  * of copper with ten square metres of fins as a radiator, and a heater that puts fifty kilowatts into a litre of iron
  * up to its limit; and vessels with a cubic metre of iron for a wall, a boiler in the open air, a boiler of low
- * pressure and a heat exchanger whose oil passes through the wall.
+ * pressure, a heat exchanger whose oil passes through the wall, a cold tank open to the place's heat and a vacuum
+ * flask.
  */
 public final class TestHeat {
 
@@ -55,6 +57,13 @@ public final class TestHeat {
     public static final int VESSEL_TANK = 8_000;
     /** How much a vessel's gas tank holds, in millibuckets at the open air's pressure. */
     public static final long VESSEL_GAS = 10_000_000L;
+    /**
+     * How the cold tank lets the place's heat in, in watts a square metre a kelvin: a hundred times a bare tank, as if
+     * finned, so a test sees its nitrogen boil off within seconds.
+     */
+    public static final double OPEN_TANK = 1_000.0;
+    /** A cold tank's surface, in square metres. */
+    public static final double TANK_SURFACE = 10.0;
 
     /* Their block states and models are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<DeviceBlock> COPPER = TestSounds.CONTENT.block("test_heat_copper",
@@ -78,11 +87,18 @@ public final class TestHeat {
     public static final BlockEntry<DeviceBlock> EXCHANGER = TestSounds.CONTENT.block("test_exchanger",
             Device.of(() -> TestHeat.VESSEL.get()).ticks(VesselBlockEntity::tick)::block)
             .named("Test heat exchanger").look(IBlockLook.cubeAll("test_exchanger")).register();
+    public static final BlockEntry<DeviceBlock> COLD_TANK = TestSounds.CONTENT.block("test_cold_tank",
+            Device.of(() -> TestHeat.VESSEL.get()).ticks(VesselBlockEntity::tick)::block)
+            .named("Test cold tank").look(IBlockLook.cubeAll("test_cold_tank")).register();
+    public static final BlockEntry<DeviceBlock> DEWAR = TestSounds.CONTENT.block("test_dewar",
+            Device.of(() -> TestHeat.VESSEL.get()).ticks(VesselBlockEntity::tick)::block)
+            .named("Test vacuum flask").look(IBlockLook.cubeAll("test_dewar")).register();
     /* One block entity for the four that hold heat, which reads from its block what it is; another for the vessels. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HeatBlockEntity>> BLOCK_ENTITY =
             TestSounds.CONTENT.blockEntity("test_heat", HeatBlockEntity::new, COPPER, IRON, RADIATOR, HEATER);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VesselBlockEntity>> VESSEL =
-            TestSounds.CONTENT.blockEntity("test_vessel", VesselBlockEntity::new, BOILER, LOW_BOILER, EXCHANGER);
+            TestSounds.CONTENT.blockEntity("test_vessel", VesselBlockEntity::new, BOILER, LOW_BOILER, EXCHANGER,
+                    COLD_TANK, DEWAR);
 
     private static final HeatSource HEATING = HeatSource.heater(HEATER_WATTS, HEATER_LIMIT);
 
@@ -122,7 +138,8 @@ public final class TestHeat {
     /**
      * A vessel: a cubic metre of iron for its wall, a tank for the liquid that goes in, one for the liquid that comes
      * out and one of gas. A boiler boils what goes in into the gas, the low-pressure one at its own pressure; the
-     * exchanger passes what goes in through its wall into its other form.
+     * exchanger passes what goes in through its wall into its other form; a cold tank lets the place's heat boil off
+     * what it holds into the gas, the vacuum flask hardly at all.
      */
     public static final class VesselBlockEntity extends SyncedBlockEntity implements IHeatHolder {
 
@@ -132,26 +149,29 @@ public final class TestHeat {
         private final MatterTank gas = new MatterTank(MatterState.GAS, VESSEL_GAS, 1L, () -> { });
         private final Boiler boiler = Boiler.of(VESSEL_CONDUCTANCE);
         private final FluidPass pass = FluidPass.of(VESSEL_CONDUCTANCE);
-        private final boolean boils;
+        private final BoilOff boilOff;
 
         public VesselBlockEntity(final BlockPos pos, final BlockState state) {
             super(VESSEL.get(), pos, state);
-            this.boils = !state.is(EXCHANGER.get());
             if (state.is(LOW_BOILER.get())) {
                 this.boiler.at(LOW_PRESSURE);
             }
+            this.boilOff = BoilOff.of(state.is(DEWAR.get()) ? BoilOff.VACUUM_JACKETED : OPEN_TANK, TANK_SURFACE);
             HeatPorts.keep(this, this.heat);
             fields().part("Boiler", this.boiler).save();
             fields().part("Pass", this.pass).save();
+            fields().part("BoilOff", this.boilOff).save();
         }
 
-        /** A boiler boils, and the exchanger passes its liquid through its wall, each tick. */
+        /** Each tick a boiler boils, the exchanger passes its liquid through its wall, and a cold tank boils off. */
         public static void tick(final Level level, final BlockPos pos, final BlockState state,
                                 final VesselBlockEntity vessel) {
-            if (vessel.boils) {
-                vessel.boiler.boil(level, pos, vessel.heat, vessel.in, vessel.gas, HeatMath.TICK_SECONDS);
-            } else {
+            if (state.is(EXCHANGER.get())) {
                 vessel.pass.run(vessel.heat, vessel.in, vessel.out, HeatMath.TICK_SECONDS);
+            } else if (state.is(COLD_TANK.get()) || state.is(DEWAR.get())) {
+                vessel.boilOff.vent(level, pos, vessel.in, vessel.gas, HeatMath.TICK_SECONDS);
+            } else {
+                vessel.boiler.boil(level, pos, vessel.heat, vessel.in, vessel.gas, HeatMath.TICK_SECONDS);
             }
         }
 

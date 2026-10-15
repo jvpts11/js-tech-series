@@ -38,7 +38,8 @@ import org.jetbrains.annotations.Nullable;
  * it, by a mod's own content.
  *
  * <p>A pipe, a cable of the fluid grid, also says what it is made for: the temperatures it stands and the marks it
- * takes. How much a pipe carries in a tick is the pressure it holds; a gas needs a pipe that takes gases.
+ * takes, and whether it is insulated against the cold. How much a pipe carries in a tick is the pressure it holds; a
+ * gas needs a pipe that takes gases.
  *
  * <p>A cable that never shares a block takes no lane: a block that holds it holds nothing else.
  *
@@ -72,6 +73,7 @@ public final class CableType {
     private final @Nullable ResourceLocation window;
     private final @Nullable ResourceLocation fitting;
     private final int span;
+    private final boolean insulated;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -103,6 +105,7 @@ public final class CableType {
         this.window = builder.window;
         this.fitting = builder.fitting;
         this.span = builder.span;
+        this.insulated = builder.insulated;
     }
 
     /** What the cable is for, as its item's tooltip says it; empty for a cable that says nothing. */
@@ -216,6 +219,11 @@ public final class CableType {
         return this.mostJoins;
     }
 
+    /** Whether, as a pipe, it is insulated: what it carries never freezes in it, however cold the place. */
+    public boolean insulated() {
+        return this.insulated;
+    }
+
     /**
      * Its jacket's texture, 32 pixels square: the side with the length along u in the top left (16 by its thickness),
      * the same side with the length along v beside it, and the cut end below.
@@ -289,6 +297,7 @@ public final class CableType {
         private @Nullable ResourceLocation window;
         private @Nullable ResourceLocation fitting;
         private int span;
+        private boolean insulated;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -368,6 +377,15 @@ public final class CableType {
         /** As a pipe, it is made for fluids marked {@code mark}: a gas, a corrosive fluid. */
         public Builder takes(final TagKey<Fluid> mark) {
             this.takes.add(Objects.requireNonNull(mark, "mark"));
+            return this;
+        }
+
+        /**
+         * As a pipe, it is insulated: a liquid in it never freezes, where a pipe that is not freezes in a place colder
+         * than the liquid's melting point (a server may turn freezing off).
+         */
+        public Builder insulated() {
+            this.insulated = true;
             return this;
         }
 

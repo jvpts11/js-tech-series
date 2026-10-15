@@ -1,0 +1,26 @@
+{
+  "values": {
+    "#c:concretes": 1.4,
+    "#c:glass_blocks": 1.0,
+    "#c:gravels": 0.7,
+    "#c:obsidians": 1.4,
+    "#c:sandstone/blocks": 1.7,
+    "#c:storage_blocks/copper": 401.0,
+    "#c:storage_blocks/diamond": 2200.0,
+    "#c:storage_blocks/gold": 318.0,
+    "#c:storage_blocks/iron": 80.0,
+    "#minecraft:dirt": 0.5,
+    "#minecraft:ice": 2.2,
+    "#minecraft:logs": 0.15,
+    "#minecraft:planks": 0.15,
+    "#minecraft:sand": 0.3,
+    "#minecraft:terracotta": 0.8,
+    "#minecraft:wool": 0.04,
+    "minecraft:basalt": 2.0,
+    "minecraft:bricks": 0.7,
+    "minecraft:clay": 1.3,
+    "minecraft:granite": 2.8,
+    "minecraft:hay_block": 0.07,
+    "minecraft:snow_block": 0.16
+  }
+}

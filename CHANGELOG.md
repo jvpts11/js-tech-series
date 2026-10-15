@@ -353,6 +353,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Heaters and coolers run at their power up to their limit, and a loop's liquid in its cool and hot forms passes
   through a wall to give or take its heat, so two passes make a heat exchanger. The game's water is the series' water,
   and water and the liquefied gases carry their real heat of boiling and molar mass.
+- (Core) Cold has its consequences: a pipe of water freezes and carries nothing where the place is below freezing,
+  unless it is insulated, and liquid nitrogen and the other cold liquids boil off their tanks as the place's heat
+  leaks in, the slower the better the tank is insulated; a server can turn either off. Blocks of the world conduct
+  heat as their real materials do, so wool keeps a hot block hot and metal draws its heat away, and mods can declare
+  places with air of their own.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

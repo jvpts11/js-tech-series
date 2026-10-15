@@ -9,7 +9,9 @@ package dev.jstech.core.heat;
 
 import dev.jstech.core.material.MaterialKind;
 import dev.jstech.core.material.MaterialLiquids;
+import dev.jstech.core.material.MatterState;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -47,5 +49,16 @@ public final class FluidHeat {
     public static double specificHeat(final FluidStack fluid) {
         return of(fluid.getFluid()).map(Thermal::specificHeat)
                 .orElse(Thermal.ofKind(MaterialKind.LIQUID).specificHeat());
+    }
+
+    /**
+     * Where the liquid {@code fluid} freezes in a pipe, in kelvin: its material's melting point, for a liquid at room
+     * temperature such as water; none for a liquid of no material, or for a molten solid or a liquefied gas, whose
+     * pipes are made to hold them hot or cold.
+     */
+    public static OptionalDouble freezesAt(final Fluid fluid) {
+        return MaterialLiquids.materialOf(fluid).filter(material -> material.roomState() == MatterState.LIQUID)
+                .map(material -> OptionalDouble.of(Thermal.of(material, false).melting()))
+                .orElse(OptionalDouble.empty());
     }
 }

@@ -82,6 +82,9 @@ public final class TestMaterials {
     public static final Supplier<Fluid> MOLTEN_TIN = MaterialLiquids.use(JsTests.MODID, SeriesMaterials.TIN, 505);
     public static final Supplier<Fluid> GASOLINE = MaterialLiquids.use(JsTests.MODID, SharedCatalogue.GASOLINE,
             MaterialLiquids.ROOM);
+    /** Nitrogen liquefied, at its boiling point, which boils off a tank the place's heat leaks into. */
+    public static final Supplier<Fluid> LIQUID_NITROGEN = MaterialLiquids.use(JsTests.MODID,
+            Elements.of(Element.NITROGEN), 77);
     /** Whether the test mod's simpler path is closed where J's Industrial is installed; off unless a test says. */
     public static final boolean[] INDUSTRIAL_CHAIN_ONLY = {false};
 

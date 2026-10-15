@@ -26,6 +26,9 @@ import dev.jstech.core.grid.GridPlaces;
 import dev.jstech.core.grid.IGridMover;
 import dev.jstech.core.grid.LineSurvey;
 import dev.jstech.core.grid.PartTally;
+import dev.jstech.core.heat.FluidHeat;
+import dev.jstech.core.heat.HeatBalance;
+import dev.jstech.core.heat.HeatClimate;
 import dev.jstech.core.inventory.FluidSubject;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.transfer.Batch;
@@ -33,9 +36,11 @@ import dev.jstech.core.transfer.HandlerSteps;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -44,6 +49,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -53,7 +59,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The fluid grid of one dimension as it moves fluids: each connected part of the grid with the ends its pipes plug
  * into. Pipes are passive: a part moves, each tick, at most what its slowest pipe carries (the pressure it holds), and
- * only the fluids every pipe of it is made for, which the rest leave where they are.
+ * only the fluids every pipe of it is made for, which the rest leave where they are. A liquid freezes in a part one of
+ * whose pipes that is not insulated runs where the place is colder than the liquid's melting point, and stays put.
  *
  * <p>The ends share what flows as {@link EndRouter} says: a machine's output feeds the inputs, then fills the tanks,
  * and the tanks feed what the inputs still want; each end by its mode, priority, rate, channel and filter. Each move
@@ -175,6 +182,7 @@ public final class LevelFluids implements IGridMover {
         for (final CableParts.Part found : CableParts.of(level, grid)) {
             long rate = Long.MAX_VALUE;
             PipeLimits limits = null;
+            double coldest = Double.NaN;
             final List<Breakable> breakable = new ArrayList<>();
             final NarrowestWire narrowest = new NarrowestWire();
             for (final CableParts.WireAt wire : found.wires()) {
@@ -185,6 +193,10 @@ public final class LevelFluids implements IGridMover {
                 narrowest.consider(place, wire);
                 if (wire.type().breaks() && place != null) {
                     breakable.add(new Breakable(BlockPos.of(place.pos()), wire.type()));
+                }
+                if (!wire.type().insulated() && place != null) {
+                    final double ambient = HeatClimate.ambient(level, BlockPos.of(place.pos()));
+                    coldest = Double.isNaN(coldest) ? ambient : Math.min(coldest, ambient);
                 }
             }
             if (limits == null) {
@@ -200,10 +212,28 @@ public final class LevelFluids implements IGridMover {
                 }
             }
             final PipeLimits carried = limits;
-            this.parts.add(new Part(rate, fluid -> carried.carries(fluid.getFluid()), ends, breakable,
+            final double cold = coldest;
+            final Map<Fluid, Boolean> frozen = new IdentityHashMap<>();
+            this.parts.add(new Part(rate, fluid -> carried.carries(fluid.getFluid())
+                    && !frozen(frozen, fluid.getFluid(), cold), ends, breakable,
                     LineFlows.traceOf(level, grid, found), new PartTally(found.wires().size(), narrowest.found(),
                             ends.stream().map(FluidEnd::key).toList())));
         }
+    }
+
+    /*
+     * Whether {@code fluid} is frozen in a part whose coldest pipe that is not insulated stands where it is
+     * {@code coldest} kelvin, or none is: a liquid at room temperature freezes below its melting point, unless the
+     * server turned freezing off. What each fluid does is worked out once a build.
+     */
+    private static boolean frozen(final Map<Fluid, Boolean> known, final Fluid fluid, final double coldest) {
+        if (!HeatBalance.pipesFreeze() || Double.isNaN(coldest)) {
+            return false;
+        }
+        return known.computeIfAbsent(fluid, any -> {
+            final OptionalDouble melts = FluidHeat.freezesAt(any);
+            return melts.isPresent() && coldest < melts.getAsDouble();
+        });
     }
 
     /*

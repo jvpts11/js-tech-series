@@ -44,6 +44,7 @@ import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.grid.CoreGrids;
+import dev.jstech.core.heat.BlockConductivity;
 import dev.jstech.core.heat.HeatPorts;
 import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.hologram.Holograms;
@@ -301,6 +302,7 @@ public final class JsCore {
         Machines.listen(modEventBus);
         MachineWrench.listen(modEventBus);
         HeatPorts.listen(modEventBus);
+        BlockConductivity.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

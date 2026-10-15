@@ -22,9 +22,9 @@ import org.jetbrains.annotations.Nullable;
  * The heat of one dimension: the blocks that hold heat and are not in balance, each looked at in turn, a few hundred a
  * tick, for the seconds since it was last looked at. Each carries heat to and from its neighbours that hold heat, by
  * their materials' conductivity; each face that meets the air gives heat to it, as thick as the air is, and radiates;
- * each face that meets another block of the world gives heat into it, the world's blocks holding the place's
- * temperature. A block in balance with everything round it sleeps, and only a change wakes it: idle heat costs
- * nothing.
+ * each face that meets another block of the world gives heat into it as that block conducts, wool hardly and metal
+ * well, the world's blocks holding the place's temperature. A block in balance with everything round it sleeps, and
+ * only a change wakes it: idle heat costs nothing.
  */
 public final class LevelHeat {
 
@@ -35,7 +35,10 @@ public final class LevelHeat {
     public static final int BATCH = 512;
     /** How close to balance a block is when it sleeps, in kelvin. */
     public static final double BALANCE = 0.05;
-    /** The conductivity taken for a block of the world, which holds no heat of its own: stone's, near enough. */
+    /**
+     * The conductivity taken for a block of the world, which holds no heat of its own, where the blocks' conductivity
+     * ({@link BlockConductivity}) says nothing of it: stone's, near enough.
+     */
     public static final double GROUND = 2.5;
     /* The longest step a block is moved by at once, in seconds, however long it waited. */
     private static final double LONGEST_STEP = 5.0;
@@ -127,7 +130,7 @@ public final class LevelHeat {
             if (state.isAir() || !state.getFluidState().isEmpty() || !state.isSolid()) {
                 exposed += 1.0;
             } else {
-                ground += HeatMath.conductance(body.conductivity(), GROUND);
+                ground += HeatMath.conductance(body.conductivity(), BlockConductivity.of(state));
             }
         }
         final double pressure = HeatClimate.pressure(level, pos);

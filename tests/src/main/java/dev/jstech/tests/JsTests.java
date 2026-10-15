@@ -58,6 +58,8 @@ public final class JsTests {
         TestUpgrades.declare();
         // Litres of copper and iron, a radiator and a heater, to prove the Core's heat.
         TestHeat.declare();
+        // A cold store whose places a test chills, to prove what deep cold does.
+        TestClimate.declare();
         // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
         TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
