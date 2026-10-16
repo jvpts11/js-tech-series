@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest.core;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.worldgen.landform.LandformField;
 import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.vein.VeinField;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -36,8 +37,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * How a land made by the Core's terrain, biomes and landforms looks to a player: a crater on the steppe, dug into the
  * sand with its gravel floor, its rim and its ejecta, the land round it seen from high above, and a lake on the
- * frost, frozen over, under the snow of the frost's own surface. The player is taken to a copy of the test land and
- * back.
+ * frost, frozen over, under the snow of the frost's own surface; and a vein of iron and tin cut through, dense at its
+ * middle and thinning outwards. The player is taken to a copy of the test land and back.
  */
 public final class TerrainClientTests {
 
@@ -55,6 +56,10 @@ public final class TerrainClientTests {
     private static final int CLEARANCE = 4;
     /* How high over a crater, and how far back, the land is seen whole. */
     private static final int HIGH = 48;
+    /* How far the land is cut away beside a vein, and how far below its middle. */
+    private static final int CUT = 20;
+    private static final int DEEP = 8;
+    private static final int UPDATE = 2;
 
     private TerrainClientTests() {
     }
@@ -107,6 +112,58 @@ public final class TerrainClientTests {
                 .then(RENDER, () -> ctx.lookAt(Vec3.atCenterOf(tops[1])))
                 .thenScreenshot(2, "frozen_lake_on_the_frost")
                 .then(1, () -> expect(ctx, tops[1], "the frost's lake", Blocks.ICE, Blocks.PACKED_ICE));
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void testLand_showsAVeinCutOpen(final ClientTestContext ctx) {
+        final VeinField.Vein[] found = new VeinField.Vein[1];
+        final Vec3[] stand = new Vec3[1];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            final BlockPos home = ctx.origin().above(2);
+            ctx.serverPlayer().teleportTo(ctx.server().overworld(), home.getX() + 0.5, home.getY(),
+                    home.getZ() + 0.5, 0F, 0F);
+            RuntimeDimensions.remove(ctx.server(), LAND);
+        }));
+        ctx.thenServer(0, level -> {
+            final ServerLevel land = RuntimeDimensions.getOrCreate(level.getServer(), LAND,
+                    TestWorldGen.TEST_LAND.id());
+            level.getServer().overworld().setDayTime(NOON);
+            found[0] = LandSurvey.vein(land, TestWorldGen.IRON_VEINS, CELLS);
+            if (found[0] == null) {
+                return;
+            }
+            final VeinField.Vein vein = found[0];
+            // The land east of the vein's middle is taken away down below it, so the vein shows cut through.
+            for (int x = vein.x() + 1; x <= vein.x() + CUT; x++) {
+                for (int z = vein.z() - CUT; z <= vein.z() + CUT; z++) {
+                    final int topY = top(land, x, z).getY();
+                    for (int y = vein.y() - DEEP; y <= topY; y++) {
+                        land.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), UPDATE);
+                    }
+                }
+            }
+            stand[0] = new Vec3(vein.x() + CUT - 2 + 0.5, vein.y() + 2, vein.z() + 0.5);
+            go(ctx, land, stand[0]);
+        })
+                .thenAssert(1, () -> found[0] != null, "the test land holds a vein of its iron")
+                .thenWaitUntil(() -> arrived(ctx, stand[0], new BlockPos(found[0].x(), found[0].y(), found[0].z())),
+                        ARRIVE, "the player's game to reach the cut")
+                .then(RENDER, () -> ctx.lookAt(new Vec3(found[0].x(), found[0].y() + 0.5, found[0].z() + 0.5)))
+                .thenScreenshot(2, "iron_vein_cut_open")
+                .then(1, () -> {
+                    final VeinField.Vein vein = found[0];
+                    int ores = 0;
+                    for (int z = vein.z() - 4; z <= vein.z() + 4; z++) {
+                        for (int y = vein.y() - 2; y <= vein.y() + 2; y++) {
+                            final BlockState face = ctx.mc().level.getBlockState(new BlockPos(vein.x(), y, z));
+                            ores += face.isAir() || face.is(Blocks.STONE) || face.is(Blocks.TUFF)
+                                    || face.is(Blocks.CALCITE) ? 0 : 1;
+                        }
+                    }
+                    if (ores == 0) {
+                        throw new ClientTestFailure("the vein's cut face shows no ore on the player's game");
+                    }
+                });
     }
 
     /* The highest block of a column of the land, making its chunk first: a chunk not made yet has no height. */

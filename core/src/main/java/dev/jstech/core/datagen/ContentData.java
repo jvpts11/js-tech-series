@@ -83,6 +83,9 @@ public final class ContentData {
         if (!WorldBiomes.biomesOf(content.modid()).isEmpty()) {
             data.server(new BiomeClimateProvider(output, data.lookup(), content.modid()));
         }
+        if (DepositProvider.declares(content.modid())) {
+            data.server(new DepositProvider(output, content.modid()));
+        }
         return data;
     }
 

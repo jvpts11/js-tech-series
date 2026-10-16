@@ -54,7 +54,8 @@ public final class CoreConfigKeysGameTests {
                         "elements.require_ium", "elements.longest_name", "hazards.natural_radioactivity",
                         "heat.pipes_freeze", "heat.boil_off", "heat.overheating_damages", "heat.ignites",
                         "heat.hot_surfaces_burn", "mechanical.parts_break", "multiblock.blocks_per_second",
-                        "multiblock.build_reach"),
+                        "multiblock.build_reach", "veins.enabled", "veins.rarity", "veins.spread", "veins.density",
+                        "veins.without_ore", "veins.try_moving_other_ores"),
                 CoreConfigKeys.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the settings declared");
         same(helper, "jstech-balance.toml", CoreConfigKeys.FILE.fileName(), "the file's name");
         helper.succeed();

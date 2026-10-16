@@ -1,0 +1,13 @@
+{
+  "biomes": "minecraft:is_nether",
+  "density": 0.4,
+  "frequency": 0.2,
+  "max_y": 117,
+  "min_y": 10,
+  "minerals": [
+    {
+      "material": "jscore:gold"
+    }
+  ],
+  "radius": 18.0
+}

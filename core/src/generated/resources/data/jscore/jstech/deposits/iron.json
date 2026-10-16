@@ -1,0 +1,11 @@
+{
+  "biomes": "minecraft:is_overworld",
+  "frequency": 0.16,
+  "max_y": 96,
+  "min_y": -48,
+  "minerals": [
+    {
+      "material": "jscore:iron"
+    }
+  ]
+}

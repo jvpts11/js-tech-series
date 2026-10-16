@@ -1,0 +1,13 @@
+{
+  "biomes": "minecraft:is_overworld",
+  "frequency": 0.12,
+  "max_y": 112,
+  "min_y": -16,
+  "minerals": [
+    {
+      "material": "jscore:copper"
+    }
+  ],
+  "radius": 22.0,
+  "thickness": 7.0
+}

@@ -1,0 +1,14 @@
+{
+  "biomes": "jstests:nowhere",
+  "frequency": 0.01,
+  "max_y": 40,
+  "min_y": 16,
+  "minerals": [
+    {
+      "material": "jscore:gold"
+    }
+  ],
+  "rocks": [
+    "minecraft:granite"
+  ]
+}

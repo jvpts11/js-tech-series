@@ -86,6 +86,7 @@ import dev.jstech.core.integration.opac.OpacIntegration;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
+import dev.jstech.core.jstechseries.SeriesDeposits;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SeriesMods;
 import dev.jstech.core.jstechseries.SimplePath;
@@ -151,6 +152,8 @@ import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.biome.BiomeClimates;
+import dev.jstech.core.worldgen.vein.Deposits;
+import dev.jstech.core.worldgen.vein.Veins;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoader;
@@ -220,6 +223,9 @@ public final class JsCore {
         // climates of biomes in real values, which heat meets where a biome has its own.
         CoreFeatures.register(modEventBus);
         BiomeClimates.listen(modEventBus);
+        // The veins every mod's ores lie in, their kinds as data.
+        Veins.listen(modEventBus);
+        Deposits.register();
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.
@@ -244,6 +250,8 @@ public final class JsCore {
         ElementNaming.declare();
         MaterialValues.declare();
         MaterialData.declare();
+        // The veins of the series' metals, which stand in for the game's scattered iron, copper and gold.
+        SeriesDeposits.declare();
         // Where a belt or a chain remembers the first pulley it was used on.
         ShaftLinkItem.declare();
         // What the manuals sound like: the game's own book and button sounds, in the Manuals channel.

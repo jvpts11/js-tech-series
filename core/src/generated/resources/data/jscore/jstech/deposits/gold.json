@@ -1,0 +1,14 @@
+{
+  "biomes": "minecraft:is_overworld",
+  "density": 0.4,
+  "frequency": 0.05,
+  "max_y": 32,
+  "min_y": -64,
+  "minerals": [
+    {
+      "material": "jscore:gold"
+    }
+  ],
+  "radius": 16.0,
+  "thickness": 5.0
+}

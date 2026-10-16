@@ -14,13 +14,15 @@ import dev.jstech.core.worldgen.landform.SeaConfig;
 import dev.jstech.core.worldgen.landform.SeaFeature;
 import dev.jstech.core.worldgen.strata.StrataConfig;
 import dev.jstech.core.worldgen.strata.StrataFeature;
+import dev.jstech.core.worldgen.vein.VeinFeature;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** The kinds of feature the Core gives every mod's world generation: landforms, rock in layers, and seas. */
+/** The kinds of feature the Core gives every mod's world generation: landforms, rock in layers, seas and veins. */
 public final class CoreFeatures {
 
     private static final DeferredRegister<Feature<?>> FEATURES =
@@ -34,6 +36,9 @@ public final class CoreFeatures {
             FEATURES.register("strata", StrataFeature::new);
     /** {@code jscore:sea}: see {@link SeaFeature}. */
     public static final DeferredHolder<Feature<?>, Feature<SeaConfig>> SEA = FEATURES.register("sea", SeaFeature::new);
+    /** {@code jscore:veins}: see {@link VeinFeature}. */
+    public static final DeferredHolder<Feature<?>, Feature<NoneFeatureConfiguration>> VEINS =
+            FEATURES.register("veins", VeinFeature::new);
 
     private CoreFeatures() {
     }

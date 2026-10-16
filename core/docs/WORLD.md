@@ -1,10 +1,10 @@
 # The world
 
-What J's Core gives a mod about the world itself: ores and structures that generate in it, dimensions of your
-own with rules for gravity, air, heat and weather, their terrain and biomes with climates in real values, the
-shapes of the land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers, seas that
-freeze or boil away, dimensions made while the game runs, data kept over areas of the world, and chunks kept loaded
-for their owners.
+What J's Core gives a mod about the world itself: ores in veins that instruments can find, structures that generate in
+it, dimensions of your own with rules for gravity, air, heat and weather, their terrain and biomes with climates in
+real values, the shapes of the land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers,
+seas that freeze or boil away, dimensions made while the game runs, data kept over areas of the world, and chunks
+kept loaded for their owners.
 
 ## The words
 
@@ -44,7 +44,84 @@ public static final WorldGen.TemplateStructure CAMP = WorldGen.structure(rl("cam
 Declaring happens when the class holding these loads, so load it before the data generation runs (an empty
 `declare()` method called from your mod's constructor). The files go under `data/<namespace>/worldgen/` (the
 configured and placed features, the structure and its set, the template pool) and a NeoForge biome modifier puts
-ores into the biomes. A data pack can replace any of them.
+ores into the biomes. A data pack can replace any of them. A scattered ore like this is for an ore that is not a
+material's; a material's ore lies in veins (below).
+
+## Veins
+
+*Added 2026-10-16.*
+
+Ores do not lie scattered: they lie in **veins**. The world is cut into zones three chunks a side, and a zone holds
+at most one vein, of a kind picked by the kinds' frequencies, dense at its middle and thinning to nothing at its edge,
+so a player finds nothing in one place and hundreds of ores in the next. A kind of vein, a **deposit type**, is
+declared in code and written as a data file:
+
+```java
+public static final ResourceLocation MAGNETITE = Deposits.deposit(rl("magnetite"))
+        .mineral(SeriesMaterials.IRON, 6)        // the materials it brings together, by weight
+        .mineral(MyMaterials.TITANIUM, 1)
+        .heights(-48, 96)                        // where its middle lies
+        .frequency(0.12)                         // in about 12 zones of 100
+        .size(20, 6)                             // 20 blocks across from its middle, 6 up and down
+        .density(0.55)                           // how much of its middle is ore
+        .biomes(BiomeTags.IS_OVERWORLD)          // the biome at its middle
+        .elsewhere(0.2)                          // a fifth as often outside those biomes; 0, the default, never
+        .rocks(HostRocks.STONE, HostRocks.DEEPSLATE, HostRocks.GRANITE)   // left out: every rock
+        .declare();
+```
+
+The data generation writes it to `data/<namespace>/jstech/deposits/magnetite.json`, which a data pack can change, and a
+data pack can add kinds of its own there:
+
+```json
+{ "minerals": [ {"material": "jscore:iron", "weight": 6}, {"material": "mymod:titanium"} ],
+  "min_y": -48, "max_y": 96, "frequency": 0.12, "radius": 20, "thickness": 6, "density": 0.55,
+  "biomes": "minecraft:is_overworld", "rocks": ["jscore:stone", "jscore:deepslate", "jscore:granite"] }
+```
+
+- **A vein crosses rocks.** Each block of it becomes the ore of one of its materials in the rock it was: a vein through
+  stone and deepslate lays iron ore in the stone and deepslate iron ore in the deepslate.
+- **An ore lies only where a mod uses it.** A material's ore in a rock exists only when the game has it (iron in stone)
+  or an installed mod declares it (`MaterialUses.ore(...)`, [Materials](CONTENT.md#materials)); a block of a vein
+  whose material has no ore in that rock is left as it was. So any mod may declare a kind for materials it does not
+  use itself.
+- **The game's iron, copper and gold lie in veins.** The Core brings veins of them (`SeriesDeposits`: iron, copper,
+  gold, the Nether's gold, and tin once a mod uses tin's ore), and while ores lie in veins the game's scattered iron,
+  copper and gold are not laid. The large veins the game itself makes, of raw iron with tuff and of raw copper with
+  granite, stay as they are.
+- **The same for the same seed.** Where every vein lies is worked out from the world's seed alone, and each chunk lays
+  only what reaches it, so a world generates the same on any number of threads, with C2ME or Distant Horizons.
+
+### Prospecting
+
+An instrument asks what is round it, and learns no coordinates:
+
+```java
+List<Prospecting.Prospect> near = Prospecting.prospect(level, pos, 64);      // nearest first
+// each: the kind, the direction it lies in (a unit vector), and how strongly it shows, 0 to 1
+Optional<Prospecting.VeinReading> here = Prospecting.sample(level, pos);     // standing in a vein
+// its kind, the share of each material in it, and about how many blocks of ore it holds
+```
+
+A larger vein shows more strongly, and a nearer one. Both answer from the seed, for chunks made or not, so mining a
+vein out does not hide it.
+
+### Settings
+
+In `jstech-balance.toml`, section `veins`:
+
+| Setting | Means | The default |
+| --- | --- | --- |
+| `enabled` | Ores lie in veins. Off, no vein is laid and the game's scattered ores come back. | on |
+| `rarity` | How many times as often each kind is found, by its id: `"jscore:iron" = 0.5`. 0 lays none. | none named |
+| `spread` | How many times as large each kind is, never wider than its zone. | none named |
+| `density` | How many times as dense each kind is, at most all ore at its middle. | none named |
+| `without_ore` | The materials whose ore is never laid: `["jscore:tin"]`. Their veins keep their other ores. | none |
+| `try_moving_other_ores` | Move other mods' scattered ores of the common ores tag (`c:ores`) into veins of their own. | off |
+
+Moving other mods' ores works with an ore a mod lays as data, as most do: its feature stands aside and a vein of its own
+replaces what it replaced with what it laid, so each block still takes its rock's variant. A mod that lays its ores
+its own way is not seen, hence "try". Only chunks made after a change are laid differently.
 
 ## Dimensions
 
@@ -330,3 +407,7 @@ ChunkLoaders.releaseAll(level, machinePos);
 - **A lake is dry, or frozen solid on top.** The place is hotter than its liquid boils, or colder than it freezes:
   check the biome's climate and the lake's `liquidRange`.
 - **The layers of rock never show.** The rock of the land is not in the tag they replace.
+- **A vein lays nothing.** No installed mod uses its materials' ores in the rocks where it lies, its biome is not one
+  of its biomes, or `without_ore` names its materials.
+- **The game's iron is still scattered.** The world's chunks were made before veins were on, or `veins.enabled` is
+  off.

@@ -7,8 +7,11 @@
  */
 package dev.jstech.tests;
 
+import dev.jstech.core.jstechseries.SeriesMaterials;
+import dev.jstech.core.material.HostRocks;
 import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.core.worldgen.biome.WorldBiomes;
+import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.landform.LandformKind;
 import dev.jstech.core.worldgen.landform.Landforms;
 import dev.jstech.core.worldgen.terrain.Terrains;
@@ -20,8 +23,8 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * A vein of ore, a structure, dimensions, biomes, a terrain and shapes of the land declared the way a mod declares
- * them, to prove the Core's world generation. The vein and the structure are placed only in a biome tag that holds no
+ * Scattered ores, a structure, dimensions, biomes, a terrain, shapes of the land and kinds of vein declared the way a
+ * mod declares them, to prove the Core's world generation. The vein and the structure are placed only in a biome tag that holds no
  * biome, so they exist in the registries and generate nowhere; the dimensions stand apart, reached only by the tests,
  * and the biomes and the shapes of the land lie only in the test land.
  */
@@ -77,6 +80,17 @@ public final class TestWorldGen {
      */
     public static final WorldGen.DimensionSpec TEST_LAND = WorldGen.dimension(id("test_land")).terrain(TERRAIN)
             .biome(STEPPE.key(), 0.5F, 0F).biome(FROST.key(), -0.5F, 0F).runtimeOnly().declare();
+    /** Veins of iron with some tin in the test land's stone, below its layers, in half its zones. */
+    public static final ResourceLocation IRON_VEINS = Deposits.deposit(id("test_iron")).mineral(SeriesMaterials.IRON, 3)
+            .mineral(SeriesMaterials.TIN, 1).heights(16, 40).frequency(0.5).size(14, 5).density(0.6).biomes(LAND)
+            .declare();
+    /** Veins of gold that cross only granite, where no mod uses gold's ore, so they lay nothing. */
+    public static final ResourceLocation GRANITE_GOLD = Deposits.deposit(id("test_granite_gold"))
+            .mineral(SeriesMaterials.GOLD, 1).heights(16, 40).frequency(0.01).biomes(NOWHERE)
+            .rocks(HostRocks.GRANITE).declare();
+    /** Another mod's ore scattered as the game scatters its own, in the test land: one the veins can move. */
+    public static final WorldGen.OreVein LAND_ORE = WorldGen.ore(id("test_land_ore")).stone(() -> Blocks.EMERALD_ORE)
+            .vein(6).perChunk(2).heights(16, 48).biomes(LAND).declare();
 
     private TestWorldGen() {
     }

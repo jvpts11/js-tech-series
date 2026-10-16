@@ -1,0 +1,17 @@
+{
+  "type": "jscore:veins",
+  "covered": [
+    "minecraft:ore_iron_upper",
+    "minecraft:ore_iron_middle",
+    "minecraft:ore_iron_small",
+    "minecraft:ore_copper",
+    "minecraft:ore_copper_large",
+    "minecraft:ore_gold",
+    "minecraft:ore_gold_lower",
+    "minecraft:ore_gold_extra",
+    "minecraft:ore_gold_nether",
+    "minecraft:ore_gold_deltas"
+  ],
+  "tagged": "c:ores",
+  "veins": "jscore:veins"
+}

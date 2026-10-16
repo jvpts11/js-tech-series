@@ -33,6 +33,8 @@ public final class JsCoreDataGenerators {
         data.server(new SeriesRecipes(data.output(), data.lookup()));
         data.server(new BlockConductivityProvider(data.output(), data.lookup()));
         data.server(new LightColoursProvider(data.output(), data.lookup()));
+        // The veins every biome's ores lie in, standing in for the game's scattered iron, copper and gold.
+        data.server(new VeinsProvider(data.output(), data.lookup()));
         data.check();
     }
 }

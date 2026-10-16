@@ -9,9 +9,13 @@ package dev.jstech.tests.testkit;
 
 import dev.jstech.core.worldgen.landform.LandformField;
 import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.vein.Deposits;
+import dev.jstech.core.worldgen.vein.VeinField;
+import dev.jstech.core.worldgen.vein.Veins;
 import java.util.List;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -19,9 +23,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
 
 /**
- * Finds the landforms a generated land holds, worked out from its seed as the generation works them out, so a test
- * knows where to look before a single chunk is made: one of a kind on the biome it wants, standing clear of every
- * other landform, so what lies at its middle is its own doing.
+ * Finds the landforms and veins a generated land holds, worked out from its seed as the generation works them out, so
+ * a test knows where to look before a single chunk is made: a landform of a kind on the biome it wants, standing clear
+ * of every other landform, so what lies at its middle is its own doing; a vein of a kind where it is found.
  */
 public final class LandSurvey {
 
@@ -60,6 +64,21 @@ public final class LandSurvey {
                     QuartPos.fromBlock(BIOME_HEIGHT), QuartPos.fromBlock(one.z()), random.sampler()).equals(biome)
                     && apart(seed, one, cx, others) && (!dry || onLand(land, generator, random, one))) {
                 return one;
+            }
+        }
+        return null;
+    }
+
+    /** A vein of the kind {@code deposit} found where it lies in {@code land}, along the first {@code zones} zones. */
+    public static VeinField.Vein vein(final ServerLevel land, final ResourceLocation deposit, final int zones) {
+        final List<Deposits.Entry> kinds = Deposits.all();
+        final VeinField field = Veins.field(kinds);
+        for (int zx = 0; zx < zones; zx++) {
+            final VeinField.Vein vein = field.in(land.getSeed(), zx, 0);
+            if (vein != null && kinds.get(vein.kind()).id().equals(deposit) && Veins.found(
+                    land.getChunkSource().getGenerator(), land.getChunkSource().randomState(), kinds.get(vein.kind()),
+                    vein)) {
+                return vein;
             }
         }
         return null;

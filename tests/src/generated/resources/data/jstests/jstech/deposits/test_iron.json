@@ -1,0 +1,18 @@
+{
+  "biomes": "jstests:test_land",
+  "density": 0.6,
+  "frequency": 0.5,
+  "max_y": 40,
+  "min_y": 16,
+  "minerals": [
+    {
+      "material": "jscore:iron",
+      "weight": 3.0
+    },
+    {
+      "material": "jscore:tin"
+    }
+  ],
+  "radius": 14.0,
+  "thickness": 5.0
+}

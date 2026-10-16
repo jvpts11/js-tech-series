@@ -577,6 +577,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   freezes and boil away where it is hotter.
 - Rock in layers by depth, each region of the land with its own sequence, the layers rising and falling
   gently and the ores lying in them.
+- Ores lie in veins: zones three chunks wide hold at most one, dense at its middle and thinning outwards, of a
+  kind declared as data (its materials and their weights, its heights, how often, how large and dense, its biomes and
+  rocks), which a data pack can change or add to. A vein crosses rocks and each block takes its rock's own ore, laid
+  only where some installed mod uses that ore; the same for the same seed on any number of threads.
+- The game's iron, copper and gold now lie in veins (the Nether's gold too), with tin once a mod uses it; their
+  scattered placement stands aside while veins are on.
+- Prospecting: an instrument learns which way the veins near it lie and how strongly each shows, never where,
+  and standing in one, what it is made of and how large it is.
+- The world's vein settings: veins on or off, how often, how large and how dense each kind is, the materials
+  whose ore is never laid, and trying to move other mods' scattered ores into veins of their own.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

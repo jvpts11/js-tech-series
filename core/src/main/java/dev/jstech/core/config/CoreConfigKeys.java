@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.config;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.diagnostic.DiagnosticBalance;
@@ -20,14 +21,16 @@ import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.ChunkLoadingBalance;
 import dev.jstech.core.time.WorldCalendar;
+import dev.jstech.core.worldgen.vein.VeinBalance;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The series' balance, {@code jstech-balance.toml} beside the world: how the Operations engine waits and shares its
  * work, how long the programs of the machines may run each tick, how much of the connection the recordings players
- * hear and bring may take, and how long the world's seasons last. A value outside its range is pulled to the nearer
- * end rather than refused, so a
- * slip in the file costs one setting its value instead of breaking the world; each value read is passed straight into
- * the balance it sets.
+ * hear and bring may take, how long the world's seasons last, and how its ores lie in veins. A value outside its range
+ * is pulled to the nearer end rather than refused, so a slip in the file costs one setting its value instead of
+ * breaking the world; each value read is passed straight into the balance it sets.
  */
 public final class CoreConfigKeys {
 
@@ -52,6 +55,8 @@ public final class CoreConfigKeys {
     public static final String MECHANICAL = "mechanical";
     /** The section of building multiblocks for players. */
     public static final String MULTIBLOCK = "multiblock";
+    /** How the world lays its ores: in veins, or scattered as the game lays them. */
+    public static final String VEINS = "veins";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_BLOCKS_PER_SECOND = 40;
@@ -68,6 +73,7 @@ public final class CoreConfigKeys {
     private static final int MAX_MEDIA_FILE_MEGABYTES = 1024;
     private static final int MAX_MEDIA_QUOTA_MEGABYTES = 1_048_576;
     private static final int MAX_CHUNKS_PER_OWNER = 4096;
+    private static final double MAX_VEIN_FACTOR = 100;
     private static final int MIN_AUDIT_ENTRIES = 100;
     private static final int MAX_AUDIT_ENTRIES = 1_000_000;
     private static final int MAX_ROBOTS_PER_PLAYER = 1024;
@@ -289,6 +295,51 @@ public final class CoreConfigKeys {
                     + "the rating. A shear pin shears either way.")
             .named("Parts break under overload");
 
+    /** Whether ores lie in veins, the game's scattered iron, copper and gold taken away. */
+    public static final ConfigKey<Boolean> VEINS_ENABLED = ConfigKey.flag(VEINS + ".enabled", true)
+            .comment("Whether ores lie in veins about three chunks wide, dense at the middle and thinning outwards, "
+                    + "instead of scattered; the game's scattered iron, copper and gold are taken away while they do. "
+                    + "Only chunks made from then on change.")
+            .named("Ores lie in veins");
+
+    /** How many times as often each kind of vein is found, by its id. */
+    public static final ConfigKey<Map<String, Double>> VEINS_RARITY = ConfigKey.of(VEINS + ".rarity",
+            Codec.unboundedMap(Codec.STRING, Codec.doubleRange(0, MAX_VEIN_FACTOR)), Map.of())
+            .activeWhen(VEINS_ENABLED)
+            .comment("How many times as often each kind of vein is found, by its id, as in "
+                    + "\"jscore:iron\" = 0.5; 0 lays none of it. A kind not named keeps its own.")
+            .named("How often veins are found");
+
+    /** How many times as large each kind of vein is, by its id. */
+    public static final ConfigKey<Map<String, Double>> VEINS_SPREAD = ConfigKey.of(VEINS + ".spread",
+            Codec.unboundedMap(Codec.STRING, Codec.doubleRange(0, MAX_VEIN_FACTOR)), Map.of())
+            .activeWhen(VEINS_ENABLED)
+            .comment("How many times as large each kind of vein is, by its id; a vein is never wider than its "
+                    + "zone of three chunks.")
+            .named("How large veins are");
+
+    /** How many times as dense each kind of vein is, by its id. */
+    public static final ConfigKey<Map<String, Double>> VEINS_DENSITY = ConfigKey.of(VEINS + ".density",
+            Codec.unboundedMap(Codec.STRING, Codec.doubleRange(0, MAX_VEIN_FACTOR)), Map.of())
+            .activeWhen(VEINS_ENABLED)
+            .comment("How many times as dense each kind of vein is, by its id; its middle is at most wholly ore.")
+            .named("How dense veins are");
+
+    /** The materials whose ore is never laid, by their ids. */
+    public static final ConfigKey<List<String>> VEINS_WITHOUT_ORE = ConfigKey.of(VEINS + ".without_ore",
+            Codec.STRING.listOf(), List.of())
+            .comment("The materials whose ore is never laid, by their ids, as in \"jscore:tin\"; veins of them "
+                    + "keep their other ores.")
+            .named("Ores never laid");
+
+    /** Whether other mods' scattered ores are moved into veins of their own. */
+    public static final ConfigKey<Boolean> VEINS_MOVE_OTHERS = ConfigKey.flag(VEINS + ".try_moving_other_ores",
+            false)
+            .activeWhen(VEINS_ENABLED)
+            .comment("Try moving other mods' scattered ores into veins, finding them by the common ores tag. It "
+                    + "works with mods that lay their ores as data, and may miss a mod that lays them its own way.")
+            .named("Try moving other mods' ores");
+
     /** How many blocks a second a tool that builds a multiblock for a player places. */
     public static final ConfigKey<Integer> MULTIBLOCK_BLOCKS_PER_SECOND = ConfigKey.whole(
             MULTIBLOCK + ".blocks_per_second", BuildBalance.DEFAULT_BLOCKS_PER_SECOND).range(1, MAX_BLOCKS_PER_SECOND)
@@ -332,6 +383,7 @@ public final class CoreConfigKeys {
             .sectionNamed(HEAT, "Heat")
             .sectionNamed(MECHANICAL, "Mechanical power")
             .sectionNamed(MULTIBLOCK, "Multiblocks")
+            .sectionNamed(VEINS, "Veins")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -366,6 +418,12 @@ public final class CoreConfigKeys {
             .key(MECHANICAL_PARTS_BREAK, MechanicalBalance::setPartsBreak)
             .key(MULTIBLOCK_BLOCKS_PER_SECOND, BuildBalance::setBlocksPerSecond)
             .key(MULTIBLOCK_BUILD_REACH, BuildBalance::setReach)
+            .key(VEINS_ENABLED, VeinBalance::setEnabled)
+            .key(VEINS_RARITY, VeinBalance::setRarity)
+            .key(VEINS_SPREAD, VeinBalance::setSpread)
+            .key(VEINS_DENSITY, VeinBalance::setDensity)
+            .key(VEINS_WITHOUT_ORE, VeinBalance::setWithoutOre)
+            .key(VEINS_MOVE_OTHERS, VeinBalance::setMoveOthers)
             .build();
 
     private CoreConfigKeys() {
