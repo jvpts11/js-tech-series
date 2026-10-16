@@ -355,6 +355,14 @@ public final class ManualReader {
                                             : this.text.text(balloon.key()) + ". " + this.text.text(
                                             balloon.detailKey()))));
                 }
+                // Read as text, a multiblock is its caption, numbered with the figures, where it is installed.
+                case GuideBlock.Multiblock multiblock -> {
+                    if (!this.text.multiblock(multiblock.multiblock()).isEmpty()) {
+                        figures++;
+                        pieces.add(new Piece.Picture("", this.text.text(GuideTexts.FIGURE.key(), chapterNo + "-"
+                                + figures) + " " + this.text.text(multiblock.captionKey())));
+                    }
+                }
                 // Where a page breaks, and what another mod draws on one, have no place in running text.
                 case GuideBlock.Break cut -> {
                 }

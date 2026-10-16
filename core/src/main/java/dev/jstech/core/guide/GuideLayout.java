@@ -566,6 +566,13 @@ public final class GuideLayout {
             case GuideBlock.Plan plan -> this.plan(plan);
             case GuideBlock.Command command -> this.command(command);
             case GuideBlock.Scene scene -> this.scene(scene);
+            case GuideBlock.Multiblock multiblock -> {
+                // A multiblock that is not installed leaves no figure, nor a gap in their numbers.
+                final List<GuideBlock.SceneBlock> blocks = this.text.multiblock(multiblock.multiblock());
+                if (!blocks.isEmpty()) {
+                    this.scene(multiblock.scene(blocks));
+                }
+            }
             case GuideBlock.Custom custom -> {
                 // A block taller than the text area would run past the page foot, so it is cut to the area.
                 final int height = Math.min(custom.height(), this.bottom() - this.top);

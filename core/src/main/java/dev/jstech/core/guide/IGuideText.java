@@ -99,4 +99,13 @@ public interface IGuideText {
     default String titleOf(final String target) {
         return "";
     }
+
+    /**
+     * The blocks of the multiblock of {@code id} as it stands now, as a scene holds them, its least corner at the
+     * grid's: none where it is not installed or is too big for a scene. Whoever knows no multiblocks, as a test does,
+     * knows none.
+     */
+    default List<GuideBlock.SceneBlock> multiblock(final String id) {
+        return List.of();
+    }
 }

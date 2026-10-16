@@ -41,6 +41,7 @@ import net.minecraft.util.ExtraCodecs;
  *  "blocks": [{"x": 0, "y": 0, "z": 0, "state": "jsc:transition_case[facing=south]", "data": "{...}"}],
  *  "view": {"yaw": -35, "pitch": 25, "zoom": 1},
  *  "balloons": [{"number": 1, "part": {"x": 0, "y": 0, "z": 0, "box": [5, 2, 15, 7, 4, 16]}, "text": "..."}]}
+ * {"type": "multiblock", "multiblock": "mymod:coke_oven", "caption": "...", "height": 120}
  * }</pre>
  */
 public final class GuideCodecs {
@@ -330,6 +331,14 @@ public final class GuideCodecs {
             Codec.INT.fieldOf("height").forGetter(GuideBlock.Scene::height),
             Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Scene::captionKey)
     ).apply(instance, GuideBlock.Scene::new));
+    private static final MapCodec<GuideBlock.Multiblock> MULTIBLOCK = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(
+                    Codec.STRING.fieldOf("multiblock").forGetter(GuideBlock.Multiblock::multiblock),
+                    SCENE_VIEW.optionalFieldOf("view", GuideBlock.SceneView.CORNER)
+                            .forGetter(GuideBlock.Multiblock::view),
+                    Codec.INT.fieldOf("height").forGetter(GuideBlock.Multiblock::height),
+                    Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Multiblock::captionKey)
+            ).apply(instance, GuideBlock.Multiblock::new));
 
     private GuideCodecs() {
     }
@@ -356,6 +365,7 @@ public final class GuideCodecs {
             case GuideBlock.Plan plan -> "plan";
             case GuideBlock.Command command -> "command";
             case GuideBlock.Scene scene -> "scene";
+            case GuideBlock.Multiblock multiblock -> "multiblock";
         };
     }
 
@@ -381,6 +391,7 @@ public final class GuideCodecs {
             case "plan" -> PLAN;
             case "command" -> COMMAND;
             case "scene" -> SCENE;
+            case "multiblock" -> MULTIBLOCK;
             default -> throw new IllegalArgumentException("no block of the type " + type);
         };
     }

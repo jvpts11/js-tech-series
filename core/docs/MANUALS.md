@@ -209,6 +209,7 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 | `tableFrom(source, caption, heads...)` | A numbered table whose rows your mod gives as the manual is laid out. See [Figures read from your mod](#figures-read-from-your-mod). |
 | `command(source)` | A command's page, read from the command as the manual is laid out. See [Commands](#commands). |
 | `scene(caption, height)`, then `place(...)`, `view(...)`, `layers()`, `balloon(...)` | A scene of blocks drawn as the game draws them, which the reader turns and brings nearer, numbered with the figures. See [Scenes](#scenes). |
+| `multiblock(caption, id, height)` | A multiblock drawn as a scene peeled layer by layer, laid out from the multiblock in force. See [A multiblock as a scene](#a-multiblock-as-a-scene). |
 | `listing(name, lines...)`, `listingIn(language, name, lines...)` | A numbered listing of code ("Listing 3-4."), headed by its file's name, its lines numbered and coloured by its language, with a Copy button. See [Listings of code](#listings-of-code). |
 | `session(look, title)`, then `typed(prompt, text)`, `answer(lines...)` | A session at a terminal, in the colours of the terminal's palette, under its name: what was typed after each prompt and what the system answered. See [Sessions at a terminal](#sessions-at-a-terminal). |
 | `recipes(type)`, `recipes(type, making)` | Every recipe of a type the world holds, or those making one item, with the time and energy over the arrow. |
@@ -375,6 +376,25 @@ A scene is drawn into a picture of its own only when it is turned, brought neare
 so a page holding one costs nothing frame to frame. Read as text, in a help program, a scene is its numbered caption
 and the list of its balloons. A block's state or data the game cannot read is drawn as air, with a line in the log;
 the test mod checks every scene every mod declares for that.
+
+#### A multiblock as a scene
+
+*Added 2026-10-16.*
+
+A multiblock is not placed block by block: its page names it, and the scene is laid out when the manual is read, from
+the multiblock in force, so a data pack's change to it shows there, and one declared as data has its scene with no
+blocks written:
+
+```java
+.multiblock("The coke oven. Peel it to see its inside.", rl("coke_oven"), 120)
+```
+
+Every place shows its first block (a tag's place, the tag's first block), and the controller stands in its place
+when its block is known ([Multiblocks](MULTIBLOCKS.md#showing-a-multiblock-before-it-is-built)). The scene may always
+be peeled layer by layer and has no balloons. Where the multiblock is not installed, or is bigger than a scene's grid,
+the figure is left out and the next one takes its number. Its file is
+`{"type": "multiblock", "multiblock": "mymod:coke_oven", "caption": "...", "height": 120}`, with a `view` as a
+scene's.
 
 ### Commands
 

@@ -412,6 +412,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A multiblock pattern names its controller's block, in code and in its file, so the projector and the recipe
   viewers show the controller in its place and count it; a machine declared as data has its controller block found by
   itself.
+- (Core) Multiblocks in the manuals: a page names a multiblock by its id and it is drawn as a scene the reader turns
+  and peels layer by layer, laid out from the multiblock in force when the manual is read, its controller in place.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

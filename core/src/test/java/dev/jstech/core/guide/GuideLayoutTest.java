@@ -776,6 +776,30 @@ class GuideLayoutTest {
         assertEquals(List.of("abcde", "fghij"), GuideLayout.wrap("abcdefghij", 30, TextSize.BODY, text));
     }
 
+    @Test
+    void lay_drawsAMultiblockThatIsThereAsAPeeledSceneAndLeavesOutOneThatIsNot() {
+        final GuideBlock.Multiblock gone = new GuideBlock.Multiblock("mod:gone", GuideBlock.SceneView.CORNER, 90,
+                "gone.caption");
+        final GuideBlock.Multiblock oven = new GuideBlock.Multiblock("mod:oven", GuideBlock.SceneView.CORNER, 90,
+                "oven.caption");
+        final GuideContents contents = new GuideContents(List.of(chapter("mod", entry("mod:oven", gone, oven))));
+        final IGuideText text = new MultiblockText(new FixedText(Map.of()), Map.of("mod:oven", List.of(
+                new GuideBlock.SceneBlock(0, 0, 0, "mod:brick", ""), new GuideBlock.SceneBlock(0, 1, 0, "mod:brick",
+                        ""))));
+
+        final GuideBook book = GuideLayout.lay(MANUAL, STYLE, contents, text);
+
+        final List<GuidePiece> pieces = book.pages().stream().flatMap(page -> page.pieces().stream()).toList();
+        final List<GuidePiece.Scene> scenes = pieces.stream().filter(piece -> piece instanceof GuidePiece.Scene)
+                .map(piece -> (GuidePiece.Scene) piece).toList();
+        assertEquals(1, scenes.size(), "a multiblock that is not installed leaves no scene");
+        assertTrue(scenes.getFirst().scene().layers(), "a multiblock is peeled layer by layer");
+        assertEquals(2, scenes.getFirst().scene().tall());
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text line
+                && line.text().startsWith(GuideTexts.FIGURE.key() + "[1-1]")), "it is the first figure, the one"
+                + " left out not counted");
+    }
+
     private static GuideBook lay(final GuideContents contents) {
         return lay(contents, new FixedText(Map.of()));
     }
@@ -979,6 +1003,36 @@ class GuideLayoutTest {
         @Override
         public String amount(final long value, final String unit) {
             return value + " " + unit;
+        }
+    }
+
+    /** The words of {@code words}, and the multiblocks installed, each as its scene's blocks. */
+    private record MultiblockText(FixedText words, Map<String, List<GuideBlock.SceneBlock>> multiblocks)
+            implements IGuideText {
+
+        @Override
+        public String text(final String key, final Object... args) {
+            return this.words.text(key, args);
+        }
+
+        @Override
+        public int width(final String text, final TextSize size) {
+            return this.words.width(text, size);
+        }
+
+        @Override
+        public int recipeCount(final String type, final String output) {
+            return this.words.recipeCount(type, output);
+        }
+
+        @Override
+        public String amount(final long value, final String unit) {
+            return this.words.amount(value, unit);
+        }
+
+        @Override
+        public List<GuideBlock.SceneBlock> multiblock(final String id) {
+            return this.multiblocks.getOrDefault(id, List.of());
         }
     }
 }

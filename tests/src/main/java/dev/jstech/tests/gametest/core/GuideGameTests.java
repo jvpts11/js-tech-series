@@ -27,9 +27,11 @@ import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.ModGuide;
+import dev.jstech.core.multiblock.Projectables;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestGuide;
+import dev.jstech.tests.TestMultiblocks;
 import dev.jstech.tests.TestPress;
 import dev.jstech.tests.TestSounds;
 import java.util.List;
@@ -211,6 +213,28 @@ public final class GuideGameTests {
         helper.assertTrue(scenes > 0 && scene.blocks().size() == 4 && scene.layers()
                 && scene.balloons().size() == 3, "the test manual's scene is declared whole: " + scene);
         helper.assertTrue(roundTrips(GuideCodecs.ENTRY, entry(TestGuide.SCENE)), "and reads back the same");
+        helper.succeed();
+    }
+
+    /*
+     * A multiblock's scene names the multiblock by its id and reads back the same; its blocks are those of the pattern
+     * in force, the controller in its place, laid out as a scene holds them.
+     */
+    @GameTest(template = ARENA)
+    public static void multiblockScene_namesItsMultiblockAndLaysOutItsPattern(final GameTestHelper helper) {
+        final GuideBlock.Multiblock multiblock = entry(TestGuide.MULTIBLOCK).blocks().stream()
+                .filter(part -> part instanceof GuideBlock.Multiblock).map(part -> (GuideBlock.Multiblock) part)
+                .findFirst().orElseThrow();
+        helper.assertTrue(multiblock.multiblock().equals(TestMultiblocks.FURNACE_ID.toString()),
+                "the scene names the test furnace; got " + multiblock.multiblock());
+        helper.assertTrue(roundTrips(GuideCodecs.ENTRY, entry(TestGuide.MULTIBLOCK)), "and reads back the same");
+        final List<GuideBlock.SceneBlock> blocks = GuideBlock.Multiblock.blocksOf(
+                Projectables.preview(TestMultiblocks.FURNACE_ID, 0).orElseThrow(), first -> first);
+        helper.assertTrue(blocks.size() == 9, "the furnace's nine places, its controller's counted; got "
+                + blocks.size());
+        helper.assertTrue(blocks.stream().anyMatch(block -> block.state().equals("jstests:test_furnace_controller")
+                && block.x() == 1 && block.z() == 1), "the controller stands amid its casing");
+        blocks.forEach(placed -> readable(helper, TestGuide.MULTIBLOCK, placed));
         helper.succeed();
     }
 

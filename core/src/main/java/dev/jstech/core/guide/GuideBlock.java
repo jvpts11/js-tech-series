@@ -8,17 +8,20 @@
 package dev.jstech.core.guide;
 
 import dev.jstech.core.id.IStableName;
+import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.core.text.Text;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /**
  * One piece of a manual's entry: a paragraph, a heading, a figure, a picture, a table, the recipes of a kind, numbered
  * steps, a warning, the problems and their fixes, a word explained, links to other entries, a command's page, a scene
- * of blocks the reader turns, or a special block another mod draws.
+ * of blocks the reader turns, a multiblock drawn as one, or a special block another mod draws.
  *
  * <p>An entry is a list of these, laid out on the pages in the order given. Words are never held here, only the keys
  * of the sentences, so a manual reads in each player's language and a resource pack can reword it. Ids are text in
@@ -617,6 +620,58 @@ public sealed interface GuideBlock {
         public boolean whole() {
             return this.fromX == 0 && this.fromY == 0 && this.fromZ == 0 && this.toX == PIXELS
                     && this.toY == PIXELS && this.toZ == PIXELS;
+        }
+    }
+
+    /**
+     * A multiblock drawn as a scene the reader turns, brings nearer and peels layer by layer, numbered with the
+     * figures. Its blocks are laid out from the multiblock in force when the manual is read, its controller in its
+     * place, so a data pack's change to the multiblock shows in it; where the multiblock is not installed, or is too
+     * big for a scene, it is left out.
+     *
+     * @param multiblock the multiblock's id, as the views that show multiblocks before they are built name it
+     * @param view       how the book first shows it, and what Reset goes back to
+     * @param height     how tall it is drawn on the page, its strip of controls under it apart
+     * @param captionKey the caption's sentence
+     */
+    record Multiblock(String multiblock, SceneView view, int height, String captionKey) implements GuideBlock {
+
+        public Multiblock {
+            Objects.requireNonNull(multiblock, "multiblock");
+            Objects.requireNonNull(view, "view");
+            Objects.requireNonNull(captionKey, "captionKey");
+            if (multiblock.isBlank()) {
+                throw new IllegalArgumentException("a multiblock's scene names the multiblock");
+            }
+            if (height < Scene.MIN_HEIGHT || height > Scene.MAX_HEIGHT) {
+                throw new IllegalArgumentException("a scene is drawn " + Scene.MIN_HEIGHT + " to " + Scene.MAX_HEIGHT
+                        + " pixels tall; got " + height);
+            }
+        }
+
+        /**
+         * The blocks of {@code preview} as a scene holds them, its least corner at the grid's: at each place the block
+         * {@code blockOf} gives for what is shown there (a block id, or a tag as {@code #namespace:path}), a place it
+         * gives none for (an empty id) left empty; none at all for a multiblock too big for a scene.
+         */
+        public static List<SceneBlock> blocksOf(final ShapePreview preview, final UnaryOperator<String> blockOf) {
+            if (preview.sizeX() > Scene.GRID || preview.sizeY() > Scene.GRID || preview.sizeZ() > Scene.GRID) {
+                return List.of();
+            }
+            final List<SceneBlock> blocks = new ArrayList<>();
+            for (final ShapePreview.Ghost ghost : preview.ghosts()) {
+                final String block = ghost.first() == null ? "" : blockOf.apply(ghost.first());
+                if (block != null && !block.isBlank()) {
+                    blocks.add(new SceneBlock(ghost.x() - preview.minX(), ghost.y() - preview.minY(),
+                            ghost.z() - preview.minZ(), block, ""));
+                }
+            }
+            return List.copyOf(blocks);
+        }
+
+        /** The scene it is drawn as, of {@code blocks}: peeled layer by layer, with no balloons. */
+        public Scene scene(final List<SceneBlock> blocks) {
+            return new Scene(blocks, this.view, List.of(), true, this.height, this.captionKey);
         }
     }
 

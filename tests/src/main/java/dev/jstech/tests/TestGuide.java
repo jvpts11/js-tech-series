@@ -49,6 +49,7 @@ public final class TestGuide {
     public static final String CODE = "jstests:code";
     public static final String COMMAND = "jstests:command";
     public static final String SCENE = "jstests:scene";
+    public static final String MULTIBLOCK = "jstests:multiblock";
     /** The listings of the code entry, by the files they are. */
     public static final String HELLO = "Hello.sgs";
     public static final String QUERY = "top.iql";
@@ -191,6 +192,16 @@ public final class TestGuide {
                 .howToGetIt("Open the test manual.")
                 .howToUseIt("Drag the scene.", "Turn the wheel over it.", "Point at a balloon.", "Hide a layer.")
                 .whatCanGoWrong("The scene is empty.", "None of its blocks is one the game knows.")
+                .register();
+        GUIDE.page("multiblock", IDEAS).titled("A Multiblock").icon(() -> Items.BLAST_FURNACE)
+                .whatItIs("An entry with the test furnace drawn from its pattern as it stands now, its controller in"
+                        + " its place.")
+                .multiblock("The test furnace, from its pattern. Peel it layer by layer.", TestMultiblocks.FURNACE_ID,
+                        100)
+                .whatItIsFor("Proving that a manual draws a multiblock from the pattern in force.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Drag it.", "Hide a layer.")
+                .whatCanGoWrong("No figure shows.", "The multiblock is not installed, or it is too big for a scene.")
                 .register();
         GUIDE.page("command", IDEAS).titled("A Command's Page").icon(() -> Items.COMMAND_BLOCK_MINECART)
                 .whatItIs("An entry that prints a command's page from the command itself, the way its manual page"

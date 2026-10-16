@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.multiblock.ShapePreview;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -72,6 +73,45 @@ class GuideBlockTest {
         assertFalse(whole.box(4, 4, 15, 12, 6, 16).whole());
         assertThrows(IllegalArgumentException.class, () -> whole.box(10, 0, 0, 4, 16, 16), "from past its end");
         assertThrows(IllegalArgumentException.class, () -> whole.box(0, 0, 0, 17, 16, 16), "past the block");
+    }
+
+    @Test
+    void multiblock_laysItsPlacesFromTheGridsCornerAndLeavesOutWhatHasNoBlock() {
+        final ShapePreview preview = new ShapePreview(List.of(
+                ghost(-1, 0, 0, List.of("test:brick"), List.of(), false),
+                ghost(0, 0, 0, List.of("test:oven"), List.of(), true),
+                ghost(1, 1, -2, List.of(), List.of("test:windows"), false),
+                ghost(1, 0, 0, List.of("test:unknown"), List.of(), false)), -1, 0, -2, 3, 2, 3);
+
+        final List<GuideBlock.SceneBlock> blocks = GuideBlock.Multiblock.blocksOf(preview,
+                first -> first.equals("test:unknown") ? "" : first.replace("#", ""));
+
+        assertEquals(3, blocks.size(), "a place whose block the game lacks stays empty");
+        assertEquals("test:brick", blocks.getFirst().state());
+        assertEquals(0, blocks.getFirst().x());
+        assertEquals(2, blocks.getFirst().z(), "the northmost place stands on the grid's first line");
+        assertTrue(blocks.stream().anyMatch(block -> block.state().equals("test:oven") && block.x() == 1),
+                "the controller stands in its place");
+        assertTrue(blocks.stream().anyMatch(block -> block.state().equals("test:windows") && block.y() == 1
+                && block.z() == 0), "a tag's place shows the block it gives");
+    }
+
+    @Test
+    void multiblock_tooBigForASceneIsLeftOut() {
+        final int big = GuideBlock.Scene.GRID + 1;
+        final ShapePreview preview = new ShapePreview(List.of(ghost(0, 0, 0, List.of("test:brick"), List.of(),
+                true)), 0, 0, 0, big, 1, 1);
+
+        assertEquals(List.of(), GuideBlock.Multiblock.blocksOf(preview, first -> first));
+        assertThrows(IllegalArgumentException.class, () -> new GuideBlock.Multiblock("", GuideBlock.SceneView.CORNER,
+                100, "caption"), "a multiblock's scene names the multiblock");
+        assertTrue(new GuideBlock.Multiblock("test:oven", GuideBlock.SceneView.CORNER, 100, "caption")
+                .scene(List.of(block(0, 0, 0))).layers(), "it is peeled layer by layer");
+    }
+
+    private static ShapePreview.Ghost ghost(final int x, final int y, final int z, final List<String> blocks,
+                                            final List<String> tags, final boolean controller) {
+        return new ShapePreview.Ghost(x, y, z, y, blocks, tags, controller);
     }
 
     private static GuideBlock.Scene scene(final List<GuideBlock.SceneBlock> blocks,

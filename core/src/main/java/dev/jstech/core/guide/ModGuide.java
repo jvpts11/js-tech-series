@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
@@ -709,6 +710,18 @@ public final class ModGuide {
             this.scene = draft;
             return this.add(() -> new GuideBlock.Scene(draft.blocks.stream().map(Supplier::get).toList(), draft.view,
                     draft.balloons, draft.layers, height, key));
+        }
+
+        /**
+         * The multiblock of {@code id} as a scene of the figures, {@code height} pixels tall, peeled layer by layer:
+         * laid out from the multiblock in force when the manual is read, its controller in its place, and left out
+         * where the multiblock is not installed.
+         */
+        public EntryBuilder multiblock(final String caption, final ResourceLocation id, final int height) {
+            this.figures++;
+            final String key = this.key("figure" + this.figures, caption);
+            final String multiblock = id.toString();
+            return this.add(() -> new GuideBlock.Multiblock(multiblock, GuideBlock.SceneView.CORNER, height, key));
         }
 
         /** A block of the last scene, in the state it is placed in, where it stands in the scene's grid. */

@@ -1,0 +1,63 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.multiblock.what"
+    },
+    {
+      "type": "multiblock",
+      "caption": "jstests.guide.multiblock.figure1",
+      "height": 100,
+      "multiblock": "jstests:test_furnace"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.multiblock.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.multiblock.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.multiblock.use1",
+        "jstests.guide.multiblock.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.multiblock.fix1",
+          "problem": "jstests.guide.multiblock.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:blast_furnace",
+  "id": "jstests:multiblock",
+  "order": 6,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.multiblock.title"
+}
