@@ -31,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What the Core's kit for those who make mods is proved with: a capability of the test mod's own, offered by the test
- * kiln on its top and by a probe part on whatever face of a cable it is mounted, and a call made from a chest's screen.
+ * kiln on its top and by a probe part on whatever face of a cable it is mounted, a part whose blade turns, and a call
+ * made from a chest's screen.
  */
 public final class TestToolkit {
 
@@ -53,6 +54,14 @@ public final class TestToolkit {
     /** A part that reads {@link #PART_READING} on its face; drawn as stone, which the game always has. */
     public static final DeferredHolder<PartType<?>, PartType<ProbePart>> PROBE_PART = PARTS.register("probe_part",
             () -> new PartType<>(ProbePart::new, PROBE_NAME, ResourceLocation.withDefaultNamespace("block/stone")));
+    private static final TextKey FAN_NAME = TextKey.of("jstests.part.fan", "Fan part");
+    /**
+     * A part of a kind that moves, always at work: its model is the barrier's, which draws nothing, and its blade is
+     * drawn each frame, turning.
+     */
+    public static final DeferredHolder<PartType<?>, PartType<FanPart>> FAN_PART = PARTS.register("fan_part",
+            () -> new PartType<>(FanPart::new, FAN_NAME, ResourceLocation.withDefaultNamespace("block/barrier"))
+                    .moving());
 
     private TestToolkit() {
     }
@@ -100,6 +109,29 @@ public final class TestToolkit {
         @SuppressWarnings("unchecked")
         public <T> @Nullable T capability(final BlockCapability<T, @Nullable Direction> capability) {
             return capability == PROBE.block() ? (T) (IProbe) () -> PART_READING : null;
+        }
+    }
+
+    /** A part whose blade turns, always at work. */
+    public static final class FanPart implements IFacePart {
+
+        @Override
+        public PartType<?> type() {
+            return FAN_PART.get();
+        }
+
+        @Override
+        public void attach(final IPartHost host, final Direction face) {
+        }
+
+        @Override
+        public boolean busy() {
+            return true;
+        }
+
+        @Override
+        public ItemStack partItem() {
+            return ItemStack.EMPTY;
         }
     }
 }

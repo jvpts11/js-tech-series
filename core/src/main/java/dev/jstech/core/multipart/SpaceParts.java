@@ -141,6 +141,22 @@ public final class SpaceParts implements IFieldPart {
         return this.kinds[index] != NONE || block != null && block.piece().shape().cutsLink();
     }
 
+    /**
+     * The faces a piece of an opaque block covers whole, a bit for each in the order of the game's directions: a
+     * cover, a panel or a slab, or a facade, but never a hollow piece.
+     */
+    public int coveredFaces() {
+        int covered = 0;
+        for (int face = 0; face < FACES; face++) {
+            final Microblock block = this.micro[SpaceSlots.face(face)];
+            if (block != null && block.piece().shape() != MicroShape.HOLLOW
+                    && MicroblockMaterials.opaque(block.piece().material())) {
+                covered |= 1 << face;
+            }
+        }
+        return covered;
+    }
+
     /** Whether {@code piece} fits beside the parts standing, and what runs through the middle. */
     public boolean fits(final SpaceFit.Piece piece) {
         if (!SpaceSlots.valid(piece.slot())) {
@@ -260,6 +276,17 @@ public final class SpaceParts implements IFieldPart {
             }
         }
         return models.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(models);
+    }
+
+    /** Whether a device of a kind that moves stands on any face, drawn each frame on the players' games. */
+    public boolean anyMoving() {
+        for (final Direction face : Direction.values()) {
+            final PartType<?> type = type(face);
+            if (type != null && type.moves()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether the device on {@code face} is at work, on either side; false when there is none. */
@@ -390,6 +417,7 @@ public final class SpaceParts implements IFieldPart {
         this.busy = tag.getByte(CLIENT_BUSY) & 0xFF;
         readMicro(tag);
         this.shape = null;
+        MovingParts.note(this.host.partPos(), anyMoving());
     }
 
     /* The parts changed: the shape follows them, the block is saved and sent, and what it offers is asked again. */

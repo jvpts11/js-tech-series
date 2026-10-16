@@ -36,10 +36,13 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  */
 public final class CoreSpaces {
 
-    /** The block a space of parts is. It has no item: a part placed where nothing stands makes it. */
+    /**
+     * The block a space of parts is. It has no item: a part placed where nothing stands makes it. What it hides of its
+     * neighbours is in its state ({@link SpaceBlock#COVERED}), so it occludes only there.
+     */
     public static final BlockEntry<SpaceBlock> BLOCK = CoreItems.CONTENT.block("multipart", SpaceBlock::new)
             .properties(properties -> properties.mapColor(MapColor.STONE).strength(0.5F).sound(SoundType.STONE)
-                    .noOcclusion().dynamicShape())
+                    .dynamicShape())
             .named("Parts")
             .look(IBlockLook.fixed(new IBlockModel.ParticleOnly("multipart", "block/cable/housing")))
             .drops(Drops.NONE)

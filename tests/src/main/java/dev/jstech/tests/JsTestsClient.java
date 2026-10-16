@@ -14,6 +14,7 @@ import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.tests.clienttest.TestGuideClient;
 import dev.jstech.tests.clienttest.TestHud;
 import dev.jstech.tests.clienttest.computers.TestClientParts;
+import dev.jstech.tests.clienttest.core.TestFanMotion;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
@@ -48,6 +49,8 @@ public final class JsTestsClient {
                         TestScreens.PRESSED::incrementAndGet)));
         // The dial's renderer and the picture program's window, as another mod registers them.
         TestClientParts.register();
+        // The fan part's turning blade, as another mod hands the Core a moving part.
+        TestFanMotion.register(modEventBus);
         // Two HUD elements in one corner, for the HUD kit's test.
         TestHud.declare();
         // The manuals' special block of the test mod, registered as another mod registers one.

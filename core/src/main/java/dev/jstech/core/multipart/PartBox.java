@@ -7,6 +7,9 @@
  */
 package dev.jstech.core.multipart;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A box within a block space, in pixels from 0 to 16 along each axis: the room a part takes. Pure.
  *
@@ -51,6 +54,32 @@ public record PartBox(int x0, int y0, int z0, int x1, int y1, int z1) {
             case SpaceSlots.Y -> this.y1;
             default -> this.z1;
         };
+    }
+
+    /** What of it lies outside {@code other}: itself when they share no room, else up to six boxes. */
+    public List<PartBox> minus(final PartBox other) {
+        if (!overlaps(other)) {
+            return List.of(this);
+        }
+        final List<PartBox> out = new ArrayList<>();
+        final int[] least = {this.x0, this.y0, this.z0};
+        final int[] most = {this.x1, this.y1, this.z1};
+        // Slice off what lies before and after the other box along each axis in turn; what is left lies inside it.
+        for (int axis = SpaceSlots.X; axis <= SpaceSlots.Z; axis++) {
+            if (least[axis] < other.min(axis)) {
+                final int[] to = most.clone();
+                to[axis] = other.min(axis);
+                out.add(of(least, to));
+                least[axis] = other.min(axis);
+            }
+            if (most[axis] > other.max(axis)) {
+                final int[] from = least.clone();
+                from[axis] = other.max(axis);
+                out.add(of(from, most));
+                most[axis] = other.max(axis);
+            }
+        }
+        return out;
     }
 
     /** Whether the point at ({@code x}, {@code y}, {@code z}), in pixels, lies in it or on its sides. */

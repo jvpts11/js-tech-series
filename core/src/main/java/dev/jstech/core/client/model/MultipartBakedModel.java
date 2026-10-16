@@ -8,7 +8,6 @@
 package dev.jstech.core.client.model;
 
 import com.mojang.math.Transformation;
-import dev.jstech.core.multipart.Microblock;
 import dev.jstech.core.multipart.MicroblockLayout;
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PlacedModel;
@@ -78,9 +77,9 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
             }
         }
         if (micro != null) {
-            for (final Microblock block : micro.blocks()) {
-                if (renderType == null || MicroblockQuads.renderTypes(block).contains(renderType)) {
-                    out.addAll(MicroblockQuads.quads(block, side, IN_PLACE));
+            for (final MicroblockLayout.Drawn drawn : micro.drawn()) {
+                if (renderType == null || MicroblockQuads.renderTypes(drawn.block()).contains(renderType)) {
+                    out.addAll(MicroblockQuads.quads(drawn, side, IN_PLACE));
                 }
             }
         }
@@ -97,8 +96,8 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
         }
         final MicroblockLayout micro = data.get(MicroblockLayout.PROPERTY);
         if (micro != null) {
-            for (final Microblock block : micro.blocks()) {
-                types = ChunkRenderTypeSet.union(types, MicroblockQuads.renderTypes(block));
+            for (final MicroblockLayout.Drawn drawn : micro.drawn()) {
+                types = ChunkRenderTypeSet.union(types, MicroblockQuads.renderTypes(drawn.block()));
             }
         }
         return types;
@@ -109,7 +108,7 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
     public TextureAtlasSprite getParticleIcon(final ModelData data) {
         final MicroblockLayout micro = data.get(MicroblockLayout.PROPERTY);
         return micro == null || micro.isEmpty() ? super.getParticleIcon(data)
-                : MicroblockQuads.particle(micro.blocks().getFirst().piece().material());
+                : MicroblockQuads.particle(micro.drawn().getFirst().block().piece().material());
     }
 
     /* Every quad of the placed model, turned to its facing about the block's middle and moved by its offset. */
@@ -123,16 +122,7 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
         }
         final Matrix4f matrix = new Matrix4f()
                 .translate(placed.dx() * PIXEL, placed.dy() * PIXEL, placed.dz() * PIXEL)
-                .translate(0.5F, 0.5F, 0.5F);
-        switch (placed.facing()) {
-            case SOUTH -> matrix.rotateY((float) Math.PI);
-            case WEST -> matrix.rotateY((float) Math.PI / 2F);
-            case EAST -> matrix.rotateY((float) -Math.PI / 2F);
-            case UP -> matrix.rotateX((float) Math.PI / 2F);
-            case DOWN -> matrix.rotateX((float) -Math.PI / 2F);
-            default -> { }
-        }
-        matrix.translate(-0.5F, -0.5F, -0.5F);
+                .rotateAround(FaceTurn.of(placed.facing()), 0.5F, 0.5F, 0.5F);
         final List<BakedQuad> moved = QuadTransformers.applying(new Transformation(matrix)).process(quads);
         // The transform moves the vertices and their normals; each quad's own face turns with them, for its shading.
         final List<BakedQuad> out = new ArrayList<>(moved.size());

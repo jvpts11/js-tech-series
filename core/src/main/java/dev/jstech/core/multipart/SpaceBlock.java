@@ -23,6 +23,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -37,17 +39,33 @@ import org.jetbrains.annotations.Nullable;
  * A block space of parts alone, with no cable through it: its shape is its parts; using it uses the device looked
  * at; breaking it takes out the part looked at and leaves the rest, the block going with its last part. A part takes
  * as long to break as the block it was cut from would.
+ *
+ * <p>Its state says which of its faces a piece of an opaque block covers whole, so a neighbour's face behind one is
+ * not drawn. The game keeps what one block hides of another by their states alone, so what the space hides of its
+ * neighbours is in its state, never read from its parts.
  */
 public final class SpaceBlock extends Block implements EntityBlock {
 
     public static final MapCodec<SpaceBlock> CODEC = simpleCodec(SpaceBlock::new);
+    /** For each face, in the order of the game's directions, whether a piece of an opaque block covers it whole. */
+    public static final List<BooleanProperty> COVERED = List.of(BooleanProperty.create("covered_down"),
+            BooleanProperty.create("covered_up"), BooleanProperty.create("covered_north"),
+            BooleanProperty.create("covered_south"), BooleanProperty.create("covered_west"),
+            BooleanProperty.create("covered_east"));
     /* How long a device takes to break, as a cable's part does. */
     private static final float DEVICE_HARDNESS = 0.3F;
     /* The game's own rule: a block's hardness to a hand's mining speed, thirty to a block mined by hand. */
     private static final float BY_HAND = 30.0F;
+    /* What hides a neighbour's face, for each set of covered faces: a thin plate on each. */
+    private static final VoxelShape[] PLATES = plates();
 
     public SpaceBlock(final Properties properties) {
         super(properties);
+        BlockState state = this.stateDefinition.any();
+        for (final BooleanProperty covered : COVERED) {
+            state = state.setValue(covered, false);
+        }
+        registerDefaultState(state);
     }
 
     /** The part {@code player} aims at in the space at {@code pos}, or none. */
@@ -94,9 +112,46 @@ public final class SpaceBlock extends Block implements EntityBlock {
         }
     }
 
+    /** Sets in the state of the space at {@code pos} which faces {@code parts} cover, when that changed. */
+    public static void showCovered(final Level level, final BlockPos pos, final SpaceParts parts) {
+        final BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof SpaceBlock)) {
+            return;
+        }
+        final int covered = parts.coveredFaces();
+        if (covered != coveredOf(state)) {
+            BlockState next = state;
+            for (int face = 0; face < COVERED.size(); face++) {
+                next = next.setValue(COVERED.get(face), (covered & 1 << face) != 0);
+            }
+            level.setBlock(pos, next, Block.UPDATE_ALL);
+        }
+    }
+
+    /** The faces {@code state} says are covered, a bit for each in the order of the game's directions. */
+    public static int coveredOf(final BlockState state) {
+        int covered = 0;
+        for (int face = 0; face < COVERED.size(); face++) {
+            if (state.getValue(COVERED.get(face))) {
+                covered |= 1 << face;
+            }
+        }
+        return covered;
+    }
+
     @Override
     protected MapCodec<SpaceBlock> codec() {
         return CODEC;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(COVERED.toArray(new BooleanProperty[0]));
+    }
+
+    @Override
+    protected VoxelShape getOcclusionShape(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        return PLATES[coveredOf(state)];
     }
 
     @Override
@@ -173,5 +228,25 @@ public final class SpaceBlock extends Block implements EntityBlock {
     @Override
     public @Nullable BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return new SpaceBlockEntity(pos, state);
+    }
+
+    private static VoxelShape[] plates() {
+        final VoxelShape[] face = new VoxelShape[COVERED.size()];
+        for (int f = 0; f < face.length; f++) {
+            final PartBox plate = MicroShape.FACE.boxes(SpaceSlots.face(f), MicroShape.THINNEST, SpaceSlots.Y)
+                    .getFirst();
+            face[f] = box(plate.x0(), plate.y0(), plate.z0(), plate.x1(), plate.y1(), plate.z1());
+        }
+        final VoxelShape[] out = new VoxelShape[1 << face.length];
+        for (int mask = 0; mask < out.length; mask++) {
+            VoxelShape shape = Shapes.empty();
+            for (int f = 0; f < face.length; f++) {
+                if ((mask & 1 << f) != 0) {
+                    shape = Shapes.or(shape, face[f]);
+                }
+            }
+            out[mask] = shape.optimize();
+        }
+        return out;
     }
 }

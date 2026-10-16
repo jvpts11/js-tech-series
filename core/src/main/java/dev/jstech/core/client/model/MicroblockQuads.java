@@ -8,7 +8,9 @@
 package dev.jstech.core.client.model;
 
 import dev.jstech.core.multipart.Microblock;
+import dev.jstech.core.multipart.MicroblockLayout;
 import dev.jstech.core.multipart.PartBox;
+import dev.jstech.core.multipart.SpaceDrawing;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -35,8 +37,8 @@ import org.joml.Vector3f;
  * A microblock's quads, cut from the block it was cut from: every face of each of its boxes, wearing the texture its
  * block shows on that side, the part of it that face covers, as a block model with its texture locked shows it, and
  * tinted as the block is (grass by its biome). A face on the space's side is kept under that side, so the game hides
- * it against a neighbour that covers it; the rest are kept under no side. Worked out once for each microblock and
- * kept until the models are baked again.
+ * it against a neighbour that covers it; the rest are kept under no side, but those the space's drawing hides. Worked
+ * out once for each way a microblock is drawn and kept until the models are baked again.
  */
 public final class MicroblockQuads {
 
@@ -55,9 +57,14 @@ public final class MicroblockQuads {
         LOOKS.clear();
     }
 
-    /** The quads of {@code block} kept under {@code side}, or under no side for null, moved by {@code offset} pixels. */
-    public static List<BakedQuad> quads(final Microblock block, @Nullable final Direction side, final float[] offset) {
-        return QUADS.computeIfAbsent(new Key(block, side, offset[0], offset[1], offset[2]), MicroblockQuads::bake);
+    /**
+     * The quads of {@code drawn}'s boxes kept under {@code side}, or under no side for null, moved by {@code offset}
+     * pixels; the faces its drawing hides are left out.
+     */
+    public static List<BakedQuad> quads(final MicroblockLayout.Drawn drawn, @Nullable final Direction side,
+                                        final float[] offset) {
+        return QUADS.computeIfAbsent(new Key(drawn.block().piece().material(), drawn.boxes(), side, offset[0],
+                offset[1], offset[2]), MicroblockQuads::bake);
     }
 
     /** The layers the block {@code block} was cut from is drawn in. */
@@ -76,13 +83,14 @@ public final class MicroblockQuads {
     }
 
     private static List<BakedQuad> bake(final Key key) {
-        final Look look = look(key.block().piece().material());
+        final Look look = look(key.material());
         final List<BakedQuad> out = new ArrayList<>();
-        for (final PartBox box : key.block().boxes()) {
+        for (final SpaceDrawing.DrawnBox drawn : key.boxes()) {
+            final PartBox box = drawn.box();
             final Vector3f from = new Vector3f(box.x0() + key.dx(), box.y0() + key.dy(), box.z0() + key.dz());
             final Vector3f to = new Vector3f(box.x1() + key.dx(), box.y1() + key.dy(), box.z1() + key.dz());
             for (final Direction face : Direction.values()) {
-                if (sideOf(face, from, to) != key.side()) {
+                if (drawn.hides(face.get3DDataValue()) || sideOf(face, from, to) != key.side()) {
                     continue;
                 }
                 final Face skin = look.faces().get(face);
@@ -138,8 +146,9 @@ public final class MicroblockQuads {
         });
     }
 
-    /** One microblock's quads under one side, moved so far. */
-    private record Key(Microblock block, @Nullable Direction side, float dx, float dy, float dz) {
+    /** The quads of boxes of one block under one side, moved so far. */
+    private record Key(Block material, List<SpaceDrawing.DrawnBox> boxes, @Nullable Direction side, float dx,
+                       float dy, float dz) {
     }
 
     /** What a block shows on one side: its sprite, and whether and how it is tinted. */

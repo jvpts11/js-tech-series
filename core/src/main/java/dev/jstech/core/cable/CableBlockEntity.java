@@ -511,11 +511,9 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             shown.add(flow(wire.slot()));
             windows |= wire.type().window().isPresent();
         }
-        final List<Microblock> standing = this.parts.microblocks();
         return ModelData.builder()
                 .with(ModelLayout.PROPERTY, parts.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(parts))
-                .with(MicroblockLayout.PROPERTY, standing.isEmpty() ? MicroblockLayout.EMPTY
-                        : new MicroblockLayout(standing))
+                .with(MicroblockLayout.PROPERTY, MicroblockLayout.of(this.parts.microblocks()))
                 .with(CablePlugs.PROPERTY, sockets.isEmpty() ? CablePlugs.NONE : new CablePlugs(sockets))
                 .with(CableDrawing.PROPERTY, drawing())
                 .with(CableFlowView.PROPERTY, windows ? new CableFlowView(shown) : CableFlowView.NONE)

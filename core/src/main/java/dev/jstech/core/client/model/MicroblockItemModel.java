@@ -10,6 +10,7 @@ package dev.jstech.core.client.model;
 import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.multipart.MicroShape;
 import dev.jstech.core.multipart.Microblock;
+import dev.jstech.core.multipart.MicroblockLayout;
 import dev.jstech.core.multipart.PartBox;
 import dev.jstech.core.multipart.SpaceSlots;
 import java.util.ArrayList;
@@ -86,9 +87,10 @@ public final class MicroblockItemModel extends BakedModelWrapper<BakedModel> {
                 offset = new float[] {0F, 0F, 0F};
             }
         }
-        final List<BakedQuad> out = new ArrayList<>(MicroblockQuads.quads(block, null, offset));
+        final MicroblockLayout.Drawn drawn = MicroblockLayout.of(List.of(block)).drawn().getFirst();
+        final List<BakedQuad> out = new ArrayList<>(MicroblockQuads.quads(drawn, null, offset));
         for (final Direction side : Direction.values()) {
-            out.addAll(MicroblockQuads.quads(block, side, offset));
+            out.addAll(MicroblockQuads.quads(drawn, side, offset));
         }
         return List.copyOf(out);
     }

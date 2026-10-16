@@ -44,9 +44,13 @@ public final class SpaceBlockEntity extends SyncedBlockEntity implements IPartHo
         return this.worldPosition;
     }
 
+    /* The parts changed: they are saved and sent, and the state says again which faces they cover. */
     @Override
     public void partChanged() {
         this.partsField.changed();
+        if (this.level != null && !this.level.isClientSide()) {
+            SpaceBlock.showCovered(this.level, this.worldPosition, this.parts);
+        }
     }
 
     /* The space's model draws its parts from this, into the world's mesh. */

@@ -14,13 +14,18 @@ import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.multipart.MicroShape;
 import dev.jstech.core.multipart.Microblock;
+import dev.jstech.core.multipart.MicroblockLayout;
 import dev.jstech.core.multipart.MicroblockRecipes;
+import dev.jstech.core.multipart.MovingParts;
+import dev.jstech.core.multipart.SpaceBlock;
 import dev.jstech.core.multipart.SpaceBlockEntity;
 import dev.jstech.core.multipart.SpaceBreaking;
+import dev.jstech.core.multipart.SpaceDrawing;
 import dev.jstech.core.multipart.SpaceParts;
 import dev.jstech.core.multipart.SpacePlacement;
 import dev.jstech.core.multipart.SpaceSlots;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestToolkit;
 import dev.jstech.tests.testkit.TestCables;
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +52,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * Microblocks in block spaces: placed where a click puts them, a space made where nothing stands and gone when its
  * last piece is taken, what fits beside what, a cable's face closed by a cover and not by a hollow piece or a facade,
- * and the saw's cuts, joins and facades in the crafting grid.
+ * what a cover hides of its neighbour and of the pieces beside it, the spaces drawn each frame for a part that
+ * moves, and the saw's cuts, joins and facades in the crafting grid.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -143,6 +149,69 @@ public final class MicroblockGameTests {
                 new Microblock(piece(MicroShape.FACADE, MicroShape.COVER, Blocks.STONE), NORTH, SpaceSlots.Y))),
                 "no facade where no cable runs");
         helper.assertBlockPresent(Blocks.AIR, BESIDE);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void covers_hideTheNeighboursFaceBehindThemWhenOpaque(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(GROUND, Blocks.STONE);
+        final BlockPos ground = helper.absolutePos(GROUND);
+        final BlockPos pos = helper.absolutePos(ABOVE);
+        helper.assertTrue(SpacePlacement.place(level, new SpacePlacement.Placement(pos, new Microblock(
+                piece(MicroShape.FACE, MicroShape.COVER, Blocks.STONE), DOWN, SpaceSlots.Y))), "a stone cover");
+        helper.assertTrue(level.getBlockState(pos).getValue(SpaceBlock.COVERED.get(Direction.DOWN.get3DDataValue())),
+                "the space's state says its floor is covered");
+        helper.assertTrue(!Block.shouldRenderFace(Blocks.STONE.defaultBlockState(), level, ground, Direction.UP, pos),
+                "the stone's top behind the cover is not drawn");
+        final SpaceParts parts = space(helper, ABOVE).parts();
+
+        parts.removeMicroblock(DOWN);
+        helper.assertTrue(parts.add(new Microblock(piece(MicroShape.FACE, MicroShape.SLAB, Blocks.GLASS), DOWN,
+                SpaceSlots.Y)), "a glass slab");
+        helper.assertTrue(SpaceBlock.coveredOf(level.getBlockState(pos)) == 0, "glass covers nothing");
+        helper.assertTrue(Block.shouldRenderFace(Blocks.STONE.defaultBlockState(), level, ground, Direction.UP, pos),
+                "the stone's top shows through the glass");
+
+        parts.removeMicroblock(DOWN);
+        helper.assertTrue(parts.add(new Microblock(piece(MicroShape.HOLLOW, MicroShape.COVER, Blocks.STONE), DOWN,
+                SpaceSlots.Y)), "a hollow cover");
+        helper.assertTrue(SpaceBlock.coveredOf(level.getBlockState(pos)) == 0, "a hollow cover covers nothing whole");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void drawing_hidesWhatLiesFlatOnOpaqueBlocksOnly(final GameTestHelper helper) {
+        final Microblock stone = new Microblock(piece(MicroShape.FACE, MicroShape.SLAB, Blocks.STONE), DOWN,
+                SpaceSlots.Y);
+        final Microblock glass = new Microblock(piece(MicroShape.FACE, MicroShape.SLAB, Blocks.GLASS), UP,
+                SpaceSlots.Y);
+        final Microblock wall = new Microblock(piece(MicroShape.FACE, MicroShape.COVER, Blocks.BRICKS), NORTH,
+                SpaceSlots.Y);
+        final List<MicroblockLayout.Drawn> drawn = MicroblockLayout.of(List.of(stone, glass, wall)).drawn();
+        helper.assertTrue(!drawn.get(0).boxes().getFirst().hides(Direction.UP.get3DDataValue()),
+                "the stone's top shows through the glass");
+        helper.assertTrue(drawn.get(1).boxes().getFirst().hides(Direction.DOWN.get3DDataValue()),
+                "the glass's bottom lies on the stone");
+        for (final SpaceDrawing.DrawnBox box : drawn.get(2).boxes()) {
+            helper.assertTrue(!box.box().overlaps(stone.boxes().getFirst()), "the thin wall gives way to the slab");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void movingParts_areNotedOnlyWhereAPartMoves(final GameTestHelper helper) {
+        final CableBlockEntity cable = TestCables.lay(helper, CABLE, SharedEnergy.INSULATED_COPPER_CABLE);
+        cable.addPart(Direction.UP, TestToolkit.PROBE_PART.get().create());
+        helper.assertTrue(!cable.parts().anyMoving(), "a probe part does not move");
+        cable.addPart(Direction.DOWN, TestToolkit.FAN_PART.get().create());
+        helper.assertTrue(cable.parts().anyMoving(), "a fan part does");
+
+        final BlockPos pos = helper.absolutePos(CABLE);
+        MovingParts.note(pos, true);
+        helper.assertTrue(MovingParts.noted(pos), "a space with a moving part is drawn each frame");
+        MovingParts.visit(at -> !at.equals(pos));
+        helper.assertTrue(!MovingParts.noted(pos), "and dropped once it has none");
         helper.succeed();
     }
 

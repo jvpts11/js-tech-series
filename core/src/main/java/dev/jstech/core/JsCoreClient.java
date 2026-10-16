@@ -49,6 +49,7 @@ import dev.jstech.core.client.machine.MachineWrenchClient;
 import dev.jstech.core.client.material.MaterialArt;
 import dev.jstech.core.client.material.MaterialTooltips;
 import dev.jstech.core.client.model.CoreModels;
+import dev.jstech.core.client.model.PartMotions;
 import dev.jstech.core.client.motion.CoreMotionClient;
 import dev.jstech.core.client.motion.GreyFilter;
 import dev.jstech.core.client.motion.MotionClock;
@@ -125,6 +126,7 @@ public final class JsCoreClient {
         SignalProbeClient.listen(modEventBus);
         NotificationsClient.listen(modEventBus);
         OverheadWireRenderer.listen();
+        PartMotions.listen();
         ScreenFiles.listen(modEventBus);
         SoundDirector.listen();
         SoundMixerEntry.listen();

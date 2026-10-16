@@ -40,6 +40,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,6 +97,16 @@ public final class CableBlock extends Block implements EntityBlock {
     protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos,
                                   final CollisionContext context) {
         return level.getBlockEntity(pos) instanceof CableBlockEntity cable ? cable.voxelShape() : CORE;
+    }
+
+    /*
+     * The game keeps what one block hides of another by their states alone, and a cable's shape is its block
+     * entity's: so it says it hides nothing, and its microblocks' faces are drawn against any neighbour rather than
+     * hidden by an answer the game kept for another cable.
+     */
+    @Override
+    protected VoxelShape getOcclusionShape(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        return Shapes.empty();
     }
 
     @Override

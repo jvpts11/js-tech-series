@@ -83,6 +83,31 @@ places it, making a space of parts alone where nothing stands, and refuses where
 A click hits exactly the piece under the crosshair (`SpaceParts.aim`), the outline shows only it, and breaking takes
 only it, with its drop; how long it takes is its block's. The middle-click picks its item.
 
+## Drawing
+
+Every piece of a space is drawn into the world's mesh, which is built again only when a piece changes. Where two
+pieces on faces side by side meet along their edge, the thinner gives way there, or, when they are as thick, the one
+on the later face (`SpaceDrawing`), so two blocks never fight to be seen in one place. A face of a piece lying flat
+against a piece of an opaque block is not drawn.
+
+A space whose face a piece of an opaque block covers whole says so in its state (`covered_down` to `covered_east`),
+and the neighbour's face behind it is not drawn either. The game keeps what one block hides of another by the two
+blocks' states alone, so what a space hides is in its state and never read from its block entity; for the same
+reason the cable block says it hides nothing.
+
+## Parts that move
+
+A kind of part with pieces that move, a fan's blades or a gauge's needle, is marked when it is made,
+`new PartType<>(...).moving()`, and its mod hands the Core what draws them on the player's game (`IPartMotion`):
+
+```java
+modBus.addListener(FMLClientSetupEvent.class, event -> PartMotions.register(MyParts.FAN.get(),
+        (pose, buffers, busy, time, light) -> drawBlades(pose, buffers, busy ? time * 18F : 0F, light)));
+```
+
+Each frame, only the spaces in sight that hold such a part are drawn so (`MovingParts`), each part turned to its face
+as its model is; a world of still parts draws nothing here. The rest of the part is its model, in the mesh.
+
 ## What can go wrong
 
 - **A piece of your block cannot be cut.** It has a block entity, no item of its own, a model that is not a plain
@@ -92,3 +117,6 @@ only it, with its drop; how long it takes is its block's. The middle-click picks
   hollow piece.
 - **A facade is refused.** The space has no cable, whose wires it hides; place a cover there instead.
 - **Your saw does not cut.** It is not in the item tag `jscore:saws`.
+- **`PartMotions.register` refuses a kind.** The kind was not marked with `moving()` where it is made.
+- **A neighbour's face shows behind a cover.** The cover's block is not opaque, as glass is not; only a piece of a
+  block the game draws solid hides what lies behind it.

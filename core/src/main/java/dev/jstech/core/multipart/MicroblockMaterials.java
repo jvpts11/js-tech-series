@@ -32,6 +32,11 @@ public final class MicroblockMaterials {
     private MicroblockMaterials() {
     }
 
+    /** Whether a piece of {@code material} hides what lies behind it, as a solid block of it does; glass does not. */
+    public static boolean opaque(final Block material) {
+        return material.defaultBlockState().isSolidRender(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+    }
+
     /** Whether microblocks are cut from {@code block}. */
     public static boolean cuttable(final Block block) {
         if (block instanceof EntityBlock || block.asItem() == Items.AIR) {

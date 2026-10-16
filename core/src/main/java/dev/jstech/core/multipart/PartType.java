@@ -30,6 +30,7 @@ public final class PartType<P extends IFacePart> {
     private final TextKey name;
     private final ResourceLocation model;
     private final ResourceLocation busyModel;
+    private boolean moves;
 
     /**
      * A kind drawn the same whether its parts are at work or not.
@@ -79,6 +80,21 @@ public final class PartType<P extends IFacePart> {
     /** Whether the kind has a model of its own for while it is at work. */
     public boolean hasBusyModel() {
         return !this.busyModel.equals(this.model);
+    }
+
+    /**
+     * Marks the kind as having something that moves, a fan's blades or a gauge's needle: besides its model, built
+     * into the world's mesh, it is drawn on its own each frame by what its mod hands the Core's moving parts on the
+     * player's game. Only spaces holding such a part are drawn so.
+     */
+    public PartType<P> moving() {
+        this.moves = true;
+        return this;
+    }
+
+    /** Whether the kind has something that moves, drawn each frame. */
+    public boolean moves() {
+        return this.moves;
     }
 
     /** The id this kind is registered under, or null when it is not registered. */

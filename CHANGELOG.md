@@ -429,6 +429,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   cut wears it. Two pieces of one shape and block join into one as thick as both, and two slabs make the block again.
   Any mod's saw cuts alike, and a pack can keep a block from being cut.
 - (Core) Facades: a cover joined with any cable hides the cable behind it on its face, while the cable keeps working.
+- (Core) Microblocks drawn as cleanly as blocks: where two pieces on faces side by side meet along their edge, one
+  gives way, so two blocks never flicker in one place; a face lying flat on an opaque piece is not drawn, nor a
+  neighbour's face behind an opaque cover.
+- (Core) Parts that move: a kind of part with a fan's blades or a gauge's needle is drawn each frame, only in the
+  spaces that hold one, while the rest of every part stays in the world's mesh.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
