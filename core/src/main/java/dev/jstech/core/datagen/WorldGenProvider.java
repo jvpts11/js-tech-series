@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.datagen;
 
-import com.mojang.datafixers.util.Pair;
 import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.core.worldgen.biome.WorldBiomes;
@@ -15,7 +14,6 @@ import dev.jstech.core.worldgen.landform.Landforms;
 import dev.jstech.core.worldgen.terrain.Terrains;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -26,7 +24,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.worldgen.Pools;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
@@ -41,20 +38,12 @@ import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
-import net.minecraft.world.level.levelgen.heightproviders.ConstantHeight;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.placement.CountPlacement;
 import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifier;
-import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.world.level.levelgen.structure.StructureSet;
-import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
-import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
-import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
-import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
-import net.minecraft.world.level.levelgen.structure.structures.JigsawStructure;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 import net.neoforged.neoforge.common.world.BiomeModifier;
@@ -84,7 +73,6 @@ public final class WorldGenProvider extends DatapackBuiltinEntriesProvider {
     /** The registry entries of the mod's declarations. */
     public static RegistrySetBuilder entries(final String modid) {
         final List<WorldGen.OreVein> ores = WorldGen.oresOf(modid);
-        final List<WorldGen.TemplateStructure> structures = WorldGen.structuresOf(modid);
         final List<WorldGen.DimensionSpec> dimensions = WorldGen.dimensionsOf(modid);
         final List<WorldBiomes.BiomeSpec> declaredBiomes = WorldBiomes.biomesOf(modid);
         final List<Terrains.TerrainSpec> terrains = Terrains.terrainsOf(modid);
@@ -140,29 +128,10 @@ public final class WorldGenProvider extends DatapackBuiltinEntriesProvider {
                                     HolderSet.direct(placed.getOrThrow(key(Registries.PLACED_FEATURE, shape.id()))),
                                     shape.step())));
                 })
-                .add(Registries.TEMPLATE_POOL, context -> {
-                    final HolderGetter<StructureTemplatePool> pools = context.lookup(Registries.TEMPLATE_POOL);
-                    structures.forEach(structure -> context.register(key(Registries.TEMPLATE_POOL, structure.id()),
-                            new StructureTemplatePool(pools.getOrThrow(Pools.EMPTY),
-                                    List.of(Pair.of(StructurePoolElement.single(structure.template().toString()), 1)),
-                                    StructureTemplatePool.Projection.RIGID)));
-                })
-                .add(Registries.STRUCTURE, context -> {
-                    final HolderGetter<Biome> biomes = context.lookup(Registries.BIOME);
-                    final HolderGetter<StructureTemplatePool> pools = context.lookup(Registries.TEMPLATE_POOL);
-                    structures.forEach(structure -> context.register(key(Registries.STRUCTURE, structure.id()),
-                            new JigsawStructure(new Structure.StructureSettings(biomes.getOrThrow(structure.biomes()),
-                                    Map.of(), structure.step(), structure.terrain()),
-                                    pools.getOrThrow(key(Registries.TEMPLATE_POOL, structure.id())), 1,
-                                    ConstantHeight.of(VerticalAnchor.absolute(0)), false, structure.heightmap())));
-                })
-                .add(Registries.STRUCTURE_SET, context -> {
-                    final HolderGetter<Structure> built = context.lookup(Registries.STRUCTURE);
-                    structures.forEach(structure -> context.register(key(Registries.STRUCTURE_SET, structure.id()),
-                            new StructureSet(built.getOrThrow(key(Registries.STRUCTURE, structure.id())),
-                                    new RandomSpreadStructurePlacement(structure.spacing(), structure.separation(),
-                                            RandomSpreadType.LINEAR, structure.salt()))));
-                });
+                .add(Registries.PROCESSOR_LIST, context -> StructureEntries.processors(context, modid))
+                .add(Registries.TEMPLATE_POOL, context -> StructureEntries.pools(context, modid))
+                .add(Registries.STRUCTURE, context -> StructureEntries.structures(context, modid))
+                .add(Registries.STRUCTURE_SET, context -> StructureEntries.sets(context, modid));
     }
 
     private static <T> ResourceKey<T> key(final ResourceKey<? extends Registry<T>> registry,

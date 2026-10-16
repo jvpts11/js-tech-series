@@ -1,0 +1,16 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 1,
+    "min_distance": 64,
+    "salt": 5120377,
+    "separation": 3,
+    "spacing": 8
+  },
+  "structures": [
+    {
+      "structure": "jstests:test_hut",
+      "weight": 1
+    }
+  ]
+}

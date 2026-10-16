@@ -15,6 +15,23 @@ sourceSets.main.resources {
     exclude("**/*.bdf")
 }
 
+/*
+ * JourneyMap publishes its API only as snapshots, and carries the API itself inside its jar. The Core compiles against
+ * that very API, taken out of the pinned JourneyMap jar, so the build never follows a snapshot.
+ */
+configurations {
+    journeyMapJar
+}
+def journeyMapApi = tasks.register('journeyMapApi', Copy) {
+    from({ zipTree(configurations.journeyMapJar.singleFile) }) {
+        include 'META-INF/jarjar/journeymap-api-*.jar'
+        rename { 'journeymap-api.jar' }
+        eachFile { path = name }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('journeymap-api')
+}
+
 dependencies {
     /*
      * SnakeYAML, the YAML format of the settings files. NeoForge brings the TOML and JSON libraries and none for
@@ -59,6 +76,11 @@ dependencies {
     // Only its own classes: what Accessories brings with it is nothing the Core's adapter names.
     compileOnly("io.wispforest:accessories-neoforge:${accessories_version}") { transitive = false }
     compileOnly "maven.modrinth:jade:${jade_version}"
+    // The map mods the markers are shown in: Xaero's Minimap's own classes (its World Map shows the minimap's
+    // waypoints), and JourneyMap's API, which it carries inside its jar (see journeyMapApi below).
+    compileOnly("maven.modrinth:xaeros-minimap:${xaero_minimap_version}") { transitive = false }
+    journeyMapJar("maven.modrinth:journeymap:${journeymap_version}") { transitive = false }
+    compileOnly files(layout.buildDirectory.file('journeymap-api/journeymap-api.jar')).builtBy(journeyMapApi)
     // KubeJS finds the Core's plugin through its plugin file; Rhino is its script engine, a mod of its own.
     compileOnly("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
     compileOnly("dev.latvian.mods:rhino:${rhino_version}") { transitive = false }

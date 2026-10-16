@@ -15,20 +15,25 @@ import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.landform.LandformKind;
 import dev.jstech.core.worldgen.landform.Landforms;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
+import dev.jstech.core.worldgen.structure.Growth;
+import dev.jstech.core.worldgen.structure.StructureFit;
+import dev.jstech.core.worldgen.structure.Structures;
 import dev.jstech.core.worldgen.terrain.Terrains;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.structure.Structure;
 
 /**
- * Scattered ores, a structure, dimensions, biomes, a terrain, shapes of the land, kinds of vein and of reservoir
- * declared the way a mod declares them, to prove the Core's world generation. The first vein and the structure are
- * placed only in a biome tag that holds no biome, so they exist in the registries and generate nowhere; the dimensions
- * stand apart, reached only by the tests, and the biomes, the shapes of the land, the veins and the reservoirs lie
- * only in the test land.
+ * Scattered ores, structures, dimensions, biomes, a terrain, shapes of the land, kinds of vein and of reservoir
+ * declared the way a mod declares them, to prove the Core's world generation. The first vein and the camp are placed
+ * only in a biome tag that holds no biome, so they exist in the registries and generate nowhere; the dimensions stand
+ * apart, reached only by the tests, and the biomes, the shapes of the land, the veins, the reservoirs and the other
+ * structures (a worn hut, a town that grows, a monument at one place) lie only in the test land.
  */
 public final class TestWorldGen {
 
@@ -38,7 +43,7 @@ public final class TestWorldGen {
 
     public static final WorldGen.OreVein ORE = WorldGen.ore(id("test_ore")).stone(() -> Blocks.AMETHYST_BLOCK)
             .vein(12).perChunk(4).heights(-16, 48).triangle().biomes(NOWHERE).declare();
-    public static final WorldGen.TemplateStructure CAMP = WorldGen.structure(id("test_camp"))
+    public static final Structures.StructureSpec CAMP = WorldGen.structure(id("test_camp"))
             .template(ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_house_1"))
             .biomes(NOWHERE).spacing(40, 12).salt(7_340_211).declare();
     /**
@@ -99,6 +104,34 @@ public final class TestWorldGen {
     /** Another mod's ore scattered as the game scatters its own, in the test land: one the veins can move. */
     public static final WorldGen.OreVein LAND_ORE = WorldGen.ore(id("test_land_ore")).stone(() -> Blocks.EMERALD_ORE)
             .vein(6).perChunk(2).heights(16, 48).biomes(LAND).declare();
+    /** The chunk along the test land's east the monument stands in. */
+    public static final int MONUMENT_CHUNK = 20;
+    /** The test land's huts, as the instruments that look for them name them. */
+    public static final TagKey<Structure> HUTS = TagKey.create(Registries.STRUCTURE, id("test_huts"));
+    /**
+     * A hut of the plains on the test land's dry and gentle ground, its oak planks half worn to birch, on foundations
+     * of stone bricks: one tried in each square of eight chunks, none within 64 blocks of the origin, and none within a
+     * chunk of the test town.
+     */
+    public static final Structures.StructureSpec HUT = Structures.structure(id("test_hut"))
+            .template(ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_house_1"))
+            .biomes(LAND).spacing(8, 3).salt(5_120_377).minDistance(64).clearOf(1)
+            .fit(new StructureFit(4, 6, 40, 120, true, 0)).foundation(() -> Blocks.STONE_BRICKS)
+            .worn(() -> Blocks.OAK_PLANKS, () -> Blocks.BIRCH_PLANKS, 0.5).declare();
+    /** A small town of the plains, streets and houses, that grows in three stages, a day each, from its middle out. */
+    public static final Structures.StructureSpec TOWN = Structures.structure(id("test_town"))
+            .template(ResourceLocation.withDefaultNamespace("village/plains/town_centers/plains_meeting_point_1"))
+            .biomes(LAND).spacing(12, 4).salt(1_906_442).size(4).streets().grows(new Growth(3, 1, 1)).declare();
+    /** The test land's monument, as the instruments that look for it name it. */
+    public static final TagKey<Structure> MONUMENTS = TagKey.create(Registries.STRUCTURE, id("test_monuments"));
+    /** How deep the monument is sunk into the ground. */
+    public static final int MONUMENT_SUNK = 2;
+    /** A monument at one place of the test land only, as a landmark's structure is, sunk into the ground. */
+    public static final Structures.StructureSpec MONUMENT = Structures.structure(id("test_monument"))
+            .template(ResourceLocation.withDefaultNamespace("village/plains/houses/plains_small_house_2"))
+            .biomes(LAND).at(new ChunkPos(MONUMENT_CHUNK, 0)).salt(77_031)
+            .fit(new StructureFit(4, -1, StructureFit.ANYWHERE.minY(), StructureFit.ANYWHERE.maxY(), false,
+                    MONUMENT_SUNK)).declare();
 
     private TestWorldGen() {
     }

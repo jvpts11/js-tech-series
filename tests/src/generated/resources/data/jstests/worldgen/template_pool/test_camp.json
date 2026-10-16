@@ -4,9 +4,7 @@
       "element": {
         "element_type": "minecraft:single_pool_element",
         "location": "minecraft:village/plains/houses/plains_small_house_1",
-        "processors": {
-          "processors": []
-        },
+        "processors": "jstests:test_camp",
         "projection": "rigid"
       },
       "weight": 1

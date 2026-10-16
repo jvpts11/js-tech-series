@@ -51,6 +51,7 @@ import dev.jstech.core.client.light.LightingClient;
 import dev.jstech.core.client.live.LiveScreens;
 import dev.jstech.core.client.live.TubeFilter;
 import dev.jstech.core.client.machine.MachineScreen;
+import dev.jstech.core.client.map.ClientMarkers;
 import dev.jstech.core.client.machine.MachineWrenchClient;
 import dev.jstech.core.client.material.MaterialArt;
 import dev.jstech.core.client.material.MaterialTooltips;
@@ -135,6 +136,8 @@ public final class JsCoreClient {
         KeyActionsClient.listen(modEventBus);
         LightingClient.listen(modEventBus);
         EffectsClient.listen(modEventBus);
+        // The map markers, handed to the map mods installed.
+        ClientMarkers.listen();
         LiveScreens.listen();
         MachineScreen.listen(modEventBus);
         MachineWrenchClient.listen(modEventBus);

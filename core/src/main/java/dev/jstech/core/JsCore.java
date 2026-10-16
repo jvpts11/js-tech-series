@@ -28,6 +28,7 @@ import dev.jstech.core.overhead.OverheadLines;
 import dev.jstech.core.machine.DataMachines;
 import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.machine.Machines;
+import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.signal.SignalRadio;
 import dev.jstech.core.command.CoreCommands;
 import dev.jstech.core.command.SeriesCommands;
@@ -153,6 +154,8 @@ import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.biome.BiomeClimates;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
+import dev.jstech.core.worldgen.place.Landmarks;
+import dev.jstech.core.worldgen.structure.CoreStructures;
 import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.vein.Veins;
 import net.neoforged.bus.api.IEventBus;
@@ -228,6 +231,11 @@ public final class JsCore {
         Veins.listen(modEventBus);
         Deposits.register();
         Reservoirs.register();
+        // The structures every mod places: where the land suits them, sunk, founded, worn and growing; the landmarks
+        // players discover; and the markers on their maps.
+        CoreStructures.register(modEventBus);
+        Landmarks.listen();
+        MapMarkers.register();
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.

@@ -1,0 +1,12 @@
+{
+  "type": "jscore:placed",
+  "biomes": "#jstests:test_land",
+  "fit": {
+    "footprint": 4,
+    "sunk": 2
+  },
+  "spawn_overrides": {},
+  "start_pool": "jstests:test_monument",
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin"
+}

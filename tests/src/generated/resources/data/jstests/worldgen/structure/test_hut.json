@@ -1,0 +1,18 @@
+{
+  "type": "jscore:placed",
+  "biomes": "#jstests:test_land",
+  "fit": {
+    "dry": true,
+    "footprint": 4,
+    "max_y": 120,
+    "min_y": 40,
+    "slope": 6
+  },
+  "foundation": {
+    "Name": "minecraft:stone_bricks"
+  },
+  "spawn_overrides": {},
+  "start_pool": "jstests:test_hut",
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin"
+}

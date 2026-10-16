@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "salt": 1906442,
+    "separation": 4,
+    "spacing": 12
+  },
+  "structures": [
+    {
+      "structure": "jstests:test_town",
+      "weight": 1
+    }
+  ]
+}

@@ -1,10 +1,11 @@
 # The world
 
 What J's Core gives a mod about the world itself: ores in veins that instruments can find, reservoirs of oil, gas and
-brines that wells drain, structures that generate in it, dimensions of your own with rules for gravity, air, heat and
-weather, their terrain and biomes with climates in real values, the shapes of the land (craters, volcanoes, canyons,
-lakes of any liquid and the rest), rock in layers, seas that freeze or boil away, dimensions made while the game runs,
-data kept over areas of the world, and chunks kept loaded for their owners.
+brines that wells drain, structures that stand where the land suits them, wear by rule and grow over time, landmarks
+players discover, finding things roughly at first and exactly later, markers on the maps, dimensions of your own with
+rules for gravity, air, heat and weather, their terrain and biomes with climates in real values, the shapes of the
+land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers, seas that freeze or boil away,
+dimensions made while the game runs, data kept over areas of the world, and chunks kept loaded for their owners.
 
 ## The words
 
@@ -15,6 +16,9 @@ data kept over areas of the world, and chunks kept loaded for their owners.
 - A **biome** is a kind of place: a desert, a forest. It says the place's climate, its colours and what grows and
   lives in it.
 - A **feature** is something world generation places once the ground is made: a tree, a vein of ore, a lake.
+- A **structure** is a building or a group of them the world generation places whole: a village, a ruin. It is made
+  of **templates**, blocks saved with the game's structure block, and a large one of many templates joined by
+  **jigsaw blocks**, each template's jigsaws naming the **pool** of templates that may join it there.
 
 ## Ores and structures
 
@@ -33,7 +37,7 @@ public static final WorldGen.OreVein TIN_ORE = WorldGen.ore(rl("tin_ore"))
         .biomes(BiomeTags.IS_OVERWORLD)
         .declare();
 
-public static final WorldGen.TemplateStructure CAMP = WorldGen.structure(rl("camp"))
+public static final Structures.StructureSpec CAMP = WorldGen.structure(rl("camp"))
         .template(rl("camp"))  // data/<namespace>/structure/camp.nbt, saved with a structure block
         .biomes(BiomeTags.IS_FOREST)
         .spacing(40, 12)       // about one every 40 chunks, never closer than 12
@@ -43,9 +47,10 @@ public static final WorldGen.TemplateStructure CAMP = WorldGen.structure(rl("cam
 
 Declaring happens when the class holding these loads, so load it before the data generation runs (an empty
 `declare()` method called from your mod's constructor). The files go under `data/<namespace>/worldgen/` (the
-configured and placed features, the structure and its set, the template pool) and a NeoForge biome modifier puts
-ores into the biomes. A data pack can replace any of them. A scattered ore like this is for an ore that is not a
-material's; a material's ore lies in veins (below).
+configured and placed features, the structure and its set, the template pool and its processor list) and a NeoForge
+biome modifier puts ores into the biomes. A data pack can replace any of them. A scattered ore like this is for an
+ore that is not a material's; a material's ore lies in veins (below). What else a structure can say is in
+[Structures](#structures).
 
 ## Veins
 
@@ -169,6 +174,202 @@ Core's `jscore:everywhere` kind:
 ```json
 { "type": "jscore:everywhere", "features": "mymod:fault_lines", "step": "underground_structures" }
 ```
+
+## Structures
+
+*Added 2026-10-16.*
+
+A structure is declared in code, and the data generation writes the files the game reads: its start pool, the
+processor list that wears its templates, the structure itself, of the Core's kind `jscore:placed`, and its set. A data
+pack can change any of them.
+
+```java
+public static final Structures.StructureSpec OUTPOST = Structures.structure(rl("outpost"))
+        .element(rl("outpost/plaza"), 1)        // its start: a template, picked by weight among several
+        .size(6).reach(96)                      // its jigsaws lay out six pieces deep, up to 96 blocks out
+        .biomes(BiomeTags.IS_OVERWORLD)
+        .spacing(48, 20).frequency(0.6F)        // one tried in each 48 chunks, in six cells of ten
+        .minDistance(1500).clearOf(4)           // none within 1,500 blocks of the origin or 4 chunks of another
+        .fit(new StructureFit(12, 6, 60, 180, true, 0))
+        .foundation(() -> Blocks.COBBLESTONE)
+        .worn(() -> Blocks.IRON_BLOCK, () -> MyBlocks.RUSTED_IRON.get(), 0.4)
+        .grows(new Growth(4, 1, 3))
+        .declare();
+public static final Structures.PoolSpec HOUSES = Structures.pool(rl("outpost/houses"))
+        .element(rl("outpost/house_a"), 3).element(rl("outpost/house_b"), 1)
+        .worn(() -> Blocks.GLASS, () -> MyBlocks.CRACKED_GLASS.get(), 0.25)
+        .declare();
+```
+
+### Where it is placed
+
+- **Spread** (`jscore:spread`), the default: the world is cut into cells of `spacing` chunks and one is tried in
+  each, never closer than `separation` to the next, in as many cells as `frequency` says. Besides the game's own
+  spread, `minDistance` keeps it away from the world's origin, where players start, and `clearOf` keeps it that many
+  chunks from every other structure, of any mod and of the game, so two never overlap. When two structures both keep
+  clear of others, the one of the greater salt yields, so one of them still stands.
+- **Fixed** (`jscore:fixed`): `.at(chunk)` places it at that chunk and nowhere else, as a landmark's structure is.
+  Call it again for several such places.
+
+### Where the land suits it
+
+`fit(new StructureFit(footprint, slope, minY, maxY, dry, sunk))` reads the ground at the structure's middle and its
+four corners, `footprint` blocks out, and refuses a place where the ground rises more than `slope` blocks across them
+(-1 for any land), lies below `minY` or above `maxY`, or, for `dry`, lies under water. `sunk` sets it that many blocks
+into the ground: half its height for one half buried, all of it for one buried whole. Without a fit, it stands on any
+land, as the game's own structures do.
+
+### Fitting into the ground
+
+- `foundation(block)` lays a column of that block under each block of the structure's lowest layer, down to the
+  ground, so a building on a slope stands on stone rather than hanging over air. A structure on foundations stands
+  level with the highest of its ground, so nothing of it is buried; one without stands on the ground at its middle.
+- `terrain(...)` says how the ground round it is shaped as the world generates: the game's `BEARD_THIN` by default
+  (the ground raised under it and cleared over it), `BEARD_BOX`, `BURY`, `ENCAPSULATE` or `NONE`.
+
+### Large layouts
+
+A structure of many templates starts from its start pool and its jigsaws join pieces from the pools they name, up to
+`size` pieces deep (at most 20) and `reach` blocks from its start (at most 128). `streets()` is for a layout whose low
+pieces hold the taller ones inside their own space, as the game's villages hold their houses beside their streets:
+without it, none of those fits. A layout of the game's village pieces needs it.
+
+### Wear
+
+`worn(from, into, chance)` wears blocks of `from` into `into`, as often as `chance` says, as the structure is
+placed: iron rusts, glass cracks, planks rot, without a worn copy of the template drawn by hand. The worn block keeps
+the facing and the other properties of the block it replaces where it has them, so worn stairs face the same way.
+`age(share)` shows that share of the wear, 0 for a new structure. Each place wears the same each time it is placed.
+In data, the processor is `jscore:weathering`:
+
+```json
+{ "processor_type": "jscore:weathering", "age": 1.0, "rules": [
+    {"test": {"predicate_type": "minecraft:block_match", "block": "minecraft:iron_block"},
+     "worn": {"Name": "mymod:rusted_iron_block"}, "chance": 0.4} ] }
+```
+
+### Settlements that grow
+
+`grows(new Growth(stages, built, days))` makes a settlement of it. The whole layout is laid out as it generates, the
+size it will reach, but only its first `built` of `stages` stand at first, its middle; the rest is kept in its plan.
+From the day its chunk first loads, as a player comes near, a stage is built every `days` days of the world's time,
+from its middle out, into the chunks that are loaded; a chunk loaded later catches up with the stages it missed. It
+never grows past the size it was laid out at. `Settlements.of(level)` lists a dimension's settlements, by keys of the
+form `<structure>@<chunk x>,<chunk z>`, and `Settlements.advance(level, key, days)` makes one older, as a story
+moving time on would.
+
+### Placing one yourself
+
+`StructurePlacer.place(level, id, chunk)` places a structure where a mod says, a quest's ruin or a crashed probe, as
+the world would have: laid out from that chunk by its own rules (its fit, its sinking, its wear, its foundations),
+built into the chunks it covers, and known to the world afterwards, so the instruments find it, what it remembers is
+kept, and a settlement grows. The game's own `/place structure` command builds the blocks and forgets the
+structure; this keeps it. It does not ask the structure's biomes, since the caller chose the place.
+
+### What a structure remembers
+
+`StructureStates` keeps, for each structure that stands, what it remembers of itself, by any place inside it: a
+chamber opened, a terminal woken, a vault emptied. Every change is posted on the game's bus as
+`StructureStates.Changed`, so the blocks of a structure act together: a terminal powered up wakes the doors of the
+base it stands in.
+
+```java
+StructureStates.at(level, pos).ifPresent(base -> StructureStates.update(level, base, state -> {
+    state.putBoolean("awake", true);
+    return state;
+}));
+```
+
+A **knowledge seal** (`KnowledgeSealBlock`) closes a chamber until the player's team knows what it asks: it says
+what it waits for, and once the team knows it, a touch opens it and the structure remembers the seal open. What it
+asks is its block entity's `"knowledge"`, set in the template, so one block seals any chamber. A mod registers its own
+seal, in its own look, with its own block entity type; make it unbreakable and proof against blasts in its properties.
+
+### Loot of another mod's item
+
+A loot table entry of type `jscore:optional_item` names an item by id and gives it only when the mod that adds it is
+installed; without it, the entry gives nothing and breaks nothing. Its weight, quality, conditions and functions are
+an item entry's own:
+
+```json
+{ "type": "jscore:optional_item", "name": "othermod:titanium_ingot", "weight": 3,
+  "functions": [{"function": "minecraft:set_count", "count": {"min": 1, "max": 4}}] }
+```
+
+In a loot table's data generation, `OptionalItemEntry.of(id)` makes the same entry.
+
+## Places
+
+*Added 2026-10-16.*
+
+### Landmarks
+
+A **landmark** is a named place of a world: a mountain, a crater, a ruin. A player who comes near one discovers it,
+for themselves and their team; the discovery is noted, posted on the game's bus as `Landmarks.Discovered`, and shown
+as a notification that points at it. Each landmark discovered is a marker on the maps by itself.
+
+```java
+public static final TextKey OLYMPUS = TextKey.of("mymod.landmark.olympus_mons", "Olympus Mons");
+public static final ResourceLocation OLYMPUS_MONS = Landmarks.landmark(rl("olympus_mons"), OLYMPUS)
+        .in(MARS).at(1200, 140, -800).radius(160)      // discovered from 160 blocks
+        .structure(rl("olympus_base"))                   // the structure that stands at it, if any
+        .declare();
+```
+
+A data pack can write over a landmark or add one with a file under `data/<namespace>/jstech/landmarks/`:
+
+```json
+{ "name": "mymod.landmark.olympus_mons", "english": "Olympus Mons", "dimension": "mymod:mars",
+  "x": 1200, "y": 140, "z": -800, "radius": 160 }
+```
+
+`Landmarks.discovered(server, player)` gives what a player or their team discovered, `Landmarks.discover(player, id)`
+discovers one as coming near does, and `Landmarks.forget(server, player, id)` lets them discover it again.
+
+### Finding things
+
+`Finding.find(level, from, target, precision)` finds the nearest thing of a kind, a structure of a tag, a biome of a
+tag, a landmark or a vein of a deposit type, with a precision, so an instrument can point roughly at first and exactly
+later: at precision 0 the answer is a place within 512 blocks of the thing, each level halves that, and at
+`Finding.EXACT` it is the thing's own place. The rough answer is the same each time it is asked, so the needle does
+not wander, and never further off than it says.
+
+```java
+Optional<Finding.Found> near = Finding.find(level, player.blockPosition(),
+        new Finding.StructureTarget(MyTags.RUINS), 2);  // within 128 blocks
+near.ifPresent(found -> say(found.near(), found.within()));
+```
+
+It finds structures at fixed places too, which the game's own search passes over.
+
+## Map markers
+
+*Added 2026-10-16.*
+
+A **marker** is a point or an area on the maps, with a label and a colour, in a **layer** the map shows or hides as
+one. Each player has their own markers, and their team has markers every member sees; both are kept with the world
+and sent to each player as they change.
+
+```java
+public static final MarkerLayer RUINS = MapMarkers.layer(rl("ruins"), RUINS_NAME, 0xC08040, false);
+
+MapMarkers.show(player, Marker.point("ruin_1", RUINS.id(), level.dimension(), pos, name));        // the player's
+MapMarkers.share(server, player.getUUID(), Marker.area("survey", RUINS.id(), dim, chunks, label)); // the team's
+MapMarkers.hide(server, player.getUUID(), "ruin_1");
+```
+
+A marker of the same id takes the place of the old. `Marker.coloured(rgb)` gives a marker its own colour instead of
+its layer's. The Core's layers are `MapMarkers.LANDMARKS`, which holds the landmarks a player or their team
+discovered, and `MapMarkers.FOUND`, for places an instrument found.
+
+The markers reach the map mods through the Core's adapters, each loaded only while its mod is installed:
+
+- **JourneyMap**: a point as a marker in its colour, labelled; an area as its chunks shaded; each layer a group.
+- **Xaero's Minimap**, and so Xaero's World Map: each marker a waypoint of the nearest of Xaero's colours.
+- **FTB Chunks**: each marker an icon of its colour on the map and the minimap, its label in the tooltip.
+
+Without a map mod, the series' own maps show them: hand `ClientMarkers::forMapView` to a `MapView` as its markers.
+Another map mod's adapter implements `IMapAdapter` and is added with `ClientMarkers.add(adapter)`.
 
 ## Dimensions
 
@@ -442,8 +643,15 @@ ChunkLoaders.releaseAll(level, machinePos);
   than the game's three. Make the ones that are templates `runtimeOnly()`.
 - **An ore never generates.** Its biome tag holds no biome where you are looking, its heights are out of the
   world, or the data generation has not run since it was declared.
-- **A structure never generates.** Its template file is missing from `data/<namespace>/structure/`, or its spacing
-  is very large.
+- **A structure never generates.** Its template file is missing from `data/<namespace>/structure/`, its spacing
+  is very large, its fit refuses the land where you are looking (too steep, too low or high, under water), it keeps
+  clear of another structure there, or the world was made with structures off.
+- **A village of the game's pieces has streets and no houses.** Its declaration lacks `streets()`.
+- **A structure on a slope is half buried.** It has no foundations, so it stands on the ground at its middle: give it
+  `foundation(...)`, or a `fit` with a smaller `slope`.
+- **A settlement never grows.** No player has come near it yet, so its days have not started, or its chunks are not
+  loaded; it catches up when they load.
+- **A seal does not open.** The player's team does not know what its block entity asks.
 - **A machine stops when you walk away.** It did not ask for its chunk, or its owner has reached the limit.
 - **Players in a dimension take damage.** Its rules say the air cannot be breathed, or it is too hot or cold. A
   mod's suit must cancel `DimensionHazardEvent` to protect them.

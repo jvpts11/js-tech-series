@@ -11,6 +11,7 @@ import com.mojang.datafixers.util.Pair;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.worldgen.biome.WorldBiomes;
 import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.structure.Structures;
 import dev.jstech.core.worldgen.terrain.Terrains;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,13 +37,10 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
-import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.flat.FlatLayerInfo;
 import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
-import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -62,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 public final class WorldGen {
 
     private static final List<OreVein> ORES = Collections.synchronizedList(new ArrayList<>());
-    private static final List<TemplateStructure> STRUCTURES = Collections.synchronizedList(new ArrayList<>());
     private static final List<DimensionSpec> DIMENSIONS = Collections.synchronizedList(new ArrayList<>());
 
     private WorldGen() {
@@ -90,9 +87,12 @@ public final class WorldGen {
         return new OreBuilder(id);
     }
 
-    /** Starts declaring a structure of one saved template, its pool, structure and set all named {@code id}. */
-    public static StructureBuilder structure(final ResourceLocation id) {
-        return new StructureBuilder(id);
+    /**
+     * Starts declaring a structure, of one saved template or a layout of many, its pool, processors, structure and set
+     * all named {@code id} ({@link Structures}).
+     */
+    public static Structures.StructureBuilder structure(final ResourceLocation id) {
+        return Structures.structure(id);
     }
 
     /** The veins the mod of that namespace declared. */
@@ -103,16 +103,14 @@ public final class WorldGen {
     }
 
     /** The structures the mod of that namespace declared. */
-    public static List<TemplateStructure> structuresOf(final String namespace) {
-        synchronized (STRUCTURES) {
-            return STRUCTURES.stream().filter(structure -> structure.id().getNamespace().equals(namespace))
-                    .toList();
-        }
+    public static List<Structures.StructureSpec> structuresOf(final String namespace) {
+        return Structures.structuresOf(namespace);
     }
 
     /** Whether the mod of that namespace declared anything for the generation of the world. */
     public static boolean declares(final String namespace) {
         return !oresOf(namespace).isEmpty() || !structuresOf(namespace).isEmpty()
+                || !Structures.poolsOf(namespace).isEmpty()
                 || !dimensionsOf(namespace).isEmpty() || !WorldBiomes.biomesOf(namespace).isEmpty()
                 || !Terrains.terrainsOf(namespace).isEmpty() || Landforms.declares(namespace);
     }
@@ -375,24 +373,6 @@ public final class WorldGen {
                           int maxY, boolean triangle, TagKey<Biome> biomes) {
     }
 
-    /**
-     * A structure of one saved template, set down on the surface.
-     *
-     * @param id         what its pool, structure and set are named
-     * @param template   the template it is built from, a file under {@code data/<namespace>/structure/}
-     * @param biomes     where it is placed
-     * @param spacing    the size, in chunks, of the cells the world is cut into, one structure tried in each
-     * @param separation the fewest chunks between two of them
-     * @param salt       what keeps its spread apart from other structures' on the same seed
-     * @param step       when in the generation it is placed
-     * @param terrain    how the ground under and round it is shaped to it
-     * @param heightmap  the surface it is set on
-     */
-    public record TemplateStructure(ResourceLocation id, ResourceLocation template, TagKey<Biome> biomes, int spacing,
-                                    int separation, int salt, GenerationStep.Decoration step,
-                                    TerrainAdjustment terrain, Heightmap.Types heightmap) {
-    }
-
     /** A vein of ore being declared. */
     public static final class OreBuilder {
 
@@ -465,78 +445,4 @@ public final class WorldGen {
         }
     }
 
-    /** A structure being declared. */
-    public static final class StructureBuilder {
-
-        private final ResourceLocation id;
-        private @Nullable ResourceLocation template;
-        private @Nullable TagKey<Biome> biomes;
-        private int spacing = 32;
-        private int separation = 8;
-        private int salt;
-        private GenerationStep.Decoration step = GenerationStep.Decoration.SURFACE_STRUCTURES;
-        private TerrainAdjustment terrain = TerrainAdjustment.BEARD_THIN;
-        private Heightmap.Types heightmap = Heightmap.Types.WORLD_SURFACE_WG;
-
-        private StructureBuilder(final ResourceLocation id) {
-            this.id = Objects.requireNonNull(id, "id");
-            this.salt = id.hashCode() & Integer.MAX_VALUE;
-        }
-
-        public StructureBuilder template(final ResourceLocation saved) {
-            this.template = saved;
-            return this;
-        }
-
-        public StructureBuilder biomes(final TagKey<Biome> where) {
-            this.biomes = where;
-            return this;
-        }
-
-        /** One tried in each cell of {@code cells} chunks, never closer than {@code apart} chunks. */
-        public StructureBuilder spacing(final int cells, final int apart) {
-            this.spacing = cells;
-            this.separation = apart;
-            return this;
-        }
-
-        public StructureBuilder salt(final int value) {
-            this.salt = value;
-            return this;
-        }
-
-        public StructureBuilder step(final GenerationStep.Decoration when) {
-            this.step = when;
-            return this;
-        }
-
-        public StructureBuilder terrain(final TerrainAdjustment shaping) {
-            this.terrain = shaping;
-            return this;
-        }
-
-        public StructureBuilder surface(final Heightmap.Types surface) {
-            this.heightmap = surface;
-            return this;
-        }
-
-        /**
-         * Declares the structure.
-         *
-         * @throws IllegalStateException when it names no template or no biomes, or its separation is not less than
-         *                               its spacing
-         */
-        public TemplateStructure declare() {
-            if (template == null || biomes == null) {
-                throw new IllegalStateException("the structure " + id + " names its template and its biomes");
-            }
-            if (separation >= spacing || separation < 0) {
-                throw new IllegalStateException("the structure " + id + " keeps its separation under its spacing");
-            }
-            final TemplateStructure structure = new TemplateStructure(id, template, biomes, spacing, separation,
-                    salt, step, terrain, heightmap);
-            STRUCTURES.add(structure);
-            return structure;
-        }
-    }
 }

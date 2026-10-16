@@ -18,14 +18,14 @@ import org.junit.jupiter.api.Test;
 
 /**
  * The mods the series works with but does not need (Mekanism, JEI, EMI, FTB, ComputerCraft, Curios, Accessories,
- * Jade, KubeJS) must never be needed by accident, which the Core's own check, the one any mod runs over its sources,
- * holds the series to. The development-only test mod is not held to it.
+ * Jade, KubeJS, JourneyMap, Xaero's) must never be needed by accident, which the Core's own check, the one any mod
+ * runs over its sources, holds the series to. The development-only test mod is not held to it.
  */
 class SoftDependencyRulesTest {
 
     private static final List<String> OPTIONAL = List.of("mekanism.", "mezz.jei.", "dev.emi.", "dev.ftb.",
             "dev.architectury.", "dan200.computercraft.", "top.theillusivec4.curios.", "io.wispforest.",
-            "snownee.jade.", "dev.latvian.");
+            "snownee.jade.", "dev.latvian.", "journeymap.", "xaero.");
     private static final Path ROOT = Path.of("").toAbsolutePath().getParent();
 
     @Test

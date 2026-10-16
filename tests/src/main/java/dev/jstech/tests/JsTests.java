@@ -99,6 +99,8 @@ public final class JsTests {
         TestConnected.declare();
         // An alarm lamp, a powered lamp, a floodlight, a beam and a lamp that breaks, to prove the lighting kit.
         TestLights.declare();
+        // A landmark, a layer of map markers, a lore and a seal that opens only to a team that knows it.
+        TestPlaces.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);

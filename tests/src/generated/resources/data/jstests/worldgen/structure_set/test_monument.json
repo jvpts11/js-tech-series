@@ -1,0 +1,18 @@
+{
+  "placement": {
+    "type": "jscore:fixed",
+    "chunks": [
+      [
+        20,
+        0
+      ]
+    ],
+    "salt": 77031
+  },
+  "structures": [
+    {
+      "structure": "jstests:test_monument",
+      "weight": 1
+    }
+  ]
+}

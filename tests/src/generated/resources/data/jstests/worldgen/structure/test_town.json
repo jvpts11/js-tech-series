@@ -1,0 +1,13 @@
+{
+  "type": "jscore:placed",
+  "biomes": "#jstests:test_land",
+  "growth": {
+    "stages": 3
+  },
+  "size": 4,
+  "spawn_overrides": {},
+  "start_pool": "jstests:test_town",
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin",
+  "use_expansion_hack": true
+}

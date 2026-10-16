@@ -592,6 +592,26 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   it a block at a time, a drained block turns back into plain rock, and nothing floods; what was drawn is kept in the
   world's data over areas, so every mod reads the same reservoirs.
 - The biome modifier `jscore:everywhere` adds features to every biome of every dimension.
+- Structures that stand where the land suits them: of one template or a layout of many joined by jigsaws,
+  spread as often as they say, none near the world's origin and none within reach of another structure of any mod, or
+  at fixed places only; refused on ground too steep, too low or high, or under water; sunk as deep as they say, on
+  foundations reaching down to the ground, and laid out like the game's villages, streets holding their houses.
+- Structures worn by rule as they are placed: iron rusts, glass cracks, as often as each rule and the
+  structure's age say, keeping each block's facing, the same each time.
+- Settlements that grow: the whole layout is planned as it generates and built a stage at a time as the
+  world's days pass, into the chunks that are loaded, a chunk loaded later catching up.
+- Placing a structure where a mod says, as the world would have, and kept by the world afterwards: found by
+  instruments, remembering its state, growing if it is a settlement.
+- What each structure remembers of itself, by any place inside it, each change heard on the game's bus; and
+  seals that open a chamber only to a team that knows what they ask.
+- Loot of another mod's item that gives it only while that mod is installed.
+- Landmarks a player discovers by coming near, for themselves and their team, with a notification that points
+  at them, declared in code or by data packs.
+- Finding the nearest structure, biome, landmark or vein with a precision: roughly at first, within 512 blocks,
+  then each level twice as close, never further off than it says and the same each time; structures at fixed places
+  included.
+- Markers on the maps, each player's own and their team's, in layers, the landmarks discovered among them,
+  shown on JourneyMap, Xaero's Minimap and World Map, FTB Chunks, or the series' own maps.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
