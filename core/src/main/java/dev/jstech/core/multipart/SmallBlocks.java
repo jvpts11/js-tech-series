@@ -29,10 +29,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ButtonBlock;
 import net.minecraft.world.level.block.FaceAttachedHorizontalDirectionalBlock;
 import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.level.block.WallTorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
@@ -203,6 +205,23 @@ public final class SmallBlocks {
     /** Whether going from {@code was} to {@code now} changes what the small block gives its neighbours. */
     public static boolean signalChanged(final BlockState was, final BlockState now) {
         return signalOf(was) != signalOf(now);
+    }
+
+    /** The redstone strength the small block in {@code state} gives, 0 to 15. */
+    public static int strengthOf(final BlockState state) {
+        return signalOf(state);
+    }
+
+    /**
+     * {@code state} as a wrench turns it: a lever or a button on a floor or a ceiling a quarter turn; none for the
+     * rest, which hang one way only.
+     */
+    public static @Nullable BlockState turned(final BlockState state) {
+        if (state.getBlock() instanceof FaceAttachedHorizontalDirectionalBlock
+                && state.getValue(FaceAttachedHorizontalDirectionalBlock.FACE) != AttachFace.WALL) {
+            return state.rotate(Rotation.CLOCKWISE_90);
+        }
+        return null;
     }
 
     /** The item a small block gives back: a wall torch its torch. */

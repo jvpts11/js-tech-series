@@ -24,6 +24,7 @@ public record PartBox(int x0, int y0, int z0, int x1, int y1, int z1) {
 
     /** A block's side, in pixels. */
     public static final int SIDE = 16;
+    private static final int QUARTERS = 4;
 
     public PartBox {
         if (x0 < 0 || y0 < 0 || z0 < 0 || x1 > SIDE || y1 > SIDE || z1 > SIDE || x0 >= x1 || y0 >= y1 || z0 >= z1) {
@@ -91,6 +92,19 @@ public record PartBox(int x0, int y0, int z0, int x1, int y1, int z1) {
         final int[] b = turn(face, this.x1, this.y1, this.z1);
         return new PartBox(Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.min(a[2], b[2]), Math.max(a[0], b[0]),
                 Math.max(a[1], b[1]), Math.max(a[2], b[2]));
+    }
+
+    /**
+     * It, made for a part facing north, turned {@code quarterTurns} quarter turns about the north face's middle, as a
+     * wrench turns a part on its face: each turn takes the east edge up.
+     */
+    public PartBox turnedAbout(final int quarterTurns) {
+        PartBox turned = this;
+        // A quarter turn about the middle: x becomes the old y counted back from the far side, y the old x.
+        for (int k = 0; k < Math.floorMod(quarterTurns, QUARTERS); k++) {
+            turned = new PartBox(SIDE - turned.y1, turned.x0, turned.z0, SIDE - turned.y0, turned.x1, turned.z1);
+        }
+        return turned;
     }
 
     /** Whether the point at ({@code x}, {@code y}, {@code z}), in pixels, lies in it or on its sides. */

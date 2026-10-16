@@ -9,7 +9,12 @@ package dev.jstech.core.multipart;
 
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.look.IDescribedAt;
+import dev.jstech.core.text.Text;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * The entity of a space of parts alone: its parts, saved and sent to the players who see it, who draw and shape the
  * space from them.
  */
-public final class SpaceBlockEntity extends SyncedBlockEntity implements IPartHost, ISpaceHolder {
+public final class SpaceBlockEntity extends SyncedBlockEntity implements IPartHost, ISpaceHolder, IDescribedAt {
 
     private final SpaceParts parts = new SpaceParts(this);
     private final PartField partsField = fields().part(SpaceParts.KEY, this.parts).save().toClient();
@@ -48,6 +53,16 @@ public final class SpaceBlockEntity extends SyncedBlockEntity implements IPartHo
     @Override
     public SpaceParts parts() {
         return this.parts;
+    }
+
+    /* The part a player looks at says what it is doing. */
+    @Override
+    public void describe(final List<Text> lines, final boolean details, final Player player) {
+        final SpaceParts.Hit aimed = SpaceBlock.aimOf(this.level == null ? EmptyBlockGetter.INSTANCE : this.level,
+                this.worldPosition, player);
+        if (aimed != null) {
+            this.parts.describe(aimed.slot(), lines, details);
+        }
     }
 
     @Override

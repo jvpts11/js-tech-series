@@ -17,6 +17,7 @@ import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.grid.IGridMover;
+import dev.jstech.core.look.IDescribedAt;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.multipart.ISpaceHolder;
@@ -32,6 +33,7 @@ import dev.jstech.core.multipart.SpaceParts;
 import dev.jstech.core.multipart.SpaceSlots;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +51,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -74,7 +77,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Which faces each wire crosses is worked out on the server when the block or a neighbour changes, kept in the save
  * and sent to the players who see the block, who draw and shape the wires from it.
  */
-public final class CableBlockEntity extends SyncedBlockEntity implements IPartHost, ISpaceHolder {
+public final class CableBlockEntity extends SyncedBlockEntity implements IPartHost, ISpaceHolder, IDescribedAt {
 
     private final Bundle bundle = new Bundle(this::bundleChanged);
     private final SpaceParts parts = new SpaceParts(this);
@@ -295,6 +298,26 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     @Override
     public SpaceParts parts() {
         return this.parts;
+    }
+
+    /* A wire met before any part is no part: the wrench and the look-at tooltip leave it to the wire. */
+    @Override
+    public int aimedPart(final Vec3 start, final Vec3 end) {
+        final Aim aim = aim(start, end);
+        if (aim.microblock()) {
+            return aim.micro();
+        }
+        return aim.part() == null ? NO_PART : SpaceSlots.face(aim.part().get3DDataValue());
+    }
+
+    /* The part a player looks at says what it is doing. */
+    @Override
+    public void describe(final List<Text> lines, final boolean details, final Player player) {
+        final Vec3[] look = CableBlock.lookOf(player);
+        final int slot = aimedPart(look[0], look[1]);
+        if (slot != NO_PART) {
+            this.parts.describe(slot, lines, details);
+        }
     }
 
     /** Whether anything stands on {@code face}: a device or a microblock. */

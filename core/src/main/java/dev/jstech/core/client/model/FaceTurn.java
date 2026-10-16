@@ -19,6 +19,14 @@ public final class FaceTurn {
     private FaceTurn() {
     }
 
+    /**
+     * The turn that takes a part made facing north, turned {@code turns} quarter turns about its face as its boxes
+     * are turned, to {@code face}.
+     */
+    public static Quaternionf of(final Direction face, final int turns) {
+        return of(face).rotateZ(QUARTER_TURN * turns);
+    }
+
     /** The turn that takes a part made facing north to {@code face}. */
     public static Quaternionf of(final Direction face) {
         return switch (face) {

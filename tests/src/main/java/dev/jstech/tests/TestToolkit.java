@@ -11,11 +11,13 @@ import dev.jstech.core.call.MenuCall;
 import dev.jstech.core.call.MenuCalls;
 import dev.jstech.core.capability.CapabilityKind;
 import dev.jstech.core.capability.CapabilityKinds;
+import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.multipart.PartBox;
 import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -78,7 +80,7 @@ public final class TestToolkit {
     /** A part that, lit, gives light, a full signal out of its face and a comparator reading; it never ticks. */
     public static final DeferredHolder<PartType<?>, PartType<LampPart>> LAMP_PART = PARTS.register("lamp_part",
             () -> new PartType<>(LampPart::new, LAMP_NAME, ResourceLocation.withDefaultNamespace("block/stone"))
-                    .redstone().shaped(List.of(LAMP_BOX)));
+                    .redstone().shaped(List.of(LAMP_BOX)).turns());
     private static final TextKey SENSOR_NAME = TextKey.of("jstests.part.sensor", "Sensor part");
     /** A part that hears the redstone reaching its face; it never ticks. */
     public static final DeferredHolder<PartType<?>, PartType<SensorPart>> SENSOR_PART = PARTS.register(
@@ -188,6 +190,11 @@ public final class TestToolkit {
         public boolean use(final ServerPlayer player) {
             set(!this.lit);
             return true;
+        }
+
+        @Override
+        public void describe(final List<Text> lines, final boolean details) {
+            lines.add(this.lit ? LookTexts.REDSTONE.with(FULL) : LookTexts.IDLE.text());
         }
 
         @Override

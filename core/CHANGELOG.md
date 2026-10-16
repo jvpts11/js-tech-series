@@ -438,6 +438,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The game's torches, levers, buttons and pressure plates share a block space: used on the face of the block
   beside a cable or a space of parts, the item hangs its block in the space, beside the wires and the other pieces,
   where it lights, powers, is pulled, pressed and falls with its wall as the game's own does.
+- A wrench of any mod on a part of a cable or a space of parts turns it, a device a quarter turn about its face,
+  a lever or a button on a floor a quarter turn, a post through the middle to its next axis, and sneaking takes the
+  part off into the player's hands. Jade names the part looked at and shows what it says it is doing.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

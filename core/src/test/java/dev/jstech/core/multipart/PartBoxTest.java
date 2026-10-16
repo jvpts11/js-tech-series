@@ -66,6 +66,16 @@ class PartBoxTest {
                 "two quarter turns about y are half a turn");
     }
 
+    @Test
+    void turnedAbout_turnsAQuarterAtATimeAboutTheFacesMiddle() {
+        final PartBox tab = new PartBox(0, 0, 0, 4, 2, 2);
+        assertEquals(new PartBox(14, 0, 0, 16, 4, 2), tab.turnedAbout(1), "the tab's corner goes round");
+        assertEquals(tab, tab.turnedAbout(4), "four quarter turns are none");
+        assertEquals(tab.turnedAbout(3), tab.turnedAbout(-1), "three one way are one the other");
+        final PartBox plate = SpaceFit.deviceBox(NORTH);
+        assertEquals(plate, plate.turnedAbout(1), "a square plate looks the same turned");
+    }
+
     private static int volume(final PartBox box) {
         return (box.x1() - box.x0()) * (box.y1() - box.y0()) * (box.z1() - box.z0());
     }

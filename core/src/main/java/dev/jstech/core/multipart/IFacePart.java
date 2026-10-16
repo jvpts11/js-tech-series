@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.multipart;
 
+import dev.jstech.core.text.Text;
+import java.util.List;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -76,6 +78,23 @@ public interface IFacePart {
 
     /** The block on the part's face, or the redstone reaching it, changed; on the server. */
     default void neighbourChanged() {
+    }
+
+    /**
+     * A wrench turned the part about its face, to {@code quarterTurns} quarter turns from as it was made, for a kind
+     * marked {@link PartType#turns()}; its model and its room turned with it. On the server.
+     */
+    default void turned(final int quarterTurns) {
+    }
+
+    /**
+     * Adds the lines a player looking at the part reads, as a block entity that describes itself does; asked on the
+     * server.
+     *
+     * @param lines   where the lines go
+     * @param details whether the player asked for more, holding the key that shows details
+     */
+    default void describe(final List<Text> lines, final boolean details) {
     }
 
     /** Writes what the part keeps into a save. */

@@ -970,6 +970,7 @@
   "jscore.look.idle": "Parada",
   "jscore.look.low_power": "Pouca energia: %s%% da velocidade",
   "jscore.look.owner": "Dono: %s",
+  "jscore.look.redstone": "Redstone: %s",
   "jscore.look.working": "Trabalhando: %s%%",
   "jscore.machine.comparator.energy": "Energia",
   "jscore.machine.comparator.input": "Entrada",

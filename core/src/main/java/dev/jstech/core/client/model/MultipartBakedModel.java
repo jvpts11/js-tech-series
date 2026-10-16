@@ -140,7 +140,7 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
         }
         final Matrix4f matrix = new Matrix4f()
                 .translate(placed.dx() * PIXEL, placed.dy() * PIXEL, placed.dz() * PIXEL)
-                .rotateAround(FaceTurn.of(placed.facing()), 0.5F, 0.5F, 0.5F);
+                .rotateAround(FaceTurn.of(placed.facing(), placed.turns()), 0.5F, 0.5F, 0.5F);
         final List<BakedQuad> moved = QuadTransformers.applying(new Transformation(matrix)).process(quads);
         // The transform moves the vertices and their normals; each quad's own face turns with them, for its shading.
         final List<BakedQuad> out = new ArrayList<>(moved.size());

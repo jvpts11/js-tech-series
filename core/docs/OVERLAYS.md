@@ -68,6 +68,10 @@ public void describe(final List<Text> lines, final boolean details) {
 }
 ```
 
+A block of several pieces, such as a cable with parts on it, implements `IDescribedAt` instead (or as well): it is
+asked with the player looking, and describes the piece their look picks
+([Block spaces and microblocks](MULTIPART.md#the-wrench-and-the-look-at-tooltip)).
+
 The lines are worked out on the server and sent to the player, so they can say what only the server knows.
 `details` is true while the player holds the key for more. A block entity that has an owner (`IOwned`) shows
 "Owner: ..." too. Jade's settings have a switch for these lines. Without Jade, nothing of this loads.

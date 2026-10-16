@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.heat.HeatReadings;
 import dev.jstech.core.heat.IHeatHolder;
 import dev.jstech.core.look.IDescribed;
+import dev.jstech.core.look.IDescribedAt;
 import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.mechanical.IMechanicalHolder;
 import dev.jstech.core.mechanical.IMechanicalPart;
@@ -75,6 +76,9 @@ public final class CoreJadePlugin implements IWailaPlugin {
             if (entity instanceof IDescribed described) {
                 described.describe(lines, accessor.showDetails());
             }
+            if (entity instanceof IDescribedAt piece && accessor.getPlayer() != null) {
+                piece.describe(lines, accessor.showDetails(), accessor.getPlayer());
+            }
             if (entity instanceof IHeatHolder holder && holder.heatBody() != null && holder.heatBody().known()) {
                 lines.add(HeatReadings.line(holder.heatBody().temperature()));
             }
@@ -96,6 +100,7 @@ public final class CoreJadePlugin implements IWailaPlugin {
         @Override
         public boolean shouldRequestData(final BlockAccessor accessor) {
             return accessor.getBlockEntity() instanceof IDescribed || accessor.getBlockEntity() instanceof IOwned
+                    || accessor.getBlockEntity() instanceof IDescribedAt
                     || accessor.getBlockEntity() instanceof IHeatHolder
                     || accessor.getBlockEntity() instanceof IMechanicalPart;
         }

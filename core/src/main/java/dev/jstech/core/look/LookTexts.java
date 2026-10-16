@@ -22,6 +22,8 @@ public final class LookTexts {
     public static final TextKey LOW_POWER = TextKey.of("jscore.look.low_power", "Low power: %s%% speed");
     /** Whose a thing is. */
     public static final TextKey OWNER = TextKey.of("jscore.look.owner", "Owner: %s");
+    /** The redstone a piece looked at gives. */
+    public static final TextKey REDSTONE = TextKey.of("jscore.look.redstone", "Redstone: %s");
     /** The switch in Jade's settings for the lines above, under the key Jade reads it from. */
     public static final TextKey JADE_OPTION = TextKey.of("config.jade.plugin_jscore.described",
             "What machines are doing, and whose they are");

@@ -10,6 +10,8 @@ package dev.jstech.core.multipart;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.look.LookTexts;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,6 +54,8 @@ public final class SpaceParts implements IFieldPart {
     private final IFacePart[] devices = new IFacePart[FACES];
     /** Each face's kind of device, as the registry numbers it; on a player's game the only thing known of them. */
     private final int[] kinds = new int[FACES];
+    /* Each face's device's quarter turns about its face, as a wrench turned it; on either side. */
+    private final int[] turns = new int[FACES];
     private final Microblock[] micro = new Microblock[SpaceSlots.COUNT];
     /* The game's own small block hung on each face, a torch or a lever ({@link SmallBlocks}), on either side. */
     private final BlockState[] small = new BlockState[FACES];
@@ -74,6 +78,10 @@ public final class SpaceParts implements IFieldPart {
     private static final String SMALL = "Small";
     private static final String STATE = "State";
     private static final String DUE = "Due";
+    private static final String TURNS = "Turns";
+    private static final String CLIENT_TURNS = "PartTurns";
+    private static final int QUARTERS = 4;
+    private static final int AXES = 3;
     private static final String CLIENT_KINDS = "PartKinds";
     private static final String CLIENT_BUSY = "PartBusy";
     private static final double PIXEL = 1.0 / PartBox.SIDE;
@@ -222,8 +230,32 @@ public final class SpaceParts implements IFieldPart {
         device.attach(this.host, face);
         this.devices[index] = device;
         this.kinds[index] = kind;
+        this.turns[index] = 0;
         changed();
         return true;
+    }
+
+    /** The quarter turns the device on {@code face} was turned about its face, 0 to 3; on either side. */
+    public int turns(final Direction face) {
+        return this.turns[face.get3DDataValue()];
+    }
+
+    /**
+     * Whether a wrench turns the part in {@code slot}: a device of a kind that turns, a lever or a button on a floor
+     * or a ceiling, a post through the middle; when it still fits turned. On either side.
+     */
+    public boolean canTurn(final int slot) {
+        return turnedFits(slot, false);
+    }
+
+    /**
+     * Turns the part in {@code slot} as a wrench does: a device a quarter turn about its face, a lever or a button on
+     * a floor or a ceiling a quarter turn, a post through the middle to the next axis.
+     *
+     * @return whether it turned
+     */
+    public boolean turn(final int slot) {
+        return turnedFits(slot, true);
     }
 
     /** Takes the device off {@code face} and gives it back; null when there was none. */
@@ -233,6 +265,7 @@ public final class SpaceParts implements IFieldPart {
         final boolean had = this.kinds[index] != NONE;
         this.devices[index] = null;
         this.kinds[index] = NONE;
+        this.turns[index] = 0;
         if (had) {
             changed();
         }
@@ -412,6 +445,28 @@ public final class SpaceParts implements IFieldPart {
         return false;
     }
 
+    /**
+     * Adds the lines a player looking at the part in {@code slot} reads: what its device says of itself, or the
+     * redstone a lever, a button or a plate gives. Asked on the server.
+     */
+    public void describe(final int slot, final List<Text> lines, final boolean details) {
+        if (!SpaceSlots.isFace(slot)) {
+            return;
+        }
+        final int index = SpaceSlots.faceOf(slot);
+        final BlockState state = this.small[index];
+        if (state != null) {
+            if (state.isSignalSource()) {
+                lines.add(LookTexts.REDSTONE.with(SmallBlocks.strengthOf(state)));
+            }
+            return;
+        }
+        final IFacePart device = this.devices[index];
+        if (device != null) {
+            device.describe(lines, details);
+        }
+    }
+
     /** Tells the device on {@code face} that the block there, or the redstone reaching it, changed. */
     public void neighbourChanged(final Direction face) {
         final IFacePart device = get(face);
@@ -459,7 +514,8 @@ public final class SpaceParts implements IFieldPart {
         for (final Direction face : Direction.values()) {
             final PartType<?> type = type(face);
             if (type != null) {
-                models.add(PlacedModel.facing(type.model((working & 1 << face.get3DDataValue()) != 0), face));
+                models.add(PlacedModel.facing(type.model((working & 1 << face.get3DDataValue()) != 0), face,
+                        this.turns[face.get3DDataValue()]));
             }
         }
         return models.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(models);
@@ -537,7 +593,7 @@ public final class SpaceParts implements IFieldPart {
         for (int face = 0; face < FACES; face++) {
             final PartType<?> type = type(Direction.from3DDataValue(face));
             if (type != null) {
-                out.add(SpaceFit.Piece.device(SpaceSlots.face(face), type.boxesOn(face)));
+                out.add(SpaceFit.Piece.device(SpaceSlots.face(face), type.boxesOn(face, this.turns[face])));
             }
         }
         for (final Microblock block : this.micro) {
@@ -567,6 +623,9 @@ public final class SpaceParts implements IFieldPart {
             final CompoundTag entry = new CompoundTag();
             entry.putByte(FACE, (byte) i);
             entry.putString(TYPE, id.toString());
+            if (this.turns[i] != 0) {
+                entry.putByte(TURNS, (byte) this.turns[i]);
+            }
             final CompoundTag data = new CompoundTag();
             device.save(data, registries);
             entry.put(DATA, data);
@@ -583,6 +642,7 @@ public final class SpaceParts implements IFieldPart {
     public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
         Arrays.fill(this.devices, null);
         Arrays.fill(this.kinds, NONE);
+        Arrays.fill(this.turns, 0);
         for (final Tag element : tag.getList(KEY, Tag.TAG_COMPOUND)) {
             final CompoundTag entry = (CompoundTag) element;
             final int index = entry.getByte(FACE) & 0xFF;
@@ -599,6 +659,7 @@ public final class SpaceParts implements IFieldPart {
             device.load(entry.getCompound(DATA), registries);
             this.devices[index] = device;
             this.kinds[index] = CoreParts.REGISTRY.getId(type);
+            this.turns[index] = Math.floorMod(entry.getByte(TURNS), QUARTERS);
         }
         readMicro(tag);
         readSmall(tag, registries);
@@ -608,6 +669,7 @@ public final class SpaceParts implements IFieldPart {
     @Override
     public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         tag.putIntArray(CLIENT_KINDS, this.kinds.clone());
+        tag.putIntArray(CLIENT_TURNS, this.turns.clone());
         tag.putByte(CLIENT_BUSY, (byte) busyFaces());
         writeMicro(tag);
         writeSmall(tag, false);
@@ -619,8 +681,10 @@ public final class SpaceParts implements IFieldPart {
             return;
         }
         final int[] incoming = tag.getIntArray(CLIENT_KINDS);
+        final int[] turned = tag.getIntArray(CLIENT_TURNS);
         for (int i = 0; i < FACES; i++) {
             this.kinds[i] = i < incoming.length ? incoming[i] : NONE;
+            this.turns[i] = i < turned.length ? Math.floorMod(turned[i], QUARTERS) : 0;
         }
         this.busy = tag.getByte(CLIENT_BUSY) & 0xFF;
         readMicro(tag);
@@ -632,6 +696,63 @@ public final class SpaceParts implements IFieldPart {
     /* A strength of redstone or light, kept within the game's range whatever a part says. */
     private static int strength(final int said) {
         return Math.clamp(said, 0, MAX_STRENGTH);
+    }
+
+    /* Whether the part in {@code slot} has a turned form that fits beside the rest; with {@code apply}, takes it. */
+    private boolean turnedFits(final int slot, final boolean apply) {
+        if (slot == SpaceSlots.CENTRE) {
+            final Microblock post = this.micro[slot];
+            if (post == null || post.piece().shape() != MicroShape.POST) {
+                return false;
+            }
+            final Microblock turned = new Microblock(post.piece(), slot, (post.axis() + 1) % AXES);
+            if (!fitsInstead(slot, turned.fitPiece())) {
+                return false;
+            }
+            if (apply) {
+                this.micro[slot] = turned;
+                changed();
+            }
+            return true;
+        }
+        if (!SpaceSlots.isFace(slot)) {
+            return false;
+        }
+        final int index = SpaceSlots.faceOf(slot);
+        final BlockState small = this.small[index];
+        if (small != null) {
+            final BlockState turned = SmallBlocks.turned(small);
+            if (turned == null || !fitsInstead(slot, SmallBlocks.pieceOf(turned))) {
+                return false;
+            }
+            if (apply) {
+                this.small[index] = turned;
+                changed();
+            }
+            return true;
+        }
+        final PartType<?> type = type(Direction.from3DDataValue(index));
+        final int next = (this.turns[index] + 1) % QUARTERS;
+        if (type == null || !type.turnable()
+                || !fitsInstead(slot, SpaceFit.Piece.device(slot, type.boxesOn(index, next)))) {
+            return false;
+        }
+        if (apply) {
+            this.turns[index] = next;
+            final IFacePart device = this.devices[index];
+            if (device != null) {
+                device.turned(next);
+            }
+            changed();
+        }
+        return true;
+    }
+
+    /* Whether {@code piece} fits beside every part but the one in its own place, which it takes the place of. */
+    private boolean fitsInstead(final int slot, final SpaceFit.Piece piece) {
+        final List<SpaceFit.Piece> others = new ArrayList<>(pieces());
+        others.removeIf(other -> other.slot() == slot);
+        return SpaceFit.fits(piece, others, this.host.middle());
     }
 
     /* Whether a pressed button or plate waits to be looked at again. */

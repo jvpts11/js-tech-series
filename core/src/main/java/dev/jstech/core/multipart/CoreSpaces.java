@@ -78,6 +78,7 @@ public final class CoreSpaces {
                 event -> PartCapabilities.register(event, BLOCK_ENTITY.get(), SpaceBlockEntity::parts));
         SpaceBreaking.listen();
         SmallBlocks.listen();
+        PartWrenching.listen();
     }
 
     /** A microblock's item of {@code piece}. */

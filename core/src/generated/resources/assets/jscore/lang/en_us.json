@@ -1055,6 +1055,7 @@
   "jscore.look.idle": "Idle",
   "jscore.look.low_power": "Low power: %s%% speed",
   "jscore.look.owner": "Owner: %s",
+  "jscore.look.redstone": "Redstone: %s",
   "jscore.look.working": "Working: %s%%",
   "jscore.machine.comparator.energy": "Energy",
   "jscore.machine.comparator.input": "Input",

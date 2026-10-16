@@ -34,11 +34,14 @@ public final class PartType<P extends IFacePart> {
     private final ResourceLocation busyModel;
     private boolean moves;
     private boolean redstone;
-    /* The room a part of the kind takes on each face, in the order of the game's directions. */
-    private List<List<PartBox>> onFaces = turned(List.of(SpaceFit.deviceBox(NORTH)));
+    private boolean turnable;
+    /* The room a part of the kind takes facing north, as made, and on each face, in the game's order of directions. */
+    private List<PartBox> facingNorth = List.of(SpaceFit.deviceBox(NORTH));
+    private List<List<PartBox>> onFaces = turned(this.facingNorth, 0);
 
     private static final int NORTH = 2;
     private static final int FACES = 6;
+    private static final int QUARTERS = 4;
 
     /**
      * A kind drawn the same whether its parts are at work or not.
@@ -113,13 +116,30 @@ public final class PartType<P extends IFacePart> {
         if (facingNorth.isEmpty()) {
             throw new IllegalArgumentException("a part takes some room; give it at least one box");
         }
-        this.onFaces = turned(facingNorth);
+        this.facingNorth = List.copyOf(facingNorth);
+        this.onFaces = turned(this.facingNorth, 0);
         return this;
     }
 
     /** The room a part of the kind takes on the face numbered {@code face}, in the order of the game's directions. */
     public List<PartBox> boxesOn(final int face) {
         return this.onFaces.get(face);
+    }
+
+    /** The room a part of the kind takes on the face numbered {@code face}, turned {@code turns} quarter turns. */
+    public List<PartBox> boxesOn(final int face, final int turns) {
+        return Math.floorMod(turns, QUARTERS) == 0 ? boxesOn(face) : turned(this.facingNorth, turns).get(face);
+    }
+
+    /** Marks the kind as one a wrench turns about its face, a quarter turn at a time, model and room together. */
+    public PartType<P> turns() {
+        this.turnable = true;
+        return this;
+    }
+
+    /** Whether a wrench turns parts of the kind about their face. */
+    public boolean turnable() {
+        return this.turnable;
     }
 
     /** Marks the kind as one that deals in redstone: redstone wire beside its face joins it. */
@@ -138,12 +158,12 @@ public final class PartType<P extends IFacePart> {
         return CoreParts.REGISTRY.getKey(this);
     }
 
-    private static List<List<PartBox>> turned(final List<PartBox> facingNorth) {
+    private static List<List<PartBox>> turned(final List<PartBox> facingNorth, final int turns) {
         final List<List<PartBox>> out = new ArrayList<>(FACES);
         for (int face = 0; face < FACES; face++) {
             final List<PartBox> on = new ArrayList<>(facingNorth.size());
             for (final PartBox box : facingNorth) {
-                on.add(box.turnedTo(face));
+                on.add(box.turnedAbout(turns).turnedTo(face));
             }
             out.add(List.copyOf(on));
         }

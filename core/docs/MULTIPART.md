@@ -97,6 +97,8 @@ A device on a face (`IFacePart`, see [Cables](CABLES.md#parts-on-the-cable)) doe
 | `light()` | The light it gives. |
 | `neighbourChanged()` | Called on the server when the block on its face, or the redstone reaching it, changes. |
 | `use(player)` | A player used it: it opens its menu or does what it does. |
+| `turned(quarterTurns)` | A wrench turned it about its face, for a kind marked `turns()`. |
+| `describe(lines, details)` | The lines a player looking at it reads, in Jade's tooltip. |
 
 A device whose light or need of a tick changes calls its host's `partChanged()`; one whose redstone or comparator
 reading changes calls `partSignalChanged(face)`, and the block's neighbours hear of it. Strengths are kept within 0
@@ -114,6 +116,7 @@ Its kind says the rest, which every player's game knows:
 () -> new PartType<>(LampPart::new, MyTexts.LAMP, rl("block/part/lamp"))
         .redstone()                                          // wire beside its face joins it
         .shaped(List.of(new PartBox(5, 5, 0, 11, 11, 3)))    // its own room, facing north, in pixels
+        .turns()                                             // a wrench turns it about its face
 ```
 
 Without `shaped`, a device takes a plate twelve pixels across and five deep. Its room is what it collides with, is
@@ -136,6 +139,21 @@ looked at again on the space's tick, which it has only while one is pressed. One
 falls off with its item, as the game's own does. They have no collision, and break as fast as the game's own.
 
 `SpaceParts.addSmall(state)` hangs one from code, `small(face)` reads it and `removeSmall(face)` takes it off.
+
+## The wrench and the look-at tooltip
+
+A wrench of any mod (the item tag `c:tools/wrench`) works on the part a player looks at in a cable or a space of
+parts (`PartWrenching`):
+
+- **Used**, it turns the part, when it turns: a device of a kind marked `turns()` a quarter turn about its face, its
+  model and its room together (`PartBox.turnedAbout`); a lever or a button on a floor or a ceiling a quarter turn; a
+  post through the middle to the next axis. A part that does not turn, or would not fit turned, is used as by hand.
+- **Used sneaking**, it takes the part off into the player's hands.
+- A wire looked at is left to the wrench's own work on wires, and a place the player may not touch is left alone.
+
+The look-at tooltip, Jade's when it is installed, names the part looked at and shows its item, and a block entity of
+several pieces (`IDescribedAt`, as the cable block and the space of parts are) adds the lines of the piece looked at:
+what its device says in `describe`, or the redstone a lever, a button or a plate gives.
 
 ## Drawing
 
