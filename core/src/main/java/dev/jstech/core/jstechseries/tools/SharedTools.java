@@ -13,6 +13,9 @@ import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SharedUses;
 import dev.jstech.core.machine.MachineSetup;
+import dev.jstech.core.multipart.CoreSpaces;
+import dev.jstech.core.multipart.MicroShape;
+import dev.jstech.core.multipart.Microblock;
 import dev.jstech.core.registry.CoreItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -20,12 +23,13 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * The tools the series' mods share, so a mod used alone has them: the Basic Wrench, which sets the ends of a line and
- * the sides of a machine and takes a machine away whole, in the common wrench tag every mod's machines know; and the
- * Configuration Card, which carries a machine's setup to others.
+ * the sides of a machine and takes a machine away whole, in the common wrench tag every mod's machines know; the
+ * Configuration Card, which carries a machine's setup to others; and the saw, which cuts microblocks.
  */
 public final class SharedTools {
 
@@ -47,12 +51,26 @@ public final class SharedTools {
     public static final ItemEntry<ConfigurationCardItem> CARD = CoreItems.CONTENT.item("configuration_card",
                     properties -> new ConfigurationCardItem(properties.stacksTo(1))).named("Configuration Card")
             .tab(JsTechTab.BLOCKS_AND_TOOLS).register();
+    /** How many cuts a saw makes before it wears out. */
+    public static final int SAW_CUTS = 512;
+    /** The saw, which cuts microblocks in the crafting grid and is worn by each cut. */
+    public static final ItemEntry<Item> SAW = CoreItems.CONTENT.item("saw",
+                    properties -> new Item(properties.durability(SAW_CUTS))).named("Saw")
+            .tag(CoreSpaces.SAWS).tab(JsTechTab.BLOCKS_AND_TOOLS).register();
 
     static {
         // Every mod of the series sets its lines' ends with it and its machines up with the card, so the Core itself
-        // uses them.
+        // uses them; and the saw and the microblocks it cuts.
         SharedUses.declare(JsCore.MODID, WRENCH::get);
         SharedUses.declare(JsCore.MODID, CARD::get);
+        SharedUses.declare(JsCore.MODID, SAW::get);
+        SharedUses.declare(JsCore.MODID, CoreSpaces.MICROBLOCK::get);
+        JsTechTab.BLOCKS_AND_TOOLS.with(CoreSpaces.MICROBLOCK::get).alsoShowing(output -> {
+            for (final MicroShape shape : MicroShape.values()) {
+                output.accept(CoreSpaces.stack(new Microblock.MicroblockPiece(shape, shape == MicroShape.FACADE
+                        ? MicroShape.COVER : MicroShape.PANEL, Blocks.OAK_PLANKS)));
+            }
+        });
     }
 
     private SharedTools() {

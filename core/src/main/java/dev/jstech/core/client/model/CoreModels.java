@@ -12,6 +12,7 @@ import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.connect.ConnectedQuadrants;
 import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.core.multipart.CoreParts;
+import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.multipart.PartType;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +104,17 @@ public final class CoreModels {
     public static void onModifyBakingResult(final ModelEvent.ModifyBakingResult event) {
         MultipartBakedModel.forget();
         CableBakedModel.forget();
+        MicroblockQuads.forget();
+        MicroblockItemModel.forget();
         final Map<ModelResourceLocation, BakedModel> models = event.getModels();
+        // A space of parts alone draws its devices and its microblocks as the cable does; the microblock's item, its
+        // piece cut from its block.
+        for (final BlockState state : CoreSpaces.BLOCK.get().getStateDefinition().getPossibleStates()) {
+            models.computeIfPresent(BlockModelShaper.stateToModelLocation(state),
+                    (location, model) -> new MultipartBakedModel(model));
+        }
+        models.computeIfPresent(ModelResourceLocation.inventory(CoreSpaces.MICROBLOCK.getId()),
+                (location, model) -> new MicroblockItemModel(model));
         // The Core's own cable block draws its wires on top of what its parts and plugs place.
         for (final BlockState state : CoreCables.BLOCK.get().getStateDefinition().getPossibleStates()) {
             models.computeIfPresent(BlockModelShaper.stateToModelLocation(state),

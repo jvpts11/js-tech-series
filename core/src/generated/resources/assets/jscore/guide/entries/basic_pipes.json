@@ -91,7 +91,7 @@
     "jscore:iron_gas_pipe",
     "jscore:vacuum_jacketed_pipe"
   ],
-  "order": 16,
+  "order": 17,
   "section": "cables",
   "title": "jscore.guide.basic_pipes.title"
 }

@@ -53,6 +53,7 @@ import dev.jstech.core.input.KeyActions;
 import dev.jstech.core.mechanical.MechanicalPorts;
 import dev.jstech.core.mechanical.ShaftLinkItem;
 import dev.jstech.core.multipart.CoreParts;
+import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
 import dev.jstech.core.robot.CoreRobotTasks;
@@ -186,6 +187,8 @@ public final class JsCore {
         CoreAttachments.register(modEventBus);
         // The cable block every mod's cables are laid in, and the screen of a line's end, are the Core's own content.
         CoreCables.declare();
+        // The space of parts alone and the microblock, which any block space holds as a cable's does.
+        CoreSpaces.declare();
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.
@@ -309,6 +312,7 @@ public final class JsCore {
         ClientPayloads.listen();
         ClientUpdates.listen();
         CoreCables.listen(modEventBus);
+        CoreSpaces.listen(modEventBus);
         CableRuns.listen(modEventBus);
         EndSettings.listen(modEventBus);
         OverheadLines.listen(modEventBus);

@@ -11,6 +11,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.jstech.core.cable.CableBlock;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.multipart.SpaceBlock;
+import dev.jstech.core.multipart.SpaceBlockEntity;
+import dev.jstech.core.multipart.SpaceParts;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
@@ -24,8 +27,8 @@ import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
- * What a player's game does with a cable block: outline the one wire or part looked at rather than the whole block, and
- * not take the whole block away the moment it is struck when the server will take only that piece.
+ * What a player's game does with a cable block and a space of parts: outline the one wire or part looked at rather than
+ * the whole block, and not take the whole block away the moment it is struck when the server will take only that piece.
  */
 public final class CableClientEvents {
 
@@ -51,7 +54,8 @@ public final class CableClientEvents {
         if (!level.isClientSide() || !event.getEntity().getAbilities().instabuild) {
             return;
         }
-        if (!CableBlock.strikeAimOf(level, event.getPos(), event.getEntity()).isNothing()) {
+        if (!CableBlock.strikeAimOf(level, event.getPos(), event.getEntity()).isNothing()
+                || SpaceBlock.strikeAimOf(level, event.getPos(), event.getEntity()) != null) {
             event.setCanceled(true);
             event.setUseBlock(TriState.FALSE);
             event.setUseItem(TriState.FALSE);
@@ -65,11 +69,16 @@ public final class CableClientEvents {
         }
         final BlockPos pos = event.getTarget().getBlockPos();
         final CableBlockEntity.Aim aim = CableBlock.aimOf(minecraft.level, pos, minecraft.player);
-        if (aim.isNothing()) {
+        VoxelShape outline = aim.isNothing() ? null : aim.outline();
+        if (outline == null && minecraft.level.getBlockEntity(pos) instanceof SpaceBlockEntity) {
+            final SpaceParts.Hit hit = SpaceBlock.aimOf(minecraft.level, pos, minecraft.player);
+            outline = hit == null ? null : hit.outline();
+        }
+        if (outline == null) {
             return;
         }
         final Vec3 camera = event.getCamera().getPosition();
-        drawOutline(event.getPoseStack(), event.getMultiBufferSource().getBuffer(RenderType.lines()), aim.outline(),
+        drawOutline(event.getPoseStack(), event.getMultiBufferSource().getBuffer(RenderType.lines()), outline,
                 pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
         event.setCanceled(true);
     }

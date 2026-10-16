@@ -37,7 +37,7 @@ public final class PartCapabilities {
     /** Has every block entity of {@code type} answer, on a face, with what its part there offers. */
     public static <B extends BlockEntity> void register(final RegisterCapabilitiesEvent event,
                                                         final BlockEntityType<B> type,
-                                                        final Function<B, FaceParts> parts) {
+                                                        final Function<B, SpaceParts> parts) {
         final List<BlockCapability<?, @Nullable Direction>> capabilities = new ArrayList<>(List.of(
                 Capabilities.ItemHandler.BLOCK, Capabilities.FluidHandler.BLOCK, Capabilities.EnergyStorage.BLOCK));
         for (final CapabilityKind<?> kind : CapabilityKinds.all()) {
@@ -49,7 +49,7 @@ public final class PartCapabilities {
     }
 
     private static <T, B extends BlockEntity> void registerOne(
-            final RegisterCapabilitiesEvent event, final BlockEntityType<B> type, final Function<B, FaceParts> parts,
+            final RegisterCapabilitiesEvent event, final BlockEntityType<B> type, final Function<B, SpaceParts> parts,
             final BlockCapability<T, @Nullable Direction> capability) {
         event.registerBlockEntity(capability, type, (host, face) -> {
             if (face == null) {

@@ -109,7 +109,7 @@
   "items": [
     "jscore:signal_probe"
   ],
-  "order": 15,
+  "order": 16,
   "section": "cables",
   "title": "jscore.guide.signal_probe.title"
 }

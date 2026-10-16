@@ -10,11 +10,12 @@ package dev.jstech.core.jstechseries.tools;
 import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.jstechseries.probe.NetworkProbe;
 import dev.jstech.core.jstechseries.probe.SignalProbe;
+import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.registry.CoreItems;
 
 /**
- * The pages of the series' shared tools in the Core's chapter of the manual: the Basic Wrench, the Network Probe and
- * the Signal Probe.
+ * The pages of the series' shared tools in the Core's chapter of the manual: the Basic Wrench, the Configuration Card,
+ * the saw with the microblocks it cuts, the Network Probe and the Signal Probe.
  */
 public final class ToolsGuide {
 
@@ -77,6 +78,40 @@ public final class ToolsGuide {
                                 + "same kind.",
                         "Pasting over a box does nothing.",
                         "The box holds more than 4,096 blocks: mark a smaller one.")
+                .register();
+        CoreItems.CONTENT.guide().page("saw", CABLES).titled("Saw and Microblocks")
+                .icon(SharedTools.SAW::get).covers(SharedTools.SAW::get).covers(CoreSpaces.MICROBLOCK::get)
+                .whatItIs("A blade of iron on a wooden handle, the series' shared saw, and the microblocks it cuts: "
+                        + "pieces of any full block, of any mod.")
+                .whatItIsFor("Building in pieces smaller than a block, and dressing cables: several pieces, cables "
+                        + "and the parts on them share one block space.")
+                .table("The pieces")
+                .property("Slab, panel, cover", "A half, a quarter and an eighth of a block against one face, and "
+                        + "the thicknesses between")
+                .property("Hollow", "A piece on a face with a hole in its middle, through which a cable still links")
+                .property("Post", "A bar along an edge of the block, or through its middle")
+                .property("Corner", "A cube in one corner of the block")
+                .property("Facade", "A cover joined with a cable: it hides the cable behind it, which keeps working")
+                .table("Where the saw lies in the crafting grid")
+                .property("Above the piece", "Two halves: a block gives two slabs, a slab two panels, a panel two "
+                        + "covers")
+                .property("Beside it", "Cut across: a piece on a face gives two posts, a post two corners")
+                .property("At a corner of it", "Hollowed: a piece on a face gives one with a hole")
+                .howToGetIt("Craft the saw of a stick and two iron ingots in a row. Each cut wears it a little, and "
+                        + "it stays in the grid.")
+                .howToUseIt("Place a piece against the face of a block to put it in the space beyond; place it on "
+                                + "the side of a piece already in a space to put it in that same space.",
+                        "A post goes on the edge nearest where you click, or through the middle when you click near "
+                                + "the face's middle; a corner in the nearest corner.",
+                        "Two pieces of one shape and one block, side by side in the grid, join into one as thick as "
+                                + "both; two slabs make the block again.",
+                        "Join a cover with a piece of any cable to make a facade, and place it on a cable's face.",
+                        "Break a piece to take only it, with its drop; the others stay.")
+                .whatCanGoWrong("A piece is not placed.",
+                        "Something already fills that place, it would overlap a piece there or reach into a cable, "
+                                + "or someone stands in it. On a cable, use a cover, a panel or a hollow piece.",
+                        "A cable stops linking on a face.",
+                        "A whole cover closes the face; use a hollow one or a facade there.")
                 .register();
         CoreItems.CONTENT.guide().page("network_probe", CABLES).titled("Network Probe")
                 .icon(NetworkProbe.ITEM::get).covers(NetworkProbe.ITEM::get)

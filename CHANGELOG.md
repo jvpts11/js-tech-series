@@ -420,6 +420,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   would place each block, stopping and saying why when it runs out, the player walks away or a place is protected.
   HOLD holds it, SHOW shows the multiblock's ghosts, LIGHT lights the display. Servers set how fast it builds and how
   far the player may walk; other mods can add a source of blocks of their own.
+- (Core) Microblocks of any full block of any mod: covers, panels, slabs and the thicknesses between, hollow pieces,
+  posts and corners, drawn from the block's own textures. Several share one block space, a cable's included, each
+  placed where the click puts it, hit, outlined and broken on its own with its own drop, and a block space of pieces
+  alone is made where nothing stands. A whole cover closes a cable's face; a hollow one lets the cable through.
+- (Core) The saw, a tool of the series' shared content, of a stick and two iron ingots: in the crafting grid, above a
+  block or a piece it cuts two halves, beside one it cuts posts and corners, at a corner of one it hollows it; each
+  cut wears it. Two pieces of one shape and block join into one as thick as both, and two slabs make the block again.
+  Any mod's saw cuts alike, and a pack can keep a block from being cut.
+- (Core) Facades: a cover joined with any cable hides the cable behind it on its face, while the cable keeps working.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

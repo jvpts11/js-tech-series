@@ -13,6 +13,7 @@ import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.core.jstechseries.tools.SharedTools;
+import dev.jstech.core.multipart.MicroblockRecipes;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
@@ -21,6 +22,7 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.data.recipes.SpecialRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -75,6 +77,14 @@ public final class SeriesRecipes extends RecipeProvider {
         ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, SharedTools.CARD.get())
                 .requires(Items.PAPER).requires(Items.REDSTONE).requires(Items.GOLD_NUGGET)
                 .unlockedBy("has_redstone", has(Items.REDSTONE)).save(output, id("configuration_card"));
+        // A blade of iron on a wooden handle.
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, SharedTools.SAW.get())
+                .pattern("SII").define('S', Items.STICK).define('I', Items.IRON_INGOT)
+                .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT)).save(output, id("saw"));
+        // The saw's cuts, two pieces joined, and a cover joined with a cable: rules for every block of every mod.
+        SpecialRecipeBuilder.special(MicroblockRecipes.SawCut::new).save(output, id("saw_cut"));
+        SpecialRecipeBuilder.special(MicroblockRecipes.Join::new).save(output, id("microblock_join"));
+        SpecialRecipeBuilder.special(MicroblockRecipes.Facade::new).save(output, id("facade"));
         converters(output);
     }
 

@@ -12,11 +12,11 @@ import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.CoreParts;
-import dev.jstech.core.multipart.FaceParts;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.multipart.PartBoxes;
 import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.multipart.SpaceParts;
 import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.tests.JsTests;
@@ -73,12 +73,9 @@ public final class MultipartGameTests {
         same(helper, ComputingParts.IMPORT.get(), cable.partType(Direction.NORTH), "the kind on the north face");
         helper.assertTrue(Shapes.joinIsNotEmpty(cable.voxelShape(), PartBoxes.shape(Direction.NORTH),
                 (a, b) -> a && b), "the part's plate in the block's shape");
-        try {
-            cable.addPart(Direction.NORTH, ComputingParts.EXPORT.get().create());
-            helper.fail("a second part on the north face was not refused");
-        } catch (final IllegalStateException expected) {
-            // One part a face.
-        }
+        helper.assertTrue(!cable.addPart(Direction.NORTH, ComputingParts.EXPORT.get().create()),
+                "a second part on the north face is refused");
+        same(helper, ComputingParts.IMPORT.get(), cable.partType(Direction.NORTH), "the first part still there");
         helper.succeed();
     }
 
@@ -134,7 +131,7 @@ public final class MultipartGameTests {
         final PartType<LoosePart> loose = new PartType<>(LoosePart::new,
                 TextKey.of("jstests.loose_part", "Loose part"),
                 ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "block/loose_part"));
-        final FaceParts parts = new FaceParts(new LooseHost());
+        final SpaceParts parts = new SpaceParts(new LooseHost());
         boolean refused = false;
         try {
             parts.add(Direction.UP, loose.create());

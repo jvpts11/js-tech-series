@@ -8,6 +8,7 @@
 package dev.jstech.core.cable;
 
 import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.SpaceBreaking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -44,20 +45,26 @@ public final class CableBreaking {
         }
         event.setCanceled(true);
         final ItemStack back;
-        if (aim.part() != null) {
+        if (aim.microblock()) {
+            back = SpaceBreaking.takeOut(level, cable.parts(), aim.micro());
+            if (back.isEmpty()) {
+                return;
+            }
+        } else if (aim.part() != null) {
             final IFacePart part = cable.removePart(aim.part());
             if (part == null) {
                 return;
             }
             part.dropContents(level);
             back = part.partItem();
+            level.playSound(null, pos, SoundType.WOOL.getBreakSound(), SoundSource.BLOCKS, 1.0F, 0.9F);
         } else {
             if (!cable.take(aim.wire().type())) {
                 return;
             }
             back = aim.wire().type().stack();
+            level.playSound(null, pos, SoundType.WOOL.getBreakSound(), SoundSource.BLOCKS, 1.0F, 0.9F);
         }
-        level.playSound(null, pos, SoundType.WOOL.getBreakSound(), SoundSource.BLOCKS, 1.0F, 0.9F);
         if (!player.getAbilities().instabuild && !player.getInventory().add(back)) {
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), back);
         }

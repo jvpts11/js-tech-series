@@ -8,6 +8,8 @@
 package dev.jstech.core.client.model;
 
 import com.mojang.math.Transformation;
+import dev.jstech.core.multipart.Microblock;
+import dev.jstech.core.multipart.MicroblockLayout;
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PlacedModel;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
@@ -43,6 +46,8 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
     private static final Map<PlacedModel, List<BakedQuad>> PLACED = new ConcurrentHashMap<>();
     private static final ChunkRenderTypeSet CUTOUT = ChunkRenderTypeSet.of(RenderType.cutout());
     private static final float PIXEL = 1F / 16F;
+    /* Microblocks in a space stand where they stand: moved by nothing. */
+    private static final float[] IN_PLACE = {0F, 0F, 0F};
 
     public MultipartBakedModel(final BakedModel base) {
         super(base);
@@ -59,14 +64,25 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
                                     @Nullable final RenderType renderType) {
         final List<BakedQuad> own = super.getQuads(state, side, random, data, renderType);
         final ModelLayout layout = data.get(ModelLayout.PROPERTY);
-        // Placed models are never culled by a face: they are drawn with the quads that belong to no side.
-        if (layout == null || layout.isEmpty() || side != null
-                || renderType != null && renderType != RenderType.cutout()) {
+        final MicroblockLayout micro = data.get(MicroblockLayout.PROPERTY);
+        final boolean placesModels = layout != null && !layout.isEmpty() && side == null
+                && (renderType == null || renderType == RenderType.cutout());
+        if (!placesModels && (micro == null || micro.isEmpty())) {
             return own;
         }
         final List<BakedQuad> out = new ArrayList<>(own);
-        for (final PlacedModel placed : layout.models()) {
-            out.addAll(PLACED.computeIfAbsent(placed, MultipartBakedModel::place));
+        // Placed models are never culled by a face: they are drawn with the quads that belong to no side.
+        if (placesModels) {
+            for (final PlacedModel placed : layout.models()) {
+                out.addAll(PLACED.computeIfAbsent(placed, MultipartBakedModel::place));
+            }
+        }
+        if (micro != null) {
+            for (final Microblock block : micro.blocks()) {
+                if (renderType == null || MicroblockQuads.renderTypes(block).contains(renderType)) {
+                    out.addAll(MicroblockQuads.quads(block, side, IN_PLACE));
+                }
+            }
         }
         return out;
     }
@@ -74,9 +90,26 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
     @Override
     public ChunkRenderTypeSet getRenderTypes(final BlockState state, final RandomSource random,
                                              final ModelData data) {
-        final ChunkRenderTypeSet own = super.getRenderTypes(state, random, data);
+        ChunkRenderTypeSet types = super.getRenderTypes(state, random, data);
         final ModelLayout layout = data.get(ModelLayout.PROPERTY);
-        return layout == null || layout.isEmpty() ? own : ChunkRenderTypeSet.union(own, CUTOUT);
+        if (layout != null && !layout.isEmpty()) {
+            types = ChunkRenderTypeSet.union(types, CUTOUT);
+        }
+        final MicroblockLayout micro = data.get(MicroblockLayout.PROPERTY);
+        if (micro != null) {
+            for (final Microblock block : micro.blocks()) {
+                types = ChunkRenderTypeSet.union(types, MicroblockQuads.renderTypes(block));
+            }
+        }
+        return types;
+    }
+
+    /* A space of microblocks breaks into what its first microblock was cut from. */
+    @Override
+    public TextureAtlasSprite getParticleIcon(final ModelData data) {
+        final MicroblockLayout micro = data.get(MicroblockLayout.PROPERTY);
+        return micro == null || micro.isEmpty() ? super.getParticleIcon(data)
+                : MicroblockQuads.particle(micro.blocks().getFirst().piece().material());
     }
 
     /* Every quad of the placed model, turned to its facing about the block's middle and moved by its offset. */

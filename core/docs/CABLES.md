@@ -266,6 +266,10 @@ A part (`IFacePart`) says its type, is attached to its host and face, saves and 
 a player's use, and gives back its item when broken. A part on a face closes that face to wires. Its model is a
 plain block model facing north; the block's model is rebuilt only when a part starts or stops working.
 
+The cable block is a block space like any other: microblocks share it with the wires and the parts, a whole cover
+closes its face to wires as a part does, a hollow cover lets them through, and a facade hides them while they keep
+working ([Block spaces and microblocks](MULTIPART.md)).
+
 ## What can go wrong
 
 - **"two lines in one lane".** Your line took a lane another line owns. Pick a free one.

@@ -17,6 +17,7 @@ says what the Core promises and what it does not yet.
 | [Text and colour](TEXT_AND_COLOUR.md) | Sentences in every language, and the palettes screens paint with. |
 | [Machines](MACHINES.md) | Processing machines, recipes with counts and fluids, upgrades, JEI and EMI. |
 | [Multiblocks](MULTIBLOCKS.md) | Shapes of many blocks, as data, with ports. |
+| [Block spaces and microblocks](MULTIPART.md) | Several things in one block space, microblocks of any block, the saw, facades. |
 | [Entities](ENTITIES.md) | Entities, vehicles, robots, projectiles, and what is worn. |
 
 ## Moving things

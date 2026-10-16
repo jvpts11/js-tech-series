@@ -10,6 +10,7 @@ package dev.jstech.core.cable;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.connect.Neighbours;
 import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.SpaceBlock;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -143,6 +144,9 @@ public final class CableBlock extends Block implements EntityBlock {
         final CableBlockEntity.Aim aim = aimOf(level, pos, player);
         if (aim.wire() != null) {
             return aim.wire().type().stack();
+        }
+        if (aim.microblock() && level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
+            return SpaceBlock.itemOf(cable.parts(), aim.micro());
         }
         if (aim.part() != null && level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
             final IFacePart part = cable.getPart(aim.part());

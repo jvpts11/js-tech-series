@@ -48,6 +48,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.ItemLike;
@@ -317,6 +318,19 @@ public final class ModContent {
                 serializer).alsoWorkedBy(machine);
         declaredProcessing.add(kind[0]);
         return kind[0];
+    }
+
+    /**
+     * Declares a serializer of recipes of this mod named {@code id}: a special crafting recipe's, whose rule is code
+     * rather than a pattern, as the saw's cuts are.
+     */
+    public <R extends Recipe<?>> DeferredHolder<RecipeSerializer<?>, RecipeSerializer<R>> recipeSerializer(
+            final String id, final Supplier<RecipeSerializer<R>> serializer) {
+        if (recipeTypes == null) {
+            recipeTypes = DeferredRegister.create(Registries.RECIPE_TYPE, modid);
+            recipeSerializers = DeferredRegister.create(Registries.RECIPE_SERIALIZER, modid);
+        }
+        return recipeSerializers.register(id, serializer);
     }
 
     /** The kinds of processing machine declared so far, in declaration order. */

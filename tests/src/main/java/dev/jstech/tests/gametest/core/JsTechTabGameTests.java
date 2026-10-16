@@ -15,6 +15,7 @@ import dev.jstech.core.material.MaterialItems;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -62,7 +63,9 @@ public final class JsTechTabGameTests {
             helper.assertTrue(shown.contains(material.get()) == SharedUses.used(material.get()),
                     material.getId() + " is shown only while a mod says it uses it");
         }
-        helper.assertTrue(shown.equals(JsTechTab.shown()), "the tab shows what it says it shows: " + shown);
+        // An item may show in several stacks, as each shape of microblock is; the items, once each, are what it says.
+        final List<Item> items = new ArrayList<>(new LinkedHashSet<>(shown));
+        helper.assertTrue(items.equals(JsTechTab.shown()), "the tab shows what it says it shows: " + items);
         helper.succeed();
     }
 

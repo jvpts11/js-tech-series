@@ -17,13 +17,17 @@ import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.grid.IGridMover;
-import dev.jstech.core.multipart.FaceParts;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
+import dev.jstech.core.multipart.ISpaceHolder;
+import dev.jstech.core.multipart.Microblock;
+import dev.jstech.core.multipart.MicroblockLayout;
 import dev.jstech.core.multipart.ModelLayout;
-import dev.jstech.core.multipart.PartBoxes;
+import dev.jstech.core.multipart.PartBox;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.multipart.PlacedModel;
+import dev.jstech.core.multipart.SpaceParts;
+import dev.jstech.core.multipart.SpaceSlots;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -68,15 +72,15 @@ import org.jetbrains.annotations.Nullable;
  * <p>Which faces each wire crosses is worked out on the server when the block or a neighbour changes, kept in the save
  * and sent to the players who see the block, who draw and shape the wires from it.
  */
-public final class CableBlockEntity extends SyncedBlockEntity implements IPartHost {
+public final class CableBlockEntity extends SyncedBlockEntity implements IPartHost, ISpaceHolder {
 
     private final Bundle bundle = new Bundle(this::bundleChanged);
-    private final FaceParts parts = new FaceParts(this);
+    private final SpaceParts parts = new SpaceParts(this);
     /* Each lane's faces: the low six bits those its wire crosses, the six from bit 8 those it meets a device on. */
     private final int[] links = new int[Lane.COUNT];
     private final Map<Lane, NetworkUuid> savedNetworks = new EnumMap<>(Lane.class);
     private final PartField wiresField = fields().part(Bundle.KEY, this.bundle).save().toClient();
-    private final PartField partsField = fields().part(FaceParts.KEY, this.parts).save().toClient();
+    private final PartField partsField = fields().part(SpaceParts.KEY, this.parts).save().toClient();
     private final PartField linksField = fields().part(LINKS, new LinksPart()).save().toClient();
     private final CableEnds ends = new CableEnds(this::endsChanged);
     private final PartField endsField = fields().part(CableEnds.KEY, this.ends).save().toClient();
@@ -136,13 +140,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
 
     /** How many pieces the block holds: its wires and its parts. */
     public int pieces() {
-        int count = this.bundle.size();
-        for (final Direction face : Direction.values()) {
-            if (this.parts.has(face)) {
-                count++;
-            }
-        }
-        return count;
+        return this.bundle.size() + this.parts.count();
     }
 
     /** Lays {@code wire}, on the server; false when the block does not take it. */
@@ -289,11 +287,13 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
 
     // The parts
 
-    /** The parts on the block's faces. */
-    public FaceParts parts() {
+    /** The parts standing in the block: the devices on its faces and its microblocks. */
+    @Override
+    public SpaceParts parts() {
         return this.parts;
     }
 
+    /** Whether anything stands on {@code face}: a device or a microblock. */
     public boolean hasPart(final Direction face) {
         return this.parts.has(face);
     }
@@ -306,8 +306,9 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         return this.parts.get(face);
     }
 
-    public void addPart(final Direction face, final IFacePart part) {
-        this.parts.add(face, part);
+    /** Mounts {@code part} on {@code face}, when it fits there; whether it was. */
+    public boolean addPart(final Direction face, final IFacePart part) {
+        return this.parts.add(face, part);
     }
 
     public @Nullable IFacePart removePart(final Direction face) {
@@ -346,6 +347,33 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     @Override
     public void partLooksChanged() {
         this.partsField.changed();
+    }
+
+    /* The wires and their junction box: only a part against a face may share their room. */
+    @Override
+    public List<PartBox> middle() {
+        final List<PartBox> out = new ArrayList<>();
+        for (final BundleShape.Piece piece : shape().pieces()) {
+            if (piece.kind() == BundleShape.Kind.JACKET || piece.kind() == BundleShape.Kind.HOUSING) {
+                final BundleShape.Box box = piece.box();
+                final int x0 = clampPixel(Math.floor(box.minX()));
+                final int y0 = clampPixel(Math.floor(box.minY()));
+                final int z0 = clampPixel(Math.floor(box.minZ()));
+                final int x1 = clampPixel(Math.ceil(box.maxX()));
+                final int y1 = clampPixel(Math.ceil(box.maxY()));
+                final int z1 = clampPixel(Math.ceil(box.maxZ()));
+                if (x0 < x1 && y0 < y1 && z0 < z1) {
+                    out.add(new PartBox(x0, y0, z0, x1, y1, z1));
+                }
+            }
+        }
+        return out;
+    }
+
+    /* A cable's faces take facades, which hide its wires and leave its links open. */
+    @Override
+    public boolean takesFacades() {
+        return true;
     }
 
     // Shape, aim and drops
@@ -395,15 +423,12 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         final BlockPos pos = this.worldPosition;
         double best = Double.MAX_VALUE;
         Aim picked = Aim.NOTHING;
-        for (final Direction face : Direction.values()) {
-            if (!this.parts.has(face)) {
-                continue;
-            }
-            final BlockHitResult hit = PartBoxes.shape(face).clip(start, end, pos);
-            if (hit != null && start.distanceToSqr(hit.getLocation()) < best) {
-                best = start.distanceToSqr(hit.getLocation());
-                picked = new Aim(face, null, PartBoxes.shape(face));
-            }
+        final SpaceParts.Hit part = this.parts.aim(pos, start, end);
+        if (part != null) {
+            best = part.distance();
+            final Microblock block = this.parts.microblock(part.slot());
+            picked = block != null ? new Aim(null, null, part.outline(), part.slot())
+                    : new Aim(Direction.from3DDataValue(SpaceSlots.faceOf(part.slot())), null, part.outline());
         }
         final BundleShape bundleShape = shape();
         final List<Wire> wires = this.bundle.wires();
@@ -430,12 +455,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         for (final Wire wire : this.bundle.wires()) {
             out.add(wire.type().stack());
         }
-        for (final Direction face : Direction.values()) {
-            final IFacePart part = this.parts.get(face);
-            if (part != null) {
-                out.add(part.partItem());
-            }
-        }
+        out.addAll(this.parts.drops());
         return out;
     }
 
@@ -491,8 +511,11 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             shown.add(flow(wire.slot()));
             windows |= wire.type().window().isPresent();
         }
+        final List<Microblock> standing = this.parts.microblocks();
         return ModelData.builder()
                 .with(ModelLayout.PROPERTY, parts.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(parts))
+                .with(MicroblockLayout.PROPERTY, standing.isEmpty() ? MicroblockLayout.EMPTY
+                        : new MicroblockLayout(standing))
                 .with(CablePlugs.PROPERTY, sockets.isEmpty() ? CablePlugs.NONE : new CablePlugs(sockets))
                 .with(CableDrawing.PROPERTY, drawing())
                 .with(CableFlowView.PROPERTY, windows ? new CableFlowView(shown) : CableFlowView.NONE)
@@ -576,7 +599,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         for (final Direction face : Direction.values()) {
             final int bit = 1 << face.get3DDataValue();
             final BlockPos next = this.worldPosition.relative(face);
-            if (this.parts.has(face) || this.ends.get(wire.slot(), face).mode() == EndMode.OFF) {
+            if (this.parts.cutsLink(face) || this.ends.get(wire.slot(), face).mode() == EndMode.OFF) {
                 continue;
             }
             if (!server.isLoaded(next)) {
@@ -588,7 +611,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             if (state.getBlock() instanceof CableBlock) {
                 if (server.getBlockEntity(next) instanceof CableBlockEntity other) {
                     final Wire there = other.bundle.of(wire.type());
-                    if (there != null && wire.joins(there) && !other.parts.has(face.getOpposite())
+                    if (there != null && wire.joins(there) && !other.parts.cutsLink(face.getOpposite())
                             && other.ends.get(there.slot(), face.getOpposite()).mode() != EndMode.OFF
                             && other.roomFor(wire.type(), face.getOpposite())) {
                         linked |= bit;
@@ -684,6 +707,10 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         return made;
     }
 
+    private static int clampPixel(final double pixels) {
+        return (int) Math.max(0, Math.min(PartBox.SIDE, pixels));
+    }
+
     private static VoxelShape voxel(final BundleShape.Box box) {
         return Shapes.box(box.minX() * PIXEL, box.minY() * PIXEL, box.minZ() * PIXEL,
                 box.maxX() * PIXEL, box.maxY() * PIXEL, box.maxZ() * PIXEL);
@@ -701,20 +728,34 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     }
 
     /**
-     * What a player aims at in a cable block: a part, a wire, or nothing in it; and the outline that shows it.
+     * What a player aims at in a cable block: a device on a face, a microblock, a wire, or nothing in it; and the
+     * outline that shows it.
      *
-     * @param part    the face whose part is aimed at, or null
+     * @param part    the face whose device is aimed at, or null
      * @param wire    the wire aimed at, or null
      * @param outline the outline to draw, within the block
+     * @param micro   the place of the microblock aimed at, or {@link #NO_MICROBLOCK}
      */
-    public record Aim(@Nullable Direction part, @Nullable Wire wire, VoxelShape outline) {
+    public record Aim(@Nullable Direction part, @Nullable Wire wire, VoxelShape outline, int micro) {
 
+        /** The mark of no microblock aimed at. */
+        public static final int NO_MICROBLOCK = -1;
         /** Nothing in the block. */
         public static final Aim NOTHING = new Aim(null, null, Shapes.empty());
 
+        /** A device or a wire aimed at, no microblock. */
+        public Aim(@Nullable final Direction part, @Nullable final Wire wire, final VoxelShape outline) {
+            this(part, wire, outline, NO_MICROBLOCK);
+        }
+
         /** Whether it picks nothing. */
         public boolean isNothing() {
-            return this.part == null && this.wire == null;
+            return this.part == null && this.wire == null && this.micro == NO_MICROBLOCK;
+        }
+
+        /** Whether it picks a microblock. */
+        public boolean microblock() {
+            return this.micro != NO_MICROBLOCK;
         }
     }
 
