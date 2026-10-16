@@ -11,6 +11,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.core.api.client.GpuSurface;
 import dev.jstech.core.client.audio.AudioEngine;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.model.kit.SceneRenderer;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuidePiece;
@@ -310,7 +311,9 @@ final class ManualScenes {
             // What the screen has drawn so far goes onto it before the scene's own target is drawn into.
             g.flush();
             state.level.showLayers(state.layers);
-            SceneRenderer.draw(state.level, state.scene, state.view, state.surface);
+            final SceneProjection projection = new SceneProjection(state.scene, state.view, pixelsWide, pixelsTall);
+            SceneRenderer.draw(state.surface, SceneRenderer.View.of(projection.middle(), state.view.yaw(),
+                    state.view.pitch(), (float) projection.scale()), new SceneLevelPainter(state.level));
             state.stale = false;
         }
         RenderSystem.enableBlend();

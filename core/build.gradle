@@ -29,11 +29,13 @@ dependencies {
         }
     }
     /*
-     * The TOML and JSON libraries the settings formats are written on come with the game, and the unit tests run
-     * without it; they get the same two, at the versions NeoForge brings, and nothing else of the game.
+     * The TOML and JSON libraries the settings formats are written on, and the vector library the models are worked
+     * out with, come with the game, and the unit tests run without it; they get the same three, at the versions the
+     * game and NeoForge bring, and nothing else of the game. The model tests read model files as JSON themselves.
      */
     testRuntimeOnly 'com.electronwill.night-config:toml:3.8.3'
-    testRuntimeOnly 'com.google.code.gson:gson:2.10.1'
+    testImplementation 'com.google.code.gson:gson:2.10.1'
+    testImplementation 'org.joml:joml:1.10.5'
 
     // Mekanism API: the chemical bridge compiles against it, but no Mekanism class is loaded unless Mekanism is
     // present (soft dependency, guarded at runtime).

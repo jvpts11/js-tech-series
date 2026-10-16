@@ -89,6 +89,10 @@ loaded from. When files there change and then stay as they are for a moment, the
 resources and the server its data packs, as F3+T and `/reload` would. Edit a texture or a recipe, build the
 resources (in IntelliJ, Build), and look again: nothing to press. A packed game watches nothing.
 
+*Added 2026-10-16.* A change to nothing but the files of the Core's models (anything in a `jsmodels` folder, or a model
+of a format only the Core reads) reads the models alone again, at once, instead of every resource; an open preview of
+a model shows the change ([Models](MODELS.md#while-you-build)).
+
 ## What can go wrong
 
 - **A listener never runs.** Its class's `listen` is not called from the mod's constructor, or a client class is

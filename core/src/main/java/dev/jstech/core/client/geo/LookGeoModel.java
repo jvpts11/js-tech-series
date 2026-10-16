@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.geo;
 
+import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
 import dev.jstech.core.content.GeoLook;
 import java.util.Objects;
 import java.util.function.Function;
@@ -17,6 +18,8 @@ import software.bernie.geckolib.model.GeoModel;
 /**
  * The GeckoLib model of anything drawn the way a {@link GeoLook} says, on the player's game: one class for every
  * family, in place of a model class copied for each. Only a mod that draws with GeckoLib, and so brings it, loads it.
+ * The Core's own models draw the same family from the same files with {@link KitBlockEntityRenderer#look}, and need
+ * no GeckoLib.
  *
  * @param <T> what is drawn
  */

@@ -64,6 +64,9 @@ public final class ContentData {
         if (!content.declaredFonts().isEmpty()) {
             data.client(new FontSheetProvider(output, content, data.existingFiles()));
         }
+        if (!content.declaredModels().isEmpty()) {
+            data.client(new ModelDefinitionProvider(output, content, data.existingFiles()));
+        }
         data.server(new ContentLootProvider(output, data.lookup(), content));
         data.server(new ContentBlockTagsProvider(output, data.lookup(), content, data.existingFiles()));
         if (ContentItemTagsProvider.hasTags(content)) {

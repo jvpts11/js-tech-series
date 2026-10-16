@@ -7,7 +7,9 @@
  */
 package dev.jstech.core.developer;
 
+import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.log.CoreLogs;
+import dev.jstech.core.model.ModelReaders;
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
@@ -31,8 +33,9 @@ import org.slf4j.Logger;
 /**
  * Data and assets reloaded as they change, in a development run: the {@code assets} and {@code data} folders every mod
  * of the run is loaded from are watched, and once their files stop changing for a moment the server reloads its data
- * packs and the player's game its resources, as {@code /reload} and F3+T would, without anyone asking. A packed game
- * watches nothing.
+ * packs and the player's game its resources, as {@code /reload} and F3+T would, without anyone asking. A change to
+ * nothing but the files of the Core's models (their models, animations and definitions) reads the models alone
+ * again, at once, instead of every resource. A packed game watches nothing.
  */
 public final class LiveReload {
 
@@ -40,6 +43,7 @@ public final class LiveReload {
     /** How long the files have to stay as they are before a reload: an editor's save or a build's copy is over. */
     private static final long QUIET_MILLIS = 750;
     private static final ResourceChanges ASSETS = new ResourceChanges(QUIET_MILLIS);
+    private static final ResourceChanges MODELS = new ResourceChanges(QUIET_MILLIS);
     private static final ResourceChanges DATA = new ResourceChanges(QUIET_MILLIS);
     private static final AtomicInteger DATA_RELOADS = new AtomicInteger();
     /* What each watched folder holds, assets or data, by the key the watch service hands back for it. */
@@ -90,6 +94,14 @@ public final class LiveReload {
     /** How many asset files changed and have since stayed as they are, for the player's game to reload; once. */
     public static int takeAssetChanges() {
         return ASSETS.take(System.currentTimeMillis());
+    }
+
+    /**
+     * How many files of the Core's models changed and have since stayed as they are, for the player's game to read
+     * its models again; once.
+     */
+    public static int takeModelChanges() {
+        return MODELS.take(System.currentTimeMillis());
     }
 
     /** How many times the server reloaded its data packs for a change; for a test to look at. */
@@ -156,11 +168,27 @@ public final class LiveReload {
                         LOGGER.warn("a new folder cannot be watched: {}", changed, unwatchable);
                     }
                 }
-                (assets ? ASSETS : DATA).changed(System.currentTimeMillis());
+                final ResourceChanges changes = !assets ? DATA : modelFile(changed) ? MODELS : ASSETS;
+                changes.changed(System.currentTimeMillis());
             }
             if (!key.reset()) {
                 HOLDS_ASSETS.remove(key);
             }
         }
+    }
+
+    /*
+     * Whether a changed file is one only the Core's models read: anything in their folder, or a model of a format no
+     * other reader of the game's knows. A geometry or animation file of Bedrock's elsewhere is GeckoLib's too, and
+     * reloads every resource.
+     */
+    private static boolean modelFile(final Path changed) {
+        for (final Path part : changed) {
+            if (part.toString().equals(DeclaredModel.FOLDER)) {
+                return true;
+            }
+        }
+        final String name = changed.getFileName().toString();
+        return ModelReaders.readsModel(name) && !name.endsWith(".geo.json");
     }
 }

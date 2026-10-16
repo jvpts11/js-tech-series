@@ -1,0 +1,176 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Core.
+ */
+package dev.jstech.core.content;
+
+import dev.jstech.core.model.ModelDefinition;
+import dev.jstech.core.model.ModelReaders;
+import dev.jstech.core.util.DeclarationError;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Everything about one model drawn with the Core's models, said once: its file, of any format the Core reads, the
+ * textures it is painted with, the animation files it plays from, and how it is drawn. The data run writes its
+ * definition, and checks that every file it names is there. Every file is a path under the mod's {@code assets}
+ * folder.
+ *
+ * <pre>{@code
+ * public static final DeclaredModel FAN = CONTENT.model("fan")
+ *         .file("jsmodels/fan.bbmodel")
+ *         .texture("textures/block/fan.png")
+ *         .animations("animations/fan.animation.json")
+ *         .glow("lamp")
+ *         .variant(on -> on.when("powered", "true").show("lamp"))
+ *         .register();
+ * }</pre>
+ */
+public final class ModelBuilder {
+
+    private final ModContent content;
+    private final String path;
+    private @Nullable String file;
+    private final List<String> textures = new ArrayList<>();
+    private final List<String> animations = new ArrayList<>();
+    private final Set<String> glow = new LinkedHashSet<>();
+    private final List<ModelDefinition.Variant> variants = new ArrayList<>();
+    private boolean translucent;
+    private boolean cracks = true;
+
+    ModelBuilder(final ModContent content, final String path) {
+        this.content = content;
+        this.path = path;
+    }
+
+    /** The model file, of any format the Core reads. */
+    public ModelBuilder file(final String modelFile) {
+        this.file = modelFile;
+        return this;
+    }
+
+    /** A texture it is painted with; the first is for every face that names none. */
+    public ModelBuilder texture(final String textureFile) {
+        this.textures.add(textureFile);
+        return this;
+    }
+
+    /** Animation files it plays from, besides the animations its own file carries. */
+    public ModelBuilder animations(final String... animationFiles) {
+        this.animations.addAll(List.of(animationFiles));
+        return this;
+    }
+
+    /** It is see-through, its parts drawn back to front. */
+    public ModelBuilder translucent() {
+        this.translucent = true;
+        return this;
+    }
+
+    /** Bones that glow in the dark, besides those whose names end in {@code _glow}. */
+    public ModelBuilder glow(final String... bones) {
+        this.glow.addAll(List.of(bones));
+        return this;
+    }
+
+    /** A block drawn with it shows no cracks as it is broken, as one whose model is not the block's shape. */
+    public ModelBuilder noCracks() {
+        this.cracks = false;
+        return this;
+    }
+
+    /** A variant chosen by the state of the block it is drawn for, as {@code variant} says. */
+    public ModelBuilder variant(final Consumer<VariantBuilder> variant) {
+        final VariantBuilder builder = new VariantBuilder();
+        variant.accept(builder);
+        this.variants.add(builder.build(this.content.modid()));
+        return this;
+    }
+
+    /**
+     * Declares the model.
+     *
+     * @throws DeclarationError when it names no file, or one of no format the Core reads
+     */
+    public DeclaredModel register() {
+        final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(this.content.modid(), this.path);
+        if (this.file == null) {
+            throw DeclarationError.of(this.content.modid(), "the model " + id, "names no model file",
+                    "name it with file(...) before register()");
+        }
+        if (!ModelReaders.readsModel(this.file)) {
+            throw DeclarationError.of(this.content.modid(), "the model " + id, "names " + this.file
+                    + ", of no format the Core reads", "use a file ending in one of " + ModelReaders.MODEL_ENDINGS);
+        }
+        final String modid = this.content.modid();
+        final DeclaredModel model = new DeclaredModel(id, new ModelDefinition(full(modid, this.file),
+                this.textures.stream().map(each -> full(modid, each)).toList(),
+                this.animations.stream().map(each -> full(modid, each)).toList(), this.translucent, this.glow,
+                this.cracks, this.variants));
+        this.content.declare(model);
+        return model;
+    }
+
+    /* A path under the mod's assets as the definition names it, with the mod before it; one naming a mod stays. */
+    private static String full(final String modid, final String file) {
+        return file.indexOf(':') >= 0 ? file : modid + ":" + file;
+    }
+
+    /** One variant of a model, chosen by the state of the block it is drawn for. */
+    public static final class VariantBuilder {
+
+        private final Map<String, String> when = new LinkedHashMap<>();
+        private final Set<String> hidden = new LinkedHashSet<>();
+        private final Set<String> shown = new LinkedHashSet<>();
+        private String model = "";
+        private String texture = "";
+
+        VariantBuilder() {
+        }
+
+        /** It is chosen when the block's property {@code property} has the value {@code value}, as written. */
+        public VariantBuilder when(final String property, final String value) {
+            this.when.put(property, value);
+            return this;
+        }
+
+        /** It is drawn from another model file. */
+        public VariantBuilder model(final String modelFile) {
+            this.model = modelFile;
+            return this;
+        }
+
+        /** It is painted with another texture. */
+        public VariantBuilder texture(final String textureFile) {
+            this.texture = textureFile;
+            return this;
+        }
+
+        /** It hides these bones. */
+        public VariantBuilder hide(final String... bones) {
+            this.hidden.addAll(List.of(bones));
+            return this;
+        }
+
+        /** It shows these bones, which the model hides. */
+        public VariantBuilder show(final String... bones) {
+            this.shown.addAll(List.of(bones));
+            return this;
+        }
+
+        ModelDefinition.Variant build(final String modid) {
+            return new ModelDefinition.Variant(this.when, this.model.isEmpty() ? "" : full(modid, this.model),
+                    this.texture.isEmpty() ? "" : full(modid, this.texture), this.hidden, this.shown);
+        }
+    }
+}

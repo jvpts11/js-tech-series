@@ -221,6 +221,10 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/protection/ProtectionCommands.java", 12,
                     "the list of permissions written for a server's administrator, LuckPerms' console commands as "
                             + "LuckPerms reads them, and the pattern of the audit log's dates"),
+            data("core/src/main/java/dev/jstech/core/model/FbxParser.java", 1,
+                    "the words every binary FBX file starts with, by which it is told from one in text"),
+            data("core/src/main/java/dev/jstech/core/model/FbxReader.java", 4,
+                    "the names FBX gives a model's own properties, which every exporter writes as they are"),
             data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"));
 
     /** Who a line for the developer is written through. */

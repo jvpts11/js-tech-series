@@ -91,6 +91,10 @@ What a technology mod needs, whichever mod it is.
   monospace grid in it, drawing the box lines and blocks itself so frames and bars join. The Core carries Misc
   Fixed, the fixed font of the old Unix terminals, in four sizes (5x8, 6x10, 9x15, 10x20), for any mod's
   terminal-like views and the manuals' code and figures.
+- [Models](docs/MODELS.md): animated models for blocks, items, entities and armour, read by the Core's own readers
+  from Blockbench projects, Bedrock and GeckoLib geometry, glTF, FBX and OBJ; controllers that blend from one
+  animation to the next, Molang in keyframes, sounds and particles on their times, bones moved by code, animations
+  the server plays for everyone who sees them, and a preview in the game that reloads as the files change.
 - [Motion](docs/MOTION.md): curves written as CSS writes them, a profile of motions for each look a mod
   declares (growing, sliding, going down to a place and back, an outline travelling, a colour giving way), kept as
   a file a resource pack replaces, and one clock every motion is read against, smooth between ticks and still for a

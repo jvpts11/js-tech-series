@@ -475,6 +475,23 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   series' mods are taken as stable, and any mod may say the same of its own namespace; another mod's dimension still
   warns. Every place the Core reaches into the game is listed with its reason and a test that fails if the game moves
   what it reaches.
+- Models: animated models for blocks, items, entities and armour, read by the Core's own readers from
+  Blockbench projects, Bedrock and GeckoLib geometry and animation files, glTF (text and binary), FBX (binary and
+  text, version 7 on) and OBJ, with bones in a tree, cubes, meshes, locators, skins and morph targets. A model is
+  declared once, with its textures, its animation files, the bones that glow, whether it is see-through, and variants
+  chosen by the block's state; the data run writes its definition and stops at a file that is missing or does not
+  read. Controllers play animations with every Blockbench easing, loop, hold or once, at any speed, several at once,
+  blending from one to the next; Molang in keyframes reads what the code gives it; sounds, particles and words to code
+  happen on their times; code moves bones over the animations; items are held at locators; and the server can play an
+  animation for everyone who sees the model. A model is worked out once and shared, animated only in sight and near,
+  and drawn with the game's own shaders, so shader packs draw it. Families of files laid out for GeckoLib are drawn by
+  the Core's models as they are, alike to the pixel.
+- The preview of a model: `/jstech model preview <model>` opens it, a declared model or any model file by its
+  path, turned, zoomed and moved with the mouse over a floor of quarter blocks, its animations played or paused from
+  their buttons, its bones in a tree, the chosen one shown in yellow, its locators by name, its glowing parts shown in
+  the dark, its faces as wire, a timeline to drag and a speed to step. In a development run a changed model file
+  reads the models alone again, at once, and an open preview shows the change; `/jstech model reload` does the same by
+  hand.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

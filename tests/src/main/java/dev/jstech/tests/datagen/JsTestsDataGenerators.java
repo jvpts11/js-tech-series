@@ -14,6 +14,7 @@ import dev.jstech.core.datagen.ContentLanguageProvider;
 import dev.jstech.core.datagen.ContentPartModelProvider;
 import dev.jstech.core.datagen.ContentSoundProvider;
 import dev.jstech.core.datagen.GuideProvider;
+import dev.jstech.core.datagen.ModelDefinitionProvider;
 import dev.jstech.core.datagen.MultiblockPatternProvider;
 import dev.jstech.core.datagen.WorldGenProvider;
 import dev.jstech.tests.JsTests;
@@ -27,7 +28,8 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
  * Data generation for the test mod: the structure templates the GameTests run inside, the entries, subtitles and cue
- * bindings of the sounds the tests play, the names of its content, the models of its buckets and the tags of its
+ * bindings of the sounds the tests play, the names of its content, the definitions of the models it draws with the
+ * Core's models, the models of its buckets and the tags of its
  * fluids. Its block states and its other item models are written by hand.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
@@ -57,5 +59,7 @@ public final class JsTestsDataGenerators {
                 new ContentPartModelProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
         TestSounds.CONTENT.declaredGuides().forEach(guide -> generator.addProvider(event.includeClient(),
                 new GuideProvider(output, guide)));
+        generator.addProvider(event.includeClient(),
+                new ModelDefinitionProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
     }
 }

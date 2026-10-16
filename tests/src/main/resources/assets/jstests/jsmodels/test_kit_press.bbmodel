@@ -1,0 +1,111 @@
+{
+  "meta": {"format_version": "4.10", "model_format": "bedrock", "box_uv": false},
+  "name": "test_kit_press",
+  "model_identifier": "test_kit_press",
+  "resolution": {"width": 16, "height": 16},
+  "elements": [
+    {
+      "name": "base", "type": "cube", "uuid": "c-base", "box_uv": false,
+      "from": [-6, 0, -6], "to": [6, 6, 6], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [2, 10, 14, 16], "texture": 0},
+        "south": {"uv": [2, 10, 14, 16], "texture": 0},
+        "east": {"uv": [2, 10, 14, 16], "texture": 0},
+        "west": {"uv": [2, 10, 14, 16], "texture": 0},
+        "up": {"uv": [2, 2, 14, 14], "texture": 0},
+        "down": {"uv": [2, 2, 14, 14], "texture": 0}
+      }
+    },
+    {
+      "name": "pillar", "type": "cube", "uuid": "c-pillar", "box_uv": false,
+      "from": [-6, 6, 4], "to": [-4, 15, 6], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 2, 9], "texture": 0},
+        "south": {"uv": [0, 0, 2, 9], "texture": 0},
+        "east": {"uv": [0, 0, 2, 9], "texture": 0},
+        "west": {"uv": [0, 0, 2, 9], "texture": 0},
+        "up": {"uv": [0, 0, 2, 2], "texture": 0},
+        "down": {"uv": [0, 0, 2, 2], "texture": 0}
+      }
+    },
+    {
+      "name": "head", "type": "cube", "uuid": "c-head", "box_uv": false,
+      "from": [-3, 9, -3], "to": [3, 13, 3], "origin": [0, 9, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [4, 0, 10, 4], "texture": 0},
+        "south": {"uv": [4, 0, 10, 4], "texture": 0},
+        "east": {"uv": [4, 0, 10, 4], "texture": 0},
+        "west": {"uv": [4, 0, 10, 4], "texture": 0},
+        "up": {"uv": [4, 4, 10, 10], "texture": 0},
+        "down": {"uv": [4, 4, 10, 10], "texture": 0}
+      }
+    },
+    {
+      "name": "lamp", "type": "cube", "uuid": "c-lamp", "box_uv": false,
+      "from": [4, 6, 4], "to": [6, 8, 6], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [14, 0, 16, 2], "texture": 0},
+        "south": {"uv": [14, 0, 16, 2], "texture": 0},
+        "east": {"uv": [14, 0, 16, 2], "texture": 0},
+        "west": {"uv": [14, 0, 16, 2], "texture": 0},
+        "up": {"uv": [14, 0, 16, 2], "texture": 0},
+        "down": {"uv": [14, 0, 16, 2], "texture": 0}
+      }
+    },
+    {
+      "name": "plate", "type": "locator", "uuid": "l-plate", "position": [0, 6, 0], "rotation": [0, 0, 0]
+    },
+    {
+      "name": "dome", "type": "mesh", "uuid": "m-dome", "origin": [0, 13, 0], "rotation": [0, 0, 0],
+      "vertices": {
+        "a": [-2, 0, -2], "b": [2, 0, 2], "c": [2, 0, -2], "d": [-2, 0, 2], "t": [0, 2, 0]
+      },
+      "faces": {
+        "n": {"vertices": ["t", "c", "a"], "texture": 0, "uv": {"a": [0, 16], "c": [8, 16], "t": [4, 12]}},
+        "e": {"vertices": ["t", "b", "c"], "texture": 0, "uv": {"c": [0, 16], "b": [8, 16], "t": [4, 12]}},
+        "s": {"vertices": ["t", "d", "b"], "texture": 0, "uv": {"b": [0, 16], "d": [8, 16], "t": [4, 12]}},
+        "w": {"vertices": ["t", "a", "d"], "texture": 0, "uv": {"d": [0, 16], "a": [8, 16], "t": [4, 12]}}
+      }
+    }
+  ],
+  "outliner": [
+    {
+      "name": "root", "uuid": "g-root", "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "children": [
+        "c-base", "c-pillar", "l-plate",
+        {"name": "press_head", "uuid": "g-head", "origin": [0, 9, 0], "rotation": [0, 0, 0],
+         "children": ["c-head", "m-dome"]},
+        {"name": "lamp_glow", "uuid": "g-lamp", "origin": [5, 7, 5], "rotation": [0, 0, 0],
+         "children": ["c-lamp"]}
+      ]
+    }
+  ],
+  "textures": [],
+  "animations": [
+    {
+      "name": "animation.test_kit_press.strike", "loop": "loop", "length": 1.0,
+      "animators": {
+        "g-head": {"name": "press_head", "type": "bone", "keyframes": [
+          {"channel": "position", "time": 0, "interpolation": "linear", "data_points": [{"x": 0, "y": 0, "z": 0}]},
+          {"channel": "position", "time": 0.5, "interpolation": "linear", "data_points": [{"x": 0, "y": -3, "z": 0}]},
+          {"channel": "position", "time": 1.0, "interpolation": "linear", "data_points": [{"x": 0, "y": 0, "z": 0}]}
+        ]},
+        "effects": {"name": "Effects", "type": "effect", "keyframes": [
+          {"channel": "sound", "time": 0.5, "data_points": [{"effect": "minecraft:block.anvil.land", "locator": ""}]},
+          {"channel": "particle", "time": 0.5, "data_points": [{"effect": "minecraft:smoke", "locator": "plate"}]},
+          {"channel": "timeline", "time": 0.5, "data_points": [{"script": "v.struck = 1;"}]}
+        ]}
+      }
+    },
+    {
+      "name": "animation.test_kit_press.spin", "loop": "loop", "length": 2.0,
+      "animators": {
+        "g-head": {"name": "press_head", "type": "bone", "keyframes": [
+          {"channel": "rotation", "time": 0, "interpolation": "linear", "data_points": [{"x": 0, "y": 0, "z": 0}]},
+          {"channel": "rotation", "time": 2, "interpolation": "linear",
+           "data_points": [{"x": 0, "y": "180 * 2", "z": 0}]}
+        ]}
+      }
+    }
+  ]
+}

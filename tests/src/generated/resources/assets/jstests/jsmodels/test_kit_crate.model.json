@@ -1,0 +1,6 @@
+{
+  "model": "jstests:jsmodels/test_kit_crate.obj",
+  "textures": [
+    "minecraft:textures/block/barrel_side.png"
+  ]
+}

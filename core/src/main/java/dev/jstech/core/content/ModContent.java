@@ -103,6 +103,7 @@ public final class ModContent {
     private final List<PartEntry<?>> declaredParts = new ArrayList<>();
     private final List<FluidEntry> declaredFluids = new ArrayList<>();
     private final List<CellFont> declaredFonts = new ArrayList<>();
+    private final List<DeclaredModel> declaredModels = new ArrayList<>();
     private final List<Consumer<DataPackRegistryEvent.NewRegistry>> datapackRegistries = new ArrayList<>();
     private @Nullable DeferredRegister<CableType> cables;
     private @Nullable DeferredRegister<PartType<?>> parts;
@@ -298,6 +299,16 @@ public final class ModContent {
     /** The fonts declared so far, in declaration order. */
     public List<CellFont> declaredFonts() {
         return Collections.unmodifiableList(declaredFonts);
+    }
+
+    /** Starts declaring a model drawn with the Core's models, known by that path under the mod's namespace. */
+    public ModelBuilder model(final String path) {
+        return new ModelBuilder(this, path);
+    }
+
+    /** The models declared so far, in declaration order. */
+    public List<DeclaredModel> declaredModels() {
+        return Collections.unmodifiableList(declaredModels);
     }
 
     /** The cables declared so far, in declaration order. */
@@ -543,6 +554,14 @@ public final class ModContent {
                     "declare it once and use what that declaration returns");
         }
         declaredFonts.add(font);
+    }
+
+    void declare(final DeclaredModel model) {
+        if (declaredModels.stream().anyMatch(declared -> declared.id().equals(model.id()))) {
+            throw DeclarationError.of(modid, "the model " + model.id(), "is declared twice",
+                    "declare it once and use what that declaration returns");
+        }
+        declaredModels.add(model);
     }
 
     /*

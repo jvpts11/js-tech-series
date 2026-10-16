@@ -93,6 +93,8 @@ public final class JsTests {
         TestData.declare();
         // A chapter and a manual, with an entry of every kind of block, to prove the Core's manuals.
         TestGuide.declare();
+        // A press, a crate, a walker and a helmet drawn with the Core's models, from files of four formats.
+        TestModels.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);

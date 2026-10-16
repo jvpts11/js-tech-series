@@ -117,6 +117,8 @@ import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.MaterialValues;
 import dev.jstech.core.material.MineralFamilies;
 import dev.jstech.core.menu.MenuSync;
+import dev.jstech.core.model.network.ModelAnimations;
+import dev.jstech.core.model.network.ModelCommands;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.notification.NotificationSettings;
@@ -292,6 +294,7 @@ public final class JsCore {
         // the server's administrators read of the series' health and cost.
         CoreCommands.declare();
         TeamProgressCommands.declare();
+        ModelCommands.declare();
         ConfigCommands.declare();
         ProtectionCommands.declare();
         MediaCommand.declare();
@@ -359,6 +362,7 @@ public final class JsCore {
         SimplePath.register(modEventBus);
         MediaNetwork.listen(modEventBus);
         MediaServerEvents.listen();
+        ModelAnimations.listen(modEventBus);
         Notifications.listen(modEventBus);
         LevelStructures.listen();
         OwnedProtection.listen();

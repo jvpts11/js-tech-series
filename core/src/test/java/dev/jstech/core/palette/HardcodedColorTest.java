@@ -53,7 +53,11 @@ class HardcodedColorTest {
             "computers/src/main/java/dev/jstech/computers/program/install/voice/KernelVoices.java", new Data(2,
                     "the multipliers of a hash that picks a kernel's boot line"),
             "computers/src/main/java/dev/jstech/computers/program/install/voice/PortageVoices.java", new Data(1,
-                    "the multiplier of a hash that picks a build line"));
+                    "the multiplier of a hash that picks a build line"),
+            "core/src/main/java/dev/jstech/core/model/GltfReader.java", new Data(3,
+                    "the marks a binary glTF file and its two chunks start with, as the format writes them"),
+            "core/src/main/java/dev/jstech/core/client/model/kit/KitRenderer.java", new Data(1,
+                    "the white a model's texture is multiplied by, which leaves the texture's own colours"));
 
     /** An ARGB colour as a number: eight hexadecimal digits. */
     private static final Pattern ARGB = Pattern.compile("0[xX][0-9A-Fa-f]{8}");

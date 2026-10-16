@@ -1,0 +1,16 @@
+{
+  "model": "jstests:jsmodels/test_kit_press.bbmodel",
+  "textures": [
+    "minecraft:textures/block/iron_block.png"
+  ],
+  "variants": [
+    {
+      "hide": [
+        "lamp_glow"
+      ],
+      "when": {
+        "powered": "false"
+      }
+    }
+  ]
+}
