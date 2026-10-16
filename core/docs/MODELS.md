@@ -47,6 +47,7 @@ public static final DeclaredModel PRESS = CONTENT.model("press")
 | `texture(path)` | a texture it is painted with; none to use the textures the file carries or names |
 | `animations(paths...)` | animation files it plays from |
 | `glow(bones...)` | bones drawn at full light, and everything hanging from them |
+| `glowLight(level, colour)` | its glowing parts cast light of `level` (1 to 15) in `colour` on the world around them as they move, with a halo ([Lighting](LIGHTING.md)) |
 | `translucent()` | it is drawn see-through, every face sorted back to front |
 | `noCracks()` | a block drawn with it shows no cracks while it is broken |
 | `variant(...)` | chosen by the block's state: another file (`model`), another texture, bones hidden (`hide`) or shown (`show`) |
@@ -150,7 +151,9 @@ block entity's state.
 ## Glow, see-through, cracks
 
 A bone whose name ends in `_glow`, or that the declaration names, is drawn at full light, and so is everything hanging
-from it. A see-through model has its faces sorted back to front by the game, as it sorts what it draws see-through. A
+from it. With `glowLight(level, colour)` its glowing parts also light the world around them where they are drawn in
+the world, as a lamp's bulb does, moving with them: a lamp on a machine's turning arm lights what it passes. A
+see-through model has its faces sorted back to front by the game, as it sorts what it draws see-through. A
 block drawn with a model shows the cracks of being broken over it, as the game draws them over any block entity,
 unless it says `noCracks()`. The model is drawn with the game's own entity shaders, so shader packs (Iris, Oculus) draw
 it as they draw a mob.

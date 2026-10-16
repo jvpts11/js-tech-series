@@ -105,6 +105,8 @@ import dev.jstech.core.jstechseries.probe.SignalProbe;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.core.jstechseries.tools.ToolsGuide;
 import dev.jstech.core.language.LanguageRegistry;
+import dev.jstech.core.light.CoreLights;
+import dev.jstech.core.light.LightingSettings;
 import dev.jstech.core.log.LogCommand;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.Forms;
@@ -206,6 +208,8 @@ public final class JsCore {
         CoreSpaces.declare();
         // The block a formed structure's plain blocks merge into, its controller's model drawing them.
         FormedParts.declare();
+        // Light standing in the air, the colours of light, its kinds as data, and the spotlights' light.
+        CoreLights.declare(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.
@@ -283,6 +287,8 @@ public final class JsCore {
         ConfigFiles.register(NotificationSettings.FILE, modEventBus, modContainer);
         // Which of the Core's systems of looks step aside for a mod that does their job, on a player's game only.
         ConfigFiles.register(StepAside.FILE, modEventBus, modContainer);
+        // How light looks on a player's game: coloured light, dynamic light, glow and their reach.
+        ConfigFiles.register(LightingSettings.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();

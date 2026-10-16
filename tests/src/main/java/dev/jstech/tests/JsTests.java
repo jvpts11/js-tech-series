@@ -97,6 +97,8 @@ public final class JsTests {
         TestModels.declare();
         // Blocks a resource pack in the test mod draws with connected textures, in both formats packs write.
         TestConnected.declare();
+        // An alarm lamp, a powered lamp, a floodlight, a beam and a lamp that breaks, to prove the lighting kit.
+        TestLights.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);

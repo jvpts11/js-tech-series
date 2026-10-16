@@ -81,7 +81,7 @@ public final class KitEntityRenderer<T extends Entity> extends EntityRenderer<T>
             // A model faces north as it is drawn; an entity looking at yaw 0 faces south.
             poses.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
             KitRenderer.draw(instance, ModelDefinition.Variant.NONE, entity, poses, buffers, light,
-                    OverlayTexture.NO_OVERLAY, this.held, entity.level());
+                    OverlayTexture.NO_OVERLAY, this.held, entity.level(), true);
             poses.popPose();
         }
         super.render(entity, yaw, partialTick, poses, buffers, light);

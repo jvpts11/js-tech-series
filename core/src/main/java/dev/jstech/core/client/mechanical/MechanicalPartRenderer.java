@@ -132,7 +132,7 @@ final class MechanicalPartRenderer<T extends MechanicalPartBlockEntity> implemen
         }
         poses.translate(0, -0.5, 0);
         KitRenderer.draw(instance, ModelDefinition.Variant.NONE, part, poses, buffers, light, overlay, null,
-                part.getLevel());
+                part.getLevel(), true);
         poses.popPose();
     }
 

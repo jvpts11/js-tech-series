@@ -520,6 +520,27 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   logics written as data, OptiFine's full sheet among them. Blocks may be named by tag. Faces join by how their
   texture lies on them, partial faces take the same part of their tile, and microblocks join their like in the spaces
   around. While Continuity or CTM is installed the Core steps aside and says so, unless the player's setting keeps it.
+- Lamps: kinds of light as data, declared by a mod and written over by a data pack (colour, intensity, reach, a
+  point, a spotlight's cone or a narrow beam, a flicker by name or by its own letters, what turns it on, the watts it
+  draws, whether it breaks), and lamps of a kind that shine always, by redstone or while they get their watts, flicker
+  each from its own point, and go dark broken until mended. Their light is the game's own, so it counts for what
+  spawns and grows.
+- Spotlights and beams reach far past fifteen blocks: their rays go on through air and water and light the
+  place where they meet something, as bright as the light still is there, with light that counts in the game; it is
+  given back when the lamp goes off, and light left where no lamp holds it goes by itself.
+- Coloured light: the colour of the light of blocks, of what is held and of mobs is data, the game's own filled
+  in (soul fire, redstone, the sea lantern, amethyst, the froglights, lava, blazes and more); light of several colours
+  mixes and tints the world it lights, fading smoothly across faces, only where its light reaches, less under open
+  sky. It rides in the world's mesh, so it looks the same with Sodium, Embeddium and Iris as without them.
+- Dynamic light: a torch held lights the way, a mob on fire its surroundings, an item that gives light the
+  ground it lies on, a model's glowing part that casts light the world as it moves, and a mod's own moving lights;
+  drawn on the player's game only, nothing of the world changed.
+- Glow without a shader: soft halos about bright lamps, blocks of coloured or bright light and glowing parts,
+  in their colour, and the shaft of a spotlight through the air, fading along its reach.
+- Light sensors read a place's light, from 0 to 15, and the hue of the light there.
+- The player's lighting settings: coloured light and dynamic light on or off, the glow's strength, how far it
+  all reaches. Dynamic light steps aside for LambDynamicLights and Sodium Dynamic Lights, coloured light and glow for
+  Shimmer, unless the player's setting keeps the Core's on as well.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

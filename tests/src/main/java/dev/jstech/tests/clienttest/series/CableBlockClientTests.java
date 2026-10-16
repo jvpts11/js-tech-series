@@ -12,6 +12,7 @@ import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.cable.Lane;
+import dev.jstech.core.client.light.LightingClient;
 import dev.jstech.core.client.model.CableBakedModel;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -67,7 +68,7 @@ public final class CableBlockClientTests {
                 .thenAssert(2, () -> {
                     final CableBlockEntity turn = clientCable(ctx, TURN);
                     final BlockState state = turn.getBlockState();
-                    final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
+                    final BakedModel model = LightingClient.beneath(ctx.mc().getBlockRenderer().getBlockModel(state));
                     return model instanceof CableBakedModel && !model.getQuads(state, null, RandomSource.create(0L),
                             turn.getModelData(), RenderType.cutout()).isEmpty();
                 }, "the wires drawn by the cable block's own model")

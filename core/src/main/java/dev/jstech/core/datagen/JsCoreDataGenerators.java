@@ -32,6 +32,7 @@ public final class JsCoreDataGenerators {
         // The series' shared content is made of the game's own materials, so a mod used alone can make it.
         data.server(new SeriesRecipes(data.output(), data.lookup()));
         data.server(new BlockConductivityProvider(data.output(), data.lookup()));
+        data.server(new LightColoursProvider(data.output(), data.lookup()));
         data.check();
     }
 }

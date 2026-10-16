@@ -47,6 +47,8 @@ public final class ModelBuilder {
     private final List<ModelDefinition.Variant> variants = new ArrayList<>();
     private boolean translucent;
     private boolean cracks = true;
+    private int glowLight;
+    private int glowColour = ModelDefinition.WHITE;
 
     ModelBuilder(final ModContent content, final String path) {
         this.content = content;
@@ -89,6 +91,16 @@ public final class ModelBuilder {
         return this;
     }
 
+    /**
+     * Its glowing parts glow in {@code colour} ({@code 0xRRGGBB}), their halo and their light, and cast light of
+     * {@code level} (1 to 15) on the world around them, as a lamp's bulb does; 0 casts none.
+     */
+    public ModelBuilder glowLight(final int level, final int colour) {
+        this.glowLight = level;
+        this.glowColour = colour;
+        return this;
+    }
+
     /** A variant chosen by the state of the block it is drawn for, as {@code variant} says. */
     public ModelBuilder variant(final Consumer<VariantBuilder> variant) {
         final VariantBuilder builder = new VariantBuilder();
@@ -116,7 +128,7 @@ public final class ModelBuilder {
         final DeclaredModel model = new DeclaredModel(id, new ModelDefinition(full(modid, this.file),
                 this.textures.stream().map(each -> full(modid, each)).toList(),
                 this.animations.stream().map(each -> full(modid, each)).toList(), this.translucent, this.glow,
-                this.cracks, this.variants));
+                this.cracks, this.variants, this.glowLight, this.glowColour));
         this.content.declare(model);
         return model;
     }

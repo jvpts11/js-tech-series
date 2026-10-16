@@ -1,0 +1,24 @@
+{
+  "values": {
+    "minecraft:allay": {
+      "colour": "#80D0FF",
+      "level": 5
+    },
+    "minecraft:blaze": {
+      "colour": "#FFA040",
+      "level": 10
+    },
+    "minecraft:glow_item_frame": {
+      "colour": "#A0FFC8",
+      "level": 4
+    },
+    "minecraft:glow_squid": {
+      "colour": "#60FFE0",
+      "level": 6
+    },
+    "minecraft:magma_cube": {
+      "colour": "#FF6020",
+      "level": 8
+    }
+  }
+}

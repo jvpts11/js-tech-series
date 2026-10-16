@@ -341,7 +341,7 @@ public final class ModelPreviewScreen extends Screen {
             line(lines, pose, -GRID_REACH, 0, at, GRID_REACH, 0, at, colours.grid());
         }
         KitRenderer.draw(this.instance, ModelDefinition.Variant.NONE, this, pose, buffers,
-                this.showGlow ? DARK : LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, null, null);
+                this.showGlow ? DARK : LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, null, null, false);
         if (this.showWire) {
             wire(pose, buffers.getBuffer(RenderType.lines()), colours.wire());
         }

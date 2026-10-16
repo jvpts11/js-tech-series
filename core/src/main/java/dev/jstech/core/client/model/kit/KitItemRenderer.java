@@ -84,7 +84,7 @@ public final class KitItemRenderer extends BlockEntityWithoutLevelRenderer {
         poses.pushPose();
         poses.translate(0.5, 0, 0.5);
         KitRenderer.draw(instance, ModelDefinition.Variant.NONE, stack, poses, buffers, light, overlay, this.held,
-                Minecraft.getInstance().level);
+                Minecraft.getInstance().level, false);
         poses.popPose();
     }
 }

@@ -1,0 +1,42 @@
+{
+  "values": {
+    "minecraft:blaze_powder": {
+      "colour": "#FFA040",
+      "level": 8
+    },
+    "minecraft:blaze_rod": {
+      "colour": "#FFA040",
+      "level": 10
+    },
+    "minecraft:fire_charge": {
+      "colour": "#FF8030",
+      "level": 8
+    },
+    "minecraft:glow_berries": {
+      "colour": "#FFC060",
+      "level": 8
+    },
+    "minecraft:glow_ink_sac": {
+      "colour": "#A0FFC8",
+      "level": 6
+    },
+    "minecraft:glowstone_dust": {
+      "level": 8
+    },
+    "minecraft:lava_bucket": {
+      "colour": "#FF8030",
+      "level": 15
+    },
+    "minecraft:magma_cream": {
+      "colour": "#FF6020",
+      "level": 6
+    },
+    "minecraft:nether_star": {
+      "level": 12
+    },
+    "minecraft:prismarine_crystals": {
+      "colour": "#B8F0FF",
+      "level": 6
+    }
+  }
+}

@@ -14,6 +14,7 @@ import dev.jstech.core.datagen.ContentLanguageProvider;
 import dev.jstech.core.datagen.ContentPartModelProvider;
 import dev.jstech.core.datagen.ContentSoundProvider;
 import dev.jstech.core.datagen.GuideProvider;
+import dev.jstech.core.datagen.LightKindProvider;
 import dev.jstech.core.datagen.ModelDefinitionProvider;
 import dev.jstech.core.datagen.MultiblockPatternProvider;
 import dev.jstech.core.datagen.WorldGenProvider;
@@ -29,8 +30,8 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 /**
  * Data generation for the test mod: the structure templates the GameTests run inside, the entries, subtitles and cue
  * bindings of the sounds the tests play, the names of its content, the definitions of the models it draws with the
- * Core's models, the models of its buckets and the tags of its
- * fluids. Its block states and its other item models are written by hand.
+ * Core's models, the models of its buckets, the tags of its fluids and the kinds of light of its lamps. Its block
+ * states and its other item models are written by hand.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class JsTestsDataGenerators {
@@ -44,6 +45,7 @@ public final class JsTestsDataGenerators {
         final PackOutput output = generator.getPackOutput();
         generator.addProvider(event.includeServer(), new GameTestStructureProvider(output));
         generator.addProvider(event.includeServer(), new MultiblockPatternProvider(output, JsTests.MODID));
+        generator.addProvider(event.includeServer(), new LightKindProvider(output, JsTests.MODID));
         TestWorldGen.declare();
         generator.addProvider(event.includeServer(),
                 new WorldGenProvider(output, event.getLookupProvider(), JsTests.MODID));

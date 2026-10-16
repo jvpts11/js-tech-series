@@ -131,7 +131,7 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         // surroundings' light.
         final int lit = standing.isPresent() || entity.getBlockState().canOcclude() ? lightAround(entity.getLevel(),
                 pos, light) : light;
-        KitRenderer.draw(instance, variant, entity, poses, buffers, lit, overlay, held(), entity.getLevel());
+        KitRenderer.draw(instance, variant, entity, poses, buffers, lit, overlay, held(), entity.getLevel(), true);
         poses.popPose();
     }
 

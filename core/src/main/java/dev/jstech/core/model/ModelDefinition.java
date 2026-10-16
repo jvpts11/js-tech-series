@@ -13,6 +13,7 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -34,9 +35,17 @@ import java.util.TreeSet;
  * @param glow        the bones that glow besides those whose names end in {@code _glow}
  * @param cracks      whether a block drawn with it shows the cracks of being broken
  * @param variants    its variants, the first whose state matches chosen
+ * @param glowLight   the light its glowing parts cast on the world around, from 0 (none) to 15
+ * @param glowColour  the colour they glow in, {@code 0xRRGGBB}, for their halo and their light
  */
 public record ModelDefinition(String model, List<String> textures, List<String> animations, boolean translucent,
-                              Set<String> glow, boolean cracks, List<Variant> variants) {
+                              Set<String> glow, boolean cracks, List<Variant> variants, int glowLight,
+                              int glowColour) {
+
+    /** White, the colour a glow is unless its definition says another. */
+    public static final int WHITE = 0xFFFFFF;
+    private static final int BRIGHTEST = 15;
+    private static final int HEX = 16;
 
     public ModelDefinition {
         Objects.requireNonNull(model, "model");
@@ -44,11 +53,13 @@ public record ModelDefinition(String model, List<String> textures, List<String> 
         animations = List.copyOf(animations);
         glow = Set.copyOf(glow);
         variants = List.copyOf(variants);
+        glowLight = Math.clamp(glowLight, 0, BRIGHTEST);
+        glowColour = glowColour & WHITE;
     }
 
     /** The definition of a model drawn as its file is, with nothing else. */
     public static ModelDefinition of(final String model, final List<String> textures) {
-        return new ModelDefinition(model, textures, List.of(), false, Set.of(), true, List.of());
+        return new ModelDefinition(model, textures, List.of(), false, Set.of(), true, List.of(), 0, WHITE);
     }
 
     /**
@@ -90,6 +101,12 @@ public record ModelDefinition(String model, List<String> textures, List<String> 
             }
             out.add("variants", variantArray);
         }
+        if (this.glowLight > 0) {
+            out.addProperty("glow_light", this.glowLight);
+        }
+        if (this.glowColour != WHITE) {
+            out.addProperty("glow_colour", String.format(Locale.ROOT, "#%06X", this.glowColour));
+        }
         return out;
     }
 
@@ -110,7 +127,22 @@ public record ModelDefinition(String model, List<String> textures, List<String> 
         }
         return new ModelDefinition(json.get("model").getAsString(), strings(json, "textures"),
                 strings(json, "animations"), ModelJson.flag(json, "translucent", false),
-                new TreeSet<>(strings(json, "glow")), ModelJson.flag(json, "cracks", true), variants);
+                new TreeSet<>(strings(json, "glow")), ModelJson.flag(json, "cracks", true), variants,
+                json.has("glow_light") ? json.get("glow_light").getAsInt() : 0, colour(name, json));
+    }
+
+    /* The colour its glow is in, written #RRGGBB; white when it says none. */
+    private static int colour(final String name, final JsonObject json) {
+        if (!json.has("glow_colour")) {
+            return WHITE;
+        }
+        final String text = json.get("glow_colour").getAsString();
+        try {
+            return Integer.parseInt(text.startsWith("#") ? text.substring(1) : text, HEX);
+        } catch (final NumberFormatException e) {
+            throw new ModelFormatException("the model definition " + name + " glows in a colour that does not read: "
+                    + text);
+        }
     }
 
     private static JsonArray strings(final Iterable<String> values) {

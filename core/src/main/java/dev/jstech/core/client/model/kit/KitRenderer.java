@@ -9,6 +9,7 @@ package dev.jstech.core.client.model.kit;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.jstech.core.client.light.KitGlows;
 import dev.jstech.core.model.BakedGeometry;
 import dev.jstech.core.model.GeometryBaker;
 import dev.jstech.core.model.MeshDeformer;
@@ -26,8 +27,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 /**
  * Draws a model of the Core's in the pose its thing was last worked out to: every bone's faces where the bone is,
@@ -48,15 +51,20 @@ public final class KitRenderer {
      *
      * @param held  what it holds at each locator, or none
      * @param level the world it is in, for what it holds; none in a screen
+     * @param world whether it is drawn in the world, the pose stack standing where the camera is, so its glowing
+     *              parts light the world around them as its definition says; not in a hand or a screen
      */
     public static <T> void draw(final KitInstance instance, final ModelDefinition.Variant variant, final T thing,
                                 final PoseStack poses, final MultiBufferSource buffers, final int light,
-                                final int overlay, @Nullable final IHeldThings<T> held, @Nullable final Level level) {
+                                final int overlay, @Nullable final IHeldThings<T> held, @Nullable final Level level,
+                                final boolean world) {
         final KitModel model = instance.model();
-        final Matrix4f[] world = instance.world();
+        final Matrix4f[] matrices = instance.world();
         final boolean[] hidden = hidden(instance, variant);
         final ResourceLocation painted = variant.texture().isEmpty() ? null : ResourceLocation.parse(
                 variant.texture());
+        final ModelDefinition definition = model.definition();
+        final boolean glows = world && level != null && definition.glowLight() > 0;
         poses.pushPose();
         poses.scale(PIXEL, PIXEL, PIXEL);
         final List<List<BakedGeometry.Part>> bones = model.geometry().bones();
@@ -66,10 +74,14 @@ public final class KitRenderer {
                 continue;
             }
             poses.pushPose();
-            poses.mulPose(world[i]);
+            poses.mulPose(matrices[i]);
             for (final BakedGeometry.Part part : parts) {
                 emit(buffers.getBuffer(type(model, part.texture(), painted)), poses.last(), part.vertices(),
                         part.vertices().length, part.glow() ? LightTexture.FULL_BRIGHT : light, overlay);
+                if (glows && part.glow()) {
+                    KitGlows.report(level, middle(poses.last(), part.vertices()), definition.glowLight(),
+                            definition.glowColour());
+                }
             }
             poses.popPose();
         }
@@ -78,14 +90,14 @@ public final class KitRenderer {
             if (hidden[deformed.bone()]) {
                 continue;
             }
-            final float[] corners = deformer.deform(instance.pose(), world);
+            final float[] corners = deformer.deform(instance.pose(), matrices);
             final GeometryBaker.Corners laid = instance.corners();
             laid.clear();
             GeometryBaker.mesh(deformed.mesh(), corners, laid);
             poses.pushPose();
             if (deformed.skin() == null) {
                 // A mesh that only morphs stays in its bone's space; one a skin bends is in the model's.
-                poses.mulPose(world[deformed.bone()]);
+                poses.mulPose(matrices[deformed.bone()]);
             }
             emit(buffers.getBuffer(type(model, deformed.mesh().texture(), painted)), poses.last(), laid.data(),
                     laid.size(), deformed.glow() ? LightTexture.FULL_BRIGHT : light, overlay);
@@ -177,6 +189,21 @@ public final class KitRenderer {
             }
         }
         return false;
+    }
+
+    /* Where the middle of a part's faces is in the world, from the pose that draws it, which stands at the camera. */
+    private static Vec3 middle(final PoseStack.Pose pose, final float[] vertices) {
+        float x = 0;
+        float y = 0;
+        float z = 0;
+        final int corners = vertices.length / BakedGeometry.STRIDE;
+        for (int at = 0; at < vertices.length; at += BakedGeometry.STRIDE) {
+            x += vertices[at];
+            y += vertices[at + 1];
+            z += vertices[at + 2];
+        }
+        final Vector3f seen = pose.pose().transformPosition(x / corners, y / corners, z / corners, new Vector3f());
+        return Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().add(seen.x(), seen.y(), seen.z());
     }
 
     private static void emit(final VertexConsumer consumer, final PoseStack.Pose pose, final float[] vertices,

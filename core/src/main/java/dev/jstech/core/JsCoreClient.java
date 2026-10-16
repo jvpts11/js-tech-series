@@ -46,6 +46,7 @@ import dev.jstech.core.client.hud.HudElements;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.input.MenuSwapCursor;
 import dev.jstech.core.client.item.ItemStateClient;
+import dev.jstech.core.client.light.LightingClient;
 import dev.jstech.core.client.live.LiveScreens;
 import dev.jstech.core.client.live.TubeFilter;
 import dev.jstech.core.client.machine.MachineScreen;
@@ -131,6 +132,7 @@ public final class JsCoreClient {
         HudElements.listen(modEventBus);
         ItemStateClient.listen(modEventBus);
         KeyActionsClient.listen(modEventBus);
+        LightingClient.listen(modEventBus);
         LiveScreens.listen();
         MachineScreen.listen(modEventBus);
         MachineWrenchClient.listen(modEventBus);

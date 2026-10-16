@@ -1,0 +1,9 @@
+{
+  "angle": 0.0,
+  "colour": "#FF2010",
+  "control": "redstone",
+  "flicker": {
+    "pattern": "mnopqrstuvwxyzyxwvutsrqponmlkjihgfedcbabcdefghijkl",
+    "rate": 20.0
+  }
+}

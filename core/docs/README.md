@@ -56,6 +56,7 @@ says what the Core promises and what it does not yet.
 | [Fonts](FONTS.md) | Declaring a font from its free source, and the monospace grid painter. |
 | [Models](MODELS.md) | Animated models for blocks, items, entities and armour from Blockbench, Bedrock, glTF, FBX and OBJ files; controllers, blends, expressions, events, bones moved by code, animations from the server, the preview. |
 | [Connected textures](CONNECTED_TEXTURES.md) | Textures that join between alike blocks, read from the formats resource packs write for OptiFine, Continuity and CTM; microblocks; stepping aside for Continuity and CTM. |
+| [Lighting](LIGHTING.md) | Kinds of light as data, lamps by redstone or power that flicker and break, spotlights and beams past fifteen blocks, coloured light, dynamic light, glow, light sensors, stepping aside. |
 | [Motion](MOTION.md) | Curves, motion profiles, and the clock every motion reads. |
 | [Overlays](OVERLAYS.md) | HUD elements, holograms, and what Jade shows. |
 | [Manuals](MANUALS.md) | Chapters, entries, manuals and styles, special blocks, and the manual key. |

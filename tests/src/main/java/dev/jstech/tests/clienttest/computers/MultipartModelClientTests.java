@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
+import dev.jstech.core.client.light.LightingClient;
 import dev.jstech.core.client.model.CableBakedModel;
 import dev.jstech.core.client.model.ConnectedBakedModel;
 import dev.jstech.core.connect.ConnectedQuadrants;
@@ -60,7 +61,7 @@ public final class MultipartModelClientTests {
                 .thenAssert(2, () -> {
                     final CableBlockEntity cable = clientCable(ctx);
                     final BlockState state = cable.getBlockState();
-                    final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
+                    final BakedModel model = LightingClient.beneath(ctx.mc().getBlockRenderer().getBlockModel(state));
                     final int bare = model.getQuads(state, null, RandomSource.create(0L), ModelData.EMPTY,
                             RenderType.cutout()).size();
                     final int drawn = model.getQuads(state, null, RandomSource.create(0L), cable.getModelData(),
@@ -112,7 +113,7 @@ public final class MultipartModelClientTests {
     private static List<TextureAtlasSprite> tilesOf(final ClientTestContext ctx, final BlockPos relative) {
         final BlockPos at = ctx.abs(relative);
         final BlockState state = ctx.mc().level.getBlockState(at);
-        final BakedModel model = ctx.mc().getBlockRenderer().getBlockModel(state);
+        final BakedModel model = LightingClient.beneath(ctx.mc().getBlockRenderer().getBlockModel(state));
         if (!(model instanceof ConnectedBakedModel)) {
             return List.of();
         }

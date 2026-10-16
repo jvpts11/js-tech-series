@@ -1,0 +1,31 @@
+{
+  "values": {
+    "minecraft:amethyst_cluster": "#C080FF",
+    "minecraft:beacon": "#B0F8FF",
+    "minecraft:conduit": "#B0F8FF",
+    "minecraft:crying_obsidian": "#A040FF",
+    "minecraft:deepslate_redstone_ore": "#FF3018",
+    "minecraft:enchanting_table": "#C0A0FF",
+    "minecraft:end_gateway": "#60FFE0",
+    "minecraft:end_rod": "#F0E8FF",
+    "minecraft:glow_lichen": "#A0FFC8",
+    "minecraft:large_amethyst_bud": "#C080FF",
+    "minecraft:medium_amethyst_bud": "#C080FF",
+    "minecraft:nether_portal": "#B040FF",
+    "minecraft:ochre_froglight": "#FFE080",
+    "minecraft:pearlescent_froglight": "#F0B0FF",
+    "minecraft:redstone_ore": "#FF3018",
+    "minecraft:redstone_torch": "#FF3018",
+    "minecraft:redstone_wall_torch": "#FF3018",
+    "minecraft:respawn_anchor": "#A040FF",
+    "minecraft:sculk_catalyst": "#40FFE0",
+    "minecraft:sea_lantern": "#B8F0FF",
+    "minecraft:small_amethyst_bud": "#C080FF",
+    "minecraft:soul_campfire": "#50C8FF",
+    "minecraft:soul_fire": "#50C8FF",
+    "minecraft:soul_lantern": "#50C8FF",
+    "minecraft:soul_torch": "#50C8FF",
+    "minecraft:soul_wall_torch": "#50C8FF",
+    "minecraft:verdant_froglight": "#B0FF90"
+  }
+}

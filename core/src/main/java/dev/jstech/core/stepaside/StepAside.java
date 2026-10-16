@@ -49,6 +49,22 @@ public final class StepAside {
     /** The connected textures of resource packs, which Continuity and CTM read too. */
     public static final StepAside CONNECTED_TEXTURES = new StepAside("connected_textures",
             List.of("continuity", "ctm"), CONNECTED_TEXTURES_KEY);
+    /** Whether the light of what is held and what burns is left to a mod of dynamic light. */
+    public static final ConfigKey<Boolean> DYNAMIC_LIGHT_KEY = ConfigKey.flag(SECTION + ".dynamic_light", true)
+            .comment("Whether the Core leaves the light of what is held, what burns and what glows to "
+                    + "LambDynamicLights or Sodium Dynamic Lights when one is installed.")
+            .named("Leave dynamic light to another mod");
+    /** The light of what is held, burns and glows, which LambDynamicLights and Sodium Dynamic Lights give too. */
+    public static final StepAside DYNAMIC_LIGHT = new StepAside("dynamic_light",
+            List.of("lambdynlights", "sodiumdynamiclights"), DYNAMIC_LIGHT_KEY);
+    /** Whether coloured light and its glow are left to Shimmer. */
+    public static final ConfigKey<Boolean> COLOURED_LIGHT_KEY = ConfigKey.flag(SECTION + ".coloured_light", true)
+            .comment("Whether the Core leaves coloured light and the glow of bright things to Shimmer when it is "
+                    + "installed.")
+            .named("Leave coloured light to Shimmer");
+    /** Coloured light and the glow of bright things, which Shimmer gives too. */
+    public static final StepAside COLOURED_LIGHT = new StepAside("coloured_light", List.of("shimmer"),
+            COLOURED_LIGHT_KEY);
     /** The player's file. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-step-aside", ConfigSide.CLIENT,
                     ConfigFormats.TOML)
@@ -56,6 +72,8 @@ public final class StepAside {
             .sectionComment(SECTION, "Each system, and whether it steps aside while such a mod is installed.")
             .sectionNamed(SECTION, "Stepping aside")
             .key(CONNECTED_TEXTURES_KEY, value -> CONNECTED_TEXTURES.stepsAside = value)
+            .key(DYNAMIC_LIGHT_KEY, value -> DYNAMIC_LIGHT.stepsAside = value)
+            .key(COLOURED_LIGHT_KEY, value -> COLOURED_LIGHT.stepsAside = value)
             .build();
 
     private StepAside(final String system, final List<String> mods, final ConfigKey<Boolean> key) {

@@ -130,7 +130,7 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
         final List<String> animationFiles = manager.getResource(animations).isPresent()
                 ? List.of(animations.toString()) : List.of();
         final ModelDefinition definition = new ModelDefinition(file.toString(), List.of(texture.toString()),
-                animationFiles, false, Set.of(), true, List.of());
+                animationFiles, false, Set.of(), true, List.of(), 0, ModelDefinition.WHITE);
         try {
             final Map<ResourceLocation, NativeImage> images = new LinkedHashMap<>();
             final KitModel read = read(manager, file, definition, images);
