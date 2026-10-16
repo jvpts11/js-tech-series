@@ -58,6 +58,7 @@ import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
 import dev.jstech.core.robot.CoreRobotTasks;
 import dev.jstech.core.config.ConfigCommands;
+import dev.jstech.core.conveyor.Conveyors;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.ConfigSync;
 import dev.jstech.core.config.CoreConfigKeys;
@@ -322,6 +323,7 @@ public final class JsCore {
         HeatPorts.listen(modEventBus);
         BlockConductivity.listen(modEventBus);
         MechanicalPorts.listen(modEventBus);
+        Conveyors.listen(modEventBus);
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

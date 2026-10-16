@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": {"model": "jstests:block/test_conveyor"},
+    "facing=east": {"model": "jstests:block/test_conveyor", "y": 90},
+    "facing=south": {"model": "jstests:block/test_conveyor", "y": 180},
+    "facing=west": {"model": "jstests:block/test_conveyor", "y": 270}
+  }
+}

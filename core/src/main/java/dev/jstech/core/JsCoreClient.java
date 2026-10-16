@@ -20,6 +20,7 @@ import dev.jstech.core.client.cable.CableEndScreen;
 import dev.jstech.core.client.cable.CableColours;
 import dev.jstech.core.client.cable.CableDragClient;
 import dev.jstech.core.client.cable.CableFlowRenderer;
+import dev.jstech.core.client.conveyor.ConveyorRenderer;
 import dev.jstech.core.client.cable.FlowSightClient;
 import dev.jstech.core.client.config.ConfigChoosers;
 import dev.jstech.core.client.config.ConfigClient;
@@ -95,6 +96,7 @@ public final class JsCoreClient {
         CableColours.listen(modEventBus);
         CableEndScreen.listen(modEventBus);
         CableFlowRenderer.listen(modEventBus);
+        ConveyorRenderer.listen(modEventBus);
         FlowSightClient.listen(modEventBus);
         ClientStateEvents.listen();
         EnergyConvertersClient.listen(modEventBus);

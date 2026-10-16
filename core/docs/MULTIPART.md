@@ -3,8 +3,9 @@
 *Added 2026-10-16.*
 
 How several things share one block space: a cable's wires, the devices on its faces, **microblocks**, pieces of any
-full block cut with the saw, and the game's own torches, levers, buttons and pressure plates. For the cable block and the devices on its faces, see [Cables](CABLES.md); this page
-is about the space they all share, and about the microblocks.
+full block cut with the saw, and the game's own torches, levers, buttons and pressure plates. For the cable block
+and the devices on its faces, see [Cables](CABLES.md); this page is about the space they all share, and about the
+microblocks.
 
 ## A block space and its places
 

@@ -447,6 +447,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Parts declared once, as blocks are: a mod names a kind of part, gives it a look and says what it does, and
   gets its item, which mounts it on a cable, a space of parts or the face of any block, its name and its models from
   the data generation, a plate's included. The GameTest kit builds spaces of microblocks, parts and small blocks.
+- Conveyors: a mod declares its kinds of belt, with their speed, how many items a block holds, what makes them
+  move and what they do at an end with nowhere to go. Belts of a kind one behind another move as one run, and only
+  its end ticks, so a long line costs one belt; the items on a belt are a queue, never entities, drawn moving smoothly.
+  A run hands its items into a belt or an inventory in front, or holds them there, or lets them fall off; hoppers,
+  pipes and items that land on a belt put items on. A belt moves by itself, as a shaft at any of its run's belts
+  turns it, or on energy any of them takes in, and carries the players and mobs that stand on it.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

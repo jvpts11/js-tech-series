@@ -29,6 +29,7 @@ says what the Core promises and what it does not yet.
 | [Redstone and signals](SIGNALS.md) | Sensors that speak redstone, signals by frequency, relays, the signal probe. |
 | [Heat](HEAT.md) | Temperature in blocks, conduction by real materials, heat pipes, loss to the air and to space. |
 | [Mechanical power](MECHANICAL_POWER.md) | Shafts, gears and gearboxes in rpm, newton-metres and watts; sources, loads, motors and dynamos. |
+| [Conveyors](CONVEYORS.md) | Belts of your own kinds, runs, items on belts, what makes them move, players and mobs carried. |
 | [Networks](NETWORKS.md) | The data network and its members, and peripheral links. |
 | [Operations](OPERATIONS.md) | Requests a network carries out, and adding a kind of your own. |
 
