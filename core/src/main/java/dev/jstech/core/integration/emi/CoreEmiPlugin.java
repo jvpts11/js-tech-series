@@ -101,10 +101,32 @@ public final class CoreEmiPlugin implements EmiPlugin {
         return true;
     }
 
+    /** How many multiblocks EMI shows, or nothing before EMI has read them. */
+    public static OptionalInt multiblocksShown() {
+        final EmiRecipeCategory category = categoryOf(MULTIBLOCKS);
+        return category == null ? OptionalInt.empty()
+                : OptionalInt.of(EmiApi.getRecipeManager().getRecipes(category).size());
+    }
+
+    /** Opens EMI's recipe screen on the multiblocks; false before EMI has read them. */
+    public static boolean showMultiblocks() {
+        final EmiRecipeCategory category = categoryOf(MULTIBLOCKS);
+        if (category == null) {
+            return false;
+        }
+        EmiApi.displayRecipeCategory(category);
+        return true;
+    }
+
     @Nullable
     private static EmiRecipeCategory categoryOf(final ProcessingKind kind) {
+        return categoryOf(kind.id());
+    }
+
+    @Nullable
+    private static EmiRecipeCategory categoryOf(final ResourceLocation id) {
         for (final EmiRecipeCategory category : EmiApi.getRecipeManager().getCategories()) {
-            if (category.getId().equals(kind.id())) {
+            if (category.getId().equals(id)) {
                 return category;
             }
         }

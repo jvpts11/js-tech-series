@@ -93,7 +93,7 @@ public final class ProjectorClient {
     /** The colours of the words above a structure and of its marks. */
     public static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "structure_projector", new Colours(
             0xFF << 24 | 0xFFFFFF, 0xFF << 24 | 0xB4BCC6, 0xFF << 24 | 0x5FE6F0, 0xFF << 24 | 0xF0564A,
-            0xC0 << 24 | 0x262E3A, 0xF0564A, 0x5FE6F0));
+            0xC0 << 24 | 0x262E3A, 0xF0564A, 0x5FE6F0, 0x20 << 24 | 0xFFFFFF));
     private static final float TEXT_SCALE = 0.025F;
     private static final int LINE_HEIGHT = 10;
     private static final int MOST_NAMED = 3;
@@ -282,11 +282,17 @@ public final class ProjectorClient {
         for (final Line line : lines) {
             widest = Math.max(widest, font.width(line.text()));
         }
+        /*
+         * As the game draws a name over a head: the ground first, seen through what stands between, with the words
+         * faint on it, then the words themselves; drawn in one go, the ground would hide the words it is behind.
+         */
         for (int i = 0; i < lines.size(); i++) {
             final Line line = lines.get(i);
-            font.drawInBatch(line.text(), -widest / 2.0F, (i - lines.size()) * LINE_HEIGHT, line.colour(), false,
-                    pose.last().pose(), buffers, Font.DisplayMode.NORMAL, PALETTE.get().ground(),
-                    LightTexture.FULL_BRIGHT);
+            final float y = (i - lines.size()) * LINE_HEIGHT;
+            font.drawInBatch(line.text(), -widest / 2.0F, y, PALETTE.get().faint(), false, pose.last().pose(),
+                    buffers, Font.DisplayMode.SEE_THROUGH, PALETTE.get().ground(), LightTexture.FULL_BRIGHT);
+            font.drawInBatch(line.text(), -widest / 2.0F, y, line.colour(), false, pose.last().pose(), buffers,
+                    Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
         }
         pose.popPose();
     }
@@ -297,8 +303,9 @@ public final class ProjectorClient {
         final List<Line> lines = new ArrayList<>();
         final ProjectorView view = projection.view();
         final ShapePreview preview = view.preview();
-        lines.add(new Line(GameText.component(ProjectorTexts.SIZE_LINE.with(projection.name(), projection.mod(),
-                preview.sizeX(), preview.sizeY(), preview.sizeZ())), c.title()));
+        lines.add(new Line(GameText.component(ProjectorTexts.SIZE_LINE.with(projection.name(), preview.sizeX(),
+                preview.sizeY(), preview.sizeZ())), c.title()));
+        lines.add(new Line(GameText.component(projection.mod()), c.words()));
         lines.add(new Line(GameText.component(ProjectorTexts.IN_PLACE.with(view.placed(), view.places().size())),
                 c.words()));
         if (view.missing() > 0) {
@@ -473,9 +480,10 @@ public final class ProjectorClient {
      * @param ground         the dim ground behind the words
      * @param wrongMark      the outline of a block that is wrong, without its alpha
      * @param controllerMark the outline of the controller's place, without its alpha
+     * @param faint          the words as they show through what stands between, faint
      */
     public record Colours(int title, int words, int missing, int wrong, int ground, int wrongMark,
-                          int controllerMark) {
+                          int controllerMark, int faint) {
     }
 
     /* Lines drawn over everything, as a mark seen through walls is: the game's own lines with no depth test. */

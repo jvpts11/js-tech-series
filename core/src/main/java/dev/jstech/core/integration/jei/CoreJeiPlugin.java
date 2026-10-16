@@ -135,6 +135,26 @@ public final class CoreJeiPlugin implements IModPlugin {
         return true;
     }
 
+    /** How many multiblocks JEI shows, or nothing while JEI is not running. */
+    public static OptionalInt multiblocksShown() {
+        final IJeiRuntime running = runtime;
+        if (running == null) {
+            return OptionalInt.empty();
+        }
+        final long count = running.getRecipeManager().createRecipeLookup(MultiblockCategory.TYPE).get().count();
+        return OptionalInt.of((int) Math.min(count, Integer.MAX_VALUE));
+    }
+
+    /** Opens JEI's recipe screen on the multiblocks; false while JEI is not running. */
+    public static boolean showMultiblocks() {
+        final IJeiRuntime running = runtime;
+        if (running == null) {
+            return false;
+        }
+        running.getRecipesGui().showTypes(List.of(MultiblockCategory.TYPE));
+        return true;
+    }
+
     /** The recipes of {@code kind} the player's game was sent, or none before it joined a world. */
     private static List<RecipeHolder<ProcessingRecipe>> recipesOf(final ProcessingKind kind) {
         final ClientLevel level = Minecraft.getInstance().level;

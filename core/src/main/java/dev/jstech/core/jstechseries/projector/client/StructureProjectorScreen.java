@@ -55,6 +55,8 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
     private static final int ITEM_INSET = 6;
     private static final int WORDS_INSET = 4;
     private static final int MOST_NAMED = 3;
+    /* The room left between the line along the face's foot and the lamp. */
+    private static final int STATUS_GAP = 4;
     private static final double SHADE_HI = 0.3;
     private static final double SHADE_LO = 0.45;
     private static final double DIM = 0.45;
@@ -290,15 +292,18 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
                 y0 + StructureProjectorLayout.LAMP_Y, false);
     }
 
-    /* Along the face's foot: the multiblock's name, its size and its mod. */
+    /* Along the face's foot: the multiblock's name, its size and its mod, cut where the lamp stands. */
     private void status(final GuiGraphics g, final Optional<ShapePreview> preview,
                         final ProjectorSettings settings) {
         if (preview.isEmpty() || settings.chosen().isEmpty()) {
             return;
         }
         final ResourceLocation id = settings.chosen().get();
-        MachineArt.engrave(g, this.font, upper(ProjectorTexts.STATUS.with(Projectables.name(id),
-                preview.get().sizeX(), preview.get().sizeY(), preview.get().sizeZ(), ScreenWords.modName(id))),
+        final String status = upper(ProjectorTexts.STATUS.with(Projectables.name(id), preview.get().sizeX(),
+                preview.get().sizeY(), preview.get().sizeZ(), ScreenWords.modName(id)));
+        final int room = (int) ((StructureProjectorLayout.LAMP_X - STATUS_GAP - StructureProjectorLayout.STATUS_X)
+                / StructureProjectorLayout.SMALL);
+        MachineArt.engrave(g, this.font, this.font.plainSubstrByWidth(status, room),
                 this.leftPos + StructureProjectorLayout.STATUS_X, this.topPos + StructureProjectorLayout.STATUS_Y,
                 false);
     }

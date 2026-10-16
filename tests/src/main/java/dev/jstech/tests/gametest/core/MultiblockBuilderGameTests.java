@@ -19,12 +19,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -113,11 +118,21 @@ public final class MultiblockBuilderGameTests {
     public static void item_isAimedAtAControllerItIsUsedOn(final GameTestHelper helper) {
         final FakePlayer player = builder(helper, "aim");
         final ItemStack stack = new ItemStack(MultiblockBuilder.ITEM.get());
-        stack.set(MultiblockBuilder.AIM.get(), GlobalPos.of(helper.getLevel().dimension(),
-                helper.absolutePos(CONTROLLER)));
-        helper.assertTrue(MultiblockBuilder.aim(stack, player).equals(Optional.of(helper.absolutePos(CONTROLLER))),
-                "it is aimed at the controller in the player's world");
-        helper.assertTrue(MultiblockBuilder.state(stack).equals(BuilderState.DEFAULT), "it comes as it is made");
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        final BlockPos controller = helper.absolutePos(CONTROLLER);
+        final InteractionResult used = stack.onItemUseFirst(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(controller), Direction.NORTH, controller, false)));
+        helper.assertTrue(used.consumesAction(), "used on a controller, it answers before the controller does");
+        helper.assertTrue(MultiblockBuilder.aim(stack, player).equals(Optional.of(controller)),
+                "and is aimed at it, in the player's world");
+        final BlockPos floor = helper.absolutePos(new BlockPos(0, 1, 0));
+        final ItemStack other = new ItemStack(MultiblockBuilder.ITEM.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, other);
+        helper.assertTrue(other.onItemUseFirst(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(floor), Direction.UP, floor, false))) == InteractionResult.PASS,
+                "used on another block, it lets the block answer");
+        helper.assertTrue(MultiblockBuilder.aim(other, player).isEmpty() && MultiblockBuilder.state(other)
+                .equals(BuilderState.DEFAULT), "and aims at nothing, set as it is made");
         helper.succeed();
     }
 

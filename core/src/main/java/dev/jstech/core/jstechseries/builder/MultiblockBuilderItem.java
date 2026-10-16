@@ -19,8 +19,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
 /**
- * The Multiblock Builder as an item: used on a multiblock's controller it is aimed at it and held up; used on anything
- * else, or in the air, it is held up as it is, to read or to set.
+ * The Multiblock Builder as an item: used on a multiblock's controller it is aimed at it and held up, before the
+ * controller opens its own screen; used on anything else, or in the air, it is held up as it is, to read or to set.
  */
 public final class MultiblockBuilderItem extends Item {
 
@@ -28,19 +28,27 @@ public final class MultiblockBuilderItem extends Item {
         super(properties.stacksTo(1));
     }
 
+    /* Before the block it is used on answers: a controller's own screen would open otherwise. */
     @Override
-    public InteractionResult useOn(final UseOnContext context) {
+    public InteractionResult onItemUseFirst(final ItemStack stack, final UseOnContext context) {
         final Level level = context.getLevel();
-        final ItemStack stack = context.getItemInHand();
-        if (level.getBlockEntity(context.getClickedPos()) instanceof MachineBlockEntity machine
-                && machine.structure() != null) {
-            stack.set(MultiblockBuilder.AIM.get(), GlobalPos.of(level.dimension(),
-                    context.getClickedPos().immutable()));
+        if (!(level.getBlockEntity(context.getClickedPos()) instanceof MachineBlockEntity machine)
+                || machine.structure() == null) {
+            return InteractionResult.PASS;
         }
+        stack.set(MultiblockBuilder.AIM.get(), GlobalPos.of(level.dimension(), context.getClickedPos().immutable()));
         if (level.isClientSide()) {
             MultiblockBuilder.open(context.getHand());
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    @Override
+    public InteractionResult useOn(final UseOnContext context) {
+        if (context.getLevel().isClientSide()) {
+            MultiblockBuilder.open(context.getHand());
+        }
+        return InteractionResult.sidedSuccess(context.getLevel().isClientSide());
     }
 
     @Override
