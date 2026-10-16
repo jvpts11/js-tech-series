@@ -27,7 +27,8 @@ its faces take facades (`takesFacades()`, true only where a cable runs).
 A piece fits a space when its place is free and its boxes overlap no other piece's (`SpaceFit`). Pieces against
 faces side by side may meet at the block's edges, as two slabs on adjacent faces do; pieces against opposite faces
 may not reach into each other, so a slab and five eighths do not fit one space. Devices on faces (`IFacePart`, a bus
-or a sensor) take the middle of their face, two pixels from each edge and five deep.
+or a sensor) take the middle of their face, two pixels from each edge and five deep, unless their kind says otherwise
+(see below).
 
 Nothing but a piece against a face may share room with what runs through the middle, and that piece only within five
 pixels of its face: a cover, a panel or a device closes a cable's end, while a slab would reach into the cable and
@@ -83,6 +84,43 @@ places it, making a space of parts alone where nothing stands, and refuses where
 A click hits exactly the piece under the crosshair (`SpaceParts.aim`), the outline shows only it, and breaking takes
 only it, with its drop; how long it takes is its block's. The middle-click picks its item.
 
+## What a device can do
+
+A device on a face (`IFacePart`, see [Cables](CABLES.md#parts-on-the-cable)) does each of these on its own face:
+
+| Method | What it does |
+| --- | --- |
+| `ticks()` | Whether it needs its tick. A space none of whose devices needs one is never ticked; the default is true. |
+| `signal()` | The redstone strength it gives out of its face, to the block there and to wire beside it. |
+| `directSignal()` | The strength it gives into the block on its face, which then powers its own neighbours, as a lever does. |
+| `comparator()` | What a comparator standing against its face reads. |
+| `light()` | The light it gives. |
+| `neighbourChanged()` | Called on the server when the block on its face, or the redstone reaching it, changes. |
+| `use(player)` | A player used it: it opens its menu or does what it does. |
+
+A device whose light or need of a tick changes calls its host's `partChanged()`; one whose redstone or comparator
+reading changes calls `partSignalChanged(face)`, and the block's neighbours hear of it. Strengths are kept within 0
+and 15. A menu opened on a device stays open while `MenuValidity.part(level, pos, face, part)` holds: the very device
+still on that face, and the player within reach.
+
+The light and the need of a tick are kept in the block's state (`light`, `ticking`, in `PartStates`), set again each
+time a device changes, because the game reads both from a block's state, and the light engine may reach a block before
+its block entity is loaded. A block read from an older save whose state does not show its devices is set right on its
+first tick.
+
+Its kind says the rest, which every player's game knows:
+
+```java
+() -> new PartType<>(LampPart::new, MyTexts.LAMP, rl("block/part/lamp"))
+        .redstone()                                          // wire beside its face joins it
+        .shaped(List.of(new PartBox(5, 5, 0, 11, 11, 3)))    // its own room, facing north, in pixels
+```
+
+Without `shaped`, a device takes a plate twelve pixels across and five deep. Its room is what it collides with, is
+aimed at and outlined by, and what keeps other parts out of its way; it is turned to each face as its model is
+(`PartBox.turnedTo`). Two devices on faces side by side may share room at the corner between their plates, and two
+microblocks along their edge, but a device never reaches into a microblock.
+
 ## Drawing
 
 Every piece of a space is drawn into the world's mesh, which is built again only when a piece changes. Where two
@@ -118,5 +156,10 @@ as its model is; a world of still parts draws nothing here. The rest of the part
 - **A facade is refused.** The space has no cable, whose wires it hides; place a cover there instead.
 - **Your saw does not cut.** It is not in the item tag `jscore:saws`.
 - **`PartMotions.register` refuses a kind.** The kind was not marked with `moving()` where it is made.
+- **A device never ticks.** Its `ticks()` says false, or its light or need of a tick changed without a call to
+  `partChanged()`, so the block's state still says it needs none.
+- **Wire beside a device does not join it.** Its kind is not marked with `redstone()`.
+- **A device is refused beside a slab.** Its plate would reach into the slab; give its kind a smaller room with
+  `shaped`, or use a thinner piece.
 - **A neighbour's face shows behind a cover.** The cover's block is not opaque, as glass is not; only a piece of a
   block the game draws solid hides what lies behind it.

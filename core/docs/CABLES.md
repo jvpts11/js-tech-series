@@ -268,7 +268,9 @@ plain block model facing north; the block's model is rebuilt only when a part st
 
 The cable block is a block space like any other: microblocks share it with the wires and the parts, a whole cover
 closes its face to wires as a part does, a hollow cover lets them through, and a facade hides them while they keep
-working ([Block spaces and microblocks](MULTIPART.md)).
+working ([Block spaces and microblocks](MULTIPART.md)). What a part can do besides, its redstone, light and
+comparator reading, a tick only when it needs one, a room of its own shape, is told there too
+([What a device can do](MULTIPART.md#what-a-device-can-do)).
 
 ## What can go wrong
 

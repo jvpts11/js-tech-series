@@ -36,8 +36,46 @@ public interface IFacePart {
         return false;
     }
 
-    /** Runs once a tick on the server while the block is loaded. */
+    /** Runs once a tick on the server while the block is loaded, for a part that {@link #ticks()}. */
     default void serverTick() {
+    }
+
+    /**
+     * Whether the part needs its tick: a space none of whose parts needs one is never ticked. A part whose answer
+     * changes calls {@link IPartHost#partChanged}.
+     */
+    default boolean ticks() {
+        return true;
+    }
+
+    /**
+     * The redstone strength the part gives out of its face, 0 to 15: to the block there and to wire beside it. A part
+     * whose signal changes calls {@link IPartHost#partSignalChanged}.
+     */
+    default int signal() {
+        return 0;
+    }
+
+    /** The strength it gives into the block on its face, which then powers its own neighbours, as a lever does. */
+    default int directSignal() {
+        return 0;
+    }
+
+    /**
+     * What a comparator reading the part's face gives, 0 to 15. A part whose reading changes calls
+     * {@link IPartHost#partSignalChanged}.
+     */
+    default int comparator() {
+        return 0;
+    }
+
+    /** The light the part gives, 0 to 15. A part whose light changes calls {@link IPartHost#partChanged}. */
+    default int light() {
+        return 0;
+    }
+
+    /** The block on the part's face, or the redstone reaching it, changed; on the server. */
+    default void neighbourChanged() {
     }
 
     /** Writes what the part keeps into a save. */

@@ -29,6 +29,22 @@ public final class SpaceBlockEntity extends SyncedBlockEntity implements IPartHo
         super(CoreSpaces.BLOCK_ENTITY.get(), pos, state);
     }
 
+    /** Runs the parts' ticks, on the server, while any needs one. */
+    public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
+                                  final SpaceBlockEntity space) {
+        space.parts.tick();
+    }
+
+    /* A space whose state does not show its parts, read from an older save, is set right on its first tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (this.level != null && !this.level.isClientSide()
+                && !PartStates.showing(this.level, this.worldPosition, this.parts)) {
+            this.level.scheduleTick(this.worldPosition, getBlockState().getBlock(), 1);
+        }
+    }
+
     @Override
     public SpaceParts parts() {
         return this.parts;
@@ -44,12 +60,12 @@ public final class SpaceBlockEntity extends SyncedBlockEntity implements IPartHo
         return this.worldPosition;
     }
 
-    /* The parts changed: they are saved and sent, and the state says again which faces they cover. */
+    /* The parts changed: they are saved and sent, and the state shows them again. */
     @Override
     public void partChanged() {
         this.partsField.changed();
         if (this.level != null && !this.level.isClientSide()) {
-            SpaceBlock.showCovered(this.level, this.worldPosition, this.parts);
+            PartStates.show(this.level, this.worldPosition, this.parts);
         }
     }
 

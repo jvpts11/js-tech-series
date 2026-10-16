@@ -59,12 +59,20 @@ class SpaceFitTest {
     void fits_letsAFacePieceCloseACablesEndButNotReachIntoIt() {
         assertTrue(SpaceFit.fits(face(NORTH, MicroShape.COVER), List.of(), CABLE), "a cover closes the cable's end");
         assertTrue(SpaceFit.fits(face(NORTH, MicroShape.PANEL), List.of(), CABLE), "and a panel");
-        assertTrue(SpaceFit.fits(new SpaceFit.Piece(SpaceSlots.face(NORTH), List.of(SpaceFit.deviceBox(NORTH)), true),
-                List.of(), CABLE), "and a device");
+        assertTrue(SpaceFit.fits(device(NORTH), List.of(), CABLE), "and a device");
         assertFalse(SpaceFit.fits(face(NORTH, MicroShape.SLAB), List.of(), CABLE), "a slab reaches into the cable");
         assertFalse(SpaceFit.fits(face(EAST, MicroShape.SLAB), List.of(), CABLE), "and beside it");
         assertTrue(SpaceFit.fits(piece(MicroShape.HOLLOW, SpaceSlots.face(NORTH), MicroShape.SLAB), List.of(),
                 CABLE), "a hollow slab lets it through");
+    }
+
+    @Test
+    void fits_letsDevicesMeetEachOtherButNotReachIntoAMicroblock() {
+        assertTrue(SpaceFit.fits(device(EAST), List.of(device(NORTH)), List.of()), "two devices side by side");
+        assertFalse(SpaceFit.fits(device(NORTH), List.of(face(DOWN, MicroShape.SLAB)), List.of()),
+                "a device would reach into a slab on the floor");
+        assertTrue(SpaceFit.fits(device(NORTH), List.of(face(DOWN, MicroShape.COVER)), List.of()),
+                "but stands above a cover");
     }
 
     @Test
@@ -78,6 +86,10 @@ class SpaceFitTest {
     }
 
     private static SpaceFit.Piece piece(final MicroShape shape, final int slot, final int size) {
-        return new SpaceFit.Piece(slot, shape.boxes(slot, size, SpaceSlots.Y), shape.onFace());
+        return new SpaceFit.Piece(slot, shape.boxes(slot, size, SpaceSlots.Y), shape.onFace(), shape.onFace());
+    }
+
+    private static SpaceFit.Piece device(final int face) {
+        return SpaceFit.Piece.device(SpaceSlots.face(face), List.of(SpaceFit.deviceBox(face)));
     }
 }

@@ -46,7 +46,8 @@ public record Microblock(MicroblockPiece piece, int slot, int axis) {
 
     /** It as the fit sees it. */
     public SpaceFit.Piece fitPiece() {
-        return new SpaceFit.Piece(this.slot, boxes(), this.piece.shape().onFace());
+        final boolean onFace = this.piece.shape().onFace();
+        return new SpaceFit.Piece(this.slot, boxes(), onFace, onFace);
     }
 
     /**

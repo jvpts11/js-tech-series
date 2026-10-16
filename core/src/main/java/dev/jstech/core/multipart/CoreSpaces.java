@@ -42,7 +42,7 @@ public final class CoreSpaces {
      */
     public static final BlockEntry<SpaceBlock> BLOCK = CoreItems.CONTENT.block("multipart", SpaceBlock::new)
             .properties(properties -> properties.mapColor(MapColor.STONE).strength(0.5F).sound(SoundType.STONE)
-                    .dynamicShape())
+                    .dynamicShape().lightLevel(PartStates::lightOf))
             .named("Parts")
             .look(IBlockLook.fixed(new IBlockModel.ParticleOnly("multipart", "block/cable/housing")))
             .drops(Drops.NONE)

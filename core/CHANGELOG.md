@@ -431,6 +431,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   neighbour's face behind an opaque cover.
 - Parts that move: a kind of part with a fan's blades or a gauge's needle is drawn each frame, only in the
   spaces that hold one, while the rest of every part stays in the world's mesh.
+- What a part does on its own face: give redstone out of it and into the block there, give a comparator
+  reading, give light, hear the redstone reaching it, open a menu that closes when the part is taken off, and take a
+  room of its own shape. A cable or a space of parts is ticked only while one of its parts needs it, so a world of
+  plain cables costs nothing each tick, and redstone wire joins a cable only on a face whose part deals in redstone.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

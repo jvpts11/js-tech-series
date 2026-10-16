@@ -10,6 +10,8 @@ package dev.jstech.core.cable;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.connect.Neighbours;
 import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.PartRedstone;
+import dev.jstech.core.multipart.PartStates;
 import dev.jstech.core.multipart.SpaceBlock;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.List;
@@ -19,6 +21,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -34,6 +37,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -48,7 +52,8 @@ import org.jetbrains.annotations.Nullable;
  * The Core's cable block, which every mod's cables are laid in: its shape is its wires, its junction box and its
  * parts, as its block entity holds them. Using it with a dye dyes the wire looked at; using it bare uses the part
  * looked at; breaking it takes out the wire or the part looked at and leaves the rest, and takes the block only with
- * its last piece.
+ * its last piece. Its state shows the light its parts give and whether any needs its tick ({@link PartStates}), and
+ * its redstone is its parts', face by face ({@link PartRedstone}).
  */
 public final class CableBlock extends Block implements EntityBlock {
 
@@ -58,6 +63,8 @@ public final class CableBlock extends Block implements EntityBlock {
 
     public CableBlock(final Properties properties) {
         super(properties);
+        registerDefaultState(this.stateDefinition.any().setValue(PartStates.LIGHT, 0)
+                .setValue(PartStates.TICKING, false));
     }
 
     /** Where a player's look runs within reach, from the eyes. */
@@ -107,6 +114,53 @@ public final class CableBlock extends Block implements EntityBlock {
     @Override
     protected VoxelShape getOcclusionShape(final BlockState state, final BlockGetter level, final BlockPos pos) {
         return Shapes.empty();
+    }
+
+    @Override
+    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(PartStates.LIGHT, PartStates.TICKING);
+    }
+
+    @Override
+    protected boolean isSignalSource(final BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getSignal(final BlockState state, final BlockGetter level, final BlockPos pos,
+                            final Direction direction) {
+        return PartRedstone.signal(level, pos, direction);
+    }
+
+    @Override
+    protected int getDirectSignal(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                  final Direction direction) {
+        return PartRedstone.directSignal(level, pos, direction);
+    }
+
+    @Override
+    public boolean canConnectRedstone(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                      @Nullable final Direction direction) {
+        return PartRedstone.joins(level, pos, direction);
+    }
+
+    @Override
+    protected boolean hasAnalogOutputSignal(final BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getAnalogOutputSignal(final BlockState state, final Level level, final BlockPos pos) {
+        return PartRedstone.comparator(level, pos);
+    }
+
+    /* A cable read from an older save whose state does not show its parts is set right a tick after it loads. */
+    @Override
+    protected void tick(final BlockState state, final ServerLevel level, final BlockPos pos,
+                        final RandomSource random) {
+        if (level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
+            PartStates.show(level, pos, cable.parts());
+        }
     }
 
     @Override
@@ -184,6 +238,7 @@ public final class CableBlock extends Block implements EntityBlock {
         if (face != null && level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
             cable.fields().neighbourChanged(level, face);
         }
+        PartRedstone.neighbourChanged(level, pos, neighbourPos);
     }
 
     @Override
@@ -206,7 +261,8 @@ public final class CableBlock extends Block implements EntityBlock {
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(final Level level, final BlockState state,
                                                                             final BlockEntityType<T> type) {
-        if (level.isClientSide()) {
+        // Only a cable whose parts need their tick is ticked, as its state says.
+        if (level.isClientSide() || !state.getValue(PartStates.TICKING)) {
             return null;
         }
         return BlockEntityTickers.create(type, CoreCables.BLOCK_ENTITY.get(), CableBlockEntity::serverTick);

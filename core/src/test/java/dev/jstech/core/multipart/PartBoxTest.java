@@ -16,6 +16,10 @@ import org.junit.jupiter.api.Test;
 class PartBoxTest {
 
     private static final PartBox WHOLE = new PartBox(0, 0, 0, 16, 16, 16);
+    private static final int NORTH = 2;
+    private static final int SOUTH = 3;
+    private static final int EAST = 5;
+    private static final int FACES = 6;
 
     @Test
     void minus_keepsABoxItDoesNotShareRoomWith() {
@@ -43,6 +47,23 @@ class PartBoxTest {
         final PartBox cover = new PartBox(0, 0, 0, 16, 16, 2);
         final PartBox slab = new PartBox(0, 0, 0, 16, 8, 16);
         assertEquals(List.of(new PartBox(0, 8, 0, 16, 16, 2)), cover.minus(slab));
+    }
+
+    @Test
+    void turnedTo_turnsADevicePlateToEveryFace() {
+        final PartBox plate = SpaceFit.deviceBox(NORTH);
+        for (int face = 0; face < FACES; face++) {
+            assertEquals(SpaceFit.deviceBox(face), plate.turnedTo(face), "the plate on face " + face);
+        }
+    }
+
+    @Test
+    void turnedTo_turnsABoxOffTheMiddleAsAModelTurns() {
+        final PartBox corner = new PartBox(0, 12, 0, 4, 16, 2);
+        assertEquals(corner, corner.turnedTo(NORTH));
+        assertEquals(new PartBox(12, 12, 14, 16, 16, 16), corner.turnedTo(SOUTH), "half a turn about y");
+        assertEquals(corner.turnedTo(SOUTH), corner.turnedTo(EAST).turnedTo(EAST),
+                "two quarter turns about y are half a turn");
     }
 
     private static int volume(final PartBox box) {

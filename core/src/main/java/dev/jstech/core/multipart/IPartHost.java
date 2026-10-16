@@ -9,8 +9,10 @@ package dev.jstech.core.multipart;
 
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 /** The block space a part is mounted in, as the part sees it: a cable block, or a space of parts alone. */
@@ -32,6 +34,22 @@ public interface IPartHost {
      */
     default void partLooksChanged() {
         partChanged();
+    }
+
+    /**
+     * The redstone or the comparator reading a part on {@code face} gives changed: the block's neighbours, and the
+     * block on that face, which the part may power through, hear of it.
+     */
+    default void partSignalChanged(final Direction face) {
+        final ServerLevel level = partServerLevel();
+        if (level == null) {
+            return;
+        }
+        final BlockPos pos = partPos();
+        final Block block = level.getBlockState(pos).getBlock();
+        level.updateNeighborsAt(pos, block);
+        level.updateNeighborsAt(pos.relative(face), block);
+        level.updateNeighbourForOutputSignal(pos, block);
     }
 
     /** The server level the block is in, or null on a player's game or before it is placed. */

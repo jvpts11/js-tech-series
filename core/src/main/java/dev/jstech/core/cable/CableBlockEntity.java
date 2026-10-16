@@ -24,6 +24,7 @@ import dev.jstech.core.multipart.Microblock;
 import dev.jstech.core.multipart.MicroblockLayout;
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PartBox;
+import dev.jstech.core.multipart.PartStates;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.multipart.PlacedModel;
 import dev.jstech.core.multipart.SpaceParts;
@@ -342,6 +343,9 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         if (refreshLinks(true) && this.level != null) {
             Neighbours.portsChanged(this.level, this.worldPosition);
         }
+        if (this.level != null && !this.level.isClientSide()) {
+            PartStates.show(this.level, this.worldPosition, this.parts);
+        }
     }
 
     @Override
@@ -469,6 +473,10 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             this.inGrids = true;
             for (final Wire wire : this.bundle.wires()) {
                 enter(server, wire);
+            }
+            // A cable read from an older save, whose state does not show its parts, is set right on its first tick.
+            if (!PartStates.showing(server, this.worldPosition, this.parts)) {
+                server.scheduleTick(this.worldPosition, getBlockState().getBlock(), 1);
             }
         }
     }

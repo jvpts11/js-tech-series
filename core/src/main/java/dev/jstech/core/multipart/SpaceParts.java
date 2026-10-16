@@ -63,6 +63,7 @@ public final class SpaceParts implements IFieldPart {
     private static final String CLIENT_KINDS = "PartKinds";
     private static final String CLIENT_BUSY = "PartBusy";
     private static final double PIXEL = 1.0 / PartBox.SIDE;
+    private static final int MAX_STRENGTH = 15;
     private static final Codec<List<Microblock>> MICROBLOCKS = Microblock.CODEC.listOf();
 
     public SpaceParts(final IPartHost host) {
@@ -180,7 +181,7 @@ public final class SpaceParts implements IFieldPart {
             throw new IllegalArgumentException("the part type " + device.type() + " is not registered");
         }
         final int index = face.get3DDataValue();
-        if (!fits(new SpaceFit.Piece(SpaceSlots.face(index), List.of(SpaceFit.deviceBox(index)), true))) {
+        if (!fits(SpaceFit.Piece.device(SpaceSlots.face(index), device.type().boxesOn(index)))) {
             return false;
         }
         device.attach(this.host, face);
@@ -232,9 +233,64 @@ public final class SpaceParts implements IFieldPart {
     /** Runs every device's tick, on the server. */
     public void tick() {
         for (final IFacePart device : this.devices) {
-            if (device != null) {
+            if (device != null && device.ticks()) {
                 device.serverTick();
             }
+        }
+    }
+
+    /** Whether any device needs its tick, on the server: a space whose devices need none is never ticked. */
+    public boolean ticks() {
+        for (final IFacePart device : this.devices) {
+            if (device != null && device.ticks()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The light the devices give, the brightest of them, 0 to 15; on the server. */
+    public int light() {
+        int light = 0;
+        for (final IFacePart device : this.devices) {
+            if (device != null) {
+                light = Math.max(light, strength(device.light()));
+            }
+        }
+        return light;
+    }
+
+    // Redstone
+
+    /** The redstone strength the device on {@code face} gives out of it, 0 to 15; on the server. */
+    public int signal(final Direction face) {
+        final IFacePart device = get(face);
+        return device == null ? 0 : strength(device.signal());
+    }
+
+    /** The strength the device on {@code face} gives into the block there, 0 to 15; on the server. */
+    public int directSignal(final Direction face) {
+        final IFacePart device = get(face);
+        return device == null ? 0 : strength(device.directSignal());
+    }
+
+    /** What a comparator reading {@code face} gives, 0 to 15; on the server. */
+    public int comparator(final Direction face) {
+        final IFacePart device = get(face);
+        return device == null ? 0 : strength(device.comparator());
+    }
+
+    /** Whether redstone wire beside {@code face} joins the space: its device's kind deals in redstone; either side. */
+    public boolean joinsRedstone(final Direction face) {
+        final PartType<?> type = type(face);
+        return type != null && type.joinsRedstone();
+    }
+
+    /** Tells the device on {@code face} that the block there, or the redstone reaching it, changed. */
+    public void neighbourChanged(final Direction face) {
+        final IFacePart device = get(face);
+        if (device != null) {
+            device.neighbourChanged();
         }
     }
 
@@ -336,8 +392,9 @@ public final class SpaceParts implements IFieldPart {
     public List<SpaceFit.Piece> pieces() {
         final List<SpaceFit.Piece> out = new ArrayList<>();
         for (int face = 0; face < FACES; face++) {
-            if (this.kinds[face] != NONE) {
-                out.add(new SpaceFit.Piece(SpaceSlots.face(face), List.of(SpaceFit.deviceBox(face)), true));
+            final PartType<?> type = type(Direction.from3DDataValue(face));
+            if (type != null) {
+                out.add(SpaceFit.Piece.device(SpaceSlots.face(face), type.boxesOn(face)));
             }
         }
         for (final Microblock block : this.micro) {
@@ -418,6 +475,11 @@ public final class SpaceParts implements IFieldPart {
         readMicro(tag);
         this.shape = null;
         MovingParts.note(this.host.partPos(), anyMoving());
+    }
+
+    /* A strength of redstone or light, kept within the game's range whatever a part says. */
+    private static int strength(final int said) {
+        return Math.clamp(said, 0, MAX_STRENGTH);
     }
 
     /* The parts changed: the shape follows them, the block is saved and sent, and what it offers is asked again. */

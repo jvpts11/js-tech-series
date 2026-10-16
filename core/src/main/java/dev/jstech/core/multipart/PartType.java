@@ -9,6 +9,8 @@ package dev.jstech.core.multipart;
 
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
@@ -31,6 +33,12 @@ public final class PartType<P extends IFacePart> {
     private final ResourceLocation model;
     private final ResourceLocation busyModel;
     private boolean moves;
+    private boolean redstone;
+    /* The room a part of the kind takes on each face, in the order of the game's directions. */
+    private List<List<PartBox>> onFaces = turned(List.of(SpaceFit.deviceBox(NORTH)));
+
+    private static final int NORTH = 2;
+    private static final int FACES = 6;
 
     /**
      * A kind drawn the same whether its parts are at work or not.
@@ -97,8 +105,48 @@ public final class PartType<P extends IFacePart> {
         return this.moves;
     }
 
+    /**
+     * Gives the kind its own room, made facing north in pixels, in place of a plate twelve pixels across and five deep:
+     * what its parts collide with, are aimed at and outlined by, and what keeps other parts out of their way.
+     */
+    public PartType<P> shaped(final List<PartBox> facingNorth) {
+        if (facingNorth.isEmpty()) {
+            throw new IllegalArgumentException("a part takes some room; give it at least one box");
+        }
+        this.onFaces = turned(facingNorth);
+        return this;
+    }
+
+    /** The room a part of the kind takes on the face numbered {@code face}, in the order of the game's directions. */
+    public List<PartBox> boxesOn(final int face) {
+        return this.onFaces.get(face);
+    }
+
+    /** Marks the kind as one that deals in redstone: redstone wire beside its face joins it. */
+    public PartType<P> redstone() {
+        this.redstone = true;
+        return this;
+    }
+
+    /** Whether redstone wire beside the face its parts stand on joins them. */
+    public boolean joinsRedstone() {
+        return this.redstone;
+    }
+
     /** The id this kind is registered under, or null when it is not registered. */
     public ResourceLocation id() {
         return CoreParts.REGISTRY.getKey(this);
+    }
+
+    private static List<List<PartBox>> turned(final List<PartBox> facingNorth) {
+        final List<List<PartBox>> out = new ArrayList<>(FACES);
+        for (int face = 0; face < FACES; face++) {
+            final List<PartBox> on = new ArrayList<>(facingNorth.size());
+            for (final PartBox box : facingNorth) {
+                on.add(box.turnedTo(face));
+            }
+            out.add(List.copyOf(on));
+        }
+        return List.copyOf(out);
     }
 }

@@ -13,8 +13,9 @@ import java.util.List;
 
 /**
  * Whether a part fits a block space beside the parts already there: its place has to be free, and it may not share
- * room with another part, nor with what runs through the space's middle. Two parts on faces side by side may meet at
- * an edge, as two covers on a block's sides do, while two on opposite faces may not reach into each other; a part on
+ * room with another part, nor with what runs through the space's middle. Two microblocks on faces side by side may
+ * meet at an edge, as two covers on a block's sides do, and two devices at the corner between their plates, but a
+ * device may not reach into a microblock, and two parts on opposite faces may not reach into each other; a part on
  * a face may close the end of a cable running out of that face, as deep as a device, which is how a cover cuts the
  * cable's link, but not reach into the rest of the cable. Pure.
  */
@@ -34,7 +35,7 @@ public final class SpaceFit {
             if (piece.slot() == candidate.slot()) {
                 return false;
             }
-            if (candidate.onFace() && piece.onFace() && axisOf(candidate) != axisOf(piece)) {
+            if (meetAtAnEdge(candidate, piece)) {
                 continue;
             }
             if (overlap(candidate.boxes(), piece.boxes())) {
@@ -57,6 +58,14 @@ public final class SpaceFit {
             most[other] = DEVICE_TO;
         }
         return PartBox.of(least, most);
+    }
+
+    /*
+     * Whether two parts on faces side by side may share room where they meet: two microblocks spanning their faces
+     * meet along the edge, two devices at the corner between their plates; a device and a microblock never.
+     */
+    private static boolean meetAtAnEdge(final Piece a, final Piece b) {
+        return a.onFace() && b.onFace() && a.wholeFace() == b.wholeFace() && axisOf(a) != axisOf(b);
     }
 
     private static int axisOf(final Piece onFace) {
@@ -99,16 +108,23 @@ public final class SpaceFit {
     }
 
     /**
-     * A part as the fit sees it: its place, the room it takes, and whether it stands against a face.
+     * A part as the fit sees it: its place, the room it takes, whether it stands against a face, and whether it spans
+     * that face to its edges, as a microblock on a face does, and so may meet another such along an edge.
      *
-     * @param slot   its place
-     * @param boxes  the room it takes
-     * @param onFace whether it stands against a face
+     * @param slot      its place
+     * @param boxes     the room it takes
+     * @param onFace    whether it stands against a face
+     * @param wholeFace whether it spans its face to the edges
      */
-    public record Piece(int slot, List<PartBox> boxes, boolean onFace) {
+    public record Piece(int slot, List<PartBox> boxes, boolean onFace, boolean wholeFace) {
 
         public Piece {
             boxes = List.copyOf(boxes);
+        }
+
+        /** A device mounted on a face: against it, but not to its edges. */
+        public static Piece device(final int slot, final List<PartBox> boxes) {
+            return new Piece(slot, boxes, true, false);
         }
     }
 }

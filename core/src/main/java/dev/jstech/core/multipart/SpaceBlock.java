@@ -8,11 +8,13 @@
 package dev.jstech.core.multipart;
 
 import com.mojang.serialization.MapCodec;
+import dev.jstech.core.util.BlockEntityTickers;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -22,6 +24,8 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -41,8 +45,9 @@ import org.jetbrains.annotations.Nullable;
  * as long to break as the block it was cut from would.
  *
  * <p>Its state says which of its faces a piece of an opaque block covers whole, so a neighbour's face behind one is
- * not drawn. The game keeps what one block hides of another by their states alone, so what the space hides of its
- * neighbours is in its state, never read from its parts.
+ * not drawn, and, as {@link PartStates} keeps them, the light its parts give and whether any needs its tick. The game
+ * keeps what one block hides of another by their states alone, so what the space hides of its neighbours is in its
+ * state, never read from its parts. Its redstone is its parts', face by face ({@link PartRedstone}).
  */
 public final class SpaceBlock extends Block implements EntityBlock {
 
@@ -61,7 +66,8 @@ public final class SpaceBlock extends Block implements EntityBlock {
 
     public SpaceBlock(final Properties properties) {
         super(properties);
-        BlockState state = this.stateDefinition.any();
+        BlockState state = this.stateDefinition.any().setValue(PartStates.LIGHT, 0)
+                .setValue(PartStates.TICKING, false);
         for (final BooleanProperty covered : COVERED) {
             state = state.setValue(covered, false);
         }
@@ -112,20 +118,13 @@ public final class SpaceBlock extends Block implements EntityBlock {
         }
     }
 
-    /** Sets in the state of the space at {@code pos} which faces {@code parts} cover, when that changed. */
-    public static void showCovered(final Level level, final BlockPos pos, final SpaceParts parts) {
-        final BlockState state = level.getBlockState(pos);
-        if (!(state.getBlock() instanceof SpaceBlock)) {
-            return;
+    /** {@code state} saying the faces in {@code covered}, a bit for each, are covered, and the rest are not. */
+    public static BlockState covering(final BlockState state, final int covered) {
+        BlockState next = state;
+        for (int face = 0; face < COVERED.size(); face++) {
+            next = next.setValue(COVERED.get(face), (covered & 1 << face) != 0);
         }
-        final int covered = parts.coveredFaces();
-        if (covered != coveredOf(state)) {
-            BlockState next = state;
-            for (int face = 0; face < COVERED.size(); face++) {
-                next = next.setValue(COVERED.get(face), (covered & 1 << face) != 0);
-            }
-            level.setBlock(pos, next, Block.UPDATE_ALL);
-        }
+        return next;
     }
 
     /** The faces {@code state} says are covered, a bit for each in the order of the game's directions. */
@@ -146,12 +145,62 @@ public final class SpaceBlock extends Block implements EntityBlock {
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(COVERED.toArray(new BooleanProperty[0]));
+        builder.add(COVERED.toArray(new BooleanProperty[0])).add(PartStates.LIGHT, PartStates.TICKING);
     }
 
     @Override
     protected VoxelShape getOcclusionShape(final BlockState state, final BlockGetter level, final BlockPos pos) {
         return PLATES[coveredOf(state)];
+    }
+
+    @Override
+    protected boolean isSignalSource(final BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getSignal(final BlockState state, final BlockGetter level, final BlockPos pos,
+                            final Direction direction) {
+        return PartRedstone.signal(level, pos, direction);
+    }
+
+    @Override
+    protected int getDirectSignal(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                  final Direction direction) {
+        return PartRedstone.directSignal(level, pos, direction);
+    }
+
+    @Override
+    public boolean canConnectRedstone(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                      @Nullable final Direction direction) {
+        return PartRedstone.joins(level, pos, direction);
+    }
+
+    @Override
+    protected boolean hasAnalogOutputSignal(final BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getAnalogOutputSignal(final BlockState state, final Level level, final BlockPos pos) {
+        return PartRedstone.comparator(level, pos);
+    }
+
+    @Override
+    protected void neighborChanged(final BlockState state, final Level level, final BlockPos pos,
+                                   final Block neighbourBlock, final BlockPos neighbourPos,
+                                   final boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighbourBlock, neighbourPos, movedByPiston);
+        PartRedstone.neighbourChanged(level, pos, neighbourPos);
+    }
+
+    /* A space read from an older save whose state does not show its parts is set right a tick after it loads. */
+    @Override
+    protected void tick(final BlockState state, final ServerLevel level, final BlockPos pos,
+                        final RandomSource random) {
+        if (level.getBlockEntity(pos) instanceof SpaceBlockEntity space) {
+            PartStates.show(level, pos, space.parts());
+        }
     }
 
     @Override
@@ -228,6 +277,16 @@ public final class SpaceBlock extends Block implements EntityBlock {
     @Override
     public @Nullable BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return new SpaceBlockEntity(pos, state);
+    }
+
+    /* Only a space whose parts need their tick is ticked, as its state says. */
+    @Override
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(final Level level, final BlockState state,
+                                                                            final BlockEntityType<T> type) {
+        if (level.isClientSide() || !state.getValue(PartStates.TICKING)) {
+            return null;
+        }
+        return BlockEntityTickers.create(type, CoreSpaces.BLOCK_ENTITY.get(), SpaceBlockEntity::serverTick);
     }
 
     private static VoxelShape[] plates() {

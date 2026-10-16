@@ -7,7 +7,10 @@
  */
 package dev.jstech.core.menu;
 
+import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.ISpaceHolder;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -44,6 +47,17 @@ public final class MenuValidity {
     public static Predicate<Player> near(final Level level, final BlockPos pos, final double blocks) {
         final Vec3 centre = Vec3.atCenterOf(pos);
         return player -> player.level() == level && player.distanceToSqr(centre) <= blocks * blocks;
+    }
+
+    /**
+     * Valid while {@code part} is still mounted on {@code face} of the block space at {@code pos}, a cable or a space
+     * of parts alone, and the player can reach it, for a menu opened on a part: a part taken off, or swapped, under an
+     * open menu closes it.
+     */
+    public static Predicate<Player> part(final Level level, final BlockPos pos, final Direction face,
+                                         final IFacePart part) {
+        return player -> player.level() == level && level.getBlockEntity(pos) instanceof ISpaceHolder holder
+                && holder.parts().get(face) == part && player.canInteractWithBlock(pos, REACH_MARGIN);
     }
 
     /** Valid while {@code blockEntity} still stands where it was and the player can reach it. */
