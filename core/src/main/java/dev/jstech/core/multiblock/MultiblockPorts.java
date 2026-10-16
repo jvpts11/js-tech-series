@@ -7,22 +7,40 @@
  */
 package dev.jstech.core.multiblock;
 
+import dev.jstech.core.JsCore;
+import dev.jstech.core.energy.EnergyPorts;
+import dev.jstech.core.heat.HeatPorts;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterCapabilities;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The ports of a multiblock, made reachable: the items, fluid, energy and other matter capabilities of a part block
- * entity pass to its controller when the part is a port of the matching kind, and are absent otherwise. A mod registers its part
- * block entity once, and stamps the ports a match found with {@link #stamp}.
+ * The ports of a multiblock, made reachable: the items, fluid, energy, other matter and heat capabilities of a part
+ * block entity pass to its controller when the part is a port of the matching kind, and are absent otherwise. A mod
+ * registers its part block entity once, and stamps the ports a match found with {@link #stamp}.
  */
 public final class MultiblockPorts {
+
+    /**
+     * The blocks that are ports of their own, by the id a {@link BlockMatch} names it by: a shape whose shell lets
+     * ports stand anywhere puts {@code BlockMatch.tag(PORTS_TAG)} among what its shell's places take.
+     */
+    public static final String PORTS_TAG = "jscore:multiblock_ports";
+    /** The same tag, for a mod's data generation to put its port blocks in. */
+    public static final TagKey<Block> PORTS = TagKey.create(Registries.BLOCK,
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "multiblock_ports"));
 
     private MultiblockPorts() {
     }
@@ -52,6 +70,32 @@ public final class MultiblockPorts {
                         return host == null ? null : host.matterPort(part.port(), part.getBlockPos(), side);
                     }));
         }
+        event.registerBlockEntity(EnergyPorts.PORT, partType, (part, side) -> {
+            final IMultiblockPortHost host = host(part, PortKind.Resource.ENERGY, null);
+            return host == null ? null : host.energyClassPort(part.port(), part.getBlockPos(), side);
+        });
+        event.registerBlockEntity(HeatPorts.HEAT.block(), partType, (part, side) -> {
+            final IMultiblockPortHost host = host(part, PortKind.Resource.HEAT, null);
+            return host == null ? null : host.heatPort(part.getBlockPos(), side);
+        });
+    }
+
+    /**
+     * Registers {@code capability} on {@code partType}, a port of a mod's own that is bound to a controller passing it
+     * to the controller's {@link IMultiblockPortHost#otherPort}: a line of its own reaching the machine, as compressed
+     * air does.
+     */
+    public static <T> void registerOther(final RegisterCapabilitiesEvent event,
+                                         final BlockCapability<T, @Nullable Direction> capability,
+                                         final BlockEntityType<? extends MultiblockPartBlockEntity> partType) {
+        event.registerBlockEntity(capability, partType, (part, side) -> {
+            final BlockPos controller = part.controllerPos();
+            if (controller == null || part.getLevel() == null || !part.getLevel().isLoaded(controller)) {
+                return null;
+            }
+            return part.getLevel().getBlockEntity(controller) instanceof IMultiblockPortHost host
+                    ? host.otherPort(capability, part.getBlockPos(), side) : null;
+        });
     }
 
     /**

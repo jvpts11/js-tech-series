@@ -15,22 +15,41 @@ import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.MachineStructure;
+import dev.jstech.core.machine.ProcessingInput;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.BoxShape;
 import dev.jstech.core.multiblock.InsideRule;
 import dev.jstech.core.multiblock.Limit;
+import dev.jstech.core.multiblock.MultiblockPortBlock;
+import dev.jstech.core.multiblock.MultiblockPortBlockEntity;
+import dev.jstech.core.multiblock.MultiblockPorts;
 import dev.jstech.core.multiblock.Place;
+import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.multiblock.RedstonePortBlock;
+import dev.jstech.core.multiblock.RedstonePortBlockEntity;
+import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
- * A multiblock machine of the test mod's own, built by the player block by block: a tank of any size from three to
+ * Multiblock machines of the test mod's own, built by the player block by block. A tank of any size from three to
  * seven a side, iron on its edges, iron or glass on its faces with hoppers among them as its valves, and empty inside,
- * its controller on a face. It runs as many recipes at once as it has valves, to prove the count reaches the machine.
+ * its controller on a face: it runs as many recipes at once as it has valves. And a smelter of the same build whose
+ * faces take ports of their own (items in, items out, energy in, redstone): it has three lanes, so ports of up to
+ * three colours each feed their own, and runs two recipes at once in each.
  */
+@EventBusSubscriber(modid = JsTests.MODID)
 public final class TestStructures {
 
     /** The tank's shape: iron edges, iron, glass or hopper faces, air inside, three to seven a side. */
@@ -39,21 +58,63 @@ public final class TestStructures {
                             .counting("valve", BlockMatch.blocks("minecraft:hopper")),
                     InsideRule.empty(), new Limit(3, 7), new Limit(3, 7))
             .limit("valve", 0, 4);
+    /** The smelter's shape: iron edges, iron, glass or ports of their own on its faces, air inside. */
+    public static final BoxShape SMELTER_SHAPE = BoxShape.of(Place.of(BlockMatch.blocks("minecraft:iron_block")),
+            Place.of(new BlockMatch(List.of("minecraft:iron_block", "minecraft:glass"),
+                    List.of(MultiblockPorts.PORTS_TAG))),
+            InsideRule.empty(), new Limit(3, 5), new Limit(3, 5));
+    /** The smelter's lanes: one for each colour of port it keeps apart. */
+    public static final ProcessingMachineBlockEntity.Layout SMELTER_LAYOUT =
+            ProcessingMachineBlockEntity.Layout.items(1, 1).withLanes(3);
+    /** How many ticks the smelter takes to make stone of cobblestone. */
+    public static final int SMELTS_IN = 5;
     private static final int ENERGY = 1_000;
+    private static final int SMELTER_ENERGY = 10_000;
+    private static final long SMELTER_SPENDS = 10L;
 
-    /* Its block state and model are written by hand: the test mod writes no models of its own. */
+    /* Their block states and models are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<DeviceBlock> TANK = TestSounds.CONTENT.block("test_tank_controller",
             Device.of(() -> TestStructures.TANK_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
             .named("Test tank controller").look(IBlockLook.cubeAll("test_tank_controller")).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TankBlockEntity>> TANK_ENTITY =
             TestSounds.CONTENT.blockEntity("test_tank_controller", TankBlockEntity::new, TANK);
+    public static final BlockEntry<DeviceBlock> SMELTER = TestSounds.CONTENT.block("test_smelter_controller",
+            Device.of(() -> TestStructures.SMELTER_ENTITY.get()).ticks(MachineBlockEntity::serverTick)::block)
+            .named("Test smelter controller").look(IBlockLook.cubeAll("test_smelter_controller")).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SmelterBlockEntity>> SMELTER_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_smelter_controller", SmelterBlockEntity::new, SMELTER);
+    public static final BlockEntry<MultiblockPortBlock> ITEM_INPUT = port("test_item_input_port",
+            "Test item input port");
+    public static final BlockEntry<MultiblockPortBlock> ITEM_OUTPUT = port("test_item_output_port",
+            "Test item output port");
+    public static final BlockEntry<MultiblockPortBlock> ENERGY_INPUT = port("test_energy_port", "Test energy port");
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PortBlockEntity>> PORT_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_port", PortBlockEntity::new, ITEM_INPUT, ITEM_OUTPUT,
+                    ENERGY_INPUT);
+    public static final BlockEntry<RedstonePortBlock> REDSTONE = TestSounds.CONTENT.block("test_redstone_port",
+            properties -> new RedstonePortBlock(properties, () -> TestStructures.REDSTONE_ENTITY.get()))
+            .named("Test redstone port").look(IBlockLook.cubeAll("test_redstone_port")).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RedstonePortBlockEntity>>
+            REDSTONE_ENTITY = TestSounds.CONTENT.blockEntity("test_redstone_port",
+            (pos, state) -> new RedstonePortBlockEntity(TestStructures.REDSTONE_ENTITY.get(), pos, state), REDSTONE);
 
     private TestStructures() {
     }
 
-    /** Declares the controller, before the test mod's content is registered. */
+    /** Declares the controllers and the ports, before the test mod's content is registered. */
     public static void declare() {
-        // Loading the class declares it.
+        // Loading the class declares them.
+    }
+
+    @SubscribeEvent
+    public static void onRegisterCapabilities(final RegisterCapabilitiesEvent event) {
+        MultiblockPorts.register(event, PORT_ENTITY.get());
+    }
+
+    /* A port block of the test mod, its kind its block's. */
+    private static BlockEntry<MultiblockPortBlock> port(final String name, final String english) {
+        return TestSounds.CONTENT.block(name, properties -> new MultiblockPortBlock(properties,
+                () -> TestStructures.PORT_ENTITY.get())).named(english).look(IBlockLook.cubeAll(name)).register();
     }
 
     /** The tank's controller: works whenever its structure stands, running a recipe at once for each valve. */
@@ -67,6 +128,31 @@ public final class TestStructures {
         @Override
         protected MachineStatus work(final ServerLevel level) {
             return MachineStatus.WORKING;
+        }
+    }
+
+    /** The smelter's controller: cobblestone into stone in each lane, two at once. */
+    public static final class SmelterBlockEntity extends ProcessingMachineBlockEntity {
+
+        public SmelterBlockEntity(final BlockPos pos, final BlockState state) {
+            super(SMELTER_ENTITY.get(), pos, state, SMELTER_LAYOUT, MachineEnergy.fe(SMELTER_ENERGY, SMELTER_ENERGY,
+                    0), SMELTER_SPENDS);
+            formsWith(MachineStructure.of(SMELTER_SHAPE).parallel(formed -> 2));
+        }
+
+        @Override
+        protected Optional<Processing> process(final Level level, final ProcessingInput input) {
+            return input.items().getFirst().is(Items.COBBLESTONE)
+                    ? Optional.of(Processing.single(0, new ItemStack(Items.STONE), SMELTS_IN)) : Optional.empty();
+        }
+    }
+
+    /** A port of the test mod: items in, items out or energy in, as its block is. */
+    public static final class PortBlockEntity extends MultiblockPortBlockEntity {
+
+        public PortBlockEntity(final BlockPos pos, final BlockState state) {
+            super(PORT_ENTITY.get(), pos, state, state.is(ITEM_INPUT.get()) ? PortKind.ITEM_INPUT
+                    : state.is(ITEM_OUTPUT.get()) ? PortKind.ITEM_OUTPUT : PortKind.ENERGY_INPUT);
         }
     }
 }

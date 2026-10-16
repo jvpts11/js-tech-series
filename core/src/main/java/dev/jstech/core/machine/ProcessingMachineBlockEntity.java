@@ -18,6 +18,7 @@ import dev.jstech.core.heat.HeatBody;
 import dev.jstech.core.heat.HeatClimate;
 import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.text.Text;
@@ -43,6 +44,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.wrapper.EmptyItemHandler;
 import net.neoforged.neoforge.items.wrapper.RangedWrapper;
 import org.jetbrains.annotations.Nullable;
 
@@ -501,6 +503,34 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         return new RangedWrapper(getInventory(), layout.firstOutput(), layout.firstUpgrade());
     }
 
+    /**
+     * The input slots of the lane of group {@code group}, for a machine of more than one lane, so the ports of each
+     * colour feed a lane of their own and two processes never mix; none for a group past its last lane.
+     */
+    @Override
+    protected IItemHandler itemsIn(final int group) {
+        if (layout.lanes() <= 1) {
+            return itemsIn();
+        }
+        return group < layout.lanes() ? new RangedWrapper(getInventory(), layout.laneInput(group, 0),
+                layout.laneInput(group, 0) + layout.inputs()) : EmptyItemHandler.INSTANCE;
+    }
+
+    /** The output slots of the lane of group {@code group}, for a machine of more than one lane. */
+    @Override
+    protected IItemHandler itemsOut(final int group) {
+        if (layout.lanes() <= 1) {
+            return itemsOut();
+        }
+        return group < layout.lanes() ? new RangedWrapper(getInventory(), layout.laneOutput(group, 0),
+                layout.laneOutput(group, 0) + layout.outputs()) : EmptyItemHandler.INSTANCE;
+    }
+
+    @Override
+    protected @Nullable IMatterHandler matterHandler(final MatterState state) {
+        return matter.outside(state);
+    }
+
     @Override
     protected @Nullable IFluidHandler fluidsIn() {
         return inputTanks.isEmpty() ? null : new CombinedTanks(inputTanks);
@@ -597,7 +627,8 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
      */
     @Override
     protected MachineStatus work(final ServerLevel level) {
-        if (lanes.size() > 1 && level.getGameTime() % SORT_EVERY == 0) {
+        // A multiblock's lanes are its groups of ports, which are never mixed.
+        if (lanes.size() > 1 && structure() == null && level.getGameTime() % SORT_EVERY == 0) {
             sortInputs();
         }
         // A machine driven by a shaft waits for it to turn fast enough, still asking its torque, and works as fast as
@@ -606,7 +637,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
         if (driven != null && driven.tooSlow()) {
             return MachineStatus.TOO_SLOW;
         }
-        final UpgradeEffect effect = upgradeEffect();
+        final UpgradeEffect effect = withStructure(upgradeEffect());
         final double share = health().workShare() * (driven == null ? 1.0 : driven.share());
         MachineStatus result = MachineStatus.WAITING;
         for (final Lane lane : lanes) {

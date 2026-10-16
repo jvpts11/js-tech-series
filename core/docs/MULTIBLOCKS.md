@@ -308,6 +308,65 @@ store of the port's state.
 For the block side, `AbstractMultiblockControllerBlock` holds what every controller block does (its shape, which
 blocks are its own parts, what happens when it breaks), so a mod writes only what differs.
 
+### Ports as blocks of their own
+
+*Added 2026-10-16.*
+
+A port can also be a block the player places **anywhere on the shell**, as the valves and hatches of a real plant,
+so the connection goes where the line arrives. A mod registers one block for each kind, with its own look, on the
+Core's `MultiblockPortBlock` and `MultiblockPortBlockEntity`, and puts the blocks in the tag
+`MultiblockPorts.PORTS` (`jscore:multiblock_ports`):
+
+```java
+public static final BlockEntry<MultiblockPortBlock> ITEM_HATCH = CONTENT.block("item_hatch",
+        properties -> new MultiblockPortBlock(properties, () -> MyContent.HATCH_ENTITY.get())).register();
+
+public static final class HatchBlockEntity extends MultiblockPortBlockEntity {
+    public HatchBlockEntity(BlockPos pos, BlockState state) {
+        super(MyContent.HATCH_ENTITY.get(), pos, state, PortKind.ITEM_INPUT);
+    }
+}
+
+// In the capabilities event, once for the type:
+MultiblockPorts.register(event, MyContent.HATCH_ENTITY.get());
+```
+
+- A shape lets ports stand on its shell by taking the tag where they may stand:
+  `Place.of(new BlockMatch(List.of("mymod:casing"), List.of(MultiblockPorts.PORTS_TAG)))`. Counting them is a
+  `counting` of their blocks, as for any place, so a limit says "from one to four".
+- There is a kind for each resource: items, liquid, energy, each other state of matter (gas, supercritical fluid,
+  slurry, plasma, exotic matter), in and out, and `HEAT`, which flows both ways. An energy port meets a cable of
+  J's Energy with its controller's voltage class, and FE as FE.
+- A line of a mod's own (J's Industrial's compressed air) reaches the controller through
+  `MultiblockPorts.registerOther(event, capability, partType)` and the host's `otherPort`.
+- **The redstone port**, `RedstonePortBlock` with `RedstonePortBlockEntity`, reads the signal round it for its
+  controller, as a lever beside the machine would; used with an empty hand it switches to giving out its controller's
+  signal, what a comparator reads of it. It never reads what it gives.
+
+A machine of the kit that `formsWith` a structure is the host of its ports already: an input port puts items, liquid
+or matter into its inputs and an output port takes from its outputs, and nothing goes the wrong way through a port.
+
+### Groups by colour
+
+*Added 2026-10-16.*
+
+A dye used on a port gives it that colour, and the same dye again takes it off. **Ports of one colour are one group**,
+and a recipe takes its inputs from one group at a time, so two processes never mix. The groups are numbered from 0:
+the ports with no colour first, when there are any, then each colour in the dyes' order. `structure().groups()`,
+`structure().groupOf(pos)` and `structure().ports()` say which is which, and Jade shows a port's kind and group.
+
+A `ProcessingMachineBlockEntity` of more than one lane gives each group a lane of its own: the item ports of group
+`n` feed lane `n`'s inputs and take from its outputs, and a group past the last lane takes nothing. Its lanes are
+never evened out between them, as a one-block machine's are. Liquid and matter tanks are shared by every lane.
+
+### Recipes at once
+
+*Added 2026-10-16.*
+
+`MachineStructure.parallel(formed -> ...)` says how many recipes the structure runs at once, from what was built.
+A processing machine works that many at once in each lane, more with its upgrades; `recipesAtOnce()` gives the exact
+number, and Jade shows it ("Runs 4 at once").
+
 ## What can go wrong
 
 - **The shape never forms.** Read the `Failure`: the letter wanted, the place (counted from the controller), and

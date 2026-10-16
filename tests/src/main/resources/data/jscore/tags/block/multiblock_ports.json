@@ -1,0 +1,8 @@
+{
+  "values": [
+    "jstests:test_item_input_port",
+    "jstests:test_item_output_port",
+    "jstests:test_energy_port",
+    "jstests:test_redstone_port"
+  ]
+}

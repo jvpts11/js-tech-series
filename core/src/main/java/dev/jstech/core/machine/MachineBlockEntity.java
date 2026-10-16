@@ -41,8 +41,15 @@ import dev.jstech.core.inventory.FaceMode;
 import dev.jstech.core.inventory.ItemFilter;
 import dev.jstech.core.look.IDescribed;
 import dev.jstech.core.material.MatterState;
+import dev.jstech.core.matter.FaceMatterHandler;
+import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.look.LookTexts;
+import dev.jstech.core.energy.IEnergyPort;
+import dev.jstech.core.heat.IHeatPort;
+import dev.jstech.core.multiblock.IMultiblockPortHost;
+import dev.jstech.core.multiblock.IRedstonePortHost;
+import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.signal.ISignalOutput;
 import dev.jstech.core.signal.Reading;
 import dev.jstech.core.team.Access;
@@ -55,7 +62,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -92,7 +101,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @TextHolder
 public abstract class MachineBlockEntity extends SyncedBlockEntity implements IOwned, IMachineParameters,
-        ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder, IMechanicalHolder {
+        ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder, IMechanicalHolder, IMultiblockPortHost,
+        IRedstonePortHost {
 
     private final FieldItemHandler inventory;
     private final @Nullable FieldEnergyStorage energy;
@@ -123,6 +133,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private @Nullable MachineShaft shaft;
     /* Its structure, for a multiblock's controller; declared from its constructor. */
     private @Nullable MachineStructure structure;
+    /* What each of its structure's redstone ports that read hears, by the port's place. */
+    private final Map<BlockPos, Integer> portSignals = new HashMap<>();
 
     public static final TextKey PARAMETER_ON = TextKey.of("jscore.machine.parameter.on", "On");
     public static final TextKey PARAMETER_PROGRESS = TextKey.of("jscore.machine.parameter.progress", "Progress");
@@ -257,6 +269,84 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     /** Its structure, for a multiblock's controller; none for a machine of one block. */
     public @Nullable MachineStructure structure() {
         return structure;
+    }
+
+    /** How many recipes it works at once: its upgrades', and its structure's when it is a multiblock's controller. */
+    public int recipesAtOnce() {
+        return withStructure(effect()).recipesAtOnce();
+    }
+
+    /** The items a port of its structure takes in or gives out: the slots of the port's group. */
+    @Override
+    public @Nullable IItemHandler itemPort(final PortKind kind, final BlockPos part, final @Nullable Direction side) {
+        final int group = portGroup(part);
+        if (group < 0) {
+            return null;
+        }
+        return new FaceItemHandler(kind.input() ? itemsIn(group) : itemsOut(group),
+                kind.input() ? FaceMode.IN : FaceMode.OUT, ItemFilter.EVERYTHING);
+    }
+
+    /** The liquid a port of its structure takes in or gives out: the tanks of the port's group. */
+    @Override
+    public @Nullable IFluidHandler fluidPort(final PortKind kind, final BlockPos part,
+                                             final @Nullable Direction side) {
+        final int group = portGroup(part);
+        final IFluidHandler tanks = group < 0 ? null : kind.input() ? fluidsIn(group) : fluidsOut(group);
+        return tanks == null ? null : new FaceFluidHandler(tanks, kind.input() ? FaceMode.IN : FaceMode.OUT,
+                ItemFilter.EVERYTHING);
+    }
+
+    /** The energy, as FE, an energy port of its structure takes in or gives out. */
+    @Override
+    public @Nullable IEnergyStorage energyPort(final PortKind kind, final BlockPos part,
+                                               final @Nullable Direction side) {
+        if (portGroup(part) < 0) {
+            return null;
+        }
+        final EnergyStore store = power.portStore();
+        final IEnergyStorage fe = energy != null ? energy
+                : store != null && store.energy().acceptsFe() ? store.asFe() : null;
+        return fe == null ? null : new FaceEnergyStorage(fe, kind.input() ? FaceMode.IN : FaceMode.OUT);
+    }
+
+    /** Its port of J's Energy, with its voltage class, as an energy port of its structure meets a cable. */
+    @Override
+    public @Nullable IEnergyPort energyClassPort(final PortKind kind, final BlockPos part,
+                                                 final @Nullable Direction side) {
+        return portGroup(part) < 0 ? null : power.portStore();
+    }
+
+    /** What a port of its structure takes in or gives out of a state of matter. */
+    @Override
+    public @Nullable IMatterHandler matterPort(final PortKind kind, final BlockPos part,
+                                               final @Nullable Direction side) {
+        final IMatterHandler whole = portGroup(part) < 0 || kind.state().isEmpty() ? null
+                : matterHandler(kind.state().get());
+        return whole == null ? null : new FaceMatterHandler(whole, kind.input() ? FaceMode.IN : FaceMode.OUT,
+                ItemFilter.EVERYTHING);
+    }
+
+    /** Its casing's heat, through a heat port of its structure, for a machine that makes heat. */
+    @Override
+    public @Nullable IHeatPort heatPort(final BlockPos part, final @Nullable Direction side) {
+        return portGroup(part) < 0 ? null : HeatPorts.port(this, null);
+    }
+
+    /** A redstone port of its structure that reads heard {@code signal}; it answers the strongest it hears. */
+    @Override
+    public void heard(final BlockPos port, final int signal) {
+        final Integer before = signal > 0 ? portSignals.put(port.immutable(), signal) : portSignals.remove(port);
+        if ((before == null ? 0 : before) != signal && level instanceof ServerLevel server) {
+            readSignal(server);
+            wake();
+        }
+    }
+
+    /** What its structure's redstone ports that give put out: what a comparator reads of it. */
+    @Override
+    public int givenSignal() {
+        return strength();
     }
 
     @Override
@@ -450,7 +540,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
             lines.add(STATUS_LINE.with(status().text()));
         }
         if (structure != null) {
-            structure.describe(lines, details);
+            structure.describe(lines, details, recipesAtOnce());
         }
         if (health.damaged()) {
             lines.add(HEALTH_LINE.with(health.health()));
@@ -664,6 +754,45 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         MechanicalPorts.keep(this);
     }
 
+    /**
+     * What it works with, its structure's recipes at once counted: {@code effect} with as many more at once as the
+     * structure runs, for a multiblock's controller; {@code effect} itself otherwise.
+     */
+    protected final UpgradeEffect withStructure(final UpgradeEffect effect) {
+        if (structure == null || structure.parallel() <= 1) {
+            return effect;
+        }
+        return effect.withParallel(effect.parallel() + structure.parallel() - 1);
+    }
+
+    /**
+     * The slots the input ports of group {@code group} of its structure put items into: its own inputs for every
+     * group, unless it keeps the groups apart ({@link ProcessingMachineBlockEntity} gives each its own lane).
+     */
+    protected IItemHandler itemsIn(final int group) {
+        return itemsIn();
+    }
+
+    /** The slots the output ports of group {@code group} of its structure take items from. */
+    protected IItemHandler itemsOut(final int group) {
+        return itemsOut();
+    }
+
+    /** The tanks the input ports of group {@code group} of its structure fill; its own, shared by every group. */
+    protected @Nullable IFluidHandler fluidsIn(final int group) {
+        return fluidsIn();
+    }
+
+    /** The tanks the output ports of group {@code group} of its structure drain. */
+    protected @Nullable IFluidHandler fluidsOut(final int group) {
+        return fluidsOut();
+    }
+
+    /** Its tanks of {@code state} as a whole, for the ports of its structure; none unless it says. */
+    protected @Nullable IMatterHandler matterHandler(final MatterState state) {
+        return null;
+    }
+
     /** The slots it pulls items into by itself; none unless it says. */
     protected IItemHandler itemsIn() {
         return EmptyItemHandler.INSTANCE;
@@ -747,6 +876,11 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         if (strength != lastStrength) {
             lastStrength = strength;
             server.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+            if (structure != null) {
+                for (final BlockPos port : structure.redstonePorts()) {
+                    server.updateNeighborsAt(port, server.getBlockState(port).getBlock());
+                }
+            }
         }
     }
 
@@ -811,10 +945,27 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
     }
 
-    /* Reads the redstone coming in from around it. */
+    /* Reads the redstone coming in from around it, and from its structure's redstone ports that read. */
     private void readSignal(final ServerLevel server) {
         signalRead = true;
-        control.hear(server.getBestNeighborSignal(worldPosition));
+        int strongest = server.getBestNeighborSignal(worldPosition);
+        for (final int heard : portSignals.values()) {
+            strongest = Math.max(strongest, heard);
+        }
+        control.hear(strongest);
+    }
+
+    /* Its structure came apart: what its redstone ports heard no longer reaches it. */
+    void forgetPortSignals(final ServerLevel server) {
+        if (!portSignals.isEmpty()) {
+            portSignals.clear();
+            readSignal(server);
+        }
+    }
+
+    /* The group of the port at {@code part} of its formed structure, or -1 when it has none there. */
+    private int portGroup(final BlockPos part) {
+        return structure == null ? -1 : structure.groupOf(part);
     }
 
     /* What its Sides tab sets: what it says goes in and out of it, and heat when it makes heat. */

@@ -15,19 +15,26 @@ import dev.jstech.core.multiblock.IStructureWatcher;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.Limit;
 import dev.jstech.core.multiblock.MultiblockPatterns;
+import dev.jstech.core.multiblock.MultiblockPortBlockEntity;
 import dev.jstech.core.multiblock.MultiblockPorts;
 import dev.jstech.core.multiblock.PatternMatcher;
+import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.multiblock.RedstonePortBlockEntity;
 import dev.jstech.core.multiblock.ShapeMatch;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.ToIntFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -35,6 +42,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -66,6 +75,11 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     private int parallel;
     private @Nullable ShapeMatch.Formed last;
     private @Nullable ShapeMatch.Failure failure;
+    /* Its ports, their groups and its redstone ports, as its last check found them; known again once checked. */
+    private List<PortAt> ports = List.of();
+    private Map<Long, Integer> groupOf = Map.of();
+    private List<BlockPos> redstonePorts = List.of();
+    private int groups;
     private boolean dirty = true;
     private boolean filed;
     private long notBefore;
@@ -159,6 +173,33 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         return this.repeats;
     }
 
+    /**
+     * Its ports, each with its kind, its colour and its group: the port blocks among its parts, and the places its
+     * pattern makes ports. None while it is not formed, nor after loading until it has been checked.
+     */
+    public List<PortAt> ports() {
+        return this.formed ? this.ports : List.of();
+    }
+
+    /**
+     * How many groups its ports make: one for each colour among them, those with none counted as one; none while it
+     * is not formed. Group 0 is the ports with no colour when there are any, then each colour in the dyes' order.
+     */
+    public int groups() {
+        return this.formed ? this.groups : 0;
+    }
+
+    /** The group of the port at {@code port}, or -1 for a place that is not one of its ports. */
+    public int groupOf(final BlockPos port) {
+        return this.formed ? this.groupOf.getOrDefault(PatternMatcher.encodePosition(port.getX(), port.getY(),
+                port.getZ()), -1) : -1;
+    }
+
+    /** Its redstone ports, both those that read and those that give. */
+    public List<BlockPos> redstonePorts() {
+        return this.formed ? this.redstonePorts : List.of();
+    }
+
     @Override
     public void changed() {
         this.dirty = true;
@@ -237,12 +278,15 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         this.filed = false;
     }
 
-    /* Its lines for whoever looks at it: formed, with its size when details are asked for, or what is wrong. */
-    void describe(final List<Text> lines, final boolean details) {
+    /*
+     * Its lines for whoever looks at it: formed, with its size when details are asked for and how many recipes it
+     * runs at once ({@code atOnce}, its upgrades counted), or what is wrong.
+     */
+    void describe(final List<Text> lines, final boolean details, final int atOnce) {
         if (this.formed) {
             lines.add(details ? FORMED_SIZE.with(this.size[0], this.size[1], this.size[2]) : FORMED.text());
-            if (this.parallel > 1) {
-                lines.add(PARALLEL.with(this.parallel));
+            if (atOnce > 1) {
+                lines.add(PARALLEL.with(atOnce));
             }
             return;
         }
@@ -280,6 +324,12 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
                 this.size = new int[] {found.sizeX(), found.sizeY(), found.sizeZ()};
                 this.repeats = found.repeats();
                 this.parallel = Math.max(0, this.parallelBy.applyAsInt(found));
+                readPorts(level, found);
+                for (final BlockPos port : this.redstonePorts) {
+                    if (level.getBlockEntity(port) instanceof RedstonePortBlockEntity reader) {
+                        reader.hear(level);
+                    }
+                }
             }
             case ShapeMatch.Failure wrong -> {
                 if (this.formed) {
@@ -293,6 +343,13 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
                 this.size = new int[] {0, 0, 0};
                 this.repeats = 0;
                 this.parallel = 0;
+                this.ports = List.of();
+                this.groupOf = Map.of();
+                this.redstonePorts = List.of();
+                this.groups = 0;
+                if (this.machine != null) {
+                    this.machine.forgetPortSignals(level);
+                }
             }
         }
         file(level, pos);
@@ -302,6 +359,48 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         if (this.machine != null) {
             this.machine.wake();
         }
+    }
+
+    /*
+     * Finds its ports among its parts: the port blocks, the places its pattern makes ports, and its redstone ports;
+     * and puts each port in the group of its colour, those with none first, then the dyes in their order.
+     */
+    private void readPorts(final ServerLevel level, final ShapeMatch.Formed found) {
+        final Map<Long, PortAt> unsorted = new LinkedHashMap<>();
+        final List<BlockPos> redstone = new ArrayList<>();
+        final TreeSet<Integer> colours = new TreeSet<>();
+        for (final long place : found.parts()) {
+            final BlockPos at = MultiblockPatterns.decode(place);
+            final BlockEntity entity = level.getBlockEntity(at);
+            if (entity instanceof RedstonePortBlockEntity) {
+                redstone.add(at);
+                continue;
+            }
+            final PortAt port = entity instanceof MultiblockPortBlockEntity block
+                    ? new PortAt(at, block.port(), block.colour(), 0)
+                    : found.ports().containsKey(place) ? new PortAt(at, found.ports().get(place), null, 0) : null;
+            if (port != null) {
+                unsorted.put(place, port);
+                colours.add(colourKey(port.colour()));
+            }
+        }
+        final List<Integer> order = new ArrayList<>(colours);
+        final List<PortAt> grouped = new ArrayList<>();
+        final Map<Long, Integer> groupOfPlace = new HashMap<>();
+        unsorted.forEach((place, port) -> {
+            final int group = order.indexOf(colourKey(port.colour()));
+            grouped.add(new PortAt(port.pos(), port.kind(), port.colour(), group));
+            groupOfPlace.put(place, group);
+        });
+        this.ports = List.copyOf(grouped);
+        this.groupOf = Map.copyOf(groupOfPlace);
+        this.redstonePorts = List.copyOf(redstone);
+        this.groups = order.size();
+    }
+
+    /* Where a colour comes in the order of the groups: no colour first, then the dyes in their own order. */
+    private static int colourKey(@Nullable final DyeColor colour) {
+        return colour == null ? -1 : colour.getId();
     }
 
     /* Files it with the level's structures: its formed structure and the places beside it, or all it reaches. */
@@ -373,5 +472,16 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
             return Text.literal(id);
         }
         return GameText.of(BuiltInRegistries.BLOCK.get(key).getName());
+    }
+
+    /**
+     * A port of a formed structure.
+     *
+     * @param pos    where it stands
+     * @param kind   what it opens onto
+     * @param colour its colour, none for a port with none
+     * @param group  its group, from 0: ports of one colour are one group, and a recipe takes its inputs from one
+     */
+    public record PortAt(BlockPos pos, PortKind kind, @Nullable DyeColor colour, int group) {
     }
 }

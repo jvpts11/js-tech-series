@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "gives=false": {
+      "model": "jstests:block/test_redstone_port"
+    },
+    "gives=true": {
+      "model": "jstests:block/test_redstone_port_gives"
+    }
+  }
+}

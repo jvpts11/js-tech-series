@@ -25,9 +25,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What another player owns, kept from those its owner does not let: a block whose block entity is owned is broken only
- * by its owner and those trusted to break it, and so is every block of a formed multiblock whose controller is owned;
- * it is used only by those its access or its trust lets in; an owned entity the same, attacking it standing for
- * breaking it. Each is written to the audit log when the server keeps one.
+ * by its owner and those trusted to break it, and used only by those its access or its trust lets in; every block of
+ * a formed multiblock whose controller is owned the same, as its controller; an owned entity the same, attacking it
+ * standing for breaking it. Each is written to the audit log when the server keeps one.
  */
 public final class OwnedProtection {
 
@@ -73,7 +73,15 @@ public final class OwnedProtection {
             return;
         }
         final BlockPos pos = event.getPos();
-        if (level.getBlockEntity(pos) instanceof IOwned owned && owned.ownership() != null) {
+        BlockEntity block = level.getBlockEntity(pos);
+        if (!(block instanceof IOwned)) {
+            // A port or a part of a formed multiblock is used as its controller is.
+            final BlockPos controller = LevelStructures.of(level).controllerHolding(pos);
+            if (controller != null && level.isLoaded(controller)) {
+                block = level.getBlockEntity(controller);
+            }
+        }
+        if (block instanceof IOwned owned && owned.ownership() != null) {
             final Ownership ownership = owned.ownership();
             if (!ownership.mayOpen(player)) {
                 event.setCanceled(true);

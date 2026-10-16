@@ -386,6 +386,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   keeps what it holds. Jade shows whether it is formed, its size and how many recipes it runs at once, or what it
   needs and where. Only its owner and those trusted break its blocks. It is checked only when a block near it
   changes, never every tick, and never while a chunk it reaches is unloaded.
+- Multiblock ports as blocks of their own, placed anywhere on the shell: items, liquid, energy (meeting J's
+  Energy cables with the controller's voltage class), each state of matter, heat, and a mod's own lines such as
+  compressed air; and a redstone port that reads the signal round it for the controller or gives the controller's
+  signal out. A dye puts a port in the group of its colour, and each group feeds a lane of its own, so two processes
+  never mix. A structure runs as many recipes at once as it says, and Jade shows the exact number.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
