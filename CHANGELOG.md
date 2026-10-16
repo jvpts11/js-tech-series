@@ -456,6 +456,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   A run hands its items into a belt or an inventory in front, or holds them there, or lets them fall off; hoppers,
   pipes and items that land on a belt put items on. A belt moves by itself, as a shaft at any of its run's belts
   turns it, or on energy any of them takes in, and carries the players and mobs that stand on it.
+- (Core) Conveyors that climb, fall, deal and sort: belts that rise or fall a block, laid to meet one another as rails
+  do and turned by a wrench; chutes that drop items into what is under them; bucket elevators that lift items and tip
+  them out to their front; splitters that deal items out in turn, joins that take from each side in turn, and
+  diverters that turn aside what their filter names, learning it from a click with the item. A machine on top of a
+  belt works the items that pass under it, holding each still while it works. A broken piece lets fall what was on it,
+  and a mod declares its own pieces on the same kit.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

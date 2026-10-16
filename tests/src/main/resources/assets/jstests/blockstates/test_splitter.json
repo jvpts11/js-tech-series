@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": {"model": "jstests:block/test_splitter"},
+    "facing=east": {"model": "jstests:block/test_splitter", "y": 90},
+    "facing=south": {"model": "jstests:block/test_splitter", "y": 180},
+    "facing=west": {"model": "jstests:block/test_splitter", "y": 270}
+  }
+}

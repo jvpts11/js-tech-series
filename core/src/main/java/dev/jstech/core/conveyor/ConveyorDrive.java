@@ -8,9 +8,9 @@
 package dev.jstech.core.conveyor;
 
 /**
- * What makes a kind of conveyor move: nothing at all, mechanical power through a shaft at any of its belts' sides,
- * or energy from any of its belts' stores. A run of belts moves as one: a shaft turns every belt of it, and energy taken
- * in at one belt runs them all.
+ * What makes a kind of conveyor move: nothing at all, mechanical power through a shaft at any of its pieces' sides,
+ * or energy from any of its pieces' stores. A run moves as one: a shaft turns every piece of it, and energy taken in
+ * at one piece runs them all.
  */
 public sealed interface ConveyorDrive permits ConveyorDrive.Free, ConveyorDrive.Mechanical, ConveyorDrive.Energy {
 

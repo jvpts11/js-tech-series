@@ -66,6 +66,20 @@ class BeltLaneTest {
     }
 
     @Test
+    void advance_bringsAHeldItemUpToWhereItIsStoppedAndNoFurther() {
+        final BeltLane<String> lane = new BeltLane<>(QUARTER);
+        lane.put("ahead", 0.6);
+        lane.put("worked", 0.3);
+        lane.advance(0.1, 1.0, 1, 0.5);
+        assertEquals(0.4, lane.entries().get(1).at(), EPSILON, "short of the middle, it moves as the belt does");
+        lane.advance(0.3, 1.0, 1, 0.5);
+        assertEquals(0.5, lane.entries().get(1).at(), EPSILON, "stopped at the middle");
+        assertEquals(1.0, lane.entries().getFirst().at(), EPSILON, "while the one ahead goes on");
+        lane.advance(0.3, 1.0, 1, 0.5);
+        assertEquals(0.5, lane.entries().get(1).at(), EPSILON, "and stays there");
+    }
+
+    @Test
     void lastAt_isTheEndOfAnEmptyLane() {
         assertEquals(1.0, new BeltLane<String>(QUARTER).lastAt(), EPSILON);
     }

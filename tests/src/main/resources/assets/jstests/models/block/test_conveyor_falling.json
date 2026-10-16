@@ -1,0 +1,55 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/iron_block",
+    "belt": "minecraft:block/black_wool",
+    "side": "minecraft:block/iron_block"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 12],
+      "to": [16, 16, 16],
+      "faces": {
+        "down": {"texture": "#side", "cullface": "down"},
+        "up": {"texture": "#belt", "cullface": "up"},
+        "north": {"texture": "#side"},
+        "south": {"texture": "#side", "cullface": "south"},
+        "west": {"texture": "#side", "cullface": "west"},
+        "east": {"texture": "#side", "cullface": "east"}
+      }
+    },
+    {
+      "from": [0, 0, 8],
+      "to": [16, 12, 12],
+      "faces": {
+        "down": {"texture": "#side", "cullface": "down"},
+        "up": {"texture": "#belt"},
+        "north": {"texture": "#side"},
+        "west": {"texture": "#side", "cullface": "west"},
+        "east": {"texture": "#side", "cullface": "east"}
+      }
+    },
+    {
+      "from": [0, 0, 4],
+      "to": [16, 8, 8],
+      "faces": {
+        "down": {"texture": "#side", "cullface": "down"},
+        "up": {"texture": "#belt"},
+        "north": {"texture": "#side"},
+        "west": {"texture": "#side", "cullface": "west"},
+        "east": {"texture": "#side", "cullface": "east"}
+      }
+    },
+    {
+      "from": [0, 0, 0],
+      "to": [16, 4, 4],
+      "faces": {
+        "down": {"texture": "#side", "cullface": "down"},
+        "up": {"texture": "#belt"},
+        "north": {"texture": "#side", "cullface": "north"},
+        "west": {"texture": "#side", "cullface": "west"},
+        "east": {"texture": "#side", "cullface": "east"}
+      }
+    }
+  ]
+}

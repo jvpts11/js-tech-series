@@ -107,11 +107,24 @@ public final class BeltLane<T> {
      * @return whether the first item now stands at the end, ready to be handed on
      */
     public boolean advance(final double distance, final double limit, final int held) {
+        return advance(distance, limit, held, Double.NEGATIVE_INFINITY);
+    }
+
+    /**
+     * Moves every item as {@link #advance(double, double, int)} does, but the item {@code held} goes on only as far as
+     * {@code heldAt}, where a machine stops it to work it, and no further.
+     *
+     * @return whether the first item now stands at the end, ready to be handed on
+     */
+    public boolean advance(final double distance, final double limit, final int held, final double heldAt) {
         double ahead = Double.POSITIVE_INFINITY;
         for (int i = 0; i < this.entries.size(); i++) {
             final Entry<T> entry = this.entries.get(i);
-            final double most = i == 0 ? Math.min(limit, END) : ahead - this.gap;
-            final double moved = i == held ? entry.at() : Math.max(entry.at(), Math.min(entry.at() + distance, most));
+            double most = i == 0 ? Math.min(limit, END) : ahead - this.gap;
+            if (i == held) {
+                most = Math.min(most, Math.max(entry.at(), heldAt));
+            }
+            final double moved = Math.max(entry.at(), Math.min(entry.at() + distance, most));
             this.entries.set(i, new Entry<>(entry.item(), moved));
             ahead = moved;
         }

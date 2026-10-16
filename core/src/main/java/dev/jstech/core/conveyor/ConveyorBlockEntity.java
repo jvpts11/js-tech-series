@@ -12,6 +12,8 @@ import dev.jstech.core.blockentity.FieldEnergyStorage;
 import dev.jstech.core.blockentity.PartField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.inventory.ItemFilter;
+import dev.jstech.core.inventory.ItemFilters;
 import dev.jstech.core.mechanical.IMechanicalPart;
 import dev.jstech.core.mechanical.ITorque;
 import dev.jstech.core.mechanical.MechanicalPorts;
@@ -19,9 +21,11 @@ import dev.jstech.core.mechanical.ShaftContact;
 import dev.jstech.core.mechanical.ShaftJoin;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
@@ -36,15 +40,15 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The block entity of a block of conveyor: the items on it, in order along it, saved and sent to the players who see
- * it. The end of a run moves the whole run each tick, from its end back, so an item handed on frees room behind it in
- * the same tick: each belt's items go as far as the run moves, and the first of each goes on into the belt in front
- * when there is room. What reaches the end goes into a belt in front of another way, at its middle, or into an
- * inventory in front, or, with nowhere to go, waits there or falls off, as its kind says.
+ * The block entity of a piece of conveyor ({@link ConveyorPieceBlock}): the items on it, in order along it, saved and
+ * sent to the players who see it. The end of a run moves the whole run each tick, from its end back, so an item handed
+ * on frees room behind it in the same tick: each piece's items go as far as the run moves, and the first of each goes
+ * on into the piece after it when there is room. What reaches the end goes to the piece's outlets, through the game's
+ * item capability: a belt, a chute, an inventory; with nowhere to go, it waits there or falls off, as its kind says.
  *
- * <p>Its kind's drive moves it: by itself; by a shaft at any of its run's belts' sides, the run's belts joined in
+ * <p>Its kind's drive moves it: by itself; by a shaft at any of its run's pieces' sides, the run's pieces joined in
  * one network of mechanical power, as fast as the shaft turns against its rated speed; or by energy any of its run's
- * belts takes in, shared by the run, as fast as what it gets against what it draws.
+ * pieces takes in, shared by the run, as fast as what it gets against what it draws.
  */
 public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanicalPart {
 
@@ -53,28 +57,40 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
     private final PartField itemsField;
     private final ValueField<Double> rpm;
     private final @Nullable FieldEnergyStorage energy;
+    private final @Nullable ValueField<ItemFilter> filter;
     /* At a run's end, whether its run may carry anything: an empty run is not walked again until an item comes on. */
     private boolean awake = true;
+    /* Worked out from its block state when first asked after the state changes. */
+    private @Nullable ConveyorOpening entry;
+    private @Nullable ConveyorOpening exit;
+    private @Nullable ConveyorGeometry line;
+    /* For a piece that deals in turn, the outlet the next item tries first. */
+    private int nextOutlet;
+    /* For a piece that takes in turn: the side it last took from, and when each side last offered an item. */
+    private @Nullable Direction lastTaken;
+    private final long[] offeredAt = new long[Direction.values().length];
+    /* The item the machine above holds still to work it, as the very stack on the lane; none while it holds none. */
+    private @Nullable ItemStack heldItem;
 
-    /** The longest run of belts the end of one moves. */
-    public static final int LONGEST_RUN = 256;
+    /* Past any run a world could hold: a walk along one stops here whatever comes. */
+    private static final int WALK_LIMIT = 1 << 16;
     private static final double TICKS = 20.0;
-    private static final double START = 0.0;
-    private static final double MIDDLE = 0.5;
     private static final double MOVED = 1.0e-6;
-    /* A belt weighs little in turning and holds back a little in its rollers. */
+    /* A piece weighs little in turning and holds back a little in its rollers. */
     private static final double INERTIA = 0.01;
     private static final double FRICTION = 0.05;
-    /* A belt moving on energy keeps a second of what it draws. */
+    /* A piece moving on energy keeps a second of what it draws. */
     private static final int STORE_TICKS = 20;
-    /* How far above its belt an item lying on it may be and still be taken onto it, in blocks. */
-    private static final double LYING = 0.25;
     private static final ConveyorType UNKNOWN = ConveyorType.moving(1.0).build();
-    private static final int PIXELS = 16;
+    private static final double PIXELS = 16.0;
+    /* How long a side's offer keeps its turn at a piece that takes in turn, in ticks. */
+    private static final long OFFER_KEPT = 2;
 
     public ConveyorBlockEntity(final BlockEntityType<?> entityType, final BlockPos pos, final BlockState state) {
         super(entityType, pos, state);
-        this.type = state.getBlock() instanceof ConveyorBlock block ? block.type() : UNKNOWN;
+        final @Nullable ConveyorPieceBlock piece = state.getBlock() instanceof ConveyorPieceBlock block ? block
+                : null;
+        this.type = piece != null ? piece.type() : UNKNOWN;
         this.items = new ConveyorItems(this.type.gap());
         this.itemsField = fields().part(ConveyorItems.KEY, this.items).save().toClient();
         this.rpm = fields().value("Rpm", Codec.DOUBLE, 0.0).save();
@@ -84,9 +100,20 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         } else {
             this.energy = null;
         }
+        this.filter = piece != null && piece.filters()
+                ? fields().value("Filter", ItemFilters.CODEC, ItemFilter.EVERYTHING).save() : null;
         if (this.type.drive() instanceof ConveyorDrive.Mechanical) {
             MechanicalPorts.keep(this);
         }
+        // Broken, it lets fall what was on it, and a machine working an item of it starts over.
+        fields().whenBroken((level, at) -> {
+            for (final BeltLane.Entry<ItemStack> entry : lane().entries()) {
+                Containers.dropItemStack(level, at.getX(), at.getY(), at.getZ(), entry.item().copy());
+            }
+            if (this.heldItem != null && level.getBlockEntity(at.above()) instanceof IBeltWorker worker) {
+                worker.abandoned();
+            }
+        });
     }
 
     /** Moves the run whose end it is, on the server. */
@@ -102,17 +129,20 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         return this.type;
     }
 
-    /** The way its belt moves. */
-    public Direction facing() {
-        return getBlockState().getValue(ConveyorBlock.FACING);
+    /** The line its items lie along, and how they lie on it. */
+    public ConveyorGeometry geometry() {
+        if (this.line == null) {
+            this.line = piece().geometry(getBlockState());
+        }
+        return this.line;
     }
 
-    /** The items on it, the first along the belt first. */
+    /** The items on it, the first along it first. */
     public BeltLane<ItemStack> lane() {
         return this.items.lane();
     }
 
-    /** How far its belt moved in the last tick, in blocks; on a player's game, as last sent. */
+    /** How far it moved in the last tick, in blocks; on a player's game, as last sent. */
     public double moving() {
         return this.items.speed();
     }
@@ -122,13 +152,31 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         return this.items.sentAt();
     }
 
+    /** The place in its lane of the item a machine above holds still; {@link ConveyorItems#NONE_HELD} for none. */
+    public int held() {
+        return this.items.held();
+    }
+
     /** The energy it holds, for a kind moving on energy; none for any other. */
     public @Nullable FieldEnergyStorage energy() {
         return this.energy;
     }
 
+    /** The filter of a piece that keeps one (a diverter's); a filter that lets everything pass for any other. */
+    public ItemFilter filter() {
+        final ItemFilter kept = this.filter != null ? this.filter.get() : null;
+        return kept != null ? kept : ItemFilter.EVERYTHING;
+    }
+
+    /** Sets the filter of a piece that keeps one; on the server. A piece that keeps none ignores it. */
+    public void setFilter(final ItemFilter to) {
+        if (this.filter != null) {
+            this.filter.set(Objects.requireNonNull(to, "to"));
+        }
+    }
+
     /**
-     * Puts {@code stack} on at {@code at}, from 0 where the belt begins to 1 where it ends, when there is room; on the
+     * Puts {@code stack} on at {@code at}, from 0 where the piece begins to 1 where it ends, when there is room; on the
      * server.
      *
      * @return whether it went on
@@ -142,56 +190,67 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         return true;
     }
 
-    /**
-     * What puts items onto it from {@code side}: from behind at its start, from the sides or above at its middle; none
-     * from its front, where it gives.
-     */
+    /** What puts items onto it through its {@code side} face, where its piece takes them in; none where it gives. */
     public @Nullable IItemHandler inserter(@Nullable final Direction side) {
-        final Direction facing = facing();
-        if (side == facing) {
-            return null;
-        }
-        return new Inserter(side == facing.getOpposite() ? START : MIDDLE);
+        final double at = piece().intakeAt(getBlockState(), side);
+        return at < ConveyorPieceBlock.START ? null : new Inserter(at, side);
     }
 
-    /** {@code entity} stands in its block: an item lying on the belt is taken onto it, and a mob or player carried. */
+    /** {@code entity} stands in its block: an item lying on it is taken onto it, and a mob or player carried. */
     public void touched(final Entity entity) {
         if (this.level == null) {
             return;
         }
-        final double above = entity.getY() - this.worldPosition.getY() - this.type.height() / (double) PIXELS;
+        final Vec3 local = entity.position().subtract(Vec3.atLowerCornerOf(this.worldPosition));
         if (entity instanceof ItemEntity lying) {
-            if (!this.level.isClientSide() && lying.isAlive() && above <= LYING && put(lying.getItem(),
-                    along(entity.position()))) {
+            if (this.level.isClientSide() || !lying.isAlive()) {
+                return;
+            }
+            final double at = piece().landsAt(getBlockState(), this.worldPosition, local);
+            if (at >= ConveyorPieceBlock.START && put(lying.getItem(), at)) {
                 lying.discard();
             }
             return;
         }
-        if (this.type.carriesEntities() && above <= LYING && !entity.isShiftKeyDown()) {
-            carry(entity);
+        final Direction way = piece().carries(getBlockState());
+        if (way == null || !this.type.carriesEntities() || entity.isShiftKeyDown()) {
+            return;
+        }
+        final ConveyorGeometry on = geometry();
+        if (local.y - on.at(on.along(local)).y <= ConveyorPieceBlock.LYING) {
+            carry(entity, way);
         }
     }
 
     @Override
-    public ShaftContact contact(final Direction face) {
-        final Direction across = facing().getClockWise();
-        return this.type.drive() instanceof ConveyorDrive.Mechanical && face.getAxis() == across.getAxis()
-                ? ShaftContact.axle(across.getAxis()) : ShaftContact.NONE;
+    public void setBlockState(final BlockState state) {
+        super.setBlockState(state);
+        this.entry = null;
+        this.exit = null;
+        this.line = null;
     }
 
-    /* The belts of its run in front and behind turn with it: a belt is a chain of rollers. */
+    @Override
+    public ShaftContact contact(final Direction face) {
+        final Direction.Axis axle = piece().axle(getBlockState());
+        return this.type.drive() instanceof ConveyorDrive.Mechanical && axle != null && face.getAxis() == axle
+                ? ShaftContact.axle(axle) : ShaftContact.NONE;
+    }
+
+    /* The pieces of its run before and after it turn with it: a belt is a chain of rollers. */
     @Override
     public List<ShaftJoin> joins() {
         if (!(this.type.drive() instanceof ConveyorDrive.Mechanical) || this.level == null) {
             return List.of();
         }
         final List<ShaftJoin> out = new ArrayList<>(2);
-        for (final Direction way : new Direction[] {facing(), facing().getOpposite()}) {
-            final BlockPos at = this.worldPosition.relative(way);
-            if (this.level.getBlockEntity(at) instanceof ConveyorBlockEntity belt && belt.type == this.type
-                    && belt.facing() == facing()) {
-                out.add(new ShaftJoin(at, 1.0));
-            }
+        final ConveyorBlockEntity ahead = ahead(this.level);
+        if (ahead != null) {
+            out.add(new ShaftJoin(ahead.worldPosition, 1.0));
+        }
+        final ConveyorBlockEntity behind = behind(this.level);
+        if (behind != null) {
+            out.add(new ShaftJoin(behind.worldPosition, 1.0));
         }
         return out;
     }
@@ -230,24 +289,79 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         }
     }
 
+    /* Its block, a piece of conveyor while the block entity stands in it. */
+    private ConveyorPieceBlock piece() {
+        return (ConveyorPieceBlock) getBlockState().getBlock();
+    }
+
+    private ConveyorOpening entry() {
+        if (this.entry == null) {
+            this.entry = piece().entry(getBlockState(), this.worldPosition);
+        }
+        return this.entry;
+    }
+
+    private ConveyorOpening exit() {
+        if (this.exit == null) {
+            this.exit = piece().exit(getBlockState(), this.worldPosition);
+        }
+        return this.exit;
+    }
+
     /* The items changed: they are saved and sent. */
     private void changed() {
         this.itemsField.changed();
     }
 
-    /* Each belt of the run, from its end back, as far as the run goes. */
+    /* The piece its run goes on into, when each is the other's first: the two are of one run. */
+    private @Nullable ConveyorBlockEntity ahead(final Level level) {
+        final ConveyorBlockEntity next = firstAhead(level);
+        return next != null && next.firstBehind(level) == this ? next : null;
+    }
+
+    private @Nullable ConveyorBlockEntity behind(final Level level) {
+        final ConveyorBlockEntity before = firstBehind(level);
+        return before != null && before.firstAhead(level) == this ? before : null;
+    }
+
+    /* The first piece of its kind that comes on where it leaves: in that block, or a falling belt in the one below. */
+    private @Nullable ConveyorBlockEntity firstAhead(final Level level) {
+        final ConveyorOpening out = exit();
+        final ConveyorBlockEntity there = meeting(level, out.cell(), out, true);
+        return there != null ? there : meeting(level, out.cell().below(), out, true);
+    }
+
+    /* The first piece of its kind that leaves where it comes on: behind, or a rising belt a block below that. */
+    private @Nullable ConveyorBlockEntity firstBehind(final Level level) {
+        final ConveyorOpening in = entry();
+        final BlockPos back = in.cell().relative(in.way().getOpposite());
+        final ConveyorBlockEntity there = meeting(level, back, in, false);
+        return there != null ? there : meeting(level, back.below(), in, false);
+    }
+
+    /* The piece of its kind at {@code at} that comes on (or, not {@code asEntry}, leaves) at {@code where}. */
+    private @Nullable ConveyorBlockEntity meeting(final Level level, final BlockPos at, final ConveyorOpening where,
+                                                  final boolean asEntry) {
+        if (!level.isLoaded(at) || !(level.getBlockEntity(at) instanceof ConveyorBlockEntity other)
+                || other.type != this.type || !piece().joinsRuns() || !other.piece().joinsRuns()) {
+            return null;
+        }
+        return (asEntry ? other.entry() : other.exit()).equals(where) ? other : null;
+    }
+
+    /* Whether its state says it ends its run. */
+    private boolean ends() {
+        return getBlockState().getValue(ConveyorPieceBlock.END);
+    }
+
+    /* Each piece of its run, from its end back, up to the end of the run behind it, or round a loop to itself. */
     private List<ConveyorBlockEntity> run(final ServerLevel level) {
         final List<ConveyorBlockEntity> run = new ArrayList<>();
         run.add(this);
-        final Direction back = facing().getOpposite();
-        BlockPos at = this.worldPosition;
-        while (run.size() < LONGEST_RUN) {
-            at = at.relative(back);
-            if (!(level.getBlockEntity(at) instanceof ConveyorBlockEntity belt) || belt.type != this.type
-                    || belt.facing() != facing()) {
-                break;
-            }
-            run.add(belt);
+        ConveyorBlockEntity at = behind(level);
+        while (at != null && at != this && !at.ends() && run.size() < WALK_LIMIT) {
+            run.add(at);
+            at = at.behind(level);
         }
         return run;
     }
@@ -258,13 +372,12 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
             return;
         }
         ConveyorBlockEntity end = this;
-        for (int k = 0; k < LONGEST_RUN; k++) {
-            final BlockPos ahead = end.worldPosition.relative(facing());
-            if (!(this.level.getBlockEntity(ahead) instanceof ConveyorBlockEntity belt) || belt.type != this.type
-                    || belt.facing() != facing()) {
+        for (int k = 0; k < WALK_LIMIT && !end.ends(); k++) {
+            final ConveyorBlockEntity next = end.ahead(this.level);
+            if (next == null) {
                 break;
             }
-            end = belt;
+            end = next;
         }
         end.awake = true;
     }
@@ -275,28 +388,102 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         }
         final List<ConveyorBlockEntity> run = run(level);
         boolean carrying = false;
-        for (final ConveyorBlockEntity belt : run) {
-            carrying |= !belt.lane().isEmpty();
+        for (final ConveyorBlockEntity piece : run) {
+            carrying |= !piece.lane().isEmpty();
         }
-        // An empty run is let be, its belts told once that they stand still, until an item comes on.
+        // An empty run is let be, its pieces told once that they stand still, until an item comes on.
         this.awake = carrying;
         final double distance = carrying ? this.type.speed() * share(run) / TICKS : 0.0;
         for (int i = 0; i < run.size(); i++) {
-            final ConveyorBlockEntity belt = run.get(i);
-            belt.speedNow(distance);
-            if (distance <= 0.0 || belt.lane().isEmpty() || !belt.lane().advance(distance, 1.0, -1)) {
+            final ConveyorBlockEntity piece = run.get(i);
+            piece.speedNow(distance);
+            if (distance <= 0.0 || piece.lane().isEmpty() || !piece.moveItems(level, distance)) {
                 continue;
             }
             if (i == 0) {
                 deliver(level);
             } else {
                 final ConveyorBlockEntity ahead = run.get(i - 1);
-                if (ahead.lane().roomAt(START)) {
-                    ahead.lane().put(belt.lane().takeFirst(), START);
+                if (ahead.lane().roomAt(ConveyorPieceBlock.START)) {
+                    ahead.lane().put(piece.lane().takeFirst(), ConveyorPieceBlock.START);
                     ahead.changed();
-                    belt.changed();
+                    piece.changed();
                 }
             }
+        }
+    }
+
+    /*
+     * Moves its items {@code distance} along, the one a machine above works held at its middle until the machine is
+     * done with it.
+     *
+     * @return whether its first item stands at its end, ready to be handed on
+     */
+    private boolean moveItems(final ServerLevel level, final double distance) {
+        final BlockPos above = this.worldPosition.above();
+        final IBeltWorker worker = piece().workedFromAbove(getBlockState()) && level.isLoaded(above)
+                && level.getBlockEntity(above) instanceof IBeltWorker machine ? machine : null;
+        final int held = heldFor(worker, distance);
+        if (held == ConveyorItems.NONE_HELD) {
+            return lane().advance(distance, 1.0, ConveyorItems.NONE_HELD);
+        }
+        lane().advance(distance, 1.0, held, ConveyorPieceBlock.MIDDLE);
+        final BeltLane.Entry<ItemStack> under = lane().entries().get(held);
+        if (worker != null && under.at() >= ConveyorPieceBlock.MIDDLE) {
+            final ItemStack made = worker.work(under.item());
+            if (made != null) {
+                if (made.isEmpty()) {
+                    lane().take(held);
+                } else {
+                    lane().replace(held, made);
+                }
+                this.heldItem = null;
+                showHeld(ConveyorItems.NONE_HELD);
+                changed();
+            }
+        }
+        return !lane().isEmpty() && lane().entries().getFirst().at() >= 1.0;
+    }
+
+    /*
+     * The place of the item {@code worker} holds still: the one it was working, while it is still on the lane, or the
+     * first coming to the middle this tick that it works.
+     */
+    private int heldFor(final @Nullable IBeltWorker worker, final double distance) {
+        final List<BeltLane.Entry<ItemStack>> entries = lane().entries();
+        if (worker == null) {
+            this.heldItem = null;
+            showHeld(ConveyorItems.NONE_HELD);
+            return ConveyorItems.NONE_HELD;
+        }
+        if (this.heldItem != null) {
+            for (int i = 0; i < entries.size(); i++) {
+                if (entries.get(i).item() == this.heldItem) {
+                    showHeld(i);
+                    return i;
+                }
+            }
+            worker.abandoned();
+            this.heldItem = null;
+        }
+        for (int i = 0; i < entries.size(); i++) {
+            final BeltLane.Entry<ItemStack> entry = entries.get(i);
+            if (entry.at() <= ConveyorPieceBlock.MIDDLE && entry.at() + distance >= ConveyorPieceBlock.MIDDLE
+                    && worker.works(entry.item())) {
+                this.heldItem = entry.item();
+                showHeld(i);
+                return i;
+            }
+        }
+        showHeld(ConveyorItems.NONE_HELD);
+        return ConveyorItems.NONE_HELD;
+    }
+
+    /* Tells its players which item stands still, when that changes. */
+    private void showHeld(final int index) {
+        if (this.items.held() != index) {
+            this.items.hold(index);
+            changed();
         }
     }
 
@@ -308,9 +495,9 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
             case ConveyorDrive.Energy power -> {
                 final int needed = perTick(power) * run.size();
                 int got = 0;
-                for (final ConveyorBlockEntity belt : run) {
-                    if (belt.energy != null && got < needed) {
-                        got += belt.energy.spendUpTo(needed - got);
+                for (final ConveyorBlockEntity piece : run) {
+                    if (piece.energy != null && got < needed) {
+                        got += piece.energy.spendUpTo(needed - got);
                     }
                 }
                 yield got / (double) needed;
@@ -318,44 +505,47 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         };
     }
 
-    /* Hands the first item at the run's end on: into a belt or an inventory in front, or as its kind says. */
+    /*
+     * Hands the first item at the run's end to its piece's outlets, in order, or in turn for a piece that deals in
+     * turn; with no outlet that takes items at all, a kind that drops them lets it fall off at the first.
+     */
     private void deliver(final ServerLevel level) {
-        final Direction facing = facing();
-        final BlockPos front = this.worldPosition.relative(facing);
         final ItemStack first = lane().entries().getFirst().item();
-        if (level.getBlockEntity(front) instanceof ConveyorBlockEntity belt) {
-            // A belt of another kind ahead takes it at its start; one across, at its middle; one head on, never.
-            final double at = belt.facing() == facing ? START : belt.facing() == facing.getOpposite() ? -1.0 : MIDDLE;
-            if (at >= START && belt.put(first, at)) {
-                lane().takeFirst();
-                changed();
+        final List<ConveyorOutlet> outlets = piece().outlets(getBlockState(), this.worldPosition, this, first);
+        final boolean inTurn = piece().dealsInTurn();
+        boolean anyTaker = false;
+        for (int k = 0; k < outlets.size(); k++) {
+            final int index = inTurn ? (this.nextOutlet + k) % outlets.size() : k;
+            final ConveyorOutlet outlet = outlets.get(index);
+            final IItemHandler taker = level.getCapability(Capabilities.ItemHandler.BLOCK, outlet.cell(),
+                    outlet.side());
+            if (taker == null) {
+                continue;
             }
-            return;
-        }
-        final IItemHandler inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, front,
-                facing.getOpposite());
-        if (inventory != null) {
-            final ItemStack left = ItemHandlerHelper.insertItem(inventory, first.copy(), false);
+            anyTaker = true;
+            final ItemStack left = ItemHandlerHelper.insertItem(taker, first.copy(), false);
             if (left.getCount() != first.getCount()) {
                 if (left.isEmpty()) {
                     lane().takeFirst();
                 } else {
                     lane().replace(0, left);
                 }
+                this.nextOutlet = (index + 1) % outlets.size();
                 changed();
+                return;
             }
-            return;
         }
-        if (this.type.end() == ConveyorEnd.DROP) {
-            final Vec3 off = Vec3.atBottomCenterOf(front).add(0.0, this.type.height() / (double) PIXELS, 0.0);
-            final ItemEntity fallen = new ItemEntity(level, off.x, off.y, off.z, lane().takeFirst());
-            fallen.setDeltaMovement(Vec3.atLowerCornerOf(facing.getNormal()).scale(moving()));
+        if (!anyTaker && this.type.end() == ConveyorEnd.DROP && !outlets.isEmpty()) {
+            final ConveyorOutlet off = outlets.getFirst();
+            final Vec3 at = Vec3.atBottomCenterOf(off.cell()).add(0.0, this.type.height() / PIXELS, 0.0);
+            final ItemEntity fallen = new ItemEntity(level, at.x, at.y, at.z, lane().takeFirst());
+            fallen.setDeltaMovement(Vec3.atLowerCornerOf(off.side().getOpposite().getNormal()).scale(moving()));
             level.addFreshEntity(fallen);
             changed();
         }
     }
 
-    /* Sets how far the belt moves a tick, sent to its players when it changes. */
+    /* Sets how far it moves a tick, sent to its players when it changes. */
     private void speedNow(final double blocksATick) {
         if (Math.abs(this.items.speed() - blocksATick) > MOVED) {
             this.items.moving(blocksATick);
@@ -363,41 +553,58 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         }
     }
 
-    /* How far along the belt {@code point} lies, from 0 where it begins to 1 where it ends. */
-    private double along(final Vec3 point) {
-        final Direction facing = facing();
-        final double local = facing.getAxis() == Direction.Axis.X ? point.x - this.worldPosition.getX()
-                : point.z - this.worldPosition.getZ();
-        final double forward = facing.getAxisDirection() == Direction.AxisDirection.POSITIVE ? local : 1.0 - local;
-        return Math.clamp(forward, START, 1.0);
-    }
-
-    /* Carries {@code entity} the way the belt moves, as fast as it moves, on either side. */
-    private void carry(final Entity entity) {
+    /* Carries {@code entity} {@code way}, as fast as the piece moves, on either side of it. */
+    private void carry(final Entity entity, final Direction way) {
         final double speed = moving();
         if (speed <= 0.0) {
             return;
         }
-        final Vec3 way = Vec3.atLowerCornerOf(facing().getNormal());
+        final Vec3 along = Vec3.atLowerCornerOf(way.getNormal());
         final Vec3 motion = entity.getDeltaMovement();
-        final double already = motion.dot(way);
+        final double already = motion.dot(along);
         if (already < speed) {
-            entity.setDeltaMovement(motion.add(way.scale(speed - already)));
+            entity.setDeltaMovement(motion.add(along.scale(speed - already)));
         }
     }
 
-    /* What a belt moving on energy draws a tick, in the energy's units: its watts over the ticks of a second. */
+    /*
+     * For a piece that takes in turn, whether {@code side} may put an item on now: not when it put the last one and
+     * another side offered one a moment ago. A real offer is noted, taken or not; a trial one is not.
+     */
+    private boolean yourTurn(final @Nullable Direction side, final boolean trial) {
+        if (!piece().takesInTurn() || side == null || this.level == null) {
+            return true;
+        }
+        final long now = this.level.getGameTime();
+        if (!trial) {
+            this.offeredAt[side.get3DDataValue()] = now;
+        }
+        if (side != this.lastTaken) {
+            return true;
+        }
+        for (final Direction other : Direction.values()) {
+            final long offered = this.offeredAt[other.get3DDataValue()];
+            if (other != side && offered > 0 && now - offered <= OFFER_KEPT) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /* What a piece moving on energy draws a tick, in the energy's units: its watts over the ticks of a second. */
     private static int perTick(final ConveyorDrive.Energy power) {
         return Math.max(1, (int) Math.ceil(power.watts() / TICKS));
     }
 
-    /* Puts what it is given on the belt where it was made to, one stack a place. */
+    /* Puts what it is given on the piece where its piece takes it in from that side, one stack a place. */
     private final class Inserter implements IItemHandler {
 
         private final double at;
+        private final @Nullable Direction side;
 
-        private Inserter(final double at) {
+        private Inserter(final double at, final @Nullable Direction side) {
             this.at = at;
+            this.side = side;
         }
 
         @Override
@@ -412,11 +619,17 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
 
         @Override
         public ItemStack insertItem(final int slot, final ItemStack stack, final boolean simulate) {
-            if (stack.isEmpty() || !lane().roomAt(this.at)) {
+            if (stack.isEmpty()) {
+                return stack;
+            }
+            // The offer counts toward the turns even when there is no room for it yet.
+            final boolean turn = yourTurn(this.side, simulate);
+            if (!turn || !lane().roomAt(this.at)) {
                 return stack;
             }
             if (!simulate) {
                 put(stack, this.at);
+                ConveyorBlockEntity.this.lastTaken = this.side;
             }
             return ItemStack.EMPTY;
         }

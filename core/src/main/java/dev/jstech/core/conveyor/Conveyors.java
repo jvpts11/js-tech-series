@@ -18,8 +18,8 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * The conveyors of every mod, found by their blocks: each block entity type a {@link ConveyorBlock} makes takes items
- * from hoppers, pipes and machines through the game's item capability, behind and at its sides and above, with
+ * The conveyors of every mod, found by their blocks: each block entity type a {@link ConveyorPieceBlock} makes takes
+ * items from hoppers, pipes and machines through the game's item capability, where its piece takes them in, with
  * nothing for its mod to register.
  */
 public final class Conveyors {
@@ -37,8 +37,8 @@ public final class Conveyors {
     public static Set<BlockEntityType<? extends ConveyorBlockEntity>> entityTypes() {
         final Set<BlockEntityType<? extends ConveyorBlockEntity>> out = new LinkedHashSet<>();
         for (final Block block : BuiltInRegistries.BLOCK) {
-            if (block instanceof ConveyorBlock conveyor) {
-                out.add(conveyor.entityType());
+            if (block instanceof ConveyorPieceBlock piece) {
+                out.add(piece.entityType());
             }
         }
         return out;

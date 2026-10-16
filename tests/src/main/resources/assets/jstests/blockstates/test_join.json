@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": {"model": "jstests:block/test_join"},
+    "facing=east": {"model": "jstests:block/test_join", "y": 90},
+    "facing=south": {"model": "jstests:block/test_join", "y": 180},
+    "facing=west": {"model": "jstests:block/test_join", "y": 270}
+  }
+}

@@ -1,8 +1,16 @@
 {
   "variants": {
-    "facing=north": {"model": "jstests:block/test_conveyor"},
-    "facing=east": {"model": "jstests:block/test_conveyor", "y": 90},
-    "facing=south": {"model": "jstests:block/test_conveyor", "y": 180},
-    "facing=west": {"model": "jstests:block/test_conveyor", "y": 270}
+    "facing=north,slope=flat": {"model": "jstests:block/test_conveyor"},
+    "facing=east,slope=flat": {"model": "jstests:block/test_conveyor", "y": 90},
+    "facing=south,slope=flat": {"model": "jstests:block/test_conveyor", "y": 180},
+    "facing=west,slope=flat": {"model": "jstests:block/test_conveyor", "y": 270},
+    "facing=north,slope=rising": {"model": "jstests:block/test_conveyor_rising"},
+    "facing=east,slope=rising": {"model": "jstests:block/test_conveyor_rising", "y": 90},
+    "facing=south,slope=rising": {"model": "jstests:block/test_conveyor_rising", "y": 180},
+    "facing=west,slope=rising": {"model": "jstests:block/test_conveyor_rising", "y": 270},
+    "facing=north,slope=falling": {"model": "jstests:block/test_conveyor_falling"},
+    "facing=east,slope=falling": {"model": "jstests:block/test_conveyor_falling", "y": 90},
+    "facing=south,slope=falling": {"model": "jstests:block/test_conveyor_falling", "y": 180},
+    "facing=west,slope=falling": {"model": "jstests:block/test_conveyor_falling", "y": 270}
   }
 }

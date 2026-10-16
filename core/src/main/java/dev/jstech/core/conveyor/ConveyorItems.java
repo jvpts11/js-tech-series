@@ -28,13 +28,18 @@ public final class ConveyorItems implements IFieldPart {
     private double speed;
     /* On a player's game, the game time the items were last sent at, from which they are moved on. */
     private long sentAt;
+    /* The item a machine above holds still while it works it, by its place in the lane; none when below 0. */
+    private int held = NONE_HELD;
 
     /** Where the items are saved. */
     public static final String KEY = "Belt";
+    /** What {@link #held()} says when no item is held. */
+    public static final int NONE_HELD = -1;
     private static final String ITEMS = "Items";
     private static final String ITEM = "Item";
     private static final String AT = "At";
     private static final String SPEED = "Speed";
+    private static final String HELD = "Held";
 
     public ConveyorItems(final double gap) {
         this.lane = new BeltLane<>(gap);
@@ -65,6 +70,16 @@ public final class ConveyorItems implements IFieldPart {
         this.sentAt = gameTime;
     }
 
+    /** The place in the lane of the item a machine above holds still, sent with the items; {@link #NONE_HELD}: none. */
+    public int held() {
+        return this.held;
+    }
+
+    /** Sets the item a machine above holds still, by its place in the lane, or {@link #NONE_HELD}. */
+    public void hold(final int index) {
+        this.held = index;
+    }
+
     @Override
     public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
         tag.put(ITEMS, write(registries));
@@ -79,12 +94,14 @@ public final class ConveyorItems implements IFieldPart {
     public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         tag.put(ITEMS, write(registries));
         tag.putDouble(SPEED, this.speed);
+        tag.putInt(HELD, this.held);
     }
 
     @Override
     public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         read(tag.getList(ITEMS, Tag.TAG_COMPOUND), registries);
         this.speed = tag.getDouble(SPEED);
+        this.held = tag.contains(HELD) ? tag.getInt(HELD) : NONE_HELD;
     }
 
     private ListTag write(final HolderLookup.Provider registries) {

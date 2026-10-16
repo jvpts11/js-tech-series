@@ -1,0 +1,6 @@
+{
+  "parent": "jstests:block/test_conveyor",
+  "textures": {
+    "belt": "minecraft:block/red_wool"
+  }
+}

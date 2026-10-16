@@ -1,0 +1,53 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/copper_block",
+    "wall": "minecraft:block/copper_block"
+  },
+  "elements": [
+    {
+      "from": [2, 0, 2],
+      "to": [14, 16, 4],
+      "faces": {
+        "down": {"texture": "#wall", "cullface": "down"},
+        "up": {"texture": "#wall", "cullface": "up"},
+        "north": {"texture": "#wall"},
+        "south": {"texture": "#wall"},
+        "west": {"texture": "#wall"},
+        "east": {"texture": "#wall"}
+      }
+    },
+    {
+      "from": [2, 0, 12],
+      "to": [14, 16, 14],
+      "faces": {
+        "down": {"texture": "#wall", "cullface": "down"},
+        "up": {"texture": "#wall", "cullface": "up"},
+        "north": {"texture": "#wall"},
+        "south": {"texture": "#wall"},
+        "west": {"texture": "#wall"},
+        "east": {"texture": "#wall"}
+      }
+    },
+    {
+      "from": [2, 0, 4],
+      "to": [4, 16, 12],
+      "faces": {
+        "down": {"texture": "#wall", "cullface": "down"},
+        "up": {"texture": "#wall", "cullface": "up"},
+        "west": {"texture": "#wall"},
+        "east": {"texture": "#wall"}
+      }
+    },
+    {
+      "from": [12, 0, 4],
+      "to": [14, 16, 12],
+      "faces": {
+        "down": {"texture": "#wall", "cullface": "down"},
+        "up": {"texture": "#wall", "cullface": "up"},
+        "west": {"texture": "#wall"},
+        "east": {"texture": "#wall"}
+      }
+    }
+  ]
+}

@@ -11,16 +11,18 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.jstech.core.conveyor.BeltLane;
 import dev.jstech.core.conveyor.ConveyorBlockEntity;
+import dev.jstech.core.conveyor.ConveyorGeometry;
 import dev.jstech.core.conveyor.Conveyors;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,9 +35,8 @@ import org.jetbrains.annotations.ApiStatus;
 public final class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity> {
 
     private static final float SCALE = 0.4F;
-    private static final float MIDDLE = 0.5F;
+    private static final double MIDDLE = 0.5;
     private static final float LIFT = 0.04F;
-    private static final float PIXELS = 16F;
     private static final float FLAT = 90F;
 
     public ConveyorRenderer(final BlockEntityRendererProvider.Context context) {
@@ -61,23 +62,32 @@ public final class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlock
         final List<BeltLane.Entry<ItemStack>> entries = belt.lane().entries();
         final double moved = belt.moving() * (belt.getLevel().getGameTime() - belt.sentAt() + partialTick);
         final double gap = belt.lane().gap();
-        final Direction facing = belt.facing();
-        final float height = belt.type().height() / PIXELS + LIFT;
+        final ConveyorGeometry line = belt.geometry();
+        final int held = belt.held();
         double ahead = Double.POSITIVE_INFINITY;
         for (int i = 0; i < entries.size(); i++) {
             final BeltLane.Entry<ItemStack> entry = entries.get(i);
-            final double most = i == 0 ? 1.0 : ahead - gap;
+            double most = i == 0 ? 1.0 : ahead - gap;
+            if (i == held) {
+                most = Math.min(most, Math.max(entry.at(), MIDDLE));
+            }
             final double at = Math.max(entry.at(), Math.min(entry.at() + Math.max(0.0, moved), most));
             ahead = at;
-            final float along = (float) at - MIDDLE;
+            final Vec3 spot = line.at(at);
             pose.pushPose();
-            pose.translate(MIDDLE + facing.getStepX() * along, height, MIDDLE + facing.getStepZ() * along);
-            pose.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
-            pose.mulPose(Axis.XP.rotationDegrees(FLAT));
+            pose.translate(spot.x, spot.y + LIFT, spot.z);
+            pose.mulPose(Axis.YP.rotationDegrees(-line.facing().toYRot()));
+            pose.mulPose(Axis.XP.rotationDegrees(FLAT - line.pitch()));
             pose.scale(SCALE, SCALE, SCALE);
             Minecraft.getInstance().getItemRenderer().renderStatic(entry.item(), ItemDisplayContext.FIXED, light,
                     overlay, pose, buffers, belt.getLevel(), i);
             pose.popPose();
         }
+    }
+
+    /* A rising belt's items reach into the block ahead and above: it is drawn while any of that is in view. */
+    @Override
+    public AABB getRenderBoundingBox(final ConveyorBlockEntity belt) {
+        return new AABB(belt.getBlockPos()).inflate(1.0);
     }
 }
