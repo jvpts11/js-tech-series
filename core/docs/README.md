@@ -55,6 +55,7 @@ says what the Core promises and what it does not yet.
 | [UI components](UI_COMPONENTS.md) | The components screens, desktop programs and dialogs are built from: controls, trees, tables, charts, graphs, 3D views, maps, gauges, ghost slots, rich tooltips. |
 | [Fonts](FONTS.md) | Declaring a font from its free source, and the monospace grid painter. |
 | [Models](MODELS.md) | Animated models for blocks, items, entities and armour from Blockbench, Bedrock, glTF, FBX and OBJ files; controllers, blends, expressions, events, bones moved by code, animations from the server, the preview. |
+| [Connected textures](CONNECTED_TEXTURES.md) | Textures that join between alike blocks, read from the formats resource packs write for OptiFine, Continuity and CTM; microblocks; stepping aside for Continuity and CTM. |
 | [Motion](MOTION.md) | Curves, motion profiles, and the clock every motion reads. |
 | [Overlays](OVERLAYS.md) | HUD elements, holograms, and what Jade shows. |
 | [Manuals](MANUALS.md) | Chapters, entries, manuals and styles, special blocks, and the manual key. |

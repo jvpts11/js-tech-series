@@ -1,0 +1,10 @@
+{
+  "ctm": {
+    "ctm_version": 1,
+    "type": "ctm:ctm",
+    "layer": "SOLID",
+    "textures": [
+      "jstests:block/test_ctm_frame-ctm"
+    ]
+  }
+}

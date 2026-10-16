@@ -142,6 +142,7 @@ import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.StateNetwork;
+import dev.jstech.core.stepaside.StepAside;
 import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
 import net.neoforged.bus.api.IEventBus;
@@ -280,6 +281,8 @@ public final class JsCore {
         ConfigFiles.register(StyleSettings.FILE, modEventBus, modContainer);
         // Where a player's notifications appear and what they silenced, read on their own game only.
         ConfigFiles.register(NotificationSettings.FILE, modEventBus, modContainer);
+        // Which of the Core's systems of looks step aside for a mod that does their job, on a player's game only.
+        ConfigFiles.register(StepAside.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();

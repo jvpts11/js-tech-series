@@ -8,6 +8,7 @@
 package dev.jstech.core.client.model;
 
 import com.mojang.math.Transformation;
+import dev.jstech.core.client.connect.ConnectedPacks;
 import dev.jstech.core.multipart.MicroblockLayout;
 import dev.jstech.core.multipart.SmallBlockLayout;
 import dev.jstech.core.multipart.ModelLayout;
@@ -22,8 +23,10 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.BakedModelWrapper;
@@ -59,6 +62,12 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     @Override
+    public ModelData getModelData(final BlockAndTintGetter level, final BlockPos pos, final BlockState state,
+                                  final ModelData data) {
+        return ConnectedPacks.withNeighbours(level, pos, state, super.getModelData(level, pos, state, data));
+    }
+
+    @Override
     public List<BakedQuad> getQuads(@Nullable final BlockState state, @Nullable final Direction side,
                                     final RandomSource random, final ModelData data,
                                     @Nullable final RenderType renderType) {
@@ -81,7 +90,9 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
         if (micro != null) {
             for (final MicroblockLayout.Drawn drawn : micro.drawn()) {
                 if (renderType == null || MicroblockQuads.renderTypes(drawn.block()).contains(renderType)) {
-                    out.addAll(MicroblockQuads.quads(drawn, side, IN_PLACE));
+                    // A microblock joins its like around it as the packs' connected textures of its material say.
+                    out.addAll(ConnectedPacks.microblock(MicroblockQuads.quads(drawn, side, IN_PLACE), drawn.block(),
+                            data, renderType));
                 }
             }
         }

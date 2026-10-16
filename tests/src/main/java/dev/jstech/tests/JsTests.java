@@ -95,6 +95,8 @@ public final class JsTests {
         TestGuide.declare();
         // A press, a crate, a walker and a helmet drawn with the Core's models, from files of four formats.
         TestModels.declare();
+        // Blocks a resource pack in the test mod draws with connected textures, in both formats packs write.
+        TestConnected.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);

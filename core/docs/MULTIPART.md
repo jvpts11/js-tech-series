@@ -196,6 +196,10 @@ and the neighbour's face behind it is not drawn either. The game keeps what one 
 blocks' states alone, so what a space hides is in its state and never read from its block entity; for the same
 reason the cable block says it hides nothing.
 
+*Added 2026-10-16:* a microblock wears the connected textures resource packs give its material, joining a whole block
+of it and microblocks like it, of the same shape and place, in the spaces around ([Connected
+textures](CONNECTED_TEXTURES.md)).
+
 ## Parts that move
 
 A kind of part with pieces that move, a fan's blades or a gauge's needle, is marked when it is made,

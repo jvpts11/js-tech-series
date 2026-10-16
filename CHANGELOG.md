@@ -513,6 +513,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   air's temperature such as lava, and living things at a body's warmth (the undead as cold as the air, anything
   burning hotter); beside the crosshair, how hot the thing looked at is, in kelvin and degrees Celsius.
 - (Core) Models drawn from a whole block take the light around the block, where none reaches inside it.
+- (Core) Connected textures of resource packs: textures that join between alike blocks, read from both formats packs
+  write, so a pack made for OptiFine, Continuity or CTM works as it is and a mod declares its own as data. OptiFine's
+  and Continuity's `.properties` rules with every method (the full 47 tiles, compact, horizontal, vertical, both ways,
+  top, random with weights and symmetry, repeat, fixed, and overlays of every kind with their tint and layer), the
+  textures and blocks they match with their properties, faces, biomes, heights, weights, names and inner seams; CTM's
+  metadata with every type (ctm, horizontal, vertical, pillar, simple, random, pattern, edges, full edges, eldritch),
+  its light, layer, proxies, conditions with predicates and faces of their own, its overrides in block models, and
+  logics written as data, OptiFine's full sheet among them. Blocks may be named by tag. Faces join by how their
+  texture lies on them, partial faces take the same part of their tile, and microblocks join their like in the spaces
+  around. While Continuity or CTM is installed the Core steps aside and says so, unless the player's setting keeps it.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
