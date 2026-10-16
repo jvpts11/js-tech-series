@@ -2,8 +2,8 @@
 
 *Added 2026-10-16.*
 
-How several things share one block space: a cable's wires, the devices on its faces, and **microblocks**, pieces of
-any full block cut with the saw. For the cable block and the devices on its faces, see [Cables](CABLES.md); this page
+How several things share one block space: a cable's wires, the devices on its faces, **microblocks**, pieces of any
+full block cut with the saw, and the game's own torches, levers, buttons and pressure plates. For the cable block and the devices on its faces, see [Cables](CABLES.md); this page
 is about the space they all share, and about the microblocks.
 
 ## A block space and its places
@@ -121,6 +121,22 @@ aimed at and outlined by, and what keeps other parts out of its way; it is turne
 (`PartBox.turnedTo`). Two devices on faces side by side may share room at the corner between their plates, and two
 microblocks along their edge, but a device never reaches into a microblock.
 
+## The game's small blocks
+
+Torches, levers, buttons and pressure plates, the game's own and any mod's made of the game's kinds, share a block
+space too (`SmallBlocks`). Each hangs on the face of the space toward what holds it up, as it would in a block of its
+own, and takes that face's place. A player places one by using its item on the face of the block beside a cable or a
+space of parts: the item decides how it stands, as it always does, and it goes into the space when it fits there.
+On a cable, a torch hangs beside the wires; it cannot stand where the wires run.
+
+They are the game's own blocks, run at the space's place: their shape, signal, light and particles are their own, a
+lever is pulled and a button pressed when used, a pressure plate is pressed by what stands on it, and a wooden button
+by an arrow. Wire beside the space joins it while it holds a lever, a button or a plate. A pressed button or plate is
+looked at again on the space's tick, which it has only while one is pressed. One whose block beside the space goes
+falls off with its item, as the game's own does. They have no collision, and break as fast as the game's own.
+
+`SpaceParts.addSmall(state)` hangs one from code, `small(face)` reads it and `removeSmall(face)` takes it off.
+
 ## Drawing
 
 Every piece of a space is drawn into the world's mesh, which is built again only when a piece changes. Where two
@@ -159,6 +175,10 @@ as its model is; a world of still parts draws nothing here. The rest of the part
 - **A device never ticks.** Its `ticks()` says false, or its light or need of a tick changed without a call to
   `partChanged()`, so the block's state still says it needs none.
 - **Wire beside a device does not join it.** Its kind is not marked with `redstone()`.
+- **A torch goes into the air beside a cable instead of onto it.** It was used on the cable itself; use it on the
+  face of the block beside the cable, where it hangs.
+- **A small block will not go into a space.** It would cross the wires or another part; on a cable, hang it on a face
+  the wires do not run out of.
 - **A device is refused beside a slab.** Its plate would reach into the slab; give its kind a smaller room with
   `shaped`, or use a thinner piece.
 - **A neighbour's face shows behind a cover.** The cover's block is not opaque, as glass is not; only a piece of a

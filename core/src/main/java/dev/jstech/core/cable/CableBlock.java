@@ -9,10 +9,11 @@ package dev.jstech.core.cable;
 
 import com.mojang.serialization.MapCodec;
 import dev.jstech.core.connect.Neighbours;
-import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.PartRedstone;
 import dev.jstech.core.multipart.PartStates;
+import dev.jstech.core.multipart.SmallBlocks;
 import dev.jstech.core.multipart.SpaceBlock;
+import dev.jstech.core.multipart.SpaceSlots;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -25,6 +26,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
@@ -196,11 +198,33 @@ public final class CableBlock extends Block implements EntityBlock {
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
-        final IFacePart part = cable.getPart(face);
-        if (part != null && player instanceof ServerPlayer server && part.use(server)) {
+        if (level instanceof ServerLevel server && player instanceof ServerPlayer user
+                && SpaceBlock.use(server, cable.parts(), face, user)) {
             return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;
+    }
+
+    /* A torch, a lever, a button or a plate on the cable has no collision, as the game's own has none. */
+    @Override
+    protected VoxelShape getCollisionShape(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                           final CollisionContext context) {
+        return level.getBlockEntity(pos) instanceof CableBlockEntity cable ? cable.collisionShape() : CORE;
+    }
+
+    @Override
+    protected void entityInside(final BlockState state, final Level level, final BlockPos pos, final Entity entity) {
+        if (level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
+            SmallBlocks.entityInside(level, cable.parts(), entity);
+        }
+    }
+
+    @Override
+    public void animateTick(final BlockState state, final Level level, final BlockPos pos,
+                            final RandomSource random) {
+        if (level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
+            SmallBlocks.animateTick(level, cable.parts(), random);
+        }
     }
 
     @Override
@@ -214,10 +238,7 @@ public final class CableBlock extends Block implements EntityBlock {
             return SpaceBlock.itemOf(cable.parts(), aim.micro());
         }
         if (aim.part() != null && level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
-            final IFacePart part = cable.getPart(aim.part());
-            if (part != null) {
-                return part.partItem();
-            }
+            return SpaceBlock.itemOf(cable.parts(), SpaceSlots.face(aim.part().get3DDataValue()));
         }
         return ItemStack.EMPTY;
     }
@@ -237,6 +258,8 @@ public final class CableBlock extends Block implements EntityBlock {
         final Direction face = Neighbours.faceTowards(pos, neighbourPos);
         if (face != null && level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
             cable.fields().neighbourChanged(level, face);
+            // A small block whose block beside the cable went falls off.
+            SmallBlocks.checkHeld(level, cable.parts());
         }
         PartRedstone.neighbourChanged(level, pos, neighbourPos);
     }

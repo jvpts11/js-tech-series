@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -96,19 +97,39 @@ public final class SpaceBlock extends Block implements EntityBlock {
         return aimOf(level, pos, player);
     }
 
-    /** The item of the part in {@code slot} of {@code parts}: the device's or the microblock's; none for none. */
+    /**
+     * The item of the part in {@code slot} of {@code parts}: the microblock's, the small block's or the device's;
+     * none for none.
+     */
     public static ItemStack itemOf(final SpaceParts parts, final int slot) {
         final Microblock block = parts.microblock(slot);
         if (block != null) {
             return CoreSpaces.stack(block.piece());
         }
         if (SpaceSlots.isFace(slot)) {
-            final IFacePart device = parts.get(Direction.from3DDataValue(SpaceSlots.faceOf(slot)));
+            final Direction face = Direction.from3DDataValue(SpaceSlots.faceOf(slot));
+            final BlockState small = parts.small(face);
+            if (small != null) {
+                return SmallBlocks.itemOf(small);
+            }
+            final IFacePart device = parts.get(face);
             if (device != null) {
                 return device.partItem();
             }
         }
         return ItemStack.EMPTY;
+    }
+
+    /**
+     * Uses the device or the small block on {@code face} of {@code parts}, on the server: a device does what it does,
+     * a lever is pulled, a button pressed.
+     *
+     * @return whether it did anything
+     */
+    public static boolean use(final ServerLevel level, final SpaceParts parts, final Direction face,
+                              final ServerPlayer player) {
+        final IFacePart device = parts.get(face);
+        return device != null ? device.use(player) : SmallBlocks.use(level, parts, face, player);
     }
 
     /** Takes the space at {@code pos} away when no part is left in it. */
@@ -192,6 +213,11 @@ public final class SpaceBlock extends Block implements EntityBlock {
                                    final boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighbourBlock, neighbourPos, movedByPiston);
         PartRedstone.neighbourChanged(level, pos, neighbourPos);
+        // A small block whose block beside the space went falls off; a space left with nothing goes.
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof SpaceBlockEntity space) {
+            SmallBlocks.checkHeld(level, space.parts());
+            vacateIfEmpty(level, pos);
+        }
     }
 
     /* A space read from an older save whose state does not show its parts is set right a tick after it loads. */
@@ -209,9 +235,32 @@ public final class SpaceBlock extends Block implements EntityBlock {
         return level.getBlockEntity(pos) instanceof SpaceBlockEntity space ? space.parts().shape() : Shapes.empty();
     }
 
+    /* A torch, a lever, a button or a plate in the space has no collision, as the game's own has none. */
+    @Override
+    protected VoxelShape getCollisionShape(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                           final CollisionContext context) {
+        return level.getBlockEntity(pos) instanceof SpaceBlockEntity space ? space.parts().solidShape()
+                : Shapes.empty();
+    }
+
     @Override
     protected boolean propagatesSkylightDown(final BlockState state, final BlockGetter level, final BlockPos pos) {
         return true;
+    }
+
+    @Override
+    protected void entityInside(final BlockState state, final Level level, final BlockPos pos, final Entity entity) {
+        if (level.getBlockEntity(pos) instanceof SpaceBlockEntity space) {
+            SmallBlocks.entityInside(level, space.parts(), entity);
+        }
+    }
+
+    @Override
+    public void animateTick(final BlockState state, final Level level, final BlockPos pos,
+                            final RandomSource random) {
+        if (level.getBlockEntity(pos) instanceof SpaceBlockEntity space) {
+            SmallBlocks.animateTick(level, space.parts(), random);
+        }
     }
 
     @Override
@@ -222,15 +271,15 @@ public final class SpaceBlock extends Block implements EntityBlock {
                 || !(level.getBlockEntity(pos) instanceof SpaceBlockEntity space)) {
             return InteractionResult.PASS;
         }
-        final IFacePart device = space.parts().get(Direction.from3DDataValue(SpaceSlots.faceOf(aimed.slot())));
-        if (device == null) {
+        final Direction face = Direction.from3DDataValue(SpaceSlots.faceOf(aimed.slot()));
+        if (space.parts().type(face) == null && space.parts().small(face) == null) {
             return InteractionResult.PASS;
         }
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
-        return player instanceof ServerPlayer server && device.use(server) ? InteractionResult.CONSUME
-                : InteractionResult.PASS;
+        return level instanceof ServerLevel server && player instanceof ServerPlayer user
+                && use(server, space.parts(), face, user) ? InteractionResult.CONSUME : InteractionResult.PASS;
     }
 
     @Override
@@ -252,6 +301,12 @@ public final class SpaceBlock extends Block implements EntityBlock {
                 ? null : space.parts().microblock(aimed.slot());
         if (block != null) {
             return block.piece().material().defaultBlockState().getDestroyProgress(player, level, pos);
+        }
+        final BlockState small = aimed == null || !SpaceSlots.isFace(aimed.slot())
+                || !(level.getBlockEntity(pos) instanceof SpaceBlockEntity space) ? null
+                : space.parts().small(Direction.from3DDataValue(SpaceSlots.faceOf(aimed.slot())));
+        if (small != null) {
+            return small.getDestroyProgress(player, level, pos);
         }
         return player.getDestroySpeed(state) / DEVICE_HARDNESS / BY_HAND;
     }

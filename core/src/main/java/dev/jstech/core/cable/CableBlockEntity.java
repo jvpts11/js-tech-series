@@ -27,6 +27,7 @@ import dev.jstech.core.multipart.PartBox;
 import dev.jstech.core.multipart.PartStates;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.multipart.PlacedModel;
+import dev.jstech.core.multipart.SmallBlockLayout;
 import dev.jstech.core.multipart.SpaceParts;
 import dev.jstech.core.multipart.SpaceSlots;
 import dev.jstech.core.network.ConnectivityIndex;
@@ -91,6 +92,8 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     private boolean inGrids;
     private @Nullable BundleShape shape;
     private @Nullable VoxelShape voxels;
+    /* The shape without the small blocks, which have no collision, worked out with the shape. */
+    private @Nullable VoxelShape solid;
 
     private static final String LINKS = "Links";
     private static final String FLOWS = "Flows";
@@ -403,20 +406,28 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     /** The block's shape: its wires, its junction box and its parts. */
     public VoxelShape voxelShape() {
         if (this.voxels == null) {
-            VoxelShape made = Shapes.empty();
+            VoxelShape wires = Shapes.empty();
             for (final BundleShape.Piece piece : shape().pieces()) {
                 if (piece.kind() == BundleShape.Kind.JACKET || piece.kind() == BundleShape.Kind.HOUSING) {
-                    made = Shapes.or(made, voxel(piece.box()));
+                    wires = Shapes.or(wires, voxel(piece.box()));
                 }
             }
-            made = Shapes.or(made, this.parts.shape());
+            final VoxelShape made = Shapes.or(wires, this.parts.shape());
+            final VoxelShape held = Shapes.or(wires, this.parts.solidShape());
             /*
              * A block just placed on a player's game has no wires until the server's word about them arrives, a tick
              * later: until then it outlines a wire's core, as a block with no entity yet does, never a whole block.
              */
             this.voxels = made.isEmpty() ? CableBlock.CORE : made.optimize();
+            this.solid = held.isEmpty() ? CableBlock.CORE : held.optimize();
         }
         return this.voxels;
+    }
+
+    /** The block's shape without what has no collision, the small blocks on it. */
+    public VoxelShape collisionShape() {
+        voxelShape();
+        return this.solid == null ? CableBlock.CORE : this.solid;
     }
 
     /**
@@ -522,6 +533,7 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         return ModelData.builder()
                 .with(ModelLayout.PROPERTY, parts.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(parts))
                 .with(MicroblockLayout.PROPERTY, MicroblockLayout.of(this.parts.microblocks()))
+                .with(SmallBlockLayout.PROPERTY, SmallBlockLayout.of(this.parts))
                 .with(CablePlugs.PROPERTY, sockets.isEmpty() ? CablePlugs.NONE : new CablePlugs(sockets))
                 .with(CableDrawing.PROPERTY, drawing())
                 .with(CableFlowView.PROPERTY, windows ? new CableFlowView(shown) : CableFlowView.NONE)

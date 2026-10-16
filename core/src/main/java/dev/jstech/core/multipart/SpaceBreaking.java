@@ -15,6 +15,7 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
@@ -72,6 +73,12 @@ public final class SpaceBreaking {
         }
         if (!SpaceSlots.isFace(slot)) {
             return ItemStack.EMPTY;
+        }
+        final BlockState small = parts.removeSmall(Direction.from3DDataValue(SpaceSlots.faceOf(slot)));
+        if (small != null) {
+            final SoundType sound = small.getSoundType();
+            level.playSound(null, pos, sound.getBreakSound(), SoundSource.BLOCKS, sound.getVolume(), sound.getPitch());
+            return SmallBlocks.itemOf(small);
         }
         final IFacePart device = parts.remove(Direction.from3DDataValue(SpaceSlots.faceOf(slot)));
         if (device == null) {

@@ -35,10 +35,10 @@ public record MicroblockLayout(List<Drawn> drawn) {
         return this.drawn.isEmpty();
     }
 
-    /** The model data of a space: what its devices place and its microblocks. */
+    /** The model data of a space: what its devices place, its microblocks and its small blocks. */
     public static ModelData modelData(final SpaceParts parts) {
         return ModelData.builder().with(ModelLayout.PROPERTY, parts.layout()).with(PROPERTY, of(parts.microblocks()))
-                .build();
+                .with(SmallBlockLayout.PROPERTY, SmallBlockLayout.of(parts)).build();
     }
 
     /** How {@code blocks}, standing in one space, are drawn. */

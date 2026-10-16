@@ -19,11 +19,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -32,9 +36,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The parts of a block space, kept by its block entity as one of its fields: the devices mounted on its faces (a bus
- * on a cable, a sensor), one a face, and the microblocks standing in any of its places. A part fits only where it
- * shares no room with another, as {@link SpaceFit} says. They are saved whole; the players who see the space are sent
- * which kind of device sits on which face, as the registry numbers it, and every microblock, which is what they draw.
+ * on a cable, a sensor), one a face, the microblocks standing in any of its places, and the game's own small blocks
+ * hung on its faces ({@link SmallBlocks}). A part fits only where it shares no room with another, as {@link SpaceFit}
+ * says. They are saved whole; the players who see the space are sent which kind of device sits on which face, as the
+ * registry numbers it, every microblock and every small block, which is what they draw.
  *
  * <pre>{@code
  * private final SpaceParts parts = new SpaceParts(this);
@@ -48,9 +53,15 @@ public final class SpaceParts implements IFieldPart {
     /** Each face's kind of device, as the registry numbers it; on a player's game the only thing known of them. */
     private final int[] kinds = new int[FACES];
     private final Microblock[] micro = new Microblock[SpaceSlots.COUNT];
+    /* The game's own small block hung on each face, a torch or a lever ({@link SmallBlocks}), on either side. */
+    private final BlockState[] small = new BlockState[FACES];
+    /* When each pressed button or plate is looked at again, in game ticks; none for 0. On the server. */
+    private final long[] smallDue = new long[FACES];
     /* On a player's game, which faces' devices are at work, a bit a face; the server asks the devices themselves. */
     private int busy;
     private @Nullable VoxelShape shape;
+    /* The shape without what has no collision, the small blocks, worked out with the shape. */
+    private @Nullable VoxelShape solid;
 
     /** Where the parts are saved. */
     public static final String KEY = "Parts";
@@ -60,6 +71,9 @@ public final class SpaceParts implements IFieldPart {
     private static final String TYPE = "Type";
     private static final String DATA = "Data";
     private static final String MICRO = "Micro";
+    private static final String SMALL = "Small";
+    private static final String STATE = "State";
+    private static final String DUE = "Due";
     private static final String CLIENT_KINDS = "PartKinds";
     private static final String CLIENT_BUSY = "PartBusy";
     private static final double PIXEL = 1.0 / PartBox.SIDE;
@@ -78,10 +92,10 @@ public final class SpaceParts implements IFieldPart {
         return this.host.partPos();
     }
 
-    /** Whether anything stands on {@code face}: a device or a microblock. */
+    /** Whether anything stands on {@code face}: a device, a microblock or a small block. */
     public boolean has(final Direction face) {
         final int index = face.get3DDataValue();
-        return this.kinds[index] != NONE || this.micro[SpaceSlots.face(index)] != null;
+        return this.kinds[index] != NONE || this.micro[SpaceSlots.face(index)] != null || this.small[index] != null;
     }
 
     /** Whether any part stands in the space. */
@@ -89,9 +103,9 @@ public final class SpaceParts implements IFieldPart {
         return count() > 0;
     }
 
-    /** How many parts stand in the space: its devices and its microblocks. */
+    /** How many parts stand in the space: its devices, its microblocks and its small blocks. */
     public int count() {
-        int count = 0;
+        int count = smallBlocks().size();
         for (final int kind : this.kinds) {
             if (kind != NONE) {
                 count++;
@@ -130,6 +144,27 @@ public final class SpaceParts implements IFieldPart {
             }
         }
         return out;
+    }
+
+    /** The small block hung on {@code face}, on either side; null when there is none. */
+    public @Nullable BlockState small(final Direction face) {
+        return this.small[face.get3DDataValue()];
+    }
+
+    /** Every small block hung in the space. */
+    public List<BlockState> smallBlocks() {
+        final List<BlockState> out = new ArrayList<>();
+        for (final BlockState state : this.small) {
+            if (state != null) {
+                out.add(state);
+            }
+        }
+        return out;
+    }
+
+    /** When the small block on {@code face} is looked at again, in game ticks; 0 for never. On the server. */
+    public long smallDue(final Direction face) {
+        return this.smallDue[face.get3DDataValue()];
     }
 
     /**
@@ -228,6 +263,58 @@ public final class SpaceParts implements IFieldPart {
         return removed;
     }
 
+    /** Whether the small block in {@code state} fits on its face, beside the parts standing. */
+    public boolean fitsSmall(final BlockState state) {
+        return SmallBlocks.takes(state.getBlock()) && fits(SmallBlocks.pieceOf(state));
+    }
+
+    /**
+     * Hangs the small block in {@code state} on its face, when it fits there.
+     *
+     * @return whether it hangs there now
+     */
+    public boolean addSmall(final BlockState state) {
+        if (!fitsSmall(state)) {
+            return false;
+        }
+        final int index = SmallBlocks.faceOf(state).get3DDataValue();
+        this.small[index] = state;
+        this.smallDue[index] = 0L;
+        changed();
+        return true;
+    }
+
+    /**
+     * Sets the small block on {@code face} to {@code state}, a lever pulled or a plate pressed, and when it is looked
+     * at again; its block's neighbours hear of a change in what it gives.
+     */
+    public void setSmall(final Direction face, final BlockState state, final long due) {
+        final int index = face.get3DDataValue();
+        final BlockState was = this.small[index];
+        final boolean wasDue = this.smallDue[index] != 0L;
+        this.small[index] = state;
+        this.smallDue[index] = due;
+        if (state != was || wasDue != (due != 0L)) {
+            changed();
+        }
+        if (was == null || SmallBlocks.signalChanged(was, state)) {
+            this.host.partSignalChanged(face);
+        }
+    }
+
+    /** Takes the small block off {@code face} and gives it back; null when there was none. */
+    public @Nullable BlockState removeSmall(final Direction face) {
+        final int index = face.get3DDataValue();
+        final BlockState removed = this.small[index];
+        if (removed != null) {
+            this.small[index] = null;
+            this.smallDue[index] = 0L;
+            changed();
+            this.host.partSignalChanged(face);
+        }
+        return removed;
+    }
+
     // Working
 
     /** Runs every device's tick, on the server. */
@@ -237,24 +324,36 @@ public final class SpaceParts implements IFieldPart {
                 device.serverTick();
             }
         }
+        final ServerLevel level = this.host.partServerLevel();
+        if (level != null && anyDue()) {
+            SmallBlocks.tick(level, this);
+        }
     }
 
-    /** Whether any device needs its tick, on the server: a space whose devices need none is never ticked. */
+    /**
+     * Whether any part needs the space's tick, on the server: a device that ticks, or a pressed button or plate. A
+     * space whose parts need none is never ticked.
+     */
     public boolean ticks() {
         for (final IFacePart device : this.devices) {
             if (device != null && device.ticks()) {
                 return true;
             }
         }
-        return false;
+        return anyDue();
     }
 
-    /** The light the devices give, the brightest of them, 0 to 15; on the server. */
+    /** The light the parts give, the brightest of them, 0 to 15: a torch's, a device's; on the server. */
     public int light() {
         int light = 0;
         for (final IFacePart device : this.devices) {
             if (device != null) {
                 light = Math.max(light, strength(device.light()));
+            }
+        }
+        for (final BlockState state : this.small) {
+            if (state != null) {
+                light = Math.max(light, state.getLightEmission());
             }
         }
         return light;
@@ -280,10 +379,37 @@ public final class SpaceParts implements IFieldPart {
         return device == null ? 0 : strength(device.comparator());
     }
 
-    /** Whether redstone wire beside {@code face} joins the space: its device's kind deals in redstone; either side. */
+    /**
+     * The strength the small blocks give the block that asks from {@code direction}, the way the game names it: a
+     * lever, button or plate gives every side, and its own block more, as the game's own does.
+     */
+    public int smallSignal(final BlockGetter level, final BlockPos pos, final Direction direction,
+                           final boolean direct) {
+        int most = 0;
+        for (final BlockState state : this.small) {
+            if (state != null) {
+                most = Math.max(most, direct ? state.getDirectSignal(level, pos, direction)
+                        : state.getSignal(level, pos, direction));
+            }
+        }
+        return most;
+    }
+
+    /**
+     * Whether redstone wire beside {@code face} joins the space: its device's kind deals in redstone, or a lever, a
+     * button or a plate hangs in the space, which wire joins from every side as it does the game's own; either side.
+     */
     public boolean joinsRedstone(final Direction face) {
         final PartType<?> type = type(face);
-        return type != null && type.joinsRedstone();
+        if (type != null && type.joinsRedstone()) {
+            return true;
+        }
+        for (final BlockState state : this.small) {
+            if (state != null && state.isSignalSource()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Tells the device on {@code face} that the block there, or the redstone reaching it, changed. */
@@ -314,6 +440,11 @@ public final class SpaceParts implements IFieldPart {
         for (final Microblock block : this.micro) {
             if (block != null) {
                 out.add(CoreSpaces.stack(block.piece()));
+            }
+        }
+        for (final BlockState state : this.small) {
+            if (state != null) {
+                out.add(SmallBlocks.itemOf(state));
             }
         }
         return out;
@@ -354,19 +485,31 @@ public final class SpaceParts implements IFieldPart {
     public VoxelShape shape() {
         if (this.shape == null) {
             VoxelShape made = Shapes.empty();
+            VoxelShape held = Shapes.empty();
             for (final SpaceFit.Piece piece : pieces()) {
-                made = Shapes.or(made, voxels(piece.boxes()));
+                final VoxelShape outline = outlineOf(piece);
+                made = Shapes.or(made, outline);
+                if (!isSmall(piece)) {
+                    held = Shapes.or(held, outline);
+                }
             }
             this.shape = made.optimize();
+            this.solid = held.optimize();
         }
         return this.shape;
+    }
+
+    /** The shape of what in the space has collision: every part but the small blocks, which have none. */
+    public VoxelShape solidShape() {
+        shape();
+        return this.solid == null ? Shapes.empty() : this.solid;
     }
 
     /** The shape of the part in {@code slot}, within the block; empty for none. */
     public VoxelShape shape(final int slot) {
         for (final SpaceFit.Piece piece : pieces()) {
             if (piece.slot() == slot) {
-                return voxels(piece.boxes());
+                return outlineOf(piece);
             }
         }
         return Shapes.empty();
@@ -376,7 +519,7 @@ public final class SpaceParts implements IFieldPart {
     public @Nullable Hit aim(final BlockPos pos, final Vec3 start, final Vec3 end) {
         Hit best = null;
         for (final SpaceFit.Piece piece : pieces()) {
-            final VoxelShape outline = voxels(piece.boxes());
+            final VoxelShape outline = outlineOf(piece);
             final BlockHitResult hit = outline.clip(start, end, pos);
             if (hit != null) {
                 final double distance = start.distanceToSqr(hit.getLocation());
@@ -400,6 +543,11 @@ public final class SpaceParts implements IFieldPart {
         for (final Microblock block : this.micro) {
             if (block != null) {
                 out.add(block.fitPiece());
+            }
+        }
+        for (final BlockState state : this.small) {
+            if (state != null) {
+                out.add(SmallBlocks.pieceOf(state));
             }
         }
         return out;
@@ -428,6 +576,7 @@ public final class SpaceParts implements IFieldPart {
             tag.put(KEY, list);
         }
         writeMicro(tag);
+        writeSmall(tag, true);
     }
 
     @Override
@@ -452,6 +601,7 @@ public final class SpaceParts implements IFieldPart {
             this.kinds[index] = CoreParts.REGISTRY.getId(type);
         }
         readMicro(tag);
+        readSmall(tag, registries);
         this.shape = null;
     }
 
@@ -460,6 +610,7 @@ public final class SpaceParts implements IFieldPart {
         tag.putIntArray(CLIENT_KINDS, this.kinds.clone());
         tag.putByte(CLIENT_BUSY, (byte) busyFaces());
         writeMicro(tag);
+        writeSmall(tag, false);
     }
 
     @Override
@@ -473,6 +624,7 @@ public final class SpaceParts implements IFieldPart {
         }
         this.busy = tag.getByte(CLIENT_BUSY) & 0xFF;
         readMicro(tag);
+        readSmall(tag, registries);
         this.shape = null;
         MovingParts.note(this.host.partPos(), anyMoving());
     }
@@ -480,6 +632,64 @@ public final class SpaceParts implements IFieldPart {
     /* A strength of redstone or light, kept within the game's range whatever a part says. */
     private static int strength(final int said) {
         return Math.clamp(said, 0, MAX_STRENGTH);
+    }
+
+    /* Whether a pressed button or plate waits to be looked at again. */
+    private boolean anyDue() {
+        for (final long due : this.smallDue) {
+            if (due != 0L) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* Whether {@code piece} is a small block's, in its face's place. */
+    private boolean isSmall(final SpaceFit.Piece piece) {
+        return SpaceSlots.isFace(piece.slot()) && this.small[SpaceSlots.faceOf(piece.slot())] != null;
+    }
+
+    /* What a piece is outlined, hit and shaped by: a small block's own shape, else its boxes. */
+    private VoxelShape outlineOf(final SpaceFit.Piece piece) {
+        return isSmall(piece) ? SmallBlocks.shapeOf(this.small[SpaceSlots.faceOf(piece.slot())])
+                : voxels(piece.boxes());
+    }
+
+    /* Each small block by its face and state; in a save, also when it is looked at again. */
+    private void writeSmall(final CompoundTag tag, final boolean saved) {
+        final ListTag list = new ListTag();
+        for (int i = 0; i < FACES; i++) {
+            if (this.small[i] == null) {
+                continue;
+            }
+            final CompoundTag entry = new CompoundTag();
+            entry.putByte(FACE, (byte) i);
+            entry.put(STATE, NbtUtils.writeBlockState(this.small[i]));
+            if (saved && this.smallDue[i] != 0L) {
+                entry.putLong(DUE, this.smallDue[i]);
+            }
+            list.add(entry);
+        }
+        if (!list.isEmpty()) {
+            tag.put(SMALL, list);
+        }
+    }
+
+    /* A small block of a block that is gone, or no longer one a space takes, is not kept. */
+    private void readSmall(final CompoundTag tag, final HolderLookup.Provider registries) {
+        Arrays.fill(this.small, null);
+        Arrays.fill(this.smallDue, 0L);
+        for (final Tag element : tag.getList(SMALL, Tag.TAG_COMPOUND)) {
+            final CompoundTag entry = (CompoundTag) element;
+            final int index = entry.getByte(FACE) & 0xFF;
+            final BlockState state = NbtUtils.readBlockState(registries.lookupOrThrow(Registries.BLOCK),
+                    entry.getCompound(STATE));
+            if (index < FACES && SmallBlocks.takes(state.getBlock())
+                    && SmallBlocks.faceOf(state).get3DDataValue() == index) {
+                this.small[index] = state;
+                this.smallDue[index] = entry.getLong(DUE);
+            }
+        }
     }
 
     /* The parts changed: the shape follows them, the block is saved and sent, and what it offers is asked again. */

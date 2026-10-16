@@ -9,6 +9,7 @@ package dev.jstech.core.client.model;
 
 import com.mojang.math.Transformation;
 import dev.jstech.core.multipart.MicroblockLayout;
+import dev.jstech.core.multipart.SmallBlockLayout;
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PlacedModel;
 import java.util.ArrayList;
@@ -64,9 +65,10 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
         final List<BakedQuad> own = super.getQuads(state, side, random, data, renderType);
         final ModelLayout layout = data.get(ModelLayout.PROPERTY);
         final MicroblockLayout micro = data.get(MicroblockLayout.PROPERTY);
+        final SmallBlockLayout small = data.get(SmallBlockLayout.PROPERTY);
         final boolean placesModels = layout != null && !layout.isEmpty() && side == null
                 && (renderType == null || renderType == RenderType.cutout());
-        if (!placesModels && (micro == null || micro.isEmpty())) {
+        if (!placesModels && (micro == null || micro.isEmpty()) && (small == null || small.isEmpty())) {
             return own;
         }
         final List<BakedQuad> out = new ArrayList<>(own);
@@ -80,6 +82,15 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
             for (final MicroblockLayout.Drawn drawn : micro.drawn()) {
                 if (renderType == null || MicroblockQuads.renderTypes(drawn.block()).contains(renderType)) {
                     out.addAll(MicroblockQuads.quads(drawn, side, IN_PLACE));
+                }
+            }
+        }
+        // The game's small blocks wear the game's own models of their states, which already stand where they hang.
+        if (small != null) {
+            for (final BlockState hung : small.states()) {
+                final BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(hung);
+                if (renderType == null || model.getRenderTypes(hung, random, ModelData.EMPTY).contains(renderType)) {
+                    out.addAll(model.getQuads(hung, side, random, ModelData.EMPTY, renderType));
                 }
             }
         }
@@ -98,6 +109,13 @@ public final class MultipartBakedModel extends BakedModelWrapper<BakedModel> {
         if (micro != null) {
             for (final MicroblockLayout.Drawn drawn : micro.drawn()) {
                 types = ChunkRenderTypeSet.union(types, MicroblockQuads.renderTypes(drawn.block()));
+            }
+        }
+        final SmallBlockLayout small = data.get(SmallBlockLayout.PROPERTY);
+        if (small != null) {
+            for (final BlockState hung : small.states()) {
+                types = ChunkRenderTypeSet.union(types, Minecraft.getInstance().getBlockRenderer().getBlockModel(hung)
+                        .getRenderTypes(hung, random, ModelData.EMPTY));
             }
         }
         return types;

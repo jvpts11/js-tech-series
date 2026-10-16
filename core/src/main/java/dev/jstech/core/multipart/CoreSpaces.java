@@ -77,6 +77,7 @@ public final class CoreSpaces {
         modBus.addListener(RegisterCapabilitiesEvent.class,
                 event -> PartCapabilities.register(event, BLOCK_ENTITY.get(), SpaceBlockEntity::parts));
         SpaceBreaking.listen();
+        SmallBlocks.listen();
     }
 
     /** A microblock's item of {@code piece}. */

@@ -7,8 +7,8 @@
  */
 package dev.jstech.core.cable;
 
-import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.SpaceBreaking;
+import dev.jstech.core.multipart.SpaceSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -51,13 +51,11 @@ public final class CableBreaking {
                 return;
             }
         } else if (aim.part() != null) {
-            final IFacePart part = cable.removePart(aim.part());
-            if (part == null) {
+            // A device or a small block on the face, taken out as in a space of parts alone.
+            back = SpaceBreaking.takeOut(level, cable.parts(), SpaceSlots.face(aim.part().get3DDataValue()));
+            if (back.isEmpty()) {
                 return;
             }
-            part.dropContents(level);
-            back = part.partItem();
-            level.playSound(null, pos, SoundType.WOOL.getBreakSound(), SoundSource.BLOCKS, 1.0F, 0.9F);
         } else {
             if (!cable.take(aim.wire().type())) {
                 return;

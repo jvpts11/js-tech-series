@@ -19,25 +19,31 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The redstone a block holding parts gives and takes, face by face, for the cable block and the space of parts alone
- * alike: each face gives what the device on it gives, wire beside a face joins it when its device's kind deals in
- * redstone, and a comparator reads the device on the face it stands against. The game names a side by the way from
- * the block asking to this one, so a part's face is the opposite of the side asked about.
+ * alike: each face gives what the device on it gives, and a lever, a button or a plate in the space gives as the
+ * game's own does; wire beside a face joins it when its device's kind deals in redstone, or every face when the space
+ * holds one of the game's signal blocks; and a comparator reads the device on the face it stands against. The game
+ * names a side by the way from the block asking to this one, so a part's face is the opposite of the side asked about.
  */
 public final class PartRedstone {
 
     private PartRedstone() {
     }
 
-    /** The strength the block at {@code pos} gives the block it is asked by, from {@code direction}. */
+    /**
+     * The strength the block at {@code pos} gives the block it is asked by, from {@code direction}: the device on that
+     * face, or a lever, button or plate in the space.
+     */
     public static int signal(final BlockGetter level, final BlockPos pos, final Direction direction) {
         final SpaceParts parts = partsAt(level, pos);
-        return parts == null ? 0 : parts.signal(direction.getOpposite());
+        return parts == null ? 0 : Math.max(parts.signal(direction.getOpposite()),
+                parts.smallSignal(level, pos, direction, false));
     }
 
     /** The strength it gives into the block it is asked by, which that block then gives its own neighbours. */
     public static int directSignal(final BlockGetter level, final BlockPos pos, final Direction direction) {
         final SpaceParts parts = partsAt(level, pos);
-        return parts == null ? 0 : parts.directSignal(direction.getOpposite());
+        return parts == null ? 0 : Math.max(parts.directSignal(direction.getOpposite()),
+                parts.smallSignal(level, pos, direction, true));
     }
 
     /** Whether wire coming from {@code direction} joins the block at {@code pos}. */

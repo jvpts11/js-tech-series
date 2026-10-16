@@ -435,6 +435,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   reading, give light, hear the redstone reaching it, open a menu that closes when the part is taken off, and take a
   room of its own shape. A cable or a space of parts is ticked only while one of its parts needs it, so a world of
   plain cables costs nothing each tick, and redstone wire joins a cable only on a face whose part deals in redstone.
+- The game's torches, levers, buttons and pressure plates share a block space: used on the face of the block
+  beside a cable or a space of parts, the item hangs its block in the space, beside the wires and the other pieces,
+  where it lights, powers, is pulled, pressed and falls with its wall as the game's own does.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
