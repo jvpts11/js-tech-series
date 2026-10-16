@@ -462,6 +462,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   diverters that turn aside what their filter names, learning it from a click with the item. A machine on top of a
   belt works the items that pass under it, holding each still while it works. A broken piece lets fall what was on it,
   and a mod declares its own pieces on the same kit.
+- (Core) Machines of any mod on the data network: a block entity says what the network may do with it, the kinds of
+  Operation it carries out and what the network may read of it, and the Core keeps it on the network of the data
+  cable it touches, with no tie to J's Computers; a member that could never be what it says stops as it is made. Its
+  state is read as tables a mod declares, a row for each machine and a column for each value, numbers in their units,
+  text and flags, so whatever runs the network reads a reactor the way it reads anything else.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

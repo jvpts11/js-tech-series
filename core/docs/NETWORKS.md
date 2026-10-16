@@ -72,6 +72,87 @@ newer one. The block implements `IFaceConnector` and answers these ports; the ca
 question, so they never disagree about a face. A block that implements `INetworkBridge` joins the runs it touches
 into one, as a router does.
 
+### Machines of any mod on the network
+
+*Added 2026-10-16.*
+
+A machine of any mod becomes a member of the network it touches through the Core, with no tie to J's Computers' own
+classes: its block entity implements `INetworkMember` and keeps itself on the network from its constructor. It says
+what the network may do with it, the kinds of Operation it carries out, and what the network may read of it:
+
+```java
+public class AcceleratorBlockEntity extends SyncedBlockEntity implements INetworkMember {
+
+    private final NetworkMembership membership = NetworkMembers.keep(this);
+
+    @Override
+    public NetworkCategory category() {
+        return NetworkCategory.C;                   // read, and given work
+    }
+
+    @Override
+    public List<OperationType<?>> carriesOut() {
+        return List.of(MyOperations.ACCELERATE);    // registered from CoreRegisterEvent, open to C
+    }
+}
+```
+
+From then on the machine is on the network of a data cable touching it, through a face that takes the cable when it
+is an `IFaceConnector`: worked out as it loads, as the blocks beside it change, and once a second besides, as networks
+form and part around it; off it once it is broken or unloaded. `membership.node()` is its identity on the network,
+kept with it in the world, and `membership.network()` the network it is on now.
+
+The network gives a machine more; it never makes it work: a member works through its own screens with no network at
+all, and a world without J's Computers simply has no network for it to join.
+
+What a member declares is checked as it is made, so one that could never be what it says stops at once, saying why:
+a block that only carries the network (category A) is no member; a member only read (B) carries out no kinds of
+Operation; and each kind it carries out must be registered and open to its category.
+
+Whatever runs the network reads its members through `NetworkSystem`: `membersOf(network)`, `memberAt(pos)`, and
+`membersCarryingOut(network, kind)`, the machines that can be given a kind of Operation.
+
+### State as tables
+
+*Added 2026-10-16.*
+
+A mod declares the state of its machines as **tables**: a row for each machine on a network, a column for each value
+it shows. Declare each table once, while the game loads, and keep it in a constant:
+
+```java
+public static final StateTable REACTORS = StateTables.declare(StateTable.builder(
+                ResourceLocation.fromNamespaceAndPath("mymod", "reactors"), MyTexts.REACTORS)
+        .number("temperature", MyTexts.TEMPERATURE, "°C")   // a number, in its unit
+        .number("power", MyTexts.POWER, "W")
+        .flag("running", MyTexts.RUNNING)                   // a yes or a no
+        .text("name", MyTexts.NAME)                         // a piece of text
+        .build());
+```
+
+A member says which tables it has a row in, and writes its row when asked, as it is at that moment:
+
+```java
+@Override
+public List<StateTable> tables() {
+    return List.of(MyTables.REACTORS);
+}
+
+@Override
+public void fill(StateTable table, StateRow.Writer row) {
+    row.set("temperature", temperature).set("power", power).set("running", running).set("name", name);
+}
+```
+
+`NetworkTables.rows(level, network, table)` reads a table across a network, and `NetworkTables.tablesOf(level,
+network)` lists the tables a network has rows in. A row says whose it is (`member()`, `pos()`) and gives each value
+by its column's name (`number`, `text`, `flag`), or nothing where the machine had nothing to say. J's Computers'
+SELECT reads them this way, so a player asks the network about a reactor or a satellite the same way as about
+storage, and no mod depends on another to be read.
+
+A column is named in lower case; its name is kept in saved queries, so it never changes once released. A row refuses
+a value its column does not hold, and a column the table has not. After the game has loaded, the list of tables is
+closed: a table declared later stops the game, and so does a name declared twice.
+
 ## Peripheral links
 
 *Added 2026-05-05.*
@@ -116,3 +197,8 @@ Standard and 20 in the Advanced. A device placed right against its owner needs n
   repeater on the way.
 - **A device will not link.** Read the reason: its owner is out of ports of that kind (a monitor needs a video
   output), the cable is too long, or it already has another owner.
+- **A machine is not on the network.** No data cable of a network touches it, the face the cable touches takes no
+  such cable, or the run between it and the Mainframe is too long. A machine joins within a second of a network
+  reaching it.
+- **The game stops as a machine is placed, saying it "is no member" or "is only read".** Its `category()` and
+  `carriesOut()` disagree: answer C for a machine given work, and carry out kinds of Operation open to C.

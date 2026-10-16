@@ -11,9 +11,12 @@ import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
@@ -44,14 +47,44 @@ public final class NetworkSystem {
 
     private final NodeRegistry<Long, ServerRouterElement> routers = new NodeRegistry<>();
 
+    /* The machines of any mod on a network through the Core, by network, and each by where it stands. */
+    private final NodeRegistry<NodeUuid, MemberNode> members = new NodeRegistry<>();
+
+    private final Map<Long, MemberNode> memberByPos = new HashMap<>();
+
+    /* Every member block loaded in the level, by where it stands, whether or not it is on a network now. */
+    private final Map<Long, NetworkMembership> keptMembers = new LinkedHashMap<>();
+
     /*
      * Every per-network / per-node registry, collected so clear() resets them all together and a newly
      * added one can never be left out again (crafting and supercomputer nodes once were).
      */
     private final List<Map<?, ?>> registries = List.of(
-            mainframesByNetwork, mainframePosByNetwork, serverLocations);
+            mainframesByNetwork, mainframePosByNetwork, serverLocations, memberByPos, keptMembers);
     private final List<NodeRegistry<?, ?>> nodeRegistries = List.of(
-            subframes, servers, personalComputers, craftingComputers, supercomputers, routers);
+            subframes, servers, personalComputers, craftingComputers, supercomputers, routers, members);
+
+    /**
+     * A machine of any mod on a network through the Core ({@link INetworkMember}): who it is, which network it is
+     * on, where it stands, what the network may do with it, the ids of the kinds of Operation it carries out, and
+     * the state tables it has a row in.
+     */
+    public record MemberNode(NodeUuid nodeUuid, NetworkUuid networkUuid, long pos, NetworkCategory category,
+                             List<String> operations, List<ResourceLocation> tables) {
+
+        public MemberNode {
+            Objects.requireNonNull(nodeUuid, "nodeUuid");
+            Objects.requireNonNull(networkUuid, "networkUuid");
+            Objects.requireNonNull(category, "category");
+            operations = List.copyOf(operations);
+            tables = List.copyOf(tables);
+        }
+
+        /** Whether it carries out the kind of Operation {@code id}. */
+        public boolean carriesOut(final String id) {
+            return this.operations.contains(id);
+        }
+    }
 
     /**
      * A Personal Computer attached to a network: a Category-C node that issues, but never orchestrates, Operations.
@@ -245,6 +278,52 @@ public final class NetworkSystem {
 
     public List<ServerRouterElement> routersOf(final NetworkUuid networkUuid) {
         return routers.of(networkUuid);
+    }
+
+    // Machines of any mod on the network, through the Core
+
+    /** Puts {@code member} on its network, off any other it was on; the same member again changes nothing. */
+    public void registerMember(final MemberNode member) {
+        Objects.requireNonNull(member, "member must not be null");
+        final MemberNode before = memberByPos.put(member.pos(), member);
+        if (before != null && !before.networkUuid().equals(member.networkUuid())) {
+            members.unregister(before.networkUuid(), before.nodeUuid());
+        }
+        members.register(member.networkUuid(), member.nodeUuid(), member);
+    }
+
+    /** Takes the member standing at {@code pos} off its network, if one is on one. */
+    public void unregisterMemberAt(final long pos) {
+        final MemberNode before = memberByPos.remove(pos);
+        if (before != null) {
+            members.unregister(before.networkUuid(), before.nodeUuid());
+        }
+    }
+
+    /** The member on a network standing at {@code pos}, if there is one. */
+    public Optional<MemberNode> memberAt(final long pos) {
+        return Optional.ofNullable(memberByPos.get(pos));
+    }
+
+    /** The machines of any mod on the network, in the order they joined. */
+    public List<MemberNode> membersOf(final NetworkUuid networkUuid) {
+        return members.of(networkUuid);
+    }
+
+    /** The machines on the network that carry out the kind of Operation {@code id}, in the order they joined. */
+    public List<MemberNode> membersCarryingOut(final NetworkUuid networkUuid, final String id) {
+        final List<MemberNode> out = new ArrayList<>();
+        for (final MemberNode member : members.of(networkUuid)) {
+            if (member.carriesOut(id)) {
+                out.add(member);
+            }
+        }
+        return out;
+    }
+
+    /** Every member block loaded in the level, by where it stands, kept by {@link NetworkMembers}. */
+    Map<Long, NetworkMembership> keptMembers() {
+        return keptMembers;
     }
 
     public void clear() {

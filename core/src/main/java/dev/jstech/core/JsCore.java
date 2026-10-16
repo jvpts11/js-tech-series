@@ -54,6 +54,8 @@ import dev.jstech.core.mechanical.MechanicalPorts;
 import dev.jstech.core.mechanical.ShaftLinkItem;
 import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.multipart.CoreSpaces;
+import dev.jstech.core.network.NetworkMembers;
+import dev.jstech.core.network.StateTables;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
 import dev.jstech.core.robot.CoreRobotTasks;
@@ -324,6 +326,7 @@ public final class JsCore {
         BlockConductivity.listen(modEventBus);
         MechanicalPorts.listen(modEventBus);
         Conveyors.listen(modEventBus);
+        NetworkMembers.listen();
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);
@@ -374,6 +377,7 @@ public final class JsCore {
         modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(() -> {
             LANGUAGES.freeze();
             OPERATIONS.freeze();
+            StateTables.freeze();
         }));
     }
 }
