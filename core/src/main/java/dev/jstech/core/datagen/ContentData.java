@@ -9,6 +9,7 @@ package dev.jstech.core.datagen;
 
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.worldgen.WorldGen;
+import dev.jstech.core.worldgen.biome.WorldBiomes;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -78,6 +79,9 @@ public final class ContentData {
         data.server(new MultiblockPatternProvider(output, content.modid()));
         if (WorldGen.declares(content.modid())) {
             data.server(new WorldGenProvider(output, data.lookup(), content.modid()));
+        }
+        if (!WorldBiomes.biomesOf(content.modid()).isEmpty()) {
+            data.server(new BiomeClimateProvider(output, data.lookup(), content.modid()));
         }
         return data;
     }

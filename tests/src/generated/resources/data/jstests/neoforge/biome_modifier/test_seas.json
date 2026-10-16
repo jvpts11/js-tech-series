@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jstests:test_land",
+  "features": "jstests:test_seas",
+  "step": "top_layer_modification"
+}

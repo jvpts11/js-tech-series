@@ -1,8 +1,10 @@
 # The world
 
 What J's Core gives a mod about the world itself: ores and structures that generate in it, dimensions of your
-own with rules for gravity, air, heat and weather, dimensions made while the game runs, data kept over areas of
-the world, and chunks kept loaded for their owners.
+own with rules for gravity, air, heat and weather, their terrain and biomes with climates in real values, the
+shapes of the land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers, seas that
+freeze or boil away, dimensions made while the game runs, data kept over areas of the world, and chunks kept loaded
+for their owners.
 
 ## The words
 
@@ -10,6 +12,9 @@ the world, and chunks kept loaded for their owners.
   rest; a machine in an unloaded chunk stops.
 - A **dimension** is a world of its own, like the Nether: its own terrain, sky and rules.
 - **World generation** is the game making new terrain as players explore; it reads what to place from data files.
+- A **biome** is a kind of place: a desert, a forest. It says the place's climate, its colours and what grows and
+  lives in it.
+- A **feature** is something world generation places once the ground is made: a tree, a vein of ore, a lake.
 
 ## Ores and structures
 
@@ -57,10 +62,155 @@ public static final WorldGen.DimensionSpec MOON = WorldGen.dimension(rl("moon"))
         .declare();
 ```
 
-A flat dimension is made of the layers, bottom first; `noise(...)` gives it terrain from a noise setting instead.
-`noSkylight`, `ceiling`, `ultraWarm` (water evaporates, as in the Nether), `effects` (how the sky looks) and
-`unnatural` (compasses spin, beds explode) say the rest. The data generation writes its dimension type and its
-dimension.
+A flat dimension is made of the layers, bottom first; `terrain(...)` gives it ground of hills and seas declared in
+code (below), and `noise(...)` ground from a noise setting of its own. `noSkylight`, `ceiling`, `ultraWarm` (water
+evaporates, as in the Nether), `effects` (how the sky looks) and `unnatural` (compasses spin, beds explode) say the
+rest. The data generation writes its dimension type and its dimension.
+
+### Terrain
+
+*Added 2026-10-16.*
+
+A terrain is the ground of a dimension, declared in code:
+
+```java
+public static final Terrains.TerrainSpec SALT_PLAINS = Terrains.terrain(rl("salt_plains"))
+        .heights(-64, 256)       // lowest y, and how many blocks tall
+        .ground(72)              // the land lies at this height on the whole
+        .hills(18, 320)          // hills rise and valleys fall up to 18 blocks, each about 320 blocks wide
+        .rough(0.1)              // a little overhang and arch; 0, the default, for none
+        .sea(63)                 // the liquid fills the low ground up to here
+        .stone(() -> Blocks.STONE).liquid(() -> Blocks.WATER)
+        .bedrock(5)              // blocks of bedrock at the bottom, fading upwards
+        .surface(() -> Blocks.SAND, () -> Blocks.SANDSTONE, 4)                    // top, under it, how deep
+        .surface(SALT_STEPPE.key(), () -> Blocks.CALCITE, () -> Blocks.DRIPSTONE_BLOCK, 3)  // a biome's own
+        .declare();
+```
+
+The data generation writes its noise settings and the noises they sample, under `data/<namespace>/worldgen/`. A
+surface's top lies where the ground meets the air; under a liquid the floor is the block under it.
+
+### Biomes and their climates
+
+*Added 2026-10-16.*
+
+```java
+public static final WorldBiomes.BiomeSpec SALT_STEPPE = WorldBiomes.biome(rl("salt_steppe"))
+        .name("Salt Steppe")
+        .climate(9.5, 240)       // a mean of 9.5 °C over the year, 240 mm of rain a year
+        .seasons(16)             // summer and winter 16 °C either side; left out, the climate decides
+        .sky(0x9DB8D9).fog(0xD8D2C4).water(0x5E9FA8, 0x050533).grass(0xB8B07A)
+        .feature(GenerationStep.Decoration.VEGETAL_DECORATION, VegetationPlacements.PATCH_GRASS_PLAIN)
+        .spawn(MobCategory.CREATURE, () -> EntityType.GOAT, 8, 2, 4)
+        .declare();
+
+public static final WorldGen.DimensionSpec STEPPES = WorldGen.dimension(rl("steppes"))
+        .terrain(SALT_PLAINS)
+        .biome(SALT_STEPPE.key(), 0.5F, 0F)      // where the terrain is warm
+        .biome(FROST_FLATS.key(), -0.5F, 0F)     // and where it is cold
+        .declare();
+```
+
+A dimension with a terrain spreads its biomes by two noises of the terrain's, its warmth and its wetness, each from
+-1 to 1: every place takes the biome whose numbers are nearest its own. The data generation writes each biome, its
+English name, and its climate to the data map `data/jscore/data_maps/worldgen/biome/climate.json`, which a data
+pack can change or add to, for any biome of any mod:
+
+```json
+{ "values": { "mymod:salt_steppe": { "temperature": 9.5, "seasons": 16, "rain": 240 } } }
+```
+
+`BiomeClimates.of(biome)` reads a biome's climate: its own, or one worked out from the game's values for it
+(plains are a mild 14 °C with 800 mm of rain). `BiomeClimates.celsius(level, pos)` is how warm a place is now: the
+climate's mean, swung by the seasons of the world's calendar (warmest in the middle of summer), and cooler the
+higher above the sea, about 6.5 °C a kilometre. Where a biome has a climate of its own, [heat](HEAT.md) meets that
+air; every other biome keeps its dimension's, as it always did. The Overworld's own biomes are left as the game
+makes them.
+
+## Shapes of the land
+
+*Added 2026-10-16.*
+
+### Landforms
+
+A landform is a shape the land takes, declared in code and laid by the Core's feature `jscore:landform`:
+
+```java
+public static final Landforms.LandformSpec CRATERS = Landforms.landform(rl("craters"), LandformKind.CRATER)
+        .cell(192)               // at most one in each square 192 blocks across
+        .chance(0.6)             // in six squares of ten
+        .radius(8, 40)           // each 8 to 40 blocks in radius
+        .height(0.3)             // as deep as 0.3 of its radius
+        .surface(() -> Blocks.GRAVEL)          // its floor
+        .scatter(() -> Blocks.COBBLESTONE)     // its ejecta
+        .biomes(MY_MOON_BIOMES)                // the biomes it is drawn in
+        .declare();
+```
+
+| Kind | What it is | `surface` | `fill` | `special` | `scatter` |
+| --- | --- | --- | --- | --- | --- |
+| `crater` | A bowl, a raised rim, a blanket of ejecta with rays and boulders; a central peak in a large one. | floor | rim | | ejecta |
+| `shield_volcano` | A broad, gentle cone. | slopes | body | summit's lava | |
+| `stratovolcano` | A steep cone. | slopes | body | summit's lava | |
+| `mesa` | A flat top over cliffs, its body in bands (`bands(...)`). | top | body | | |
+| `dunes` | Ridges, gentle on the windward side and steep on the lee. | top | body | | |
+| `canyon` | A long winding cut with steep walls. | floor | | in its bottom | |
+| `river` | A shallow winding channel of any liquid. | bed | | liquid | what it freezes to |
+| `lake` | A bowl of any liquid. | bed | bank | liquid | what it freezes to |
+| `lava_tube` | A tunnel under the ground, open to the sky here and there. | | | its floor | |
+| `ice_sheet` | A sheet of ice over the land. | snow on top | | ice | |
+| `geyser` | A mound round a vent down to water over magma, which bubbles. | mound's top | mound | water | magma |
+| `sinkhole` | A shaft down into the ground. | floor | | in its bottom | |
+| `salt_flat` | The land made level, cracked in a net. | | | salt | cracks |
+
+`height` is a share of the radius: a crater's depth, a mesa's height, a lava tube's bore, a river's depth, a
+geyser's vent. A river's or a canyon's radius is half its length. A lake's or a river's liquid freezes where it is
+colder than `liquidRange(freezes, boils)` says, in kelvin, and boils away where it is hotter; water's 273.15 and
+373.15 are the default, and a lake of lava, of brine or of liquid methane says its own.
+
+Where they lie is worked out from the world's seed alone: the world is cut into squares a `cell` across, each
+holding at most one, at a place, size and turn of its own. So any chunk finds every landform that reaches it
+without asking another, and a landform of any size is laid a chunk at a time, on any thread, the same every time
+for the same seed. Each kind is laid in the chunks of its biomes; `middle(tag)` lays only those whose middle lies in
+the tag's biomes, drawn whole into every biome of `biomes(...)` they reach, so one at a biome's edge is not cut
+off there.
+
+`LandformPainter.paint(level, config, instance, base, heightmap, x0, z0, x1, z1)` lays one where code wants it, a
+command or a test.
+
+### Rock in layers
+
+```java
+public static final Landforms.StrataSpec MOON_ROCK = Landforms.strata(rl("moon_rock"))
+        .sequence(Landforms.layer(() -> Blocks.TUFF, 10), Landforms.layer(() -> Blocks.CALCITE, 6))
+        .sequence(Landforms.layer(() -> Blocks.BASALT, 14))
+        .region(384)             // regions about 384 blocks wide, each holding one of the sequences
+        .wobble(4)               // the layers' boundaries rise and fall 4 blocks across the land
+        .replaces(BlockTags.BASE_STONE_OVERWORLD)
+        .biomes(MY_MOON_BIOMES)
+        .declare();
+```
+
+Each column takes its region's sequence and, from the top of the ground down, puts each layer's rock in place of
+the rock it replaces; below the last layer the rock is left as it was. Regions meet along wavy borders. It is laid
+after the landforms, through what they raised, and before the ores, which then lie in the layers.
+
+### Seas
+
+```java
+public static final Landforms.SeaSpec SEAS = Landforms.sea(rl("seas"))
+        .liquid(() -> Blocks.WATER).frozen(() -> Blocks.PACKED_ICE)
+        .range(271.35, 373.15)   // sea water freezes a little under fresh water's 273.15 K
+        .biomes(MY_MOON_BIOMES)
+        .declare();
+```
+
+The terrain fills its low ground with its liquid up to its sea; where it is colder than the liquid freezes, the
+sea's top freezes, and where it is hotter than it boils, the sea is gone down to its floor. It is the last thing
+laid.
+
+The data generation writes each landform, rock in layers and sea as a configured feature, a placed feature and a
+NeoForge biome modifier under the same name, so a data pack can change or remove any of them.
 
 ### Runtime-only dimensions
 
@@ -173,3 +323,10 @@ ChunkLoaders.releaseAll(level, machinePos);
 - **A machine stops when you walk away.** It did not ask for its chunk, or its owner has reached the limit.
 - **Players in a dimension take damage.** Its rules say the air cannot be breathed, or it is too hot or cold. A
   mod's suit must cancel `DimensionHazardEvent` to protect them.
+- **A landform never generates.** Its biomes hold none of the biomes where you are looking, its `cell` is very
+  large or its `chance` small, or the data generation has not run since it was declared.
+- **A landform stops at a biome's edge.** The biome beyond is not one of its `biomes`. Add it there too, and keep
+  where its middle may lie with `middle(...)`.
+- **A lake is dry, or frozen solid on top.** The place is hotter than its liquid boils, or colder than it freezes:
+  check the biome's climate and the lake's `liquidRange`.
+- **The layers of rock never show.** The rock of the land is not in the tag they replace.

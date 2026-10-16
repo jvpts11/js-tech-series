@@ -1,4 +1,6 @@
 {
+  "biome.jstests.test_frost_flats": "Test Frost Flats",
+  "biome.jstests.test_salt_steppe": "Test Salt Steppe",
   "block.jstests.connected_panel": "Connected panel",
   "block.jstests.test_accelerator": "Test accelerator",
   "block.jstests.test_acid": "Test Acid",

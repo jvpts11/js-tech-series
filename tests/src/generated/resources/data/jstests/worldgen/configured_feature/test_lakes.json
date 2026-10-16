@@ -1,0 +1,18 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 96,
+    "chance": 1.0,
+    "height": 0.4,
+    "kind": "lake",
+    "largest": 8,
+    "salt": 224246623,
+    "scatter": {
+      "Name": "minecraft:ice"
+    },
+    "smallest": 6,
+    "surface": {
+      "Name": "minecraft:clay"
+    }
+  }
+}

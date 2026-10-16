@@ -565,6 +565,21 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   locator of its model and from smoke, steam, sparks, a beam, a trail or nothing, playing there at once.
 - (Core) The player's effects settings: particles at once, how hard the screen shakes, how bright a flash is, and
   whether heat haze and shockwaves bend the view; the game's own particle setting thins them out.
+- (Core) Terrain declared in code: how high the land lies, how far and how wide its hills, how rough, its rock, the
+  liquid of its seas up to their level, a floor of bedrock and its surface biome by biome, written as the noise
+  settings a data pack can change; a dimension takes it with its biomes spread by the terrain's warmth and wetness.
+- (Core) Biomes declared in code, with their climate in real values: degrees Celsius over the year, how far the
+  seasons swing it, millimetres of rain a year, kept in a data map a data pack can fill for any biome; every other
+  biome's read from the game's own values. A place's warmth follows the calendar's seasons and cools with height,
+  and heat meets it where a biome has a climate of its own.
+- (Core) Landforms as data, laid a chunk at a time from the world's seed so any size draws whole: craters with
+  their ejecta, rays and central peaks, shield volcanoes and stratovolcanoes with lava in their summits, mesas in
+  bands, dunes, canyons, lava tubes open to the sky here and there, ice sheets, geysers that bubble, sinkholes and
+  cracked salt flats.
+- (Core) Lakes, rivers and seas of any liquid, which freeze over where the place is colder than their liquid
+  freezes and boil away where it is hotter.
+- (Core) Rock in layers by depth, each region of the land with its own sequence, the layers rising and falling
+  gently and the ores lying in them.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

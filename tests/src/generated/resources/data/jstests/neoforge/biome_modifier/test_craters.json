@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jstests:test_land",
+  "features": "jstests:test_craters",
+  "step": "raw_generation"
+}

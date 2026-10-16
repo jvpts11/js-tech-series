@@ -7,7 +7,11 @@
  */
 package dev.jstech.core.worldgen;
 
+import com.mojang.datafixers.util.Pair;
 import dev.jstech.core.dimension.RuntimeDimensions;
+import dev.jstech.core.worldgen.biome.WorldBiomes;
+import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.terrain.Terrains;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +28,9 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FixedBiomeSource;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
@@ -40,9 +46,11 @@ import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * What a mod adds to the generation of the world: veins of ore and structures built from a saved template, declared
- * once and written by the generator as the datapack files the game reads (the features, the biome modifiers, the
- * template pools, the structures and their sets), so a datapack can change any of them.
+ * What a mod adds to the generation of the world: veins of ore, structures built from a saved template and
+ * dimensions, declared once and written by the generator as the datapack files the game reads (the features, the
+ * biome modifiers, the template pools, the structures and their sets, the dimensions), so a datapack can change any
+ * of them. A dimension's ground is declared beside them ({@link Terrains}), with its biomes ({@link WorldBiomes}) and
+ * the shapes of its land ({@link Landforms}).
  *
  * <pre>{@code
  * WorldGen.ore(id("tin_ore")).stone(TIN_ORE).deepslate(DEEPSLATE_TIN_ORE).vein(9).perChunk(12)
@@ -105,7 +113,24 @@ public final class WorldGen {
     /** Whether the mod of that namespace declared anything for the generation of the world. */
     public static boolean declares(final String namespace) {
         return !oresOf(namespace).isEmpty() || !structuresOf(namespace).isEmpty()
-                || !dimensionsOf(namespace).isEmpty();
+                || !dimensionsOf(namespace).isEmpty() || !WorldBiomes.biomesOf(namespace).isEmpty()
+                || !Terrains.terrainsOf(namespace).isEmpty() || Landforms.declares(namespace);
+    }
+
+    /**
+     * Where a biome lies among a dimension's others: by the warmth and the wetness its terrain's noise gives each
+     * place, each from -1 to 1, the biome nearest to a place's lying there.
+     *
+     * @param biome    the biome
+     * @param warmth   how warm the places it lies in are
+     * @param wetness  how wet
+     */
+    public record BiomePoint(ResourceKey<Biome> biome, float warmth, float wetness) {
+
+        /** Where it lies, as the game's biome source reads it. */
+        public Climate.ParameterPoint point() {
+            return Climate.parameters(this.warmth, this.wetness, 0F, 0F, 0F, 0F, 0F);
+        }
     }
 
     /**
@@ -131,7 +156,8 @@ public final class WorldGen {
      * @param ultraWarm    whether water boils away in it
      * @param natural      whether compasses and clocks work, and beds and portals behave as in the overworld
      * @param bedWorks     whether a bed can be slept in
-     * @param biome        the one biome it is all of
+     * @param biome        the one biome it is all of, when its biomes are not spread by {@code biomes}
+     * @param biomes       its biomes, spread by the warmth and wetness of its terrain; empty for its one biome
      * @param layers       a flat dimension's ground, lowest layer first; empty for ground made by {@code noise}
      * @param noise        the noise settings its ground is made with, when it is not flat
      * @param runtimeOnly  whether only its copies made while the game runs exist, the world loading none of it
@@ -139,10 +165,11 @@ public final class WorldGen {
     public record DimensionSpec(ResourceLocation id, boolean skylight, boolean ceiling, OptionalLong fixedTime,
                                 float ambientLight, int minY, int height, ResourceLocation effects,
                                 boolean ultraWarm, boolean natural, boolean bedWorks, ResourceKey<Biome> biome,
-                                List<Layer> layers, @Nullable ResourceKey<NoiseGeneratorSettings> noise,
-                                boolean runtimeOnly) {
+                                List<BiomePoint> biomes, List<Layer> layers,
+                                @Nullable ResourceKey<NoiseGeneratorSettings> noise, boolean runtimeOnly) {
 
         public DimensionSpec {
+            biomes = List.copyOf(biomes);
             layers = List.copyOf(layers);
         }
 
@@ -156,12 +183,16 @@ public final class WorldGen {
                     new DimensionType.MonsterSettings(false, false, UniformInt.of(0, 7), 0));
         }
 
-        /** How its ground is made: flat layers over its one biome, or noise over it. */
+        /** How its ground is made: flat layers over its one biome, or noise over it or over its spread biomes. */
         public ChunkGenerator generator(final HolderGetter<Biome> biomes,
                                         final HolderGetter<NoiseGeneratorSettings> noiseSettings) {
             final Holder<Biome> only = biomes.getOrThrow(biome);
             if (noise != null) {
-                return new NoiseBasedChunkGenerator(new FixedBiomeSource(only), noiseSettings.getOrThrow(noise));
+                return new NoiseBasedChunkGenerator(this.biomes.isEmpty() ? new FixedBiomeSource(only)
+                        : MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(this.biomes.stream()
+                                .map(one -> Pair.<Climate.ParameterPoint, Holder<Biome>>of(one.point(),
+                                        biomes.getOrThrow(one.biome())))
+                                .toList())), noiseSettings.getOrThrow(noise));
             }
             final List<FlatLayerInfo> flat = new ArrayList<>();
             for (final Layer layer : layers) {
@@ -184,6 +215,7 @@ public final class WorldGen {
 
         private final ResourceLocation id;
         private final List<Layer> layers = new ArrayList<>();
+        private final List<BiomePoint> biomes = new ArrayList<>();
         private boolean skylight = true;
         private boolean ceiling;
         private OptionalLong fixedTime = OptionalLong.empty();
@@ -224,8 +256,29 @@ public final class WorldGen {
             return this;
         }
 
+        /**
+         * Makes its ground as {@code terrain} says, its heights the terrain's, and its biomes spread by the terrain's
+         * warmth and wetness when {@link #biome(ResourceKey, float, float)} names more than one.
+         */
+        public DimensionBuilder terrain(final Terrains.TerrainSpec terrain) {
+            this.noise = terrain.key();
+            this.minY = terrain.minY();
+            this.height = terrain.height();
+            return this;
+        }
+
         public DimensionBuilder biome(final ResourceKey<Biome> only) {
             this.biome = only;
+            return this;
+        }
+
+        /**
+         * Adds {@code spread} to its biomes, lying where its terrain's noise is {@code warmth} warm and {@code wetness}
+         * wet, each from -1 to 1: every place takes the biome nearest it. Its ground is made by noise.
+         */
+        public DimensionBuilder biome(final ResourceKey<Biome> spread, final float warmth, final float wetness) {
+            this.biomes.add(new BiomePoint(spread, warmth, wetness));
+            this.biome = this.biomes.getFirst().biome();
             return this;
         }
 
@@ -285,6 +338,9 @@ public final class WorldGen {
             if (layers.isEmpty() == (noise == null)) {
                 throw new IllegalStateException("the dimension " + id + " has flat layers or noise, one of them");
             }
+            if (!biomes.isEmpty() && noise == null) {
+                throw new IllegalStateException("the dimension " + id + " spreads its biomes over ground of noise");
+            }
             if (height < 16 || height % 16 != 0 || minY % 16 != 0) {
                 throw new IllegalStateException("the dimension " + id + " is a whole number of sections tall");
             }
@@ -295,7 +351,7 @@ public final class WorldGen {
                         + (DimensionType.MAX_Y + 1) + ", at most " + DimensionType.Y_SIZE + " tall");
             }
             final DimensionSpec spec = new DimensionSpec(id, skylight, ceiling, fixedTime, ambientLight, minY, height,
-                    effects, ultraWarm, natural, bedWorks, biome, layers, noise, runtimeOnly);
+                    effects, ultraWarm, natural, bedWorks, biome, biomes, layers, noise, runtimeOnly);
             DIMENSIONS.add(spec);
             return spec;
         }

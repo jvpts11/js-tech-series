@@ -17,6 +17,7 @@ import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.worldgen.biome.WorldBiomes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -74,6 +75,8 @@ public final class ContentLanguageProvider extends LanguageProvider {
         ConfigTexts.english(content.modid()).forEach(this::add);
         // Everything the mod writes in the manuals, under the keys its declarations made.
         content.declaredGuides().forEach(guide -> guide.translations().forEach(this::add));
+        // The names of the biomes it adds to the world, which the debug screen and the locate command show.
+        WorldBiomes.biomesOf(content.modid()).forEach(biome -> add(biome.id().toLanguageKey("biome"), biome.name()));
         more.forEach(names -> names.accept(this::add));
     }
 }

@@ -1,0 +1,8 @@
+{
+  "type": "jscore:sea",
+  "config": {
+    "frozen": {
+      "Name": "minecraft:packed_ice"
+    }
+  }
+}

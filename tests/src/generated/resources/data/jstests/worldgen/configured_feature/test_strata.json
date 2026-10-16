@@ -1,0 +1,22 @@
+{
+  "type": "jscore:strata",
+  "config": {
+    "salt": -2079933550,
+    "sequences": [
+      [
+        {
+          "block": {
+            "Name": "minecraft:tuff"
+          },
+          "thickness": 6
+        },
+        {
+          "block": {
+            "Name": "minecraft:calcite"
+          },
+          "thickness": 4
+        }
+      ]
+    ]
+  }
+}

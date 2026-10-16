@@ -1,0 +1,15 @@
+{
+  "type": "jscore:landform",
+  "config": {
+    "cell": 96,
+    "chance": 1.0,
+    "height": 0.3,
+    "kind": "crater",
+    "largest": 14,
+    "salt": -2100793569,
+    "smallest": 10,
+    "surface": {
+      "Name": "minecraft:gravel"
+    }
+  }
+}

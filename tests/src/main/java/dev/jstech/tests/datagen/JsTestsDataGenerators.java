@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.datagen;
 
+import dev.jstech.core.datagen.BiomeClimateProvider;
 import dev.jstech.core.datagen.ContentCueProvider;
 import dev.jstech.core.datagen.ContentFluidTagsProvider;
 import dev.jstech.core.datagen.ContentItemModelProvider;
@@ -30,8 +31,8 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 /**
  * Data generation for the test mod: the structure templates the GameTests run inside, the entries, subtitles and cue
  * bindings of the sounds the tests play, the names of its content, the definitions of the models it draws with the
- * Core's models, the models of its buckets, the tags of its fluids and the kinds of light of its lamps. Its block
- * states and its other item models are written by hand.
+ * Core's models, the models of its buckets, the tags of its fluids, the kinds of light of its lamps, and its world
+ * generation with the climates of its biomes. Its block states and its other item models are written by hand.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class JsTestsDataGenerators {
@@ -49,6 +50,8 @@ public final class JsTestsDataGenerators {
         TestWorldGen.declare();
         generator.addProvider(event.includeServer(),
                 new WorldGenProvider(output, event.getLookupProvider(), JsTests.MODID));
+        generator.addProvider(event.includeServer(),
+                new BiomeClimateProvider(output, event.getLookupProvider(), JsTests.MODID));
         generator.addProvider(event.includeServer(), new ContentFluidTagsProvider(output,
                 event.getLookupProvider(), TestSounds.CONTENT, event.getExistingFileHelper()));
         generator.addProvider(event.includeClient(),

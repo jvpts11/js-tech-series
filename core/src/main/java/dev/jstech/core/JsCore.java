@@ -149,6 +149,8 @@ import dev.jstech.core.state.StateNetwork;
 import dev.jstech.core.stepaside.StepAside;
 import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
+import dev.jstech.core.worldgen.CoreFeatures;
+import dev.jstech.core.worldgen.biome.BiomeClimates;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoader;
@@ -214,6 +216,10 @@ public final class JsCore {
         CoreLights.declare(modEventBus);
         // Effects fired from the server for whoever is near, and the commands of the effects editor.
         Effects.listen(modEventBus);
+        // The shapes of the land every mod's world generation lays (landforms, rock in layers, seas), and the
+        // climates of biomes in real values, which heat meets where a biome has its own.
+        CoreFeatures.register(modEventBus);
+        BiomeClimates.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.

@@ -138,6 +138,7 @@ import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
 import dev.jstech.tests.clienttest.core.EffectsClientTests;
 import dev.jstech.tests.clienttest.core.LightingClientTests;
+import dev.jstech.tests.clienttest.core.TerrainClientTests;
 import dev.jstech.tests.clienttest.core.LiveReloadClientTests;
 import dev.jstech.tests.clienttest.core.MachineLooksClientTests;
 import dev.jstech.tests.clienttest.core.MachineScreenClientTests;
@@ -284,6 +285,7 @@ public final class ClientTestSuite {
             ConnectedPacksClientTests.class,
             LightingClientTests.class,
             EffectsClientTests.class,
+            TerrainClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,

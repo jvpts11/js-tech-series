@@ -1,0 +1,6 @@
+{
+  "values": [
+    "jstests:test_salt_steppe",
+    "jstests:test_frost_flats"
+  ]
+}

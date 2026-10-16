@@ -1,0 +1,14 @@
+{
+  "values": {
+    "jstests:test_frost_flats": {
+      "rain": 150.0,
+      "seasons": 14.0,
+      "temperature": -25.0
+    },
+    "jstests:test_salt_steppe": {
+      "rain": 240.0,
+      "seasons": 16.0,
+      "temperature": 9.5
+    }
+  }
+}

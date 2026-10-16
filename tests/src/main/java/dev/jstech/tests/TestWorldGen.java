@@ -8,6 +8,10 @@
 package dev.jstech.tests;
 
 import dev.jstech.core.worldgen.WorldGen;
+import dev.jstech.core.worldgen.biome.WorldBiomes;
+import dev.jstech.core.worldgen.landform.LandformKind;
+import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.terrain.Terrains;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -16,9 +20,10 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * A vein of ore, a structure and a dimension declared the way a mod declares them, to prove the Core's world
- * generation. The vein and the structure are placed only in a biome tag that holds no biome, so they exist in the
- * registries and generate nowhere; the dimension stands apart, reached only by the tests.
+ * A vein of ore, a structure, dimensions, biomes, a terrain and shapes of the land declared the way a mod declares
+ * them, to prove the Core's world generation. The vein and the structure are placed only in a biome tag that holds no
+ * biome, so they exist in the registries and generate nowhere; the dimensions stand apart, reached only by the tests,
+ * and the biomes and the shapes of the land lie only in the test land.
  */
 public final class TestWorldGen {
 
@@ -40,6 +45,38 @@ public final class TestWorldGen {
             .layer(() -> Blocks.BEDROCK, 1).layer(() -> Blocks.STONE, 6).layer(() -> Blocks.LIGHT_GRAY_CONCRETE, 1)
             .biome(Biomes.DESERT).heights(0, 64).fixedTime(18_000).ambientLight(0.1F).unnatural().runtimeOnly()
             .declare();
+    /** A dry steppe of salt and sand, cool on the whole and swung hard by the seasons. */
+    public static final WorldBiomes.BiomeSpec STEPPE = WorldBiomes.biome(id("test_salt_steppe"))
+            .name("Test Salt Steppe").climate(9.5, 240).seasons(16).grass(0xB8B07A).declare();
+    /** A plain of frost, far below freezing all the year. */
+    public static final WorldBiomes.BiomeSpec FROST = WorldBiomes.biome(id("test_frost_flats"))
+            .name("Test Frost Flats").climate(-25, 150).declare();
+    /** The two biomes of the test land. */
+    public static final TagKey<Biome> LAND = TagKey.create(Registries.BIOME, id("test_land"));
+    /** The test land's ground: low hills of stone round a sea, sand on top, snow on the frost. */
+    public static final Terrains.TerrainSpec TERRAIN = Terrains.terrain(id("test_land")).heights(0, 128).ground(64)
+            .hills(10, 128).sea(60).bedrock(3).surface(() -> Blocks.SAND, () -> Blocks.SANDSTONE, 3)
+            .surface(FROST.key(), () -> Blocks.SNOW_BLOCK, () -> Blocks.DIRT, 3).declare();
+    /** A crater in every square 96 blocks across, floored with gravel, its ejecta of cobblestone. */
+    public static final Landforms.LandformSpec CRATERS = Landforms.landform(id("test_craters"), LandformKind.CRATER)
+            .cell(96).radius(10, 14).height(0.3).surface(() -> Blocks.GRAVEL).scatter(() -> Blocks.COBBLESTONE)
+            .biomes(LAND).declare();
+    /** A lake in every square 96 blocks across, its bed of clay, frozen on the frost. */
+    public static final Landforms.LandformSpec LAKES = Landforms.landform(id("test_lakes"), LandformKind.LAKE)
+            .cell(96).radius(6, 8).height(0.4).surface(() -> Blocks.CLAY).biomes(LAND).declare();
+    /** Tuff over calcite under the test land's ground. */
+    public static final Landforms.StrataSpec STRATA = Landforms.strata(id("test_strata"))
+            .sequence(Landforms.layer(() -> Blocks.TUFF, 6), Landforms.layer(() -> Blocks.CALCITE, 4))
+            .biomes(LAND).declare();
+    /** The test land's sea, freezing to packed ice on the frost. */
+    public static final Landforms.SeaSpec SEAS = Landforms.sea(id("test_seas")).frozen(() -> Blocks.PACKED_ICE)
+            .biomes(LAND).declare();
+    /**
+     * The test land: its terrain under the steppe where the terrain's noise is warm and the frost where it is cold.
+     * Only its copies exist, made by the tests that look at what it generates.
+     */
+    public static final WorldGen.DimensionSpec TEST_LAND = WorldGen.dimension(id("test_land")).terrain(TERRAIN)
+            .biome(STEPPE.key(), 0.5F, 0F).biome(FROST.key(), -0.5F, 0F).runtimeOnly().declare();
 
     private TestWorldGen() {
     }

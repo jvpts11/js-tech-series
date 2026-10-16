@@ -8,12 +8,17 @@
 package dev.jstech.core.datagen;
 
 import com.mojang.datafixers.util.Pair;
+import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.WorldGen;
+import dev.jstech.core.worldgen.biome.WorldBiomes;
+import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.terrain.Terrains;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
@@ -25,12 +30,14 @@ import net.minecraft.data.worldgen.Pools;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
+import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
@@ -79,7 +86,19 @@ public final class WorldGenProvider extends DatapackBuiltinEntriesProvider {
         final List<WorldGen.OreVein> ores = WorldGen.oresOf(modid);
         final List<WorldGen.TemplateStructure> structures = WorldGen.structuresOf(modid);
         final List<WorldGen.DimensionSpec> dimensions = WorldGen.dimensionsOf(modid);
+        final List<WorldBiomes.BiomeSpec> declaredBiomes = WorldBiomes.biomesOf(modid);
+        final List<Terrains.TerrainSpec> terrains = Terrains.terrainsOf(modid);
+        final List<Shaped> shapes = shapes(modid);
         return new RegistrySetBuilder()
+                .add(Registries.NOISE, context -> terrains.forEach(terrain -> terrain.noises().forEach(noise ->
+                        context.register(terrain.noise(noise.name()), noise.parameters()))))
+                .add(Registries.NOISE_SETTINGS, context -> terrains.forEach(terrain -> context.register(
+                        terrain.key(), terrain.settings(context.lookup(Registries.NOISE)))))
+                .add(Registries.BIOME, context -> {
+                    final HolderGetter<PlacedFeature> placed = context.lookup(Registries.PLACED_FEATURE);
+                    final HolderGetter<ConfiguredWorldCarver<?>> carvers = context.lookup(Registries.CONFIGURED_CARVER);
+                    declaredBiomes.forEach(biome -> context.register(biome.key(), biome.biome(placed, carvers)));
+                })
                 .add(Registries.DIMENSION_TYPE, context -> dimensions.forEach(dimension -> context.register(
                         key(Registries.DIMENSION_TYPE, dimension.id()), dimension.dimensionType())))
                 .add(Registries.LEVEL_STEM, context -> {
@@ -92,22 +111,34 @@ public final class WorldGenProvider extends DatapackBuiltinEntriesProvider {
                                     new LevelStem(types.getOrThrow(key(Registries.DIMENSION_TYPE, dimension.id())),
                                             dimension.generator(biomes, noise))));
                 })
-                .add(Registries.CONFIGURED_FEATURE, context -> ores.forEach(ore -> context.register(
-                        key(Registries.CONFIGURED_FEATURE, ore.id()),
-                        new ConfiguredFeature<>(Feature.ORE, new OreConfiguration(targets(ore), ore.veinSize())))))
+                .add(Registries.CONFIGURED_FEATURE, context -> {
+                    ores.forEach(ore -> context.register(key(Registries.CONFIGURED_FEATURE, ore.id()),
+                            new ConfiguredFeature<>(Feature.ORE, new OreConfiguration(targets(ore), ore.veinSize()))));
+                    final HolderGetter<Biome> all = context.lookup(Registries.BIOME);
+                    shapes.forEach(shape -> context.register(key(Registries.CONFIGURED_FEATURE, shape.id()),
+                            shape.feature().apply(all)));
+                })
                 .add(Registries.PLACED_FEATURE, context -> {
                     final HolderGetter<ConfiguredFeature<?, ?>> configured =
                             context.lookup(Registries.CONFIGURED_FEATURE);
                     ores.forEach(ore -> context.register(key(Registries.PLACED_FEATURE, ore.id()), new PlacedFeature(
                             configured.getOrThrow(key(Registries.CONFIGURED_FEATURE, ore.id())), placement(ore))));
+                    // A shape of the land is placed once in each chunk, at its corner, and works out the rest itself.
+                    shapes.forEach(shape -> context.register(key(Registries.PLACED_FEATURE, shape.id()),
+                            new PlacedFeature(configured.getOrThrow(key(Registries.CONFIGURED_FEATURE, shape.id())),
+                                    List.of())));
                 })
                 .add(NeoForgeRegistries.Keys.BIOME_MODIFIERS, context -> {
-                    final HolderGetter<Biome> biomes = context.lookup(Registries.BIOME);
+                    final HolderGetter<Biome> all = context.lookup(Registries.BIOME);
                     final HolderGetter<PlacedFeature> placed = context.lookup(Registries.PLACED_FEATURE);
                     ores.forEach(ore -> context.register(key(NeoForgeRegistries.Keys.BIOME_MODIFIERS, ore.id()),
-                            (BiomeModifier) new BiomeModifiers.AddFeaturesBiomeModifier(biomes.getOrThrow(ore.biomes()),
+                            (BiomeModifier) new BiomeModifiers.AddFeaturesBiomeModifier(all.getOrThrow(ore.biomes()),
                                     HolderSet.direct(placed.getOrThrow(key(Registries.PLACED_FEATURE, ore.id()))),
                                     GenerationStep.Decoration.UNDERGROUND_ORES)));
+                    shapes.forEach(shape -> context.register(key(NeoForgeRegistries.Keys.BIOME_MODIFIERS, shape.id()),
+                            (BiomeModifier) new BiomeModifiers.AddFeaturesBiomeModifier(all.getOrThrow(shape.biomes()),
+                                    HolderSet.direct(placed.getOrThrow(key(Registries.PLACED_FEATURE, shape.id()))),
+                                    shape.step())));
                 })
                 .add(Registries.TEMPLATE_POOL, context -> {
                     final HolderGetter<StructureTemplatePool> pools = context.lookup(Registries.TEMPLATE_POOL);
@@ -137,6 +168,28 @@ public final class WorldGenProvider extends DatapackBuiltinEntriesProvider {
     private static <T> ResourceKey<T> key(final ResourceKey<? extends Registry<T>> registry,
                                           final ResourceLocation id) {
         return ResourceKey.create(registry, id);
+    }
+
+    /*
+     * The shapes of the land the mod declared, each a feature of the Core's: landforms first, laid on the raw ground,
+     * then the rock in layers through what they raised, before the ores; the seas last, once everything else is laid.
+     */
+    private static List<Shaped> shapes(final String modid) {
+        final List<Shaped> shapes = new ArrayList<>();
+        Landforms.landformsOf(modid).forEach(one -> shapes.add(new Shaped(one.id(), one.biomes(), one.step(),
+                all -> new ConfiguredFeature<>(CoreFeatures.LANDFORM.get(), one.config(all)))));
+        Landforms.strataOf(modid).forEach(one -> shapes.add(new Shaped(one.id(), one.biomes(),
+                GenerationStep.Decoration.LOCAL_MODIFICATIONS,
+                all -> new ConfiguredFeature<>(CoreFeatures.STRATA.get(), one.config()))));
+        Landforms.seasOf(modid).forEach(one -> shapes.add(new Shaped(one.id(), one.biomes(),
+                GenerationStep.Decoration.TOP_LAYER_MODIFICATION,
+                all -> new ConfiguredFeature<>(CoreFeatures.SEA.get(), one.config()))));
+        return shapes;
+    }
+
+    /* A shape of the land, as it is written: its feature, the biomes it is added to, and its step. */
+    private record Shaped(ResourceLocation id, TagKey<Biome> biomes, GenerationStep.Decoration step,
+                          Function<HolderGetter<Biome>, ConfiguredFeature<?, ?>> feature) {
     }
 
 
