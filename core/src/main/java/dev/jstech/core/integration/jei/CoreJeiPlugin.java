@@ -20,8 +20,10 @@ import java.util.List;
 import java.util.OptionalInt;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.extensions.vanilla.crafting.IExtendableCraftingRecipeCategory;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
@@ -170,6 +172,17 @@ public final class CoreJeiPlugin implements IModPlugin {
             return false;
         }
         running.getRecipesGui().showTypes(List.of(MultiblockCategory.TYPE));
+        return true;
+    }
+
+    /** Opens JEI's recipe screen on what makes {@code stack}; false before JEI is running. */
+    public static boolean showRecipesOf(final ItemStack stack) {
+        final IJeiRuntime running = runtime;
+        if (running == null) {
+            return false;
+        }
+        running.getRecipesGui().show(running.getJeiHelpers().getFocusFactory()
+                .createFocus(RecipeIngredientRole.OUTPUT, VanillaTypes.ITEM_STACK, stack));
         return true;
     }
 

@@ -127,6 +127,12 @@ public final class CoreEmiPlugin implements EmiPlugin {
         return true;
     }
 
+    /** Opens EMI's recipe screen on what makes {@code stack}. */
+    public static boolean showRecipesOf(final ItemStack stack) {
+        EmiApi.displayRecipes(EmiStack.of(stack));
+        return true;
+    }
+
     @Nullable
     private static EmiRecipeCategory categoryOf(final ProcessingKind kind) {
         return categoryOf(kind.id());

@@ -138,6 +138,7 @@ import dev.jstech.tests.clienttest.core.LiveReloadClientTests;
 import dev.jstech.tests.clienttest.core.MachineScreenClientTests;
 import dev.jstech.tests.clienttest.core.MediaClientTests;
 import dev.jstech.tests.clienttest.core.MultiblockToolsClientTests;
+import dev.jstech.tests.clienttest.core.MultipartClientTests;
 import dev.jstech.tests.clienttest.core.RenderTargetsClientTests;
 import dev.jstech.tests.clienttest.core.SoundMixerClientTests;
 import dev.jstech.tests.clienttest.core.WorldStabilityClientTests;
@@ -266,6 +267,7 @@ public final class ClientTestSuite {
             OverheadLinesClientTests.class,
             SignalProbeClientTests.class,
             MultiblockToolsClientTests.class,
+            MultipartClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,

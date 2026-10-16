@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.multipart.MicroShape;
 import dev.jstech.core.multipart.Microblock;
@@ -25,6 +26,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.RenderTypeHelper;
@@ -50,7 +52,7 @@ public final class MicroblockItemModel extends BakedModelWrapper<BakedModel> {
 
     private static final Map<Microblock.MicroblockPiece, BakedModel> PIECES = new ConcurrentHashMap<>();
     private static final float SIDE = PartBox.SIDE;
-    private static final int NORTH = 2;
+    private static final int DOWN = 0;
 
     public MicroblockItemModel(final BakedModel base) {
         super(base);
@@ -66,7 +68,10 @@ public final class MicroblockItemModel extends BakedModelWrapper<BakedModel> {
         return this.overrides;
     }
 
-    /* The piece standing in the middle of the slot: a piece on a face upright, a post up, a corner centred. */
+    /*
+     * The piece in the middle of the slot: a piece on a face lying flat, its broad face up where the slot's light is
+     * brightest, as the pieces lie in the world; a post up, a corner centred.
+     */
     private static List<BakedQuad> quadsOf(final Microblock.MicroblockPiece piece) {
         final int thickness = piece.size() * 2;
         final float half = (SIDE - thickness) / 2F;
@@ -74,8 +79,8 @@ public final class MicroblockItemModel extends BakedModelWrapper<BakedModel> {
         final float[] offset;
         switch (piece.shape()) {
             case FACE, HOLLOW, FACADE -> {
-                block = new Microblock(piece, SpaceSlots.face(NORTH), SpaceSlots.Y);
-                offset = new float[] {0F, 0F, half};
+                block = new Microblock(piece, SpaceSlots.face(DOWN), SpaceSlots.Y);
+                offset = new float[] {0F, half, 0F};
             }
             case CORNER -> {
                 block = new Microblock(piece, SpaceSlots.corner(false, false, false), SpaceSlots.Y);
@@ -123,6 +128,22 @@ public final class MicroblockItemModel extends BakedModelWrapper<BakedModel> {
                                         final RandomSource random, final ModelData data,
                                         @Nullable final RenderType renderType) {
             return getQuads(state, side, random);
+        }
+
+        /*
+         * The piece is held and shown as the item's own model says, and then drawn as itself: the wrapper would hand
+         * the drawing on to the item's own model, a stone cover, both here and in its passes.
+         */
+        @Override
+        public BakedModel applyTransform(final ItemDisplayContext context, final PoseStack pose,
+                                         final boolean leftHand) {
+            super.applyTransform(context, pose, leftHand);
+            return this;
+        }
+
+        @Override
+        public List<BakedModel> getRenderPasses(final ItemStack stack, final boolean fabulous) {
+            return List.of(this);
         }
 
         /* Glass in a glass layer: the piece is drawn in the layers its block is. */
