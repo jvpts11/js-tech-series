@@ -1,0 +1,11 @@
+{
+  "emitters": [
+    {
+      "name": "gas",
+      "emission": {"shape": {"type": "sphere", "radius": 0.5}, "rate": 20, "life": [6, 10], "speed": [0.2, 0.6]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [1, 4], "colour": ["#C8C8C880", "#C8C8C800"],
+               "spin": 8},
+      "motion": {"gravity": 0.03, "drag": 0.5, "expands": true, "medium": "air"}
+    }
+  ]
+}

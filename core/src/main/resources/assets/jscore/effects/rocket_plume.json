@@ -1,0 +1,19 @@
+{
+  "reach": 256,
+  "emitters": [
+    {
+      "name": "flame",
+      "emission": {"shape": {"type": "cone", "angle": 14}, "rate": 120, "life": [0.3, 0.6], "speed": [12, 16]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.5, 1.8], "colour": ["#FFF0C0FF", "#FF602000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.4, "expands": true}
+    },
+    {
+      "name": "exhaust",
+      "emission": {"shape": {"type": "cone", "angle": 24}, "rate": 30, "life": [3, 5], "speed": [6, 9]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [1, 4], "colour": ["#D8D4D0B0", "#B0ACA800"],
+               "spin": 10},
+      "motion": {"buoyancy": 0.4, "drag": 0.8, "expands": true, "medium": "air"}
+    }
+  ]
+}

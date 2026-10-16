@@ -1,0 +1,16 @@
+{
+  "reach": 256,
+  "emitters": [
+    {
+      "name": "bolt",
+      "kind": "arc",
+      "look": {"colour": ["#E0E8FFFF"], "blend": "additive", "width": 0.25},
+      "extra": {"length": 40, "jagged": 0.25, "branches": 4, "fade": 0.4}
+    },
+    {
+      "name": "flash",
+      "kind": "screen",
+      "extra": {"radius": 64, "flash": 0.9, "fade": 0.5}
+    }
+  ]
+}

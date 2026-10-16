@@ -1,0 +1,11 @@
+{
+  "reach": 256,
+  "emitters": [
+    {
+      "name": "laser",
+      "kind": "beam",
+      "look": {"colour": ["#FF2020FF"], "blend": "additive", "width": 0.08},
+      "extra": {"length": 64, "fade": 0.5}
+    }
+  ]
+}

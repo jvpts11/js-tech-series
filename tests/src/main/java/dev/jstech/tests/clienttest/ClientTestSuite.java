@@ -136,6 +136,7 @@ import dev.jstech.tests.clienttest.core.GridPainterClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
+import dev.jstech.tests.clienttest.core.EffectsClientTests;
 import dev.jstech.tests.clienttest.core.LightingClientTests;
 import dev.jstech.tests.clienttest.core.LiveReloadClientTests;
 import dev.jstech.tests.clienttest.core.MachineLooksClientTests;
@@ -282,6 +283,7 @@ public final class ClientTestSuite {
             MachineLooksClientTests.class,
             ConnectedPacksClientTests.class,
             LightingClientTests.class,
+            EffectsClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,

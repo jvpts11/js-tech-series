@@ -1,0 +1,13 @@
+{
+  "chosen": "#FF8B8B8B",
+  "dark": "#FF555555",
+  "debugGround": "#90505050",
+  "debugText": "#FFE0E0E0",
+  "ground": "#FFC6C6C6",
+  "ink": "#FF404040",
+  "light": "#FFFFFFFF",
+  "marker": "#FFFF55FF",
+  "outline": "#FF000000",
+  "soft": "#FF707070",
+  "white": "#FFFFFFFF"
+}

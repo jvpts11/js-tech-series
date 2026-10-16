@@ -1,0 +1,12 @@
+{
+  "anchor": {"face": "up"},
+  "emitters": [
+    {
+      "name": "smoke",
+      "emission": {"shape": {"type": "disc", "radius": 0.25}, "rate": 18, "life": [4, 7], "speed": [0.5, 0.8]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.5, 2.4],
+               "colour": ["#B0B0B0C8", "#90909000"], "spin": 12},
+      "motion": {"buoyancy": 0.9, "drag": 1.0, "expands": true, "medium": "air"}
+    }
+  ]
+}

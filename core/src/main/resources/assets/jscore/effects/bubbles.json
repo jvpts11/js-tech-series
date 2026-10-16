@@ -1,0 +1,10 @@
+{
+  "emitters": [
+    {
+      "name": "bubbles",
+      "emission": {"shape": {"type": "disc", "radius": 0.3}, "rate": 12, "life": [2, 4], "speed": [0.1, 0.3]},
+      "look": {"sprite": "minecraft:bubble", "size": [0.12, 0.16]},
+      "motion": {"buoyancy": 2, "drag": 4, "medium": "water"}
+    }
+  ]
+}

@@ -544,6 +544,27 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The player's lighting settings: coloured light and dynamic light on or off, the glow's strength, how far it
   all reaches. Dynamic light steps aside for LambDynamicLights and Sodium Dynamic Lights, coloured light and glow for
   Shimmer, unless the player's setting keeps the Core's on as well.
+- (Core) Particles and effects as data: an effect is a file of emitters with shapes (a point, a sphere, a box, a disc,
+  a cone, a line, the faces of a model), a rate and bursts, particles whose size, colour, picture and spin change
+  over their life, with a light of their own, a ribbon behind them, collisions with blocks, and emitters they carry.
+  They move by the physics of where they are: the dimension's pull, drag and lift by the air's density, the wind, the
+  water they are in; steam rises and drifts, nothing rises in a vacuum, a plume widens as the air thins, bubbles
+  live only in water.
+- (Core) The wind: a few metres a second in a world with air, turning over the days, stronger in rain and storms and
+  higher up, the same on the server and every player's game; a mod's weather says its own.
+- (Core) Beams, electric arcs that zigzag and branch, ribbons and tracers; marks that fade on the world, scorch and
+  soot; and what effects do to the screen: a flash, a shake, the ring of a shockwave bending the view, the air
+  shimmering over hot things, a hazard's vignette.
+- (Core) Effects fired from the server reach whoever can see them in a few bytes, aimed, coloured, scaled, following
+  an entity or played on a block where its file anchors it; a model's animations play them at their locators. The
+  Core brings smoke, steam, sparks, a beam, a trail, an arc flash (now fired by overvoltage), an explosion, a cloud of
+  gas, bubbles, a rocket's plume, re-entry plasma, scorch, soot, a laser and lightning.
+- (Core) The effects editor in the world: the effect plays on the real block with the world's wind and air while a
+  card turns its emitters on and off and changes their numbers, the game's debug lines saying what it costs and what
+  acts on it; Save writes its file in the mod's source. A new effect starts at the block looked at, from a face or a
+  locator of its model and from smoke, steam, sparks, a beam, a trail or nothing, playing there at once.
+- (Core) The player's effects settings: particles at once, how hard the screen shakes, how bright a flash is, and
+  whether heat haze and shockwaves bend the view; the game's own particle setting thins them out.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

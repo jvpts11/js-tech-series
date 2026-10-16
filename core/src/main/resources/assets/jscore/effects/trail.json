@@ -1,0 +1,12 @@
+{
+  "anchor": {"face": "up"},
+  "emitters": [
+    {
+      "name": "tracers",
+      "emission": {"shape": {"type": "cone", "angle": 20}, "rate": 6, "life": [0.8, 1.2], "speed": [6, 8]},
+      "look": {"sprite": "minecraft:glow", "size": [0.12], "colour": ["#FFF0C0FF", "#FFB06000"],
+               "blend": "additive", "light": 15, "trail": 0.3, "width": 0.06},
+      "motion": {"gravity": 0.2, "drag": 0.05}
+    }
+  ]
+}

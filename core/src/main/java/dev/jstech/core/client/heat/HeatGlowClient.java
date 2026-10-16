@@ -13,9 +13,11 @@ import dev.jstech.core.heat.Blackbody;
 import dev.jstech.core.heat.IHeatHolder;
 import dev.jstech.core.heat.ThermalSight;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -43,6 +45,11 @@ public final class HeatGlowClient {
     public static void listen() {
         HeatScan.listen();
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, HeatGlowClient::onRender);
+    }
+
+    /** The blocks near the player hot enough to glow, and how hot each is in kelvin, as last looked for. */
+    public static Map<BlockPos, Double> hot() {
+        return HeatScan.hot();
     }
 
     private static void onRender(final RenderLevelStageEvent event) {

@@ -1,0 +1,11 @@
+{
+  "sources": [
+    {
+      "type": "jscore:brightened",
+      "from": "minecraft:big_smoke",
+      "frames": 12,
+      "to": "jscore:steam",
+      "share": 0.75
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "emitters": [
+    {
+      "name": "soot",
+      "kind": "mark",
+      "look": {"colour": ["#202020A0"]},
+      "extra": {"radius": 1.2, "fade": 600}
+    }
+  ]
+}

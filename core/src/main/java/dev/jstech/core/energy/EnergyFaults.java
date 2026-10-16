@@ -7,14 +7,18 @@
  */
 package dev.jstech.core.energy;
 
+import dev.jstech.core.JsCore;
+import dev.jstech.core.effect.Effects;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * What a line of a class too high does to a block, in the world: a burn smokes and sparks, the block left damaged; an
@@ -29,6 +33,10 @@ public final class EnergyFaults {
     /** How far an arc flash sets fire and burns, in blocks; and how long whoever it burns stays on fire, in seconds. */
     public static final int ARC_REACH = 3;
     public static final int ARC_FIRE_SECONDS = 5;
+
+    /** The effect an arc flash plays: the arc, its sparks, the flash of the screen, the scorch it leaves. */
+    public static final ResourceLocation ARC_FLASH_EFFECT = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "arc_flash");
 
     private static final int SMOKE = 12;
     private static final int SPARKS = 8;
@@ -63,6 +71,7 @@ public final class EnergyFaults {
      * thing within reach is set on fire.
      */
     public static void arcFlash(final ServerLevel level, final BlockPos pos) {
+        Effects.at(level, ARC_FLASH_EFFECT, Vec3.atCenterOf(pos)).send();
         level.sendParticles(ParticleTypes.FLASH, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1, 0, 0, 0, 0);
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, FLASH,
                 SPREAD * 2, SPREAD * 2, SPREAD * 2, SPEED * 4);

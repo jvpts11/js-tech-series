@@ -57,6 +57,7 @@ says what the Core promises and what it does not yet.
 | [Models](MODELS.md) | Animated models for blocks, items, entities and armour from Blockbench, Bedrock, glTF, FBX and OBJ files; controllers, blends, expressions, events, bones moved by code, animations from the server, the preview. |
 | [Connected textures](CONNECTED_TEXTURES.md) | Textures that join between alike blocks, read from the formats resource packs write for OptiFine, Continuity and CTM; microblocks; stepping aside for Continuity and CTM. |
 | [Lighting](LIGHTING.md) | Kinds of light as data, lamps by redstone or power that flicker and break, spotlights and beams past fifteen blocks, coloured light, dynamic light, glow, light sensors, stepping aside. |
+| [Particles and effects](EFFECTS.md) | Effects as files of emitters, particles moved by the place's physics and wind, trails, beams, arcs, marks, screen effects, effects fired from the server, the effects editor in the world. |
 | [Motion](MOTION.md) | Curves, motion profiles, and the clock every motion reads. |
 | [Overlays](OVERLAYS.md) | HUD elements, holograms, and what Jade shows. |
 | [Manuals](MANUALS.md) | Chapters, entries, manuals and styles, special blocks, and the manual key. |

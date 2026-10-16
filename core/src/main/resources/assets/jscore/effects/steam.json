@@ -1,0 +1,12 @@
+{
+  "anchor": {"face": "up"},
+  "emitters": [
+    {
+      "name": "steam",
+      "emission": {"shape": {"type": "disc", "radius": 0.35}, "rate": 40, "life": [3, 5], "speed": [1.0, 1.4]},
+      "look": {"sprite": "jscore:steam", "frames": 12, "size": [0.4, 2.0],
+               "colour": ["#F4F8FCC8", "#F4F8FC00"], "spin": 20},
+      "motion": {"buoyancy": 1.6, "drag": 1.2, "expands": true, "medium": "air"}
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "reach": 256,
+  "emitters": [
+    {
+      "name": "plasma",
+      "emission": {"shape": {"type": "sphere", "radius": 1.2}, "rate": 80, "life": [0.3, 0.5], "speed": [0.3, 0.8]},
+      "look": {"sprite": "minecraft:glow", "size": [0.7, 0.1], "colour": ["#FF90D0FF", "#FF402000"],
+               "blend": "additive", "light": 15, "trail": 0.2, "width": 0.2},
+      "motion": {"drag": 0.2}
+    }
+  ]
+}

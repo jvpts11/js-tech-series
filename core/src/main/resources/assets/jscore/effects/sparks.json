@@ -1,0 +1,20 @@
+{
+  "anchor": {"face": "up"},
+  "emitters": [
+    {
+      "name": "sparks",
+      "emission": {"shape": {"type": "cone", "angle": 120}, "rate": 30, "bursts": [{"at": 0, "count": 20}],
+                   "life": [0.6, 1.2], "speed": [2, 5], "children": ["wisps"]},
+      "look": {"sprite": "minecraft:spark", "frames": 8, "size": [0.12, 0.04],
+               "colour": ["#FFE9A0FF", "#FF7A2000"], "blend": "additive", "light": 15, "trail": 0.15, "width": 0.03},
+      "motion": {"gravity": 1, "drag": 0.3, "collide": true}
+    },
+    {
+      "name": "wisps",
+      "emission": {"rate": 6, "life": [0.4, 0.8], "speed": [0, 0.1]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.05, 0.15],
+               "colour": ["#8080807A", "#60606000"]},
+      "motion": {"buoyancy": 1.2, "drag": 2.0, "medium": "air"}
+    }
+  ]
+}

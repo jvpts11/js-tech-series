@@ -15,8 +15,10 @@ import dev.jstech.core.heat.ThermalScale;
 import dev.jstech.core.heat.ThermalSight;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
@@ -72,6 +74,13 @@ final class HeatScan {
     /** The blocks hot enough to glow, as last looked for. */
     static List<Found> glowing() {
         return glowing;
+    }
+
+    /** The places of the blocks hot enough to glow, and how hot each is in kelvin, as last looked for. */
+    static Map<BlockPos, Double> hot() {
+        final Map<BlockPos, Double> out = new HashMap<>();
+        glowing.forEach(found -> out.put(found.pos(), found.kelvin()));
+        return out;
     }
 
     /** Whether a block at {@code packed} glows, to leave out the face it shares with another. */

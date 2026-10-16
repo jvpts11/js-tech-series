@@ -43,6 +43,8 @@ import dev.jstech.core.diagnostic.DiagnosticNotifications;
 import dev.jstech.core.diagnostic.DiagnosticReports;
 import dev.jstech.core.diagnostic.Sections;
 import dev.jstech.core.dimension.DimensionEffects;
+import dev.jstech.core.effect.EffectSettings;
+import dev.jstech.core.effect.Effects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.grid.CoreGrids;
@@ -210,6 +212,8 @@ public final class JsCore {
         FormedParts.declare();
         // Light standing in the air, the colours of light, its kinds as data, and the spotlights' light.
         CoreLights.declare(modEventBus);
+        // Effects fired from the server for whoever is near, and the commands of the effects editor.
+        Effects.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.
@@ -289,6 +293,8 @@ public final class JsCore {
         ConfigFiles.register(StepAside.FILE, modEventBus, modContainer);
         // How light looks on a player's game: coloured light, dynamic light, glow and their reach.
         ConfigFiles.register(LightingSettings.FILE, modEventBus, modContainer);
+        // How effects look on a player's game: particles at once, the screen's shake and flash, heat haze.
+        ConfigFiles.register(EffectSettings.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();

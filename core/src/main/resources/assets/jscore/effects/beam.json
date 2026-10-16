@@ -1,0 +1,11 @@
+{
+  "anchor": {"face": "up"},
+  "emitters": [
+    {
+      "name": "beam",
+      "kind": "beam",
+      "look": {"colour": ["#40E0FFE0"], "blend": "additive", "width": 0.15},
+      "extra": {"length": 16, "fade": 1}
+    }
+  ]
+}

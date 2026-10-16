@@ -1,0 +1,40 @@
+{
+  "reach": 128,
+  "emitters": [
+    {
+      "name": "fireball",
+      "emission": {"shape": {"type": "sphere", "radius": 1}, "bursts": [{"at": 0, "count": 30}],
+                   "life": [0.4, 0.8], "speed": [2, 5]},
+      "look": {"sprite": "minecraft:explosion", "frames": 16, "size": [1.6, 3.2],
+               "colour": ["#FFD890FF", "#FF603000"], "blend": "additive", "light": 15},
+      "motion": {"drag": 2.5, "medium": "air"}
+    },
+    {
+      "name": "smoke",
+      "emission": {"shape": {"type": "sphere", "radius": 1.5}, "bursts": [{"at": 0.1, "count": 40}],
+                   "life": [3, 6], "speed": [1, 3]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [1.2, 3.5],
+               "colour": ["#4A4440D0", "#2A282600"], "spin": 15},
+      "motion": {"buoyancy": 1.2, "drag": 1.4, "expands": true, "medium": "air"}
+    },
+    {
+      "name": "debris",
+      "emission": {"shape": {"type": "sphere", "radius": 0.5}, "bursts": [{"at": 0, "count": 30}],
+                   "life": [0.8, 1.6], "speed": [5, 10]},
+      "look": {"sprite": "minecraft:spark", "frames": 8, "size": [0.16, 0.06],
+               "colour": ["#FFE0A0FF", "#FF502000"], "blend": "additive", "light": 15, "trail": 0.2, "width": 0.04},
+      "motion": {"gravity": 1, "drag": 0.3, "collide": true}
+    },
+    {
+      "name": "blast",
+      "kind": "screen",
+      "extra": {"radius": 32, "flash": 0.8, "shake": 0.8, "shock": 1, "fade": 1.2}
+    },
+    {
+      "name": "scorch",
+      "kind": "mark",
+      "look": {"colour": ["#140E08C0"]},
+      "extra": {"radius": 3, "fade": 120}
+    }
+  ]
+}

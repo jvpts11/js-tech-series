@@ -1,0 +1,10 @@
+{
+  "emitters": [
+    {
+      "name": "scorch",
+      "kind": "mark",
+      "look": {"colour": ["#141008C0"]},
+      "extra": {"radius": 2, "fade": 120}
+    }
+  ]
+}
