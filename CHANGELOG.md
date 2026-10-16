@@ -444,6 +444,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A wrench of any mod on a part of a cable or a space of parts turns it, a device a quarter turn about its face,
   a lever or a button on a floor a quarter turn, a post through the middle to its next axis, and sneaking takes the
   part off into the player's hands. Jade names the part looked at and shows what it says it is doing.
+- (Core) The microblocks' rules in JEI and EMI: the saw's cuts, two pieces joined and a facade are one crafting recipe
+  each, going through every block and piece rather than thousands of entries; looking up a block in JEI shows the
+  cuts of that block.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

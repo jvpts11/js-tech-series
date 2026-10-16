@@ -14,17 +14,21 @@ import dev.jstech.core.client.recipeview.MultiblockRecipeViews;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
+import dev.jstech.core.multipart.MicroblockRecipes;
+import dev.jstech.core.multipart.MicroblockShowcase;
 import java.util.List;
 import java.util.OptionalInt;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.recipe.category.extensions.vanilla.crafting.IExtendableCraftingRecipeCategory;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
+import mezz.jei.api.registration.IVanillaCategoryExtensionRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -38,8 +42,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The Core's bridge to JEI, which finds it by its annotation and only when JEI is installed: every mod's processing
  * machines get a category of their recipes, with the machines that work them beside it and the "+" that moves a recipe
- * into the open machine; every multiblock that can be shown before it is built has its preview and materials; and every
- * screen that names areas to keep clear has the ingredient list kept off them. A mod that declares its machines, its
+ * into the open machine; every multiblock that can be shown before it is built has its preview and materials; the
+ * microblocks' rules are in the crafting category, one entry each going through every block; and every screen that
+ * names areas to keep clear has the ingredient list kept off them. A mod that declares its machines, its
  * multiblocks and its screens the Core's way writes nothing for JEI of its own.
  */
 @JeiPlugin
@@ -62,6 +67,19 @@ public final class CoreJeiPlugin implements IModPlugin {
                     ProcessingRecipeViews.largest(recipes)));
         }
         registration.addRecipeCategories(new MultiblockCategory(gui));
+    }
+
+    /* The microblocks' rules in the crafting category, each one entry going through every block. */
+    @Override
+    public void registerVanillaCategoryExtensions(final IVanillaCategoryExtensionRegistration registration) {
+        MicroblockShowcase.forget();
+        final IExtendableCraftingRecipeCategory crafting = registration.getCraftingCategory();
+        crafting.addExtension(MicroblockRecipes.SawCut.class,
+                new MicroblockCraftingExtension<>(MicroblockShowcase.Rule.CUT));
+        crafting.addExtension(MicroblockRecipes.Join.class,
+                new MicroblockCraftingExtension<>(MicroblockShowcase.Rule.JOIN));
+        crafting.addExtension(MicroblockRecipes.Facade.class,
+                new MicroblockCraftingExtension<>(MicroblockShowcase.Rule.FACADE));
     }
 
     @Override

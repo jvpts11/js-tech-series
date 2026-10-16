@@ -71,6 +71,12 @@ The recipes are rules in code, true of every block, so there is one of each and 
 
 The thinking behind each rule is pure (`Cuts`), so it is tested without the game.
 
+JEI and EMI show each rule as one crafting recipe, not one for every block: its grid and what it makes go through
+every block microblocks are cut from, every piece and every way the rule works, all its places showing the same frame
+at once (`MicroblockShowcase`, worked out by the rules themselves). Looking up a block, or the microblock, finds the
+rules; in JEI only the frames of the block looked up are shown. A mod's own cuttable blocks join them with nothing
+written.
+
 ## Placing
 
 `SpacePlacement.target(level, clicked, location, face, piece)` works out where a player's click puts a piece:

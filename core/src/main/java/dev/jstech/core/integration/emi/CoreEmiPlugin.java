@@ -25,6 +25,7 @@ import dev.jstech.core.machine.Machines;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.multiblock.MultiblockViewTexts;
+import dev.jstech.core.multipart.MicroblockShowcase;
 import dev.jstech.core.text.GameText;
 import java.util.List;
 import java.util.OptionalInt;
@@ -39,8 +40,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The Core's bridge to EMI, which finds it by its annotation and only when EMI is installed: the same as the bridge to
  * JEI, a category for every mod's processing machines with the machines as its workstations, the fill button that
- * moves a recipe into the open machine, one for every multiblock that can be shown before it is built, and the areas
- * screens name kept clear of EMI's lists.
+ * moves a recipe into the open machine, one for every multiblock that can be shown before it is built, the
+ * microblocks' rules as one crafting recipe each going through every block, and the areas screens name kept clear of
+ * EMI's lists.
  */
 @EmiEntrypoint
 public final class CoreEmiPlugin implements EmiPlugin {
@@ -73,6 +75,13 @@ public final class CoreEmiPlugin implements EmiPlugin {
         }
         for (final MultiblockEntry entry : MultiblockRecipeViews.entries()) {
             registry.addRecipe(new MultiblockEmiRecipe(multiblocks, entry));
+        }
+        // The microblocks' rules, each one crafting recipe going through every block.
+        MicroblockShowcase.forget();
+        for (final MicroblockShowcase.Rule rule : MicroblockShowcase.Rule.values()) {
+            if (!MicroblockShowcase.frames(rule).isEmpty()) {
+                registry.addRecipe(new MicroblockEmiRecipe(rule));
+            }
         }
         registry.addRecipeHandler(Machines.MENU.get(), new MachineRecipeHandler());
         registry.addGenericExclusionArea((screen, areas) -> {
