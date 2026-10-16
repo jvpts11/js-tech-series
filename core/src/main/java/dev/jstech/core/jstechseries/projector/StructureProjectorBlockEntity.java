@@ -86,9 +86,10 @@ public final class StructureProjectorBlockEntity extends SyncedBlockEntity {
                 : Orientation.turns().get(index);
     }
 
-    /** What it shows laid out as it stands, every layer, when a multiblock is chosen. */
+    /** What it shows laid out as it stands, every layer, its controller's block in when known, when one is chosen. */
     public Optional<ShapePreview> preview() {
-        return shape().flatMap(shape -> shape.preview(0)).map(preview -> preview.turned(orientation()));
+        return Optional.ofNullable(this.chosen.get()).flatMap(id -> Projectables.preview(id, 0))
+                .map(preview -> preview.turned(orientation()));
     }
 
     /** Where the controller of what it shows stands: in front of it. */

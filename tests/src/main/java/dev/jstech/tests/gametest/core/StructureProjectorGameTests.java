@@ -94,6 +94,25 @@ public final class StructureProjectorGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void projector_holdsAKnownControllerToItsBlock(final GameTestHelper helper) {
+        final StructureProjectorBlockEntity projector = projector(helper);
+        projector.apply(ProjectorSettings.FRESH.choosing(TestMultiblocks.FURNACE_ID));
+        helper.setBlock(CONTROLLER, Blocks.DIRT);
+        final ProjectorView wrong = ProjectorView.of(helper.getLevel(), projector).orElseThrow();
+        helper.assertTrue(stateAt(wrong, helper.absolutePos(CONTROLLER)) == ProjectorView.State.WRONG,
+                "dirt where the furnace's named controller goes is wrong");
+        helper.setBlock(CONTROLLER, TestMultiblocks.CONTROLLER.get());
+        final ProjectorView right = ProjectorView.of(helper.getLevel(), projector).orElseThrow();
+        helper.assertTrue(stateAt(right, helper.absolutePos(CONTROLLER)) == ProjectorView.State.PLACED,
+                "the controller itself is placed");
+        helper.succeed();
+    }
+
+    private static ProjectorView.State stateAt(final ProjectorView view, final BlockPos at) {
+        return view.places().stream().filter(place -> place.pos().equals(at)).findFirst().orElseThrow().state();
+    }
+
     private static StructureProjectorBlockEntity projector(final GameTestHelper helper) {
         helper.setBlock(PROJECTOR, StructureProjector.BLOCK.get());
         if (helper.getBlockEntity(PROJECTOR) instanceof StructureProjectorBlockEntity projector) {

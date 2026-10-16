@@ -38,15 +38,17 @@ public record ProjectorView(ShapePreview preview, BlockPos controller, List<Plac
 
     /** What {@code projector} sees in {@code level}, when it has a multiblock to show. */
     public static Optional<ProjectorView> of(final BlockGetter level, final StructureProjectorBlockEntity projector) {
-        return projector.preview().map(preview -> {
-            final BlockPos controller = projector.controllerOf(preview);
-            final List<Place> places = new ArrayList<>();
-            for (final ShapePreview.Ghost ghost : preview.ghosts()) {
-                final BlockPos at = controller.offset(ghost.x(), ghost.y(), ghost.z());
-                places.add(new Place(at, ghost, stateOf(level.getBlockState(at), ghost)));
-            }
-            return new ProjectorView(preview, controller, places);
-        });
+        return projector.preview().map(preview -> of(level, preview, projector.controllerOf(preview)));
+    }
+
+    /** What is seen in {@code level} of {@code preview} with its controller at {@code controller}. */
+    public static ProjectorView of(final BlockGetter level, final ShapePreview preview, final BlockPos controller) {
+        final List<Place> places = new ArrayList<>();
+        for (final ShapePreview.Ghost ghost : preview.ghosts()) {
+            final BlockPos at = controller.offset(ghost.x(), ghost.y(), ghost.z());
+            places.add(new Place(at, ghost, stateOf(level.getBlockState(at), ghost)));
+        }
+        return new ProjectorView(preview, controller, places);
     }
 
     /** How many places hold the right block. */
@@ -90,11 +92,11 @@ public record ProjectorView(ShapePreview preview, BlockPos controller, List<Plac
     }
 
     /*
-     * Whether the block at a place is right: one of its blocks, or of its tags; for the controller's place, any block.
-     * An empty place, or one a block could be placed in, is missing; anything else is wrong.
+     * Whether the block at a place is right: one of its blocks, or of its tags; for the controller's place whose block
+     * is not known, any block. An empty place, or one a block could be placed in, is missing; anything else is wrong.
      */
     private static State stateOf(final BlockState state, final ShapePreview.Ghost ghost) {
-        if (ghost.controller()) {
+        if (ghost.controller() && ghost.blocks().isEmpty()) {
             return state.isAir() ? State.MISSING : State.PLACED;
         }
         final String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();

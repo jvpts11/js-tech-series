@@ -55,4 +55,14 @@ public record PatternById(ResourceLocation id) implements IStructureShape {
     public @Nullable IBlockMatcher wanted(final String wanted) {
         return MultiblockPatterns.get(this.id).map(pattern -> pattern.wanted(wanted)).orElse(null);
     }
+
+    @Override
+    public boolean mirrors() {
+        return MultiblockPatterns.get(this.id).map(MultiblockPattern::mirrors).orElse(false);
+    }
+
+    @Override
+    public boolean liesDown() {
+        return MultiblockPatterns.get(this.id).map(MultiblockPattern::liesDown).orElse(false);
+    }
 }

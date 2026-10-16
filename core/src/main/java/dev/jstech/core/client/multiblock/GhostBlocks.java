@@ -40,14 +40,19 @@ public final class GhostBlocks {
 
     /** Every block {@code ghost} takes, its own and those of its tags, in their order, each once. */
     public static List<Block> choicesOf(final ShapePreview.Ghost ghost) {
+        return choicesOf(ghost.blocks(), ghost.tags());
+    }
+
+    /** Every block of {@code blocks} the game knows and of {@code tags}, in their order, each once. */
+    public static List<Block> choicesOf(final List<String> blocks, final List<String> tags) {
         final Set<Block> out = new LinkedHashSet<>();
-        for (final String id : ghost.blocks()) {
+        for (final String id : blocks) {
             final Block block = blockOf(id);
             if (block != null) {
                 out.add(block);
             }
         }
-        for (final String tag : ghost.tags()) {
+        for (final String tag : tags) {
             final ResourceLocation tagId = ResourceLocation.tryParse(tag);
             if (tagId != null) {
                 BuiltInRegistries.BLOCK.getTag(TagKey.create(Registries.BLOCK, tagId))
@@ -55,6 +60,15 @@ public final class GhostBlocks {
             }
         }
         return List.copyOf(out);
+    }
+
+    /** The blocks {@code first} (a block id, or a tag as {@code #namespace:path}) stands for: it, or the tag's. */
+    public static List<Block> blocksOf(@Nullable final String first) {
+        if (first == null) {
+            return List.of();
+        }
+        return first.startsWith("#") ? choicesOf(List.of(), List.of(first.substring(1)))
+                : choicesOf(List.of(first), List.of());
     }
 
     /** What {@code first} (a block id, or a tag as {@code #namespace:path}) is called. */

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -82,6 +83,47 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
         return controller;
     }
 
+    /**
+     * The same with {@code block}, by id, at its controller's place, when the shape named none there: the block a
+     * machine's controller is, known to whoever declared the machine rather than to its shape.
+     */
+    public ShapePreview withController(final String block) {
+        final List<Ghost> named = new ArrayList<>();
+        for (final Ghost ghost : this.ghosts) {
+            named.add(ghost.controller() && ghost.blocks().isEmpty() ? new Ghost(ghost.x(), ghost.y(), ghost.z(),
+                    ghost.layer(), List.of(block), List.of(), true) : ghost);
+        }
+        return new ShapePreview(named, this.minX, this.minY, this.minZ, this.sizeX, this.sizeY, this.sizeZ);
+    }
+
+    /** The id of the block at its controller's place, when it is known. */
+    public Optional<String> controllerBlock() {
+        return this.ghosts.stream().filter(Ghost::controller).findFirst().map(Ghost::first);
+    }
+
+    /**
+     * The places where more than one block will do, grouped by what will do there, in the order they are first met:
+     * each group's blocks and tags, air left out, and how many places take it. A place that takes one block or one
+     * tag is not in it.
+     */
+    public List<Choice> choices() {
+        final Map<List<String>, Choice> groups = new LinkedHashMap<>();
+        for (final Ghost ghost : this.ghosts) {
+            if (ghost.controller()) {
+                continue;
+            }
+            final List<String> blocks = ghost.blocks().stream().filter(block -> !Cells.AIR.equals(block)).toList();
+            if (blocks.size() + ghost.tags().size() < 2) {
+                continue;
+            }
+            final List<String> key = new ArrayList<>(blocks);
+            ghost.tags().forEach(tag -> key.add("#" + tag));
+            groups.merge(key, new Choice(blocks, ghost.tags(), 1),
+                    (known, more) -> new Choice(known.blocks(), known.tags(), known.places() + 1));
+        }
+        return List.copyOf(groups.values());
+    }
+
     /** How many layers it has. */
     public int layers() {
         return this.sizeY;
@@ -113,6 +155,21 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
         final Map<String, Integer> out = new LinkedHashMap<>();
         sorted.forEach(entry -> out.put(entry.getKey(), entry.getValue()));
         return out;
+    }
+
+    /**
+     * What will do at some of a shape's places.
+     *
+     * @param blocks the blocks that do, by id
+     * @param tags   the tags whose blocks do too
+     * @param places how many places take any of them
+     */
+    public record Choice(List<String> blocks, List<String> tags, int places) {
+
+        public Choice {
+            blocks = List.copyOf(blocks);
+            tags = List.copyOf(tags);
+        }
     }
 
     /**

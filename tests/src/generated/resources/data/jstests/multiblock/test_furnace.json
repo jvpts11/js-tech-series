@@ -1,4 +1,5 @@
 {
+  "controller": "jstests:test_furnace_controller",
   "key": {
     "E": {
       "blocks": [

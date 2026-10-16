@@ -47,7 +47,8 @@ final class ShapePreviews {
                 }
             }
         }
-        return ShapePreview.of(ghosts);
+        final ShapePreview laid = ShapePreview.of(ghosts);
+        return pattern.controllerBlock().map(laid::withController).orElse(laid);
     }
 
     /** {@code box} at its least sides and height, {@code grow} more each, its controller amid its north face. */

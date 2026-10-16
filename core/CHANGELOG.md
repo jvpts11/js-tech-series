@@ -401,6 +401,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Its screen previews the multiblock in 3D layer by layer and chooses it from the list of every multiblock, its turn,
   its mirror, its layer and whether only what is missing shows. Every multiblock is listed with nothing more to write,
   and a mod can hide one.
+- Multiblocks in JEI and EMI: every multiblock that can be shown has a page of its own, with the multiblock in
+  3D turned by a drag or a click, a button for each layer, the blocks that will do where more than one does, how it
+  may stand, its materials with how many of each, its size, and buttons that show its ghosts in front of the player
+  and open its page in the manual. Looking up a block's uses finds the multiblocks built of it, and looking up a
+  controller finds how to build it.
+- A multiblock pattern names its controller's block, in code and in its file, so the projector and the recipe
+  viewers show the controller in its place and count it; a machine declared as data has its controller block found by
+  itself.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

@@ -14,6 +14,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.multiblock.FadedConsumer;
 import dev.jstech.core.client.multiblock.GhostBlocks;
+import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.jstechseries.projector.ProjectorSettings;
 import dev.jstech.core.jstechseries.projector.ProjectorTexts;
 import dev.jstech.core.jstechseries.projector.ProjectorView;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalDouble;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -44,9 +46,11 @@ import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -65,7 +69,8 @@ import org.jetbrains.annotations.Nullable;
  * the blocks still missing are drawn as ghosts, pale and see-through, a block that is wrong is outlined in red through
  * whatever stands between, the controller's place is outlined in cyan until it is built, and above the structure float
  * its name, its size and how much is in place, missing and wrong. A ghost looked at says what goes there and on which
- * layer, beside the crosshair. Its screen is registered here too.
+ * layer, beside the crosshair. A multiblock a recipe viewer's button asks to show is shown the same way, as a projector
+ * at the player's feet would show it, until it is built or the player walks away. Its screen is registered here too.
  */
 @PaletteHolder
 public final class ProjectorClient {
@@ -94,18 +99,24 @@ public final class ProjectorClient {
     /* What each projector saw when it last looked, by its place, and when it looked. */
     private static final Map<BlockPos, Seen> SEEN = new HashMap<>();
 
+    /* The multiblock a recipe viewer asked to show in front of the player, and what was last seen of it. */
+    @Nullable
+    private static Held held;
+
     private ProjectorClient() {
     }
 
     /** Hands the mod's bus and the game's what this answers, once, from the Core's client. */
     public static void listen(final IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, ProjectorClient::onRender);
-        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> SEEN.clear());
-        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.Clone.class, event -> SEEN.clear());
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> forget());
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.Clone.class, event -> forget());
         modBus.addListener(RegisterGuiLayersEvent.class, event -> event.registerAbove(VanillaGuiLayers.CROSSHAIR,
                 LAYER, ProjectorClient::drawLooked));
         modBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(StructureProjector.MENU.get(),
                 StructureProjectorScreen::new));
+        MultiblockShows.addTool(() -> new ItemStack(StructureProjector.BLOCK.asItem()));
+        MultiblockShows.showsInWorld(new HeldShow());
     }
 
     /** What {@code projector} sees now, read again when it is older than a moment or its settings changed. */
@@ -137,16 +148,44 @@ public final class ProjectorClient {
         final Camera camera = event.getCamera();
         final PoseStack pose = event.getPoseStack();
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-        for (final StructureProjectorBlockEntity projector : shown(minecraft.player)) {
-            final ProjectorView view = seen(projector);
-            if (view != null) {
-                drawGhosts(pose, camera, buffers, minecraft.getBlockRenderer(), view, projector.settings());
-                drawWords(pose, camera, minecraft.font, buffers, projector, view);
-            }
+        for (final Projection projection : projections(minecraft.player)) {
+            drawGhosts(pose, camera, buffers, minecraft.getBlockRenderer(), projection.view(), projection.settings());
+            drawWords(pose, camera, minecraft.font, buffers, projection.settings().chosen().orElseThrow(),
+                    projection.view());
         }
         buffers.endBatch(Sheets.translucentCullBlockSheet());
         buffers.endBatch(SeenThrough.LINES);
         buffers.endBatch();
+    }
+
+    /*
+     * Everything shown to the player now: what each projector near enough sees, and the multiblock a recipe viewer
+     * asked to show, which goes once it is built or the player walks away from it.
+     */
+    private static List<Projection> projections(final Player player) {
+        final List<Projection> out = new ArrayList<>();
+        for (final StructureProjectorBlockEntity projector : shown(player)) {
+            final ProjectorView view = seen(projector);
+            if (view != null) {
+                out.add(new Projection(projector.settings(), view));
+            }
+        }
+        final Held showing = held;
+        if (showing != null) {
+            final ProjectorView view = showing.view(player);
+            if (view == null || showing.at().distToCenterSqr(player.position()) > RANGE * RANGE
+                    || view.missing() == 0 && view.wrong() == 0) {
+                held = null;
+            } else {
+                out.add(new Projection(showing.settings(), view));
+            }
+        }
+        return out;
+    }
+
+    private static void forget() {
+        SEEN.clear();
+        held = null;
     }
 
     /* The projectors loaded in the player's level, showing, near enough to be drawn. */
@@ -180,7 +219,7 @@ public final class ProjectorClient {
                     continue;
                 }
             }
-            final BlockState state = place.ghost().controller() ? null : GhostBlocks.stateOf(place.ghost());
+            final BlockState state = GhostBlocks.stateOf(place.ghost());
             if (state == null) {
                 outline(pose, eye, lines, at, PALETTE.get().controllerMark());
                 continue;
@@ -206,12 +245,12 @@ public final class ProjectorClient {
 
     /* The words above the structure, every line facing the camera. */
     private static void drawWords(final PoseStack pose, final Camera camera, final Font font,
-                                  final MultiBufferSource buffers, final StructureProjectorBlockEntity projector,
+                                  final MultiBufferSource buffers, final ResourceLocation id,
                                   final ProjectorView view) {
         final ShapePreview preview = view.preview();
         final Vec3 top = Vec3.atLowerCornerOf(view.controller()).add(preview.minX() + preview.sizeX() / 2.0,
                 preview.minY() + preview.sizeY() + 1.2, preview.minZ() + preview.sizeZ() / 2.0);
-        final List<Line> lines = words(projector, view);
+        final List<Line> lines = words(id, view);
         final Vec3 from = top.subtract(camera.getPosition());
         pose.pushPose();
         pose.translate(from.x, from.y, from.z);
@@ -231,10 +270,9 @@ public final class ProjectorClient {
     }
 
     /* What floats above the structure: its name, mod and size; how much is in place; what is missing; what wrong. */
-    private static List<Line> words(final StructureProjectorBlockEntity projector, final ProjectorView view) {
+    private static List<Line> words(final ResourceLocation id, final ProjectorView view) {
         final Colours c = PALETTE.get();
         final List<Line> lines = new ArrayList<>();
-        final ResourceLocation id = projector.settings().chosen().orElseThrow();
         final ShapePreview preview = view.preview();
         lines.add(new Line(GameText.component(ProjectorTexts.SIZE_LINE.with(Projectables.name(id),
                 ScreenWords.modName(id), preview.sizeX(), preview.sizeY(), preview.sizeZ())), c.title()));
@@ -265,29 +303,26 @@ public final class ProjectorClient {
         if (minecraft.player == null || minecraft.level == null || minecraft.screen != null) {
             return;
         }
-        final ProjectorView.Place looked = looked(minecraft.player, delta.getGameTimeDeltaPartialTick(true));
+        final Looked looked = looked(minecraft.player, delta.getGameTimeDeltaPartialTick(true));
         if (looked == null) {
             return;
         }
-        final Component what = looked.ghost().controller() ? GameText.component(ProjectorTexts.CONTROLLER)
-                : GhostBlocks.nameOf(looked.ghost().first());
-        final int layers = layersOf(looked);
+        final ShapePreview.Ghost ghost = looked.place().ghost();
+        final Component what = ghost.first() == null ? GameText.component(ProjectorTexts.CONTROLLER)
+                : GhostBlocks.nameOf(ghost.first());
         g.renderComponentTooltip(minecraft.font, List.of(what, GameText.component(ProjectorTexts.GHOST_LAYER.with(
-                looked.ghost().layer() + 1, layers))), g.guiWidth() / 2 + TOOLTIP_OFFSET,
+                ghost.layer() + 1, looked.layers()))), g.guiWidth() / 2 + TOOLTIP_OFFSET,
                 g.guiHeight() / 2 + TOOLTIP_OFFSET);
     }
 
     /* The ghost along the player's look, nearer than any real block they look at; none for none. */
     @Nullable
-    private static ProjectorView.Place looked(final Player player, final float partial) {
-        final Map<BlockPos, ProjectorView.Place> ghosts = new HashMap<>();
-        for (final StructureProjectorBlockEntity projector : shown(player)) {
-            final ProjectorView view = seen(projector);
-            if (view != null) {
-                for (final ProjectorView.Place place : view.upTo(projector.settings().layer())) {
-                    if (place.state() != ProjectorView.State.PLACED) {
-                        ghosts.put(place.pos(), place);
-                    }
+    private static Looked looked(final Player player, final float partial) {
+        final Map<BlockPos, Looked> ghosts = new HashMap<>();
+        for (final Projection projection : projections(player)) {
+            for (final ProjectorView.Place place : projection.view().upTo(projection.settings().layer())) {
+                if (place.state() != ProjectorView.State.PLACED) {
+                    ghosts.put(place.pos(), new Looked(place, projection.view().preview().layers()));
                 }
             }
         }
@@ -298,7 +333,7 @@ public final class ProjectorClient {
         final Vec3 look = player.getViewVector(partial);
         for (double t = 0; t <= REACH; t += LOOK_STEP) {
             final BlockPos at = BlockPos.containing(eye.add(look.scale(t)));
-            final ProjectorView.Place place = ghosts.get(at);
+            final Looked place = ghosts.get(at);
             if (place != null) {
                 return place;
             }
@@ -309,17 +344,86 @@ public final class ProjectorClient {
         return null;
     }
 
-    private static int layersOf(final ProjectorView.Place place) {
-        for (final Seen seen : SEEN.values()) {
-            if (seen.view() != null && seen.view().places().contains(place)) {
-                return seen.view().preview().layers();
-            }
-        }
-        return place.ghost().layer() + 1;
-    }
-
     /** What a projector last saw, with the settings it saw it with and when. */
     private record Seen(ProjectorSettings settings, long at, @Nullable ProjectorView view) {
+    }
+
+    /** One multiblock shown: how it is shown and what is seen of it. */
+    private record Projection(ProjectorSettings settings, ProjectorView view) {
+    }
+
+    /** A ghost looked at, and how many layers its multiblock has. */
+    private record Looked(ProjectorView.Place place, int layers) {
+    }
+
+    /**
+     * The multiblock a recipe viewer asked to show, as a projector at the player's feet facing where they looked
+     * would show it, and what was last seen of it and when.
+     */
+    private static final class Held {
+
+        private final ResourceLocation id;
+        private final BlockPos at;
+        private final Direction facing;
+        private final ProjectorSettings settings;
+        @Nullable
+        private ProjectorView seen;
+        private long seenAt = Long.MIN_VALUE;
+
+        private Held(final ResourceLocation id, final BlockPos at, final Direction facing) {
+            this.id = id;
+            this.at = at.immutable();
+            this.facing = facing;
+            this.settings = ProjectorSettings.FRESH.choosing(id);
+        }
+
+        ResourceLocation id() {
+            return this.id;
+        }
+
+        BlockPos at() {
+            return this.at;
+        }
+
+        ProjectorSettings settings() {
+            return this.settings;
+        }
+
+        /* What is seen of it now, read again when older than a moment; none when it can no longer be shown. */
+        @Nullable
+        ProjectorView view(final Player player) {
+            final long now = player.level().getGameTime();
+            if (this.seen != null && now - this.seenAt < READ_EVERY) {
+                return this.seen;
+            }
+            final Optional<ShapePreview> preview = Projectables.preview(this.id, 0);
+            if (preview.isEmpty()) {
+                return null;
+            }
+            final int axis = this.facing.getAxis() == Direction.Axis.X ? 0 : 2;
+            final int[] controller = preview.get().anchor(this.at.getX(), this.at.getY(), this.at.getZ(), axis,
+                    this.facing.getAxisDirection().getStep());
+            this.seen = ProjectorView.of(player.level(), preview.get(),
+                    new BlockPos(controller[0], controller[1], controller[2]));
+            this.seenAt = now;
+            return this.seen;
+        }
+    }
+
+    /* What shows a multiblock in front of the player when a recipe viewer's button asks. */
+    private static final class HeldShow implements MultiblockShows.IWorldShow {
+
+        @Override
+        public void show(@Nullable final ResourceLocation id) {
+            final Player player = Minecraft.getInstance().player;
+            held = id == null || player == null ? null : new Held(id, player.blockPosition(), player.getDirection());
+        }
+
+        @Override
+        public Optional<ResourceLocation> shown() {
+            final Held showing = held;
+            return showing == null ? Optional.empty() : Optional.of(showing.id());
+        }
     }
 
     /** One line of the words above a structure, and its colour. */

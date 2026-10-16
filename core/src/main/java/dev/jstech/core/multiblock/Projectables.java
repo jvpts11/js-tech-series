@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 
@@ -31,6 +32,9 @@ public final class Projectables {
     /* Where the shown multiblocks come from: the patterns first, then what other kits add, in the order added. */
     private static final List<Supplier<Map<ResourceLocation, IStructureShape>>> SOURCES =
             new CopyOnWriteArrayList<>(List.of(MultiblockPatterns::projectable));
+    /* Who knows a multiblock's controller block besides its pattern: the kits whose controllers name their shape. */
+    private static final List<Function<ResourceLocation, Optional<String>>> CONTROLLERS =
+            new CopyOnWriteArrayList<>();
 
     private Projectables() {
     }
@@ -38,6 +42,41 @@ public final class Projectables {
     /** Adds the multiblocks {@code source} gives, after those known already; an id known already keeps its first. */
     public static void addSource(final Supplier<Map<ResourceLocation, IStructureShape>> source) {
         SOURCES.add(source);
+    }
+
+    /**
+     * Adds a way to find the block of a multiblock's controller, by the multiblock's id, for the multiblocks whose
+     * shape does not name it: asked in the order added, after the pattern.
+     */
+    public static void addControllers(final Function<ResourceLocation, Optional<String>> source) {
+        CONTROLLERS.add(source);
+    }
+
+    /**
+     * The id of the block of the controller of the multiblock of {@code id}: the one its pattern names, else the
+     * first a kit knows, else none.
+     */
+    public static Optional<String> controllerOf(final ResourceLocation id) {
+        final Optional<String> named = MultiblockPatterns.get(id).flatMap(MultiblockPattern::controllerBlock);
+        if (named.isPresent()) {
+            return named;
+        }
+        for (final Function<ResourceLocation, Optional<String>> source : CONTROLLERS) {
+            final Optional<String> known = source.apply(id);
+            if (known.isPresent()) {
+                return known;
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * The multiblock of {@code id} laid out to be shown, its repeated part or its sides {@code grow} past their
+     * least, with its controller's block at its place when it is known; none for an id that cannot be shown.
+     */
+    public static Optional<ShapePreview> preview(final ResourceLocation id, final int grow) {
+        return get(id).flatMap(shape -> shape.preview(grow)).map(preview -> preview.controllerBlock().isPresent()
+                ? preview : controllerOf(id).map(preview::withController).orElse(preview));
     }
 
     /** Every multiblock that can be shown, by id, in the order of their sources and then of their ids. */

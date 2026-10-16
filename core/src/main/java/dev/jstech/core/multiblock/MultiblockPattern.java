@@ -47,6 +47,8 @@ public final class MultiblockPattern implements IStructureShape {
     private final int controllerX;
     private final int controllerY;
     private final int controllerZ;
+    @Nullable
+    private final String controllerBlock;
 
     public static final char CONTROLLER_CHAR = '#';
 
@@ -76,6 +78,7 @@ public final class MultiblockPattern implements IStructureShape {
         this.controllerX = controllerX;
         this.controllerY = controllerY;
         this.controllerZ = controllerZ;
+        this.controllerBlock = from.controllerBlock;
     }
 
     public static Builder builder(String name) {
@@ -112,11 +115,13 @@ public final class MultiblockPattern implements IStructureShape {
     }
 
     /** Whether it is also found mirrored. */
+    @Override
     public boolean mirrors() {
         return this.mirrors;
     }
 
     /** Whether it is also found lying on its side. */
+    @Override
     public boolean liesDown() {
         return this.liesDown;
     }
@@ -153,6 +158,14 @@ public final class MultiblockPattern implements IStructureShape {
     public int controllerY() { return controllerY; }
 
     public int controllerZ() { return controllerZ; }
+
+    /**
+     * The id of the block that stands at {@code #}, when the pattern names it: the matcher never needs it, since the
+     * controller is the one matching, but a projector, a recipe viewer and a manual show it there and list it.
+     */
+    public Optional<String> controllerBlock() {
+        return Optional.ofNullable(this.controllerBlock);
+    }
 
     @Override
     public ShapeMatch check(final IBlockProvider provider, final long controller) {
@@ -273,6 +286,8 @@ public final class MultiblockPattern implements IStructureShape {
         private Repeat repeat;
         @Nullable
         private Inside inside;
+        @Nullable
+        private String controllerBlock;
 
         private Builder(String name) {
             this.name = Objects.requireNonNull(name, "name must not be null");
@@ -340,6 +355,12 @@ public final class MultiblockPattern implements IStructureShape {
         /** Keeps the count {@code count} between {@code least} and {@code most}, both counted in. */
         public Builder limit(final String count, final int least, final int most) {
             limits.put(Objects.requireNonNull(count, "count must not be null"), new Limit(least, most));
+            return this;
+        }
+
+        /** Names the block that stands at {@code #}, by id, for the views that show it before it is built. */
+        public Builder controller(final String block) {
+            this.controllerBlock = Objects.requireNonNull(block, "block must not be null");
             return this;
         }
 

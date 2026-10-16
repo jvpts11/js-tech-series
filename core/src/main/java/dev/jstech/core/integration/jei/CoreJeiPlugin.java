@@ -8,7 +8,9 @@
 package dev.jstech.core.integration.jei;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
+import dev.jstech.core.client.recipeview.MultiblockRecipeViews;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
@@ -36,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The Core's bridge to JEI, which finds it by its annotation and only when JEI is installed: every mod's processing
  * machines get a category of their recipes, with the machines that work them beside it and the "+" that moves a recipe
- * into the open machine, and every screen that names areas to keep clear has the ingredient list kept off them. A mod
- * that declares its machines and its screens the Core's way writes nothing for JEI of its own.
+ * into the open machine; every multiblock that can be shown before it is built has its preview and materials; and every
+ * screen that names areas to keep clear has the ingredient list kept off them. A mod that declares its machines, its
+ * multiblocks and its screens the Core's way writes nothing for JEI of its own.
  */
 @JeiPlugin
 public final class CoreJeiPlugin implements IModPlugin {
@@ -58,6 +61,7 @@ public final class CoreJeiPlugin implements IModPlugin {
             registration.addRecipeCategories(new ProcessingCategory(kind, gui,
                     ProcessingRecipeViews.largest(recipes)));
         }
+        registration.addRecipeCategories(new MultiblockCategory(gui));
     }
 
     @Override
@@ -65,6 +69,7 @@ public final class CoreJeiPlugin implements IModPlugin {
         for (final ProcessingKind kind : ProcessingRecipeViews.kinds()) {
             registration.addRecipes(ProcessingCategory.typeOf(kind), recipesOf(kind));
         }
+        registration.addRecipes(MultiblockCategory.TYPE, MultiblockRecipeViews.entries());
     }
 
     @Override
@@ -73,6 +78,9 @@ public final class CoreJeiPlugin implements IModPlugin {
             for (final ItemStack machine : ProcessingRecipeViews.machineStacks(kind)) {
                 registration.addRecipeCatalyst(machine, ProcessingCategory.typeOf(kind));
             }
+        }
+        for (final ItemStack tool : MultiblockShows.tools()) {
+            registration.addRecipeCatalyst(tool, MultiblockCategory.TYPE);
         }
     }
 

@@ -121,12 +121,27 @@ public final class GuideClient {
      * @return whether the item has a page
      */
     public static boolean openPageOf(final ItemStack stack) {
+        return openPageOf(stack, null);
+    }
+
+    /**
+     * Opens the page of an item from {@code parent}, which closing the manual goes back to.
+     *
+     * @return whether the item has a page
+     */
+    public static boolean openPageOf(final ItemStack stack, @Nullable final Screen parent) {
         final String entry = pageFor(stack);
         if (entry.isEmpty()) {
             return false;
         }
         final Optional<GuideManual> manual = GuideLibrary.loaded().manualFor(entry);
-        return manual.isPresent() && open(manual.get().id(), entry);
+        return manual.isPresent() && open(manual.get().id(), entry, parent);
+    }
+
+    /** Whether an item has a page in a manual. */
+    public static boolean hasPage(final ItemStack stack) {
+        final String entry = pageFor(stack);
+        return !entry.isEmpty() && GuideLibrary.loaded().manualFor(entry).isPresent();
     }
 
     /** How far the manual key has been held over an item with a page, from 0 to 1; 0 when it is not. */

@@ -66,6 +66,7 @@ public final class TestMultiblocks {
                     .port('O', PortKind.ITEM_OUTPUT)
                     .port('E', PortKind.ENERGY_INPUT)
                     .port('G', PortKind.GAS_INPUT)
+                    .controller("jstests:test_furnace_controller")
                     .build());
 
     /** A pattern its mod declares not to be shown before it is built, to prove the projector leaves it out. */

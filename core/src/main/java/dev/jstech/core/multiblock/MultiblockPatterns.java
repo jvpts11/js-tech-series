@@ -48,12 +48,14 @@ import net.minecraft.world.level.block.Block;
  * a mod ships is the one a pack overrides.
  *
  * <p>A pattern's file is its layers from the bottom up, each a list of rows from north to south written west to east,
- * a key giving each letter the blocks or tags that fit it, and the letters whose slots are ports:
+ * a key giving each letter the blocks or tags that fit it, the letters whose slots are ports, and the block that stands
+ * at {@code #}, which the views that show a multiblock before it is built draw there:
  *
  * <pre>{@code
  * {"layers": [["AIA", "A#A", "AOA"]],
  *  "key": {"A": {"blocks": ["minecraft:iron_block"]}, "I": {"tags": ["minecraft:logs"]}, ...},
- *  "ports": {"I": "item_input", "O": "item_output"}}
+ *  "ports": {"I": "item_input", "O": "item_output"},
+ *  "controller": "mymod:smelter"}
  * }</pre>
  *
  * <p>A structure saved with a structure block reads as a pattern too, through {@link #fromStructure}: the block that
@@ -81,7 +83,8 @@ public final class MultiblockPatterns {
                                             ShapeCodecs.INSIDE.fieldOf("rule")
                                                     .forGetter(MultiblockPattern.Inside::rule))
                                     .apply(inside, MultiblockPattern.Inside::new)).optionalFieldOf("inside")
-                                    .forGetter(RawPattern::inside))
+                                    .forGetter(RawPattern::inside),
+                            Codec.STRING.optionalFieldOf("controller").forGetter(RawPattern::controller))
                             .apply(instance, RawPattern::new))
             .flatXmap(MultiblockPatterns::build, MultiblockPatterns::raw);
 
@@ -119,6 +122,10 @@ public final class MultiblockPatterns {
                         + "\", which is not an id");
             }
         }
+        pattern.controllerBlock().filter(block -> ResourceLocation.tryParse(block) == null).ifPresent(block -> {
+            throw new IllegalArgumentException("the multiblock pattern " + id + " names its controller \"" + block
+                    + "\", which is not an id");
+        });
         if (DECLARED.putIfAbsent(id, pattern) != null) {
             throw DeclarationError.of(id.getNamespace(), "the multiblock pattern " + id, "is declared twice",
                     "declare it once; a file of the same id in a data pack replaces it without a second declaration");
@@ -277,7 +284,7 @@ public final class MultiblockPatterns {
             }
             grid[pos.getInt(1)][pos.getInt(2)][pos.getInt(0)] = letter;
         }
-        final MultiblockPattern.Builder builder = MultiblockPattern.builder(name);
+        final MultiblockPattern.Builder builder = MultiblockPattern.builder(name).controller(controllerBlock);
         for (final char[][] layer : grid) {
             final String[] rows = new String[sz];
             for (int z = 0; z < sz; z++) {
@@ -349,6 +356,7 @@ public final class MultiblockPatterns {
             }
             raw.repeat().ifPresent(builder::repeat);
             raw.inside().ifPresent(inside -> builder.inside(inside.letter(), inside.rule()));
+            raw.controller().ifPresent(builder::controller);
             return DataResult.success(builder.build());
         } catch (final IllegalArgumentException | IllegalStateException wrong) {
             return DataResult.error(wrong::getMessage);
@@ -367,12 +375,13 @@ public final class MultiblockPatterns {
             layers.add(List.of(pattern.rows(y)));
         }
         return DataResult.success(new RawPattern(pattern.name(), layers, pattern.places(), pattern.ports(),
-                pattern.limits(), pattern.mirrors(), pattern.liesDown(), pattern.repeat(), pattern.inside()));
+                pattern.limits(), pattern.mirrors(), pattern.liesDown(), pattern.repeat(), pattern.inside(),
+                pattern.controllerBlock()));
     }
 
     private record RawPattern(String name, List<List<String>> layers, Map<Character, Place> key,
                               Map<Character, PortKind> ports, Map<String, Limit> limits, boolean mirrors,
                               boolean liesDown, Optional<MultiblockPattern.Repeat> repeat,
-                              Optional<MultiblockPattern.Inside> inside) {
+                              Optional<MultiblockPattern.Inside> inside, Optional<String> controller) {
     }
 }

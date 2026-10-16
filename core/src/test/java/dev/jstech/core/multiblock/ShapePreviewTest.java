@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class ShapePreviewTest {
@@ -38,6 +39,48 @@ class ShapePreviewTest {
         assertEquals(17, preview.blocks());
         assertTrue(preview.layer(0).stream().anyMatch(ShapePreview.Ghost::controller));
         assertEquals(Map.of(CASING, 12, GLASS, 4), preview.materials());
+    }
+
+    @Test
+    void pattern_showsTheControllerItNamesAndListsItApart() {
+        final MultiblockPattern pattern = MultiblockPattern.builder("smelter")
+                .layer("C#C")
+                .where('C', BlockMatch.blocks(CASING))
+                .controller("test:smelter")
+                .build();
+        final ShapePreview preview = ShapePreviews.pattern(pattern, Orientation.NORTH, 0);
+        assertEquals(Optional.of("test:smelter"), preview.controllerBlock());
+        assertEquals(Map.of(CASING, 2), preview.materials());
+    }
+
+    @Test
+    void withController_namesOnlyAControllerTheShapeLeftUnnamed() {
+        final MultiblockPattern bare = MultiblockPattern.builder("bare")
+                .layer("C#")
+                .where('C', BlockMatch.blocks(CASING))
+                .build();
+        final ShapePreview unnamed = ShapePreviews.pattern(bare, Orientation.NORTH, 0);
+        assertEquals(Optional.empty(), unnamed.controllerBlock());
+        final ShapePreview named = unnamed.withController("test:first");
+        assertEquals(Optional.of("test:first"), named.controllerBlock());
+        assertEquals(Optional.of("test:first"), named.withController("test:second").controllerBlock());
+        assertEquals(unnamed.blocks(), named.blocks());
+    }
+
+    @Test
+    void choices_groupThePlacesWhereMoreThanOneBlockWillDo() {
+        final MultiblockPattern pattern = MultiblockPattern.builder("windows")
+                .layer("CGC", "G#W")
+                .where('C', BlockMatch.blocks(CASING))
+                .where('G', new BlockMatch(List.of(GLASS, "test:tinted"), List.of()))
+                .where('W', new BlockMatch(List.of(GLASS), List.of("test:windows")))
+                .build();
+        final List<ShapePreview.Choice> choices = ShapePreviews.pattern(pattern, Orientation.NORTH, 0).choices();
+        assertEquals(2, choices.size());
+        assertEquals(List.of(GLASS, "test:tinted"), choices.getFirst().blocks());
+        assertEquals(2, choices.getFirst().places());
+        assertEquals(List.of("test:windows"), choices.get(1).tags());
+        assertEquals(1, choices.get(1).places());
     }
 
     @Test

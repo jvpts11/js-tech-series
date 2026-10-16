@@ -1,0 +1,9 @@
+{
+  "button": "#FFFFFFFF",
+  "buttonOff": "#FFA0A0A0",
+  "ground": "#FF8B8B8B",
+  "hint": "#FF5A5A5A",
+  "light": "#FFFFFFFF",
+  "shade": "#FF373737",
+  "text": "#FF404040"
+}

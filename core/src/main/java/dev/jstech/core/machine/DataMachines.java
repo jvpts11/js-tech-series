@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The multiblock machines data packs declare, by id: each file under {@code data/<namespace>/multiblock_machine/}
@@ -124,9 +126,14 @@ public final class DataMachines {
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "multiblock_machine"), "multiblock_machine", CODEC)
             .synced().register();
 
+    /* Every controller block built on DataMachineBlock, read once the blocks are all registered. */
+    @Nullable
+    private static volatile List<DataMachineBlock> controllers;
+
     static {
         // A machine whose shape names a pattern by id is shown as that pattern; the others are shown as themselves.
         Projectables.addSource(DataMachines::shown);
+        Projectables.addControllers(DataMachines::controllerOf);
     }
 
     private DataMachines() {
@@ -162,6 +169,27 @@ public final class DataMachines {
         FILES.entries().forEach((id, machine) -> out.put(id, machine.shape()));
         out.values().removeIf(shape -> shape instanceof PatternById);
         return out;
+    }
+
+    /*
+     * The block of the controller of the multiblock {@code id}: the controller block of the machine of that id, or of
+     * a machine whose shape is the pattern of that id. A block naming a file there is not controls nothing.
+     */
+    private static Optional<String> controllerOf(final ResourceLocation id) {
+        List<DataMachineBlock> known = controllers;
+        if (known == null) {
+            known = BuiltInRegistries.BLOCK.stream().filter(DataMachineBlock.class::isInstance)
+                    .map(DataMachineBlock.class::cast).toList();
+            controllers = known;
+        }
+        for (final DataMachineBlock controller : known) {
+            final ResourceLocation machine = controller.machine();
+            if (get(machine).map(DataMachine::shape).filter(shape -> machine.equals(id)
+                    || shape instanceof PatternById byId && byId.id().equals(id)).isPresent()) {
+                return Optional.of(BuiltInRegistries.BLOCK.getKey(controller).toString());
+            }
+        }
+        return Optional.empty();
     }
 
     private static DataResult<IStructureShape> shape(final RawShape raw) {

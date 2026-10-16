@@ -36,6 +36,16 @@ public interface IStructureShape {
     @Nullable
     IBlockMatcher wanted(String wanted);
 
+    /** Whether it is also found mirrored, besides its four turns; a shape a rule gives is the same either way. */
+    default boolean mirrors() {
+        return false;
+    }
+
+    /** Whether it is also found lying on its side. */
+    default boolean liesDown() {
+        return false;
+    }
+
     /**
      * The shape laid out as it stands facing north, to be shown before it is built: at its least size, grown by
      * {@code grow} (more repeats of a pattern's slice, longer sides of a box), or none for a shape that cannot be

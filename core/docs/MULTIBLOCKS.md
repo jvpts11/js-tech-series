@@ -33,6 +33,9 @@ public static final MultiblockPattern FURNACE = MultiblockPatterns.declare(rl("f
   block of a tag.
 - `port` marks a letter as a port of a kind: `ITEM_INPUT`, `ITEM_OUTPUT`, `FLUID_INPUT`, `FLUID_OUTPUT`,
   `ENERGY_INPUT`, `ENERGY_OUTPUT`.
+- `controller("mymod:furnace_controller")` names the block that stands at `#`. Matching never needs it, since the
+  controller is the one matching, but the views that show a multiblock before it is built draw it there and list it
+  (its file holds it as `"controller"`). A pattern read from a structure file names it by itself.
 - The shape is found facing any of the four horizontal ways, so a player can build it turned.
 
 ### Patterns are data
@@ -374,9 +377,10 @@ number, and Jade shows it ("Runs 4 at once").
 The **Structure Projector**, a block of the Core's shared content, shows any multiblock of any installed mod in the
 world, in front of itself: its near side a block away, its middle across from the projector, its bottom level with
 it. The places still empty are drawn as ghosts, the block that goes there pale and see-through; a block that is
-wrong is outlined in red, seen through whatever stands between; the controller's place is outlined in cyan until it
-is built; and above the structure float its name, its mod, its size, how much is in place, what is missing and what
-is wrong. Looking at a ghost says what goes there and on which layer.
+wrong is outlined in red, seen through whatever stands between; the controller is a ghost too when its block is known,
+and its place is outlined in cyan until it is built when it is not; and above the structure float its name, its mod,
+its size, how much is in place, what is missing and what is wrong. Looking at a ghost says what goes there and on
+which layer.
 
 Its screen has no inventory, since a projector holds nothing: the multiblock in 3D (the layer shown whole, those below
 as ghosts, turned by dragging), the list of the multiblocks, what is placed, missing and wrong in the world, and the
@@ -395,9 +399,29 @@ MultiblockPatterns.declare(rl("secret_core"), pattern, false);   // projectable:
   slice its least times, a box its least sides) grown by `grow`, each with its offset from the controller, its layer
   and the blocks and tags that go there; `preview.turned(orientation)` stands it another way, and
   `preview.materials()` counts what it takes.
-- A kit of its own that has multiblocks to show adds them with `Projectables.addSource(...)`.
+- A kit of its own that has multiblocks to show adds them with `Projectables.addSource(...)`, and the controllers it
+  knows with `Projectables.addControllers(...)`. A multiblock's controller is the block its pattern names, else the
+  block built on `DataMachineBlock` for its file (or for a machine whose shape is that pattern);
+  `Projectables.preview(id, grow)` lays it out with the controller at its place.
 - What the projector sees, `ProjectorView.of(level, projector)`, is worked out on whichever side asks, from the world
   that side holds: the projector does no work on the server.
+
+### In the recipe viewers
+
+With JEI or EMI installed, every multiblock that can be shown has a page in their category **Multiblocks**, with
+nothing to write: the multiblock in 3D (dragged round in JEI, turned a step by a click in EMI), a button for each
+layer (or, past five layers, buttons that step through them), the blocks that will do at a place that takes more
+than one, how it may stand, its materials with how many of each and its controller last, how many blocks it has and
+its size. Its materials are what it takes, so looking up the uses of a block finds the multiblocks built of it; its
+controller is what it makes, so looking up the controller finds how to build it. The Structure Projector stands
+beside the category.
+
+- **Show in world** shows its ghosts in front of the player, as a projector at their feet would, until it is built or
+  they walk away; pressed again, it hides them.
+- **Open the page** opens its controller's page in the manuals, and closing the manual goes back to the viewer.
+- What both viewers show is in `MultiblockRecipeViews`, laid out by `MultiblockViewLayout` and drawn by
+  `MultiblockCard`, so the two show it alike. An item of a mod's own that shows multiblocks is listed beside them with
+  `MultiblockShows.addTool(...)`.
 
 ## Machines entirely as data
 

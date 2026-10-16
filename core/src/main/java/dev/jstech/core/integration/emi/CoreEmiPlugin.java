@@ -15,27 +15,39 @@ import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.render.EmiRenderable;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.Bounds;
+import dev.jstech.core.JsCore;
+import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
+import dev.jstech.core.client.recipeview.MultiblockEntry;
+import dev.jstech.core.client.recipeview.MultiblockRecipeViews;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.machine.Machines;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
+import dev.jstech.core.multiblock.MultiblockViewTexts;
 import dev.jstech.core.text.GameText;
 import java.util.List;
 import java.util.OptionalInt;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The Core's bridge to EMI, which finds it by its annotation and only when EMI is installed: the same as the bridge to
  * JEI, a category for every mod's processing machines with the machines as its workstations, the fill button that
- * moves a recipe into the open machine, and the areas screens name kept clear of EMI's lists.
+ * moves a recipe into the open machine, one for every multiblock that can be shown before it is built, and the areas
+ * screens name kept clear of EMI's lists.
  */
 @EmiEntrypoint
 public final class CoreEmiPlugin implements EmiPlugin {
+
+    /* The id of the multiblocks' category, the same as JEI's. */
+    private static final ResourceLocation MULTIBLOCKS = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "multiblocks");
 
     @Override
     public void register(final EmiRegistry registry) {
@@ -51,6 +63,16 @@ public final class CoreEmiPlugin implements EmiPlugin {
                     : registry.getRecipeManager().getAllRecipesFor(kind.type())) {
                 registry.addRecipe(new ProcessingEmiRecipe(category, holder));
             }
+        }
+        final List<ItemStack> tools = MultiblockShows.tools();
+        final EmiRecipeCategory multiblocks = new NamedCategory(MULTIBLOCKS,
+                tools.isEmpty() ? EmiStack.of(Items.BRICKS) : EmiStack.of(tools.getFirst()));
+        registry.addCategory(multiblocks);
+        for (final ItemStack tool : tools) {
+            registry.addWorkstation(multiblocks, EmiStack.of(tool));
+        }
+        for (final MultiblockEntry entry : MultiblockRecipeViews.entries()) {
+            registry.addRecipe(new MultiblockEmiRecipe(multiblocks, entry));
         }
         registry.addRecipeHandler(Machines.MENU.get(), new MachineRecipeHandler());
         registry.addGenericExclusionArea((screen, areas) -> {
@@ -102,6 +124,19 @@ public final class CoreEmiPlugin implements EmiPlugin {
         @Override
         public Component getName() {
             return GameText.component(kind.title());
+        }
+    }
+
+    /* The multiblocks' category, named by the Core's own words rather than by EMI's key for it. */
+    private static final class NamedCategory extends EmiRecipeCategory {
+
+        private NamedCategory(final ResourceLocation id, final EmiRenderable icon) {
+            super(id, icon);
+        }
+
+        @Override
+        public Component getName() {
+            return GameText.component(MultiblockViewTexts.CATEGORY);
         }
     }
 }
