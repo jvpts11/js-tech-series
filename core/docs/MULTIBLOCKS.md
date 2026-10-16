@@ -423,6 +423,40 @@ beside the category.
   `MultiblockCard`, so the two show it alike. An item of a mod's own that shows multiblocks is listed beside them with
   `MultiblockShows.addTool(...)`.
 
+## Building a multiblock for the player
+
+*Added 2026-10-16.*
+
+The **Multiblock Builder**, a handheld instrument of the probes' family, builds a multiblock around its controller.
+The player places the controller and uses the builder on it: it is aimed at it, and works out the multiblock from the
+controller itself, the shape its machine forms with at its least size, turned the way the controller faces. Its
+display has three pages:
+
+- **Build**: the multiblock's name, size and facing; how many blocks it will place and how many are already there;
+  each block it needs, how many, and how many the player has (green when enough, red when not); the first place that
+  takes several blocks, the chosen one framed; where the blocks come from; and whether it is ready, or what it lacks,
+  or how the building goes.
+- **Choices**: every group of places that take several blocks, its chosen block between arrows; left and right
+  change it.
+- **Source**: where the blocks come from, the player's inventory first.
+
+OK builds: a block at a time, at the pace the settings give, each taken from the source and placed as the player
+would place it, so it is the player's and the claims round it have their say. It never breaks a block that stands in
+the way. HOLD holds the building and carries it on; SHOW shows the multiblock's ghosts as a projector would while the
+builder is held; LIGHT lights the display; POWER turns it off, which stops it. It stops, and says why, when it is
+built, when the player walks too far away, when a place is protected or something stands in it, or when the source
+runs out; a player without the permission `jscore.multiblock.build` may not start it. A player in creative takes
+from the inventory without using it up.
+
+- How fast it builds and how far the player may walk are server settings: `multiblock.blocks_per_second` (5) and
+  `multiblock.build_reach` (32 blocks), in the balance file.
+- What it plans is a `BuildOrder`, pure: for each missing place its block, the player's choice first and then the
+  first the source has, with what it uses and what the source lacks; `BuilderPlan.of(...)` works it out from the
+  world, alike on either side.
+- A mod with a store of blocks of its own, such as a network's, declares it as a source with
+  `BuildSources.declare(id, source)`: what it is called, whether the player may use it now, how many of an item it
+  holds, and taking one out and putting one back.
+
 ## Machines entirely as data
 
 *Added 2026-10-16.*

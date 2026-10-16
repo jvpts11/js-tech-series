@@ -15,6 +15,7 @@ import dev.jstech.core.heat.HeatBalance;
 import dev.jstech.core.mechanical.MechanicalBalance;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.material.NamingBalance;
+import dev.jstech.core.multiblock.BuildBalance;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.ChunkLoadingBalance;
@@ -49,8 +50,13 @@ public final class CoreConfigKeys {
     public static final String HEAT = "heat";
     /** What mechanical power does to the world: parts that break under overload. */
     public static final String MECHANICAL = "mechanical";
+    /** The section of building multiblocks for players. */
+    public static final String MULTIBLOCK = "multiblock";
 
     private static final int MAX_LATENCY_TICKS = 200;
+    private static final int MAX_BLOCKS_PER_SECOND = 40;
+    private static final int MIN_BUILD_REACH = 8;
+    private static final int MAX_BUILD_REACH = 128;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
     private static final int MAX_EXPIRY_HOURS = 24 * 365;
     private static final int MIN_MACHINE_MICROS = 50;
@@ -283,6 +289,19 @@ public final class CoreConfigKeys {
                     + "the rating. A shear pin shears either way.")
             .named("Parts break under overload");
 
+    /** How many blocks a second a tool that builds a multiblock for a player places. */
+    public static final ConfigKey<Integer> MULTIBLOCK_BLOCKS_PER_SECOND = ConfigKey.whole(
+            MULTIBLOCK + ".blocks_per_second", BuildBalance.DEFAULT_BLOCKS_PER_SECOND).range(1, MAX_BLOCKS_PER_SECOND)
+            .comment("How many blocks a second a tool that builds a multiblock for a player places, one at a time.")
+            .named("Blocks built a second").unit("blocks/s");
+
+    /** How far from the controller the player may be while a tool builds a multiblock. */
+    public static final ConfigKey<Integer> MULTIBLOCK_BUILD_REACH = ConfigKey.whole(
+            MULTIBLOCK + ".build_reach", BuildBalance.DEFAULT_REACH).range(MIN_BUILD_REACH, MAX_BUILD_REACH)
+            .comment("How far from a multiblock's controller, in blocks, the player may walk while a tool builds it; "
+                    + "past that it stops.")
+            .named("Building reach").unit("blocks");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -301,6 +320,7 @@ public final class CoreConfigKeys {
             .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off, "
                     + "machines that overheat, fires and burns.")
             .sectionComment(MECHANICAL, "What mechanical power does to the world: parts that break under overload.")
+            .sectionComment(MULTIBLOCK, "Building multiblocks for players: how fast, and how far from them.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
@@ -311,6 +331,7 @@ public final class CoreConfigKeys {
             .sectionNamed(HAZARDS, "Hazards")
             .sectionNamed(HEAT, "Heat")
             .sectionNamed(MECHANICAL, "Mechanical power")
+            .sectionNamed(MULTIBLOCK, "Multiblocks")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -343,6 +364,8 @@ public final class CoreConfigKeys {
             .key(HEAT_IGNITES, HeatBalance::setIgnites)
             .key(HEAT_HOT_SURFACES_BURN, HeatBalance::setHotSurfacesBurn)
             .key(MECHANICAL_PARTS_BREAK, MechanicalBalance::setPartsBreak)
+            .key(MULTIBLOCK_BLOCKS_PER_SECOND, BuildBalance::setBlocksPerSecond)
+            .key(MULTIBLOCK_BUILD_REACH, BuildBalance::setReach)
             .build();
 
     private CoreConfigKeys() {

@@ -26,6 +26,7 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -98,6 +101,8 @@ public final class ProjectorClient {
 
     /* What each projector saw when it last looked, by its place, and when it looked. */
     private static final Map<BlockPos, Seen> SEEN = new HashMap<>();
+    /* What other tools of the series show the same way, each asked every frame. */
+    private static final List<Supplier<Optional<Shown>>> ALSO = new CopyOnWriteArrayList<>();
 
     /* The multiblock a recipe viewer asked to show in front of the player, and what was last seen of it. */
     @Nullable
@@ -117,6 +122,14 @@ public final class ProjectorClient {
                 StructureProjectorScreen::new));
         MultiblockShows.addTool(() -> new ItemStack(StructureProjector.BLOCK.asItem()));
         MultiblockShows.showsInWorld(new HeldShow());
+    }
+
+    /**
+     * Shows what {@code source} gives the way a projector shows its multiblock, ghosts, marks and words, every frame it
+     * gives one: for another tool of the series that shows a multiblock, as the Multiblock Builder does.
+     */
+    public static void showAlso(final Supplier<Optional<Shown>> source) {
+        ALSO.add(source);
     }
 
     /** What {@code projector} sees now, read again when it is older than a moment or its settings changed. */
@@ -150,8 +163,7 @@ public final class ProjectorClient {
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
         for (final Projection projection : projections(minecraft.player)) {
             drawGhosts(pose, camera, buffers, minecraft.getBlockRenderer(), projection.view(), projection.settings());
-            drawWords(pose, camera, minecraft.font, buffers, projection.settings().chosen().orElseThrow(),
-                    projection.view());
+            drawWords(pose, camera, minecraft.font, buffers, projection);
         }
         buffers.endBatch(Sheets.translucentCullBlockSheet());
         buffers.endBatch(SeenThrough.LINES);
@@ -167,7 +179,7 @@ public final class ProjectorClient {
         for (final StructureProjectorBlockEntity projector : shown(player)) {
             final ProjectorView view = seen(projector);
             if (view != null) {
-                out.add(new Projection(projector.settings(), view));
+                out.add(named(projector.settings(), view));
             }
         }
         final Held showing = held;
@@ -177,10 +189,20 @@ public final class ProjectorClient {
                     || view.missing() == 0 && view.wrong() == 0) {
                 held = null;
             } else {
-                out.add(new Projection(showing.settings(), view));
+                out.add(named(showing.settings(), view));
             }
         }
+        for (final Supplier<Optional<Shown>> source : ALSO) {
+            source.get().ifPresent(shown -> out.add(new Projection(ProjectorSettings.FRESH, shown.view(),
+                    shown.name(), shown.mod())));
+        }
         return out;
+    }
+
+    /* A projection of the multiblock its settings choose, named as the multiblock and its mod are. */
+    private static Projection named(final ProjectorSettings settings, final ProjectorView view) {
+        final ResourceLocation id = settings.chosen().orElseThrow();
+        return new Projection(settings, view, Projectables.name(id), ScreenWords.modName(id));
     }
 
     private static void forget() {
@@ -245,12 +267,12 @@ public final class ProjectorClient {
 
     /* The words above the structure, every line facing the camera. */
     private static void drawWords(final PoseStack pose, final Camera camera, final Font font,
-                                  final MultiBufferSource buffers, final ResourceLocation id,
-                                  final ProjectorView view) {
+                                  final MultiBufferSource buffers, final Projection projection) {
+        final ProjectorView view = projection.view();
         final ShapePreview preview = view.preview();
         final Vec3 top = Vec3.atLowerCornerOf(view.controller()).add(preview.minX() + preview.sizeX() / 2.0,
                 preview.minY() + preview.sizeY() + 1.2, preview.minZ() + preview.sizeZ() / 2.0);
-        final List<Line> lines = words(id, view);
+        final List<Line> lines = words(projection);
         final Vec3 from = top.subtract(camera.getPosition());
         pose.pushPose();
         pose.translate(from.x, from.y, from.z);
@@ -270,12 +292,13 @@ public final class ProjectorClient {
     }
 
     /* What floats above the structure: its name, mod and size; how much is in place; what is missing; what wrong. */
-    private static List<Line> words(final ResourceLocation id, final ProjectorView view) {
+    private static List<Line> words(final Projection projection) {
         final Colours c = PALETTE.get();
         final List<Line> lines = new ArrayList<>();
+        final ProjectorView view = projection.view();
         final ShapePreview preview = view.preview();
-        lines.add(new Line(GameText.component(ProjectorTexts.SIZE_LINE.with(Projectables.name(id),
-                ScreenWords.modName(id), preview.sizeX(), preview.sizeY(), preview.sizeZ())), c.title()));
+        lines.add(new Line(GameText.component(ProjectorTexts.SIZE_LINE.with(projection.name(), projection.mod(),
+                preview.sizeX(), preview.sizeY(), preview.sizeZ())), c.title()));
         lines.add(new Line(GameText.component(ProjectorTexts.IN_PLACE.with(view.placed(), view.places().size())),
                 c.words()));
         if (view.missing() > 0) {
@@ -348,8 +371,18 @@ public final class ProjectorClient {
     private record Seen(ProjectorSettings settings, long at, @Nullable ProjectorView view) {
     }
 
-    /** One multiblock shown: how it is shown and what is seen of it. */
-    private record Projection(ProjectorSettings settings, ProjectorView view) {
+    /** One multiblock shown: how it is shown, what is seen of it, and what it and its mod are called. */
+    private record Projection(ProjectorSettings settings, ProjectorView view, Text name, Text mod) {
+    }
+
+    /**
+     * A multiblock another tool shows the way a projector does, every layer of it.
+     *
+     * @param view what is seen of it in the world
+     * @param name what it is called
+     * @param mod  what its mod is called
+     */
+    public record Shown(ProjectorView view, Text name, Text mod) {
     }
 
     /** A ghost looked at, and how many layers its multiblock has. */

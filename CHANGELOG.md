@@ -414,6 +414,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   itself.
 - (Core) Multiblocks in the manuals: a page names a multiblock by its id and it is drawn as a scene the reader turns
   and peels layer by layer, laid out from the multiblock in force when the manual is read, its controller in place.
+- (Core) The Multiblock Builder, a handheld instrument used on a multiblock's controller: its display says what is
+  missing and how much of each block the player has, lets them choose what goes where a place takes several blocks
+  and where the blocks come from, and OK builds the multiblock a block at a time from the inventory, as the player
+  would place each block, stopping and saying why when it runs out, the player walks away or a place is protected.
+  HOLD holds it, SHOW shows the multiblock's ghosts, LIGHT lights the display. Servers set how fast it builds and how
+  far the player may walk; other mods can add a source of blocks of their own.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

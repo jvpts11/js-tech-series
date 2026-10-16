@@ -81,6 +81,7 @@ import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SimplePath;
+import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
 import dev.jstech.core.jstechseries.containment.ContainmentGuide;
 import dev.jstech.core.jstechseries.containment.SharedContainment;
 import dev.jstech.core.jstechseries.projector.ProjectorGuide;
@@ -221,6 +222,7 @@ public final class JsCore {
         EnergyConverters.declare();
         SharedContainment.declare();
         StructureProjector.declare();
+        MultiblockBuilder.declare();
         SharedTools.declare();
         NetworkProbe.declare();
         SignalProbe.declare();
@@ -300,6 +302,7 @@ public final class JsCore {
         ClampMeter.listen(modEventBus);
         NetworkProbe.listen(modEventBus);
         SignalProbe.listen(modEventBus);
+        MultiblockBuilder.listen(modEventBus);
         SharedEnergy.listen(modEventBus);
         EnergyConverters.listen(modEventBus);
         SharedContainment.listen(modEventBus);

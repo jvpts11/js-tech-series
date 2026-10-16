@@ -16,13 +16,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
 
 /** The words the projector puts together on the player's side: a multiblock's mod, and a count of blocks by name. */
-final class ScreenWords {
+public final class ScreenWords {
 
     private ScreenWords() {
     }
 
-    /** The name of the mod a multiblock of {@code id} comes from, as the mod calls itself. */
-    static Text modName(final ResourceLocation id) {
+    /** The name of the mod a multiblock, or a block, of {@code id} comes from, as the mod calls itself. */
+    public static Text modName(final ResourceLocation id) {
         return Text.literal(ModList.get().getModContainerById(id.getNamespace())
                 .map(container -> container.getModInfo().getDisplayName()).orElse(id.getNamespace()));
     }

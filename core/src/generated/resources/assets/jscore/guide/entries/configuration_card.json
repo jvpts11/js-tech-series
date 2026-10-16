@@ -90,7 +90,7 @@
   "items": [
     "jscore:configuration_card"
   ],
-  "order": 12,
+  "order": 13,
   "section": "cables",
   "title": "jscore.guide.configuration_card.title"
 }
