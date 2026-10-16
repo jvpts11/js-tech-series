@@ -60,6 +60,7 @@
   "block.jstests.test_smelter_controller": "Test smelter controller",
   "block.jstests.test_speed_controller": "Test speed controller",
   "block.jstests.test_splitter": "Test splitter",
+  "block.jstests.test_standing_post": "Test standing post",
   "block.jstests.test_tank_controller": "Test tank controller",
   "block.jstests.test_thermocouple": "Test thermocouple",
   "block.jstests.test_torque_meter": "Test torque meter",

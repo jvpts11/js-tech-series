@@ -471,6 +471,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   recipe may ask for a piece of knowledge: the machine will not run it until its owner's team knows it, saying "Needs
   knowledge", while JEI, EMI and the manuals always show the recipe, with a padlock. Operators give and take
   knowledge and milestones with `/jstech knowledge` and `/jstech milestone`.
+- Worlds of the series open with no warning about experimental settings: the data and the dimensions of the
+  series' mods are taken as stable, and any mod may say the same of its own namespace; another mod's dimension still
+  warns. Every place the Core reaches into the game is listed with its reason and a test that fails if the game moves
+  what it reaches.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

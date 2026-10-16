@@ -2,7 +2,10 @@
   "required": true,
   "package": "dev.jstech.core.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "MappedRegistryMixin",
+    "WorldDimensionsMixin"
+  ],
   "client": [
     "AdvancementWidgetMixin",
     "GameRendererMixin"

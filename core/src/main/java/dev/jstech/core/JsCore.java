@@ -85,6 +85,7 @@ import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SeriesMaterials;
+import dev.jstech.core.jstechseries.SeriesMods;
 import dev.jstech.core.jstechseries.SimplePath;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
 import dev.jstech.core.jstechseries.containment.ContainmentGuide;
@@ -191,6 +192,8 @@ public final class JsCore {
 
     public JsCore(final IEventBus modEventBus, final ModContainer modContainer) {
         LOGGER.info("J's Core {} loaded.", modContainer.getModInfo().getVersion());
+        // The series' worlds open with no warning about experimental settings: its data is no experiment.
+        SeriesMods.declareStable();
         // The data network lives on the level and the chunks as attachments the core owns.
         CoreAttachments.register(modEventBus);
         // The cable block every mod's cables are laid in, and the screen of a line's end, are the Core's own content.

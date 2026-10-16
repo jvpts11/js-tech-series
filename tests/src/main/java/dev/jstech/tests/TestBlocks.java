@@ -9,14 +9,25 @@ package dev.jstech.tests;
 
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.content.IStandingParts;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
-/** The blocks the tests place: one drawn with a connected texture, its five tiles in five colours to tell apart. */
+/**
+ * The blocks the tests place: one drawn with a connected texture, its five tiles in five colours to tell apart; and
+ * one with a post standing half a block out of its top, for the aim at standing parts.
+ */
 public final class TestBlocks {
 
-    /* Its block state and model are written by hand: the test mod writes no models of its own. */
+    /* Their block states and models are written by hand: the test mod writes no models of its own. */
     public static final BlockEntry<Block> CONNECTED_PANEL = TestSounds.CONTENT.block("connected_panel", Block::new)
             .named("Connected panel").look(IBlockLook.cubeAll("connected_panel")).register();
+    public static final BlockEntry<PostBlock> STANDING_POST = TestSounds.CONTENT.block("test_standing_post",
+            PostBlock::new).named("Test standing post").look(IBlockLook.cubeAll("test_standing_post")).register();
 
     private TestBlocks() {
     }
@@ -24,5 +35,21 @@ public final class TestBlocks {
     /** Declares the blocks, before the test mod's content is registered. */
     public static void declare() {
         // Loading the class declares them.
+    }
+
+    /** A block with a post standing half a block out of its top, outside its cube. */
+    public static final class PostBlock extends Block implements IStandingParts {
+
+        /** The post, in the block's own coordinates. */
+        public static final AABB POST = new AABB(0.375, 1.0, 0.375, 0.625, 1.5, 0.625);
+
+        public PostBlock(final Properties properties) {
+            super(properties);
+        }
+
+        @Override
+        public List<AABB> standingParts(final BlockState state, final BlockGetter level, final BlockPos pos) {
+            return List.of(POST);
+        }
     }
 }

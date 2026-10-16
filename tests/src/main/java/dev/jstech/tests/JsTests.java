@@ -9,6 +9,7 @@ package dev.jstech.tests;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.registry.StableNamespaces;
 import dev.jstech.tests.testkit.ChunkLoadWatch;
 import dev.jstech.tests.testkit.TestSettings;
 import dev.jstech.tests.testkit.TestShowcaseSettings;
@@ -40,6 +41,8 @@ public final class JsTests {
     public JsTests(final IEventBus modEventBus, final ModContainer modContainer) {
         LOGGER.warn("J's Tech Series Tests {} loaded. This is a development-only test mod: it is not part of the"
                 + " series, adds nothing to the game and must not be installed.", modContainer.getModInfo().getVersion());
+        // The test mod's data is no experiment, as a mod of the series' is: its moon opens a world with no warning.
+        StableNamespaces.declare(MODID);
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
         // A kiln and a mixer that work in a few ticks, for the autocraft tests to run real recipes through.
