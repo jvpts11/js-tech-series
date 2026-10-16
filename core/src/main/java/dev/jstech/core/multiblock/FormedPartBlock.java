@@ -1,0 +1,136 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Core.
+ */
+package dev.jstech.core.multiblock;
+
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.HitResult;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * A block of a formed structure that has merged into its controller's model: drawn as nothing, since the model draws
+ * it, but solid as it was, as hard to break, as loud, as bright, and dropping what the block it was drops. Breaking it
+ * breaks the structure, which gives every other block back. It looks for its controller now and then, and a block
+ * whose controller has gone, broken by any means, turns back into what it was by itself.
+ */
+public final class FormedPartBlock extends Block implements EntityBlock {
+
+    /** How often a merged block looks for its controller, in ticks. */
+    public static final int LOOKS_EVERY = 100;
+
+    public FormedPartBlock(final Properties properties) {
+        super(properties);
+    }
+
+    /** The block a merged block at {@code pos} was, or {@code state} for any other block. */
+    public static BlockState originalAt(final BlockGetter level, final BlockPos pos, final BlockState state) {
+        return state.getBlock() instanceof FormedPartBlock && level.getBlockEntity(pos)
+                instanceof FormedPartBlockEntity part ? part.original() : state;
+    }
+
+    @Override
+    public @Nullable BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
+        return new FormedPartBlockEntity(pos, state);
+    }
+
+    @Override
+    protected RenderShape getRenderShape(final BlockState state) {
+        return RenderShape.INVISIBLE;
+    }
+
+    @Override
+    protected float getDestroyProgress(final BlockState state, final Player player, final BlockGetter level,
+                                       final BlockPos pos) {
+        final BlockState was = originalAt(level, pos, state);
+        return was == state ? super.getDestroyProgress(state, player, level, pos)
+                : was.getDestroyProgress(player, level, pos);
+    }
+
+    @Override
+    public SoundType getSoundType(final BlockState state, final LevelReader level, final BlockPos pos,
+                                  @Nullable final Entity entity) {
+        final BlockState was = originalAt(level, pos, state);
+        return was == state ? super.getSoundType(state, level, pos, entity) : was.getSoundType(level, pos, entity);
+    }
+
+    @Override
+    public float getExplosionResistance(final BlockState state, final BlockGetter level, final BlockPos pos,
+                                        final Explosion explosion) {
+        final BlockState was = originalAt(level, pos, state);
+        return was == state ? super.getExplosionResistance(state, level, pos, explosion)
+                : was.getExplosionResistance(level, pos, explosion);
+    }
+
+    @Override
+    public int getLightEmission(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        final BlockState was = originalAt(level, pos, state);
+        return was == state ? super.getLightEmission(state, level, pos) : was.getLightEmission(level, pos);
+    }
+
+    @Override
+    public ItemStack getCloneItemStack(final BlockState state, final HitResult target, final LevelReader level,
+                                       final BlockPos pos, final Player player) {
+        final BlockState was = originalAt(level, pos, state);
+        return was == state ? ItemStack.EMPTY : was.getCloneItemStack(target, level, pos, player);
+    }
+
+    /* What it drops is what the block it was drops, by that block's own loot. */
+    @Override
+    protected List<ItemStack> getDrops(final BlockState state, final LootParams.Builder params) {
+        final BlockEntity entity = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+        if (entity instanceof FormedPartBlockEntity part && !(part.original().getBlock() instanceof FormedPartBlock)) {
+            return part.original().getDrops(params);
+        }
+        return List.of();
+    }
+
+    @Override
+    protected void onPlace(final BlockState state, final Level level, final BlockPos pos, final BlockState old,
+                           final boolean movedByPiston) {
+        super.onPlace(state, level, pos, old, movedByPiston);
+        level.scheduleTick(pos, this, LOOKS_EVERY);
+    }
+
+    /* It looks for its controller; one that does not hold it any more, broken or undone, gives it back. */
+    @Override
+    protected void tick(final BlockState state, final ServerLevel level, final BlockPos pos,
+                        final RandomSource random) {
+        if (!(level.getBlockEntity(pos) instanceof FormedPartBlockEntity part)) {
+            return;
+        }
+        final BlockPos controller = part.controller();
+        if (controller != null && !(level.isLoaded(controller) && level.shouldTickBlocksAt(controller))) {
+            // A controller not running now is not taken for gone: its structure is only as it was saved.
+            level.scheduleTick(pos, this, LOOKS_EVERY);
+            return;
+        }
+        if (controller == null || !(level.getBlockEntity(controller) instanceof IStructureController owner)
+                || !owner.holdsPlace(pos)) {
+            FormedParts.restoreAt(level, pos);
+            return;
+        }
+        level.scheduleTick(pos, this, LOOKS_EVERY);
+    }
+}

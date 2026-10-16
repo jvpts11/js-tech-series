@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest;
 
+import dev.jstech.core.client.mechanical.TurningParts;
 import dev.jstech.core.client.model.kit.IKitDriver;
 import dev.jstech.core.client.model.kit.KitArmorModel;
 import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
@@ -15,6 +16,7 @@ import dev.jstech.core.client.model.kit.KitItemRenderer;
 import dev.jstech.core.model.ModelAnimation;
 import dev.jstech.core.model.ModelAnimator;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestMechanical;
 import dev.jstech.tests.TestModels;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.world.item.ItemStack;
@@ -28,13 +30,16 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 /**
  * The renderers of what the tests draw with the Core's models, registered as another mod registers its own: the press,
  * holding an iron ingot on its plate and counting the words its strike hands to code; the dock drawn from J's
- * Computers' files; the crate as an item; the helmet as armour; and the walker, its head turning as it walks.
+ * Computers' files; the crate as an item; the helmet as armour; the walker, its head turning as it walks; and the
+ * shaft, the gears and the pulleys turning as fast as their network turns them, the belts between pulleys running.
  */
 @EventBusSubscriber(modid = JsTests.MODID, value = Dist.CLIENT)
 public final class TestModelRenderers {
 
     /** How many words the press's animations handed to code; for a test to look at. */
     public static final AtomicInteger PRESS_WORDS = new AtomicInteger();
+    /* How long the turbine's rotor takes to come to rest once it stops working, in seconds. */
+    private static final double TURBINE_SPIN_DOWN = 0.5;
 
     private TestModelRenderers() {
     }
@@ -50,6 +55,22 @@ public final class TestModelRenderers {
                 .<TestModels.DockEntity>look(TestModels.DOCK).build());
         event.registerEntityRenderer(TestModels.WALKER_ENTITY.get(), context -> KitEntityRenderer.of(context,
                 TestModels.WALKER.id(), (walker, animator, seconds) -> animator.play("main", "Walk", seconds)));
+        event.registerBlockEntityRenderer(TestModels.TURBINE_ENTITY.get(), context -> KitBlockEntityRenderer
+                .<TestModels.TurbineEntity>formedOnly(TestModels.TURBINE.id())
+                .driver((turbine, animator, seconds) -> {
+                    if (turbine.running()) {
+                        animator.play("main", "working", seconds);
+                    } else if (animator.controller("main").playing() != null) {
+                        animator.controller("main").stop(seconds, TURBINE_SPIN_DOWN);
+                    }
+                })
+                .build());
+        TurningParts.draw(TestMechanical.SHAFT, TestModels.SHAFT.id());
+        TurningParts.draw(TestMechanical.SMALL_GEAR, TestModels.GEAR.id());
+        TurningParts.draw(TestMechanical.LARGE_GEAR, TestModels.GEAR.id());
+        TurningParts.draw(TestMechanical.SMALL_PULLEY, TestModels.SMALL_PULLEY.id());
+        TurningParts.draw(TestMechanical.LARGE_PULLEY, TestModels.LARGE_PULLEY.id());
+        TurningParts.register(event, TestMechanical.PART.get());
     }
 
     @SubscribeEvent

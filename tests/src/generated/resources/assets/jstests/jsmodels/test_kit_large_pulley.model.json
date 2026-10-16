@@ -1,0 +1,6 @@
+{
+  "model": "jstests:jsmodels/test_kit_large_pulley.bbmodel",
+  "textures": [
+    "minecraft:textures/block/oak_planks.png"
+  ]
+}

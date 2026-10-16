@@ -1,0 +1,68 @@
+{
+  "meta": {"format_version": "4.10", "model_format": "bedrock", "box_uv": false},
+  "name": "test_kit_large_pulley",
+  "model_identifier": "test_kit_large_pulley",
+  "resolution": {"width": 16, "height": 16},
+  "elements": [
+    {
+      "name": "axle", "type": "cube", "uuid": "c-axle", "box_uv": false,
+      "from": [-1, 0, -1], "to": [1, 16, 1], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 2, 16], "texture": 0}, "south": {"uv": [0, 0, 2, 16], "texture": 0},
+        "east": {"uv": [0, 0, 2, 16], "texture": 0}, "west": {"uv": [0, 0, 2, 16], "texture": 0},
+        "up": {"uv": [0, 0, 2, 2], "texture": 0}, "down": {"uv": [0, 0, 2, 2], "texture": 0}
+      }
+    },
+    {
+      "name": "rim", "type": "cube", "uuid": "c-rim", "box_uv": false,
+      "from": [-3.2, 5, -3.2], "to": [3.2, 11, 3.2], "origin": [0, 8, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [4, 5, 12, 11], "texture": 0}, "south": {"uv": [4, 5, 12, 11], "texture": 0},
+        "east": {"uv": [4, 5, 12, 11], "texture": 0}, "west": {"uv": [4, 5, 12, 11], "texture": 0},
+        "up": {"uv": [4, 4, 12, 12], "texture": 0}, "down": {"uv": [4, 4, 12, 12], "texture": 0}
+      }
+    },
+    {
+      "name": "rim_turned", "type": "cube", "uuid": "c-rim-turned", "box_uv": false,
+      "from": [-3.2, 5, -3.2], "to": [3.2, 11, 3.2], "origin": [0, 8, 0], "rotation": [0, 45, 0],
+      "faces": {
+        "north": {"uv": [4, 5, 12, 11], "texture": 0}, "south": {"uv": [4, 5, 12, 11], "texture": 0},
+        "east": {"uv": [4, 5, 12, 11], "texture": 0}, "west": {"uv": [4, 5, 12, 11], "texture": 0},
+        "up": {"uv": [4, 4, 12, 12], "texture": 0}, "down": {"uv": [4, 4, 12, 12], "texture": 0}
+      }
+    },
+    {
+      "name": "flange", "type": "cube", "uuid": "c-flange", "box_uv": false,
+      "from": [-4, 4.5, -4], "to": [4, 5, 4], "origin": [0, 8, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [4, 0, 12, 1], "texture": 0}, "south": {"uv": [4, 0, 12, 1], "texture": 0},
+        "east": {"uv": [4, 0, 12, 1], "texture": 0}, "west": {"uv": [4, 0, 12, 1], "texture": 0},
+        "up": {"uv": [4, 4, 12, 12], "texture": 0}, "down": {"uv": [4, 4, 12, 12], "texture": 0}
+      }
+    },
+    {
+      "name": "other_flange", "type": "cube", "uuid": "c-other-flange", "box_uv": false,
+      "from": [-4, 11, -4], "to": [4, 11.5, 4], "origin": [0, 8, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [4, 0, 12, 1], "texture": 0}, "south": {"uv": [4, 0, 12, 1], "texture": 0},
+        "east": {"uv": [4, 0, 12, 1], "texture": 0}, "west": {"uv": [4, 0, 12, 1], "texture": 0},
+        "up": {"uv": [4, 4, 12, 12], "texture": 0}, "down": {"uv": [4, 4, 12, 12], "texture": 0}
+      }
+    },
+    {
+      "name": "spoke", "type": "cube", "uuid": "c-spoke", "box_uv": false,
+      "from": [-3, 11.5, -0.5], "to": [3, 12, 0.5], "origin": [0, 8, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [5, 0, 11, 1], "texture": 0}, "south": {"uv": [5, 0, 11, 1], "texture": 0},
+        "east": {"uv": [0, 0, 1, 1], "texture": 0}, "west": {"uv": [0, 0, 1, 1], "texture": 0},
+        "up": {"uv": [5, 7, 11, 8], "texture": 0}, "down": {"uv": [5, 7, 11, 8], "texture": 0}
+      }
+    }
+  ],
+  "outliner": [
+    {"name": "pulley", "uuid": "g-pulley", "origin": [0, 8, 0], "rotation": [0, 0, 0],
+     "children": ["c-axle", "c-rim", "c-rim-turned", "c-flange", "c-other-flange", "c-spoke"]}
+  ],
+  "textures": [],
+  "animations": []
+}

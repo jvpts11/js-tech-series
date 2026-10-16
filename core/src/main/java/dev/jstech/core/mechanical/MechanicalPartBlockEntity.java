@@ -8,10 +8,13 @@
 package dev.jstech.core.mechanical;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.core.audio.IAudible;
+import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.client.audio.SoundDirector;
 import dev.jstech.core.signal.ISignalOutput;
 import dev.jstech.core.signal.Reading;
 import java.util.List;
@@ -36,7 +39,8 @@ import org.jetbrains.annotations.Nullable;
  * Every part is a sensor of its speed, as a tachometer, and a torque meter of the torque through it too, offered to
  * whatever reads sensors and to a comparator.
  */
-public class MechanicalPartBlockEntity extends SyncedBlockEntity implements IMechanicalPart, ISignalOutput {
+public class MechanicalPartBlockEntity extends SyncedBlockEntity implements IMechanicalPart, ISignalOutput,
+        IAudible {
 
     private final ValueField<Double> rpm;
     private final ValueField<Double> torque;
@@ -57,6 +61,11 @@ public class MechanicalPartBlockEntity extends SyncedBlockEntity implements IMec
     public static final double TORQUE_METER_MOST = 1_000.0;
     /* How far a torque meter's reading moves, in newton-metres, before it is sent again. */
     private static final double TORQUE_STEP = 0.01;
+    /* Below this share of its loudest speed a turning part is not heard. */
+    private static final double QUIET_SHARE = 0.02;
+    /* Its sound's pitch at a crawl, and how much higher it goes at its loudest speed. */
+    private static final double LOWEST_PITCH = 0.5;
+    private static final double PITCH_SPAN = 1.0;
     /* What a block that is no part of the kit is taken as: a shaft that weighs and holds back nothing. */
     private static final MechanicalPartSpec NOTHING = MechanicalPartSpec.shaft(0.0, 0.0);
 
@@ -204,6 +213,52 @@ public class MechanicalPartBlockEntity extends SyncedBlockEntity implements IMec
     @Override
     public double rpm() {
         return this.rpm.get();
+    }
+
+    @Override
+    public double audioX() {
+        return this.worldPosition.getX() + 0.5;
+    }
+
+    @Override
+    public double audioY() {
+        return this.worldPosition.getY() + 0.5;
+    }
+
+    @Override
+    public double audioZ() {
+        return this.worldPosition.getZ() + 0.5;
+    }
+
+    /** The sound it turns with, if its block has one, higher and louder the faster it turns. */
+    @Override
+    public List<LoopRequest> loops() {
+        if (!(getBlockState().getBlock() instanceof MechanicalPartBlock block) || block.sound() == null) {
+            return List.of();
+        }
+        final double share = Math.abs(this.rpm.get()) / block.fullRpm();
+        if (share < QUIET_SHARE) {
+            return List.of();
+        }
+        final float volume = (float) Math.min(1.0, share);
+        final float pitch = (float) (LOWEST_PITCH + PITCH_SPAN * Math.min(1.0, share));
+        return List.of(new LoopRequest(block.sound(), volume, pitch, null));
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (this.level != null && this.level.isClientSide()) {
+            SoundDirector.track(this);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (this.level != null && this.level.isClientSide()) {
+            SoundDirector.untrack(this);
+        }
     }
 
     @Override

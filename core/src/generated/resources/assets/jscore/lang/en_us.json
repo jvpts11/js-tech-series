@@ -8,6 +8,7 @@
   "block.jscore.fe_converter_lv": "FE Converter LV",
   "block.jscore.fe_converter_mv": "FE Converter MV",
   "block.jscore.fe_converter_uhv": "FE Converter UHV",
+  "block.jscore.formed_part": "Formed structure",
   "block.jscore.lead_acid_battery_bank": "Lead-Acid Battery Bank",
   "block.jscore.multipart": "Parts",
   "block.jscore.structure_projector": "Structure Projector",

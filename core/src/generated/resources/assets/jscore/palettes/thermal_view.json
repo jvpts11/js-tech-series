@@ -1,0 +1,14 @@
+{
+  "air": "#FF2A1B5C",
+  "cold": "#FF36C2E8",
+  "coldest": "#FFE8FAFF",
+  "cool": "#FF2152B0",
+  "ground": "#96000000",
+  "hot": "#FFE0472B",
+  "hotter": "#FFF59A22",
+  "hottest": "#FFFCE65A",
+  "text": "#FFFFFFFF",
+  "veil": "#D80C0A1E",
+  "warm": "#FF8E2C8E",
+  "white": "#FFFFFFF2"
+}

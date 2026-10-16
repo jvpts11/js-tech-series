@@ -136,6 +136,7 @@ import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
 import dev.jstech.tests.clienttest.core.LiveReloadClientTests;
+import dev.jstech.tests.clienttest.core.MachineLooksClientTests;
 import dev.jstech.tests.clienttest.core.MachineScreenClientTests;
 import dev.jstech.tests.clienttest.core.MediaClientTests;
 import dev.jstech.tests.clienttest.core.ModelKitClientTests;
@@ -276,6 +277,7 @@ public final class ClientTestSuite {
             ProgressionClientTests.class,
             ReachClientTests.class,
             ModelKitClientTests.class,
+            MachineLooksClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,

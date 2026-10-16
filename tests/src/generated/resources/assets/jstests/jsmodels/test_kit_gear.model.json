@@ -1,0 +1,6 @@
+{
+  "model": "jstests:jsmodels/test_kit_gear.bbmodel",
+  "textures": [
+    "minecraft:textures/block/copper_block.png"
+  ]
+}

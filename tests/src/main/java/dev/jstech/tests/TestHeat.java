@@ -12,6 +12,8 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.content.IItemLook;
+import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.heat.BoilOff;
 import dev.jstech.core.heat.Boiler;
 import dev.jstech.core.heat.FluidPass;
@@ -26,6 +28,8 @@ import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.MatterTank;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,10 +38,10 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 
 /**
  * Blocks of the test mod that hold heat, to prove the Core's heat: a litre of copper, a litre of iron, the same litre
- * of copper with ten square metres of fins as a radiator, and a heater that puts fifty kilowatts into a litre of iron
- * up to its limit; and vessels with a cubic metre of iron for a wall, a boiler in the open air, a boiler of low
- * pressure, a heat exchanger whose oil passes through the wall, a cold tank open to the place's heat and a vacuum
- * flask.
+ * of copper with ten square metres of fins as a radiator, a heater that puts fifty kilowatts into a litre of iron up
+ * to its limit, and a hot plate that keeps a litre of iron at a red heat, glowing; vessels with a cubic metre of iron
+ * for a wall, a boiler in the open air, a boiler of low pressure, a heat exchanger whose oil passes through the wall,
+ * a cold tank open to the place's heat and a vacuum flask; and goggles that see heat.
  */
 public final class TestHeat {
 
@@ -49,6 +53,10 @@ public final class TestHeat {
     public static final double HEATER_WATTS = 50_000.0;
     /** The hottest the heater makes itself, in kelvin. */
     public static final double HEATER_LIMIT = 700.0;
+    /** What the hot plate puts in, in watts: more than a litre of iron loses at a red heat. */
+    public static final double HOT_PLATE_WATTS = 5_000_000.0;
+    /** The hottest the hot plate makes itself, in kelvin: a bright cherry red. */
+    public static final double HOT_PLATE_LIMIT = 1_300.0;
     /** What a vessel's wall passes to what boils or flows through it, in watts a kelvin. */
     public static final double VESSEL_CONDUCTANCE = 100_000.0;
     /** The pressure the low-pressure boiler holds, in kilopascals: water boils there at about 44 °C. */
@@ -78,6 +86,9 @@ public final class TestHeat {
     public static final BlockEntry<DeviceBlock> HEATER = TestSounds.CONTENT.block("test_heater",
             Device.of(() -> TestHeat.BLOCK_ENTITY.get()).ticks(HeatBlockEntity::tick)::block)
             .named("Test heater").look(IBlockLook.cubeAll("test_heater")).register();
+    public static final BlockEntry<DeviceBlock> HOT_PLATE = TestSounds.CONTENT.block("test_hot_plate",
+            Device.of(() -> TestHeat.BLOCK_ENTITY.get()).ticks(HeatBlockEntity::tick)::block)
+            .named("Test hot plate").look(IBlockLook.cubeAll("test_hot_plate")).register();
     public static final BlockEntry<DeviceBlock> BOILER = TestSounds.CONTENT.block("test_boiler",
             Device.of(() -> TestHeat.VESSEL.get()).ticks(VesselBlockEntity::tick)::block)
             .named("Test boiler").look(IBlockLook.cubeAll("test_boiler")).register();
@@ -93,14 +104,20 @@ public final class TestHeat {
     public static final BlockEntry<DeviceBlock> DEWAR = TestSounds.CONTENT.block("test_dewar",
             Device.of(() -> TestHeat.VESSEL.get()).ticks(VesselBlockEntity::tick)::block)
             .named("Test vacuum flask").look(IBlockLook.cubeAll("test_dewar")).register();
-    /* One block entity for the four that hold heat, which reads from its block what it is; another for the vessels. */
+    /* Goggles that see heat, worn or held: in the Core's tag by the test mod's own tag file, as their model is. */
+    public static final ItemEntry<ArmorItem> GOGGLES = TestSounds.CONTENT.item("test_thermal_goggles",
+            properties -> new ArmorItem(ArmorMaterials.TURTLE, ArmorItem.Type.HELMET, properties))
+            .named("Test thermal goggles").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    /* One block entity for the five that hold heat, which reads from its block what it is; another for the vessels. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HeatBlockEntity>> BLOCK_ENTITY =
-            TestSounds.CONTENT.blockEntity("test_heat", HeatBlockEntity::new, COPPER, IRON, RADIATOR, HEATER);
+            TestSounds.CONTENT.blockEntity("test_heat", HeatBlockEntity::new, COPPER, IRON, RADIATOR, HEATER,
+                    HOT_PLATE);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VesselBlockEntity>> VESSEL =
             TestSounds.CONTENT.blockEntity("test_vessel", VesselBlockEntity::new, BOILER, LOW_BOILER, EXCHANGER,
                     COLD_TANK, DEWAR);
 
     private static final HeatSource HEATING = HeatSource.heater(HEATER_WATTS, HEATER_LIMIT);
+    private static final HeatSource GLOWING = HeatSource.heater(HOT_PLATE_WATTS, HOT_PLATE_LIMIT);
 
     private TestHeat() {
     }
@@ -123,10 +140,10 @@ public final class TestHeat {
             HeatPorts.keep(this, this.heat);
         }
 
-        /** The heater puts its watts in, each tick, up to its limit. */
+        /** The heater, or the hot plate, puts its watts in, each tick, up to its limit. */
         public static void tick(final Level level, final BlockPos pos, final BlockState state,
                                 final HeatBlockEntity heater) {
-            HEATING.apply(heater.heat, HeatMath.TICK_SECONDS);
+            (state.is(HOT_PLATE.get()) ? GLOWING : HEATING).apply(heater.heat, HeatMath.TICK_SECONDS);
         }
 
         @Override

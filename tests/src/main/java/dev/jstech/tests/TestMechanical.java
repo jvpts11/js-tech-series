@@ -48,6 +48,8 @@ public final class TestMechanical {
 
     /** The hand crank. */
     public static final TorqueCurve CRANK_CURVE = TorqueCurve.of(20.0, 75.0, 60.0);
+    /** The crank's top speed, in revolutions a minute. */
+    public static final double CRANK_TOP = 60.0;
     /** What the load asks, in newton-metres. */
     public static final double LOAD = 15.0;
     /** The motor: 50 N·m, 5 kW, up to 1,500 rpm, at nine tenths. */
@@ -75,12 +77,18 @@ public final class TestMechanical {
     public static final double HEAVY_MILL_TORQUE = 18.0;
     public static final int MILL_TICKS = 20;
 
-    /* Their block states and models are written by hand: the test mod writes no models of its own. */
-    public static final BlockEntry<MechanicalPartBlock> SHAFT = part("test_shaft", "Test shaft",
-            MechanicalPartSpec.shaft(0.005, 0.1));
-    public static final BlockEntry<MechanicalPartBlock> SMALL_GEAR = part("test_small_gear", "Test small gear",
+    /*
+     * Their block states and models are written by hand: the test mod writes no models of its own. The shaft, the
+     * gears and the pulleys are drawn turning, by the Core's models; the shaft whirs as it turns, loudest at the
+     * crank's top speed.
+     */
+    public static final BlockEntry<MechanicalPartBlock> SHAFT = TestSounds.CONTENT.block("test_shaft",
+            properties -> MechanicalPartBlock.turning(properties, MechanicalPartSpec.shaft(0.005, 0.1),
+                    () -> TestMechanical.PART.get()).turningSound(TestSounds.WHIR, CRANK_TOP))
+            .named("Test shaft").look(IBlockLook.cubeAll("test_shaft")).register();
+    public static final BlockEntry<MechanicalPartBlock> SMALL_GEAR = turning("test_small_gear", "Test small gear",
             MechanicalPartSpec.gear(SMALL_TEETH, 0.05, 0.2));
-    public static final BlockEntry<MechanicalPartBlock> LARGE_GEAR = part("test_large_gear", "Test large gear",
+    public static final BlockEntry<MechanicalPartBlock> LARGE_GEAR = turning("test_large_gear", "Test large gear",
             MechanicalPartSpec.gear(LARGE_TEETH, 0.2, 0.3));
     public static final BlockEntry<MechanicalPartBlock> GEARBOX = part("test_gearbox", "Test gearbox",
             MechanicalPartSpec.gearbox(0.05, 0.3));
@@ -96,9 +104,9 @@ public final class TestMechanical {
             MechanicalPartSpec.shearPin(PIN_RATING, 0.005, 0.1));
     public static final BlockEntry<MechanicalPartBlock> WEAK_SHAFT = part("test_weak_shaft", "Test weak shaft",
             MechanicalPartSpec.shaft(0.005, 0.1).rated(PIN_RATING));
-    public static final BlockEntry<MechanicalPartBlock> SMALL_PULLEY = part("test_small_pulley",
+    public static final BlockEntry<MechanicalPartBlock> SMALL_PULLEY = turning("test_small_pulley",
             "Test small pulley", MechanicalPartSpec.pulley(SMALL_RADIUS, 0.02, 0.1));
-    public static final BlockEntry<MechanicalPartBlock> LARGE_PULLEY = part("test_large_pulley",
+    public static final BlockEntry<MechanicalPartBlock> LARGE_PULLEY = turning("test_large_pulley",
             "Test large pulley", MechanicalPartSpec.pulley(2 * SMALL_RADIUS, 0.08, 0.1));
     public static final BlockEntry<MechanicalPartBlock> TORQUE_METER = part("test_torque_meter",
             "Test torque meter", MechanicalPartSpec.torqueMeter(0.005, 0.0));
@@ -152,6 +160,13 @@ public final class TestMechanical {
     private static BlockEntry<MechanicalPartBlock> part(final String id, final String name,
                                                         final MechanicalPartSpec spec) {
         return TestSounds.CONTENT.block(id, properties -> new MechanicalPartBlock(properties, spec,
+                () -> TestMechanical.PART.get())).named(name).look(IBlockLook.cubeAll(id)).register();
+    }
+
+    /* A part drawn turning by the Core's models. */
+    private static BlockEntry<MechanicalPartBlock> turning(final String id, final String name,
+                                                           final MechanicalPartSpec spec) {
+        return TestSounds.CONTENT.block(id, properties -> MechanicalPartBlock.turning(properties, spec,
                 () -> TestMechanical.PART.get())).named(name).look(IBlockLook.cubeAll(id)).register();
     }
 

@@ -1,0 +1,114 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Core.
+ */
+package dev.jstech.core.multiblock;
+
+import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.content.Drops;
+import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.registry.CoreItems;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
+import net.neoforged.neoforge.registries.DeferredHolder;
+
+/**
+ * The blocks of a formed structure merged into its controller's model, and given back: a structure that merges turns
+ * each plain block of its shell into a {@link FormedPartBlock} that remembers it, and turns them back as it comes
+ * apart. Only a block with no block entity merges; a port, a part that keeps something, the controller itself stay as
+ * they are, where they were.
+ */
+public final class FormedParts {
+
+    /** The block a merged block stands as. */
+    public static final BlockEntry<FormedPartBlock> BLOCK = CoreItems.CONTENT.block("formed_part",
+                    FormedPartBlock::new)
+            .properties(properties -> properties.mapColor(MapColor.METAL).strength(2.0F).noOcclusion()
+                    .pushReaction(PushReaction.BLOCK))
+            .named("Formed structure")
+            .look(IBlockLook.fixed(new IBlockModel.ParticleOnly("formed_part", "minecraft:block/iron_block")))
+            .drops(Drops.NONE)
+            .register();
+    /** Its block entity, which keeps what the block was. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FormedPartBlockEntity>> ENTITY =
+            CoreItems.CONTENT.blockEntity("formed_part", FormedPartBlockEntity::new, BLOCK);
+
+    /* Shown at each block as it merges or comes back. */
+    private static final int PUFFS = 3;
+    private static final double SPREAD = 0.3;
+    private static final double SPEED = 0.02;
+
+    private FormedParts() {
+    }
+
+    /** Declares the block, before the Core's content is registered. */
+    public static void declare() {
+        // Loading the class declares the block and its entity.
+    }
+
+    /** Whether the block {@code state} merges into a structure's model: a plain block, with no block entity. */
+    public static boolean merges(final BlockState state) {
+        return !state.isAir() && !state.hasBlockEntity() && state.getFluidState().isEmpty()
+                && !(state.getBlock() instanceof FormedPartBlock);
+    }
+
+    /**
+     * Merges into the model of the controller at {@code controller} every plain block at {@code places}, with a puff
+     * of smoke at each.
+     *
+     * @return the places that merged
+     */
+    public static List<Long> merge(final ServerLevel level, final BlockPos controller, final Collection<Long> places) {
+        final List<Long> out = new ArrayList<>();
+        for (final long place : places) {
+            final BlockPos at = MultiblockPatterns.decode(place);
+            final BlockState was = level.getBlockState(at);
+            if (!merges(was)) {
+                continue;
+            }
+            // Its neighbours are not told: nothing round it changed, as the structure sees it.
+            level.setBlock(at, BLOCK.get().defaultBlockState(), Block.UPDATE_CLIENTS);
+            if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part) {
+                part.merged(was, controller);
+                out.add(place);
+                puff(level, at);
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    /** Gives back the blocks merged at {@code places}, each the block it was. */
+    public static void restore(final ServerLevel level, final Collection<Long> places) {
+        for (final long place : places) {
+            restoreAt(level, MultiblockPatterns.decode(place));
+        }
+    }
+
+    /** Gives back the block merged at {@code at}, if one is. */
+    public static void restoreAt(final ServerLevel level, final BlockPos at) {
+        if (level.getBlockEntity(at) instanceof FormedPartBlockEntity part
+                && level.getBlockState(at).getBlock() instanceof FormedPartBlock) {
+            final BlockState was = part.original();
+            level.setBlock(at, was, Block.UPDATE_ALL);
+            puff(level, at);
+        }
+    }
+
+    private static void puff(final ServerLevel level, final BlockPos at) {
+        level.sendParticles(ParticleTypes.POOF, at.getX() + 0.5, at.getY() + 0.5, at.getZ() + 0.5, PUFFS, SPREAD,
+                SPREAD, SPREAD, SPEED);
+    }
+}

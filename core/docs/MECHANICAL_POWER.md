@@ -166,6 +166,37 @@ stronger one turns it. A processing machine of the kit does all this by itself.
 - **The network probe**, used on any part that turns, reads its network of shafts on its own pages, in watts: the
   power its sources give, its sources and its loads, and what friction takes.
 
+## Seen and heard turning
+
+*Added 2026-10-16.*
+
+A part's speed is sent to the players who see it, and a part made with `MechanicalPartBlock.turning(...)` is drawn
+turning at that speed by a model of the Core's ([Models](MODELS.md)) in place of its block's own model. Its block
+hides nothing beside it and lets light through, so the faces around it are drawn and the part is lit as its place
+is.
+
+```java
+BlockEntry<MechanicalPartBlock> GEAR = CONTENT.block("gear", properties -> MechanicalPartBlock.turning(properties,
+        MechanicalPartSpec.gear(16, 0.05, 0.2), () -> PART.get())).named("Gear").register();
+
+// From the client setup, and in EntityRenderersEvent.RegisterRenderers:
+TurningParts.draw(MyParts.GEAR, rl("gear"));                          // the whole model turns about its axle
+TurningParts.draw(MyParts.GEARBOX, rl("gearbox"), "input", "output"); // only these bones turn
+TurningParts.register(event, MyParts.PART.get());
+```
+
+- **A model of a turning part is made standing up**, its axle along Y through the middle of its block; it is laid
+  along the part's axis as the part is placed.
+- **The angle follows the speed** frame by frame, so a part speeding up or slowing down does so smoothly, whatever
+  the server's ticks. Every other gear stands half a tooth on, so two meshed gears' teeth meet.
+- **Every part drawn with one model shares its shape**: the model is baked once and every part only turns it.
+- **A belt or a chain runs** between the pulleys it joins, as fast as the pulleys' rims: its two straight runs touch
+  both pulleys as an open belt does (`BeltPath`), drawn with the game's black wool for a belt and its chain for a
+  chain, as thick as a belt is. A pulley's model is made as round as its spec's radius, so the belt meets its rim.
+- **A part is heard turning** when its block declares a sound: `turningSound(loop, fullRpm)` plays its looping sound
+  while it turns, louder and higher the faster, as loud as it gets and a half higher than recorded at `fullRpm`, and
+  silent below a fiftieth of that.
+
 ## What can go wrong
 
 - **Nothing turns.** The network is jammed (its ratios disagree), its sources give less than its friction, or a face
@@ -178,3 +209,7 @@ stronger one turns it. A processing machine of the kit does all this by itself.
   stronger pin.
 - **Two pulleys will not join.** They must turn on one axis, side by side (no offset along the axis), within the
   belt's reach, and neither may be joined already.
+- **A part turns but is drawn as its block, or not at all.** It is drawn turning only when its block was made with
+  `MechanicalPartBlock.turning(...)` and its mod named its model with `TurningParts.draw(...)` and registered the
+  renderer of its block entity type with `TurningParts.register(...)`; a model not found draws nothing.
+- **The belt floats off the pulleys.** The pulleys' models are not as round as their specs' radii.

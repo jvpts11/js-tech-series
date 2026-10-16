@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.WeakHashMap;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
@@ -56,6 +57,15 @@ public final class KitAnimations {
             return size() > WAITING_KEPT;
         }
     };
+    /* What each target was told of late, for a model it is drawn with anew a moment after. */
+    private static final Map<ModelTarget, Map<String, Order>> RECENT = new LinkedHashMap<>(16, 0.75F, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<ModelTarget, Map<String, Order>> eldest) {
+            return size() > WAITING_KEPT;
+        }
+    };
+    /** How long after it is told an order is carried out again on a model drawn anew, in milliseconds. */
+    private static final long RECENT_MILLIS = 2_000;
 
     private KitAnimations() {
     }
@@ -73,7 +83,12 @@ public final class KitAnimations {
         }
         final KitInstance made = new KitInstance(model);
         BLOCKS.put(entity, made);
-        waiting(ModelTarget.block(entity.getBlockPos()), made);
+        final ModelTarget target = ModelTarget.block(entity.getBlockPos());
+        waiting(target, made);
+        if (kept != null) {
+            // Drawn with another model now, as a structure that has just formed: what was just played goes on.
+            recent(target, made);
+        }
         return made;
     }
 
@@ -135,6 +150,8 @@ public final class KitAnimations {
             WAITING.computeIfAbsent(payload.target(), target -> new LinkedHashMap<>()).put(payload.controller(),
                     payload);
         }
+        RECENT.computeIfAbsent(payload.target(), target -> new LinkedHashMap<>()).put(payload.controller(),
+                new Order(payload, Util.getMillis()));
     }
 
     /** Forgets every model's things, whose models have been read again. */
@@ -148,6 +165,7 @@ public final class KitAnimations {
     private static void forgetAll() {
         forgetModels();
         WAITING.clear();
+        RECENT.clear();
     }
 
     private static Optional<KitInstance> find(final ModelTarget target) {
@@ -160,6 +178,20 @@ public final class KitAnimations {
             case ENTITY -> Optional.ofNullable(ENTITIES.get(target.entity()));
             case ITEM -> Optional.ofNullable(ITEMS.get(target.item()));
         };
+    }
+
+    /* Carries out again on a model newly drawn for a target what the server told it of late. */
+    private static void recent(final ModelTarget target, final KitInstance instance) {
+        final Map<String, Order> orders = RECENT.get(target);
+        if (orders == null) {
+            return;
+        }
+        final long now = Util.getMillis();
+        for (final Order order : orders.values()) {
+            if (now - order.receivedAt() <= RECENT_MILLIS) {
+                carryOut(order.payload(), instance);
+            }
+        }
     }
 
     private static void waiting(final ModelTarget target, final KitInstance instance) {
@@ -186,5 +218,9 @@ public final class KitAnimations {
             case STOP -> controller.stop(now, payload.transition());
             case SPEED -> controller.speed(payload.speed(), now);
         }
+    }
+
+    /* An order from the server, and when it came. */
+    private record Order(ModelAnimationPayload payload, long receivedAt) {
     }
 }

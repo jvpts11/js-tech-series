@@ -119,6 +119,7 @@ import dev.jstech.core.material.MineralFamilies;
 import dev.jstech.core.menu.MenuSync;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.model.network.ModelCommands;
+import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.notification.NotificationSettings;
@@ -202,6 +203,8 @@ public final class JsCore {
         CoreCables.declare();
         // The space of parts alone and the microblock, which any block space holds as a cable's does.
         CoreSpaces.declare();
+        // The block a formed structure's plain blocks merge into, its controller's model drawing them.
+        FormedParts.declare();
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.

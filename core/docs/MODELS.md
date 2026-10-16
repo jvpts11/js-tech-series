@@ -72,6 +72,11 @@ event.registerBlockEntityRenderer(PRESS_ENTITY.get(), context -> KitBlockEntityR
 The model stands on the middle of its block's floor and turns with the block's `facing` (or `horizontal_facing`),
 as Bedrock's models of blocks do. Give the block `RenderShape.ENTITYBLOCK_ANIMATED` and a block model of nothing but
 its particle. The renderer's box is the model's, whichever way it faces, so a model wider than its block is not cut off.
+A model drawn from a whole block, where no light reaches, is lit by the brightest light around the block.
+
+*Added 2026-10-16:* `formed(model)` and `formedOnly(model)` draw a multiblock's model over its whole structure once
+it forms ([Multiblocks](MULTIBLOCKS.md)), and parts of mechanical power are drawn turning by `TurningParts`
+([Mechanical power](MECHANICAL_POWER.md)).
 
 | Builder | What it says | Unless said |
 | --- | --- | --- |

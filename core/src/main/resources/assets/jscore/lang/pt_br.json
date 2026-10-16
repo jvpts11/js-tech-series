@@ -8,6 +8,7 @@
   "block.jscore.fe_converter_lv": "Conversor FE BT",
   "block.jscore.fe_converter_mv": "Conversor FE MT",
   "block.jscore.fe_converter_uhv": "Conversor FE UAT",
+  "block.jscore.formed_part": "Estrutura formada",
   "block.jscore.lead_acid_battery_bank": "Banco de Baterias de Chumbo-Ácido",
   "block.jscore.multipart": "Peças",
   "block.jscore.structure_projector": "Projetor de Estruturas",

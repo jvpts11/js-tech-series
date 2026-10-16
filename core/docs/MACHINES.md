@@ -152,7 +152,8 @@ Its casing is then its **heat port**: saved, sent to the players who see it, war
 radiator or a cooler beside it takes its heat away. Past its limit it stops (`OVERHEATED`) and loses health a second,
 more the hotter it is, unless the server turned that off; it starts again once ten kelvin cooler. Its recipes'
 temperature conditions read its casing's temperature, and a sensor reads it as its `temperature` value, from 0 °C to
-its limit.
+its limit. *Added 2026-10-16:* a casing past 798 K glows in the colour of its heat, and thermal goggles see its
+temperature ([Heat](HEAT.md)).
 
 ### A shaft: motors and dynamos
 
@@ -171,7 +172,9 @@ protected MachineStatus work(ServerLevel level) {
 
 A motor spends from the machine's energy the power its torque gives at its speed, over its efficiency; a dynamo
 brakes the network and makes energy of what it takes, while the machine has room (`MachineShaft.dynamo`). A stopped
-machine (switched off, off by redstone, its fuse blown, overheated, wrecked) neither drives nor takes.
+machine (switched off, off by redstone, its fuse blown, overheated, wrecked) neither drives nor takes. *Added
+2026-10-16:* how fast its shaft turns (`shaft().rpm()`) is sent to the players who see it, for its renderer to turn
+its model's shaft by.
 
 A machine **driven** by its shaft (`MachineShaft.driven(torque, leastRpm, ratedRpm, face)`) asks its torque while it
 has work and works as fast as its shaft turns against its rated speed; below its least speed it stops, `TOO_SLOW`. A
@@ -188,9 +191,9 @@ redstone (`RedstoneMode`): `IGNORE` (it always runs), `HIGH` (only with a signal
 ### Damage and repair
 
 A machine does not wear. It is damaged only by overvoltage (a port burnt by a line too high), an explosion (which
-damages it instead of breaking it), sabotage or overheating (`damage(points)`). A damaged machine shows cracks, and
-works slower: at full speed when whole, half speed just before it stops, and not at all with no health left
-(`MachineHealth.workShare()`).
+damages it instead of breaking it), sabotage or overheating (`damage(points)`). A damaged machine shows cracks (a
+multiblock across every block of its structure, and over its formed model), and works slower: at full speed when
+whole, half speed just before it stops, and not at all with no health left (`MachineHealth.workShare()`).
 
 A **repair kit** mends it, as Factorio's repair packs do: used on the machine and held, it gives back its rate a second,
 spending itself as it goes, until the machine is whole. `RepairKitItem` is one ready to register; any item may be one

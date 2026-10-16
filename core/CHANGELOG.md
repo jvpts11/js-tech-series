@@ -492,6 +492,24 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the dark, its faces as wire, a timeline to drag and a speed to step. In a development run a changed model file
   reads the models alone again, at once, and an open preview shows the change; `/jstech model reload` does the same by
   hand.
+- Formed multiblocks: a structure can turn into one detailed model once it forms, a turbine's casing with its
+  rotor turning in place of its iron, turned, mirrored or laid down as it was built. Its plain blocks merge into parts
+  that draw nothing and stand in for what they were, breaking as slowly and dropping the block they were; the
+  controller, the ports and every block with a block entity stay, so pipes and cables still meet them. Forming puffs
+  where each block merged and can play a sound and an animation; breaking any block gives every one back, and a part
+  whose controller is gone turns back by itself. A damaged machine's cracks show across its whole structure.
+- Turning parts: shafts, gears and pulleys drawn turning at their real speed by the Core's models, the angle
+  following the speed frame by frame, meshed gears half a tooth apart so their teeth meet, every part of one model
+  sharing its shape; a belt or chain runs between the pulleys it joins as fast as their rims. A part drawn turning
+  hides nothing beside it and is lit as its place is. A part can be heard turning, louder and higher the faster.
+- Hot things glow: a block that holds heat past 798 K, the Draper point, glows in the colour of a black body at
+  its temperature, from Planck's law and the eye's colour matching, dull red to orange to yellow going white, as
+  bright by night as by day.
+- Thermal goggles: an item in `jscore:sees_heat`, worn or held, shows the world as a thermal camera does, what
+  is at the air's temperature under a dark veil and, in false colour, the blocks that hold heat, liquids far from the
+  air's temperature such as lava, and living things at a body's warmth (the undead as cold as the air, anything
+  burning hotter); beside the crosshair, how hot the thing looked at is, in kelvin and degrees Celsius.
+- Models drawn from a whole block take the light around the block, where none reaches inside it.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

@@ -56,7 +56,8 @@ public final class ModelGameTests {
     @GameTest(template = ARENA)
     public static void declaredModels_haveTheirDefinitionsBesideThem(final GameTestHelper helper) {
         final List<DeclaredModel> declared = TestSounds.CONTENT.declaredModels();
-        helper.assertTrue(declared.size() == 4, "the test mod declares its four models; it has " + declared.size());
+        // The press, the crate, the walker, the helmet, the turbine, the shaft, the gear and the two pulleys.
+        helper.assertTrue(declared.size() == 9, "the test mod declares its nine models; it has " + declared.size());
         for (final DeclaredModel model : declared) {
             final ResourceLocation file = DeclaredModel.definitionFile(model.id());
             final ModelDefinition written = ModelDefinition.fromJson(model.id().toString(), JsonParser.parseString(

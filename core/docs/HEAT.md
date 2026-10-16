@@ -315,6 +315,37 @@ public List<Reading> readings() {   // a thermocouple against the block under it
 Like every reading it speaks redstone, 0 at the bottom of its span to 15 at the top, and is read by anything that
 reads sensors.
 
+## Seeing heat
+
+*Added 2026-10-16.*
+
+**Hot things glow.** A block that holds heat past the Draper point, 798 K, where anything starts to glow, glows in
+the colour of a black body at its temperature (`Blackbody`): Planck's law weighed by the eye's colour matching
+functions, a dull red first, then cherry, orange and yellow going white, more strongly the hotter it is, wholly from
+1,500 K. Its glow is its own light, as bright by night as by day. A run of hot blocks glows as one shape. The
+blocks are looked for around the player twice a second, so nothing is drawn for the blocks that are cold.
+
+**Thermal goggles** show the world as a thermal camera does. A player who wears an item of `jscore:sees_heat` on the
+head, or holds one, sees everything at the air's temperature under a dark veil, and over it, in false colour, what is
+warmer or colder than the air (`ThermalSight`, `ThermalScale`):
+
+- the blocks that hold heat, at their temperatures;
+- liquids far from the air's temperature, at their types' (lava, a molten metal, a liquefied gas); the game's water,
+  which its type gives a nominal 300 K, is not told apart from the air;
+- living things at a body's warmth, 310 K, the undead as cold as the air, anything burning at a wood fire's 1,100 K.
+
+The colours run from violet through red and orange to a white heat at 1,500 K and from blue through cyan to an icy
+white at 77 K, steepest near the air's temperature, so a body a few tens of kelvin warmer than a room stands out.
+Beside the crosshair the player reads how hot what they look at is, in kelvin and in degrees Celsius; the air's own
+temperature for a block that holds none. The view's colours are the palette `jscore:thermal_view`, which a resource
+pack can change. A mod puts its goggles in the tag:
+
+```json
+{ "values": ["mymod:thermal_goggles"] }
+```
+
+(`data/jscore/tags/item/sees_heat.json` in the mod's resources.)
+
 ## It costs nothing at rest
 
 *Added 2026-10-15.*
@@ -343,3 +374,7 @@ loaded.
   to heat and put a radiator, a heat pipe or a cooler there, or take off upgrades that make it give off more.
 - **A hot block starts no fire.** Fire does not spread in that world (the `doFireTick` rule), or the server turned
   `heat.ignites` off.
+- **A hot block does not glow.** It is below 798 K, or more than four chunks from the player, or it holds no heat of
+  its own (`IHeatHolder`): a block of the world is as hot as the place it stands in.
+- **The goggles show nothing.** The item is not in `jscore:sees_heat`, or everything in view is within a few kelvin
+  of the air.

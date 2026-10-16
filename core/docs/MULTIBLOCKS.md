@@ -287,6 +287,38 @@ never every tick. It is never checked while a chunk it reaches is not loaded, an
 it: it stays as it was until it can be read again. `LevelStructures.of(level).controllerHolding(pos)` says which
 formed structure a place belongs to.
 
+### Formed into one model
+
+*Added 2026-10-16.*
+
+A structure can turn into one detailed model once it forms, a boiler's riveted drum, a turbine's casing with its
+rotor turning, in place of the blocks it was built of:
+
+```java
+formsWith(MachineStructure.of(MyContent.TURBINE_SHAPE)
+        .merges()                                // its plain blocks merge into the model once formed
+        .formingSound(MySounds.TURBINE_FORMS)    // heard as it forms
+        .formingAnimation("form"));              // played once on the model as it forms
+
+// On the player's game, the controller's renderer draws the model over the whole structure:
+event.registerBlockEntityRenderer(MyContent.TURBINE_ENTITY.get(), context -> KitBlockEntityRenderer
+        .<TurbineEntity>formedOnly(rl("turbine")).build());
+```
+
+- **Only plain blocks merge**: a block with no block entity and no liquid in it. Each turns into a formed part
+  (`jscore:formed_part`) that draws nothing, remembers the block it was and stands in for it: it breaks as slowly,
+  sounds and lights as it did, a pick block gives the block, and breaking it drops that block. The controller, the
+  ports and every block with a block entity stay as they are, so pipes and cables still meet them.
+- **Breaking a block of it undoes the structure**, and every formed part turns back into the block it was, with a
+  puff where each stood. A formed part whose controller is gone, or no longer holds it, turns back by itself within
+  five seconds.
+- **The model** is the one of the Core's ([Models](MODELS.md)) the controller's renderer names, made as the structure
+  stands facing north, as its pattern is drawn, its origin on the middle of the controller's floor; it is turned,
+  mirrored or laid down as the structure was built. While it is not formed the controller's own model shows
+  (`formed(model)` keeps a model for that, `formedOnly(model)` draws nothing then). A damaged machine's cracks show
+  across the whole model.
+- A structure is checked through its formed parts as through the blocks they were.
+
 ## Ports
 
 *Added 2026-10-05.*

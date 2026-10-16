@@ -49,6 +49,8 @@ import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.heat.IHeatPort;
 import dev.jstech.core.multiblock.IMultiblockPortHost;
 import dev.jstech.core.multiblock.IRedstonePortHost;
+import dev.jstech.core.multiblock.IStructureController;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.signal.ISignalOutput;
 import dev.jstech.core.signal.Reading;
@@ -66,6 +68,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -102,7 +105,7 @@ import org.jetbrains.annotations.Nullable;
 @TextHolder
 public abstract class MachineBlockEntity extends SyncedBlockEntity implements IOwned, IMachineParameters,
         ISignalOutput, IDescribed, IAudible, IFaceGate, IHeatHolder, IMechanicalHolder, IMultiblockPortHost,
-        IRedstonePortHost {
+        IRedstonePortHost, IStructureController {
 
     private final FieldItemHandler inventory;
     private final @Nullable FieldEnergyStorage energy;
@@ -456,7 +459,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
             power.mend();
         }
         if (given > 0 && level instanceof ServerLevel server) {
-            health.showCracks(server, worldPosition);
+            showCracks(server);
         }
         return given;
     }
@@ -465,9 +468,24 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     public int damage(final int points) {
         final int taken = health.damage(points);
         if (taken > 0 && level instanceof ServerLevel server) {
-            health.showCracks(server, worldPosition);
+            showCracks(server);
         }
         return taken;
+    }
+
+    @Override
+    public boolean holdsPlace(final BlockPos pos) {
+        return structure != null && structure.holdsPlace(pos);
+    }
+
+    @Override
+    public Optional<Orientation> formedOrientation() {
+        return structure == null ? Optional.empty() : structure.orientation();
+    }
+
+    @Override
+    public boolean merged() {
+        return structure != null && structure.merged();
     }
 
     @Override
@@ -735,7 +753,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
             throw new IllegalStateException("a machine declares its structure once");
         }
         structure = Objects.requireNonNull(declared, "declared");
-        final PartField field = fields().part("Structure", declared).save();
+        final PartField field = fields().part("Structure", declared).save().toClient();
         declared.on(this, field::changed);
     }
 
@@ -749,8 +767,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
             throw new IllegalStateException("a machine declares its shaft once");
         }
         shaft = Objects.requireNonNull(declared, "declared");
-        declared.on(this);
-        fields().part("Shaft", declared).save().toClient();
+        final PartField field = fields().part("Shaft", declared).save().toClient();
+        declared.on(this, field::changed);
         MechanicalPorts.keep(this);
     }
 
@@ -844,7 +862,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
             }
         }
         if (health.damaged() && Math.floorMod(now + worldPosition.asLong(), MachineHealth.CRACKS_EVERY) == 0) {
-            health.showCracks(server, worldPosition);
+            showCracks(server);
         }
         if (!signalRead) {
             readSignal(server);
@@ -938,7 +956,21 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         perMinute.set((int) Math.min(Integer.MAX_VALUE, count));
     }
 
-    private void play(final ServerLevel server, @Nullable final SoundKey sound) {
+    /*
+     * Shows its cracks, as many as its damage, on its own block and on every block of its formed structure; merged
+     * into its model, the model shows them whole.
+     */
+    private void showCracks(final ServerLevel server) {
+        health.showCracks(server, worldPosition);
+        if (structure != null) {
+            for (final BlockPos place : structure.crackedPlaces()) {
+                health.showCracks(server, place);
+            }
+        }
+    }
+
+    /* Plays {@code sound} once where it stands, as loud as its upgrades leave it; nothing for none. */
+    void play(final ServerLevel server, @Nullable final SoundKey sound) {
         if (sound != null && loudness.get() > 0) {
             Audio.at(server, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5,
                     sound, loudness.get() / (float) PERCENT, 1.0F);

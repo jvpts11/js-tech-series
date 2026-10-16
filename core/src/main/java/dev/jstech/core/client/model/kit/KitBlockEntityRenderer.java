@@ -12,26 +12,34 @@ import com.mojang.math.Axis;
 import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelDefinition;
+import dev.jstech.core.multiblock.IStructureController;
+import dev.jstech.core.multiblock.Orientation;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 /**
  * Draws a block entity with a model of the Core's: standing on the middle of its block's floor and facing the way
  * its block faces, as Bedrock's models of blocks do; drawn as the variant its block's state chooses; moved by its
- * driver and by what the server plays on it; holding what it holds at its locators. Only a block entity in sight is
- * drawn, as the game draws any, and only one near enough to see move is animated: one farther keeps its last pose.
+ * driver and by what the server plays on it; holding what it holds at its locators. The controller of a structure
+ * whose blocks merge into its model draws, once formed, its structure's model instead, standing as the structure
+ * stands. Only a block entity in sight is drawn, as the game draws any, and only one near enough to see move is
+ * animated: one farther keeps its last pose.
  *
  * <pre>{@code
  * event.registerBlockEntityRenderer(MY_MACHINE.get(), context -> KitBlockEntityRenderer.<MachineEntity>of(
@@ -46,6 +54,7 @@ import org.joml.Matrix4f;
 public final class KitBlockEntityRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
 
     private final Function<? super T, Optional<KitModel>> model;
+    private final @Nullable ResourceLocation formed;
     private final IKitDriver<? super T> driver;
     private final IHeldThings<? super T> held;
     private final int viewDistance;
@@ -58,6 +67,7 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
 
     private KitBlockEntityRenderer(final Builder<T> builder) {
         this.model = builder.model;
+        this.formed = builder.formed;
         this.driver = builder.driver;
         this.held = builder.held;
         this.viewDistance = builder.viewDistance;
@@ -83,10 +93,19 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
                 look.animationFile()));
     }
 
+    /**
+     * A renderer drawing a structure's controller only as the declared model {@code model} of its formed structure,
+     * and nothing while it is not formed, its block's own model showing then.
+     */
+    public static <T extends BlockEntity> Builder<T> formedOnly(final ResourceLocation model) {
+        return new Builder<T>(entity -> Optional.empty()).formed(model);
+    }
+
     @Override
     public void render(final T entity, final float partialTick, final PoseStack poses,
                        final MultiBufferSource buffers, final int light, final int overlay) {
-        final Optional<KitModel> found = this.model.apply(entity);
+        final Optional<Orientation> standing = standing(entity);
+        final Optional<KitModel> found = standing.isPresent() ? KitModels.get(this.formed) : this.model.apply(entity);
         if (found.isEmpty()) {
             return;
         }
@@ -100,12 +119,38 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         if (camera.distanceToSqr(Vec3.atCenterOf(pos)) <= this.animateDistance * this.animateDistance) {
             this.driver.drive(entity, instance.animator(), seconds);
             instance.animate(KitClock.frame(), seconds, this.driver.movesBones(), listener(entity, instance,
-                    pos, facing));
+                    pos, facing, standing));
         }
         poses.pushPose();
-        place(poses, facing);
-        KitRenderer.draw(instance, variant, entity, poses, buffers, light, overlay, held(), entity.getLevel());
+        if (standing.isPresent()) {
+            stand(poses, standing.get());
+        } else {
+            place(poses, facing);
+        }
+        // Inside a whole block no light reaches: a model drawn from one, or spread over a structure, takes its
+        // surroundings' light.
+        final int lit = standing.isPresent() || entity.getBlockState().canOcclude() ? lightAround(entity.getLevel(),
+                pos, light) : light;
+        KitRenderer.draw(instance, variant, entity, poses, buffers, lit, overlay, held(), entity.getLevel());
         poses.popPose();
+    }
+
+    /**
+     * The light around the block at {@code pos}, brightest of its own, {@code own}, and its six neighbours', the
+     * light of blocks and of the sky each at its brightest.
+     */
+    public static int lightAround(@Nullable final Level level, final BlockPos pos, final int own) {
+        if (level == null) {
+            return own;
+        }
+        int block = LightTexture.block(own);
+        int sky = LightTexture.sky(own);
+        for (final Direction way : Direction.values()) {
+            final int there = LevelRenderer.getLightColor(level, pos.relative(way));
+            block = Math.max(block, LightTexture.block(there));
+            sky = Math.max(sky, LightTexture.sky(there));
+        }
+        return LightTexture.pack(block, sky);
     }
 
     @Override
@@ -120,12 +165,13 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
 
     @Override
     public AABB getRenderBoundingBox(final T entity) {
-        final Optional<KitModel> found = this.model.apply(entity);
+        final Optional<KitModel> found = standing(entity).isPresent() ? KitModels.get(this.formed)
+                : this.model.apply(entity);
         final BlockPos pos = entity.getBlockPos();
         if (found.isEmpty()) {
             return new AABB(pos);
         }
-        // The model turns with its block: the box it can reach whichever way it faces, about its block's floor.
+        // The model turns with its block or its structure: the box it can reach whichever way it stands.
         final AABB box = found.get().bounds();
         final double reach = Math.max(Math.max(Math.max(Math.abs(box.minX), Math.abs(box.maxX)),
                 Math.max(Math.abs(box.minZ), Math.abs(box.maxZ))), Math.max(Math.abs(box.minY), Math.abs(box.maxY)));
@@ -148,17 +194,44 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
         }
     }
 
+    /*
+     * Stands a structure's model as its structure stands: made as the structure stands facing north, as its pattern
+     * is drawn, on its controller's floor, it is turned, laid down or mirrored about the controller's middle.
+     */
+    static void stand(final PoseStack poses, final Orientation orientation) {
+        final Matrix4f turn = new Matrix4f().zero();
+        turn.set(orientation.xFrom(), 0, orientation.xSign());
+        turn.set(orientation.yFrom(), 1, orientation.ySign());
+        turn.set(orientation.zFrom(), 2, orientation.zSign());
+        turn.m33(1);
+        poses.translate(0.5, 0.5, 0.5);
+        poses.mulPose(turn);
+        poses.translate(0, -0.5, 0);
+    }
+
+    /* How the structure the block entity controls stands, when it is formed and draws a model formed; or none. */
+    private Optional<Orientation> standing(final T entity) {
+        if (this.formed == null || !(entity instanceof IStructureController controller) || !controller.merged()) {
+            return Optional.empty();
+        }
+        return controller.formedOrientation();
+    }
+
     @SuppressWarnings("unchecked")
     private IHeldThings<T> held() {
         return (IHeldThings<T>) this.held;
     }
 
     private IAnimationListener listener(final T entity, final KitInstance instance, final BlockPos pos,
-                                        final Direction facing) {
+                                        final Direction facing, final Optional<Orientation> standing) {
         return KitEvents.of(entity, this.driver, instance, entity.getLevel(), () -> {
             final PoseStack placed = new PoseStack();
             placed.translate(pos.getX(), pos.getY(), pos.getZ());
-            place(placed, facing);
+            if (standing.isPresent()) {
+                stand(placed, standing.get());
+            } else {
+                place(placed, facing);
+            }
             return new Matrix4f(placed.last().pose());
         }, SoundSource.BLOCKS);
     }
@@ -171,6 +244,7 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
     public static final class Builder<T extends BlockEntity> {
 
         private final Function<? super T, Optional<KitModel>> model;
+        private @Nullable ResourceLocation formed;
         private IKitDriver<? super T> driver = IKitDriver.none();
         private IHeldThings<? super T> held = IHeldThings.none();
         private int viewDistance = VIEW_DISTANCE;
@@ -178,6 +252,15 @@ public final class KitBlockEntityRenderer<T extends BlockEntity> implements Bloc
 
         private Builder(final Function<? super T, Optional<KitModel>> model) {
             this.model = Objects.requireNonNull(model, "model");
+        }
+
+        /**
+         * Once the structure it controls has formed and its blocks merged, it draws the declared model
+         * {@code structureModel} of the whole structure, standing as the structure stands.
+         */
+        public Builder<T> formed(final ResourceLocation structureModel) {
+            this.formed = Objects.requireNonNull(structureModel, "structureModel");
+            return this;
         }
 
         /** The code that chooses what it plays and moves its bones. */

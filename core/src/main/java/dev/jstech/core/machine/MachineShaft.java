@@ -51,6 +51,7 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
     private final double least;
     private final double rated;
     private @Nullable MachineBlockEntity machine;
+    private @Nullable Runnable synced;
     private double rpm;
     private double share;
     private double asked;
@@ -229,6 +230,10 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
         if (woke && this.machine != null) {
             this.machine.wake();
         }
+        // The players who see it are sent its speed, as the network tells it of every change worth telling.
+        if (this.synced != null) {
+            this.synced.run();
+        }
     }
 
     @Override
@@ -258,9 +263,10 @@ public final class MachineShaft implements IMechanicalPart, IFieldPart {
         this.rpm = tag.getCompound(KEY).getDouble(RPM);
     }
 
-    /* The machine it is declared on, from the machine's constructor. */
-    void on(final MachineBlockEntity owner) {
+    /* The machine it is declared on, and how it tells its field it changed, from the machine's constructor. */
+    void on(final MachineBlockEntity owner, final Runnable changed) {
         this.machine = owner;
+        this.synced = changed;
     }
 
     /* Whether a speed went from below {@code mark} to at or above it. */

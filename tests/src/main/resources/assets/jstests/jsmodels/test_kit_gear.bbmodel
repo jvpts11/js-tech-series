@@ -1,0 +1,78 @@
+{
+  "meta": {"format_version": "4.10", "model_format": "bedrock", "box_uv": false},
+  "name": "test_kit_gear",
+  "model_identifier": "test_kit_gear",
+  "resolution": {"width": 16, "height": 16},
+  "elements": [
+    {
+      "name": "axle", "type": "cube", "uuid": "c-axle", "box_uv": false,
+      "from": [-2, 0, -2], "to": [2, 16, 2], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 4, 16], "texture": 0}, "south": {"uv": [0, 0, 4, 16], "texture": 0},
+        "east": {"uv": [0, 0, 4, 16], "texture": 0}, "west": {"uv": [0, 0, 4, 16], "texture": 0},
+        "up": {"uv": [0, 0, 4, 4], "texture": 0}, "down": {"uv": [0, 0, 4, 4], "texture": 0}
+      }
+    },
+    {
+      "name": "wheel", "type": "cube", "uuid": "c-wheel", "box_uv": false,
+      "from": [-6, 6, -6], "to": [6, 10, 6], "origin": [0, 8, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [2, 6, 14, 10], "texture": 0}, "south": {"uv": [2, 6, 14, 10], "texture": 0},
+        "east": {"uv": [2, 6, 14, 10], "texture": 0}, "west": {"uv": [2, 6, 14, 10], "texture": 0},
+        "up": {"uv": [2, 2, 14, 14], "texture": 0}, "down": {"uv": [2, 2, 14, 14], "texture": 0}
+      }
+    },
+    {
+      "name": "wheel_turned", "type": "cube", "uuid": "c-wheel-turned", "box_uv": false,
+      "from": [-6, 6, -6], "to": [6, 10, 6], "origin": [0, 8, 0], "rotation": [0, 45, 0],
+      "faces": {
+        "north": {"uv": [2, 6, 14, 10], "texture": 0}, "south": {"uv": [2, 6, 14, 10], "texture": 0},
+        "east": {"uv": [2, 6, 14, 10], "texture": 0}, "west": {"uv": [2, 6, 14, 10], "texture": 0},
+        "up": {"uv": [2, 2, 14, 14], "texture": 0}, "down": {"uv": [2, 2, 14, 14], "texture": 0}
+      }
+    },
+    {
+      "name": "teeth_x", "type": "cube", "uuid": "c-teeth-x", "box_uv": false,
+      "from": [-8, 6, -1], "to": [8, 10, 1], "origin": [0, 8, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 6, 16, 10], "texture": 0}, "south": {"uv": [0, 6, 16, 10], "texture": 0},
+        "east": {"uv": [7, 6, 9, 10], "texture": 0}, "west": {"uv": [7, 6, 9, 10], "texture": 0},
+        "up": {"uv": [0, 7, 16, 9], "texture": 0}, "down": {"uv": [0, 7, 16, 9], "texture": 0}
+      }
+    },
+    {
+      "name": "teeth_z", "type": "cube", "uuid": "c-teeth-z", "box_uv": false,
+      "from": [-1, 6, -8], "to": [1, 10, 8], "origin": [0, 8, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [7, 6, 9, 10], "texture": 0}, "south": {"uv": [7, 6, 9, 10], "texture": 0},
+        "east": {"uv": [0, 6, 16, 10], "texture": 0}, "west": {"uv": [0, 6, 16, 10], "texture": 0},
+        "up": {"uv": [7, 0, 9, 16], "texture": 0}, "down": {"uv": [7, 0, 9, 16], "texture": 0}
+      }
+    },
+    {
+      "name": "teeth_diagonal", "type": "cube", "uuid": "c-teeth-diagonal", "box_uv": false,
+      "from": [-8, 6, -1], "to": [8, 10, 1], "origin": [0, 8, 0], "rotation": [0, 45, 0],
+      "faces": {
+        "north": {"uv": [0, 6, 16, 10], "texture": 0}, "south": {"uv": [0, 6, 16, 10], "texture": 0},
+        "east": {"uv": [7, 6, 9, 10], "texture": 0}, "west": {"uv": [7, 6, 9, 10], "texture": 0},
+        "up": {"uv": [0, 7, 16, 9], "texture": 0}, "down": {"uv": [0, 7, 16, 9], "texture": 0}
+      }
+    },
+    {
+      "name": "teeth_other_diagonal", "type": "cube", "uuid": "c-teeth-other-diagonal", "box_uv": false,
+      "from": [-8, 6, -1], "to": [8, 10, 1], "origin": [0, 8, 0], "rotation": [0, -45, 0],
+      "faces": {
+        "north": {"uv": [0, 6, 16, 10], "texture": 0}, "south": {"uv": [0, 6, 16, 10], "texture": 0},
+        "east": {"uv": [7, 6, 9, 10], "texture": 0}, "west": {"uv": [7, 6, 9, 10], "texture": 0},
+        "up": {"uv": [0, 7, 16, 9], "texture": 0}, "down": {"uv": [0, 7, 16, 9], "texture": 0}
+      }
+    }
+  ],
+  "outliner": [
+    {"name": "gear", "uuid": "g-gear", "origin": [0, 8, 0], "rotation": [0, 0, 0],
+     "children": ["c-axle", "c-wheel", "c-wheel-turned", "c-teeth-x", "c-teeth-z", "c-teeth-diagonal",
+                  "c-teeth-other-diagonal"]}
+  ],
+  "textures": [],
+  "animations": []
+}

@@ -1,0 +1,102 @@
+{
+  "meta": {"format_version": "4.10", "model_format": "bedrock", "box_uv": false},
+  "name": "test_kit_turbine",
+  "model_identifier": "test_kit_turbine",
+  "resolution": {"width": 16, "height": 16},
+  "elements": [
+    {
+      "name": "back", "type": "cube", "uuid": "c-back", "box_uv": false,
+      "from": [-24, 0, -40], "to": [24, 16, -8], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": 0}, "south": {"uv": [0, 0, 16, 16], "texture": 0},
+        "east": {"uv": [0, 0, 16, 16], "texture": 0}, "west": {"uv": [0, 0, 16, 16], "texture": 0},
+        "up": {"uv": [0, 0, 16, 16], "texture": 0}, "down": {"uv": [0, 0, 16, 16], "texture": 0}
+      }
+    },
+    {
+      "name": "front_left", "type": "cube", "uuid": "c-front-left", "box_uv": false,
+      "from": [-24, 0, -8], "to": [-8, 16, 8], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": 0}, "south": {"uv": [0, 0, 16, 16], "texture": 0},
+        "east": {"uv": [0, 0, 16, 16], "texture": 0}, "west": {"uv": [0, 0, 16, 16], "texture": 0},
+        "up": {"uv": [0, 0, 16, 16], "texture": 0}, "down": {"uv": [0, 0, 16, 16], "texture": 0}
+      }
+    },
+    {
+      "name": "front_right", "type": "cube", "uuid": "c-front-right", "box_uv": false,
+      "from": [8, 0, -8], "to": [24, 16, 8], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": 0}, "south": {"uv": [0, 0, 16, 16], "texture": 0},
+        "east": {"uv": [0, 0, 16, 16], "texture": 0}, "west": {"uv": [0, 0, 16, 16], "texture": 0},
+        "up": {"uv": [0, 0, 16, 16], "texture": 0}, "down": {"uv": [0, 0, 16, 16], "texture": 0}
+      }
+    },
+    {
+      "name": "top", "type": "cube", "uuid": "c-top", "box_uv": false,
+      "from": [-24, 16, -40], "to": [24, 30, 8], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 14], "texture": 0}, "south": {"uv": [0, 0, 16, 14], "texture": 0},
+        "east": {"uv": [0, 0, 16, 14], "texture": 0}, "west": {"uv": [0, 0, 16, 14], "texture": 0},
+        "up": {"uv": [0, 0, 16, 16], "texture": 0}, "down": {"uv": [0, 0, 16, 16], "texture": 0}
+      }
+    },
+    {
+      "name": "shaft", "type": "cube", "uuid": "c-shaft", "box_uv": false,
+      "from": [-1, 30, -17], "to": [1, 38, -15], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 2, 8], "texture": 0}, "south": {"uv": [0, 0, 2, 8], "texture": 0},
+        "east": {"uv": [0, 0, 2, 8], "texture": 0}, "west": {"uv": [0, 0, 2, 8], "texture": 0},
+        "up": {"uv": [0, 0, 2, 2], "texture": 0}, "down": {"uv": [0, 0, 2, 2], "texture": 0}
+      }
+    },
+    {
+      "name": "blade_x", "type": "cube", "uuid": "c-blade-x", "box_uv": false,
+      "from": [-14, 36, -17], "to": [14, 37, -15], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 1], "texture": 0}, "south": {"uv": [0, 0, 16, 1], "texture": 0},
+        "east": {"uv": [0, 0, 2, 1], "texture": 0}, "west": {"uv": [0, 0, 2, 1], "texture": 0},
+        "up": {"uv": [0, 0, 16, 2], "texture": 0}, "down": {"uv": [0, 0, 16, 2], "texture": 0}
+      }
+    },
+    {
+      "name": "blade_z", "type": "cube", "uuid": "c-blade-z", "box_uv": false,
+      "from": [-1, 36, -30], "to": [1, 37, -2], "origin": [0, 0, 0], "rotation": [0, 0, 0],
+      "faces": {
+        "north": {"uv": [0, 0, 2, 1], "texture": 0}, "south": {"uv": [0, 0, 2, 1], "texture": 0},
+        "east": {"uv": [0, 0, 16, 1], "texture": 0}, "west": {"uv": [0, 0, 16, 1], "texture": 0},
+        "up": {"uv": [0, 0, 2, 16], "texture": 0}, "down": {"uv": [0, 0, 2, 16], "texture": 0}
+      }
+    }
+  ],
+  "outliner": [
+    {
+      "name": "casing", "uuid": "g-casing", "origin": [0, 0, -16], "rotation": [0, 0, 0],
+      "children": [
+        "c-back", "c-front-left", "c-front-right", "c-top",
+        {"name": "rotor", "uuid": "g-rotor", "origin": [0, 30, -16], "rotation": [0, 0, 0],
+         "children": ["c-shaft", "c-blade-x", "c-blade-z"]}
+      ]
+    }
+  ],
+  "textures": [],
+  "animations": [
+    {
+      "name": "animation.test_kit_turbine.working", "loop": "loop", "length": 1.0,
+      "animators": {
+        "g-rotor": {"name": "rotor", "type": "bone", "keyframes": [
+          {"channel": "rotation", "time": 0, "interpolation": "linear", "data_points": [{"x": 0, "y": 0, "z": 0}]},
+          {"channel": "rotation", "time": 1, "interpolation": "linear", "data_points": [{"x": 0, "y": 360, "z": 0}]}
+        ]}
+      }
+    },
+    {
+      "name": "animation.test_kit_turbine.form", "loop": "once", "length": 0.5,
+      "animators": {
+        "g-casing": {"name": "casing", "type": "bone", "keyframes": [
+          {"channel": "scale", "time": 0, "interpolation": "linear", "data_points": [{"x": 0.85, "y": 0.85, "z": 0.85}]},
+          {"channel": "scale", "time": 0.5, "interpolation": "linear", "data_points": [{"x": 1, "y": 1, "z": 1}]}
+        ]}
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "controller": "jstests:test_kit_turbine",
+  "key": {
+    "I": {
+      "blocks": [
+        "minecraft:iron_block"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "III",
+      "III",
+      "I#I"
+    ],
+    [
+      "III",
+      "III",
+      "III"
+    ]
+  ],
+  "name": "test_kit_turbine"
+}

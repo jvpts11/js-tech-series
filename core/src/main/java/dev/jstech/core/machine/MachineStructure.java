@@ -7,8 +7,11 @@
  */
 package dev.jstech.core.machine;
 
+import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.multiblock.BlockMatch;
+import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.IBlockMatcher;
 import dev.jstech.core.multiblock.IStructureShape;
 import dev.jstech.core.multiblock.IStructureWatcher;
@@ -17,6 +20,7 @@ import dev.jstech.core.multiblock.Limit;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.MultiblockPortBlockEntity;
 import dev.jstech.core.multiblock.MultiblockPorts;
+import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PatternById;
 import dev.jstech.core.multiblock.PatternMatcher;
 import dev.jstech.core.multiblock.PortKind;
@@ -66,9 +70,17 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
 
     private final IStructureShape shape;
     private ToIntFunction<ShapeMatch.Formed> parallelBy = formed -> 1;
+    private boolean merges;
+    private @Nullable SoundKey formingSound;
+    private @Nullable String formingAnimation;
     private @Nullable MachineBlockEntity machine;
     private @Nullable Runnable synced;
     private boolean formed;
+    /* How its structure stands, by its place among every way one can lie, or -1; on the players' games too. */
+    private int orientation = -1;
+    /* Its plain blocks merged into its model, as places. */
+    private List<Long> merged = List.of();
+    private boolean mergedOnClient;
     private List<Long> places = List.of();
     private Set<Long> held = Set.of();
     private int[] size = {0, 0, 0};
@@ -121,7 +133,12 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     private static final String SIZE_KEY = "Size";
     private static final String REPEATS_KEY = "Repeats";
     private static final String PARALLEL_KEY = "Parallel";
+    private static final String MERGED_KEY = "Merged";
+    private static final String ORIENTATION_KEY = "Orientation";
+    /** The controller of its model that plays the animation of its forming. */
+    public static final String FORMING_CONTROLLER = "structure";
     private static final int AXES = 3;
+    private static final List<Orientation> ORIENTATIONS = Orientation.lyingAndMirrors();
 
     private MachineStructure(final IStructureShape shape) {
         this.shape = Objects.requireNonNull(shape, "shape");
@@ -139,6 +156,70 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     public MachineStructure parallel(final ToIntFunction<ShapeMatch.Formed> by) {
         this.parallelBy = Objects.requireNonNull(by, "by");
         return this;
+    }
+
+    /**
+     * Once formed, its plain blocks merge into its controller's model, which its renderer draws whole, as
+     * {@code KitBlockEntityRenderer.formed(...)} says; its ports, and every block that keeps something, stay where
+     * they are. It comes apart, and they come back, as soon as a block of it goes.
+     */
+    public MachineStructure merges() {
+        this.merges = true;
+        return this;
+    }
+
+    /** Plays {@code sound} once as it forms. */
+    public MachineStructure formingSound(final SoundKey sound) {
+        this.formingSound = Objects.requireNonNull(sound, "sound");
+        return this;
+    }
+
+    /**
+     * Plays the animation {@code animation} of its controller's model as it forms, on the model's controller
+     * {@link #FORMING_CONTROLLER}, for everyone who sees it.
+     */
+    public MachineStructure formingAnimation(final String animation) {
+        this.formingAnimation = Objects.requireNonNull(animation, "animation");
+        return this;
+    }
+
+    /** Whether its blocks merge into its model once it forms. */
+    public boolean mergesWhenFormed() {
+        return this.merges;
+    }
+
+    /** How its structure stands, once formed: on the server once checked, on the players' games as sent. */
+    public Optional<Orientation> orientation() {
+        return this.formed && this.orientation >= 0 ? Optional.of(ORIENTATIONS.get(this.orientation))
+                : Optional.empty();
+    }
+
+    /** Whether its blocks stand merged into its model now. */
+    public boolean merged() {
+        return this.formed && (this.mergedOnClient || !this.merged.isEmpty());
+    }
+
+    /** Whether its formed structure holds the place {@code pos}, as saved, before it is checked again. */
+    public boolean holdsPlace(final BlockPos pos) {
+        return holds(PatternMatcher.encodePosition(pos.getX(), pos.getY(), pos.getZ()));
+    }
+
+    /**
+     * The places of its formed structure that show its cracks as their own, its controller's aside: every place of
+     * its shell, unless its blocks merged into its model, which shows the cracks as the controller's.
+     */
+    public List<BlockPos> crackedPlaces() {
+        if (!this.formed || this.merges && !this.merged.isEmpty()) {
+            return List.of();
+        }
+        final List<BlockPos> out = new ArrayList<>();
+        final Set<Long> inside = this.last == null ? Set.of() : new HashSet<>(this.last.inside());
+        for (final long place : this.places) {
+            if (!inside.contains(place)) {
+                out.add(MultiblockPatterns.decode(place));
+            }
+        }
+        return out;
     }
 
     /** Its shape. */
@@ -224,7 +305,27 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         own.putIntArray(SIZE_KEY, this.size);
         own.putInt(REPEATS_KEY, this.repeats);
         own.putInt(PARALLEL_KEY, this.parallel);
+        own.putLongArray(MERGED_KEY, this.merged.stream().mapToLong(Long::longValue).toArray());
+        own.putInt(ORIENTATION_KEY, this.orientation);
         tag.put(KEY, own);
+    }
+
+    /* The players who see it are told whether it is formed, how it stands, and whether its blocks merged. */
+    @Override
+    public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+        final CompoundTag own = new CompoundTag();
+        own.putBoolean(FORMED_KEY, this.formed);
+        own.putInt(ORIENTATION_KEY, this.orientation);
+        own.putBoolean(MERGED_KEY, !this.merged.isEmpty());
+        tag.put(KEY, own);
+    }
+
+    @Override
+    public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+        final CompoundTag own = tag.getCompound(KEY);
+        this.formed = own.getBoolean(FORMED_KEY);
+        this.orientation = own.contains(ORIENTATION_KEY) ? own.getInt(ORIENTATION_KEY) : -1;
+        this.mergedOnClient = own.getBoolean(MERGED_KEY);
     }
 
     @Override
@@ -241,6 +342,12 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         this.size = saved.length == AXES ? saved : new int[] {0, 0, 0};
         this.repeats = own.getInt(REPEATS_KEY);
         this.parallel = own.getInt(PARALLEL_KEY);
+        final List<Long> wereMerged = new ArrayList<>();
+        for (final long place : own.getLongArray(MERGED_KEY)) {
+            wereMerged.add(place);
+        }
+        this.merged = List.copyOf(wereMerged);
+        this.orientation = own.contains(ORIENTATION_KEY) ? own.getInt(ORIENTATION_KEY) : -1;
         this.dirty = true;
     }
 
@@ -310,6 +417,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     }
 
     private void apply(final ServerLevel level, final BlockPos pos, final ShapeMatch result) {
+        final boolean wasFormed = this.formed;
         switch (result) {
             case ShapeMatch.Formed found -> {
                 final List<Long> now = new ArrayList<>(found.parts());
@@ -337,11 +445,23 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
                         reader.hear(level);
                     }
                 }
+                this.orientation = ORIENTATIONS.indexOf(found.orientation());
+                if (this.merges) {
+                    mergeInto(level, pos, found, gone);
+                }
+                if (!wasFormed) {
+                    formedNow(level);
+                }
             }
             case ShapeMatch.Failure wrong -> {
                 if (this.formed) {
                     MultiblockPorts.release(level, this.places);
                 }
+                if (!this.merged.isEmpty()) {
+                    FormedParts.restore(level, this.merged);
+                    this.merged = List.of();
+                }
+                this.orientation = -1;
                 this.formed = false;
                 this.last = null;
                 this.failure = wrong;
@@ -403,6 +523,40 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         this.groupOf = Map.copyOf(groupOfPlace);
         this.redstonePorts = List.copyOf(redstone);
         this.groups = order.size();
+    }
+
+    /*
+     * Merges its shell's plain blocks into its model: those it holds that have not merged yet, as a structure found
+     * again larger has; and gives back the merged ones it no longer holds.
+     */
+    private void mergeInto(final ServerLevel level, final BlockPos pos, final ShapeMatch.Formed found,
+                           final List<Long> gone) {
+        final Set<Long> wasMerged = new HashSet<>(this.merged);
+        final List<Long> kept = new ArrayList<>();
+        final List<Long> released = new ArrayList<>();
+        for (final long place : this.merged) {
+            (gone.contains(place) ? released : kept).add(place);
+        }
+        FormedParts.restore(level, released);
+        final List<Long> fresh = new ArrayList<>();
+        for (final long place : found.parts()) {
+            if (!wasMerged.contains(place)) {
+                fresh.add(place);
+            }
+        }
+        kept.addAll(FormedParts.merge(level, pos, fresh));
+        this.merged = List.copyOf(kept);
+    }
+
+    /* It has just formed: its sound, and its model's animation of forming for everyone who sees it. */
+    private void formedNow(final ServerLevel level) {
+        if (this.machine == null) {
+            return;
+        }
+        this.machine.play(level, this.formingSound);
+        if (this.formingAnimation != null) {
+            ModelAnimations.replay(this.machine, FORMING_CONTROLLER, this.formingAnimation);
+        }
     }
 
     /* Where a colour comes in the order of the groups: no colour first, then the dyes in their own order. */

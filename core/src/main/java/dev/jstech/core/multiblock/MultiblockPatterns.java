@@ -198,7 +198,10 @@ public final class MultiblockPatterns {
                 controller.getY(), controller.getZ()));
     }
 
-    /** The world as the matcher reads it: each place's block id and the block's tags. */
+    /**
+     * The world as the matcher reads it: each place's block id and the block's tags; a block merged into a formed
+     * structure's model read as the block it was, so the structure still stands as it was built.
+     */
     public static IBlockProvider provider(final BlockGetter level) {
         return new IBlockProvider() {
             @Override
@@ -327,7 +330,8 @@ public final class MultiblockPatterns {
     }
 
     private static Block blockIn(final BlockGetter level, final long encodedPos) {
-        return level.getBlockState(decode(encodedPos)).getBlock();
+        final BlockPos at = decode(encodedPos);
+        return FormedPartBlock.originalAt(level, at, level.getBlockState(at)).getBlock();
     }
 
     /* The next letter a structure's block can take, past the two the pattern keeps for itself. */
