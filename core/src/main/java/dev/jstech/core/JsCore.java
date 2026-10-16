@@ -25,6 +25,7 @@ import dev.jstech.core.cable.CableRuns;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.overhead.OverheadLines;
+import dev.jstech.core.machine.DataMachines;
 import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.machine.Machines;
 import dev.jstech.core.signal.SignalRadio;
@@ -278,6 +279,7 @@ public final class JsCore {
         DiagnosticNotifications.declare();
         // The multiblock patterns of every mod, read from data and declared in code.
         MultiblockPatterns.register();
+        DataMachines.register();
         // What each dimension is like to stand in, read from data.
         DimensionRulesData.register();
         // The tasks every robot knows, before a world reads its robots back.

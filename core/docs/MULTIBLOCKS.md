@@ -367,6 +367,49 @@ never evened out between them, as a one-block machine's are. Liquid and matter t
 A processing machine works that many at once in each lane, more with its upgrades; `recipesAtOnce()` gives the exact
 number, and Jade shows it ("Runs 4 at once").
 
+## Machines entirely as data
+
+*Added 2026-10-16.*
+
+A multiblock machine can be declared with no code at all: its shape, its slots, its energy, the kind of recipe it
+works and how many at once, in a file under `data/<namespace>/multiblock_machine/`. A data pack adds one, or changes
+a mod's:
+
+```json
+{"shape": {"box": {"frame": {"blocks": ["minecraft:iron_block"]},
+                   "face": {"blocks": ["minecraft:glass"], "tags": ["jscore:multiblock_ports"]},
+                   "sides": {"least": 3, "most": 7}, "height": {"least": 3, "most": 7}}},
+ "recipes": "mymod:baking",
+ "layout": {"inputs": 1, "outputs": 1, "lanes": 2},
+ "energy": {"capacity": 10000, "receive": 1000, "per_tick": 10},
+ "parallel": {"by": "count", "name": "unit"}}
+```
+
+- `shape` is one of `pattern` (a pattern's id, read when it is checked, so a pack's own copy counts), `drawn` (a
+  pattern written in the file, as above), `box`, `walls` or `cuboid`, each with the fields of its shape.
+- `recipes` is the recipe type of a kind of processing machine some mod declared (`ModContent.processing`); its
+  recipes are data as any other.
+- `layout` gives `inputs`, `outputs`, `upgrades`, `lanes`, `input_tanks`, `output_tanks`, `tank_capacity` and
+  `matter` tanks (`state`, `inputs`, `outputs`, `volume`, `pressure`); what is left out it has none of, and one lane.
+- `energy` is in FE; `per_tick` is what a recipe that names no energy spends.
+- `parallel` is read `by` `fixed` (with a `value`), `count` or `value` (with a `name`), or `repeats`.
+
+The controller is one block for each machine, with its own look, built on `DataMachineBlock` with a
+`DataMachineBlockEntity`, which names the file:
+
+```java
+public static final BlockEntry<DataMachineBlock> OVEN = CONTENT.block("coke_oven",
+        properties -> new DataMachineBlock(properties, Device.of(() -> MyContent.OVEN_ENTITY.get())
+                .ticks(MachineBlockEntity::serverTick).opensMenu(MachineMenu::new), rl("coke_oven"))).register();
+public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DataMachineBlockEntity>> OVEN_ENTITY =
+        CONTENT.blockEntity("coke_oven",
+                (pos, state) -> new DataMachineBlockEntity(MyContent.OVEN_ENTITY.get(), pos, state), OVEN);
+```
+
+The files are sent to every player, so the controller has the same slots on both sides. A machine's slots are made as
+its controller is placed or loaded: a change to a file's layout reaches the controllers placed or loaded after the
+reload. A controller whose block names a file there is not never forms, and Jade names the file it lacks.
+
 ## What can go wrong
 
 - **The shape never forms.** Read the `Failure`: the letter wanted, the place (counted from the controller), and

@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The parts of a multiblock's shape as data files hold them: a slot's blocks and tags, a place with what it counts
- * and gives, a limit, a repeated slice, an inside with its parts and their neighbour rules. A matcher made in code
- * cannot be written; one declared with {@link BlockMatch} can.
+ * and gives, a limit, a repeated slice, an inside with its parts and their neighbour rules, and the shapes by rule
+ * whole. A matcher made in code cannot be written; one declared with {@link BlockMatch} can.
  */
 public final class ShapeCodecs {
 
@@ -127,6 +127,46 @@ public final class ShapeCodecs {
             .apply(instance, RawInside::new))
             .flatXmap(raw -> attempt(() -> new InsideRule(raw.allows(), raw.parts()).requireKnownParts()),
                     rule -> DataResult.success(new RawInside(rule.allows(), rule.parts())));
+
+    /** A box: its frame, its faces, its inside (empty when left out), its sides and height, and its limits. */
+    public static final Codec<BoxShape> BOX = RecordCodecBuilder.<RawBox>create(instance -> instance.group(
+                    PLACE.fieldOf("frame").forGetter(RawBox::frame),
+                    PLACE.fieldOf("face").forGetter(RawBox::face),
+                    INSIDE.optionalFieldOf("inside", InsideRule.empty()).forGetter(RawBox::inside),
+                    LIMIT.fieldOf("sides").forGetter(RawBox::sides),
+                    LIMIT.fieldOf("height").forGetter(RawBox::height),
+                    Codec.unboundedMap(Codec.STRING, LIMIT).optionalFieldOf("limits", Map.of())
+                            .forGetter(RawBox::limits))
+            .apply(instance, RawBox::new))
+            .flatXmap(raw -> attempt(() -> new BoxShape(raw.frame(), raw.face(), raw.inside(), raw.sides(),
+                            raw.height(), raw.limits())),
+                    box -> DataResult.success(new RawBox(box.frame(), box.face(), box.inside(), box.sides(),
+                            box.height(), box.limits())));
+
+    /** A floor and walls: its floor, its walls, its inside (empty when left out), its area, height and limits. */
+    public static final Codec<WallsShape> WALLS = RecordCodecBuilder.<RawWalls>create(instance -> instance.group(
+                    PLACE.fieldOf("floor").forGetter(RawWalls::floor),
+                    PLACE.fieldOf("wall").forGetter(RawWalls::wall),
+                    INSIDE.optionalFieldOf("inside", InsideRule.empty()).forGetter(RawWalls::inside),
+                    LIMIT.fieldOf("area").forGetter(RawWalls::area),
+                    LIMIT.fieldOf("height").forGetter(RawWalls::height),
+                    Codec.unboundedMap(Codec.STRING, LIMIT).optionalFieldOf("limits", Map.of())
+                            .forGetter(RawWalls::limits))
+            .apply(instance, RawWalls::new))
+            .flatXmap(raw -> attempt(() -> new WallsShape(raw.floor(), raw.wall(), raw.inside(), raw.area(),
+                            raw.height(), raw.limits())),
+                    walls -> DataResult.success(new RawWalls(walls.floor(), walls.wall(), walls.inside(),
+                            walls.area(), walls.height(), walls.limits())));
+
+    /** A cuboid of units: its unit, its sides and its limits. */
+    public static final Codec<CuboidShape> CUBOID = RecordCodecBuilder.<RawCuboid>create(instance -> instance.group(
+                    PLACE.fieldOf("unit").forGetter(RawCuboid::unit),
+                    LIMIT.fieldOf("sides").forGetter(RawCuboid::sides),
+                    Codec.unboundedMap(Codec.STRING, LIMIT).optionalFieldOf("limits", Map.of())
+                            .forGetter(RawCuboid::limits))
+            .apply(instance, RawCuboid::new))
+            .flatXmap(raw -> attempt(() -> new CuboidShape(raw.unit(), raw.sides(), raw.limits())),
+                    cuboid -> DataResult.success(new RawCuboid(cuboid.unit(), cuboid.sides(), cuboid.limits())));
 
     private ShapeCodecs() {
     }
@@ -286,6 +326,17 @@ public final class ShapeCodecs {
     }
 
     private record RawInside(IBlockMatcher allows, List<InsidePart> parts) {
+    }
+
+    private record RawBox(Place frame, Place face, InsideRule inside, Limit sides, Limit height,
+                          Map<String, Limit> limits) {
+    }
+
+    private record RawWalls(Place floor, Place wall, InsideRule inside, Limit area, Limit height,
+                            Map<String, Limit> limits) {
+    }
+
+    private record RawCuboid(Place unit, Limit sides, Map<String, Limit> limits) {
     }
 
     private record RawRepeat(String axis, int index, int least, int most) {

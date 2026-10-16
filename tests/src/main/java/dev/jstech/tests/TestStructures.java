@@ -11,11 +11,15 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.machine.DataMachineBlock;
+import dev.jstech.core.machine.DataMachineBlockEntity;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
+import dev.jstech.core.machine.MachineMenu;
 import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.machine.ProcessingInput;
+import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.BoxShape;
@@ -31,6 +35,7 @@ import dev.jstech.core.multiblock.RedstonePortBlockEntity;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -47,7 +52,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * seven a side, iron on its edges, iron or glass on its faces with hoppers among them as its valves, and empty inside,
  * its controller on a face: it runs as many recipes at once as it has valves. And a smelter of the same build whose
  * faces take ports of their own (items in, items out, energy in, redstone): it has three lanes, so ports of up to
- * three colours each feed their own, and runs two recipes at once in each.
+ * three colours each feed their own, and runs two recipes at once in each. And machines declared in their files
+ * alone: a baker, a furnace on the test furnace's pattern, and a controller whose file is nowhere.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class TestStructures {
@@ -97,6 +103,21 @@ public final class TestStructures {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RedstonePortBlockEntity>>
             REDSTONE_ENTITY = TestSounds.CONTENT.blockEntity("test_redstone_port",
             (pos, state) -> new RedstonePortBlockEntity(TestStructures.REDSTONE_ENTITY.get(), pos, state), REDSTONE);
+    /** A machine declared in its file alone: a box of ports that bakes clay, three at once. */
+    public static final BlockEntry<DataMachineBlock> BAKER = dataMachine("test_baker", "Test baker", "baker");
+    /** One whose file names the test furnace's pattern by its id. */
+    public static final BlockEntry<DataMachineBlock> DATA_FURNACE = dataMachine("test_data_furnace",
+            "Test data furnace", "data_furnace");
+    /** One whose block names a file there is not. */
+    public static final BlockEntry<DataMachineBlock> NO_MACHINE = dataMachine("test_no_machine", "Test no machine",
+            "nowhere");
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DataMachineBlockEntity>> DATA_ENTITY =
+            TestSounds.CONTENT.blockEntity("test_data_machine",
+                    (pos, state) -> new DataMachineBlockEntity(TestStructures.DATA_ENTITY.get(), pos, state), BAKER,
+                    DATA_FURNACE, NO_MACHINE);
+    /** What the baker's file says it works: clay into bricks. */
+    public static final ProcessingKind BAKING = TestSounds.CONTENT.processing("test_baking", "Test Baking",
+            () -> TestStructures.BAKER.get());
 
     private TestStructures() {
     }
@@ -109,6 +130,16 @@ public final class TestStructures {
     @SubscribeEvent
     public static void onRegisterCapabilities(final RegisterCapabilitiesEvent event) {
         MultiblockPorts.register(event, PORT_ENTITY.get());
+    }
+
+    /* The controller of the machine of the test mod's file {@code machine}. */
+    private static BlockEntry<DataMachineBlock> dataMachine(final String name, final String english,
+                                                            final String machine) {
+        return TestSounds.CONTENT.block(name, properties -> new DataMachineBlock(properties,
+                        Device.of(() -> TestStructures.DATA_ENTITY.get()).ticks(MachineBlockEntity::serverTick)
+                                .opensMenu(MachineMenu::new),
+                        ResourceLocation.fromNamespaceAndPath(JsTests.MODID, machine)))
+                .named(english).look(IBlockLook.cubeAll(name)).register();
     }
 
     /* A port block of the test mod, its kind its block's. */

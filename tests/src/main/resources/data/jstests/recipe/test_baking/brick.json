@@ -1,0 +1,10 @@
+{
+  "type": "jstests:test_baking",
+  "inputs": [
+    {"item": "minecraft:clay_ball", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:brick", "count": 1}
+  ],
+  "ticks": 5
+}

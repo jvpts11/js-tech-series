@@ -1,0 +1,14 @@
+{
+  "shape": {
+    "box": {
+      "frame": {"blocks": ["minecraft:iron_block"]},
+      "face": {"blocks": ["minecraft:iron_block", "minecraft:glass"], "tags": ["jscore:multiblock_ports"]},
+      "sides": {"least": 3, "most": 5},
+      "height": {"least": 3, "most": 5}
+    }
+  },
+  "recipes": "jstests:test_baking",
+  "layout": {"inputs": 1, "outputs": 1},
+  "energy": {"capacity": 10000, "receive": 1000, "per_tick": 5},
+  "parallel": {"by": "fixed", "value": 3}
+}

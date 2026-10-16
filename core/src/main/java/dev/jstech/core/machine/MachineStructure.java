@@ -17,6 +17,7 @@ import dev.jstech.core.multiblock.Limit;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.MultiblockPortBlockEntity;
 import dev.jstech.core.multiblock.MultiblockPorts;
+import dev.jstech.core.multiblock.PatternById;
 import dev.jstech.core.multiblock.PatternMatcher;
 import dev.jstech.core.multiblock.PortKind;
 import dev.jstech.core.multiblock.RedstonePortBlockEntity;
@@ -96,6 +97,8 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
             "Needs at least %s of %s; has %s");
     public static final TextKey WRONG_SIZE = TextKey.of("jscore.multiblock.wrong_size", "Not a size it may be: %s %s");
     public static final TextKey OR_ANOTHER = TextKey.of("jscore.multiblock.or_another", "%s or another");
+    public static final TextKey NO_PATTERN = TextKey.of("jscore.multiblock.no_pattern",
+            "Its shape, the pattern %s, is in no file");
     public static final TextKey ALONG_X = TextKey.of("jscore.multiblock.along_x", "blocks along x");
     public static final TextKey HIGH = TextKey.of("jscore.multiblock.high", "blocks high");
     public static final TextKey ALONG_Z = TextKey.of("jscore.multiblock.along_z", "blocks along z");
@@ -292,6 +295,10 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         }
         final ShapeMatch.Failure wrong = this.failure;
         if (wrong == null) {
+            return;
+        }
+        if (wrong.wanted().equals(PatternById.MISSING)) {
+            lines.add(NO_PATTERN.with(wrong.found()));
             return;
         }
         lines.add(switch (wrong.wrong()) {

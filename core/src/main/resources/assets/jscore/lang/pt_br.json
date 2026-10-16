@@ -1299,6 +1299,7 @@
   "jscore.multiblock.needs_at_least": "Precisa de pelo menos %s de %s; tem %s",
   "jscore.multiblock.needs_block": "Precisa de %s em %s, %s, %s a partir do controlador; achou %s",
   "jscore.multiblock.needs_count": "Precisa de %s a %s de %s; tem %s",
+  "jscore.multiblock.no_pattern": "Sua forma, o padrão %s, não está em arquivo nenhum",
   "jscore.multiblock.of_floor": "lugares de chão",
   "jscore.multiblock.or_another": "%s ou outro",
   "jscore.multiblock.parallel": "Roda %s de uma vez",

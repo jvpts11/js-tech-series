@@ -1384,6 +1384,7 @@
   "jscore.multiblock.needs_at_least": "Needs at least %s of %s; has %s",
   "jscore.multiblock.needs_block": "Needs %s at %s, %s, %s from the controller; found %s",
   "jscore.multiblock.needs_count": "Needs from %s to %s of %s; has %s",
+  "jscore.multiblock.no_pattern": "Its shape, the pattern %s, is in no file",
   "jscore.multiblock.of_floor": "places of floor",
   "jscore.multiblock.or_another": "%s or another",
   "jscore.multiblock.parallel": "Runs %s at once",

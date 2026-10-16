@@ -391,6 +391,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   compressed air; and a redstone port that reads the signal round it for the controller or gives the controller's
   signal out. A dye puts a port in the group of its colour, and each group feeds a lane of its own, so two processes
   never mix. A structure runs as many recipes at once as it says, and Jade shows the exact number.
+- Multiblock machines entirely as data: a file gives a machine its shape (a pattern by id or drawn, a box,
+  walls or a cuboid), its slots, lanes and tanks, its energy, the kind of recipe it works and how many at once, and a
+  controller block built on the Core's data machine block names the file. The files reach every player, and a data
+  pack adds or changes a machine with no code.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

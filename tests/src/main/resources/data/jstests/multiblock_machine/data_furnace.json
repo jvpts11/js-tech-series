@@ -1,0 +1,5 @@
+{
+  "shape": {"pattern": "jstests:test_furnace"},
+  "recipes": "jstests:test_baking",
+  "layout": {"inputs": 1, "outputs": 1}
+}
