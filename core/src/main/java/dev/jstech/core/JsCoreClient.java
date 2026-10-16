@@ -30,6 +30,7 @@ import dev.jstech.core.client.data.DataRegistryClient;
 import dev.jstech.core.client.developer.LiveReloadClient;
 import dev.jstech.core.client.diagnostic.DiagnosticsClient;
 import dev.jstech.core.client.effect.EffectsClient;
+import dev.jstech.core.client.field.ChunkFieldsClient;
 import dev.jstech.core.client.fluid.FluidsClient;
 import dev.jstech.core.client.font.CoreFontClient;
 import dev.jstech.core.client.gui.component.Grounds;
@@ -136,8 +137,9 @@ public final class JsCoreClient {
         KeyActionsClient.listen(modEventBus);
         LightingClient.listen(modEventBus);
         EffectsClient.listen(modEventBus);
-        // The map markers, handed to the map mods installed.
+        // The map markers, handed to the map mods installed, and the fields over the chunks round the player.
         ClientMarkers.listen();
+        ChunkFieldsClient.listen();
         LiveScreens.listen();
         MachineScreen.listen(modEventBus);
         MachineWrenchClient.listen(modEventBus);

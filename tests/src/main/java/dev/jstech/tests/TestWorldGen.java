@@ -104,6 +104,9 @@ public final class TestWorldGen {
     /** Another mod's ore scattered as the game scatters its own, in the test land: one the veins can move. */
     public static final WorldGen.OreVein LAND_ORE = WorldGen.ore(id("test_land_ore")).stone(() -> Blocks.EMERALD_ORE)
             .vein(6).perChunk(2).heights(16, 48).biomes(LAND).declare();
+    /** Patches of mossy cobblestone in the test land's stone, no ore, so no vein ever moves them. */
+    public static final WorldGen.OreVein MOSS = WorldGen.ore(id("test_moss")).stone(() -> Blocks.MOSSY_COBBLESTONE)
+            .vein(8).perChunk(4).heights(16, 48).biomes(LAND).declare();
     /** The chunk along the test land's east the monument stands in. */
     public static final int MONUMENT_CHUNK = 20;
     /** The test land's huts, as the instruments that look for them name them. */

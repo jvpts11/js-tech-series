@@ -78,6 +78,11 @@ public final class CoreAttachments {
     public static final Supplier<AttachmentType<LevelStructures>> STRUCTURES =
             ATTACHMENT_TYPES.register("structures", () -> AttachmentType.builder(LevelStructures::new).build());
 
+    /** The generation a chunk has had, by the ids of the work generating old chunks: saved with the chunk. */
+    public static final Supplier<AttachmentType<List<String>>> RETROGEN =
+            ATTACHMENT_TYPES.register("retrogen", () -> AttachmentType.builder(() -> List.<String>of())
+                    .serialize(Codec.STRING.listOf()).build());
+
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");
 

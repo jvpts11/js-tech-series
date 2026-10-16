@@ -31,8 +31,10 @@ whose log the watchdog writes to. Around the work, a section:
   Java Flight Recorder, VisualVM, a thread dump and a crash report's stack;
 - **is watched** by the watchdog, and **kept to its budget** when it has one (below).
 
-The Core's own sections are the energy grid (`jscore:energy_grid`), the fluid grid (`jscore:fluid_grid`) and the
-results of work away from the tick coming back (`jscore:task_results`).
+The Core's own sections are the energy grid (`jscore:energy_grid`), the fluid grid (`jscore:fluid_grid`), the
+results of work away from the tick coming back (`jscore:task_results`), and the world changing: generation laid into
+old chunks (`jscore:retrogen`), the surface changing by itself (`jscore:live_changes`), large edits set a share each
+tick (`jscore:world_edits`) and the fields over the chunks (`jscore:chunk_fields`), each with a budget.
 
 ## The watchdog
 

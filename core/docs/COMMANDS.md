@@ -57,6 +57,11 @@ level always may run it, and a server's permission mod may grant it to a player 
 | `/jstech bandwidth [<player>]` | level 3 | What the server sent over the last minute, to everyone or one player: a graph, by mod, by kind and the biggest senders ([Diagnostics](DIAGNOSTICS.md#network-use)). *Added 2026-10-15.* |
 | `/jstech cost [<seconds>]` | level 3 | Measures what the series' blocks cost the server for some seconds (10 by default, 60 at most), then lists the worst places with their owners ([Diagnostics](DIAGNOSTICS.md#what-weighs)). *Added 2026-10-15.* |
 | `/jstech diagnostics` | level 3 | Writes the diagnostic file for a bug report into `jstech-diagnostics/` ([Diagnostics](DIAGNOSTICS.md#the-diagnostic-file-and-crash-reports)). *Added 2026-10-15.* |
+| `/jstech event list` | level 2 | The world events planned and under way in the dimension of who runs it, with how long until each begins or ends ([World](WORLD.md#world-events)). *Added 2026-10-17.* |
+| `/jstech event start <type> [<ticks>]` | level 2 | Begins one now, for its own time or that many ticks; one that reaches only so far happens round who runs it. *Added 2026-10-17.* |
+| `/jstech event plan <type> <ticks>` | level 2 | Plans one to begin that far ahead, warned of as it nears. *Added 2026-10-17.* |
+| `/jstech event delay <type> <ticks>` | level 2 | Puts a planned one off by that many ticks; one under way is not put off. *Added 2026-10-17.* |
+| `/jstech event stop <type>` | level 2 | Ends one now, planned or under way. *Added 2026-10-17.* |
 
 ## What can go wrong
 

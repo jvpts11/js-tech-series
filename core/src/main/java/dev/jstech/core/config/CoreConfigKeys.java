@@ -21,6 +21,7 @@ import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.ChunkLoadingBalance;
 import dev.jstech.core.time.WorldCalendar;
+import dev.jstech.core.world.event.WorldEventBalance;
 import dev.jstech.core.worldgen.vein.VeinBalance;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,8 @@ import java.util.Map;
 /**
  * The series' balance, {@code jstech-balance.toml} beside the world: how the Operations engine waits and shares its
  * work, how long the programs of the machines may run each tick, how much of the connection the recordings players
- * hear and bring may take, how long the world's seasons last, and how its ores lie in veins. A value outside its range
+ * hear and bring may take, how long the world's seasons last, how its ores lie in veins, and how often its events
+ * happen. A value outside its range
  * is pulled to the nearer end rather than refused, so a slip in the file costs one setting its value instead of
  * breaking the world; each value read is passed straight into the balance it sets.
  */
@@ -57,6 +59,8 @@ public final class CoreConfigKeys {
     public static final String MULTIBLOCK = "multiblock";
     /** How the world lays its ores: in veins, or scattered as the game lays them. */
     public static final String VEINS = "veins";
+    /** The events the world goes through: whether they happen, and how often each. */
+    public static final String WORLD_EVENTS = "world_events";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_BLOCKS_PER_SECOND = 40;
@@ -74,6 +78,7 @@ public final class CoreConfigKeys {
     private static final int MAX_MEDIA_QUOTA_MEGABYTES = 1_048_576;
     private static final int MAX_CHUNKS_PER_OWNER = 4096;
     private static final double MAX_VEIN_FACTOR = 100;
+    private static final double MAX_EVENT_FACTOR = 100;
     private static final int MIN_AUDIT_ENTRIES = 100;
     private static final int MAX_AUDIT_ENTRIES = 1_000_000;
     private static final int MAX_ROBOTS_PER_PLAYER = 1024;
@@ -340,6 +345,35 @@ public final class CoreConfigKeys {
                     + "works with mods that lay their ores as data, and may miss a mod that lays them its own way.")
             .named("Try moving other mods' ores");
 
+    /** Whether the world's events happen by themselves. */
+    public static final ConfigKey<Boolean> WORLD_EVENTS_ENABLED = ConfigKey.flag(WORLD_EVENTS + ".enabled", true)
+            .comment("Whether the events the mods declare (storms, showers, quakes) happen by themselves, by their "
+                    + "schedules and their chances. An operator's command starts any of them still.")
+            .named("World events happen");
+
+    /** How many times as often each world event happens by chance, by its id. */
+    public static final ConfigKey<Map<String, Double>> WORLD_EVENTS_FREQUENCY = ConfigKey.of(
+            WORLD_EVENTS + ".frequency", Codec.unboundedMap(Codec.STRING, Codec.doubleRange(0, MAX_EVENT_FACTOR)),
+            Map.of())
+            .activeWhen(WORLD_EVENTS_ENABLED)
+            .comment("How many times as often each event that happens by chance does, by its id, as in "
+                    + "\"mymod:solar_storm\" = 0.5. An event not named keeps its own chance.")
+            .named("How often world events happen");
+
+    /** The world events that never happen by themselves, by their ids. */
+    public static final ConfigKey<List<String>> WORLD_EVENTS_DISABLED = ConfigKey.of(WORLD_EVENTS + ".disabled",
+            Codec.STRING.listOf(), List.of())
+            .activeWhen(WORLD_EVENTS_ENABLED)
+            .comment("The events that never happen by themselves, by their ids, as in \"mymod:earthquake\".")
+            .named("World events that never happen");
+
+    /** The world events that leave the world as it is, by their ids. */
+    public static final ConfigKey<List<String>> WORLD_EVENTS_HARMLESS = ConfigKey.of(WORLD_EVENTS + ".harmless",
+            Codec.STRING.listOf(), List.of())
+            .comment("The events that leave the world as it is, by their ids: no craters, no radiation, no cracks. "
+                    + "They still come, warn and play their effects.")
+            .named("World events that change nothing");
+
     /** How many blocks a second a tool that builds a multiblock for a player places. */
     public static final ConfigKey<Integer> MULTIBLOCK_BLOCKS_PER_SECOND = ConfigKey.whole(
             MULTIBLOCK + ".blocks_per_second", BuildBalance.DEFAULT_BLOCKS_PER_SECOND).range(1, MAX_BLOCKS_PER_SECOND)
@@ -384,6 +418,7 @@ public final class CoreConfigKeys {
             .sectionNamed(MECHANICAL, "Mechanical power")
             .sectionNamed(MULTIBLOCK, "Multiblocks")
             .sectionNamed(VEINS, "Veins")
+            .sectionNamed(WORLD_EVENTS, "World events")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -424,6 +459,10 @@ public final class CoreConfigKeys {
             .key(VEINS_DENSITY, VeinBalance::setDensity)
             .key(VEINS_WITHOUT_ORE, VeinBalance::setWithoutOre)
             .key(VEINS_MOVE_OTHERS, VeinBalance::setMoveOthers)
+            .key(WORLD_EVENTS_ENABLED, WorldEventBalance::setEnabled)
+            .key(WORLD_EVENTS_FREQUENCY, WorldEventBalance::setFrequency)
+            .key(WORLD_EVENTS_DISABLED, WorldEventBalance::setDisabled)
+            .key(WORLD_EVENTS_HARMLESS, WorldEventBalance::setHarmless)
             .build();
 
     private CoreConfigKeys() {

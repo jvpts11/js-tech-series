@@ -56,6 +56,8 @@ public final class CoreLogs {
     public static final LogSystem INTEGRATIONS = LogSystems.declare(JsCore.MODID, "integrations");
     /** Teams, owners and who may use what. */
     public static final LogSystem TEAMS = LogSystems.declare(JsCore.MODID, "teams");
+    /** The world changing: generation in old chunks, live changes, large edits, world events and fields. */
+    public static final LogSystem WORLD = LogSystems.declare(JsCore.MODID, "world");
 
     private CoreLogs() {
     }

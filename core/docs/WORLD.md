@@ -2,7 +2,9 @@
 
 What J's Core gives a mod about the world itself: ores in veins that instruments can find, reservoirs of oil, gas and
 brines that wells drain, structures that stand where the land suits them, wear by rule and grow over time, landmarks
-players discover, finding things roughly at first and exactly later, markers on the maps, dimensions of your own with
+players discover, finding things roughly at first and exactly later, markers on the maps, worlds that change after
+they are made (generation in old chunks, a surface that changes with the climate, large edits, world events, fields
+over the chunks), dimensions of your own with
 rules for gravity, air, heat and weather, their terrain and biomes with climates in real values, the shapes of the
 land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers, seas that freeze or boil away,
 dimensions made while the game runs, data kept over areas of the world, and chunks kept loaded for their owners.
@@ -371,6 +373,140 @@ The markers reach the map mods through the Core's adapters, each loaded only whi
 Without a map mod, the series' own maps show them: hand `ClientMarkers::forMapView` to a `MapView` as its markers.
 Another map mod's adapter implements `IMapAdapter` and is added with `ClientMarkers.add(adapter)`.
 
+## Worlds that change
+
+*Added 2026-10-17.*
+
+A world is not finished once it is generated: a mod added later lays its ores into the land already explored, ice
+thaws where the climate warms it, a blast leaves a crater, a storm comes, fallout drifts. Each of these runs within a
+budget of its own, so the server never stalls for it ([Diagnostics](DIAGNOSTICS.md#budgets-slowing-down-gracefully)).
+
+### Generation in old chunks
+
+Chunks made before a mod, or a new kind of vein, was part of the world never had what it generates. `Retrogen` lays it
+into them:
+
+```java
+Retrogen.feature(rl("tin_veins"), MyWorldGen.TIN_VEINS_PLACED);       // a placed feature, as generation places it
+Retrogen.declare(rl("meteor_craters"), (level, chunk, random) -> Craters.paint(level, chunk, random));
+```
+
+Each chunk keeps which of this work it has had, saved with it. A chunk made while the work is part of the world's
+generation is marked as it is made, so only old ones get it. An old chunk is noted as it loads and generated later,
+a few each tick, once its eight neighbours are loaded too, so the work may reach a little into them. Its random is the
+same for the same chunk and work, so a world generates alike however it is played. `Retrogen.forget(chunk, id)` lets
+a chunk have the work again.
+
+### The surface changing by itself
+
+A **live change** is a change the surface goes through by itself, as the climate and the weather say: ice thawing
+where it is warm, water gathering in a basin in the rain, grass drying to dirt in the heat. The Core declares none: a
+world changes only as its mods say.
+
+```java
+LiveChanges.change(rl("ice_thaws")).test(new BlockMatchTest(Blocks.ICE))
+        .becomes(Blocks.WATER.defaultBlockState()).warmerThan(275).sky().chance(0.2).declare();
+LiveChanges.change(rl("puddles")).test(new BlockMatchTest(Blocks.AIR)).above()
+        .on(new TagMatchTest(BlockTags.DIRT)).becomes(Blocks.WATER.defaultBlockState())
+        .raining(true).sky().basin().chance(0.05).declare();
+```
+
+Once a second, a column of each chunk within six chunks of each player is looked at, and the first change whose
+block and conditions all hold at its topmost block (or the block above it, for `above()`) happens, as often as its
+chance says. The conditions are how warm the place is in kelvin (`warmerThan`, `colderThan`), the rain (`raining`),
+the open sky (`sky`), a basin (`basin()`: each block beside solid, or already what it becomes), the block under it
+(`on`), the seasons and the dimensions. A data pack writes over or adds one under `data/<namespace>/jstech/live_changes/`:
+
+```json
+{ "test": {"predicate_type": "minecraft:block_match", "block": "minecraft:ice"},
+  "becomes": {"Name": "minecraft:water", "Properties": {"level": "0"}}, "chance": 0.2, "min_kelvin": 275,
+  "sky": true }
+```
+
+`LiveChanges.setBiome(level, box, biome)` changes the biome of every place in a box, as terraforming or a climate
+shifting would: the players who see it are sent the new biomes at once, so the grass, the water and the sky change
+colour, and the climate there is the new biome's from then on.
+
+### Large edits
+
+A large edit (a crater blasted, a city levelled, a valley terraformed) is planned away from the server's thread and
+set on it a share of each tick:
+
+```java
+WorldEdit crater = WorldEdits.plan(level, BoundingBox.fromCorners(from, to), blocks -> {
+    EditPlan.Builder plan = EditPlan.builder();
+    // read blocks.get(x, y, z) freely: a snapshot taken as the edit began
+    return plan.build();
+});
+crater.whenOver(edit -> report(edit.state()));     // DONE, STOPPED or FAILED
+```
+
+The planner reads a `RegionSnapshot`, the box's blocks copied on the server's thread as the edit begins, so it may
+take its time while the world goes on. The plan's blocks are set chunk by chunk, the edits under way taking turns in
+the order they began, as structures are set: without waking their neighbours, unless the plan asks for `updates()`.
+An edit says how far it has got (`progress()`), can be stopped where it is (`stop()`), and a planner that throws sets
+nothing. `WorldEdits.apply(level, plan)` sets a plan made already.
+
+### World events
+
+A **world event** is something the world goes through by its schedule or by chance: a meteor shower, a solar storm,
+an earthquake.
+
+```java
+public static final ResourceLocation SOLAR_STORM = WorldEvents.event(rl("solar_storm"), MyTexts.SOLAR_STORM)
+        .in(Level.OVERWORLD).chance(0.05)           // on one day in twenty, or .every(7, 20) for 20:00 each week
+        .warning(6000).instrument(MyTags.MAGNETOMETERS)
+        .lasts(12000).effect(rl("aurora")).declare();
+```
+
+Once a day each kind of event a dimension may have is rolled for, or found due by its schedule, and planned. Those
+carrying its instrument anywhere in their inventory are warned as it nears, with how long is left; everyone it covers
+is told as it begins, unless it is `quiet()`; its effect plays round them while it lasts; and it ends. Each step is
+posted on the game's bus as `WorldEventStage.Warned`, `Started` and `Ended`, where a mod does what its event does:
+
+```java
+NeoForge.EVENT_BUS.addListener(WorldEventStage.Started.class, stage -> {
+    if (stage.event().type().equals(SOLAR_STORM)) {
+        Grids.surge(stage.level());
+    }
+});
+```
+
+An event covers the whole dimension, or, with `radius(blocks)`, only so far round a place picked near a player
+standing in its `biomes`. It happens only in its dimensions and its seasons, one of a kind at a time. What is planned
+and under way is kept with each dimension, so a restart loses nothing; `WorldEvents.planned(level)`,
+`active(level)` and `activeAt(level, id, pos)` read it, for any mod and the series' computers. Operators list, start,
+plan, put off and stop events with `/jstech event` ([Commands](COMMANDS.md)), and the server's settings switch them
+off, make each happen more or less often, keep some from ever happening by themselves, or make some harmless
+(`world_events` in `jstech-balance.toml`): a harmless event still comes, warns and plays its effects, and its stages
+say `consequences()` is false, so its mod leaves the world as it is. A data pack writes over or adds one under
+`data/<namespace>/jstech/world_events/`:
+
+```json
+{ "name": "mymod.event.solar_storm", "english": "Solar storm", "dimensions": ["minecraft:overworld"],
+  "chance_per_day": 0.05, "warning": 6000, "instrument": "mymod:magnetometers", "duration": 12000,
+  "effect": "mymod:aurora" }
+```
+
+### Fields over the chunks
+
+A **field** is a value over the chunks of each dimension that spreads to the neighbouring chunks and fades: fallout,
+pollution, a cloud of spores.
+
+```java
+public static final ChunkField FALLOUT = ChunkFields.field(rl("fallout"))
+        .spread(0.1).decay(0.02).every(40).synced().declare();
+
+FALLOUT.add(level, new ChunkPos(pos), 500);
+float here = FALLOUT.get(level, new ChunkPos(player.blockPosition()));
+```
+
+Every `every` ticks each chunk keeps a share of its value and hands `spread` of it evenly to its four neighbours, all
+of it fading by `decay`; what falls below the least worth keeping (`least`) is gone. The step is worked out away from
+the server's thread, and what is added meanwhile is kept. A field's values are saved with each dimension. A synced one
+is sent to each player for the chunks round them, eight out each way, whenever what they would see changes, and
+read on their game with `ChunkFieldsClient.value(field, chunk)`, for an overlay, an instrument or the sky.
+
 ## Dimensions
 
 *Added 2026-10-05.*
@@ -652,6 +788,14 @@ ChunkLoaders.releaseAll(level, machinePos);
 - **A settlement never grows.** No player has come near it yet, so its days have not started, or its chunks are not
   loaded; it catches up when they load.
 - **A seal does not open.** The player's team does not know what its block entity asks.
+- **Old chunks never get a mod's new generation.** Their neighbours are never all loaded, or they were made with it
+  already: a chunk made while the work is declared is marked as having had it.
+- **The surface never changes.** No mod declares a live change, no player is near enough (six chunks), or a
+  condition never holds there: the climate, the rain, the open sky, the block under it.
+- **A world event never comes.** Its chance is small, it is out of season, its dimension is not one of its, the
+  server's settings keep it off, or, for one round a place, no player stands in its biomes. Start it with
+  `/jstech event start` to see it.
+- **A field stops spreading.** Its `every` is 0, so only `stepNow` moves it.
 - **A machine stops when you walk away.** It did not ask for its chunk, or its owner has reached the limit.
 - **Players in a dimension take damage.** Its rules say the air cannot be breathed, or it is too hot or cold. A
   mod's suit must cancel `DimensionHazardEvent` to protect them.

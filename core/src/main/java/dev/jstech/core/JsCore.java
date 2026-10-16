@@ -151,10 +151,15 @@ import dev.jstech.core.state.StateNetwork;
 import dev.jstech.core.stepaside.StepAside;
 import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
+import dev.jstech.core.world.edit.WorldEdits;
+import dev.jstech.core.world.event.WorldEvents;
+import dev.jstech.core.world.field.ChunkFields;
+import dev.jstech.core.world.live.LiveChanges;
 import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.biome.BiomeClimates;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.place.Landmarks;
+import dev.jstech.core.worldgen.retro.Retrogen;
 import dev.jstech.core.worldgen.structure.CoreStructures;
 import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.vein.Veins;
@@ -236,6 +241,13 @@ public final class JsCore {
         CoreStructures.register(modEventBus);
         Landmarks.listen();
         MapMarkers.register();
+        // The world changing: generation laid into old chunks, the surface changing with the climate, large edits set
+        // a share each tick, the world's events, and fields over the chunks that spread and fade.
+        Retrogen.listen();
+        LiveChanges.listen();
+        WorldEdits.listen();
+        WorldEvents.listen();
+        ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.

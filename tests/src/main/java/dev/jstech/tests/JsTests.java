@@ -101,6 +101,8 @@ public final class JsTests {
         TestLights.declare();
         // A landmark, a layer of map markers, a lore and a seal that opens only to a team that knows it.
         TestPlaces.declare();
+        // Generation for old chunks, changes of the surface, a storm and fields over the chunks.
+        TestWorldChanges.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);

@@ -615,6 +615,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   included.
 - (Core) Markers on the maps, each player's own and their team's, in layers, the landmarks discovered among them,
   shown on JourneyMap, Xaero's Minimap and World Map, FTB Chunks, or the series' own maps.
+- (Core) Generation laid into the chunks made before it, a few each tick once their neighbours are loaded: a mod
+  added to a world lays its ores into the land already explored. Each chunk remembers what it has had.
+- (Core) The surface changing by itself as the climate and the weather say (ice thawing where it is warm, water
+  gathering in basins in the rain), each change declared by its mod or a data pack; and a place's biome changed, its
+  colours and its climate with it.
+- (Core) Large edits planned away from the server's thread from a snapshot of the world, and set a share of each tick:
+  a crater or a levelled city never stalls the server.
+- (Core) World events by schedule or by chance (storms, showers, quakes): warned of to those carrying their
+  instrument, told to everyone they cover, their effects played in sync, kept through restarts, started, put off and
+  stopped by operators with `/jstech event`, and switched off, made rarer or made harmless by the server's settings.
+- (Core) Fields over the chunks that spread and fade (fallout, pollution), worked out away from the tick and sent to
+  the players near them.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
