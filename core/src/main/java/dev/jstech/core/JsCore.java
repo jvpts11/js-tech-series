@@ -107,6 +107,7 @@ import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.MaterialValues;
 import dev.jstech.core.material.MineralFamilies;
 import dev.jstech.core.menu.MenuSync;
+import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.notification.NotificationSettings;
 import dev.jstech.core.notification.NotificationSounds;
@@ -330,6 +331,7 @@ public final class JsCore {
         MediaNetwork.listen(modEventBus);
         MediaServerEvents.listen();
         Notifications.listen(modEventBus);
+        LevelStructures.listen();
         OwnedProtection.listen();
         Protection.listen();
         RuntimeDimensions.listen();

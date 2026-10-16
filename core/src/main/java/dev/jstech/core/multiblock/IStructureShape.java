@@ -7,6 +7,9 @@
  */
 package dev.jstech.core.multiblock;
 
+import java.util.Map;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * A multiblock's shape, drawn as a pattern or given by a rule (a box, a floor and walls, a cuboid), checked against
  * the world from its controller. Pure: the world is read through an {@link IBlockProvider}.
@@ -15,4 +18,20 @@ public interface IStructureShape {
 
     /** Checks the world with the controller at {@code controller}: formed, with what it gives, or the first wrong. */
     ShapeMatch check(IBlockProvider provider, long controller);
+
+    /**
+     * The farthest from its controller, along any axis, that checking it reads the world, the places beside it
+     * counted: what has to be loaded for it to be checked, and what its controller watches.
+     */
+    int reach();
+
+    /** The least and the most of each count, by name. */
+    Map<String, Limit> limits();
+
+    /**
+     * What fits the place a failure names as {@code wanted} (a pattern's letter, or a part of a shape such as
+     * {@link ShapeMatch#FRAME}), to tell the player; none for what the shape does not know.
+     */
+    @Nullable
+    IBlockMatcher wanted(String wanted);
 }

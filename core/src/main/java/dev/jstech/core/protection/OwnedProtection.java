@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.protection;
 
+import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.team.IOwned;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.text.GameText;
@@ -24,8 +25,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * What another player owns, kept from those its owner does not let: a block whose block entity is owned is broken only
- * by its owner and those trusted to break it, and used only by those its access or its trust lets in; an owned entity
- * the same, attacking it standing for breaking it. Each is written to the audit log when the server keeps one.
+ * by its owner and those trusted to break it, and so is every block of a formed multiblock whose controller is owned;
+ * it is used only by those its access or its trust lets in; an owned entity the same, attacking it standing for
+ * breaking it. Each is written to the audit log when the server keeps one.
  */
 public final class OwnedProtection {
 
@@ -45,7 +47,14 @@ public final class OwnedProtection {
         if (!(event.getPlayer() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
-        final BlockEntity block = level.getBlockEntity(event.getPos());
+        BlockEntity block = level.getBlockEntity(event.getPos());
+        if (!(block instanceof IOwned)) {
+            // A block of a formed multiblock is its controller's, whatever block it is.
+            final BlockPos controller = LevelStructures.of(level).controllerHolding(event.getPos());
+            if (controller != null && level.isLoaded(controller)) {
+                block = level.getBlockEntity(controller);
+            }
+        }
         if (block instanceof IOwned owned && owned.ownership() != null) {
             final Ownership ownership = owned.ownership();
             if (!ownership.mayBreak(player)) {

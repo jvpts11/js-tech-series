@@ -20,6 +20,8 @@ import dev.jstech.core.text.TextKey;
 public enum MachineStatus implements IStableName {
 
     WORKING("working", TextKey.of("jscore.machine.status.working", "Working"), Lamp.RUN),
+    /** A multiblock's controller whose structure is not built whole. */
+    NOT_FORMED("not_formed", TextKey.of("jscore.machine.status.not_formed", "Not formed"), Lamp.FAULT),
     WAITING("waiting", TextKey.of("jscore.machine.status.waiting", "Waiting for input"), Lamp.WAIT),
     OUTPUT_FULL("output_full", TextKey.of("jscore.machine.status.output_full", "Output full"), Lamp.WAIT),
     NO_ENERGY("no_energy", TextKey.of("jscore.machine.status.no_energy", "No energy"), Lamp.FAULT),

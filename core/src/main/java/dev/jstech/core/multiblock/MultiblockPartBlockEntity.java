@@ -40,6 +40,12 @@ public abstract class MultiblockPartBlockEntity extends SyncedBlockEntity {
         controller.set(pos.immutable());
     }
 
+    /** Lets go of its controller and its port: the structure it was part of came apart. */
+    public void release() {
+        controller.set(null);
+        port.set(null);
+    }
+
     /** What the part opens onto, or null when it is not a port. */
     @Nullable
     public PortKind port() {

@@ -72,6 +72,32 @@ public final class MultiblockPorts {
         }
     }
 
+    /**
+     * Binds each part of a formed structure that is a part block entity to the controller at {@code controller}, with
+     * the port its pattern gives the part, or as a plain part.
+     */
+    public static void stamp(final Level level, final BlockPos controller, final ShapeMatch.Formed formed) {
+        for (final long encoded : formed.parts()) {
+            final BlockPos at = MultiblockPatterns.decode(encoded);
+            if (level.getBlockEntity(at) instanceof MultiblockPartBlockEntity part) {
+                part.setController(controller);
+                part.setPort(formed.ports().get(encoded));
+            }
+            level.invalidateCapabilities(at);
+        }
+    }
+
+    /** Lets every part block entity among {@code places} go of its controller and its port. */
+    public static void release(final Level level, final Iterable<Long> places) {
+        for (final long encoded : places) {
+            final BlockPos at = MultiblockPatterns.decode(encoded);
+            if (level.isLoaded(at) && level.getBlockEntity(at) instanceof MultiblockPartBlockEntity part) {
+                part.release();
+                level.invalidateCapabilities(at);
+            }
+        }
+    }
+
     /*
      * The controller a port of that resource (and, for matter, that state) passes to, or null for a plain part, a port
      * of another resource or state, or a part whose controller is not loaded.

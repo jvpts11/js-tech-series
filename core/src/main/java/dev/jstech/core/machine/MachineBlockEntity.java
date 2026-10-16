@@ -121,6 +121,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private @Nullable MachineHeat heat;
     /* Its shaft, for a motor or a dynamo; declared from its constructor. */
     private @Nullable MachineShaft shaft;
+    /* Its structure, for a multiblock's controller; declared from its constructor. */
+    private @Nullable MachineStructure structure;
 
     public static final TextKey PARAMETER_ON = TextKey.of("jscore.machine.parameter.on", "On");
     public static final TextKey PARAMETER_PROGRESS = TextKey.of("jscore.machine.parameter.progress", "Progress");
@@ -250,6 +252,11 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     /** Its shaft, or none for a machine that neither drives nor is driven. */
     public @Nullable MachineShaft shaft() {
         return shaft;
+    }
+
+    /** Its structure, for a multiblock's controller; none for a machine of one block. */
+    public @Nullable MachineStructure structure() {
+        return structure;
     }
 
     @Override
@@ -442,6 +449,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         if (ticked) {
             lines.add(STATUS_LINE.with(status().text()));
         }
+        if (structure != null) {
+            structure.describe(lines, details);
+        }
         if (health.damaged()) {
             lines.add(HEALTH_LINE.with(health.health()));
         }
@@ -536,6 +546,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         if (level != null && level.isClientSide()) {
             SoundDirector.untrack(this);
         }
+        if (structure != null && level instanceof ServerLevel server) {
+            structure.removed(server, worldPosition);
+        }
     }
 
     /**
@@ -623,6 +636,20 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     }
 
     /**
+     * Declares it the controller of a multiblock, as {@code declared} says: called once from its constructor. It
+     * stands {@link MachineStatus#NOT_FORMED} until the world holds its structure whole, checked again whenever a
+     * block it watches changes; whether it is formed is saved, and shown to whoever looks at it.
+     */
+    protected final void formsWith(final MachineStructure declared) {
+        if (structure != null) {
+            throw new IllegalStateException("a machine declares its structure once");
+        }
+        structure = Objects.requireNonNull(declared, "declared");
+        final PartField field = fields().part("Structure", declared).save();
+        declared.on(this, field::changed);
+    }
+
+    /**
      * Declares its shaft, a motor's or a dynamo's, as {@code declared} says: called once from its constructor. It joins
      * the network of mechanical power at its face, saved and sent to the players who see it; the machine's
      * {@link #work} runs it with {@link MachineShaft#run}, and a stopped machine neither drives nor takes.
@@ -670,6 +697,9 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private void tickServer(final ServerLevel server) {
         ticked = true;
         final long now = server.getGameTime();
+        if (structure != null) {
+            structure.tick(server, worldPosition);
+        }
         final UpgradeEffect effect = effect();
         if (!effect.equals(applied)) {
             applied = effect;
@@ -721,10 +751,13 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     }
 
     /*
-     * What keeps it from working now, in the order a player is told: its switch, redstone, its fuse, its heat, its
-     * health.
+     * What keeps it from working now, in the order a player is told: its structure, its switch, redstone, its fuse,
+     * its heat, its health.
      */
     private @Nullable MachineStatus stopped(final long now) {
+        if (structure != null && !structure.formed()) {
+            return MachineStatus.NOT_FORMED;
+        }
         if (!control.on()) {
             return MachineStatus.SWITCHED_OFF;
         }

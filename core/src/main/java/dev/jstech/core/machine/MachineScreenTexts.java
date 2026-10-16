@@ -35,6 +35,7 @@ public final class MachineScreenTexts {
     public static final TextKey METER_RANGE = TextKey.of("jscore.machine.screen.meter_range", "x%s");
     public static final TextKey NO_COUNT = TextKey.of("jscore.machine.screen.no_count", "--/min");
     public static final TextKey LCD_WORKING = TextKey.of("jscore.machine.screen.lcd.working", "RUNNING");
+    public static final TextKey LCD_NOT_FORMED = TextKey.of("jscore.machine.screen.lcd.not_formed", "UNBUILT");
     public static final TextKey LCD_WAITING = TextKey.of("jscore.machine.screen.lcd.waiting", "NO INPUT");
     public static final TextKey LCD_OUTPUT_FULL = TextKey.of("jscore.machine.screen.lcd.output_full", "OUT FULL");
     public static final TextKey LCD_NO_ENERGY = TextKey.of("jscore.machine.screen.lcd.no_energy", "NO POWER");

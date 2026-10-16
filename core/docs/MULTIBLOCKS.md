@@ -250,6 +250,40 @@ A count with no `which` counts every block of its place, and a limit with no `mo
 with `BlockMatch` can be written: a pattern that fits a place, counts or reads its inside with code of its own
 cannot go to a file, and the data generation says which.
 
+## A machine that is a multiblock
+
+*Added 2026-10-16.*
+
+A machine of the Core's kit ([Machines](MACHINES.md)) becomes a multiblock's controller with one call in its
+constructor. The player builds the structure block by block, in any order; it forms when it stands whole:
+
+```java
+public TankBlockEntity(BlockPos pos, BlockState state) {
+    super(MyContent.TANK_ENTITY.get(), pos, state, 0, MachineEnergy.fe(10_000, 1_000, 0));
+    formsWith(MachineStructure.of(MyContent.TANK_SHAPE)
+            .parallel(formed -> Math.max(1, formed.count("valve"))));
+}
+```
+
+- Until the structure stands whole the machine is **Not formed** (its screen and its face say so, `UNBUILT` on the
+  LCD) and does no work. Once it forms, `structure().formed()` is true, its parts are bound to it, and
+  `size()`, `repeats()` and `structure().get()` (the whole result, its counts and numbers) say what was built.
+- `parallel` says how many recipes it runs at once from what was built: by its size, by its parts, by what is inside.
+  `structure().parallel()` gives the number, none while it is not formed.
+- Its screen is the machine's screen, with the same tabs as every machine.
+- **Jade** shows whether it is formed, its size when Shift is held, and how many it runs at once; or, while it is not
+  formed, what it needs and where: "Needs Block of Iron at 1, 1, 1 from the controller; found Dirt", "Needs from 1
+  to 4 of valve; has 0".
+- **Only its owner and those its owner lets break it** break the blocks of a formed structure, whatever blocks they
+  are, as with every owned block ([Ownership](OWNERSHIP.md)).
+- Breaking any block of it undoes the structure; the controller keeps what it holds.
+
+It is checked again only when a block changes in the box it watches (everything its shape can reach while it is not
+formed, its structure and the places beside it once formed), a few ticks after the change, and once a minute besides,
+never every tick. It is never checked while a chunk it reaches is not loaded, and a chunk that unloads never undoes
+it: it stays as it was until it can be read again. `LevelStructures.of(level).controllerHolding(pos)` says which
+formed structure a place belongs to.
+
 ## Ports
 
 *Added 2026-10-05.*

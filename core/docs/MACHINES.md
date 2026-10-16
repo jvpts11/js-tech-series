@@ -92,6 +92,7 @@ Each tick the machine says what it is doing, a `MachineStatus`, which its screen
 | State | Lamp | When |
 | --- | --- | --- |
 | `WORKING` | RUN | It works. |
+| `NOT_FORMED` | FAULT | A multiblock's controller whose structure is not built whole ([Multiblocks](MULTIBLOCKS.md)). |
 | `WAITING` | WAIT | Nothing in it makes anything. |
 | `OUTPUT_FULL` | WAIT | Its outputs have no room for everything the recipe makes. |
 | `NO_ENERGY` | FAULT | It has no energy for the tick. |

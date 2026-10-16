@@ -12,6 +12,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.LevelGrids;
 import dev.jstech.core.heat.LevelHeat;
 import dev.jstech.core.mechanical.LevelMechanics;
+import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
 import dev.jstech.core.persistence.SaveLayout;
@@ -69,6 +70,13 @@ public final class CoreAttachments {
      */
     public static final Supplier<AttachmentType<LevelMechanics>> MECHANICS =
             ATTACHMENT_TYPES.register("mechanics", () -> AttachmentType.builder(LevelMechanics::new).build());
+
+    /**
+     * A dimension's multiblock structures, by the places their controllers watch; never saved, since each controller
+     * files itself again as it loads.
+     */
+    public static final Supplier<AttachmentType<LevelStructures>> STRUCTURES =
+            ATTACHMENT_TYPES.register("structures", () -> AttachmentType.builder(LevelStructures::new).build());
 
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");

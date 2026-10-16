@@ -7,8 +7,6 @@
  */
 package dev.jstech.core.multiblock;
 
-import java.util.Map;
-
 /**
  * A shape given by a rule, with no pattern drawn: any box between a least and a most size, with a frame on its edges
  * and ports or glass on its faces, as a dynamic tank; a floor of any outline with walls round it, as a smeltery; any
@@ -20,9 +18,6 @@ public sealed interface RuleShape extends IStructureShape permits BoxShape, Wall
     int MOST_SIDE = 64;
     /** The most places a floor of a floor and walls may have. */
     int MOST_AREA = 4096;
-
-    /** The least and the most of each count, by name. */
-    Map<String, Limit> limits();
 
     /** Refuses a limit of a size beyond what a shape by rule may be. */
     static void requireWithin(final Limit size, final int most, final String what) {

@@ -159,6 +159,30 @@ public final class MultiblockPattern implements IStructureShape {
         return ShapeMatcher.match(this, provider, controller);
     }
 
+    /** Its longest side, grown to its repeated slice's most: however it stands, no place is farther than that. */
+    @Override
+    public int reach() {
+        final int[] size = {sizeX(), sizeY(), sizeZ()};
+        if (this.repeat != null) {
+            size[this.repeat.axis()] += this.repeat.times().most() - 1;
+        }
+        return Math.max(size[0], Math.max(size[1], size[2]));
+    }
+
+    /** What fits a letter's places: its place's blocks, or what the inside allows for the inside letter. */
+    @Override
+    public @Nullable IBlockMatcher wanted(final String wanted) {
+        if (wanted.length() != 1) {
+            return null;
+        }
+        final char letter = wanted.charAt(0);
+        if (this.inside != null && this.inside.letter() == letter) {
+            return this.inside.rule().allows();
+        }
+        final Place place = this.places.get(letter);
+        return place == null ? null : place.fits();
+    }
+
     /**
      * The pattern with its repeated slice there {@code times} times, and where its controller then stands: the
      * drawing itself for a pattern with no repeated slice.

@@ -48,6 +48,18 @@ class CuboidShapeTest {
     }
 
     @Test
+    void check_namesAUnitMissingOnALineThroughTheControllerRatherThanFormingSmaller() {
+        final Map<Long, String> world = new HashMap<>();
+        fill(world, 3, 3, 3);
+        world.put(pos(0, 0, 0), STORAGE);
+        world.remove(pos(2, 1, 1));
+        final ShapeMatch.Failure failure = assertInstanceOf(ShapeMatch.Failure.class,
+                PROCESSOR.check(provider(world), pos(1, 1, 1)));
+        assertEquals(ShapeMatch.UNIT, failure.wanted());
+        assertEquals(pos(2, 1, 1), failure.at());
+    }
+
+    @Test
     void check_needsAtLeastOneStorageUnit() {
         final Map<Long, String> world = new HashMap<>();
         fill(world, 2, 2, 2);

@@ -381,6 +381,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   with neighbour rules: a cell gives more beside a moderator, a cooler works only beside a working cell. A failed
   check names the wrong place of the way the player most likely built it, and every rule goes to the pattern's file,
   so a data pack changes it with no code.
+- Multiblock machines built in the world: a machine becomes a structure's controller and forms when the player
+  has built it whole, in any order, standing "Not formed" until then; breaking any block undoes it and the controller
+  keeps what it holds. Jade shows whether it is formed, its size and how many recipes it runs at once, or what it
+  needs and where. Only its owner and those trusted break its blocks. It is checked only when a block near it
+  changes, never every tick, and never while a chunk it reaches is unloaded.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

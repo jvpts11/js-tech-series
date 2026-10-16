@@ -61,6 +61,29 @@ class BoxShapeTest {
     }
 
     @Test
+    void check_namesABrokenEdgeEvenWhereItsDepthIsMeasured() {
+        final Map<Long, String> world = new HashMap<>();
+        box(world, 0, 0, 0, 2, 2, 2, GLASS);
+        world.put(pos(2, 2, 1), "minecraft:dirt");
+        final ShapeMatch.Failure failure = assertInstanceOf(ShapeMatch.Failure.class,
+                TANK.check(provider(world), pos(1, 1, 0)));
+        assertEquals(ShapeMatch.Wrong.BLOCK, failure.wrong());
+        assertEquals(pos(2, 2, 1), failure.at());
+        assertEquals("minecraft:dirt", failure.found());
+    }
+
+    @Test
+    void check_namesAFaceBlockMissingBesideTheController() {
+        final Map<Long, String> world = new HashMap<>();
+        box(world, 0, 0, 0, 4, 4, 4, GLASS);
+        world.remove(pos(3, 2, 0));
+        final ShapeMatch.Failure failure = assertInstanceOf(ShapeMatch.Failure.class,
+                TANK.check(provider(world), pos(2, 2, 0)));
+        assertEquals(ShapeMatch.FACE, failure.wanted());
+        assertEquals(pos(3, 2, 0), failure.at());
+    }
+
+    @Test
     void check_failsABlockLeftInsideAnEmptyBox() {
         final Map<Long, String> world = new HashMap<>();
         box(world, 0, 0, 0, 4, 4, 4, GLASS);

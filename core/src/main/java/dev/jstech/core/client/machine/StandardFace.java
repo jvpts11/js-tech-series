@@ -179,6 +179,7 @@ public final class StandardFace implements IMachineFace {
     private static TextKey lcdWord(final MachineStatus status) {
         return switch (status) {
             case WORKING -> MachineScreenTexts.LCD_WORKING;
+            case NOT_FORMED -> MachineScreenTexts.LCD_NOT_FORMED;
             case WAITING -> MachineScreenTexts.LCD_WAITING;
             case OUTPUT_FULL -> MachineScreenTexts.LCD_OUTPUT_FULL;
             case NO_ENERGY -> MachineScreenTexts.LCD_NO_ENERGY;

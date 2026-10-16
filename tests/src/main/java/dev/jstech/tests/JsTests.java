@@ -64,6 +64,8 @@ public final class JsTests {
         TestHotMachine.declare();
         // Shafts, gears, a gearbox, a crank, a load, a motor and a dynamo, to prove the Core's mechanical power.
         TestMechanical.declare();
+        // A tank of any size the player builds block by block, to prove multiblocks that form in the world.
+        TestStructures.declare();
         // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
         TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.

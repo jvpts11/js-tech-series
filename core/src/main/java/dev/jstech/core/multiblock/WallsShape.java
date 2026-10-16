@@ -74,6 +74,25 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
         return best.failure();
     }
 
+    /**
+     * As far as it reads: a floor no farther from the controller than its area allows in a line, nor than the most a
+     * side of a shape may be, with the walls beyond it; and its walls' most height.
+     */
+    @Override
+    public int reach() {
+        return Math.max(span(), this.height.most()) + 1;
+    }
+
+    @Override
+    public @Nullable IBlockMatcher wanted(final String wanted) {
+        return switch (wanted) {
+            case ShapeMatch.FLOOR -> this.floor.fits();
+            case ShapeMatch.WALL -> this.wall.fits();
+            case ShapeMatch.INSIDE -> this.inside.allows();
+            default -> null;
+        };
+    }
+
     /*
      * One attempt, the inside lying one way from the controller: down to the floor from the place behind it, the
      * floor's outline filled out at that level, then the walls read layer by layer up from it.
@@ -95,6 +114,8 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
         final Set<Long> region = new LinkedHashSet<>();
         final Set<Long> walls = new LinkedHashSet<>();
         final Deque<Long> queue = new ArrayDeque<>();
+        final int[] c = PatternMatcher.decodePosition(controller);
+        final int span = span();
         region.add(low);
         queue.add(low);
         while (!queue.isEmpty()) {
@@ -107,7 +128,9 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
                 if (next != controller && fitsInside(provider, next)) {
                     region.add(next);
                     tally.fits();
-                    if (region.size() > this.area.most()) {
+                    final int[] xyz = PatternMatcher.decodePosition(next);
+                    if (region.size() > this.area.most() || Math.abs(xyz[0] - c[0]) > span
+                            || Math.abs(xyz[2] - c[2]) > span) {
                         return Cells.wrongSize(controller, ShapeMatch.AREA, region.size());
                     }
                     queue.add(next);
@@ -189,5 +212,10 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
 
     private boolean fitsInside(final IBlockProvider provider, final long pos) {
         return this.inside.fits(provider, pos, Cells.blockAt(provider, pos));
+    }
+
+    /* The farthest along x or z a place of the floor may be from the controller. */
+    private int span() {
+        return Math.min(this.area.most(), MOST_SIDE);
     }
 }

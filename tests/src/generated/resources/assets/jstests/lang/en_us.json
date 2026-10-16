@@ -41,6 +41,7 @@
   "block.jstests.test_small_gear": "Test small gear",
   "block.jstests.test_small_pulley": "Test small pulley",
   "block.jstests.test_speed_controller": "Test speed controller",
+  "block.jstests.test_tank_controller": "Test tank controller",
   "block.jstests.test_thermocouple": "Test thermocouple",
   "block.jstests.test_torque_meter": "Test torque meter",
   "block.jstests.test_transmitter": "Test transmitter",

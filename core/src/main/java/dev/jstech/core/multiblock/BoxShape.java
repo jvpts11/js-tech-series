@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Any box between a least and a most size, as a dynamic tank: a frame on its twelve edges, faces between them (casing,
@@ -68,6 +69,22 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
         return best.failure();
     }
 
+    /** As far as its walks read: its most side or height from the controller, and one beyond. */
+    @Override
+    public int reach() {
+        return Math.max(this.sides.most(), this.height.most()) + 1;
+    }
+
+    @Override
+    public @Nullable IBlockMatcher wanted(final String wanted) {
+        return switch (wanted) {
+            case ShapeMatch.FRAME -> this.frame.fits();
+            case ShapeMatch.FACE -> this.face.fits();
+            case ShapeMatch.INSIDE -> this.inside.allows();
+            default -> null;
+        };
+    }
+
     /*
      * One attempt, the inside lying one way from the controller: the controller's face found by walking along the
      * shell from it, the depth by walking along an edge from the face's corner, then every place of the box read.
@@ -75,18 +92,34 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
     private ShapeMatch attempt(final IBlockProvider provider, final long controller, final int[] inward,
                                final ShapeTally tally) {
         final int axis = inward[0] != 0 ? 0 : inward[1] != 0 ? 1 : 2;
+        final int u = axis == 0 ? 1 : 0;
+        final int v = axis == 2 ? 1 : 2;
         final int[] c = PatternMatcher.decodePosition(controller);
         final int[] lo = c.clone();
         final int[] hi = c.clone();
-        for (int other = 0; other < 3; other++) {
-            if (other != axis) {
-                lo[other] = c[other] - walk(provider, c, other, -1, most(other), tally);
-                hi[other] = c[other] + walk(provider, c, other, 1, most(other), tally);
+        extend(provider, c, u, lo, hi, tally);
+        extend(provider, c, v, lo, hi, tally);
+        // Along the face's edges too, so one block missing on the controller's row is told as missing.
+        for (int round = 0; round < 2; round++) {
+            for (final int along : new int[] {u, v}) {
+                final int across = along == u ? v : u;
+                for (final int at : new int[] {lo[across], hi[across]}) {
+                    final int[] from = c.clone();
+                    from[across] = at;
+                    extend(provider, from, along, lo, hi, tally);
+                }
             }
         }
-        final int[] corner = hi.clone();
-        corner[axis] = c[axis];
-        final int depth = walk(provider, corner, axis, inward[axis], most(axis), tally);
+        // The depth along each of the four edges that run inward, so one broken edge does not hide it.
+        int depth = 0;
+        for (final int atU : new int[] {lo[u], hi[u]}) {
+            for (final int atV : new int[] {lo[v], hi[v]}) {
+                final int[] corner = c.clone();
+                corner[u] = atU;
+                corner[v] = atV;
+                depth = Math.max(depth, walk(provider, corner, axis, inward[axis], most(axis), tally));
+            }
+        }
         if (inward[axis] > 0) {
             hi[axis] = c[axis] + depth;
         } else {
@@ -134,6 +167,13 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
         }
         return new ShapeMatch.Formed(Orientation.NORTH, controller, parts, Map.of(), within, hi[0] - lo[0] + 1,
                 hi[1] - lo[1] + 1, hi[2] - lo[2] + 1, 1, tally.counts(), tally.values());
+    }
+
+    /* Widens the box along an axis to as far as the shell runs both ways from a place. */
+    private void extend(final IBlockProvider provider, final int[] from, final int axis, final int[] lo,
+                        final int[] hi, final ShapeTally tally) {
+        lo[axis] = Math.min(lo[axis], from[axis] - walk(provider, from, axis, -1, most(axis), tally));
+        hi[axis] = Math.max(hi[axis], from[axis] + walk(provider, from, axis, 1, most(axis), tally));
     }
 
     /*
