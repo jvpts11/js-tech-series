@@ -12,14 +12,18 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.matter.MatterStack;
+import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
@@ -58,19 +62,23 @@ import org.jetbrains.annotations.Nullable;
  * @param matterOutputs the matter it makes
  * @param byproducts    what it may make besides, by chance
  * @param conditions    the temperature and the pressure it runs between
+ * @param knowledge     the knowledge the machine's owner's team must have before the machine runs it
+ *                      ({@code "knowledge": "myaddon:fusion"}); viewers always show it, with a lock
  */
 public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs,
                                List<SizedFluidIngredient> fluidInputs, List<ItemStack> outputs,
                                List<FluidStack> fluidOutputs, int ticks, int energyPerTick,
                                List<SizedIngredient> catalysts, List<MatterStack> matterInputs,
                                List<MatterStack> matterOutputs, List<Byproduct> byproducts,
-                               RecipeConditions conditions)
+                               RecipeConditions conditions, Optional<ResourceLocation> knowledge)
         implements Recipe<ProcessingInput> {
 
     /** How long a recipe takes when its file does not say. */
     public static final int DEFAULT_TICKS = 200;
     private static final StreamCodec<RegistryFriendlyByteBuf, MatterStack> MATTER_STREAM =
             ByteBufCodecs.fromCodecWithRegistries(MatterStack.CODEC);
+    private static final StreamCodec<ByteBuf, Optional<ResourceLocation>> KNOWLEDGE_STREAM =
+            ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC);
 
     public ProcessingRecipe {
         inputs = List.copyOf(inputs);
@@ -81,14 +89,15 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
         matterInputs = List.copyOf(matterInputs);
         matterOutputs = List.copyOf(matterOutputs);
         byproducts = List.copyOf(byproducts);
+        Objects.requireNonNull(knowledge, "knowledge");
     }
 
-    /** A recipe of items and liquids only, with no catalyst, byproduct or condition. */
+    /** A recipe of items and liquids only, with no catalyst, byproduct, condition or knowledge. */
     public ProcessingRecipe(final ProcessingKind kind, final List<SizedIngredient> inputs,
                             final List<SizedFluidIngredient> fluidInputs, final List<ItemStack> outputs,
                             final List<FluidStack> fluidOutputs, final int ticks, final int energyPerTick) {
         this(kind, inputs, fluidInputs, outputs, fluidOutputs, ticks, energyPerTick, List.of(), List.of(), List.of(),
-                List.of(), RecipeConditions.ANY);
+                List.of(), RecipeConditions.ANY, Optional.empty());
     }
 
     /**
@@ -199,10 +208,11 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
                         Byproduct.CODEC.listOf().optionalFieldOf("byproducts", List.of())
                                 .forGetter(ProcessingRecipe::byproducts),
                         RecipeConditions.CODEC.optionalFieldOf("conditions", RecipeConditions.ANY)
-                                .forGetter(ProcessingRecipe::conditions))
+                                .forGetter(ProcessingRecipe::conditions),
+                        ResourceLocation.CODEC.optionalFieldOf("knowledge").forGetter(ProcessingRecipe::knowledge))
                 .apply(instance, (in, fluidIn, out, fluidOut, ticks, energy, catalysts, matterIn, matterOut,
-                                  byproducts, conditions) -> new ProcessingRecipe(kind, in, fluidIn, out, fluidOut,
-                        ticks, energy, catalysts, matterIn, matterOut, byproducts, conditions)))
+                                  byproducts, conditions, knowledge) -> new ProcessingRecipe(kind, in, fluidIn, out,
+                        fluidOut, ticks, energy, catalysts, matterIn, matterOut, byproducts, conditions, knowledge)))
                 .validate(recipe -> recipe.inputs().isEmpty() && recipe.fluidInputs().isEmpty()
                         && recipe.matterInputs().isEmpty()
                         ? DataResult.error(() -> "a processing recipe takes something")
@@ -238,10 +248,11 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
             matter.encode(buf, recipe.matterOutputs());
             byproducts.encode(buf, recipe.byproducts());
             RecipeConditions.STREAM_CODEC.encode(buf, recipe.conditions());
+            KNOWLEDGE_STREAM.encode(buf, recipe.knowledge());
         }, buf -> new ProcessingRecipe(kind, ingredients.decode(buf), fluidIngredients.decode(buf),
                 stacks.decode(buf), fluids.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf), ingredients.decode(buf), matter.decode(buf), matter.decode(buf),
-                byproducts.decode(buf), RecipeConditions.STREAM_CODEC.decode(buf)));
+                byproducts.decode(buf), RecipeConditions.STREAM_CODEC.decode(buf), KNOWLEDGE_STREAM.decode(buf)));
     }
 
     /*

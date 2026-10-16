@@ -31,6 +31,7 @@ import dev.jstech.core.machine.Machines;
 import dev.jstech.core.signal.SignalRadio;
 import dev.jstech.core.command.CoreCommands;
 import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.command.TeamProgressCommands;
 import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.datagen.JsCoreDataGenerators;
 import dev.jstech.core.developer.LiveReload;
@@ -122,7 +123,11 @@ import dev.jstech.core.notification.NotificationSounds;
 import dev.jstech.core.notification.Notifications;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.persistence.NetworkRegistry;
+import dev.jstech.core.progression.Eras;
+import dev.jstech.core.progression.Knowledges;
 import dev.jstech.core.progression.PlayerProgress;
+import dev.jstech.core.progression.ProgressionTriggers;
+import dev.jstech.core.progression.TeamProgress;
 import dev.jstech.core.protection.OwnedProtection;
 import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.protection.Protection;
@@ -275,12 +280,15 @@ public final class JsCore {
         MediaLedgers.register();
         // How far each player has come along each progression axis, and the advancement triggers every mod stands on.
         PlayerProgress.register();
+        TeamProgress.register();
+        ProgressionTriggers.listen();
         // The manuals each player was handed as they first joined, so each is handed once.
         GuideGifts.register();
         CoreTriggers.register(modEventBus);
         // The series' commands under /jstech: the Core's own, the recordings' upkeep, the log's levels, and what
         // the server's administrators read of the series' health and cost.
         CoreCommands.declare();
+        TeamProgressCommands.declare();
         ConfigCommands.declare();
         ProtectionCommands.declare();
         MediaCommand.declare();
@@ -378,6 +386,8 @@ public final class JsCore {
             LANGUAGES.freeze();
             OPERATIONS.freeze();
             StateTables.freeze();
+            Eras.freeze();
+            Knowledges.freeze();
         }));
     }
 }

@@ -17,12 +17,14 @@ import dev.jstech.core.text.GameText;
 import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
+import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.gui.widgets.IRecipeExtrasBuilder;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -144,6 +146,25 @@ final class ProcessingCategory implements IRecipeCategory<RecipeHolder<Processin
             final ProcessingViewLayout.Point at = layout.textLine(line + 1);
             builder.addText(lines.get(line), size.width(), ProcessingViewLayout.TEXT_LINE)
                     .setPosition(at.x(), at.y()).setColor(RecipeViewPalette.get().text());
+        }
+        ProcessingRecipeViews.knowledgeLine(recipe).ifPresent(needs -> {
+            final ProcessingViewLayout.Point at = layout.textLine(lines.size() + 1);
+            final int indent = ProcessingRecipeViews.knowledgeIndent(recipe);
+            builder.addText(needs, size.width() - indent, ProcessingViewLayout.TEXT_LINE)
+                    .setPosition(at.x() + indent, at.y()).setColor(RecipeViewPalette.get().text());
+        });
+    }
+
+    /* A locked recipe's padlock, beside the line naming what it needs. */
+    @Override
+    public void draw(final RecipeHolder<ProcessingRecipe> holder, final IRecipeSlotsView slots,
+                     final GuiGraphics graphics, final double mouseX, final double mouseY) {
+        final ProcessingRecipe recipe = holder.value();
+        if (ProcessingRecipeViews.locked(recipe)) {
+            final ProcessingViewLayout.Point at = ProcessingRecipeViews.layoutOf(recipe)
+                    .textLine(ProcessingRecipeViews.lines(recipe).size() + 1);
+            graphics.blitSprite(ProcessingRecipeViews.LOCK, at.x(), at.y(), ProcessingRecipeViews.LOCK_WIDTH,
+                    ProcessingRecipeViews.LOCK_HEIGHT);
         }
     }
 

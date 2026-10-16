@@ -37,6 +37,8 @@ public final class MachineTexts {
             "At %s kPa or more");
     public static final TextKey RECIPE_PRESSURE_BELOW = TextKey.of("jscore.recipe.pressure_below",
             "At %s kPa or less");
+    /** The knowledge a recipe needs; beside a padlock, in the locked colour, while the player's team lacks it. */
+    public static final TextKey RECIPE_NEEDS = TextKey.of("jscore.recipe.needs", "Needs %s");
 
     private MachineTexts() {
     }

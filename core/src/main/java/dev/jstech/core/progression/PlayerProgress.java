@@ -12,6 +12,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.PlayerState;
+import dev.jstech.core.team.CoreTeams;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -59,12 +60,14 @@ public final class PlayerProgress {
 
     /**
      * Moves {@code player} to {@code step} along {@code axis} if it is further than any step they have reached, and
-     * posts an {@link AxisStepReachedEvent} when it is.
+     * posts an {@link AxisStepReachedEvent} when it is. The player's team reaches it too ({@link TeamProgress}), if it
+     * had not.
      *
      * @return whether the player moved forward
      */
     public static <S extends IAxisStep> boolean reach(final MinecraftServer server, final UUID player,
                                                       final ProgressionAxis<S> axis, final S step) {
+        TeamProgress.reach(server, CoreTeams.teamOf(server, player), axis, step);
         final S before = reached(server, player, axis);
         if (step.level() <= before.level()) {
             return false;

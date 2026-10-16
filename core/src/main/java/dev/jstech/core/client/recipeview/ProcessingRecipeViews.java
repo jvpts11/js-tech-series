@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.recipeview;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
@@ -16,13 +17,18 @@ import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.ProcessingViewLayout;
 import dev.jstech.core.machine.RecipeConditions;
 import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.progression.KnowledgeGate;
+import dev.jstech.core.progression.Knowledges;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -31,6 +37,13 @@ import net.minecraft.world.item.ItemStack;
  * the same recipes the same way.
  */
 public final class ProcessingRecipeViews {
+
+    /** The padlock drawn beside the knowledge line of a locked recipe, a sprite of the game's GUI atlas. */
+    public static final ResourceLocation LOCK = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "recipe/lock");
+    /** The padlock's size, in pixels. */
+    public static final int LOCK_WIDTH = 7;
+    public static final int LOCK_HEIGHT = 9;
+    private static final int LOCK_GAP = 2;
 
     private ProcessingRecipeViews() {
     }
@@ -57,7 +70,31 @@ public final class ProcessingRecipeViews {
     public static ProcessingViewLayout layoutOf(final ProcessingRecipe recipe) {
         return new ProcessingViewLayout(recipe.inputs().size() + recipe.fluidInputs().size()
                 + recipe.catalysts().size(), recipe.outputs().size() + recipe.fluidOutputs().size()
-                + recipe.byproducts().size(), 1 + lines(recipe).size());
+                + recipe.byproducts().size(), 1 + lines(recipe).size() + (recipe.knowledge().isPresent() ? 1 : 0));
+    }
+
+    /**
+     * The line naming the knowledge {@code recipe} needs, last under it, if it needs any: in the viewer's own colour
+     * when the player's team has it, and the palette's locked colour beside a padlock when it does not.
+     */
+    public static Optional<Component> knowledgeLine(final ProcessingRecipe recipe) {
+        return recipe.knowledge().map(id -> {
+            final Text name = Knowledges.byId(id).map(known -> known.name().text())
+                    .orElseGet(() -> Text.literal(id.toString()));
+            final MutableComponent line = GameText.component(MachineTexts.RECIPE_NEEDS.with(name));
+            return KnowledgeGate.openHere(recipe.knowledge()) ? line
+                    : line.withColor(RecipeViewPalette.get().locked());
+        });
+    }
+
+    /** Whether {@code recipe} is locked for this client's player's team: drawn with a padlock. */
+    public static boolean locked(final ProcessingRecipe recipe) {
+        return !KnowledgeGate.openHere(recipe.knowledge());
+    }
+
+    /** How far the knowledge line of {@code recipe} stands in from the left, past its padlock when it has one. */
+    public static int knowledgeIndent(final ProcessingRecipe recipe) {
+        return locked(recipe) ? LOCK_WIDTH + LOCK_GAP : 0;
     }
 
     /**

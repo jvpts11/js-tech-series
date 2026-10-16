@@ -21,6 +21,9 @@ import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
+import dev.jstech.core.progression.KnowledgeGate;
+import dev.jstech.core.progression.ProgressionTriggers;
+import dev.jstech.core.team.Ownership;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -76,6 +79,8 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
     private final SlotLocks locks;
     /* What its upgrades do together, worked out again only when an upgrade slot changes. */
     private @Nullable UpgradeEffect effect;
+    /* Whether the last inputs looked up made only what its owner's team does not know how to make. */
+    private boolean locked;
 
     /** How often a machine of several lanes sorts its inputs among them, in ticks. */
     public static final int SORT_EVERY = 10;
@@ -608,10 +613,20 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
 
     /**
      * What the inputs make by the recipes of {@code kind}: the usual answer to {@link #process}. When they make
-     * several, the one the player picked, or the first.
+     * several, the one the player picked, or the first. A recipe that asks for knowledge the owner's team does not
+     * have is passed over, and inputs that make only such recipes leave the machine locked.
      */
     protected Optional<Processing> byKind(final Level level, final ProcessingKind kind, final ProcessingInput input) {
-        final List<RecipeHolder<ProcessingRecipe>> all = kind.findAll(level, input);
+        final List<RecipeHolder<ProcessingRecipe>> found = kind.findAll(level, input);
+        final List<RecipeHolder<ProcessingRecipe>> all = new ArrayList<>(found.size());
+        final Ownership owned = ownership();
+        for (final RecipeHolder<ProcessingRecipe> holder : found) {
+            if (level.getServer() == null || KnowledgeGate.allows(level.getServer(),
+                    owned == null ? null : owned.owner(), holder.value().knowledge())) {
+                all.add(holder);
+            }
+        }
+        this.locked = all.isEmpty() && !found.isEmpty();
         if (all.isEmpty()) {
             return Optional.empty();
         }
@@ -623,7 +638,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
 
     /*
      * One tick of work: each lane works on its own, and the machine is as busy as its busiest lane: working, else
-     * waiting for energy, else with its output full, else waiting for input.
+     * waiting for energy, else with its output full, else locked behind knowledge, else waiting for input.
      */
     @Override
     protected MachineStatus work(final ServerLevel level) {
@@ -706,9 +721,11 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
 
     private static int rank(final MachineStatus status) {
         return switch (status) {
-            case WORKING -> 3;
-            case NO_ENERGY -> 2;
-            case OUTPUT_FULL -> 1;
+            case WORKING -> 4;
+            case NO_ENERGY -> 3;
+            case OUTPUT_FULL -> 2;
+            // A lane held back by knowledge says so over one that has nothing to work.
+            case LOCKED -> 1;
             default -> 0;
         };
     }
@@ -830,11 +847,12 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
          */
         private MachineStatus work(final ServerLevel level, final UpgradeEffect effect, final double share) {
             final ProcessingInput input = input(this.index);
+            locked = false;
             final Optional<Processing> found = input.isEmpty() ? Optional.empty() : process(level, input);
             final int held = found.map(each -> setsHeld(each, effect)).orElse(0);
             if (held <= 0) {
                 reset();
-                return MachineStatus.WAITING;
+                return locked ? MachineStatus.LOCKED : MachineStatus.WAITING;
             }
             final Processing work = found.get();
             final int times = timesThatFit(work, effect, held);
@@ -991,6 +1009,13 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                 }
             }
             outputs().put(made, times(work.fluidOutputs(), times), timesMatter(work.matterOutputs(), times));
+            // What a machine makes, its owner made: the axes move as they would at a table.
+            final Ownership owned = ownership();
+            if (owned != null && level != null && level.getServer() != null) {
+                for (final ItemStack each : made) {
+                    ProgressionTriggers.made(level.getServer(), owned.owner(), each);
+                }
+            }
             return count;
         }
     }

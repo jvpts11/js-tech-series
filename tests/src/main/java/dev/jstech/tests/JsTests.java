@@ -78,6 +78,8 @@ public final class JsTests {
         TestConveyors.declare();
         // A reactor the network reads and an accelerator it gives work to, members through the Core alone.
         TestNetworkMembers.declare(modEventBus);
+        // An era between two of the series', an axis, milestones and knowledge, to prove the Core's progression.
+        TestProgression.declare();
         // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.
         TestFluids.declare();
         // Materials in every form and ores in several rocks, to prove the Core's catalogue and the art it draws.

@@ -133,6 +133,16 @@ public final class CoreEmiPlugin implements EmiPlugin {
         return true;
     }
 
+    /** Opens EMI on the recipes of the processing machines of {@code kind}; whether it has a category for them. */
+    public static boolean showRecipesOf(final ProcessingKind kind) {
+        final EmiRecipeCategory category = categoryOf(kind);
+        if (category == null) {
+            return false;
+        }
+        EmiApi.displayRecipeCategory(category);
+        return true;
+    }
+
     @Nullable
     private static EmiRecipeCategory categoryOf(final ProcessingKind kind) {
         return categoryOf(kind.id());

@@ -37,6 +37,8 @@ level always may run it, and a server's permission mod may grant it to a player 
 | Command | Who | What it does |
 | --- | --- | --- |
 | `/jstech progress <players> <axis> [<step>]` | level 2 | Shows where players are on a progression axis, or puts them on a step ([Progression](PROGRESSION.md)). |
+| `/jstech knowledge <players> [grant <id> [<share>] \| forget <id>]` | level 2 | Shows what players' teams know, or gives or takes a piece of knowledge ([Progression](PROGRESSION.md#what-a-team-reaches)). |
+| `/jstech milestone <players> <id>` | level 2 | Has players' teams reach a milestone ([Progression](PROGRESSION.md#milestones)). |
 | `/jstech chunks <players> [release]` | level 2 | Shows how many chunks players keep loaded, or lets them all go ([World](WORLD.md#keeping-chunks-loaded)). |
 | `/jstech dimension create <id> <template>` | level 3 | Makes a dimension from a declared one, while the game runs ([World](WORLD.md#dimensions-made-while-the-game-runs)). |
 | `/jstech dimension remove <id>` | level 3 | Takes away a dimension made that way; refuses any other. |

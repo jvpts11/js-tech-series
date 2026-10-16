@@ -11,6 +11,8 @@ import dev.jstech.core.material.Material;
 import dev.jstech.core.matter.MatterStack;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -22,6 +24,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Writes a processing recipe from a mod's recipe provider:
@@ -45,6 +48,7 @@ public final class ProcessingRecipeBuilder {
     private RecipeConditions conditions = RecipeConditions.ANY;
     private int ticks = ProcessingRecipe.DEFAULT_TICKS;
     private int energyPerTick;
+    private @Nullable ResourceLocation knowledge;
 
     private ProcessingRecipeBuilder(final ProcessingKind kind) {
         this.kind = kind;
@@ -135,10 +139,16 @@ public final class ProcessingRecipeBuilder {
         return this;
     }
 
+    /** The knowledge the machine's owner's team must have before the machine runs it. */
+    public ProcessingRecipeBuilder needs(final ResourceLocation id) {
+        this.knowledge = Objects.requireNonNull(id, "id");
+        return this;
+    }
+
     /** The recipe as it stands. */
     public ProcessingRecipe build() {
         return new ProcessingRecipe(kind, inputs, fluidInputs, outputs, fluidOutputs, ticks, energyPerTick, catalysts,
-                matterInputs, matterOutputs, byproducts, conditions);
+                matterInputs, matterOutputs, byproducts, conditions, Optional.ofNullable(knowledge));
     }
 
     /**

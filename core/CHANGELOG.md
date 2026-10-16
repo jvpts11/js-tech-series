@@ -464,6 +464,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   cable it touches, with no tie to J's Computers; a member that could never be what it says stops as it is made. Its
   state is read as tables a mod declares, a row for each machine and a column for each value, numbers in their units,
   text and flags, so whatever runs the network reads a reactor the way it reads anything else.
+- Progression kept per team: the eras of hardware are a registry an add-on's era goes into the middle of; the
+  axes move by playing, as a player first makes an item, at a table, in a furnace or in a machine they own, or places
+  a block; what a team reaches is the team's alone, and two teams that merge keep everything either had. Mods declare
+  ordered milestones a team reaches once, and knowledge a team comes to know whole or a share at a time. A machine
+  recipe may ask for a piece of knowledge: the machine will not run it until its owner's team knows it, saying "Needs
+  knowledge", while JEI, EMI and the manuals always show the recipe, with a padlock. Operators give and take
+  knowledge and milestones with `/jstech knowledge` and `/jstech milestone`.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

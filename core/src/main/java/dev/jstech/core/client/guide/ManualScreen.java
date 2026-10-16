@@ -16,6 +16,7 @@ import dev.jstech.core.client.audio.AudioEngine;
 import dev.jstech.core.client.gui.PointerShape;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.gui.ManualButtonLook;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
@@ -1811,6 +1812,11 @@ public final class ManualScreen extends Screen {
             g.fill(arrowStart, arrowY, arrowEnd, arrowY + 1, ink);
             for (int head = 0; head < 4; head++) {
                 g.fill(arrowEnd - head, arrowY - head, arrowEnd - head + 1, arrowY + head + 1, ink);
+            }
+            // A recipe locked behind knowledge the reader's team lacks wears a padlock on its arrow.
+            if (view.locked()) {
+                g.blitSprite(ProcessingRecipeViews.LOCK, arrowStart, arrowY - ProcessingRecipeViews.LOCK_HEIGHT / 2,
+                        ProcessingRecipeViews.LOCK_WIDTH, ProcessingRecipeViews.LOCK_HEIGHT);
             }
             // The time stands over the arrow and the energy under it, as a recipe card is read.
             final int faint = this.colour(GuideStyle.FAINT, chapter);

@@ -1,0 +1,12 @@
+{
+  "type": "jstests:test_pressing",
+  "inputs": [
+    {"item": "minecraft:gold_ingot", "count": 2},
+    {"item": "minecraft:redstone", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:gold_block", "count": 1}
+  ],
+  "ticks": 10,
+  "knowledge": "jstests:test_fusion"
+}

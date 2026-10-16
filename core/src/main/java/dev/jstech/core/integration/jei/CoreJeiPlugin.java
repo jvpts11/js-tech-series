@@ -186,6 +186,16 @@ public final class CoreJeiPlugin implements IModPlugin {
         return true;
     }
 
+    /** Opens JEI on the recipes of the processing machines of {@code kind}; whether JEI was there to open. */
+    public static boolean showRecipesOf(final ProcessingKind kind) {
+        final IJeiRuntime running = runtime;
+        if (running == null) {
+            return false;
+        }
+        running.getRecipesGui().showTypes(List.of(ProcessingCategory.typeOf(kind)));
+        return true;
+    }
+
     /** The recipes of {@code kind} the player's game was sent, or none before it joined a world. */
     private static List<RecipeHolder<ProcessingRecipe>> recipesOf(final ProcessingKind kind) {
         final ClientLevel level = Minecraft.getInstance().level;

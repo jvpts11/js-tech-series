@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.guide;
 
+import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.machine.ProcessingRecipe;
@@ -89,7 +90,8 @@ public final class GuideRecipes {
                     : Component.literal(UnitFormatter.forCurrentLocale().compact(processing.energyPerTick(),
                             Unit.FE_PER_TICK));
             return new View(inputs, List.copyOf(processing.outputs()), GameText.component(
-                    MachineTexts.RECIPE_TIME.with(ProcessingViewLayout.seconds(processing.ticks()))), energy);
+                    MachineTexts.RECIPE_TIME.with(ProcessingViewLayout.seconds(processing.ticks()))), energy,
+                    ProcessingRecipeViews.locked(processing));
         }
         final List<List<ItemStack>> inputs = new ArrayList<>();
         for (final Ingredient ingredient : recipe.getIngredients()) {
@@ -101,7 +103,7 @@ public final class GuideRecipes {
                 ? GameText.component(MachineTexts.RECIPE_TIME.with(
                         ProcessingViewLayout.seconds(cooking.getCookingTime())))
                 : Component.empty();
-        return new View(inputs, List.of(recipe.getResultItem(registries)), time, Component.empty());
+        return new View(inputs, List.of(recipe.getResultItem(registries)), time, Component.empty(), false);
     }
 
     /**
@@ -111,8 +113,10 @@ public final class GuideRecipes {
      * @param outputs what it makes
      * @param time    how long it takes, written over its arrow, or nothing
      * @param energy  the energy it spends a tick, written under its arrow, or nothing
+     * @param locked  whether it needs knowledge the reader's team does not have: a padlock on its arrow
      */
-    public record View(List<List<ItemStack>> inputs, List<ItemStack> outputs, Component time, Component energy) {
+    public record View(List<List<ItemStack>> inputs, List<ItemStack> outputs, Component time, Component energy,
+                       boolean locked) {
 
         public View {
             inputs = inputs.stream().map(List::copyOf).toList();

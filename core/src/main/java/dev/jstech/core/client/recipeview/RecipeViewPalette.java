@@ -16,8 +16,12 @@ import dev.jstech.core.palette.Palettes;
 @PaletteHolder
 public final class RecipeViewPalette {
 
-    /* The dark grey both viewers write their own recipe text in, so the Core's line reads as theirs do. */
-    static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "recipe_view", new Colours(0xFF404040));
+    /*
+     * The dark grey both viewers write their own recipe text in, so the Core's line reads as theirs do; and a dark
+     * red for the knowledge a locked recipe needs.
+     */
+    static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "recipe_view",
+            new Colours(0xFF404040, 0xFFA02020));
 
     private RecipeViewPalette() {
     }
@@ -30,8 +34,9 @@ public final class RecipeViewPalette {
     /**
      * The colours.
      *
-     * @param text the line of time and energy under a recipe
+     * @param text   the line of time and energy under a recipe
+     * @param locked the line naming the knowledge a recipe needs, while the player's team does not have it
      */
-    public record Colours(int text) {
+    public record Colours(int text, int locked) {
     }
 }

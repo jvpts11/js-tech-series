@@ -94,6 +94,17 @@ final class ProcessingEmiRecipe extends BasicEmiRecipe {
             final ProcessingViewLayout.Point at = layout.textLine(line + 1);
             widgets.addText(lines.get(line), at.x(), at.y(), RecipeViewPalette.get().text(), false);
         }
+        ProcessingRecipeViews.knowledgeLine(recipe).ifPresent(needs -> {
+            final ProcessingViewLayout.Point at = layout.textLine(lines.size() + 1);
+            if (ProcessingRecipeViews.locked(recipe)) {
+                widgets.addDrawable(at.x(), at.y(), ProcessingRecipeViews.LOCK_WIDTH,
+                        ProcessingRecipeViews.LOCK_HEIGHT, (graphics, mouseX, mouseY, delta) -> graphics.blitSprite(
+                                ProcessingRecipeViews.LOCK, 0, 0, ProcessingRecipeViews.LOCK_WIDTH,
+                                ProcessingRecipeViews.LOCK_HEIGHT));
+            }
+            widgets.addText(needs, at.x() + ProcessingRecipeViews.knowledgeIndent(recipe), at.y(),
+                    RecipeViewPalette.get().text(), false);
+        });
     }
 
     @Override

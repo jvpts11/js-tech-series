@@ -37,6 +37,7 @@ public final class MachineScreenTexts {
     public static final TextKey LCD_WORKING = TextKey.of("jscore.machine.screen.lcd.working", "RUNNING");
     public static final TextKey LCD_NOT_FORMED = TextKey.of("jscore.machine.screen.lcd.not_formed", "UNBUILT");
     public static final TextKey LCD_WAITING = TextKey.of("jscore.machine.screen.lcd.waiting", "NO INPUT");
+    public static final TextKey LCD_LOCKED = TextKey.of("jscore.machine.screen.lcd.locked", "LOCKED");
     public static final TextKey LCD_OUTPUT_FULL = TextKey.of("jscore.machine.screen.lcd.output_full", "OUT FULL");
     public static final TextKey LCD_NO_ENERGY = TextKey.of("jscore.machine.screen.lcd.no_energy", "NO POWER");
     public static final TextKey LCD_UNDERVOLTAGE = TextKey.of("jscore.machine.screen.lcd.undervoltage", "LOW LINE");
