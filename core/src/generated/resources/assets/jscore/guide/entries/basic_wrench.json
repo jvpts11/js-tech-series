@@ -102,7 +102,7 @@
   "items": [
     "jscore:basic_wrench"
   ],
-  "order": 10,
+  "order": 11,
   "section": "cables",
   "title": "jscore.guide.basic_wrench.title"
 }

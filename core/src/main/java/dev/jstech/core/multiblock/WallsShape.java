@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +82,11 @@ public record WallsShape(Place floor, Place wall, InsideRule inside, Limit area,
     @Override
     public int reach() {
         return Math.max(span(), this.height.most()) + 1;
+    }
+
+    @Override
+    public Optional<ShapePreview> preview(final int grow) {
+        return Optional.of(ShapePreviews.walls(this, grow));
     }
 
     @Override

@@ -8,6 +8,7 @@
 package dev.jstech.core.multiblock;
 
 import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,4 +35,13 @@ public interface IStructureShape {
      */
     @Nullable
     IBlockMatcher wanted(String wanted);
+
+    /**
+     * The shape laid out as it stands facing north, to be shown before it is built: at its least size, grown by
+     * {@code grow} (more repeats of a pattern's slice, longer sides of a box), or none for a shape that cannot be
+     * shown.
+     */
+    default Optional<ShapePreview> preview(final int grow) {
+        return Optional.empty();
+    }
 }

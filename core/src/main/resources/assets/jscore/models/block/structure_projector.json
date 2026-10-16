@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "jscore:block/structure_projector/side",
+    "side": "jscore:block/structure_projector/side",
+    "top": "jscore:block/structure_projector/top",
+    "lens": "jscore:block/structure_projector/lens"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 10, 16],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 10], "texture": "#side"},
+        "south": {"uv": [0, 0, 16, 10], "texture": "#side"},
+        "east": {"uv": [0, 0, 16, 10], "texture": "#side"},
+        "west": {"uv": [0, 0, 16, 10], "texture": "#side"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#top"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#top", "cullface": "down"}
+      }
+    },
+    {
+      "from": [3, 10, 3],
+      "to": [13, 11, 13],
+      "shade": false,
+      "faces": {
+        "north": {"uv": [0, 0, 10, 1], "texture": "#lens"},
+        "south": {"uv": [0, 0, 10, 1], "texture": "#lens"},
+        "east": {"uv": [0, 0, 10, 1], "texture": "#lens"},
+        "west": {"uv": [0, 0, 10, 1], "texture": "#lens"},
+        "up": {"uv": [0, 0, 10, 10], "texture": "#lens"}
+      }
+    }
+  ]
+}

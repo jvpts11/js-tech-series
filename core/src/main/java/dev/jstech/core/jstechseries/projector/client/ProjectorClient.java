@@ -1,0 +1,366 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Core.
+ */
+package dev.jstech.core.jstechseries.projector.client;
+
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import dev.jstech.core.JsCore;
+import dev.jstech.core.client.multiblock.FadedConsumer;
+import dev.jstech.core.client.multiblock.GhostBlocks;
+import dev.jstech.core.jstechseries.projector.ProjectorSettings;
+import dev.jstech.core.jstechseries.projector.ProjectorTexts;
+import dev.jstech.core.jstechseries.projector.ProjectorView;
+import dev.jstech.core.jstechseries.projector.StructureProjector;
+import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
+import dev.jstech.core.multiblock.Projectables;
+import dev.jstech.core.multiblock.ShapePreview;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
+import dev.jstech.core.text.GameText;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.OptionalDouble;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * The Structure Projector on the player's side: for every projector loaded near the player that shows a multiblock,
+ * the blocks still missing are drawn as ghosts, pale and see-through, a block that is wrong is outlined in red through
+ * whatever stands between, the controller's place is outlined in cyan until it is built, and above the structure float
+ * its name, its size and how much is in place, missing and wrong. A ghost looked at says what goes there and on which
+ * layer, beside the crosshair. Its screen is registered here too.
+ */
+@PaletteHolder
+public final class ProjectorClient {
+
+    /** How far from the player a projector's multiblock is drawn, in blocks. */
+    public static final double RANGE = 64.0;
+    /** How far a ghost is looked at from, in blocks. */
+    public static final double REACH = 8.0;
+    private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "structure_projector");
+    /* What is seen of the world is read again this often, in ticks: the counts need not follow every block. */
+    private static final int READ_EVERY = 10;
+    private static final float GHOST_ALPHA = 0.45F;
+    private static final float GHOST_SCALE = 0.98F;
+    private static final double GROW = 0.004;
+    private static final double LOOK_STEP = 0.05;
+    /** The colours of the words above a structure and of its marks. */
+    public static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "structure_projector", new Colours(
+            0xFF << 24 | 0xFFFFFF, 0xFF << 24 | 0xB4BCC6, 0xFF << 24 | 0x5FE6F0, 0xFF << 24 | 0xF0564A,
+            0xC0 << 24 | 0x262E3A, 0xF0564A, 0x5FE6F0));
+    private static final float TEXT_SCALE = 0.025F;
+    private static final int LINE_HEIGHT = 10;
+    private static final int MOST_NAMED = 3;
+    private static final int TOOLTIP_OFFSET = 10;
+
+    /* What each projector saw when it last looked, by its place, and when it looked. */
+    private static final Map<BlockPos, Seen> SEEN = new HashMap<>();
+
+    private ProjectorClient() {
+    }
+
+    /** Hands the mod's bus and the game's what this answers, once, from the Core's client. */
+    public static void listen(final IEventBus modBus) {
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, ProjectorClient::onRender);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> SEEN.clear());
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.Clone.class, event -> SEEN.clear());
+        modBus.addListener(RegisterGuiLayersEvent.class, event -> event.registerAbove(VanillaGuiLayers.CROSSHAIR,
+                LAYER, ProjectorClient::drawLooked));
+        modBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(StructureProjector.MENU.get(),
+                StructureProjectorScreen::new));
+    }
+
+    /** What {@code projector} sees now, read again when it is older than a moment or its settings changed. */
+    @Nullable
+    public static ProjectorView seen(final StructureProjectorBlockEntity projector) {
+        final Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null) {
+            return null;
+        }
+        final long now = minecraft.level.getGameTime();
+        final ProjectorSettings settings = projector.settings();
+        final Seen known = SEEN.get(projector.getBlockPos());
+        if (known != null && known.settings().equals(settings) && now - known.at() < READ_EVERY) {
+            return known.view();
+        }
+        final ProjectorView view = ProjectorView.of(minecraft.level, projector).orElse(null);
+        SEEN.put(projector.getBlockPos().immutable(), new Seen(settings, now, view));
+        return view;
+    }
+
+    private static void onRender(final RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+            return;
+        }
+        final Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null) {
+            return;
+        }
+        final Camera camera = event.getCamera();
+        final PoseStack pose = event.getPoseStack();
+        final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
+        for (final StructureProjectorBlockEntity projector : shown(minecraft.player)) {
+            final ProjectorView view = seen(projector);
+            if (view != null) {
+                drawGhosts(pose, camera, buffers, minecraft.getBlockRenderer(), view, projector.settings());
+                drawWords(pose, camera, minecraft.font, buffers, projector, view);
+            }
+        }
+        buffers.endBatch(Sheets.translucentCullBlockSheet());
+        buffers.endBatch(SeenThrough.LINES);
+        buffers.endBatch();
+    }
+
+    /* The projectors loaded in the player's level, showing, near enough to be drawn. */
+    private static List<StructureProjectorBlockEntity> shown(final Player player) {
+        final List<StructureProjectorBlockEntity> out = new ArrayList<>();
+        for (final StructureProjectorBlockEntity projector : StructureProjectorBlockEntity.shown()) {
+            if (projector.getLevel() == player.level() && !projector.isRemoved() && projector.settings().on()
+                    && projector.getBlockPos().distToCenterSqr(player.position()) <= RANGE * RANGE) {
+                out.add(projector);
+            }
+        }
+        return out;
+    }
+
+    /* The ghosts of what is missing, the red outline of what is wrong, the cyan outline of a missing controller. */
+    private static void drawGhosts(final PoseStack pose, final Camera camera,
+                                   final MultiBufferSource.BufferSource buffers, final BlockRenderDispatcher blocks,
+                                   final ProjectorView view, final ProjectorSettings settings) {
+        final Vec3 eye = camera.getPosition();
+        final VertexConsumer faded = new FadedConsumer(buffers.getBuffer(Sheets.translucentCullBlockSheet()),
+                GHOST_ALPHA);
+        final VertexConsumer lines = buffers.getBuffer(SeenThrough.LINES);
+        for (final ProjectorView.Place place : view.upTo(settings.layer())) {
+            if (place.state() == ProjectorView.State.PLACED) {
+                continue;
+            }
+            final BlockPos at = place.pos();
+            if (place.state() == ProjectorView.State.WRONG) {
+                outline(pose, eye, lines, at, PALETTE.get().wrongMark());
+                if (settings.missingOnly()) {
+                    continue;
+                }
+            }
+            final BlockState state = place.ghost().controller() ? null : GhostBlocks.stateOf(place.ghost());
+            if (state == null) {
+                outline(pose, eye, lines, at, PALETTE.get().controllerMark());
+                continue;
+            }
+            pose.pushPose();
+            pose.translate(at.getX() - eye.x + 0.5, at.getY() - eye.y + 0.5, at.getZ() - eye.z + 0.5);
+            pose.scale(GHOST_SCALE, GHOST_SCALE, GHOST_SCALE);
+            pose.translate(-0.5, -0.5, -0.5);
+            blocks.getModelRenderer().renderModel(pose.last(), faded, state, blocks.getBlockModel(state), 1F, 1F,
+                    1F, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, null);
+            pose.popPose();
+        }
+    }
+
+    private static void outline(final PoseStack pose, final Vec3 eye, final VertexConsumer lines, final BlockPos at,
+                                final int colour) {
+        pose.pushPose();
+        pose.translate(-eye.x, -eye.y, -eye.z);
+        LevelRenderer.renderLineBox(pose, lines, new AABB(at).inflate(GROW), (colour >> 16 & 0xFF) / 255F,
+                (colour >> 8 & 0xFF) / 255F, (colour & 0xFF) / 255F, 1F);
+        pose.popPose();
+    }
+
+    /* The words above the structure, every line facing the camera. */
+    private static void drawWords(final PoseStack pose, final Camera camera, final Font font,
+                                  final MultiBufferSource buffers, final StructureProjectorBlockEntity projector,
+                                  final ProjectorView view) {
+        final ShapePreview preview = view.preview();
+        final Vec3 top = Vec3.atLowerCornerOf(view.controller()).add(preview.minX() + preview.sizeX() / 2.0,
+                preview.minY() + preview.sizeY() + 1.2, preview.minZ() + preview.sizeZ() / 2.0);
+        final List<Line> lines = words(projector, view);
+        final Vec3 from = top.subtract(camera.getPosition());
+        pose.pushPose();
+        pose.translate(from.x, from.y, from.z);
+        pose.mulPose(camera.rotation());
+        pose.scale(TEXT_SCALE, -TEXT_SCALE, TEXT_SCALE);
+        int widest = 0;
+        for (final Line line : lines) {
+            widest = Math.max(widest, font.width(line.text()));
+        }
+        for (int i = 0; i < lines.size(); i++) {
+            final Line line = lines.get(i);
+            font.drawInBatch(line.text(), -widest / 2.0F, (i - lines.size()) * LINE_HEIGHT, line.colour(), false,
+                    pose.last().pose(), buffers, Font.DisplayMode.NORMAL, PALETTE.get().ground(),
+                    LightTexture.FULL_BRIGHT);
+        }
+        pose.popPose();
+    }
+
+    /* What floats above the structure: its name, mod and size; how much is in place; what is missing; what wrong. */
+    private static List<Line> words(final StructureProjectorBlockEntity projector, final ProjectorView view) {
+        final Colours c = PALETTE.get();
+        final List<Line> lines = new ArrayList<>();
+        final ResourceLocation id = projector.settings().chosen().orElseThrow();
+        final ShapePreview preview = view.preview();
+        lines.add(new Line(GameText.component(ProjectorTexts.SIZE_LINE.with(Projectables.name(id),
+                ScreenWords.modName(id), preview.sizeX(), preview.sizeY(), preview.sizeZ())), c.title()));
+        lines.add(new Line(GameText.component(ProjectorTexts.IN_PLACE.with(view.placed(), view.places().size())),
+                c.words()));
+        if (view.missing() > 0) {
+            lines.add(new Line(GameText.component(ProjectorTexts.MISSING_LINE.with(view.missing(),
+                    ScreenWords.counts(view.missingByBlock(), MOST_NAMED))), c.missing()));
+        }
+        final ProjectorView.Place wrong = view.places().stream()
+                .filter(place -> place.state() == ProjectorView.State.WRONG).findFirst().orElse(null);
+        if (wrong != null) {
+            final Minecraft minecraft = Minecraft.getInstance();
+            final Component found = Objects.requireNonNull(minecraft.level).getBlockState(wrong.pos()).getBlock()
+                    .getName();
+            lines.add(new Line(GameText.component(ProjectorTexts.WRONG_LINE.with(view.wrong(), GameText.of(found),
+                    GameText.of(GhostBlocks.nameOf(wrong.ghost().first())))), c.wrong()));
+        }
+        if (view.missing() > 0 || view.wrong() > 0) {
+            lines.add(new Line(GameText.component(ProjectorTexts.LOOK.text()), c.words()));
+        }
+        return lines;
+    }
+
+    /* Beside the crosshair, the ghost looked at: what goes there and on which layer. */
+    private static void drawLooked(final GuiGraphics g, final DeltaTracker delta) {
+        final Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || minecraft.level == null || minecraft.screen != null) {
+            return;
+        }
+        final ProjectorView.Place looked = looked(minecraft.player, delta.getGameTimeDeltaPartialTick(true));
+        if (looked == null) {
+            return;
+        }
+        final Component what = looked.ghost().controller() ? GameText.component(ProjectorTexts.CONTROLLER)
+                : GhostBlocks.nameOf(looked.ghost().first());
+        final int layers = layersOf(looked);
+        g.renderComponentTooltip(minecraft.font, List.of(what, GameText.component(ProjectorTexts.GHOST_LAYER.with(
+                looked.ghost().layer() + 1, layers))), g.guiWidth() / 2 + TOOLTIP_OFFSET,
+                g.guiHeight() / 2 + TOOLTIP_OFFSET);
+    }
+
+    /* The ghost along the player's look, nearer than any real block they look at; none for none. */
+    @Nullable
+    private static ProjectorView.Place looked(final Player player, final float partial) {
+        final Map<BlockPos, ProjectorView.Place> ghosts = new HashMap<>();
+        for (final StructureProjectorBlockEntity projector : shown(player)) {
+            final ProjectorView view = seen(projector);
+            if (view != null) {
+                for (final ProjectorView.Place place : view.upTo(projector.settings().layer())) {
+                    if (place.state() != ProjectorView.State.PLACED) {
+                        ghosts.put(place.pos(), place);
+                    }
+                }
+            }
+        }
+        if (ghosts.isEmpty()) {
+            return null;
+        }
+        final Vec3 eye = player.getEyePosition(partial);
+        final Vec3 look = player.getViewVector(partial);
+        for (double t = 0; t <= REACH; t += LOOK_STEP) {
+            final BlockPos at = BlockPos.containing(eye.add(look.scale(t)));
+            final ProjectorView.Place place = ghosts.get(at);
+            if (place != null) {
+                return place;
+            }
+            if (!player.level().getBlockState(at).isAir()) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static int layersOf(final ProjectorView.Place place) {
+        for (final Seen seen : SEEN.values()) {
+            if (seen.view() != null && seen.view().places().contains(place)) {
+                return seen.view().preview().layers();
+            }
+        }
+        return place.ghost().layer() + 1;
+    }
+
+    /** What a projector last saw, with the settings it saw it with and when. */
+    private record Seen(ProjectorSettings settings, long at, @Nullable ProjectorView view) {
+    }
+
+    /** One line of the words above a structure, and its colour. */
+    private record Line(Component text, int colour) {
+    }
+
+    /**
+     * The colours of the projector's words and marks.
+     *
+     * @param title          the multiblock's name, the first line above it
+     * @param words          the lines that only tell
+     * @param missing        the line of what is missing
+     * @param wrong          the line of what is wrong
+     * @param ground         the dim ground behind the words
+     * @param wrongMark      the outline of a block that is wrong, without its alpha
+     * @param controllerMark the outline of the controller's place, without its alpha
+     */
+    public record Colours(int title, int words, int missing, int wrong, int ground, int wrongMark,
+                          int controllerMark) {
+    }
+
+    /* Lines drawn over everything, as a mark seen through walls is: the game's own lines with no depth test. */
+    private static final class SeenThrough extends RenderType {
+
+        private static final RenderType LINES = create("jscore_projector_marks",
+                DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINES, 1536, CompositeState.builder()
+                        .setShaderState(RENDERTYPE_LINES_SHADER)
+                        .setLineState(new LineStateShard(OptionalDouble.of(2.0)))
+                        .setLayeringState(VIEW_OFFSET_Z_LAYERING)
+                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                        .setOutputState(ITEM_ENTITY_TARGET)
+                        .setWriteMaskState(COLOR_WRITE)
+                        .setCullState(NO_CULL)
+                        .setDepthTestState(NO_DEPTH_TEST)
+                        .createCompositeState(false));
+
+        /* Never made: the class only reaches the game's render states, which only a render type may. */
+        private SeenThrough(final String name, final VertexFormat format, final VertexFormat.Mode mode,
+                            final int bufferSize, final boolean crumbling, final boolean sort, final Runnable setup,
+                            final Runnable clear) {
+            super(name, format, mode, bufferSize, crumbling, sort, setup, clear);
+        }
+    }
+}

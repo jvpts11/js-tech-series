@@ -1,0 +1,15 @@
+{
+  "key": {
+    "P": {
+      "blocks": [
+        "jstests:test_furnace_part"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "#P"
+    ]
+  ],
+  "name": "test_hidden"
+}

@@ -68,6 +68,15 @@ public final class TestMultiblocks {
                     .port('G', PortKind.GAS_INPUT)
                     .build());
 
+    /** A pattern its mod declares not to be shown before it is built, to prove the projector leaves it out. */
+    public static final ResourceLocation HIDDEN_ID = ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+            "test_hidden");
+    public static final MultiblockPattern HIDDEN = MultiblockPatterns.declare(HIDDEN_ID,
+            MultiblockPattern.builder("test_hidden")
+                    .layer("#P")
+                    .where('P', BlockMatch.blocks("jstests:test_furnace_part"))
+                    .build(), false);
+
     private TestMultiblocks() {
     }
 

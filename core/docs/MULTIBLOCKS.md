@@ -367,6 +367,38 @@ never evened out between them, as a one-block machine's are. Liquid and matter t
 A processing machine works that many at once in each lane, more with its upgrades; `recipesAtOnce()` gives the exact
 number, and Jade shows it ("Runs 4 at once").
 
+## Showing a multiblock before it is built
+
+*Added 2026-10-16.*
+
+The **Structure Projector**, a block of the Core's shared content, shows any multiblock of any installed mod in the
+world, in front of itself: its near side a block away, its middle across from the projector, its bottom level with
+it. The places still empty are drawn as ghosts, the block that goes there pale and see-through; a block that is
+wrong is outlined in red, seen through whatever stands between; the controller's place is outlined in cyan until it
+is built; and above the structure float its name, its mod, its size, how much is in place, what is missing and what
+is wrong. Looking at a ghost says what goes there and on which layer.
+
+Its screen has no inventory, since a projector holds nothing: the multiblock in 3D (the layer shown whole, those below
+as ghosts, turned by dragging), the list of the multiblocks, what is placed, missing and wrong in the world, and the
+turn, the mirror (for a pattern that mirrors), "only what is missing", the layer, and the switch.
+
+**Every multiblock can be shown, with nothing more to write**: every pattern declared or in a file, and every machine
+declared as data whose shape is its own. A mod that does not want one shown declares it so:
+
+```java
+MultiblockPatterns.declare(rl("secret_core"), pattern, false);   // projectable: false
+```
+
+- A multiblock is called by the key `multiblock.<namespace>.<path>`, which its mod's language files give it; with
+  none, its id's path is shown with its words capitalised ("coke_oven" as "Coke Oven").
+- Every shape lays itself out to be shown: `shape.preview(grow)` gives the places at its least size (a pattern's
+  slice its least times, a box its least sides) grown by `grow`, each with its offset from the controller, its layer
+  and the blocks and tags that go there; `preview.turned(orientation)` stands it another way, and
+  `preview.materials()` counts what it takes.
+- A kit of its own that has multiblocks to show adds them with `Projectables.addSource(...)`.
+- What the projector sees, `ProjectorView.of(level, projector)`, is worked out on whichever side asks, from the world
+  that side holds: the projector does no work on the server.
+
 ## Machines entirely as data
 
 *Added 2026-10-16.*

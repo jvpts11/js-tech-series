@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -73,6 +74,11 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
     @Override
     public int reach() {
         return Math.max(this.sides.most(), this.height.most()) + 1;
+    }
+
+    @Override
+    public Optional<ShapePreview> preview(final int grow) {
+        return Optional.of(ShapePreviews.box(this, grow));
     }
 
     @Override

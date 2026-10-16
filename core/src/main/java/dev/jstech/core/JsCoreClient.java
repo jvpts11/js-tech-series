@@ -61,6 +61,7 @@ import dev.jstech.core.client.vehicle.VehicleControls;
 import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.jstechseries.energy.client.ClampMeterClient;
 import dev.jstech.core.jstechseries.energy.client.EnergyConvertersClient;
+import dev.jstech.core.jstechseries.projector.client.ProjectorClient;
 import dev.jstech.core.jstechseries.probe.client.NetworkProbeClient;
 import dev.jstech.core.jstechseries.probe.client.SignalProbeClient;
 import net.neoforged.api.distmarker.Dist;
@@ -95,6 +96,7 @@ public final class JsCoreClient {
         FlowSightClient.listen(modEventBus);
         ClientStateEvents.listen();
         EnergyConvertersClient.listen(modEventBus);
+        ProjectorClient.listen(modEventBus);
         ConfigClient.listen();
         CoreFontClient.listen(modEventBus);
         CoreModels.listen(modEventBus);

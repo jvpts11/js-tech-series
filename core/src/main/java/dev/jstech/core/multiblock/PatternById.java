@@ -9,6 +9,7 @@ package dev.jstech.core.multiblock;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,11 @@ public record PatternById(ResourceLocation id) implements IStructureShape {
     @Override
     public Map<String, Limit> limits() {
         return MultiblockPatterns.get(this.id).map(MultiblockPattern::limits).orElse(Map.of());
+    }
+
+    @Override
+    public Optional<ShapePreview> preview(final int grow) {
+        return MultiblockPatterns.get(this.id).flatMap(pattern -> pattern.preview(grow));
     }
 
     @Override

@@ -23,6 +23,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -82,12 +85,16 @@ public final class MultiblockPatterns {
                             .apply(instance, RawPattern::new))
             .flatXmap(MultiblockPatterns::build, MultiblockPatterns::raw);
 
+    /* Sent to the players too, so what a projector or a recipe viewer shows is the pattern in force. */
     private static final DataRegistry<MultiblockPattern> FILES = DataRegistry.builder(
-            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "multiblock"), "multiblock", CODEC).register();
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "multiblock"), "multiblock", CODEC).synced()
+            .register();
 
     /** The patterns mods declared in code, which the files of the same id replace. */
     private static final Map<ResourceLocation, MultiblockPattern> DECLARED =
             Collections.synchronizedMap(new LinkedHashMap<>());
+    /* The patterns their mods declared not to be shown before they are built. */
+    private static final Set<ResourceLocation> HIDDEN = ConcurrentHashMap.newKeySet();
 
     private MultiblockPatterns() {
     }
@@ -119,6 +126,35 @@ public final class MultiblockPatterns {
         return pattern;
     }
 
+    /**
+     * Declares a mod's pattern as {@link #declare(ResourceLocation, MultiblockPattern)} does, and whether it may be
+     * shown before it is built: every pattern is, in the Structure Projector, the recipe viewers and the manuals,
+     * unless its mod says {@code projectable} is false.
+     */
+    public static MultiblockPattern declare(final ResourceLocation id, final MultiblockPattern pattern,
+                                            final boolean projectable) {
+        final MultiblockPattern declared = declare(id, pattern);
+        if (!projectable) {
+            HIDDEN.add(id);
+        }
+        return declared;
+    }
+
+    /**
+     * Every pattern that may be shown before it is built, by id: the declared ones and those in files, a file in
+     * place of the declared pattern of its id, on either side.
+     */
+    public static Map<ResourceLocation, IStructureShape> projectable() {
+        final Map<ResourceLocation, IStructureShape> out = new TreeMap<>();
+        synchronized (DECLARED) {
+            out.putAll(DECLARED);
+        }
+        out.putAll(FILES.clientEntries());
+        out.putAll(FILES.entries());
+        out.keySet().removeAll(HIDDEN);
+        return out;
+    }
+
     /** The patterns declared in code by the mod of that namespace, for its generator to write. */
     public static Map<ResourceLocation, MultiblockPattern> declaredBy(final String namespace) {
         final Map<ResourceLocation, MultiblockPattern> out = new LinkedHashMap<>();
@@ -132,10 +168,17 @@ public final class MultiblockPatterns {
         return out;
     }
 
-    /** The pattern of that id: the server's file when there is one, the declared one otherwise. */
+    /**
+     * The pattern of that id: the server's file when there is one, on a player's game the file the server sent, the
+     * declared one otherwise.
+     */
     public static Optional<MultiblockPattern> get(final ResourceLocation id) {
         final Optional<MultiblockPattern> file = FILES.get(id);
-        return file.isPresent() ? file : Optional.ofNullable(DECLARED.get(id));
+        if (file.isPresent()) {
+            return file;
+        }
+        final MultiblockPattern sent = FILES.clientEntries().get(id);
+        return sent != null ? Optional.of(sent) : Optional.ofNullable(DECLARED.get(id));
     }
 
     /**

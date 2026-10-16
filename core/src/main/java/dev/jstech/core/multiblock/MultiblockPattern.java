@@ -169,6 +169,12 @@ public final class MultiblockPattern implements IStructureShape {
         return Math.max(size[0], Math.max(size[1], size[2]));
     }
 
+    /** The pattern as drawn, its repeated slice there its least times and {@code grow} more. */
+    @Override
+    public Optional<ShapePreview> preview(final int grow) {
+        return Optional.of(ShapePreviews.pattern(this, Orientation.NORTH, grow));
+    }
+
     /** What fits a letter's places: its place's blocks, or what the inside allows for the inside letter. */
     @Override
     public @Nullable IBlockMatcher wanted(final String wanted) {

@@ -20,10 +20,13 @@ import dev.jstech.core.multiblock.IStructureShape;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.multiblock.PatternById;
+import dev.jstech.core.multiblock.Projectables;
 import dev.jstech.core.multiblock.ShapeCodecs;
 import dev.jstech.core.multiblock.WallsShape;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -121,6 +124,11 @@ public final class DataMachines {
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "multiblock_machine"), "multiblock_machine", CODEC)
             .synced().register();
 
+    static {
+        // A machine whose shape names a pattern by id is shown as that pattern; the others are shown as themselves.
+        Projectables.addSource(DataMachines::shown);
+    }
+
     private DataMachines() {
     }
 
@@ -145,6 +153,15 @@ public final class DataMachines {
             }
         }
         return Optional.empty();
+    }
+
+    /* The machines shown before they are built, by id, on either side: those whose shape is their own. */
+    private static Map<ResourceLocation, IStructureShape> shown() {
+        final Map<ResourceLocation, IStructureShape> out = new TreeMap<>();
+        FILES.clientEntries().forEach((id, machine) -> out.put(id, machine.shape()));
+        FILES.entries().forEach((id, machine) -> out.put(id, machine.shape()));
+        out.values().removeIf(shape -> shape instanceof PatternById);
+        return out;
     }
 
     private static DataResult<IStructureShape> shape(final RawShape raw) {

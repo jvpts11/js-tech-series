@@ -8,6 +8,7 @@
     "jscore:fe_converter_uhv",
     "jscore:configurable_energy_converter",
     "jscore:exotic_matter_containment",
-    "jscore:antimatter_trap"
+    "jscore:antimatter_trap",
+    "jscore:structure_projector"
   ]
 }

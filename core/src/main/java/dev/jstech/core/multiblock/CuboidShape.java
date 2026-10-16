@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -109,6 +110,11 @@ public record CuboidShape(Place unit, Limit sides, Map<String, Limit> limits) im
     @Override
     public @Nullable IBlockMatcher wanted(final String wanted) {
         return ShapeMatch.UNIT.equals(wanted) ? this.unit.fits() : null;
+    }
+
+    @Override
+    public Optional<ShapePreview> preview(final int grow) {
+        return Optional.of(ShapePreviews.cuboid(this, grow));
     }
 
     /* Widens the cuboid along an axis to as far as the units run both ways from a place. */
