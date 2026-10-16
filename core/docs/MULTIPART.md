@@ -90,6 +90,28 @@ places it, making a space of parts alone where nothing stands, and refuses where
 A click hits exactly the piece under the crosshair (`SpaceParts.aim`), the outline shows only it, and breaking takes
 only it, with its drop; how long it takes is its block's. The middle-click picks its item.
 
+## Declaring a kind of part
+
+A kind of part is declared once, as a block is, with its item under the same id:
+
+```java
+public static final PartEntry<SensorPart> SENSOR = CONTENT.part("sensor", SensorPart::new)
+        .named("Sensor")
+        .look(PartLook.plate("block/part/sensor_front", "block/part/sensor_side"))
+        .redstone()
+        .tab(MyTab.TOOLS)
+        .register();
+```
+
+`register()` registers the kind in the Core's part registry and its item, a `PartItem`, which mounts the part on the
+face of a cable or a space of parts it is used on, or, used on any other block, on the face of the space beside it
+toward that block, making the space where nothing stands. The kind is called what its item is. The data generation
+writes the item's model, which shows the part's own, and its English name; a part drawn with `PartLook.plate(front,
+side)`, or `plate(front, busyFront, side)` with a front of its own at work, has its model written too, a plate twelve
+pixels across and five deep facing north. A part drawn with `PartLook.handmade(model)` uses the mod's own model file.
+`shaped`, `redstone`, `turns` and `moving` say what the kind says ([What a device can do](#what-a-device-can-do)). A
+mod with its own data generation adds `ContentPartModelProvider` beside its other providers.
+
 ## What a device can do
 
 A device on a face (`IFacePart`, see [Cables](CABLES.md#parts-on-the-cable)) does each of these on its own face:
@@ -186,6 +208,17 @@ modBus.addListener(FMLClientSetupEvent.class, event -> PartMotions.register(MyPa
 Each frame, only the spaces in sight that hold such a part are drawn so (`MovingParts`), each part turned to its face
 as its model is; a world of still parts draws nothing here. The rest of the part is its model, in the mesh.
 
+## Testing
+
+The Core's GameTest kit builds spaces of parts as a test needs them (`ScenarioBuilder`): `placeMicroblock(pos,
+microblock)`, `mountPart(pos, face, type)`, which gives back the part mounted, `hangSmall(pos, state)` and
+`partsAt(pos)`, each into a cable's space or into one made where nothing stands, failing the test when it cannot.
+
+```java
+final ScenarioBuilder build = ScenarioBuilder.forGameTest(helper);
+final SensorPart sensor = build.mountPart(new BlockPos(2, 2, 2), Direction.NORTH, MyParts.SENSOR.get());
+```
+
 ## What can go wrong
 
 - **A piece of your block cannot be cut.** It has a block entity, no item of its own, a model that is not a plain
@@ -195,6 +228,10 @@ as its model is; a world of still parts draws nothing here. The rest of the part
   hollow piece.
 - **A facade is refused.** The space has no cable, whose wires it hides; place a cover there instead.
 - **Your saw does not cut.** It is not in the item tag `jscore:saws`.
+- **A declared part stops loading with "has no look".** Give it `look(PartLook.plate(...))` or
+  `look(PartLook.handmade(...))` before `register()`.
+- **A plate part shows as a purple and black box.** The mod's data generation lacks `ContentPartModelProvider`, or
+  has not been run since the part was declared.
 - **`PartMotions.register` refuses a kind.** The kind was not marked with `moving()` where it is made.
 - **A device never ticks.** Its `ticks()` says false, or its light or need of a tick changed without a call to
   `partChanged()`, so the block's state still says it needs none.

@@ -447,6 +447,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The microblocks' rules in JEI and EMI: the saw's cuts, two pieces joined and a facade are one crafting recipe
   each, going through every block and piece rather than thousands of entries; looking up a block in JEI shows the
   cuts of that block.
+- (Core) Parts declared once, as blocks are: a mod names a kind of part, gives it a look and says what it does, and
+  gets its item, which mounts it on a cable, a space of parts or the face of any block, its name and its models from
+  the data generation, a plate's included. The GameTest kit builds spaces of microblocks, parts and small blocks.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

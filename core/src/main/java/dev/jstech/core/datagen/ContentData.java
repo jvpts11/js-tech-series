@@ -52,6 +52,9 @@ public final class ContentData {
         final ContentData data = new ContentData(event, content.modid(), new ContentLanguageProvider(output, content));
         data.client(new ContentBlockStateProvider(output, content, data.existingFiles()));
         data.client(new ContentItemModelProvider(output, content, data.existingFiles()));
+        if (!content.declaredParts().isEmpty()) {
+            data.client(new ContentPartModelProvider(output, content, data.existingFiles()));
+        }
         data.client(data.language);
         data.client(new PaletteProvider(output, content.modid()));
         data.client(new MotionProfileProvider(output, content.modid()));

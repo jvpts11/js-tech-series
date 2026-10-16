@@ -8,6 +8,7 @@
 package dev.jstech.core.multipart;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -82,15 +83,40 @@ public final class SpacePlacement {
         if (!level.isUnobstructed(null, voxels(block).move(pos.getX(), pos.getY(), pos.getZ()))) {
             return false;
         }
+        return into(level, pos, parts -> parts.add(block));
+    }
+
+    /**
+     * Mounts {@code device} on {@code face} of the space at {@code pos}, a cable's or a space of parts alone, making
+     * a space where nothing stands; on the server.
+     *
+     * @return whether it is mounted there now
+     */
+    public static boolean mount(final Level level, final BlockPos pos, final Direction face, final IFacePart device) {
+        return into(level, pos, parts -> parts.add(face, device));
+    }
+
+    /**
+     * Hangs the game's small block {@code state} in the space at {@code pos}, making a space where nothing stands; on
+     * the server.
+     *
+     * @return whether it hangs there now
+     */
+    public static boolean hang(final Level level, final BlockPos pos, final BlockState state) {
+        return into(level, pos, parts -> parts.addSmall(state));
+    }
+
+    /* Puts a part into the space at {@code pos}, or into a new one where nothing stands, which goes if it fails. */
+    private static boolean into(final Level level, final BlockPos pos, final Predicate<SpaceParts> put) {
         if (level.getBlockEntity(pos) instanceof ISpaceHolder holder) {
-            return holder.parts().add(block);
+            return put.test(holder.parts());
         }
         final BlockState there = level.getBlockState(pos);
         if (!there.canBeReplaced() || !there.getFluidState().isEmpty()) {
             return false;
         }
         level.setBlock(pos, CoreSpaces.BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
-        if (level.getBlockEntity(pos) instanceof SpaceBlockEntity space && space.parts().add(block)) {
+        if (level.getBlockEntity(pos) instanceof SpaceBlockEntity space && put.test(space.parts())) {
             return true;
         }
         level.setBlock(pos, there, Block.UPDATE_ALL);

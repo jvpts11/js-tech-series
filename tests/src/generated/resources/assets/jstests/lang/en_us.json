@@ -65,6 +65,7 @@
   "item.jstests.full_tool": "Full Test Tool",
   "item.jstests.hrc_fuse": "Test HRC Fuse",
   "item.jstests.modes_tool": "Modes Test Tool",
+  "item.jstests.plate_part": "Test Plate Part",
   "item.jstests.rewirable_fuse": "Test Rewirable Fuse",
   "item.jstests.test_acid_bucket": "Test Acid Bucket",
   "item.jstests.test_belt": "Test belt",

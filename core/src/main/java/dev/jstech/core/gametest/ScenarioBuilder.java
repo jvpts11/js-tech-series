@@ -12,11 +12,18 @@ import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.ISpaceHolder;
+import dev.jstech.core.multipart.Microblock;
+import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.multipart.SpaceParts;
+import dev.jstech.core.multipart.SpacePlacement;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Builds a test's scenario straight into a level, for a mod's GameTests and for tests driven from a player's game
  * alike: blocks set and machines placed as a player placing their items would, cables laid in the Core's cable
- * block, and a record of every block it wrote. Positions handed to it are relative: a GameTest maps them through its
+ * block, microblocks, parts and the game's small blocks put into block spaces, and a record of every block it wrote. Positions handed to it are relative: a GameTest maps them through its
  * arena, anything else through the origin it was given.
  *
  * <p>A mod's own builder extends it with its machines' set-ups, as the series' test mod does.
@@ -114,6 +121,50 @@ public class ScenarioBuilder {
             throw new IllegalStateException("could not lay " + cable.id() + " at " + relative);
         }
         note(pos);
+    }
+
+    /**
+     * Stands {@code block} in the space at {@code relative}, a cable's or one made where nothing stands, as a player
+     * placing its microblock would.
+     */
+    public void placeMicroblock(final BlockPos relative, final Microblock block) {
+        final BlockPos pos = absolute(relative);
+        if (!SpacePlacement.place(level, new SpacePlacement.Placement(pos, block))) {
+            throw new IllegalStateException("could not place " + block + " at " + relative);
+        }
+        note(pos);
+    }
+
+    /**
+     * Mounts a new part of {@code type} on {@code face} of the space at {@code relative}, a cable's or one made where
+     * nothing stands, and gives it back.
+     */
+    public <P extends IFacePart> P mountPart(final BlockPos relative, final Direction face, final PartType<P> type) {
+        final BlockPos pos = absolute(relative);
+        final P part = type.create();
+        if (!SpacePlacement.mount(level, pos, face, part)) {
+            throw new IllegalStateException("could not mount " + type.id() + " on the " + face + " face at "
+                    + relative);
+        }
+        note(pos);
+        return part;
+    }
+
+    /** Hangs the game's small block {@code state}, a torch or a lever, in the space at {@code relative}. */
+    public void hangSmall(final BlockPos relative, final BlockState state) {
+        final BlockPos pos = absolute(relative);
+        if (!SpacePlacement.hang(level, pos, state)) {
+            throw new IllegalStateException("could not hang " + state + " at " + relative);
+        }
+        note(pos);
+    }
+
+    /** The parts of the space at {@code relative}, a cable's or a space of parts alone. */
+    public SpaceParts partsAt(final BlockPos relative) {
+        if (!(level.getBlockEntity(absolute(relative)) instanceof ISpaceHolder holder)) {
+            throw new IllegalStateException("no space of parts at " + relative);
+        }
+        return holder.parts();
     }
 
     /** Records a position as part of the scenario, growing the written box to hold it. */

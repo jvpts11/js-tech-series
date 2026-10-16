@@ -36,8 +36,10 @@ public static void kiln_smeltsWithPower(final GameTestHelper helper) {
 }
 ```
 
-`layCable(level, pos, type)` lays a cable of any mod into the shared cable block. A mod can extend
-`ScenarioBuilder` with the shapes it builds often.
+`layCable(level, pos, type)` lays a cable of any mod into the shared cable block, and `placeMicroblock`,
+`mountPart`, `hangSmall` and `partsAt` build block spaces of parts
+([Block spaces and microblocks](MULTIPART.md#testing)). A mod can extend `ScenarioBuilder` with the shapes it builds
+often.
 
 ## Players in tests
 

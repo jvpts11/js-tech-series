@@ -19,6 +19,9 @@ import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
+import dev.jstech.core.multipart.CoreParts;
+import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
@@ -97,10 +100,12 @@ public final class ModContent {
     private final List<DeferredHolder<BlockEntityType<?>, ? extends BlockEntityType<?>>> declaredBlockEntities =
             new ArrayList<>();
     private final List<CableEntry> declaredCables = new ArrayList<>();
+    private final List<PartEntry<?>> declaredParts = new ArrayList<>();
     private final List<FluidEntry> declaredFluids = new ArrayList<>();
     private final List<CellFont> declaredFonts = new ArrayList<>();
     private final List<Consumer<DataPackRegistryEvent.NewRegistry>> datapackRegistries = new ArrayList<>();
     private @Nullable DeferredRegister<CableType> cables;
+    private @Nullable DeferredRegister<PartType<?>> parts;
     private DeferredRegister.@Nullable DataComponents components;
     private @Nullable DeferredRegister<FluidType> fluidTypes;
     private @Nullable DeferredRegister<Fluid> fluids;
@@ -200,6 +205,14 @@ public final class ModContent {
     }
 
     /**
+     * Starts declaring a kind of part mounted on the faces of cables and spaces of parts, and the item that mounts it,
+     * under one id.
+     */
+    public <P extends IFacePart> PartBuilder<P> part(final String id, final Supplier<P> factory) {
+        return new PartBuilder<>(this, id, factory);
+    }
+
+    /**
      * Registers the block entity made by those blocks. Every block that makes it is named here, so a variant of a
      * block (another era of the same machine) cannot be left out of its entity's valid blocks.
      */
@@ -290,6 +303,11 @@ public final class ModContent {
     /** The cables declared so far, in declaration order. */
     public List<CableEntry> declaredCables() {
         return Collections.unmodifiableList(declaredCables);
+    }
+
+    /** The kinds of part declared so far, in declaration order. */
+    public List<PartEntry<?>> declaredParts() {
+        return Collections.unmodifiableList(declaredParts);
     }
 
     /** The fluids declared so far, in declaration order. */
@@ -412,6 +430,9 @@ public final class ModContent {
         if (cables != null) {
             cables.register(modEventBus);
         }
+        if (parts != null) {
+            parts.register(modEventBus);
+        }
         if (components != null) {
             components.register(modEventBus);
         }
@@ -458,6 +479,17 @@ public final class ModContent {
 
     void declare(final CableEntry entry) {
         declaredCables.add(entry);
+    }
+
+    DeferredRegister<PartType<?>> partRegister() {
+        if (parts == null) {
+            parts = DeferredRegister.create(CoreParts.KEY, modid);
+        }
+        return parts;
+    }
+
+    void declare(final PartEntry<?> entry) {
+        declaredParts.add(entry);
     }
 
     DeferredRegister<FluidType> fluidTypeRegister() {

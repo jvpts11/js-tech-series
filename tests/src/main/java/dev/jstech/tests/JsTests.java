@@ -72,6 +72,8 @@ public final class JsTests {
         TestItems.declare();
         // Two fuses, to prove the Core's protection slot.
         TestFuses.declare();
+        // A kind of part declared the Core's way, its item and its plate's model.
+        TestParts.declare();
         // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.
         TestFluids.declare();
         // Materials in every form and ores in several rocks, to prove the Core's catalogue and the art it draws.

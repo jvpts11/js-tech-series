@@ -11,6 +11,7 @@ import dev.jstech.core.datagen.ContentCueProvider;
 import dev.jstech.core.datagen.ContentFluidTagsProvider;
 import dev.jstech.core.datagen.ContentItemModelProvider;
 import dev.jstech.core.datagen.ContentLanguageProvider;
+import dev.jstech.core.datagen.ContentPartModelProvider;
 import dev.jstech.core.datagen.ContentSoundProvider;
 import dev.jstech.core.datagen.GuideProvider;
 import dev.jstech.core.datagen.MultiblockPatternProvider;
@@ -52,6 +53,8 @@ public final class JsTestsDataGenerators {
         generator.addProvider(event.includeClient(), new ContentCueProvider(output, TestSounds.CONTENT));
         generator.addProvider(event.includeClient(),
                 new ContentItemModelProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
+        generator.addProvider(event.includeClient(),
+                new ContentPartModelProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
         TestSounds.CONTENT.declaredGuides().forEach(guide -> generator.addProvider(event.includeClient(),
                 new GuideProvider(output, guide)));
     }
