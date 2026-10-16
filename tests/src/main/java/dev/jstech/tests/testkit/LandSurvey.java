@@ -9,6 +9,7 @@ package dev.jstech.tests.testkit;
 
 import dev.jstech.core.worldgen.landform.LandformField;
 import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.vein.VeinField;
 import dev.jstech.core.worldgen.vein.Veins;
@@ -79,6 +80,23 @@ public final class LandSurvey {
                     land.getChunkSource().getGenerator(), land.getChunkSource().randomState(), kinds.get(vein.kind()),
                     vein)) {
                 return vein;
+            }
+        }
+        return null;
+    }
+
+    /** A reservoir of the kind {@code kind} found where it lies in {@code land}, in its first {@code zones} zones. */
+    public static Reservoirs.Reservoir reservoir(final ServerLevel land, final ResourceLocation kind, final int zones) {
+        final List<Reservoirs.Kind> kinds = Reservoirs.all();
+        final VeinField field = Reservoirs.field(kinds);
+        for (int zx = 0; zx < zones; zx++) {
+            final VeinField.Vein body = field.in(land.getSeed(), zx, 0);
+            if (body != null && kinds.get(body.kind()).id().equals(kind)) {
+                final Reservoirs.Kind found = kinds.get(body.kind());
+                if (Veins.found(land.getChunkSource().getGenerator(), land.getChunkSource().randomState(),
+                        found.type().biomes(), found.type().elsewhere(), body)) {
+                    return new Reservoirs.Reservoir(found, body);
+                }
             }
         }
         return null;

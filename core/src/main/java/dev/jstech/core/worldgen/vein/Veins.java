@@ -11,10 +11,12 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.core.JsCore;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.SplittableRandom;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -82,16 +84,26 @@ public final class Veins {
      */
     public static boolean found(final ChunkGenerator generator, final RandomState random, final Deposits.Entry kind,
                                 final VeinField.Vein vein) {
-        if (kind.type().biomes().isEmpty()) {
+        return found(generator, random, kind.type().biomes(), kind.type().elsewhere(), vein);
+    }
+
+    /**
+     * Whether a body of the ground lies where the field put it: always where it has no {@code biomes}, or where the
+     * biome at its middle is one of them; elsewhere {@code elsewhere} as often. The same for any body the field
+     * places (veins, reservoirs).
+     */
+    public static boolean found(final ChunkGenerator generator, final RandomState random,
+                                final Optional<TagKey<Biome>> biomes, final double elsewhere,
+                                final VeinField.Vein body) {
+        if (biomes.isEmpty()) {
             return true;
         }
-        final Holder<Biome> middle = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(vein.x()),
-                QuartPos.fromBlock(vein.y()), QuartPos.fromBlock(vein.z()), random.sampler());
-        if (middle.is(kind.type().biomes().get())) {
+        final Holder<Biome> middle = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(body.x()),
+                QuartPos.fromBlock(body.y()), QuartPos.fromBlock(body.z()), random.sampler());
+        if (middle.is(biomes.get())) {
             return true;
         }
-        return kind.type().elsewhere() > 0
-                && (new SplittableRandom(vein.seed() ^ FOUND_SALT).nextLong() >>> 11) * TO_UNIT
-                < kind.type().elsewhere();
+        return elsewhere > 0 && (new SplittableRandom(body.seed() ^ FOUND_SALT).nextLong() >>> 11) * TO_UNIT
+                < elsewhere;
     }
 }

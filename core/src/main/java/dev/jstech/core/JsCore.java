@@ -152,6 +152,7 @@ import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.biome.BiomeClimates;
+import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.vein.Veins;
 import net.neoforged.bus.api.IEventBus;
@@ -223,9 +224,10 @@ public final class JsCore {
         // climates of biomes in real values, which heat meets where a biome has its own.
         CoreFeatures.register(modEventBus);
         BiomeClimates.listen(modEventBus);
-        // The veins every mod's ores lie in, their kinds as data.
+        // The veins every mod's ores lie in and the reservoirs of oil, gas and brines, their kinds as data.
         Veins.listen(modEventBus);
         Deposits.register();
+        Reservoirs.register();
         EndSettings.declare();
         OverheadLines.declare();
         // The menu every machine of every mod opens, behind its five tabs, and what a wrench shows of a machine.

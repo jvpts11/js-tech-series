@@ -14,6 +14,7 @@ import dev.jstech.core.worldgen.biome.WorldBiomes;
 import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.landform.LandformKind;
 import dev.jstech.core.worldgen.landform.Landforms;
+import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.terrain.Terrains;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -23,10 +24,11 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * Scattered ores, a structure, dimensions, biomes, a terrain, shapes of the land and kinds of vein declared the way a
- * mod declares them, to prove the Core's world generation. The vein and the structure are placed only in a biome tag that holds no
- * biome, so they exist in the registries and generate nowhere; the dimensions stand apart, reached only by the tests,
- * and the biomes and the shapes of the land lie only in the test land.
+ * Scattered ores, a structure, dimensions, biomes, a terrain, shapes of the land, kinds of vein and of reservoir
+ * declared the way a mod declares them, to prove the Core's world generation. The first vein and the structure are
+ * placed only in a biome tag that holds no biome, so they exist in the registries and generate nowhere; the dimensions
+ * stand apart, reached only by the tests, and the biomes, the shapes of the land, the veins and the reservoirs lie
+ * only in the test land.
  */
 public final class TestWorldGen {
 
@@ -88,6 +90,12 @@ public final class TestWorldGen {
     public static final ResourceLocation GRANITE_GOLD = Deposits.deposit(id("test_granite_gold"))
             .mineral(SeriesMaterials.GOLD, 1).heights(16, 40).frequency(0.01).biomes(NOWHERE)
             .rocks(HostRocks.GRANITE).declare();
+    /** Reservoirs of brine in mud under a cap of smooth basalt, in the test land's stone, in most of its zones. */
+    public static final ResourceLocation BRINES = Reservoirs.reservoir(id("test_brine"))
+            .fluid(ResourceLocation.withDefaultNamespace("water"))
+            .rocks(ResourceLocation.withDefaultNamespace("mud"), ResourceLocation.withDefaultNamespace("packed_mud"),
+                    ResourceLocation.withDefaultNamespace("smooth_basalt"))
+            .perBlock(1000).heights(20, 36).frequency(0.7).size(24, 4).capping(2).biomes(LAND).declare();
     /** Another mod's ore scattered as the game scatters its own, in the test land: one the veins can move. */
     public static final WorldGen.OreVein LAND_ORE = WorldGen.ore(id("test_land_ore")).stone(() -> Blocks.EMERALD_ORE)
             .vein(6).perChunk(2).heights(16, 48).biomes(LAND).declare();

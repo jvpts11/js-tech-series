@@ -86,6 +86,22 @@ class VeinFieldTest {
     }
 
     @Test
+    void in_placesBodiesInZonesOfTheirOwnSizeApartFromTheVeins() {
+        final List<VeinField.Kind> kinds = List.of(new VeinField.Kind(1.0, 0, 40, 30, 4));
+        final VeinField large = new VeinField(kinds, 128, 77L);
+        final VeinField veins = new VeinField(kinds);
+        int same = 0;
+        for (int x = -10; x < 10; x++) {
+            final VeinField.Vein body = large.in(SEED, x, 2);
+            assertTrue(Math.floorDiv(body.x(), 128) == x && Math.floorDiv(body.z(), 128) == 2);
+            assertTrue(body.x() - x * 128 >= 32 && body.x() - x * 128 < 96, "a quarter of a zone from its edges");
+            same += body.seed() == veins.in(SEED, x, 2).seed() ? 1 : 0;
+        }
+        assertEquals(0, same, "another salt picks other bodies");
+        assertEquals(128, large.zone());
+    }
+
+    @Test
     void reaching_findsTheSameVeinsFromEveryChunkTheyTouch() {
         final VeinField field = field(0.5);
         final List<VeinField.Vein> all = new ArrayList<>();

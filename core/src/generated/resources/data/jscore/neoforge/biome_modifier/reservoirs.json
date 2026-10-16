@@ -1,0 +1,5 @@
+{
+  "type": "jscore:everywhere",
+  "features": "jscore:reservoirs",
+  "step": "underground_structures"
+}

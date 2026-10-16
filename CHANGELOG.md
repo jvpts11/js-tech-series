@@ -590,6 +590,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and standing in one, what it is made of and how large it is.
 - (Core) The world's vein settings: veins on or off, how often, how large and how dense each kind is, the materials
   whose ore is never laid, and trying to move other mods' scattered ores into veins of their own.
+- (Core) Reservoirs of oil, gas and brines as things in the ground: a lens of soaked rock under a cap rock, of a kind
+  declared as data (what it holds, its rocks, how much a block holds, where, how often and how large). A well drains
+  it a block at a time, a drained block turns back into plain rock, and nothing floods; what was drawn is kept in the
+  world's data over areas, so every mod reads the same reservoirs.
+- (Core) The biome modifier `jscore:everywhere` adds features to every biome of every dimension.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

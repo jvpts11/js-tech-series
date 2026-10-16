@@ -1,10 +1,10 @@
 # The world
 
-What J's Core gives a mod about the world itself: ores in veins that instruments can find, structures that generate in
-it, dimensions of your own with rules for gravity, air, heat and weather, their terrain and biomes with climates in
-real values, the shapes of the land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers,
-seas that freeze or boil away, dimensions made while the game runs, data kept over areas of the world, and chunks
-kept loaded for their owners.
+What J's Core gives a mod about the world itself: ores in veins that instruments can find, reservoirs of oil, gas and
+brines that wells drain, structures that generate in it, dimensions of your own with rules for gravity, air, heat and
+weather, their terrain and biomes with climates in real values, the shapes of the land (craters, volcanoes, canyons,
+lakes of any liquid and the rest), rock in layers, seas that freeze or boil away, dimensions made while the game runs,
+data kept over areas of the world, and chunks kept loaded for their owners.
 
 ## The words
 
@@ -122,6 +122,53 @@ In `jstech-balance.toml`, section `veins`:
 Moving other mods' ores works with an ore a mod lays as data, as most do: its feature stands aside and a vein of its own
 replaces what it replaced with what it laid, so each block still takes its rock's variant. A mod that lays its ores
 its own way is not seen, hence "try". Only chunks made after a change are laid differently.
+
+## Reservoirs
+
+*Added 2026-10-16.*
+
+Oil, natural gas and brines are things in the ground: a **reservoir** is a lens of porous rock soaked in them, under a
+dome of **cap rock** that holds them in. Each block holds an amount; a well drains them one at a time, and a block that
+holds no more turns back into plain rock. A reservoir lays no liquid, so digging into one floods nothing, and shows it.
+
+```java
+public static final ResourceLocation OIL = Reservoirs.reservoir(rl("oil"))
+        .fluid(rl("crude_oil"))                                  // what it holds
+        .rocks(rl("oil_sand"),                                   // the soaked rock
+                ResourceLocation.withDefaultNamespace("sandstone"),      // what a drained block turns into
+                ResourceLocation.withDefaultNamespace("smooth_basalt"))  // the cap rock
+        .perBlock(1000)              // millibuckets a block
+        .heights(-40, 20)            // where its middle lies
+        .frequency(0.25)             // in a quarter of the zones, eight chunks a side
+        .size(28, 5).capping(2)      // 28 blocks across, 5 up and down, under 2 blocks of cap
+        .biomes(Tags.Biomes.IS_DESERT).elsewhere(0.3)
+        .declare();
+```
+
+The data generation writes it to `data/<namespace>/jstech/reservoirs/oil.json`, which a data pack can change, and a data
+pack can add reservoirs of its own. Where each lies is worked out from the world's seed, so every mod finds the same
+ones, and what has been drawn from each is kept in the dimension's data over areas (`Reservoirs.DRAWN`), so every mod
+reads the same blocks left:
+
+```java
+List<Reservoirs.Reservoir> near = Reservoirs.near(level, pos, 128);          // nearest first
+Optional<Reservoirs.Held> held = Reservoirs.at(level, pos);                  // a block of one, and what it holds
+int drawn = Reservoirs.drain(level, pos, 250, false);                        // millibuckets taken
+Optional<BlockPos> next = Reservoirs.nearestHolding(level, reservoir, well); // the next block a well drains
+long left = Reservoirs.left(level, reservoir);                               // about how much is left in it
+```
+
+A reservoir replaces only the rock it says (the overworld's stone unless `replaces(...)` names another), never air, a
+liquid or another block, so caves and veins cut through it stay as they were. It is laid before the ores. The Core
+brings the kit; the reservoirs themselves are a mod's: J's Industrial's oil, J's Geology's natural gas, the brines of
+desert salt flats.
+
+To add a feature of your own to every biome of every dimension, as the reservoirs are, write a biome modifier of the
+Core's `jscore:everywhere` kind:
+
+```json
+{ "type": "jscore:everywhere", "features": "mymod:fault_lines", "step": "underground_structures" }
+```
 
 ## Dimensions
 
@@ -411,3 +458,5 @@ ChunkLoaders.releaseAll(level, machinePos);
   of its biomes, or `without_ore` names its materials.
 - **The game's iron is still scattered.** The world's chunks were made before veins were on, or `veins.enabled` is
   off.
+- **A reservoir never shows.** Its rock is not the rock it replaces where it lies, its biome is not one of its biomes,
+  or its soaked rock's id names no block.

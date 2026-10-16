@@ -1,0 +1,10 @@
+{
+  "biomes": "jstests:test_land",
+  "cap": "minecraft:smooth_basalt",
+  "drained": "minecraft:packed_mud",
+  "fluid": "minecraft:water",
+  "frequency": 0.7,
+  "max_y": 36,
+  "min_y": 20,
+  "soaked": "minecraft:mud"
+}

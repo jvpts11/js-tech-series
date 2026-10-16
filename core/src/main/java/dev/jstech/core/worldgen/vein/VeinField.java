@@ -15,27 +15,44 @@ import java.util.SplittableRandom;
  * Where the veins of a world lie: the world cut into zones three chunks a side, each holding at most one vein, of a
  * kind picked by the kinds' frequencies, at a place, height and size of its own, worked out from the world's seed
  * alone. Any chunk finds every vein that reaches it without asking another, the same on any thread and every time for
- * the same seed. Pure.
+ * the same seed. Other bodies in the ground lie the same way in zones of their own size and salt (reservoirs). Pure.
  */
 public final class VeinField {
 
     private final List<Kind> kinds;
+    private final int zone;
+    private final long salt;
+    private final int margin;
     private final int reach;
 
-    /** A zone's side, in blocks: three chunks. */
+    /** A vein zone's side, in blocks: three chunks. */
     public static final int ZONE = 48;
 
-    /* Two odd numbers of no pattern that spread neighbouring zones far apart, and the field's own salt. */
+    /* Two odd numbers of no pattern that spread neighbouring zones far apart, and the veins' own salt. */
     private static final long MIX_X = -7_046_029_254_386_353_131L;
     private static final long MIX_Z = -4_417_276_706_812_531_889L;
     private static final long SALT = 5_573_394_017_221_771_109L;
-    /* A vein's middle keeps this far from its zone's edges, so neighbouring veins seldom touch. */
-    private static final int MARGIN = ZONE / 4;
     private static final double LEAST_SIZE = 0.75;
     private static final double SIZE_SPREAD = 0.5;
 
+    /** The veins of {@code kinds}, in zones three chunks a side. */
     public VeinField(final List<Kind> kinds) {
+        this(kinds, ZONE, SALT);
+    }
+
+    /**
+     * Bodies of {@code kinds} in zones {@code zone} blocks a side, {@code salt} keeping them apart from the veins and
+     * from other bodies on the same seed; each middle keeps a quarter of a zone from its zone's edges, so neighbours
+     * seldom touch.
+     */
+    public VeinField(final List<Kind> kinds, final int zone, final long salt) {
+        if (zone < 4) {
+            throw new IllegalArgumentException("a zone is at least four blocks across, not " + zone);
+        }
         this.kinds = List.copyOf(kinds);
+        this.zone = zone;
+        this.salt = salt;
+        this.margin = zone / 4;
         int most = 0;
         for (final Kind kind : this.kinds) {
             most = Math.max(most, (int) Math.ceil(kind.radius() * (LEAST_SIZE + SIZE_SPREAD)));
@@ -43,12 +60,17 @@ public final class VeinField {
         this.reach = most;
     }
 
+    /** A zone's side, in blocks. */
+    public int zone() {
+        return this.zone;
+    }
+
     /** The vein of the zone {@code zx, zz}, or none if it holds none. */
     public Vein in(final long seed, final int zx, final int zz) {
         if (this.kinds.isEmpty()) {
             return null;
         }
-        final SplittableRandom random = new SplittableRandom(seed ^ SALT ^ zx * MIX_X ^ zz * MIX_Z);
+        final SplittableRandom random = new SplittableRandom(seed ^ this.salt ^ zx * MIX_X ^ zz * MIX_Z);
         double total = 0;
         for (final Kind kind : this.kinds) {
             total += kind.frequency();
@@ -60,8 +82,8 @@ public final class VeinField {
             final Kind kind = this.kinds.get(i);
             reached += kind.frequency() * scale;
             if (roll < reached) {
-                final int x = zx * ZONE + MARGIN + random.nextInt(ZONE - 2 * MARGIN);
-                final int z = zz * ZONE + MARGIN + random.nextInt(ZONE - 2 * MARGIN);
+                final int x = zx * this.zone + this.margin + random.nextInt(this.zone - 2 * this.margin);
+                final int z = zz * this.zone + this.margin + random.nextInt(this.zone - 2 * this.margin);
                 final int y = kind.minY() + random.nextInt(Math.max(1, kind.maxY() - kind.minY() + 1));
                 final double size = LEAST_SIZE + SIZE_SPREAD * random.nextDouble();
                 return new Vein(i, x, y, z, kind.radius() * size, kind.thickness() * size, random.nextLong());
@@ -73,8 +95,10 @@ public final class VeinField {
     /** Every vein whose reach touches the columns from {@code x0, z0} to {@code x1, z1}, for {@code seed}. */
     public List<Vein> reaching(final long seed, final int x0, final int z0, final int x1, final int z1) {
         final List<Vein> out = new ArrayList<>();
-        for (int zx = Math.floorDiv(x0 - this.reach, ZONE); zx <= Math.floorDiv(x1 + this.reach, ZONE); zx++) {
-            for (int zz = Math.floorDiv(z0 - this.reach, ZONE); zz <= Math.floorDiv(z1 + this.reach, ZONE); zz++) {
+        final int lastX = Math.floorDiv(x1 + this.reach, this.zone);
+        final int lastZ = Math.floorDiv(z1 + this.reach, this.zone);
+        for (int zx = Math.floorDiv(x0 - this.reach, this.zone); zx <= lastX; zx++) {
+            for (int zz = Math.floorDiv(z0 - this.reach, this.zone); zz <= lastZ; zz++) {
                 final Vein vein = in(seed, zx, zz);
                 if (vein != null && vein.x() + vein.radius() >= x0 && vein.x() - vein.radius() <= x1
                         && vein.z() + vein.radius() >= z0 && vein.z() - vein.radius() <= z1) {

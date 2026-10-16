@@ -14,7 +14,7 @@ import dev.jstech.core.datagen.ContentItemModelProvider;
 import dev.jstech.core.datagen.ContentLanguageProvider;
 import dev.jstech.core.datagen.ContentPartModelProvider;
 import dev.jstech.core.datagen.ContentSoundProvider;
-import dev.jstech.core.datagen.DepositProvider;
+import dev.jstech.core.datagen.DeclaredFilesProvider;
 import dev.jstech.core.datagen.GuideProvider;
 import dev.jstech.core.datagen.LightKindProvider;
 import dev.jstech.core.datagen.ModelDefinitionProvider;
@@ -53,7 +53,8 @@ public final class JsTestsDataGenerators {
                 new WorldGenProvider(output, event.getLookupProvider(), JsTests.MODID));
         generator.addProvider(event.includeServer(),
                 new BiomeClimateProvider(output, event.getLookupProvider(), JsTests.MODID));
-        generator.addProvider(event.includeServer(), new DepositProvider(output, JsTests.MODID));
+        generator.addProvider(event.includeServer(), DeclaredFilesProvider.deposits(output, JsTests.MODID));
+        generator.addProvider(event.includeServer(), DeclaredFilesProvider.reservoirs(output, JsTests.MODID));
         generator.addProvider(event.includeServer(), new ContentFluidTagsProvider(output,
                 event.getLookupProvider(), TestSounds.CONTENT, event.getExistingFileHelper()));
         generator.addProvider(event.includeClient(),

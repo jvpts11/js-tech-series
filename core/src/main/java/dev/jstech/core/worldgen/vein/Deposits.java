@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The kinds of vein, by id: each declared in code by its mod with what it is while nothing else says, and each a file
  * under {@code data/<namespace>/jstech/deposits/} a data pack writes over or adds to. The data generation writes a
- * mod's declared kinds as its files ({@code DepositProvider}). A vein of a kind generates only the ores some installed
- * mod uses, so a kind may be declared by any mod for materials it does not use itself.
+ * mod's declared kinds as its files ({@code DeclaredFilesProvider}). A vein of a kind generates only the ores some
+ * installed mod uses, so a kind may be declared by any mod for materials it does not use itself.
  *
  * <pre>{@code
  * public static final ResourceLocation MAGNETITE = Deposits.deposit(rl("magnetite"))

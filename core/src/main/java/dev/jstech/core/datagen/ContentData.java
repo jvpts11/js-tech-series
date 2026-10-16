@@ -10,6 +10,7 @@ package dev.jstech.core.datagen;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.core.worldgen.biome.WorldBiomes;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -83,8 +84,11 @@ public final class ContentData {
         if (!WorldBiomes.biomesOf(content.modid()).isEmpty()) {
             data.server(new BiomeClimateProvider(output, data.lookup(), content.modid()));
         }
-        if (DepositProvider.declares(content.modid())) {
-            data.server(new DepositProvider(output, content.modid()));
+        for (final DeclaredFilesProvider<?> files : List.of(DeclaredFilesProvider.deposits(output, content.modid()),
+                DeclaredFilesProvider.reservoirs(output, content.modid()))) {
+            if (files.declares()) {
+                data.server(files);
+            }
         }
         return data;
     }
