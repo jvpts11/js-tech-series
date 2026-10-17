@@ -690,6 +690,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Sound made visible: the debug screen tells the place's echo, its walls and the air sound goes through, and a
   key draws the rays the place is heard by and a line to every sound playing. The Sound Mixer's Options tab adds
   Echoes and Distance and Ringing Ears.
+- (Core) Travelling between dimensions with what one rides: a vehicle and everyone in it go together and arrive at a
+  safe place near where they were sent, on firm ground with room above, a platform laid where there is no ground;
+  a mod shows the passage through a screen of its own instead of the game's "loading terrain".
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

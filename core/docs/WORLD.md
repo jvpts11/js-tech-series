@@ -761,6 +761,29 @@ the same with `/jstech dimension create <id> <template>` and `remove <id>` ([Com
 copy kept loaded (`ServerLevel.setChunkForced`) are loaded again whenever it is made again, as the world's own
 dimensions' are when the server starts.
 
+### Travelling between dimensions
+
+*Added 2026-10-17.*
+
+```java
+DimensionTravel.travel(player, mars, new BlockPos(0, 90, 0), MySpace.REENTRY);  // the screen, or null for the game's
+```
+
+The traveller goes with what they ride, a vehicle and everyone riding it, and they arrive together at a safe place
+near where they were sent: firm ground with room above for the whole of them, nothing to drown, burn or smother them
+there, looked for at that height first, then up and down from it, then round it; over no ground at all, a small
+platform of stone is laid under them. The land there is loaded before they arrive.
+
+A mod shows the passage through a screen of its own instead of the game's "loading terrain" (the fire of a
+re-entry), declared on the player's game:
+
+```java
+TravelScreens.register(MySpace.REENTRY, (ready, reason) -> new ReentryScreen(ready, reason));
+```
+
+The screen is a `ReceivingLevelScreen` of the mod's own, so it closes as the game's does, once `ready` says the land
+round the player is there to be seen.
+
 ## Sky, time and weather
 
 *Added 2026-10-17.*

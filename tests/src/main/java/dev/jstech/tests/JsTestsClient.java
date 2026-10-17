@@ -8,11 +8,13 @@
 package dev.jstech.tests;
 
 import dev.jstech.core.client.config.CoreConfigScreen;
+import dev.jstech.core.client.dimension.TravelScreens;
 import dev.jstech.core.client.gui.data.DataScreens;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.tests.clienttest.TestGuideClient;
 import dev.jstech.tests.clienttest.TestHud;
+import dev.jstech.tests.clienttest.TestPassageScreen;
 import dev.jstech.tests.clienttest.computers.TestClientParts;
 import dev.jstech.tests.clienttest.core.TestFanMotion;
 import java.util.List;
@@ -55,5 +57,7 @@ public final class JsTestsClient {
         TestHud.declare();
         // The manuals' special block of the test mod, registered as another mod registers one.
         TestGuideClient.register();
+        // A passage between dimensions shown through a screen of the test mod's own.
+        TravelScreens.register(TestPassageScreen.ID, TestPassageScreen::new);
     }
 }

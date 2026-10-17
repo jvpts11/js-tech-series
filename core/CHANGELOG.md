@@ -687,6 +687,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Sound made visible: the debug screen tells the place's echo, its walls and the air sound goes through, and a
   key draws the rays the place is heard by and a line to every sound playing. The Sound Mixer's Options tab adds
   Echoes and Distance and Ringing Ears.
+- Travelling between dimensions with what one rides: a vehicle and everyone in it go together and arrive at a
+  safe place near where they were sent, on firm ground with room above, a platform laid where there is no ground;
+  a mod shows the passage through a screen of its own instead of the game's "loading terrain".
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

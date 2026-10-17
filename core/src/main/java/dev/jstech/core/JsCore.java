@@ -56,6 +56,7 @@ import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.effect.EffectSettings;
 import dev.jstech.core.effect.Effects;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.dimension.DimensionTravel;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.heat.BlockConductivity;
@@ -453,6 +454,7 @@ public final class JsCore {
         OwnedProtection.listen();
         Protection.listen();
         RuntimeDimensions.listen();
+        DimensionTravel.listen(modEventBus);
         RuntimePacks.listen(modEventBus);
         Sections.listen();
         SeriesCommands.listen();

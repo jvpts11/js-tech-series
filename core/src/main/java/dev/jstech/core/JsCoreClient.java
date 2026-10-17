@@ -30,6 +30,7 @@ import dev.jstech.core.client.connect.ConnectedPacks;
 import dev.jstech.core.client.data.DataRegistryClient;
 import dev.jstech.core.client.developer.LiveReloadClient;
 import dev.jstech.core.client.diagnostic.DiagnosticsClient;
+import dev.jstech.core.client.dimension.TravelScreens;
 import dev.jstech.core.client.effect.EffectsClient;
 import dev.jstech.core.client.field.ChunkFieldsClient;
 import dev.jstech.core.client.fluid.FluidsClient;
@@ -127,6 +128,7 @@ public final class JsCoreClient {
         WeatherClient.listen();
         LightLawsClient.listen(modEventBus);
         PortalViews.listen();
+        TravelScreens.listen();
         RoomViewClient.listen();
         PersistorClient.listen();
         BuilderClient.listen(modEventBus);
