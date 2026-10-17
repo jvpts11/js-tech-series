@@ -84,6 +84,8 @@ dependencies {
     // KubeJS finds the Core's plugin through its plugin file; Rhino is its script engine, a mod of its own.
     compileOnly("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
     compileOnly("dev.latvian.mods:rhino:${rhino_version}") { transitive = false }
+    // Simple Voice Chat finds the Core's plugin by its annotation; its API is all the plugin names.
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${voicechat_api_version}"
 }
 
 // The notices of the third-party work this mod carries, beside its own licence, and the licences they come under.

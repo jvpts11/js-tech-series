@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * A player's sound preferences as their settings file keeps them, {@code jstech-audio.json} beside the game's own
- * options: each channel's volume, the sounds never to be heard, and the three switches of the sound options. Reading
+ * options: each channel's volume, the sounds never to be heard, and the switches of the sound options. Reading
  * the file fills the preferences in force; {@link #save} writes them back, all at once.
  */
 public final class AudioSettings {
@@ -29,6 +29,8 @@ public final class AudioSettings {
     public static final ConfigKey<Boolean> VISUAL_CUES = ConfigKey.flag("visual_cues", false);
     public static final ConfigKey<Boolean> OCCLUSION = ConfigKey.flag("occlusion", true);
     public static final ConfigKey<Boolean> DUCKING = ConfigKey.flag("duck_under_alerts", true);
+    public static final ConfigKey<Boolean> ACOUSTICS = ConfigKey.flag("acoustics", true);
+    public static final ConfigKey<Boolean> RINGING_EARS = ConfigKey.flag("ringing_ears", true);
 
     /** The preferences in force on this game, which the file fills and the sound options change. */
     private static final AudioPrefs PREFS = new AudioPrefs();
@@ -55,6 +57,8 @@ public final class AudioSettings {
                 .key(VISUAL_CUES, prefs::setVisualCues)
                 .key(OCCLUSION, prefs::setOcclusion)
                 .key(DUCKING, prefs::setDucking)
+                .key(ACOUSTICS, prefs::setAcoustics)
+                .key(RINGING_EARS, prefs::setRingingEars)
                 .build();
     }
 
@@ -65,6 +69,8 @@ public final class AudioSettings {
         file.stage(VISUAL_CUES, prefs.visualCues());
         file.stage(OCCLUSION, prefs.occlusion());
         file.stage(DUCKING, prefs.ducking());
+        file.stage(ACOUSTICS, prefs.acoustics());
+        file.stage(RINGING_EARS, prefs.ringingEars());
         file.save();
     }
 }

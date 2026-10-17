@@ -13,8 +13,8 @@ package dev.jstech.core.audio;
  */
 public final class Occlusion {
 
-    /** How much of a sound each solid block on the way lets through. */
-    private static final float THROUGH_ONE_BLOCK = 0.6F;
+    /** How much of a sound each solid block on the way lets through, when what it is made of says nothing else. */
+    public static final float THROUGH_ONE_BLOCK = 0.6F;
     /** The least that gets through, however many blocks are in the way. */
     private static final float FLOOR = 0.15F;
 
@@ -27,6 +27,14 @@ public final class Occlusion {
             return 1.0F;
         }
         return Math.max(FLOOR, (float) Math.pow(THROUGH_ONE_BLOCK, solidBlocks));
+    }
+
+    /**
+     * The share of a sound that gets through blocks letting {@code letThrough} of it all together, the product of
+     * what each lets through by what it is made of (wool little, metal much), from 1 for none in the way.
+     */
+    public static float share(final double letThrough) {
+        return letThrough >= 1 ? 1.0F : Math.max(FLOOR, (float) letThrough);
     }
 
     /**

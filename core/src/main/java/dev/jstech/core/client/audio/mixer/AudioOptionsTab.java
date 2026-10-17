@@ -32,14 +32,16 @@ import net.minecraft.network.chat.Component;
 
 /**
  * The Options tab: whether walls muffle sounds, whether alerts are also shown on the screen, whether the other
- * channels are lowered under an alert, and the key that turns off the last sound, which opens the game's controls to
- * choose it.
+ * channels are lowered under an alert, whether places echo and distance and motion change sounds, whether the ears
+ * ring after a blast, and the key that turns off the last sound, which opens the game's controls to choose it.
  */
 final class AudioOptionsTab implements Tab {
 
     private final CycleButton<Boolean> muffle;
     private final CycleButton<Boolean> alertsOnScreen;
     private final CycleButton<Boolean> lowerUnderAlerts;
+    private final CycleButton<Boolean> echoes;
+    private final CycleButton<Boolean> ringingEars;
     private final Button key;
     private final MultiLineTextWidget note;
 
@@ -54,6 +56,10 @@ final class AudioOptionsTab implements Tab {
                 prefs.visualCues(), AudioPrefs::setVisualCues);
         lowerUnderAlerts = toggle(SoundMixerTexts.LOWER_UNDER_ALERTS, SoundMixerTexts.LOWER_UNDER_ALERTS_TIP,
                 prefs.ducking(), AudioPrefs::setDucking);
+        echoes = toggle(SoundMixerTexts.ECHOES, SoundMixerTexts.ECHOES_TIP, prefs.acoustics(),
+                AudioPrefs::setAcoustics);
+        ringingEars = toggle(SoundMixerTexts.RINGING_EARS, SoundMixerTexts.RINGING_EARS_TIP, prefs.ringingEars(),
+                AudioPrefs::setRingingEars);
         key = Button.builder(CommonComponents.optionNameValue(GameText.component(AudioTexts.TURN_OFF_LAST_SOUND),
                 AudioKeys.key().getTranslatedKeyMessage()), button -> {
                     final Minecraft minecraft = Minecraft.getInstance();
@@ -76,6 +82,14 @@ final class AudioOptionsTab implements Tab {
         return lowerUnderAlerts;
     }
 
+    CycleButton<Boolean> echoes() {
+        return echoes;
+    }
+
+    CycleButton<Boolean> ringingEars() {
+        return ringingEars;
+    }
+
     Button key() {
         return key;
     }
@@ -90,6 +104,8 @@ final class AudioOptionsTab implements Tab {
         visitor.accept(muffle);
         visitor.accept(alertsOnScreen);
         visitor.accept(lowerUnderAlerts);
+        visitor.accept(echoes);
+        visitor.accept(ringingEars);
         visitor.accept(key);
         visitor.accept(note);
     }
@@ -101,7 +117,10 @@ final class AudioOptionsTab implements Tab {
         muffle.setPosition(left, SoundMixerLayout.CONTENT_TOP);
         alertsOnScreen.setPosition(left + SoundMixerLayout.COLUMN + SoundMixerLayout.GAP, SoundMixerLayout.CONTENT_TOP);
         lowerUnderAlerts.setPosition(left, SoundMixerLayout.CONTENT_TOP + SoundMixerLayout.PITCH);
-        key.setPosition(left, SoundMixerLayout.CONTENT_TOP + 2 * SoundMixerLayout.PITCH);
+        echoes.setPosition(left + SoundMixerLayout.COLUMN + SoundMixerLayout.GAP,
+                SoundMixerLayout.CONTENT_TOP + SoundMixerLayout.PITCH);
+        ringingEars.setPosition(left, SoundMixerLayout.CONTENT_TOP + 2 * SoundMixerLayout.PITCH);
+        key.setPosition(left, SoundMixerLayout.CONTENT_TOP + 3 * SoundMixerLayout.PITCH);
         note.setPosition(width / 2 - note.getWidth() / 2, SoundMixerLayout.OPTIONS_NOTE_TOP);
     }
 

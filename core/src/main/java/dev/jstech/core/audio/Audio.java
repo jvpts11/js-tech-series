@@ -171,10 +171,23 @@ public final class Audio {
      * @throws IllegalArgumentException when the cue belongs to the world and not to the interface
      */
     public static void cueOnScreen(final ServerPlayer player, final SoundCue cue, final SoundContext context) {
+        cueOnScreen(player, cue, context, FrequencyResponse.FULL);
+    }
+
+    /**
+     * Raises a cue of the interface for one player alone, through a device that reproduces what {@code response}
+     * lets it: a helmet's radio ({@link FrequencyResponse#RADIO}), an intercom. Heard from inside the player's own
+     * helmet, it carries even through a vacuum.
+     *
+     * @throws IllegalArgumentException when the cue belongs to the world and not to the interface
+     */
+    public static void cueOnScreen(final ServerPlayer player, final SoundCue cue, final SoundContext context,
+                                   final FrequencyResponse response) {
         if (cue.space() != SoundSpace.INTERFACE) {
             throw new IllegalArgumentException(cue.id() + " is a cue of the world, not of the interface");
         }
-        PacketDistributor.sendToPlayer(player, new CueSoundPayload(cue.id(), true, 0, 0, 0, context, 1.0F, 1.0F));
+        PacketDistributor.sendToPlayer(player, new CueSoundPayload(cue.id(), true, 0, 0, 0, context, 1.0F, 1.0F,
+                StereoSide.BOTH, response));
     }
 
     /**

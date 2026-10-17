@@ -75,6 +75,24 @@ public final class TestSounds {
                     ResourceLocation.withDefaultNamespace("block.note_block.bass"))
             .otherwise(HUM).register();
 
+    /** A far blast's rumble, which the blast becomes from far away. */
+    public static final SoundKey RUMBLE = CONTENT.sound("test/rumble").world().range(128)
+            .file(ResourceLocation.withDefaultNamespace("ambient/weather/thunder1"))
+            .subtitle("A test rumble").register();
+
+    /** A blast that matters, heard from far off as its rumble. */
+    public static final SoundKey BLAST = CONTENT.sound("test/blast").world().range(128).matters()
+            .distant(RUMBLE, 48).file(ResourceLocation.withDefaultNamespace("random/explode1"))
+            .subtitle("A test blast").register();
+
+    /** A voice on a helmet's radio, the game's chime. */
+    public static final SoundKey RADIO_VOICE = CONTENT.sound("test/radio_voice").onScreen()
+            .file(ResourceLocation.withDefaultNamespace("note/bell"))
+            .subtitle("A test radio voice").register();
+
+    /** A call on a helmet's radio. */
+    public static final SoundCue RADIO = CONTENT.cue("test/radio").onScreen().otherwise(RADIO_VOICE).register();
+
     private TestSounds() {
     }
 }

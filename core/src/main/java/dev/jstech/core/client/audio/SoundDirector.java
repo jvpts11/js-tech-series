@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -98,6 +99,15 @@ public final class SoundDirector {
             }
         });
         return out;
+    }
+
+    /**
+     * Whether the director quiets {@code sound} itself for the walls in the way, as it does every running sound it
+     * keeps, so nothing quiets it for them again.
+     */
+    public static boolean muffles(final SoundInstance sound) {
+        final SoundInstance own = sound instanceof ScaledSoundInstance scaled ? scaled.original() : sound;
+        return own instanceof LoopSoundInstance;
     }
 
     /** Looks at every source now rather than at the next turn, for a test that cannot wait. */

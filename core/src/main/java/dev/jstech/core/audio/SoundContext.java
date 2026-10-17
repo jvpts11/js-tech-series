@@ -31,6 +31,8 @@ public record SoundContext(Map<String, String> values) {
     public static final String DEVICE = "device";
     /** The family of the system running on the machine ({@code unix}). */
     public static final String FAMILY = "family";
+    /** The kind of entity a sound comes from or strikes, by its id ({@code minecraft:iron_golem}). */
+    public static final String ENTITY = "entity";
     /** The most dimensions one context has. */
     public static final int MAX_DIMENSIONS = 16;
     /** The longest a dimension's name or value is. */

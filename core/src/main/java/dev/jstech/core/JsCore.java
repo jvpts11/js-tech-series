@@ -13,6 +13,8 @@ import dev.jstech.core.advancement.CoreTriggers;
 import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.audio.AudioNetwork;
 import dev.jstech.core.audio.AudioSettings;
+import dev.jstech.core.audio.acoustics.AcousticCues;
+import dev.jstech.core.audio.acoustics.Acoustics;
 import dev.jstech.core.audio.media.MediaCommand;
 import dev.jstech.core.audio.media.MediaLedgers;
 import dev.jstech.core.audio.media.MediaNetwork;
@@ -263,6 +265,8 @@ public final class JsCore {
         Physics.listen(modEventBus);
         // Sealed rooms: closed spaces found and their air kept, by real gases.
         Rooms.listen(modEventBus);
+        // How sound travels: each player told the air round their head, and blasts ringing ears.
+        Acoustics.listen();
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -296,6 +300,8 @@ public final class JsCore {
         GuideSounds.declare();
         // What the notifications sound like, one of the game's own sounds for each level.
         NotificationSounds.declare();
+        // The ring in the ears after a blast, a cue silent until a pack gives it its sound.
+        AcousticCues.declare();
         // The clamp meter, the series' instrument that reads the energy through a line or a block, and its page.
         ClampMeter.declare();
         SharedEnergy.declare();

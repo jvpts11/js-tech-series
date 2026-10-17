@@ -30,6 +30,8 @@ public final class AudioPrefs {
     private boolean visualCues;
     private boolean occlusion = true;
     private boolean ducking = true;
+    private boolean acoustics = true;
+    private boolean ringingEars = true;
 
     /** How loud a channel plays, from 0 to 1; 1 when the player has not said. */
     public synchronized float volume(final String channel) {
@@ -107,5 +109,23 @@ public final class AudioPrefs {
 
     public synchronized void setDucking(final boolean lower) {
         this.ducking = lower;
+    }
+
+    /** Whether places echo, and the air and the water a sound goes through change it. */
+    public synchronized boolean acoustics() {
+        return acoustics;
+    }
+
+    public synchronized void setAcoustics(final boolean on) {
+        this.acoustics = on;
+    }
+
+    /** Whether the ears ring after a blast close by, muffling everything for a few seconds. */
+    public synchronized boolean ringingEars() {
+        return ringingEars;
+    }
+
+    public synchronized void setRingingEars(final boolean ring) {
+        this.ringingEars = ring;
     }
 }

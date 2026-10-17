@@ -120,6 +120,7 @@ import dev.jstech.tests.clienttest.computers.VintageShellsClientTests;
 import dev.jstech.tests.clienttest.computers.VolumeClientTests;
 import dev.jstech.tests.clienttest.computers.WorkshopClientTests;
 import dev.jstech.tests.clienttest.computers.WreckedMachineClientTests;
+import dev.jstech.tests.clienttest.core.AcousticsClientTests;
 import dev.jstech.tests.clienttest.core.AudioClientTests;
 import dev.jstech.tests.clienttest.core.BigPayloadClientTests;
 import dev.jstech.tests.clienttest.core.ConnectedPacksClientTests;
@@ -188,6 +189,7 @@ public final class ClientTestSuite {
 
     private static final List<Class<?>> CLASSES = List.of(
             AudioClientTests.class,
+            AcousticsClientTests.class,
             AutomationManagerClientTests.class,
             BootSplashClientTests.class,
             SoundMixerClientTests.class,

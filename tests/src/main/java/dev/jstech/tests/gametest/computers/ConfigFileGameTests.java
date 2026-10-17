@@ -269,7 +269,8 @@ public final class ConfigFileGameTests {
                 "the computers' settings");
         same(helper, "jstech-audio.json", AudioSettings.FILE.fileName(), "the player's sound file");
         same(helper, ConfigSide.CLIENT, AudioSettings.FILE.side(), "whose the sound file is");
-        same(helper, List.of("volumes", "muted", "visual_cues", "occlusion", "duck_under_alerts"),
+        same(helper, List.of("volumes", "muted", "visual_cues", "occlusion", "duck_under_alerts", "acoustics",
+                        "ringing_ears"),
                 AudioSettings.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the sound settings");
         helper.succeed();
     }

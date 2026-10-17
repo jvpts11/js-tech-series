@@ -1,4 +1,13 @@
 {
+  "test/blast": {
+    "sounds": [
+      {
+        "attenuation_distance": 128,
+        "name": "random/explode1"
+      }
+    ],
+    "subtitle": "subtitles.jstests.test.blast"
+  },
   "test/click": {
     "sounds": [
       "random/click"
@@ -14,6 +23,12 @@
     ],
     "subtitle": "subtitles.jstests.test.hum"
   },
+  "test/radio_voice": {
+    "sounds": [
+      "note/bell"
+    ],
+    "subtitle": "subtitles.jstests.test.radio_voice"
+  },
   "test/room": {
     "sounds": [
       {
@@ -22,6 +37,15 @@
       }
     ],
     "subtitle": "subtitles.jstests.test.room"
+  },
+  "test/rumble": {
+    "sounds": [
+      {
+        "attenuation_distance": 128,
+        "name": "ambient/weather/thunder1"
+      }
+    ],
+    "subtitle": "subtitles.jstests.test.rumble"
   },
   "test/whir": {
     "sounds": [

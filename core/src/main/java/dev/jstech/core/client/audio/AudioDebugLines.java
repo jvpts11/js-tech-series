@@ -13,6 +13,7 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundKeys;
 import dev.jstech.core.audio.SoundMixerTexts;
 import dev.jstech.core.client.GameLocale;
+import dev.jstech.core.client.audio.acoustics.AcousticsClient;
 import dev.jstech.core.client.diagnostic.DiagnosticsClient;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -26,7 +27,8 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 /**
  * The sound system's panel on the game's debug screen (F3), under the Sound Mixer's name: how many running sounds the
  * director keeps out of its budget, the rooms, what is muffled and by how many walls, how far the other channels are
- * lowered under an alert, the last sound heard and how many are turned off.
+ * lowered under an alert, the last sound heard and how many are turned off; then how sound travels where the player
+ * is: the place's echo, its walls, its air, and ringing ears.
  */
 public final class AudioDebugLines {
 
@@ -68,6 +70,7 @@ public final class AudioDebugLines {
                 : AudioDebugTexts.LAST_HEARD.with(last.toString())));
         out.add(GameText.resolve(AudioDebugTexts.TURNED_OFF.with(
                 GameLocale.count(AudioPrefsStore.prefs().mutedSounds().size()), GameLocale.count(known()))));
+        out.addAll(AcousticsClient.debugLines());
         return out;
     }
 

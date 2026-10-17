@@ -1,0 +1,8 @@
+{
+  "sound": "minecraft:block.beacon.ambient",
+  "volume": 0.6,
+  "when": {
+    "dimensions": ["minecraft:overworld"],
+    "near": [{"what": "minecraft:reinforced_deepslate", "radius": 4, "least": 10}]
+  }
+}

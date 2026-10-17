@@ -1,0 +1,14 @@
+{
+  "priority": 1,
+  "when": {
+    "near": [{"what": "minecraft:end_portal_frame", "radius": 4, "least": 8}]
+  },
+  "layers": [
+    {"sound": "minecraft:block.conduit.ambient", "volume": 0.8},
+    {
+      "sound": "minecraft:block.beacon.ambient",
+      "volume": 0.5,
+      "when": {"near": [{"what": "minecraft:reinforced_deepslate", "radius": 4, "least": 8}]}
+    }
+  ]
+}

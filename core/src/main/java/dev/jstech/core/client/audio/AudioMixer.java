@@ -12,6 +12,7 @@ import dev.jstech.core.audio.DuckEnvelope;
 import dev.jstech.core.audio.RecentSounds;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundKeys;
+import dev.jstech.core.client.audio.acoustics.SoundShaper;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
@@ -69,7 +70,8 @@ public final class AudioMixer {
     public static void onPlaySound(final PlaySoundEvent event) {
         final SoundInstance sound = event.getSound();
         if (sound != null) {
-            event.setSound(mix(sound));
+            // Mixed, then sent on its way to the listener through the place, its walls and its air.
+            event.setSound(SoundShaper.shape(mix(sound)));
         }
     }
 

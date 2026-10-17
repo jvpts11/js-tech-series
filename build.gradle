@@ -110,6 +110,12 @@ subprojects {
             url = 'https://api.modrinth.com/maven'
             content { includeGroup 'maven.modrinth' }
         }
+        // Simple Voice Chat's API: the Core's voices go through the same walls, air and vacuum as its sounds.
+        maven {
+            name = 'MaxHenkel'
+            url = 'https://maven.maxhenkel.de/repository/public'
+            content { includeGroup 'de.maxhenkel.voicechat' }
+        }
         // GeckoLib: shipped dependency of the computing mod, for the large block models with bones and animation.
         maven {
             name = 'GeckoLib'

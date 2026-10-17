@@ -40,6 +40,23 @@ public final class AudioDebugTexts {
             "Last heard: nothing");
     /** How many sounds are turned off, then how many the game knows. */
     public static final TextKey TURNED_OFF = TextKey.of("jscore.audio.debug.turned_off", "Turned off: %s of %s");
+    /** How long the place's echo rings, in seconds, then how loud it is, in percent. */
+    public static final TextKey ECHO = TextKey.of("jscore.audio.debug.echo", "Echo: %s s, %s%% loud");
+    /** How walled in the place is, in percent, how far to a wall, in metres, and how much the walls drink. */
+    public static final TextKey PLACE = TextKey.of("jscore.audio.debug.place",
+            "Place: %s%% walled, %s m to a wall, drinks %s%%");
+    /** The sealed room's air in cubic metres, then its walls in square metres. */
+    public static final TextKey ROOM = TextKey.of("jscore.audio.debug.room", "Sealed room: %s m3, %s m2 of walls");
+    public static final TextKey MEDIUM_VACUUM = TextKey.of("jscore.audio.debug.medium_vacuum",
+            "Through: a vacuum, only what is touched");
+    /** How fast sound goes through water, in metres a second. */
+    public static final TextKey MEDIUM_WATER = TextKey.of("jscore.audio.debug.medium_water",
+            "Through: water, muffled, %s m/s");
+    /** The air's pressure in kilopascals, how fast sound goes in it and how loud it carries a sound, in percent. */
+    public static final TextKey MEDIUM_AIR = TextKey.of("jscore.audio.debug.medium_air",
+            "Through: air at %s kPa, %s m/s, %s%% loud");
+    /** How much the ringing ears take away of a sound's loudness, in percent. */
+    public static final TextKey RINGING = TextKey.of("jscore.audio.debug.ringing", "Ears ringing: %s%% muffled");
 
     private AudioDebugTexts() {
     }

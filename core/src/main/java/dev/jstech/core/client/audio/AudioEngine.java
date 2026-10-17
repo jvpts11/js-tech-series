@@ -184,11 +184,13 @@ public final class AudioEngine {
             return null;
         }
         final boolean screen = cue.space() == SoundSpace.INTERFACE;
-        if (!screen && declared != null
-                && (declared.spec().stereo() || side != StereoSide.BOTH || !response.full())) {
+        // Through a device that changes it, a cue is read from its file and played as it is read: from a speaker in
+        // the world, or from inside the player's own helmet, a radio's.
+        if (declared != null && (screen ? !response.full()
+                : declared.spec().stereo() || side != StereoSide.BOTH || !response.full())) {
             final SoundInstance recorded = new MadeSoundInstance(declared,
                     () -> ResponseFilter.of(StereoSelect.of(RecordingFiles.open(declared), side), response),
-                    volume, false, x, y, z);
+                    volume, screen, screen ? 0 : x, screen ? 0 : y, screen ? 0 : z);
             sink.play(recorded);
             return recorded;
         }

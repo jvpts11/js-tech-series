@@ -21,6 +21,10 @@ public record FrequencyResponse(int maxSampleRate, int bits, int lowCutHz, int h
 
     /** Hardware that plays a recording as it was made. */
     public static final FrequencyResponse FULL = new FrequencyResponse(0, 0, 0, 0);
+    /** A radio's voice band, as a walkie-talkie or a helmet's radio carries it: thin, with no bass and no air. */
+    public static final FrequencyResponse RADIO = new FrequencyResponse(8_000, 8, 300, 3_400);
+    /** An intercom's: wider than a radio's, still with little bass. */
+    public static final FrequencyResponse INTERCOM = new FrequencyResponse(16_000, 12, 200, 6_000);
 
     public FrequencyResponse {
         if (maxSampleRate < 0 || lowCutHz < 0 || highCutHz < 0) {

@@ -19,6 +19,8 @@ public final class AudioTexts {
 
     public static final TextKey TURN_OFF_LAST_SOUND = TextKey.of("key.jscore.turn_off_last_sound",
             "Turn Off Last Sound");
+    public static final TextKey SHOW_SOUND_DEBUG = TextKey.of("key.jscore.show_sound_debug",
+            "Show Sound Debugging");
     /** The sound turned off, then the key that brings it back. */
     public static final TextKey TURNED_OFF = TextKey.of("jscore.audio.turned_off",
             "Turned off: %s. Press %s again to undo.");

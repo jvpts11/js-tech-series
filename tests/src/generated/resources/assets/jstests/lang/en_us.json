@@ -360,9 +360,12 @@
   "jstests.world_event.spark_storm": "Test spark storm",
   "jstests.world_event.storm": "Test storm",
   "subtitles.jstests.test.beep": "A test beep",
+  "subtitles.jstests.test.blast": "A test blast",
   "subtitles.jstests.test.click": "A test click",
   "subtitles.jstests.test.hum": "A test hum",
+  "subtitles.jstests.test.radio_voice": "A test radio voice",
   "subtitles.jstests.test.room": "A test room",
+  "subtitles.jstests.test.rumble": "A test rumble",
   "subtitles.jstests.test.tune": "A test tune",
   "subtitles.jstests.test.whir": "A test whir"
 }

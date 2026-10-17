@@ -12,10 +12,12 @@ import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundSpace;
 import dev.jstech.core.audio.SoundSpec;
+import dev.jstech.core.audio.SoundTraits;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -45,6 +47,9 @@ public final class SoundBuilder {
     private boolean stereo;
     private final List<ResourceLocation> files = new ArrayList<>();
     private @Nullable String english;
+    private boolean matters;
+    private @Nullable SoundKey distant;
+    private int distantFrom;
 
     /** How far a sound of the world carries when its declaration does not say: the game's own default. */
     private static final int DEFAULT_RANGE = 16;
@@ -129,6 +134,28 @@ public final class SoundBuilder {
         return this;
     }
 
+    /**
+     * It matters: heard, it is shown on screen with where it comes from, to a player who asked for signs, as an alert
+     * is. For what a player must not miss, a blast, a breach, a launch; not for every machine's hum.
+     */
+    public SoundBuilder matters() {
+        this.matters = true;
+        return this;
+    }
+
+    /**
+     * Heard from {@code fromBlocks} away or farther it plays {@code far} instead, the sound a big thing makes from
+     * far off: a launch's roar becomes a low rumble kilometres away. Give it a {@link #range} that reaches that far.
+     */
+    public SoundBuilder distant(final SoundKey far, final int fromBlocks) {
+        if (fromBlocks < 1) {
+            throw new IllegalArgumentException("a sound is distant from one block away on: " + fromBlocks);
+        }
+        this.distant = far;
+        this.distantFrom = fromBlocks;
+        return this;
+    }
+
     /** What its subtitle says in English while it plays. */
     public SoundBuilder subtitle(final String text) {
         this.english = text;
@@ -162,6 +189,10 @@ public final class SoundBuilder {
         } : content.soundRegister().register(path, () -> SoundEvent.createFixedRangeEvent(id, range));
         final SoundKey key = new SoundKey(id, spec, TextKey.of(SoundKey.subtitleKey(id), english), event);
         content.declare(key);
+        if (matters || distant != null) {
+            SoundTraits.declare(id, new SoundTraits.Traits(matters,
+                    Optional.ofNullable(distant).map(SoundKey::id), distantFrom));
+        }
         return key;
     }
 

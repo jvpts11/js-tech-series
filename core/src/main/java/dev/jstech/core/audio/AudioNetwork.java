@@ -7,7 +7,10 @@
  */
 package dev.jstech.core.audio;
 
+import dev.jstech.core.audio.acoustics.EarRingPayload;
+import dev.jstech.core.audio.acoustics.ListenerAirPayload;
 import dev.jstech.core.client.audio.AudioEngine;
+import dev.jstech.core.client.audio.acoustics.AcousticsClient;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -15,8 +18,8 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
  * What the sound system sends over the network: the sounds of a player's own screen, which only they hear, the
- * notes of a synthesised sound, which each client that hears them makes into samples, and cues, whose sound each
- * client picks from its own packs.
+ * notes of a synthesised sound, which each client that hears them makes into samples, cues, whose sound each client
+ * picks from its own packs, the air round a player's head, and a blast ringing their ears.
  */
 public final class AudioNetwork {
 
@@ -36,6 +39,18 @@ public final class AudioNetwork {
         registrar.playToClient(ToneSoundPayload.TYPE, ToneSoundPayload.STREAM_CODEC, AudioNetwork::onToneSound);
         registrar.playToClient(CueSoundPayload.TYPE, CueSoundPayload.STREAM_CODEC, AudioNetwork::onCueSound);
         registrar.playToClient(ToneStopPayload.TYPE, ToneStopPayload.STREAM_CODEC, AudioNetwork::onToneStop);
+        registrar.playToClient(ListenerAirPayload.TYPE, ListenerAirPayload.STREAM_CODEC, AudioNetwork::onListenerAir);
+        registrar.playToClient(EarRingPayload.TYPE, EarRingPayload.STREAM_CODEC, AudioNetwork::onEarRing);
+    }
+
+    /* Runs on a client only, as the ones below. */
+    private static void onListenerAir(final ListenerAirPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> AcousticsClient.told(payload));
+    }
+
+    /* Runs on a client only, as the ones below. */
+    private static void onEarRing(final EarRingPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> AcousticsClient.ring(payload));
     }
 
     /* Runs on a client only, as the ones below. */

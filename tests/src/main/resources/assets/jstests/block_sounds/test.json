@@ -1,0 +1,8 @@
+{
+  "minecraft:reinforced_deepslate": {
+    "step": "minecraft:block.amethyst_block.step",
+    "hit": "minecraft:block.amethyst_block.hit",
+    "absorption": 0.9,
+    "through": 0.1
+  }
+}

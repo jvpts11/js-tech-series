@@ -395,10 +395,13 @@ public final class AudioClientTests {
                 })
                 .thenAssert(1, () -> {
                     final List<String> lines = AudioDebugLines.lines();
-                    return lines.size() == 6 && lines.get(0).startsWith("Running: ")
+                    return lines.size() >= 9 && lines.get(0).startsWith("Running: ")
                             && lines.get(0).endsWith("/24 short, 0/2 long") && lines.get(3).startsWith("Lowered")
-                            && lines.get(5).startsWith("Turned off: ");
-                }, "six lines: running out of the budget, rooms, muffled, lowering, last heard, turned off")
+                            && lines.get(5).startsWith("Turned off: ") && lines.get(6).startsWith("Echo: ")
+                            && lines.get(7).startsWith("Place: ")
+                            && lines.stream().anyMatch(line -> line.startsWith("Through: air at "));
+                }, "the director's six lines (running out of the budget, rooms, muffled, lowering, last heard, turned"
+                        + " off), then the echo, the place and the air sound goes through")
                 .thenScreenshot(2, "debug")
                 .then(0, () -> ctx.mc().getDebugOverlay().toggleOverlay());
     }

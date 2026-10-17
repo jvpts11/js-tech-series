@@ -53,7 +53,15 @@ public final class SoundMixerTexts {
     public static final TextKey ALERTS_ON_SCREEN = TextKey.of("jscore.sound_mixer.alerts_on_screen",
             "Alerts on Screen");
     public static final TextKey ALERTS_ON_SCREEN_TIP = TextKey.of("jscore.sound_mixer.alerts_on_screen.tip",
-            "Shows a sign at the top of the screen, pointing where an alert comes from.");
+            "Shows a sign at the top of the screen, pointing where an alert or another sound that matters comes"
+                    + " from.");
+    public static final TextKey ECHOES = TextKey.of("jscore.sound_mixer.echoes", "Echoes and Distance");
+    public static final TextKey ECHOES_TIP = TextKey.of("jscore.sound_mixer.echoes.tip",
+            "Places echo by their size and walls, far sounds arrive late, and what moves changes pitch as it"
+                    + " passes.");
+    public static final TextKey RINGING_EARS = TextKey.of("jscore.sound_mixer.ringing_ears", "Ringing Ears");
+    public static final TextKey RINGING_EARS_TIP = TextKey.of("jscore.sound_mixer.ringing_ears.tip",
+            "A blast close by leaves everything muffled for a few seconds.");
     public static final TextKey LOWER_UNDER_ALERTS = TextKey.of("jscore.sound_mixer.lower_under_alerts",
             "Lower Under Alerts");
     public static final TextKey LOWER_UNDER_ALERTS_TIP = TextKey.of("jscore.sound_mixer.lower_under_alerts.tip",

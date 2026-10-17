@@ -68,3 +68,11 @@ type = "optional"
 versionRange = "[2101.7.2,)"
 ordering = "NONE"
 side = "BOTH"
+
+# Simple Voice Chat is optional: when it is present, voices go through walls, thin air and a vacuum as sounds do.
+[[dependencies.${mod_id}]]
+modId = "voicechat"
+type = "optional"
+versionRange = "*"
+ordering = "NONE"
+side = "BOTH"

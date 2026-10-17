@@ -671,6 +671,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Atmosphere Detector, a block of the series' shared content: a pressure gauge, each gas with its share and
   its own pressure, the room drawn with its leaks blinking, four lamps, and a key that shows the room in the world.
 - Carbon dioxide joins the shared catalogue, a gas every body and fire breathes out.
+- How sound travels: every sound of the world, the game's own and other mods' included, echoes in the place
+  the player stands in by its size and its walls, a sealed room by its exact size; walls muffle it by what they are
+  made of, wool little and metal much, and the air takes its high notes away with distance. Through a vacuum only
+  what the player touches is heard; under water everything is dull; thin air carries sounds weaker. A far sound
+  arrives as late as the speed of sound brings it, and what moves changes pitch as it passes. A sound can say it
+  matters, to be shown on screen with where it comes from, and what it becomes heard from far away.
+- Resource packs give blocks their sounds by material (steps, blows, breaking, placing, falls, and how much
+  they drink and let through), a blow on a living thing its sound by the kind of thing struck, the ambience of places
+  by biome, weather, time, depth, roof and what is near, and music in layers that come in and go out with the moment
+  while the game's own music waits.
+- Ringing ears after a blast close by, unless something worn protects them; radio and intercom bands for
+  sound played through devices, a helmet's radio heard even through a vacuum; and, with Simple Voice Chat, voices
+  muffled by walls and silent through a vacuum like every other sound.
+- Sound made visible: the debug screen tells the place's echo, its walls and the air sound goes through, and a
+  key draws the rays the place is heard by and a line to every sound playing. The Sound Mixer's Options tab adds
+  Echoes and Distance and Ringing Ears.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

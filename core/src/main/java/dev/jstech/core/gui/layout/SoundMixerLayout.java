@@ -52,7 +52,7 @@ public final class SoundMixerLayout {
     public static final int TOGGLE_WIDTH = 34;
     /** The search icon's room at the left of the search field, where the typed text starts after it. */
     public static final int SEARCH_TEXT_INSET = 20;
-    public static final int OPTIONS_NOTE_TOP = CONTENT_TOP + 3 * PITCH + 11;
+    public static final int OPTIONS_NOTE_TOP = CONTENT_TOP + 4 * PITCH + 11;
     /** The smallest screen the game lays out, in its own units. */
     public static final int SMALLEST_WIDTH = 320;
     public static final int SMALLEST_HEIGHT = 240;
@@ -128,7 +128,9 @@ public final class SoundMixerLayout {
         layout.box("muffle", left, CONTENT_TOP, COLUMN, CONTROL_HEIGHT);
         layout.box("alerts_on_screen", left + COLUMN + GAP, CONTENT_TOP, COLUMN, CONTROL_HEIGHT);
         layout.box("lower_under_alerts", left, CONTENT_TOP + PITCH, COLUMN, CONTROL_HEIGHT);
-        layout.box("key", left, CONTENT_TOP + 2 * PITCH, FULL, CONTROL_HEIGHT);
+        layout.box("echoes", left + COLUMN + GAP, CONTENT_TOP + PITCH, COLUMN, CONTROL_HEIGHT);
+        layout.box("ringing_ears", left, CONTENT_TOP + 2 * PITCH, COLUMN, CONTROL_HEIGHT);
+        layout.box("key", left, CONTENT_TOP + 3 * PITCH, FULL, CONTROL_HEIGHT);
         for (int line = 0; line < noteLines; line++) {
             layout.text("note_" + line, left, OPTIONS_NOTE_TOP + line * 11, FULL / 6, 1.0F);
         }

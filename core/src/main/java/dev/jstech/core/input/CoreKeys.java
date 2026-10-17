@@ -34,6 +34,10 @@ public final class CoreKeys {
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "turn_off_last_sound"),
             AudioTexts.TURN_OFF_LAST_SOUND));
 
+    /** Shows, in the world, the rays sound is heard by and a line to every sound playing; no key until given one. */
+    public static final KeyAction SHOW_SOUND_DEBUG = KeyActions.declare(KeyAction.builder(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "show_sound_debug"), AudioTexts.SHOW_SOUND_DEBUG));
+
     public static final KeyAction CHANGE_ITEM_MODE = KeyActions.declare(KeyAction.builder(
                     ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "item_mode"), ItemTexts.MODE_KEY)
             .onServer(ItemStates::cycleHeld));

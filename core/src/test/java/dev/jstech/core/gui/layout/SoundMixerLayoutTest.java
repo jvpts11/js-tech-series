@@ -55,7 +55,7 @@ class SoundMixerLayoutTest {
         assertEquals(111, SoundMixerLayout.channelY(6));
         assertEquals(144, SoundMixerLayout.resetY(SERIES_CHANNELS));
         assertEquals(180, SoundMixerLayout.channelsNoteY(SERIES_CHANNELS));
-        assertEquals(122, SoundMixerLayout.OPTIONS_NOTE_TOP);
+        assertEquals(147, SoundMixerLayout.OPTIONS_NOTE_TOP);
         assertEquals(332, SoundMixerLayout.doneY(360));
         assertEquals(322, SoundMixerLayout.listBottom(360));
     }

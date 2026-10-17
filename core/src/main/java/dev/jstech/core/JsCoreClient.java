@@ -13,6 +13,7 @@ import dev.jstech.core.client.audio.AudioDebugLines;
 import dev.jstech.core.client.audio.AudioKeys;
 import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.audio.SoundDirector;
+import dev.jstech.core.client.audio.acoustics.AcousticsClient;
 import dev.jstech.core.client.audio.media.MediaClientEvents;
 import dev.jstech.core.client.audio.mixer.SoundMixerEntry;
 import dev.jstech.core.client.cable.CableClientEvents;
@@ -108,6 +109,8 @@ public final class JsCoreClient {
         AudioDebugLines.listen(modEventBus);
         AudioKeys.listen(modEventBus);
         AudioMixer.listen();
+        // How sound travels: the place's echo, its walls and air, the ambience and music of where the player is.
+        AcousticsClient.listen(modEventBus);
         CableClientEvents.listen();
         CableDragClient.listen();
         ClampMeterClient.listen(modEventBus);
