@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "jscore:electric"
+    "jscore:electric",
+    "jscore:oxygen_toxicity"
   ]
 }

@@ -44,7 +44,10 @@ import dev.jstech.core.diagnostic.DiagnosticNotifications;
 import dev.jstech.core.diagnostic.DiagnosticReports;
 import dev.jstech.core.diagnostic.Sections;
 import dev.jstech.core.dimension.DayClocks;
+import dev.jstech.core.jstechseries.atmosphere.AtmosphereDetector;
+import dev.jstech.core.jstechseries.atmosphere.AtmosphereGuide;
 import dev.jstech.core.physics.Physics;
+import dev.jstech.core.room.Rooms;
 import dev.jstech.core.sky.Skies;
 import dev.jstech.core.weather.Weathers;
 import dev.jstech.core.dimension.DimensionEffects;
@@ -258,6 +261,8 @@ public final class JsCore {
         Weathers.listen();
         // Places, dimensions and bodies with laws of their own: gravity, time, light, space and matter.
         Physics.listen(modEventBus);
+        // Sealed rooms: closed spaces found and their air kept, by real gases.
+        Rooms.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -299,6 +304,8 @@ public final class JsCore {
         StructureProjector.declare();
         // The Space Persistor, the series' chunk loader, which keeps any mod's machines working far away.
         SpacePersistor.declare();
+        // The Atmosphere Detector, which reads the air of a sealed room or a place and shows the room.
+        AtmosphereDetector.declare();
         MultiblockBuilder.declare();
         SharedTools.declare();
         NetworkProbe.declare();
@@ -307,7 +314,7 @@ public final class JsCore {
         JsEnergyGuide.declare();
         ContainmentGuide.declare();
         ProjectorGuide.declare();
-        PersistorGuide.declare();
+        AtmosphereGuide.declare(PersistorGuide.declare());
         ToolsGuide.declare();
         LinesGuide.declare();
         CoreItems.register(modEventBus);

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "jscore:block/atmosphere_detector/front",
+    "side": "jscore:block/atmosphere_detector/side",
+    "top": "jscore:block/atmosphere_detector/top"
+  }
+}

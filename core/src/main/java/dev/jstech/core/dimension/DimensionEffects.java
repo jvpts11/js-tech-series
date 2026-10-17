@@ -9,15 +9,22 @@ package dev.jstech.core.dimension;
 
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.air.AirMix;
+import dev.jstech.core.room.GasMath;
+import dev.jstech.core.room.RoomHazards;
+import dev.jstech.core.room.SealedRooms;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -87,10 +94,17 @@ public final class DimensionEffects {
             return hazards;
         }
         final DimensionRules rules = DimensionRulesData.of(player.level());
-        final Climate here = rules.at(player.getEyeY());
-        consider(player, rules, !here.breathable(), DimensionHazardEvent.Hazard.AIR, hazards);
+        // A sealed room's air is breathed in it; out of one, the place's, at the height of the eyes.
+        final Climate here = SealedRooms.climateAt(player.level(), BlockPos.containing(player.getEyePosition()));
+        final AirMix air = SealedRooms.airOf(here);
+        final double carbon = air.share(AirMix.CARBON_DIOXIDE);
+        consider(player, rules, !here.breathable() || GasMath.stifling(carbon), DimensionHazardEvent.Hazard.AIR,
+                hazards);
         consider(player, rules, here.scorching(), DimensionHazardEvent.Hazard.HEAT, hazards);
         consider(player, rules, here.freezing(), DimensionHazardEvent.Hazard.COLD, hazards);
+        consider(player, rules, GasMath.headache(carbon), DimensionHazardEvent.Hazard.CARBON_DIOXIDE, hazards);
+        consider(player, rules, GasMath.poisons(air.partial(AirMix.OXYGEN, here.pressure())),
+                DimensionHazardEvent.Hazard.OXYGEN, hazards);
         return hazards;
     }
 
@@ -107,6 +121,12 @@ public final class DimensionEffects {
         }
         if (hazards.contains(DimensionHazardEvent.Hazard.COLD) && player.canFreeze()) {
             player.setTicksFrozen(Math.min(player.getTicksRequiredToFreeze(), player.getTicksFrozen() + COLD_GIVEN));
+        }
+        if (hazards.contains(DimensionHazardEvent.Hazard.CARBON_DIOXIDE) && !player.hasEffect(MobEffects.CONFUSION)) {
+            player.addEffect(new MobEffectInstance(MobEffects.CONFUSION, RoomHazards.NAUSEA_TICKS));
+        }
+        if (hazards.contains(DimensionHazardEvent.Hazard.OXYGEN) && player.tickCount % RoomHazards.POISONS_EVERY == 0) {
+            player.hurt(RoomHazards.oxygen(player.level()), RoomHazards.POISON_DAMAGE);
         }
     }
 

@@ -16,8 +16,11 @@ public final class PersistorGuide {
     private PersistorGuide() {
     }
 
-    /** Declares the section and its page, from the Core's constructor, after the Core's chapter. */
-    public static void declare() {
+    /**
+     * Declares the section and its page, from the Core's constructor, after the Core's chapter; the section, for the
+     * other pages on the world.
+     */
+    public static ModGuide.SectionRef declare() {
         final ModGuide.SectionRef world = CoreItems.CONTENT.guide().section("world")
                 .titled("The world").icon(SpacePersistor.BLOCK::asItem).register();
         CoreItems.CONTENT.guide().page("space_persistor", world).titled("Space Persistor")
@@ -45,5 +48,6 @@ public final class PersistorGuide {
                         "It is switched off, short of power, or has nothing to keep: feed it, switch it on, or check"
                                 + " its area.")
                 .register();
+        return world;
     }
 }

@@ -10,6 +10,7 @@
     "jscore:exotic_matter_containment",
     "jscore:antimatter_trap",
     "jscore:structure_projector",
-    "jscore:space_persistor"
+    "jscore:space_persistor",
+    "jscore:atmosphere_detector"
   ]
 }

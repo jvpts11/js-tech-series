@@ -1,0 +1,73 @@
+{
+  "values": {
+    "#c:glass_blocks": {
+      "leak": 5.0E-4,
+      "rating": 120.0
+    },
+    "#c:glass_panes": {
+      "leak": 0.001,
+      "rating": 60.0
+    },
+    "#minecraft:doors": {
+      "door": true,
+      "leak": 0.002,
+      "rating": 60.0
+    },
+    "#minecraft:fence_gates": {
+      "door": true,
+      "leak": 0.05,
+      "rating": 30.0
+    },
+    "#minecraft:leaves": {
+      "leak": 0.5,
+      "rating": 5.0
+    },
+    "#minecraft:trapdoors": {
+      "door": true,
+      "leak": 0.002,
+      "rating": 60.0
+    },
+    "minecraft:copper_grate": {
+      "leak": 0.25,
+      "rating": 50.0
+    },
+    "minecraft:exposed_copper_grate": {
+      "leak": 0.25,
+      "rating": 50.0
+    },
+    "minecraft:iron_door": {
+      "door": true,
+      "leak": 0.001,
+      "rating": 400.0
+    },
+    "minecraft:iron_trapdoor": {
+      "door": true,
+      "leak": 0.001,
+      "rating": 400.0
+    },
+    "minecraft:oxidized_copper_grate": {
+      "leak": 0.25,
+      "rating": 50.0
+    },
+    "minecraft:waxed_copper_grate": {
+      "leak": 0.25,
+      "rating": 50.0
+    },
+    "minecraft:waxed_exposed_copper_grate": {
+      "leak": 0.25,
+      "rating": 50.0
+    },
+    "minecraft:waxed_oxidized_copper_grate": {
+      "leak": 0.25,
+      "rating": 50.0
+    },
+    "minecraft:waxed_weathered_copper_grate": {
+      "leak": 0.25,
+      "rating": 50.0
+    },
+    "minecraft:weathered_copper_grate": {
+      "leak": 0.25,
+      "rating": 50.0
+    }
+  }
+}

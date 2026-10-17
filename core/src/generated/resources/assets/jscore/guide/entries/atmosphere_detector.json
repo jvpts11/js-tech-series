@@ -1,0 +1,80 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.atmosphere_detector.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.atmosphere_detector.for"
+    },
+    {
+      "type": "define",
+      "definition": "jscore.guide.atmosphere_detector.definition1",
+      "term": "jscore.guide.atmosphere_detector.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jscore.guide.atmosphere_detector.definition2",
+      "term": "jscore.guide.atmosphere_detector.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.atmosphere_detector.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.atmosphere_detector.use1",
+        "jscore.guide.atmosphere_detector.use2",
+        "jscore.guide.atmosphere_detector.use3",
+        "jscore.guide.atmosphere_detector.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.atmosphere_detector.fix1",
+          "problem": "jscore.guide.atmosphere_detector.problem1"
+        },
+        {
+          "fix": "jscore.guide.atmosphere_detector.fix2",
+          "problem": "jscore.guide.atmosphere_detector.problem2"
+        },
+        {
+          "fix": "jscore.guide.atmosphere_detector.fix3",
+          "problem": "jscore.guide.atmosphere_detector.problem3"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:atmosphere_detector",
+  "id": "jscore:atmosphere_detector",
+  "items": [
+    "jscore:atmosphere_detector"
+  ],
+  "order": 13,
+  "section": "jscore:world",
+  "title": "jscore.guide.atmosphere_detector.title"
+}

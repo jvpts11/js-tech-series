@@ -742,7 +742,8 @@ Whether air is breathed follows its oxygen's own pressure, its share of the whol
 gives 21 kPa, the same air at half the pressure only 10 and chokes, and pure oxygen at a fifth of the pressure, as in
 a suit, is breathed. A player is weighed by the air and the warmth at their eyes, so climbing out of a hot, thick
 ground into cool, thin air above changes what hurts them. `DimensionRulesData.of(level).at(y)` gives the climate at a
-height (its pressure, temperature, air and whether it is breathed); the heat kit and the winds read it too.
+height (its pressure, temperature, air and whether it is breathed); the heat kit and the winds read it too. Inside a
+sealed room, the room's own air is breathed, and its warmth kept ([Sealed rooms](ROOMS.md)).
 
 ### Dimensions made while the game runs
 

@@ -1,0 +1,21 @@
+{
+  "air": "#FF55FFFF",
+  "argon": "#FFC8A0F0",
+  "barGround": "#FF1E2024",
+  "breathe": "#FF3CAA50",
+  "carbonDioxide": "#FFA0A0A0",
+  "face": "#FFEFE9D2",
+  "hub": "#FF282828",
+  "leak": "#FFFF463C",
+  "leakDark": "#FF781E1A",
+  "needle": "#FFC41E18",
+  "nitrogen": "#FF6E96DC",
+  "oxygen": "#FF78DC8C",
+  "rim": "#FF787E86",
+  "show": "#FF55E6FF",
+  "thin": "#FFC83C32",
+  "tick": "#FF323232",
+  "vacuum": "#FF5A8CE6",
+  "viewGround": "#FF0E1218",
+  "walls": "#FF6E7884"
+}

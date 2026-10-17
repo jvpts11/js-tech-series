@@ -20,6 +20,7 @@ import dev.jstech.core.multiblock.BuildBalance;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.ChunkLoadingBalance;
+import dev.jstech.core.room.RoomBalance;
 import dev.jstech.core.time.WorldCalendar;
 import dev.jstech.core.world.event.WorldEventBalance;
 import dev.jstech.core.worldgen.vein.VeinBalance;
@@ -57,6 +58,8 @@ public final class CoreConfigKeys {
     public static final String MECHANICAL = "mechanical";
     /** The section of building multiblocks for players. */
     public static final String MULTIBLOCK = "multiblock";
+    /** What sealed rooms do: decompression, fire and oxygen, breathing mobs, plants, bursting blocks, their size. */
+    public static final String ROOMS = "rooms";
     /** How the world lays its ores: in veins, or scattered as the game lays them. */
     public static final String VEINS = "veins";
     /** The events the world goes through: whether they happen, and how often each. */
@@ -68,6 +71,8 @@ public final class CoreConfigKeys {
     private static final int MAX_BUILD_REACH = 128;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
     private static final int MAX_EXPIRY_HOURS = 24 * 365;
+    private static final int MIN_LARGEST_ROOM = 64;
+    private static final int MAX_LARGEST_ROOM = 262_144;
     private static final int MIN_MACHINE_MICROS = 50;
     private static final int MAX_MACHINE_MICROS = 1_000_000;
     private static final int MIN_SERVER_MICROS = 100;
@@ -309,6 +314,51 @@ public final class CoreConfigKeys {
                     + "the rating. A shear pin shears either way.")
             .named("Parts break under overload");
 
+    /** Whether the air rushing out of a room pulls things towards the hole. */
+    public static final ConfigKey<Boolean> ROOMS_DECOMPRESSION_PULL = ConfigKey.flag(
+            ROOMS + ".decompression_pull", true)
+            .comment("Whether the air rushing out of a sealed room through a hole pulls items, mobs and players "
+                    + "towards it.")
+            .named("Decompression pulls");
+
+    /** Whether fire in air mostly of oxygen spreads at once. */
+    public static final ConfigKey<Boolean> ROOMS_FIRE_IN_PURE_OXYGEN = ConfigKey.flag(
+            ROOMS + ".fire_in_pure_oxygen", true)
+            .comment("Whether any flame in a room whose air is mostly oxygen sets alight at once everything that "
+                    + "burns round it, an inferno.")
+            .named("Infernos in pure oxygen");
+
+    /** Whether fire needs oxygen. */
+    public static final ConfigKey<Boolean> ROOMS_FIRE_NEEDS_OXYGEN = ConfigKey.flag(
+            ROOMS + ".fire_needs_oxygen", true)
+            .comment("Whether fire goes out, and will not light, where the air has too little oxygen, in a room or "
+                    + "out in a dimension without it.")
+            .named("Fire needs oxygen");
+
+    /** Whether mobs that breathe suffocate in air they cannot breathe. */
+    public static final ConfigKey<Boolean> ROOMS_MOBS_BREATHE = ConfigKey.flag(ROOMS + ".mobs_breathe", true)
+            .comment("Whether mobs that breathe, by their kind, suffocate in air they cannot breathe; the undead and "
+                    + "golems do not breathe.")
+            .named("Mobs breathe");
+
+    /** Whether plants need air to grow. */
+    public static final ConfigKey<Boolean> ROOMS_PLANTS_NEED_AIR = ConfigKey.flag(ROOMS + ".plants_need_air", true)
+            .comment("Whether crops and saplings grow only where there is air.")
+            .named("Plants need air");
+
+    /** Whether a block facing more pressure than it stands bursts. */
+    public static final ConfigKey<Boolean> ROOMS_BLOCKS_BURST = ConfigKey.flag(ROOMS + ".blocks_burst", true)
+            .comment("Whether a block of a room's walls facing a greater difference in pressure than it stands "
+                    + "bursts, as a weak window does under water.")
+            .named("Blocks burst");
+
+    /** The largest room looked for, in blocks. */
+    public static final ConfigKey<Integer> ROOMS_LARGEST = ConfigKey.whole(ROOMS + ".largest_room",
+            RoomBalance.LARGEST_DEFAULT).range(MIN_LARGEST_ROOM, MAX_LARGEST_ROOM)
+            .comment("The largest sealed room, in blocks: a closed space larger than this is taken as open to the "
+                    + "place round it.")
+            .named("Largest room").unit("blocks");
+
     /** Whether ores lie in veins, the game's scattered iron, copper and gold taken away. */
     public static final ConfigKey<Boolean> VEINS_ENABLED = ConfigKey.flag(VEINS + ".enabled", true)
             .comment("Whether ores lie in veins about three chunks wide, dense at the middle and thinning outwards, "
@@ -426,6 +476,7 @@ public final class CoreConfigKeys {
             .sectionNamed(HEAT, "Heat")
             .sectionNamed(MECHANICAL, "Mechanical power")
             .sectionNamed(MULTIBLOCK, "Multiblocks")
+            .sectionNamed(ROOMS, "Sealed rooms")
             .sectionNamed(VEINS, "Veins")
             .sectionNamed(WORLD_EVENTS, "World events")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
@@ -463,6 +514,13 @@ public final class CoreConfigKeys {
             .key(MECHANICAL_PARTS_BREAK, MechanicalBalance::setPartsBreak)
             .key(MULTIBLOCK_BLOCKS_PER_SECOND, BuildBalance::setBlocksPerSecond)
             .key(MULTIBLOCK_BUILD_REACH, BuildBalance::setReach)
+            .key(ROOMS_DECOMPRESSION_PULL, RoomBalance::setDecompressionPull)
+            .key(ROOMS_FIRE_IN_PURE_OXYGEN, RoomBalance::setFireInPureOxygen)
+            .key(ROOMS_FIRE_NEEDS_OXYGEN, RoomBalance::setFireNeedsOxygen)
+            .key(ROOMS_MOBS_BREATHE, RoomBalance::setMobsBreathe)
+            .key(ROOMS_PLANTS_NEED_AIR, RoomBalance::setPlantsNeedAir)
+            .key(ROOMS_BLOCKS_BURST, RoomBalance::setBlocksBurst)
+            .key(ROOMS_LARGEST, RoomBalance::setLargestRoom)
             .key(VEINS_ENABLED, VeinBalance::setEnabled)
             .key(VEINS_RARITY, VeinBalance::setRarity)
             .key(VEINS_SPREAD, VeinBalance::setSpread)

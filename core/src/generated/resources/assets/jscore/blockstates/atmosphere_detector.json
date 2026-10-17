@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jscore:block/atmosphere_detector",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jscore:block/atmosphere_detector"
+    },
+    "facing=south": {
+      "model": "jscore:block/atmosphere_detector",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jscore:block/atmosphere_detector",
+      "y": 270
+    }
+  }
+}

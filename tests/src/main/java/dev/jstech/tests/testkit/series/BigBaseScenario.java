@@ -39,11 +39,14 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,6 +192,28 @@ public final class BigBaseScenario {
                 });
             }
             return new BenchmarkLoad.Workload(List.copyOf(requests), everyTicks, List.copyOf(hooks));
+        }
+
+        /**
+         * Takes away everything of the base that works on its own each tick, dropping nothing: the base reaches far
+         * past its test's ground, which the game test server clears, so left standing it would go on ticking under
+         * every benchmark after it.
+         */
+        public void tearDown(final ServerLevel level) {
+            final List<BlockEntity> working = new ArrayList<>();
+            working.add(mainframe);
+            working.addAll(serverRacks);
+            working.addAll(nodeRacks);
+            working.addAll(hubs);
+            working.addAll(personalComputers);
+            working.addAll(craftingComputers);
+            working.addAll(machines);
+            for (final BlockEntity entity : working) {
+                final BlockPos pos = entity.getBlockPos();
+                // Gone first, so the block taken away has nothing of its own to drop.
+                level.removeBlockEntity(pos);
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_SUPPRESS_DROPS);
+            }
         }
     }
 

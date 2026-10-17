@@ -55,7 +55,10 @@ public final class CoreConfigKeysGameTests {
                         "elements.require_ium", "elements.longest_name", "hazards.natural_radioactivity",
                         "heat.pipes_freeze", "heat.boil_off", "heat.overheating_damages", "heat.ignites",
                         "heat.hot_surfaces_burn", "mechanical.parts_break", "multiblock.blocks_per_second",
-                        "multiblock.build_reach", "veins.enabled", "veins.rarity", "veins.spread", "veins.density",
+                        "multiblock.build_reach", "rooms.decompression_pull", "rooms.fire_in_pure_oxygen",
+                        "rooms.fire_needs_oxygen", "rooms.mobs_breathe", "rooms.plants_need_air",
+                        "rooms.blocks_burst", "rooms.largest_room", "veins.enabled", "veins.rarity", "veins.spread",
+                        "veins.density",
                         "veins.without_ore", "veins.try_moving_other_ores", "world_events.enabled",
                         "world_events.frequency", "world_events.disabled", "world_events.harmless"),
                 CoreConfigKeys.FILE.keys().stream().map(ConfigKey::dottedPath).toList(), "the settings declared");

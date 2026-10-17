@@ -22,7 +22,8 @@ import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * What the series' mods share that is no element: the common fuels, liquids every mod may burn or store (the gases,
+ * What the series' mods share that is no element: the common fuels, liquids every mod may burn or store, carbon
+ * dioxide, which every body and fire breathes out (the other gases,
  * hydrogen, oxygen, nitrogen, helium, xenon and the rest, are their elements), and the generic components, items with
  * no game of their own. Each exists only when an installed mod declares it uses it ({@code MaterialLiquids},
  * {@link CatalogueItems}); each mod that makes one gives its own recipe, J's Industrial the whole industrial chain, a
@@ -35,6 +36,7 @@ public final class SharedCatalogue {
     public static final TextKey GASOLINE_NAME = TextKey.of("jscore.material.gasoline", "Gasoline");
     public static final TextKey KEROSENE_NAME = TextKey.of("jscore.material.kerosene", "Kerosene");
     public static final TextKey DIESEL_NAME = TextKey.of("jscore.material.diesel", "Diesel");
+    public static final TextKey CARBON_DIOXIDE_NAME = TextKey.of("jscore.material.carbon_dioxide", "Carbon Dioxide");
 
     public static final TextKey SERVOMOTOR_NAME = TextKey.of("item.jscore.servomotor", "Servomotor");
     public static final TextKey ELECTRIC_MOTOR_NAME = TextKey.of("item.jscore.electric_motor", "Electric Motor");
@@ -60,6 +62,16 @@ public final class SharedCatalogue {
     public static final Material GASOLINE = fuel("gasoline", GASOLINE_NAME, 0xE9D59A);
     public static final Material KEROSENE = fuel("kerosene", KEROSENE_NAME, 0xD9E2E8);
     public static final Material DIESEL = fuel("diesel", DIESEL_NAME, 0xC9A85A);
+    /*
+     * Carbon dioxide, which every body and fire breathes out and every plant in: the air of Mars and Venus, what a
+     * sealed room's scrubbers take out of it. Its values are the gas's at 0 °C.
+     */
+    public static final Material CARBON_DIOXIDE = Materials.material(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "carbon_dioxide"), MaterialKind.GAS,
+            CARBON_DIOXIDE_NAME).colour(0xD8DCE0).with(MaterialProperties.FORMULA, "CO2")
+            .with(Thermal.MOLAR_MASS, 0.044_01).with(Thermal.DENSITY, 1.977).with(Thermal.SPECIFIC_HEAT, 840.0)
+            .with(Thermal.CONDUCTIVITY, 0.0146).with(Thermal.MELTING, 194.65).with(Thermal.BOILING, 194.65)
+            .declare();
 
     public static final CatalogueItems.Entry SERVOMOTOR = component("servomotor", SERVOMOTOR_NAME);
     public static final CatalogueItems.Entry ELECTRIC_MOTOR = component("electric_motor", ELECTRIC_MOTOR_NAME);

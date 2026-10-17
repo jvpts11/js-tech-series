@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:undead",
+    "minecraft:iron_golem",
+    "minecraft:snow_golem",
+    "minecraft:armor_stand",
+    "minecraft:vex",
+    "minecraft:blaze",
+    "minecraft:breeze",
+    "minecraft:shulker",
+    "minecraft:ender_dragon"
+  ]
+}

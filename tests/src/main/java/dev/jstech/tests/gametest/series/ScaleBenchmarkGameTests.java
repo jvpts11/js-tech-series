@@ -291,10 +291,15 @@ public final class ScaleBenchmarkGameTests {
                     final double perOpMs = (report.get("load_x16_ms") - report.get("load_x4_ms"))
                             / (OPS_PER_TICK * 16 - OPS_PER_TICK * 4);
                     report.put("op_marginal_us", perOpMs * 1000.0);
-                    measureWire(level, base, report);
-                    measurePersistence(level, base, report);
-                    measureDenseDrive(level, base, report, denseTypes);
-                    finish(helper, report);
+                    try {
+                        measureWire(level, base, report);
+                        measurePersistence(level, base, report);
+                        measureDenseDrive(level, base, report, denseTypes);
+                        finish(helper, report);
+                    } finally {
+                        // Measured, the base goes, so it does not tick under the benchmarks after it.
+                        base.tearDown(level);
+                    }
                 }))
                 .thenSucceed();
     }

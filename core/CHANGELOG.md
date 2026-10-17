@@ -657,6 +657,20 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   blue, shimmering, darkened or glowing; space that wraps round, shortcuts, small doors into large rooms of another
   dimension, and portals with no edge that show their far side; explosions that go out slowly and liquids that rise. A
   mass curves space round it, pulling things in, slowing time and bending the view round a black horizon.
+- Sealed rooms: closed spaces are found where a block asks for them and worked out again whenever a block near
+  them changes, by any means, a little each tick; their air is real gas, its pressure an ideal gas's, breathed by the
+  oxygen's own pressure. Gas leaks through cracks slowly and holes fast, and between rooms joined by doors, their
+  pressures evening out at once and their airs mixing over time; how each block seals and what it stands is data, and
+  a block facing more than it stands bursts. Inside a room its air is breathed and its warmth kept; carbon dioxide
+  gives a headache and then stifles, pure oxygen poisons slowly, fire goes out without oxygen and turns into an
+  inferno in pure oxygen, and air rushing out of a hole pulls things after it. A room under water is pumped dry and
+  floods through a hole as fast as the depth pushes. Mobs breathe by their kind, plants need air and breathe a room's
+  carbon dioxide out as oxygen, vents join rooms to the gas lines, goggles show a room's outline and leaks, and mods
+  are told when rooms form, change, fill and leak. Each consequence can be turned off. Finding a room reads only
+  chunks already loaded, never loading one, and a mod that puts a whole area back as it was forgets its rooms with it.
+- The Atmosphere Detector, a block of the series' shared content: a pressure gauge, each gas with its share and
+  its own pressure, the room drawn with its leaks blinking, four lamps, and a key that shows the room in the world.
+- Carbon dioxide joins the shared catalogue, a gas every body and fire breathes out.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

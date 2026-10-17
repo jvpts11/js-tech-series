@@ -35,7 +35,11 @@ public final class DimensionHazardEvent extends Event implements ICancellableEve
         /** It is hot enough to burn. */
         HEAT,
         /** It is cold enough to freeze. */
-        COLD
+        COLD,
+        /** The air holds enough carbon dioxide to give a headache and nausea; past danger, it is not breathed. */
+        CARBON_DIOXIDE,
+        /** The air holds so much oxygen it poisons, slowly. */
+        OXYGEN
     }
 
     public Player player() {

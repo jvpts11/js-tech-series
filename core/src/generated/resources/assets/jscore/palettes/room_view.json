@@ -1,0 +1,11 @@
+{
+  "danger": "#FFFF6060",
+  "dim": "#FF9A9A9A",
+  "fine": "#FF6EE07A",
+  "hole": "#48FF5555",
+  "leak": "#70FF4040",
+  "outline": "#FF55FFFF",
+  "panel": "#C8101418",
+  "title": "#FFFFFFFF",
+  "warning": "#FFFFB13B"
+}
