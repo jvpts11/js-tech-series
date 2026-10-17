@@ -738,6 +738,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the crops and fish of their ground, which poison whoever eats them until the soil is dug out; radioactive fallout
   raises the dose rate and settles on whoever stands in it; and the world's carbon dioxide is one number that rises by
   what is burnt, shown on the map of hazards. Pollution has a setting of its own.
+- Explosions: blasts decided by their energy, in joules and its TNT equivalent, with no radius of their own.
+  The shock wave goes out at the speed of sound of the air or the water and reaches each place in its own time; it
+  breaks each block by what that block stands (a window gives at a few kilopascals, concrete holds hundreds), and a
+  wall it cannot break shields what is behind it. Bodies take the overpressure where they stand, hurt and thrown by
+  it, and catch fire in the fireball; a casing breaks into fragments of its own material that strike as shrapnel;
+  earth and stone fly as debris; explosives it breaks go off; the ground round the crater is scorched. A vacuum
+  carries no wave, and water carries it far. The breaking is spread over ticks within a budget, claimed land is
+  respected, and what each mod's explosions do to the world is a setting of the server's. The game's own explosions
+  show the fireball, the smoke and the scorch marks too.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

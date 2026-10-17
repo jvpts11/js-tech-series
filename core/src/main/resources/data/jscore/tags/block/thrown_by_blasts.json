@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:dirt",
+    "#minecraft:sand",
+    "#minecraft:planks",
+    "#minecraft:logs",
+    "#minecraft:terracotta",
+    "#c:gravels",
+    "#c:cobblestones",
+    "#c:stones",
+    "#c:sandstone/blocks",
+    "#c:concretes",
+    "minecraft:bricks",
+    "minecraft:stone_bricks"
+  ]
+}

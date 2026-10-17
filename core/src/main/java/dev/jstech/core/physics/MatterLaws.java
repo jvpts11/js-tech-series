@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.physics;
 
+import dev.jstech.core.explosion.Explosions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,9 +58,12 @@ public final class MatterLaws {
         return queue == null ? 0 : queue.size();
     }
 
-    /* An explosion where matter is slow keeps its blocks, to be broken as it reaches them. */
+    /*
+     * An explosion where matter is slow keeps its blocks, to be broken as it reaches them; a blast of the Core's own
+     * already goes out at the pace the laws give it.
+     */
     private static void onDetonate(final ExplosionEvent.Detonate event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) {
+        if (!(event.getLevel() instanceof ServerLevel level) || Explosions.isBlast(event.getExplosion())) {
             return;
         }
         final Vec3 centre = event.getExplosion().center();

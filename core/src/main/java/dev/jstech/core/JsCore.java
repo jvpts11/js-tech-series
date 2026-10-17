@@ -57,6 +57,7 @@ import dev.jstech.core.effect.EffectSettings;
 import dev.jstech.core.effect.Effects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.DimensionTravel;
+import dev.jstech.core.explosion.Explosions;
 import dev.jstech.core.hazard.BlockDensity;
 import dev.jstech.core.hazard.HazardMaps;
 import dev.jstech.core.hazard.Pollution;
@@ -297,6 +298,8 @@ public final class JsCore {
         Lungs.listen();
         // The world showing contamination: grass dying and plants withering where it is high.
         Withering.listen();
+        // Explosions decided by their energy: a shock wave at the speed of sound through blocks by their strength.
+        Explosions.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -330,8 +333,9 @@ public final class JsCore {
         GuideSounds.declare();
         // What the notifications sound like, one of the game's own sounds for each level.
         NotificationSounds.declare();
-        // The ring in the ears after a blast, a cue silent until a pack gives it its sound.
+        // The ring in the ears after a blast, a cue silent until a pack gives it its sound, and the boom of a blast.
         AcousticCues.declare();
+        Explosions.declare();
         // The clamp meter, the series' instrument that reads the energy through a line or a block, and its page.
         ClampMeter.declare();
         SharedEnergy.declare();

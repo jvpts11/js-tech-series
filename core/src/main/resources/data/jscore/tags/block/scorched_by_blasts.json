@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:grass_block",
+    "minecraft:podzol",
+    "minecraft:mycelium",
+    "minecraft:moss_block",
+    "jscore:withered_grass"
+  ]
+}

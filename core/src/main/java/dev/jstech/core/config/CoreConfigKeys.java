@@ -11,6 +11,8 @@ import com.mojang.serialization.Codec;
 import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.diagnostic.DiagnosticBalance;
+import dev.jstech.core.explosion.BlastBalance;
+import dev.jstech.core.explosion.BlastConsequence;
 import dev.jstech.core.hazard.HazardBalance;
 import dev.jstech.core.heat.HeatBalance;
 import dev.jstech.core.mechanical.MechanicalBalance;
@@ -50,6 +52,8 @@ public final class CoreConfigKeys {
     public static final String DIAGNOSTICS = "diagnostics";
     /** Naming the elements discovered beyond the known table. */
     public static final String ELEMENTS = "elements";
+    /** What blasts do to the world, and how much of a tick they take. */
+    public static final String EXPLOSIONS = "explosions";
     /** The world's hazards: radiation, pollution and the rest. */
     public static final String HAZARDS = "hazards";
     /** What heat does to the world: pipes that freeze, cold liquids that boil off, overheating, fires and burns. */
@@ -92,6 +96,10 @@ public final class CoreConfigKeys {
     private static final int MAX_STALL_MILLIS = 60_000;
     private static final int SHORTEST_LONGEST_NAME = 4;
     private static final int LONGEST_LONGEST_NAME = 40;
+    private static final int FEWEST_LOOKED_AT = 1_024;
+    private static final int MOST_LOOKED_AT = 1_048_576;
+    private static final int FEWEST_BROKEN = 16;
+    private static final int MOST_BROKEN = 65_536;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
@@ -321,6 +329,36 @@ public final class CoreConfigKeys {
                     + "radiation or pollution is high, and come back slowly where it falls.")
             .named("Contamination withers the land");
 
+    /** What each mod's explosions do to the world, by the mod's id or the explosive's. */
+    public static final ConfigKey<Map<String, BlastConsequence>> EXPLOSIONS_CONSEQUENCES = ConfigKey.of(
+            EXPLOSIONS + ".consequences", Codec.unboundedMap(Codec.STRING, BlastConsequence.CODEC), Map.of())
+            .comment("What each mod's explosions do to the world, by the mod's id or by one explosive's, as in "
+                    + "\"jsindustrial\" = \"spare_blocks\": \"full\" breaks blocks, hurts and throws; \"spare_blocks\" "
+                    + "hurts and throws but breaks nothing; \"harmless\" only flashes and sounds. An explosive's own "
+                    + "setting comes before its mod's; one not named does it all.")
+            .named("What explosions do");
+
+    /** How many blocks the blasts of a level look at in a tick. */
+    public static final ConfigKey<Integer> EXPLOSIONS_LOOKED_AT = ConfigKey.whole(EXPLOSIONS + ".blocks_looked_at",
+            BlastBalance.DEFAULT_LOOKED_AT).range(FEWEST_LOOKED_AT, MOST_LOOKED_AT)
+            .comment("How many blocks the blasts of a level look at in a tick, as their shock waves go out; a great "
+                    + "blast past it goes on over the next ticks.")
+            .named("Blocks a blast looks at in a tick").unit("blocks");
+
+    /** How many blocks the blasts of a level break in a tick. */
+    public static final ConfigKey<Integer> EXPLOSIONS_BROKEN = ConfigKey.whole(EXPLOSIONS + ".blocks_broken",
+            BlastBalance.DEFAULT_BROKEN).range(FEWEST_BROKEN, MOST_BROKEN)
+            .comment("How many blocks the blasts of a level break in a tick; the rest wait for the next ticks, so a "
+                    + "great blast never stalls the server.")
+            .named("Blocks a blast breaks in a tick").unit("blocks");
+
+    /** Whether the game's own explosions show the Core's fireball, smoke and scorch marks. */
+    public static final ConfigKey<Boolean> EXPLOSIONS_GAME_SHOWN = ConfigKey.flag(EXPLOSIONS + ".show_game_explosions",
+            true)
+            .comment("Whether the game's own explosions (TNT, creepers, beds in the Nether) show the fireball, the "
+                    + "smoke, the sparks and the scorch marks the mods' blasts do. They break what they always did.")
+            .named("The game's explosions look the part");
+
     /** Whether a pipe of a liquid freezes where the place is colder than the liquid's melting point. */
     public static final ConfigKey<Boolean> HEAT_PIPES_FREEZE = ConfigKey.flag(HEAT + ".pipes_freeze", true)
             .comment("Whether a pipe of a liquid freezes and carries none of it where the place is colder than the "
@@ -501,6 +539,7 @@ public final class CoreConfigKeys {
                     + "things, and how many of each thing one player may have.")
             .sectionComment(DIAGNOSTICS, "The watchdog, and what the server counts of what it sends each player.")
             .sectionComment(ELEMENTS, "Naming the elements discovered beyond the 118 known.")
+            .sectionComment(EXPLOSIONS, "What blasts do to the world, mod by mod, and how much of a tick they take.")
             .sectionComment(HAZARDS, "The world's hazards: which of them there are.")
             .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off, "
                     + "machines that overheat, fires and burns.")
@@ -513,6 +552,7 @@ public final class CoreConfigKeys {
             .sectionNamed(PROTECTION, "Protection")
             .sectionNamed(DIAGNOSTICS, "Diagnostics")
             .sectionNamed(ELEMENTS, "Elements")
+            .sectionNamed(EXPLOSIONS, "Explosions")
             .sectionNamed(HAZARDS, "Hazards")
             .sectionNamed(HEAT, "Heat")
             .sectionNamed(MECHANICAL, "Mechanical power")
@@ -554,6 +594,10 @@ public final class CoreConfigKeys {
             .key(HAZARDS_DISSONANCE, HazardBalance::setDissonance)
             .key(HAZARDS_POLLUTION, HazardBalance::setPollution)
             .key(HAZARDS_WITHERING, HazardBalance::setWithering)
+            .key(EXPLOSIONS_CONSEQUENCES, BlastBalance::setConsequences)
+            .key(EXPLOSIONS_LOOKED_AT, BlastBalance::setLookedAt)
+            .key(EXPLOSIONS_BROKEN, BlastBalance::setBroken)
+            .key(EXPLOSIONS_GAME_SHOWN, BlastBalance::setGameExplosionsShown)
             .key(HEAT_PIPES_FREEZE, HeatBalance::setPipesFreeze)
             .key(HEAT_BOIL_OFF, HeatBalance::setBoilOff)
             .key(HEAT_OVERHEATING_DAMAGES, HeatBalance::setOverheatingDamages)

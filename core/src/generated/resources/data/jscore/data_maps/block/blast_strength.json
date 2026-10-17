@@ -1,0 +1,25 @@
+{
+  "values": {
+    "#c:cobblestones": 150.0,
+    "#c:concretes": 700.0,
+    "#c:glass_blocks": 4.0,
+    "#c:glass_panes": 2.0,
+    "#c:gravels": 50.0,
+    "#c:obsidians": 20000.0,
+    "#c:sandstone/blocks": 150.0,
+    "#c:stones": 200.0,
+    "#c:storage_blocks/iron": 5000.0,
+    "#minecraft:dirt": 60.0,
+    "#minecraft:ice": 30.0,
+    "#minecraft:logs": 120.0,
+    "#minecraft:planks": 80.0,
+    "#minecraft:sand": 40.0,
+    "#minecraft:terracotta": 150.0,
+    "#minecraft:wooden_doors": 20.0,
+    "#minecraft:wooden_trapdoors": 20.0,
+    "#minecraft:wool": 20.0,
+    "minecraft:bricks": 150.0,
+    "minecraft:iron_door": 300.0,
+    "minecraft:stone_bricks": 250.0
+  }
+}

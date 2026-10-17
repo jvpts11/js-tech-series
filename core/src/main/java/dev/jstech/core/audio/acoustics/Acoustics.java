@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.dimension.Climate;
+import dev.jstech.core.explosion.Explosions;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.core.worn.WornItems;
@@ -111,8 +112,9 @@ public final class Acoustics {
         }
     }
 
+    /* A blast of the Core's own rings each player's ears as its wave reaches them, not here. */
     private static void onDetonate(final ExplosionEvent.Detonate event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) {
+        if (!(event.getLevel() instanceof ServerLevel level) || Explosions.isBlast(event.getExplosion())) {
             return;
         }
         final Vec3 centre = event.getExplosion().center();
