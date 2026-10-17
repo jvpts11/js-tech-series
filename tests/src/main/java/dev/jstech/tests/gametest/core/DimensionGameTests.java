@@ -38,7 +38,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The Core's dimensions, through the test mod's small moon: declared and generated with the world, its rules read
  * from its file and felt (its pull on whatever stands there, the air and cold a player suffers unless a suit spares
- * them), and copies of it made while the game runs and taken away again.
+ * them), and copies of it made while the game runs, taken away again, and made again with the chunks they kept loaded.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -152,6 +152,27 @@ public final class DimensionGameTests {
                 && !RuntimeDimensions.made(server).containsKey(copy.location()), "and is gone, not to be made again");
         helper.assertFalse(RuntimeDimensions.remove(server, MOON), "a dimension the Core did not make is left alone");
         helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void runtimeDimension_keepsTheChunksItKeptLoadedWhenMadeAgain(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final ResourceKey<Level> copy = ResourceKey.create(Registries.DIMENSION,
+                ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "moon_kept_" + UUID.randomUUID().toString()
+                        .substring(0, 8)));
+        RuntimeDimensions.getOrCreate(server, copy, TestWorldGen.MOON.id()).setChunkForced(1, 1, true);
+        RuntimeDimensions.remove(server, copy);
+        final ServerLevel again = RuntimeDimensions.getOrCreate(server, copy, TestWorldGen.MOON.id());
+        final BlockPos kept = new BlockPos(24, 9, 24);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(again.isPositionEntityTicking(kept),
+                        "made again, as when the server starts, the chunk it kept loaded is loaded and ticking; held "
+                                + again.getForcedChunks() + ", loaded " + again.getChunkSource().hasChunk(1, 1)))
+                .thenExecute(() -> {
+                    again.setChunkForced(1, 1, false);
+                    RuntimeDimensions.remove(server, copy);
+                })
+                .thenSucceed();
     }
 
     private static ServerLevel moon(final GameTestHelper helper) {

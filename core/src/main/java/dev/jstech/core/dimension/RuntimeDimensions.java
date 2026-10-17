@@ -10,6 +10,7 @@ package dev.jstech.core.dimension;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.worldgen.WorldGen;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.ForcedChunksSavedData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.border.BorderChangeListener;
@@ -40,6 +42,7 @@ import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.WorldData;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.world.chunk.ForcedChunkManager;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +60,8 @@ public final class RuntimeDimensions {
 
     private static final Logger LOGGER = CoreLogs.DIMENSIONS.logger();
     private static final String FILE = "jscore_runtime_dimensions";
+    /* The file the game keeps a level's forced chunks in. */
+    private static final String FORCED = "chunks";
 
     /** The template of each dimension made while this server runs, for the rules a copy takes from it. */
     private static final Map<ResourceLocation, ResourceLocation> TEMPLATES = new ConcurrentHashMap<>();
@@ -220,7 +225,24 @@ public final class RuntimeDimensions {
         server.forgeGetWorldMap().put(key, level);
         server.markWorldsDirty();
         NeoForge.EVENT_BUS.post(new LevelEvent.Load(level));
+        keepForced(level);
         return level;
+    }
+
+    /*
+     * The chunks kept loaded in the level when it was last saved are kept loaded again, as the server does for the
+     * world's own levels when it starts: a level made after that would otherwise hold them forced and load none.
+     */
+    private static void keepForced(final ServerLevel level) {
+        final ForcedChunksSavedData forced = level.getDataStorage().get(ForcedChunksSavedData.factory(), FORCED);
+        if (forced == null) {
+            return;
+        }
+        final LongIterator chunks = forced.getChunks().iterator();
+        while (chunks.hasNext()) {
+            level.getChunkSource().updateChunkForced(new ChunkPos(chunks.nextLong()), true);
+        }
+        ForcedChunkManager.reinstatePersistentChunks(level, forced);
     }
 
     private static Ledger ledger(final MinecraftServer server) {

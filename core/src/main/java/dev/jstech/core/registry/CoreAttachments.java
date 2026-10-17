@@ -16,6 +16,7 @@ import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
 import dev.jstech.core.persistence.SaveLayout;
+import dev.jstech.core.physics.Laws;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.UUIDUtil;
 import net.neoforged.bus.api.IEventBus;
@@ -82,6 +83,11 @@ public final class CoreAttachments {
     public static final Supplier<AttachmentType<List<String>>> RETROGEN =
             ATTACHMENT_TYPES.register("retrogen", () -> AttachmentType.builder(() -> List.<String>of())
                     .serialize(Codec.STRING.listOf()).build());
+
+    /** The laws an entity carries with it, wherever it stands: saved with it. */
+    public static final Supplier<AttachmentType<Laws>> OWN_LAWS =
+            ATTACHMENT_TYPES.register("own_laws", () -> AttachmentType.builder(() -> Laws.NONE)
+                    .serialize(Laws.CODEC).build());
 
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");

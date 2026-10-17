@@ -8,7 +8,6 @@
 package dev.jstech.core.worldgen.biome;
 
 import dev.jstech.core.JsCore;
-import dev.jstech.core.dimension.DimensionRules;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.heat.HeatClimate;
 import dev.jstech.core.heat.HeatMath;
@@ -85,9 +84,8 @@ public final class BiomeClimates {
         if (own.isEmpty()) {
             return null;
         }
-        final DimensionRules rules = DimensionRulesData.of(level);
         return new HeatClimate.Air(HeatMath.kelvin(own.get().celsius(pos.getY(), dayOfYear(level), daysAYear())),
-                rules.pressure());
+                DimensionRulesData.of(level).at(pos.getY() + 0.5).pressure());
     }
 
     private static double dayOfYear(final Level level) {

@@ -103,6 +103,15 @@ public final class TestWorldGen {
     public static final WorldGen.DimensionSpec SKY_LAND = WorldGen.dimension(id("sky_land")).heights(0, 256)
             .layer(() -> Blocks.STONE, 3).layer(() -> Blocks.GRASS_BLOCK, 1).effects(Skies.EFFECTS).runtimeOnly()
             .declare();
+    /** A flat land of half the overworld's pull, by its rules. */
+    public static final WorldGen.DimensionSpec HALF_G_LAND = WorldGen.dimension(id("half_g_land")).heights(0, 256)
+            .layer(() -> Blocks.STONE, 3).runtimeOnly().declare();
+    /**
+     * A flat land like Venus, by its rules: a hell of heat and pressure at the ground and air of carbon dioxide,
+     * falling with height to the overworld's air, warmth and pressure high above.
+     */
+    public static final WorldGen.DimensionSpec VENUS_LAND = WorldGen.dimension(id("venus_land")).heights(0, 256)
+            .layer(() -> Blocks.STONE, 3).runtimeOnly().declare();
     /** A flat land locked to its star, its sun held at noon by its rules. */
     public static final WorldGen.DimensionSpec LOCKED_LAND = WorldGen.dimension(id("locked_land")).heights(0, 256)
             .layer(() -> Blocks.STONE, 3).runtimeOnly().declare();

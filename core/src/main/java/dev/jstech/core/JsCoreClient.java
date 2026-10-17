@@ -69,6 +69,8 @@ import dev.jstech.core.client.network.TransferClient;
 import dev.jstech.core.client.notification.NotificationsClient;
 import dev.jstech.core.client.overhead.OverheadWireRenderer;
 import dev.jstech.core.client.palette.CorePaletteClient;
+import dev.jstech.core.client.physics.LightLawsClient;
+import dev.jstech.core.client.physics.PortalViews;
 import dev.jstech.core.client.sky.SkyClient;
 import dev.jstech.core.client.weather.WeatherClient;
 import dev.jstech.core.client.state.ClientStateEvents;
@@ -117,6 +119,8 @@ public final class JsCoreClient {
         ProjectorClient.listen(modEventBus);
         SkyClient.listen(modEventBus);
         WeatherClient.listen();
+        LightLawsClient.listen(modEventBus);
+        PortalViews.listen();
         PersistorClient.listen();
         BuilderClient.listen(modEventBus);
         ConfigClient.listen();

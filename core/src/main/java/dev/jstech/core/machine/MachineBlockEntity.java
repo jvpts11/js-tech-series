@@ -44,7 +44,6 @@ import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.FaceMatterHandler;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterTank;
-import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.heat.IHeatPort;
 import dev.jstech.core.multiblock.IMultiblockPortHost;
@@ -52,6 +51,8 @@ import dev.jstech.core.multiblock.IRedstonePortHost;
 import dev.jstech.core.multiblock.IStructureController;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.PortKind;
+import dev.jstech.core.physics.Physics;
+import dev.jstech.core.physics.PhysicsMath;
 import dev.jstech.core.signal.ISignalOutput;
 import dev.jstech.core.signal.Reading;
 import dev.jstech.core.team.Access;
@@ -80,6 +81,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -138,6 +140,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private @Nullable MachineStructure structure;
     /* What each of its structure's redstone ports that read hears, by the port's place. */
     private final Map<BlockPos, Integer> portSignals = new HashMap<>();
+    /* The part of a tick its place's rate of time has left it, towards its next work. */
+    private double timeCarried;
 
     public static final TextKey PARAMETER_ON = TextKey.of("jscore.machine.parameter.on", "On");
     public static final TextKey PARAMETER_PROGRESS = TextKey.of("jscore.machine.parameter.progress", "Progress");
@@ -226,7 +230,18 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final MachineBlockEntity machine) {
         if (level instanceof ServerLevel server) {
-            machine.tickServer(server);
+            // Time runs at its place's rate: where it runs at half speed a machine works every other tick.
+            final double rate = Physics.lawsAt(server, Vec3.atCenterOf(pos)).timeRate();
+            if (rate == 1.0) {
+                machine.timeCarried = 0;
+                machine.tickServer(server);
+                return;
+            }
+            final double[] ticks = PhysicsMath.ticks(rate, machine.timeCarried);
+            machine.timeCarried = ticks[1];
+            for (int i = 0; i < (int) ticks[0]; i++) {
+                machine.tickServer(server);
+            }
         }
     }
 

@@ -254,6 +254,14 @@ returns at once until something it waits on changes. Anything saved that changes
 out, energy arriving, a setting, its health), and so do its neighbours' changes; at the latest it looks again every
 `SLEEP_AT_MOST` ticks. A large factory of idle machines weighs nothing on the server.
 
+### The time of its place
+
+*Added 2026-10-17.*
+
+A machine stands in its place's time: where a law of its own makes time run twice as fast ([Laws of their
+own](WORLD.md#laws-of-their-own)), it works two ticks for every one of the game's and makes twice as much, spending
+its energy as fast; where time runs at half speed, it works every other tick; where time stands still, it stops.
+
 ## Never jammed
 
 *Added 2026-10-15.*

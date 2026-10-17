@@ -651,6 +651,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Machine screens of their own: a mod's machine whose screen is unlike every other's opens its own on the same
   menu, keeping the tabs, plates, lamps and Protection tab of every machine; a machine that holds no items leaves the
   inventory off its Main tab, and one whose energy a setting turns off offers no port.
+- (Core) A dimension's air by height: its rules can say what its air is made of, breathed where the oxygen's own
+  pressure is enough, and how its air, pressure and temperature change with height in bands, so a land can burn at
+  the ground and be cool and breathable high in its clouds; a player is weighed by the air at their eyes.
+- (Core) Laws of their own: a place, a dimension or a body can keep laws of physics of its own. Gravity scaled,
+  turned along a direction or pulling to a point, felt by players, mobs, items, falling blocks and arrows alike; time
+  running slower or faster for what lives there and for the series' machines; light tinted, shifted towards red or
+  blue, shimmering, darkened or glowing; space that wraps round, shortcuts, small doors into large rooms of another
+  dimension, and portals with no edge that show their far side; explosions that go out slowly and liquids that rise. A
+  mass curves space round it, pulling things in, slowing time and bending the view round a black horizon.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
@@ -682,6 +691,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `loses(100_000)`.
 - (Core) Machines short of energy work slower in the same proportion, spending what there is, instead of waiting for a
   whole tick's energy; looked at, they say they run on low power.
+
+### Fixed
+- (Core) A dimension made while the game runs keeps loaded again the chunks it kept loaded, each time it is made
+  again; it held them as kept but loaded none after the server restarted.
 
 ## [0.5.2a] - 2026-10-14
 

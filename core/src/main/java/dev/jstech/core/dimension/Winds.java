@@ -46,7 +46,7 @@ public final class Winds {
         for (final ToDoubleBiFunction<Level, Vec3> factor : FACTORS) {
             strength *= factor.applyAsDouble(level, at);
         }
-        return WindMath.at(level.getGameTime(), at.y, strength, rules.pressure() > 0);
+        return WindMath.at(level.getGameTime(), at.y, strength, rules.at(at.y).pressure() > 0);
     }
 
     /**

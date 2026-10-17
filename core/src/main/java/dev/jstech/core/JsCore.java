@@ -44,6 +44,7 @@ import dev.jstech.core.diagnostic.DiagnosticNotifications;
 import dev.jstech.core.diagnostic.DiagnosticReports;
 import dev.jstech.core.diagnostic.Sections;
 import dev.jstech.core.dimension.DayClocks;
+import dev.jstech.core.physics.Physics;
 import dev.jstech.core.sky.Skies;
 import dev.jstech.core.weather.Weathers;
 import dev.jstech.core.dimension.DimensionEffects;
@@ -255,6 +256,8 @@ public final class JsCore {
         WorldEvents.listen();
         // The weathers the world events bring: what falls, the fog, the wind, and what they do out in them.
         Weathers.listen();
+        // Places, dimensions and bodies with laws of their own: gravity, time, light, space and matter.
+        Physics.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();

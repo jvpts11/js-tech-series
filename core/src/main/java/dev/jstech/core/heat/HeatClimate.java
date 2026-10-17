@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.heat;
 
-import dev.jstech.core.dimension.DimensionRules;
+import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.dimension.DimensionRulesData;
 import java.util.List;
 import java.util.Objects;
@@ -58,8 +58,8 @@ public final class HeatClimate {
                 return own;
             }
         }
-        final DimensionRules rules = DimensionRulesData.of(level);
-        return new Air(HeatMath.kelvin(rules.temperature()), rules.pressure());
+        final Climate here = DimensionRulesData.of(level).at(pos.getY() + 0.5);
+        return new Air(HeatMath.kelvin(here.temperature()), here.pressure());
     }
 
     /**

@@ -5,7 +5,8 @@ brines that wells drain, structures that stand where the land suits them, wear b
 players discover, finding things roughly at first and exactly later, markers on the maps, worlds that change after
 they are made (generation in old chunks, a surface that changes with the climate, large edits, world events, fields
 over the chunks), dimensions of your own with
-rules for gravity, air, heat and weather, their terrain and biomes with climates in real values, the shapes of the
+rules for gravity, air (by height), heat and weather, laws of physics of their own for places, dimensions and
+bodies, their terrain and biomes with climates in real values, the shapes of the
 land (craters, volcanoes, canyons, lakes of any liquid and the rest), rock in layers, seas that freeze or boil away,
 dimensions made while the game runs, data kept over areas of the world, and chunks kept loaded for their owners.
 
@@ -696,12 +697,15 @@ A dimension's rules are a data file, `data/<namespace>/dimension_rules/<path>.js
 | Rule | Means | Range | The overworld's |
 | --- | --- | --- | --- |
 | `gravity` | The pull, as a share of the overworld's. | 0 to 10 | 1.0 |
-| `breathable` | Whether the air can be breathed. | yes or no | yes |
+| `breathable` | Whether the air can be breathed, for a dimension that does not say what its air is. | yes or no | yes |
 | `temperature` | Degrees Celsius. Above 60 burns, below -30 freezes. | -273.15 to 10,000 | 15 |
 | `weather` | `natural`, `clear`, `rain` or `thunder`. | | `natural` |
 | `pressure` | Kilopascals. | 0 to 100,000 | 101.3 |
 | `clock` | Its own clock: `day` (ticks, 1,200 to 24,000,000), `locked_at` (a world locked to its star, the time of day its sun is held at) and `year` (its days). *Added 2026-10-17.* | | none: the overworld's clock |
 | `wind` | How hard its wind blows, as a share of the overworld's. *Added 2026-10-17.* | 0 to 20 | 1 |
+| `air` | What its air is made of, each gas by its share: `{"jscore:nitrogen": 0.78, "jscore:oxygen": 0.21}`. It is breathed where the oxygen's own pressure is 16 kPa or more. *Added 2026-10-17.* | shares 0 to 1 | none: `breathable` says |
+| `bands` | Its air, pressure and temperature by height (below). *Added 2026-10-17.* | | none |
+| `laws` | Laws of its own for the whole dimension ([Laws of their own](#laws-of-their-own)). *Added 2026-10-17.* | | none |
 
 Every rule is optional. The Core applies them: entities fall as the gravity says; once a second a player in air
 they cannot breathe, or in heat or cold past the limits, is hurt; the weather follows the rule. Before hurting a
@@ -718,6 +722,28 @@ NeoForge.EVENT_BUS.addListener((DimensionHazardEvent event) -> {
 
 `DimensionRulesData.of(level)` reads a dimension's rules from code, on either side.
 
+### Air and height
+
+*Added 2026-10-17.*
+
+A dimension's air need not be the same all the way up. Its `bands` say what holds from a height upwards, each
+naming only what changes there; between two bands the pressure and the temperature go evenly from one to the other,
+and the air is that of the band below. A land like Venus, a hell at the ground and the overworld's air high in its
+clouds:
+
+```json
+{ "temperature": 464, "pressure": 9300, "air": { "jscore:carbon_dioxide": 0.965, "jscore:nitrogen": 0.035 },
+  "bands": [{ "at": 0, "pressure": 9300, "temperature": 464 },
+            { "at": 200, "pressure": 101.3, "temperature": 20,
+              "air": { "jscore:nitrogen": 0.78, "jscore:oxygen": 0.21, "jscore:argon": 0.01 } }] }
+```
+
+Whether air is breathed follows its oxygen's own pressure, its share of the whole: the overworld's air at sea level
+gives 21 kPa, the same air at half the pressure only 10 and chokes, and pure oxygen at a fifth of the pressure, as in
+a suit, is breathed. A player is weighed by the air and the warmth at their eyes, so climbing out of a hot, thick
+ground into cool, thin air above changes what hurts them. `DimensionRulesData.of(level).at(y)` gives the climate at a
+height (its pressure, temperature, air and whether it is breathed); the heat kit and the winds read it too.
+
 ### Dimensions made while the game runs
 
 *Added 2026-10-05.*
@@ -730,7 +756,9 @@ ServerLevel base = RuntimeDimensions.getOrCreate(server,
 
 The copy has the template's terrain and rules, and is made again every time the server starts until it is
 removed with `RuntimeDimensions.remove(server, key)`. Asking for one that exists gives it back. An operator can do
-the same with `/jstech dimension create <id> <template>` and `remove <id>` ([Commands](COMMANDS.md)).
+the same with `/jstech dimension create <id> <template>` and `remove <id>` ([Commands](COMMANDS.md)). The chunks a
+copy kept loaded (`ServerLevel.setChunkForced`) are loaded again whenever it is made again, as the world's own
+dimensions' are when the server starts.
 
 ## Sky, time and weather
 
@@ -810,6 +838,61 @@ lives out in a weather near a player is harmed and given its effect (a roof keep
 false), its lightning strikes near the players out in it, and within its reach the wind blows as hard as it says. A
 server that makes the event harmless (`world_events.harmless`) makes its weather harmless too. `Weathers.at(level, pos)`
 says what weather is under way at a place, on either side.
+
+## Laws of their own
+
+*Added 2026-10-17.*
+
+A place, a dimension or a body may keep laws of physics of its own: things weightless or falling up, time running at
+half speed, light shifted towards red, a room bigger inside than out, an explosion going out slowly. Each law is
+optional and the usual one holds where none is said:
+
+```json
+{ "gravity": { "type": "scaled", "g": 0 }, "time": 0.5,
+  "light": { "tint": "#C0D0FF", "shift": -0.4, "mirage": 0.3 },
+  "space": { "kind": "wrap" }, "matter": { "fluids_rise": true, "explosion_speed": 4 } }
+```
+
+| Law | Means |
+| --- | --- |
+| `gravity` | How things are pulled: `scaled` (`g` times the overworld's pull, 0 for weightless), `towards` a direction (`x`, `y`, `z`, at `g`: `y` -1 is the usual way, 1 falls up) or to a `centre` (`x`, `y`, `z`, at `g` at its `radius`, weaker with the square of the distance beyond it and stronger within, to four times at most), up to 20 g. |
+| `time` | How fast time runs, 0 (stood still) to 10: every entity but players lives, moves and ages that much faster or slower, and so do the series' machines; another mod's blocks keep the usual time. |
+| `light` | What a player there sees: everything seen through a `tint`, colours `shift`ed towards red (above 0) or blue (below), shimmering as in a `mirage`, a `dark`ness or a `glow` with nothing to make it so, and a `lens` (below). Only what is seen; the light the game counts does not change. |
+| `space` | How the area's edge joins up: `wrap` (leaving through one face comes back in through the opposite one, moving on as it was), `enter` (coming in leads to the same place of a `target` box, `[x1, y1, z1, x2, y2, z2]`, scaled to its size, in another `dimension` if one is named: a shortcut, or a small door into a large room) and `leave` (going out leads to just outside the target box: the way back out). A crossing settles for half a second before another. |
+| `matter` | Liquids rising instead of falling (`fluids_rise`, each pool climbing a block every 4 ticks while there is room above, in areas of at most 32,768 blocks), and explosions going out at `explosion_speed` blocks a second, each block breaking as the blast reaches it. |
+
+They hold in three ways, and where several do, an entity's own come first, then the highest area's, then the
+dimension's:
+
+- A dimension's rules hold `laws` for the whole of it.
+- A mod puts an area of its own in a dimension, kept with the world and sent to the players there:
+
+```java
+Physics.add(level, new PhysicsArea("mymod:lab", Box.between(0, 60, 0, 15, 75, 15), laws, 0));   // the highest
+Physics.remove(level, "mymod:lab");                                                          // priority wins
+Physics.mass(level, "mymod:singularity", centre, 2.0, 1.5);   // space curved round a mass (below)
+```
+
+- An entity carries laws with it wherever it goes, a player's floating suit or a stone that falls up:
+  `Physics.own(entity, laws)`, and `Laws.NONE` to carry none.
+
+`Physics.lawsAt(level, pos)` and `Physics.lawsOf(entity)` say what holds, on either side.
+
+### What it looks and feels like
+
+Gravity moves each thing on the side that moves it: a player on their own game, so flying in a weightless room is
+smooth, and everything else on the server, items, falling blocks and arrows too, which the game's own gravity leaves
+out of a dimension's pull. A player under a pull weaker than the overworld's is never sent away for flying.
+
+A mass curves space round it as a small black hole would: within four of its radius things fall towards it, time
+runs at half speed, and a player looking at it sees the view bent round a black horizon at its middle, the land
+behind it pushed out into a ring.
+
+An area that leads elsewhere in its own dimension and is said to be `seamless` is a portal with no edge: its faces
+show what lies at the far side, as seen from where the player would come out, so walking in looks like walking on.
+The nearest such portal within 48 blocks shows; drawing its far side costs about as much as drawing the world again.
+Through it show the land, what stands on it, its particles, the sky and the clouds; the weather and what other mods
+draw over the world do not, and with Fabulous graphics neither do items lying on the ground.
 
 ## Data over areas of the world
 
@@ -916,6 +999,13 @@ from its screen.
   keeps the nearest that fit and asks for the rest again once a second.
 - **Players in a dimension take damage.** Its rules say the air cannot be breathed, or it is too hot or cold. A
   mod's suit must cancel `DimensionHazardEvent` to protect them.
+- **The air chokes high up, or burns low down.** The dimension's `bands` change its air with height: its oxygen's own
+  pressure falls below 16 kPa as the pressure thins.
+- **A law of time does nothing to a machine.** Only the series' machines keep a place's time; another mod's blocks
+  keep the usual one, and players always do.
+- **A seamless portal shows the sky only, or nothing.** Its target lies in another dimension (it still leads there,
+  but shows nothing), it is not the nearest within 48 blocks, or the land at its far side is beyond what the game has
+  built round the player.
 - **A landform never generates.** Its biomes hold none of the biomes where you are looking, its `cell` is very
   large or its `chance` small, or the data generation has not run since it was declared.
 - **A landform stops at a biome's edge.** The biome beyond is not one of its `biomes`. Add it there too, and keep

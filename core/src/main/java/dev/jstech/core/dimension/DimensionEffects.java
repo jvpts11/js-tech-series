@@ -87,9 +87,10 @@ public final class DimensionEffects {
             return hazards;
         }
         final DimensionRules rules = DimensionRulesData.of(player.level());
-        consider(player, rules, !rules.breathable(), DimensionHazardEvent.Hazard.AIR, hazards);
-        consider(player, rules, rules.scorching(), DimensionHazardEvent.Hazard.HEAT, hazards);
-        consider(player, rules, rules.freezing(), DimensionHazardEvent.Hazard.COLD, hazards);
+        final Climate here = rules.at(player.getEyeY());
+        consider(player, rules, !here.breathable(), DimensionHazardEvent.Hazard.AIR, hazards);
+        consider(player, rules, here.scorching(), DimensionHazardEvent.Hazard.HEAT, hazards);
+        consider(player, rules, here.freezing(), DimensionHazardEvent.Hazard.COLD, hazards);
         return hazards;
     }
 
