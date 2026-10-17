@@ -102,6 +102,13 @@ neoForge {
                 // -PctMods=<suite>[,<suite>...] runs only the client tests of those suites (core, computers,
                 // industrial, series; see TestSuites), shared out over the shards as the whole suite is.
                 systemProperty 'jsc.clienttests.mods', (providers.gradleProperty('ctMods').getOrElse(''))
+                // -Pjfr records the window with Java Flight Recorder, for profiling what the client draws.
+                if (providers.gradleProperty('jfr').present) {
+                    jvmArguments.addAll(
+                            '-XX:StartFlightRecording=settings=profile,name=jsc,dumponexit=true,filename='
+                                    + rootProject.file("local/bench/jfr/client-shard-${shard}.jfr").absolutePath,
+                            '-XX:FlightRecorderOptions=stackdepth=512')
+                }
             }
         }
 

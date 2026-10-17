@@ -51,7 +51,10 @@ public final class PlacesClientTests {
     private static final ResourceKey<Level> LAND = ResourceKey.create(Registries.DIMENSION,
             ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "places_land"));
     private static final int ARRIVE = 600;
-    private static final int RENDER = 160;
+    /* Ticks for block changes made on the server to reach the player's game. */
+    private static final int CHANGES = 20;
+    /* Ticks after the land is drawn before the picture, for a frame of it to be shown. */
+    private static final int SHOOT = 5;
     private static final int WAIT = 200;
     private static final long NOON = 6_000L;
     private static final int CHUNKS_SEARCHED = 32;
@@ -83,9 +86,10 @@ public final class PlacesClientTests {
                 .thenAssert(1, () -> hut[0] != null, "a hut stands in the test land")
                 .thenWaitUntil(() -> arrived(ctx, stand[0], hut[0].getBoundingBox().getCenter()), ARRIVE,
                         "the player's game to reach the hut")
-                .then(RENDER, () -> ctx.lookAt(Vec3.atCenterOf(hut[0].getPieces().getFirst().getBoundingBox()
+                .then(1, () -> ctx.lookAt(Vec3.atCenterOf(hut[0].getPieces().getFirst().getBoundingBox()
                         .getCenter())))
-                .thenScreenshot(2, "worn_hut_on_its_foundations")
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "worn_hut_on_its_foundations")
                 .then(1, () -> {
                     final BoundingBox box = hut[0].getPieces().getFirst().getBoundingBox();
                     int birch = 0;
@@ -137,8 +141,9 @@ public final class PlacesClientTests {
         })
                 .thenAssert(1, () -> town[0] != null, "a town stands in the test land")
                 .thenWaitUntil(() -> arrived(ctx, stand[0], middle[0]), ARRIVE, "the player's game to reach the town")
-                .then(RENDER, () -> ctx.lookAt(Vec3.atCenterOf(middle[0])))
-                .thenScreenshot(2, "town_at_its_first_stage")
+                .then(1, () -> ctx.lookAt(Vec3.atCenterOf(middle[0])))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "town_at_its_first_stage")
                 .thenServer(1, level -> {
                     final ServerLevel land = level.getServer().getLevel(LAND);
                     grown[0] = land != null && Settlements.advance(land, key[0], 2)
@@ -146,8 +151,10 @@ public final class PlacesClientTests {
                             .stages();
                 })
                 .thenAssert(1, () -> grown[0], "two days on, the town stands at its last stage")
-                .then(RENDER, () -> ctx.lookAt(Vec3.atCenterOf(middle[0])))
-                .thenScreenshot(2, "town_grown_two_days_on");
+                // The buildings put up reach the player's game as block changes first, then are drawn.
+                .then(CHANGES, () -> ctx.lookAt(Vec3.atCenterOf(middle[0])))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "town_grown_two_days_on");
     }
 
     @ClientTest(timeoutTicks = 1200)

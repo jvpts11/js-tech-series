@@ -18,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,6 +27,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -33,6 +35,8 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -241,6 +245,15 @@ public final class ClientTestContext {
     /** Waits until the open screen is a {@code type}. */
     public <T extends Screen> ClientTestContext thenAwaitScreen(final Class<T> type, final int maxTicks) {
         return thenWaitUntil(() -> type.isInstance(mc.screen), maxTicks, "screen " + type.getSimpleName());
+    }
+
+    /**
+     * Waits until the land round the player has reached their game and been drawn: every chunk within their view
+     * distance there, and no section of it left to build. Land the server is still making arrives over many seconds,
+     * from the player outwards, so a fixed wait photographs its far edge with holes in it.
+     */
+    public ClientTestContext thenAwaitLandDrawn(final int maxTicks) {
+        return thenWaitUntil(this::landDrawn, maxTicks, "the land round the player to reach their game and be drawn");
     }
 
     /**
@@ -664,10 +677,22 @@ public final class ClientTestContext {
         }
     }
 
-    /** Saves the current frame as {@code ct-<test>-<label>.png} under the game's screenshots folder. */
+    /**
+     * Saves the current frame as {@code ct-<test>-<label>.png} under the game's screenshots folder, or fails the test.
+     * It is written here and now, not by the game's own screenshot, which writes it later on another thread and only
+     * logs a failure: a picture another program holds open would keep the last run's in its place, unnoticed.
+     */
     public String screenshot(final String label) {
         final String name = "ct-" + testName.replace('.', '_') + "-" + label + ".png";
-        Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), message -> { });
+        final File folder = new File(mc.gameDirectory, Screenshot.SCREENSHOT_DIR);
+        if (!folder.isDirectory() && !folder.mkdirs()) {
+            throw new ClientTestFailure("the screenshots folder " + folder + " could not be made");
+        }
+        try (NativeImage frame = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+            frame.writeToFile(new File(folder, name));
+        } catch (final IOException failed) {
+            throw new ClientTestFailure("the screenshot " + name + " could not be written", failed);
+        }
         screenshots.add(name);
         return name;
     }
@@ -736,6 +761,27 @@ public final class ClientTestContext {
 
     public void fail(final String message) {
         throw new ClientTestFailure(message);
+    }
+
+    /*
+     * Whether every chunk within the player's view distance, less the ring at its edge the server may send last, is in
+     * their game, and nothing is left to build for drawing; the server sends a round view, not a square one.
+     */
+    private boolean landDrawn() {
+        final ClientLevel level = mc.level;
+        if (level == null || mc.player == null) {
+            return false;
+        }
+        final int reach = Math.max(1, mc.options.getEffectiveRenderDistance() - 1);
+        final ChunkPos at = mc.player.chunkPosition();
+        for (int dx = -reach; dx <= reach; dx++) {
+            for (int dz = -reach; dz <= reach; dz++) {
+                if (dx * dx + dz * dz <= reach * reach && !level.getChunkSource().hasChunk(at.x + dx, at.z + dz)) {
+                    return false;
+                }
+            }
+        }
+        return mc.levelRenderer.hasRenderedAllSections();
     }
 
     /* Which way the device at that absolute position faces: the face it turns to whoever placed it. */

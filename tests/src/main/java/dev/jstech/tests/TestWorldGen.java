@@ -26,6 +26,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.structure.Structure;
 
 /**
@@ -87,6 +88,12 @@ public final class TestWorldGen {
      */
     public static final WorldGen.DimensionSpec TEST_LAND = WorldGen.dimension(id("test_land")).terrain(TERRAIN)
             .biome(STEPPE.key(), 0.5F, 0F).biome(FROST.key(), -0.5F, 0F).runtimeOnly().declare();
+    /**
+     * The game's own overworld ground under plains, nothing of the series in it: what the test land's generation is
+     * measured against.
+     */
+    public static final WorldGen.DimensionSpec VANILLA_LAND = WorldGen.dimension(id("vanilla_land"))
+            .noise(NoiseGeneratorSettings.OVERWORLD).biome(Biomes.PLAINS).runtimeOnly().declare();
     /** Veins of iron with some tin in the test land's stone, below its layers, in half its zones. */
     public static final ResourceLocation IRON_VEINS = Deposits.deposit(id("test_iron")).mineral(SeriesMaterials.IRON, 3)
             .mineral(SeriesMaterials.TIN, 1).heights(16, 40).frequency(0.5).size(14, 5).density(0.6).biomes(LAND)

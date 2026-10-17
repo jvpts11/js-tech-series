@@ -48,8 +48,8 @@ public final class TerrainClientTests {
             ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "land_view"));
     private static final int CELLS = 64;
     private static final int ARRIVE = 600;
-    /* Long enough for the client to build the chunks round the player before the picture is taken. */
-    private static final int RENDER = 160;
+    /* Ticks after the land is drawn before the picture, for a frame of it to be shown. */
+    private static final int SHOOT = 5;
     private static final long NOON = 6_000L;
     /* Where the player stands to see a landform: off its edge, above it, and clear of the ground under it. */
     private static final double OFF = 1.6;
@@ -101,19 +101,22 @@ public final class TerrainClientTests {
                 .thenAssert(1, () -> found[0] != null && found[1] != null,
                         "the test land holds a clear crater on the steppe and a clear lake on the frost")
                 .thenWaitUntil(() -> arrived(ctx, stands[0], tops[0]), ARRIVE, "the player's game to reach the crater")
-                .then(RENDER, () -> ctx.lookAt(Vec3.atCenterOf(tops[0])))
-                .thenScreenshot(2, "crater_on_the_steppe")
+                .then(1, () -> ctx.lookAt(Vec3.atCenterOf(tops[0])))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "crater_on_the_steppe")
                 .then(1, () -> expect(ctx, tops[0], "the crater's floor", Blocks.GRAVEL))
                 .thenServer(1, level -> go(ctx, level.getServer().getLevel(LAND), Vec3.atCenterOf(tops[0])
                         .add(0, HIGH, HIGH)))
                 .thenWaitUntil(() -> arrived(ctx, Vec3.atCenterOf(tops[0]).add(0, HIGH, HIGH), tops[0]), ARRIVE,
                         "the player's game to rise over the land")
-                .then(RENDER, () -> ctx.lookAt(Vec3.atCenterOf(tops[0])))
-                .thenScreenshot(2, "the_land_from_above")
+                .then(1, () -> ctx.lookAt(Vec3.atCenterOf(tops[0])))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "the_land_from_above")
                 .thenServer(1, level -> go(ctx, level.getServer().getLevel(LAND), stands[1]))
                 .thenWaitUntil(() -> arrived(ctx, stands[1], tops[1]), ARRIVE, "the player's game to reach the lake")
-                .then(RENDER, () -> ctx.lookAt(Vec3.atCenterOf(tops[1])))
-                .thenScreenshot(2, "frozen_lake_on_the_frost")
+                .then(1, () -> ctx.lookAt(Vec3.atCenterOf(tops[1])))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "frozen_lake_on_the_frost")
                 .then(1, () -> expect(ctx, tops[1], "the frost's lake", Blocks.ICE, Blocks.PACKED_ICE));
     }
 
@@ -140,8 +143,9 @@ public final class TerrainClientTests {
                 .thenAssert(1, () -> found[0] != null, "the test land holds a vein of its iron")
                 .thenWaitUntil(() -> arrived(ctx, stand[0], new BlockPos(found[0].x(), found[0].y(), found[0].z())),
                         ARRIVE, "the player's game to reach the cut")
-                .then(RENDER, () -> ctx.lookAt(new Vec3(found[0].x(), found[0].y() + 0.5, found[0].z() + 0.5)))
-                .thenScreenshot(2, "iron_vein_cut_open")
+                .then(1, () -> ctx.lookAt(new Vec3(found[0].x(), found[0].y() + 0.5, found[0].z() + 0.5)))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "iron_vein_cut_open")
                 .then(1, () -> {
                     final VeinField.Vein vein = found[0];
                     int ores = 0;
@@ -181,8 +185,9 @@ public final class TerrainClientTests {
         })
                 .thenAssert(1, () -> found[0] != null, "the test land holds a reservoir of its brine")
                 .thenWaitUntil(() -> arrived(ctx, stand[0], middle[0]), ARRIVE, "the player's game to reach the cut")
-                .then(RENDER, () -> ctx.lookAt(Vec3.atCenterOf(middle[0])))
-                .thenScreenshot(2, "brine_reservoir_cut_open")
+                .then(1, () -> ctx.lookAt(Vec3.atCenterOf(middle[0])))
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SHOOT, "brine_reservoir_cut_open")
                 .then(1, () -> {
                     expect(ctx, middle[0], "the reservoir's middle", Blocks.MUD);
                     expect(ctx, middle[0].above((int) Math.ceil(found[0].body().thickness()) + 1), "its cap",
