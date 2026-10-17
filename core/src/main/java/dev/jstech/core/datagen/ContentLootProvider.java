@@ -8,6 +8,7 @@
 package dev.jstech.core.datagen;
 
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.ModContent;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +28,8 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 
 /**
  * Writes the loot table of every block a mod declared, from what it was declared to drop. Every declared block gets
- * a table, even one that drops nothing, so none is left to the game's default.
+ * a table, even one that drops nothing, so none is left to the game's default; but one whose table is written by hand,
+ * which the data run's check still asks for.
  */
 public final class ContentLootProvider extends LootTableProvider {
 
@@ -54,6 +56,9 @@ public final class ContentLootProvider extends LootTableProvider {
                     case SELF -> dropSelf(entry.get());
                     case SELF_WITH_CONTENTS -> add(entry.get(), this::selfWithContents);
                     case NONE -> add(entry.get(), noDrop());
+                    case HANDMADE -> {
+                        // Its table is the mod's own, in its data.
+                    }
                 }
             }
         }
@@ -68,7 +73,8 @@ public final class ContentLootProvider extends LootTableProvider {
 
         @Override
         protected Iterable<Block> getKnownBlocks() {
-            return content.declaredBlocks().stream().<Block>map(BlockEntry::get).toList();
+            return content.declaredBlocks().stream().filter(entry -> entry.drops() != Drops.HANDMADE)
+                    .<Block>map(BlockEntry::get).toList();
         }
     }
 }

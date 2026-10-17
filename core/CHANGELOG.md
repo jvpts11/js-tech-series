@@ -690,6 +690,31 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Travelling between dimensions with what one rides: a vehicle and everyone in it go together and arrive at a
   safe place near where they were sent, on firm ground with room above, a platform laid where there is no ground;
   a mod shows the passage through a screen of its own instead of the game's "loading terrain".
+- Hazards: one kit for whatever harms a body from where it is. Kinds of harm every mod shares (radiation,
+  electrical, cryogenic, acid, heat, blast, pressure, dust, toxic, glare), any damage of the game or of a mod made one
+  of them by a tag; what worn things and each kind of creature stop of each, as data, adding up by kind and cutting
+  the damage as it lands, shown in the tooltip. A hazard builds up in a body from its sources, cut by what is worn
+  against it, harms in bands, goes away away from its sources, faster with a medicine or a shower a mod gives it,
+  kills with a death message of its own, and creatures
+  suffer the kinds that harm them. The dimensions' bad air, heat and cold are kinds of it.
+- Hazards of carried things, as data: a hot ingot burns the hand, sodium goes off in the rain, a pyrophoric
+  powder catches fire, an unstable charge goes off in a fall, a toxic or corrosive thing harms its carrier and a
+  blinding one blinds, each named in the tooltip with what protects from it.
+- The lungs: coal dust, silica and asbestos breathed, breaking their blocks or near a machine, build up black
+  lung, silicosis and asbestosis, a lasting harm that heals slowly or hardly at all, from a cough to the lungs
+  failing; masks and respirators stop their share.
+- The hazard devices, items of the series' shared content in yellow cases with black faces: the Geiger counter,
+  its needle on a scale of tens, its range and a lamp for every click, clicking faster as the rate climbs and named in
+  the subtitles; the pocket dosimeter, the dose taken and its band; and the hazard map, the land round the player with
+  a hazard on each chunk measured. Carried, each shows on the HUD in the corner and at the size the player chose;
+  used, it is held up full size, or the map opens whole. The body's screen, on its own key, a worn panel of green
+  enamel with the dose, the rate here, a shower lamp, the lungs, dissonance and the other hazards.
+- Maps of hazards: an instrument carried reads its hazard at each chunk onto the player's map, kept through
+  death, and a mod's sensor adds its own readings; what was never read stays grey.
+- The land withering: where radiation or pollution is high grass dies into withered grass, plants wither to
+  dead bushes and crops stop growing, and they come back slowly where it falls.
+- Hazard settings: radiation can be turned off as a whole, and so can creatures suffering hazards, the lungs,
+  the hazards of carried things and the land withering.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

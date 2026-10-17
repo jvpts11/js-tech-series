@@ -105,6 +105,8 @@ public final class JsTests {
         TestWorldChanges.declare();
         // An acid rain and a storm of lightning, the weathers the sky kit is tried with.
         TestSkies.declare();
+        // A hazard of the test mod's own and a contamination of the land, to prove the Core's hazard kit.
+        TestHazards.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);

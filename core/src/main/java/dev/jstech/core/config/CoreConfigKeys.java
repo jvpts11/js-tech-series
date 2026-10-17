@@ -274,11 +274,40 @@ public final class CoreConfigKeys {
             .comment("How many letters a name given to an element may have.")
             .named("Longest name").unit("letters").activeWhen(ELEMENTS_DISCOVERERS_NAME);
 
+    /** Whether there is radiation at all. */
+    public static final ConfigKey<Boolean> HAZARDS_RADIATION = ConfigKey.flag(HAZARDS + ".radiation", true)
+            .comment("Whether there is radiation at all: off, no dose builds up, nothing is contaminated, no source "
+                    + "gives any off and the instruments read nothing.")
+            .named("Radiation");
+
     /** Whether minerals with uranium or thorium in them are naturally radioactive. */
     public static final ConfigKey<Boolean> HAZARDS_NATURAL_RADIOACTIVITY = ConfigKey.flag(
             HAZARDS + ".natural_radioactivity", true)
             .comment("Whether every mineral with uranium or thorium in it is naturally radioactive, at a low rate.")
-            .named("Radioactive minerals");
+            .named("Radioactive minerals").activeWhen(HAZARDS_RADIATION);
+
+    /** Whether creatures suffer hazards as players do. */
+    public static final ConfigKey<Boolean> HAZARDS_MOBS_SUFFER = ConfigKey.flag(HAZARDS + ".mobs_suffer", true)
+            .comment("Whether creatures suffer hazards as players do: animals sicken and die in a contaminated place.")
+            .named("Creatures suffer hazards");
+
+    /** Whether dusts breathed harm the lungs. */
+    public static final ConfigKey<Boolean> HAZARDS_LUNGS = ConfigKey.flag(HAZARDS + ".lungs", true)
+            .comment("Whether coal dust, silica and asbestos breathed without a mask build up a lasting harm to the "
+                    + "lungs.")
+            .named("Dust harms the lungs");
+
+    /** Whether what a player carries harms them. */
+    public static final ConfigKey<Boolean> HAZARDS_ITEM_HAZARDS = ConfigKey.flag(HAZARDS + ".item_hazards", true)
+            .comment("Whether what is carried harms its carrier: a hot ingot burns, sodium catches fire in the rain, a "
+                    + "radioactive rod doses.")
+            .named("Hazards of what is carried");
+
+    /** Whether contamination withers the land. */
+    public static final ConfigKey<Boolean> HAZARDS_WITHERING = ConfigKey.flag(HAZARDS + ".withering", true)
+            .comment("Whether the world shows contamination: grass dies, plants wither and crops stop growing where "
+                    + "radiation or pollution is high, and come back slowly where it falls.")
+            .named("Contamination withers the land");
 
     /** Whether a pipe of a liquid freezes where the place is colder than the liquid's melting point. */
     public static final ConfigKey<Boolean> HEAT_PIPES_FREEZE = ConfigKey.flag(HEAT + ".pipes_freeze", true)
@@ -505,7 +534,12 @@ public final class CoreConfigKeys {
             .key(ELEMENTS_DISCOVERERS_NAME, NamingBalance::setDiscoverersName)
             .key(ELEMENTS_REQUIRE_IUM, NamingBalance::setRequireIum)
             .key(ELEMENTS_LONGEST_NAME, NamingBalance::setLongest)
+            .key(HAZARDS_RADIATION, HazardBalance::setRadiation)
             .key(HAZARDS_NATURAL_RADIOACTIVITY, HazardBalance::setNaturalRadioactivity)
+            .key(HAZARDS_MOBS_SUFFER, HazardBalance::setMobsSuffer)
+            .key(HAZARDS_LUNGS, HazardBalance::setLungs)
+            .key(HAZARDS_ITEM_HAZARDS, HazardBalance::setItemHazards)
+            .key(HAZARDS_WITHERING, HazardBalance::setWithering)
             .key(HEAT_PIPES_FREEZE, HeatBalance::setPipesFreeze)
             .key(HEAT_BOIL_OFF, HeatBalance::setBoilOff)
             .key(HEAT_OVERHEATING_DAMAGES, HeatBalance::setOverheatingDamages)

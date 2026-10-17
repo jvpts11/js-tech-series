@@ -1,0 +1,13 @@
+{
+  "arrow": "#FFFFFFFF",
+  "grid": "#28000000",
+  "hot": "#FFE8501E",
+  "hottest": "#FFE01E1E",
+  "mild": "#FFF8B840",
+  "mildest": "#FFF0DC60",
+  "never": "#FF808080",
+  "normal": "#FF5A9A3A",
+  "sweep": "#7878FFA0",
+  "unread": "#A0383838",
+  "warm": "#FFF08A30"
+}

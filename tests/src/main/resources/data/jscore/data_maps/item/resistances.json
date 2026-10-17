@@ -1,0 +1,11 @@
+{
+  "values": {
+    "minecraft:turtle_helmet": {
+      "jscore:heat": 0.25,
+      "jscore:inhaled": 0.9
+    },
+    "minecraft:golden_chestplate": {
+      "jscore:heat": 0.5
+    }
+  }
+}

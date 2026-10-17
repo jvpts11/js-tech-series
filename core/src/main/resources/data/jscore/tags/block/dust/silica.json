@@ -1,0 +1,9 @@
+{
+  "values": [
+    "#minecraft:base_stone_overworld",
+    "minecraft:sandstone",
+    "minecraft:red_sandstone",
+    "minecraft:quartz_block",
+    "minecraft:nether_quartz_ore"
+  ]
+}

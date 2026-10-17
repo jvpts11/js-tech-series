@@ -22,7 +22,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -38,14 +37,14 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 
 /**
  * What a dimension's rules do: its pull on every living thing in it, its weather, and the air, heat and cold a player
- * not made for them suffers, each a {@link DimensionHazardEvent} another mod may cancel. The hazards are weighed once
- * a second and their harm dealt each tick, so a choking player's air runs down as smoothly as under water.
+ * not made for them suffers, each a {@link DimensionHazardEvent} another mod may cancel. The hazards are kinds of the
+ * hazard kit ({@link DimensionHazards}), weighed once a second with their harm dealt each tick, so a choking player's
+ * air runs down as smoothly as under water.
  */
 public final class DimensionEffects {
 
@@ -53,7 +52,6 @@ public final class DimensionEffects {
     /** What a dimension's pull is kept under on every living thing, so it is taken off when the thing leaves. */
     private static final ResourceLocation GRAVITY = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "dimension_gravity");
-    private static final int WEIGH_EVERY = 20;
     /* A player out of water gets back four of air a tick; five taken leaves one a tick lost, as under water. */
     private static final int AIR_TAKEN = 5;
     private static final int DROWNED_AT = -20;
@@ -62,8 +60,8 @@ public final class DimensionEffects {
     private static final int COLD_GIVEN = 3;
     private static final float BURN_SECONDS = 3.0F;
 
-    /** The hazards each player stands in, as last weighed. */
-    private static final Map<UUID, Set<DimensionHazardEvent.Hazard>> SUFFERING = new ConcurrentHashMap<>();
+    /** The hazards each player stands in, as last weighed, and in which tick. */
+    private static final Map<UUID, Weighed> WEIGHED = new ConcurrentHashMap<>();
 
     private DimensionEffects() {
     }
@@ -108,62 +106,82 @@ public final class DimensionEffects {
         return hazards;
     }
 
-    /** Deals one tick of the hazards {@code player} was last weighed to suffer. */
+    /**
+     * The hazards {@code player} stands in this tick, weighed at most once a tick however many ask: what the hazard
+     * kit's kinds of a place's air and climate build up from.
+     */
+    public static Set<DimensionHazardEvent.Hazard> weighed(final Player player) {
+        final long now = player.level().getGameTime();
+        final Weighed last = WEIGHED.get(player.getUUID());
+        if (last != null && last.tick() == now) {
+            return last.hazards();
+        }
+        final Set<DimensionHazardEvent.Hazard> hazards = weigh(player);
+        WEIGHED.put(player.getUUID(), new Weighed(now, hazards));
+        return hazards;
+    }
+
+    /** Deals one tick of {@code hazards} to {@code player}. */
     public static void suffer(final Player player, final Set<DimensionHazardEvent.Hazard> hazards) {
-        if (hazards.contains(DimensionHazardEvent.Hazard.AIR)) {
-            final int air = player.getAirSupply() - AIR_TAKEN;
-            if (air <= DROWNED_AT) {
-                player.setAirSupply(0);
-                player.hurt(player.damageSources().drown(), DROWNING_DAMAGE);
-            } else {
-                player.setAirSupply(air);
+        hazards.forEach(hazard -> suffer(player, hazard));
+    }
+
+    /** Deals one tick of {@code hazard} to {@code player}: the air runs out, the cold freezes, the air poisons. */
+    public static void suffer(final Player player, final DimensionHazardEvent.Hazard hazard) {
+        switch (hazard) {
+            case AIR -> {
+                final int air = player.getAirSupply() - AIR_TAKEN;
+                if (air <= DROWNED_AT) {
+                    player.setAirSupply(0);
+                    player.hurt(player.damageSources().drown(), DROWNING_DAMAGE);
+                } else {
+                    player.setAirSupply(air);
+                }
+            }
+            case COLD -> {
+                if (player.canFreeze()) {
+                    player.setTicksFrozen(Math.min(player.getTicksRequiredToFreeze(),
+                            player.getTicksFrozen() + COLD_GIVEN));
+                }
+            }
+            case CARBON_DIOXIDE -> {
+                if (!player.hasEffect(MobEffects.CONFUSION)) {
+                    player.addEffect(new MobEffectInstance(MobEffects.CONFUSION, RoomHazards.NAUSEA_TICKS));
+                }
+            }
+            case OXYGEN -> {
+                if (player.tickCount % RoomHazards.POISONS_EVERY == 0) {
+                    player.hurt(RoomHazards.oxygen(player.level()), RoomHazards.POISON_DAMAGE);
+                }
+            }
+            case HEAT -> {
+                // The heat sets the player alight once a second, when it is weighed.
             }
         }
-        if (hazards.contains(DimensionHazardEvent.Hazard.COLD) && player.canFreeze()) {
-            player.setTicksFrozen(Math.min(player.getTicksRequiredToFreeze(), player.getTicksFrozen() + COLD_GIVEN));
-        }
-        if (hazards.contains(DimensionHazardEvent.Hazard.CARBON_DIOXIDE) && !player.hasEffect(MobEffects.CONFUSION)) {
-            player.addEffect(new MobEffectInstance(MobEffects.CONFUSION, RoomHazards.NAUSEA_TICKS));
-        }
-        if (hazards.contains(DimensionHazardEvent.Hazard.OXYGEN) && player.tickCount % RoomHazards.POISONS_EVERY == 0) {
-            player.hurt(RoomHazards.oxygen(player.level()), RoomHazards.POISON_DAMAGE);
-        }
+    }
+
+    /** Sets {@code player} alight for a few seconds, as the heat of a scorching place does once a second. */
+    static void ignite(final Player player) {
+        player.igniteForSeconds(BURN_SECONDS);
     }
 
     /** Hands the game's bus what this answers, once, from the mod's constructor. */
     public static void listen() {
-        NeoForge.EVENT_BUS.addListener(PlayerTickEvent.Post.class, DimensionEffects::onPlayerTick);
+        DimensionHazards.declare();
         NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, DimensionEffects::onJoinLevel);
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, DimensionEffects::onLoggedOut);
         NeoForge.EVENT_BUS.addListener(LevelEvent.Load.class, DimensionEffects::onLevelLoad);
     }
 
-    public static void onPlayerTick(final PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        Set<DimensionHazardEvent.Hazard> hazards = SUFFERING.get(player.getUUID());
-        if (hazards == null || player.tickCount % WEIGH_EVERY == 0) {
-            hazards = weigh(player);
-            if (hazards.contains(DimensionHazardEvent.Hazard.HEAT)) {
-                player.igniteForSeconds(BURN_SECONDS);
-            }
-            SUFFERING.put(player.getUUID(), hazards);
-        }
-        if (!hazards.isEmpty()) {
-            suffer(player, hazards);
-        }
-    }
-
     public static void onJoinLevel(final EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide() && event.getEntity() instanceof LivingEntity living) {
             applyGravity(living);
-            SUFFERING.remove(living.getUUID());
+            WEIGHED.remove(living.getUUID());
         }
     }
 
     public static void onLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
-        SUFFERING.remove(event.getEntity().getUUID());
+        WEIGHED.remove(event.getEntity().getUUID());
     }
 
     /**
@@ -206,7 +224,7 @@ public final class DimensionEffects {
                     }
                 }
             }
-            SUFFERING.clear();
+            WEIGHED.clear();
         });
     }
 
@@ -216,5 +234,9 @@ public final class DimensionEffects {
         if (applies && !NeoForge.EVENT_BUS.post(new DimensionHazardEvent(player, hazard, rules)).isCanceled()) {
             hazards.add(hazard);
         }
+    }
+
+    /* The hazards a player stood in, as weighed in one tick. */
+    private record Weighed(long tick, Set<DimensionHazardEvent.Hazard> hazards) {
     }
 }

@@ -1,0 +1,16 @@
+{
+  "amber": "#FFF0BE3C",
+  "backlight": "#3C60D070",
+  "band": "#FFE6783C",
+  "dial": "#FF969696",
+  "dim": "#FF8C8C8C",
+  "green": "#FF6EC83C",
+  "lampDark": "#FF323232",
+  "lampOff": "#FF3C3C3C",
+  "mould": "#FF3C2E00",
+  "needle": "#FFFF503C",
+  "pivot": "#FFC8C8C8",
+  "red": "#FFE63C32",
+  "unit": "#FFBEBEBE",
+  "white": "#FFFFFFFF"
+}

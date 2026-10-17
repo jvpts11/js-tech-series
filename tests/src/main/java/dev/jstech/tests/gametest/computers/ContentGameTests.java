@@ -208,13 +208,17 @@ public final class ContentGameTests {
 
     /**
      * A block that drops itself drops just its own item, mined with the best tool, and so does one that keeps its
-     * contents in the item (empty here, with no block entity behind it); one that drops nothing, nothing.
+     * contents in the item (empty here, with no block entity behind it); one that drops nothing, nothing. One whose
+     * loot table is written by hand drops what its table says, which the test of that block checks.
      */
     @GameTest(template = ARENA)
     public static void declaredBlocks_dropWhatTheyDeclare(final GameTestHelper helper) {
         final List<String> wrong = new ArrayList<>();
         for (final ModContent content : ModContent.all()) {
             for (final BlockEntry<?> block : content.declaredBlocks()) {
+                if (block.drops() == Drops.HANDMADE) {
+                    continue;
+                }
                 final List<ItemStack> drops = block.get().defaultBlockState().getDrops(
                         new LootParams.Builder(helper.getLevel())
                                 .withParameter(LootContextParams.ORIGIN, Vec3.ZERO)

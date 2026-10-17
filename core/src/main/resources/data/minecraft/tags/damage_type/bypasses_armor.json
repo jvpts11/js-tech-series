@@ -2,6 +2,9 @@
   "replace": false,
   "values": [
     "jscore:electric",
-    "jscore:oxygen_toxicity"
+    "jscore:oxygen_toxicity",
+    "jscore:lung_failure",
+    "jscore:hot_item",
+    "jscore:corrosive_item"
   ]
 }

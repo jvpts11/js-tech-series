@@ -32,7 +32,7 @@ public static final BlockEntry<Block> COPPER_BOX = CONTENT.block("copper_box", B
 | `look(...)` | How it is drawn (below). | yes |
 | `item()` or `item((block, props) -> ...)` | Gives it an item, the plain kind or one you make. | no |
 | `itemLook(...)` | How its item is drawn, when not like the block. | no |
-| `drops(Drops.SELF)` / `drops(Drops.NONE)` | What breaking it gives. The default is itself when it has an item, nothing otherwise. | no |
+| `drops(Drops.SELF)` / `drops(Drops.NONE)` | What breaking it gives. The default is itself when it has an item, nothing otherwise. `Drops.SELF_WITH_CONTENTS` keeps what its block entity holds in the item; `Drops.HANDMADE` uses a loot table written by hand in the mod's data (grass giving dirt unless broken with silk touch) and generates none. | no |
 | `tab(section)` | The creative tab section it shows in. | no |
 | `tag(tagKey)` | A block tag it belongs to; repeat for more. | no |
 | `geo(look)` | Drawn by a GeckoLib model instead of a block model ([Screens](SCREENS.md#models)). | no |

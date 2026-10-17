@@ -19,6 +19,8 @@ import net.minecraft.advancements.AdvancementNode;
 import net.minecraft.advancements.AdvancementType;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.advancements.critereon.ImpossibleTrigger;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.components.SubtitleOverlay;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
 import net.minecraft.client.gui.screens.advancements.AdvancementWidget;
 import net.minecraft.core.BlockPos;
@@ -35,7 +37,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * The Core's reaches into the player's game, each checked by what it does, so a new version of the game that moves
  * what one reaches fails here: the aim lands on a part standing out of a block; an advancement's title runs past the
- * game's 163 pixels; and the toasts say which of their slots they hold.
+ * game's 163 pixels; the toasts say which of their slots they hold; and the game's subtitles can be told of a sound.
  */
 public final class ReachClientTests {
 
@@ -45,8 +47,23 @@ public final class ReachClientTests {
     private static final int GAME_TITLE_WIDTH = 163;
     private static final String LONG_TITLE = "Have You Tried Turning It Off and On Again, and Then Off Once More?";
     private static final String OCCUPIED_SLOTS = "occupiedSlots";
+    private static final String SUBTITLE_OVERLAY = "subtitleOverlay";
 
     private ReachClientTests() {
+    }
+
+    /* The test mod is built without the Core's access transformer: it finds the field by its name, as the game runs. */
+    @ClientTest(timeoutTicks = 100)
+    public static void subtitles_nameWhatIsNotHeard(final ClientTestContext ctx) {
+        ctx.then(0, () -> {
+            try {
+                final Field overlay = Gui.class.getDeclaredField(SUBTITLE_OVERLAY);
+                ctx.assertTrue(Modifier.isPublic(overlay.getModifiers()), "the game's subtitles are open to reach");
+                ctx.assertTrue(overlay.get(ctx.mc().gui) instanceof SubtitleOverlay, "and its HUD keeps them");
+            } catch (final NoSuchFieldException | IllegalAccessException moved) {
+                ctx.assertTrue(false, "the game's subtitles moved: " + moved);
+            }
+        });
     }
 
     @ClientTest(timeoutTicks = 400)

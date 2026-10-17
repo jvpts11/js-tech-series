@@ -1,0 +1,7 @@
+{
+  "chapter": "jscore",
+  "icon": "jscore:geiger_counter",
+  "id": "jscore:hazards",
+  "order": 6,
+  "title": "jscore.guide.section.hazards"
+}

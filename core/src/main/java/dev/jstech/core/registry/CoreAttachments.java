@@ -10,6 +10,8 @@ package dev.jstech.core.registry;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.LevelGrids;
+import dev.jstech.core.hazard.HazardLevels;
+import dev.jstech.core.hazard.HazardMap;
 import dev.jstech.core.heat.LevelHeat;
 import dev.jstech.core.mechanical.LevelMechanics;
 import dev.jstech.core.multiblock.LevelStructures;
@@ -88,6 +90,16 @@ public final class CoreAttachments {
     public static final Supplier<AttachmentType<Laws>> OWN_LAWS =
             ATTACHMENT_TYPES.register("own_laws", () -> AttachmentType.builder(() -> Laws.NONE)
                     .serialize(Laws.CODEC).build());
+
+    /** What has built up of each hazard in a living thing: saved with it, and gone with its death. */
+    public static final Supplier<AttachmentType<HazardLevels>> HAZARDS =
+            ATTACHMENT_TYPES.register("hazards", () -> AttachmentType.builder(HazardLevels::new)
+                    .serialize(HazardLevels.CODEC).build());
+
+    /** What a player knows of the land's hazards, chunk by chunk: saved with them, and kept through death. */
+    public static final Supplier<AttachmentType<HazardMap>> HAZARD_MAP =
+            ATTACHMENT_TYPES.register("hazard_map", () -> AttachmentType.builder(HazardMap::new)
+                    .serialize(HazardMap.CODEC).copyOnDeath().build());
 
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");

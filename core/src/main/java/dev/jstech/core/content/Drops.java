@@ -26,5 +26,11 @@ public enum Drops {
      * multiblock whose controller spills what it holds and pops its item while the rest of the structure is taken
      * down without drops).
      */
-    NONE
+    NONE,
+
+    /**
+     * A loot table written by hand in the mod's data, used as it is: nothing is generated. For what the other
+     * choices cannot say, as grass gives dirt unless it is broken with silk touch.
+     */
+    HANDMADE
 }

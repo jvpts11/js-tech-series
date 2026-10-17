@@ -1,0 +1,70 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.geiger_counter.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.geiger_counter.for"
+    },
+    {
+      "type": "define",
+      "definition": "jscore.guide.geiger_counter.definition1",
+      "term": "jscore.guide.geiger_counter.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.geiger_counter.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.geiger_counter.use1",
+        "jscore.guide.geiger_counter.use2",
+        "jscore.guide.geiger_counter.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.geiger_counter.fix1",
+          "problem": "jscore.guide.geiger_counter.problem1"
+        },
+        {
+          "fix": "jscore.guide.geiger_counter.fix2",
+          "problem": "jscore.guide.geiger_counter.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:geiger_counter",
+  "id": "jscore:geiger_counter",
+  "items": [
+    "jscore:geiger_counter"
+  ],
+  "order": 19,
+  "section": "jscore:hazards",
+  "title": "jscore.guide.geiger_counter.title"
+}

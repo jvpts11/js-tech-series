@@ -57,6 +57,12 @@ import dev.jstech.core.effect.EffectSettings;
 import dev.jstech.core.effect.Effects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.DimensionTravel;
+import dev.jstech.core.hazard.HazardMaps;
+import dev.jstech.core.hazard.Hazards;
+import dev.jstech.core.hazard.ItemHazards;
+import dev.jstech.core.hazard.Lungs;
+import dev.jstech.core.hazard.Resistances;
+import dev.jstech.core.hazard.Withering;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.heat.BlockConductivity;
@@ -110,6 +116,10 @@ import dev.jstech.core.jstechseries.persistor.PersistorGuide;
 import dev.jstech.core.jstechseries.persistor.PersistorSettings;
 import dev.jstech.core.jstechseries.persistor.SpacePersistor;
 import dev.jstech.core.jstechseries.energy.ClampMeter;
+import dev.jstech.core.jstechseries.hazard.HazardDeviceSettings;
+import dev.jstech.core.jstechseries.hazard.HazardDevices;
+import dev.jstech.core.jstechseries.hazard.HazardGuide;
+import dev.jstech.core.jstechseries.hazard.WitheredGrass;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.energy.JsEnergyGuide;
@@ -268,6 +278,14 @@ public final class JsCore {
         Rooms.listen(modEventBus);
         // How sound travels: each player told the air round their head, and blasts ringing ears.
         Acoustics.listen();
+        // Hazards: kinds of harm and what resists them, and what builds up in a body from where it is.
+        Resistances.listen(modEventBus);
+        Hazards.listen(modEventBus);
+        HazardMaps.listen(modEventBus);
+        ItemHazards.listen(modEventBus);
+        Lungs.listen();
+        // The world showing contamination: grass dying and plants withering where it is high.
+        Withering.listen();
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -313,6 +331,9 @@ public final class JsCore {
         SpacePersistor.declare();
         // The Atmosphere Detector, which reads the air of a sealed room or a place and shows the room.
         AtmosphereDetector.declare();
+        // The hazard devices (the Geiger counter, the dosimeter, the hazard map) and the grass contamination kills.
+        HazardDevices.declare();
+        WitheredGrass.declare();
         MultiblockBuilder.declare();
         SharedTools.declare();
         NetworkProbe.declare();
@@ -323,6 +344,7 @@ public final class JsCore {
         ProjectorGuide.declare();
         AtmosphereGuide.declare(PersistorGuide.declare());
         ToolsGuide.declare();
+        HazardGuide.declare();
         LinesGuide.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
@@ -355,6 +377,8 @@ public final class JsCore {
         ConfigFiles.register(StyleSettings.FILE, modEventBus, modContainer);
         // Where a player's notifications appear and what they silenced, read on their own game only.
         ConfigFiles.register(NotificationSettings.FILE, modEventBus, modContainer);
+        // Where a player's hazard devices show on their HUD and how big, read on their own game only.
+        ConfigFiles.register(HazardDeviceSettings.FILE, modEventBus, modContainer);
         // Which of the Core's systems of looks step aside for a mod that does their job, on a player's game only.
         ConfigFiles.register(StepAside.FILE, modEventBus, modContainer);
         // How light looks on a player's game: coloured light, dynamic light, glow and their reach.
@@ -405,6 +429,7 @@ public final class JsCore {
         BigPayloads.listen(modEventBus);
         CableBreaking.listen();
         ClampMeter.listen(modEventBus);
+        HazardDevices.listen(modEventBus);
         NetworkProbe.listen(modEventBus);
         SignalProbe.listen(modEventBus);
         MultiblockBuilder.listen(modEventBus);

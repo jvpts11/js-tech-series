@@ -42,7 +42,7 @@ public final class NaturalRadioactivity {
 
     /** Whether {@code material} is a naturally radioactive mineral, in a world that has them. */
     public static boolean radioactive(final Material material) {
-        if (!HazardBalance.naturalRadioactivity()) {
+        if (!HazardBalance.radiation() || !HazardBalance.naturalRadioactivity()) {
             return false;
         }
         final Optional<Mineral> mineral = material.mineral();
