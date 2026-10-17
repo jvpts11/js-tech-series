@@ -94,7 +94,7 @@
   "items": [
     "jscore:network_probe"
   ],
-  "order": 15,
+  "order": 16,
   "section": "cables",
   "title": "jscore.guide.network_probe.title"
 }

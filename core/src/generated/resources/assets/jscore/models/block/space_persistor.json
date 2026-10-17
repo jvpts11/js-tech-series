@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "jscore:block/space_persistor/bottom",
+    "side": "jscore:block/space_persistor/side",
+    "top": "jscore:block/space_persistor/top"
+  }
+}

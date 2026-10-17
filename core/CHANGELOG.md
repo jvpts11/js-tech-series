@@ -624,6 +624,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stopped by operators with `/jstech event`, and switched off, made rarer or made harmless by the server's settings.
 - Fields over the chunks that spread and fade (fallout, pollution), worked out away from the tick and sent to
   the players near them.
+- The Space Persistor, the series' chunk loader: it keeps an area round it loaded and working for its owner,
+  nearest chunk first. Its screen is a map of the land round it, the chunks it keeps outlined and another owner's
+  hatched, a click adding a chunk or taking it off, zoomed from 16 to 128 chunks across; keys for a square, a circle, a
+  line or only the chunks clicked, drums for the radius, an LCD of what it keeps, its owner's count and the server's,
+  and a plate to name it. Each chunk costs power (200 W of J's Energy by default, set by the server, or nothing at
+  all, when it has no port); short of power, switched off or broken, it lets every chunk go.
+- A server's budget of loaded chunks: every owner together keeps at most 400 by default, besides each owner's
+  own number; `/jstech chunks` counts them, and `/jstech chunks map` shows an operator every place keeping chunks,
+  and whose it is, on their own map. The chunks a machine keeps are an area on its owner's team's maps.
+- Machine screens of their own: a mod's machine whose screen is unlike every other's opens its own on the same
+  menu, keeping the tabs, plates, lamps and Protection tab of every machine; a machine that holds no items leaves the
+  inventory off its Main tab, and one whose energy a setting turns off offers no port.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

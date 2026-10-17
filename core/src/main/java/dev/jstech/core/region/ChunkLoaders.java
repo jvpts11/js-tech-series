@@ -34,9 +34,10 @@ import net.neoforged.neoforge.common.world.chunk.TicketHelper;
 
 /**
  * Chunks kept loaded for somebody: a machine keeps the chunks it works in loaded while nobody is near, under the name
- * of the player or the team that owns it, and each owner may keep only so many loaded across the whole world. A
- * source is the block that asked; breaking it should release what it holds, and a source that no longer holds
- * anything when the world loads again has its chunks let go of.
+ * of the player or the team that owns it; each owner may keep only so many loaded across the whole world, and every
+ * owner together only as many as the server's budget. A source is the block that asked; breaking it should release
+ * what it holds, and a source that no longer holds anything when the world loads again has its chunks let go of. The
+ * chunks each source keeps are a marker on its owner's team's maps ({@link LoadedChunkMarkers}).
  */
 public final class ChunkLoaders {
 
@@ -58,7 +59,9 @@ public final class ChunkLoaders {
          * The owner keeps as many chunks loaded as they may; nothing new is loaded. A source that changed owner or
          * ticking with this request has already let go of its old chunks, as it starts again under its new terms.
          */
-        LIMIT_REACHED
+        LIMIT_REACHED,
+        /** Every owner together keeps as many chunks loaded as the server's budget allows; nothing new is loaded. */
+        SERVER_FULL
     }
 
     /** Hands the game the controller, on the mod's event bus. */
@@ -85,11 +88,15 @@ public final class ChunkLoaders {
         if (loadedBy(level.getServer(), owner) >= ChunkLoadingBalance.limit()) {
             return LoadOutcome.LIMIT_REACHED;
         }
+        if (loadedOnServer(level.getServer()) >= ChunkLoadingBalance.serverBudget()) {
+            return LoadOutcome.SERVER_FULL;
+        }
         final Source kept = held != null ? held : new Source(owner, ticking, new LongLinkedOpenHashSet());
         kept.chunks.add(chunk.toLong());
         ledger.sources.put(source.immutable(), kept);
         ledger.setDirty();
         CONTROLLER.forceChunk(level, source, chunk.x, chunk.z, true, ticking);
+        LoadedChunkMarkers.changed(level, source, owner, kept.chunks);
         return LoadOutcome.LOADED;
     }
 
@@ -105,6 +112,7 @@ public final class ChunkLoaders {
             ledger.sources.remove(source);
         }
         ledger.setDirty();
+        LoadedChunkMarkers.changed(level, source, held.owner, held.chunks);
     }
 
     /** Lets go of every chunk the source kept loaded, as a broken machine does. */
@@ -118,6 +126,7 @@ public final class ChunkLoaders {
             CONTROLLER.forceChunk(level, source, ChunkPos.getX(chunk), ChunkPos.getZ(chunk), false, held.ticking);
         }
         ledger.setDirty();
+        LoadedChunkMarkers.changed(level, source, held.owner, LongSet.of());
     }
 
     /**
@@ -152,6 +161,17 @@ public final class ChunkLoaders {
         return count;
     }
 
+    /** How many chunks every owner together keeps loaded, across every dimension: what the server's budget counts. */
+    public static int loadedOnServer(final MinecraftServer server) {
+        int count = 0;
+        for (final ServerLevel level : server.getAllLevels()) {
+            for (final Source source : ledger(level).sources.values()) {
+                count += source.chunks.size();
+            }
+        }
+        return count;
+    }
+
     /** How many chunks each owner keeps loaded, across every dimension; an owner who keeps none is not in it. */
     public static Map<UUID, Integer> loadedPerOwner(final MinecraftServer server) {
         final Map<UUID, Integer> out = new LinkedHashMap<>();
@@ -172,6 +192,17 @@ public final class ChunkLoaders {
                 out.add(new ChunkPos(chunk));
             }
         }
+        return out;
+    }
+
+    /** Every source of {@code level} keeping chunks loaded, with the chunks it keeps. */
+    public static Map<BlockPos, Set<ChunkPos>> kept(final ServerLevel level) {
+        final Map<BlockPos, Set<ChunkPos>> out = new LinkedHashMap<>();
+        ledger(level).sources.forEach((pos, source) -> {
+            final Set<ChunkPos> chunks = new LinkedHashSet<>();
+            source.chunks.forEach(chunk -> chunks.add(new ChunkPos(chunk)));
+            out.put(pos, chunks);
+        });
         return out;
     }
 

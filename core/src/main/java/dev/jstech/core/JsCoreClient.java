@@ -75,6 +75,7 @@ import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.jstechseries.energy.client.ClampMeterClient;
 import dev.jstech.core.jstechseries.energy.client.EnergyConvertersClient;
 import dev.jstech.core.jstechseries.builder.client.BuilderClient;
+import dev.jstech.core.jstechseries.persistor.client.PersistorClient;
 import dev.jstech.core.jstechseries.projector.client.ProjectorClient;
 import dev.jstech.core.jstechseries.probe.client.NetworkProbeClient;
 import dev.jstech.core.jstechseries.probe.client.SignalProbeClient;
@@ -112,6 +113,7 @@ public final class JsCoreClient {
         ClientStateEvents.listen();
         EnergyConvertersClient.listen(modEventBus);
         ProjectorClient.listen(modEventBus);
+        PersistorClient.listen();
         BuilderClient.listen(modEventBus);
         ConfigClient.listen();
         ConnectedPacks.listen(modEventBus);

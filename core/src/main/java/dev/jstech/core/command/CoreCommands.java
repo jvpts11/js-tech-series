@@ -18,6 +18,8 @@ import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionAxes;
 import dev.jstech.core.progression.ProgressionAxis;
 import dev.jstech.core.region.ChunkLoaders;
+import dev.jstech.core.region.ChunkLoadingBalance;
+import dev.jstech.core.region.LoadedChunkMarkers;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -54,6 +56,12 @@ public final class CoreCommands {
             "%s keeps %s chunks loaded");
     public static final TextKey CHUNKS_RELEASED = TextKey.of("jscore.command.chunks.released",
             "Let go of the %s chunks %s kept loaded");
+    public static final TextKey CHUNKS_SERVER = TextKey.of("jscore.command.chunks.server",
+            "Every owner together keeps %s chunks loaded, of the server's %s");
+    public static final TextKey CHUNKS_MAPPED = TextKey.of("jscore.command.chunks.mapped",
+            "Shown %s places keeping chunks loaded on your map");
+    public static final TextKey CHUNKS_UNMAPPED = TextKey.of("jscore.command.chunks.unmapped",
+            "Took the places keeping chunks loaded off your map");
     public static final TextKey DIMENSION_MADE = TextKey.of("jscore.command.dimension.made",
             "Made the dimension %s, a copy of %s");
     public static final TextKey DIMENSION_REMOVED = TextKey.of("jscore.command.dimension.removed",
@@ -106,6 +114,9 @@ public final class CoreCommands {
                                 .then(Commands.argument(STEP, StringArgumentType.word()).suggests(STEPS)
                                         .executes(CoreCommands::setProgress)))));
         SeriesCommands.declare("chunks", SeriesCommands.GAME_MASTERS, (node, context) -> node
+                .executes(CoreCommands::showServerChunks)
+                .then(Commands.literal("map").executes(CoreCommands::mapChunks)
+                        .then(Commands.literal("hide").executes(CoreCommands::unmapChunks)))
                 .then(Commands.argument(PLAYERS, EntityArgument.players())
                         .executes(CoreCommands::showChunks)
                         .then(Commands.literal("release").executes(CoreCommands::releaseChunks))));
@@ -161,6 +172,25 @@ public final class CoreCommands {
             total += held;
         }
         return total;
+    }
+
+    private static int showServerChunks(final CommandContext<CommandSourceStack> context) {
+        final int held = ChunkLoaders.loadedOnServer(context.getSource().getServer());
+        context.getSource().sendSuccess(() -> GameText.component(CHUNKS_SERVER.with(held,
+                ChunkLoadingBalance.serverBudget())), false);
+        return held;
+    }
+
+    private static int mapChunks(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        final int shown = LoadedChunkMarkers.showAll(context.getSource().getPlayerOrException());
+        context.getSource().sendSuccess(() -> GameText.component(CHUNKS_MAPPED.with(shown)), false);
+        return shown;
+    }
+
+    private static int unmapChunks(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        final int hidden = LoadedChunkMarkers.hideAll(context.getSource().getPlayerOrException());
+        context.getSource().sendSuccess(() -> GameText.component(CHUNKS_UNMAPPED.text()), false);
+        return hidden;
     }
 
     private static int releaseChunks(final CommandContext<CommandSourceStack> context)

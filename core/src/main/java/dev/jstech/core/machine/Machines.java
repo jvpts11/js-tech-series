@@ -107,10 +107,10 @@ public final class Machines {
     private static void register(final RegisterCapabilitiesEvent event, final BlockEntityType<?> type) {
         final BlockEntityType<BlockEntity> any = (BlockEntityType<BlockEntity>) type;
         event.registerBlockEntity(EnergyPorts.PORT, any, (entity, side) ->
-                entity instanceof MachineBlockEntity machine && open(machine, MachineResource.ENERGY, side)
-                        ? machine.power().portStore() : null);
+                entity instanceof MachineBlockEntity machine && machine.takesEnergy()
+                        && open(machine, MachineResource.ENERGY, side) ? machine.power().portStore() : null);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, any, (entity, side) -> {
-            if (!(entity instanceof MachineBlockEntity machine)) {
+            if (!(entity instanceof MachineBlockEntity machine) || !machine.takesEnergy()) {
                 return null;
             }
             final EnergyStore store = machine.power().portStore();

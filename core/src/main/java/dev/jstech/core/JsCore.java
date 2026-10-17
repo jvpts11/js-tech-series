@@ -96,6 +96,9 @@ import dev.jstech.core.jstechseries.containment.ContainmentGuide;
 import dev.jstech.core.jstechseries.containment.SharedContainment;
 import dev.jstech.core.jstechseries.projector.ProjectorGuide;
 import dev.jstech.core.jstechseries.projector.StructureProjector;
+import dev.jstech.core.jstechseries.persistor.PersistorGuide;
+import dev.jstech.core.jstechseries.persistor.PersistorSettings;
+import dev.jstech.core.jstechseries.persistor.SpacePersistor;
 import dev.jstech.core.jstechseries.energy.ClampMeter;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
@@ -286,6 +289,8 @@ public final class JsCore {
         EnergyConverters.declare();
         SharedContainment.declare();
         StructureProjector.declare();
+        // The Space Persistor, the series' chunk loader, which keeps any mod's machines working far away.
+        SpacePersistor.declare();
         MultiblockBuilder.declare();
         SharedTools.declare();
         NetworkProbe.declare();
@@ -294,6 +299,7 @@ public final class JsCore {
         JsEnergyGuide.declare();
         ContainmentGuide.declare();
         ProjectorGuide.declare();
+        PersistorGuide.declare();
         ToolsGuide.declare();
         LinesGuide.declare();
         CoreItems.register(modEventBus);
@@ -319,6 +325,8 @@ public final class JsCore {
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
         // J's Energy's settings: whether it is on, what the wrong voltage does, and how it speaks FE.
         ConfigFiles.register(JsEnergySettings.FILE, modEventBus, modContainer);
+        // What the Space Persistor's chunks cost in power, which may be nothing.
+        ConfigFiles.register(PersistorSettings.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
         // The styles a player chose for the screens of every mod, read on their own game only.

@@ -77,6 +77,7 @@ public final class CoreConfigKeys {
     private static final int MAX_MEDIA_FILE_MEGABYTES = 1024;
     private static final int MAX_MEDIA_QUOTA_MEGABYTES = 1_048_576;
     private static final int MAX_CHUNKS_PER_OWNER = 4096;
+    private static final int MAX_SERVER_CHUNKS = 65_536;
     private static final double MAX_VEIN_FACTOR = 100;
     private static final double MAX_EVENT_FACTOR = 100;
     private static final int MIN_AUDIT_ENTRIES = 100;
@@ -195,6 +196,14 @@ public final class CoreConfigKeys {
             .comment("How many chunks one player or team may keep loaded through machines, across every dimension; "
                     + "0 lets nobody keep any.")
             .named("Loaded chunks per owner").unit("chunks");
+
+    /** How many chunks every owner together may keep loaded through the series' machines: the server's budget. */
+    public static final ConfigKey<Integer> WORLD_CHUNKS_SERVER_BUDGET = ConfigKey.whole(
+            WORLD + ".chunks_server_budget", ChunkLoadingBalance.DEFAULT_SERVER_BUDGET)
+            .range(0, MAX_SERVER_CHUNKS)
+            .comment("How many chunks every player and team together may keep loaded through machines, across every "
+                    + "dimension: the server's budget, besides each owner's own number; 0 lets nobody keep any.")
+            .named("Loaded chunks on the server").unit("chunks");
 
     /** Whether players on one team may hurt each other. */
     public static final ConfigKey<Boolean> PROTECTION_TEAM_DAMAGE = ConfigKey.flag(PROTECTION + ".team_damage", false)
@@ -434,6 +443,7 @@ public final class CoreConfigKeys {
             .key(MEDIA_PLAYER_QUOTA_MEGABYTES, MediaBalance::setPlayerQuotaMegabytes)
             .key(CALENDAR_DAYS_PER_SEASON, WorldCalendar::setDaysPerSeason)
             .key(WORLD_CHUNKS_PER_OWNER, ChunkLoadingBalance::setLimit)
+            .key(WORLD_CHUNKS_SERVER_BUDGET, ChunkLoadingBalance::setServerBudget)
             .key(PROTECTION_TEAM_DAMAGE, ProtectionBalance::setTeamDamage)
             .key(PROTECTION_AUDIT, ProtectionBalance::setAudit)
             .key(PROTECTION_AUDIT_ENTRIES, ProtectionBalance::setAuditEntries)

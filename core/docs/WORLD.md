@@ -769,9 +769,38 @@ ChunkLoaders.releaseAll(level, machinePos);
   it loaded.
 - Each owner may keep a number of chunks across every dimension: 25 unless the server says otherwise
   (`world.chunks_per_owner` in `jstech-balance.toml`, 0 to 4,096). Past it, `load` answers `LIMIT_REACHED`.
+- Every owner together may keep only the server's budget: 400 unless the server says otherwise
+  (`world.chunks_server_budget`, 0 to 65,536). Past it, `load` answers `SERVER_FULL`, however much room the owner
+  has left. `ChunkLoaders.loadedOnServer(server)` counts them.
 - The Core remembers what each source keeps. A source that holds nothing when the world loads (its block is gone)
   has its chunks let go.
-- `/jstech chunks <player>` shows what a player keeps loaded, and releases it ([Commands](COMMANDS.md)).
+- The chunks a source keeps are an area on the maps of its owner's team (the layer "Chunks kept loaded",
+  `LoadedChunkMarkers.LAYER`), kept up to date as it loads and lets go of them.
+- `/jstech chunks <player>` shows what a player keeps loaded, and releases it; `/jstech chunks` counts every owner's
+  against the budget, and `/jstech chunks map` shows an operator every place keeping chunks, and whose it is, on their
+  own map ([Commands](COMMANDS.md)).
+
+### The Space Persistor
+
+*Added 2026-10-17.*
+
+The series' chunk loader, a machine of the Core's kit that any mod may use (`SpacePersistor.BLOCK`). Its owner
+places it and it keeps an area round it loaded and ticking, nearest chunk first, as far as their number and the
+server's budget allow; its own chunk is always in it. Its screen is its own (no inventory: it holds no items):
+
+- a map of the land round it in the game's map colours, chunk by chunk, its area outlined in moving dashes and another
+  owner's chunks hatched; a click on a chunk adds it or takes it off, the wheel or the keys zoom from 16 to 128 chunks
+  across;
+- the shape keys: a square, a circle (a radius of one is the plus round it), a line across the way it faces, or only
+  the chunks clicked; and the radius' drums, 0 to 99;
+- an LCD of what it keeps, its owner's against their number, every owner's against the budget, and its power; its
+  switch; the lamps KEEPING and FULL (refused for want of room, asked again once a second);
+- its name plate, which a click lets the player name; unnamed, it shows the biome it stands in.
+
+Each chunk costs power: 200 W of J's Energy at the low class, unless the server says otherwise
+(`persistor.watts_per_chunk` in `jstech-persistor.toml`). Short of power, switched off or broken, it lets every chunk
+go. Set to 0, it takes no energy at all: no port, no FE, no Protection tab. Only a player who may set it up changes it
+from its screen.
 
 ## What can go wrong
 
@@ -796,7 +825,10 @@ ChunkLoaders.releaseAll(level, machinePos);
   server's settings keep it off, or, for one round a place, no player stands in its biomes. Start it with
   `/jstech event start` to see it.
 - **A field stops spreading.** Its `every` is 0, so only `stepNow` moves it.
-- **A machine stops when you walk away.** It did not ask for its chunk, or its owner has reached the limit.
+- **A machine stops when you walk away.** It did not ask for its chunk, its owner has reached the limit, or the
+  server its budget (`/jstech chunks`).
+- **A Space Persistor's FULL lamp is lit.** Its owner keeps as many chunks as they may, or the server its budget: it
+  keeps the nearest that fit and asks for the rest again once a second.
 - **Players in a dimension take damage.** Its rules say the air cannot be breathed, or it is too hot or cold. A
   mod's suit must cancel `DimensionHazardEvent` to protect them.
 - **A landform never generates.** Its biomes hold none of the biomes where you are looking, its `cell` is very

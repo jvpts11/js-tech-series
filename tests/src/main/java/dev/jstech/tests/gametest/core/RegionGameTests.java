@@ -13,6 +13,7 @@ import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.region.ChunkLoadingBalance;
 import dev.jstech.core.region.RegionIndex;
 import dev.jstech.tests.JsTests;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -25,7 +26,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Core's world by where things are: a region index kept in a dimension, and chunks kept loaded for an owner, up
- * to the owner's limit and no further, and let go of again.
+ * to the owner's limit and the server's budget and no further, and let go of again.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -91,5 +92,29 @@ public final class RegionGameTests {
             ChunkLoadingBalance.setLimit(limit);
             throw failed;
         }
+    }
+
+    /* A batch of its own: the server's budget is every owner's, and lowering it would starve the tests beside it. */
+    @GameTest(template = ARENA, batch = "jscore_chunk_budget")
+    public static void chunkLoaders_stopAtTheServersBudget(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos source = new BlockPos(FAR + 64, 64, FAR);
+        final ChunkPos chunk = new ChunkPos(source);
+        final int budget = ChunkLoadingBalance.serverBudget();
+        try {
+            ChunkLoadingBalance.setServerBudget(ChunkLoaders.loadedOnServer(level.getServer()));
+            helper.assertTrue(ChunkLoaders.load(level, source, UUID.randomUUID(), chunk, true)
+                    == ChunkLoaders.LoadOutcome.SERVER_FULL, "an owner with room is refused by a full server");
+            helper.assertTrue(ChunkLoaders.loadedFrom(level, source).isEmpty(), "and nothing is kept");
+            ChunkLoadingBalance.setServerBudget(ChunkLoaders.loadedOnServer(level.getServer()) + 1);
+            helper.assertTrue(ChunkLoaders.load(level, source, UUID.randomUUID(), chunk, true)
+                    == ChunkLoaders.LoadOutcome.LOADED, "one more in the budget lets it in");
+            helper.assertTrue(ChunkLoaders.kept(level).getOrDefault(source, Set.of()).contains(chunk),
+                    "the server knows which source keeps it");
+        } finally {
+            ChunkLoaders.releaseAll(level, source);
+            ChunkLoadingBalance.setServerBudget(budget);
+        }
+        helper.succeed();
     }
 }

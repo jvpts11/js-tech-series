@@ -69,19 +69,15 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
     private final List<IMachineFace> faces = new ArrayList<>();
     private int ticks;
 
-    private static final ResourceLocation STEEL = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+    /** The steel face every machine's tabs are drawn on. */
+    public static final ResourceLocation STEEL = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "textures/gui/machine/steel_face.png");
-    private static final ResourceLocation TAB_ICONS = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
-            "textures/gui/machine/tabs.png");
-    private static final List<TextKey> TAB_NAMES = List.of(MachineScreenTexts.TAB_MAIN, MachineScreenTexts.TAB_SIDES,
-            MachineScreenTexts.TAB_REDSTONE, MachineScreenTexts.TAB_UPGRADES, MachineScreenTexts.TAB_PROTECTION);
-    private static final List<TextKey> LAMP_WORDS = List.of(MachineScreenTexts.RUN, MachineScreenTexts.WAIT,
-            MachineScreenTexts.FAULT);
-    private static final int ICON = 16;
+    /** The tabs' names, in their order. */
+    public static final List<TextKey> TAB_NAMES = List.of(MachineScreenTexts.TAB_MAIN,
+            MachineScreenTexts.TAB_SIDES, MachineScreenTexts.TAB_REDSTONE, MachineScreenTexts.TAB_UPGRADES,
+            MachineScreenTexts.TAB_PROTECTION);
     private static final int INVENTORY_WORD_X = 8;
     private static final int INVENTORY_WORD_Y = 6;
-    private static final int PLATE_TEXT_ROOM = NAME_PLATE_MOST - 16;
-    private static final int LAMP_WORD_ROOM = 38;
 
     public MachineScreen(final MachineMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -94,10 +90,13 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
         this.faces.add(new ProtectionTab());
     }
 
-    /** Hands the mod's bus the screen, once, from the Core's client. */
+    /**
+     * Hands the mod's bus the screen, once, from the Core's client: a machine with a screen of its own opens that one
+     * ({@link MachineScreens}), every other this one.
+     */
     public static void listen(final IEventBus modBus) {
         modBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(Machines.MENU.get(),
-                MachineScreen::new));
+                MachineScreens::open));
     }
 
     @Override
@@ -151,7 +150,6 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
 
     @Override
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
-        final MachineArt.Colours c = MachineArt.PALETTE.get();
         final int active = this.menu.tab();
         for (int i = 0; i < TABS; i++) {
             if (i != active) {
@@ -165,8 +163,8 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
         g.blit(STEEL, this.leftPos + FACE_X, this.topPos + FACE_Y, 0, 0, FACE_WIDTH, FACE_HEIGHT, FACE_WIDTH,
                 FACE_HEIGHT);
         final MachineView view = view(g, mouseX, mouseY, partialTick);
-        plates(view, c);
-        lamps(view);
+        MachineChrome.plates(view, this.title);
+        MachineChrome.lamps(view);
         this.faces.get(active).draw(view);
         MachineArt.window(g, this.leftPos + INVENTORY_X, this.topPos + INVENTORY_Y,
                 this.leftPos + INVENTORY_X + INVENTORY_WIDTH, this.topPos + INVENTORY_Y + INVENTORY_HEIGHT, 0, 0);
@@ -210,45 +208,15 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
                     GameText.of(this.title), Text.literal(ProtectionTab.ownerName(owned)))));
         }
         if (MachineScreenLayout.on(fx, fy, LAMP_X - 1, LAMP_Y - 1, LAMP_WORD_X - LAMP_X + 24,
-                LAMP_PITCH * LAMP_WORDS.size())) {
+                LAMP_PITCH * MachineChrome.lampCount())) {
             return List.of(GameText.component(MachineBlockEntity.STATUS_LINE.with(view.machine().status().text())));
         }
         return this.faces.get(this.menu.tab()).tooltip(view, fx, fy);
     }
 
-    /* The machine's name on its aluminium plate, and its class, or FE, on the yellow one. */
-    private void plates(final MachineView view, final MachineArt.Colours c) {
-        final GuiGraphics g = view.g();
-        MachineArt.plate(g, this.font, view.x(PLATE_X), view.y(NAME_PLATE_Y), MachineArt.fit(this.font,
-                MachineWords.upper(GameText.of(this.title)), PLATE_TEXT_ROOM), c.aluminium(), c.plateInk());
-        final Optional<EnergyClass> port = view.machine().power().portClass();
-        final String rating = port.map(each -> MachineWords.upper(each.ratingKey().map(TextKey::text)
-                .orElse(each.name().text()))).orElse(MachineWords.upper(MachineScreenTexts.FE));
-        MachineArt.plate(g, this.font, view.x(PLATE_X), view.y(CLASS_PLATE_Y), MachineArt.fit(this.font, rating,
-                PLATE_TEXT_ROOM), c.classPlate(), c.classInk());
-    }
-
-    /* The three lamps, the one of the machine's state lit, their words engraved beside them. */
-    private static void lamps(final MachineView view) {
-        final MachineArt.Colours c = MachineArt.PALETTE.get();
-        final MachineStatus.Lamp lit = view.machine().status().lamp();
-        final int[] colours = {c.lampRun(), c.lampWait(), c.lampFault()};
-        final List<MachineStatus.Lamp> lamps = List.of(MachineStatus.Lamp.RUN, MachineStatus.Lamp.WAIT,
-                MachineStatus.Lamp.FAULT);
-        for (int i = 0; i < lamps.size(); i++) {
-            MachineArt.lamp(view.g(), view.x(LAMP_X), view.y(LAMP_Y + i * LAMP_PITCH), colours[i],
-                    lamps.get(i) == lit);
-            MachineArt.engrave(view.g(), view.font(), MachineArt.fit(view.font(), MachineWords.upper(
-                    LAMP_WORDS.get(i)), LAMP_WORD_ROOM), view.x(LAMP_WORD_X), view.y(LAMP_Y + 1 + i * LAMP_PITCH),
-                    false);
-        }
-    }
-
     /* Tab {@code index} on the window's top edge, with its icon. */
     private void tab(final GuiGraphics g, final int index, final boolean active) {
-        final int x = this.leftPos + MachineScreenLayout.tabX(index);
-        MachineArt.tab(g, x, this.topPos, active);
-        g.blit(TAB_ICONS, x + TAB_ICON, this.topPos + TAB_ICON, index * ICON, 0, ICON, ICON, ICON * TABS, ICON);
+        MachineChrome.tab(g, this.leftPos + MachineScreenLayout.tabX(index), this.topPos, index, active);
     }
 
     private MachineView view(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {

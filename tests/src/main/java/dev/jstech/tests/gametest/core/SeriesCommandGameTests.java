@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.core;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.gametest.GameTestPlayers;
+import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionAxes;
 import dev.jstech.core.region.ChunkLoaders;
@@ -27,7 +28,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The series' commands under {@code /jstech}, run as a player of the test's own would run them: where they stand
- * along an axis and putting them further, the chunks their machines keep loaded and letting go of them, and a player
+ * along an axis and putting them further, the chunks their machines keep loaded and letting go of them, the server's
+ * count of them and every place keeping them on an operator's map, and a player
  * without the right level never reaching them.
  */
 @GameTestHolder(JsTests.MODID)
@@ -88,6 +90,38 @@ public final class SeriesCommandGameTests {
             GameTestPlayers.leave(player);
         }
         helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void chunks_countsTheServerAndMapsEveryPlaceKeepingChunks(final GameTestHelper helper)
+            throws CommandSyntaxException {
+        final ServerPlayer player = GameTestPlayers.join(helper, "surveyor");
+        final BlockPos source = helper.absolutePos(new BlockPos(2, 2, 2));
+        final ChunkPos chunk = new ChunkPos(source);
+        try {
+            ChunkLoaders.load(helper.getLevel(), source, player.getUUID(), chunk, false);
+            helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS, "jstech chunks") >= 1,
+                    "the server's count holds the chunk kept");
+            helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS, "jstech chunks map") >= 1,
+                    "the map shows at least the one place keeping chunks");
+            helper.assertTrue(markersOver(helper, player, chunk) == 2, "the operator sees it twice: as its owner, and"
+                    + " among every place");
+            helper.assertTrue(run(helper, player, SeriesCommands.GAME_MASTERS, "jstech chunks map hide") >= 1,
+                    "hiding takes every place off");
+            helper.assertTrue(markersOver(helper, player, chunk) == 1, "and leaves the owner's own marker");
+            ChunkLoaders.releaseAll(helper.getLevel(), source);
+            helper.assertTrue(markersOver(helper, player, chunk) == 0, "which goes once the chunk is let go");
+        } finally {
+            ChunkLoaders.releaseAll(helper.getLevel(), source);
+            GameTestPlayers.leave(player);
+        }
+        helper.succeed();
+    }
+
+    /* How many of the markers {@code player} sees cover {@code chunk}. */
+    private static long markersOver(final GameTestHelper helper, final ServerPlayer player, final ChunkPos chunk) {
+        return MapMarkers.of(helper.getLevel().getServer(), player.getUUID()).stream()
+                .filter(marker -> marker.area().contains(chunk)).count();
     }
 
     /* Runs the command as {@code player} at that permission level, its answers kept off the log. */

@@ -15,18 +15,22 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.Locale;
 
-/** The words the machine screen engraves for faces and what they do, in capitals as the steel is lettered. */
-final class MachineWords {
+/**
+ * The words the machine screen engraves for faces and what they do, in capitals as the steel is lettered; a machine
+ * with a screen of its own letters its steel with {@link #upper} too.
+ */
+public final class MachineWords {
 
     private MachineWords() {
     }
 
     /** {@code text} as the steel is lettered. */
-    static String upper(final Text text) {
+    public static String upper(final Text text) {
         return GameText.resolve(text).toUpperCase(Locale.ROOT);
     }
 
-    static String upper(final TextKey key) {
+    /** The text of {@code key} as the steel is lettered. */
+    public static String upper(final TextKey key) {
         return upper(key.text());
     }
 

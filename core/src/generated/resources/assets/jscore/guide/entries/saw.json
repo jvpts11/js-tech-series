@@ -138,7 +138,7 @@
     "jscore:saw",
     "jscore:microblock"
   ],
-  "order": 14,
+  "order": 15,
   "section": "cables",
   "title": "jscore.guide.saw.title"
 }

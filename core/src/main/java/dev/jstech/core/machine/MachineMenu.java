@@ -109,7 +109,8 @@ public final class MachineMenu extends CoreMenu {
                     MachineScreenLayout.battery().y(), PROTECTION, false));
         }
         final SlotGroup protections = slots(guards.toArray(Slot[]::new));
-        final PlayerSlots player = playerInventory(inventory, MachineScreenLayout.playerInventory());
+        final PlayerSlots player = playerInventory(inventory, MachineScreenLayout.playerInventory(),
+                () -> tab != MAIN || machine.inventoryOnMain());
         shiftClick(player.main(), main, upgrades, protections, player.hotbar());
         shiftClick(player.hotbar(), main, upgrades, protections, player.main());
         shiftClick(main, player.main(), player.hotbar());

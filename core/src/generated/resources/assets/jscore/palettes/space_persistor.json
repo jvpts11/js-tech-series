@@ -1,0 +1,19 @@
+{
+  "aqua": "#FF55FFFF",
+  "aquaDark": "#FF145050",
+  "black": "#FF000000",
+  "dimEven": "#380A0E12",
+  "dimOdd": "#4D0A0E12",
+  "gridFar": "#22000000",
+  "gridNear": "#3C000000",
+  "keptFill": "#2E55FFFF",
+  "keyInk": "#FF3C2800",
+  "label": "#FFDCDCDC",
+  "labelGround": "#96000000",
+  "othersHatch": "#96FFAA00",
+  "shine": "#28FFFFFF",
+  "unknown": "#FF14181E",
+  "white": "#FFFFFFFF",
+  "zoomEdge": "#C8C8C8C8",
+  "zoomGround": "#A0000000"
+}

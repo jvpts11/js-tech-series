@@ -244,6 +244,23 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return power;
     }
 
+    /**
+     * Whether it takes energy at all now: a machine whose energy a setting turns off offers no port and no FE then.
+     * Every machine does, unless it says otherwise.
+     */
+    public boolean takesEnergy() {
+        return true;
+    }
+
+    /**
+     * Whether the player's inventory is under its Main tab: a machine that holds no items and draws a screen of its
+     * own ({@code MachineScreens}) leaves it off there, where its slots are neither drawn nor clicked, and shows it on
+     * the tabs that take items. Every machine has it, unless it says otherwise.
+     */
+    public boolean inventoryOnMain() {
+        return true;
+    }
+
     /** Its switch, its answer to redstone and what a comparator reads of it. */
     public MachineControl control() {
         return control;
@@ -678,6 +695,13 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return MachineStatus.WAITING;
     }
 
+    /**
+     * What it does once its state for the tick is known, whether it worked or something stopped it, before it may
+     * rest: a machine that holds something only while it works (chunks kept loaded) lets go of it here.
+     */
+    protected void settled(final ServerLevel level, final MachineStatus status) {
+    }
+
     /** Adds the values a machine of a mod lets the outside read and set, after every machine's own. */
     protected void declareParameters(final List<MachineParameter> declared) {
     }
@@ -886,6 +910,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         final MachineStatus result = stopped != null ? stopped : work(server);
         drawn.set(drawnThisTick);
         show(server, result);
+        settled(server, result);
         if (result.restful()) {
             asleep = true;
             wakeAt = now + SLEEP_AT_MOST;

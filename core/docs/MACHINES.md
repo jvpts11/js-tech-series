@@ -318,6 +318,22 @@ public List<FaceSlot> mainSlots() {
 }
 ```
 
+*Added 2026-10-17:* a machine whose screen is unlike every other's (the Space Persistor's map, say) opens a screen of
+its own on the same menu, so its buttons, its tabs and its Protection tab stay every machine's:
+
+```java
+MachineScreens.register(machine -> machine instanceof MyLoaderBlockEntity, MyLoaderScreen::new);  // client setup
+```
+
+The screen is a `CoreContainerScreen<MachineMenu>`; `MachineChrome` draws the tabs, the plates and the lamps as the
+standard screen does, and `ProtectionTab` is the tab itself. Three hooks of the machine go with it:
+
+- `inventoryOnMain()` false leaves the player's inventory off its Main tab, neither drawn nor clicked, for a machine
+  that holds no items; it shows on the tabs that take items.
+- `takesEnergy()` false offers no port and no FE, for a machine whose energy a setting turns off.
+- `settled(level, status)` runs after every tick's work, with what it came to: what the machine does when it stops
+  (lets go of what it held, say) goes there.
+
 ## Recipes
 
 *Added 2026-10-05.*
