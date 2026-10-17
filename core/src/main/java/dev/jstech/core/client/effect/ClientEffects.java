@@ -66,6 +66,17 @@ public final class ClientEffects {
         start(id, holder, at, way, Optional::empty, 0, 1.0F);
     }
 
+    /**
+     * Holds the effect {@code id} as {@link #hold(Object, ResourceLocation, Supplier, Supplier)} does, in the colour
+     * {@code rgb} ({@code 0xRRGGBB}) in place of its own, each particle keeping its own transparency: rain of any
+     * liquid, dust of any colour.
+     */
+    public static void hold(final Object holder, final ResourceLocation id, final Supplier<Vec3> at,
+                            final Supplier<Vec3> way, final int rgb) {
+        EffectEngine.stop(holder);
+        start(id, holder, at, way, Optional::empty, 0xFF << 24 | rgb, 1.0F);
+    }
+
     /** Plays the effect {@code id} on the block at {@code pos}, where its file anchors it, until let go. */
     public static void holdOnBlock(final Object holder, final ResourceLocation id, final BlockPos pos) {
         EffectEngine.stop(holder);

@@ -700,6 +700,8 @@ A dimension's rules are a data file, `data/<namespace>/dimension_rules/<path>.js
 | `temperature` | Degrees Celsius. Above 60 burns, below -30 freezes. | -273.15 to 10,000 | 15 |
 | `weather` | `natural`, `clear`, `rain` or `thunder`. | | `natural` |
 | `pressure` | Kilopascals. | 0 to 100,000 | 101.3 |
+| `clock` | Its own clock: `day` (ticks, 1,200 to 24,000,000), `locked_at` (a world locked to its star, the time of day its sun is held at) and `year` (its days). *Added 2026-10-17.* | | none: the overworld's clock |
+| `wind` | How hard its wind blows, as a share of the overworld's. *Added 2026-10-17.* | 0 to 20 | 1 |
 
 Every rule is optional. The Core applies them: entities fall as the gravity says; once a second a player in air
 they cannot breathe, or in heat or cold past the limits, is hurt; the weather follows the rule. Before hurting a
@@ -729,6 +731,85 @@ ServerLevel base = RuntimeDimensions.getOrCreate(server,
 The copy has the template's terrain and rules, and is made again every time the server starts until it is
 removed with `RuntimeDimensions.remove(server, key)`. Asking for one that exists gives it back. An operator can do
 the same with `/jstech dimension create <id> <template>` and `remove <id>` ([Commands](COMMANDS.md)).
+
+## Sky, time and weather
+
+*Added 2026-10-17.*
+
+### Each dimension's own day and year
+
+A dimension whose rules give it a `clock` keeps its own time, apart from the overworld's, which nothing changes:
+
+```json
+{ "clock": { "day": 25200, "year": 687 } }     // a day of 21 minutes, a year of 687 of them
+{ "clock": { "locked_at": 6000 } }              // locked to its star: its sun held at noon
+```
+
+Its day moves as fast as its length says while the game's daylight cycle runs, the players' sun moving with it, and
+its time is kept with the world (a dimension given a clock in a world already played starts at the overworld's time
+of day). Its calendar follows its own year: `WorldCalendar.now(level)` gives seasons a quarter of it each, and
+`WorldCalendar.orbit(level)` where its world stands round its star, 0 to 1. `DayClocks.of(level)` reads the clock.
+
+### The sky kit
+
+A dimension whose kind of place is drawn as `jscore:sky` (`"effects"` in its dimension type, or
+`WorldGen.dimension(...).effects(Skies.EFFECTS)`) has its sky drawn by the Core from a data file,
+`data/<namespace>/skies/<path>.json` for the dimension `<namespace>:<path>`; a copy made while the game runs takes its
+template's:
+
+```json
+{ "sky_colour": "#C99A6E", "sunset_colour": "#5E8FD6",
+  "suns": [{ "kind": "g", "distance": 1.52 }, { "kind": "m", "offset": 0.08, "distance": 3 }],
+  "bodies": [{ "texture": "mymod:textures/sky/moon.png", "size": 0.8, "orbit_days": 7, "tilt": 5, "turn_days": 7,
+               "rings": { "colour": "#D8C9A0", "inner": 1.4, "outer": 2.3, "tilt": 20 } }],
+  "stars": { "count": 2500 }, "galaxy": { "tilt": 60 }, "nebulae": [{ "colour": "#FF5090", "yaw": 40 }],
+  "aurora": { "colour": "#40FF90" }, "clouds": { "height": 160, "density": 0.4 }, "haze": { "colour": "#C08A60" } }
+```
+
+- **Suns**, each of a kind of star (`o`, `b`, `a`, `f`, `g`, `k`, `m`, `white_dwarf`, `red_giant`) that gives its
+  colour and size, smaller the farther it is, `offset` turns round the sky from the first, which the clock follows.
+- **Planets and moons**, spheres lit from where the first sun stands, so their phases come of the geometry, their
+  surface (a map of the whole of it, pole to pole) wrapped round them and turning once in `turn_days`, coming round
+  to the sun again in `orbit_days`; their dark side is the colour of the sky behind, and one passing over a sun
+  eclipses it, the day darkening to a tenth at totality.
+- **Stars**, square as the game's, **the band of the galaxy**, **nebulae** and **an aurora** over the north at night.
+- **The colour of the sky, its fog and its sunsets**; **clouds** of their own height, colour and density (0 for none);
+  **haze** that closes the view in.
+- **Sunlight by distance**: the day's light falls with the square of the first sun's distance (a dark day on Pluto),
+  and the suns' colours tint it. This is only what the player sees: the game's light levels, and what spawns and
+  grows by them, stay the overworld's.
+
+`SkyMath` holds the arithmetic (where things stand, how much of a sun a body hides, how much of it is lit, the light
+at a distance), without the game.
+
+### The weather kit
+
+A kind of weather says what falls and in what colour, how much it closes the view in and in what fog, how hard it
+makes the wind blow, what it does to a body out in it, and how often its lightning strikes. It comes with a world event
+of the same id ([World events](#world-events)), which says where, when and for how long, and warns of it:
+
+```java
+public static final ResourceLocation DUST_STORM = WorldEvents.event(rl("dust_storm"), MyTexts.DUST_STORM)
+        .in(MARS).chance(0.1).warning(6000).instrument(MyTags.BAROMETERS).lasts(12000).declare();
+public static final ResourceLocation DUST_STORM_WEATHER = Weathers.weather(DUST_STORM)
+        .falls(WeatherKind.Fall.DUST, 0xC08A60, 0.9).fog(0xB07A50, 0.7).wind(4).declare();
+public static final ResourceLocation ACID_RAIN_WEATHER = Weathers.weather(ACID_RAIN)
+        .falls(WeatherKind.Fall.RAIN, 0x9CE05A, 0.6).harms(rl("acid"), 1, 2).gives(POISON_ID, 0, 4).declare();
+```
+
+or a file under `data/<namespace>/jstech/weathers/`, which replaces one declared in code:
+
+```json
+{ "event": "mymod:methane_rain", "falls": "rain", "colour": "#E0C890", "density": 0.5, "fog_colour": "#B09060",
+  "sight": 0.3, "wind": 1.5, "lightning": 2, "harm": { "damage_type": "mymod:acid", "amount": 1, "every": 2 },
+  "effect": { "effect": "minecraft:poison", "amplifier": 0, "seconds": 4 }, "sheltered": true }
+```
+
+What falls is `none`, `rain`, `snow` or `dust`, drawn round the player in the weather's colour. Once a second what
+lives out in a weather near a player is harmed and given its effect (a roof keeps it off, unless `sheltered` is
+false), its lightning strikes near the players out in it, and within its reach the wind blows as hard as it says. A
+server that makes the event harmless (`world_events.harmless`) makes its weather harmless too. `Weathers.at(level, pos)`
+says what weather is under way at a place, on either side.
 
 ## Data over areas of the world
 
@@ -827,6 +908,10 @@ from its screen.
 - **A field stops spreading.** Its `every` is 0, so only `stepNow` moves it.
 - **A machine stops when you walk away.** It did not ask for its chunk, its owner has reached the limit, or the
   server its budget (`/jstech chunks`).
+- **A dimension's day runs with the overworld's.** Its rules give it no `clock`, or the game's daylight cycle is off.
+- **A dimension's sky is the game's.** Its dimension type is not drawn as `jscore:sky`, or its sky file is not under
+  `data/<namespace>/skies/` named after it.
+- **A weather never falls.** Its world event is not under way where you stand: start it with `/jstech event start`.
 - **A Space Persistor's FULL lamp is lit.** Its owner keeps as many chunks as they may, or the server its budget: it
   keeps the nearest that fit and asks for the rest again once a second.
 - **Players in a dimension take damage.** Its rules say the air cannot be breathed, or it is too hot or cold. A

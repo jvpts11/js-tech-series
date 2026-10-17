@@ -1,0 +1,22 @@
+{
+  "sky_colour": "#7FA8E0",
+  "sunset_colour": "#5E8FD6",
+  "suns": [
+    {"kind": "g"},
+    {"kind": "m", "offset": 0.08, "distance": 2.5}
+  ],
+  "bodies": [
+    {"texture": "minecraft:textures/block/red_sand.png", "size": 1.4, "orbit_days": 6, "offset": 0.35, "tilt": 18,
+     "turn_days": 2, "rings": {"colour": "#D8C9A0", "inner": 1.4, "outer": 2.4, "tilt": 25}},
+    {"colour": "#C8C8C8", "size": 1.2, "orbit_days": 1, "offset": 0.75}
+  ],
+  "stars": {"count": 2500, "brightness": 1.2},
+  "galaxy": {"colour": "#C8D0FF", "brightness": 0.6, "tilt": 55},
+  "nebulae": [
+    {"colour": "#FF5090", "yaw": 40, "pitch": 35, "size": 30, "brightness": 0.5},
+    {"colour": "#50A0FF", "yaw": 200, "pitch": 50, "size": 22, "brightness": 0.4}
+  ],
+  "aurora": {"colour": "#40FF90", "top_colour": "#A040FF", "strength": 0.9},
+  "clouds": {"height": 120, "colour": "#F0E8FF", "density": 0.6},
+  "haze": {"colour": "#A0B8E0", "density": 0.15}
+}

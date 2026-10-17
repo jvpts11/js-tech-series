@@ -1,0 +1,11 @@
+{
+  "emitters": [
+    {
+      "name": "dust",
+      "emission": {"shape": {"type": "disc", "radius": 22}, "rate": 420, "life": [3, 5], "speed": [0.2, 0.8]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.2, 0.4],
+               "colour": ["#FFFFFF00", "#FFFFFF90", "#FFFFFF00"], "spin": 30},
+      "motion": {"gravity": 0.02, "drag": 2.5, "collide": true}
+    }
+  ]
+}

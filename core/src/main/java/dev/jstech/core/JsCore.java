@@ -43,6 +43,9 @@ import dev.jstech.core.diagnostic.DiagnosticCommands;
 import dev.jstech.core.diagnostic.DiagnosticNotifications;
 import dev.jstech.core.diagnostic.DiagnosticReports;
 import dev.jstech.core.diagnostic.Sections;
+import dev.jstech.core.dimension.DayClocks;
+import dev.jstech.core.sky.Skies;
+import dev.jstech.core.weather.Weathers;
 import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.effect.EffectSettings;
 import dev.jstech.core.effect.Effects;
@@ -250,6 +253,8 @@ public final class JsCore {
         LiveChanges.listen();
         WorldEdits.listen();
         WorldEvents.listen();
+        // The weathers the world events bring: what falls, the fog, the wind, and what they do out in them.
+        Weathers.listen();
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -368,8 +373,9 @@ public final class JsCore {
         // The multiblock patterns of every mod, read from data and declared in code.
         MultiblockPatterns.register();
         DataMachines.register();
-        // What each dimension is like to stand in, read from data.
+        // What each dimension is like to stand in, and what its sky holds, read from data.
         DimensionRulesData.register();
+        Skies.register();
         // The tasks every robot knows, before a world reads its robots back.
         CoreRobotTasks.declare();
         // The chunks machines keep loaded for their owners, under the game's own forced-chunk file.
@@ -411,6 +417,7 @@ public final class JsCore {
         DataRegistries.listen(modEventBus);
         DiagnosticReports.listen();
         DimensionEffects.listen();
+        DayClocks.listen();
         FieldCapabilities.listen(modEventBus);
         CoreGrids.listen();
         GuideGifts.listen();

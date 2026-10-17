@@ -636,6 +636,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A server's budget of loaded chunks: every owner together keeps at most 400 by default, besides each owner's
   own number; `/jstech chunks` counts them, and `/jstech chunks map` shows an operator every place keeping chunks,
   and whose it is, on their own map. The chunks a machine keeps are an area on its owner's team's maps.
+- (Core) Each dimension's own day and year: a dimension's rules can give it a day of any length, a world locked to its
+  star with its sun held still, and a year of its own days, its seasons a quarter of it and its world going round its
+  orbit; the overworld's day is never touched. Its wind can blow harder or softer than the overworld's.
+- (Core) The sky kit: a dimension's sky drawn from a data file, with suns coloured and sized by their kind of star and
+  dimmer the farther they are; planets and moons lit by the real geometry, so their phases and eclipses come of where
+  they stand, their surfaces turning and their rings leaning; square stars, the band of the galaxy, nebulae and an
+  aurora; the colour of its sky, fog and sunsets, its own clouds and haze. The day's light dims with the sun's
+  distance and in an eclipse, and takes the colour of its suns.
+- (Core) The weather kit: kinds of weather any mod declares, or a data pack writes, brought by world events: rain of any
+  liquid, snow of any ice and dust storms in their colour, fog that closes the view in, wind that blows harder, harm
+  and effects on what lives out in them, and lightning. A server that makes an event harmless makes its weather
+  harmless too.
 - (Core) Machine screens of their own: a mod's machine whose screen is unlike every other's opens its own on the same
   menu, keeping the tabs, plates, lamps and Protection tab of every machine; a machine that holds no items leaves the
   inventory off its Main tab, and one whose energy a setting turns off offers no port.

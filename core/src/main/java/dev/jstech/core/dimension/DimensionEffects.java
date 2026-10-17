@@ -9,7 +9,6 @@ package dev.jstech.core.dimension;
 
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.JsCore;
-import java.lang.reflect.Field;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -147,20 +146,28 @@ public final class DimensionEffects {
     }
 
     /**
-     * A dimension the datapacks made reads the overworld's weather; the Core hands it weather of its own, which its
-     * rules may hold. One the Core made at runtime already has it.
+     * A dimension the datapacks made reads the overworld's weather and time; the Core hands it weather and a clock of
+     * its own, which its rules may hold or set going, and gives the clock back the time it had when the world was
+     * saved. One the Core made at runtime already has them.
      */
     public static void onLevelLoad(final LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level && level.dimension() != Level.OVERWORLD
-                && level.getLevelData() instanceof DerivedLevelData
-                && !(level.getLevelData() instanceof RuledLevelData)) {
+        if (!(event.getLevel() instanceof ServerLevel level) || level.dimension() == Level.OVERWORLD) {
+            return;
+        }
+        if (level.getLevelData() instanceof DerivedLevelData && !(level.getLevelData() instanceof RuledLevelData)) {
             try {
-                final Field data = ObfuscationReflectionHelper.findField(Level.class, "levelData");
-                data.set(level, new RuledLevelData(level.getServer().getWorldData(), level.dimension()));
+                // The level reads its time and weather through one field, and sets its time and tells the players how
+                // fast it moves through the other: both must be the Core's.
+                final RuledLevelData ruled = new RuledLevelData(level.getServer().getWorldData(), level.dimension());
+                ObfuscationReflectionHelper.findField(Level.class, "levelData").set(level, ruled);
+                ObfuscationReflectionHelper.findField(ServerLevel.class, "serverLevelData").set(level, ruled);
             } catch (final RuntimeException | IllegalAccessException refused) {
-                LOGGER.warn("The weather of {} stays the overworld's: {}", level.dimension().location(),
+                LOGGER.warn("The weather and time of {} stay the overworld's: {}", level.dimension().location(),
                         refused.toString());
             }
+        }
+        if (level.getLevelData() instanceof RuledLevelData ruled) {
+            DayClocks.restore(level, ruled);
         }
     }
 

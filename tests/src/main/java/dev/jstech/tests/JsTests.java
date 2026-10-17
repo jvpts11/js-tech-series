@@ -103,6 +103,8 @@ public final class JsTests {
         TestPlaces.declare();
         // Generation for old chunks, changes of the surface, a storm and fields over the chunks.
         TestWorldChanges.declare();
+        // An acid rain and a storm of lightning, the weathers the sky kit is tried with.
+        TestSkies.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);

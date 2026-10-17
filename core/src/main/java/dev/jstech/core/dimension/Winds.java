@@ -10,17 +10,19 @@ package dev.jstech.core.dimension;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.ToDoubleBiFunction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * The wind at any place: what a mod's source says ({@link IWindSource}), else the Core's own ({@link WindMath}) for a
- * dimension with an atmosphere, stronger in its rain and storms; none in a vacuum. Smoke drifts with it, and what else
- * the wind moves.
+ * dimension with an atmosphere, stronger with height, in its rain and storms, as hard as the dimension's rules say and
+ * as its weather blows; none in a vacuum. Smoke drifts with it, and what else the wind moves.
  */
 public final class Winds {
 
     private static final List<IWindSource> SOURCES = new CopyOnWriteArrayList<>();
+    private static final List<ToDoubleBiFunction<Level, Vec3>> FACTORS = new CopyOnWriteArrayList<>();
 
     private Winds() {
     }
@@ -40,6 +42,18 @@ public final class Winds {
         }
         final DimensionRules rules = DimensionRulesData.of(level);
         final double weather = level.isThundering() ? WindMath.STORM : level.isRaining() ? WindMath.RAIN : 1.0;
-        return WindMath.at(level.getGameTime(), at.y, weather, rules.pressure() > 0);
+        double strength = weather * rules.wind();
+        for (final ToDoubleBiFunction<Level, Vec3> factor : FACTORS) {
+            strength *= factor.applyAsDouble(level, at);
+        }
+        return WindMath.at(level.getGameTime(), at.y, strength, rules.pressure() > 0);
+    }
+
+    /**
+     * Has {@code factor} make the Core's own wind blow harder or softer where it says, as a weather blowing a dust
+     * storm does; 1 leaves it as it is. A mod's own source of wind is its own to scale.
+     */
+    public static void factor(final ToDoubleBiFunction<Level, Vec3> factor) {
+        FACTORS.add(factor);
     }
 }

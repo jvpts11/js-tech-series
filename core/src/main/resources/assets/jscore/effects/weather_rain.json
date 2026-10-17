@@ -1,0 +1,11 @@
+{
+  "emitters": [
+    {
+      "name": "drops",
+      "emission": {"shape": {"type": "disc", "radius": 18}, "rate": 450, "life": [1.0, 1.4], "speed": [12, 15]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.05, 0.05],
+               "colour": ["#FFFFFFB0", "#FFFFFF90"], "trail": 0.06, "width": 0.025},
+      "motion": {"gravity": 1, "drag": 0.1, "collide": true}
+    }
+  ]
+}

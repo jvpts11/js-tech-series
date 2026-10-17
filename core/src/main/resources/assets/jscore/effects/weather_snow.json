@@ -1,0 +1,11 @@
+{
+  "emitters": [
+    {
+      "name": "flakes",
+      "emission": {"shape": {"type": "disc", "radius": 18}, "rate": 220, "life": [6, 9], "speed": [1.0, 1.8]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.09, 0.12],
+               "colour": ["#FFFFFFE0", "#FFFFFFC0"], "spin": 60},
+      "motion": {"gravity": 0.04, "drag": 1.5, "collide": true}
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "event": "jstests:test_spark_storm",
+  "falls": "snow",
+  "colour": "#E0D8FF",
+  "density": 0.4
+}

@@ -141,6 +141,7 @@ import dev.jstech.tests.clienttest.core.LightingClientTests;
 import dev.jstech.tests.clienttest.core.TerrainClientTests;
 import dev.jstech.tests.clienttest.core.PlacesClientTests;
 import dev.jstech.tests.clienttest.core.LandDrawingClientTests;
+import dev.jstech.tests.clienttest.core.SkyClientTests;
 import dev.jstech.tests.clienttest.core.WorldChangesClientTests;
 import dev.jstech.tests.clienttest.core.LiveReloadClientTests;
 import dev.jstech.tests.clienttest.core.MachineLooksClientTests;
@@ -293,6 +294,7 @@ public final class ClientTestSuite {
             TerrainClientTests.class,
             PlacesClientTests.class,
             LandDrawingClientTests.class,
+            SkyClientTests.class,
             WorldChangesClientTests.class,
             ItemStateClientTests.class,
             DataRegistryClientTests.class,

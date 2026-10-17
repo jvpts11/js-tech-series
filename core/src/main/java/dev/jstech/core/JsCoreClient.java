@@ -69,6 +69,8 @@ import dev.jstech.core.client.network.TransferClient;
 import dev.jstech.core.client.notification.NotificationsClient;
 import dev.jstech.core.client.overhead.OverheadWireRenderer;
 import dev.jstech.core.client.palette.CorePaletteClient;
+import dev.jstech.core.client.sky.SkyClient;
+import dev.jstech.core.client.weather.WeatherClient;
 import dev.jstech.core.client.state.ClientStateEvents;
 import dev.jstech.core.client.vehicle.VehicleControls;
 import dev.jstech.core.gui.style.StyleSettings;
@@ -113,6 +115,8 @@ public final class JsCoreClient {
         ClientStateEvents.listen();
         EnergyConvertersClient.listen(modEventBus);
         ProjectorClient.listen(modEventBus);
+        SkyClient.listen(modEventBus);
+        WeatherClient.listen();
         PersistorClient.listen();
         BuilderClient.listen(modEventBus);
         ConfigClient.listen();

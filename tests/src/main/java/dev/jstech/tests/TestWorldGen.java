@@ -9,6 +9,7 @@ package dev.jstech.tests;
 
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.material.HostRocks;
+import dev.jstech.core.sky.Skies;
 import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.core.worldgen.biome.WorldBiomes;
 import dev.jstech.core.worldgen.vein.Deposits;
@@ -94,6 +95,17 @@ public final class TestWorldGen {
      */
     public static final WorldGen.DimensionSpec VANILLA_LAND = WorldGen.dimension(id("vanilla_land"))
             .noise(NoiseGeneratorSettings.OVERWORLD).biome(Biomes.PLAINS).runtimeOnly().declare();
+    /**
+     * A flat land under the whole of the sky kit, its rules and sky in the test mod's data: a day twice as fast as the
+     * overworld's in a year of eight, wind twice as strong, two suns, a ringed planet, a moon that eclipses at noon,
+     * stars, the galaxy, nebulae, an aurora, clouds and haze.
+     */
+    public static final WorldGen.DimensionSpec SKY_LAND = WorldGen.dimension(id("sky_land")).heights(0, 256)
+            .layer(() -> Blocks.STONE, 3).layer(() -> Blocks.GRASS_BLOCK, 1).effects(Skies.EFFECTS).runtimeOnly()
+            .declare();
+    /** A flat land locked to its star, its sun held at noon by its rules. */
+    public static final WorldGen.DimensionSpec LOCKED_LAND = WorldGen.dimension(id("locked_land")).heights(0, 256)
+            .layer(() -> Blocks.STONE, 3).runtimeOnly().declare();
     /** Veins of iron with some tin in the test land's stone, below its layers, in half its zones. */
     public static final ResourceLocation IRON_VEINS = Deposits.deposit(id("test_iron")).mineral(SeriesMaterials.IRON, 3)
             .mineral(SeriesMaterials.TIN, 1).heights(16, 40).frequency(0.5).size(14, 5).density(0.6).biomes(LAND)
