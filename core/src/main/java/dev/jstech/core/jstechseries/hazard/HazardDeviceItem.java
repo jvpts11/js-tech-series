@@ -7,8 +7,11 @@
  */
 package dev.jstech.core.jstechseries.hazard;
 
+import dev.jstech.core.hazard.HazardKind;
 import dev.jstech.core.hazard.IHazardInstrument;
-import java.util.Optional;
+import dev.jstech.core.hazard.Pollution;
+import java.util.Collection;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -37,8 +40,14 @@ public final class HazardDeviceItem extends Item implements IHazardInstrument {
     }
 
     @Override
-    public Optional<ResourceLocation> reads(final ItemStack stack) {
-        return this.device == HazardDevice.GEIGER_COUNTER ? Optional.of(HazardDevices.RADIATION) : Optional.empty();
+    public Collection<ResourceLocation> reads(final ItemStack stack) {
+        return switch (this.device) {
+            case GEIGER_COUNTER -> List.of(HazardDevices.RADIATION);
+            // The map device reads the air and the ground of every pollution that harms bodies.
+            case HAZARD_MAP -> Pollution.kinds().stream().flatMap(kind -> kind.felt().stream())
+                    .map(HazardKind::id).toList();
+            case POCKET_DOSIMETER -> List.of();
+        };
     }
 
     @Override

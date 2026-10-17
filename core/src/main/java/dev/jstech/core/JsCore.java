@@ -59,6 +59,7 @@ import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.DimensionTravel;
 import dev.jstech.core.hazard.BlockDensity;
 import dev.jstech.core.hazard.HazardMaps;
+import dev.jstech.core.hazard.Pollution;
 import dev.jstech.core.hazard.Radiation;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.ItemHazards;
@@ -122,6 +123,7 @@ import dev.jstech.core.jstechseries.hazard.HazardDeviceSettings;
 import dev.jstech.core.jstechseries.hazard.Dissonance;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
 import dev.jstech.core.jstechseries.hazard.IonizingRadiation;
+import dev.jstech.core.jstechseries.hazard.SeriesPollution;
 import dev.jstech.core.jstechseries.hazard.HazardGuide;
 import dev.jstech.core.jstechseries.hazard.WitheredGrass;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
@@ -290,6 +292,8 @@ public final class JsCore {
         // Radiation: given off by blocks, weakened by the distance and by the density of each block on its way.
         BlockDensity.listen(modEventBus);
         Radiation.listen();
+        // Pollution: amounts over the chunks that spread, fade, are taken up by plants and harm bodies and the land.
+        Pollution.listen();
         Lungs.listen();
         // The world showing contamination: grass dying and plants withering where it is high.
         Withering.listen();
@@ -344,6 +348,8 @@ public final class JsCore {
         // The series' ionizing radiation, its contamination, and dissonance where the laws depart from ours.
         IonizingRadiation.declare();
         Dissonance.declare();
+        // The series' kinds of pollution: soot, acid rain, heavy metals, fallout, and the world's carbon dioxide.
+        SeriesPollution.declare();
         MultiblockBuilder.declare();
         SharedTools.declare();
         NetworkProbe.declare();

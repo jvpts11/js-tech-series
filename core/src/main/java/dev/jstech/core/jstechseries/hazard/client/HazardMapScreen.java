@@ -11,6 +11,7 @@ import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.hazard.HazardMapsClient;
 import dev.jstech.core.hazard.HazardKind;
 import dev.jstech.core.hazard.HazardMap;
+import dev.jstech.core.jstechseries.hazard.CarbonDioxide;
 import dev.jstech.core.jstechseries.hazard.DeviceState;
 import dev.jstech.core.jstechseries.hazard.DeviceStatePayload;
 import dev.jstech.core.jstechseries.hazard.HazardDevice;
@@ -52,6 +53,7 @@ public final class HazardMapScreen extends Screen {
     private int mapHeight;
     private boolean dragged;
     private @Nullable ChunkPos clicked;
+    private int tabWidth = TAB_WIDTH;
 
     /** A chunk on the map, in pixels: a block a pixel. */
     public static final int CELL = 16;
@@ -59,6 +61,7 @@ public final class HazardMapScreen extends Screen {
     private static final int TOP = 52;
     private static final int LEGEND_WIDTH = 116;
     private static final int TAB_WIDTH = 74;
+    private static final int MIN_TAB_WIDTH = 30;
     private static final int TAB_HEIGHT = 20;
     private static final int TABS_Y = 26;
     private static final int DONE_WIDTH = 90;
@@ -121,15 +124,21 @@ public final class HazardMapScreen extends Screen {
         final Component title = kind.<Component>map(found -> GameText.component(HazardScreenTexts.MAP_TITLE.with(
                 GameText.resolve(found.name())))).orElse(this.title);
         Draw.textCentered(g, this.font, title, this.width / 2, 10, TITLE_COLOUR);
-        final int tabsEnd = MARGIN + DeviceHud.mapped().size() * (TAB_WIDTH + 4);
-        Draw.text(g, this.font, GameText.resolve(HazardScreenTexts.MAP_SOURCES), tabsEnd + 4, TABS_Y + 6,
-                DIM_COLOUR);
+        final int tabsEnd = MARGIN + DeviceHud.mapped().size() * (this.tabWidth + 4);
+        final String sources = GameText.resolve(HazardScreenTexts.MAP_SOURCES);
+        // Said beside the tabs where it fits; with many hazards mapped, the tabs need the room.
+        if (tabsEnd + 4 + this.font.width(sources) <= this.width - MARGIN) {
+            Draw.text(g, this.font, sources, tabsEnd + 4, TABS_Y + 6, DIM_COLOUR);
+        }
         this.picture.update(new ChunkPos((int) Math.floor(this.centreX), (int) Math.floor(this.centreZ)),
                 CHUNKS_A_FRAME);
         g.fill(this.mapX - 1, this.mapY - 1, this.mapX + this.mapWidth + 1, this.mapY + this.mapHeight + 1,
                 FRAME_COLOUR);
         HazardMapDrawing.draw(g, this.picture, this.mapX, this.mapY, this.mapWidth, this.mapHeight, CELL,
                 this.centreX, this.centreZ, kind, player.getX() / 16, player.getZ() / 16, player.getYRot(), -1);
+        // The world's carbon dioxide, one number for all of it, above the Done button.
+        wrapped(g, GameText.component(CarbonDioxide.SHOWN.with(Math.round(CarbonDioxide.PPM.client()))),
+                this.width - LEGEND_WIDTH - MARGIN, this.height - MARGIN - TAB_HEIGHT - 3 * ROW, DIM_COLOUR);
         if (kind.isEmpty()) {
             final List<FormattedCharSequence> lines = this.font.split(GameText.component(
                     HazardScreenTexts.MAP_NOTHING), this.mapWidth - 2 * MARGIN);
@@ -200,10 +209,13 @@ public final class HazardMapScreen extends Screen {
         }
         final List<HazardKind> kinds = DeviceHud.mapped();
         final Optional<HazardKind> shown = shownKind();
+        // As wide as they may be, narrower when many hazards share the map's width, never past it.
+        this.tabWidth = Math.max(MIN_TAB_WIDTH, Math.min(TAB_WIDTH, (this.mapWidth + 4) / Math.max(1, kinds.size())
+                - 4));
         for (int i = 0; i < kinds.size(); i++) {
             final HazardKind kind = kinds.get(i);
             final Button tab = Button.builder(GameText.component(kind.name()), pressed -> show(kind))
-                    .bounds(MARGIN + i * (TAB_WIDTH + 4), TABS_Y - 4, TAB_WIDTH, TAB_HEIGHT).build();
+                    .bounds(MARGIN + i * (this.tabWidth + 4), TABS_Y - 4, this.tabWidth, TAB_HEIGHT).build();
             tab.active = shown.map(found -> found != kind).orElse(true);
             this.addRenderableWidget(tab);
         }

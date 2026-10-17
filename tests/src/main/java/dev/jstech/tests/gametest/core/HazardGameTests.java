@@ -18,6 +18,7 @@ import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.IHazardInstrument;
 import dev.jstech.core.hazard.ItemHazards;
 import dev.jstech.core.hazard.Lungs;
+import dev.jstech.core.hazard.Pollution;
 import dev.jstech.core.hazard.Resistances;
 import dev.jstech.core.hazard.Withering;
 import dev.jstech.core.jstechseries.hazard.DeviceState;
@@ -324,10 +325,13 @@ public final class HazardGameTests {
     public static void hazardDevices_measureTheSeriesRadiationAndKeepTheirSettings(final GameTestHelper helper) {
         final ItemStack geiger = new ItemStack(HazardDevices.GEIGER_COUNTER.get());
         helper.assertTrue(geiger.getItem() instanceof IHazardInstrument instrument
-                && instrument.reads(geiger).equals(Optional.of(HazardDevices.RADIATION)),
+                && instrument.reads(geiger).equals(List.of(HazardDevices.RADIATION)),
                 "the counter reads radiation");
-        helper.assertTrue(HazardMaps.readBy(geiger).equals(Hazards.find(HazardDevices.RADIATION)),
-                "as the kit finds it");
+        helper.assertTrue(HazardMaps.readBy(geiger).equals(List.of(Hazards.find(HazardDevices.RADIATION)
+                .orElseThrow())), "as the kit finds it");
+        helper.assertTrue(HazardMaps.readBy(new ItemStack(HazardDevices.HAZARD_MAP.get())).equals(
+                Pollution.kinds().stream().flatMap(kind -> kind.felt().stream()).toList()),
+                "the map device reads every pollution that harms bodies");
         helper.assertTrue(HazardMaps.readBy(new ItemStack(HazardDevices.POCKET_DOSIMETER.get())).isEmpty(),
                 "the dosimeter maps nothing");
         DeviceState state = DeviceState.DEFAULT;

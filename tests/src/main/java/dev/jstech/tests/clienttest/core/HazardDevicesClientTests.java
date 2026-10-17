@@ -15,9 +15,12 @@ import dev.jstech.core.gui.HudStack;
 import dev.jstech.core.hazard.HazardMaps;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.Lungs;
+import dev.jstech.core.hazard.Pollution;
 import dev.jstech.core.hazard.Radiation;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
 import dev.jstech.core.jstechseries.hazard.IonizingRadiation;
+import dev.jstech.core.jstechseries.hazard.SeriesPollution;
+import dev.jstech.core.jstechseries.hazard.client.SmogClient;
 import dev.jstech.core.jstechseries.hazard.client.BodyScreen;
 import dev.jstech.core.jstechseries.hazard.client.DeviceArt;
 import dev.jstech.core.jstechseries.hazard.client.HazardDevicesClient;
@@ -72,6 +75,9 @@ public final class HazardDevicesClientTests {
             Hazards.set(player, IonizingRadiation.DOSE, 0);
             Hazards.set(player, IonizingRadiation.CONTAMINATION, 0);
             Radiation.emit(ctx.serverLevel(), ctx.abs(SOURCE), IonizingRadiation.RAYS, 0);
+            final ChunkPos here = player.chunkPosition();
+            SeriesPollution.SOOT.field().add(ctx.serverLevel(), here, -SeriesPollution.SOOT.field().get(
+                    ctx.serverLevel(), here));
         }));
         ctx.thenServer(0, level -> {
             ctx.give(0, new ItemStack(HazardDevices.GEIGER_COUNTER.get()));
@@ -159,7 +165,12 @@ public final class HazardDevicesClientTests {
                         "the body's hazards reach its screen")
                 .thenScreenshot(SETTLE, "body_screen")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
-                .thenAwaitNoScreen(WAIT);
+                .thenAwaitNoScreen(WAIT)
+                // Soot thick on the chunk: the haze closes in, grey-brown.
+                .thenServer(0, level -> Pollution.emit(level, ctx.serverPlayer().blockPosition(),
+                        SeriesPollution.SOOT, 450))
+                .thenWaitUntil(() -> SmogClient.thickness() > 0.3, WAIT, "the haze of the soot")
+                .thenScreenshot(SETTLE * 2, "smog");
     }
 
     private static boolean placed(final HudStack.Corner corner, final ResourceLocation element) {

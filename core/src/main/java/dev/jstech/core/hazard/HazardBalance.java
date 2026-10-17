@@ -21,8 +21,18 @@ public final class HazardBalance {
     private static volatile boolean itemHazards = true;
     private static volatile boolean withering = true;
     private static volatile boolean dissonance = true;
+    private static volatile boolean pollution = true;
 
     private HazardBalance() {
+    }
+
+    /** Whether there is pollution: off, nothing is given off and what lies on the land does nothing. */
+    public static boolean pollution() {
+        return pollution;
+    }
+
+    public static void setPollution(final boolean value) {
+        pollution = value;
     }
 
     /** Whether laws of physics that depart from ours build up dissonance in a body. */

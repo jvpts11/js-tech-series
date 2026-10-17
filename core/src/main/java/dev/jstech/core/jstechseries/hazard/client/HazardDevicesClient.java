@@ -17,7 +17,10 @@ import dev.jstech.core.jstechseries.hazard.HazardDevice;
 import dev.jstech.core.jstechseries.hazard.HazardDeviceItem;
 import dev.jstech.core.jstechseries.hazard.HazardDeviceSettings;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
+import dev.jstech.core.jstechseries.hazard.SeriesPollution;
 import dev.jstech.core.jstechseries.hazard.WitheredGrass;
+import dev.jstech.core.text.GameText;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -33,6 +36,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
  * The hazard devices on the player's game: each on the HUD while carried (the Geiger counter in the hotbar or the off
@@ -77,6 +81,15 @@ public final class HazardDevicesClient {
                 (state, level, pos, tint) -> 0xFF << 24 | WitheredGrass.COLOUR, WitheredGrass.BLOCK.get()));
         modBus.addListener(RegisterColorHandlersEvent.Item.class, event -> event.register(
                 (stack, tint) -> 0xFF << 24 | WitheredGrass.COLOUR, WitheredGrass.BLOCK.item()));
+        // Food grown or caught on fouled ground says what it carries.
+        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, event -> {
+            final double metals = SeriesPollution.metalsIn(event.getItemStack());
+            if (metals > 0) {
+                event.getToolTip().add(GameText.component(SeriesPollution.CONTAMINATED_FOOD.with(
+                        DeviceReadings.figure(metals))).withStyle(ChatFormatting.RED));
+            }
+        });
+        SmogClient.listen();
     }
 
     /**

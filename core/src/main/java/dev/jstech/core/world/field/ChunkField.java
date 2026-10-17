@@ -100,6 +100,11 @@ public final class ChunkField {
         return values(level).size();
     }
 
+    /** The chunks of {@code level} that hold some of it, each packed as the game packs a chunk's place: a copy. */
+    public long[] chunks(final ServerLevel level) {
+        return values(level).keySet().toLongArray();
+    }
+
     /** The sum of it over {@code level}. */
     public double total(final ServerLevel level) {
         double sum = 0;

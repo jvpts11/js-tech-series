@@ -309,6 +309,12 @@ public final class CoreConfigKeys {
                     + "space that wraps) build up dissonance in a body, from warped sight to coming apart.")
             .named("Dissonance");
 
+    /** Whether there is pollution. */
+    public static final ConfigKey<Boolean> HAZARDS_POLLUTION = ConfigKey.flag(HAZARDS + ".pollution", true)
+            .comment("Whether there is pollution: soot, acid rain, heavy metals and carbon dioxide given off and doing "
+                    + "what they do; radioactive fallout goes with radiation.")
+            .named("Pollution");
+
     /** Whether contamination withers the land. */
     public static final ConfigKey<Boolean> HAZARDS_WITHERING = ConfigKey.flag(HAZARDS + ".withering", true)
             .comment("Whether the world shows contamination: grass dies, plants wither and crops stop growing where "
@@ -546,6 +552,7 @@ public final class CoreConfigKeys {
             .key(HAZARDS_LUNGS, HazardBalance::setLungs)
             .key(HAZARDS_ITEM_HAZARDS, HazardBalance::setItemHazards)
             .key(HAZARDS_DISSONANCE, HazardBalance::setDissonance)
+            .key(HAZARDS_POLLUTION, HazardBalance::setPollution)
             .key(HAZARDS_WITHERING, HazardBalance::setWithering)
             .key(HEAT_PIPES_FREEZE, HeatBalance::setPipesFreeze)
             .key(HEAT_BOIL_OFF, HeatBalance::setBoilOff)

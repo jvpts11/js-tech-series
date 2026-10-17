@@ -733,6 +733,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   that bends, space that wraps) it builds up in a body, from warped sight through drifting gravity, stuttering time
   and jumps through space to coming apart, and falls back in normal laws; a bubble of normal laws a mod gives keeps it
   off. It has a setting of its own.
+- (Core) Pollution: kinds any mod declares, an amount over each chunk given off by blocks, which spreads, fades, is
+  taken up where plants grow, harms the bodies on the chunk as a hazard of its own, does what it does to the land, and
+  withers it under enough; the hazard map device measures them.
+- (Core) The series' pollution: soot hangs as a haze and is breathed as smog, a cough that a mask stops; sulfur and
+  nitrogen oxides fall as acid rain that kills leaves, weathers copper and calcite and stunts crops; heavy metals foul
+  the crops and fish of their ground, which poison whoever eats them until the soil is dug out; radioactive fallout
+  raises the dose rate and settles on whoever stands in it; and the world's carbon dioxide is one number that rises by
+  what is burnt, shown on the map of hazards. Pollution has a setting of its own.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

@@ -222,6 +222,48 @@ a block that makes a zone, each spending its own energy:
 Dissonance.shield(body -> MyModules.poweredStabiliser(body));
 ```
 
+## Pollution
+
+*Added 2026-10-17.*
+
+Pollution is an amount over each chunk, built on the Core's fields over chunks ([World](WORLD.md)): it spreads to
+the neighbouring chunks, fades, is kept with each dimension and is sent to the players near enough to see it. A mod
+declares a kind, with what it does to the bodies on a chunk (a hazard built up from the chunk's amount each second)
+and to the land:
+
+```java
+public static final PollutionKind SPORES = Pollution.declare(PollutionKind.builder(id("spores"), Texts.SPORES,
+        Texts.PER_CUBIC_METRE)
+        .spread(0.1).fades(0.01).every(100)   // a share to the neighbours and a share gone each step
+        .plantsTakeUp(0.05)                   // more gone where plants grow
+        .felt(MyHazards.SPORE_LUNG)           // what a body on the chunk builds up from its amount
+        .withersAt(500)                       // the land withers under this much
+        .enabledWhen(MySettings::spores).build());
+SPORES.addEffect((level, top, amount) -> rotLeaves(level, top, amount));
+Pollution.emit(level, chimneyPos, MyPollution.SPORES, 20);
+```
+
+Every five seconds a few columns of each polluted chunk the game has loaded are looked at: the plants on them (leaves,
+grass, flowers, saplings, crops, moss) take their share up, and each of the kind's effects is done at the top of each.
+The hazard map device measures the hazard of every kind that harms bodies, so carrying it maps them.
+
+The series' kinds (`SeriesPollution`), each with what it really does:
+
+- **Soot and particulates**, in micrograms a cubic metre: a haze over the chunk, the end of sight closing in as it
+  thickens; breathed as **smog**, a cough over 150 and a struggle over 300, which a mask stops; rain and plants take
+  it down; the land withers under 2,000.
+- **Sulfur and nitrogen oxides**: where it rains over 40, acid rain kills leaves slowly and weathers copper and
+  calcite; crops grow up to half as often; the land withers under 600.
+- **Heavy metals**, in milligrams a kilogram of soil, which never fade: a crop harvested or a fish caught there
+  carries a hundredth of the ground's amount for each, said in its tooltip, and eating it builds up **heavy metal
+  poisoning**, from tiredness to aching bones to failing nerves, as in Minamata and Itai-itai; each block of soil dug
+  out takes a sixty-fourth of the chunk's metals away, and plants draw them up slowly.
+- **Radioactive fallout**, in kilobecquerels a square metre, which spreads slowly and decays: it raises the dose rate a
+  thousandth of a millisievert an hour for each, and settles on whoever stands in it as contamination.
+- **Carbon dioxide** (`CarbonDioxide`), one number for the whole world in parts per million: it starts at the air's
+  before industry, 280, rises by what the mods' machines burn (`CarbonDioxide.emit(kilograms)`), is shown on the map of
+  hazards, and does nothing yet.
+
 ## The hazard devices
 
 *Added 2026-10-17.*
@@ -295,4 +337,5 @@ In the world's balance file, under `hazards`:
 | `lungs` | `true` | Whether dust harms the lungs. |
 | `item_hazards` | `true` | Whether what is carried harms its carrier. |
 | `dissonance` | `true` | Whether laws of physics that depart from ours build up dissonance. |
+| `pollution` | `true` | Whether there is pollution: soot, acid, heavy metals and carbon dioxide; fallout goes with radiation. |
 | `withering` | `true` | Whether contamination withers the land. |

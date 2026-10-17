@@ -73,10 +73,12 @@ public final class HazardMaps {
         });
     }
 
-    /** The hazard {@code stack} measures, if it is an instrument measuring a declared one. */
-    public static Optional<HazardKind> readBy(final ItemStack stack) {
-        return stack.getItem() instanceof IHazardInstrument instrument ? instrument.reads(stack).flatMap(Hazards::find)
-                : Optional.empty();
+    /** The declared hazards {@code stack} measures, if it is an instrument; none otherwise. */
+    public static List<HazardKind> readBy(final ItemStack stack) {
+        if (!(stack.getItem() instanceof IHazardInstrument instrument)) {
+            return List.of();
+        }
+        return instrument.reads(stack).stream().map(Hazards::find).flatMap(Optional::stream).toList();
     }
 
     /** The mapped hazards {@code player}'s carried instruments measure: in the hotbar and the off hand. */
@@ -84,9 +86,9 @@ public final class HazardMaps {
         final Set<HazardKind> kinds = new LinkedHashSet<>();
         final Inventory inventory = player.getInventory();
         for (int slot = 0; slot < Inventory.getSelectionSize(); slot++) {
-            readBy(inventory.getItem(slot)).ifPresent(kinds::add);
+            kinds.addAll(readBy(inventory.getItem(slot)));
         }
-        readBy(player.getOffhandItem()).ifPresent(kinds::add);
+        kinds.addAll(readBy(player.getOffhandItem()));
         kinds.removeIf(kind -> !kind.mapped() || !kind.enabled());
         return kinds;
     }
