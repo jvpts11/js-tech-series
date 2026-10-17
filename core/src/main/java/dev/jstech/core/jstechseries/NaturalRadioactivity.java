@@ -42,9 +42,16 @@ public final class NaturalRadioactivity {
 
     /** Whether {@code material} is a naturally radioactive mineral, in a world that has them. */
     public static boolean radioactive(final Material material) {
-        if (!HazardBalance.radiation() || !HazardBalance.naturalRadioactivity()) {
-            return false;
-        }
+        return on() && bearsUraniumOrThorium(material);
+    }
+
+    /** Whether the world has naturally radioactive minerals: radiation on, and the minerals' own setting. */
+    public static boolean on() {
+        return HazardBalance.radiation() && HazardBalance.naturalRadioactivity();
+    }
+
+    /** Whether {@code material} is a mineral with uranium or thorium in it, whatever the world's settings. */
+    public static boolean bearsUraniumOrThorium(final Material material) {
         final Optional<Mineral> mineral = material.mineral();
         if (mineral.isEmpty()) {
             return false;

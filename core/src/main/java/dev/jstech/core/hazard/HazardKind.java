@@ -59,6 +59,7 @@ public final class HazardKind {
     private final double rateFactor;
     private final List<Double> mapSteps;
     private final TextKey shortName;
+    private final double background;
     private final List<IHazardSource> sources = new CopyOnWriteArrayList<>();
     private final List<IHazardRecovery> recoveries = new CopyOnWriteArrayList<>();
 
@@ -66,6 +67,7 @@ public final class HazardKind {
         this.id = builder.id;
         this.name = builder.name;
         this.shortName = builder.shortName == null ? builder.name : builder.shortName;
+        this.background = builder.background;
         this.unit = builder.unit;
         this.rateUnit = builder.rateUnit;
         this.rateFactor = builder.rateFactor;
@@ -115,6 +117,11 @@ public final class HazardKind {
         return perSecond * this.rateFactor;
     }
 
+    /** A rate of {@code shown} in the unit its rate is shown in, in its unit a second. */
+    public double perSecond(final double shown) {
+        return shown / this.rateFactor;
+    }
+
     /** Whether a map of hazards shows it, chunk by chunk. */
     public boolean mapped() {
         return !this.mapSteps.isEmpty();
@@ -150,6 +157,14 @@ public final class HazardKind {
             }
         }
         return Optional.ofNullable(found);
+    }
+
+    /**
+     * The background every body lives in, in its unit a second: what comes at a body no faster than this builds up
+     * nothing, and the body recovers as if away from every source.
+     */
+    public double background() {
+        return this.background;
     }
 
     /** What a body loses of it in a second away from its sources: so much, and so much a share of what it has. */
@@ -239,6 +254,7 @@ public final class HazardKind {
         private double rateFactor = 1;
         private List<Double> mapSteps = List.of();
         private @Nullable TextKey shortName;
+        private double background;
 
         private Builder(final ResourceLocation id, final TextKey name, final TextKey unit) {
             this.id = id;
@@ -291,6 +307,15 @@ public final class HazardKind {
         /** Creatures suffer it too. */
         public Builder affectsMobs() {
             this.mobs = true;
+            return this;
+        }
+
+        /**
+         * The background every body lives in, in its unit a second: what comes no faster builds up nothing, as the
+         * sky's radiation gives no one a dose worth counting, and the body goes on recovering in it.
+         */
+        public Builder background(final double perSecond) {
+            this.background = Math.max(0, perSecond);
             return this;
         }
 

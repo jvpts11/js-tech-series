@@ -12,6 +12,7 @@ import dev.jstech.core.hazard.HazardEffects;
 import dev.jstech.core.hazard.HazardKind;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.Withering;
+import dev.jstech.core.jstechseries.hazard.Dissonance;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.Map;
@@ -40,6 +41,8 @@ public final class TestHazards {
     /* What each body is exposed to, a second, and the places the land is contaminated at. */
     private static final Map<UUID, Double> EXPOSED = new ConcurrentHashMap<>();
     private static final Set<BlockPos> CONTAMINATED = ConcurrentHashMap.newKeySet();
+    /* The bodies a test stood in a bubble of normal laws. */
+    private static final Set<UUID> SHIELDED = ConcurrentHashMap.newKeySet();
 
     public static final HazardKind KIND = Hazards.declare(HazardKind.builder(
                     ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "test_hazard"), NAME, UNIT)
@@ -53,6 +56,7 @@ public final class TestHazards {
         KIND.addRecovery((body, level) -> body.hasEffect(MobEffects.REGENERATION) ? 1 : 0);
         // Twice what plants bear wherever a test contaminated, nothing elsewhere.
         Withering.declare((level, pos) -> CONTAMINATED.contains(pos) ? 2 : 0);
+        Dissonance.shield(body -> SHIELDED.contains(body.getUUID()));
     }
 
     private TestHazards() {
@@ -69,6 +73,15 @@ public final class TestHazards {
             EXPOSED.remove(body.getUUID());
         } else {
             EXPOSED.put(body.getUUID(), perSecond);
+        }
+    }
+
+    /** Stands {@code body} in a bubble of normal laws, or takes it out. */
+    public static void shield(final LivingEntity body, final boolean shielded) {
+        if (shielded) {
+            SHIELDED.add(body.getUUID());
+        } else {
+            SHIELDED.remove(body.getUUID());
         }
     }
 

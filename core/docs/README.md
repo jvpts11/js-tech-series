@@ -28,7 +28,7 @@ says what the Core promises and what it does not yet.
 | [Cables](CABLES.md) | The one cable block, your own cable types, and parts on cables. |
 | [Redstone and signals](SIGNALS.md) | Sensors that speak redstone, signals by frequency, relays, the signal probe. |
 | [Heat](HEAT.md) | Temperature in blocks, conduction by real materials, heat pipes, loss to the air and to space. |
-| [Hazards](HAZARDS.md) | Kinds of harm and resistances, hazards that build up in a body in bands, hazards of carried things, the lungs, the hazard devices and the body's screen, maps of hazards, the land withering. |
+| [Hazards](HAZARDS.md) | Kinds of harm and resistances, hazards that build up in a body in bands, hazards of carried things, the lungs, radiation and its shielding by block density, ionizing radiation and contamination, dissonance, the hazard devices and the body's screen, maps of hazards, the land withering. |
 | [Sealed rooms](ROOMS.md) | Closed spaces found and their air kept by real gases: leaks and bursting blocks, doors, breathing, fire and oxygen, rooms under water, mobs and plants, the view of a room, the Atmosphere Detector, vents. |
 | [Mechanical power](MECHANICAL_POWER.md) | Shafts, gears and gearboxes in rpm, newton-metres and watts; sources, loads, motors and dynamos. |
 | [Conveyors](CONVEYORS.md) | Belts of your own kinds, slopes, chutes, bucket elevators, splitters, joins, diverters, machines that work items on the belt, what makes them move, players and mobs carried. |

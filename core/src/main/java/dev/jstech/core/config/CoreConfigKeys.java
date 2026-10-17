@@ -303,6 +303,12 @@ public final class CoreConfigKeys {
                     + "radioactive rod doses.")
             .named("Hazards of what is carried");
 
+    /** Whether laws of physics that depart from ours build up dissonance. */
+    public static final ConfigKey<Boolean> HAZARDS_DISSONANCE = ConfigKey.flag(HAZARDS + ".dissonance", true)
+            .comment("Whether laws of physics that depart from ours (time at another pace, a pull that is not down, "
+                    + "space that wraps) build up dissonance in a body, from warped sight to coming apart.")
+            .named("Dissonance");
+
     /** Whether contamination withers the land. */
     public static final ConfigKey<Boolean> HAZARDS_WITHERING = ConfigKey.flag(HAZARDS + ".withering", true)
             .comment("Whether the world shows contamination: grass dies, plants wither and crops stop growing where "
@@ -539,6 +545,7 @@ public final class CoreConfigKeys {
             .key(HAZARDS_MOBS_SUFFER, HazardBalance::setMobsSuffer)
             .key(HAZARDS_LUNGS, HazardBalance::setLungs)
             .key(HAZARDS_ITEM_HAZARDS, HazardBalance::setItemHazards)
+            .key(HAZARDS_DISSONANCE, HazardBalance::setDissonance)
             .key(HAZARDS_WITHERING, HazardBalance::setWithering)
             .key(HEAT_PIPES_FREEZE, HeatBalance::setPipesFreeze)
             .key(HEAT_BOIL_OFF, HeatBalance::setBoilOff)

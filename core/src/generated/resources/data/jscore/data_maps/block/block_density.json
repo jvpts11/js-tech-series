@@ -1,0 +1,29 @@
+{
+  "values": {
+    "#c:cobblestones": 2700.0,
+    "#c:concretes": 2400.0,
+    "#c:glass_blocks": 2500.0,
+    "#c:gravels": 1700.0,
+    "#c:obsidians": 2600.0,
+    "#c:sandstone/blocks": 2300.0,
+    "#c:stones": 2700.0,
+    "#c:storage_blocks/copper": 8960.0,
+    "#c:storage_blocks/diamond": 3500.0,
+    "#c:storage_blocks/gold": 19300.0,
+    "#c:storage_blocks/iron": 7874.0,
+    "#c:storage_blocks/netherite": 10000.0,
+    "#minecraft:dirt": 1500.0,
+    "#minecraft:ice": 917.0,
+    "#minecraft:leaves": 100.0,
+    "#minecraft:logs": 700.0,
+    "#minecraft:planks": 600.0,
+    "#minecraft:sand": 1600.0,
+    "#minecraft:terracotta": 1900.0,
+    "#minecraft:wool": 100.0,
+    "minecraft:basalt": 3000.0,
+    "minecraft:bricks": 1900.0,
+    "minecraft:clay": 1800.0,
+    "minecraft:hay_block": 150.0,
+    "minecraft:snow_block": 300.0
+  }
+}

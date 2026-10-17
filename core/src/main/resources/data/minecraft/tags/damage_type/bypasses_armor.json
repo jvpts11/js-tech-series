@@ -5,6 +5,8 @@
     "jscore:oxygen_toxicity",
     "jscore:lung_failure",
     "jscore:hot_item",
-    "jscore:corrosive_item"
+    "jscore:corrosive_item",
+    "jscore:radiation_sickness",
+    "jscore:dissonance"
   ]
 }

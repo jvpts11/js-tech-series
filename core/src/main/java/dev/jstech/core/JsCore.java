@@ -57,7 +57,9 @@ import dev.jstech.core.effect.EffectSettings;
 import dev.jstech.core.effect.Effects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.DimensionTravel;
+import dev.jstech.core.hazard.BlockDensity;
 import dev.jstech.core.hazard.HazardMaps;
+import dev.jstech.core.hazard.Radiation;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.ItemHazards;
 import dev.jstech.core.hazard.Lungs;
@@ -117,7 +119,9 @@ import dev.jstech.core.jstechseries.persistor.PersistorSettings;
 import dev.jstech.core.jstechseries.persistor.SpacePersistor;
 import dev.jstech.core.jstechseries.energy.ClampMeter;
 import dev.jstech.core.jstechseries.hazard.HazardDeviceSettings;
+import dev.jstech.core.jstechseries.hazard.Dissonance;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
+import dev.jstech.core.jstechseries.hazard.IonizingRadiation;
 import dev.jstech.core.jstechseries.hazard.HazardGuide;
 import dev.jstech.core.jstechseries.hazard.WitheredGrass;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
@@ -283,6 +287,9 @@ public final class JsCore {
         Hazards.listen(modEventBus);
         HazardMaps.listen(modEventBus);
         ItemHazards.listen(modEventBus);
+        // Radiation: given off by blocks, weakened by the distance and by the density of each block on its way.
+        BlockDensity.listen(modEventBus);
+        Radiation.listen();
         Lungs.listen();
         // The world showing contamination: grass dying and plants withering where it is high.
         Withering.listen();
@@ -334,6 +341,9 @@ public final class JsCore {
         // The hazard devices (the Geiger counter, the dosimeter, the hazard map) and the grass contamination kills.
         HazardDevices.declare();
         WitheredGrass.declare();
+        // The series' ionizing radiation, its contamination, and dissonance where the laws depart from ours.
+        IonizingRadiation.declare();
+        Dissonance.declare();
         MultiblockBuilder.declare();
         SharedTools.declare();
         NetworkProbe.declare();

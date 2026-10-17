@@ -3,8 +3,8 @@
 What harms a body from where it is and what it carries: radiation, a pollution, dust in the lungs, the air of
 another world, a hot ingot in the hand. J's Core gives every mod one kit for them: kinds of harm and what resists
 each, hazards that build up in a body and harm it in bands, the hazards of carried things, the lungs, the devices that
-measure them and the screen of the body, maps of the chunks that were measured, and the land withering where it is
-contaminated. It is in the spirit of the radiation of HBM's Nuclear Tech and Mekanism and the hazards of GregTech.
+measure them and the screen of the body, maps of the chunks that were measured, the land withering where it is
+contaminated, the radiation family, the series' ionizing radiation and dissonance. It is in the spirit of the radiation of HBM's Nuclear Tech and Mekanism and the hazards of GregTech.
 
 The design behind this page is [Hazards](design/hazards.md).
 
@@ -76,6 +76,7 @@ public static final HazardKind SPORES = Hazards.declare(HazardKind.builder(id("s
         .upTo(100)                              // the most a body can build up
         .shortName(Texts.SPR)                   // its name on a device's button
         .rateShownIn(Texts.PER_HOUR, 3600)      // its rate shown in its unit an hour
+        .background(0.001)                      // what comes no faster builds up nothing
         .mapped(1, 10, 100)                     // a map of hazards shows it, stepping up at each
         .build());
 SPORES.addSource((body, level) -> sporesNear(level, body.blockPosition()));   // its unit a second
@@ -139,6 +140,87 @@ Lungs.breathe(player, Lungs.SILICOSIS, 0.2);   // percent of the lungs, before w
 
 The hazards of a dimension's air and climate ([World](WORLD.md)) are kinds of the kit: air that cannot be breathed,
 scorching heat, freezing cold, stale air and too much oxygen, each in seconds and gone at once out of it.
+
+## Radiation
+
+*Added 2026-10-17.*
+
+Radiation is a family of hazards with more in common: it is given off by sources, travels out from them, and is
+weakened by every block it crosses. A mod declares a kind of radiation for the hazard it doses:
+
+```java
+public static final RadiationKind GLOW = Radiation.declare(new RadiationKind(id("glow"), Texts.GLOW,
+        MyHazards.GLOW_SICKNESS, 0.0005, 24));   // weakening a kilogram a cubic metre, reach in blocks
+```
+
+A block gives it off by saying how much reaches a block from it, in the unit the dosed hazard's rate is shown in, as it
+loads and as its contents change, and nothing as it empties or goes; the sources are forgotten with their chunk:
+
+```java
+Radiation.emit(level, pos, MyRadiation.GLOW, 40);
+Radiation.emit(level, pos, MyRadiation.GLOW, 0);
+```
+
+What reaches a place is what is everywhere there (`addAmbient`: the sky, what lies on a chunk), and what each source
+within reach gives off, divided by the square of the distance and multiplied by the share every block on the straight
+way lets through: `e` to the minus the kind's weakening times the block's density, the source's and the place's own
+blocks left out. What a body carries is added (`addCarried`). What reaches a body each second builds up the hazard,
+cut by what it wears.
+
+```java
+double here = Radiation.rateAt(level, at, MyRadiation.GLOW);
+double through = Radiation.transmission(level, from, to, MyRadiation.GLOW);
+```
+
+How dense each block is lives in the data map `jscore:block_density`, in kilograms a cubic metre; the Core fills it for
+the game's blocks (wool 100, wood 600, earth 1,500, stone 2,700, iron 7,874, gold 19,300). A block it says nothing of
+is as dense as its item's material, as water or lava for a liquid, as rock for any other full block, as air otherwise.
+
+## Ionizing radiation
+
+*Added 2026-10-17.*
+
+The series' kind, in real units (`IonizingRadiation`). Each place has a dose rate in millisieverts an hour, and a body
+builds up a dose in sieverts through two channels:
+
+- the **external dose**, from every source round it and what it carries, which only distance, time and shielding
+  reduce: about five centimetres of a block's material for each block, so a block of lead stops nearly all of it,
+  stone and concrete about half, water a quarter, air hardly any; worn shielding stops its share (the kind of harm
+  `radiation`);
+- **contamination**, radioactive dust on the body in kilobecquerels, each giving a hundredth of a millisievert an hour,
+  which keeps dosing until it is washed off in water or the rain (four hundred times faster than the body sheds it by
+  itself); a suit and a respirator keep it from settling (the kind of harm `contamination`), and carrying a
+  radioactive thing leaves some on its carrier.
+
+The dose brings the bands of the acute radiation syndrome: Rad I at 1 Sv (nausea), II at 2 (slowness), III at 4
+(weakness, slow harm), IV at 6 (heavy harm, blurred sight), V at 8 (close to deadly); it kills as radiation sickness.
+Away from the sources the body recovers half a millisievert a second; under the background of a tenth of a
+millisievert an hour, the sky's and the rock's, it takes no dose and goes on recovering.
+
+Its sources: the sky (`CosmicRadiation`: three ten-thousandths of a millisievert an hour under the overworld's air,
+rising as the air thins to two hundredths where there is none, each solid block above taking seven tenths off; a mod
+sets a dimension's own with `CosmicRadiation.declare`), every mineral with uranium or thorium in it (`NaturalRadiation`:
+two thousandths at a block from each block of it), radioactive carried things by their strength, and any mod's blocks
+through `Radiation.emit`. Where the dose rate passes a hundred millisieverts an hour the land withers.
+
+## Dissonance
+
+*Added 2026-10-17.*
+
+Where the laws of physics round a body depart from the normal ones ([World](WORLD.md)), the difference builds up in it
+(`Dissonance`), a percent a second for each unit the laws are from ours: how far the pull is from straight down at its
+usual strength, twice how far time runs from its usual pace, how much light bends, shimmers, darkens or glows, one for
+space that wraps or leads elsewhere, one for liquids that rise. A planet's own gravity is not a law of its own and
+counts for nothing. I at 10 warps the sight; II at 25 lets the body's gravity drift; III at 45 makes time stutter, the
+body caught back where it was a second ago, and hungry; IV at 70 throws it in small jumps through space and harms it;
+V at 100 tears it apart. In normal laws it falls back half a percent a second and two hundredths of what there is.
+
+A bubble of normal laws round a body keeps it from building up, and doubles how fast it falls back: an armour module,
+a block that makes a zone, each spending its own energy:
+
+```java
+Dissonance.shield(body -> MyModules.poweredStabiliser(body));
+```
 
 ## The hazard devices
 
@@ -212,4 +294,5 @@ In the world's balance file, under `hazards`:
 | `mobs_suffer` | `true` | Whether creatures suffer hazards as players do. |
 | `lungs` | `true` | Whether dust harms the lungs. |
 | `item_hazards` | `true` | Whether what is carried harms its carrier. |
+| `dissonance` | `true` | Whether laws of physics that depart from ours build up dissonance. |
 | `withering` | `true` | Whether contamination withers the land. |

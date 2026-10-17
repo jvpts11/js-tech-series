@@ -15,7 +15,9 @@ import dev.jstech.core.gui.HudStack;
 import dev.jstech.core.hazard.HazardMaps;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.Lungs;
+import dev.jstech.core.hazard.Radiation;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
+import dev.jstech.core.jstechseries.hazard.IonizingRadiation;
 import dev.jstech.core.jstechseries.hazard.client.BodyScreen;
 import dev.jstech.core.jstechseries.hazard.client.DeviceArt;
 import dev.jstech.core.jstechseries.hazard.client.HazardDevicesClient;
@@ -45,6 +47,8 @@ import org.lwjgl.glfw.GLFW;
 public final class HazardDevicesClientTests {
 
     private static final BlockPos STAND = new BlockPos(0, 2, 0);
+    /* Where a block gives off radiation, three blocks east of where the player stands, at their eyes. */
+    private static final BlockPos SOURCE = new BlockPos(3, 3, 0);
     private static final int WAIT = 200;
     private static final int SETTLE = 10;
     /* Long enough for the map device to draw the land round the player. */
@@ -65,6 +69,9 @@ public final class HazardDevicesClientTests {
             Hazards.set(player, TestHazards.KIND, 0);
             Hazards.set(player, Lungs.BLACK_LUNG, 0);
             Hazards.set(player, Lungs.SILICOSIS, 0);
+            Hazards.set(player, IonizingRadiation.DOSE, 0);
+            Hazards.set(player, IonizingRadiation.CONTAMINATION, 0);
+            Radiation.emit(ctx.serverLevel(), ctx.abs(SOURCE), IonizingRadiation.RAYS, 0);
         }));
         ctx.thenServer(0, level -> {
             ctx.give(0, new ItemStack(HazardDevices.GEIGER_COUNTER.get()));
@@ -81,10 +88,14 @@ public final class HazardDevicesClientTests {
                         for (int dz = -READ_ROUND; dz <= READ_ROUND; dz++) {
                             if (dx + dz != 3) {
                                 HazardMaps.record(player, level.dimension(), new ChunkPos(here.x + dx, here.z + dz),
-                                        TestHazards.KIND, Math.pow(10, (dx - dz + 2 * READ_ROUND) / 4.0 - 1));
+                                        IonizingRadiation.DOSE, Math.pow(10, (dx - dz + 2 * READ_ROUND) / 4.0 - 2));
                             }
                         }
                     }
+                    // A source a few blocks off, a dose taken already, and dust on the skin.
+                    Radiation.emit(level, ctx.abs(SOURCE), IonizingRadiation.RAYS, 40);
+                    Hazards.set(player, IonizingRadiation.DOSE, 1.24);
+                    Hazards.set(player, IonizingRadiation.CONTAMINATION, 500);
                     Hazards.set(player, Lungs.BLACK_LUNG, 9);
                     Hazards.set(player, Lungs.SILICOSIS, 3);
                     // Kept coming, so it is still on the body when its screen opens.
@@ -92,8 +103,9 @@ public final class HazardDevicesClientTests {
                     TestHazards.expose(player, 0.2);
                 })
                 .then(0, () -> ctx.selectHotbar(2))
-                .thenWaitUntil(() -> HazardMapsClient.known(TestHazards.KIND.id()) > 0, WAIT,
+                .thenWaitUntil(() -> HazardMapsClient.known(IonizingRadiation.DOSE.id()) > 0, WAIT,
                         "the map's readings to reach the player's game")
+                .thenWaitUntil(() -> HazardDevicesClient.clicks() > 0, WAIT, "the Geiger counter to click")
                 .thenWaitUntil(() -> placed(HudStack.Corner.BOTTOM_LEFT, HazardDevicesClient.GEIGER_HUD)
                         && placed(HudStack.Corner.BOTTOM_LEFT, HazardDevicesClient.DOSIMETER_HUD)
                         && placed(HudStack.Corner.BOTTOM_RIGHT, HazardDevicesClient.MAP_HUD), WAIT,
@@ -108,9 +120,9 @@ public final class HazardDevicesClientTests {
                 })
                 .thenAssert(SETTLE, () -> {
                     final HazardMapScreen map = ctx.screen(HazardMapScreen.class);
-                    return map.clicked().isPresent() && map.shownKind().map(kind -> kind == TestHazards.KIND)
+                    return map.clicked().isPresent() && map.shownKind().map(kind -> kind == IonizingRadiation.DOSE)
                             .orElse(false);
-                }, "the map shows the test hazard and the chunk clicked")
+                }, "the map shows the radiation and the chunk clicked")
                 .thenScreenshot(0, "map_screen")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(WAIT)
@@ -141,7 +153,10 @@ public final class HazardDevicesClientTests {
                 })
                 .thenAwaitScreen(BodyScreen.class, WAIT)
                 .thenAssert(SETTLE, () -> HazardsClient.level(TestHazards.KIND.id()) >= 5
-                        && HazardsClient.level(Lungs.BLACK_LUNG.id()) > 8, "the body's hazards reach its screen")
+                        && HazardsClient.level(Lungs.BLACK_LUNG.id()) > 8
+                        && HazardsClient.level(IonizingRadiation.DOSE.id()) > 1
+                        && HazardsClient.level(IonizingRadiation.CONTAMINATION.id()) > 0,
+                        "the body's hazards reach its screen")
                 .thenScreenshot(SETTLE, "body_screen")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(WAIT);

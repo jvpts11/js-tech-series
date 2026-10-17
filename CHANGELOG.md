@@ -718,6 +718,21 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   dead bushes and crops stop growing, and they come back slowly where it falls.
 - (Core) Hazard settings: radiation can be turned off as a whole, and so can creatures suffering hazards, the lungs,
   the hazards of carried things and the land withering.
+- (Core) Radiation: a family of hazards any mod declares kinds of, given off by blocks, weaker with the square of the
+  distance and weakened by every block on its way by the block's density, from the data map of block densities the
+  Core fills for the game's blocks; what is everywhere in a place and what a body carries add to it.
+- (Core) Ionizing radiation, in real units: a dose rate in millisieverts an hour and a dose in sieverts, from the
+  sources round a body through the blocks between, so lead stops nearly all and stone about half, worn shielding
+  taking its share; and contamination, radioactive dust on the skin in kilobecquerels that keeps dosing until water or
+  the rain washes it off, which a suit keeps from settling. The bands of radiation sickness, Rad I to V, from nausea to
+  close to deadly; slow recovery away from the sources and under the background. The sky gives off a little, more as
+  the air thins and the most with none, roofs stopping it; minerals with uranium or thorium in them give off a little
+  more; a mod sets a dimension's radiation belts. The Geiger counter, the dosimeter, the hazard map and the body's
+  screen read it, and the land withers where it is high.
+- (Core) Dissonance: where the laws of physics depart from ours (time at another pace, a pull that is not down, light
+  that bends, space that wraps) it builds up in a body, from warped sight through drifting gravity, stuttering time
+  and jumps through space to coming apart, and falls back in normal laws; a bubble of normal laws a mod gives keeps it
+  off. It has a setting of its own.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

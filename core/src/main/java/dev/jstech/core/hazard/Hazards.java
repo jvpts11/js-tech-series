@@ -139,8 +139,9 @@ public final class Hazards {
                 continue;
             }
             final double stopped = kind.protection().map(protection -> Resistances.total(body, protection)).orElse(0.0);
-            final double rate = taken * (1 - stopped);
-            final double now = taken > 0 ? before + rate
+            // What comes no faster than the background every body lives in builds up nothing.
+            final double rate = taken > kind.background() ? taken * (1 - stopped) : 0;
+            final double now = rate > 0 ? before + rate
                     : before - Math.min(before, kind.recovered(before) * (1 + kind.faster(body, level)));
             set(body, kind, now);
             body.getData(CoreAttachments.HAZARDS).rate(kind.id(), rate, taken);

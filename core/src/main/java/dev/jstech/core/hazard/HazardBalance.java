@@ -20,8 +20,18 @@ public final class HazardBalance {
     private static volatile boolean lungs = true;
     private static volatile boolean itemHazards = true;
     private static volatile boolean withering = true;
+    private static volatile boolean dissonance = true;
 
     private HazardBalance() {
+    }
+
+    /** Whether laws of physics that depart from ours build up dissonance in a body. */
+    public static boolean dissonance() {
+        return dissonance;
+    }
+
+    public static void setDissonance(final boolean value) {
+        dissonance = value;
     }
 
     /**

@@ -18,6 +18,7 @@ import dev.jstech.core.hazard.Lungs;
 import dev.jstech.core.hazard.Resistances;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
 import dev.jstech.core.jstechseries.hazard.HazardScreenTexts;
+import dev.jstech.core.jstechseries.hazard.IonizingRadiation;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -238,9 +239,9 @@ public final class BodyScreen extends Screen {
         }
         centred(g, unit, cx, cy + RATE_RADIUS / 2 + 3, c.ink());
         final double outside = radiation.map(DeviceReadings::rateHere).orElse(0.0);
-        // The radioactive dust on the body doses it as its own rate, in the radiation's units.
-        final double onYou = radiation.map(kind -> kind.shownRate(HazardsClient.rate(HazardDevices.CONTAMINATION)))
-                .orElse(0.0);
+        // The radioactive dust on the body doses it as its own rate, by how much of it there is.
+        final double onYou = radiation.isPresent()
+                ? IonizingRadiation.contaminationRate(HazardsClient.level(HazardDevices.CONTAMINATION)) : 0;
         needle(g, cx, cy, RATE_RADIUS, angle(logShare(outside)), c.outsideNeedle());
         needle(g, cx, cy, RATE_RADIUS, angle(logShare(onYou)), c.onYouNeedle());
         pivot(g, cx, cy, RATE_RADIUS);

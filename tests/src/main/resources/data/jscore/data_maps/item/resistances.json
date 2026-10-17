@@ -6,6 +6,10 @@
     },
     "minecraft:golden_chestplate": {
       "jscore:heat": 0.5
+    },
+    "minecraft:iron_helmet": {
+      "jscore:radiation": 0.5,
+      "jscore:contamination": 0.9
     }
   }
 }

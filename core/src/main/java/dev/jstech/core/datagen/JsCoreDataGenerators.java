@@ -32,6 +32,7 @@ public final class JsCoreDataGenerators {
         // The series' shared content is made of the game's own materials, so a mod used alone can make it.
         data.server(new SeriesRecipes(data.output(), data.lookup()));
         data.server(new BlockConductivityProvider(data.output(), data.lookup()));
+        data.server(new BlockDensityProvider(data.output(), data.lookup()));
         data.server(new LightColoursProvider(data.output(), data.lookup()));
         data.server(new SealProvider(data.output(), data.lookup()));
         // The veins every biome's ores lie in, standing in for the game's scattered iron, copper and gold, and the

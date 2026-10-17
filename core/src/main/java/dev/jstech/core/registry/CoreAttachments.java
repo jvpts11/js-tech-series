@@ -12,6 +12,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.LevelGrids;
 import dev.jstech.core.hazard.HazardLevels;
 import dev.jstech.core.hazard.HazardMap;
+import dev.jstech.core.hazard.LevelRadiation;
 import dev.jstech.core.heat.LevelHeat;
 import dev.jstech.core.mechanical.LevelMechanics;
 import dev.jstech.core.multiblock.LevelStructures;
@@ -95,6 +96,10 @@ public final class CoreAttachments {
     public static final Supplier<AttachmentType<HazardLevels>> HAZARDS =
             ATTACHMENT_TYPES.register("hazards", () -> AttachmentType.builder(HazardLevels::new)
                     .serialize(HazardLevels.CODEC).build());
+
+    /** A dimension's sources of radiation; never saved, since each block that gives it off says so as it loads. */
+    public static final Supplier<AttachmentType<LevelRadiation>> RADIATION =
+            ATTACHMENT_TYPES.register("radiation", () -> AttachmentType.builder(LevelRadiation::new).build());
 
     /** What a player knows of the land's hazards, chunk by chunk: saved with them, and kept through death. */
     public static final Supplier<AttachmentType<HazardMap>> HAZARD_MAP =
