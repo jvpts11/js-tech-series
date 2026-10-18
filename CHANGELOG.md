@@ -750,6 +750,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   carries no wave, and water carries it far. The breaking is spread over ticks within a budget, claimed land is
   respected, and what each mod's explosions do to the world is a setting of the server's. The game's own explosions
   show the fireball, the smoke and the scorch marks too.
+- (Core) Fire: the game's fire spreads, and eats what burns, by the oxygen of the air (never with too little, an
+  inferno in air half oxygen) and by the wind (faster downwind, slower upwind, leaping ahead in a gale), and gives off
+  smoke that rises and drifts. What burned stays burned, as a data map says. A fire's class is the worst of what feeds
+  it (solids, flammable liquids, cooking oils, electrical, metals), and each agent does on each class what the real
+  one does: water shocks whoever sprays live equipment, spreads burning oil and makes a burning metal burst. Sensors
+  read the heat and the smoke where they hang. It has settings of its own.
+- (Core) The series' fire safety: extinguishers of water, foam, carbon dioxide and dry powder, their bands in the
+  colours of the European code; a sprinkler fed by a water pipe whose bulb bursts in the heat of a fire; smoke and heat
+  detectors that call and give redstone; and charred logs, charred planks and ash where wood and cloth burnt. The
+  series' fires give off soot.
+- (Core) Blocks laid along an axis as logs are, and blocks whose every state picks its own model, for any mod's
+  content; and a texture a pack draws as the game loads may be named by a mod's own models.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

@@ -128,6 +128,8 @@ public final class PerformanceGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> mf.submitSelfTest(load, work))
                 .thenExecuteAfter(2, () -> tickBench(helper,
                         load + " queued self-tests", level, abs, state, mf, 30, 200))
+                // What is still queued goes with the Mainframe, so it does not run on into the next bench.
+                .thenExecute(() -> helper.setBlock(rel, Blocks.AIR))
                 .thenSucceed();
     }
 
@@ -159,6 +161,8 @@ public final class PerformanceGameTests {
                 })
                 .thenExecuteAfter(2, () -> tickBench(helper, load + " queued processing ops",
                         level, abs, state, mf, 20, 100))
+                // The jobs never finish: the Mainframe goes, so its load does not run on into the next bench.
+                .thenExecute(() -> helper.setBlock(rel, Blocks.AIR))
                 .thenSucceed();
     }
 
@@ -196,6 +200,8 @@ public final class PerformanceGameTests {
                         tickBench(helper, target + " waiting SELECTs", level, absM, stateM, mf, 10, 80);
                     }
                 })
+                // The SELECTs wait for ever: the Mainframe and its rack go, so they do not run into the next bench.
+                .thenExecute(() -> clear(helper, new BlockPos(1, 2, 2), new BlockPos(2, 2, 3)))
                 .thenSucceed();
     }
 
@@ -228,6 +234,7 @@ public final class PerformanceGameTests {
                 })
                 .thenExecuteAfter(12, () -> tickBench(helper,
                         "idle, large item catalog", level, absM, stateM, mf, 20, 200))
+                .thenExecute(() -> clear(helper, new BlockPos(1, 2, 2), new BlockPos(2, 2, 3)))
                 .thenSucceed();
     }
 
@@ -311,6 +318,8 @@ public final class PerformanceGameTests {
                             "CRAFT planner exceeded " + CATASTROPHE_MS + " ms/plan: "
                                     + String.format(Locale.ROOT, "%.2f", usPerPlan / 1000.0) + " ms");
                 })
+                // The CRAFTs stay alive: the whole network goes, so they do not run into the next bench.
+                .thenExecute(() -> clear(helper, new BlockPos(1, 2, 2), new BlockPos(5, 2, 3)))
                 .thenSucceed();
     }
 
@@ -367,6 +376,15 @@ public final class PerformanceGameTests {
                     helper.assertTrue(mspt < CATASTROPHE_MS,
                             "physical network tick exceeded " + CATASTROPHE_MS + " ms: " + mspt);
                 })
+                // The cables and machines tick for ever: they go, so they do not weigh on the next bench.
+                .thenExecute(() -> clear(helper, new BlockPos(1, 2, 1), new BlockPos(x0 + side, 4, z0 + side)))
                 .thenSucceed();
+    }
+
+    /* Empties the box from {@code from} to {@code to}, so what a bench built stops ticking when it is done. */
+    private static void clear(final GameTestHelper helper, final BlockPos from, final BlockPos to) {
+        for (final BlockPos pos : BlockPos.betweenClosed(from, to)) {
+            helper.setBlock(pos, Blocks.AIR);
+        }
     }
 }

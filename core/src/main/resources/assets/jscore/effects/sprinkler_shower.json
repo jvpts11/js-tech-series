@@ -1,0 +1,21 @@
+{
+  "reach": 48,
+  "emitters": [
+    {
+      "name": "drops",
+      "emission": {"shape": {"type": "cone", "angle": 55}, "bursts": [{"at": 0, "count": 24}],
+                   "life": [0.5, 0.9], "speed": [3, 5]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.06, 0.12],
+               "colour": ["#C8DCF0E0", "#A8C4E040"]},
+      "motion": {"gravity": 1, "drag": 0.4, "collide": true}
+    },
+    {
+      "name": "mist",
+      "emission": {"shape": {"type": "cone", "angle": 60}, "bursts": [{"at": 0.1, "count": 4}],
+                   "life": [1, 1.6], "speed": [1, 2]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.5, 1.6],
+               "colour": ["#E8F0F860", "#E8F0F800"], "spin": 10},
+      "motion": {"drag": 1.2, "expands": true, "medium": "air"}
+    }
+  ]
+}

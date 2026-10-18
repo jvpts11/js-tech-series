@@ -1,0 +1,66 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fire_detectors.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fire_detectors.for"
+    },
+    {
+      "type": "define",
+      "definition": "jscore.guide.fire_detectors.definition1",
+      "term": "jscore.guide.fire_detectors.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fire_detectors.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.fire_detectors.use1",
+        "jscore.guide.fire_detectors.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.fire_detectors.fix1",
+          "problem": "jscore.guide.fire_detectors.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:smoke_detector",
+  "id": "jscore:fire_detectors",
+  "items": [
+    "jscore:smoke_detector",
+    "jscore:heat_detector"
+  ],
+  "order": 25,
+  "section": "jscore:fire",
+  "title": "jscore.guide.fire_detectors.title"
+}

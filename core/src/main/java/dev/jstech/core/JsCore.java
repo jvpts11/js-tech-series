@@ -58,6 +58,7 @@ import dev.jstech.core.effect.Effects;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.DimensionTravel;
 import dev.jstech.core.explosion.Explosions;
+import dev.jstech.core.fire.Fires;
 import dev.jstech.core.hazard.BlockDensity;
 import dev.jstech.core.hazard.HazardMaps;
 import dev.jstech.core.hazard.Pollution;
@@ -123,6 +124,10 @@ import dev.jstech.core.jstechseries.energy.ClampMeter;
 import dev.jstech.core.jstechseries.hazard.HazardDeviceSettings;
 import dev.jstech.core.jstechseries.hazard.Dissonance;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
+import dev.jstech.core.jstechseries.fire.CharredBlocks;
+import dev.jstech.core.jstechseries.fire.FireGuide;
+import dev.jstech.core.jstechseries.fire.FireSafety;
+import dev.jstech.core.jstechseries.fire.SeriesFire;
 import dev.jstech.core.jstechseries.hazard.IonizingRadiation;
 import dev.jstech.core.jstechseries.hazard.SeriesPollution;
 import dev.jstech.core.jstechseries.hazard.HazardGuide;
@@ -300,6 +305,8 @@ public final class JsCore {
         Withering.listen();
         // Explosions decided by their energy: a shock wave at the speed of sound through blocks by their strength.
         Explosions.listen(modEventBus);
+        // Fire that spreads by what burns, the oxygen and the wind, leaves its remains, and is put out by class.
+        Fires.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -354,6 +361,10 @@ public final class JsCore {
         Dissonance.declare();
         // The series' kinds of pollution: soot, acid rain, heavy metals, fallout, and the world's carbon dioxide.
         SeriesPollution.declare();
+        // What fire leaves, the extinguishers, the sprinkler and the detectors, and the soot fires give off.
+        CharredBlocks.declare();
+        FireSafety.declare();
+        SeriesFire.declare();
         MultiblockBuilder.declare();
         SharedTools.declare();
         NetworkProbe.declare();
@@ -365,6 +376,7 @@ public final class JsCore {
         AtmosphereGuide.declare(PersistorGuide.declare());
         ToolsGuide.declare();
         HazardGuide.declare();
+        FireGuide.declare();
         LinesGuide.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
@@ -450,6 +462,7 @@ public final class JsCore {
         CableBreaking.listen();
         ClampMeter.listen(modEventBus);
         HazardDevices.listen(modEventBus);
+        FireSafety.listen(modEventBus);
         NetworkProbe.listen(modEventBus);
         SignalProbe.listen(modEventBus);
         MultiblockBuilder.listen(modEventBus);

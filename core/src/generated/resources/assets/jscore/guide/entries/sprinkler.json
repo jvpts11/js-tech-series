@@ -1,0 +1,64 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.sprinkler.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.sprinkler.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.sprinkler.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.sprinkler.use1",
+        "jscore.guide.sprinkler.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.sprinkler.fix1",
+          "problem": "jscore.guide.sprinkler.problem1"
+        },
+        {
+          "fix": "jscore.guide.sprinkler.fix2",
+          "problem": "jscore.guide.sprinkler.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:sprinkler",
+  "id": "jscore:sprinkler",
+  "items": [
+    "jscore:sprinkler"
+  ],
+  "order": 24,
+  "section": "jscore:fire",
+  "title": "jscore.guide.sprinkler.title"
+}

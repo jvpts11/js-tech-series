@@ -4,7 +4,8 @@ Explosions with real physics, decided by their energy and not by a radius: the s
 sound, pushes through blocks by the strength of each, and hurts and throws what it reaches by the overpressure there.
 A casing breaks into fragments, broken blocks fly as debris, explosives it breaks go off, and the ground round the
 crater is scorched. The medium decides the rest: a vacuum carries no wave, water carries it far. It is in the spirit
-of the explosions of HBM's Nuclear Tech, with the figures of real blasts.
+of the explosions of HBM's Nuclear Tech, with the figures of real blasts. And fire that spreads by what burns, by the
+air's oxygen and by the wind, leaves charred wood and ash, and is put out by its class with the right agent.
 
 The design behind this page is [Explosions and fire](design/explosions-and-fire.md).
 
@@ -152,3 +153,83 @@ jsindustrial = "spare_blocks"
 ```
 
 A mod with a setting of its own passes it with `.atMost(consequence)`; the server's still holds.
+
+## Fire
+
+*Added 2026-10-17.*
+
+The game's own fire does the burning; the Core changes how it spreads and what it leaves.
+
+- **By the oxygen**: toward each place, a fire spreads, and eats what burns, as many times as fast as the oxygen of
+  the air there says against the air at sea level (21 kPa): never below 12 kPa, faster in air rich in it, three times
+  faster again as an inferno in air half or more oxygen. Outside a sealed room, an inferno lights what burns round it
+  each second; a sealed room keeps its own.
+- **By the wind**: a fire spreads faster downwind and slower upwind (`Winds.at`), and a wind of 6 m/s or more makes
+  it leap a block ahead of itself, up to three in a gale, onto what burns there.
+- **By what burns**: as the game's own flammability says, wood fast, wool and leaves faster, stone never.
+
+`FireMath` holds the figures, pure. `Fires.spread(level, fire, target)` and `Fires.burnRate(level, pos)` give the
+factors; `Fires.burning(level)` counts the fires the kit knows of.
+
+### What burned stays burned
+
+The data map `jscore:burns_into` of blocks says what a block becomes when the fire burns it away, the properties the
+two share kept (a log's axis):
+
+```json
+{ "values": { "#minecraft:logs_that_burn": "mymod:charred_log", "#minecraft:wool": "mymod:ash" } }
+```
+
+The series fills it for the game's blocks: logs char, planks char, and thin wood, wool, carpets, leaves, hay, books and
+scaffolding burn to a layer of ash, which needs something under it to lie on. A block it says nothing of leaves nothing.
+
+### Classes of fire and putting them out
+
+The class of a fire is the worst of what feeds it, the block under it and those round it (`FireClasses.at`): solids,
+flammable liquids, cooking oils, electrical, metals. The data map `jscore:fire_class` of blocks gives a fuel's class; a
+liquid in the fluid tags `jscore:flammable_liquids` or `jscore:cooking_oils` is of that class; anything holding energy
+is electrical while it holds some; a block whose item reacts with water or catches fire in the air is a burning metal.
+
+`Extinguishing.extinguish(level, fire, agent, sprayer)` puts a fire out with an agent, as the agent does on its class:
+
+| Agent | Solids | Liquids | Cooking oils | Electrical | Metals |
+| --- | --- | --- | --- | --- | --- |
+| Water | puts out | flares up | flares up | shocks the sprayer | bursts |
+| Foam | puts out | puts out | puts out | shocks the sprayer | bursts |
+| Carbon dioxide | smoulders, may light again | puts out | nothing | puts out | nothing |
+| Dry powder | puts out | puts out | may light again | puts out | puts out |
+
+A burning metal struck by water bursts as a small blast of the explosive `jscore:burning_metal`, which the servers'
+setting of explosions governs.
+
+### Smoke, heat and what watches for them
+
+Once a second the fires give off smoke, which rises and drifts with the wind, and a mod watching them
+(`Fires.watch(watcher)`) is told of each one burning, and asks `FireClasses.at` for its class when it needs it: the
+series' fires give off soot into their chunk. The kit looks at the fires a share each tick, so many fires never weigh
+on one tick.
+`FireSenses.heatAt(level, pos)` and `FireSenses.smokeAt(level, pos)` say how hot the air is and how much of the light
+the smoke takes away at a place: smoke rises, so a fire above a place sends it none, and in a sealed room the smoke of
+every fire in it fills it.
+
+### The series' fire safety
+
+- **Extinguishers** of water, foam, carbon dioxide and dry powder, their bands in the colour of the European code.
+  Held down, one sprays a cone ahead (water six blocks, carbon dioxide two and a half) and puts out the fires in it and
+  the flames on what burns there. Its bar shows the seconds of spraying it holds; a water one fills again from water.
+- **The sprinkler**, hung under a ceiling and fed water by a pipe or a tank beside it: it takes water in and gives none
+  out, its bulb bursts at 68 °C, and it showers the place under it while the heat lasts and half a minute after.
+- **The smoke and heat detectors**, hung under a ceiling: sensors that give their alarm, full, on every side, or what
+  they read, the smoke as a share of the light lost or the temperature, chosen with a signal probe. A smoke detector
+  calls at a tenth of the light lost, a heat detector at 57 °C.
+- **Charred logs, charred planks and ash**, what fire leaves, drawn as the game loads from its own oak and powder.
+
+### Fire settings
+
+In the world's balance file, under `fire`:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `remains` | `true` | Whether what burned stays burned, as data packs say, instead of vanishing. |
+| `wind` | `true` | Whether the wind spreads fire faster downwind and makes it leap ahead. |
+| `smoke` | `true` | Whether fires give off smoke that rises and drifts with the wind. |

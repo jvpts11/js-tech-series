@@ -1,0 +1,21 @@
+{
+  "reach": 48,
+  "emitters": [
+    {
+      "name": "jet",
+      "emission": {"shape": {"type": "cone", "angle": 10}, "bursts": [{"at": 0, "count": 16}],
+                   "life": [0.35, 0.7], "speed": [7, 10]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.12, 0.7],
+               "colour": ["#B8D4F0E0", "#A0C8F000"], "spin": 30},
+      "motion": {"gravity": 0.5, "drag": 1.8, "expands": true, "medium": "air"}
+    },
+    {
+      "name": "cloud",
+      "emission": {"shape": {"type": "cone", "angle": 22}, "bursts": [{"at": 0.05, "count": 6}],
+                   "life": [0.8, 1.4], "speed": [3, 5]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.4, 1.4],
+               "colour": ["#C8DCF080", "#C8DCF000"], "spin": 15},
+      "motion": {"drag": 1.4, "expands": true, "medium": "air"}
+    }
+  ]
+}

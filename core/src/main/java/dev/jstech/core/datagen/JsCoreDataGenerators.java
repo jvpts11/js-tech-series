@@ -8,6 +8,7 @@
 package dev.jstech.core.datagen;
 
 import dev.jstech.core.jstechseries.SeriesRecipes;
+import dev.jstech.core.jstechseries.fire.FireRemainsProvider;
 import dev.jstech.core.registry.CoreItems;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
@@ -34,6 +35,7 @@ public final class JsCoreDataGenerators {
         data.server(new BlockConductivityProvider(data.output(), data.lookup()));
         data.server(new BlockDensityProvider(data.output(), data.lookup()));
         data.server(new BlastStrengthProvider(data.output(), data.lookup()));
+        data.server(new FireRemainsProvider(data.output(), data.lookup()));
         data.server(new LightColoursProvider(data.output(), data.lookup()));
         data.server(new SealProvider(data.output(), data.lookup()));
         // The veins every biome's ores lie in, standing in for the game's scattered iron, copper and gold, and the

@@ -53,6 +53,8 @@ the models from it. The texture names below are files in `assets/<your mod>/text
 | `IBlockLook.column(id)` | A pillar: `id_side` around, `id_top` on both ends. |
 | `IBlockLook.orientable(id)` | A machine facing the way it was placed: `id_front`, `id_side`, `id_top`. Pass `IBlockLook::orientable` to `look` and it is given the block's id. |
 | `IBlockLook.fixed(model)` | One model whatever the state. |
+| `IBlockLook.axis(model)` | One model laid along the block's axis, as the game's logs are; the block is a `RotatedPillarBlock`. |
+| `IBlockLook.byState(state -> model)` | A model chosen from the whole state and never turned: a sprinkler open or shut, a detector's lamp lit or dark. |
 | `IBlockLook.facing(model)` | One model turned to the block's horizontal facing; `.frontAgainstFacing()` turns it round, `.whileOn(property, otherModel)` swaps the model while a property is on (a screen lit, a drive loaded). |
 | `IBlockLook.facingByState(state -> model)` | A model chosen from the whole state, turned to the facing: for a block with more than one property that changes how it looks. |
 | `IBlockLook.pipe(texture, core, arm)` | A cable: a core in the middle and an arm toward each side it connects to. |
@@ -432,6 +434,13 @@ pack says otherwise. A mod registers properties of its own with `MaterialPropert
 The art and the data above are packs the Core makes as the game loads, and any mod can make its own the same way: a
 `RuntimePacks.declare(id, PackType, title, files)` whose files are made from what the installed mods declared, each
 only when first read. Such a pack is always on, below every pack a player or a server adds.
+
+A texture such a pack draws on the player's side, named by a hand-written model, is promised from the mod's common
+code with `RuntimePacks.promise(textureId)`, so the check of the mod's generated data finds it there. `GameTexture`
+reads one of the game's own textures to draw from and writes the PNG back, so nothing of the game's art ships: the
+series' charred wood and ash are drawn this way from the game's oak and grey powder.
+
+*Added 2026-10-17.*
 
 ### The series' catalogue
 

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "alarm=false": {
+      "model": "jscore:block/heat_detector"
+    },
+    "alarm=true": {
+      "model": "jscore:block/heat_detector_alarm"
+    }
+  }
+}

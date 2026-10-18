@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed interface IBlockLook
         permits IBlockLook.Fixed,
+        IBlockLook.Axis,
+        IBlockLook.ByState,
         IBlockLook.Facing,
         IBlockLook.FacingByState,
         IBlockLook.Pipe {
@@ -40,6 +42,16 @@ public sealed interface IBlockLook
     /** One model, whatever the state. */
     static IBlockLook fixed(final IBlockModel model) {
         return new Fixed(model);
+    }
+
+    /** One model laid along the block's axis, for a block that rotates as a log does. */
+    static IBlockLook axis(final IBlockModel model) {
+        return new Axis(model);
+    }
+
+    /** A model chosen by the block's whole state and never turned: a sprinkler open or shut, a lamp lit or dark. */
+    static IBlockLook byState(final Function<BlockState, IBlockModel> model) {
+        return new ByState(model);
     }
 
     /** One model, turned so its front looks the way the block's horizontal facing points. */
@@ -65,6 +77,14 @@ public sealed interface IBlockLook
 
     /** Every state shows the one model. */
     record Fixed(IBlockModel model) implements IBlockLook {
+    }
+
+    /** The one model, a pillar laid along the block's axis, as the game's logs are. */
+    record Axis(IBlockModel model) implements IBlockLook {
+    }
+
+    /** The model each state picks, never turned. */
+    record ByState(Function<BlockState, IBlockModel> model) implements IBlockLook {
     }
 
     /**

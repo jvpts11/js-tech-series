@@ -11,14 +11,17 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.util.DeclarationError;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.PipeBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.neoforged.neoforge.client.model.generators.BlockModelBuilder;
 import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
+import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
 import net.neoforged.neoforge.client.model.generators.ModelFile;
 import net.neoforged.neoforge.client.model.generators.MultiPartBlockStateBuilder;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
@@ -42,6 +45,24 @@ public final class ContentBlockStateProvider extends BlockStateProvider {
             final Block block = entry.get();
             switch (entry.look()) {
                 case IBlockLook.Fixed fixed -> simpleBlock(block, model(fixed.model()));
+                case IBlockLook.Axis axis -> {
+                    if (!(block instanceof RotatedPillarBlock pillar)) {
+                        throw DeclarationError.of(content.modid(), "the block " + entry.getId(),
+                                "is laid along an axis but has none", "make it a RotatedPillarBlock, or give it "
+                                        + "another look");
+                    }
+                    final ModelFile pillarModel = model(axis.model());
+                    axisBlock(pillar, pillarModel, pillarModel);
+                }
+                case IBlockLook.ByState byState -> {
+                    // Each model written once, however many states show it.
+                    final Map<String, ModelFile> files = new HashMap<>();
+                    getVariantBuilder(block).forAllStates(state -> {
+                        final IBlockModel chosen = byState.model().apply(state);
+                        return ConfiguredModel.builder()
+                                .modelFile(files.computeIfAbsent(chosen.name(), name -> model(chosen))).build();
+                    });
+                }
                 case IBlockLook.Facing facing -> {
                     final ModelFile off = model(facing.model());
                     final IBlockLook.Toggle toggle = facing.toggle();

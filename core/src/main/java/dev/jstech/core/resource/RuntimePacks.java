@@ -14,6 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
@@ -41,8 +43,24 @@ import org.jetbrains.annotations.ApiStatus;
 public final class RuntimePacks {
 
     private static final List<Declared> DECLARED = new CopyOnWriteArrayList<>();
+    /* The textures packs of the player's game promise to make, said on both sides so the server's data can know. */
+    private static final Set<ResourceLocation> PROMISED = ConcurrentHashMap.newKeySet();
 
     private RuntimePacks() {
+    }
+
+    /**
+     * Says the texture {@code texture} ({@code mymod:block/charred_log_side}) is made as the player's game loads, by
+     * a pack declared there: a model may name it, and the check of the mod's generated data finds it. Said from the
+     * mod's common code, which the data generation runs.
+     */
+    public static void promise(final ResourceLocation texture) {
+        PROMISED.add(Objects.requireNonNull(texture, "texture"));
+    }
+
+    /** Whether a pack promised to make the texture {@code texture} as the player's game loads. */
+    public static boolean promised(final ResourceLocation texture) {
+        return PROMISED.contains(texture);
     }
 
     /**

@@ -135,6 +135,7 @@ import dev.jstech.tests.clienttest.core.SettingsKitClientTests;
 import dev.jstech.tests.clienttest.core.FluidClientTests;
 import dev.jstech.tests.clienttest.core.GridPainterClientTests;
 import dev.jstech.tests.clienttest.core.HazardDevicesClientTests;
+import dev.jstech.tests.clienttest.core.FireClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
@@ -223,6 +224,7 @@ public final class ClientTestSuite {
             RecipeViewClientTests.class,
             HudHologramClientTests.class,
             HazardDevicesClientTests.class,
+            FireClientTests.class,
             WorldStabilityClientTests.class,
             ManualClientTests.class,
             SeriesManualsClientTests.class,

@@ -13,6 +13,7 @@ import com.google.gson.JsonParser;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
+import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
 import java.io.Reader;
@@ -164,7 +165,9 @@ final class ContentCheckProvider implements DataProvider {
                     continue;
                 }
                 final ResourceLocation location = ResourceLocation.parse(named);
-                if (checkable(location) && !exists(file(location, "textures/", ".png"), PackType.CLIENT_RESOURCES)) {
+                // A texture a pack makes as the player's game loads is found there, not in the mod's files.
+                if (checkable(location) && !RuntimePacks.promised(location)
+                        && !exists(file(location, "textures/", ".png"), PackType.CLIENT_RESOURCES)) {
                     missing.add(DeclarationError.of(modid, (block ? "the block " : "the item ") + owner,
                             "is drawn with the model " + model + ", which names the texture " + location
                             + ", and there is no such picture",

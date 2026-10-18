@@ -84,6 +84,7 @@ import dev.jstech.core.client.vehicle.VehicleControls;
 import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.jstechseries.energy.client.ClampMeterClient;
 import dev.jstech.core.jstechseries.energy.client.EnergyConvertersClient;
+import dev.jstech.core.jstechseries.fire.client.FireArt;
 import dev.jstech.core.jstechseries.hazard.client.HazardDevicesClient;
 import dev.jstech.core.jstechseries.builder.client.BuilderClient;
 import dev.jstech.core.jstechseries.persistor.client.PersistorClient;
@@ -196,5 +197,7 @@ public final class JsCoreClient {
         ConfigChoosers.register(StyleSettings.CHOOSER, new StyleChooser());
         // How the things of the materials the installed mods use look, drawn as the resources load.
         MaterialArt.declare();
+        // How what fire leaves looks: the game's oak charred and its snow greyed to ash, as the resources load.
+        FireArt.declare();
     }
 }

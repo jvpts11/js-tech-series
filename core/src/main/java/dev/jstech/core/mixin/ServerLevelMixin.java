@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.mixin;
 
+import dev.jstech.core.fire.Fires;
 import dev.jstech.core.room.Rooms;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -17,10 +18,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Tells the sealed rooms of every block that changes. The game's events tell of blocks broken, placed, blown up and
- * pushed, but not of a block changed by a command, by another mod's machine or without telling its neighbours; a room
- * opened by one of those would stay sealed. The game calls this method for every block that changes, by any means: it
- * only notes where, and the rooms are worked out again later, away from the change.
+ * Tells the sealed rooms and the fire kit of every block that changes. The game's events tell of blocks broken,
+ * placed, blown up and pushed, but not of a block changed by a command, by another mod's machine or without telling
+ * its neighbours, nor of a fire lit or gone out; a room opened by one of those would stay sealed, and a fire would go
+ * unseen. The game calls this method for every block that changes, by any means: it only notes where, and the rooms
+ * and the fires are worked out later, away from the change.
  */
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
@@ -29,5 +31,6 @@ public abstract class ServerLevelMixin {
     private void jscore$noteForRooms(final BlockPos pos, final BlockState before, final BlockState after,
                                      final CallbackInfo info) {
         Rooms.noteChange((ServerLevel) (Object) this, pos, before, after);
+        Fires.noteChange((ServerLevel) (Object) this, pos, before, after);
     }
 }

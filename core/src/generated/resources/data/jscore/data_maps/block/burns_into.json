@@ -1,0 +1,19 @@
+{
+  "values": {
+    "#minecraft:fence_gates": "jscore:ash",
+    "#minecraft:leaves": "jscore:ash",
+    "#minecraft:logs_that_burn": "jscore:charred_log",
+    "#minecraft:planks": "jscore:charred_planks",
+    "#minecraft:wooden_doors": "jscore:ash",
+    "#minecraft:wooden_fences": "jscore:ash",
+    "#minecraft:wooden_slabs": "jscore:ash",
+    "#minecraft:wooden_stairs": "jscore:ash",
+    "#minecraft:wooden_trapdoors": "jscore:ash",
+    "#minecraft:wool": "jscore:ash",
+    "#minecraft:wool_carpets": "jscore:ash",
+    "minecraft:bookshelf": "jscore:ash",
+    "minecraft:dried_kelp_block": "jscore:ash",
+    "minecraft:hay_block": "jscore:ash",
+    "minecraft:scaffolding": "jscore:ash"
+  }
+}

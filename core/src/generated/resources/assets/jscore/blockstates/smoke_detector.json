@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "alarm=false": {
+      "model": "jscore:block/smoke_detector"
+    },
+    "alarm=true": {
+      "model": "jscore:block/smoke_detector_alarm"
+    }
+  }
+}

@@ -13,6 +13,7 @@ import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.diagnostic.DiagnosticBalance;
 import dev.jstech.core.explosion.BlastBalance;
 import dev.jstech.core.explosion.BlastConsequence;
+import dev.jstech.core.fire.FireBalance;
 import dev.jstech.core.hazard.HazardBalance;
 import dev.jstech.core.heat.HeatBalance;
 import dev.jstech.core.mechanical.MechanicalBalance;
@@ -54,6 +55,8 @@ public final class CoreConfigKeys {
     public static final String ELEMENTS = "elements";
     /** What blasts do to the world, and how much of a tick they take. */
     public static final String EXPLOSIONS = "explosions";
+    /** What fire does: the remains it leaves, the wind and the smoke. */
+    public static final String FIRE = "fire";
     /** The world's hazards: radiation, pollution and the rest. */
     public static final String HAZARDS = "hazards";
     /** What heat does to the world: pipes that freeze, cold liquids that boil off, overheating, fires and burns. */
@@ -359,6 +362,23 @@ public final class CoreConfigKeys {
                     + "smoke, the sparks and the scorch marks the mods' blasts do. They break what they always did.")
             .named("The game's explosions look the part");
 
+    /** Whether what burned stays burned. */
+    public static final ConfigKey<Boolean> FIRE_REMAINS = ConfigKey.flag(FIRE + ".remains", true)
+            .comment("Whether what burned stays burned: a log burns to charred wood and wool to ash, as data packs "
+                    + "say, instead of vanishing.")
+            .named("What burned stays burned");
+
+    /** Whether the wind spreads fire. */
+    public static final ConfigKey<Boolean> FIRE_WIND = ConfigKey.flag(FIRE + ".wind", true)
+            .comment("Whether the wind spreads a fire faster downwind and slower upwind, and a strong wind makes it "
+                    + "leap a few blocks ahead.")
+            .named("The wind spreads fire");
+
+    /** Whether fires give off smoke. */
+    public static final ConfigKey<Boolean> FIRE_SMOKE = ConfigKey.flag(FIRE + ".smoke", true)
+            .comment("Whether fires give off smoke that rises and drifts with the wind.")
+            .named("Fires give off smoke");
+
     /** Whether a pipe of a liquid freezes where the place is colder than the liquid's melting point. */
     public static final ConfigKey<Boolean> HEAT_PIPES_FREEZE = ConfigKey.flag(HEAT + ".pipes_freeze", true)
             .comment("Whether a pipe of a liquid freezes and carries none of it where the place is colder than the "
@@ -540,6 +560,7 @@ public final class CoreConfigKeys {
             .sectionComment(DIAGNOSTICS, "The watchdog, and what the server counts of what it sends each player.")
             .sectionComment(ELEMENTS, "Naming the elements discovered beyond the 118 known.")
             .sectionComment(EXPLOSIONS, "What blasts do to the world, mod by mod, and how much of a tick they take.")
+            .sectionComment(FIRE, "What fire does: the remains it leaves, the wind and the smoke.")
             .sectionComment(HAZARDS, "The world's hazards: which of them there are.")
             .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off, "
                     + "machines that overheat, fires and burns.")
@@ -553,6 +574,7 @@ public final class CoreConfigKeys {
             .sectionNamed(DIAGNOSTICS, "Diagnostics")
             .sectionNamed(ELEMENTS, "Elements")
             .sectionNamed(EXPLOSIONS, "Explosions")
+            .sectionNamed(FIRE, "Fire")
             .sectionNamed(HAZARDS, "Hazards")
             .sectionNamed(HEAT, "Heat")
             .sectionNamed(MECHANICAL, "Mechanical power")
@@ -598,6 +620,9 @@ public final class CoreConfigKeys {
             .key(EXPLOSIONS_LOOKED_AT, BlastBalance::setLookedAt)
             .key(EXPLOSIONS_BROKEN, BlastBalance::setBroken)
             .key(EXPLOSIONS_GAME_SHOWN, BlastBalance::setGameExplosionsShown)
+            .key(FIRE_REMAINS, FireBalance::setRemains)
+            .key(FIRE_WIND, FireBalance::setWind)
+            .key(FIRE_SMOKE, FireBalance::setSmoke)
             .key(HEAT_PIPES_FREEZE, HeatBalance::setPipesFreeze)
             .key(HEAT_BOIL_OFF, HeatBalance::setBoilOff)
             .key(HEAT_OVERHEATING_DAMAGES, HeatBalance::setOverheatingDamages)

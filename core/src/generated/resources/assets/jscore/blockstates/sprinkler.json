@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "open=false": {
+      "model": "jscore:block/sprinkler"
+    },
+    "open=true": {
+      "model": "jscore:block/sprinkler_open"
+    }
+  }
+}

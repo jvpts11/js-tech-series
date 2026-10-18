@@ -1,0 +1,7 @@
+{
+  "parent": "jscore:block/heat_detector",
+  "textures": {
+    "particle": "jscore:block/heat_detector_alarm",
+    "face": "jscore:block/heat_detector_alarm"
+  }
+}

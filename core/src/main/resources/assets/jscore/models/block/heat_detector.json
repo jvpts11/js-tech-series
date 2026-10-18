@@ -1,0 +1,39 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "jscore:block/heat_detector",
+    "face": "jscore:block/heat_detector"
+  },
+  "display": {
+    "gui": {"rotation": [-30, 45, 0], "translation": [0, -4, 0], "scale": [1, 1, 1]},
+    "ground": {"rotation": [0, 0, 0], "translation": [0, -3, 0], "scale": [0.5, 0.5, 0.5]},
+    "fixed": {"rotation": [-90, 0, 0], "translation": [0, 0, -7], "scale": [1, 1, 1]}
+  },
+  "elements": [
+    {
+      "name": "housing",
+      "from": [4, 14, 4],
+      "to": [12, 16, 12],
+      "faces": {
+        "north": {"uv": [4, 0, 12, 2], "texture": "#face"},
+        "east": {"uv": [4, 0, 12, 2], "texture": "#face"},
+        "south": {"uv": [4, 0, 12, 2], "texture": "#face"},
+        "west": {"uv": [4, 0, 12, 2], "texture": "#face"},
+        "up": {"uv": [4, 4, 12, 12], "texture": "#face", "cullface": "up"},
+        "down": {"uv": [4, 4, 12, 12], "texture": "#face"}
+      }
+    },
+    {
+      "name": "bead",
+      "from": [7, 13, 7],
+      "to": [9, 14, 9],
+      "faces": {
+        "north": {"uv": [7, 7, 9, 8], "texture": "#face"},
+        "east": {"uv": [7, 7, 9, 8], "texture": "#face"},
+        "south": {"uv": [7, 8, 9, 9], "texture": "#face"},
+        "west": {"uv": [7, 8, 9, 9], "texture": "#face"},
+        "down": {"uv": [7, 7, 9, 9], "texture": "#face"}
+      }
+    }
+  ]
+}

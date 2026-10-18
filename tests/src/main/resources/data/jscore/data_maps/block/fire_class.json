@@ -1,0 +1,8 @@
+{
+  "values": {
+    "minecraft:sponge": "liquids",
+    "minecraft:wet_sponge": "cooking_oils",
+    "minecraft:lightning_rod": "electrical",
+    "minecraft:raw_iron_block": "metals"
+  }
+}

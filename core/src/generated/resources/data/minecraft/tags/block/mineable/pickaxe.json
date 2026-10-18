@@ -11,6 +11,9 @@
     "jscore:antimatter_trap",
     "jscore:structure_projector",
     "jscore:space_persistor",
-    "jscore:atmosphere_detector"
+    "jscore:atmosphere_detector",
+    "jscore:sprinkler",
+    "jscore:smoke_detector",
+    "jscore:heat_detector"
   ]
 }
