@@ -8,13 +8,18 @@
 package dev.jstech.core.moving.physics;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.util.Loaded;
 import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
+import it.unimi.dsi.fastutil.longs.Long2FloatMap;
+import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -22,6 +27,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 
 /**
@@ -55,6 +61,14 @@ final class StructureForces {
     /* How much of the waves' hold is given, so it never stops a light body's bobbing faster than the step. */
     private double waves = 1;
     private RigidBody moving;
+    /* What the structure is told to do now, by its helm or its autopilot. */
+    private StructureControls controls = new StructureControls();
+    /* How hard each engine pushed, as last gathered, from 0 to 1, by its place in the yard. */
+    private final Long2FloatMap engines = new Long2FloatOpenHashMap();
+    /* What kind of engine each one that pushed is, by its place in the yard. */
+    private final Long2ObjectMap<Aerodynamics.ThrustKind> engineKinds = new Long2ObjectOpenHashMap<>();
+    /* Its wings, as last gathered, by their place in the yard. */
+    private final LongList wings = new LongArrayList();
 
     /** The blocks of the world a magnet pulls. */
     static final TagKey<Block> MAGNETIC = TagKey.create(Registries.BLOCK,
@@ -77,7 +91,11 @@ final class StructureForces {
      * step of {@code seconds}; the pull at its centre is left in {@link #gravity()}.
      */
     void gather(final Level level, final StructureFrame frame, final StructureParts parts, final Box bounds,
-                final RigidBody body, final double seconds, final ForceSum sum) {
+                final RigidBody body, final double seconds, final ForceSum sum, final StructureControls told) {
+        this.controls = told;
+        engines.clear();
+        engineKinds.clear();
+        wings.clear();
         if (level.getGameTime() - magnetsAt >= MAGNET_LOOK) {
             magnetTargets.clear();
             magnetsAt = level.getGameTime();
@@ -110,6 +128,7 @@ final class StructureForces {
             }
             if (physics.wing().isPresent()) {
                 wing(level, frame, part, physics.wing().get(), body, sum);
+                wings.add(pos.asLong());
             }
             if (physics.magnet().isPresent()) {
                 magnet(level, part, physics.magnet().get(), sum);
@@ -138,19 +157,40 @@ final class StructureForces {
         return floating;
     }
 
-    /* An engine's thrust, towards the way it looks, by its throttle and the air it works in. */
+    /* How hard each engine pushed in the last gathering, from 0 to 1, by its place in the yard. */
+    Long2FloatMap engines() {
+        return engines;
+    }
+
+    /* What kind of engine the one at the yard's packed place {@code pos} is, of those that pushed last. */
+    Aerodynamics.ThrustKind engineKind(final long pos) {
+        return engineKinds.getOrDefault(pos, Aerodynamics.ThrustKind.ROCKET);
+    }
+
+    /* Its wings in the last gathering, by their place in the yard. */
+    LongList wings() {
+        return wings;
+    }
+
+    /*
+     * An engine's thrust, towards the way it looks, by its throttle and the air it works in: its throttle its signal,
+     * or the structure's controls for the way it pushes, whichever is the more.
+     */
     private void thrust(final Level level, final StructureFrame frame, final StructureParts.Part part,
                         final BlockPhysics.Thrust thrust, final RigidBody body, final ForceSum sum) {
-        final int signal = BlockPhysics.signal(level, part.pos(), part.way(), thrust.throttle());
-        if (signal <= 0) {
+        FrameMath.turned(part.way(), frame, way);
+        final double throttle = Math.max(BlockPhysics.signal(level, part.pos(), part.way(), thrust.throttle()) / FULL,
+                controls.forEngine(new Vec3(way.x, way.y, way.z), level.getGameTime()));
+        if (throttle <= 0) {
             return;
         }
-        FrameMath.turned(part.way(), frame, way);
         final Vector3d at = new Vector3d(point);
         final double along = body.velocityAt(at, air).dot(way);
         final double share = Aerodynamics.thrustShare(thrust.kind(), PhysicsWorld.airDensity(level, at.y), along,
                 thrust.exhaust());
-        sum.add(ForceSum.ForceKind.THRUST, new Vector3d(way).mul(thrust.newtons() * share * signal / FULL), at);
+        sum.add(ForceSum.ForceKind.THRUST, new Vector3d(way).mul(thrust.newtons() * share * throttle), at);
+        engines.put(part.pos().asLong(), (float) (throttle * share));
+        engineKinds.put(part.pos().asLong(), thrust.kind());
     }
 
     /* A wing's lift and drag, by the air going past it. */

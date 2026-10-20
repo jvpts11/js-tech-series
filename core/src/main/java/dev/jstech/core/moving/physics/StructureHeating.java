@@ -13,6 +13,8 @@ import dev.jstech.core.heat.IHeatHolder;
 import dev.jstech.core.heat.LevelHeat;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.util.Loaded;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -31,6 +33,7 @@ final class StructureHeating {
     private final Vector3d way = new Vector3d();
     private final Vector3d middle = new Vector3d();
     private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    private final Map<Direction, Double> kelvins = new EnumMap<>(Direction.class);
 
     /* Less heat than this a square metre, in watts, does nothing worth working out. */
     private static final double NOTICED = 1_000;
@@ -41,6 +44,7 @@ final class StructureHeating {
     /** Heats the faces of the structure standing at {@code frame}, moving as {@code body}, over {@code seconds}. */
     void heat(final ServerLevel level, final StructureFrame frame, final StructureParts parts, final RigidBody body,
               final double seconds) {
+        kelvins.clear();
         final double speed = body.velocity().length();
         if (Aerodynamics.heating(PhysicsWorld.airDensity(level, body.position().y), speed) < NOTICED) {
             return;
@@ -62,8 +66,14 @@ final class StructureHeating {
             }
             final double air = PhysicsWorld.airTemperature(level, height);
             final double kelvin = Math.pow(flux / (EMISSIVITY * STEFAN_BOLTZMANN) + Math.pow(air, 4), 0.25);
+            kelvins.put(face, kelvin);
             heatFace(level, parts, face, flux, kelvin, seconds);
         }
+    }
+
+    /* How hot each face heading into the air was in the last tick, in kelvin, by the way it looks; none for cool. */
+    Map<Direction, Double> kelvins() {
+        return kelvins;
     }
 
     /* Each block of the structure whose face looking {@code face} meets the air takes the heat, or burns. */

@@ -77,6 +77,16 @@ public final class ClientEffects {
         start(id, holder, at, way, Optional::empty, 0xFF << 24 | rgb, 1.0F);
     }
 
+    /**
+     * Holds the effect {@code id} as {@link #hold(Object, ResourceLocation, Supplier, Supplier)} does, {@code scale}
+     * times its size: an engine's plume as big as it pushes, a glow as wide as the face it wraps.
+     */
+    public static void holdScaled(final Object holder, final ResourceLocation id, final Supplier<Vec3> at,
+                                  final Supplier<Vec3> way, final float scale) {
+        EffectEngine.stop(holder);
+        start(id, holder, at, way, Optional::empty, 0, scale);
+    }
+
     /** Plays the effect {@code id} on the block at {@code pos}, where its file anchors it, until let go. */
     public static void holdOnBlock(final Object holder, final ResourceLocation id, final BlockPos pos) {
         EffectEngine.stop(holder);

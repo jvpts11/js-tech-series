@@ -83,9 +83,11 @@ public final class MovingStructurePhysicsClientTests {
         ctx.thenServer(0, level -> {
             clear(ctx);
             calm(level);
+            // Dropped from a few blocks: a crate of planks falling far enough onto stone breaks the planks the blow is
+            // too much for, as a real one cracks, and this is about how they are drawn, not what breaks them.
             crates.add(crate(ctx, new BlockPos(-3, 2, -9), new BlockPos(-2, 2, -8), Blocks.STONE));
-            crates.add(crate(ctx, new BlockPos(-3, 8, -9), new BlockPos(-2, 9, -8), Blocks.OAK_PLANKS));
-            crates.add(crate(ctx, new BlockPos(2, 9, -9), new BlockPos(3, 10, -8), Blocks.OAK_PLANKS));
+            crates.add(crate(ctx, new BlockPos(-3, 5, -9), new BlockPos(-2, 6, -8), Blocks.OAK_PLANKS));
+            crates.add(crate(ctx, new BlockPos(2, 5, -9), new BlockPos(3, 6, -8), Blocks.OAK_PLANKS));
         })
                 .thenTeleport(0, STAND, Direction.NORTH)
                 .thenAwaitLandDrawn(WAIT)

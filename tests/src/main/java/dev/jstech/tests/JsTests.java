@@ -47,6 +47,8 @@ public final class JsTests {
         TestBlocks.declare();
         // A thruster, a wheel, a burner, a light block, a levitator and a magnet, to prove the structures' physics.
         TestPhysics.declare();
+        // A decoupler, a clamp, tools and seats, for what moving structures do aboard.
+        TestAboard.declare();
         // A kiln and a mixer that work in a few ticks, for the autocraft tests to run real recipes through.
         TestMachines.declare();
         // A furnace of several blocks whose casing has ports, to prove the Core's multiblocks.

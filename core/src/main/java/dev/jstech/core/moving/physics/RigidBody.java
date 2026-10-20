@@ -29,6 +29,9 @@ public final class RigidBody {
     private final Matrix3d scratch = new Matrix3d();
     private final Vector3d momentum = new Vector3d();
     private final Vector3d arm = new Vector3d();
+    /* How far its joints moved it since they began to be drawn together this step. */
+    private final Vector3d shiftedLinear = new Vector3d();
+    private final Vector3d shiftedAngular = new Vector3d();
     /* What a push does to it, as {@link #prepare prepared} for a step: none for a body that does not give. */
     private final Matrix3d inverseInertia = new Matrix3d().zero();
     private double inverseMass;
@@ -170,6 +173,68 @@ public final class RigidBody {
         final Vector3d turning = new Vector3d(arm).cross(way);
         inverseInertia.transform(turning);
         return inverseMass + turning.cross(arm).dot(way);
+    }
+
+    /**
+     * How fast it goes along a row of a constraint, as readied: its centre's speed along {@code linear} and its spin
+     * along {@code angular}.
+     */
+    public double alongRow(final Vector3d linear, final Vector3d angular) {
+        return velocity.dot(linear) + spin.dot(angular);
+    }
+
+    /**
+     * How much it gives against a push along a row of a constraint, as readied: one over the mass the push meets,
+     * its own along {@code linear} and its turning's along {@code angular}.
+     */
+    public double giveAlongRow(final Vector3d linear, final Vector3d angular) {
+        if (inverseMass <= 0) {
+            return 0;
+        }
+        inverseInertia.transform(angular, arm);
+        return inverseMass * linear.lengthSquared() + angular.dot(arm);
+    }
+
+    /**
+     * Gives it a push of {@code size} along a row of a constraint, as readied: its centre pushed along
+     * {@code linear} and its spin along {@code angular}, by what it gives.
+     */
+    public void pushAlongRow(final Vector3d linear, final Vector3d angular, final double size) {
+        if (inverseMass <= 0 || size == 0) {
+            return;
+        }
+        velocity.fma(inverseMass * size, linear);
+        inverseInertia.transform(angular, arm);
+        spin.fma(size, arm);
+    }
+
+    /** Forgets how far {@link #shiftAlongRow} moved it, before its joints are drawn together again. */
+    public void startShift() {
+        shiftedLinear.zero();
+        shiftedAngular.zero();
+    }
+
+    /** How far it was moved along a row by {@link #shiftAlongRow} since {@link #startShift}. */
+    public double shiftedAlongRow(final Vector3d linear, final Vector3d angular) {
+        return shiftedLinear.dot(linear) + shiftedAngular.dot(angular);
+    }
+
+    /**
+     * Moves it, as readied, by a push of {@code size} along a row of a constraint, where it is rather than how fast
+     * it goes: its centre along {@code linear} and its turn along {@code angular}, by what it gives. So a joint that
+     * drifted apart is drawn together again with nothing added to how fast it goes.
+     */
+    public void shiftAlongRow(final Vector3d linear, final Vector3d angular, final double size) {
+        if (inverseMass <= 0 || size == 0) {
+            return;
+        }
+        position.fma(inverseMass * size, linear);
+        shiftedLinear.fma(inverseMass * size, linear);
+        inverseInertia.transform(angular, arm).mul(size);
+        shiftedAngular.add(arm);
+        final Quaterniond rate = new Quaterniond(arm.x * HALF, arm.y * HALF, arm.z * HALF, 0).mul(orientation);
+        orientation.set(orientation.x + rate.x, orientation.y + rate.y, orientation.z + rate.z,
+                orientation.w + rate.w).normalize();
     }
 
     /** Its inertia about its centre in the world's axes, as it is turned now, into {@code into}. */

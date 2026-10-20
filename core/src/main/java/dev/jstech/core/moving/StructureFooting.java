@@ -57,6 +57,26 @@ public final class StructureFooting {
         stands.put(entity, new Stand(body, support));
     }
 
+    /**
+     * What stands on {@code body} now, on the server, as its watchers are told it: those that stood on it this tick
+     * or the last, none riding anything.
+     */
+    public static List<Entity> ridersOf(final IStructureBody body) {
+        final Map<Entity, Stand> stands = side(body.level());
+        if (stands.isEmpty()) {
+            return List.of();
+        }
+        final List<Entity> riders = new ArrayList<>();
+        for (final Map.Entry<Entity, Stand> each : stands.entrySet()) {
+            final Stand stand = each.getValue();
+            final Entity entity = each.getKey();
+            if (stand.body == body && stand.since <= 1 && !entity.isRemoved() && !entity.isPassenger()) {
+                riders.add(entity);
+            }
+        }
+        return riders;
+    }
+
     /** The structure {@code entity} stands on, or stood on in the last ticks; null for none. */
     public static @Nullable IStructureBody standingOn(final Entity entity) {
         if (!LevelMovingStructures.anyLoaded()) {
@@ -165,6 +185,23 @@ public final class StructureFooting {
         }
     }
 
+    /**
+     * The blocks {@code moves} of {@code from} went to {@code to}, a piece parting or a structure joining another:
+     * what stood on them stands on {@code to} now, on the same blocks where they went.
+     */
+    public static void moved(final IStructureBody from, final IStructureBody to, final Map<BlockPos, BlockPos> moves) {
+        final Map<Entity, Stand> stands = side(from.level());
+        for (final Stand stand : stands.values()) {
+            if (stand.body == from) {
+                final BlockPos went = moves.get(stand.support);
+                if (went != null) {
+                    stand.body = to;
+                    stand.support = went;
+                }
+            }
+        }
+    }
+
     /** How fast the place {@code at} of {@code body} moved in its last tick, turning included, in blocks a tick. */
     public static Vec3 speedAt(final IStructureBody body, final Vec3 at) {
         final StructureFrame before = body.previousFrame();
@@ -226,7 +263,7 @@ public final class StructureFooting {
     /* A thing standing on a structure: which, on which block of the yard, and how many ticks ago. */
     private static final class Stand {
 
-        private final IStructureBody body;
+        private IStructureBody body;
         private BlockPos support;
         private int since;
 

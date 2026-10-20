@@ -14,12 +14,16 @@ import dev.jstech.core.moving.LevelMovingStructures;
 import dev.jstech.core.moving.MovingStructureEntity;
 import dev.jstech.core.moving.StructureClientHooks;
 import dev.jstech.core.moving.StructureCollisions;
+import dev.jstech.core.moving.StructureControls;
+import dev.jstech.core.moving.StructureEffectsPayload;
 import dev.jstech.core.moving.StructureFooting;
 import dev.jstech.core.moving.StructureFootingPayload;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureHandOffPayload;
+import dev.jstech.core.moving.StructureHelmPayload;
 import dev.jstech.core.moving.StructurePosePayload;
 import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.uuid.StructureUuid;
@@ -27,12 +31,15 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -52,7 +59,10 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
 
     private static final Int2ObjectMap<ClientStructure> BY_ENTITY = new Int2ObjectOpenHashMap<>();
     private static final Int2ObjectMap<ClientStructure> BY_PLOT = new Int2ObjectOpenHashMap<>();
+    /* How often a player at a helm tells the server what they hold, unchanged, in ticks. */
+    private static final int HELM_AGAIN = 10;
     private static boolean footed;
+    private static int helmKeys;
 
     private ClientMovingStructures() {
     }
@@ -62,6 +72,7 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         StructureClientHooks.set(new ClientMovingStructures());
         DynamicLightsClient.provide(ClientMovingStructures::lamps);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Pre.class, ClientMovingStructures::beforeTick);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, ClientMovingStructures::afterTick);
         NeoForge.EVENT_BUS.addListener(PlayerTickEvent.Post.class, ClientMovingStructures::afterPlayer);
         NeoForge.EVENT_BUS.addListener(LevelEvent.Unload.class, ClientMovingStructures::onUnload);
     }
@@ -74,6 +85,11 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
     /** The structure of {@code entity}, or null when the game does not hold it. */
     public static @Nullable ClientStructure of(final MovingStructureEntity entity) {
         return BY_ENTITY.get(entity.getId());
+    }
+
+    /** The structure whose entity's id is {@code entity}, or null when the game does not hold it. */
+    public static @Nullable ClientStructure byEntity(final int entity) {
+        return BY_ENTITY.get(entity);
     }
 
     /** Every structure the player's game holds. */
@@ -224,6 +240,11 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         }
     }
 
+    @Override
+    public void effects(final StructureEffectsPayload payload) {
+        StructureEffectsClient.told(payload);
+    }
+
     /*
      * The structure's entity has left: it no longer collides, carries or answers for its plot; its drawing is let go
      * too, unless it is kept drawn where it landed until the land is drawn with its blocks.
@@ -260,7 +281,10 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         if (game.level == null || BY_ENTITY.isEmpty()) {
             return;
         }
-        for (final ClientStructure structure : BY_ENTITY.values()) {
+        // A structure held by another takes its place on its parent once the parent has taken its own.
+        final List<ClientStructure> ordered = new ArrayList<>(BY_ENTITY.values());
+        ordered.sort(Comparator.comparingInt(ClientStructure::depth));
+        for (final ClientStructure structure : ordered) {
             structure.tick();
             final MovingStructureEntity entity = structure.entity();
             final StructurePose was = structure.previousFrame().pose();
@@ -278,15 +302,19 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         if (player == null) {
             return;
         }
-        final IStructureBody standing = StructureFooting.standingOn(player);
-        if (standing instanceof ClientStructure structure && structure.ready()) {
-            StructureFooting.carry(player, structure);
-        }
-        final List<IStructureBody> near = new ArrayList<>(LevelMovingStructures.of(player.level())
-                .near(player.getBoundingBox().inflate(0.5)));
-        for (final IStructureBody body : near) {
-            if (body.ready() && !player.isSpectator() && !player.noPhysics) {
-                StructureCollisions.pushOut(player, body);
+        // A player riding something is where it puts them, a seat aboard sunk into its block: neither carried by a
+        // deck nor pushed out of the block they sit in, which would set them off their seat between its updates.
+        if (!player.isPassenger()) {
+            final IStructureBody standing = StructureFooting.standingOn(player);
+            if (standing instanceof ClientStructure structure && structure.ready()) {
+                StructureFooting.carry(player, structure);
+            }
+            final List<IStructureBody> near = new ArrayList<>(LevelMovingStructures.of(player.level())
+                    .near(player.getBoundingBox().inflate(0.5)));
+            for (final IStructureBody body : near) {
+                if (body.ready() && !player.isSpectator() && !player.noPhysics) {
+                    StructureCollisions.pushOut(player, body);
+                }
             }
         }
         final Vec3 eye = game.gameRenderer.getMainCamera().getPosition();
@@ -298,9 +326,23 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         StructureAmbience.tick(game);
     }
 
-    /* After the player moved, and before the game sends where to: the server is told where on the deck they stand. */
+    /*
+     * After the player moved, and before the game sends where to: the server is told where on the deck they stand;
+     * at a helm, what controls they hold.
+     */
     private static void afterPlayer(final PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof LocalPlayer player) || player.isPassenger()) {
+        if (!(event.getEntity() instanceof LocalPlayer player)) {
+            return;
+        }
+        if (player.isPassenger()) {
+            // Sitting, they stand on no deck: the server is told so, or it would put them where they last stood.
+            if (footed) {
+                PacketDistributor.sendToServer(StructureFootingPayload.none());
+                footed = false;
+            }
+            if (player.getVehicle() instanceof StructureSeatEntity seat && seat.helm()) {
+                helm(player, seat);
+            }
             return;
         }
         final IStructureBody standing = StructureFooting.standingOn(player);
@@ -314,6 +356,77 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         } else if (footed) {
             PacketDistributor.sendToServer(StructureFootingPayload.none());
             footed = false;
+        }
+    }
+
+    /*
+     * After the entities moved: what stands on each structure going is put where the server had it on it, at the
+     * structure's tick drawn now, so it is drawn on the deck as the deck is drawn; the player's own game moves the
+     * player, and is let be.
+     */
+    private static void afterTick(final ClientTickEvent.Post event) {
+        final ClientLevel level = Minecraft.getInstance().level;
+        if (level == null || BY_ENTITY.isEmpty()) {
+            return;
+        }
+        for (final ClientStructure structure : BY_ENTITY.values()) {
+            if (structure.riders().isEmpty() || !structure.ready()) {
+                continue;
+            }
+            final StructureFrame now = structure.frame();
+            final StructureFrame before = structure.previousFrame();
+            final double yaw = now.pose().yawDegrees();
+            final double yawBefore = before.pose().yawDegrees();
+            for (final Int2ObjectMap.Entry<double[]> each : structure.riders().int2ObjectEntrySet()) {
+                final Entity entity = level.getEntity(each.getIntKey());
+                if (entity == null || entity.isControlledByLocalInstance() || entity.isPassenger()) {
+                    continue;
+                }
+                final double[] at = each.getValue();
+                final double[] was = structure.previousRiders().getOrDefault(each.getIntKey(), at);
+                entity.setPos(now.worldX(at[0], at[1], at[2]), now.worldY(at[0], at[1], at[2]),
+                        now.worldZ(at[0], at[1], at[2]));
+                entity.xo = before.worldX(was[0], was[1], was[2]);
+                entity.yo = before.worldY(was[0], was[1], was[2]);
+                entity.zo = before.worldZ(was[0], was[1], was[2]);
+                entity.xOld = entity.xo;
+                entity.yOld = entity.yo;
+                entity.zOld = entity.zo;
+                entity.setYRot((float) (yaw + at[3]));
+                entity.yRotO = (float) (yawBefore + was[3]);
+                if (entity instanceof LivingEntity living) {
+                    living.yBodyRot = entity.getYRot();
+                    living.yBodyRotO = entity.yRotO;
+                }
+            }
+        }
+    }
+
+    /* The controls a player at a helm holds, told the server as they change and once a second besides. */
+    private static void helm(final LocalPlayer player, final StructureSeatEntity seat) {
+        final Minecraft game = Minecraft.getInstance();
+        int keys = 0;
+        if (player.input.forwardImpulse > 0) {
+            keys |= StructureHelmPayload.bit(StructureControls.ControlAxis.FORWARD);
+        }
+        if (player.input.forwardImpulse < 0) {
+            keys |= StructureHelmPayload.bit(StructureControls.ControlAxis.BACK);
+        }
+        if (player.input.leftImpulse > 0) {
+            keys |= StructureHelmPayload.bit(StructureControls.ControlAxis.LEFT);
+        }
+        if (player.input.leftImpulse < 0) {
+            keys |= StructureHelmPayload.bit(StructureControls.ControlAxis.RIGHT);
+        }
+        if (game.options.keyJump.isDown()) {
+            keys |= StructureHelmPayload.bit(StructureControls.ControlAxis.UP);
+        }
+        if (game.options.keySprint.isDown()) {
+            keys |= StructureHelmPayload.bit(StructureControls.ControlAxis.DOWN);
+        }
+        if (keys != helmKeys || player.tickCount % HELM_AGAIN == 0) {
+            helmKeys = keys;
+            PacketDistributor.sendToServer(new StructureHelmPayload(seat.getId(), keys));
         }
     }
 

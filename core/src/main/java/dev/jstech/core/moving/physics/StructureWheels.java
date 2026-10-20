@@ -10,6 +10,7 @@ package dev.jstech.core.moving.physics;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureRays;
 import dev.jstech.core.util.Loaded;
@@ -57,6 +58,8 @@ final class StructureWheels {
     private RigidBody hitBody;
     private double hitGrip;
     private double hitDistance;
+    /* What the structure is told to do now, by its helm or its autopilot. */
+    private StructureControls controls = new StructureControls();
 
     /* A full signal. */
     private static final double FULL = 15.0;
@@ -76,12 +79,14 @@ final class StructureWheels {
      * {@code seconds}; the force they gave, all told, is added to {@code given}.
      */
     void step(final ServerLevel level, final MovingStructure structure, final StructureFrame frame,
-              final StructureParts parts, final RigidBody body, final double seconds, final Vector3d given) {
+              final StructureParts parts, final RigidBody body, final double seconds, final Vector3d given,
+              final PhysicsIsland island, final StructureControls told) {
+        this.controls = told;
         spare.addAll(tyres);
         tyres.clear();
         for (final StructureParts.Part part : parts.parts()) {
             if (part.physics().wheel().isPresent()) {
-                spring(level, structure, frame, part, part.physics().wheel().get(), body, seconds, given);
+                spring(level, structure, frame, part, part.physics().wheel().get(), body, seconds, given, island);
             }
         }
         if (tyres.isEmpty()) {
@@ -100,13 +105,13 @@ final class StructureWheels {
     /* The wheel's spring: it looks for the ground, and holds the structure up from it; its tyre is kept to grip. */
     private void spring(final ServerLevel level, final MovingStructure structure, final StructureFrame frame,
                         final StructureParts.Part part, final BlockPhysics.Wheel wheel, final RigidBody body,
-                        final double seconds, final Vector3d given) {
+                        final double seconds, final Vector3d given, final PhysicsIsland island) {
         final BlockPos pos = part.pos();
         FrameMath.middle(frame, pos.getX(), pos.getY(), pos.getZ(), mount);
         FrameMath.turned(Direction.DOWN, frame, down);
         up.set(down).negate();
         final double length = wheel.travel() + wheel.radius();
-        if (!look(level, structure, length)) {
+        if (!look(level, structure, length, island)) {
             return;
         }
         final RigidBody under = hitBody;
@@ -128,8 +133,16 @@ final class StructureWheels {
         final Tyre tyre = spare.isEmpty() ? new Tyre() : spare.remove(spare.size() - 1);
         final Vector3d forward = tyre.forward;
         FrameMath.turned(part.way(), frame, forward);
-        final double steering = wheel.steer() <= 0 ? 0 : Math.toRadians(wheel.steer())
-                * (signal(level, part, wheel.left()) - signal(level, part, wheel.right()));
+        // Its signals and the structure's controls, from its helm or its autopilot, together.
+        final long now = level.getGameTime();
+        final Vec3 rolls = new Vec3(forward.x, forward.y, forward.z);
+        final double steered = clamp(signal(level, part, wheel.left()) - signal(level, part, wheel.right())
+                + controls.steering(now));
+        final double driven = clamp(signal(level, part, wheel.throttle()) - signal(level, part, wheel.reverse())
+                + controls.forWheel(rolls, now));
+        final double braked = Math.max(signal(level, part, wheel.stop()),
+                controls.value(StructureControls.ControlAxis.DOWN, now));
+        final double steering = wheel.steer() <= 0 ? 0 : Math.toRadians(wheel.steer()) * steered;
         if (steering != 0) {
             forward.rotateAxis(steering, up.x, up.y, up.z);
         }
@@ -143,9 +156,8 @@ final class StructureWheels {
         tyre.point.set(at);
         tyre.under = under;
         tyre.most = wheel.grip() * hitGrip / PLAIN_GRIP * spring;
-        tyre.drive = wheel.drive() * (signal(level, part, wheel.throttle()) - signal(level, part, wheel.reverse()))
-                * seconds;
-        tyre.holding = wheel.brake() * signal(level, part, wheel.stop()) * seconds + ROLLING * spring;
+        tyre.drive = wheel.drive() * driven * seconds;
+        tyre.holding = wheel.brake() * braked * seconds + ROLLING * spring;
         tyre.forwardMass = mass(body, under, forward, at);
         tyre.sideMass = mass(body, under, tyre.side, at);
         tyre.braking = 0;
@@ -182,7 +194,9 @@ final class StructureWheels {
      * Looks down from the wheel's mount for the ground within {@code length}: the world's blocks, and the other
      * structures near; whether it found any, the nearest kept.
      */
-    private boolean look(final ServerLevel level, final MovingStructure structure, final double length) {
+    private boolean look(final ServerLevel level, final MovingStructure structure, final double length,
+                         final PhysicsIsland island) {
+        final StructurePhysics mine = island.member(structure);
         final Vec3 from = new Vec3(mount.x, mount.y, mount.z);
         final Vec3 to = new Vec3(mount.x + down.x * length, mount.y + down.y * length, mount.z + down.z * length);
         hitDistance = Double.MAX_VALUE;
@@ -201,7 +215,12 @@ final class StructureWheels {
             if (near == structure || !near.ready() || !(near instanceof MovingStructure them)) {
                 continue;
             }
-            final StructureFrame theirFrame = them.frame();
+            // A structure of the same body, what it holds or what holds it, is no ground for its wheels.
+            final StructurePhysics owner = island.owner(them);
+            if (mine != null && owner == mine) {
+                continue;
+            }
+            final StructureFrame theirFrame = island.standing(them);
             final BlockHitResult hit = StructureRays.clipYard(level, ray, theirFrame);
             if (hit == null) {
                 continue;
@@ -209,13 +228,12 @@ final class StructureWheels {
             final Vec3 yard = hit.getLocation();
             final Vec3 inWorld = new Vec3(theirFrame.worldX(yard.x, yard.y, yard.z),
                     theirFrame.worldY(yard.x, yard.y, yard.z), theirFrame.worldZ(yard.x, yard.y, yard.z));
-            final StructurePhysics physics = them.physics();
             final RigidBody body;
             final double grip;
-            if (physics != null && physics.active()) {
-                physics.prepareBody();
-                body = physics.body();
-                grip = physics.parts().grip(hit.getBlockPos().asLong());
+            if (owner != null && owner.active()) {
+                owner.prepareBody();
+                body = owner.body();
+                grip = owner.partsOf(them).grip(hit.getBlockPos().asLong());
             } else {
                 body = StructureContacts.held(them);
                 grip = ContactMath.grip(level.getBlockState(hit.getBlockPos()).getFriction(level,
@@ -260,6 +278,10 @@ final class StructureWheels {
         body.velocityAt(at, relative);
         under.velocityAt(at, scratch);
         relative.sub(scratch);
+    }
+
+    private static double clamp(final double value) {
+        return Math.max(-1, Math.min(1, value));
     }
 
     /* How strong a signal reaches the wheel from {@code side}, from 0 to 1. */

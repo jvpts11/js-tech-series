@@ -21,6 +21,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.IEventBus;
@@ -45,6 +47,13 @@ public final class StructureSync {
     private static final Map<ServerPlayer, IntSet> WATCHING = new WeakHashMap<>();
     /* For each structure, who sees it and the server's tick each was last told its pose. */
     private static final Map<MovingStructure, Map<ServerPlayer, Long>> TOLD = new WeakHashMap<>();
+    /* For each structure showing something of itself going, what its players were last told of it, and when. */
+    private static final Map<MovingStructure, Shown> SHOWN = new WeakHashMap<>();
+    /*
+     * How often what a structure shows is told again while it shows anything, in ticks: a player's game lets what it
+     * was told fade a while after, so a structure gone quiet without a word stops showing.
+     */
+    private static final int SHOWN_AGAIN = 40;
 
     private StructureSync() {
     }
@@ -55,8 +64,13 @@ public final class StructureSync {
                 .playToClient(StructurePosePayload.TYPE, StructurePosePayload.STREAM_CODEC, StructureSync::onPose)
                 .playToClient(StructureHandOffPayload.TYPE, StructureHandOffPayload.STREAM_CODEC,
                         StructureSync::onHandOff)
+                .playToClient(StructureEffectsPayload.TYPE, StructureEffectsPayload.STREAM_CODEC,
+                        StructureSync::onEffects)
                 .playToServer(StructureFootingPayload.TYPE, StructureFootingPayload.STREAM_CODEC,
-                        StructureSync::onFooting));
+                        StructureSync::onFooting)
+                .playToServer(StructureHelmPayload.TYPE, StructureHelmPayload.STREAM_CODEC, StructureSync::onHelm)
+                .playToServer(StructureZiplinePayload.TYPE, StructureZiplinePayload.STREAM_CODEC,
+                        StructureSync::onZipline));
     }
 
     /**
@@ -138,6 +152,10 @@ public final class StructureSync {
         TOLD.computeIfAbsent(structure, any -> new WeakHashMap<>()).put(player, level.getGameTime());
         tell(player, payload(structure, level));
         sendChunks(level, player, sent(structure.bounds()), null);
+        final Shown shown = SHOWN.get(structure);
+        if (shown != null) {
+            tell(player, shown.payload());
+        }
     }
 
     /** {@code player} no longer sees {@code structure}: its chunks are taken off their game. */
@@ -173,6 +191,45 @@ public final class StructureSync {
             unwatch(structure, player);
         }
         TOLD.remove(structure);
+        SHOWN.remove(structure);
+    }
+
+    /** What {@code structure} shows of itself going now, as its players were last told, or null for nothing. */
+    public static @Nullable StructureEffectsPayload shown(final MovingStructure structure) {
+        final Shown shown = SHOWN.get(structure);
+        return shown == null ? null : shown.payload();
+    }
+
+    /**
+     * What {@code structure}, moving by its physics, shows of itself going now: who sees it is told when that
+     * changes, and again now and then while it shows anything, and once as it stops showing anything.
+     */
+    public static void effects(final MovingStructure structure, final StructureEffectsPayload payload) {
+        if (!(structure.level() instanceof ServerLevel level)) {
+            return;
+        }
+        final Shown was = SHOWN.get(structure);
+        final long now = level.getGameTime();
+        if (!payload.any()) {
+            if (was != null) {
+                SHOWN.remove(structure);
+                tellWatchers(structure, payload);
+            }
+            return;
+        }
+        if (was != null && was.payload().equals(payload) && now - was.at() < SHOWN_AGAIN) {
+            return;
+        }
+        SHOWN.put(structure, new Shown(payload, now));
+        tellWatchers(structure, payload);
+    }
+
+    /* {@code structure} no longer moves by its physics: what it showed stops at once. */
+    static void stopShowing(final MovingStructure structure) {
+        if (SHOWN.remove(structure) != null) {
+            tellWatchers(structure, new StructureEffectsPayload(structure.entity().getId(), List.of(),
+                    StructureEffectsPayload.NOTHING_HOT, false, List.of()));
+        }
     }
 
     /** {@code structure} moved, or came to rest: who sees it is told, each as often as their distance asks. */
@@ -182,7 +239,8 @@ public final class StructureSync {
             return;
         }
         final long now = level.getGameTime();
-        final boolean resting = structure.resting();
+        // One held by another is told with its parent's rate: they are drawn together.
+        final boolean resting = structure.resting() && structure.mount() == null;
         StructurePosePayload payload = null;
         for (final Map.Entry<ServerPlayer, Long> each : told.entrySet()) {
             final ServerPlayer player = each.getKey();
@@ -258,6 +316,17 @@ public final class StructureSync {
         }
     }
 
+    /* Tells everyone who sees {@code structure} of it. */
+    private static void tellWatchers(final MovingStructure structure, final CustomPacketPayload payload) {
+        final Map<ServerPlayer, Long> told = TOLD.get(structure);
+        if (told == null) {
+            return;
+        }
+        for (final ServerPlayer player : told.keySet()) {
+            tell(player, payload);
+        }
+    }
+
     /* The box holding every one of {@code places}, of which there is at least one. */
     private static Box holding(final Collection<BlockPos> places) {
         int minX = Integer.MAX_VALUE;
@@ -291,9 +360,38 @@ public final class StructureSync {
     private static StructurePosePayload payload(final MovingStructure structure, final ServerLevel level) {
         final double[] velocity = structure.velocity();
         final double[] spin = structure.spin();
+        final StructureMount mount = structure.mount();
+        final MovingStructure parent = mount == null ? null : StructureMounts.parentOf(structure);
         return new StructurePosePayload(structure.entity().getId(), level.getGameTime(), structure.pose(),
                 new float[] {(float) velocity[0], (float) velocity[1], (float) velocity[2]},
-                new float[] {(float) spin[0], (float) spin[1], (float) spin[2]});
+                new float[] {(float) spin[0], (float) spin[1], (float) spin[2]},
+                parent == null ? -1 : parent.entity().getId(), parent == null ? structure.pose() : mount.local(),
+                riders(structure));
+    }
+
+    /* What stands on {@code structure}, each where its feet are from the structure's pivot, as it looks on it. */
+    private static List<StructurePosePayload.Rider> riders(final MovingStructure structure) {
+        final List<Entity> standing = StructureFooting.ridersOf(structure);
+        if (standing.isEmpty()) {
+            return List.of();
+        }
+        final StructureFrame frame = structure.frame();
+        final double yaw = frame.pose().yawDegrees();
+        final List<StructurePosePayload.Rider> riders = new ArrayList<>(standing.size());
+        for (final Entity entity : standing) {
+            if (riders.size() >= StructurePosePayload.MOST_RIDERS) {
+                break;
+            }
+            final double x = entity.getX();
+            final double y = entity.getY();
+            final double z = entity.getZ();
+            riders.add(new StructurePosePayload.Rider(entity.getId(),
+                    (float) (frame.yardX(x, y, z) - structure.pivotX()),
+                    (float) (frame.yardY(x, y, z) - structure.pivotY()),
+                    (float) (frame.yardZ(x, y, z) - structure.pivotZ()),
+                    (float) Mth.wrapDegrees(entity.getYRot() - yaw)));
+        }
+        return riders;
     }
 
     /* Runs on a client only: the payload is only ever sent to one. */
@@ -306,11 +404,36 @@ public final class StructureSync {
         context.enqueueWork(() -> StructureClientHooks.get().handOff(payload));
     }
 
+    /* Runs on a client only: the payload is only ever sent to one. */
+    private static void onEffects(final StructureEffectsPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> StructureClientHooks.get().effects(payload));
+    }
+
+    private static void onHelm(final StructureHelmPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) {
+                StructureSeating.helm(player, payload);
+            }
+        });
+    }
+
+    private static void onZipline(final StructureZiplinePayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) {
+                StructureSeating.zipline(player, payload);
+            }
+        });
+    }
+
     private static void onFooting(final StructureFootingPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
                 StructureFooting.reported(player, payload);
             }
         });
+    }
+
+    /* What a structure's players were last told it shows of itself going, and the tick they were. */
+    private record Shown(StructureEffectsPayload payload, long at) {
     }
 }

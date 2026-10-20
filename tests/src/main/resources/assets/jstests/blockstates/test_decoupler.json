@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=north": {"model": "jstests:block/test_decoupler"},
+    "facing=east": {"model": "jstests:block/test_decoupler", "y": 90},
+    "facing=south": {"model": "jstests:block/test_decoupler", "y": 180},
+    "facing=west": {"model": "jstests:block/test_decoupler", "y": 270},
+    "facing=up": {"model": "jstests:block/test_decoupler", "x": 270},
+    "facing=down": {"model": "jstests:block/test_decoupler", "x": 90}
+  }
+}

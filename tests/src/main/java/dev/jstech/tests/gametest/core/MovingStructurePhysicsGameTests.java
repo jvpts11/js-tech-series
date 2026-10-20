@@ -303,9 +303,12 @@ public final class MovingStructurePhysicsGameTests {
                     balloon.move(PhysicsMotion.AT_REST);
                 })
                 .thenExecuteAfter(30, () -> {
+                    final Room now = SealedRooms.roomAt(level, inside).orElse(null);
                     helper.assertTrue(balloon.worldBox().minY > start[0] + 0.5,
                             "filled with hydrogen, it rises: " + balloon.worldBox().minY + " from " + start[0]
-                                    + forcesOf(balloon));
+                                    + forcesOf(balloon) + "; its room " + (now == null ? "none" : now.id() + " volume "
+                                    + now.volume() + " breached " + now.breached() + " leaks " + now.leaks().size()
+                                    + " gases " + now.gases() + " bounds " + now.bounds()));
                     MovingStructures.takeAway(balloon);
                 })
                 .thenSucceed();

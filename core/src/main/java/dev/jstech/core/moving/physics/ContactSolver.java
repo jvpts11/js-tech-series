@@ -115,6 +115,16 @@ public final class ContactSolver {
      * a strong pull does not bounce.
      */
     public void solve(final double seconds, final int iterations, final double settles) {
+        iterate(begin(seconds, iterations, settles));
+        end();
+    }
+
+    /**
+     * Readies the contacts for a step of {@code seconds}, each started from its push of the step before, a blow
+     * bouncing only when it closes faster than {@code settles}: how many times they are to be worked, from
+     * {@code iterations}, more when a blow came. What holds the same bodies by joints may be worked between.
+     */
+    public int begin(final double seconds, final int iterations, final double settles) {
         // Every contact is readied as the bodies come, before any starts from its last push.
         boolean blow = false;
         for (final Contact contact : live) {
@@ -125,19 +135,34 @@ public final class ContactSolver {
             warm(contact);
         }
         // A blow has no push of the step before to start from: it is worked longer, so its many points agree.
-        final int times = blow ? iterations * BLOW_TIMES : iterations;
+        return blow ? iterations * BLOW_TIMES : iterations;
+    }
+
+    /** Works every contact {@code times} times, there and back by turns. */
+    public void iterate(final int times) {
         for (int i = 0; i < times; i++) {
-            // There and back by turns, so no contact is always worked first and the pushes share out evenly.
-            if (i % 2 == 0) {
-                for (final Contact contact : live) {
-                    work(contact);
-                }
-            } else {
-                for (int j = live.size() - 1; j >= 0; j--) {
-                    work(live.get(j));
-                }
+            round(i);
+        }
+    }
+
+    /**
+     * Works every contact once, the {@code index}th time: there on an even time and back on an odd one, so no contact
+     * is always worked first and the pushes share out evenly.
+     */
+    public void round(final int index) {
+        if (index % 2 == 0) {
+            for (final Contact contact : live) {
+                work(contact);
+            }
+        } else {
+            for (int j = live.size() - 1; j >= 0; j--) {
+                work(live.get(j));
             }
         }
+    }
+
+    /** Keeps what each contact gave, for the next step to start from. */
+    public void end() {
         after.clear();
         for (final Contact contact : live) {
             final double[] kept = before.get(contact.key);

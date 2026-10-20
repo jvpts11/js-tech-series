@@ -20,6 +20,7 @@ public final class StructureBalance {
     public static final double DEFAULT_PHYSICS_MILLIS = 10.0;
     private static volatile int mostBlocks = DEFAULT_MOST_BLOCKS;
     private static volatile double physicsMillis = DEFAULT_PHYSICS_MILLIS;
+    private static volatile boolean split = true;
 
     private StructureBalance() {
     }
@@ -42,5 +43,15 @@ public final class StructureBalance {
     /** Sets how much of a tick the physics of a dimension's structures takes at most; from the balance file. */
     public static void physicsMillis(final double millis) {
         physicsMillis = Math.max(0.1, millis);
+    }
+
+    /** Whether a structure whose blocks are no longer all joined becomes as many structures as it now is. */
+    public static boolean split() {
+        return split;
+    }
+
+    /** Sets whether a structure no longer all joined parts; from the balance file. */
+    public static void split(final boolean parts) {
+        split = parts;
     }
 }

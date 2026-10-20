@@ -44,6 +44,8 @@ final class RunningEffect {
     boolean started;
     boolean stopped;
     EffectPlace place = EffectPlace.STILL;
+    /* Where it was the tick before, for what it emits moving to be laid along the way it went; null at first. */
+    @Nullable Vec3 lastAt;
 
     RunningEffect(final ClientLevel level, final @Nullable ResourceLocation id, final EffectDefinition definition,
                   final @Nullable Object holder, final Supplier<Vec3> at, final Supplier<Vec3> way,

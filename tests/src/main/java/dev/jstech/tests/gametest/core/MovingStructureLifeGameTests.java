@@ -1,0 +1,511 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Tech Series.
+ */
+package dev.jstech.tests.gametest.core;
+
+import com.mojang.authlib.GameProfile;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureAutopilot;
+import dev.jstech.core.moving.StructureControls;
+import dev.jstech.core.moving.StructureEffectsPayload;
+import dev.jstech.core.moving.StructureFrame;
+import dev.jstech.core.moving.StructureHelmPayload;
+import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.StructureResult;
+import dev.jstech.core.moving.StructureSeatEntity;
+import dev.jstech.core.moving.StructureSync;
+import dev.jstech.core.moving.StructureYard;
+import dev.jstech.core.moving.TowardMotion;
+import dev.jstech.core.moving.YardLayout;
+import dev.jstech.core.moving.ZiplineEntity;
+import dev.jstech.core.moving.joint.JointKind;
+import dev.jstech.core.moving.joint.StructureJoint;
+import dev.jstech.core.moving.joint.StructureJoints;
+import dev.jstech.core.moving.physics.PhysicsMotion;
+import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestAboard;
+import dev.jstech.tests.TestPhysics;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.embedded.EmbeddedChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DirectionalBlock;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.AttachFace;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.portal.DimensionTransition;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.event.entity.player.PlayerRespawnPositionEvent;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.registration.NetworkRegistry;
+
+/**
+ * Living aboard moving structures, in a real world: a player sits on a seat aboard and is carried with it, and a seat
+ * taken is refused to another and gone once left; at a helm, the controls they hold fire the engines pushing the way
+ * they ask, and are let go a second after they stop; an autopilot flies a hovering craft to a place and holds it
+ * there; an arrow loosed from a moving deck flies on with it; a villager sleeps in a bed aboard where the bed is in the
+ * world and is carried with it, and stands up beside it there; a player coming back to a bed aboard comes back where it
+ * is; a rider hanging from a rope rides it down; and an engine burning is told to the players who see it, and told
+ * no more once it goes out, and keeps a rocket too heavy for it awake on its pad, its flame shown.
+ */
+@GameTestHolder(JsTests.MODID)
+@PrefixGameTestTemplate(false)
+public final class MovingStructureLifeGameTests {
+
+    private static final String ARENA = "empty";
+    private static final String TALL = "tall";
+    private static final String BATCH = "jscore_moving_life";
+    private static final int CLEAR = 12_000;
+    /* How near what is carried keeps to where it is carried to, in blocks. */
+    private static final double KEEPS = 0.1;
+    /* The height above a bed's block a sleeper lies at, as the game's own. */
+    private static final double LIES = 0.6875;
+
+    private MovingStructureLifeGameTests() {
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void seats_aPlayerSitsOnASeatAboardAndIsCarriedWithIt(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(2, 2, 4), Blocks.STONE);
+        helper.setBlock(new BlockPos(3, 2, 4), TestAboard.SEAT.get());
+        final MovingStructure cart = assembled(helper, new BlockPos(2, 2, 4), new BlockPos(3, 2, 4));
+        final BlockPos seat = find(level, cart, state -> state.is(TestAboard.SEAT.get()));
+        final ServerPlayer rider = rider(helper, new Vec3(3.5, 3, 4.5));
+        helper.assertTrue(MovingStructures.sit(rider, seat), "the player sits on the seat aboard");
+        helper.assertTrue(rider.getVehicle() instanceof StructureSeatEntity, "in the seat's entity");
+        final StructurePose start = cart.pose();
+        MovingStructures.move(cart, new TowardMotion(start.movedTo(start.x() + 4, start.y(), start.z()), 4, 0));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(cart.resting(), "the cart goes four blocks"))
+                .thenIdle(2)
+                .thenExecute(() -> {
+                    final Vec3 seatAt = worldOf(cart, Vec3.atCenterOf(seat));
+                    helper.assertTrue(Math.abs(rider.getX() - seatAt.x) < KEEPS
+                            && Math.abs(rider.getZ() - seatAt.z) < KEEPS, "the rider went with the seat: "
+                            + rider.position() + " for a seat at " + seatAt);
+                    leave(rider);
+                    MovingStructures.takeAway(cart);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
+    public static void seats_aSeatTakenIsRefusedToAnotherAndGoneOnceLeft(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(3, 2, 4), TestAboard.SEAT.get());
+        final MovingStructure bench = assembled(helper, new BlockPos(3, 2, 4), new BlockPos(3, 2, 4));
+        final BlockPos seat = find(level, bench, state -> state.is(TestAboard.SEAT.get()));
+        final ServerPlayer first = rider(helper, new Vec3(3.5, 3, 3.5));
+        final ServerPlayer second = rider(helper, new Vec3(3.5, 3, 5.5));
+        helper.assertTrue(MovingStructures.sit(first, seat), "the first sits");
+        helper.assertTrue(!MovingStructures.sit(second, seat), "the seat taken, the second does not");
+        final StructureSeatEntity sitting = (StructureSeatEntity) first.getVehicle();
+        first.stopRiding();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(sitting.isRemoved(), "left, the seat's entity is gone"))
+                .thenExecute(() -> {
+                    helper.assertTrue(MovingStructures.sit(second, seat), "and the second may sit now");
+                    leave(first);
+                    leave(second);
+                    MovingStructures.takeAway(bench);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 200)
+    public static void helm_theControlsHeldFireTheEnginesAndAreLetGoASecondAfter(final GameTestHelper helper) {
+        calm(helper);
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure craft = hoverCraft(helper);
+        final BlockPos helm = find(level, craft, state -> state.is(TestAboard.HELM.get()));
+        final ServerPlayer pilot = rider(helper, new Vec3(4.5, 7, 7.5));
+        helper.assertTrue(MovingStructures.sit(pilot, helm), "the pilot sits at the helm");
+        helper.startSequence()
+                .thenIdle(5)
+                .thenExecuteFor(6, () -> helper.assertTrue(MovingStructures.helm(pilot,
+                        StructureHelmPayload.bit(StructureControls.ControlAxis.FORWARD)), "at the helm"))
+                .thenExecute(() -> {
+                    helper.assertTrue(craft.physics() != null && craft.physics().body().velocity().z < -1,
+                            "forward fires the engine looking forward, north: " + craft.physics().body().velocity());
+                    helper.assertTrue(craft.controls().piloted(level.getGameTime()), "a pilot steers it");
+                })
+                .thenExecuteFor(6, () -> MovingStructures.helm(pilot,
+                        StructureHelmPayload.bit(StructureControls.ControlAxis.BACK)))
+                .thenExecute(() -> helper.assertTrue(craft.physics().body().velocity().z > -0.8,
+                        "back fires the engine looking south, and it slows: " + craft.physics().body().velocity()))
+                .thenExecuteAfter(25, () -> {
+                    helper.assertTrue(!craft.controls().live(level.getGameTime()),
+                            "told nothing a second, the controls let go");
+                    leave(pilot);
+                    MovingStructures.takeAway(craft);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 400)
+    public static void autopilot_fliesAHoveringCraftToAPlaceAndHoldsItThere(final GameTestHelper helper) {
+        calm(helper);
+        final MovingStructure craft = hoverCraft(helper);
+        final Vec3 target = craft.worldBox().getCenter().add(0, 0, -4);
+        // With engines only forward and back, it is flown along them: what blows it aside it cannot answer.
+        final double[] fastest = new double[1];
+        final double[] tilted = new double[1];
+        helper.startSequence()
+                .thenExecuteAfter(5, () -> craft.fly(StructureAutopilot.goTo(target, 3)))
+                .thenWaitUntil(() -> {
+                    final double going = Math.abs(craft.physics().body().velocity().z);
+                    fastest[0] = Math.max(fastest[0], going);
+                    tilted[0] = Math.max(tilted[0], Math.max(Math.abs(craft.pose().qx()),
+                            Math.abs(craft.pose().qz())));
+                    final double off = craft.worldBox().getCenter().z - target.z;
+                    helper.assertTrue(Math.abs(off) < 0.2 && going < 0.2, "it comes to the place and holds there: "
+                            + off + " off, going " + going);
+                })
+                .thenExecuteAfter(20, () -> {
+                    final double off = craft.worldBox().getCenter().z - target.z;
+                    helper.assertTrue(Math.abs(off) < 0.3, "a second on, it holds there still: " + off + " off");
+                    helper.assertTrue(fastest[0] <= 3.3, "never faster than it was told: " + fastest[0]);
+                    // A quaternion's x or z of 0.05 is a tilt of under six degrees.
+                    helper.assertTrue(tilted[0] < 0.05, "and level all the way: " + tilted[0]);
+                    craft.fly(null);
+                    MovingStructures.takeAway(craft);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void projectiles_anArrowLoosedFromAMovingDeckFliesOnWithIt(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(2, 2, 4), Blocks.STONE);
+        helper.setBlock(new BlockPos(3, 2, 4), TestAboard.SEAT.get());
+        final MovingStructure cart = assembled(helper, new BlockPos(2, 2, 4), new BlockPos(3, 2, 4));
+        final BlockPos seat = find(level, cart, state -> state.is(TestAboard.SEAT.get()));
+        final ServerPlayer archer = rider(helper, new Vec3(3.5, 3, 4.5));
+        helper.assertTrue(MovingStructures.sit(archer, seat), "the archer sits aboard");
+        final StructurePose start = cart.pose();
+        MovingStructures.move(cart, new TowardMotion(start.movedTo(start.x() + 5, start.y(), start.z()), 4, 0));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(cart.velocity()[0] > 0.1, "the deck gets going"))
+                .thenExecute(() -> {
+                    final Arrow arrow = new Arrow(EntityType.ARROW, level);
+                    arrow.setOwner(archer);
+                    arrow.setPos(archer.getEyePosition());
+                    arrow.setDeltaMovement(Vec3.ZERO);
+                    level.addFreshEntity(arrow);
+                    final double deck = cart.velocity()[0];
+                    helper.assertTrue(Math.abs(arrow.getDeltaMovement().x - deck) < 0.02,
+                            "the arrow goes on as fast as the deck: " + arrow.getDeltaMovement() + " for " + deck);
+                    arrow.discard();
+                    leave(archer);
+                    MovingStructures.takeAway(cart);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void sleeping_aSleeperLiesInABedAboardAndIsCarriedWithIt(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        for (int x = 2; x <= 3; x++) {
+            helper.setBlock(new BlockPos(x, 2, 4), Blocks.STONE);
+        }
+        final BlockState foot = Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.EAST);
+        helper.setBlock(new BlockPos(2, 3, 4), foot);
+        helper.setBlock(new BlockPos(3, 3, 4), foot.setValue(BedBlock.PART, BedPart.HEAD));
+        final MovingStructure boat = assembled(helper, new BlockPos(2, 2, 4), new BlockPos(3, 3, 4));
+        final BlockPos head = find(level, boat, state -> state.getBlock() instanceof BedBlock
+                && state.getValue(BedBlock.PART) == BedPart.HEAD);
+        final Villager sleeper = new Villager(EntityType.VILLAGER, level);
+        sleeper.setNoAi(true);
+        sleeper.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 4))));
+        level.addFreshEntity(sleeper);
+        sleeper.startSleeping(head);
+        helper.assertTrue(!YardLayout.isYard(sleeper.getX()), "laid down where the bed is in the world, not out in the"
+                + " yard: " + sleeper.position());
+        helper.assertTrue(lying(boat, head).distanceTo(sleeper.position()) < KEEPS, "in the bed: "
+                + sleeper.position() + " for " + lying(boat, head));
+        final StructurePose start = boat.pose();
+        MovingStructures.move(boat, new TowardMotion(start.movedTo(start.x() + 3, start.y(), start.z()), 3, 0));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(boat.resting(), "the boat goes three blocks"))
+                .thenIdle(2)
+                .thenExecute(() -> {
+                    helper.assertTrue(sleeper.isSleeping(), "the sleeper sleeps on");
+                    helper.assertTrue(lying(boat, head).distanceTo(sleeper.position()) < KEEPS,
+                            "carried in the bed: " + sleeper.position() + " for " + lying(boat, head));
+                    sleeper.stopSleeping();
+                    helper.assertTrue(!YardLayout.isYard(sleeper.getX()), "and stands up beside it in the world: "
+                            + sleeper.position());
+                    sleeper.discard();
+                    MovingStructures.takeAway(boat);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
+    public static void sleeping_aPlayerComesBackToABedAboardWhereItIs(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(3, 2, 4), Blocks.STONE);
+        final MovingStructure raft = assembled(helper, new BlockPos(3, 2, 4), new BlockPos(3, 2, 4));
+        final BlockPos block = find(level, raft, state -> state.is(Blocks.STONE));
+        final Vec3 yardPlace = Vec3.atBottomCenterOf(block.above());
+        final PlayerRespawnPositionEvent coming = new PlayerRespawnPositionEvent(player(level, "sleeper"),
+                new DimensionTransition(level, yardPlace, Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING), false);
+        NeoForge.EVENT_BUS.post(coming);
+        final Vec3 to = coming.getDimensionTransition().pos();
+        helper.assertTrue(to.distanceTo(worldOf(raft, yardPlace)) < 1.0e-6, "they come back where the bed is in the"
+                + " world: " + to + " for " + worldOf(raft, yardPlace));
+        MovingStructures.takeAway(raft);
+        helper.succeed();
+    }
+
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 300)
+    public static void zipline_aRiderHangingFromARopeRidesItDown(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(1, 10, 4), Blocks.STONE);
+        final MovingStructure post = assembled(helper, new BlockPos(1, 10, 4), new BlockPos(1, 10, 4));
+        final Vec3 high = Vec3.atCenterOf(helper.absolutePos(new BlockPos(1, 10, 4))).add(0.5, 0, 0);
+        final Vec3 low = Vec3.atCenterOf(helper.absolutePos(new BlockPos(8, 4, 4)));
+        final StructureJoint rope = StructureJoints.join(level, new JointKind.Rope(high.distanceTo(low),
+                        JointKind.RopeLook.ROPE, Optional.empty()), StructureJoints.Anchor.on(post, high,
+                        new Vec3(0, 1, 0)), StructureJoints.Anchor.world(low, new Vec3(0, 1, 0)), Optional.empty());
+        final Vec3 holdAt = ZiplineEntity.along(high, low, 0.1);
+        final ServerPlayer rider = rider(helper, new Vec3(1.5, 2, 4.5));
+        rider.moveTo(holdAt.x, holdAt.y - rider.getEyeHeight(), holdAt.z, 0, 0);
+        helper.assertTrue(MovingStructures.zipline(rider, rope.id(), 0.1), "the rider takes hold of the rope");
+        helper.assertTrue(rider.getVehicle() instanceof ZiplineEntity, "and hangs from it");
+        final Vec3 start = rider.position();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(rider.getVehicle() == null, "at its end, the rider lets go"))
+                .thenExecute(() -> {
+                    helper.assertTrue(rider.getX() > start.x + 4 && rider.getY() < start.y - 3,
+                            "having ridden it down: " + rider.position() + " from " + start);
+                    leave(rider);
+                    StructureJoints.remove(level, rope.id());
+                    MovingStructures.takeAway(post);
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 200)
+    public static void effects_anEngineBurningIsToldAndToldNoMoreOnceItGoesOut(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(4, 2, 4), TestPhysics.THRUSTER.get().defaultBlockState()
+                .setValue(DirectionalBlock.FACING, Direction.UP));
+        helper.setBlock(new BlockPos(5, 2, 4), lever(Direction.EAST, false));
+        final MovingStructure rocket = assembled(helper, new BlockPos(4, 2, 4), new BlockPos(5, 2, 4));
+        rocket.move(PhysicsMotion.AT_REST);
+        final BlockPos engine = find(level, rocket, state -> state.is(TestPhysics.THRUSTER.get()));
+        final BlockPos lever = find(level, rocket, state -> state.is(Blocks.LEVER));
+        helper.startSequence()
+                .thenExecuteAfter(5, () -> {
+                    helper.assertTrue(StructureSync.shown(rocket) == null, "unlit, it shows nothing");
+                    level.setBlock(lever, level.getBlockState(lever).setValue(LeverBlock.POWERED, true), 3);
+                })
+                .thenWaitUntil(() -> {
+                    final StructureEffectsPayload shown = StructureSync.shown(rocket);
+                    helper.assertTrue(shown != null && shown.engines().size() == 1, "lit, its engine is told");
+                    final StructureEffectsPayload.Engine burning = shown.engines().get(0);
+                    helper.assertTrue(burning.pos() == engine.asLong() && burning.strength()
+                            == StructureEffectsPayload.STEPS && burning.look() == StructureEffectsPayload.Engine.ROCKET,
+                            "a rocket at its full: " + burning);
+                })
+                .thenExecute(() -> level.setBlock(lever, level.getBlockState(lever)
+                        .setValue(LeverBlock.POWERED, false), 3))
+                .thenWaitUntil(() -> helper.assertTrue(StructureSync.shown(rocket) == null,
+                        "gone out, it is told no more"))
+                .thenExecute(() -> MovingStructures.takeAway(rocket))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void effects_aRocketTooHeavyToLiftStaysAwakeBurningOnItsPad(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(4, 2, 4), Blocks.IRON_BLOCK);
+        helper.setBlock(new BlockPos(4, 3, 4), TestPhysics.THRUSTER.get().defaultBlockState()
+                .setValue(DirectionalBlock.FACING, Direction.UP));
+        helper.setBlock(new BlockPos(5, 3, 4), lever(Direction.EAST, true));
+        final MovingStructure rocket = assembled(helper, new BlockPos(4, 2, 4), new BlockPos(5, 3, 4));
+        rocket.move(PhysicsMotion.AT_REST);
+        final double start = rocket.worldBox().minY;
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(Math.abs(rocket.worldBox().minY - start) < 0.05, "too heavy, it stays on its pad: "
+                    + rocket.worldBox().minY + " from " + start);
+            helper.assertTrue(rocket.physics() != null && !rocket.physics().asleep(),
+                    "its engine pushing, it does not fall asleep");
+            helper.assertTrue(StructureSync.shown(rocket) != null, "and its flame is still shown");
+            MovingStructures.takeAway(rocket);
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void effects_whatAStructureShowsGoesToItsPlayersWhole(final GameTestHelper helper) {
+        final StructureEffectsPayload sent = new StructureEffectsPayload(42,
+                List.of(new StructureEffectsPayload.Engine(BlockPos.asLong(1, 2, 3), (byte) 9,
+                        StructureEffectsPayload.Engine.JET)), List.of(0, 1_200, 0, 0, 875, 0), true,
+                List.of(BlockPos.asLong(4, 5, 6), BlockPos.asLong(-7, 8, -9)));
+        final RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess());
+        StructureEffectsPayload.STREAM_CODEC.encode(buffer, sent);
+        final StructureEffectsPayload read = StructureEffectsPayload.STREAM_CODEC.decode(buffer);
+        helper.assertTrue(read.equals(sent), "read back as sent: " + read);
+        helper.assertTrue(read.any(), "and it shows something");
+        helper.assertTrue(!new StructureEffectsPayload(42, List.of(), StructureEffectsPayload.NOTHING_HOT, false,
+                List.of()).any(), "nothing burning, hot or trailing shows nothing");
+        helper.succeed();
+    }
+
+    /*
+     * A craft hovering in the air in a row: its helm looking north in the middle, a levitator either side holding it
+     * up through its middle, and an engine at each end looking along the row, forward north, back south. Held up
+     * from under its middle it would tip over, as anything held up from below does; held through it, it hovers level.
+     * It stands at the south of the arena, with room to go north.
+     */
+    private static MovingStructure hoverCraft(final GameTestHelper helper) {
+        helper.setBlock(new BlockPos(4, 6, 5), TestPhysics.THRUSTER.get().defaultBlockState()
+                .setValue(DirectionalBlock.FACING, Direction.NORTH));
+        helper.setBlock(new BlockPos(4, 6, 6), TestPhysics.HOVER.get());
+        helper.setBlock(new BlockPos(4, 6, 7), TestAboard.HELM.get());
+        helper.setBlock(new BlockPos(4, 6, 8), TestPhysics.HOVER.get());
+        helper.setBlock(new BlockPos(4, 6, 9), TestPhysics.THRUSTER.get().defaultBlockState()
+                .setValue(DirectionalBlock.FACING, Direction.SOUTH));
+        final MovingStructure craft = assembled(helper, new BlockPos(4, 6, 5), new BlockPos(4, 6, 9));
+        craft.move(PhysicsMotion.AT_REST);
+        return craft;
+    }
+
+    /*
+     * A player of the server who plays in survival, at the arena's place {@code at}: one a mod stands in for may not
+     * ride anything, so a seat needs a real one.
+     */
+    private static ServerPlayer rider(final GameTestHelper helper, final Vec3 at) {
+        final ServerLevel level = helper.getLevel();
+        final CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(),
+                "deck-rider"), false);
+        final ServerPlayer player = new ServerPlayer(level.getServer(), level, cookie.gameProfile(),
+                cookie.clientInformation()) {
+            @Override
+            public boolean isSpectator() {
+                return false;
+            }
+
+            @Override
+            public boolean isCreative() {
+                return false;
+            }
+        };
+        final Connection connection = new Connection(PacketFlow.SERVERBOUND);
+        new EmbeddedChannel(connection);
+        NetworkRegistry.configureMockConnection(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        for (int id = 0; id <= 8; id++) {
+            player.connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(id));
+        }
+        final Vec3 there = helper.absoluteVec(at);
+        player.moveTo(there.x, there.y, there.z, 0, 0);
+        return player;
+    }
+
+    /* Takes {@code player} off the server, out of their seat first. */
+    private static void leave(final ServerPlayer player) {
+        player.stopRiding();
+        player.server.getPlayerList().remove(player);
+    }
+
+    /* Where a sleeper lies in the bed whose head is at the yard's {@code head} of {@code structure}, in the world. */
+    private static Vec3 lying(final MovingStructure structure, final BlockPos head) {
+        return worldOf(structure, new Vec3(head.getX() + 0.5, head.getY() + LIES, head.getZ() + 0.5));
+    }
+
+    /* Where the yard's place {@code place} of {@code structure} is in the world now. */
+    private static Vec3 worldOf(final MovingStructure structure, final Vec3 place) {
+        final StructureFrame frame = structure.frame();
+        return new Vec3(frame.worldX(place.x, place.y, place.z), frame.worldY(place.x, place.y, place.z),
+                frame.worldZ(place.x, place.y, place.z));
+    }
+
+    /* A stand-in player of its own, named {@code name}. */
+    private static FakePlayer player(final ServerLevel level, final String name) {
+        return FakePlayerFactory.get(level, new GameProfile(UUID.nameUUIDFromBytes(name.getBytes(
+                StandardCharsets.UTF_8)), name));
+    }
+
+    /* A lever on a wall, facing away from the block it is on, lit or not. */
+    private static BlockState lever(final Direction facing, final boolean lit) {
+        return Blocks.LEVER.defaultBlockState().setValue(LeverBlock.FACE, AttachFace.WALL)
+                .setValue(LeverBlock.FACING, facing).setValue(LeverBlock.POWERED, lit);
+    }
+
+    /*
+     * Clears the weather, so the wind blows as on a calm day: a storm another test brought would push a hovering
+     * craft as it would a real one.
+     */
+    private static void calm(final GameTestHelper helper) {
+        helper.getLevel().setWeatherParameters(CLEAR, 0, false, false);
+    }
+
+    /* The first block of the structure's yard that is so, or null. */
+    private static BlockPos find(final ServerLevel level, final MovingStructure structure,
+                                 final Predicate<BlockState> wanted) {
+        for (final BlockPos at : BlockPos.betweenClosed(structure.bounds().minX(), structure.bounds().minY(),
+                structure.bounds().minZ(), structure.bounds().maxX(), structure.bounds().maxY(),
+                structure.bounds().maxZ())) {
+            if (wanted.test(level.getBlockState(at))) {
+                return at.immutable();
+            }
+        }
+        return null;
+    }
+
+    /* Makes every block of the arena's box from {@code from} to {@code to} into a structure. */
+    private static MovingStructure assembled(final GameTestHelper helper, final BlockPos from, final BlockPos to) {
+        warm(helper.getLevel());
+        final StructureResult made = MovingStructures.assemble(helper.getLevel(), helper.absolutePos(from),
+                helper.absolutePos(to));
+        helper.assertTrue(made.ok() && made.structure() != null, "a structure is made: "
+                + (made.refusal() == null ? "done" : made.refusal().english()));
+        return made.structure();
+    }
+
+    /* Loads the chunks round the yard's next plot, so a structure made comes into it at once. */
+    private static void warm(final ServerLevel level) {
+        final int plot = StructureYard.nextPlot(level);
+        final int cx = YardLayout.centreX(plot) >> 4;
+        final int cz = YardLayout.centreZ(plot) >> 4;
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                level.getChunk(cx + dx, cz + dz);
+            }
+        }
+    }
+}

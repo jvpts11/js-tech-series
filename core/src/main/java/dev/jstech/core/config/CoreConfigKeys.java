@@ -557,6 +557,12 @@ public final class CoreConfigKeys {
                     + "past it a structure waits a tick, and goes the next whatever the budget.")
             .named("Most physics a tick").unit("ms");
 
+    /** Whether a moving structure that loses its middle becomes two. */
+    public static final ConfigKey<Boolean> MOVING_SPLIT = ConfigKey.flag(MOVING + ".split", true)
+            .comment("Whether a moving structure whose blocks are no longer all joined, its middle broken out, "
+                    + "becomes as many structures as it now is, each going its own way; off, it holds together.")
+            .named("Broken structures part");
+
     /** How far from the controller the player may be while a tool builds a multiblock. */
     public static final ConfigKey<Integer> MULTIBLOCK_BUILD_REACH = ConfigKey.whole(
             MULTIBLOCK + ".build_reach", BuildBalance.DEFAULT_REACH).range(MIN_BUILD_REACH, MAX_BUILD_REACH)
@@ -584,8 +590,8 @@ public final class CoreConfigKeys {
             .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off, "
                     + "machines that overheat, fires and burns.")
             .sectionComment(MECHANICAL, "What mechanical power does to the world: parts that break under overload.")
-            .sectionComment(MOVING, "The moving structures: how big one may be, and how much of a tick their "
-                    + "physics may take.")
+            .sectionComment(MOVING, "The moving structures: how big one may be, how much of a tick their "
+                    + "physics may take, and whether one broken in two parts.")
             .sectionComment(MULTIBLOCK, "Building multiblocks for players: how fast, and how far from them.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
@@ -653,6 +659,7 @@ public final class CoreConfigKeys {
             .key(MECHANICAL_PARTS_BREAK, MechanicalBalance::setPartsBreak)
             .key(MOVING_MOST_BLOCKS, StructureBalance::mostBlocks)
             .key(MOVING_PHYSICS_MILLIS, StructureBalance::physicsMillis)
+            .key(MOVING_SPLIT, StructureBalance::split)
             .key(MULTIBLOCK_BLOCKS_PER_SECOND, BuildBalance::setBlocksPerSecond)
             .key(MULTIBLOCK_BUILD_REACH, BuildBalance::setReach)
             .key(ROOMS_DECOMPRESSION_PULL, RoomBalance::setDecompressionPull)

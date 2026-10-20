@@ -62,5 +62,9 @@ public final class StructureClientHooks {
         /** The server told that a structure's blocks are about to change hands with the world's. */
         default void handOff(final StructureHandOffPayload payload) {
         }
+
+        /** The server told what a structure shows of itself going: its engines, its glowing faces, its trails. */
+        default void effects(final StructureEffectsPayload payload) {
+        }
     }
 }

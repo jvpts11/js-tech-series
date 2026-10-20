@@ -69,6 +69,16 @@ public final class StructureTravel {
             return StructureResult.refused(StructureTexts.YARD_FULL.text());
         }
         structure.depart(new StructureDeparture(to.dimension(), plot, dy, at.x, at.y, at.z));
+        // What it holds goes with it, each arriving where it stands on it.
+        final StructureFrame arriving = new StructureFrame(structure.pose().movedTo(at.x, at.y, at.z),
+                structure.pivotX(), structure.pivotY(), structure.pivotZ());
+        for (final MovingStructure child : StructureMounts.children(structure)) {
+            final StructureMount mount = child.mount();
+            if (mount != null && !child.departing()) {
+                final StructurePose there = arriving.placed(mount.local());
+                travel(child, to, new Vec3(there.x(), there.y(), there.z()));
+            }
+        }
         return StructureResult.done(structure, structure.blocks());
     }
 
@@ -132,12 +142,21 @@ public final class StructureTravel {
             }
         }
         final IStructureMotion motion = structure.motion();
+        final StructureMount mount = structure.mount();
         structure.move(null);
         BlockMover.move(from, to, moves, Rotation.NONE, false, false);
         final StructurePose arrived = structure.pose().movedTo(going.x(), going.y(), going.z());
         final MovingStructure there = MovingStructures.make(to, structure.id(), going.plot(), arriving, moves.size(),
                 structure.pivotX() + dx, structure.pivotY() + dy, structure.pivotZ() + dz, arrived, null);
+        if (mount != null) {
+            StructureMounts.unfile(there);
+            there.mounted(mount);
+            StructureMounts.file(there);
+        }
         there.move(motion);
+        // What it holds stands where it stood on it, here and there, its blocks now in another plot.
+        StructureMounts.shift(from, structure.id(), dx, dy, dz);
+        StructureMounts.shift(to, structure.id(), dx, dy, dz);
         structure.depart(null);
         MovingStructures.remove(structure, true);
         // The land stays loaded a while so the structure ticks there and holds its plot, then goes as a portal's.

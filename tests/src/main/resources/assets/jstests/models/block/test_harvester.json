@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "minecraft:block/composter_bottom",
+    "front": "minecraft:block/composter_top",
+    "side": "minecraft:block/composter_side"
+  }
+}

@@ -98,12 +98,12 @@ final class StructureContacts {
 
     /**
      * Finds where the structure standing at {@code frame}, moving as {@code body}, meets the world and the structures
-     * near it, ahead of time by {@code margin}, and holds them apart over a step of {@code seconds}. False, and
-     * nothing done, while a chunk it reaches is not loaded: it waits there, as it would fall through what is unread.
+     * near it, ahead of time by {@code margin}, the structures of {@code island} worked with it standing where they
+     * stand mid-tick. False, and nothing found, while a chunk it reaches is not loaded: it waits there, as it would
+     * fall through what is unread.
      */
-    boolean step(final ServerLevel level, final MovingStructure structure, final StructureFrame standing,
-                 final StructureParts parts, final RigidBody body, final double margin, final double seconds,
-                 final double settles) {
+    boolean find(final ServerLevel level, final MovingStructure structure, final StructureFrame standing,
+                 final StructureParts parts, final RigidBody body, final double margin, final PhysicsIsland island) {
         solver.clear();
         cells.clear();
         met.clear();
@@ -117,8 +117,28 @@ final class StructureContacts {
         this.ownParts = parts;
         FrameMath.axes(standing, axes);
         world(level, parts, body, box, margin);
-        structures(level, structure, parts, body, box, margin);
-        solver.solve(seconds, ContactSolver.ITERATIONS, settles);
+        structures(level, structure, parts, body, box, margin, island);
+        return true;
+    }
+
+    /** Readies the contacts found for a step of {@code seconds}: how many times they are to be worked. */
+    int begin(final double seconds, final double settles) {
+        return solver.begin(seconds, ContactSolver.ITERATIONS, settles);
+    }
+
+    /** Works the contacts {@code times} times. */
+    void iterate(final int times) {
+        solver.iterate(times);
+    }
+
+    /** Works the contacts once, the {@code index}th time. */
+    void round(final int index) {
+        solver.round(index);
+    }
+
+    /** Keeps what the contacts gave, and sums the blows they took over the tick. */
+    void end() {
+        solver.end();
         final List<ContactSolver.Contact> contacts = solver.contacts();
         for (int i = 0; i < contacts.size(); i++) {
             final double blow = contacts.get(i).blow();
@@ -127,7 +147,6 @@ final class StructureContacts {
                 metBlows.addTo(met.getLong(i), blow);
             }
         }
-        return true;
     }
 
     /** The contacts of the last step. */
@@ -275,38 +294,47 @@ final class StructureContacts {
 
     /* The other structures near: each block of theirs the structure's blocks may meet. */
     private void structures(final ServerLevel level, final MovingStructure structure, final StructureParts parts,
-                            final RigidBody body, final AABB box, final double margin) {
+                            final RigidBody body, final AABB box, final double margin, final PhysicsIsland island) {
+        final StructurePhysics mine = island.member(structure);
         for (final IStructureBody near : MovingStructures.near(level, box)) {
             if (near == structure || !near.ready() || !(near instanceof MovingStructure them)) {
                 continue;
             }
-            final StructurePhysics physics = them.physics();
+            // What it holds and what holds it are of its own body: they move as one, and never meet.
+            final StructurePhysics physics = island.owner(them);
+            if (mine != null && physics == mine) {
+                continue;
+            }
+            final boolean together = island.member(them) != null;
             final RigidBody theirBody;
             final StructureParts made;
             if (physics != null && physics.active()) {
                 // Each works the pair in its own step, both pushed: so each meets the other as its own pull acts. One
                 // asleep, met gently, holds as the ground does, so what rests on it rests still; met hard, it wakes.
-                if (physics.asleep() && body.velocity().length() + body.spin().length() < GENTLE) {
+                // One worked with it in the same steps moves with it, asleep or not.
+                if (!together && physics.asleep() && body.velocity().length() + body.spin().length() < GENTLE) {
                     theirBody = held(them);
                 } else {
                     physics.prepareBody();
                     theirBody = physics.body();
                 }
-                made = physics.parts();
+                made = physics.partsOf(them);
             } else {
                 theirBody = held(them);
                 made = null;
             }
-            final AABB overlap = box.intersect(them.worldBox().inflate(margin));
+            final StructureFrame theirs = island.standing(them);
+            final AABB overlap = box.intersect(worldBox(theirs, them.bounds()).inflate(margin));
             if (overlap.getXsize() < 0 || overlap.getYsize() < 0 || overlap.getZsize() < 0) {
                 continue;
             }
             // Two structures moving by their physics both work their blows: only the one of the lower id counts them.
             counts = made == null || structure.id().value().compareTo(them.id().value()) < 0;
             final int before = solver.contacts().size();
-            meetStructure(level, them.frame(), parts, made, body, theirBody, overlap.inflate(REACH), margin);
+            meetStructure(level, theirs, parts, made, body, theirBody, overlap.inflate(REACH), margin);
             counts = true;
-            if (physics != null && theirBody == physics.body() && solver.contacts().size() > before) {
+            // One worked in the same steps has its own contacts with the ground worked with these already.
+            if (!together && physics != null && theirBody == physics.body() && solver.contacts().size() > before) {
                 // They meet: worked as one, the other held up by the ground it stands on.
                 final int lent = solver.contacts().size();
                 physics.lendWorld(solver, theirBody, ground);

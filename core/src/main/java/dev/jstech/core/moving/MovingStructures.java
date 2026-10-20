@@ -8,6 +8,7 @@
 package dev.jstech.core.moving;
 
 import dev.jstech.core.content.EntityEntry;
+import dev.jstech.core.moving.joint.StructureJoints;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
@@ -15,6 +16,8 @@ import dev.jstech.core.uuid.StructureUuid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
@@ -23,6 +26,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -55,6 +60,14 @@ public final class MovingStructures {
     public static final EntityEntry<MovingStructureEntity> ENTITY = CoreItems.CONTENT.entity("moving_structure",
                     MovingStructureEntity::new, MobCategory.MISC).size(1, 1).tracking(32, 20).fireImmune().noSummon()
             .named("Moving structure").register();
+    /** The entity someone sitting on a structure's seat sits in. */
+    public static final EntityEntry<StructureSeatEntity> SEAT = CoreItems.CONTENT.entity("structure_seat",
+                    StructureSeatEntity::new, MobCategory.MISC).size(0.4F, 0.2F).tracking(10, 1).fireImmune()
+            .noSummon().named("Structure seat").register();
+    /** The entity a player riding a rope down hangs from. */
+    public static final EntityEntry<ZiplineEntity> ZIPLINE = CoreItems.CONTENT.entity("zipline",
+                    ZiplineEntity::new, MobCategory.MISC).size(0.3F, 0.3F).tracking(10, 1).fireImmune()
+            .noSummon().named("Zipline").register();
     /* From this many structures moving in a level, their next poses are worked out beside the server's thread. */
     private static final int ALONGSIDE = 8;
     /* Players who left the game standing on a structure, waiting for it to load so they stand on it again. */
@@ -67,6 +80,9 @@ public final class MovingStructures {
     /** Hands the game's bus what the kit answers, and its payloads to the mod's, once, from the Core's constructor. */
     public static void listen(final IEventBus modBus) {
         StructureYard.listen();
+        StructureJoints.listen();
+        StructureSeating.listen();
+        StructureSleeping.listen();
         StructureSync.listen(modBus);
         StructureCommands.declare();
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Pre.class, MovingStructures::beforeTick);
@@ -102,12 +118,74 @@ public final class MovingStructures {
     }
 
     /**
+     * Holds {@code child} by {@code parent} where it stands now, a turret on a ship, a shuttle docked to a station:
+     * it goes wherever the parent goes, and its own rule turns it on the parent ({@link StructureMounts}).
+     * {@code anchor} is the parent's block holding it, whose loss lets it go.
+     */
+    public static StructureResult mount(final MovingStructure child, final MovingStructure parent,
+                                        final Optional<BlockPos> anchor) {
+        return StructureMounts.mount(child, parent, anchor);
+    }
+
+    /** Lets {@code child} go from what holds it: by its physics at its place's speed when it {@code falls}. */
+    public static StructureResult unmount(final MovingStructure child, final boolean falls) {
+        return StructureMounts.unmount(child, falls);
+    }
+
+    /**
+     * Docks {@code visitor} to {@code host} where it stands: one with it while docked, their momentum shared
+     * ({@link StructureDocking}); {@code clamp} the host's block holding it.
+     */
+    public static StructureResult dock(final MovingStructure host, final MovingStructure visitor,
+                                       final Optional<BlockPos> clamp) {
+        return StructureDocking.dock(host, visitor, clamp);
+    }
+
+    /** Lets a docked {@code visitor} go, pushed gently away along {@code away}, a way of the world. */
+    public static StructureResult undock(final MovingStructure visitor, final Vec3 away) {
+        return StructureDocking.undock(visitor, away);
+    }
+
+    /**
+     * Joins {@code visitor} into {@code host} for good, its blocks moved into the host where they stand on it now
+     * ({@link StructureMerging}); refused when the two are not square to each other or their blocks would overlap.
+     */
+    public static StructureResult join(final MovingStructure host, final MovingStructure visitor) {
+        return StructureMerging.join(host, visitor);
+    }
+
+    /**
      * Sends {@code structure} to {@code to} with everyone aboard, its pivot arriving at {@code at}: it goes a few
      * ticks later, once the chunks it goes to have loaded, and is found there by its id. Refused, saying why, when it
      * cannot go.
      */
     public static StructureResult travel(final MovingStructure structure, final ServerLevel to, final Vec3 at) {
         return StructureTravel.travel(structure, to, at);
+    }
+
+    /**
+     * Sits {@code player} on the seat at the yard's block {@code seat} of a structure, as using it does: refused
+     * while they ride something or someone sits there already; whether they sit.
+     */
+    public static boolean sit(final ServerPlayer player, final BlockPos seat) {
+        return StructureSeating.sit(player, seat);
+    }
+
+    /**
+     * {@code player}, sitting at a helm, holds the controls {@code keys}, each its {@link StructureHelmPayload#bit},
+     * as their game tells them: the structure they sit on is steered by them while they hold any; whether they sit at
+     * a helm.
+     */
+    public static boolean helm(final ServerPlayer player, final int keys) {
+        return StructureSeating.helm(player, keys);
+    }
+
+    /**
+     * {@code player} takes hold of the rope joint {@code joint} at {@code along}, from 0 at its first end to 1 at its
+     * second, to ride it down: refused out of their reach or while they ride something; whether they hang from it.
+     */
+    public static boolean zipline(final ServerPlayer player, final UUID joint, final double along) {
+        return StructureSeating.zipline(player, joint, along);
     }
 
     /** The structure of that id loaded in {@code level}, or null. */
@@ -189,11 +267,18 @@ public final class MovingStructures {
         if (entity.isRemoved() || !(structure.level() instanceof ServerLevel level)) {
             return;
         }
+        // What it held, with nothing to hold it now, falls; what goes with it to another dimension goes on.
+        for (final MovingStructure child : StructureMounts.children(structure)) {
+            if (!child.departing()) {
+                StructureMounts.unmount(child, true);
+            }
+        }
         if (clear && !structure.arriving()) {
             StructureYard.clearAndGiveBack(level, structure.plot(), structure.bounds());
         } else {
             StructureYard.giveBack(level, structure.plot());
         }
+        StructureJoints.forget(level, structure.id());
         entity.discard();
     }
 
@@ -232,7 +317,13 @@ public final class MovingStructures {
      */
     private static void onJoin(final EntityJoinLevelEvent event) {
         final Entity entity = event.getEntity();
-        if (entity instanceof MovingStructureEntity || !YardLayout.isYard(entity.getX())) {
+        if (entity instanceof MovingStructureEntity || entity instanceof StructureSeatEntity) {
+            return;
+        }
+        if (!YardLayout.isYard(entity.getX())) {
+            if (!event.loadedFromDisk()) {
+                shotFromAboard(entity);
+            }
             return;
         }
         final IStructureBody body = LevelMovingStructures.of(event.getLevel()).atYard((int) Math.floor(entity.getX()),
@@ -246,9 +337,35 @@ public final class MovingStructures {
         final double z = entity.getZ();
         final Vec3 speed = entity.getDeltaMovement();
         entity.setPos(frame.worldX(x, y, z), frame.worldY(x, y, z), frame.worldZ(x, y, z));
-        entity.setDeltaMovement(frame.turnX(speed.x, speed.y, speed.z), frame.turnY(speed.x, speed.y, speed.z),
-                frame.turnZ(speed.x, speed.y, speed.z));
+        // It goes as fast as it was thrown, turned as the structure is, and as fast as its place on it goes.
+        entity.setDeltaMovement(new Vec3(frame.turnX(speed.x, speed.y, speed.z), frame.turnY(speed.x, speed.y,
+                speed.z), frame.turnZ(speed.x, speed.y, speed.z)).add(StructureFooting.speedAt(body,
+                entity.position())));
         entity.setYRot((float) (entity.getYRot() + frame.pose().yawDegrees()));
+    }
+
+    /*
+     * A shot or a thing thrown by someone standing or sitting on a structure goes as fast as they were thrown, and as
+     * fast as the structure carries the place they were thrown from: an arrow loosed from a ship's deck flies on
+     * with the ship.
+     */
+    private static void shotFromAboard(final Entity entity) {
+        if (!LevelMovingStructures.anyLoaded() || entity.level().isClientSide()) {
+            return;
+        }
+        final Entity thrower = entity instanceof Projectile shot ? shot.getOwner()
+                : entity instanceof ItemEntity item ? item.getOwner() : null;
+        if (thrower == null) {
+            return;
+        }
+        IStructureBody body = StructureFooting.standingOn(thrower);
+        if (body == null && thrower.getVehicle() instanceof StructureSeatEntity seat) {
+            body = seat.structure();
+        }
+        if (body != null && body.ready()) {
+            entity.setDeltaMovement(entity.getDeltaMovement().add(StructureFooting.speedAt(body,
+                    thrower.position())));
+        }
     }
 
     /* A block set down in the yard past the plot of the structure it is set on would be another's: it is refused. */

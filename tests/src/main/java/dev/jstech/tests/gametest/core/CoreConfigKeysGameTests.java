@@ -60,7 +60,7 @@ public final class CoreConfigKeysGameTests {
                         "heat.pipes_freeze",
                         "heat.boil_off", "heat.overheating_damages", "heat.ignites",
                         "heat.hot_surfaces_burn", "mechanical.parts_break", "moving_structures.most_blocks",
-                        "moving_structures.physics_millis", "multiblock.blocks_per_second",
+                        "moving_structures.physics_millis", "moving_structures.split", "multiblock.blocks_per_second",
                         "multiblock.build_reach", "rooms.decompression_pull", "rooms.fire_in_pure_oxygen",
                         "rooms.fire_needs_oxygen", "rooms.mobs_breathe", "rooms.plants_need_air",
                         "rooms.blocks_burst", "rooms.largest_room", "veins.enabled", "veins.rarity", "veins.spread",

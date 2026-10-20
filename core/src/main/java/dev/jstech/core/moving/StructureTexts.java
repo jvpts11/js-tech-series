@@ -40,6 +40,16 @@ public final class StructureTexts {
             "The structure's blocks are not loaded yet");
     public static final TextKey TRAVELLING = TextKey.of("jscore.moving.refused.travelling",
             "The structure is on its way to another dimension");
+    public static final TextKey MOUNT_LOOP = TextKey.of("jscore.moving.refused.mount_loop",
+            "A structure cannot be held by itself, nor by a structure it holds");
+    public static final TextKey NOT_MOUNTED = TextKey.of("jscore.moving.refused.not_mounted",
+            "That structure is not held by another");
+    public static final TextKey NOT_ALIGNED = TextKey.of("jscore.moving.refused.not_aligned",
+            "The two structures are not square to each other, so their blocks cannot be joined for good");
+    public static final TextKey NO_ROOM = TextKey.of("jscore.moving.refused.no_room",
+            "The two structures' blocks would overlap at %s");
+    public static final TextKey TOO_WIDE = TextKey.of("jscore.moving.refused.too_wide",
+            "Joined, the structure would be too big to move, or out of the world's height");
     public static final TextKey REFUSED_BY = TextKey.of("jscore.moving.refused.by_mod", "%s");
     public static final TextKey ASSEMBLED = TextKey.of("jscore.command.structure.assembled",
             "Made a moving structure of %s blocks");

@@ -1,0 +1,19 @@
+{
+  "reach": 192,
+  "emitters": [
+    {
+      "name": "flame",
+      "emission": {"shape": {"type": "cone", "angle": 6}, "rate": 80, "life": [0.12, 0.25], "speed": [14, 20]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.45, 0.9], "colour": ["#C8DCFFE0", "#4060FF00"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.6, "expands": true}
+    },
+    {
+      "name": "haze",
+      "emission": {"shape": {"type": "cone", "angle": 12}, "rate": 20, "life": [0.6, 1.0], "speed": [8, 12]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.6, 1.6], "colour": ["#E0DCD830", "#D0CCC800"],
+               "spin": 8},
+      "motion": {"buoyancy": 0.2, "drag": 1.2, "expands": true, "medium": "air"}
+    }
+  ]
+}

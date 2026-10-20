@@ -1,0 +1,12 @@
+{
+  "values": {
+    "jstests:test_decoupler": {"decoupler": {"push": 2000}},
+    "jstests:test_clamp": {"clamp": {"reach": 1.5}},
+    "jstests:test_drill": {"tool": {"kind": "drill", "speed": 4, "loot": "minecraft:iron_pickaxe"}},
+    "jstests:test_harvester": {"tool": {"kind": "harvester", "speed": 10}},
+    "jstests:test_plough": {"tool": {"kind": "plough", "speed": 10}},
+    "jstests:test_placer": {"tool": {"kind": "placer", "speed": 10}},
+    "jstests:test_seat": {"seat": {"height": 0.5}},
+    "jstests:test_helm": {"seat": {"height": 0.5, "helm": true}}
+  }
+}

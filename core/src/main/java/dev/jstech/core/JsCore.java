@@ -161,6 +161,7 @@ import dev.jstech.core.material.MineralFamilies;
 import dev.jstech.core.menu.MenuSync;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.model.network.ModelCommands;
+import dev.jstech.core.moving.BlockAboard;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.physics.BlockPhysics;
 import dev.jstech.core.multiblock.FormedParts;
@@ -314,6 +315,8 @@ public final class JsCore {
         MovingStructures.listen(modEventBus);
         // Their physics: mass, engines, wings, wheels, floating and balloons, as data, and what they meet.
         BlockPhysics.listen(modEventBus);
+        // What blocks do aboard them, as data: seats and helms, docking clamps, decouplers and tools.
+        BlockAboard.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();

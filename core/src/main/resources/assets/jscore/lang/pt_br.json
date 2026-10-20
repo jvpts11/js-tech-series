@@ -2599,7 +2599,7 @@
   "jscore.command.structure.under_way": "em movimento",
   "jscore.command.structure.none": "Nenhuma estrutura móvel está carregada nesta dimensão",
   "jscore.configuration.moving_structures": "Estruturas móveis",
-  "jscore.configuration.moving_structures.tooltip": "As estruturas móveis: de que tamanho uma pode ser, e quanto de um tick a sua física pode levar.",
+  "jscore.configuration.moving_structures.tooltip": "As estruturas móveis: de que tamanho uma pode ser, quanto de um tick a sua física pode levar, e se uma partida em duas se separa.",
   "jscore.configuration.moving_structures.most_blocks": "Máximo de blocos numa estrutura móvel",
   "jscore.configuration.moving_structures.most_blocks.tooltip": "De quantos blocos uma estrutura móvel pode ser feita; uma com mais é recusada, dizendo o porquê.",
   "jscore.configuration.moving_structures.most_blocks.unit": "blocos",
@@ -2609,5 +2609,14 @@
   "jscore.moving.refused.not_loaded": "Esses blocos não estão todos carregados",
   "jscore.moving.refused.land_not_loaded": "A estrutura não pode ser assentada onde o terreno não está carregado",
   "jscore.moving.refused.not_ready": "Os blocos da estrutura ainda não estão carregados",
-  "jscore.moving.refused.travelling": "A estrutura está a caminho de outra dimensão"
+  "jscore.moving.refused.travelling": "A estrutura está a caminho de outra dimensão",
+  "jscore.moving.refused.mount_loop": "Uma estrutura não pode ser presa a si mesma, nem a uma estrutura que ela mesma prende",
+  "jscore.moving.refused.not_mounted": "Essa estrutura não está presa a outra",
+  "jscore.moving.refused.not_aligned": "As duas estruturas não estão no esquadro uma da outra, então seus blocos não podem ser unidos de vez",
+  "jscore.moving.refused.no_room": "Os blocos das duas estruturas se sobreporiam em %s",
+  "jscore.moving.refused.too_wide": "Unida, a estrutura ficaria grande demais para se mover, ou fora da altura do mundo",
+  "jscore.configuration.moving_structures.split": "Estruturas partidas se separam",
+  "jscore.configuration.moving_structures.split.tooltip": "Se uma estrutura móvel cujos blocos já não estão todos unidos, com o meio quebrado, vira tantas estruturas quantas agora são as suas partes, cada uma seguindo seu caminho; desligado, ela se mantém inteira.",
+  "entity.jscore.structure_seat": "Assento de estrutura",
+  "entity.jscore.zipline": "Tirolesa"
 }

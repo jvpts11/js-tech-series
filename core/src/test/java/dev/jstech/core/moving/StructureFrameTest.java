@@ -79,6 +79,26 @@ class StructureFrameTest {
         assertFalse(frame(StructurePose.turned(0, 0, 0, 0, 1, 0, 0.3)).aligned());
     }
 
+    @Test
+    void placed_putsAHeldStructureWhereItsParentCarriesIt() {
+        final StructureFrame ship = frame(StructurePose.turned(100, 70, -20, 0, 1, 0, Math.PI / 2));
+        final StructurePose turret = StructurePose.turned(PIVOT_X + 2, PIVOT_Y + 1, PIVOT_Z, 0, 1, 0, Math.PI / 4);
+        final StructurePose placed = ship.placed(turret);
+        assertEquals(ship.worldX(PIVOT_X + 2, PIVOT_Y + 1, PIVOT_Z), placed.x(), CLOSE);
+        assertEquals(ship.worldY(PIVOT_X + 2, PIVOT_Y + 1, PIVOT_Z), placed.y(), CLOSE);
+        assertEquals(ship.worldZ(PIVOT_X + 2, PIVOT_Y + 1, PIVOT_Z), placed.z(), CLOSE);
+        assertEquals(0, placed.angleTo(StructurePose.turned(0, 0, 0, 0, 1, 0, 3 * Math.PI / 4)), 1.0e-9);
+    }
+
+    @Test
+    void local_undoesPlaced() {
+        final StructureFrame ship = frame(StructurePose.turned(-40, 90, 3, 1, 2, -1, 0.9));
+        final StructurePose world = StructurePose.turned(-38, 91.5, 2, -0.3, 1, 0.2, 2.1);
+        final StructurePose back = ship.placed(ship.local(world));
+        assertEquals(0, back.distanceTo(world), 1.0e-6);
+        assertEquals(0, back.angleTo(world), 1.0e-7);
+    }
+
     private static StructureFrame frame(final StructurePose pose) {
         return new StructureFrame(pose, PIVOT_X, PIVOT_Y, PIVOT_Z);
     }

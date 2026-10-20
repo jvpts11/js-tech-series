@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=north": {"model": "jstests:block/test_plough"},
+    "facing=east": {"model": "jstests:block/test_plough", "y": 90},
+    "facing=south": {"model": "jstests:block/test_plough", "y": 180},
+    "facing=west": {"model": "jstests:block/test_plough", "y": 270},
+    "facing=up": {"model": "jstests:block/test_plough", "x": 270},
+    "facing=down": {"model": "jstests:block/test_plough", "x": 90}
+  }
+}

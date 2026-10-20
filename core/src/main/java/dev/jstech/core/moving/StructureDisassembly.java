@@ -108,6 +108,11 @@ public final class StructureDisassembly {
             case 3 -> Rotation.CLOCKWISE_90;
             default -> Rotation.NONE;
         };
+        // What it holds is set down with it, each where it stands; one that cannot be stays where it is, at rest.
+        for (final MovingStructure child : StructureMounts.children(structure)) {
+            StructureMounts.unmount(child, false);
+            setDown(child);
+        }
         structure.move(null);
         StructureSync.landing(structure, level, grid, moves.values());
         BlockMover.move(level, level, moves, rotation, false, true);

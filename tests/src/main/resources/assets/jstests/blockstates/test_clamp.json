@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=north": {"model": "jstests:block/test_clamp"},
+    "facing=east": {"model": "jstests:block/test_clamp", "y": 90},
+    "facing=south": {"model": "jstests:block/test_clamp", "y": 180},
+    "facing=west": {"model": "jstests:block/test_clamp", "y": 270},
+    "facing=up": {"model": "jstests:block/test_clamp", "x": 270},
+    "facing=down": {"model": "jstests:block/test_clamp", "x": 90}
+  }
+}

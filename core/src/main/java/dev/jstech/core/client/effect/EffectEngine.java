@@ -74,6 +74,8 @@ public final class EffectEngine {
     private static final double LEAST_SPEED = 1e-4;
     private static final int ARC_TICKS = 2;
     private static final int BRIGHTEST = 15;
+    /* An effect that went further than this in a tick, in blocks, jumped: what it emits is not laid along the way. */
+    private static final double JUMPED = 64.0;
 
     private static double cost;
     private static long tickNanos;
@@ -176,6 +178,7 @@ public final class EffectEngine {
             if (seen) {
                 emit(effect, at, setting * crowd, budget);
             }
+            effect.lastAt = at;
             effect.elapsed += TICK;
             if (!effect.held() && effect.elapsed > effect.end() + TICK && effect.alive() == 0) {
                 running.remove();
@@ -221,10 +224,15 @@ public final class EffectEngine {
         }
     }
 
-    /* Emits what the effect's emitters emit this tick, from where it is. */
+    /*
+     * Emits what the effect's emitters emit this tick, from where it is; one that moved emits along the way it went
+     * since the tick before, so a fast engine leaves a line, not beads a tick apart.
+     */
     private static void emit(final RunningEffect effect, final Vec3 at, final double thinned, final int budget) {
         final Vec3 way = effect.way.get();
         final double[] frame = frameOf(way);
+        final Vec3 from = effect.lastAt == null || effect.lastAt.distanceToSqr(at) > JUMPED * JUMPED ? at
+                : effect.lastAt;
         for (final EmitterRun run : effect.runs) {
             final Emitter emitter = run.emitter;
             if (!emitter.enabled() || emitter.kind() != Emitter.Kind.PARTICLES) {
@@ -244,7 +252,7 @@ public final class EffectEngine {
                 run.carry -= (int) run.carry;
             }
             for (int i = 0; i < count; i++) {
-                spawn(run, effect, at, frame, budget);
+                spawn(run, effect, count > 1 ? from.lerp(at, (i + 1.0) / count) : at, frame, budget);
             }
         }
     }

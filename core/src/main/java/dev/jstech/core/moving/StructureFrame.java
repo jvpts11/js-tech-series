@@ -193,6 +193,24 @@ public final class StructureFrame {
     }
 
     /**
+     * Where a structure held by this one stands in the world, its pose {@code local} given in this one's yard: its
+     * place a place of this yard, its rotation from this yard's axes. A turret on a ship stands so.
+     */
+    public StructurePose placed(final StructurePose local) {
+        final StructurePose turned = local.then(pose);
+        return turned.movedTo(worldX(local.x(), local.y(), local.z()), worldY(local.x(), local.y(), local.z()),
+                worldZ(local.x(), local.y(), local.z()));
+    }
+
+    /** The pose in this structure's yard of a structure standing at {@code world}: what {@link #placed} undoes. */
+    public StructurePose local(final StructurePose world) {
+        final StructurePose undo = new StructurePose(0, 0, 0, -pose.qx(), -pose.qy(), -pose.qz(), pose.qw());
+        final StructurePose turned = world.then(undo);
+        return turned.movedTo(yardX(world.x(), world.y(), world.z()), yardY(world.x(), world.y(), world.z()),
+                yardZ(world.x(), world.y(), world.z()));
+    }
+
+    /**
      * Whether the rotation maps each axis onto an axis, a quarter turn or none on each: then a block of the yard is a
      * box of the world too, exactly, and the structure can be set down on the world's grid.
      */

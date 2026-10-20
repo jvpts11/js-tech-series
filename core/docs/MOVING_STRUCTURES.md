@@ -175,7 +175,8 @@ blow harder than a block holds, by its blast strength (`jscore:blast_strength`),
 structure: a heavy block falling on glass goes through it.
 
 A tick is worked in as many steps as keep a structure from going more than half a block in one, and its stiffest
-hold, a liquid's surface, steady. A structure still for a second falls asleep and costs next to nothing; it wakes the
+hold, a liquid's surface, steady. A structure still for a second, its engines and burners idle, falls asleep and
+costs next to nothing; it wakes the
 moment a block of it changes, it is pushed, something moves against it, or what held it goes. Nothing of a chunk not
 loaded is read: a structure reaching one waits there. Each structure's tick of physics is timed in the diagnostics as
 `jscore:structure_physics`; twenty small structures falling and landing at once take a few milliseconds a tick. The
@@ -183,7 +184,172 @@ physics of a dimension's structures takes no more of a tick than `moving_structu
 that, a structure waits a tick, and goes the next whatever the budget.
 
 `structure.physics()` gives its physics while it moves by them: its `parts()` (mass, centre, inertia), its `body()`
-(where its centre is, how fast it goes and turns) and the `forces()` on it in the last tick, by their kind.
+(where its centre is, how fast it goes and turns) and the `forces()` on it in the last tick, by their kind. Its
+`authority(way)` says how fast its engines and driving wheels can speed it up along a way of the world, at full, in
+metres a second a second.
+
+## Joints
+
+*Added 2026-10-21.*
+
+Structures are joined to each other, or to the world, by joints: a rope or a chain, a spring, a bar, a hinge, a
+slider, a ball joint and a weld. Each end is a place on a structure or a place of the world, and the joint holds them
+as a real one does, worked in the same steps as what the structures touch: a crate hangs and swings at the end of its
+rope, a drawbridge turns on its hinge, a trailer follows its tow bar.
+
+```java
+StructureJoints.join(level, new JointKind.Rope(6, JointKind.RopeLook.CHAIN, Optional.empty()),
+        StructureJoints.Anchor.on(crane, hook, new Vec3(0, 1, 0)),
+        StructureJoints.Anchor.on(crate, lid, new Vec3(0, 1, 0)), Optional.of(40_000.0));
+```
+
+| Joint | What it does |
+| --- | --- |
+| `Rope(length, look, winch)` | keeps its ends no further apart than its length, slack when nearer; drawn as a rope or a chain, sagging as far as its slack lets it. A `Winch` reels it in and out by signals, at its `speed`, between its `least` and `most` lengths |
+| `Spring(rest, stiffness, damping)` | pulls its ends towards its rest length, `stiffness` newtons a metre, and holds back their going, `damping` newton seconds a metre; drawn as a coil |
+| `Bar(length)` | keeps its ends at its length, pushing and pulling: a tow bar |
+| `Hinge(limits, drive)` | keeps its ends together, turning only about its axis, within its `limits` in degrees; a `Drive` turns it at a `speed` with a `force`, always or by a signal |
+| `Slider(limits, drive)` | lets its ends slide along its axis only, within its `limits` in blocks; driven, a lift or a piston |
+| `Ball()` | keeps its ends together, turning any way |
+| `Weld()` | holds the two as they stood when joined |
+
+A joint that `breaksAt` a load, in newtons or newton metres, breaks when pulled harder. A signal for a drive or a winch
+(`JointSignal`) is read at a block of either end. The joints of a dimension are saved with it and sent to its players,
+whose game draws each one between where its ends are drawn that frame, so a rope from a ship never lags the ship.
+Structures joined to each other move by their physics together, all in the tick of the first of them to come.
+
+## Held structures
+
+*Added 2026-10-21.*
+
+A structure can be held by another: a turret on a ship, a crane's cab on its tracks, a shuttle docked to a station.
+Held, it goes wherever its parent goes, and its own rule moves it on the parent, in the parent's places, so a turret
+turning by a `SpinMotion` turns on the ship whichever way the ship goes.
+
+```java
+MovingStructures.mount(turret, ship, Optional.of(ringBlock));  // the ring is the ship's block holding it
+MovingStructures.unmount(turret, true);                         // let go, it falls at the speed its place had
+```
+
+A structure moving by its physics holds what it holds as part of its body: the turret's mass, its engines, its wheels,
+its balloons and its blocks meeting the world are all the ship's, so a ship lifts on an engine its turret carries.
+Breaking the block that holds a structure lets it go. A held structure goes to another dimension with its parent and
+is set down with it. A structure cannot be held by itself, nor by one it holds.
+
+## Parting and joining
+
+*Added 2026-10-21.*
+
+A structure whose blocks are no longer all joined, its middle broken out, becomes as many structures as it now is.
+The largest part keeps its name, its rule and its plot; every other part becomes a structure of its own and moves by
+its physics, going on at the speed its place had. With the setting `moving_structures.split` off, a broken structure
+holds together.
+
+A **decoupler** parts the structure at itself when its signal comes on, as a rocket's stages part: it is gone, the
+structure parts there, and the two sides are pushed apart along the way it faced. Two structures square to each other
+can be **joined** for good, the visitor's blocks moved into the host where they stand on it:
+
+```java
+StructureResult joined = MovingStructures.join(host, visitor);
+```
+
+Joining is refused when the two are not square to each other, when their blocks would overlap, or when the structure
+joined would be too big to move.
+
+## Docking
+
+*Added 2026-10-21.*
+
+Docking makes two structures one while they are docked: the visitor is held by the host and moves as part of it, its
+mass and its engines the host's, and their momentum is shared, so a shuttle docking at speed sets the station going.
+A **docking clamp** docks by itself: with its signal on, meeting another structure's clamp face to face within its
+`reach`, it takes hold of the other where it is and draws it in on itself, square to it and face on face, over a
+second or so, however the two go. As its signal goes off, it lets go, the visitor pushed gently away. Of two clamps
+that meet, the structure of more blocks holds the other.
+
+```java
+MovingStructures.dock(station, shuttle, Optional.of(port));    // docked where it stands
+MovingStructures.undock(shuttle, awayFromThePort);              // let go, pushed away along a way of the world
+```
+
+## Tools on the move
+
+*Added 2026-10-21.*
+
+A tool aboard works the world in front of it as the structure passes: a **drill** mines, a **harvester** takes ripe
+crops and plants them again, a **plough** tills the ground, and a **placer** sets the blocks it carries where there is
+room. What a tool takes goes into a container aboard, and what it places comes out of one; with none aboard, what it
+takes drops into the world. A melon, a pumpkin or another block of `#jscore:harvested_whole` is taken whole; sugar
+cane, a cactus, bamboo or another of `#jscore:harvested_above` is cut above its foot.
+
+## Seats and helms
+
+*Added 2026-10-21.*
+
+A player using a seat of a structure sits on it, and is carried with it, steady in their seat as it goes; crouching,
+they use the block as any other. One sitting at a **helm** steers the structure with the keys they walk with: forward
+and back, left and right, up with the jump key and down with the sprint key. The structure's engines and wheels
+answer by the way each looks against the helm's forward: an engine pushing forward fires on forward, one pushing up on
+up; a wheel rolling forward drives forward and back, and steers left and right. Told nothing for a second, the
+controls let go, so a pilot who left the helm leaves the structure to its signals.
+
+```java
+MovingStructures.sit(player, seatBlock);                                  // as using the seat does
+structure.controls().tell(now, held, forward, up, false);                 // what a computer or a mod tells it
+```
+
+Whatever is shot or thrown from a seat aboard, or from a deck, goes on with the deck's speed, so an arrow loosed from a
+moving ship flies with the ship.
+
+## The autopilot
+
+*Added 2026-10-21.*
+
+An autopilot flies a structure by its controls, as a pilot at its helm would: it goes to a place and holds there,
+holds a height, follows a route, or docks to a structure's clamp. It works each control by how far the structure's
+speed falls short of what it wants, over how fast its engines and wheels can speed it up that way, so a heavy rocket,
+a light airship and a car are flown alike, never past where they were sent. Its height is held against the
+structure's weight. It is kept with the structure, and flies on after a restart; a pilot at the helm takes over while
+they hold it.
+
+```java
+structure.fly(StructureAutopilot.goTo(new Vec3(120, 90, -40), 8));      // no faster than 8 metres a second
+structure.fly(StructureAutopilot.route(List.of(a, b, c), 10, true));     // round again after the last
+structure.fly(StructureAutopilot.dock(station.id(), port, 2));
+structure.fly(null);                                                     // lets go
+```
+
+## Sleeping aboard
+
+*Added 2026-10-21.*
+
+A bed aboard is slept in as one on the ground: it is reached, and kept safe from monsters, as it stands in the world;
+its sleeper lies in it there and is carried with it as the structure goes, drawn along the bed however the structure
+is turned, and stands up beside it there. A player who slept in a bed aboard comes back to it, where it is, as long as
+its structure is loaded; otherwise to the world's spawn.
+
+## Ropes to ride
+
+*Added 2026-10-21.*
+
+A player using a rope joint within reach, riding nothing, takes hold of it there and rides it down, hanging under it,
+until its end, where they let go.
+
+```java
+MovingStructures.zipline(player, rope.id(), 0.1);   // a tenth of the way from its first end
+```
+
+## What it shows going
+
+*Added 2026-10-21.*
+
+A structure moving by its physics shows its players what it does: each engine burning gives off its flame, a
+rocket's long column of exhaust or a jet's short blue flame, as big as it pushes, and a propeller nothing; a face
+heading into the air fast enough to glow glows on its outermost blocks in the colour of a black body at its heat, and
+past about 1,600 kelvin it is wrapped in the plasma of a re-entry; and where the air is colder than about 40 degrees
+under freezing, at an aircraft's speed, it leaves white trails behind its engines and its wingtips, as the water of
+their exhaust and of the air spun off them freezes. An engine pushing keeps its structure awake, so a rocket too heavy
+for its engines stands burning on its pad. What it shows is told to its players only as it changes.
 
 ## Setting it down
 
@@ -372,6 +538,7 @@ For game masters, as `/jstech structure ...`:
 | --- | --- | --- |
 | `moving_structures.most_blocks` | 65,536 | The most blocks one structure may be made of. |
 | `moving_structures.physics_millis` | 10 | How much of a tick, in milliseconds, the physics of a dimension's structures may take; past it a structure waits a tick, and goes the next whatever the budget, so many structures slow down together rather than slow the server. |
+| `moving_structures.split` | on | Whether a structure whose blocks are no longer all joined becomes as many structures as it now is, each going its own way; off, it holds together. |
 
 ## What can go wrong
 
@@ -388,3 +555,6 @@ For game masters, as `/jstech structure ...`:
 | A balloon does not lift | its envelope weighs too much for the air it puts aside: blocks are heavy, so give the envelope's blocks a small `mass` in `jscore:block_physics`. |
 | An iron ship sinks | its walls are blocks of solid iron: give its hull room, the air it holds is what floats it. |
 | A light raft or cart drifts | the wind blows it, as it would a real one: a brake holds a cart. |
+| A hovering craft tips over | it is held up from below its centre of mass, as a broom balanced on a hand is: put its levitators, balloons or lifting engines round its middle, or above it. |
+| A mod's stand-in player cannot sit, ride a rope or steer | NeoForge's `FakePlayer` rides nothing; tell the structure its controls with `structure.controls().tell(...)` instead. |
+| A shuttle under an autopilot goes no further sideways than it is blown | it has engines only forward and back: the autopilot works only the controls its engines answer. |

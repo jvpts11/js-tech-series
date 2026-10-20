@@ -12,11 +12,15 @@ import dev.jstech.core.moving.physics.PhysicsMotion;
 import dev.jstech.core.moving.physics.StructurePhysics;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.uuid.StructureUuid;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
@@ -56,6 +60,21 @@ public final class MovingStructure implements IStructureBody {
     private @Nullable StructurePhysics physics;
     private @Nullable StructureArrival arrival;
     private @Nullable StructureDeparture departure;
+    /* The structure holding it, and where it stands on it, or null. */
+    private @Nullable StructureMount mount;
+    /* The blocks beside those it lost, to look at for whether it is still one; the pieces waiting to part. */
+    private final Set<Long> splitSeeds = new HashSet<>();
+    private final List<StructureSplitting.Waiting> splitting = new ArrayList<>();
+    /* Plots taken for pieces that were waiting when it was saved, to give back as it loads. */
+    private final List<Integer> splitPlots = new ArrayList<>();
+    /* What its blocks do aboard: its seats, clamps, decouplers and tools. */
+    private final StructureAboard aboard = new StructureAboard();
+    /* What it is told to do now, by its helm or its autopilot, and the autopilot flying it, if any. */
+    private final StructureControls controls = new StructureControls();
+    private @Nullable StructureAutopilot autopilot;
+    /* What the autopilot has built up holding its height against its weight. */
+    private final double[] autopilotHold = new double[1];
+    private boolean parting;
     private boolean ready;
     private boolean held;
     private boolean departureHeld;
@@ -70,6 +89,10 @@ public final class MovingStructure implements IStructureBody {
     private static final String PIVOT = "pivot";
     private static final String POSE = "pose";
     private static final String MOTION = "motion";
+    private static final String MOUNT = "mount";
+    private static final String AUTOPILOT = "autopilot";
+    private static final String SPLIT_SEEDS = "split_seeds";
+    private static final String SPLIT_PLOTS = "split_plots";
     private static final Codec<double[]> PLACE = Codec.DOUBLE.listOf(3, 3).xmap(
             list -> new double[] {list.get(0), list.get(1), list.get(2)},
             place -> List.of(place[0], place[1], place[2]));
@@ -115,6 +138,19 @@ public final class MovingStructure implements IStructureBody {
             read.departure = StructureDeparture.CODEC.parse(NbtOps.INSTANCE, tag.get(DEPARTURE)).result()
                     .orElse(null);
         }
+        if (tag.contains(MOUNT)) {
+            read.mount = StructureMount.CODEC.parse(NbtOps.INSTANCE, tag.get(MOUNT)).result().orElse(null);
+        }
+        if (tag.contains(AUTOPILOT)) {
+            read.autopilot = StructureAutopilot.CODEC.parse(NbtOps.INSTANCE, tag.get(AUTOPILOT)).result()
+                    .orElse(null);
+        }
+        for (final long seed : tag.getLongArray(SPLIT_SEEDS)) {
+            read.splitSeeds.add(seed);
+        }
+        for (final int plot : tag.getIntArray(SPLIT_PLOTS)) {
+            read.splitPlots.add(plot);
+        }
         return read;
     }
 
@@ -140,6 +176,27 @@ public final class MovingStructure implements IStructureBody {
         if (departure != null) {
             StructureDeparture.CODEC.encodeStart(NbtOps.INSTANCE, departure).result()
                     .ifPresent(written -> tag.put(DEPARTURE, written));
+        }
+        if (mount != null) {
+            StructureMount.CODEC.encodeStart(NbtOps.INSTANCE, mount).result()
+                    .ifPresent(written -> tag.put(MOUNT, written));
+        }
+        if (autopilot != null) {
+            StructureAutopilot.CODEC.encodeStart(NbtOps.INSTANCE, autopilot).result()
+                    .ifPresent(written -> tag.put(AUTOPILOT, written));
+        }
+        // A piece waiting to part is looked for again as it loads, and the plot taken for it given back.
+        final Set<Long> seeds = new HashSet<>(splitSeeds);
+        final List<Integer> plots = new ArrayList<>(splitPlots);
+        for (final StructureSplitting.Waiting piece : splitting) {
+            seeds.addAll(piece.seeds());
+            plots.add(piece.plot());
+        }
+        if (!seeds.isEmpty()) {
+            tag.putLongArray(SPLIT_SEEDS, seeds.stream().mapToLong(Long::longValue).toArray());
+        }
+        if (!plots.isEmpty()) {
+            tag.putIntArray(SPLIT_PLOTS, plots.stream().mapToInt(Integer::intValue).toArray());
         }
     }
 
@@ -230,12 +287,24 @@ public final class MovingStructure implements IStructureBody {
         return departure != null;
     }
 
-    /** Sets the rule that moves it from the next tick, or null to bring it to rest where it is. */
+    /** The structure holding it and where it stands on it, or null for one held by none. */
+    public @Nullable StructureMount mount() {
+        return mount;
+    }
+
+    /**
+     * Sets the rule that moves it from the next tick, or null to bring it to rest where it is. Held by another, a rule
+     * moves it on its parent, in the parent's yard; let go by its physics, it is let go by its parent first.
+     */
     public void move(@Nullable final IStructureMotion next) {
+        if (next instanceof PhysicsMotion && mount != null) {
+            StructureMounts.unmount(this, false);
+        }
         this.motion = next;
         this.pending = null;
         if (!(next instanceof PhysicsMotion)) {
             physics = null;
+            StructureSync.stopShowing(this);
         } else if (physics != null) {
             physics.wake();
         }
@@ -271,7 +340,7 @@ public final class MovingStructure implements IStructureBody {
      */
     void prepare() {
         final IStructureMotion now = motion;
-        if (now == null || now.readsWorld() || !ready) {
+        if (now == null || now.readsWorld() || !ready || mount != null) {
             pending = null;
             return;
         }
@@ -307,6 +376,16 @@ public final class MovingStructure implements IStructureBody {
             MovingStructures.remove(this, false);
             return;
         }
+        if (!splitPlots.isEmpty()) {
+            for (final int plot : splitPlots) {
+                StructureYard.giveBack(level, plot);
+            }
+            splitPlots.clear();
+        }
+        aboard.tick(level, this);
+        if (!splitSeeds.isEmpty() || !splitting.isEmpty()) {
+            StructureSplitting.look(level, this, splitSeeds, splitting);
+        }
         if (departure != null) {
             if (!departureHeld) {
                 StructureTravel.hold(this, level, departure);
@@ -317,25 +396,133 @@ public final class MovingStructure implements IStructureBody {
             }
         }
         keeping.tick(level, bounds, worldBox);
-        final IStructureMotion now = motion;
-        if (now == null) {
-            if (previousFrame != frame) {
-                previousFrame = frame;
+        if (mount != null) {
+            // Its parent moves it, and turns it by its rule, in the parent's own tick.
+            return;
+        }
+        if (autopilot != null && !controls.piloted(level.getGameTime())) {
+            final StructureAutopilot next = autopilot.steer(level, this, autopilotHold);
+            if (next != autopilot) {
+                fly(next);
             }
+        }
+        stepOwn(level);
+        StructureMounts.drive(level, this, 0);
+    }
+
+    /*
+     * Held by another, one tick: turned by its own rule on its parent, in the parent's yard, then put where the
+     * parent, standing at {@code parent}, has it; then what it holds after it.
+     */
+    void followParent(final ServerLevel level, final StructureFrame parent, final int depth) {
+        final StructureMount held = mount;
+        if (held == null || !ready) {
             return;
         }
-        final IStructureMotion.Step step = pending != null ? pending
-                : now.step(frame.pose(), new IStructureMotion.Context(frame, level, this));
-        pending = null;
-        motion = step.next();
-        if (step.pose() == frame.pose() && motion != null) {
-            // Held still this tick, as a structure asleep is: nothing is carried, pushed or told.
+        StructurePose local = held.local();
+        final IStructureMotion now = motion;
+        if (now != null && !now.readsWorld()) {
+            final IStructureMotion.Step step = now.step(local, new IStructureMotion.Context(new StructureFrame(local,
+                    pivotX, pivotY, pivotZ), null));
+            local = step.pose();
+            motion = step.next();
+        }
+        if (local != held.local()) {
+            mount = held.at(local);
+        }
+        final StructurePose world = parent.placed(local);
+        if (world.equals(frame.pose())) {
             holdStill();
+        } else {
+            advance(world);
+        }
+        StructureMounts.drive(level, this, depth + 1);
+    }
+
+    /** What its blocks do aboard: its seats, clamps, decouplers and tools. */
+    public StructureAboard aboard() {
+        return aboard;
+    }
+
+    /** What it is told to do now, by its helm or its autopilot; what it holds takes its parent's. */
+    public StructureControls controls() {
+        return controls;
+    }
+
+    /** The autopilot flying it, or null. */
+    public @Nullable StructureAutopilot autopilot() {
+        return autopilot;
+    }
+
+    /** Sets the autopilot flying it from the next tick, or null for none; a pilot at its helm still steers. */
+    public void fly(@Nullable final StructureAutopilot pilot) {
+        this.autopilot = pilot;
+        if (pilot == null) {
+            controls.release();
+        }
+    }
+
+    /*
+     * Its box of blocks taken in to the blocks it has now, after pieces of it parted: the chunks of its plot it no
+     * longer fills are let go, and who sees it is told.
+     */
+    void shrinkToBlocks(final ServerLevel level) {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                for (int y = bounds.minY(); y <= bounds.maxY(); y++) {
+                    if (!level.getBlockState(at.set(x, y, z)).isAir()) {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        minZ = Math.min(minZ, z);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                        maxZ = Math.max(maxZ, z);
+                    }
+                }
+            }
+        }
+        if (minX > maxX) {
             return;
         }
-        advance(step.pose());
-        if (motion == null) {
-            settle();
+        final Box smaller = new Box(minX, minY, minZ, maxX, maxY, maxZ);
+        if (smaller.equals(bounds)) {
+            return;
+        }
+        if (held) {
+            // Let go first and held again in the same tick: the chunks it still fills never unload.
+            StructureYard.release(level, bounds);
+            StructureYard.hold(level, smaller);
+        }
+        bounds = smaller;
+        worldBox = boxOf(frame, bounds);
+        LevelMovingStructures.of(level).moved(this);
+        entity.boundsChanged();
+    }
+
+    /* Looks at once for the pieces its lost blocks left, a decoupler having just fired. */
+    void lookForPieces(final ServerLevel level) {
+        StructureSplitting.look(level, this, splitSeeds, splitting);
+    }
+
+    /* Whether blocks are leaving it whole, for a piece of it to go its own way: those are not blocks lost. */
+    void parting(final boolean leaving) {
+        this.parting = leaving;
+    }
+
+    /* Sets what holds it, or null to be held by none; it is filed again by whoever calls. */
+    void mounted(@Nullable final StructureMount held) {
+        this.mount = held;
+        if (held != null && motion instanceof PhysicsMotion) {
+            motion = null;
+            physics = null;
+            StructureSync.stopShowing(this);
         }
     }
 
@@ -344,6 +531,7 @@ public final class MovingStructure implements IStructureBody {
         StructureYard.hold(level, bounds);
         held = true;
         LevelMovingStructures.of(level).add(this);
+        StructureMounts.file(this);
         if (!ready && arrival == null && StructureYard.loaded(level, bounds)) {
             ready = true;
             MovingStructures.loaded(this);
@@ -387,6 +575,7 @@ public final class MovingStructure implements IStructureBody {
         ready = false;
         keeping.letGo(level);
         LevelMovingStructures.of(level).remove(id);
+        StructureMounts.unfile(this);
         StructureSync.forget(this);
     }
 
@@ -403,10 +592,26 @@ public final class MovingStructure implements IStructureBody {
         if (physics != null) {
             physics.blockChanged(level, at, before, after);
         }
+        if (mount != null) {
+            // Held by a structure moving by its physics, its blocks are part of the body that moves them all.
+            final StructurePhysics carrying = StructureMounts.rootOf(this).physics();
+            if (carrying != null) {
+                carrying.pieceChanged(this, level, at, before, after);
+            }
+        }
+        aboard.changed(at, after);
         final boolean was = !before.isAir();
         final boolean is = !after.isAir();
         if (was == is) {
             return;
+        }
+        StructureMounts.anchorChanged(this, at, !is);
+        if (was && !parting) {
+            // The blocks beside one lost are looked at next tick: they may no longer be joined.
+            for (final Direction side : Direction.values()) {
+                splitSeeds.add(BlockPos.asLong(at.getX() + side.getStepX(), at.getY() + side.getStepY(),
+                        at.getZ() + side.getStepZ()));
+            }
         }
         if (is) {
             blocks++;
@@ -483,6 +688,30 @@ public final class MovingStructure implements IStructureBody {
         // Counted after: each block laid in its plot was also heard of as a block set on the structure.
         blocks = moves.size();
         emptied = moves.isEmpty();
+    }
+
+    /* One tick by its own rule, held by none. */
+    private void stepOwn(final ServerLevel level) {
+        final IStructureMotion now = motion;
+        if (now == null) {
+            if (previousFrame != frame) {
+                previousFrame = frame;
+            }
+            return;
+        }
+        final IStructureMotion.Step step = pending != null ? pending
+                : now.step(frame.pose(), new IStructureMotion.Context(frame, level, this));
+        pending = null;
+        motion = step.next();
+        if (step.pose() == frame.pose() && motion != null) {
+            // Held still this tick, as a structure asleep is: nothing is carried, pushed or told.
+            holdStill();
+            return;
+        }
+        advance(step.pose());
+        if (motion == null) {
+            settle();
+        }
     }
 
     /* Takes the pose: carries what stands on it, pushes aside what it runs into, tells who sees it. */

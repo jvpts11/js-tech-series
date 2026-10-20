@@ -555,7 +555,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Effects fired from the server reach whoever can see them in a few bytes, aimed, coloured, scaled, following
   an entity or played on a block where its file anchors it; a model's animations play them at their locators. The
   Core brings smoke, steam, sparks, a beam, a trail, an arc flash (now fired by overvoltage), an explosion, a cloud of
-  gas, bubbles, a rocket's plume, re-entry plasma, scorch, soot, a laser and lightning.
+  gas, bubbles, a rocket's plume, a jet's exhaust, a contrail, re-entry plasma, scorch, soot, a laser and lightning.
+  An effect held by something moving fast lays what it gives off along the way it went each tick, so a racing
+  engine leaves a line, not beads; and a held effect can be scaled, an engine's flame as big as it pushes.
 - The effects editor in the world: the effect plays on the real block with the world's wind and air while a
   card turns its emitters on and off and changes their numbers, the game's debug lines saying what it costs and what
   acts on it; Save writes its file in the mod's source. A new effect starts at the block looked at, from a face or a
@@ -798,6 +800,34 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Rooms aboard moving structures: a sealed room aboard has round it the air of where its structure is, taken
   again each second, so a cabin climbs into thin air and a sealed balloon swells until its walls burst; a hole in a
   room aboard pulls whoever is in it towards the hole as its air rushes out.
+- Joints between moving structures, and to the world: ropes and chains that sag with their slack, springs,
+  tow bars, hinges and sliders that turn and slide within limits and can be driven, ball joints and welds, each
+  holding as a real one does and breaking past the load it is given, a winch reeling a rope in and out by its signals.
+  Structures joined move by their physics together, and every player sees the ropes, chains, springs and bars drawn
+  between their ends.
+- Structures held by structures: a turret on a ship, a cab on a crane, turned on its parent by a rule of its
+  own and going wherever the parent goes; a parent moving by its physics carries what it holds as part of its body,
+  its mass, its engines and its wheels its own, and lets it fall when the block holding it breaks.
+- Structures parting and joining: one whose middle breaks out becomes as many structures as it now is, each
+  going its own way at the speed it had, unless the setting `moving_structures.split` holds them together; a decoupler
+  parts a rocket's stages at a signal and pushes them apart; two structures square to each other join for good.
+- Docking: docking clamps meeting face to face at a signal take hold of the other structure where it is and draw
+  it in square over a second or so, however the two go, their momentum shared; at the signal's end they let go, the
+  visitor pushed gently away.
+- Tools on the move: a drill mines, a harvester takes ripe crops and plants them again (a melon or a pumpkin
+  whole, sugar cane, cactus and bamboo above their foot), a plough tills and a placer sets the blocks it carries,
+  each as the structure passes, into and out of the containers aboard. Seats, helms, clamps, decouplers and tools are
+  the data map `jscore:block_aboard`.
+- Living aboard: a player sits on a seat aboard and is carried with it, steady in their seat; at a helm they
+  steer the structure with the keys they walk with, its engines and wheels answering by the way each looks; an
+  autopilot flies a structure to a place, at a height, along a route or to a docking clamp, any structure alike, by
+  how fast its engines can speed it up; an arrow loosed from a moving deck flies on with it; a bed aboard is slept
+  in as one on the ground, its sleeper carried and drawn along it however the structure is turned, and is the place
+  its sleeper comes back to; and a player takes hold of a rope and rides it down.
+- What a moving structure shows going: its engines' flames, a rocket's or a jet's, as big as they push; its
+  faces glowing hot from the air they head into, in the colour of their heat, wrapped in plasma on a re-entry; and
+  white trails behind its engines and wingtips where the air is cold enough. An engine pushing keeps its structure
+  awake, so a rocket too heavy for its engines stands burning on its pad.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
