@@ -25,13 +25,17 @@ import java.util.Optional;
  * @param pressure    the pressure there, in kilopascals
  * @param temperature the temperature there, in degrees Celsius
  * @param air         the air there, from this height up to the next band
+ * @param gravity     how hard it pulls there, as a share of the dimension's own pull, running straight between bands
+ *                    as the pressure does: a planet's pull thinning towards orbit
  */
-public record AltitudeBand(double at, Optional<Double> pressure, Optional<Double> temperature, Optional<AirMix> air) {
+public record AltitudeBand(double at, Optional<Double> pressure, Optional<Double> temperature, Optional<AirMix> air,
+                           Optional<Double> gravity) {
 
     public static final Codec<AltitudeBand> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.doubleRange(-4_096, 4_096).fieldOf("at").forGetter(AltitudeBand::at),
             Codec.doubleRange(0, 100_000).optionalFieldOf("pressure").forGetter(AltitudeBand::pressure),
             Codec.doubleRange(-273.15, 10_000).optionalFieldOf("temperature").forGetter(AltitudeBand::temperature),
-            AirMix.CODEC.optionalFieldOf("air").forGetter(AltitudeBand::air))
+            AirMix.CODEC.optionalFieldOf("air").forGetter(AltitudeBand::air),
+            Codec.doubleRange(0, 10).optionalFieldOf("gravity").forGetter(AltitudeBand::gravity))
             .apply(instance, AltitudeBand::new));
 }

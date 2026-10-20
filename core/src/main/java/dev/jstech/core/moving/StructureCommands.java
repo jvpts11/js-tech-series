@@ -12,6 +12,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import dev.jstech.core.command.SeriesCommands;
+import dev.jstech.core.moving.physics.PhysicsMotion;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import net.minecraft.commands.CommandSourceStack;
@@ -28,8 +29,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * The commands of the moving structures, for those who build modpacks, maps and tests:
  * {@code /jstech structure assemble <from> <to>} and {@code assemble joined <block>} make one; {@code move},
- * {@code spin}, {@code swing}, {@code rails} and {@code stop} move it by the kit's rules; {@code setdown} sets it on
- * the ground; {@code list} names those loaded here.
+ * {@code spin}, {@code swing}, {@code rails} and {@code stop} move it by the kit's rules, {@code physics} lets it go
+ * by its physics; {@code setdown} sets it on the ground; {@code list} names those loaded here.
  */
 public final class StructureCommands {
 
@@ -81,6 +82,9 @@ public final class StructureCommands {
                         .then(Commands.argument(STRUCTURE, EntityArgument.entity())
                                 .then(Commands.argument(SPEED, DoubleArgumentType.doubleArg(0.01, 200))
                                         .executes(StructureCommands::rails))))
+                .then(Commands.literal("physics")
+                        .then(Commands.argument(STRUCTURE, EntityArgument.entity())
+                                .executes(StructureCommands::physics)))
                 .then(Commands.literal("stop")
                         .then(Commands.argument(STRUCTURE, EntityArgument.entity())
                                 .executes(StructureCommands::stop)))
@@ -145,6 +149,11 @@ public final class StructureCommands {
         }
         structure.move(motion);
         return said(context, StructureTexts.MOVING.text());
+    }
+
+    private static int physics(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        structure(context).move(PhysicsMotion.AT_REST);
+        return said(context, StructureTexts.PHYSICAL.text());
     }
 
     private static int stop(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {

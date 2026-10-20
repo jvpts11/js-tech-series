@@ -102,6 +102,89 @@ are worked out beside it, many structures at once, when many move.
 `structure.teleport(pose)` puts a structure at a pose at once, carrying what stands on it. The game's own `/tp` moves
 a structure's entity the same way.
 
+## By its physics
+
+*Added 2026-10-20.*
+
+A structure let go moves by its physics, as a body of real mass: it falls, rests on the ground and on other
+structures, floats, sinks, flies on its engines and wings, rolls on its wheels and rises on its balloons. It goes on
+until another motion is set; how fast it goes and turns is saved with it, so a ship in flight flies on after a restart.
+
+```java
+structure.move(PhysicsMotion.AT_REST);                 // let it go: it falls, or floats, as it would
+structure.move(PhysicsMotion.going(0, 0, 12));         // thrown south at 12 metres a second
+```
+
+What each block is, for the physics, is data: the data map `jscore:block_physics`. A block it says nothing of weighs
+its density (`jscore:block_density`) times the volume of its shape, displaces that volume in a liquid, and gives no
+force of its own.
+
+```json
+{ "values": {
+  "mymod:rocket_engine": { "thrust": { "newtons": 400000, "kind": "rocket", "throttle": "back" } },
+  "mymod:propeller":     { "thrust": { "newtons": 8000, "kind": "propeller", "exhaust": 60 } },
+  "mymod:wing":          { "mass": 40, "wing": { "area": 1, "stall": 15, "lift": 1.2 } },
+  "mymod:rudder":        { "wing": { "area": 1, "face": "facing" } },
+  "mymod:wheel":         { "wheel": { "radius": 0.5, "stiffness": 60000, "damping": 6000, "steer": 30,
+                                       "drive": 4000, "brake": 8000 } },
+  "mymod:float":         { "mass": 20, "displacement": 1.0 },
+  "mymod:hover_coil":    { "levitation": 20000 },
+  "mymod:electromagnet": { "magnet": { "newtons": 50000, "reach": 6, "power": "any" } },
+  "mymod:burner":        { "burner": { "watts": 300000, "power": "any" } },
+  "mymod:envelope":      { "mass": 0.5, "drag": 0.8 }
+} }
+```
+
+| Field | What it is |
+| --- | --- |
+| `mass` | its mass, in kilograms |
+| `displacement` | the volume it displaces in a liquid, in cubic metres, 0 to 1 |
+| `drag` | how much its faces drag, as a share of a flat face's |
+| `thrust` | an engine pushing the way the block faces: `newtons` at full throttle; `kind` `rocket` (the same anywhere, a vacuum too), `jet` (less as the air thins) or `propeller` (less again as the craft nears its `exhaust` speed); `throttle`, the side its signal comes from |
+| `wing` | lift and drag by the air going past it: `area`, `stall` (degrees), `lift` (its most, at the stall); its `face` looks up the structure's up, or the way the block faces for a sail or a rudder |
+| `wheel` | a wheel on a spring along the structure's down: `radius`, `travel`, `stiffness`, `damping`, `grip`; `steer` (degrees), `drive` and `brake` (newtons) by the signals at its `left`, `right`, `throttle`, `reverse` and `stop` sides |
+| `levitation` | the weight it holds up, in newtons, stopping a fall, never lifting |
+| `magnet` | a pull on the magnetic blocks of the world (`#jscore:magnetic`) within its `reach`, falling with the square of the distance; with `power`, as strong as its signal |
+| `burner` | heat, in `watts`, for the air of the room above it; with `power`, as strong as its signal |
+
+A side is `any`, `front`, `back`, `left`, `right`, `top` or `bottom`, as the block faces: a block's way is its
+`facing`, or its horizontal facing.
+
+What moves it, each tick:
+
+- **Its weight**, at its centre of mass, which follows every block set on it or broken off it. The pull is the laws'
+  of the place where they say one, else the dimension's at that height, a band's `gravity` thinning it towards orbit
+  ([World](WORLD.md)).
+- **The air**, as dense as the dimension's pressure and temperature make it at that height, none in a vacuum, and the
+  **wind**: its faces drag as they meet the flow, its wings lift, its engines that breathe air give less up high.
+- **Liquids**: each block under one is held up by the liquid it displaces, and so is **the air its hull holds**, each
+  block of air with its blocks below it and on its four sides, so a ship floats by the air in it as a real one does.
+  Its bobbing at the surface is carried off as waves carry it off, and a boat settles.
+- **Its balloons**, its sealed rooms aboard ([Sealed rooms](ROOMS.md)): a room lifts the weight of the air it puts
+  aside, less the weight of the gas it holds, so a room of hydrogen or helium lifts, and a burner opening into a room
+  warms its air, lighter as it warms, as in a hot air balloon. Up high the air round it is thin, so a balloon climbs
+  until it lifts no more; a room aboard has round it the air of where the structure is, not of the yard.
+- **Re-entry**: a face it heads into the air with, fast, heats by the root of the air's density and the speed cubed;
+  a block there that holds heat takes it in, and one that burns catches fire once the face glows as hot.
+
+What it meets: the world's blocks and the other structures' blocks, each by its real shape, a slab as a slab, met
+ahead of time so a fast structure stops where it touches, never through. It rests still on many points, slides as
+the blocks' slipperiness lets it, ice barely, and bounces a little from a hard blow. Another structure moving by its
+physics is pushed back as hard as it pushes; one moved by a motion carries what rests on it, a crate on a lift. A
+blow harder than a block holds, by its blast strength (`jscore:blast_strength`), breaks it, of the world or of the
+structure: a heavy block falling on glass goes through it.
+
+A tick is worked in as many steps as keep a structure from going more than half a block in one, and its stiffest
+hold, a liquid's surface, steady. A structure still for a second falls asleep and costs next to nothing; it wakes the
+moment a block of it changes, it is pushed, something moves against it, or what held it goes. Nothing of a chunk not
+loaded is read: a structure reaching one waits there. Each structure's tick of physics is timed in the diagnostics as
+`jscore:structure_physics`; twenty small structures falling and landing at once take a few milliseconds a tick. The
+physics of a dimension's structures takes no more of a tick than `moving_structures.physics_millis` lets it: past
+that, a structure waits a tick, and goes the next whatever the budget.
+
+`structure.physics()` gives its physics while it moves by them: its `parts()` (mass, centre, inertia), its `body()`
+(where its centre is, how fast it goes and turns) and the `forces()` on it in the last tick, by their kind.
+
 ## Setting it down
 
 *Added 2026-10-20.*
@@ -278,6 +361,7 @@ For game masters, as `/jstech structure ...`:
 | `spin <structure> <rate>` | spins it about the up axis, in degrees a second |
 | `swing <structure> <hinge> <angle> <rate>` | swings it on a hinge across the way you face |
 | `rails <structure> <speed>` | runs it on the rails under it, the way you face |
+| `physics <structure>` | lets it go, to move by its physics |
 | `stop <structure>` | brings it to rest |
 | `setdown <structure>` | sets it down on the grid |
 | `list` | names the structures loaded in the dimension |
@@ -287,6 +371,7 @@ For game masters, as `/jstech structure ...`:
 | Setting | Default | What it does |
 | --- | --- | --- |
 | `moving_structures.most_blocks` | 65,536 | The most blocks one structure may be made of. |
+| `moving_structures.physics_millis` | 10 | How much of a tick, in milliseconds, the physics of a dimension's structures may take; past it a structure waits a tick, and goes the next whatever the budget, so many structures slow down together rather than slow the server. |
 
 ## What can go wrong
 
@@ -299,3 +384,7 @@ For game masters, as `/jstech structure ...`:
 | A structure just made is not `ready()` | its plot is loading; its blocks come into it in a few ticks. Wait for `ready()` before reading its blocks in the yard. |
 | `travel` succeeded but the structure is still here | it goes once the chunks it goes to have loaded; find it there by its id a few ticks later. |
 | A structure cannot be set down | it leans too far, something is in the way, it would land out of the world or where the land is not loaded, or its blocks are not loaded yet. |
+| A structure let go hangs in the air | a chunk it reaches is not loaded, so it waits; or a levitator, a balloon or a magnet holds it. |
+| A balloon does not lift | its envelope weighs too much for the air it puts aside: blocks are heavy, so give the envelope's blocks a small `mass` in `jscore:block_physics`. |
+| An iron ship sinks | its walls are blocks of solid iron: give its hull room, the air it holds is what floats it. |
+| A light raft or cart drifts | the wind blows it, as it would a real one: a brake holds a cart. |

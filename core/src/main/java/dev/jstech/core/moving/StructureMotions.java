@@ -10,6 +10,7 @@ package dev.jstech.core.moving;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
+import dev.jstech.core.moving.physics.PhysicsMotion;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +45,7 @@ public final class StructureMotions {
         register(PathMotion.TYPE, PathMotion.CODEC);
         register(FaceMotion.TYPE, FaceMotion.CODEC);
         register(RailsMotion.TYPE, RailsMotion.CODEC);
+        register(PhysicsMotion.TYPE, PhysicsMotion.CODEC);
     }
 
     private StructureMotions() {

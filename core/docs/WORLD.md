@@ -745,6 +745,11 @@ ground into cool, thin air above changes what hurts them. `DimensionRulesData.of
 height (its pressure, temperature, air and whether it is breathed); the heat kit and the winds read it too. Inside a
 sealed room, the room's own air is breathed, and its warmth kept ([Sealed rooms](ROOMS.md)).
 
+A band may also say its `gravity`, as a share of the dimension's own pull, running evenly between bands as the
+pressure does: a planet's pull thinning towards its orbit. *Added 2026-10-20.* It is read by what flies through the
+height, the physics of a moving structure ([Moving structures](MOVING_STRUCTURES.md)); a mob or a player falls as the
+dimension pulls. `DimensionRulesData.of(level).gravityAt(y)` gives the pull at a height.
+
 ### Dimensions made while the game runs
 
 *Added 2026-10-05.*

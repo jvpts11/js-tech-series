@@ -11,6 +11,7 @@ import dev.jstech.core.air.AirMix;
 import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.dimension.DimensionRules;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.moving.MovingStructures;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -69,6 +71,7 @@ final class RoomFinder {
 
     /* How far up a column of water beyond a wall is read for its depth. */
     private static final int DEEPEST = 256;
+    private static final double HALF = 0.5;
 
     /**
      * A search from {@code starts}, for the room {@code room} as it was ({@code previous}, its blocks), or for none
@@ -115,6 +118,14 @@ final class RoomFinder {
             read += this.stage == Stage.FILL ? fill(budget - read) : face(budget - read);
         }
         return read;
+    }
+
+    /**
+     * The height in the world of the bottom of the block {@code pos}: aboard a moving structure, where the structure
+     * has it now, so a room aboard an airship has the thin air of where it flies round it, not the yard's.
+     */
+    static double height(final ServerLevel level, final BlockPos pos) {
+        return MovingStructures.inWorld(level, Vec3.atCenterOf(pos)).y - HALF;
     }
 
     /* Grows the part being filled, or starts the next; when every start is done, turns to the faces. */
@@ -275,10 +286,10 @@ final class RoomFinder {
         final AirMix air;
         if (water) {
             final int depth = depth(beyond);
-            outside = GasMath.underWater(rules.at(beyond.getY() + depth).pressure(), depth);
+            outside = GasMath.underWater(rules.at(height(this.level, beyond) + depth).pressure(), depth);
             air = AirMix.VACUUM;
         } else {
-            final Climate climate = rules.at(beyond.getY());
+            final Climate climate = rules.at(height(this.level, beyond));
             outside = climate.pressure();
             air = SealedRooms.airOf(climate);
         }

@@ -48,12 +48,18 @@ public interface IStructureMotion {
     }
 
     /**
-     * What a rule may know of the structure it moves: its frame now, and the level, which only a rule that
-     * {@link #readsWorld() reads the world} is given.
+     * What a rule may know of the structure it moves: its frame now, and the level and the structure itself, which
+     * only a rule that {@link #readsWorld() reads the world} is given.
      *
-     * @param frame  how its blocks stand in the world now
-     * @param world  the level, for a rule that reads it; null for one worked out beside the server's thread
+     * @param frame     how its blocks stand in the world now
+     * @param world     the level, for a rule that reads it; null for one worked out beside the server's thread
+     * @param structure the structure moved, for a rule that reads the world; null otherwise
      */
-    record Context(StructureFrame frame, @Nullable Level world) {
+    record Context(StructureFrame frame, @Nullable Level world, @Nullable MovingStructure structure) {
+
+        /** What a rule knows of a structure it is not handed. */
+        public Context(final StructureFrame frame, @Nullable final Level world) {
+            this(frame, world, null);
+        }
     }
 }

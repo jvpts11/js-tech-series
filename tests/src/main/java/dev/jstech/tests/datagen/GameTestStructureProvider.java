@@ -46,11 +46,13 @@ public final class GameTestStructureProvider implements DataProvider {
     public CompletableFuture<?> run(final CachedOutput cache) {
         /*
          * "empty" is the 9x6x9 box the correctness tests run in; "bench" is a large arena for the
-         * performance benchmarks that build a physically huge network (hundreds of ticking cables).
+         * performance benchmarks that build a physically huge network (hundreds of ticking cables);
+         * "tall" is the room a structure flying up has, a balloon or a rocket, under the arena's ceiling.
          */
         return CompletableFuture.allOf(
                 write(cache, "empty", emptyArena(9, 6, 9)),
-                write(cache, "bench", emptyArena(48, 8, 48)));
+                write(cache, "bench", emptyArena(48, 8, 48)),
+                write(cache, "tall", emptyArena(12, 32, 12)));
     }
 
     /*

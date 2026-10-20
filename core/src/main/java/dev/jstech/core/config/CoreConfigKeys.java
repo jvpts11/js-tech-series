@@ -107,6 +107,7 @@ public final class CoreConfigKeys {
     private static final int FEWEST_BROKEN = 16;
     private static final int MOST_BROKEN = 65_536;
     private static final int MOST_STRUCTURE_BLOCKS = 4_194_304;
+    private static final double MOST_PHYSICS_MILLIS = 45.0;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
@@ -549,6 +550,13 @@ public final class CoreConfigKeys {
                     + "why.")
             .named("Most blocks in a moving structure").unit("blocks");
 
+    /** How much of a tick the physics of a dimension's moving structures may take. */
+    public static final ConfigKey<Double> MOVING_PHYSICS_MILLIS = ConfigKey.number(MOVING + ".physics_millis",
+            StructureBalance.DEFAULT_PHYSICS_MILLIS).range(0.5, MOST_PHYSICS_MILLIS)
+            .comment("How much of a tick, in milliseconds, the physics of a dimension's moving structures may take; "
+                    + "past it a structure waits a tick, and goes the next whatever the budget.")
+            .named("Most physics a tick").unit("ms");
+
     /** How far from the controller the player may be while a tool builds a multiblock. */
     public static final ConfigKey<Integer> MULTIBLOCK_BUILD_REACH = ConfigKey.whole(
             MULTIBLOCK + ".build_reach", BuildBalance.DEFAULT_REACH).range(MIN_BUILD_REACH, MAX_BUILD_REACH)
@@ -576,7 +584,8 @@ public final class CoreConfigKeys {
             .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off, "
                     + "machines that overheat, fires and burns.")
             .sectionComment(MECHANICAL, "What mechanical power does to the world: parts that break under overload.")
-            .sectionComment(MOVING, "The moving structures: how big one may be.")
+            .sectionComment(MOVING, "The moving structures: how big one may be, and how much of a tick their "
+                    + "physics may take.")
             .sectionComment(MULTIBLOCK, "Building multiblocks for players: how fast, and how far from them.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
@@ -643,6 +652,7 @@ public final class CoreConfigKeys {
             .key(HEAT_HOT_SURFACES_BURN, HeatBalance::setHotSurfacesBurn)
             .key(MECHANICAL_PARTS_BREAK, MechanicalBalance::setPartsBreak)
             .key(MOVING_MOST_BLOCKS, StructureBalance::mostBlocks)
+            .key(MOVING_PHYSICS_MILLIS, StructureBalance::physicsMillis)
             .key(MULTIBLOCK_BLOCKS_PER_SECOND, BuildBalance::setBlocksPerSecond)
             .key(MULTIBLOCK_BUILD_REACH, BuildBalance::setReach)
             .key(ROOMS_DECOMPRESSION_PULL, RoomBalance::setDecompressionPull)

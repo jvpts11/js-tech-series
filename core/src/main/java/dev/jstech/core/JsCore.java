@@ -162,6 +162,7 @@ import dev.jstech.core.menu.MenuSync;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.model.network.ModelCommands;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.physics.BlockPhysics;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
@@ -311,6 +312,8 @@ public final class JsCore {
         Fires.listen(modEventBus);
         // Moving structures: real blocks kept in the yard, drawn and collided where the structure is, moved by rule.
         MovingStructures.listen(modEventBus);
+        // Their physics: mass, engines, wings, wheels, floating and balloons, as data, and what they meet.
+        BlockPhysics.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();

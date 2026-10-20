@@ -128,6 +128,11 @@ lasts.
 A block of a room's walls facing a greater difference in pressure than it stands bursts, as a weak window does under
 water: the room then leaks through the hole it left.
 
+A room aboard a moving structure has round it the air of where the structure is, not of the yard its blocks are kept
+in, taken again each second: an airship's cabin climbs into thin air, and a sealed balloon swells against its walls
+until they burst; a hole in it pulls whoever is aboard in it towards the hole. *Added 2026-10-20.* Its rooms are
+also its balloons ([Moving structures](MOVING_STRUCTURES.md)).
+
 ## Under water
 
 *Added 2026-10-17.*

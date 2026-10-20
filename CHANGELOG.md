@@ -773,15 +773,34 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the structure is turned, with the glow and the coloured light of its lamps, the same under a shader pack; its lamps
   light the world round it as it goes, and its blocks change hands with the world's in a single frame as it is made
   and as it is set down, never a frame of neither. It is saved in the middle of a move, set down on the world's grid
-  turned
-  as it was, taken to another dimension with everyone aboard, and kept working far from players by a chunk loader
-  aboard. Nothing of it reads a chunk that is not loaded: a structure made where its plot of the yard has not loaded
-  yet keeps its blocks on the ground for the few ticks it takes, and one sent to another dimension goes once the land
-  it goes to has loaded. Blocks that remember other blocks are told where they moved, and a block entity's fields
+  turned as it was, taken to another dimension with everyone aboard, and kept working far from players by a chunk
+  loader aboard. Nothing of it reads a chunk that is not loaded: a structure made where its plot of the yard has not
+  loaded yet keeps its blocks on the ground for the few ticks it takes, and one sent to another dimension goes once the
+  land it goes to has loaded. Blocks that remember other blocks are told where they moved, and a block entity's fields
   follow on their own, with `whenMoved` for the rest. The Core's own kits work aboard: a formed multiblock crosses
   formed and stands formed set down turned, cables, mechanical networks, spotlights, peripheral links, radio relays,
   the Atmosphere Detector and radiation leave nothing where they stood, and an overhead wire goes with the two
   insulators it hangs from. It has commands and a setting of its own.
+- (Core) Moving structures by their physics: a structure let go moves as a body of real mass, its mass, centre and
+  inertia following every block set on it or broken off it. It falls under the pull of the place, a dimension's pull
+  thinning with height where its rules say so; the air, as dense as the height makes it, and the wind drag its faces;
+  its engines push (rockets anywhere, jets and propellers by the air), its wings lift and stall, its wheels hang on
+  springs and grip, steer, drive and brake by their signals, a car on a ship's deck as well as on a road; it floats
+  by the blocks under a liquid and by the air its hull holds, so a ship floats as a real one does, and settles; its
+  sealed rooms lift as balloons, of hydrogen or helium or of air warmed by a burner, and climb until the thin air
+  lifts them no more; levitators hold it up and magnets pull it to the iron of the world; a face heading fast into
+  the air heats, and what burns on it catches fire. It meets the world's blocks and other structures' by their real
+  shapes, ahead of time so a fast one stops where it touches, rests still on many points, slides as the blocks'
+  slipperiness lets it, bounces a little from a hard blow, pushes and is pushed by another structure moving by its
+  physics, rides one moved by a rule, and breaks a block whose blow was more than it holds. Still for a second, it
+  falls asleep and costs next to nothing, and wakes as soon as anything about it changes. What each block is, its mass
+  and the forces it gives, is the data map `jscore:block_physics`; blocks of iron are `#jscore:magnetic`; the command
+  `/jstech structure physics` lets a structure go; each structure's tick of physics is timed in the diagnostics, and
+  a dimension's physics takes no more of a tick than the setting `moving_structures.physics_millis` lets it, past
+  which a structure waits a tick.
+- (Core) Rooms aboard moving structures: a sealed room aboard has round it the air of where its structure is, taken
+  again each second, so a cabin climbs into thin air and a sealed balloon swells until its walls burst; a hole in a
+  room aboard pulls whoever is in it towards the hole as its air rushes out.
 
 ### Changed
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

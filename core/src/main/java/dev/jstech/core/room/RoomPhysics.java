@@ -7,10 +7,16 @@
  */
 package dev.jstech.core.room;
 
+import dev.jstech.core.dimension.Climate;
+import dev.jstech.core.dimension.DimensionRules;
+import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.moving.YardLayout;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -52,6 +58,7 @@ final class RoomPhysics {
             if (store.room(room.id()) == null || !loaded(level, room)) {
                 continue;
             }
+            aboard(level, room);
             final double[] flow = outside(store, room);
             // A room open to the place round it, its air long the place's, is forgotten: a block asking for it finds
             // it again once it is closed, holding the place's air, as it would have.
@@ -89,6 +96,29 @@ final class RoomPhysics {
             }
         }
         return true;
+    }
+
+    /*
+     * A room aboard a moving structure has round it the air of where the structure is now, not of the yard its blocks
+     * are kept in: what lies beyond its faces is taken again each second, at the height each is in the world, so a
+     * balloon climbing into thin air swells against its walls, and bursts past what they hold.
+     */
+    private static void aboard(final ServerLevel level, final Room room) {
+        if (!YardLayout.isYard(room.bounds().minX)) {
+            return;
+        }
+        final DimensionRules rules = DimensionRulesData.of(level);
+        final List<RoomFace> moved = new ArrayList<>(room.faces().size());
+        for (final RoomFace face : room.faces()) {
+            if (face.water()) {
+                moved.add(face);
+                continue;
+            }
+            final Climate climate = rules.at(RoomFinder.height(level, face.beyond()));
+            moved.add(new RoomFace(face.cell(), face.side(), face.block(), face.kind(), face.area(), face.rating(),
+                    face.beyond(), climate.pressure(), SealedRooms.airOf(climate), false));
+        }
+        room.outsideNow(moved);
     }
 
     /*

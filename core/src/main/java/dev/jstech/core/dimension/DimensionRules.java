@@ -117,6 +117,24 @@ public record DimensionRules(double gravity, boolean breathable, double temperat
         return new Climate(kpa, celsius, mix, mix.map(made -> made.breathable(kpa)).orElse(this.breathable));
     }
 
+    /**
+     * How hard it pulls at the height {@code y}, as a share of the overworld's pull: its own pull, by the bands' share
+     * of it there, running straight between the bands either side, the nearest band's beyond them.
+     */
+    public double gravityAt(final double y) {
+        AltitudeBand low = null;
+        AltitudeBand high = null;
+        for (final AltitudeBand band : this.bands) {
+            if (band.at() <= y) {
+                low = band;
+            } else {
+                high = band;
+                break;
+            }
+        }
+        return gravity * between(y, low, high, AltitudeBand::gravity, 1.0);
+    }
+
     /* A band's value at {@code y}: straight between the bands either side, the nearer's beyond, its own unsaid. */
     private static double between(final double y, final AltitudeBand low, final AltitudeBand high,
                                   final Function<AltitudeBand, Optional<Double>> value, final double own) {

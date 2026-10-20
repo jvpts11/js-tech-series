@@ -8,6 +8,10 @@
 package dev.jstech.core.room;
 
 import dev.jstech.core.air.AirMix;
+import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureFrame;
+import dev.jstech.core.moving.YardLayout;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -17,6 +21,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -127,21 +132,41 @@ final class RoomConsequences {
         if (holes.isEmpty()) {
             return;
         }
-        for (final Entity entity : level.getEntities((Entity) null, room.bounds())) {
-            if (!room.cells().contains(entity.blockPosition().asLong()) || entity.isSpectator()
+        // A room aboard a moving structure is in the yard; whoever is in it stands where the structure is.
+        final AABB box = room.bounds();
+        final IStructureBody aboard = YardLayout.isYard(box.minX)
+                ? MovingStructures.at(level, BlockPos.containing(box.getCenter())) : null;
+        final StructureFrame frame = aboard == null ? null : aboard.frame();
+        final AABB where = frame == null ? box : worldBox(frame, box);
+        for (final Entity entity : level.getEntities((Entity) null, where)) {
+            final Vec3 at = frame == null ? entity.position() : yardOf(frame, entity.position());
+            if (!room.cells().contains(BlockPos.containing(at).asLong()) || entity.isSpectator()
                     || entity instanceof ServerPlayer player && player.getAbilities().flying) {
                 continue;
             }
             Vec3 nearest = holes.getFirst();
             for (final Vec3 hole : holes) {
-                if (hole.distanceToSqr(entity.position()) < nearest.distanceToSqr(entity.position())) {
+                if (hole.distanceToSqr(at) < nearest.distanceToSqr(at)) {
                     nearest = hole;
                 }
             }
-            final Vec3 towards = nearest.subtract(entity.position());
+            final Vec3 towards = nearest.subtract(at);
             final double away = Math.max(1, towards.length());
-            entity.addDeltaMovement(towards.normalize().scale(PULL * room.jet() / away));
+            final Vec3 pull = towards.normalize().scale(PULL * room.jet() / away);
+            entity.addDeltaMovement(frame == null ? pull : new Vec3(frame.turnX(pull.x, pull.y, pull.z),
+                    frame.turnY(pull.x, pull.y, pull.z), frame.turnZ(pull.x, pull.y, pull.z)));
             entity.hurtMarked = true;
         }
+    }
+
+    /* The box of the world the yard's {@code box} fills, as the structure's frame stands. */
+    private static AABB worldBox(final StructureFrame frame, final AABB box) {
+        final double[] world = frame.worldBox(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ);
+        return new AABB(world[0], world[1], world[2], world[3], world[4], world[5]);
+    }
+
+    /* The yard's place of the world's place {@code at}, as the structure's frame stands. */
+    private static Vec3 yardOf(final StructureFrame frame, final Vec3 at) {
+        return new Vec3(frame.yardX(at.x, at.y, at.z), frame.yardY(at.x, at.y, at.z), frame.yardZ(at.x, at.y, at.z));
     }
 }

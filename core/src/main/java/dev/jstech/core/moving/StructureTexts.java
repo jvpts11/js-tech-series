@@ -47,6 +47,8 @@ public final class StructureTexts {
             "Set the structure of %s blocks down on the ground");
     public static final TextKey MOVING = TextKey.of("jscore.command.structure.moving", "The structure is on its way");
     public static final TextKey STOPPED = TextKey.of("jscore.command.structure.stopped", "The structure has stopped");
+    public static final TextKey PHYSICAL = TextKey.of("jscore.command.structure.physical",
+            "The structure now moves by its physics: its weight, its engines, the wind and what it meets");
     public static final TextKey NO_RAILS = TextKey.of("jscore.command.structure.no_rails",
             "There are no rails running that way under the structure");
     public static final TextKey NOT_A_STRUCTURE = TextKey.of("jscore.command.structure.not_one",

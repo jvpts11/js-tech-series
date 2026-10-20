@@ -8,6 +8,8 @@
 package dev.jstech.core.moving;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.core.moving.physics.PhysicsMotion;
+import dev.jstech.core.moving.physics.StructurePhysics;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.uuid.StructureUuid;
 import java.util.LinkedHashMap;
@@ -50,6 +52,8 @@ public final class MovingStructure implements IStructureBody {
     private AABB worldBox;
     private @Nullable IStructureMotion motion;
     private IStructureMotion.@Nullable Step pending;
+    /* Its physics, while it moves by them. */
+    private @Nullable StructurePhysics physics;
     private @Nullable StructureArrival arrival;
     private @Nullable StructureDeparture departure;
     private boolean ready;
@@ -230,9 +234,29 @@ public final class MovingStructure implements IStructureBody {
     public void move(@Nullable final IStructureMotion next) {
         this.motion = next;
         this.pending = null;
+        if (!(next instanceof PhysicsMotion)) {
+            physics = null;
+        } else if (physics != null) {
+            physics.wake();
+        }
         if (next == null) {
             settle();
         }
+    }
+
+    /** Its physics while it moves by them ({@link PhysicsMotion}), or null. */
+    public @Nullable StructurePhysics physics() {
+        return motion instanceof PhysicsMotion ? physics : null;
+    }
+
+    /** Its physics, made as it starts to move by them. */
+    public StructurePhysics physicsMade() {
+        StructurePhysics made = physics;
+        if (made == null) {
+            made = StructurePhysics.of(this);
+            physics = made;
+        }
+        return made;
     }
 
     /** Puts it at {@code pose} at once, carrying what stands on it there with it. */
@@ -301,9 +325,14 @@ public final class MovingStructure implements IStructureBody {
             return;
         }
         final IStructureMotion.Step step = pending != null ? pending
-                : now.step(frame.pose(), new IStructureMotion.Context(frame, level));
+                : now.step(frame.pose(), new IStructureMotion.Context(frame, level, this));
         pending = null;
         motion = step.next();
+        if (step.pose() == frame.pose() && motion != null) {
+            // Held still this tick, as a structure asleep is: nothing is carried, pushed or told.
+            holdStill();
+            return;
+        }
         advance(step.pose());
         if (motion == null) {
             settle();
@@ -371,6 +400,9 @@ public final class MovingStructure implements IStructureBody {
      * structure whose last block went is taken away at its next tick.
      */
     void blockChanged(final ServerLevel level, final BlockPos at, final BlockState before, final BlockState after) {
+        if (physics != null) {
+            physics.blockChanged(level, at, before, after);
+        }
         final boolean was = !before.isAir();
         final boolean is = !after.isAir();
         if (was == is) {
@@ -468,8 +500,17 @@ public final class MovingStructure implements IStructureBody {
             LevelMovingStructures.of(level).moved(this);
             StructureFooting.carry(this);
             StructureCollisions.pushAside(this);
+            StructurePhysics.wakeAround(this);
             StructureSync.moved(this);
         }
+    }
+
+    /* Stands still a tick under its rule: it stood where it stands, and goes nowhere. */
+    private void holdStill() {
+        if (previousFrame == frame && velocity[0] == 0 && velocity[1] == 0 && velocity[2] == 0) {
+            return;
+        }
+        settle();
     }
 
     /* Comes to rest: nothing moves it, it stood where it stands, and who sees it is told once. */

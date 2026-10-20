@@ -1,0 +1,12 @@
+{
+  "values": {
+    "jstests:test_thruster": {"mass": 100, "thrust": {"newtons": 20000, "kind": "rocket"}},
+    "jstests:test_wheel": {"mass": 50, "wheel": {"radius": 0.5, "travel": 0.4, "stiffness": 40000, "damping": 4000,
+      "steer": 30, "drive": 400, "brake": 6000}},
+    "jstests:test_burner": {"mass": 2, "burner": {"watts": 5000000}},
+    "jstests:test_light_block": {"mass": 5},
+    "jstests:test_envelope": {"mass": 0.2},
+    "jstests:test_hover": {"mass": 100, "levitation": 200000},
+    "jstests:test_magnet": {"mass": 200, "magnet": {"newtons": 50000, "reach": 6}}
+  }
+}

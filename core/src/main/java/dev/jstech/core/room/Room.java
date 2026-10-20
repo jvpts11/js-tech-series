@@ -268,6 +268,11 @@ public final class Room {
         this.bounds = boundsOf(this.cells);
     }
 
+    /** Sets what lies beyond its faces again, its shape the same: the air round a room that moved. */
+    void outsideNow(final List<RoomFace> moved) {
+        this.faces = List.copyOf(moved);
+    }
+
     /** Counts one more of its blocks under water, or one fewer. */
     void flood(final long cell, final boolean filled) {
         if (filled) {

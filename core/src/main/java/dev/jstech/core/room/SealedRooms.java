@@ -10,6 +10,7 @@ package dev.jstech.core.room;
 import dev.jstech.core.air.AirMix;
 import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.moving.MovingStructures;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -76,9 +77,12 @@ public final class SealedRooms {
         return placeClimate(level, Vec3.atCenterOf(pos));
     }
 
-    /** The air of the place at {@code at}, as if no room held it: its dimension's, at that height. */
+    /**
+     * The air of the place at {@code at}, as if no room held it: its dimension's, at that height; aboard a moving
+     * structure, at the height the structure has that place now.
+     */
     public static Climate placeClimate(final Level level, final Vec3 at) {
-        return DimensionRulesData.of(level).at(at.y);
+        return DimensionRulesData.of(level).at(MovingStructures.inWorld(level, at).y);
     }
 
     /** Whether the air at {@code pos} can be breathed. */
