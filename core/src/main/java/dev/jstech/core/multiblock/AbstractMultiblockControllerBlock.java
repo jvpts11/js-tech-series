@@ -113,7 +113,8 @@ public abstract class AbstractMultiblockControllerBlock
     @Override
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
+        // Lifted whole, as a moving structure takes its blocks, the controller is moved, not broken.
+        if (!state.is(newState.getBlock()) && !movedByPiston && level instanceof ServerLevel serverLevel) {
             if (!settled.remove(pos)) {
                 dropContents(serverLevel, pos);
             }

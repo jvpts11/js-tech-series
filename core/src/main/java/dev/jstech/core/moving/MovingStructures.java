@@ -1,0 +1,322 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Core.
+ */
+package dev.jstech.core.moving;
+
+import dev.jstech.core.content.EntityEntry;
+import dev.jstech.core.region.Box;
+import dev.jstech.core.registry.CoreItems;
+import dev.jstech.core.registry.CoreAttachments;
+import dev.jstech.core.uuid.StructureUuid;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Moving structures: structures of real blocks that move through the world, from a drawbridge to an airship. The
+ * blocks are kept in a reserved region of the world, the yard ({@link StructureYard}), where they run as they would on
+ * the ground: machines run, computers boot, networks work and crops grow. They are drawn and collided where the
+ * structure is, carry what stands on them, and are hit by arrows and every other ray. A structure moves by a rule
+ * ({@link IStructureMotion}), survives a restart in mid-move and goes to another dimension with everyone aboard.
+ *
+ * <pre>{@code
+ * StructureResult made = MovingStructures.assemble(level, corner, otherCorner);
+ * MovingStructures.move(made.structure(), new TowardMotion(StructurePose.at(x, y + 12, z), 2, 0));
+ * MovingStructures.setDown(made.structure());
+ * }</pre>
+ */
+public final class MovingStructures {
+
+    /** The entity each structure is in the world as. */
+    public static final EntityEntry<MovingStructureEntity> ENTITY = CoreItems.CONTENT.entity("moving_structure",
+                    MovingStructureEntity::new, MobCategory.MISC).size(1, 1).tracking(32, 20).fireImmune().noSummon()
+            .named("Moving structure").register();
+    /* From this many structures moving in a level, their next poses are worked out beside the server's thread. */
+    private static final int ALONGSIDE = 8;
+    /* Players who left the game standing on a structure, waiting for it to load so they stand on it again. */
+    private static final Map<ServerPlayer, Footing> RETURNING = new WeakHashMap<>();
+    private static volatile ForkJoinPool workers;
+
+    private MovingStructures() {
+    }
+
+    /** Hands the game's bus what the kit answers, and its payloads to the mod's, once, from the Core's constructor. */
+    public static void listen(final IEventBus modBus) {
+        StructureYard.listen();
+        StructureSync.listen(modBus);
+        StructureCommands.declare();
+        NeoForge.EVENT_BUS.addListener(LevelTickEvent.Pre.class, MovingStructures::beforeTick);
+        NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, MovingStructures::afterTick);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, EntityJoinLevelEvent.class, MovingStructures::onJoin);
+        NeoForge.EVENT_BUS.addListener(BlockEvent.EntityPlaceEvent.class, MovingStructures::onPlace);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, MovingStructures::onLoggedIn);
+    }
+
+    /** Makes a structure of every block in the box from {@code from} to {@code to}, its pivot at their middle. */
+    public static StructureResult assemble(final ServerLevel level, final BlockPos from, final BlockPos to) {
+        return StructureAssembly.box(level, from, to, null);
+    }
+
+    /** Makes a structure of {@code seed} and every block joined to it face to face. */
+    public static StructureResult assembleJoined(final ServerLevel level, final BlockPos seed) {
+        return StructureAssembly.joined(level, seed, null);
+    }
+
+    /** Sets {@code structure} down on the world's grid where it is, and takes it away. */
+    public static StructureResult setDown(final MovingStructure structure) {
+        return StructureDisassembly.setDown(structure);
+    }
+
+    /** Takes {@code structure} away for good, its blocks gone with it and its plot of the yard given back. */
+    public static void takeAway(final MovingStructure structure) {
+        remove(structure, true);
+    }
+
+    /** Sets the rule that moves {@code structure} from the next tick, or null to bring it to rest. */
+    public static void move(final MovingStructure structure, @Nullable final IStructureMotion motion) {
+        structure.move(motion);
+    }
+
+    /**
+     * Sends {@code structure} to {@code to} with everyone aboard, its pivot arriving at {@code at}: it goes a few
+     * ticks later, once the chunks it goes to have loaded, and is found there by its id. Refused, saying why, when it
+     * cannot go.
+     */
+    public static StructureResult travel(final MovingStructure structure, final ServerLevel to, final Vec3 at) {
+        return StructureTravel.travel(structure, to, at);
+    }
+
+    /** The structure of that id loaded in {@code level}, or null. */
+    public static @Nullable MovingStructure byId(final ServerLevel level, final StructureUuid id) {
+        return LevelMovingStructures.of(level).byId(id) instanceof MovingStructure structure ? structure : null;
+    }
+
+    /** The structure loaded in {@code level} whose blocks hold the yard's block {@code pos}, or null. */
+    public static @Nullable IStructureBody at(final Level level, final BlockPos pos) {
+        return LevelMovingStructures.of(level).atYard(pos.getX(), pos.getZ());
+    }
+
+    /** The loaded structures of {@code level} whose blocks may fill some of the world's box {@code box}. */
+    public static List<IStructureBody> near(final Level level, final AABB box) {
+        return LevelMovingStructures.of(level).near(box);
+    }
+
+    /**
+     * Where the place {@code place} is in the world: a place of the yard among a loaded structure's blocks is where
+     * that structure has it now; any other place is where it is.
+     */
+    public static Vec3 inWorld(final Level level, final Vec3 place) {
+        if (!YardLayout.isYard(place.x)) {
+            return place;
+        }
+        final IStructureBody body = LevelMovingStructures.of(level).atYard((int) Math.floor(place.x),
+                (int) Math.floor(place.z));
+        if (body == null) {
+            return place;
+        }
+        final StructureFrame frame = body.frame();
+        return new Vec3(frame.worldX(place.x, place.y, place.z), frame.worldY(place.x, place.y, place.z),
+                frame.worldZ(place.x, place.y, place.z));
+    }
+
+    /** The block of the world that holds the middle of the block {@code pos}, which may be of the yard. */
+    public static BlockPos inWorld(final Level level, final BlockPos pos) {
+        if (!YardLayout.isYardBlock(pos.getX())) {
+            return pos;
+        }
+        return BlockPos.containing(inWorld(level, Vec3.atCenterOf(pos)));
+    }
+
+    /** A block of the yard changed: the structure whose plot it is in hears of it. */
+    public static void noteChange(final ServerLevel level, final BlockPos pos, final BlockState before,
+                                  final BlockState after) {
+        if (!YardLayout.isYardBlock(pos.getX())) {
+            return;
+        }
+        if (LevelMovingStructures.of(level).atYard(pos.getX(), pos.getZ()) instanceof MovingStructure structure) {
+            structure.blockChanged(level, pos, before, after);
+        }
+    }
+
+    /*
+     * Makes a structure's entity in {@code level} and puts it in the world; with {@code arrival}, its blocks still
+     * stand where they were, to come into its plot once its chunks have loaded.
+     */
+    static MovingStructure make(final ServerLevel level, final StructureUuid id, final int plot, final Box bounds,
+                                final int blocks, final double pivotX, final double pivotY, final double pivotZ,
+                                final StructurePose pose, @Nullable final StructureArrival arrival) {
+        final MovingStructureEntity entity = ENTITY.get().create(level);
+        if (entity == null) {
+            throw new IllegalStateException("the moving structure's entity could not be made");
+        }
+        final MovingStructure structure = new MovingStructure(entity, id, plot, bounds, blocks, pivotX, pivotY,
+                pivotZ, pose, null);
+        entity.hold(structure);
+        level.addFreshEntity(entity);
+        if (arrival != null) {
+            structure.arriving(arrival);
+        }
+        return structure;
+    }
+
+    /* Takes {@code structure} away for good: its entity gone, its plot given back, its blocks cleared if asked. */
+    static void remove(final MovingStructure structure, final boolean clear) {
+        final MovingStructureEntity entity = structure.entity();
+        if (entity.isRemoved() || !(structure.level() instanceof ServerLevel level)) {
+            return;
+        }
+        if (clear && !structure.arriving()) {
+            StructureYard.clearAndGiveBack(level, structure.plot(), structure.bounds());
+        } else {
+            StructureYard.giveBack(level, structure.plot());
+        }
+        entity.discard();
+    }
+
+    /* Works out the next poses of the structures moving in a level, beside the server's thread when many move. */
+    private static void beforeTick(final LevelTickEvent.Pre event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        final LevelMovingStructures all = LevelMovingStructures.of(level);
+        if (all.isEmpty()) {
+            return;
+        }
+        final List<MovingStructure> moving = new ArrayList<>();
+        for (final IStructureBody body : all.all()) {
+            if (body instanceof MovingStructure structure && !structure.resting()
+                    && level.isPositionEntityTicking(structure.entity().blockPosition())) {
+                moving.add(structure);
+            }
+        }
+        if (moving.size() < ALONGSIDE) {
+            for (final MovingStructure structure : moving) {
+                structure.prepare();
+            }
+            return;
+        }
+        workers().submit(() -> moving.parallelStream().forEach(MovingStructure::prepare)).join();
+    }
+
+    private static void afterTick(final LevelTickEvent.Post event) {
+        StructureFooting.tick(event.getLevel());
+    }
+
+    /*
+     * Whatever is born among a structure's blocks in the yard, an item a block drops, a mob a spawner makes, the
+     * lightning that strikes it, is put where that place is in the world, moving and facing as the structure has it.
+     */
+    private static void onJoin(final EntityJoinLevelEvent event) {
+        final Entity entity = event.getEntity();
+        if (entity instanceof MovingStructureEntity || !YardLayout.isYard(entity.getX())) {
+            return;
+        }
+        final IStructureBody body = LevelMovingStructures.of(event.getLevel()).atYard((int) Math.floor(entity.getX()),
+                (int) Math.floor(entity.getZ()));
+        if (body == null) {
+            return;
+        }
+        final StructureFrame frame = body.frame();
+        final double x = entity.getX();
+        final double y = entity.getY();
+        final double z = entity.getZ();
+        final Vec3 speed = entity.getDeltaMovement();
+        entity.setPos(frame.worldX(x, y, z), frame.worldY(x, y, z), frame.worldZ(x, y, z));
+        entity.setDeltaMovement(frame.turnX(speed.x, speed.y, speed.z), frame.turnY(speed.x, speed.y, speed.z),
+                frame.turnZ(speed.x, speed.y, speed.z));
+        entity.setYRot((float) (entity.getYRot() + frame.pose().yawDegrees()));
+    }
+
+    /* A block set down in the yard past the plot of the structure it is set on would be another's: it is refused. */
+    private static void onPlace(final BlockEvent.EntityPlaceEvent event) {
+        final BlockPos pos = event.getPos();
+        if (!YardLayout.isYardBlock(pos.getX()) || !(event.getLevel() instanceof Level level)) {
+            return;
+        }
+        final IStructureBody body = LevelMovingStructures.of(level).atYard(pos.getX(), pos.getZ());
+        if (body == null) {
+            event.setCanceled(true);
+        }
+    }
+
+    /* A player who left the game standing on a structure comes back standing where they were on it. */
+    private static void onLoggedIn(final PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        final Footing footing = player.getData(CoreAttachments.FOOTING.get());
+        if (footing.structure().isEmpty()) {
+            return;
+        }
+        if (!standAgain(player, footing)) {
+            RETURNING.put(player, footing);
+        }
+    }
+
+    /* Puts a returning player on their structure, if it is loaded; whether it was. */
+    static boolean standAgain(final ServerPlayer player, final Footing footing) {
+        final MovingStructure structure = footing.structure().map(id -> byId(player.serverLevel(), id)).orElse(null);
+        if (structure == null || !structure.ready()) {
+            return false;
+        }
+        final StructureFrame frame = structure.frame();
+        player.teleportTo(player.serverLevel(), frame.worldX(footing.x(), footing.y(), footing.z()),
+                frame.worldY(footing.x(), footing.y(), footing.z()), frame.worldZ(footing.x(), footing.y(),
+                        footing.z()), (float) (frame.pose().yawDegrees() + footing.yaw()), player.getXRot());
+        return true;
+    }
+
+    /* A structure finished loading: the players waiting for it stand on it again. */
+    static void loaded(final MovingStructure structure) {
+        if (RETURNING.isEmpty()) {
+            return;
+        }
+        RETURNING.entrySet().removeIf(each -> each.getValue().structure().map(structure.id()::equals).orElse(false)
+                && each.getKey().level() == structure.level() && standAgain(each.getKey(), each.getValue()));
+    }
+
+    private static ForkJoinPool workers() {
+        ForkJoinPool pool = workers;
+        if (pool == null) {
+            synchronized (MovingStructures.class) {
+                pool = workers;
+                if (pool == null) {
+                    pool = new ForkJoinPool(Math.max(1, Runtime.getRuntime().availableProcessors() / 2),
+                            fork -> {
+                                final ForkJoinWorkerThread thread =
+                                        ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(fork);
+                                thread.setName("jscore-moving-structures-" + thread.getPoolIndex());
+                                thread.setDaemon(true);
+                                return thread;
+                            }, null, false);
+                    workers = pool;
+                }
+            }
+        }
+        return pool;
+    }
+}

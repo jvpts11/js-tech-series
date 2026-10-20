@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.hazard;
 
+import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.moving.StructureBlocksMovedEvent;
 import dev.jstech.core.registry.CoreAttachments;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -71,11 +73,25 @@ public final class Radiation {
         }
     }
 
-    /** Hands the game's bus what forgets the sources of a chunk as it unloads, once, from the Core's constructor. */
+    /**
+     * Hands the game's bus what forgets the sources of a chunk as it unloads, and what carries a source along with
+     * its block when a moving structure takes it, once, from the Core's constructor.
+     */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Unload.class, event -> {
             if (event.getLevel() instanceof ServerLevel level && level.hasData(CoreAttachments.RADIATION)) {
                 level.getData(CoreAttachments.RADIATION).forget(event.getChunk().getPos());
+            }
+        });
+        NeoForge.EVENT_BUS.addListener(StructureBlocksMovedEvent.class, event -> {
+            final BlockMove move = event.move();
+            if (!(move.from() instanceof ServerLevel from) || !(move.to() instanceof ServerLevel to)
+                    || !from.hasData(CoreAttachments.RADIATION)) {
+                return;
+            }
+            final LevelRadiation left = from.getData(CoreAttachments.RADIATION);
+            for (final Map.Entry<BlockPos, BlockPos> each : move.moved().entrySet()) {
+                left.takeAt(each.getKey()).forEach((kind, strength) -> emit(to, each.getValue(), kind, strength));
             }
         });
     }

@@ -10,6 +10,7 @@ package dev.jstech.core.jstechseries.atmosphere;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.dimension.Climate;
+import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.RoomAir;
@@ -121,6 +122,15 @@ public final class AtmosphereDetectorBlockEntity extends SyncedBlockEntity {
         if (this.level instanceof ServerLevel server && server.isLoaded(this.worldPosition)
                 && !server.getBlockState(this.worldPosition).is(AtmosphereDetector.BLOCK.get())) {
             SealedRooms.untrack(server, this.worldPosition);
+        }
+    }
+
+    /* Moved with a moving structure: the room it asked for where it stood is no longer asked for; it asks here. */
+    @Override
+    public void moved(final BlockPos was, final BlockMove move) {
+        super.moved(was, move);
+        if (move.from() instanceof ServerLevel left) {
+            SealedRooms.untrack(left, was);
         }
     }
 

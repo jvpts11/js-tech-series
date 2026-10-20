@@ -9,10 +9,12 @@ package dev.jstech.core.network;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.moving.StructureBlocksMovedEvent;
 import dev.jstech.core.operation.OperationType;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -34,12 +36,23 @@ public final class NetworkMembers {
     private NetworkMembers() {
     }
 
-    /** Hands the game's bus the second-by-second look, once, from the Core's constructor. */
+    /**
+     * Hands the game's bus the second-by-second look, once, from the Core's constructor; and forgets, where blocks
+     * moved away with a structure, the cables an owner of a network touched there.
+     */
     @ApiStatus.Internal
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (event.getLevel() instanceof ServerLevel level && level.getGameTime() % RECHECK == 0) {
                 recheck(level);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener(StructureBlocksMovedEvent.class, event -> {
+            if (event.move().from() instanceof ServerLevel level) {
+                final ConnectivityIndex index = NetworkSystem.get(level).connectivity();
+                for (final BlockPos was : event.move().moved().keySet()) {
+                    index.unanchor(was.asLong());
+                }
             }
         });
     }

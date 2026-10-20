@@ -264,4 +264,22 @@ class PeripheralPortsTest {
         assertFalse(loaded.disabled(7L));
         assertArrayEquals(new long[] {2L}, loaded.disabledPositions());
     }
+
+    @Test
+    void moved_keepsEveryPortHubAndFlagAtTheNewPlacesInOrder() {
+        final PeripheralPorts ports = new PeripheralPorts();
+        ports.link(3L, PortKind.VIDEO);
+        ports.link(1L, PortKind.DEVICE);
+        ports.linkThrough(2L, PortKind.DEVICE, 1L);
+        ports.setDisabled(3L, true);
+
+        ports.moved(pos -> pos + 100);
+
+        assertArrayEquals(new long[] {103L, 101L, 102L}, ports.positions());
+        assertEquals(PortKind.VIDEO, ports.kindOf(103L));
+        assertEquals(OptionalLong.of(101L), ports.hubOf(102L));
+        assertTrue(ports.disabled(103L));
+        assertFalse(ports.disabled(101L));
+        assertNull(ports.kindOf(3L));
+    }
 }

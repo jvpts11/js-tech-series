@@ -46,6 +46,7 @@ import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.heat.IHeatPort;
+import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multiblock.IMultiblockPortHost;
 import dev.jstech.core.multiblock.IRedstonePortHost;
 import dev.jstech.core.multiblock.IStructureController;
@@ -688,6 +689,15 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         }
         if (structure != null && level instanceof ServerLevel server) {
             structure.removed(server, worldPosition);
+        }
+    }
+
+    /** Moved with a moving structure: its fields' places follow, and so does its multiblock, which stays formed. */
+    @Override
+    public void moved(final BlockPos was, final BlockMove move) {
+        super.moved(was, move);
+        if (structure != null) {
+            structure.moved(move);
         }
     }
 

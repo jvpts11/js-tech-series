@@ -18,6 +18,7 @@ import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.grid.IGridMover;
 import dev.jstech.core.look.IDescribedAt;
+import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.multipart.ISpaceHolder;
@@ -521,6 +522,21 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             leave(server, wire);
         }
         this.inGrids = false;
+    }
+
+    /*
+     * Moved with a moving structure: its wires leave their grids where the cable stood, so nothing flows any more
+     * through the place it left; they join them again where it is as it loads there.
+     */
+    @Override
+    public void moved(final BlockPos was, final BlockMove move) {
+        super.moved(was, move);
+        if (move.from() instanceof ServerLevel left) {
+            for (final Wire wire : this.bundle.wires()) {
+                CoreGrids.remove(left, wire.type().grid(),
+                        GridPlace.wire(was.asLong(), Wire.of(wire.type()).slot().id()));
+            }
+        }
     }
 
     /* The parts changed on the client: the render mesh and the collision and selection shape follow them. */

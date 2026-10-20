@@ -10,6 +10,7 @@ package dev.jstech.core.machine;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.model.network.ModelAnimations;
+import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.IBlockMatcher;
@@ -48,6 +49,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -364,6 +366,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     void tick(final ServerLevel level, final BlockPos pos) {
         final long now = level.getGameTime();
         if (!this.filed) {
+            forgetFarPlaces(pos);
             file(level, pos);
             this.dirty = true;
         }
@@ -386,6 +389,30 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     void removed(final ServerLevel level, final BlockPos pos) {
         LevelStructures.of(level).forget(pos);
         this.filed = false;
+    }
+
+    /*
+     * Its blocks moved together, a moving structure made, set down or taken to another dimension: the places of its
+     * structure follow the blocks standing in them and it stands turned as they turned, so it stays formed where it is
+     * now, its merged blocks merged, and never forms again. It is checked again soon all the same, and filed again
+     * from where it is.
+     */
+    void moved(final BlockMove move) {
+        this.places = moved(this.places, move);
+        this.merged = moved(this.merged, move);
+        this.held = new HashSet<>(this.places);
+        if (this.orientation >= 0 && move.rotation() != Rotation.NONE) {
+            final Orientation turn = switch (move.rotation()) {
+                case CLOCKWISE_90 -> Orientation.EAST;
+                case CLOCKWISE_180 -> Orientation.SOUTH;
+                case COUNTERCLOCKWISE_90 -> Orientation.WEST;
+                case NONE -> Orientation.NORTH;
+            };
+            this.orientation = ORIENTATIONS.indexOf(ORIENTATIONS.get(this.orientation).then(turn));
+        }
+        this.last = null;
+        this.filed = false;
+        this.dirty = true;
     }
 
     /*
@@ -562,6 +589,36 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     /* Where a colour comes in the order of the groups: no colour first, then the dyes in their own order. */
     private static int colourKey(@Nullable final DyeColor colour) {
         return colour == null ? -1 : colour.getId();
+    }
+
+    /* The places {@code places} where the blocks of {@code move} that stood in them are now. */
+    private static List<Long> moved(final List<Long> places, final BlockMove move) {
+        final List<Long> out = new ArrayList<>(places.size());
+        for (final long place : places) {
+            final BlockPos now = move.where(MultiblockPatterns.decode(place));
+            out.add(PatternMatcher.encodePosition(now.getX(), now.getY(), now.getZ()));
+        }
+        return List.copyOf(out);
+    }
+
+    /*
+     * Forgets the places it holds when they are farther from it than its shape reaches: its blocks were moved by
+     * something that did not tell it where they went, and the places are of where it stood before. Read or filed,
+     * such places would reach across the world; checked again, it finds its structure where it is.
+     */
+    private void forgetFarPlaces(final BlockPos pos) {
+        final int reach = this.shape.reach();
+        for (final long place : this.places) {
+            final int[] xyz = PatternMatcher.decodePosition(place);
+            if (Math.abs(xyz[0] - pos.getX()) > reach || Math.abs(xyz[1] - pos.getY()) > reach
+                    || Math.abs(xyz[2] - pos.getZ()) > reach) {
+                this.places = List.of();
+                this.merged = List.of();
+                this.held = Set.of();
+                this.dirty = true;
+                return;
+            }
+        }
     }
 
     /* Files it with the level's structures: its formed structure and the places beside it, or all it reaches. */

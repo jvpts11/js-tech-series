@@ -10,6 +10,10 @@ package dev.jstech.core.client.overhead;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.client.moving.ClientStructure;
+import dev.jstech.core.moving.LevelMovingStructures;
+import dev.jstech.core.moving.StructureFrame;
+import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.overhead.Catenary;
 import dev.jstech.core.overhead.HungWire;
 import dev.jstech.core.overhead.OverheadLines;
@@ -30,6 +34,7 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 /**
@@ -74,20 +79,53 @@ public final class OverheadWireRenderer {
         final VertexConsumer out = buffers.getBuffer(type);
         final TextureAtlasSprite sprite = minecraft.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(PLAIN);
         final int colour = PALETTE.get().wire();
+        final float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         pose.pushPose();
         pose.translate(-camera.x, -camera.y, -camera.z);
         final Matrix4f matrix = pose.last().pose();
         for (final HungWire wire : wires) {
-            if (wire.a().add(wire.b()).scale(0.5).distanceToSqr(camera) > RANGE * RANGE) {
+            final boolean inYard = YardLayout.isYard(wire.a().x);
+            final StructureFrame aboard = inYard ? aboard(level, wire, partialTick) : null;
+            if (inYard && aboard == null) {
+                continue;
+            }
+            final Catenary.Point middle = new Catenary.Point((wire.a().x + wire.b().x) / 2,
+                    (wire.a().y + wire.b().y) / 2, (wire.a().z + wire.b().z) / 2);
+            final Catenary.Point seen = world(aboard, middle);
+            if (camera.distanceToSqr(seen.x(), seen.y(), seen.z()) > RANGE * RANGE) {
                 continue;
             }
             final List<Catenary.Point> points = Catenary.points(wire.start(), wire.end());
             for (int k = 1; k < points.size(); k++) {
-                piece(out, matrix, pose, level, sprite, colour, points.get(k - 1), points.get(k));
+                piece(out, matrix, pose, level, sprite, colour, world(aboard, points.get(k - 1)),
+                        world(aboard, points.get(k)));
             }
         }
         pose.popPose();
         buffers.endBatch(type);
+    }
+
+    /*
+     * The frame, as it is drawn now, of the moving structure a wire of the yard hangs on, so the wire is drawn where
+     * the structure is; none while the player's game has not that structure's blocks.
+     */
+    private static @Nullable StructureFrame aboard(final ClientLevel level, final HungWire wire,
+                                                   final float partialTick) {
+        if (!(LevelMovingStructures.of(level).atYard((int) Math.floor(wire.a().x),
+                (int) Math.floor(wire.a().z)) instanceof ClientStructure structure) || !structure.ready()) {
+            return null;
+        }
+        return new StructureFrame(structure.drawnAt(partialTick), structure.pivotX(), structure.pivotY(),
+                structure.pivotZ());
+    }
+
+    /* Where a point of a wire is in the world: itself, or where it is aboard the structure of {@code aboard}. */
+    private static Catenary.Point world(@Nullable final StructureFrame aboard, final Catenary.Point at) {
+        if (aboard == null) {
+            return at;
+        }
+        return new Catenary.Point(aboard.worldX(at.x(), at.y(), at.z()), aboard.worldY(at.x(), at.y(), at.z()),
+                aboard.worldZ(at.x(), at.y(), at.z()));
     }
 
     /* One piece of wire, as a flat ribbon and an upright one crossing along it. */

@@ -14,6 +14,7 @@ import dev.jstech.core.explosion.Explosions;
 import dev.jstech.core.protection.Actor;
 import dev.jstech.core.protection.ProtectedAction;
 import dev.jstech.core.protection.Protection;
+import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -91,7 +92,7 @@ public final class Extinguishing {
             if (lit >= FLARE_LIGHTS) {
                 return;
             }
-            if (level.isLoaded(near) && level.getBlockState(near).isAir()
+            if (Loaded.at(level, near) && level.getBlockState(near).isAir()
                     && BaseFireBlock.canBePlacedAt(level, near, Direction.UP)
                     && Protection.may(actor, ProtectedAction.BURN, level, near)) {
                 level.setBlockAndUpdate(near, BaseFireBlock.getState(level, near));

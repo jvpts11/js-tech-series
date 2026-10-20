@@ -18,6 +18,8 @@ import dev.jstech.core.energy.LevelEnergy;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.GridMember;
 import dev.jstech.core.grid.GridPlace;
+import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.moving.StructureBlocksMovedEvent;
 import dev.jstech.core.protection.Actor;
 import dev.jstech.core.protection.ProtectedAction;
 import dev.jstech.core.protection.Protection;
@@ -136,6 +138,7 @@ public final class OverheadLines {
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Unload.class, OverheadLines::onChunkUnload);
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, OverheadLines::onLevelTick);
         NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, OverheadLines::onEntityJoin);
+        NeoForge.EVENT_BUS.addListener(StructureBlocksMovedEvent.class, OverheadLines::onBlocksMoved);
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> {
             IN_GRID.clear();
             LOADED.clear();
@@ -321,6 +324,41 @@ public final class OverheadLines {
     public static void onEntityJoin(final EntityJoinLevelEvent event) {
         if (event.getEntity() instanceof LightningBolt bolt && event.getLevel() instanceof ServerLevel level) {
             struck(level, bolt.position());
+        }
+    }
+
+    /*
+     * Blocks moved with a moving structure: a wire hung between two of them goes with them, fastened again where its
+     * insulators are now and as they turned; a wire hung from one that moved to one that stayed falls, its wire left
+     * at the one that stayed, as when an insulator is broken.
+     */
+    public static void onBlocksMoved(final StructureBlocksMovedEvent event) {
+        final BlockMove move = event.move();
+        if (!(move.from() instanceof ServerLevel from) || !(move.to() instanceof ServerLevel to)) {
+            return;
+        }
+        for (final HungWire wire : WIRES.get(from).wires()) {
+            final boolean fromMoved = move.movedHere(wire.from().pos());
+            final boolean toMoved = move.movedHere(wire.to().pos());
+            if (fromMoved != toMoved) {
+                unhang(from, wire, fromMoved ? wire.to().pos() : wire.from().pos());
+                continue;
+            }
+            if (!fromMoved) {
+                continue;
+            }
+            leave(from, wire);
+            WIRES.update(from, book -> book.without(wire.id()));
+            final WireEnd a = new WireEnd(move.where(wire.from().pos()), wire.from().anchor());
+            final WireEnd b = new WireEnd(move.where(wire.to().pos()), wire.to().anchor());
+            final IWireAnchors aAnchors = loadedAnchors(to, a.pos());
+            final IWireAnchors bAnchors = loadedAnchors(to, b.pos());
+            if (aAnchors == null || bAnchors == null || !stands(to, a) || !stands(to, b)) {
+                continue;
+            }
+            final WireBook hung = WIRES.update(to, before -> before.with(a, b, wire.cable(), fastening(a, aAnchors),
+                    fastening(b, bAnchors)));
+            hung.byId(hung.next() - 1).ifPresent(there -> tryEnter(to, there));
         }
     }
 

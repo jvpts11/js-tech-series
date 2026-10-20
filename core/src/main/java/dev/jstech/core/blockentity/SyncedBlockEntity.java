@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.blockentity;
 
+import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.moving.IMovesWithStructures;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -28,7 +30,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * own worked-out state) is never overwritten by an update. Updates are batched: however many fields change in a
  * tick, the players who see the block are sent one update at its end.
  */
-public abstract class SyncedBlockEntity extends BlockEntity {
+public abstract class SyncedBlockEntity extends BlockEntity implements IMovesWithStructures {
 
     private final BlockEntityFields fields = new BlockEntityFields(this);
 
@@ -39,6 +41,15 @@ public abstract class SyncedBlockEntity extends BlockEntity {
     /** The fields this block entity declares, and what is done with them. */
     public final BlockEntityFields fields() {
         return fields;
+    }
+
+    /**
+     * Moved with a moving structure: the places its fields hold follow the blocks that moved with it, and what its
+     * fields declared for a move happens.
+     */
+    @Override
+    public void moved(final BlockPos was, final BlockMove move) {
+        fields.moved(was, move);
     }
 
     @Override

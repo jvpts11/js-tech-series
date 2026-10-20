@@ -49,6 +49,20 @@ public final class LevelRadiation {
                 key -> new HashMap<>()).put(kind, strength);
     }
 
+    /** Takes away everything the block at {@code pos} gives off, and gives it back, by kind; empty for none. */
+    public synchronized Map<RadiationKind, Double> takeAt(final BlockPos pos) {
+        final long chunk = ChunkPos.asLong(pos);
+        final Map<Long, Map<RadiationKind, Double>> places = this.byChunk.get(chunk);
+        if (places == null) {
+            return Map.of();
+        }
+        final Map<RadiationKind, Double> kinds = places.remove(pos.asLong());
+        if (places.isEmpty()) {
+            this.byChunk.remove(chunk);
+        }
+        return kinds == null ? Map.of() : kinds;
+    }
+
     /** How much of {@code kind} the block at {@code pos} gives off. */
     public synchronized double strength(final BlockPos pos, final RadiationKind kind) {
         final Map<Long, Map<RadiationKind, Double>> places = this.byChunk.get(ChunkPos.asLong(pos));

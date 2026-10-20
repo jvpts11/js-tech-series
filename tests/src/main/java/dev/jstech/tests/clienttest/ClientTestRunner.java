@@ -68,6 +68,8 @@ public final class ClientTestRunner {
     static final String WORLD_NAME = "jsc-clienttests";
     private static final int AREA_SPACING = 64;
     private static final int SETTLE_TICKS = 40;
+    /* How many frames of each thread's stack a timed-out wait writes to the log. */
+    private static final int DUMPED_FRAMES = 40;
     private static final int GUI_SCALE = 2;
 
     private static final ClientTestRunner INSTANCE = new ClientTestRunner();
@@ -366,6 +368,9 @@ public final class ClientTestRunner {
     private void failCurrent(final Minecraft mc, final RuntimeException e) {
         final String where = " [step " + stepIndex + " " + stepLabel() + "]";
         LOGGER.error("[JSC-CT] {} failed{}", current.name(), where, e);
+        if (e.getMessage() != null && e.getMessage().contains("timed out")) {
+            dumpServerThreads();
+        }
         try {
             context.screenshot("FAILED");
         } catch (final RuntimeException ignored) {
@@ -414,5 +419,25 @@ public final class ClientTestRunner {
      */
     private static Path runDirectory(final Minecraft mc) {
         return mc.gameDirectory.toPath().toAbsolutePath().normalize().getParent();
+    }
+
+    /*
+     * A wait that timed out may be the server's chunks held up, which shows nowhere else: the stacks of the server's
+     * threads and of the game's workers are written to the log, for whoever reads the failure.
+     */
+    private static void dumpServerThreads() {
+        final StringBuilder out = new StringBuilder("[JSC-CT] the server's threads as the wait timed out:");
+        for (final Map.Entry<Thread, StackTraceElement[]> each : Thread.getAllStackTraces().entrySet()) {
+            final String name = each.getKey().getName();
+            if (!name.startsWith("Server thread") && !name.startsWith("Worker-") && !name.startsWith("IO-Worker")) {
+                continue;
+            }
+            out.append(System.lineSeparator()).append('"').append(name).append("\" ").append(each.getKey().getState());
+            final StackTraceElement[] stack = each.getValue();
+            for (int i = 0; i < Math.min(DUMPED_FRAMES, stack.length); i++) {
+                out.append(System.lineSeparator()).append("    at ").append(stack[i]);
+            }
+        }
+        LOGGER.error(out.toString());
     }
 }

@@ -246,7 +246,8 @@ What follows from the declarations:
 - The capabilities of every `exposed()` field are registered for every block entity type declared through
   `ModContent.blockEntity`, so no mod registers them one by one.
 - `dropsWhenBroken()` spills an inventory when the block is broken; `whenBroken` and `whenNeighbourChanges` run
-  code of yours at those moments.
+  code of yours at those moments, and `whenMoved` when the block moves with a moving structure, which is never a
+  break ([Moving structures](MOVING_STRUCTURES.md#blocks-that-remember-other-blocks)).
 - `mirror(property, value)` keeps a property of the block state equal to a value, so the look follows the state
   (a furnace's front lit while it burns) with no code of yours.
 - `layout(saveLayout)` versions what the block entity saves, so a later version of your mod can read an older

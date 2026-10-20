@@ -40,6 +40,13 @@ public final class PeripheralLink {
         this.world = world;
         // A peripheral broken or replaced frees its place on its owner for another.
         fields.whenBroken(this::unlink);
+        // Moved with a moving structure, it stays linked to an owner that moved with it.
+        fields.whenMoved((was, move) -> {
+            final Long at = owner.get();
+            if (at != null && move.movedHere(BlockPos.of(at))) {
+                owner.set(move.where(BlockPos.of(at)).asLong());
+            }
+        });
     }
 
     public PeripheralCableType cableType() {

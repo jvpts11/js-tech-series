@@ -16,6 +16,7 @@ import dev.jstech.core.protection.Actor;
 import dev.jstech.core.protection.ProtectedAction;
 import dev.jstech.core.protection.Protection;
 import dev.jstech.core.room.SealedRooms;
+import dev.jstech.core.util.Loaded;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -153,7 +154,7 @@ final class LevelFires {
             final BlockState rest = this.remains.remove(key);
             final BlockPos pos = BlockPos.of(key);
             // What could not stand there (ash where leaves were, with nothing under it) falls away and is gone.
-            if (rest != null && FireBalance.remains() && this.level.isLoaded(pos)
+            if (rest != null && FireBalance.remains() && Loaded.at(this.level, pos)
                     && this.level.getBlockState(pos).isAir() && rest.canSurvive(this.level, pos)) {
                 this.level.setBlockAndUpdate(pos, rest);
             }
@@ -175,7 +176,7 @@ final class LevelFires {
         for (int i = 0; i < ready.size(); i++) {
             this.rekindles.remove(ready.getLong(i));
             final BlockPos pos = BlockPos.of(ready.getLong(i));
-            if (this.level.isLoaded(pos) && this.level.getBlockState(pos).isAir() && feeds(pos) > 0) {
+            if (Loaded.at(this.level, pos) && this.level.getBlockState(pos).isAir() && feeds(pos) > 0) {
                 this.level.setBlockAndUpdate(pos, BaseFireBlock.getState(this.level, pos));
             }
         }
@@ -189,7 +190,7 @@ final class LevelFires {
         final boolean spreads = this.level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK);
         for (int index = this.cursor; index < end; index++) {
             final BlockPos pos = BlockPos.of(this.thisSecond.getLong(index));
-            if (!this.level.isLoaded(pos) || !(this.level.getBlockState(pos).getBlock() instanceof BaseFireBlock)) {
+            if (!Loaded.at(this.level, pos) || !(this.level.getBlockState(pos).getBlock() instanceof BaseFireBlock)) {
                 remove(pos.asLong());
                 continue;
             }
@@ -221,7 +222,7 @@ final class LevelFires {
         final double unitZ = wind.z() / wind.speed();
         for (int k = leap; k >= 1; k--) {
             final BlockPos target = pos.offset((int) Math.round(unitX * k), 0, (int) Math.round(unitZ * k));
-            if (target.equals(pos) || !this.level.isLoaded(target) || !this.level.getBlockState(target).isAir()
+            if (target.equals(pos) || !Loaded.at(this.level, target) || !this.level.getBlockState(target).isAir()
                     || this.level.isRainingAt(target)) {
                 continue;
             }
@@ -248,7 +249,7 @@ final class LevelFires {
             if (lit >= INFERNO_LIGHTS) {
                 return;
             }
-            if (this.level.isLoaded(target) && this.level.getBlockState(target).isAir() && feeds(target) > 0
+            if (Loaded.at(this.level, target) && this.level.getBlockState(target).isAir() && feeds(target) > 0
                     && light(pos, target.immutable())) {
                 lit++;
             }
@@ -268,7 +269,7 @@ final class LevelFires {
         int most = 0;
         for (final Direction way : Direction.values()) {
             final BlockPos beside = pos.relative(way);
-            if (this.level.isLoaded(beside)) {
+            if (Loaded.at(this.level, beside)) {
                 most = Math.max(most, this.level.getBlockState(beside).getFireSpreadSpeed(this.level, beside,
                         way.getOpposite()));
             }

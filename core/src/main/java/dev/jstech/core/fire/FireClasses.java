@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.energy.EnergyPorts;
 import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.hazard.ItemHazards;
+import dev.jstech.core.util.Loaded;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -67,7 +68,7 @@ public final class FireClasses {
         FireClass worst = FireClass.SOLIDS;
         for (final Direction way : FED_FROM) {
             final BlockPos fuel = fire.relative(way);
-            if (!level.isLoaded(fuel)) {
+            if (!Loaded.at(level, fuel)) {
                 continue;
             }
             final FireClass kind = of(level, fuel, level.getBlockState(fuel), way.getOpposite());

@@ -70,6 +70,7 @@ import dev.jstech.core.client.multiblock.FormedPartsClient;
 import dev.jstech.core.client.motion.CoreMotionClient;
 import dev.jstech.core.client.motion.GreyFilter;
 import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.client.moving.MovingStructuresClient;
 import dev.jstech.core.client.network.TransferClient;
 import dev.jstech.core.client.notification.NotificationsClient;
 import dev.jstech.core.client.overhead.OverheadWireRenderer;
@@ -187,6 +188,7 @@ public final class JsCoreClient {
         TransferClient.listen();
         TubeFilter.listen(modEventBus);
         VehicleControls.listen(modEventBus);
+        MovingStructuresClient.listen(modEventBus);
         // In a development run, the mods' assets reloaded as they change.
         LiveReloadClient.listen();
         // What draws each of the Core's kinds of screen component, a rich line of a tooltip, and the chooser of the

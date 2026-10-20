@@ -7,13 +7,18 @@
  */
 package dev.jstech.core.peripheral;
 
+import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.moving.StructureBlocksMovedEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Frees the ports an owner holds for peripherals that went away while its chunk was not loaded to be told. A peripheral
  * broken far from its owner can only tell the owner when the owner is loaded, so the owner checks for itself now and
- * then: a port is never left taken by a peripheral that is no longer there.
+ * then: a port is never left taken by a peripheral that is no longer there. An owner moved with a moving structure
+ * keeps its ports where its peripherals now are.
  */
 public final class PeripheralReconciler {
 
@@ -21,6 +26,24 @@ public final class PeripheralReconciler {
     public static final long INTERVAL_TICKS = 100L;
 
     private PeripheralReconciler() {
+    }
+
+    /**
+     * Hands the game's bus what follows moving structures, once, from the Core's constructor: an owner of the Core's
+     * kind ({@link IPeripheralOwnerSupport}) that moved keeps every port, hub and disabled flag, at the places the
+     * peripherals that moved with it are now. An owner of its own kind follows them from its own move hook.
+     */
+    @ApiStatus.Internal
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(StructureBlocksMovedEvent.class, event -> {
+            final BlockMove move = event.move();
+            for (final BlockPos now : move.moved().values()) {
+                if (move.to().getBlockEntity(now) instanceof IPeripheralOwnerSupport owner) {
+                    owner.peripheralPorts().moved(pos -> move.where(BlockPos.of(pos)).asLong());
+                    owner.markPeripheralChange();
+                }
+            }
+        });
     }
 
     /**

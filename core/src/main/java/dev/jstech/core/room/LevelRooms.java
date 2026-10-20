@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.room;
 
+import dev.jstech.core.util.Loaded;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -527,6 +528,10 @@ final class LevelRooms {
         }
         for (final long cell : lit) {
             final BlockPos pos = BlockPos.of(cell);
+            // A fire whose chunk is not loaded now is not read: that would load the chunk, or wait on it.
+            if (!Loaded.at(this.level, pos)) {
+                continue;
+            }
             final BlockState state = this.level.getBlockState(pos);
             if (state.getBlock() instanceof BaseFireBlock && !GasMath.burns(SealedRooms.oxygenAt(this.level, pos))) {
                 set(pos, Blocks.AIR.defaultBlockState());

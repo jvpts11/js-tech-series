@@ -39,6 +39,7 @@ public final class EntityBuilder<E extends Entity> {
     private int updateInterval = 3;
     private boolean fireImmune;
     private boolean holdsEnergy;
+    private boolean noSummon;
     private @Nullable String english;
     private @Nullable Supplier<AttributeSupplier.Builder> attributes;
 
@@ -75,6 +76,12 @@ public final class EntityBuilder<E extends Entity> {
         return this;
     }
 
+    /** The {@code /summon} command does not make it: an entity made only by its mod, as the mod's rules say. */
+    public EntityBuilder<E> noSummon() {
+        this.noSummon = true;
+        return this;
+    }
+
     /** A living entity's attributes: health, speed, and the rest it starts with. */
     public EntityBuilder<E> attributes(final Supplier<AttributeSupplier.Builder> start) {
         this.attributes = start;
@@ -104,10 +111,17 @@ public final class EntityBuilder<E extends Entity> {
         final int range = trackingRange;
         final int interval = updateInterval;
         final boolean immune = fireImmune;
+        final boolean unsummoned = noSummon;
         content.entityRegister().register(id, () -> {
-            final EntityType.Builder<E> builder = EntityType.Builder.of(factory, category).sized(wide, tall)
+            EntityType.Builder<E> builder = EntityType.Builder.of(factory, category).sized(wide, tall)
                     .clientTrackingRange(range).updateInterval(interval);
-            return (immune ? builder.fireImmune() : builder).build(key.toString());
+            if (immune) {
+                builder = builder.fireImmune();
+            }
+            if (unsummoned) {
+                builder = builder.noSummon();
+            }
+            return builder.build(key.toString());
         });
         content.declare(entry);
         return entry;

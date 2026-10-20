@@ -14,6 +14,8 @@ import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineResource;
 import dev.jstech.core.machine.MachineStatus;
+import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.region.ChunkLoadingBalance;
 import dev.jstech.core.team.Ownership;
@@ -101,6 +103,11 @@ public final class SpacePersistorBlockEntity extends MachineBlockEntity {
 
     /** The chunks its area covers, nearest it first. */
     public List<ChunkPos> wantedChunks() {
+        if (this.wanted == null && YardLayout.isYardBlock(this.worldPosition.getX())) {
+            // Aboard a moving structure the structure keeps the world under it loaded wherever it goes; the persistor
+            // keeps only its own chunk of the yard, which tells the structure a loader is aboard.
+            this.wanted = List.of(new ChunkPos(this.worldPosition));
+        }
         if (this.wanted == null) {
             final ChunkPos own = new ChunkPos(this.worldPosition);
             final List<ChunkPos> chunks = new ArrayList<>();
@@ -201,6 +208,19 @@ public final class SpacePersistorBlockEntity extends MachineBlockEntity {
     @Override
     protected Set<MachineResource> resources() {
         return takesEnergy() ? Set.of(MachineResource.ENERGY) : Set.of();
+    }
+
+    /* Moved with a structure: the chunks it kept where it was are let go, and it keeps chunks again from here. */
+    @Override
+    public void moved(final BlockPos was, final BlockMove move) {
+        super.moved(was, move);
+        if (move.from() instanceof ServerLevel from) {
+            ChunkLoaders.releaseAll(from, was);
+        }
+        this.wanted = null;
+        this.unsettled = true;
+        setChanged();
+        wake();
     }
 
     private void changeArea(final PersistorArea to) {

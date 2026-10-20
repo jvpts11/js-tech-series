@@ -15,6 +15,8 @@ import dev.jstech.core.hazard.HazardMap;
 import dev.jstech.core.hazard.LevelRadiation;
 import dev.jstech.core.heat.LevelHeat;
 import dev.jstech.core.mechanical.LevelMechanics;
+import dev.jstech.core.moving.Footing;
+import dev.jstech.core.moving.LevelMovingStructures;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.persistence.CoreChunkData;
@@ -100,6 +102,22 @@ public final class CoreAttachments {
     /** A dimension's sources of radiation; never saved, since each block that gives it off says so as it loads. */
     public static final Supplier<AttachmentType<LevelRadiation>> RADIATION =
             ATTACHMENT_TYPES.register("radiation", () -> AttachmentType.builder(LevelRadiation::new).build());
+
+    /**
+     * A dimension's moving structures loaded now, on the server and on a player's game; never saved, since each
+     * structure is saved with its entity and files itself again as it loads.
+     */
+    public static final Supplier<AttachmentType<LevelMovingStructures>> MOVING_STRUCTURES =
+            ATTACHMENT_TYPES.register("moving_structures",
+                    () -> AttachmentType.builder(LevelMovingStructures::new).build());
+
+    /**
+     * The moving structure a player stands on and where on it, by the structure's own places: saved with the player,
+     * so one who leaves the game on a deck in flight comes back standing where they were on it.
+     */
+    public static final Supplier<AttachmentType<Footing>> FOOTING =
+            ATTACHMENT_TYPES.register("footing", () -> AttachmentType.builder(() -> Footing.NONE)
+                    .serialize(Footing.CODEC).build());
 
     /** What a player knows of the land's hazards, chunk by chunk: saved with them, and kept through death. */
     public static final Supplier<AttachmentType<HazardMap>> HAZARD_MAP =

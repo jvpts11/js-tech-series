@@ -308,6 +308,11 @@ public final class ConnectivityIndex {
         }
     }
 
+    /** Forgets the cables the owner at {@code ownerPos} touched: it is no longer there, moved with a structure. */
+    public void unanchor(final long ownerPos) {
+        anchors.remove(ownerPos);
+    }
+
     /**
      * Takes out a block that carries the network, if it was ever put in.
      *

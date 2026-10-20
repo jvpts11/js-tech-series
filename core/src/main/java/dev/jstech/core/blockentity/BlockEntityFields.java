@@ -8,6 +8,7 @@
 package dev.jstech.core.blockentity;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.util.BlockDrops;
 import net.minecraft.core.BlockPos;
@@ -62,6 +63,7 @@ public final class BlockEntityFields {
     private final List<BiConsumer<ServerLevel, Direction>> neighbourListeners = new ArrayList<>();
     private final List<ItemStackHandler> spilled = new ArrayList<>();
     private final List<Consumer<ServerLevel>> loadedListeners = new ArrayList<>();
+    private final List<BiConsumer<BlockPos, BlockMove>> movedListeners = new ArrayList<>();
     private boolean closed;
     /* Set as the block is taken away whole, its contents going with it: then nothing spills. */
     private boolean whole;
@@ -247,6 +249,31 @@ public final class BlockEntityFields {
      */
     public void takenWhole() {
         whole = true;
+    }
+
+    /**
+     * Runs {@code listener} when the block moves with others, as a moving structure is made, set down or sent on,
+     * with where it was: a link that keeps its places otherwise than in a field of a place follows them, and what it
+     * left behind where it stood is put away, since a block moved is never broken.
+     */
+    public void whenMoved(final BiConsumer<BlockPos, BlockMove> listener) {
+        movedListeners.add(Objects.requireNonNull(listener, "listener"));
+    }
+
+    /**
+     * The block moved with others from {@code was}, as a moving structure is made, set down or sent on: every place a
+     * field holds of a block that moved with it follows that block, so a link to a block of the same structure still
+     * holds, and what was declared to happen then happens.
+     */
+    public void moved(final BlockPos was, final BlockMove move) {
+        for (final IField field : fields) {
+            if (field instanceof ValueField<?> value) {
+                value.moved(move);
+            }
+        }
+        for (final BiConsumer<BlockPos, BlockMove> listener : movedListeners) {
+            listener.accept(was, move);
+        }
     }
 
     /**

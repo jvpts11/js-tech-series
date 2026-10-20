@@ -11,6 +11,7 @@ import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.FieldEnergyStorage;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.moving.BlockMove;
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -125,6 +126,15 @@ public class LampBlockEntity extends SyncedBlockEntity {
     public void setRemoved() {
         super.setRemoved();
         SEEN.remove(this);
+    }
+
+    /* Moved with a moving structure: the light its beam laid where it stood goes out; it lays it again from here. */
+    @Override
+    public void moved(final BlockPos was, final BlockMove move) {
+        super.moved(was, move);
+        if (move.from() instanceof ServerLevel left) {
+            BeamLights.release(left, was.asLong());
+        }
     }
 
     /** Each tick on the server: on or off as its control says, its light set, a spotlight's laid on the world. */

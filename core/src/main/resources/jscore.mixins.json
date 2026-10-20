@@ -3,14 +3,34 @@
   "package": "dev.jstech.core.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BlockGetterMixin",
+    "ChunkMapMixin",
+    "ChunkStatusTasksMixin",
+    "ChunkUnloadMixin",
+    "CollisionGetterMixin",
+    "EntityMixin",
     "FireBlockMixin",
+    "LevelMixin",
     "MappedRegistryMixin",
+    "NaturalSpawnerMixin",
+    "PlayerListMixin",
+    "PlayerMixin",
+    "ServerGamePacketListenerImplMixin",
     "ServerLevelMixin",
+    "TrackedEntityMixin",
+    "WorldBorderMixin",
     "WorldDimensionsMixin"
   ],
   "client": [
     "AdvancementWidgetMixin",
-    "GameRendererMixin"
+    "ClientChunkCacheMixin",
+    "ClientLevelMixin",
+    "GameRendererMixin",
+    "LevelRendererMixin",
+    "ParticleEngineMixin",
+    "ParticleMixin",
+    "RenderChunkRegionMixin",
+    "RenderSectionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

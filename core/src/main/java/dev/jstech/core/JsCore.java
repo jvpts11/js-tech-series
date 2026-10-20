@@ -80,6 +80,7 @@ import dev.jstech.core.mechanical.ShaftLinkItem;
 import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.network.NetworkMembers;
+import dev.jstech.core.peripheral.PeripheralReconciler;
 import dev.jstech.core.network.StateTables;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
@@ -160,6 +161,7 @@ import dev.jstech.core.material.MineralFamilies;
 import dev.jstech.core.menu.MenuSync;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.model.network.ModelCommands;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.multiblock.MultiblockPatterns;
@@ -307,6 +309,8 @@ public final class JsCore {
         Explosions.listen(modEventBus);
         // Fire that spreads by what burns, the oxygen and the wind, leaves its remains, and is put out by class.
         Fires.listen(modEventBus);
+        // Moving structures: real blocks kept in the yard, drawn and collided where the structure is, moved by rule.
+        MovingStructures.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -484,6 +488,7 @@ public final class JsCore {
         MechanicalPorts.listen(modEventBus);
         Conveyors.listen(modEventBus);
         NetworkMembers.listen();
+        PeripheralReconciler.listen();
         CoreEnergy.listen(modEventBus);
         ConfigSync.listen(modEventBus);
         CoreParts.listen(modEventBus);

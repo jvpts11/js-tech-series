@@ -40,6 +40,8 @@ public final class CoreLogs {
     public static final LogSystem LANGUAGES = LogSystems.declare(JsCore.MODID, "languages");
     /** The recordings: their store, their sending and their playing. */
     public static final LogSystem MEDIA = LogSystems.declare(JsCore.MODID, "media");
+    /** The moving structures: their yard, their entities, assembling and taking them apart. */
+    public static final LogSystem MOVING = LogSystems.declare(JsCore.MODID, "moving");
     /** The models drawn with the Core's models: their files, their reading and their animations. */
     public static final LogSystem MODELS = LogSystems.declare(JsCore.MODID, "models");
     /** What the players' games send the server. */

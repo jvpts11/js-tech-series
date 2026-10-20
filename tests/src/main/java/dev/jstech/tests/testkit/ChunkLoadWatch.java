@@ -12,6 +12,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +33,8 @@ public final class ChunkLoadWatch {
     private static final String[] WATCHED = {"dev.jstech.core.", "dev.jstech.computers.", "dev.jstech.industrial."};
     private static final StackWalker WALKER = StackWalker.getInstance();
     private static final Map<String, AtomicInteger> BY_LINE = new ConcurrentHashMap<>();
+    /* How many frames of the series' code a report names, the reading line first and what called it after. */
+    private static final int CHAIN = 8;
 
     private ChunkLoadWatch() {
     }
@@ -41,20 +44,33 @@ public final class ChunkLoadWatch {
         NeoForge.EVENT_BUS.addListener(ChunkLoadWatch::onLoad);
     }
 
+    /** How many chunks the lines of the series' code starting with {@code prefix} have loaded by reading them. */
+    public static int loadsBy(final String prefix) {
+        int count = 0;
+        for (final Map.Entry<String, AtomicInteger> line : BY_LINE.entrySet()) {
+            if (line.getKey().startsWith(prefix)) {
+                count += line.getValue().get();
+            }
+        }
+        return count;
+    }
+
     private static void onLoad(final ChunkEvent.Load event) {
         if (event.getLevel().isClientSide()) {
             return;
         }
-        final Optional<String> reader = WALKER.walk(frames -> frames
+        final List<String> chain = WALKER.walk(frames -> frames
                 .map(frame -> frame.getClassName() + "." + frame.getMethodName() + ":" + frame.getLineNumber())
                 .filter(ChunkLoadWatch::watched)
-                .findFirst());
+                .limit(CHAIN)
+                .toList());
+        final Optional<String> reader = chain.stream().findFirst();
         reader.ifPresent(line -> {
             final int count = BY_LINE.computeIfAbsent(line, l -> new AtomicInteger()).incrementAndGet();
             if (count == 1 || Integer.bitCount(count) == 1) {
                 final ChunkPos pos = event.getChunk().getPos();
-                JsTests.LOGGER.warn("[JSC-CHUNKLOAD] chunk {} loaded by reading it at {} ({} so far)", pos, line,
-                        count);
+                JsTests.LOGGER.warn("[JSC-CHUNKLOAD] chunk {} loaded by reading it at {} ({} so far), called from {}",
+                        pos, line, count, String.join(" < ", chain.subList(1, chain.size())));
             }
         });
     }

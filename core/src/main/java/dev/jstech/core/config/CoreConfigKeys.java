@@ -17,6 +17,7 @@ import dev.jstech.core.fire.FireBalance;
 import dev.jstech.core.hazard.HazardBalance;
 import dev.jstech.core.heat.HeatBalance;
 import dev.jstech.core.mechanical.MechanicalBalance;
+import dev.jstech.core.moving.StructureBalance;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.material.NamingBalance;
 import dev.jstech.core.multiblock.BuildBalance;
@@ -63,6 +64,8 @@ public final class CoreConfigKeys {
     public static final String HEAT = "heat";
     /** What mechanical power does to the world: parts that break under overload. */
     public static final String MECHANICAL = "mechanical";
+    /** The moving structures: how big one may be. */
+    public static final String MOVING = "moving_structures";
     /** The section of building multiblocks for players. */
     public static final String MULTIBLOCK = "multiblock";
     /** What sealed rooms do: decompression, fire and oxygen, breathing mobs, plants, bursting blocks, their size. */
@@ -103,6 +106,7 @@ public final class CoreConfigKeys {
     private static final int MOST_LOOKED_AT = 1_048_576;
     private static final int FEWEST_BROKEN = 16;
     private static final int MOST_BROKEN = 65_536;
+    private static final int MOST_STRUCTURE_BLOCKS = 4_194_304;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
@@ -538,6 +542,13 @@ public final class CoreConfigKeys {
             .comment("How many blocks a second a tool that builds a multiblock for a player places, one at a time.")
             .named("Blocks built a second").unit("blocks/s");
 
+    /** How many blocks one moving structure may be made of. */
+    public static final ConfigKey<Integer> MOVING_MOST_BLOCKS = ConfigKey.whole(MOVING + ".most_blocks",
+            StructureBalance.DEFAULT_MOST_BLOCKS).range(1, MOST_STRUCTURE_BLOCKS)
+            .comment("How many blocks one moving structure may be made of; a structure of more is refused, saying "
+                    + "why.")
+            .named("Most blocks in a moving structure").unit("blocks");
+
     /** How far from the controller the player may be while a tool builds a multiblock. */
     public static final ConfigKey<Integer> MULTIBLOCK_BUILD_REACH = ConfigKey.whole(
             MULTIBLOCK + ".build_reach", BuildBalance.DEFAULT_REACH).range(MIN_BUILD_REACH, MAX_BUILD_REACH)
@@ -565,6 +576,7 @@ public final class CoreConfigKeys {
             .sectionComment(HEAT, "What heat does to the world: pipes that freeze, cold liquids that boil off, "
                     + "machines that overheat, fires and burns.")
             .sectionComment(MECHANICAL, "What mechanical power does to the world: parts that break under overload.")
+            .sectionComment(MOVING, "The moving structures: how big one may be.")
             .sectionComment(MULTIBLOCK, "Building multiblocks for players: how fast, and how far from them.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
@@ -578,6 +590,7 @@ public final class CoreConfigKeys {
             .sectionNamed(HAZARDS, "Hazards")
             .sectionNamed(HEAT, "Heat")
             .sectionNamed(MECHANICAL, "Mechanical power")
+            .sectionNamed(MOVING, "Moving structures")
             .sectionNamed(MULTIBLOCK, "Multiblocks")
             .sectionNamed(ROOMS, "Sealed rooms")
             .sectionNamed(VEINS, "Veins")
@@ -629,6 +642,7 @@ public final class CoreConfigKeys {
             .key(HEAT_IGNITES, HeatBalance::setIgnites)
             .key(HEAT_HOT_SURFACES_BURN, HeatBalance::setHotSurfacesBurn)
             .key(MECHANICAL_PARTS_BREAK, MechanicalBalance::setPartsBreak)
+            .key(MOVING_MOST_BLOCKS, StructureBalance::mostBlocks)
             .key(MULTIBLOCK_BLOCKS_PER_SECOND, BuildBalance::setBlocksPerSecond)
             .key(MULTIBLOCK_BUILD_REACH, BuildBalance::setReach)
             .key(ROOMS_DECOMPRESSION_PULL, RoomBalance::setDecompressionPull)

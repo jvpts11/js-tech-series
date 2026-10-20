@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.function.LongUnaryOperator;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -236,6 +237,24 @@ public final class PeripheralPorts {
             if (this.linked.containsKey(pos)) {
                 this.disabled.add(pos);
             }
+        }
+    }
+
+    /**
+     * The owner and its peripherals moved, as a moving structure takes its blocks: every position it keeps, of a
+     * peripheral or of a hub, becomes {@code where} of it, in the same order, each port, hub and disabled flag kept.
+     */
+    public void moved(final LongUnaryOperator where) {
+        final Map<Long, PortKind> wereLinked = new LinkedHashMap<>(this.linked);
+        final Map<Long, Long> wereHubs = new HashMap<>(this.hubs);
+        final Set<Long> wereDisabled = new HashSet<>(this.disabled);
+        this.linked.clear();
+        this.hubs.clear();
+        this.disabled.clear();
+        wereLinked.forEach((pos, kind) -> this.linked.put(where.applyAsLong(pos), kind));
+        wereHubs.forEach((pos, hub) -> this.hubs.put(where.applyAsLong(pos), where.applyAsLong(hub)));
+        for (final long pos : wereDisabled) {
+            this.disabled.add(where.applyAsLong(pos));
         }
     }
 

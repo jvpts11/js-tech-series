@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.light;
 
+import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.light.Beams;
 import dev.jstech.core.light.BeamLights;
 import dev.jstech.core.light.LampBlockEntity;
@@ -181,6 +182,8 @@ public final class ColouredLights {
         }
         if (next >= queue.size()) {
             queue = around(player.blockPosition());
+            // A moving structure's blocks are out in the yard: its sections are looked at while it is near.
+            queue.addAll(ClientMovingStructures.yardSectionsNear(player.position(), LightingSettings.reach()));
             next = 0;
             if (BY_SECTION.keySet().retainAll(new HashSet<>(queue))) {
                 VERSION.incrementAndGet();
@@ -188,14 +191,33 @@ public final class ColouredLights {
         }
         final Map<Long, List<Source>> lamps = lamps(level);
         for (int i = 0; i < SECTIONS_A_TICK && next < queue.size(); i++, next++) {
-            final long section = queue.get(next);
-            final List<Source> now = new ArrayList<>(blocks(level, section));
-            now.addAll(lamps.getOrDefault(section, List.of()));
-            final List<Source> before = BY_SECTION.put(section, List.copyOf(now));
-            if (before != null && !before.equals(now) || before == null && !now.isEmpty()) {
-                VERSION.incrementAndGet();
-                rebuildAround(section);
-            }
+            look(level, queue.get(next), lamps);
+        }
+    }
+
+    /**
+     * Looks at {@code sections} again now rather than at their turn: the blocks there changed hands with a moving
+     * structure's, and their glow and coloured light go with them in the frame they do.
+     */
+    public static void lookAgain(final List<Long> sections) {
+        final ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        final Map<Long, List<Source>> lamps = lamps(level);
+        for (final long section : sections) {
+            look(level, section, lamps);
+        }
+    }
+
+    /* Takes the sources of the section {@code section} as they are now; what their light reaches is built again. */
+    private static void look(final ClientLevel level, final long section, final Map<Long, List<Source>> lamps) {
+        final List<Source> now = new ArrayList<>(blocks(level, section));
+        now.addAll(lamps.getOrDefault(section, List.of()));
+        final List<Source> before = BY_SECTION.put(section, List.copyOf(now));
+        if (before != null && !before.equals(now) || before == null && !now.isEmpty()) {
+            VERSION.incrementAndGet();
+            rebuildAround(section);
         }
     }
 
@@ -256,8 +278,12 @@ public final class ColouredLights {
     /* A block that gives light of a colour, or bright enough to glow; not the light standing in the air. */
     private static boolean worthKeeping(final BlockState state) {
         final int level = state.getLightEmission();
-        return level > 0 && !(state.getBlock() instanceof LightBlock) && (LightColours.of(state) != LightMath.WHITE
-                || level >= GLOWS_FROM);
+        return level > 0 && !(state.getBlock() instanceof LightBlock) && glows(level, LightColours.of(state));
+    }
+
+    /** Whether light of {@code level} and {@code colour} is kept for its glow: of a colour, or bright enough. */
+    static boolean glows(final int level, final int colour) {
+        return colour != LightMath.WHITE || level >= GLOWS_FROM;
     }
 
     /* The lamps the player's game has, and the places their spotlights light, by section. */

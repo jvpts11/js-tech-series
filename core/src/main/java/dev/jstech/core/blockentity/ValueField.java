@@ -9,10 +9,15 @@ package dev.jstech.core.blockentity;
 
 import dev.jstech.core.log.CoreLogs;
 import com.mojang.serialization.Codec;
+import dev.jstech.core.moving.BlockMove;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -76,6 +81,23 @@ public final class ValueField<T> implements IField {
     @Override
     public FieldFlags flags() {
         return flags;
+    }
+
+    /**
+     * Its block moved with others, a moving structure made or set down: a place it holds of a block that moved too
+     * follows that block, in this dimension or another; a block's look it holds turns as the blocks turned; any other
+     * value, or a place of a block that stayed, is kept as it is.
+     */
+    @SuppressWarnings("unchecked")
+    void moved(final BlockMove move) {
+        if (value instanceof BlockPos place && move.movedHere(place)) {
+            set((T) move.where(place));
+        } else if (value instanceof GlobalPos place && place.dimension() == move.from().dimension()
+                && move.movedHere(place.pos())) {
+            set((T) GlobalPos.of(move.to().dimension(), move.where(place.pos())));
+        } else if (value instanceof BlockState look && move.rotation() != Rotation.NONE) {
+            set((T) look.rotate(move.rotation()));
+        }
     }
 
     @Override

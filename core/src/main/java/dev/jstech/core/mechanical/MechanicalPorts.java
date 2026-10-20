@@ -12,6 +12,7 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.capability.CapabilityKind;
 import dev.jstech.core.capability.CapabilityKinds;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.moving.StructureBlocksMovedEvent;
 import dev.jstech.core.signal.Signals;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -52,6 +53,17 @@ public final class MechanicalPorts {
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (event.getLevel() instanceof ServerLevel level) {
                 LevelMechanics.of(level).tick(level);
+            }
+        });
+        // Parts moved away with a structure leave the networks they turned in where they stood.
+        NeoForge.EVENT_BUS.addListener(StructureBlocksMovedEvent.class, event -> {
+            if (event.move().from() instanceof ServerLevel level) {
+                final LevelMechanics mechanics = LevelMechanics.of(level);
+                for (final BlockPos was : event.move().moved().keySet()) {
+                    if (mechanics.networkAt(was) != null) {
+                        LevelMechanics.changed(level, was);
+                    }
+                }
             }
         });
     }

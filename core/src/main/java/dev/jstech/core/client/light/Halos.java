@@ -9,6 +9,7 @@ package dev.jstech.core.client.light;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.light.LampBlockEntity;
 import dev.jstech.core.light.LightMath;
 import dev.jstech.core.light.LightingSettings;
@@ -58,19 +59,29 @@ final class Halos {
         }
         final Vec3 eye = camera.getPosition();
         final double reach = LightingSettings.reach();
+        // A glowing block aboard a moving structure is out in the yard; it glows where the structure draws it.
+        final float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
         final List<Glow> glows = new ArrayList<>();
         for (final ColouredLights.Source source : ColouredLights.glowing()) {
-            glows.add(new Glow(new Vec3(source.x() + 0.5, source.y() + 0.5, source.z() + 0.5), source.level(),
-                    source.colour()));
+            glows.add(new Glow(ClientMovingStructures.drawnInWorld(new Vec3(source.x() + 0.5, source.y() + 0.5,
+                    source.z() + 0.5), partialTick), source.level(), source.colour()));
         }
         for (final LampBlockEntity lamp : LampBlockEntity.seen()) {
             if (lamp.getLevel() == level && lamp.lit() && lamp.shining() > 0) {
-                glows.add(new Glow(Vec3.atCenterOf(lamp.getBlockPos()), lamp.shining(), lamp.kind().colour()));
+                glows.add(new Glow(ClientMovingStructures.drawnInWorld(Vec3.atCenterOf(lamp.getBlockPos()),
+                        partialTick), lamp.shining(), lamp.kind().colour()));
             }
         }
         for (final KitGlows.Glowing part : KitGlows.last()) {
             if (part.level() == level) {
-                glows.add(new Glow(part.at(), part.light(), part.colour()));
+                glows.add(new Glow(ClientMovingStructures.drawnInWorld(part.at(), partialTick), part.light(),
+                        part.colour()));
+            }
+        }
+        // A structure set down glows where it landed until the land is drawn with its blocks, and glows itself.
+        for (final IDynamicLightSource.Light lamp : ClientMovingStructures.landedLamps()) {
+            if (ColouredLights.glows(lamp.level(), lamp.colour())) {
+                glows.add(new Glow(lamp.at(), lamp.level(), lamp.colour()));
             }
         }
         glows.removeIf(glow -> glow.at().distanceToSqr(eye) > reach * reach);

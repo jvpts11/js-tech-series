@@ -759,6 +759,26 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   series' fires give off soot.
 - Blocks laid along an axis as logs are, and blocks whose every state picks its own model, for any mod's
   content; and a texture a pack draws as the game loads may be named by a mod's own models.
+- Moving structures: structures of real blocks that move through the world and go on working as they move,
+  machines running and crops growing, any mod's blocks among them. A structure is made of a box of blocks or of the
+  blocks joined to one, and moved by rules: toward a place, spinning, swinging on a hinge, through a path, turning to
+  face a direction, running on the game's rails. Entities collide with it however it is turned, stand on it and are
+  carried as it moves; a player walks a moving deck as the ground, on a server too; arrows and every ray hit it, and
+  its blocks are opened, used, broken and built on as blocks of the ground. Its sounds, particles (a torch's flame,
+  a block's pieces), drops and news go where its blocks are, and the rain falls on it where it is. It is drawn as
+  cached meshes in the light of the world where it is, as the server lights it, each face shaded as it faces however
+  the structure is turned, with the glow and the coloured light of its lamps, the same under a shader pack; its lamps
+  light the world round it as it goes, and its blocks change hands with the world's in a single frame as it is made
+  and as it is set down, never a frame of neither. It is saved in the middle of a move, set down on the world's grid
+  turned
+  as it was, taken to another dimension with everyone aboard, and kept working far from players by a chunk loader
+  aboard. Nothing of it reads a chunk that is not loaded: a structure made where its plot of the yard has not loaded
+  yet keeps its blocks on the ground for the few ticks it takes, and one sent to another dimension goes once the land
+  it goes to has loaded. Blocks that remember other blocks are told where they moved, and a block entity's fields
+  follow on their own, with `whenMoved` for the rest. The Core's own kits work aboard: a formed multiblock crosses
+  formed and stands formed set down turned, cables, mechanical networks, spotlights, peripheral links, radio relays,
+  the Atmosphere Detector and radiation leave nothing where they stood, and an overhead wire goes with the two
+  insulators it hangs from. It has commands and a setting of its own.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
@@ -794,6 +814,20 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 ### Fixed
 - A dimension made while the game runs keeps loaded again the chunks it kept loaded, each time it is made
   again; it held them as kept but loaded none after the server restarted.
+- A multiblock's controller lifted whole, as by a piston or by a mod that moves blocks as Create's
+  contraptions do, is moved, not broken: its parts are no longer taken down where it stood, and what it holds no
+  longer drops.
+- A formed machine moved by a mod that does not tell it where its blocks went forgets the places it stood at
+  and finds its structure again where it is, where it could stop the server reaching across the world for them.
+- A fire lit in a chunk that went away before the sealed rooms looked at its oxygen no longer loads that chunk
+  again to look.
+- What reads the world only where it is loaded (a block entity read at the place it is remembered at, a fire
+  spreading, the sealed rooms' fires) no longer reads a chunk still on its way to loading, which made the server wait
+  for it in the middle of a tick.
+- A chunk let go and wanted again before it unloaded, then needed by the generation of a chunk beside it, no
+  longer holds the server: the game's unloading of it went round and round for all the server's spare time, so the
+  generation never went on, new land never came and the server could not stop. The Core drops that unloading, as
+  the chunk is kept; this was the game's own, made likelier by anything that loads chunks a while and lets them go.
 
 ## [0.5.2a] - 2026-10-14
 

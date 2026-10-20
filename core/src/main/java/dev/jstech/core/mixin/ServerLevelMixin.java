@@ -8,6 +8,7 @@
 package dev.jstech.core.mixin;
 
 import dev.jstech.core.fire.Fires;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.room.Rooms;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -18,11 +19,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Tells the sealed rooms and the fire kit of every block that changes. The game's events tell of blocks broken,
- * placed, blown up and pushed, but not of a block changed by a command, by another mod's machine or without telling
- * its neighbours, nor of a fire lit or gone out; a room opened by one of those would stay sealed, and a fire would go
- * unseen. The game calls this method for every block that changes, by any means: it only notes where, and the rooms
- * and the fires are worked out later, away from the change.
+ * Tells the sealed rooms, the fire kit and the moving structures of every block that changes. The game's events tell
+ * of blocks broken, placed, blown up and pushed, but not of a block changed by a command, by another mod's machine or
+ * without telling its neighbours, nor of a fire lit or gone out; a room opened by one of those would stay sealed, a
+ * fire would go unseen, and a structure would lose count of the blocks of its plot of the yard, whose box grows with
+ * a block set past its edge. The game calls this method for every block that changes, by any means: it only notes
+ * where, and the rooms and the fires are worked out later, away from the change.
  */
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
@@ -32,5 +34,6 @@ public abstract class ServerLevelMixin {
                                      final CallbackInfo info) {
         Rooms.noteChange((ServerLevel) (Object) this, pos, before, after);
         Fires.noteChange((ServerLevel) (Object) this, pos, before, after);
+        MovingStructures.noteChange((ServerLevel) (Object) this, pos, before, after);
     }
 }
