@@ -169,9 +169,10 @@ The codec writes the value into saved worlds, the stream codec sends it to playe
 
 *Added 2026-10-01.*
 
-An item can hold modes, energy, a fluid or other items, each said in one line of its declaration. The Core
-adds the data components, the capabilities (so chargers, pipes and machines reach what it holds) and the
-lines on its tooltip.
+An item can hold modes, energy, a fluid, a gas or other items, each said in one line of its declaration. The
+Core adds the data components, the capabilities (so chargers, pipes and machines reach what it holds) and the
+lines on its tooltip. What an item does as a tool, how long it lasts, and keys that work it when it is not held
+are on their own page ([Tools and items](TOOLS.md)).
 
 ```java
 public static final ItemMode SCAN = ItemMode.of("scan", MyTexts.MODE_SCAN);
@@ -183,17 +184,21 @@ public static final ItemEntry<Item> SURVEYOR = CONTENT.item("surveyor", Item::ne
         .modes(SCAN, MARK)                  // two or more; the first is where it starts
         .holdsEnergy(50_000, 500, 500)      // capacity, most in a tick, most out a tick (FE)
         .holdsFluid(4_000)                  // millibuckets; 1000 is one bucket
+        .holdsGas(1_000, 200)               // a tank of 1000 mB at 200 times the open air's pressure
         .holdsItems(9)                      // slots, up to 256
         .register();
 ```
 
 - **Modes** are the ways an item works, switched by a key the player binds in the game's controls ("Change
-  Item Mode"; it has no key until bound, and the tooltip says so). Read the current one with
+  Item Mode"; it has no key until bound, and the tooltip says so), or by the mouse wheel turned while sneaking
+  with the item in the main hand. Read the current one with
   `ItemStates.mode(stack)`, change it with `ItemStates.setMode(stack, mode)`. The mode is saved by its id, so an
   id never changes once released; an id a stack does not know falls back to the first mode.
 - **FE** (Forge Energy) is the energy unit every NeoForge mod shares. An item that holds energy is reached by
   anything that charges or drains items.
-- An item that holds energy, a fluid or items never stacks: two of them would have to share what they hold.
+- A **gas** is held in a tank of a volume at a pressure, holding their product of one gas at a time, counted at
+  the pressure of the open air, and is reached by the Core's gas capability (`MatterCapabilities.GAS_ITEM`).
+- An item that holds energy, a fluid, a gas or items never stacks: two of them would have to share what they hold.
 - An item that holds items refuses other items that hold items, so nothing can be nested without end.
 
 ## Block entities

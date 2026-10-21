@@ -13,19 +13,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A worn item that takes modules, as a data pack or a mod declares it: its sockets, each of a kind. Its modules run
- * on the energy the item holds.
+ * An item that takes modules, as a data pack or a mod declares it: its sockets, each of a kind, and whether its modules
+ * work while it is worn, as a suit's, or while it is held in the main hand, as a tool's. Its modules run on the energy
+ * the item holds.
  *
  * @param sockets its sockets, in order, as many of each kind as each says
+ * @param held    whether its modules work while it is held in the main hand rather than worn
  */
-public record ModuleHostDef(List<Socket> sockets) {
+public record ModuleHostDef(List<Socket> sockets, boolean held) {
 
     public static final Codec<ModuleHostDef> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Socket.CODEC.listOf().fieldOf("sockets").forGetter(ModuleHostDef::sockets))
+            Socket.CODEC.listOf().fieldOf("sockets").forGetter(ModuleHostDef::sockets),
+            Codec.BOOL.optionalFieldOf("held", false).forGetter(ModuleHostDef::held))
             .apply(instance, ModuleHostDef::new));
 
     public ModuleHostDef {
         sockets = List.copyOf(sockets);
+    }
+
+    /** A worn item with {@code sockets}. */
+    public static ModuleHostDef worn(final List<Socket> sockets) {
+        return new ModuleHostDef(sockets, false);
+    }
+
+    /** A tool with {@code sockets}, whose modules work while it is held in the main hand. */
+    public static ModuleHostDef tool(final List<Socket> sockets) {
+        return new ModuleHostDef(sockets, true);
     }
 
     /** Its sockets one by one, each by its kind: as many entries as sockets. */

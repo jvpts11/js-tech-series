@@ -85,6 +85,7 @@ import dev.jstech.core.network.StateTables;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
 import dev.jstech.core.module.CoreModuleEffects;
+import dev.jstech.core.tool.Tools;
 import dev.jstech.core.module.Modules;
 import dev.jstech.core.creature.CoreCreatureBehaviours;
 import dev.jstech.core.creature.Creatures;
@@ -333,6 +334,8 @@ public final class JsCore {
         // Modules in worn things: the hosts' sockets, the modules' effects and the energy they spend each second.
         CoreModuleEffects.declare();
         Modules.listen();
+        // Tools: areas and veins mined, what they work on and their heat, building tools and copies of regions.
+        Tools.listen();
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();

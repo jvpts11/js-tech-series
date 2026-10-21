@@ -18,6 +18,7 @@ says what the Core promises and what it does not yet.
 | [Machines](MACHINES.md) | Processing machines, recipes with counts and fluids, upgrades, JEI and EMI. |
 | [Multiblocks](MULTIBLOCKS.md) | Shapes of many blocks, as data, with ports. |
 | [Block spaces and microblocks](MULTIPART.md) | Several things in one block space, microblocks of any block, the saw, facades. |
+| [Tools and items](TOOLS.md) | Tools with modes, areas and veins mined, building tools and copies of regions, tools on energy, fuel or air, heat, waits and charging, modules in tools, keys for items not held, durability from a material. |
 | [Entities](ENTITIES.md) | Entities, vehicles, robots, projectiles, and what is worn. |
 | [Moving structures](MOVING_STRUCTURES.md) | Structures of real blocks that move and keep working: made from the world and set down on its grid, moved by rules (toward a place, spinning, on a hinge, along a path, facing a direction, on rails), stood on and carried, aimed at and used, drawn as cached meshes in the world's light, saved in mid-move, taken to another dimension with everyone aboard, kept loaded by a chunk loader aboard. |
 

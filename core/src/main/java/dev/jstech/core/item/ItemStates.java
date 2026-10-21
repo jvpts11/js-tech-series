@@ -15,6 +15,8 @@ import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.energy.ItemEnergyStorage;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
+import dev.jstech.core.matter.MatterCapabilities;
+import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
@@ -43,18 +45,19 @@ import org.jetbrains.annotations.Nullable;
  * Items that hold something: the components the Core keeps it in, what each declared item holds, and the mode key.
  *
  * <p>An item says what it holds where it is declared, and the Core does the rest: it gives the item the game's
- * capability for each (energy, fluid, items), keeps each in a component that goes wherever the item goes and is saved
- * with it, makes the item stack alone, and tells a player what it holds in its tooltip:
+ * capability for each (energy, fluid, items) or the Core's (gas), keeps each in a component that goes wherever the
+ * item goes and is saved with it, makes the item stack alone, and tells a player what it holds in its tooltip:
  *
  * <pre>{@code
  * CONTENT.item("field_kit", Item::new).named("Field Kit")
  *         .modes(ItemMode.of("scan", SCAN), ItemMode.of("mark", MARK))
- *         .holdsEnergy(50_000L, 500, 500).holdsFluid(4_000).holdsItems(9)
+ *         .holdsEnergy(50_000L, 500, 500).holdsFluid(4_000).holdsGas(1_000, 200).holdsItems(9)
  *         .register();
  * }</pre>
  *
  * <p>The mode key, a key action of the Core's, changes the mode of the item in the main hand, on the server, which
- * tells the player the new one on the action bar; with shift held it goes back one.
+ * tells the player the new one on the action bar; with shift held it goes back one. The mouse wheel turned while
+ * sneaking does the same, one mode a notch.
  */
 public final class ItemStates {
 
@@ -73,6 +76,17 @@ public final class ItemStates {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> INVENTORY =
             COMPONENTS.registerComponentType("inventory", builder -> builder.persistent(ItemContainerContents.CODEC)
                     .networkSynchronized(ItemContainerContents.STREAM_CODEC).cacheEncoding());
+    /** The gas an item holds; none while it is empty. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<MatterStack>> GAS =
+            COMPONENTS.registerComponentType("gas", builder -> builder.persistent(ItemGasTank.CODEC)
+                    .networkSynchronized(ByteBufCodecs.fromCodec(ItemGasTank.CODEC)));
+    /**
+     * Whether an item that turns on and off is on, as a jetpack or a magnet: one that has never been turned is off. A
+     * key action of its mod turns it ({@link ItemActions#toggle}).
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> ON =
+            COMPONENTS.registerComponentType("item_on", builder -> builder.persistent(Codec.BOOL)
+                    .networkSynchronized(ByteBufCodecs.BOOL));
 
     /* What each declared item holds, worked out the first time it is asked for, once every item is registered. */
     private static volatile @Nullable Map<Item, ItemState> byItem;
@@ -157,6 +171,10 @@ public final class ItemStates {
         final ItemState state = of(stack);
         final List<Text> lines = new ArrayList<>();
         mode(stack).ifPresent(mode -> lines.add(ItemTexts.MODE.with(mode.name())));
+        final Boolean on = stack.get(ON.get());
+        if (on != null) {
+            lines.add(on ? ItemTexts.ON.text() : ItemTexts.OFF.text());
+        }
         if (state.holdsEnergy()) {
             final UnitFormatter format = UnitFormatter.forCurrentLocale();
             final long stored = new ItemEnergyStorage(stack, state.energyCapacity(), state.energyIn(),
@@ -169,6 +187,11 @@ public final class ItemStates {
             lines.add(fluid.isEmpty() ? ItemTexts.FLUID_EMPTY.with(state.fluidCapacity())
                     : ItemTexts.FLUID.with(GameText.of(fluid.copy().getHoverName()), fluid.getAmount(),
                             state.fluidCapacity()));
+        }
+        if (state.holdsGas()) {
+            final MatterStack gas = stack.get(GAS.get());
+            lines.add(gas == null ? ItemTexts.GAS_EMPTY.with(state.gasCapacity())
+                    : ItemTexts.GAS.with(gas.material().name(), gas.amount(), state.gasCapacity()));
         }
         if (state.holdsItems()) {
             final long used = stack.getOrDefault(INVENTORY.get(), ItemContainerContents.EMPTY).nonEmptyStream()
@@ -187,6 +210,10 @@ public final class ItemStates {
         if (state.holdsFluid()) {
             event.registerItem(Capabilities.FluidHandler.ITEM,
                     (stack, context) -> new FluidHandlerItemStack(FLUID, stack, state.fluidCapacity()), item);
+        }
+        if (state.holdsGas()) {
+            event.registerItem(MatterCapabilities.GAS_ITEM,
+                    (stack, context) -> new ItemGasTank(stack, state.gasCapacity()), item);
         }
         if (state.holdsItems()) {
             event.registerItem(Capabilities.ItemHandler.ITEM,

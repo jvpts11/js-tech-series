@@ -73,8 +73,19 @@ public final class KeyActionsClient {
             here.run();
         }
         final BooleanSupplier worth = SENDS_WHEN.get(action);
-        if (action.reachesServer() && (worth == null || worth.getAsBoolean())) {
-            PacketDistributor.sendToServer(new KeyActionPayload(action.id(), Screen.hasShiftDown()));
+        if (worth == null || worth.getAsBoolean()) {
+            send(action, Screen.hasShiftDown());
+        }
+    }
+
+    /**
+     * Sends a press of {@code action} to the server as though shift were held or not, as {@code shift} says, for
+     * input that is not the action's key: the mouse wheel turning an item's mode one way or the other. Nothing for an
+     * action the server has no part in.
+     */
+    public static void send(final KeyAction action, final boolean shift) {
+        if (action.reachesServer()) {
+            PacketDistributor.sendToServer(new KeyActionPayload(action.id(), shift));
         }
     }
 

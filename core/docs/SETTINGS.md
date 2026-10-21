@@ -219,6 +219,8 @@ The Core's server settings are in `jstech-balance.toml`, in each world's `server
 | `protection.audit` | false | Whether who used, changed or broke what others own is written down. |
 | `protection.audit_entries` | 10000 | How many entries the audit log keeps (100 to 1,000,000). |
 | `protection.robots_per_player` | 16 | How many robots one player may have at once (0 to 1,024). |
+| `tools.most_broken`, `tools.hardness_margin` | 64, 2.0 | The most blocks a tool breaks in one blow, and how much harder than the block broken one may be ([Tools and items](TOOLS.md#mining-an-area-or-a-vein)). |
+| `tools.most_placed`, `tools.most_copied` | 64, 4096 | The most blocks a line or plane places in one use, and the most places a copy holds. |
 | `diagnostics.stall_millis` | 1000 | How long a section of a mod's work may run before the watchdog writes down what it was doing, in milliseconds (50 to 60,000) ([Diagnostics](DIAGNOSTICS.md#the-watchdog)). |
 | `diagnostics.count_network` | true | Whether what the server sends each player is counted, for `/jstech bandwidth`. |
 | `diagnostics.warn_operators` | true | Whether operators are told in chat when a section stalls or slows itself. |

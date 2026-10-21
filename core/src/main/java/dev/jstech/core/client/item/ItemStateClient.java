@@ -13,21 +13,26 @@ import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.item.ItemTexts;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.tool.BuildingTools;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
  * Items that hold something, on a player's game: the mode key ({@link CoreKeys#CHANGE_ITEM_MODE}) is sent to the
- * server only while the main hand holds an item with modes, and the lines of a tooltip say what an item holds. The key
- * has none of its own until the player gives it one, since the game and the mods beside it already take nearly every
- * key; the tooltip of an item with modes says so.
+ * server only while the main hand holds an item with modes, the mouse wheel turned while sneaking with one does what
+ * the key does (down to the next mode, up to the one before) instead of changing the slot, and the lines of a tooltip
+ * say what an item holds. The key has none of its own until the player gives it one, since the game and the mods
+ * beside it already take nearly every key; the tooltip of an item with modes says so.
  */
 public final class ItemStateClient {
 
@@ -38,6 +43,18 @@ public final class ItemStateClient {
     public static void listen(final IEventBus modBus) {
         modBus.addListener(FMLClientSetupEvent.class, ItemStateClient::onClientSetup);
         NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, ItemStateClient::onTooltip);
+        NeoForge.EVENT_BUS.addListener(InputEvent.MouseScrollingEvent.class, ItemStateClient::onScroll);
+    }
+
+    public static void onScroll(final InputEvent.MouseScrollingEvent event) {
+        final Minecraft minecraft = Minecraft.getInstance();
+        final LocalPlayer player = minecraft.player;
+        if (minecraft.screen != null || player == null || !player.isShiftKeyDown() || event.getScrollDeltaY() == 0
+                || !ItemStates.of(player.getMainHandItem()).hasModes()) {
+            return;
+        }
+        event.setCanceled(true);
+        KeyActionsClient.send(CoreKeys.CHANGE_ITEM_MODE, event.getScrollDeltaY() > 0);
     }
 
     public static void onClientSetup(final FMLClientSetupEvent event) {
@@ -48,7 +65,8 @@ public final class ItemStateClient {
     }
 
     public static void onTooltip(final ItemTooltipEvent event) {
-        final List<Text> lines = ItemStates.describe(event.getItemStack());
+        final List<Text> lines = new ArrayList<>(ItemStates.describe(event.getItemStack()));
+        lines.addAll(BuildingTools.describe(event.getItemStack()));
         if (lines.isEmpty()) {
             return;
         }

@@ -9,6 +9,9 @@ package dev.jstech.core.module;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.data.DeclaredData;
+import dev.jstech.core.energy.ItemEnergyStorage;
+import dev.jstech.core.item.ItemState;
+import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.worn.WornItems;
 import java.util.HashMap;
@@ -16,31 +19,41 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.WeakHashMap;
+import java.util.function.BiConsumer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
+import net.neoforged.neoforge.event.enchanting.GetEnchantmentLevelEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * The kit of modules in worn items: a worn item with sockets (a host) takes modules, each into a socket of its kind,
- * and each module on does what it does for its wearer, spending the energy the host holds; out of energy, it does
- * nothing until the host is charged. Hosts and modules are declared by their items' ids, in code by their mods or in
- * data packs under {@code data/<namespace>/jstech/module_hosts/} and {@code data/<namespace>/jstech/modules/}, a file
- * winning over a declaration. J's Industrial's exo-suits and J's Space's suits are hosts of this kit.
+ * The kit of modules in worn items and in tools: an item with sockets (a host) takes modules, each into a socket of
+ * its kind, and each module on does what it does, spending the energy the host holds; out of energy, it does nothing
+ * until the host is charged. Hosts and modules are declared by their items' ids, in code by their mods or in data
+ * packs under {@code data/<namespace>/jstech/module_hosts/} and {@code data/<namespace>/jstech/modules/}, a file
+ * winning over a declaration. J's Industrial's exo-suits and J's Space's suits are hosts of this kit, and so are tools
+ * like a multitool whose modules give it reach, an area, a vein or silk touch.
  *
- * <p>A host is worn anywhere things are worn ({@link WornItems}): its armour slot, or a slot of Curios or Accessories.
- * The modules in it work for a player each second.
+ * <p>A worn host is worn anywhere things are worn ({@link WornItems}): its armour slot, or a slot of Curios or
+ * Accessories; the modules in it work for a player each second, spending their energy each second. A tool host's
+ * modules work while it is held in the main hand, and spend their energy each use (each block broken, each shot).
  */
 public final class Modules {
 
@@ -56,17 +69,44 @@ public final class Modules {
     private static final Map<LivingEntity, Map<ResourceLocation, Holder<Attribute>>> CHANGED = new WeakHashMap<>();
     /* Modules work once a second. */
     private static final int EVERY = 20;
+    /* What an item that holds no energy has to give. */
+    private static final IEnergyStorage NO_ENERGY = new EnergyStorage(0);
 
     private Modules() {
     }
 
-    /** Hands the game's bus the modules' work for players, once, from the Core. */
+    /** Hands the game's bus the modules' work for players and what they make of tools, once, from the Core. */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(PlayerTickEvent.Post.class, event -> {
             if (event.getEntity() instanceof ServerPlayer player && player.tickCount % EVERY == 0) {
                 work(player);
             }
         });
+        NeoForge.EVENT_BUS.addListener(ItemAttributeModifierEvent.class, Modules::onToolAttributes);
+        NeoForge.EVENT_BUS.addListener(GetEnchantmentLevelEvent.class, Modules::onToolEnchantments);
+    }
+
+    /**
+     * What the modules working in {@code tool}, a host whose modules work while held, make of it: those on, in a
+     * socket of their kind, whose energy a use takes from it, counted in socket order while its energy lasts. Nothing
+     * for any other item. Its level, or none where there is none to ask by, says whose data is read.
+     */
+    public static ModuleTool tool(final @Nullable Level level, final ItemStack tool) {
+        final ModuleTool made = new ModuleTool();
+        working(level, tool, (socket, module) -> {
+            made.socket("socket_" + socket);
+            module.effects().forEach(effect -> effect.shape(made));
+        });
+        return made;
+    }
+
+    /** Spends from {@code tool} what a use takes of each module working in it. */
+    public static void spendForUse(final @Nullable Level level, final ItemStack tool) {
+        final long[] total = new long[1];
+        working(level, tool, (socket, module) -> total[0] += module.energy());
+        if (total[0] > 0) {
+            energyOf(tool).extractEnergy((int) Math.min(Integer.MAX_VALUE, total[0]), false);
+        }
     }
 
     /** Declares the item {@code item} a module, as {@code def} says while no data pack says otherwise. */
@@ -151,7 +191,7 @@ public final class Modules {
         for (int w = 0; w < worn.size(); w++) {
             final ItemStack host = worn.get(w);
             final Optional<ModuleHostDef> def = host(level, host);
-            if (def.isEmpty()) {
+            if (def.isEmpty() || def.get().held()) {
                 continue;
             }
             final List<String> kinds = def.get().kinds();
@@ -176,6 +216,81 @@ public final class Modules {
                 instance.removeModifier(change.getKey());
             }
         }
+    }
+
+    private static void onToolAttributes(final ItemAttributeModifierEvent event) {
+        final ItemStack stack = event.getItemStack();
+        if (!heldHost(stack)) {
+            return;
+        }
+        for (final ModuleTool.Change change : tool(null, stack).changes()) {
+            event.addModifier(change.attribute(), change.modifier(), EquipmentSlotGroup.MAINHAND);
+        }
+    }
+
+    private static void onToolEnchantments(final GetEnchantmentLevelEvent event) {
+        final ItemStack stack = event.getStack();
+        if (!heldHost(stack)) {
+            return;
+        }
+        for (final Map.Entry<ResourceKey<Enchantment>, Integer> given : tool(null, stack).enchantments().entrySet()) {
+            if (event.getTargetEnchant() == null || event.isTargetting(given.getKey())) {
+                event.getHolder(given.getKey()).ifPresent(holder -> event.getEnchantments().upgrade(holder,
+                        given.getValue()));
+            }
+        }
+    }
+
+    /* Whether {@code stack} is a host whose modules work while held, by whatever data is known: a quick look. */
+    private static boolean heldHost(final ItemStack stack) {
+        return !stack.isEmpty() && HOSTS.anywhere(BuiltInRegistries.ITEM.getKey(stack.getItem()))
+                .filter(ModuleHostDef::held).isPresent();
+    }
+
+    /*
+     * Tells {@code each} the modules working in {@code tool}, socket by socket, while the energy they take a use
+     * lasts; nothing for an item that is no host working while held.
+     */
+    private static void working(final @Nullable Level level, final ItemStack tool,
+                                final BiConsumer<Integer, ModuleDef> each) {
+        if (tool.isEmpty()) {
+            return;
+        }
+        final ResourceLocation id = BuiltInRegistries.ITEM.getKey(tool.getItem());
+        final Optional<ModuleHostDef> def = level != null ? HOSTS.get(level, id) : HOSTS.anywhere(id);
+        if (def.isEmpty() || !def.get().held()) {
+            return;
+        }
+        final List<String> kinds = def.get().kinds();
+        final List<InstalledModules.Socketed> sockets = tool.getOrDefault(INSTALLED.get(), InstalledModules.NONE)
+                .sized(kinds.size()).sockets();
+        long left = energyOf(tool).getEnergyStored();
+        for (int s = 0; s < sockets.size(); s++) {
+            final InstalledModules.Socketed socketed = sockets.get(s);
+            if (!socketed.on() || socketed.module().isEmpty()) {
+                continue;
+            }
+            final ResourceLocation moduleId = BuiltInRegistries.ITEM.getKey(socketed.module().getItem());
+            final Optional<ModuleDef> module = level != null ? MODULES.get(level, moduleId)
+                    : MODULES.anywhere(moduleId);
+            if (module.isPresent() && module.get().kind().equals(kinds.get(s)) && module.get().energy() <= left) {
+                left -= module.get().energy();
+                each.accept(s, module.get());
+            }
+        }
+    }
+
+    /*
+     * The energy {@code host} holds: the Core's own store of an item declared to hold energy, which spends at any rate
+     * whatever it gives others, else the item's capability, else none.
+     */
+    private static IEnergyStorage energyOf(final ItemStack host) {
+        final ItemState state = ItemStates.of(host);
+        if (state.holdsEnergy()) {
+            return new ItemEnergyStorage(host, state.energyCapacity(), 0, Integer.MAX_VALUE);
+        }
+        final IEnergyStorage given = host.getCapability(Capabilities.EnergyStorage.ITEM);
+        return given != null ? given : NO_ENERGY;
     }
 
     /* Spends {@code joules} of {@code energy}, all or none; whether it was there. */

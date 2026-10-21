@@ -79,6 +79,9 @@ public final class JsTests {
         TestModules.declare(modEventBus);
         // A van, a trailer, a drone, a boat, their parts and fuels and a fuel pump, to prove the Core's vehicles.
         TestVehicles.declare(modEventBus);
+        // A drill, a pick that heats, a chainsaw, an air shovel, a railgun, a wand, a multitool with its modules, a
+        // hammer and a magnet, to prove the Core's tools.
+        TestTools.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
         TestItems.declare();
         // Two fuses, to prove the Core's protection slot.

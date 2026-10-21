@@ -8,7 +8,9 @@
 package dev.jstech.core.content;
 
 import dev.jstech.core.item.ItemState;
+import dev.jstech.core.tool.ToolSpec;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponentType;
@@ -31,15 +33,22 @@ public final class ItemEntry<I extends Item> extends DeferredItem<I> {
     private final ItemState state;
     private final List<Default<?>> defaults;
     private final List<TagKey<Item>> tags;
+    private final Optional<ToolSpec> tool;
 
     ItemEntry(final ResourceLocation id, final String english, final IItemLook look, final ItemState state,
-              final List<Default<?>> defaults, final List<TagKey<Item>> tags) {
+              final List<Default<?>> defaults, final List<TagKey<Item>> tags, final Optional<ToolSpec> tool) {
         super(ResourceKey.create(Registries.ITEM, id));
         this.english = english;
         this.look = look;
         this.state = state;
         this.defaults = List.copyOf(defaults);
         this.tags = List.copyOf(tags);
+        this.tool = tool;
+    }
+
+    /** What the item does as a tool, as it was declared; none for an item that is no tool of the Core's. */
+    public Optional<ToolSpec> tool() {
+        return tool;
     }
 
     /** The item tags it was declared in, besides those of its tab. */

@@ -895,6 +895,26 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Modules in worn things: a worn item with sockets takes modules, each into a socket of its kind, and each
   module on does what it does for its wearer (changes an attribute, gives an effect), spending the energy the item
   holds; hosts, modules and their effects are declared in code or by data packs.
+- (Core) Tools that mine an area or a vein: a tool declares, mode by mode, an area of the face it breaks into (three by
+  three, five by five, with depth) or the vein of the block it breaks, the same block or the same ore; the rest breaks
+  with it as the player would break each block, its drops, the tool's wear and every protection's say included,
+  leaving what the tool is not made for, what is far harder than the block broken and what the player may not break.
+  The server sets the most blocks broken in one blow and how much harder they may be.
+- (Core) Tools on energy, fuel or gas: a tool spends the energy it holds, a fuel it burns from the fluid it holds, or
+  a gas from its tank, each block and each use; out of it, it does no more than a bare hand. A tool that heats
+  overheats and cools down by the world's time, one held to charge acts let go with how charged it was
+  (`ChargingItem`), and one that waits between uses shows the wait over its icon.
+- (Core) Building tools: a tool lays copies of a block out along a line or over a plane from the face it is used on,
+  copies the region between two corners and pastes it turned as the player has turned, every block from the player's
+  inventory or from a supply a mod adds (`IBuildSupply`, for J's Computers' network), placed where the player may
+  place it.
+- (Core) Modules in tools: a tool whose modules work while it is held takes them as worn things do, and they make it
+  mine an area or a vein, work as though enchanted (silk touch, fortune), or change the reach and speed of the hand
+  holding it, spending its energy each use.
+- (Core) Items: an item holds a gas, in a tank of a volume at a pressure the Core's gas capability reaches; a key works
+  an item wherever its player carries it, in a hand, worn or in the inventory, and turns one on and off
+  (`ItemActions`); an item lasts as many uses as declared, or as many as its mod makes of a property of its material;
+  the mouse wheel turned while sneaking changes the mode of the item in hand.
 
 ### Changed
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending
@@ -903,6 +923,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A robot's inventory is as big as the robot, and `RobotEntity.INVENTORY_SIZE` is gone; a robot as wide as a
   player and two thirds as tall still carries nine stacks. `ProjectileSpec` gains a mass, a drag area and what it gets
   through, its old constructor kept.
+- (Core) A host of modules says whether its modules work worn or held (`ModuleHostDef.worn`, `ModuleHostDef.tool`, or
+  `"held"` in data), and a module's energy is spent each second worn, each use in a tool. `ItemState` gains a gas
+  tank. A module effect does nothing where it has no part, in what is worn or in a tool, unless its kind says.
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
   industrial control link; telemetry becomes a line of its own, which J's Space lays.
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

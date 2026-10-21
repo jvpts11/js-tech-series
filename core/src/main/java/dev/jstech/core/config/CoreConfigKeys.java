@@ -26,6 +26,7 @@ import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.ChunkLoadingBalance;
 import dev.jstech.core.room.RoomBalance;
 import dev.jstech.core.time.WorldCalendar;
+import dev.jstech.core.tool.ToolBalance;
 import dev.jstech.core.world.event.WorldEventBalance;
 import dev.jstech.core.worldgen.vein.VeinBalance;
 import java.util.List;
@@ -68,6 +69,8 @@ public final class CoreConfigKeys {
     public static final String MOVING = "moving_structures";
     /** The section of building multiblocks for players. */
     public static final String MULTIBLOCK = "multiblock";
+    /** Tools that break or place many blocks at once, and copies of regions. */
+    public static final String TOOLS = "tools";
     /** What sealed rooms do: decompression, fire and oxygen, breathing mobs, plants, bursting blocks, their size. */
     public static final String ROOMS = "rooms";
     /** How the world lays its ores: in veins, or scattered as the game lays them. */
@@ -108,6 +111,9 @@ public final class CoreConfigKeys {
     private static final int MOST_BROKEN = 65_536;
     private static final int MOST_STRUCTURE_BLOCKS = 4_194_304;
     private static final double MOST_PHYSICS_MILLIS = 45.0;
+    private static final int MOST_TOOL_BLOCKS = 4096;
+    private static final double MOST_HARDNESS_MARGIN = 100.0;
+    private static final int MOST_COPIED_BLOCKS = 65_536;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
@@ -629,6 +635,33 @@ public final class CoreConfigKeys {
                     + "past that it stops.")
             .named("Building reach").unit("blocks");
 
+    /** The most blocks a tool breaks in one blow. */
+    public static final ConfigKey<Integer> TOOLS_MOST_BROKEN = ConfigKey.whole(TOOLS + ".most_broken",
+            ToolBalance.DEFAULT_MOST_BROKEN).range(1, MOST_TOOL_BLOCKS)
+            .comment("The most blocks a tool that mines an area or a vein breaks in one blow, the one broken among "
+                    + "them; a tool's own area or vein never takes more.")
+            .named("Blocks broken at once").unit("blocks");
+
+    /** How much harder than the block broken a block in the area may be. */
+    public static final ConfigKey<Double> TOOLS_HARDNESS_MARGIN = ConfigKey.number(TOOLS + ".hardness_margin",
+            ToolBalance.DEFAULT_HARDNESS_MARGIN).range(0.0, MOST_HARDNESS_MARGIN)
+            .comment("How much harder than the block broken, as the game measures hardness (stone 1.5, an ore 3, "
+                    + "obsidian 50), a block in a tool's area or vein may be and still be taken.")
+            .named("Hardness margin");
+
+    /** The most blocks a building tool places in one use. */
+    public static final ConfigKey<Integer> TOOLS_MOST_PLACED = ConfigKey.whole(TOOLS + ".most_placed",
+            ToolBalance.DEFAULT_MOST_PLACED).range(1, MOST_TOOL_BLOCKS)
+            .comment("The most blocks a building tool places in one use along a line or over a plane; a paste places "
+                    + "the whole copy, which the most copied keeps small.")
+            .named("Blocks placed at once").unit("blocks");
+
+    /** The most blocks a copy of a region holds. */
+    public static final ConfigKey<Integer> TOOLS_MOST_COPIED = ConfigKey.whole(TOOLS + ".most_copied",
+            ToolBalance.DEFAULT_MOST_COPIED).range(1, MOST_COPIED_BLOCKS)
+            .comment("The most blocks a building tool's copy of a region holds; a larger region is not copied.")
+            .named("Blocks copied").unit("blocks");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -653,6 +686,8 @@ public final class CoreConfigKeys {
                     + "physics may take, whether one broken in two parts, which forces of their physics act, whether "
                     + "their blows break blocks, and whether the physics tool has a recipe.")
             .sectionComment(MULTIBLOCK, "Building multiblocks for players: how fast, and how far from them.")
+            .sectionComment(TOOLS, "Tools that break or place many blocks at once: how many, how much harder than "
+                    + "the block broken, and how big a copy of a region may be.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
@@ -667,6 +702,7 @@ public final class CoreConfigKeys {
             .sectionNamed(MECHANICAL, "Mechanical power")
             .sectionNamed(MOVING, "Moving structures")
             .sectionNamed(MULTIBLOCK, "Multiblocks")
+            .sectionNamed(TOOLS, "Tools")
             .sectionNamed(ROOMS, "Sealed rooms")
             .sectionNamed(VEINS, "Veins")
             .sectionNamed(WORLD_EVENTS, "World events")
@@ -732,6 +768,10 @@ public final class CoreConfigKeys {
             .key(MOVING_PHYSICS_TOOL_RECIPE, StructureBalance::physicsToolRecipe)
             .key(MULTIBLOCK_BLOCKS_PER_SECOND, BuildBalance::setBlocksPerSecond)
             .key(MULTIBLOCK_BUILD_REACH, BuildBalance::setReach)
+            .key(TOOLS_MOST_BROKEN, ToolBalance::setMostBroken)
+            .key(TOOLS_HARDNESS_MARGIN, ToolBalance::setHardnessMargin)
+            .key(TOOLS_MOST_PLACED, ToolBalance::setMostPlaced)
+            .key(TOOLS_MOST_COPIED, ToolBalance::setMostCopied)
             .key(ROOMS_DECOMPRESSION_PULL, RoomBalance::setDecompressionPull)
             .key(ROOMS_FIRE_IN_PURE_OXYGEN, RoomBalance::setFireInPureOxygen)
             .key(ROOMS_FIRE_NEEDS_OXYGEN, RoomBalance::setFireNeedsOxygen)

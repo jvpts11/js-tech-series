@@ -16,7 +16,8 @@ import java.util.List;
  * it is on, and what it does for its wearer.
  *
  * @param kind    the kind of socket it fits, as its host names it: {@code visor}, {@code plate}, {@code core}
- * @param energy  what it spends while on, in FE a second; 0 for one that spends nothing
+ * @param energy  what it spends while on, in FE: a second in a worn host, a use in a tool; 0 for one that spends
+ *                nothing
  * @param effects what it does
  */
 public record ModuleDef(String kind, int energy, List<IModuleEffect> effects) {

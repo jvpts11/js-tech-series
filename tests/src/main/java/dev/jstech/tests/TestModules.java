@@ -63,7 +63,7 @@ public final class TestModules {
     public static final ItemEntry<Item> SIGHT_MODULE = TestSounds.CONTENT.item("test_sight_module", Item::new)
             .named("Test Night Vision Module").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
 
-    public static final ModuleHostDef HELMET_DEF = Modules.declareHost(HELMET.getId(), new ModuleHostDef(List.of(
+    public static final ModuleHostDef HELMET_DEF = Modules.declareHost(HELMET.getId(), ModuleHostDef.worn(List.of(
             new ModuleHostDef.Socket("visor", 1), new ModuleHostDef.Socket("core", 2))));
     public static final ModuleDef SPEED_DEF = Modules.declare(SPEED_MODULE.getId(), new ModuleDef("core",
             SPEED_ENERGY, List.of(new CoreModuleEffects.AttributeChange(Attributes.MOVEMENT_SPEED, SPEED_BOOST,

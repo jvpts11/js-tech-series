@@ -517,7 +517,7 @@ their items' ids, in code or in data packs under `data/<namespace>/jstech/module
 `data/<namespace>/jstech/modules/`:
 
 ```java
-Modules.declareHost(HELMET.getId(), new ModuleHostDef(List.of(
+Modules.declareHost(HELMET.getId(), ModuleHostDef.worn(List.of(
         new ModuleHostDef.Socket("visor", 1), new ModuleHostDef.Socket("core", 2))));
 Modules.declare(SPEED_MODULE.getId(), new ModuleDef("core", 100, List.of(          // 100 FE a second while on
         new CoreModuleEffects.AttributeChange(Attributes.MOVEMENT_SPEED, 0.2,
@@ -537,6 +537,8 @@ Modules.declare(SPEED_MODULE.getId(), new ModuleDef("core", 100, List.of(       
   out, and `Modules.setOn` turns it on or off.
 - The host's energy is its own, as an item holds it ([Content](CONTENT.md)); it must give each second what its modules
   spend, at once. A host is worn anywhere things are worn: its armour slot, or a slot of Curios or Accessories.
+- A tool can be a host too, whose modules work while it is held and spend each use ([Tools and
+  items](TOOLS.md#modules-in-tools)).
 
 ## What can go wrong
 
