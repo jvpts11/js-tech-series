@@ -1,0 +1,11 @@
+{
+  "box": "#FFFFFFFF",
+  "closedEye": "#FF505050",
+  "dim": "#78000000",
+  "eyeGround": "#A0000000",
+  "grid": "#1EFFFFFF",
+  "hidden": "#FF8C8C8C",
+  "picked": "#FFFFFF55",
+  "snaps": "#FF646464",
+  "title": "#FF404040"
+}

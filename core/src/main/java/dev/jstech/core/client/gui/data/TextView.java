@@ -27,6 +27,7 @@ public final class TextView extends UiComponent {
     private final IntSupplier colour;
     private final CoreElements.TextAlign align;
     private final TextMeasure measure;
+    private boolean steady;
 
     public TextView(final Supplier<String> text, final IntSupplier colour, final CoreElements.TextAlign align,
                     final TextMeasure measure) {
@@ -39,6 +40,17 @@ public final class TextView extends UiComponent {
     /** The text shown now. */
     public String text() {
         return text.get();
+    }
+
+    /** Says the text never changes (a translation key's words, a title), so its screen may draw it once. */
+    public TextView steady() {
+        steady = true;
+        return this;
+    }
+
+    @Override
+    public boolean still() {
+        return steady;
     }
 
     @Override

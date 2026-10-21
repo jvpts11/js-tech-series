@@ -37,6 +37,27 @@ An element whose corner the player chooses is declared with a supplier of its co
 `HudElements.declare(rl("notifications"), Settings::corner, element)`. The Core's notifications are one
 ([Notifications](NOTIFICATIONS.md)).
 
+### The HUD editor
+
+*Added 2026-10-21.*
+
+The player moves, resizes and hides every mod's HUD elements in the HUD editor, opened from the settings screen
+("Where the HUD's elements are", under This player) or by its key, "Edit the HUD", which has none until given one.
+Over the game, dimmed under a grid, each element has a dashed box with its mod's and its own name on a label: a box
+dragged moves the element and settles against the others or on the grid, the chosen box (yellow) is resized by the
+squares at its corners in quarter steps, from half its size to three times, and its eye hides it (grey). Reset all
+puts every element back, Cancel leaves them as they were, and Done keeps what was done. The HUD follows the editor
+while it is open.
+
+What the player did is kept in their `jstech-hud.toml`, each element by its id: the corner it is held from, how far
+from it, its size and whether it is hidden. An element held from a corner stays by that corner whatever the window's
+size, and an element placed leaves its corner's stack; one never touched stays where its mod declared it.
+
+Name your element for the editor under the translation key `hud.<namespace>.<path>` of its id. An element that is
+empty while nothing happens (as notifications are) says how big its box is in the editor with `editSize`. A placed
+element is scaled about its top left and drawn there, so one that keeps where it drew, for a click, keeps the right
+place at its own size.
+
 ## Holograms
 
 *Added 2026-10-05.*

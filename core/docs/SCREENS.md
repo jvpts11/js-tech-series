@@ -65,6 +65,15 @@ When the file is read again (a resource pack changed, or in a development run th
 is built again from it at once, with no restart. A file that cannot be read says what is wrong in the place of the
 screen, and in the log.
 
+A screen declared in a file draws less: its window and what never changes (panels, wells, separators, pictures, slot
+frames, the title and words from a translation key) are drawn once into a picture the size of the game's window,
+which is laid down again each frame, and only what moves (a bar, a value's words, a button under the pointer) is
+drawn over it. The picture is drawn again when the screen is built or laid out again, or the window changes size. A
+component of your own says it never changes with `still()`; one shown or usable by a value (`visible_if`,
+`enabled_if`), or that would cover something that moves, is drawn each frame as before. A file has no style sheet:
+it picks a whole style, a label's tone, a button as the primary one and its containers' room, and the style does
+the rest.
+
 ## The layout engine
 
 *Added 2026-10-15.*
@@ -254,6 +263,26 @@ partialTick)`, and `LiveScreens.draw(...)` puts it on a face. It is drawn again 
 away, twice a second up to 32, and not at all beyond. On the server, `LiveFeed` sends the picture's description
 only to the players near it and only when it changed.
 
+A screen in the world answers the crosshair as a screen answers the mouse. The block declares, once for both
+sides, which of its faces shows a screen, the part of the face it covers and its pixels, and what a press does:
+
+```java
+ScreenTouches.declare(PANEL, new ITouchScreen() {
+    public Optional<TouchArea> area(BlockState state, Direction face) {
+        return face == state.getValue(FACING) ? Optional.of(TouchArea.whole(64, 32)) : Optional.empty();
+    }
+    public void pressed(ServerPlayer player, BlockPos pos, Direction face, int x, int y) {
+        PanelLayout.buttonAt(x, y).ifPresent(button -> button.press(player.serverLevel(), pos));
+    }
+});
+```
+
+On the player's game `ScreenTouchClient.pointerOn(pos)` gives the pixel under the crosshair, which the screen's
+painter hands its components as the mouse, so the one under the crosshair lights as it would under the pointer; a
+right click there presses the screen instead of using the block or the item in hand, and the server checks the
+player is near and the pixel is on the screen before `pressed` hears it. A face is read as seen from in front of
+it: across from its left, down from its top, so a face looking north has its left to the east (`ScreenFace`).
+
 ## Keys
 
 *Added 2026-10-01.*
@@ -286,8 +315,62 @@ language: "Press button", "Checkbox: Ready: OFF", "Speed: 40 slider", with how i
 `narration()` says what the narrator reads; one with no words of its own takes a name from its file's `narration`
 key or from `setSpoken`. A screen of your own built from the Core's components hands them over the same way.
 
+## Tools for building a screen
+
+*Added 2026-10-21.*
+
+In a development run (`runClient`), three tools help you build a screen declared in a file. A packed game has none
+of them.
+
+**The inspector.** On an open screen, F12 puts a panel beside it, where the recipe book sits. The panel holds:
+
+- the tree of what the screen is built of: a blue square for what only lays others out, a green one for a component,
+  each named by its kind and its `id`;
+- the problems found: a text with no translation in one of the series' languages, a component with no words for the
+  narrator, an `action` nobody handed over, boxes that overlap, a component past the window;
+- buttons that draw the screen at the next GUI scale, in the other language and in each state its code offers.
+
+Over the screen, each box is dashed in its colour and each problem is marked where it is. The pointer on a
+component shows its card: its box, what it does or is bound to, its style, when it is drawn again, and its file and
+line. Ctrl+C copies the file and line, ready for your editor's "go to file". A problem cut short in the panel is read
+whole under the pointer.
+
+The states are the ones your screen's code offers, by name, beside its actions:
+
+```java
+DataScreens.register(event, MENU.get(), rl("press"), menu -> screen -> screen
+        .onAction("start", () -> START.send(true))
+        .preview("jammed", () -> menu.showJammed()));
+```
+
+**The editor.** Ctrl+E from the inspector opens the editor on the same screen. Click a component to choose it, drag
+it to move it (in a stack by its margin, in a row or a column onto a sibling to take its place), drag its bottom
+right corner to resize it, and change its name, what it is bound to and one more of its fields in the panel. Add...
+lists every kind of component; Enter or a click adds the first one where the pointer last was over the screen, in
+the deepest component there that holds others. Every change is written to the file in your mod's source at once,
+two spaces a level, so the file in git is the one you see; Undo and Redo walk back and forth through the changes.
+Snap moves in steps of 1, 2, 4 or 8 pixels, and Alt moves by one. Escape or Done closes the editor.
+
+**A new screen.** Look at a block and type `/jstech screen new`. The new screen names the file after the block, at
+`assets/<mod>/jstech/screens/<block>.json`, and starts it from one of:
+
+- a machine's screen with the player's inventory below;
+- a screen with no inventory;
+- a tab of a screen;
+- a HUD element;
+- a copy of a screen already there.
+
+A preview beside it shows what each start gives. Create writes the file to your mod's source and opens it with the
+editor on it. Its empty face says where Add puts the first component, and that line goes when the first component
+takes its place.
+
 ## What can go wrong
 
+- **F12 does nothing.** The game is packed (the tools are only in a development run), or the screen is not declared in
+  a file.
+- **The editor says there is no source folder for your mod.** Your mod is loaded from a jar, not from its project's
+  `build/resources/main`, so the run cannot find its `src/main/resources`; a change then holds only until the game
+  closes. Run the mod from its own project.
 - **A screen shows "No resource pack has the screen" or a line of what is wrong.** Its file is not at
   `assets/<mod>/jstech/screens/<name>.json`, or cannot be read; the line and the log say where.
 - **A component shows its kind in brackets.** Nothing on this game draws that kind: the mod that declares it is

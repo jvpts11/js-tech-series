@@ -10,6 +10,7 @@ package dev.jstech.core.client.gui.data;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.gui.screen.ScreenFile;
 import dev.jstech.core.log.CoreLogs;
@@ -71,6 +72,25 @@ public final class ScreenFiles extends SimpleJsonResourceReloadListener {
     /** Runs {@code action} each time the files are read again. */
     public static void onReload(final Runnable action) {
         RELOADED.add(action);
+    }
+
+    /**
+     * Takes {@code json} as what the file of {@code id} says now, as the editor of screens writes it, without the
+     * packs being read again; what is wrong with it when it cannot be read, in which case the screen keeps the file
+     * it had.
+     */
+    public static Optional<String> put(final ResourceLocation id, final JsonElement json) {
+        final DataResult<ScreenFile> read = ScreenFile.CODEC.parse(JsonOps.INSTANCE, json);
+        if (read.error().isPresent()) {
+            return Optional.of(read.error().get().message());
+        }
+        final Map<ResourceLocation, ScreenFile> now = new LinkedHashMap<>(files);
+        now.put(id, read.getOrThrow());
+        files = Map.copyOf(now);
+        final Map<ResourceLocation, String> wrong = new LinkedHashMap<>(problems);
+        wrong.remove(id);
+        problems = Map.copyOf(wrong);
+        return Optional.empty();
     }
 
     @Override

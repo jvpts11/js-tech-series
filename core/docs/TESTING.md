@@ -60,6 +60,20 @@ try {
 greet a connection the test cannot carry, and fail. Always `leave` in `finally`, or the player stays for the tests
 after.
 
+## Pictures of the screen
+
+*Added 2026-10-21.*
+
+The series' client tests, which play the game in a window, check what a screen looks like against a reference
+picture: `ctx.matchesReference(label, x, y, width, height)` cuts the GUI's rectangle out of the frame and compares it
+with `clienttest/references/<test>-<label>.png` among the test mod's resources. A pixel may be a little off in each
+colour, and one in two hundred may be off by more, so the small differences between one graphics card and another
+pass. A picture with no reference, or one that differs more, fails the test and leaves what was drawn, and its
+differences in red, in the run's `reference-pictures` folder: look at it, and when it is right copy it into the
+references. `ctx.capture` and `ctx.assertSamePicture` compare two pictures drawn in the test itself, as the test of the
+screens' still parts compares a screen drawn from its picture with one drawn each frame. Cut out only what the test
+sets: the player's inventory, the world behind and the time of day change from one test to the next.
+
 ## What can go wrong
 
 - **A unit test fails with `NoClassDefFoundError` or an error from inside the game's classes.** It touched a game

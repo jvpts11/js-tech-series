@@ -363,6 +363,33 @@ public final class ClientTestContext {
         return then(delayTicks, () -> screenshot(label));
     }
 
+    /**
+     * Fails, after {@code delayTicks}, unless the GUI's rectangle {@code x}, {@code y}, {@code width} by
+     * {@code height} looks as the reference picture named after the test and {@code label} does.
+     */
+    public ClientTestContext thenMatchesReference(final int delayTicks, final String label, final int x, final int y,
+                                                  final int width, final int height) {
+        return then(delayTicks, () -> matchesReference(label, x, y, width, height));
+    }
+
+    /**
+     * Fails unless the GUI's rectangle looks as the reference picture {@code <test>-<label>} does, in the test mod's
+     * {@code clienttest/references}; what was drawn, and where it differs, is left in the run's folder.
+     */
+    public void matchesReference(final String label, final int x, final int y, final int width, final int height) {
+        ReferencePictures.check(mc, testName.replace('.', '_') + "-" + label, x, y, width, height);
+    }
+
+    /** A copy of the GUI's rectangle of the last frame; close it when done. */
+    public NativeImage capture(final int x, final int y, final int width, final int height) {
+        return ReferencePictures.capture(mc, x, y, width, height);
+    }
+
+    /** Fails unless two pictures of {@code label} look the same, as a reference picture is compared. */
+    public void assertSamePicture(final String label, final NativeImage drawn, final NativeImage other) {
+        ReferencePictures.same(mc, testName.replace('.', '_') + "-" + label, drawn, other);
+    }
+
     /** Asserts {@code condition} after {@code delayTicks}. */
     public ClientTestContext thenAssert(final int delayTicks, final BooleanSupplier condition, final String message) {
         return then(delayTicks, () -> assertTrue(condition.getAsBoolean(), message));

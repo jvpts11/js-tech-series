@@ -939,6 +939,22 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `narration` (`KeyboardFocus`, `UiComponent.narration`).
 - (Core) Less movement for a player who asks, in the Core's own settings (`jstech-accessibility.toml`): what slides,
   turns round or blinks on the screens of the series is drawn still, and a tooltip's 3D preview stands still.
+- (Core) The HUD editor: every mod's HUD elements in dashed boxes over the dimmed game, dragged where the player wants
+  them and settling against each other or on a grid, resized by the chosen box's corners and hidden by its eye; Reset
+  all, Cancel and Done. Opened from the settings screen or by its key; what the player did is kept in
+  `jstech-hud.toml`, and an element placed leaves its corner's stack and stays by the corner nearest it.
+- (Core) Screens in the world that answer the crosshair: a block declares which face shows a screen, where on it and
+  its pixels (`ScreenTouches`, `ITouchScreen`); the player's game finds the pixel under the crosshair for the
+  screen's picture to light what is there, and a right click presses the screen at that pixel on the server.
+- (Core) Screens declared in files draw less: their window and what never changes are drawn once into a picture laid
+  down each frame, and only what moves is drawn over it (`UiComponent.still`, `StillLayer`).
+- (Core) Tools for building screens declared in files, in a development run: F12 opens the inspector, with the tree
+  of what the screen is built of, the problems found (a text with no translation, no words for the narrator, an
+  action nobody handed over, overlaps) and a card of the component under the pointer with its file and line, which
+  Ctrl+C copies; it draws the screen at another GUI scale, in the other language and in each state its code offers
+  (`ScreenWiring.preview`). Ctrl+E opens the editor on the screen, which moves, resizes, adds, copies and takes out
+  components and writes each change to the mod's source at once, with Undo and Redo; `/jstech screen new` makes the
+  file of a new screen for the block looked at, from a machine's screen, a tab, a HUD element or a copy.
 
 ### Changed
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

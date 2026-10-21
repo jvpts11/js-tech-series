@@ -93,6 +93,14 @@ resources (in IntelliJ, Build), and look again: nothing to press. A packed game 
 of a format only the Core reads) reads the models alone again, at once, instead of every resource; an open preview of
 a model shows the change ([Models](MODELS.md#while-you-build)).
 
+## Tools for screens
+
+*Added 2026-10-21.*
+
+On a screen declared in a file, F12 opens the inspector and Ctrl+E from it the editor, which writes every change to
+your mod's source; `/jstech screen new` makes a new screen for the block you look at. All three are in
+[Screens](SCREENS.md#tools-for-building-a-screen).
+
 ## What can go wrong
 
 - **A listener never runs.** Its class's `listen` is not called from the mod's constructor, or a client class is

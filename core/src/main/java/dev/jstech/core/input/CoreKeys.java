@@ -23,9 +23,9 @@ import org.lwjgl.glfw.GLFW;
 /**
  * The Core's own keys: turning off the last sound heard, which the player's game does alone, changing the mode of
  * the item in the main hand, which the server does, opening an item's page in the manual, opening the history of
- * notifications, opening the diagram of forces of a moving structure, showing the physics of the structures near, and
- * looking about freely. The first two and the last two have no key until the player gives them one; the manual's is
- * M, which every manual's tooltip names, the history's N, and the forces' K.
+ * notifications, opening the diagram of forces of a moving structure, showing the physics of the structures near,
+ * looking about freely, and opening the HUD editor. The first two and the last three have no key until the player
+ * gives them one; the manual's is M, which every manual's tooltip names, the history's N, and the forces' K.
  */
 @TextHolder
 public final class CoreKeys {
@@ -78,6 +78,15 @@ public final class CoreKeys {
      */
     public static final KeyAction FREE_LOOK = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "free_look"), CameraTexts.FREE_LOOK_KEY));
+
+    /** What the key that opens the HUD editor is called. */
+    public static final TextKey EDIT_HUD_KEY = TextKey.of("key.jscore.edit_hud", "Edit the HUD");
+    /**
+     * Opens the HUD editor over the game, which the settings screen also opens; no key until given one, since the
+     * player seldom needs it.
+     */
+    public static final KeyAction EDIT_HUD = KeyActions.declare(KeyAction.builder(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "edit_hud"), EDIT_HUD_KEY));
 
     private CoreKeys() {
     }

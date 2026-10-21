@@ -38,6 +38,9 @@ import dev.jstech.core.client.effect.EffectsClient;
 import dev.jstech.core.client.field.ChunkFieldsClient;
 import dev.jstech.core.client.fluid.FluidsClient;
 import dev.jstech.core.client.font.CoreFontClient;
+import dev.jstech.core.client.developer.ScreenDevCommands;
+import dev.jstech.core.client.developer.ScreenEditor;
+import dev.jstech.core.client.developer.ScreenInspector;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.data.ControlElementBuilders;
 import dev.jstech.core.client.gui.data.CoreElementBuilders;
@@ -45,6 +48,7 @@ import dev.jstech.core.client.gui.data.ScreenFiles;
 import dev.jstech.core.client.gui.style.StyleChooser;
 import dev.jstech.core.client.gui.style.StyleLoader;
 import dev.jstech.core.client.gui.tooltip.ClientRichLine;
+import dev.jstech.core.client.live.ScreenTouchClient;
 import dev.jstech.core.client.gui.tooltip.ItemTooltips;
 import dev.jstech.core.client.gui.tooltip.TooltipPieces;
 import dev.jstech.core.client.guide.GuideClient;
@@ -171,6 +175,7 @@ public final class JsCoreClient {
         ItemStateClient.listen(modEventBus);
         ToolClient.listen(modEventBus);
         CameraClient.listen(modEventBus);
+        ScreenTouchClient.listen();
         KeyActionsClient.listen(modEventBus);
         LightingClient.listen(modEventBus);
         EffectsClient.listen(modEventBus);
@@ -199,8 +204,12 @@ public final class JsCoreClient {
         VehicleControls.listen(modEventBus);
         VehiclesClient.listen(modEventBus);
         MovingStructuresClient.listen(modEventBus);
-        // In a development run, the mods' assets reloaded as they change.
+        // In a development run, the mods' assets reloaded as they change, and the tools for screens: the inspector
+        // (F12), the editor on the screen (Ctrl+E from the inspector) and the new screen (/jstech screen new).
         LiveReloadClient.listen();
+        ScreenInspector.listen();
+        ScreenEditor.listen();
+        ScreenDevCommands.listen();
         // What draws each of the Core's kinds of screen component, a rich line of a tooltip, and the chooser of the
         // player's styles.
         CoreElementBuilders.register();

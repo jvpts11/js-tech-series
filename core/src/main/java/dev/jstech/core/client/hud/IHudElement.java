@@ -25,6 +25,14 @@ public interface IHudElement {
     /** How big it is this frame, in the GUI's pixels. */
     HudStack.Size size(Minecraft minecraft);
 
+    /**
+     * How big its box is in the HUD editor, where it is shown whether or not it shows now: its size this frame unless
+     * it says otherwise, as one that is empty while nothing happens says how big it is when something does.
+     */
+    default HudStack.Size editSize(final Minecraft minecraft) {
+        return size(minecraft);
+    }
+
     /** Draws it with its top-left corner at {@code x}, {@code y}. */
     void render(GuiGraphics graphics, DeltaTracker delta, int x, int y);
 }

@@ -76,6 +76,13 @@ final class NotificationToasts implements IHudElement {
         return new HudStack.Size(width(minecraft), Math.max(0, height - GAP));
     }
 
+    /* In the HUD editor, as tall as one notification at least, so that the box stands while none shows. */
+    @Override
+    public HudStack.Size editSize(final Minecraft minecraft) {
+        final HudStack.Size now = size(minecraft);
+        return new HudStack.Size(now.width(), Math.max(HEIGHT, now.height()));
+    }
+
     @Override
     public void render(final GuiGraphics g, final DeltaTracker delta, final int x, final int y) {
         final Minecraft minecraft = Minecraft.getInstance();

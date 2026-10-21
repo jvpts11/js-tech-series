@@ -20,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
@@ -284,7 +285,17 @@ public final class ClientTestRunner {
         if (server == null) {
             throw new IllegalStateException("integrated server vanished");
         }
-        pendingMove = server.submit(() -> context.teleport(new BlockPos(3, 2, 8), net.minecraft.core.Direction.NORTH));
+        pendingMove = server.submit(() -> {
+            /*
+             * A window the last test left open is closed on the server too: closing its screen above told the server
+             * nothing, and a test that waits for the server to close its own window would wait for that one.
+             */
+            final ServerPlayer player = context.serverPlayer();
+            if (player.containerMenu != player.inventoryMenu) {
+                player.closeContainer();
+            }
+            context.teleport(new BlockPos(3, 2, 8), net.minecraft.core.Direction.NORTH);
+        });
         enter(State.MOVE_TO_AREA);
     }
 

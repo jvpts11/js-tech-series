@@ -15,8 +15,10 @@ import dev.jstech.core.gui.flex.TextMeasure;
 import dev.jstech.core.gui.screen.ElementSpec;
 import dev.jstech.core.gui.style.StyleMetrics;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -42,6 +44,13 @@ public final class BuildContext {
     private final AbstractContainerMenu menu;
     private final Supplier<Component> title;
     private final Set<String> unwired = new LinkedHashSet<>();
+    private final Map<BuiltNode, ElementSpec> specs = new IdentityHashMap<>();
+
+    /**
+     * Shown and usable always: what a component whose file names no value for it gets, which its screen knows by this
+     * one so that it may draw a still component once.
+     */
+    public static final BooleanSupplier ALWAYS = () -> true;
 
     BuildContext(final StyleSkin skin, final Font font, final ScreenWiring<?> wiring,
                  @Nullable final AbstractContainerMenu menu, final Supplier<Component> title) {
@@ -146,10 +155,17 @@ public final class BuildContext {
         if (component != null) {
             spec.common().narration().ifPresent(key -> component.setSpoken(Component.translatable(key)));
         }
-        final BooleanSupplier visible = spec.common().visibleIf().map(this::truth).orElse(() -> true);
-        final BooleanSupplier enabled = spec.common().enabledIf().map(this::truth).orElse(() -> true);
-        return new BuiltNode(spec.common().id(), box, component, placed, visible, enabled, spec.common().tooltip(),
-                children);
+        final BooleanSupplier visible = spec.common().visibleIf().map(this::truth).orElse(ALWAYS);
+        final BooleanSupplier enabled = spec.common().enabledIf().map(this::truth).orElse(ALWAYS);
+        final BuiltNode node = new BuiltNode(spec.common().id(), box, component, placed, visible, enabled,
+                spec.common().tooltip(), children);
+        specs.put(node, spec);
+        return node;
+    }
+
+    /** What part of the file each node was built from, for the developer's inspector. */
+    Map<BuiltNode, ElementSpec> specs() {
+        return specs;
     }
 
     /** The names the file used that nobody handed over. */

@@ -112,6 +112,14 @@ public abstract class UiComponent {
     }
 
     /**
+     * Whether the component draws the same every frame whatever happens (a frame, a panel, fixed words), so its
+     * screen may draw it once into a picture and lay that down again rather than draw it each frame.
+     */
+    public boolean still() {
+        return false;
+    }
+
+    /**
      * Whether the component, while it has the keyboard, takes every key as typing (a field, a text area, a command
      * line), so that Tab, the arrows and the game's keys do not leave it; the others let Tab and the arrows move on.
      */

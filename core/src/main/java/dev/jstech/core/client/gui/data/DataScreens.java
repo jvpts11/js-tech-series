@@ -48,4 +48,12 @@ public final class DataScreens {
         final Minecraft minecraft = Minecraft.getInstance();
         minecraft.setScreen(new DataScreen(file, title, logic, minecraft.screen));
     }
+
+    /**
+     * What the screen declared in {@code file} builds, with no code and no menu behind it, to be drawn somewhere other
+     * than a screen of its own: a preview of it.
+     */
+    public static DataScreenView preview(final ResourceLocation file, final Component title) {
+        return new DataScreenView(file, new ScreenWiring<>(null), null, () -> title);
+    }
 }

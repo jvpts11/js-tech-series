@@ -10,6 +10,8 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.core.client.hud.HudElements;
 import dev.jstech.core.client.hud.IHudElement;
 import dev.jstech.core.gui.HudStack;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -20,10 +22,14 @@ import net.minecraft.resources.ResourceLocation;
  * Two HUD elements of the test mod, declared as another mod would declare its own, that show only while a client
  * test turns them on: a tall red bar and a short blue one, stacked in the top right corner.
  */
+@TextHolder
 public final class TestHud {
 
     public static final ResourceLocation TALL = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "tall_bar");
     public static final ResourceLocation SHORT = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "short_bar");
+    /** Their names in the HUD editor, under the keys of their ids. */
+    public static final TextKey TALL_NAME = TextKey.of("hud.jstests.tall_bar", "Tall bar");
+    public static final TextKey SHORT_NAME = TextKey.of("hud.jstests.short_bar", "Short bar");
 
     private static volatile boolean showing;
 

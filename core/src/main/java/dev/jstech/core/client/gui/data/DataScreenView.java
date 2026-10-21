@@ -11,6 +11,7 @@ import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Checkbox;
 import dev.jstech.core.client.gui.component.KeyboardFocus;
 import dev.jstech.core.client.gui.component.Panel;
+import dev.jstech.core.client.gui.component.StillLayer;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.style.StyleSkin;
@@ -23,12 +24,14 @@ import dev.jstech.core.gui.flex.Role;
 import dev.jstech.core.gui.flex.TextMeasure;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.gui.screen.CoreElements;
+import dev.jstech.core.gui.screen.ElementSpec;
 import dev.jstech.core.gui.screen.InterfaceTexts;
 import dev.jstech.core.gui.screen.ScreenFile;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.gui.style.Style;
 import dev.jstech.core.log.CoreLogs;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +77,14 @@ public final class DataScreenView {
     private Set<String> unwired = Set.of();
     private Optional<String> problem = Optional.empty();
     private boolean warnedTall;
+    /* The components drawn once with the window into a picture, and how often what they show may have changed. */
+    private final Set<UiComponent> stillOnes = Collections.newSetFromMap(new IdentityHashMap<>());
+    /* What part of the file each node was built from, for the developer's inspector. */
+    private final Map<BuiltNode, ElementSpec> specs = new IdentityHashMap<>();
+    private final StillLayer still = new StillLayer();
+    private long revision;
+    private int left;
+    private int top;
 
     private static final Logger LOGGER = CoreLogs.INTERFACE.logger();
 
@@ -91,6 +102,9 @@ public final class DataScreenView {
         root.dispose();
         root.clear();
         nodes.clear();
+        specs.clear();
+        stillOnes.clear();
+        revision++;
         final Optional<ScreenFile> read = ScreenFiles.get(file);
         style = styleOf(read.orElse(null));
         skin = Styles.skin(style);
@@ -110,6 +124,7 @@ public final class DataScreenView {
             tree = built;
             width = read.get().width();
             unwired = context.unwired();
+            specs.putAll(context.specs());
         }
         tree.forEach(node -> {
             if (node.component() != null) {
@@ -131,22 +146,97 @@ public final class DataScreenView {
             LOGGER.warn("the screen {} needs {} pixels down and the window has {}", file, height, screenHeight);
         }
         place(tree, placed, left, top);
+        this.left = left;
+        this.top = top;
+        findStill();
+        revision++;
     }
 
-    /** Draws the screen's window, then what it holds. */
+    /** The window's left on the game's screen, as it was last laid out. */
+    public int left() {
+        return left;
+    }
+
+    /** The window's top on the game's screen, as it was last laid out. */
+    public int top() {
+        return top;
+    }
+
+    /** How many times the screen was built or laid out, so that what is worked out of it knows when to look again. */
+    public long revision() {
+        return revision;
+    }
+
+    /**
+     * Draws the screen's window, then what it holds: the window and what never changes laid down from the picture
+     * drawn once of them, what moves drawn over it.
+     */
     public void render(final GuiGraphics g, final int left, final int top, final int mouseX, final int mouseY,
                        final float partialTick) {
         if (tree == null) {
             return;
         }
-        skin.window(g, left, top, width, height);
         tree.forEach(node -> {
             if (node.component() != null) {
                 node.component().setVisible(node.visible().getAsBoolean());
                 node.component().setEnabled(node.enabled().getAsBoolean());
             }
         });
-        root.render(g, new UiContext(skin, font, mouseX, mouseY, partialTick));
+        final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
+        still.draw(g, revision, () -> {
+            skin.window(g, left, top, width, height);
+            for (final UiComponent component : root.children()) {
+                if (stillOnes.contains(component)) {
+                    component.render(g, ctx);
+                }
+            }
+        });
+        stillOnes.forEach(component -> component.setVisible(false));
+        try {
+            root.render(g, ctx);
+        } finally {
+            stillOnes.forEach(component -> component.setVisible(true));
+        }
+    }
+
+    /** How many times the picture of the still parts was drawn; for a test to see they are drawn once. */
+    public int stillPaints() {
+        return still.paints();
+    }
+
+    /** The file the screen is built from. */
+    public ResourceLocation file() {
+        return file;
+    }
+
+    /** What was built of the file, its root first; none before it is built. */
+    public Optional<BuiltNode> tree() {
+        return Optional.ofNullable(tree);
+    }
+
+    /** The part of the file {@code node} was built from; none for a part a component made of itself. */
+    public Optional<ElementSpec> specOf(final BuiltNode node) {
+        return Optional.ofNullable(specs.get(node));
+    }
+
+    /** The node built for {@code component}, if it is one of the screen's. */
+    public Optional<BuiltNode> nodeOf(final UiComponent component) {
+        return Optional.ofNullable(nodes.get(component));
+    }
+
+    /** The value the screen's code or its menu hands over under {@code name}, as it is now; none when none is. */
+    public Optional<Object> valueNow(final String name) {
+        return wiring.value(name).map(Supplier::get);
+    }
+
+    /** The states the screen's code says the developer's inspector can put it in. */
+    public List<ScreenWiring.Preview> previews() {
+        return wiring.previews();
+    }
+
+    /** The components drawn once into the picture with the window. */
+    public Set<UiComponent> stillOnes() {
+        return Collections.unmodifiableSet(stillOnes);
     }
 
     /** What the pointer resting at {@code (x, y)} shows: the tooltip of the component under it, or nothing. */
@@ -196,9 +286,33 @@ public final class DataScreenView {
         return root.charTyped(c);
     }
 
-    /** Lets go of what the components hold outside themselves, when the screen goes away. */
+    /*
+     * The components that draw the same whatever happens and always show, but for one that would cover a component
+     * that moves and is drawn before it, which keeps being drawn each frame in its place among the others.
+     */
+    private void findStill() {
+        stillOnes.clear();
+        final List<UiComponent> moving = new ArrayList<>();
+        for (final UiComponent component : root.children()) {
+            final BuiltNode node = nodes.get(component);
+            final boolean steady = component.still() && node != null && node.visible() == BuildContext.ALWAYS
+                    && node.enabled() == BuildContext.ALWAYS;
+            if (steady && moving.stream().noneMatch(other -> overlap(other, component))) {
+                stillOnes.add(component);
+            } else {
+                moving.add(component);
+            }
+        }
+    }
+
+    private static boolean overlap(final UiComponent a, final UiComponent b) {
+        return a.x() < b.right() && b.x() < a.right() && a.y() < b.bottom() && b.y() < a.bottom();
+    }
+
+    /** Lets go of what the components hold outside themselves, and the still parts' picture, when the screen goes. */
     public void dispose() {
         root.dispose();
+        still.release();
     }
 
     /**

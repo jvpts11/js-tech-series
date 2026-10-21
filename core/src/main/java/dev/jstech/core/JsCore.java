@@ -104,6 +104,8 @@ import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.gui.screen.ControlElements;
 import dev.jstech.core.gui.screen.CoreElements;
 import dev.jstech.core.gui.AccessibilitySettings;
+import dev.jstech.core.live.ScreenTouches;
+import dev.jstech.core.gui.HudSettings;
 import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.gui.tooltip.TooltipSettings;
 import dev.jstech.core.guide.CoreGuide;
@@ -342,6 +344,8 @@ public final class JsCore {
         Tools.listen();
         // Views from elsewhere: scenes along camera paths, the view of an entity or from a point.
         CameraViews.listen(modEventBus);
+        // Screens on blocks' faces that a player presses with the crosshair.
+        ScreenTouches.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -463,6 +467,8 @@ public final class JsCore {
         ConfigFiles.register(TooltipSettings.FILE, modEventBus, modContainer);
         // What makes the screens easier on a player: less movement.
         ConfigFiles.register(AccessibilitySettings.FILE, modEventBus, modContainer);
+        // Where a player put the HUD's elements in the HUD editor, read on their own game only.
+        ConfigFiles.register(HudSettings.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();

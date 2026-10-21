@@ -49,7 +49,8 @@ public final class JsTestsClient {
         // The test machine's screen, declared in a file; its button counts its presses.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> DataScreens.register(event,
                 TestScreens.MENU.get(), TestScreens.FILE, menu -> screen -> screen.onAction("press",
-                        TestScreens.PRESSED::incrementAndGet)));
+                        TestScreens.PRESSED::incrementAndGet).preview("pressed ten times",
+                        () -> TestScreens.PRESSED.set(10))));
         // The dial's renderer and the picture program's window, as another mod registers them.
         TestClientParts.register();
         // The fan part's turning blade, as another mod hands the Core a moving part.

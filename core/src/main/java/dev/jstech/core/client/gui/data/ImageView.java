@@ -24,6 +24,11 @@ public final class ImageView extends UiComponent {
     }
 
     @Override
+    public boolean still() {
+        return true;
+    }
+
+    @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         Draw.blended(() -> g.blitSprite(sprite, x(), y(), width(), height()));
     }

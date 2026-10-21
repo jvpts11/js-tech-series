@@ -29,6 +29,11 @@ public final class PieceView extends UiComponent {
     }
 
     @Override
+    public boolean still() {
+        return true;
+    }
+
+    @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         if (!(ctx.skin() instanceof StyleSkin style)) {
             ctx.skin().panel(g, x(), y(), width(), height());

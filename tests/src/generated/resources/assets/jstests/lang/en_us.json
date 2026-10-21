@@ -119,6 +119,8 @@
   "fluid_type.jstests.test_hot_oil": "Test Hot Oil",
   "fuel.jstests.test_fuel": "Test Fuel",
   "fuel.jstests.test_gas_fuel": "Test Gas Fuel",
+  "hud.jstests.short_bar": "Short bar",
+  "hud.jstests.tall_bar": "Tall bar",
   "item.jstests.full_tool": "Full Test Tool",
   "item.jstests.hrc_fuse": "Test HRC Fuse",
   "item.jstests.modes_tool": "Modes Test Tool",

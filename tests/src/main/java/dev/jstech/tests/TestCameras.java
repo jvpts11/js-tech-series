@@ -18,11 +18,17 @@ import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
+import dev.jstech.core.live.ITouchScreen;
+import dev.jstech.core.live.ScreenTouches;
+import dev.jstech.core.live.TouchArea;
 import dev.jstech.core.model.Easing;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -58,6 +64,10 @@ public final class TestCameras {
             .named("Test camera screen").look(IBlockLook.cubeAll("test_camera_screen")).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ScreenEntity>> SCREEN_ENTITY =
             TestSounds.CONTENT.blockEntity("test_camera_screen", ScreenEntity::new, SCREEN);
+    /** How many pixels a side the screen's north face has, which takes presses. */
+    public static final int TOUCH_PIXELS = 64;
+    /** The pixel of the last press on the screen, as the server heard it; none yet at first. */
+    public static final AtomicReference<int[]> PRESSED = new AtomicReference<>(new int[] {-1, -1});
 
     /* The screen's camera sits this far above it, looking north and this far down. */
     private static final double CAMERA_ABOVE = 2.5;
@@ -68,9 +78,24 @@ public final class TestCameras {
     private TestCameras() {
     }
 
-    /** Declares the cameras, before the test mod's content is registered. */
+    /**
+     * Declares the cameras, before the test mod's content is registered, and that the screen's north face answers
+     * presses, as another mod declares a screen in the world that does.
+     */
     public static void declare() {
-        // Loading the class declares them.
+        ScreenTouches.declare(SCREEN, new ITouchScreen() {
+            @Override
+            public Optional<TouchArea> area(final BlockState state, final Direction face) {
+                return face == Direction.NORTH ? Optional.of(TouchArea.whole(TOUCH_PIXELS, TOUCH_PIXELS))
+                        : Optional.empty();
+            }
+
+            @Override
+            public void pressed(final ServerPlayer player, final BlockPos pos, final Direction face, final int x,
+                                final int y) {
+                PRESSED.set(new int[] {x, y});
+            }
+        });
     }
 
     /** What the camera of the screen at {@code screen} sees. */

@@ -8,7 +8,9 @@
 package dev.jstech.core.client.gui.data;
 
 import dev.jstech.core.menu.CoreMenu;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -34,6 +36,7 @@ public final class ScreenWiring<M> {
     private final Map<String, Consumer<String>> texts = new LinkedHashMap<>();
     private final Map<String, Supplier<?>> values = new LinkedHashMap<>();
     private final Map<String, Consumer<Object>> handlers = new LinkedHashMap<>();
+    private final List<Preview> previews = new ArrayList<>();
 
     ScreenWiring(@Nullable final M menu) {
         this.menu = menu;
@@ -94,6 +97,29 @@ public final class ScreenWiring<M> {
     public ScreenWiring<M> value(final String name, final Supplier<?> value) {
         values.put(name, value);
         return this;
+    }
+
+    /**
+     * A state the developer's inspector can put the screen in to see it so, as "working" or "jammed" for a machine's:
+     * what {@code show} does sets the values the screen reads. Only a development run shows it.
+     */
+    public ScreenWiring<M> preview(final String name, final Runnable show) {
+        previews.add(new Preview(name, show));
+        return this;
+    }
+
+    /** The states the inspector can put the screen in, in the order they were given. */
+    public List<Preview> previews() {
+        return List.copyOf(previews);
+    }
+
+    /**
+     * A state the inspector can put a screen in.
+     *
+     * @param name what it is called
+     * @param show what puts the screen in it
+     */
+    public record Preview(String name, Runnable show) {
     }
 
     /** The action {@code name}, or none. */

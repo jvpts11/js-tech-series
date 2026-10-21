@@ -35,6 +35,11 @@ public final class SlotFrame extends UiComponent {
     }
 
     @Override
+    public boolean still() {
+        return true;
+    }
+
+    @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         for (int i = 0; i < count; i++) {
             ctx.skin().slot(g, x() + (i % columns) * SIZE + 1, y() + (i / columns) * SIZE + 1);

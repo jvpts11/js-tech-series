@@ -77,7 +77,7 @@ public final class CoreElementBuilders {
                 FlexBox.column(name(spec)), new PieceView(StylePiece.WELL), true));
         ElementBuilders.register(CoreElements.TITLE, (spec, props, ctx) -> text(spec, ctx,
                 () -> ctx.title().getString(), colour(ctx, CoreElements.Tone.TITLE), CoreElements.TextAlign.LEFT, 1f,
-                false));
+                false, true));
         ElementBuilders.register(CoreElements.LABEL, CoreElementBuilders::label);
         ElementBuilders.register(CoreElements.BUTTON, CoreElementBuilders::button);
         ElementBuilders.register(CoreElements.SLOT, (spec, props, ctx) -> slots(spec, ctx, props.slot(), 1, 1));
@@ -125,16 +125,19 @@ public final class CoreElementBuilders {
             final String key = props.text().orElse("");
             text = () -> Component.translatable(key).getString();
         }
-        return text(spec, ctx, text, colour(ctx, props.tone()), props.textAlign(), props.scale(), props.wrap());
+        return text(spec, ctx, text, colour(ctx, props.tone()), props.textAlign(), props.scale(), props.wrap(),
+                props.bind().isEmpty());
     }
 
+    /* A text; a steady one, a key's words or the title, may be drawn once with the screen's still parts. */
     private static BuiltNode text(final ElementSpec spec, final BuildContext ctx, final Supplier<String> text,
                                   final IntSupplier colour, final CoreElements.TextAlign align, final float scale,
-                                  final boolean wrap) {
+                                  final boolean wrap, final boolean steady) {
         final TextMeasure measure = ctx.text(scale, wrap);
         final FlexBox box = FlexBox.leaf(name(spec), maxWidth -> measure.of(text.get()).measure(maxWidth))
                 .role(Role.TEXT);
-        return ctx.node(spec, box, new TextView(text, colour, align, measure), null, List.of());
+        final TextView view = new TextView(text, colour, align, measure);
+        return ctx.node(spec, box, steady ? view.steady() : view, null, List.of());
     }
 
     private static BuiltNode button(final ElementSpec spec, final CoreElements.ButtonProps props,
@@ -189,16 +192,17 @@ public final class CoreElementBuilders {
             final FlexBox label = FlexBox.leaf(name(spec) + " label", maxWidth -> measure.of(said.get())
                     .measure(maxWidth)).role(Role.TEXT).margin(new Insets(0, 0, LABEL_GAP, 0));
             parts.add(new BuiltNode(Optional.empty(), label, new TextView(said, colour(ctx, CoreElements.Tone.TITLE),
-                    CoreElements.TextAlign.LEFT, measure), null, () -> true, () -> true, Optional.empty(), List.of()));
+                    CoreElements.TextAlign.LEFT, measure).steady(), null, BuildContext.ALWAYS, BuildContext.ALWAYS,
+                    Optional.empty(), List.of()));
         }
         final FlexBox grid = FlexBox.leaf(name(spec) + " grid", IMeasure.fixed(9 * SlotFrame.SIZE,
                 3 * SlotFrame.SIZE)).role(Role.SOLID);
         parts.add(new BuiltNode(Optional.empty(), grid, new SlotFrame(27, 9), placed -> placePlayer(ctx, placed, 9),
-                () -> true, () -> true, Optional.empty(), List.of()));
+                BuildContext.ALWAYS, BuildContext.ALWAYS, Optional.empty(), List.of()));
         final FlexBox hotbar = FlexBox.leaf(name(spec) + " hotbar", IMeasure.fixed(9 * SlotFrame.SIZE,
                 SlotFrame.SIZE)).role(Role.SOLID).margin(new Insets(HOTBAR_GAP, 0, 0, 0));
         parts.add(new BuiltNode(Optional.empty(), hotbar, new SlotFrame(9, 9), placed -> placePlayer(ctx, placed, 0),
-                () -> true, () -> true, Optional.empty(), List.of()));
+                BuildContext.ALWAYS, BuildContext.ALWAYS, Optional.empty(), List.of()));
         for (final BuiltNode part : parts) {
             column.add(part.box());
         }
