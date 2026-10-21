@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.data;
 
+import dev.jstech.core.client.gui.component.TextScale;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.style.StyleSkin;
 import dev.jstech.core.gui.flex.FlexBox;
@@ -76,9 +77,12 @@ public final class BuildContext {
         return skin.style().metrics();
     }
 
-    /** How a text is measured in the style's font, at {@code scale}, wrapped or not. */
+    /**
+     * How a text is measured in the style's font, at {@code scale} of the size the player wants the text at
+     * ({@link TextScale}), wrapped or not: the boxes measured from it grow with a larger text.
+     */
     public TextMeasure text(final float scale, final boolean wraps) {
-        return new TextMeasure(text -> skin.textWidth(font, text), font.lineHeight, scale, wraps);
+        return new TextMeasure(text -> skin.textWidth(font, text), font.lineHeight, TextScale.of(scale), wraps);
     }
 
     /** The screen's menu, or none. */

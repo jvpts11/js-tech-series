@@ -11,6 +11,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -92,6 +93,11 @@ public final class Checkbox extends UiComponent {
     public Component narration() {
         return Narration.checkbox(spoken() != null ? spoken() : Component.literal(label.get()),
                 checked.getAsBoolean());
+    }
+
+    @Override
+    public Optional<Component> pressLabel() {
+        return Optional.of(spoken() != null ? spoken() : Component.literal(label.get()));
     }
 
     @Override

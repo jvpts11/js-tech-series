@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * One control of a program's content: a rectangle that draws itself through the skin, takes the input that
@@ -164,6 +165,14 @@ public abstract class UiComponent {
     /** How the component is used, said after its narration while it has the keyboard; empty for nothing. */
     public Component narrationUsage() {
         return Component.empty();
+    }
+
+    /**
+     * What a press on the component does, in its own words, for the hint beside the crosshair on a screen in the
+     * world ("Right click: Start"); none for one a press does nothing to.
+     */
+    public Optional<Component> pressLabel() {
+        return Optional.empty();
     }
 
     /** Called when the component loses the keyboard: the place to commit what was typed. */

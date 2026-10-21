@@ -37,8 +37,10 @@ import org.jetbrains.annotations.Nullable;
  *     public Optional<TouchArea> area(BlockState state, Direction face) {
  *         return face == state.getValue(FACING) ? Optional.of(TouchArea.whole(64, 32)) : Optional.empty();
  *     }
- *     public void pressed(ServerPlayer player, BlockPos pos, Direction face, int x, int y) {
- *         PanelLayout.buttonAt(x, y).ifPresent(button -> button.press(player.serverLevel(), pos));
+ *     public void pressed(ServerPlayer player, BlockPos pos, Direction face, TouchPress press) {
+ *         if (press.on("start")) {
+ *             PumpBlock.start(player.serverLevel(), pos);
+ *         }
  *     }
  * });
  * }</pre>
@@ -127,7 +129,8 @@ public final class ScreenTouches {
             at(player.serverLevel().getBlockState(pos), payload.face()).ifPresent(touch -> {
                 if (payload.x() >= 0 && payload.y() >= 0 && payload.x() < touch.area().width()
                         && payload.y() < touch.area().height()) {
-                    touch.screen().pressed(player, pos, payload.face(), payload.x(), payload.y());
+                    touch.screen().pressed(player, pos, payload.face(), new TouchPress(payload.x(), payload.y(),
+                            payload.target()));
                 }
             });
         });

@@ -94,6 +94,16 @@ class ConfigScreenLayoutTest {
     }
 
     @Test
+    void rowHeight_growsWithALargerText() {
+        final int line = ConfigScreenLayout.LINE;
+        assertEquals(ConfigScreenLayout.rowHeight(false, 2), ConfigScreenLayout.rowHeight(false, 2, line),
+                "the normal text keeps the row as it is");
+        assertEquals(ConfigScreenLayout.ROW + 4, ConfigScreenLayout.rowHeight(false, 1, line + 4));
+        assertEquals(ConfigScreenLayout.ROW + line + 2 * 4 + 4, ConfigScreenLayout.rowHeight(true, 2, line + 4)
+                - ConfigScreenLayout.NOTED_ROW + ConfigScreenLayout.ROW, "each line of the name and the note grow");
+    }
+
+    @Test
     void tabs_areCentredWithoutOverlapping() {
         for (final int width : new int[] {320, 480}) {
             final int last = ConfigScreenLayout.tabX(width, 2, 3) + ConfigScreenLayout.tabWidth(width, 3);

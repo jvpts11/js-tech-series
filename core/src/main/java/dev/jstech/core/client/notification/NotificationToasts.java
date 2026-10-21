@@ -8,11 +8,13 @@
 package dev.jstech.core.client.notification;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.client.gui.component.TextScale;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.style.StyleSkin;
 import dev.jstech.core.client.gui.style.Styles;
 import dev.jstech.core.client.hud.IHudElement;
 import dev.jstech.core.gui.HudStack;
+import dev.jstech.core.gui.TextSizes;
 import dev.jstech.core.gui.style.StylePiece;
 import dev.jstech.core.gui.style.StyleRole;
 import dev.jstech.core.notification.Notification;
@@ -43,14 +45,22 @@ final class NotificationToasts implements IHudElement {
     /* Where each notification was drawn last, for a click to find. */
     private final List<Placed> placed = new ArrayList<>();
 
-    /** How wide a notification is, and how tall with and without an action's line. */
+    /** How wide a notification is at the normal text size. */
     static final int WIDTH = 200;
-    static final int HEIGHT = 36;
-    static final int HEIGHT_WITH_ACTION = 44;
     private static final int GAP = 2;
     private static final int ICON = 16;
     private static final int TEXT_X = 30;
     private static final int PAD = 8;
+    /*
+     * Down a notification at the normal text size: the title's top, its line, the room under it, each small line, and
+     * the room left at the foot for the time line, without an action's line and with one.
+     */
+    private static final int TITLE_Y = 6;
+    private static final int LINE = 9;
+    private static final int UNDER_TITLE = 2;
+    private static final int SMALL_LINE = 7;
+    private static final int FOOT = 5;
+    private static final int FOOT_WITH_ACTION = 6;
     /* The time line is the title's colour, a little see-through. */
     private static final int RGB = 0xFFFFFF;
     private static final int BAR_ALPHA = 200 << 24;
@@ -69,9 +79,10 @@ final class NotificationToasts implements IHudElement {
 
     @Override
     public HudStack.Size size(final Minecraft minecraft) {
+        final float small = skin().style().metrics().smallScale();
         int height = 0;
         for (final NotificationBoard.Entry<Notification> entry : this.board.showing(Util.getMillis())) {
-            height += heightOf(entry) + GAP;
+            height += heightOf(entry, small) + GAP;
         }
         return new HudStack.Size(width(minecraft), Math.max(0, height - GAP));
     }
@@ -80,7 +91,8 @@ final class NotificationToasts implements IHudElement {
     @Override
     public HudStack.Size editSize(final Minecraft minecraft) {
         final HudStack.Size now = size(minecraft);
-        return new HudStack.Size(now.width(), Math.max(HEIGHT, now.height()));
+        final int one = Lines.of(false, skin().style().metrics().smallScale()).height();
+        return new HudStack.Size(now.width(), Math.max(one, now.height()));
     }
 
     @Override
@@ -88,7 +100,8 @@ final class NotificationToasts implements IHudElement {
         final Minecraft minecraft = Minecraft.getInstance();
         final long now = Util.getMillis();
         final List<NotificationBoard.Entry<Notification>> shown = this.board.showing(now);
-        final StyleSkin skin = Styles.menuSkin(Styles.forMod(JsCore.MODID));
+        final StyleSkin skin = skin();
+        final float small = skin.style().metrics().smallScale();
         final int w = width(minecraft);
         // The newest goes nearest the corner: at the top of a top corner's stack, at the foot of a bottom one's.
         final boolean bottom = NotificationsClient.corner().bottom();
@@ -96,7 +109,7 @@ final class NotificationToasts implements IHudElement {
         int top = y;
         for (int i = 0; i < shown.size(); i++) {
             final NotificationBoard.Entry<Notification> entry = shown.get(bottom ? shown.size() - 1 - i : i);
-            final int h = heightOf(entry);
+            final int h = heightOf(entry, small);
             draw(g, minecraft.font, skin, entry, x, top, w, h, now);
             this.placed.add(new Placed(entry, x, top, w, h));
             top += h + GAP;
@@ -140,36 +153,62 @@ final class NotificationToasts implements IHudElement {
                              final int h, final long now) {
         final Notification notification = entry.item();
         final int colour = levelColour(skin, notification.level());
-        final float small = skin.style().metrics().smallScale();
+        // The text at the size the player wants it; the icon and the frame keep the GUI scale.
+        final float title = TextScale.factor();
+        final float small = TextScale.of(skin.style().metrics().smallScale());
+        final Lines lines = Lines.of(notification.action().isPresent(), skin.style().metrics().smallScale());
         skin.piece(g, StylePiece.NOTIFICATION, x, y, w, h);
         g.blitSprite(icon(notification.level()), x + PAD, y + (h - ICON) / 2 - 2, ICON, ICON);
         final int right = x + w - PAD;
         int titleRoom = right - (x + TEXT_X);
         if (entry.count() > 1) {
             final String count = GameText.resolve(NotificationTexts.COUNT.with(entry.count()));
-            final int cw = skin.textWidth(font, count);
-            skin.drawText(g, font, count, right - cw, y + 6, skin.colour(StyleRole.NOTICE));
+            final int cw = TextScale.width(skin, font, count, title);
+            TextScale.draw(skin, g, font, count, right - cw, y + TITLE_Y, skin.colour(StyleRole.NOTICE), title);
             titleRoom -= cw + 4;
         }
-        skin.drawText(g, font, Texts.clip(font, GameText.resolve(notification.title()), titleRoom), x + TEXT_X, y + 6,
-                colour);
+        TextScale.draw(skin, g, font, Texts.clip(font, GameText.resolve(notification.title()),
+                (int) (titleRoom / title)), x + TEXT_X, y + TITLE_Y, colour, title);
         final int smallRoom = (int) ((right - (x + TEXT_X)) / small);
-        skin.drawText(g, font, Texts.clip(font, GameText.resolve(notification.body()), smallRoom), x + TEXT_X, y + 17,
-                skin.colour(StyleRole.MENU_TEXT), small);
+        skin.drawText(g, font, Texts.clip(font, GameText.resolve(notification.body()), smallRoom), x + TEXT_X,
+                y + lines.body(), skin.colour(StyleRole.MENU_TEXT), small);
         skin.drawText(g, font, Texts.clip(font, NotificationsClient.modName(entry.mod()), smallRoom), x + TEXT_X,
-                y + 24, skin.colour(StyleRole.MENU_DIM), small);
+                y + lines.mod(), skin.colour(StyleRole.MENU_DIM), small);
         actionLine(notification).ifPresent(line -> skin.drawText(g, font, Texts.clip(font, line, smallRoom),
-                x + TEXT_X, y + 31, skin.colour(StyleRole.INFO), small));
+                x + TEXT_X, y + lines.action(), skin.colour(StyleRole.INFO), small));
         final int left = (int) ((w - 2 * 4) * NotificationBoard.left(entry, now));
         g.fill(x + 4, y + h - 4, x + 4 + left, y + h - 3, (colour & RGB) | BAR_ALPHA);
     }
 
-    private static int heightOf(final NotificationBoard.Entry<Notification> entry) {
-        return entry.item().action().isPresent() ? HEIGHT_WITH_ACTION : HEIGHT;
+    private static int heightOf(final NotificationBoard.Entry<Notification> entry, final float small) {
+        return Lines.of(entry.item().action().isPresent(), small).height();
     }
 
+    /* As wide as the game's toast, wider with a larger text, and never wider than the screen. */
     private static int width(final Minecraft minecraft) {
-        return Math.min(WIDTH, minecraft.getWindow().getGuiScaledWidth() - 2 * HudStack.MARGIN);
+        return Math.min(TextSizes.grown(WIDTH, TextScale.factor()),
+                minecraft.getWindow().getGuiScaledWidth() - 2 * HudStack.MARGIN);
+    }
+
+    private static StyleSkin skin() {
+        return Styles.menuSkin(Styles.forMod(JsCore.MODID));
+    }
+
+    /*
+     * Where a notification's lines go down it, and how tall it is: the game's toast at the normal text size, each line
+     * grown with a larger text.
+     */
+    private record Lines(int body, int mod, int action, int height) {
+
+        private static Lines of(final boolean action, final float smallScale) {
+            final int titleLine = TextSizes.grown(LINE, TextScale.factor());
+            final int smallLine = TextScale.larger()
+                    ? Math.max(SMALL_LINE, TextSizes.grown(LINE, TextScale.of(smallScale))) : SMALL_LINE;
+            final int body = TITLE_Y + titleLine + UNDER_TITLE;
+            final int mod = body + smallLine;
+            final int last = action ? mod + smallLine : mod;
+            return new Lines(body, mod, mod + smallLine, last + smallLine + (action ? FOOT_WITH_ACTION : FOOT));
+        }
     }
 
     /* Where one notification was drawn. */

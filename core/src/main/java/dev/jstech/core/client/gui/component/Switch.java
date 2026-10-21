@@ -8,6 +8,7 @@
 package dev.jstech.core.client.gui.component;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
@@ -75,6 +76,13 @@ public final class Switch extends UiComponent {
         final String said = label.get();
         return Narration.toggle(spoken() != null ? spoken() : said.isEmpty() ? null : Component.literal(said),
                 on.getAsBoolean());
+    }
+
+    @Override
+    public Optional<Component> pressLabel() {
+        final String said = label.get();
+        return spoken() != null ? Optional.of(spoken()) : said.isEmpty() ? Optional.empty()
+                : Optional.of(Component.literal(said));
     }
 
     @Override

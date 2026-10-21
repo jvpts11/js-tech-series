@@ -9,6 +9,7 @@ package dev.jstech.core.client.gui.data;
 
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.gui.flex.Size;
 import dev.jstech.core.gui.flex.TextMeasure;
 import dev.jstech.core.gui.screen.CoreElements;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Objects;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A text of a screen's file, in one line or broken at its words to its box, drawn through the style: its font, its
@@ -28,6 +30,8 @@ public final class TextView extends UiComponent {
     private final CoreElements.TextAlign align;
     private final TextMeasure measure;
     private boolean steady;
+    /* The text last measured against its box, so a text that stays as it was is not measured again. */
+    private @Nullable String measured;
 
     public TextView(final Supplier<String> text, final IntSupplier colour, final CoreElements.TextAlign align,
                     final TextMeasure measure) {
@@ -46,6 +50,20 @@ public final class TextView extends UiComponent {
     public TextView steady() {
         steady = true;
         return this;
+    }
+
+    /**
+     * Whether its text, changed since it was last asked, needs more room than its box: a bound value grown since the
+     * screen was laid out, for the screen to lay itself out again rather than draw past the box.
+     */
+    public boolean outgrown() {
+        final String now = text.get();
+        if (now.equals(measured)) {
+            return false;
+        }
+        measured = now;
+        final Size needs = measure.of(now).measure(width());
+        return needs.width() > width() || needs.height() > height();
     }
 
     @Override

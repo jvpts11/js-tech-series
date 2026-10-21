@@ -84,6 +84,8 @@ public final class JsTests {
         TestTools.declare();
         // Binoculars, two scenes and a screen that shows a camera, to prove the Core's camera.
         TestCameras.declare();
+        // A pump's panel whose screen answers the crosshair, to prove the Core's screens in the world.
+        TestTouchPanel.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
         TestItems.declare();
         // Two fuses, to prove the Core's protection slot.

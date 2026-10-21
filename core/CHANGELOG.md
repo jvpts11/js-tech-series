@@ -941,8 +941,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   all, Cancel and Done. Opened from the settings screen or by its key; what the player did is kept in
   `jstech-hud.toml`, and an element placed leaves its corner's stack and stays by the corner nearest it.
 - Screens in the world that answer the crosshair: a block declares which face shows a screen, where on it and
-  its pixels (`ScreenTouches`, `ITouchScreen`); the player's game finds the pixel under the crosshair for the
-  screen's picture to light what is there, and a right click presses the screen at that pixel on the server.
+  its pixels (`ScreenTouches`, `ITouchScreen`); a screen is built of the Core's components (`TouchPanel`), the one
+  under the crosshair lit as the mouse lights it, and while the crosshair rests on a button the action bar says what a
+  right click does ("Right click: Start"); a right click presses the screen there on the server, by the pixel and by
+  the name of the part pressed (`TouchPress`).
+- The size of the text apart from the GUI scale, in the Core's own settings (`jstech-accessibility.toml`, Text
+  size: Normal, Larger, Largest): each step draws a letter's pixels a screen pixel larger, so it stays sharp. The
+  screens declared in files, the settings screen and the notifications grow with their text, while the icons, frames,
+  slots and the game's buttons keep the GUI scale (`TextScale`). A text bound to a value that grows past its box lays
+  its screen out again instead of running past the window's edge.
 - Screens declared in files draw less: their window and what never changes are drawn once into a picture laid
   down each frame, and only what moves is drawn over it (`UiComponent.still`, `StillLayer`).
 - Tools for building screens declared in files, in a development run: F12 opens the inspector, with the tree

@@ -13,6 +13,7 @@ import dev.jstech.core.client.gui.component.Dropdown;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Slider;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.TextScale;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.style.StyleSkin;
@@ -24,6 +25,7 @@ import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigKeyRange;
 import dev.jstech.core.config.ConfigScreenTexts;
 import dev.jstech.core.config.ConfigTraits;
+import dev.jstech.core.gui.TextSizes;
 import dev.jstech.core.gui.layout.ConfigScreenLayout;
 import dev.jstech.core.gui.style.StyleRole;
 import dev.jstech.core.text.GameText;
@@ -343,6 +345,7 @@ final class ConfigRows {
         private final List<UiComponent> controls = new ArrayList<>();
         private final List<int[]> spans = new ArrayList<>();
         private final boolean editable;
+        private final float textScale;
         private final int nameLines;
 
         SettingRow(final Host host, final ConfigFile file, final ConfigDraft draft, final ConfigKey<?> key) {
@@ -360,9 +363,11 @@ final class ConfigRows {
                 marks.add(new ConfigWidgets.Mark(GameText.resolve(ConfigScreenTexts.ON_RELOAD), StyleRole.INFO));
             }
             final Component title = host.model().name(key);
-            // Measured beside the button back to the default, so the row keeps its height as the button comes and goes.
+            // Measured beside the button back to the default, so the row keeps its height as the button comes and goes,
+            // at the size the player wants the text: a larger one takes more lines, and taller ones.
+            this.textScale = TextScale.factor();
             this.nameLines = ConfigScreenLayout.nameLines(title.getString(), ConfigScreenLayout.nameWidth(width, true),
-                    text -> host.skin().textWidth(host.font(), text)).size();
+                    text -> TextScale.width(host.skin(), host.font(), text, textScale)).size();
             this.name = add(new ConfigWidgets.SettingName(title::getString, marks, note, () -> draft.isActive(key),
                     () -> draft.isChanged(key), () -> host.describe(key)));
             this.reset = add(new Button(RESET_MARK, () -> draft.toDefault(key)).setFocusable(true));
@@ -371,7 +376,7 @@ final class ConfigRows {
 
         @Override
         int height() {
-            return ConfigScreenLayout.rowHeight(noted, nameLines);
+            return ConfigScreenLayout.rowHeight(noted, nameLines, TextSizes.grown(ConfigScreenLayout.LINE, textScale));
         }
 
         @Override

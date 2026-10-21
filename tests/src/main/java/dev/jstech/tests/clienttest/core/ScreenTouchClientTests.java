@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest.core;
 
 import dev.jstech.core.client.live.ScreenTouchClient;
 import dev.jstech.tests.TestCameras;
+import dev.jstech.tests.TestTouchPanel;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import net.minecraft.client.KeyMapping;
@@ -19,7 +20,9 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * A screen on a block's face as the player's crosshair meets it: the pixel under the crosshair found, as the screen's
- * picture reads it to light what is there, and a right click pressing the screen at that pixel on the server.
+ * picture reads it to light what is there, and a right click pressing the screen at that pixel on the server; on a
+ * panel of the Core's components, the button under the crosshair lit, the action bar saying what a right click does,
+ * and the press carrying the button's name.
  */
 public final class ScreenTouchClientTests {
 
@@ -30,6 +33,9 @@ public final class ScreenTouchClientTests {
     private static final int AT_X = 16;
     private static final int AT_Y = 48;
     private static final int WAIT = 60;
+    /* The middle of the panel's Start button, and the height of its buttons' middles. */
+    private static final int START_X = 26;
+    private static final int BUTTON_Y = 34;
 
     private ScreenTouchClientTests() {
     }
@@ -52,6 +58,42 @@ public final class ScreenTouchClientTests {
                 .thenWaitUntil(() -> TestCameras.PRESSED.get()[0] == AT_X && TestCameras.PRESSED.get()[1] == AT_Y,
                         WAIT, "the server heard the press at that pixel")
                 .thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(SCREEN), Blocks.AIR.defaultBlockState()));
+    }
+
+    @ClientTest(timeoutTicks = 400)
+    public static void panel_lightsTheButtonUnderTheCrosshairAndTheActionBarSaysIt(final ClientTestContext ctx) {
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    TestTouchPanel.PRESSED.set("");
+                    TestTouchPanel.RUNNING.set(false);
+                    level.setBlockAndUpdate(ctx.abs(SCREEN), TestTouchPanel.PANEL.get().defaultBlockState());
+                })
+                .thenWaitUntil(() -> ctx.mc().level.getBlockState(ctx.abs(SCREEN)).is(TestTouchPanel.PANEL.get()),
+                        WAIT, "the panel in the world")
+                .then(0, () -> ctx.lookAt(onPanel(ctx, START_X, BUTTON_Y)))
+                .thenWaitUntil(() -> ScreenTouchClient.hint().isPresent(), WAIT, "the hint on the action bar")
+                .thenAssert(0, () -> ScreenTouchClient.target().filter(at -> at.name().equals(TestTouchPanel.START))
+                        .isPresent(), "the crosshair is on Start")
+                .thenAssert(0, () -> ScreenTouchClient.hint().map(hint -> hint.getString().equals("Right click: Start"))
+                        .orElse(false), "the action bar says \"Right click: Start\"")
+                .thenScreenshot(6, "panel-start-lit")
+                .then(0, () -> KeyMapping.click(ctx.mc().options.keyUse.getKey()))
+                .thenWaitUntil(() -> TestTouchPanel.START.equals(TestTouchPanel.PRESSED.get()), WAIT,
+                        "the server heard Start pressed by its name")
+                .thenAssert(0, TestTouchPanel.RUNNING::get, "Start set the pump running")
+                .then(0, () -> ctx.lookAt(onPanel(ctx, TestTouchPanel.WIDTH / 2, BUTTON_Y)))
+                .thenWaitUntil(() -> ScreenTouchClient.hint().isEmpty(), WAIT,
+                        "no hint between the buttons, where a press reaches nothing")
+                .thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(SCREEN), Blocks.AIR.defaultBlockState()));
+    }
+
+    /* The middle of a pixel of the panel's screen, across the middle half of its north face. */
+    private static Vec3 onPanel(final ClientTestContext ctx, final int x, final int y) {
+        final BlockPos at = ctx.abs(SCREEN);
+        final double across = (x + 0.5) / TestTouchPanel.WIDTH;
+        final double down = TestTouchPanel.AREA.top() + (y + 0.5) / TestTouchPanel.HEIGHT
+                * (TestTouchPanel.AREA.bottom() - TestTouchPanel.AREA.top());
+        return new Vec3(at.getX() + 1 - across, at.getY() + 1 - down, at.getZ());
     }
 
     /* The middle of a pixel of the screen on the north face, seen from the north: its left is to the east. */

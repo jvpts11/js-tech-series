@@ -11,6 +11,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -140,6 +141,11 @@ public final class Button extends UiComponent {
     @Override
     public Component narration() {
         return Narration.button(spoken() != null ? spoken() : Component.literal(label.get()));
+    }
+
+    @Override
+    public Optional<Component> pressLabel() {
+        return Optional.of(spoken() != null ? spoken() : Component.literal(label.get()));
     }
 
     @Override

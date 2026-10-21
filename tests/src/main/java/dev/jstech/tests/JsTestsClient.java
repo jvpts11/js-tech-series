@@ -15,6 +15,7 @@ import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.tests.clienttest.TestGuideClient;
 import dev.jstech.tests.clienttest.TestHud;
 import dev.jstech.tests.clienttest.TestPassageScreen;
+import dev.jstech.tests.clienttest.TestTouchPanelClient;
 import dev.jstech.tests.clienttest.computers.TestClientParts;
 import dev.jstech.tests.clienttest.core.TestFanMotion;
 import dev.jstech.tests.clienttest.core.TestTooltips;
@@ -63,5 +64,7 @@ public final class JsTestsClient {
         TravelScreens.register(TestPassageScreen.ID, TestPassageScreen::new);
         // What the test mod says in tooltips, as another mod says it through the Core.
         TestTooltips.declare();
+        // The pump's panel, a screen in the world built of the Core's components.
+        TestTouchPanelClient.register(modEventBus);
     }
 }

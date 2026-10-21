@@ -8,10 +8,12 @@
 package dev.jstech.core.client.config;
 
 import dev.jstech.core.api.client.ISkin;
+import dev.jstech.core.client.gui.component.TextScale;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.style.StyleSkin;
+import dev.jstech.core.gui.TextSizes;
 import dev.jstech.core.gui.layout.ConfigScreenLayout;
 import dev.jstech.core.gui.style.StyleRole;
 import java.util.List;
@@ -155,30 +157,33 @@ final class ConfigWidgets {
                 g.fill(x() - 4, y() + 2, x() - 2, bottom() - 2, colour(skin, StyleRole.NOTICE));
             }
             // A name too long for one line takes two, and the row is a line taller for it; what is left is cut short.
+            // All of it at the size the player wants the text.
+            final float scale = TextScale.factor();
+            final int line = TextSizes.grown(ConfigScreenLayout.LINE, scale);
+            final int room = (int) (width() / scale);
             final List<String> lines = ConfigScreenLayout.nameLines(name.get(), width(),
-                    text -> skin.textWidth(ctx.font(), text));
-            final int block = 8 + (lines.size() - 1) * ConfigScreenLayout.LINE;
+                    text -> TextScale.width(skin, ctx.font(), text, scale));
+            final int block = TextSizes.grown(8, scale) + (lines.size() - 1) * line;
             final int nameY = note.isEmpty() ? y() + (height() - block) / 2 : y() + 4;
             String shown = "";
             for (int i = 0; i < lines.size(); i++) {
-                shown = Texts.clip(ctx.font(), lines.get(i), width());
-                skin.drawText(g, ctx.font(), shown, x(), nameY + i * ConfigScreenLayout.LINE,
-                        on ? skin.text() : skin.dim());
+                shown = Texts.clip(ctx.font(), lines.get(i), room);
+                TextScale.draw(skin, g, ctx.font(), shown, x(), nameY + i * line, on ? skin.text() : skin.dim(), scale);
             }
-            final int lastY = nameY + (lines.size() - 1) * ConfigScreenLayout.LINE;
-            int markX = x() + skin.textWidth(ctx.font(), shown) + SPACE + 2;
+            final int lastY = nameY + (lines.size() - 1) * line;
+            int markX = x() + TextScale.width(skin, ctx.font(), shown, scale) + SPACE + 2;
             for (final Mark mark : marks) {
-                final int room = right() - markX;
-                final int w = skin.textWidth(ctx.font(), mark.text());
-                if (w > room) {
+                final int left = right() - markX;
+                final int w = TextScale.width(skin, ctx.font(), mark.text(), scale);
+                if (w > left) {
                     break;
                 }
-                skin.drawText(g, ctx.font(), mark.text(), markX, lastY, colour(skin, mark.role()));
+                TextScale.draw(skin, g, ctx.font(), mark.text(), markX, lastY, colour(skin, mark.role()), scale);
                 markX += w + SPACE + 2;
             }
             if (!note.isEmpty()) {
-                skin.drawText(g, ctx.font(), Texts.clip(ctx.font(), note, width()), x(), lastY + 11,
-                        colour(skin, StyleRole.NOTICE));
+                TextScale.draw(skin, g, ctx.font(), Texts.clip(ctx.font(), note, room), x(), lastY + line + 2,
+                        colour(skin, StyleRole.NOTICE), scale);
             }
         }
 

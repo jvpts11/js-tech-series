@@ -177,6 +177,15 @@ public final class ConfigScreenLayout {
     }
 
     /**
+     * How tall a setting's row is, its name in {@code nameLines} lines {@code line} pixels apart: a text larger than
+     * the normal makes each line, the line under the name and so the row taller by as much as each line grew.
+     */
+    public static int rowHeight(final boolean noted, final int nameLines, final int line) {
+        final int lines = Math.max(1, Math.min(NAME_LINES, nameLines)) + (noted ? 1 : 0);
+        return rowHeight(noted, nameLines) + lines * Math.max(0, line - LINE);
+    }
+
+    /**
      * {@code name} broken into the lines it takes in {@code room}, between words, at most {@link #NAME_LINES}; the
      * last line holds whatever is left, for the screen to cut short.
      */

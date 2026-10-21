@@ -12,6 +12,7 @@ import dev.jstech.core.client.gui.component.Checkbox;
 import dev.jstech.core.client.gui.component.KeyboardFocus;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.StillLayer;
+import dev.jstech.core.client.gui.component.TextScale;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.style.StyleSkin;
@@ -140,16 +141,13 @@ public final class DataScreenView {
         if (tree == null) {
             return;
         }
-        placed = FlexLayout.layout(tree.box(), width, height);
         if (height > screenHeight && !warnedTall) {
             warnedTall = true;
             LOGGER.warn("the screen {} needs {} pixels down and the window has {}", file, height, screenHeight);
         }
-        place(tree, placed, left, top);
         this.left = left;
         this.top = top;
-        findStill();
-        revision++;
+        lay();
     }
 
     /** The window's left on the game's screen, as it was last laid out. */
@@ -175,6 +173,14 @@ public final class DataScreenView {
                        final float partialTick) {
         if (tree == null) {
             return;
+        }
+        boolean outgrown = false;
+        for (final UiComponent component : root.children()) {
+            outgrown |= component instanceof TextView text && text.outgrown();
+        }
+        if (outgrown) {
+            // A text grown past its box since the screen was laid out: the window keeps its size, the rest gives room.
+            lay();
         }
         tree.forEach(node -> {
             if (node.component() != null) {
@@ -404,13 +410,22 @@ public final class DataScreenView {
 
     /* A screen whose file is missing or broken says so where it would have been. */
     private BuiltNode missing(final String said) {
-        final TextMeasure measure = new TextMeasure(text -> skin.textWidth(font, text), font.lineHeight, 1f, true);
+        final TextMeasure measure = new TextMeasure(text -> skin.textWidth(font, text), font.lineHeight,
+                TextScale.factor(), true);
         final FlexBox box = FlexBox.leaf("problem", measure.of(said)).role(Role.TEXT);
         final TextView text = new TextView(() -> said, skin::text, CoreElements.TextAlign.LEFT, measure);
         final FlexBox column = FlexBox.column("screen").padding(Insets.of(style.metrics().padding())).add(box);
         return new BuiltNode(Optional.empty(), column, null, null, () -> true, () -> true, Optional.empty(),
                 List.of(new BuiltNode(Optional.empty(), box, text, null, () -> true, () -> true, Optional.empty(),
                         List.of())));
+    }
+
+    /* Lays the tree out in the window as it is, at the corner it was last given, and hands each node its box. */
+    private void lay() {
+        placed = FlexLayout.layout(tree.box(), width, height);
+        place(tree, placed, left, top);
+        findStill();
+        revision++;
     }
 
     /* Hands each node its box on the game's screen, and its box in the screen's own space to what it does placed. */

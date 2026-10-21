@@ -267,21 +267,42 @@ A screen in the world answers the crosshair as a screen answers the mouse. The b
 sides, which of its faces shows a screen, the part of the face it covers and its pixels, and what a press does:
 
 ```java
-ScreenTouches.declare(PANEL, new ITouchScreen() {
+ScreenTouches.declare(PUMP, new ITouchScreen() {
     public Optional<TouchArea> area(BlockState state, Direction face) {
-        return face == state.getValue(FACING) ? Optional.of(TouchArea.whole(64, 32)) : Optional.empty();
+        return face == state.getValue(FACING) ? Optional.of(TouchArea.whole(96, 48)) : Optional.empty();
     }
-    public void pressed(ServerPlayer player, BlockPos pos, Direction face, int x, int y) {
-        PanelLayout.buttonAt(x, y).ifPresent(button -> button.press(player.serverLevel(), pos));
+    public void pressed(ServerPlayer player, BlockPos pos, Direction face, TouchPress press) {
+        if (press.on("start")) {
+            PumpBlock.start(player.serverLevel(), pos);
+        }
     }
 });
 ```
 
-On the player's game `ScreenTouchClient.pointerOn(pos)` gives the pixel under the crosshair, which the screen's
-painter hands its components as the mouse, so the one under the crosshair lights as it would under the pointer; a
-right click there presses the screen instead of using the block or the item in hand, and the server checks the
-player is near and the pixel is on the screen before `pressed` hears it. A face is read as seen from in front of
-it: across from its left, down from its top, so a face looking north has its left to the east (`ScreenFace`).
+*Added 2026-10-21.* On the player's game, a `TouchPanel` builds the screen of the Core's components, as a screen on
+the monitor is built. The components it adds with a name are the parts a press reaches:
+
+```java
+TouchPanel pump = new TouchPanel(MODID);                       // drawn on the window of the mod's style
+pump.add(new Label(() -> "PUMP 2", Label.Tone.ACCENT)).setBounds(6, 6, 36, 9);
+pump.add("start", new Button(() -> "Start", () -> { })).setBounds(6, 26, 40, 16);
+pump.add("stop", new Button(() -> "Stop", () -> { })).setBounds(50, 26, 40, 16);
+ScreenTouchClient.targets(PUMP, pump);
+// In the block's renderer:
+LiveScreen picture = LiveScreens.ask(pos, pump.painter(pos), 96, 48, 2, Tube.COLOUR, distanceSquared);
+```
+
+The panel hands its components the pixel under the crosshair as the mouse (`ScreenTouchClient.pointerOn(pos)`), so
+the button there lights as it would under the pointer. While the crosshair rests on a named part, the action bar says
+what a right click does, in the part's own words and with the key the player uses: "Right click: Start". A right
+click there presses the screen instead of using the block or the item in hand. The press carries the part's name
+(`TouchPress.target`, `press.on("start")`), and the server checks that the player is near and the pixel is on the
+screen before `pressed` hears it. The name is what the player's game says, so check that the part may be pressed now,
+as you would a click on a menu's button. A screen painted another way declares its parts with an `ITouchTargets` of
+its own.
+
+A face is read as seen from in front of it: across from its left, down from its top, so a face looking north has its
+left to the east (`ScreenFace`).
 
 ## Keys
 
@@ -314,6 +335,28 @@ the game's buttons (Controlify does), and the game's narrator reads each in the 
 language: "Press button", "Checkbox: Ready: OFF", "Speed: 40 slider", with how it is used after it. A component's
 `narration()` says what the narrator reads; one with no words of its own takes a name from its file's `narration`
 key or from `setSpoken`. A screen of your own built from the Core's components hands them over the same way.
+
+## The size of the text
+
+*Added 2026-10-21.*
+
+A player can have the text larger than the GUI scale makes it, in the Core's own settings (`text.size` in
+`jstech-accessibility.toml`, "Text size": Normal, Larger or Largest). Each step draws a letter's pixels one screen
+pixel larger than the GUI scale does (three screen pixels to a font pixel at GUI scale 2, not two), so the letters
+stay sharp; the small font is cut to whole pixels too. What holds the text grows with it, and the icons, the frames,
+the slots and the game's own buttons keep the GUI scale:
+
+- **screens declared in files**: every text is measured at the larger size, so the boxes laid out from it grow and
+  the rest of the window gives them room;
+- **the Core's settings screen**: each row grows with its name;
+- **notifications**: each grows to its text.
+
+A screen of your own reads the scale with `TextScale.of(scale)` (`TextScale.factor()` for text of the normal size),
+measures with `TextScale.width(skin, font, text, scale)` and draws with `TextScale.draw(...)`, which at the normal
+size draws just as the skin does. The manuals keep their own size for now.
+
+A text bound to a value grows after the screen is laid out, as the value changes. When it no longer fits its box,
+the screen lays itself out again in the same window, so the text does not run past the window's edge.
 
 ## Tools for building a screen
 

@@ -21,6 +21,7 @@ import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.live.ITouchScreen;
 import dev.jstech.core.live.ScreenTouches;
 import dev.jstech.core.live.TouchArea;
+import dev.jstech.core.live.TouchPress;
 import dev.jstech.core.model.Easing;
 import java.util.List;
 import java.util.Optional;
@@ -91,9 +92,9 @@ public final class TestCameras {
             }
 
             @Override
-            public void pressed(final ServerPlayer player, final BlockPos pos, final Direction face, final int x,
-                                final int y) {
-                PRESSED.set(new int[] {x, y});
+            public void pressed(final ServerPlayer player, final BlockPos pos, final Direction face,
+                                final TouchPress press) {
+                PRESSED.set(new int[] {press.x(), press.y()});
             }
         });
     }
