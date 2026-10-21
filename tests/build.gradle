@@ -47,6 +47,11 @@ def withFtbTeams = providers.gradleProperty('withFtbTeams').isPresent()
  * machines' recipes and the areas screens keep clear. Off by default, so every other run shows JEI alone.
  */
 def withEmi = providers.gradleProperty('withEmi').isPresent()
+/*
+ * -PwithRei runs the development client with REI (and Cloth Config, which it needs), to see the Core's bridge to REI
+ * at work. Off by default, so every other run shows JEI alone.
+ */
+def withRei = providers.gradleProperty('withRei').isPresent()
 // -PwithJade runs the development mods with Jade, to see the lines the Core's bridge gives its tooltip.
 def withJade = providers.gradleProperty('withJade').isPresent()
 /*
@@ -244,6 +249,13 @@ dependencies {
     compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
     if (withEmi) {
         localRuntime "dev.emi:emi-neoforge:${emi_version}"
+    }
+    // REI's API, for the client test that reads what the Core's bridge gave REI when REI is there.
+    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}") { transitive = false }
+    if (withRei) {
+        localRuntime("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}") { transitive = false }
+        localRuntime("me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}") { transitive = false }
+        localRuntime "dev.architectury:architectury-neoforge:${architectury_version}"
     }
     if (withJade) {
         localRuntime "maven.modrinth:jade:${jade_version}"

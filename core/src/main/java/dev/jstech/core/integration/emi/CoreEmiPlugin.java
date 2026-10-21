@@ -23,14 +23,14 @@ import dev.jstech.core.client.recipeview.IKeepsViewersClear;
 import dev.jstech.core.client.recipeview.IRecipeViewer;
 import dev.jstech.core.client.recipeview.MultiblockEntry;
 import dev.jstech.core.client.recipeview.MultiblockRecipeViews;
-import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.client.recipeview.RecipeViewers;
+import dev.jstech.core.client.recipeview.ViewKinds;
 import dev.jstech.core.machine.Machines;
 import dev.jstech.core.machine.ProcessingKind;
-import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.multiblock.MultiblockViewTexts;
 import dev.jstech.core.multipart.MicroblockShowcase;
 import dev.jstech.core.progression.IKnowledgeGated;
+import dev.jstech.core.recipeview.RecipeViewKind;
 import dev.jstech.core.text.GameText;
 import java.util.List;
 import java.util.OptionalInt;
@@ -44,11 +44,13 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The Core's bridge to EMI, which finds it by its annotation and only when EMI is installed: the same as the bridge to
- * JEI, a category for every mod's processing machines with the machines as its workstations, the fill button that
+ * JEI, a category for every kind of recipe from the Core's kit ({@link ViewKinds}), every mod's processing machines
+ * among them, with the blocks that work them as its workstations, the fill button that
  * moves a recipe into the open machine, one for every multiblock that can be shown before it is built, the
  * microblocks' rules as one crafting recipe each going through every block, and the areas screens name kept clear of
  * EMI's lists.
@@ -65,18 +67,9 @@ public final class CoreEmiPlugin implements EmiPlugin {
     @Override
     public void register(final EmiRegistry registry) {
         RecipeViewers.add(VIEWER);
-        for (final ProcessingKind kind : ProcessingRecipeViews.kinds()) {
-            final List<ItemStack> machines = ProcessingRecipeViews.machineStacks(kind);
-            final EmiRenderable icon = machines.isEmpty() ? EmiStack.EMPTY : EmiStack.of(machines.getFirst());
-            final EmiRecipeCategory category = new KindCategory(kind, icon);
-            registry.addCategory(category);
-            for (final ItemStack machine : machines) {
-                registry.addWorkstation(category, EmiStack.of(machine));
-            }
-            for (final RecipeHolder<ProcessingRecipe> holder
-                    : registry.getRecipeManager().getAllRecipesFor(kind.type())) {
-                registry.addRecipe(new ProcessingEmiRecipe(category, holder));
-            }
+        final Level level = Minecraft.getInstance().level;
+        for (final RecipeViewKind<?> kind : ViewKinds.all()) {
+            addKind(registry, kind, level);
         }
         final List<ItemStack> tools = MultiblockShows.tools();
         final EmiRecipeCategory multiblocks = new NamedCategory(MULTIBLOCKS,
@@ -118,14 +111,24 @@ public final class CoreEmiPlugin implements EmiPlugin {
 
     /** How many recipes EMI shows under that kind of machine, or nothing before EMI has read them. */
     public static OptionalInt recipesShown(final ProcessingKind kind) {
-        final EmiRecipeCategory category = categoryOf(kind);
+        return recipesShown(kind.id());
+    }
+
+    /** How many recipes EMI shows under the kind of recipe whose id is {@code id}, or nothing before it read them. */
+    public static OptionalInt recipesShown(final ResourceLocation id) {
+        final EmiRecipeCategory category = categoryOf(id);
         return category == null ? OptionalInt.empty()
                 : OptionalInt.of(EmiApi.getRecipeManager().getRecipes(category).size());
     }
 
     /** Opens EMI's recipe screen on the recipes of that kind of machine; false before EMI has read them. */
     public static boolean showRecipes(final ProcessingKind kind) {
-        final EmiRecipeCategory category = categoryOf(kind);
+        return showRecipes(kind.id());
+    }
+
+    /** Opens EMI's recipe screen on the kind of recipe whose id is {@code id}; false before EMI has read it. */
+    public static boolean showRecipes(final ResourceLocation id) {
+        final EmiRecipeCategory category = categoryOf(id);
         if (category == null) {
             return false;
         }
@@ -170,17 +173,7 @@ public final class CoreEmiPlugin implements EmiPlugin {
 
     /** Opens EMI on the recipes of the processing machines of {@code kind}; whether it has a category for them. */
     public static boolean showRecipesOf(final ProcessingKind kind) {
-        final EmiRecipeCategory category = categoryOf(kind);
-        if (category == null) {
-            return false;
-        }
-        EmiApi.displayRecipeCategory(category);
-        return true;
-    }
-
-    @Nullable
-    private static EmiRecipeCategory categoryOf(final ProcessingKind kind) {
-        return categoryOf(kind.id());
+        return showRecipes(kind.id());
     }
 
     @Nullable
@@ -228,12 +221,32 @@ public final class CoreEmiPlugin implements EmiPlugin {
         }
     }
 
+    /* A kind's category with its workstations and its recipes, each page as large as the kind says. */
+    private static <T> void addKind(final EmiRegistry registry, final RecipeViewKind<T> kind,
+                                    @Nullable final Level level) {
+        final ItemStack shown = kind.icon();
+        final EmiRecipeCategory category = new KindCategory(kind, shown.isEmpty() ? EmiStack.EMPTY
+                : EmiStack.of(shown));
+        registry.addCategory(category);
+        for (final ItemStack station : kind.workstations()) {
+            registry.addWorkstation(category, EmiStack.of(station));
+        }
+        if (level == null) {
+            return;
+        }
+        final List<T> recipes = kind.recipes(level);
+        final RecipeViewKind.Size size = kind.size(recipes);
+        for (final T recipe : recipes) {
+            registry.addRecipe(new DeclaredEmiRecipe<>(category, kind, recipe, size));
+        }
+    }
+
     /* A kind's category, named as the kind is rather than by EMI's own key for it. */
     private static final class KindCategory extends EmiRecipeCategory {
 
-        private final ProcessingKind kind;
+        private final RecipeViewKind<?> kind;
 
-        private KindCategory(final ProcessingKind kind, final EmiRenderable icon) {
+        private KindCategory(final RecipeViewKind<?> kind, final EmiRenderable icon) {
             super(kind.id(), icon);
             this.kind = kind;
         }

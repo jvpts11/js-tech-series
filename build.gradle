@@ -106,6 +106,12 @@ subprojects {
             url = 'https://maven.terraformersmc.com/releases'
             content { includeGroup 'dev.emi' }
         }
+        // REI and Cloth Config: the third recipe viewer the Core's recipe pages are shown in, and what it needs.
+        maven {
+            name = 'Shedaniel'
+            url = 'https://maven.shedaniel.me/'
+            content { includeGroupByRegex 'me\\.shedaniel.*' }
+        }
         // Curios and Accessories: the two equipment-slot mods the Core reads worn items from.
         maven {
             name = 'TheIllusiveC4'

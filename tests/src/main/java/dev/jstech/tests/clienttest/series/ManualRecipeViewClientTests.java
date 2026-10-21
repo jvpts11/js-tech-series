@@ -17,6 +17,7 @@ import dev.jstech.core.guide.GuideSearch;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.integration.emi.CoreEmiPlugin;
 import dev.jstech.core.integration.jei.CoreJeiPlugin;
+import dev.jstech.core.integration.rei.CoreReiPlugin;
 import dev.jstech.tests.TestGuide;
 import dev.jstech.tests.TestPress;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -102,7 +103,8 @@ public final class ManualRecipeViewClientTests {
         ctx.then(0, () -> ctx.mc().setScreen(new InventoryScreen(ctx.player())))
                 .thenAwaitScreen(AbstractContainerScreen.class, OPEN)
                 .thenAssert(0, () -> search(upgrade.getHoverName().getString()), "a viewer runs to search")
-                .thenAssert(SETTLE, () -> pointAtListed(ctx, upgrade), "the upgrade is found in the viewer's list")
+                // A viewer still building its list as the test starts finds the upgrade once it is built.
+                .thenWaitUntil(() -> pointAtListed(ctx, upgrade), OPEN, "the upgrade is found in the viewer's list")
                 .then(2, () -> manualKey().setDown(true))
                 .thenWaitUntil(() -> GuideClient.holdProgress() > HALF_HELD, OPEN,
                         "the bar fills while the key is held over it")
@@ -146,7 +148,9 @@ public final class ManualRecipeViewClientTests {
 
     /* Types into the search of the viewer the game runs; whether one runs. */
     private static boolean search(final String words) {
-        return ModList.get().isLoaded("emi") ? CoreEmiPlugin.search(words) : CoreJeiPlugin.search(words);
+        // REI's list lies over the others where it runs beside them, so it is narrowed as well.
+        final boolean rei = !ModList.get().isLoaded("roughlyenoughitems") || CoreReiPlugin.search(words);
+        return rei && (ModList.get().isLoaded("emi") ? CoreEmiPlugin.search(words) : CoreJeiPlugin.search(words));
     }
 
     /*

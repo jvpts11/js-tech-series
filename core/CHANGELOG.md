@@ -1049,6 +1049,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   with its switch in `jstech-step-aside.toml`; no sound in a vacuum, the speed of sound and the hum of machines stay.
   The log says, as the game finishes loading, which system steps aside for which mod, and LambDynamicLights is
   handed the light the series' items give held.
+- Recipe viewers for every kind of recipe: a mod declares a kind once with `RecipeViews` (a type of the game's
+  recipes, or any values it lists), lays out its page with slots, fluids, lines, sprites and an arrow, and it is shown
+  in JEI, EMI and REI alike; the processing machines' pages are made the same way. REI now shows everything JEI and
+  EMI do: the machines' recipes with the "+" that moves one into the open machine, the multiblocks with their
+  previews, the microblocks' rules, and the areas screens keep clear. A viewer opened from a manual comes back to it
+  when it closes, EMI's too.
 - CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,

@@ -224,7 +224,8 @@ data.server(new MyRecipeProvider(data.output(), data.lookup()));
 | --- | --- |
 | [Content](CONTENT.md) | Every builder: blocks, items, looks, tabs, tags, block entities, menus, materials, items with state. |
 | [Text and colour](TEXT_AND_COLOUR.md) | Sentences a player reads, in every language; the colours of screens, which resource packs can change. |
-| [Machines](MACHINES.md) | Processing machines, recipes with counts and fluids, upgrades, and JEI and EMI. |
+| [Machines](MACHINES.md) | Processing machines, recipes with counts and fluids, upgrades, and JEI, EMI and REI. |
+| [Recipe viewers](RECIPE_VIEWERS.md) | Any kind of recipe shown in JEI, EMI and REI from one declaration. |
 | [Energy and resources](ENERGY_AND_RESOURCES.md) | Energy, fluids, chemicals and items moving between blocks. |
 | [Networks](NETWORKS.md) and [Operations](OPERATIONS.md) | Data networks of devices, and the requests they carry out. |
 | [Cables](CABLES.md) | The one cable block every mod lays its cables in. |

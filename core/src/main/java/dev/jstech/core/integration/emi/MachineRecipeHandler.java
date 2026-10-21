@@ -59,7 +59,8 @@ final class MachineRecipeHandler implements EmiRecipeHandler<MachineMenu> {
     /* The processing recipe behind an EMI recipe, when it is one. */
     @SuppressWarnings("unchecked")
     private static Optional<RecipeHolder<ProcessingRecipe>> processing(final EmiRecipe recipe) {
-        return recipe instanceof ProcessingEmiRecipe each && each.getBackingRecipe().value() instanceof ProcessingRecipe
+        return recipe instanceof DeclaredEmiRecipe<?> each && each.getBackingRecipe() != null
+                && each.getBackingRecipe().value() instanceof ProcessingRecipe
                 ? Optional.of((RecipeHolder<ProcessingRecipe>) each.getBackingRecipe()) : Optional.empty();
     }
 }

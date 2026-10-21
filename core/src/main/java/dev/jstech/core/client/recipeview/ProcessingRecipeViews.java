@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
+import dev.jstech.core.machine.Byproduct;
 import dev.jstech.core.machine.MachineTexts;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
@@ -20,6 +21,9 @@ import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.progression.IKnowledgeGated;
 import dev.jstech.core.progression.KnowledgeGate;
 import dev.jstech.core.progression.Knowledges;
+import dev.jstech.core.recipeview.RecipeView;
+import dev.jstech.core.recipeview.RecipeViewKind;
+import dev.jstech.core.recipeview.RecipeViews;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -31,6 +35,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 /**
  * What both recipe viewers show of the processing machines every mod declared: the kinds, the layout each recipe is
@@ -52,6 +60,72 @@ public final class ProcessingRecipeViews {
     /** Every kind of processing machine any mod declared, in the order the mods declared them. */
     public static List<ProcessingKind> kinds() {
         return ModContent.all().stream().flatMap(content -> content.declaredProcessing().stream()).toList();
+    }
+
+    /**
+     * {@code kind} as a kind of recipe view, the same pages in JEI, EMI and REI: its machines beside it, each page as
+     * large as its largest recipe's, laid out as {@link #lay} lays it.
+     */
+    public static RecipeViewKind<RecipeHolder<ProcessingRecipe>> viewKind(final ProcessingKind kind) {
+        return RecipeViews.recipes(kind.id().getNamespace(), kind.id().getPath(), kind.title(), kind::type)
+                .workstations(() -> machineStacks(kind))
+                .sizedBy(recipes -> {
+                    final ProcessingViewLayout largest = largest(recipes.stream().map(RecipeHolder::value).toList());
+                    return new RecipeViewKind.Size(largest.width(), largest.height());
+                })
+                .layout((holder, page) -> lay(holder.value(), page))
+                .build();
+    }
+
+    /**
+     * Lays {@code recipe} out: its item and fluid inputs and its catalysts on the left, its outputs and byproducts on
+     * the right, the arrow between, and under them its line of time and energy, what else it says, and the knowledge
+     * it needs, beside a padlock while the player's team lacks it.
+     */
+    public static void lay(final ProcessingRecipe recipe, final RecipeView.Builder page) {
+        final ProcessingViewLayout layout = layoutOf(recipe);
+        final int colour = RecipeViewPalette.get().text();
+        int index = 0;
+        for (final SizedIngredient input : recipe.inputs()) {
+            final ProcessingViewLayout.Point at = layout.input(index++);
+            page.input(at.x(), at.y(), List.of(input.getItems()));
+        }
+        for (final SizedFluidIngredient input : recipe.fluidInputs()) {
+            final ProcessingViewLayout.Point at = layout.input(index++);
+            page.fluidInput(at.x(), at.y(), List.of(input.getFluids()), input.amount());
+        }
+        for (final SizedIngredient catalyst : recipe.catalysts()) {
+            final ProcessingViewLayout.Point at = layout.input(index++);
+            page.catalyst(at.x(), at.y(), List.of(catalyst.getItems())).tooltip(catalyst());
+        }
+        index = 0;
+        for (final ItemStack output : recipe.outputs()) {
+            final ProcessingViewLayout.Point at = layout.output(index++);
+            page.output(at.x(), at.y(), output);
+        }
+        for (final FluidStack output : recipe.fluidOutputs()) {
+            final ProcessingViewLayout.Point at = layout.output(index++);
+            page.fluidOutput(at.x(), at.y(), output, output.getAmount());
+        }
+        for (final Byproduct byproduct : recipe.byproducts()) {
+            final ProcessingViewLayout.Point at = layout.output(index++);
+            page.output(at.x(), at.y(), byproduct.stack()).chance(byproduct.chance());
+        }
+        page.arrow(layout.arrow().x(), layout.arrow().y(), recipe.ticks());
+        page.line(layout.textLine().x(), layout.textLine().y(), layout.width(), workLine(recipe), colour);
+        final List<Component> lines = lines(recipe);
+        for (int line = 0; line < lines.size(); line++) {
+            final ProcessingViewLayout.Point at = layout.textLine(line + 1);
+            page.line(at.x(), at.y(), layout.width(), lines.get(line), colour);
+        }
+        knowledgeLine(recipe).ifPresent(needs -> {
+            final ProcessingViewLayout.Point at = layout.textLine(lines.size() + 1);
+            if (locked(recipe)) {
+                page.sprite(LOCK, at.x(), at.y(), LOCK_WIDTH, LOCK_HEIGHT);
+            }
+            final int indent = knowledgeIndent(recipe);
+            page.line(at.x() + indent, at.y(), layout.width() - indent, needs, colour);
+        });
     }
 
     /**

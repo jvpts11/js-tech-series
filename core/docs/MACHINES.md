@@ -494,16 +494,18 @@ CONTENT.item("advanced_installer", properties -> new MachineInstallerItem(proper
         .named("Advanced Installer").register();
 ```
 
-## JEI and EMI
+## JEI, EMI and REI
 
-*Added 2026-10-05.*
+*Added 2026-10-05; REI on 2026-10-21.*
 
-JEI and EMI are mods that show players every recipe in the game. When either is installed, every recipe kind
+JEI, EMI and REI are mods that show players every recipe in the game. When any is installed, every recipe kind
 declared on the Core gets a page of its own, with no code of yours: the inputs, an arrow with the time and the
 energy, the outputs, and the machines that work it (so looking up "how is this used" on a machine lists its
-recipes). The Core's integration only loads when the viewer is there, so neither is a dependency of your mod.
+recipes). The Core's integration only loads when the viewer is there, so none is a dependency of your mod. Kinds of
+recipe that are not a machine's are shown the same way ([Recipe viewers](RECIPE_VIEWERS.md)).
 
-With a machine's screen open, JEI's "+" (and EMI's fill button) on a recipe the machine works moves it in: the
+With a machine's screen open, JEI's "+" (and EMI's fill button, and REI's "+") on a recipe the machine works moves it
+in: the
 recipe's inputs from the player's inventory into the machine's first lane, each in the slot of its place in the
 recipe and its catalysts after them, once or (with Shift) as many as a stack holds; whatever the slots held that the
 recipe does not take goes back to the player, and the recipe is picked among those its inputs make. The button is
@@ -511,7 +513,7 @@ greyed out, saying why, on a recipe of another kind, one with more ingredients t
 player does not hold a set of.
 
 Screens can keep the viewers' item lists from covering them: a screen that implements `IKeepsViewersClear`
-returns the rectangles (in screen pixels) that must stay clear, and both viewers keep off them.
+returns the rectangles (in screen pixels) that must stay clear, and every viewer keeps off them.
 
 ## What can go wrong
 
@@ -527,5 +529,5 @@ returns the rectangles (in screen pixels) that must stay clear, and both viewers
 - **It works slower and shows cracks.** It is damaged: use a repair kit on it.
 - **A recipe file does nothing.** It failed to load: the log says why (no input, no output, an unknown item). A
   data pack's recipe with the same path as one of yours replaces yours.
-- **The kind has no page in JEI or EMI.** Its machine has no item, and a viewer needs one to show what works the
-  kind.
+- **The kind has no machine beside its page.** Its machine has no item, and a viewer needs one to show what works
+  the kind.

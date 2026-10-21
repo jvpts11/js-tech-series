@@ -104,6 +104,8 @@ public final class JsTests {
         TestMaterials.declare();
         // A frame of every wood, a tile of every stone and a casing of every metal, to prove the Core's variants.
         TestVariants.declare();
+        // The game's stonecutting and a list of fuels declared for the recipe viewers, kinds that are no machine's.
+        TestRecipeViews.declare();
         // Large values sent either way, in pieces.
         TestBigPayloads.declare();
         // A registry datapacks fill and notes read from datapack files, both sent to the players.

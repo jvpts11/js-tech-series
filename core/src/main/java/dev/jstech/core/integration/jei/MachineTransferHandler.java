@@ -51,7 +51,7 @@ final class MachineTransferHandler implements IRecipeTransferHandler<MachineMenu
 
     @Override
     public RecipeType<RecipeHolder<ProcessingRecipe>> getRecipeType() {
-        return ProcessingCategory.typeOf(this.kind);
+        return DeclaredCategory.holderType(this.kind.id());
     }
 
     @Override

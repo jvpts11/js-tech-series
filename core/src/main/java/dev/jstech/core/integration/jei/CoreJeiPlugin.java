@@ -14,12 +14,13 @@ import dev.jstech.core.client.recipeview.IRecipeViewer;
 import dev.jstech.core.client.recipeview.MultiblockRecipeViews;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.client.recipeview.RecipeViewers;
+import dev.jstech.core.client.recipeview.ViewKinds;
 import dev.jstech.core.machine.ProcessingKind;
-import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.multipart.MicroblockRecipes;
 import dev.jstech.core.multipart.MicroblockShowcase;
 import dev.jstech.core.progression.KnowledgeShapedRecipe;
 import dev.jstech.core.progression.KnowledgeShapelessRecipe;
+import dev.jstech.core.recipeview.RecipeViewKind;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -29,6 +30,7 @@ import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.RecipeIngredientRole;
+import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.extensions.vanilla.crafting.IExtendableCraftingRecipeCategory;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
@@ -43,13 +45,13 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The Core's bridge to JEI, which finds it by its annotation and only when JEI is installed: every mod's processing
- * machines get a category of their recipes, with the machines that work them beside it and the "+" that moves a recipe
- * into the open machine; every multiblock that can be shown before it is built has its preview and materials; the
+ * The Core's bridge to JEI, which finds it by its annotation and only when JEI is installed: every kind of recipe from
+ * the Core's kit gets a category ({@link ViewKinds}), every mod's processing machines among them, with the blocks that
+ * work them beside it and, for a machine, the "+" that moves a recipe into the open machine; every multiblock that can
+ * be shown before it is built has its preview and materials; the
  * microblocks' rules are in the crafting category, one entry each going through every block; and every screen that
  * names areas to keep clear has the ingredient list kept off them. A mod that declares its machines, its
  * multiblocks and its screens the Core's way writes nothing for JEI of its own.
@@ -71,10 +73,8 @@ public final class CoreJeiPlugin implements IModPlugin {
     @Override
     public void registerCategories(final IRecipeCategoryRegistration registration) {
         final IGuiHelper gui = registration.getJeiHelpers().getGuiHelper();
-        for (final ProcessingKind kind : ProcessingRecipeViews.kinds()) {
-            final List<ProcessingRecipe> recipes = recipesOf(kind).stream().map(RecipeHolder::value).toList();
-            registration.addRecipeCategories(new ProcessingCategory(kind, gui,
-                    ProcessingRecipeViews.largest(recipes)));
+        for (final RecipeViewKind<?> kind : ViewKinds.all()) {
+            registration.addRecipeCategories(category(kind, gui));
         }
         registration.addRecipeCategories(new MultiblockCategory(gui));
     }
@@ -97,17 +97,20 @@ public final class CoreJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(final IRecipeRegistration registration) {
-        for (final ProcessingKind kind : ProcessingRecipeViews.kinds()) {
-            registration.addRecipes(ProcessingCategory.typeOf(kind), recipesOf(kind));
+        final ClientLevel level = Minecraft.getInstance().level;
+        if (level != null) {
+            for (final RecipeViewKind<?> kind : ViewKinds.all()) {
+                addRecipes(registration, kind, level);
+            }
         }
         registration.addRecipes(MultiblockCategory.TYPE, MultiblockRecipeViews.entries());
     }
 
     @Override
     public void registerRecipeCatalysts(final IRecipeCatalystRegistration registration) {
-        for (final ProcessingKind kind : ProcessingRecipeViews.kinds()) {
-            for (final ItemStack machine : ProcessingRecipeViews.machineStacks(kind)) {
-                registration.addRecipeCatalyst(machine, ProcessingCategory.typeOf(kind));
+        for (final RecipeViewKind<?> kind : ViewKinds.all()) {
+            for (final ItemStack station : kind.workstations()) {
+                registration.addRecipeCatalyst(station, DeclaredCategory.typeOf(kind));
             }
         }
         for (final ItemStack tool : MultiblockShows.tools()) {
@@ -120,7 +123,7 @@ public final class CoreJeiPlugin implements IModPlugin {
     public void registerRecipeTransferHandlers(final IRecipeTransferRegistration registration) {
         for (final ProcessingKind kind : ProcessingRecipeViews.kinds()) {
             registration.addRecipeTransferHandler(new MachineTransferHandler(kind, registration.getTransferHelper()),
-                    ProcessingCategory.typeOf(kind));
+                    DeclaredCategory.holderType(kind.id()));
         }
     }
 
@@ -148,23 +151,37 @@ public final class CoreJeiPlugin implements IModPlugin {
 
     /** How many recipes JEI shows under that kind of machine, or nothing while JEI is not running. */
     public static OptionalInt recipesShown(final ProcessingKind kind) {
+        return recipesShown(kind.id());
+    }
+
+    /** How many recipes JEI shows under the kind of recipe whose id is {@code id}, or nothing while it is not on. */
+    public static OptionalInt recipesShown(final ResourceLocation id) {
         final IJeiRuntime running = runtime;
         if (running == null) {
             return OptionalInt.empty();
         }
-        final long count = running.getRecipeManager().createRecipeLookup(ProcessingCategory.typeOf(kind)).get()
-                .count();
+        final Optional<RecipeType<?>> type = running.getJeiHelpers().getRecipeType(id);
+        if (type.isEmpty()) {
+            return OptionalInt.of(0);
+        }
+        final long count = running.getRecipeManager().createRecipeLookup(type.get()).get().count();
         return OptionalInt.of((int) Math.min(count, Integer.MAX_VALUE));
     }
 
     /** Opens JEI's recipe screen on the recipes of that kind of machine; false while JEI is not running. */
     public static boolean showRecipes(final ProcessingKind kind) {
+        return showRecipes(kind.id());
+    }
+
+    /** Opens JEI's recipe screen on the kind of recipe whose id is {@code id}; false while JEI has none of it. */
+    public static boolean showRecipes(final ResourceLocation id) {
         final IJeiRuntime running = runtime;
         if (running == null) {
             return false;
         }
-        running.getRecipesGui().showTypes(List.of(ProcessingCategory.typeOf(kind)));
-        return true;
+        final Optional<RecipeType<?>> type = running.getJeiHelpers().getRecipeType(id);
+        type.ifPresent(found -> running.getRecipesGui().showTypes(List.of(found)));
+        return type.isPresent();
     }
 
     /** How many multiblocks JEI shows, or nothing while JEI is not running. */
@@ -200,12 +217,7 @@ public final class CoreJeiPlugin implements IModPlugin {
 
     /** Opens JEI on the recipes of the processing machines of {@code kind}; whether JEI was there to open. */
     public static boolean showRecipesOf(final ProcessingKind kind) {
-        final IJeiRuntime running = runtime;
-        if (running == null) {
-            return false;
-        }
-        running.getRecipesGui().showTypes(List.of(ProcessingCategory.typeOf(kind)));
-        return true;
+        return showRecipes(kind.id());
     }
 
     /** Opens JEI's recipe screen on what {@code stack} goes into; false before JEI is running. */
@@ -229,10 +241,16 @@ public final class CoreJeiPlugin implements IModPlugin {
         return true;
     }
 
-    /** The recipes of {@code kind} the player's game was sent, or none before it joined a world. */
-    private static List<RecipeHolder<ProcessingRecipe>> recipesOf(final ProcessingKind kind) {
+    /* A kind's category, each page as large as the kind says for the recipes the player's game was sent. */
+    private static <T> DeclaredCategory<T> category(final RecipeViewKind<T> kind, final IGuiHelper gui) {
         final ClientLevel level = Minecraft.getInstance().level;
-        return level == null ? List.of() : level.getRecipeManager().getAllRecipesFor(kind.type());
+        final List<T> recipes = level == null ? List.of() : kind.recipes(level);
+        return new DeclaredCategory<>(kind, gui, kind.size(recipes));
+    }
+
+    private static <T> void addRecipes(final IRecipeRegistration registration, final RecipeViewKind<T> kind,
+                                       final ClientLevel level) {
+        registration.addRecipes(DeclaredCategory.typeOf(kind), kind.recipes(level));
     }
 
     /* JEI as the Core's screens ask it: its recipe screen first, then its ingredient list and its bookmarks. */
