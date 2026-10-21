@@ -1,6 +1,7 @@
 // The test mod of the series: development only, never published. It holds the GameTests, the client tests and
-// the test kit for every mod, so the shipped jars carry no test code and a test may span several mods. It also
-// hosts the development runs, which load the core, the computing mod, the industrial mod and this one.
+// the series' own helpers for them, built on the Core's test kit, so the shipped jars carry no test code and a test
+// may span several mods. It also hosts the development runs, which load the core, the computing mod, the industrial
+// mod, the test kit and this one.
 plugins {
     id 'net.neoforged.moddev'
 }
@@ -9,6 +10,10 @@ plugins {
 evaluationDependsOn(':core')
 evaluationDependsOn(':computers')
 evaluationDependsOn(':industrial')
+evaluationDependsOn(':testkit')
+
+// checkGeneratedData: the data run's files kept up to date.
+apply from: rootProject.file('gradle/generated-data.gradle')
 
 base {
     archivesName = "${mod_id}-${minecraft_version}"
@@ -102,11 +107,11 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
-        // Client tests: real client windows that create a test world, drive the screens with synthetic
-        // input, take screenshots and write run/clienttests/shard-<i>/clienttests/report.txt. The suite is
-        // split over `clientShards` windows (default 4) so shards can run side by side: by the ticks each test
-        // took last time (run/clienttests/durations.txt, written by every run) so the shards end together, or
-        // round-robin when nothing was measured yet.
+        // Client tests, run by the Core's test kit: real client windows that create a test world, drive the
+        // screens with synthetic input, take screenshots and write run/clienttests/shard-<i>/clienttests/report.txt.
+        // The tests are split over `clientShards` windows (default 4) so shards can run side by side: by the ticks
+        // each test took last time (run/clienttests/durations.txt, written by every run) so the shards end
+        // together, or round-robin when nothing was measured yet.
         //   .\gradlew.bat runClientTests0   (one shard)   -PclientShards=6 to change the split; every shard at
         //   once: runClientTests0 ... runClientTests5 -PclientShards=6 --parallel
         def clientShards = (providers.gradleProperty('clientShards').getOrElse('4')) as int
@@ -116,15 +121,15 @@ neoForge {
                 gameDirectory = rootProject.file("run/clienttests/shard-${shard}")
                 // 640 tall so the GUI (scale 2) shows the full 256-pixel monitor glass a player gets.
                 programArguments.addAll '--width', '960', '--height', '640'
-                systemProperty 'jsc.clienttests', 'true'
-                systemProperty 'jsc.clienttests.shard', "${shard}"
-                systemProperty 'jsc.clienttests.shards', "${clientShards}"
+                systemProperty 'jstestkit.clienttests', 'true'
+                systemProperty 'jstestkit.clienttests.shard', "${shard}"
+                systemProperty 'jstestkit.clienttests.shards', "${clientShards}"
                 // -PctOnly=<substring>[,<substring>...] runs only the client tests whose name contains any of
                 // them (case-insensitive), so a few tests can be driven without stealing the mouse for the suite.
-                systemProperty 'jsc.clienttests.only', (providers.gradleProperty('ctOnly').getOrElse(''))
+                systemProperty 'jstestkit.clienttests.only', (providers.gradleProperty('ctOnly').getOrElse(''))
                 // -PctMods=<suite>[,<suite>...] runs only the client tests of those suites (core, computers,
                 // industrial, series; see TestSuites), shared out over the shards as the whole suite is.
-                systemProperty 'jsc.clienttests.mods', (providers.gradleProperty('ctMods').getOrElse(''))
+                systemProperty 'jstestkit.clienttests.suites', (providers.gradleProperty('ctMods').getOrElse(''))
                 // -Pjfr records the window with Java Flight Recorder, for profiling what the client draws.
                 if (providers.gradleProperty('jfr').present) {
                     jvmArguments.addAll(
@@ -154,6 +159,11 @@ neoForge {
             // -PgtMods=<suite>[,<suite>...] runs only the GameTests of those suites: core, computers, industrial,
             // series (see TestSuites). With -PgtOnly too, a test runs when it is in one of them and is named.
             systemProperty 'jsc.gametests.mods', (providers.gradleProperty('gtMods').getOrElse(''))
+            // -PkeepOldSaves keeps the samples the old-save tests build as this version's, in the folder they are
+            // read from (the test kit's OldSaves): run once for each version that is released.
+            if (providers.gradleProperty('keepOldSaves').present) {
+                systemProperty 'jstestkit.oldsaves', file('src/main/resources/old_saves').absolutePath
+            }
             systemProperty 'jsc.gametests.ftbteams', withFtbTeams || withFtbQuests ? 'present' : 'absent'
             systemProperty 'jsc.gametests.kubejs', withKubeJs ? 'present' : 'absent'
             systemProperty 'jsc.gametests.crafttweaker', withCraftTweaker ? 'present' : 'absent'
@@ -200,6 +210,9 @@ neoForge {
         jsindustrial {
             sourceSet(rootProject.project(':industrial').sourceSets.main)
         }
+        jstestkit {
+            sourceSet(rootProject.project(':testkit').sourceSets.main)
+        }
     }
 }
 
@@ -207,6 +220,7 @@ dependencies {
     implementation project(':core')
     implementation project(':computers')
     implementation project(':industrial')
+    implementation project(':testkit')
 
     // The computing mod's dependencies, present so the runs load them as well.
     implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"

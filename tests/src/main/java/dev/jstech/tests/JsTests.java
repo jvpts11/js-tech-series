@@ -10,6 +10,8 @@ package dev.jstech.tests;
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.registry.StableNamespaces;
+import dev.jstech.testkit.client.ClientTestRunner;
+import dev.jstech.testkit.gametest.Arenas;
 import dev.jstech.tests.testkit.ChunkLoadWatch;
 import dev.jstech.tests.testkit.TestSettings;
 import dev.jstech.tests.testkit.TestShowcaseSettings;
@@ -43,6 +45,13 @@ public final class JsTests {
                 + " series, adds nothing to the game and must not be installed.", modContainer.getModInfo().getVersion());
         // The test mod's data is no experiment, as a mod of the series' is: its moon opens a world with no warning.
         StableNamespaces.declare(MODID);
+        /*
+         * The arenas the GameTests run in, made in code: the box the correctness tests run in, a large one for the
+         * benchmarks that build a physically huge network, and the room a structure flying up has under the ceiling.
+         */
+        Arenas.declare(MODID, "empty", 9, 6, 9);
+        Arenas.declare(MODID, "bench", 48, 8, 48);
+        Arenas.declare(MODID, "tall", 12, 32, 12);
         // The sounds the tests play through the series' sound system, on files the game already has.
         TestBlocks.declare();
         // A thruster, a wheel, a burner, a light block, a levitator and a magnet, to prove the structures' physics.
@@ -150,7 +159,7 @@ public final class JsTests {
             // A world's settings file in every format, where the settings tests can read and write them.
             TestSettings.register(modEventBus, modContainer);
         }
-        if (GameTestHooks.isGametestServer() || Boolean.getBoolean("jsc.clienttests")) {
+        if (GameTestHooks.isGametestServer() || Boolean.getBoolean(ClientTestRunner.PROPERTY)) {
             /*
              * An engine another mod brings, so a Mainframe can be swapped onto one that is not the series' own: on
              * the GameTest server, and in the client tests that replace an engine from the Network Manager.

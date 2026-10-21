@@ -9,6 +9,8 @@ package dev.jstech.core.optional;
 
 import dev.jstech.core.log.CoreLogs;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.neoforged.fml.ModList;
@@ -37,6 +39,9 @@ public final class OptionalMod {
     private final String modid;
     private final Predicate<String> installed;
 
+    /* The mods a test has every guard see as absent, though the game has them. */
+    private static final Set<String> SEEN_ABSENT = ConcurrentHashMap.newKeySet();
+
     private OptionalMod(final String modid, final Predicate<String> installed) {
         this.modid = Objects.requireNonNull(modid, "modid");
         this.installed = Objects.requireNonNull(installed, "installed");
@@ -44,7 +49,20 @@ public final class OptionalMod {
 
     /** The mod {@code modid}, as the game's list of mods knows it. */
     public static OptionalMod of(final String modid) {
-        return new OptionalMod(modid, id -> ModList.get().isLoaded(id));
+        return new OptionalMod(modid, id -> !SEEN_ABSENT.contains(id) && ModList.get().isLoaded(id));
+    }
+
+    /**
+     * Has every guard of the game's list of mods see {@code modid} as absent while {@code absent}, though it is
+     * installed: how the Core's test kit shows a mod's adapters stand without the other mod in a game that has it.
+     */
+    @ApiStatus.Internal
+    public static void seenAbsent(final String modid, final boolean absent) {
+        if (absent) {
+            SEEN_ABSENT.add(modid);
+        } else {
+            SEEN_ABSENT.remove(modid);
+        }
     }
 
     /**

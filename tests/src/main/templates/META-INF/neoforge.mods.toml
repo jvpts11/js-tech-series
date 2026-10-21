@@ -36,6 +36,13 @@ ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.${mod_id}]]
+modId = "jstestkit"
+type = "required"
+versionRange = "[${mod_version}]"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
 modId = "jsc"
 type = "required"
 versionRange = "[${mod_version}]"

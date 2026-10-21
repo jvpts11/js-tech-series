@@ -9,10 +9,10 @@ package dev.jstech.tests.gametest.core;
 
 import dev.jstech.core.advancement.Advancements;
 import dev.jstech.core.advancement.AxisStepTrigger;
-import dev.jstech.core.gametest.GameTestPlayers;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionAxes;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.Optional;
 import net.minecraft.advancements.AdvancementHolder;

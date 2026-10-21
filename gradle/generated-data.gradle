@@ -1,0 +1,22 @@
+// The data generation kept up to date, for a mod with a data run: checkGeneratedData keeps the files the data run
+// wrote before, runs it again, and fails, saying which, when it wrote anything else; the Core's test kit compares
+// them (GeneratedData). What the run wrote stays where it is: it is what to commit.
+def generated = file('src/generated/resources')
+def before = layout.buildDirectory.dir('generated-data-before')
+def snapshotGeneratedData = tasks.register('snapshotGeneratedData', Sync) {
+    from(generated) {
+        exclude '.cache/**'
+    }
+    into before
+}
+tasks.matching { it.name == 'runData' }.configureEach {
+    mustRunAfter snapshotGeneratedData
+}
+tasks.register('checkGeneratedData', JavaExec) {
+    group = 'verification'
+    description = 'Runs the data generation and fails when it wrote other files than the ones kept.'
+    dependsOn snapshotGeneratedData, 'runData', ':testkit:classes'
+    classpath = files(rootProject.project(':testkit').sourceSets.main.output)
+    mainClass = 'dev.jstech.testkit.check.GeneratedData'
+    args before.get().asFile.absolutePath, generated.absolutePath
+}

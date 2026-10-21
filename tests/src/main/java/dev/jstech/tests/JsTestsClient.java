@@ -12,6 +12,7 @@ import dev.jstech.core.client.dimension.TravelScreens;
 import dev.jstech.core.client.gui.data.DataScreens;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.connect.IJoinRule;
+import dev.jstech.tests.clienttest.ClientTestSuite;
 import dev.jstech.tests.clienttest.TestGuideClient;
 import dev.jstech.tests.clienttest.TestHud;
 import dev.jstech.tests.clienttest.TestPassageScreen;
@@ -66,5 +67,7 @@ public final class JsTestsClient {
         TestTooltips.declare();
         // The pump's panel, a screen in the world built of the Core's components.
         TestTouchPanelClient.register(modEventBus);
+        // Every client test of the series, a suite for each mod, handed to the Core's test kit, which runs them.
+        ClientTestSuite.register();
     }
 }

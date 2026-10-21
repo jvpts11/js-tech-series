@@ -8,13 +8,13 @@
 package dev.jstech.tests.gametest.core;
 
 import com.mojang.authlib.GameProfile;
-import dev.jstech.core.gametest.GameTestPlayers;
 import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.team.Access;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.team.ITeamSource;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.team.ScoreboardTeams;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.UUID;
 import net.minecraft.gametest.framework.GameTest;

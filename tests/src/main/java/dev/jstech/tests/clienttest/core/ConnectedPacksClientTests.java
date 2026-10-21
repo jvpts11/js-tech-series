@@ -8,11 +8,11 @@
 package dev.jstech.tests.clienttest.core;
 
 import dev.jstech.core.client.connect.ConnectedPacks;
-import dev.jstech.core.gametest.ScenarioBuilder;
 import dev.jstech.core.multipart.MicroShape;
 import dev.jstech.core.multipart.Microblock;
 import dev.jstech.core.multipart.SpaceSlots;
 import dev.jstech.core.stepaside.StepAside;
+import dev.jstech.testkit.gametest.ScenarioBuilder;
 import dev.jstech.tests.TestConnected;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;

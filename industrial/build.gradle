@@ -6,6 +6,9 @@ plugins {
 // The data run below reaches into the core's source set, so it must be configured first.
 evaluationDependsOn(':core')
 
+// checkGeneratedData: the data run's files kept up to date.
+apply from: rootProject.file('gradle/generated-data.gradle')
+
 base {
     archivesName = "${mod_id}-${minecraft_version}"
 }

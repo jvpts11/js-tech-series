@@ -7,7 +7,6 @@
  */
 package dev.jstech.tests.gametest.core;
 
-import dev.jstech.core.gametest.GameTestPlayers;
 import dev.jstech.core.hazard.BlockDensity;
 import dev.jstech.core.hazard.HazardBalance;
 import dev.jstech.core.hazard.HazardMap;
@@ -23,6 +22,7 @@ import dev.jstech.core.jstechseries.hazard.NaturalRadiation;
 import dev.jstech.core.material.HostRocks;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.registry.CoreAttachments;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMaterials;
 import java.util.Optional;

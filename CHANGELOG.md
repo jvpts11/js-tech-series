@@ -1066,6 +1066,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   busiest of the last 100, each with its size. `/jstech health` counts, in each dimension, the bodies of heat awake,
   the networks of shafts, the sealed rooms, the moving structures and the multiblocks watched; the heat, the shafts,
   the rooms and the moving structures are timed sections of work, and `/jstech cost` measures each moving structure.
+- (Core) J's Core Test Kit: a mod of its own, `jstestkit`, that a mod built on the Core writes its tests with and
+  depends on in its tests only, published to the local Maven repository for now. For GameTests: arenas made in code,
+  a scene for every kit of the Core (the data network and its Operations, energy, machines and their recipes,
+  multiblocks, sealed rooms, moving structures, hazards, menus), round trips through the save, ticks run at once and
+  chance with a seed, assertions that say what was expected, what was found and where, tests of a tick's cost with a
+  limit, old saves read back through the game's upgrades, optional mods seen absent, players who log in, and a report
+  of each test's time and a stall monitor for long runs. For client tests: the runner, its helper, reference pictures
+  and shards balanced by duration, which any mod registers its tests with. For unit tests: the test of the API's
+  surface the series keeps its promise with, and the data generation kept up to date (`checkGeneratedData`).
 - (Core) CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - (Core) FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,
@@ -1118,6 +1127,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Machines short of energy work slower in the same proportion, spending what there is, instead of waiting for a
   whole tick's energy; looked at, they say they run on low power.
 - (Core) A panel of the series on the debug screen with nothing to show leaves its name out too.
+- (Core) `ScenarioBuilder` and `GameTestPlayers` move out of the Core's jar into the test kit,
+  `dev.jstech.testkit.gametest`, so the Core a player installs carries no test code.
 
 ### Fixed
 - (Core) A dimension made while the game runs keeps loaded again the chunks it kept loaded, each time it is made

@@ -21,7 +21,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.core.cable.CableBlock;
-import dev.jstech.core.gametest.ScenarioBuilder;
+import dev.jstech.testkit.gametest.ScenarioBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;

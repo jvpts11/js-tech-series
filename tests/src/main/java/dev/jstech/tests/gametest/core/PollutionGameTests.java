@@ -7,7 +7,6 @@
  */
 package dev.jstech.tests.gametest.core;
 
-import dev.jstech.core.gametest.GameTestPlayers;
 import dev.jstech.core.hazard.HazardBalance;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.Pollution;
@@ -17,6 +16,7 @@ import dev.jstech.core.hazard.Withering;
 import dev.jstech.core.jstechseries.hazard.CarbonDioxide;
 import dev.jstech.core.jstechseries.hazard.IonizingRadiation;
 import dev.jstech.core.jstechseries.hazard.SeriesPollution;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.List;

@@ -12,7 +12,7 @@ import dev.jstech.core.dimension.DimensionHazardEvent;
 import dev.jstech.core.dimension.DimensionRules;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.dimension.RuntimeDimensions;
-import dev.jstech.core.gametest.GameTestPlayers;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestSuits;
 import dev.jstech.tests.TestWorldGen;

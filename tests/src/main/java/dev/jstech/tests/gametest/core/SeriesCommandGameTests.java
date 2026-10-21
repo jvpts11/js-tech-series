@@ -9,12 +9,12 @@ package dev.jstech.tests.gametest.core;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jstech.core.command.SeriesCommands;
-import dev.jstech.core.gametest.GameTestPlayers;
 import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionAxes;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.commands.CommandSourceStack;

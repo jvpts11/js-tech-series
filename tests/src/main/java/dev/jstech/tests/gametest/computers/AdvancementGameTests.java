@@ -25,7 +25,7 @@ import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.advancement.EventTrigger;
-import dev.jstech.core.gametest.GameTestPlayers;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachines;
 import dev.jstech.tests.testkit.computers.CraftingRig;

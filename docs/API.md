@@ -163,6 +163,9 @@ code with the file on every build, and fails when:
 When it fails, it writes what the file would have to say to `core/build/api-photo`, with anything new at
 the next number. Nothing reaches the API, or leaves it, without somebody reading that and deciding it.
 
+The test is J's Core Test Kit's `ApiSurface`, and a mod built on the series keeps its own promise with it the same
+way, a photo of its own in its tests ([Testing](../core/docs/TESTING.md#the-apis-surface)).
+
 ## What changed, release by release
 
 Each release's section of `CHANGELOG.md` opens with an API part, for the people who build on the series:

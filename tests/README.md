@@ -1,7 +1,8 @@
 # Tests (development only)
 
 This folder is not a mod. It is the development-only test mod of the J's Tech Series: the GameTests, the
-client tests, the test kit and the debug commands for every mod of the series, kept out of the shipped jars.
+client tests, the series' own helpers for them and the debug commands for every mod of the series, kept out of
+the shipped jars. It is built on J's Core Test Kit ([testkit/](../testkit/README.md)), as any mod's tests would be.
 
 - It is never released. No release, and no page anywhere, will ever offer it.
 - It adds nothing to the game and must not be installed. A jar built from it is a by-product of the build,

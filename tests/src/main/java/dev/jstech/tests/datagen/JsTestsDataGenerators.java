@@ -30,10 +30,10 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
- * Data generation for the test mod: the structure templates the GameTests run inside, the entries, subtitles and cue
- * bindings of the sounds the tests play, the names of its content, the definitions of the models it draws with the
- * Core's models, the models of its buckets, the tags of its fluids, the kinds of light of its lamps, and its world
- * generation with the climates of its biomes. Its block states and its other item models are written by hand.
+ * Data generation for the test mod: the entries, subtitles and cue bindings of the sounds the tests play, the names of
+ * its content, the definitions of the models it draws with the Core's models, the models of its buckets, the tags of
+ * its fluids, the kinds of light of its lamps, and its world generation with the climates of its biomes. Its block
+ * states and its other item models are written by hand, and the arenas its GameTests run in are made in code.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class JsTestsDataGenerators {
@@ -45,7 +45,6 @@ public final class JsTestsDataGenerators {
     public static void onGatherData(final GatherDataEvent event) {
         final DataGenerator generator = event.getGenerator();
         final PackOutput output = generator.getPackOutput();
-        generator.addProvider(event.includeServer(), new GameTestStructureProvider(output));
         generator.addProvider(event.includeServer(), new MultiblockPatternProvider(output, JsTests.MODID));
         generator.addProvider(event.includeServer(), new LightKindProvider(output, JsTests.MODID));
         TestWorldGen.declare();

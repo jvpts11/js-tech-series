@@ -7,7 +7,6 @@
  */
 package dev.jstech.tests.gametest.core;
 
-import dev.jstech.core.gametest.ScenarioBuilder;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.multipart.CoreParts;
 import dev.jstech.core.multipart.MicroShape;
@@ -15,6 +14,7 @@ import dev.jstech.core.multipart.Microblock;
 import dev.jstech.core.multipart.PartItem;
 import dev.jstech.core.multipart.SpaceParts;
 import dev.jstech.core.multipart.SpaceSlots;
+import dev.jstech.testkit.gametest.ScenarioBuilder;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestParts;
 import dev.jstech.tests.TestToolkit;

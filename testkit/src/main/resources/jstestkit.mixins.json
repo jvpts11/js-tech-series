@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "dev.jstech.testkit.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "StructureTemplateManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}

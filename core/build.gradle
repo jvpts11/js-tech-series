@@ -3,6 +3,12 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+// The unit tests reach the test kit's classes, so it is configured first.
+evaluationDependsOn(':testkit')
+
+// checkGeneratedData: the data run's files kept up to date.
+apply from: rootProject.file('gradle/generated-data.gradle')
+
 base {
     archivesName = "${mod_id}-${minecraft_version}"
 }
@@ -53,6 +59,11 @@ dependencies {
     testRuntimeOnly 'com.electronwill.night-config:toml:3.8.3'
     testImplementation 'com.google.code.gson:gson:2.10.1'
     testImplementation 'org.joml:joml:1.10.5'
+    /*
+     * The test kit's checks that read sources, the test of the API's surface among them, run in the Core's unit
+     * tests as they run in any mod's: the kit's own classes only, none of the game it is built against.
+     */
+    testImplementation files(project(':testkit').sourceSets.main.output)
 
     // Mekanism API: the chemical bridge compiles against it, but no Mekanism class is loaded unless Mekanism is
     // present (soft dependency, guarded at runtime).

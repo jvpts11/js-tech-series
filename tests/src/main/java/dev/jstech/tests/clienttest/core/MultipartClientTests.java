@@ -8,7 +8,6 @@
 package dev.jstech.tests.clienttest.core;
 
 import dev.jstech.core.cable.CoreCables;
-import dev.jstech.core.gametest.ScenarioBuilder;
 import dev.jstech.core.integration.emi.CoreEmiPlugin;
 import dev.jstech.core.integration.jei.CoreJeiPlugin;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
@@ -16,6 +15,7 @@ import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.multipart.MicroShape;
 import dev.jstech.core.multipart.Microblock;
 import dev.jstech.core.multipart.SpaceSlots;
+import dev.jstech.testkit.gametest.ScenarioBuilder;
 import dev.jstech.tests.TestParts;
 import dev.jstech.tests.TestToolkit;
 import dev.jstech.tests.clienttest.ClientTest;

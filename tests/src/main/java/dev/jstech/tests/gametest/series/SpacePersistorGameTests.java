@@ -8,7 +8,6 @@
 package dev.jstech.tests.gametest.series;
 
 import dev.jstech.core.energy.EnergyPorts;
-import dev.jstech.core.gametest.GameTestPlayers;
 import dev.jstech.core.jstechseries.persistor.PersistorArea;
 import dev.jstech.core.jstechseries.persistor.PersistorReadings;
 import dev.jstech.core.jstechseries.persistor.PersistorSettings;
@@ -22,6 +21,7 @@ import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.region.LoadedChunkMarkers;
 import dev.jstech.core.team.Ownership;
+import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import java.util.Arrays;
 import java.util.List;

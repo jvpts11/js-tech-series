@@ -116,8 +116,8 @@ What a technology mod needs, whichever mod it is.
 - [Entities](docs/ENTITIES.md), vehicles, robots that work a list of tasks, projectiles, and what a player wears
   (Curios or Accessories when installed).
 - [Overlays](docs/OVERLAYS.md): HUD elements that stack, holograms, and Jade's lines.
-- A [settings screen](docs/SETTINGS.md) in the Core's look for every mod's settings, and a [GameTest
-  kit](docs/TESTING.md).
+- A [settings screen](docs/SETTINGS.md) in the Core's look for every mod's settings, and a [test
+  kit](docs/TESTING.md) of its own, J's Core Test Kit, for a mod's GameTests and client tests.
 - [Manuals](docs/MANUALS.md): each mod writes its chapter once, in entries of ready blocks, and it shows in its own
   manual and in the series' one; styles are data, a binder by default; contents, index and search are built for it,
   and holding M over an item opens its page.

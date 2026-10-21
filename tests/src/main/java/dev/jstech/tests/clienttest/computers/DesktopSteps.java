@@ -9,8 +9,8 @@ package dev.jstech.tests.clienttest.computers;
 
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
+import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.clienttest.ClientTestContext;
-import dev.jstech.tests.clienttest.ClientTestFailure;
 import org.jetbrains.annotations.Nullable;
 
 /**

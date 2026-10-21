@@ -7,619 +7,39 @@
  */
 package dev.jstech.tests.clienttest;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.platform.Window;
-import com.mojang.logging.LogUtils;
 import dev.jstech.computers.client.os.DesktopScreen;
-import dev.jstech.computers.os.media.EjectButton;
-import dev.jstech.core.peripheral.IPeripheralEndpoint;
+import dev.jstech.testkit.client.ClientTestHelper;
+import dev.jstech.testkit.client.ClientTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWCursorPosCallback;
-import org.slf4j.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 
 /**
- * The driver a client test builds its sequence with, and the toolbox its steps call while running.
- *
- * <p>A test method receives the context, queues steps ({@link #then}, {@link #thenServer},
- * {@link #thenWaitUntil}, ...) and returns; {@link ClientTestRunner} then executes the steps on the client
- * thread, one tick at a time. Everything the synthetic player does goes through the real client paths:
- * a right-click is {@code gameMode.useItemOn} (packet to the integrated server, which opens the menu, which
- * the client turns into a screen); screen input is the screen's own {@code mouseClicked} / {@code keyPressed}.
- *
- * <p>Positions are relative to the test's own area, following the GameTest convention (y = 2 stands on the
- * ground); {@link #abs(BlockPos)} maps them to the world.
+ * The series' client tests' helper: the Core's test kit's, with the series' own steps on top, a scenario built with
+ * the series' machines at the test's origin and the desktop's points of J's Computers. Each step the kit has hands
+ * this helper back, so a test chains the series' steps after the kit's.
  */
-public final class ClientTestContext {
+public final class ClientTestContext extends ClientTestHelper {
 
-    /** One unit of work; returns true once it has finished (a one-shot step finishes on its first tick). */
-    @FunctionalInterface
-    public interface IStep {
-        boolean tick();
+    ClientTestContext(final Minecraft mc, final ClientTests.Planned test, final BlockPos origin) {
+        super(mc, test, origin);
     }
 
-    record Queued(int delay, String label, IStep step) {
-    }
-
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private final Minecraft mc;
-    private final String testName;
-    private final BlockPos origin;
-    private final List<Queued> queue = new ArrayList<>();
-    private final List<String> screenshots = new ArrayList<>();
-    private final List<Runnable> afterTest = new ArrayList<>();
-
-    /* How long a peripheral may take to link before it is clicked: a few ticks alone, far more on a loaded machine. */
-    private static final int PERIPHERAL_LINK_WAIT = 200;
-
-    ClientTestContext(final Minecraft mc, final String testName, final BlockPos origin) {
-        this.mc = mc;
-        this.testName = testName;
-        this.origin = origin;
-    }
-
-    List<Queued> steps() {
-        return queue;
-    }
-
-    List<String> screenshotsTaken() {
-        return screenshots;
-    }
-
-    /**
-     * Registers {@code cleanup} to run once the test ends, whether it passed or failed, after its last step.
-     * Register it right after the change it undoes. Cleanups run in the reverse order they were registered, each
-     * on its own so one that throws does not stop the others. A cleanup that touches the server must not wait
-     * for it: it runs on the client thread.
-     */
-    public void afterTest(final Runnable cleanup) {
-        afterTest.add(cleanup);
-    }
-
-    void runAfterTest() {
-        for (int i = afterTest.size() - 1; i >= 0; i--) {
-            try {
-                afterTest.get(i).run();
-            } catch (final RuntimeException e) {
-                LOGGER.error("[JSC-CT] a cleanup of {} failed", testName, e);
-            }
-        }
-        afterTest.clear();
-    }
-
-    // Sequence building
-
-    /** Runs {@code action} once, {@code delayTicks} after the previous step finished. */
-    public ClientTestContext then(final int delayTicks, final Runnable action) {
-        queue.add(new Queued(delayTicks, "then", () -> {
-            action.run();
-            return true;
-        }));
-        return this;
-    }
-
-    /** Runs {@code action} on the integrated server's thread and waits for it to complete. */
-    public ClientTestContext thenServer(final int delayTicks, final Consumer<ServerLevel> action) {
-        queue.add(new Queued(delayTicks, "server", new IStep() {
-            private CompletableFuture<Void> pending;
-
-            @Override
-            public boolean tick() {
-                if (pending == null) {
-                    final MinecraftServer server = server();
-                    pending = server.submit(() -> action.accept(serverLevel()));
-                }
-                if (pending.isCompletedExceptionally()) {
-                    try {
-                        pending.join();
-                    } catch (final CompletionException e) {
-                        // Surface the server-side failure itself, not the wrapper.
-                        if (e.getCause() instanceof RuntimeException cause) {
-                            throw cause;
-                        }
-                        throw new ClientTestFailure("server step failed", e.getCause());
-                    }
-                }
-                return pending.isDone();
-            }
-        }));
-        return this;
-    }
-
-    /** Builds a scenario on the server with the shared fixtures, at this test's origin. */
+    /** Builds a scenario on the server with the series' fixtures, at this test's origin. */
     public ClientTestContext thenBuild(final int delayTicks, final Consumer<TestWorldBuilder> build) {
-        return thenServer(delayTicks, level -> build.accept(TestWorldBuilder.at(level, origin)));
+        return thenServer(delayTicks, level -> build.accept(TestWorldBuilder.at(level, origin())));
     }
 
-    /** Polls {@code condition} every tick; fails the test if it is still false after {@code maxTicks}. */
-    public ClientTestContext thenWaitUntil(final BooleanSupplier condition, final int maxTicks, final String what) {
-        return thenWaitUntil(condition, maxTicks, what, () -> "");
-    }
-
-    /**
-     * As {@link #thenWaitUntil(BooleanSupplier, int, String)}, with {@code diagnostics} evaluated only on
-     * timeout and appended to the failure, for the state that explains why the wait never ended.
-     */
-    public ClientTestContext thenWaitUntil(final BooleanSupplier condition, final int maxTicks, final String what,
-                                           final java.util.function.Supplier<String> diagnostics) {
-        queue.add(new Queued(0, "wait:" + what, new IStep() {
-            private int waited;
-
-            @Override
-            public boolean tick() {
-                if (condition.getAsBoolean()) {
-                    return true;
-                }
-                if (++waited > maxTicks) {
-                    String extra;
-                    try {
-                        extra = diagnostics.get();
-                    } catch (final RuntimeException e) {
-                        extra = "(diagnostics failed: " + e + ")";
-                    }
-                    throw new ClientTestFailure("timed out after " + maxTicks + " ticks waiting for " + what
-                            + (extra.isEmpty() ? "" : " - " + extra));
-                }
-                return false;
-            }
-        }));
-        return this;
-    }
-
-    /**
-     * Polls {@code condition} ON THE SERVER THREAD (one probe in flight at a time) until it is true; fails after
-     * {@code maxTicks} with {@code diagnostics} (also evaluated on the server). Use this for anything read from
-     * the server level: {@code Level.getBlockEntity} and friends return null when called from another thread.
-     */
-    public ClientTestContext thenWaitUntilServer(final java.util.function.Predicate<ServerLevel> condition,
-                                                 final int maxTicks, final String what,
-                                                 final java.util.function.Function<ServerLevel, String> diagnostics) {
-        queue.add(new Queued(0, "waitServer:" + what, new IStep() {
-            private int waited;
-            private CompletableFuture<Boolean> probe;
-
-            @Override
-            public boolean tick() {
-                if (probe == null) {
-                    final MinecraftServer server = server();
-                    probe = server.submit(() -> condition.test(server.overworld()));
-                }
-                if (probe.isDone()) {
-                    final boolean met;
-                    try {
-                        met = probe.join();
-                    } catch (final CompletionException e) {
-                        throw e.getCause() instanceof RuntimeException cause ? cause
-                                : new ClientTestFailure("server probe failed", e.getCause());
-                    }
-                    probe = null;
-                    if (met) {
-                        return true;
-                    }
-                }
-                if (++waited > maxTicks) {
-                    String extra;
-                    try {
-                        final MinecraftServer server = server();
-                        extra = server.submit(() -> diagnostics.apply(server.overworld())).join();
-                    } catch (final RuntimeException e) {
-                        extra = "(diagnostics failed: " + e + ")";
-                    }
-                    throw new ClientTestFailure("timed out after " + maxTicks + " ticks waiting for " + what
-                            + (extra.isEmpty() ? "" : " - " + extra));
-                }
-                return false;
-            }
-        }));
-        return this;
-    }
-
-    /** Waits until the open screen is a {@code type}. */
-    public <T extends Screen> ClientTestContext thenAwaitScreen(final Class<T> type, final int maxTicks) {
-        return thenWaitUntil(() -> type.isInstance(mc.screen), maxTicks, "screen " + type.getSimpleName());
-    }
-
-    /**
-     * Waits until the land round the player has reached their game and been drawn: every chunk within their view
-     * distance there, and no section of it left to build. Land the server is still making arrives over many seconds,
-     * from the player outwards, so a fixed wait photographs its far edge with holes in it.
-     */
-    public ClientTestContext thenAwaitLandDrawn(final int maxTicks) {
-        return thenWaitUntil(this::landDrawn, maxTicks, "the land round the player to reach their game and be drawn");
-    }
-
-    /**
-     * Waits until no screen is open, and until the server has closed the player's window as well. A window closed on
-     * the client reaches the server as a packet, and the game closes whatever window the server has open when that
-     * packet lands, whichever window it was sent for: a step that opened the next window from the server before then
-     * would have it closed at once, with its screen still up on the client.
-     */
-    public ClientTestContext thenAwaitNoScreen(final int maxTicks) {
-        return thenWaitUntil(() -> mc.screen == null, maxTicks, "no screen")
-                .thenWaitUntilServer(level -> serverPlayer().containerMenu == serverPlayer().inventoryMenu, maxTicks,
-                        "the server to close the window",
-                        level -> "still open: " + serverPlayer().containerMenu.getClass().getSimpleName());
-    }
-
-    /**
-     * Saves and leaves the world, reopens it from disk and waits until the player is back in, a real reload,
-     * so whatever the test checks afterwards went through NBT and the level save. Any open screen is closed.
-     */
-    public ClientTestContext thenSaveAndReload(final int delayTicks) {
-        queue.add(new Queued(delayTicks, "saveAndReload", new IStep() {
-            private int phase;
-            private int waited;
-
-            @Override
-            public boolean tick() {
-                waited++;
-                switch (phase) {
-                    case 0 -> {
-                        if (mc.level == null) {
-                            throw new ClientTestFailure("no world to reload");
-                        }
-                        mc.level.disconnect();
-                        mc.disconnect(new net.minecraft.client.gui.screens.TitleScreen());
-                        phase = 1;
-                        waited = 0;
-                    }
-                    case 1 -> {
-                        if (mc.level == null && mc.getSingleplayerServer() == null) {
-                            mc.createWorldOpenFlows().openWorld(ClientTestRunner.WORLD_NAME,
-                                    () -> { throw new ClientTestFailure("the test world could not be reopened"); });
-                            phase = 2;
-                            waited = 0;
-                        } else if (waited > 600) {
-                            throw new ClientTestFailure("leaving the world took more than 600 ticks");
-                        }
-                    }
-                    case 2 -> {
-                        final MinecraftServer server = mc.getSingleplayerServer();
-                        if (mc.level != null && mc.player != null && mc.screen == null && server != null
-                                && server.isReady() && mc.player.tickCount > 20) {
-                            return true;
-                        }
-                        if (waited > 1200) {
-                            throw new ClientTestFailure("reopening the world took more than 1200 ticks");
-                        }
-                    }
-                    default -> throw new IllegalStateException("bad reload phase " + phase);
-                }
-                return false;
-            }
-        }));
-        return this;
-    }
-
-    /**
-     * Teleports the synthetic player to {@code relative} (its feet), looking toward {@code facing}, and
-     * waits for the client to have got there.
-     *
-     * <p>The move is the server's, and the client learns of it a packet later; the steps that follow
-     * click from where the client thinks the player stands, so a click sent before the move arrived
-     * would aim from the old place. A client busy with a mod's start-up work can fall a second behind
-     * in the first test of a run, which is exactly when that happened.
-     */
-    public ClientTestContext thenTeleport(final int delayTicks, final BlockPos relative, final Direction facing) {
-        thenServer(delayTicks, level -> teleport(relative, facing));
-        return thenWaitUntil(() -> player() != null
-                        && player().position().distanceTo(Vec3.atBottomCenterOf(abs(relative))) < 2.0,
-                200, "the client's player to arrive at " + relative);
-    }
-
-    /** Right-clicks the block at {@code relative} with the empty hand, the way the player opens a GUI. */
-    public ClientTestContext thenRightClick(final int delayTicks, final BlockPos relative) {
-        /*
-         * A peripheral is waited for until it has linked to its machine: a monitor clicked before its link is made
-         * opens nothing, and how many ticks the link takes is the server's business, more of them on a loaded
-         * machine. A block that is no peripheral passes at once.
-         */
-        thenWaitUntilServer(level -> !(level.getBlockEntity(abs(relative)) instanceof IPeripheralEndpoint peripheral)
-                        || peripheral.linkedOwner().isPresent(), PERIPHERAL_LINK_WAIT,
-                "the peripheral at " + relative + " to link to its machine before it is clicked",
-                level -> "it is linked to nothing");
-        return then(delayTicks, () -> rightClick(relative));
-    }
-
-    /**
-     * Right-clicks the front of the device at {@code relative} at {@code x}, {@code y} sixty-fourths from its top
-     * left as seen, as {@link #rightClickFront} does: a plain spot of a front whose middle carries a button.
-     */
-    public ClientTestContext thenRightClickFront(final int delayTicks, final BlockPos relative, final double x,
-                                                 final double y) {
-        return then(delayTicks, () -> rightClickFront(relative, x, y, 0));
-    }
-
-    /** Takes a screenshot named after the test and {@code label}. */
-    public ClientTestContext thenScreenshot(final int delayTicks, final String label) {
-        return then(delayTicks, () -> screenshot(label));
-    }
-
-    /**
-     * Fails, after {@code delayTicks}, unless the GUI's rectangle {@code x}, {@code y}, {@code width} by
-     * {@code height} looks as the reference picture named after the test and {@code label} does.
-     */
-    public ClientTestContext thenMatchesReference(final int delayTicks, final String label, final int x, final int y,
-                                                  final int width, final int height) {
-        return then(delayTicks, () -> matchesReference(label, x, y, width, height));
-    }
-
-    /**
-     * Fails unless the GUI's rectangle looks as the reference picture {@code <test>-<label>} does, in the test mod's
-     * {@code clienttest/references}; what was drawn, and where it differs, is left in the run's folder.
-     */
-    public void matchesReference(final String label, final int x, final int y, final int width, final int height) {
-        ReferencePictures.check(mc, testName.replace('.', '_') + "-" + label, x, y, width, height);
-    }
-
-    /** A copy of the GUI's rectangle of the last frame; close it when done. */
-    public NativeImage capture(final int x, final int y, final int width, final int height) {
-        return ReferencePictures.capture(mc, x, y, width, height);
-    }
-
-    /** Fails unless two pictures of {@code label} look the same, as a reference picture is compared. */
-    public void assertSamePicture(final String label, final NativeImage drawn, final NativeImage other) {
-        ReferencePictures.same(mc, testName.replace('.', '_') + "-" + label, drawn, other);
-    }
-
-    /** Asserts {@code condition} after {@code delayTicks}. */
-    public ClientTestContext thenAssert(final int delayTicks, final BooleanSupplier condition, final String message) {
-        return then(delayTicks, () -> assertTrue(condition.getAsBoolean(), message));
-    }
-
-    // Toolbox for steps
-
-    public Minecraft mc() {
-        return mc;
-    }
-
-    public BlockPos origin() {
-        return origin;
-    }
-
-    public BlockPos abs(final BlockPos relative) {
-        return origin.offset(relative);
-    }
-
-    public MinecraftServer server() {
-        final MinecraftServer server = mc.getSingleplayerServer();
-        if (server == null) {
-            throw new ClientTestFailure("no integrated server");
-        }
-        return server;
-    }
-
-    public ServerLevel serverLevel() {
-        return server().overworld();
-    }
-
-    public ServerPlayer serverPlayer() {
-        final List<ServerPlayer> players = server().getPlayerList().getPlayers();
-        if (players.isEmpty()) {
-            throw new ClientTestFailure("no player on the integrated server");
-        }
-        return players.get(0);
-    }
-
-    public LocalPlayer player() {
-        if (mc.player == null) {
-            throw new ClientTestFailure("no client player");
-        }
-        return mc.player;
-    }
-
-    /** The open screen as {@code type}, or a failure naming what is open instead. */
-    public <T extends Screen> T screen(final Class<T> type) {
-        if (type.isInstance(mc.screen)) {
-            return type.cast(mc.screen);
-        }
-        throw new ClientTestFailure("expected " + type.getSimpleName() + " to be open but found "
-                + (mc.screen == null ? "no screen" : mc.screen.getClass().getSimpleName()));
-    }
-
-    /** The open screen as {@code type}, or null when something else (or nothing) is open. Never fails. */
-    public <T extends Screen> T openScreen(final Class<T> type) {
-        return type.isInstance(mc.screen) ? type.cast(mc.screen) : null;
-    }
-
-    /** Server-side: moves the player to {@code relative} looking toward {@code facing}. Call from a server step. */
-    public void teleport(final BlockPos relative, final Direction facing) {
-        final BlockPos at = abs(relative);
-        final ServerPlayer player = serverPlayer();
-        player.teleportTo(serverLevel(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5,
-                facing.toYRot(), 0.0F);
-    }
-
-    /** Server-side: puts {@code stack} in the player's main hand. Call from a server step. */
-    public void hold(final ItemStack stack) {
-        serverPlayer().setItemInHand(InteractionHand.MAIN_HAND, stack);
-    }
-
-    /** Server-side: puts {@code stack} in inventory slot {@code slot} (0-8 = hotbar). Call from a server step. */
-    public void give(final int slot, final ItemStack stack) {
-        serverPlayer().getInventory().setItem(slot, stack);
-    }
-
-    /** Client-side: selects hotbar slot {@code slot}; the next use sends the selection to the server first. */
-    public void selectHotbar(final int slot) {
-        player().getInventory().selected = slot;
-    }
-
-    /**
-     * Client-side: uses the held item on the block at {@code relative}, hitting the face that looks at the
-     * player, the same path a real click takes, so the server-side reach and hit checks apply.
-     */
-    public void rightClick(final BlockPos relative) {
-        final BlockPos target = abs(relative);
-        final Vec3 center = Vec3.atCenterOf(target);
-        rightClick(relative, Direction.getNearest(player().getEyePosition().subtract(center)));
-    }
-
-    /** Client-side: uses the held item on the given face of the block at {@code relative}. */
-    public void rightClick(final BlockPos relative, final Direction face) {
-        final BlockPos target = abs(relative);
-        final Vec3 center = Vec3.atCenterOf(target);
-        final Vec3 location = center.add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5));
-        final BlockHitResult hit = new BlockHitResult(location, face, target, false);
-        Objects.requireNonNull(mc.gameMode, "no game mode").useItemOn(player(), InteractionHand.MAIN_HAND, hit);
-    }
-
-    /**
-     * Client-side: uses the held item on the front of the device at {@code relative}, the face it turns to whoever
-     * placed it, at {@code x}, {@code y} sixty-fourths from the front's top left as seen and {@code depth}
-     * sixty-fourths behind its face: aimed from the player's eyes at that point and landing where the look crosses
-     * the face of the block, as the game's own aim would, so a part set back in the front is pressed where it is drawn.
-     */
-    public void rightClickFront(final BlockPos relative, final double x, final double y, final int depth) {
-        final BlockPos at = abs(relative);
-        final Direction facing = facingOf(at);
-        final Vec3 out = Vec3.atLowerCornerOf(facing.getNormal());
-        final Vec3 faceCentre = Vec3.atCenterOf(at).add(out.scale(0.5));
-        final Vec3 target = frontPoint(at, x, y).subtract(out.scale(depth / (double) EjectButton.FRONT));
-        final Vec3 eye = player().getEyePosition();
-        final Vec3 look = target.subtract(eye);
-        final Vec3 hit = eye.add(look.scale(out.dot(faceCentre.subtract(eye)) / out.dot(look)));
-        Objects.requireNonNull(mc.gameMode, "no game mode")
-                .useItemOn(player(), InteractionHand.MAIN_HAND, new BlockHitResult(hit, facing, at, false));
-    }
-
-    /**
-     * Client-side: turns the player's head to the point {@code x}, {@code y} sixty-fourths from the top left of the
-     * front of the device at {@code relative}, as seen, so the crosshair rests on what is drawn there.
-     */
-    public void lookAtFront(final BlockPos relative, final double x, final double y) {
-        lookAtFront(relative, x, y, 0);
-    }
-
-    /**
-     * Client-side: turns the player to look at the point ({@code x}, {@code y}) of a block's front, {@code out}
-     * sixty-fourths out in front of its face, where a part standing out of the block stands.
-     */
-    public void lookAtFront(final BlockPos relative, final double x, final double y, final double out) {
-        final BlockPos at = abs(relative);
-        final Vec3 normal = Vec3.atLowerCornerOf(facingOf(at).getNormal());
-        lookAt(frontPoint(at, x, y).add(normal.scale(out / EjectButton.FRONT)));
-    }
-
-    /** Client-side: turns the player's head to the world point {@code point}, so the crosshair rests on it. */
-    public void lookAt(final Vec3 point) {
-        final Vec3 look = point.subtract(player().getEyePosition());
-        player().setYRot((float) Math.toDegrees(Math.atan2(-look.x, look.z)));
-        player().setXRot((float) -Math.toDegrees(Math.atan2(look.y, Math.sqrt(look.x * look.x + look.z * look.z))));
-    }
-
-    /**
-     * Client-side: places the held block item at {@code relative} by clicking the top face of the block
-     * below it, exactly as the player builds on the ground. Orientation follows the player's facing, so
-     * teleport with the right {@code facing} first. Hold sneak (see {@link #sneak}) when the block below
-     * has a GUI, as a player would.
-     */
-    public void place(final BlockPos relative) {
-        placeAgainst(relative, Direction.UP);
-    }
-
-    /**
-     * Client-side: places the held block item at {@code relative} by clicking the neighbour on the side
-     * {@code face} points away from (e.g. {@code UP} clicks the block below, {@code NORTH} the block south).
-     */
-    public void placeAgainst(final BlockPos relative, final Direction face) {
-        rightClick(relative.relative(face.getOpposite()), face);
-    }
-
-    /**
-     * Client-side: presses or releases the sneak key. The key state reaches the server on the next tick,
-     * so wait a tick before the click that depends on it. Sneaking is how a player places a block on, or
-     * ejects media from, a block that would otherwise open its GUI.
-     */
-    public void sneak(final boolean down) {
-        mc.options.keyShift.setDown(down);
-    }
-
-    /** Queues sneak → place → release for {@code relative} (three ticks, the way a player does it). */
-    public ClientTestContext thenPlace(final int delayTicks, final BlockPos relative) {
-        return thenPlaceAgainst(delayTicks, relative, Direction.UP);
-    }
-
-    public ClientTestContext thenPlaceAgainst(final int delayTicks, final BlockPos relative, final Direction face) {
-        then(delayTicks, () -> sneak(true));
-        then(2, () -> placeAgainst(relative, face));
-        return then(1, () -> sneak(false));
-    }
-
-    /** Queues sneak → right-click {@code face} of the block at {@code relative} → release. */
-    public ClientTestContext thenSneakClick(final int delayTicks, final BlockPos relative, final Direction face) {
-        then(delayTicks, () -> sneak(true));
-        then(2, () -> rightClick(relative, face));
-        return then(1, () -> sneak(false));
-    }
-
-    /** Queues a server step that fills hotbar slots 0..n-1 with {@code stacks} and empties the rest. */
-    public ClientTestContext thenGive(final int delayTicks, final ItemStack... stacks) {
-        return thenServer(delayTicks, level -> {
-            for (int i = 0; i < 9; i++) {
-                give(i, i < stacks.length ? stacks[i].copy() : ItemStack.EMPTY);
-            }
-        });
-    }
-
-    /** Presses and releases the left mouse button at screen coordinates ({@code x}, {@code y}). */
-    public void click(final double x, final double y) {
-        final Screen screen = screen(Screen.class);
-        screen.mouseClicked(x, y, 0);
-        screen.mouseReleased(x, y, 0);
-    }
-
-    /**
-     * Rests the pointer at screen coordinates ({@code x}, {@code y}) without pressing anything, the way moving the
-     * mouse there would. The move is handed to the handler the game gave the window for cursor moves, so what
-     * follows is exactly what a real move does: the next frame is drawn with the pointer there.
-     */
-    public void pointAt(final double x, final double y) {
-        final Window window = Minecraft.getInstance().getWindow();
-        final long handle = window.getWindow();
-        final GLFWCursorPosCallback moved = GLFW.glfwSetCursorPosCallback(handle, null);
-        GLFW.glfwSetCursorPosCallback(handle, moved);
-        if (moved != null) {
-            moved.invoke(handle, x * window.getGuiScale(), y * window.getGuiScale());
-        }
-    }
-
-    /** Presses and releases the right mouse button at screen coordinates ({@code x}, {@code y}). */
-    public void rightClick(final double x, final double y) {
-        final Screen screen = screen(Screen.class);
-        screen.mouseClicked(x, y, 1);
-        screen.mouseReleased(x, y, 1);
-    }
-
-    /** Clicks a desktop-relative point (window and app geometry, as the desktop apps report it). */
+    /** Clicks a point of the desktop, by the geometry of its windows and programs as they report it. */
     public void clickDesktop(final int[] point) {
         final DesktopScreen desktop = screen(DesktopScreen.class);
         // A desktop drawn smaller puts its points closer together on the screen; the click goes where they are drawn.
@@ -627,7 +47,7 @@ public final class ClientTestContext {
                 desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
     }
 
-    /** Presses on one desktop-local point, drags to another and lets go, at the desktop's scale. */
+    /** Presses on one point of the desktop, drags to another and lets go, at the desktop's scale. */
     public void dragDesktop(final int[] from, final int[] to) {
         final DesktopScreen desktop = screen(DesktopScreen.class);
         final double s = desktop.desktopScale();
@@ -641,188 +61,136 @@ public final class ClientTestContext {
         desktop.mouseReleased(ex, ey, 0);
     }
 
-    /** The right button on a desktop-local point, the way {@link #clickDesktop} is the left one. */
+    /** The right button on a point of the desktop, the way {@link #clickDesktop} is the left one. */
     public void rightClickDesktop(final int[] point) {
         final DesktopScreen desktop = screen(DesktopScreen.class);
         rightClick(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
                 desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
     }
 
-    /** Rests the pointer on a desktop-local point without pressing anything, the way {@link #pointAt} does. */
+    /** Rests the pointer on a point of the desktop without pressing anything, the way {@link #pointAt} does. */
     public void pointAtDesktop(final int[] point) {
         final DesktopScreen desktop = screen(DesktopScreen.class);
         pointAt(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
                 desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
     }
 
-    /** Clicks at ({@code x}, {@code y}) relative to the open container screen's top-left corner. */
-    public void clickGui(final int x, final int y) {
-        final AbstractContainerScreen<?> screen = screen(AbstractContainerScreen.class);
-        click(screen.getGuiLeft() + x + 0.5, screen.getGuiTop() + y + 0.5);
+    @Override
+    public ClientTestContext then(final int delayTicks, final Runnable action) {
+        super.then(delayTicks, action);
+        return this;
     }
 
-    /** Scrolls the wheel by {@code delta} notches at ({@code x}, {@code y}) relative to the container screen. */
-    public void scrollGui(final int x, final int y, final double delta) {
-        final AbstractContainerScreen<?> screen = screen(AbstractContainerScreen.class);
-        screen.mouseScrolled(screen.getGuiLeft() + x + 0.5, screen.getGuiTop() + y + 0.5, 0.0, delta);
+    @Override
+    public ClientTestContext thenServer(final int delayTicks, final Consumer<ServerLevel> action) {
+        super.thenServer(delayTicks, action);
+        return this;
     }
 
-    /** Drags the left button from ({@code x1}, {@code y1}) to ({@code x2}, {@code y2}), container-relative. */
-    public void dragGui(final int x1, final int y1, final int x2, final int y2) {
-        final AbstractContainerScreen<?> screen = screen(AbstractContainerScreen.class);
-        final double sx = screen.getGuiLeft() + x1 + 0.5;
-        final double sy = screen.getGuiTop() + y1 + 0.5;
-        final double ex = screen.getGuiLeft() + x2 + 0.5;
-        final double ey = screen.getGuiTop() + y2 + 0.5;
-        screen.mouseClicked(sx, sy, 0);
-        screen.mouseDragged(ex, ey, 0, ex - sx, ey - sy);
-        screen.mouseReleased(ex, ey, 0);
+    @Override
+    public ClientTestContext thenWaitUntil(final BooleanSupplier condition, final int maxTicks, final String what) {
+        super.thenWaitUntil(condition, maxTicks, what);
+        return this;
     }
 
-    /** Presses and releases a GLFW key on the open screen. */
-    public void key(final int keyCode) {
-        key(keyCode, 0);
+    @Override
+    public ClientTestContext thenWaitUntil(final BooleanSupplier condition, final int maxTicks, final String what,
+                                           final Supplier<String> diagnostics) {
+        super.thenWaitUntil(condition, maxTicks, what, diagnostics);
+        return this;
     }
 
-    /**
-     * The same, with modifiers held: {@code GLFW_MOD_CONTROL} and friends, combined with {@code |}.
-     *
-     * <p>The shortcuts a program has are keys held with something, so a test that never holds anything
-     * cannot reach them at all.
-     */
-    public void key(final int keyCode, final int modifiers) {
-        final Screen screen = screen(Screen.class);
-        screen.keyPressed(keyCode, 0, modifiers);
-        screen.keyReleased(keyCode, 0, modifiers);
+    @Override
+    public ClientTestContext thenWaitUntilServer(final Predicate<ServerLevel> condition, final int maxTicks,
+                                                 final String what,
+                                                 final Function<ServerLevel, String> diagnostics) {
+        super.thenWaitUntilServer(condition, maxTicks, what, diagnostics);
+        return this;
     }
 
-    /** Types {@code text} into the open screen, character by character. */
-    public void type(final String text) {
-        final Screen screen = screen(Screen.class);
-        for (final char c : text.toCharArray()) {
-            screen.charTyped(c, 0);
-        }
+    @Override
+    public <T extends Screen> ClientTestContext thenAwaitScreen(final Class<T> type, final int maxTicks) {
+        super.thenAwaitScreen(type, maxTicks);
+        return this;
     }
 
-    /**
-     * Saves the current frame as {@code ct-<test>-<label>.png} under the game's screenshots folder, or fails the test.
-     * It is written here and now, not by the game's own screenshot, which writes it later on another thread and only
-     * logs a failure: a picture another program holds open would keep the last run's in its place, unnoticed.
-     */
-    public String screenshot(final String label) {
-        final String name = "ct-" + testName.replace('.', '_') + "-" + label + ".png";
-        final File folder = new File(mc.gameDirectory, Screenshot.SCREENSHOT_DIR);
-        if (!folder.isDirectory() && !folder.mkdirs()) {
-            throw new ClientTestFailure("the screenshots folder " + folder + " could not be made");
-        }
-        try (NativeImage frame = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-            frame.writeToFile(new File(folder, name));
-        } catch (final IOException failed) {
-            throw new ClientTestFailure("the screenshot " + name + " could not be written", failed);
-        }
-        screenshots.add(name);
-        return name;
+    @Override
+    public ClientTestContext thenAwaitLandDrawn(final int maxTicks) {
+        super.thenAwaitLandDrawn(maxTicks);
+        return this;
     }
 
-    /**
-     * The colour currently on screen at logical GUI coordinates ({@code x}, {@code y}), as ARGB. Reads the
-     * last rendered frame, so it proves what the player actually sees (a popup drawn above the slots, ...).
-     */
-    public int pixel(final int x, final int y) {
-        try (FrameSampler frame = sampleFrame()) {
-            return frame.pixel(x, y);
-        }
+    @Override
+    public ClientTestContext thenAwaitNoScreen(final int maxTicks) {
+        super.thenAwaitNoScreen(maxTicks);
+        return this;
     }
 
-    /**
-     * One copy of the last rendered frame to read many pixels from; close it when done. Reading a grid through
-     * {@link #pixel} would copy the whole frame once per sample.
-     */
-    public FrameSampler sampleFrame() {
-        return new FrameSampler(mc.getWindow(), Screenshot.takeScreenshot(mc.getMainRenderTarget()));
+    @Override
+    public ClientTestContext thenSaveAndReload(final int delayTicks) {
+        super.thenSaveAndReload(delayTicks);
+        return this;
     }
 
-    /** A copy of one frame, read by logical GUI coordinates. */
-    public static final class FrameSampler implements AutoCloseable {
-
-        private final Window window;
-        private final NativeImage image;
-
-        private FrameSampler(final Window window, final NativeImage image) {
-            this.window = window;
-            this.image = image;
-        }
-
-        /** The colour at logical GUI coordinates ({@code x}, {@code y}), as ARGB. */
-        public int pixel(final int x, final int y) {
-            final double scale = window.getGuiScale();
-            final int px = (int) Math.min(window.getWidth() - 1, x * scale);
-            final int py = (int) Math.min(window.getHeight() - 1, y * scale);
-            final int abgr = image.getPixelRGBA(px, py);
-            final int r = abgr & 0xFF;
-            final int g = (abgr >> 8) & 0xFF;
-            final int b = (abgr >> 16) & 0xFF;
-            final int a = (abgr >>> 24) & 0xFF;
-            return (a << 24) | (r << 16) | (g << 8) | b;
-        }
-
-        @Override
-        public void close() {
-            image.close();
-        }
+    @Override
+    public ClientTestContext thenTeleport(final int delayTicks, final BlockPos relative, final Direction facing) {
+        super.thenTeleport(delayTicks, relative, facing);
+        return this;
     }
 
-    // Assertions
-
-    public void assertTrue(final boolean condition, final String message) {
-        if (!condition) {
-            throw new ClientTestFailure(message);
-        }
+    @Override
+    public ClientTestContext thenRightClick(final int delayTicks, final BlockPos relative) {
+        super.thenRightClick(delayTicks, relative);
+        return this;
     }
 
-    public void assertEquals(final Object expected, final Object actual, final String message) {
-        if (!Objects.equals(expected, actual)) {
-            throw new ClientTestFailure(message + " (expected " + expected + ", got " + actual + ")");
-        }
+    @Override
+    public ClientTestContext thenRightClickFront(final int delayTicks, final BlockPos relative, final double x,
+                                                 final double y) {
+        super.thenRightClickFront(delayTicks, relative, x, y);
+        return this;
     }
 
-    public void fail(final String message) {
-        throw new ClientTestFailure(message);
+    @Override
+    public ClientTestContext thenScreenshot(final int delayTicks, final String label) {
+        super.thenScreenshot(delayTicks, label);
+        return this;
     }
 
-    /*
-     * Whether every chunk within the player's view distance, less the ring at its edge the server may send last, is in
-     * their game, and nothing is left to build for drawing; the server sends a round view, not a square one.
-     */
-    private boolean landDrawn() {
-        final ClientLevel level = mc.level;
-        if (level == null || mc.player == null) {
-            return false;
-        }
-        final int reach = Math.max(1, mc.options.getEffectiveRenderDistance() - 1);
-        final ChunkPos at = mc.player.chunkPosition();
-        for (int dx = -reach; dx <= reach; dx++) {
-            for (int dz = -reach; dz <= reach; dz++) {
-                if (dx * dx + dz * dz <= reach * reach && !level.getChunkSource().hasChunk(at.x + dx, at.z + dz)) {
-                    return false;
-                }
-            }
-        }
-        return mc.levelRenderer.hasRenderedAllSections();
+    @Override
+    public ClientTestContext thenMatchesReference(final int delayTicks, final String label, final int x, final int y,
+                                                  final int width, final int height) {
+        super.thenMatchesReference(delayTicks, label, x, y, width, height);
+        return this;
     }
 
-    /* Which way the device at that absolute position faces: the face it turns to whoever placed it. */
-    private Direction facingOf(final BlockPos at) {
-        return Objects.requireNonNull(mc.level, "no level").getBlockState(at)
-                .getValue(HorizontalDirectionalBlock.FACING);
+    @Override
+    public ClientTestContext thenAssert(final int delayTicks, final BooleanSupplier condition, final String message) {
+        super.thenAssert(delayTicks, condition, message);
+        return this;
     }
 
-    /* The point x, y sixty-fourths from the top left of the front of the device at that absolute position, as seen. */
-    private Vec3 frontPoint(final BlockPos at, final double x, final double y) {
-        final Direction facing = facingOf(at);
-        final Vec3 out = Vec3.atLowerCornerOf(facing.getNormal());
-        final Vec3 right = Vec3.atLowerCornerOf(facing.getCounterClockWise().getNormal());
-        final double front = EjectButton.FRONT;
-        return Vec3.atCenterOf(at).add(out.scale(0.5)).add(right.scale(x / front - 0.5)).add(0, 0.5 - y / front, 0);
+    @Override
+    public ClientTestContext thenPlace(final int delayTicks, final BlockPos relative) {
+        super.thenPlace(delayTicks, relative);
+        return this;
+    }
+
+    @Override
+    public ClientTestContext thenPlaceAgainst(final int delayTicks, final BlockPos relative, final Direction face) {
+        super.thenPlaceAgainst(delayTicks, relative, face);
+        return this;
+    }
+
+    @Override
+    public ClientTestContext thenSneakClick(final int delayTicks, final BlockPos relative, final Direction face) {
+        super.thenSneakClick(delayTicks, relative, face);
+        return this;
+    }
+
+    @Override
+    public ClientTestContext thenGive(final int delayTicks, final ItemStack... stacks) {
+        super.thenGive(delayTicks, stacks);
+        return this;
     }
 }

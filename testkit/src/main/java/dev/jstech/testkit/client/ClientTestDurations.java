@@ -3,9 +3,9 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Tech Series.
+ * This file is part of J's Core Test Kit.
  */
-package dev.jstech.tests.clienttest;
+package dev.jstech.testkit.client;
 
 import com.mojang.logging.LogUtils;
 import java.io.IOException;
@@ -23,22 +23,22 @@ import org.slf4j.Logger;
 
 /**
  * How many ticks each client test took the last time it passed, kept in {@code durations.txt} beside the shards'
- * game directories, so the next run can share the suite out by it and its shards end together. A run updates only
- * the tests it ran: one test run alone leaves the others as they were. The file is the machine's own, never part of
- * the repository; a run without it (a fresh checkout, the CI) shares the suite out round-robin.
+ * game folders, so the next run shares the tests out by it and its shards end together. A run updates only the tests
+ * it ran: one test run alone leaves the others as they were. The file is the machine's own, never part of a
+ * repository; a run without it (a fresh checkout, a build server) shares the tests out round-robin.
  */
-final class ClientTestDurations {
+public final class ClientTestDurations {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final String FILE = "durations.txt";
-    /** Several shards finish at about the same time; each holds this while it reads and rewrites the file. */
+    /* Several shards finish at about the same time; each holds this while it reads and rewrites the file. */
     private static final String LOCK = "durations.lock";
 
     private ClientTestDurations() {
     }
 
     /** The ticks each test took when it last passed, by its name; empty when nothing was ever measured. */
-    static Map<String, Integer> read(final Path runDirectory) {
+    public static Map<String, Integer> read(final Path runDirectory) {
         final Path file = runDirectory.resolve(FILE);
         final Map<String, Integer> ticks = new TreeMap<>();
         if (!Files.isRegularFile(file)) {
@@ -52,15 +52,15 @@ final class ClientTestDurations {
                 }
             }
         } catch (final IOException | NumberFormatException e) {
-            // A file that cannot be read only costs the balance: the suite is shared out round-robin instead.
-            LOGGER.warn("[JSC-CT] the client test durations could not be read from {}", file, e);
+            // A file that cannot be read only costs the balance: the tests are shared out round-robin instead.
+            LOGGER.warn("{} the client test durations could not be read from {}", ClientTestReport.MARK, file, e);
             return new TreeMap<>();
         }
         return ticks;
     }
 
     /** Writes how long each test that passed in this run took, over what the file said of it. */
-    static void record(final Path runDirectory, final List<ClientTestReport.Result> results) {
+    public static void record(final Path runDirectory, final List<ClientTestReport.Result> results) {
         try {
             Files.createDirectories(runDirectory);
             try (FileChannel channel = FileChannel.open(runDirectory.resolve(LOCK), StandardOpenOption.CREATE,
@@ -76,7 +76,8 @@ final class ClientTestDurations {
                 Files.write(runDirectory.resolve(FILE), lines, StandardCharsets.UTF_8);
             }
         } catch (final IOException e) {
-            LOGGER.warn("[JSC-CT] the client test durations could not be written to {}", runDirectory, e);
+            LOGGER.warn("{} the client test durations could not be written to {}", ClientTestReport.MARK,
+                    runDirectory, e);
         }
     }
 }

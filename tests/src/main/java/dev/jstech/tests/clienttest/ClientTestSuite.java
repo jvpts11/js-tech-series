@@ -7,6 +7,9 @@
  */
 package dev.jstech.tests.clienttest;
 
+import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.testkit.client.ClientTests;
+import dev.jstech.tests.JsTests;
 import dev.jstech.tests.clienttest.computers.AssemblyScreensClientTests;
 import dev.jstech.tests.clienttest.computers.AutomationManagerClientTests;
 import dev.jstech.tests.clienttest.computers.BookPagesClientTests;
@@ -156,6 +159,7 @@ import dev.jstech.tests.clienttest.core.KeyActionClientTests;
 import dev.jstech.tests.clienttest.core.EffectsClientTests;
 import dev.jstech.tests.clienttest.core.LightingClientTests;
 import dev.jstech.tests.clienttest.core.TerrainClientTests;
+import dev.jstech.tests.clienttest.core.TestKitClientTests;
 import dev.jstech.tests.clienttest.core.PlacesClientTests;
 import dev.jstech.tests.clienttest.core.LandDrawingClientTests;
 import dev.jstech.tests.clienttest.core.SkyClientTests;
@@ -198,17 +202,17 @@ import dev.jstech.tests.clienttest.series.ManualRecipeViewClientTests;
 import dev.jstech.tests.clienttest.series.ManualImmersionClientTests;
 import dev.jstech.tests.clienttest.series.ManualSiteClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
+import dev.jstech.tests.testkit.TestSuites;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
- * The explicit list of client test classes. Tests are discovered by reflection from these classes only (
- * no classpath scanning) and ordered by name so every shard sees the same list and can take its slice.
+ * The explicit list of the series' client test classes, handed to the Core's test kit, which runs them: their tests
+ * are read from these classes only, with no scan of the class path, each in the suite its package names
+ * ({@link TestSuites}), and each run with the series' helper, {@link ClientTestContext}.
  */
 public final class ClientTestSuite {
 
@@ -409,91 +413,30 @@ public final class ClientTestSuite {
     }
 
     /**
-     * One discovered test: its display name, the method to invoke, its timeout and its index in the whole
-     * (sorted) suite, and the index places the test's world area, so shards never overlap.
+     * Hands the kit every test of the classes listed, a suite for each mod's package, and what every test must
+     * start without: the view the Network Interactor keeps of what a player left it at, which hid from one test what
+     * another typed into its search. Once, from the test mod's client constructor.
+     *
+     * @throws IllegalStateException when a class is in no suite's package, or a test does not take the series' helper
      */
-    public record Entry(String name, Method method, int timeoutTicks, int index) {
-    }
-
-    /** Every test in the suite, sorted by name and numbered. */
-    public static List<Entry> all() {
-        final List<Entry> found = new ArrayList<>();
+    public static void register() {
+        final Map<String, List<ClientTests.Test>> bySuite = new LinkedHashMap<>();
         for (final Class<?> type : CLASSES) {
+            final String suite = TestSuites.of(type);
+            if (suite == null) {
+                throw new IllegalStateException("the client tests " + type.getName() + " are in no suite's package");
+            }
             for (final Method method : type.getDeclaredMethods()) {
-                final ClientTest annotation = method.getAnnotation(ClientTest.class);
-                if (annotation == null) {
-                    continue;
-                }
-                if (!Modifier.isStatic(method.getModifiers()) || !Modifier.isPublic(method.getModifiers())
-                        || method.getParameterCount() != 1
-                        || method.getParameterTypes()[0] != ClientTestContext.class) {
-                    throw new IllegalStateException("client test " + type.getSimpleName() + "." + method.getName()
-                            + " must be public static and take a single ClientTestContext");
-                }
-                found.add(new Entry(type.getSimpleName() + "." + method.getName(), method,
-                        annotation.timeoutTicks(), 0));
-            }
-        }
-        found.sort(Comparator.comparing(Entry::name));
-        final List<Entry> entries = new ArrayList<>(found.size());
-        for (int i = 0; i < found.size(); i++) {
-            final Entry e = found.get(i);
-            entries.add(new Entry(e.name(), e.method(), e.timeoutTicks(), i));
-        }
-        return entries;
-    }
-
-    /**
-     * The slice of the suite that shard {@code shard} of {@code shards} runs. Knowing how many ticks each test took
-     * last time, the longest go first, each to the shard with the least to do so far, so the shards end together and
-     * no shard waits on the one that drew the long tests; a test never measured counts as the measured ones'
-     * average. Knowing nothing, round-robin by index. Every shard reads the same durations, so each takes its own
-     * slice of one split and no test runs twice or not at all.
-     */
-    public static List<Entry> shard(final int shard, final int shards, final Map<String, Integer> ticks) {
-        return shard(shard, shards, ticks, entry -> true);
-    }
-
-    /**
-     * The same, of only the tests {@code chosen} keeps: they are picked before the suite is split, so the few asked for
-     * are shared out over the shards as the whole suite is, rather than found in one shard and missing in the others.
-     */
-    public static List<Entry> shard(final int shard, final int shards, final Map<String, Integer> ticks,
-                                    final Predicate<Entry> chosen) {
-        final List<Entry> all = all().stream().filter(chosen).toList();
-        final List<Entry> mine = new ArrayList<>();
-        if (ticks.isEmpty()) {
-            for (int i = 0; i < all.size(); i++) {
-                if (i % shards == shard) {
-                    mine.add(all.get(i));
+                final ClientTest marked = method.getAnnotation(ClientTest.class);
+                if (marked != null) {
+                    bySuite.computeIfAbsent(suite, unused -> new ArrayList<>()).add(ClientTests.testOf(type, method,
+                            marked.timeoutTicks(), ClientTestContext.class));
                 }
             }
-            return mine;
         }
-        final int unknown = (int) ticks.values().stream().mapToInt(Integer::intValue).average().orElse(0);
-        final List<Entry> longestFirst = new ArrayList<>(all);
-        longestFirst.sort(Comparator.comparingInt((Entry e) -> -ticks.getOrDefault(e.name(), unknown))
-                .thenComparing(Entry::name));
-        final long[] load = new long[shards];
-        for (final Entry entry : longestFirst) {
-            int least = 0;
-            for (int other = 1; other < shards; other++) {
-                if (load[other] < load[least]) {
-                    least = other;
-                }
-            }
-            load[least] += ticks.getOrDefault(entry.name(), unknown);
-            if (least == shard) {
-                mine.add(entry);
-            }
-        }
-        mine.sort(Comparator.comparingInt(Entry::index));
-        return mine;
-    }
-
-    /** The ticks a slice is expected to take, from the same durations its split was made with. */
-    public static long expectedTicks(final List<Entry> slice, final Map<String, Integer> ticks) {
-        final int unknown = (int) ticks.values().stream().mapToInt(Integer::intValue).average().orElse(0);
-        return slice.stream().mapToLong(entry -> ticks.getOrDefault(entry.name(), unknown)).sum();
+        bySuite.forEach((suite, tests) -> ClientTests.register(JsTests.MODID, suite, tests, ClientTestContext::new));
+        // And the test kit's own tests, written with nothing of the series', as a mod built on the Core writes them.
+        ClientTests.register(JsTests.MODID, "core", List.of(TestKitClientTests.class));
+        ClientTests.beforeEach(NetworkInteractorApp::forgetView);
     }
 }

@@ -3,9 +3,9 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Core.
+ * This file is part of J's Core Test Kit.
  */
-package dev.jstech.core.gametest;
+package dev.jstech.testkit.gametest;
 
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableEntry;
@@ -38,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Builds a test's scenario straight into a level, for a mod's GameTests and for tests driven from a player's game
  * alike: blocks set and machines placed as a player placing their items would, cables laid in the Core's cable
- * block, microblocks, parts and the game's small blocks put into block spaces, and a record of every block it wrote. Positions handed to it are relative: a GameTest maps them through its
- * arena, anything else through the origin it was given.
+ * block, microblocks, parts and the game's small blocks put into block spaces, and a record of every block it wrote.
+ * Positions handed to it are relative: a GameTest maps them through its arena, anything else through the origin it was
+ * given.
  *
  * <p>A mod's own builder extends it with its machines' set-ups, as the series' test mod does.
  */
