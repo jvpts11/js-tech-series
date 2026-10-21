@@ -34,6 +34,11 @@ import dev.jstech.core.pack.ContentPacks;
 import dev.jstech.core.script.CoreScripts;
 import dev.jstech.core.unify.UnificationSettings;
 import dev.jstech.core.unify.UnifiedDrops;
+import dev.jstech.core.loot.LootChanges;
+import dev.jstech.core.recipe.RecipeChoiceSettings;
+import dev.jstech.core.recipe.RecipeChoices;
+import dev.jstech.core.variant.VariantData;
+import dev.jstech.core.variant.Variants;
 import dev.jstech.core.machine.DataMachines;
 import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.machine.Machines;
@@ -390,6 +395,7 @@ public final class JsCore {
         ElementNaming.declare();
         MaterialValues.declare();
         MaterialData.declare();
+        VariantData.declare();
         // The veins of the series' metals, which stand in for the game's scattered iron, copper and gold.
         SeriesDeposits.declare();
         // Where a belt or a chain remembers the first pulley it was used on.
@@ -481,6 +487,8 @@ public final class JsCore {
         ConfigFiles.register(UnificationSettings.FILE, modEventBus, modContainer);
         // What the Core makes of other mods' rocks, woods and metals, read as the game starts.
         ConfigFiles.register(VariantSettings.FILE, modEventBus, modContainer);
+        // Whether a world's players choose between recipes that overlap, or leave that to Polymorph.
+        ConfigFiles.register(RecipeChoiceSettings.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
         // The styles a player chose for the screens of every mod, read on their own game only.
@@ -601,9 +609,13 @@ public final class JsCore {
         CatalogueItems.listen(modEventBus);
         MaterialLiquids.listen(modEventBus);
         MaterialUses.listen(modEventBus);
+        // After the materials' uses, so the Core's own blocks of metal are there to find.
+        Variants.listen(modEventBus);
         SimplePath.register(modEventBus);
         DataConditions.register(modEventBus);
         UnifiedDrops.register(modEventBus);
+        LootChanges.register(modEventBus);
+        RecipeChoices.listen(modEventBus);
         MediaNetwork.listen(modEventBus);
         MediaServerEvents.listen();
         ModelAnimations.listen(modEventBus);

@@ -320,3 +320,100 @@ drawn on the texture the rock's own model draws it with, wherever its mod keeps 
 disk under `jstech/cache/` in the game's folder, read back while nothing it is drawn from changed (the mods installed
 and their versions, the materials' colours and looks); a change has it drawn again. The folder can be emptied at any
 time. These packs sit under every resource pack, so a resource pack replaces any texture or model made this way.
+
+## Variants of other mods' materials
+
+*Added 2026-10-21.*
+
+A mod declares a kind of variant once, and the Core makes one of it for every wood, stone or metal of every installed
+mod, the game's own among them, with no list kept by hand. The materials are found by the common tags in the mods' own
+files: a wood by its planks (`minecraft:planks`), a stone by the tags of the world's stones (the same as for the ores
+above), a metal by its block (`c:storage_blocks/tin`) where an ingot of the same name exists (`c:ingots/tin`), the
+Core's own metals first. Microblocks need no variants: they are cut from any whole block of any mod.
+
+```java
+public static final TextKey CASING_NAME = TextKey.of("block.mymod.casing", "%s Casing");
+public static final VariantKind CASINGS = Variants.kind(MODID, "casing", VariantFamily.METAL, CASING_NAME)
+        .model("mymod:block/casing_template", "plate", "particle")
+        .tagged("mymod:casings")
+        .tab(MY_SECTION)
+        .declare();
+```
+
+Each variant copies its material's block (hardness, sound, the tool it asks for), is named after the kind and the
+material in the player's language ("Tin Casing", "Oak Frame"), is drawn with the kind's model, the material's own
+texture in the textures the kind names, drops itself, and is in the tag of the tool its family is broken with
+(`minecraft:mineable/axe` for wood, `minecraft:mineable/pickaxe` for the rest) and in the kind's tags. A kind may make
+its blocks itself (`made(...)`), when a variant is more than a plain block. Its id is the declaring mod's, with the
+material's name: `mymod:oak_frame`, `mymod:tin_casing`, `mymod:create_limestone_tile` for a stone of another mod. The
+names of other mods' woods and metals come from the words of their ids, and a resource pack translates them under
+`jscore.variant.wood.<mod>.<name>` and `jscore.variant.metal.<name>`.
+
+The same `jstech-variants.toml` leaves them out, read as the game starts:
+
+| Setting | What it does |
+| --- | --- |
+| `variants.enabled` | Whether the kinds the mods declare are made (on) |
+| `variants.skipped_mods` | The mods whose materials have none; `minecraft` for the game's own |
+| `variants.skipped_materials` | Materials that have none: `minecraft:oak`, `create:limestone`, `c:tin` |
+| `variants.skipped_kinds` | Kinds that are not made at all, by id: `mymod:casing` |
+
+## Changing drops as data
+
+*Added 2026-10-21.*
+
+Three of NeoForge's modifiers of loot, written in `data/<namespace>/loot_modifiers/` and named in
+`data/neoforge/loot_modifiers/global_loot_modifiers.json`, change what drops with no code. Each takes the game's
+conditions of loot (the table it changes, the tool, the dimension or the biome where it happens), and its file may
+carry NeoForge's conditions (an installed mod) under `neoforge:conditions`:
+
+```json
+{"type": "jscore:add_drops", "conditions": [{"condition": "neoforge:loot_table_id",
+  "loot_table_id": "minecraft:blocks/gravel"}], "items": [{"id": "minecraft:flint"}], "chance": 0.25}
+{"type": "jscore:remove_drops", "conditions": [], "items": {"item": "minecraft:rotten_flesh"}}
+{"type": "jscore:swap_drops", "conditions": [], "from": {"tag": "c:raw_materials/iron"},
+  "to": "minecraft:iron_ingot"}
+```
+
+`add_drops` adds its items, each time or by `chance`; `remove_drops` takes away every drop its items match;
+`swap_drops` swaps every drop `from` matches for as many of `to`.
+
+## Changing recipes as data
+
+*Added 2026-10-21.*
+
+A data pack takes recipes away, puts one item for another in every recipe, and puts a recipe in another's place, in
+files under `data/<namespace>/jstech/recipe_changes/`. They are done just before the game reads the recipes, so they
+reach recipes of every kind, any mod's; a file may carry NeoForge's conditions, and is passed over when they do not
+hold. The files are read in the order of their ids, a later one winning a swap or a recipe:
+
+```json
+{"remove": ["minecraft:stone_bricks", "othermod:*", {"output": "othermod:copper_gear"},
+            {"type": "othermod:grinding"}],
+ "swap": {"othermod:tin_ingot": "jscore:tin_ingot"},
+ "replace": {"minecraft:torch": {"type": "minecraft:crafting_shaped", "...": "..."}}}
+```
+
+`remove` takes away a recipe by its id, all of a mod's (`othermod:*`), every recipe making an item (`output`), or
+every recipe of a kind (`type`). `swap` puts the item on the right in every recipe where the one on the left is named.
+`replace` puts the recipe given in the place of the id, or adds it when no recipe has that id. The log says how many
+recipes each did. Unification comes after, on what the changes leave.
+
+## Choosing between recipes
+
+*Added 2026-10-21.*
+
+When more than one recipe fits what is in a crafting grid, the crafting table's or another mod's built on it, or in
+a furnace's input, a small chooser stands beside the result: an arrow up, the count, an arrow down. A click shows the
+next recipe's result, a right-click the one before, and the tooltip names every recipe that fits, the chosen one
+marked. The choice is kept: the player's for the grid, with them through death, so the same grid gives the same result
+next time; the furnace's for each item it smelts, which it smelts by while it fits. A recipe placed from the recipe
+book counts as chosen. The inventory's own small grid has no room for the chooser beside its result, and follows the
+choice the player made at a table.
+
+The world's `jstech-recipe-choice.toml`:
+
+| Setting | What it does |
+| --- | --- |
+| `recipe_choice.enabled` | Whether players choose between recipes that overlap (on) |
+| `recipe_choice.step_aside` | Whether choosing is left to Polymorph when it is installed (on) |

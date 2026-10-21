@@ -1,0 +1,8 @@
+{
+  "remove": ["jstests:change/removed", {"output": "minecraft:command_block"}],
+  "swap": {"minecraft:knowledge_book": "minecraft:jigsaw"},
+  "replace": {
+    "jstests:change/replaced": {"type": "minecraft:crafting_shapeless", "category": "misc", "ingredients": [{"item": "minecraft:barrier"}, {"item": "minecraft:gravel"}], "result": {"id": "minecraft:red_sand", "count": 1}},
+    "jstests:change/added": {"type": "minecraft:crafting_shapeless", "category": "misc", "ingredients": [{"item": "minecraft:barrier"}, {"item": "minecraft:clay_ball"}], "result": {"id": "minecraft:clay", "count": 1}}
+  }
+}

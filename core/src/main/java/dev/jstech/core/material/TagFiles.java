@@ -12,6 +12,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,11 +45,37 @@ public final class TagFiles {
         return out;
     }
 
+    /**
+     * The tags {@code tag} names itself, as {@code namespace:path} without their hash, with the text of each file of a
+     * tag given by {@code files}: the tags of the metals a tag of every metal gathers, one by one.
+     */
+    public static Set<String> tagsIn(final String tag, final Function<String, List<String>> files) {
+        final Set<String> out = new TreeSet<>();
+        for (final String entry : entries(tag, files)) {
+            if (entry.charAt(0) == TAG) {
+                out.add(entry.substring(1));
+            }
+        }
+        return out;
+    }
+
     private static void collect(final String tag, final Function<String, List<String>> files, final Set<String> out,
                                 final Set<String> followed) {
         if (!followed.add(tag)) {
             return;
         }
+        for (final String entry : entries(tag, files)) {
+            if (entry.charAt(0) == TAG) {
+                collect(entry.substring(1), files, out, followed);
+            } else {
+                out.add(entry);
+            }
+        }
+    }
+
+    /* Every entry of every file of {@code tag}, as written, none empty. */
+    private static List<String> entries(final String tag, final Function<String, List<String>> files) {
+        final List<String> out = new ArrayList<>();
         for (final String text : files.apply(tag)) {
             final JsonArray values;
             try {
@@ -62,16 +89,12 @@ public final class TagFiles {
             }
             for (final JsonElement value : values) {
                 final String entry = entryOf(value);
-                if (entry == null || entry.isEmpty()) {
-                    continue;
-                }
-                if (entry.charAt(0) == TAG) {
-                    collect(entry.substring(1), files, out, followed);
-                } else {
+                if (entry != null && !entry.isEmpty()) {
                     out.add(entry);
                 }
             }
         }
+        return out;
     }
 
     /* An entry as a tag's file writes it: an id, a tag's id after a hash, or an object holding either. */

@@ -9,6 +9,7 @@ package dev.jstech.core.mixin;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import dev.jstech.core.recipe.RecipeChanges;
 import dev.jstech.core.unify.Unification;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
@@ -22,8 +23,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Unifies the recipes' files just before the game reads them, with the item tags as they are loading, which the game
- * has read already by then: what reaches the recipes this way reaches recipes of every kind, the Core's or not.
+ * Changes the recipes' files just before the game reads them, as the data packs' recipe changes say, and then unifies
+ * them, with the item tags as they are loading, which the game has read already by then: what reaches the recipes this
+ * way reaches recipes of every kind, the Core's or not.
  */
 @Mixin(RecipeManager.class)
 public abstract class RecipeManagerMixin extends SimpleJsonResourceReloadListener {
@@ -36,6 +38,7 @@ public abstract class RecipeManagerMixin extends SimpleJsonResourceReloadListene
             + "Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD"))
     private void jscore$unify(final Map<ResourceLocation, JsonElement> recipes, final ResourceManager resources,
                               final ProfilerFiller profiler, final CallbackInfo info) {
+        RecipeChanges.apply(recipes, resources, makeConditionalOps());
         Unification.unifyRecipes(recipes, getContext());
     }
 }

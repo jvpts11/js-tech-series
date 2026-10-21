@@ -15,6 +15,7 @@ import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.util.DeclarationError;
+import dev.jstech.core.variant.Variants;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -77,6 +78,7 @@ final class ContentCheckProvider implements DataProvider {
             madeAsTheGameLoads.add(liquid.bucketId());
         });
         CatalogueItems.registered().forEach(entry -> madeAsTheGameLoads.add(entry.id()));
+        Variants.registered().forEach(variant -> madeAsTheGameLoads.add(variant.id()));
         for (final Map.Entry<ResourceKey<Block>, Block> entry : BuiltInRegistries.BLOCK.entrySet()) {
             final ResourceLocation id = entry.getKey().location();
             if (id.getNamespace().equals(modid) && !madeAsTheGameLoads.contains(id)) {

@@ -9,7 +9,6 @@ package dev.jstech.core.client.material;
 
 import com.google.gson.JsonObject;
 import dev.jstech.core.JsCore;
-import dev.jstech.core.material.BlockModelFiles;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.Form;
 import dev.jstech.core.material.FormArt;
@@ -34,7 +33,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 
@@ -51,8 +49,6 @@ public final class MaterialArt implements IRuntimeFiles {
     public static final TextKey TITLE = TextKey.of("jscore.pack.material_art", "J's Core: the materials' art");
 
     private static final int SIZE = FormArt.SIZE;
-    /** How many models a rock's model may be built on, one on another, before its texture is given up on. */
-    private static final int MOST_PARENTS = 4;
     /** The way the art is drawn, raised whenever it changes, so what was kept on disk is drawn again. */
     private static final int DRAWING = 1;
 
@@ -186,26 +182,7 @@ public final class MaterialArt implements IRuntimeFiles {
         if (!rock.found() || read.computeIfAbsent(texture(rock.texture()), GameTexture::read).isPresent()) {
             return rock.texture();
         }
-        final ResourceLocation block = BuiltInRegistries.BLOCK.getKey(rock.rock());
-        Optional<String> model = GameTexture.fileText(block.withPath("blockstates/" + block.getPath() + ".json"))
-                .flatMap(BlockModelFiles::modelOf);
-        for (int depth = 0; model.isPresent() && depth < MOST_PARENTS; depth++) {
-            final ResourceLocation id = ResourceLocation.tryParse(model.get());
-            if (id == null) {
-                break;
-            }
-            final Optional<String> file = GameTexture.fileText(id.withPath("models/" + id.getPath() + ".json"));
-            if (file.isEmpty()) {
-                break;
-            }
-            final Optional<ResourceLocation> drawn = BlockModelFiles.textureOf(file.get())
-                    .map(ResourceLocation::tryParse);
-            if (drawn.isPresent()) {
-                return drawn.get();
-            }
-            model = BlockModelFiles.parentOf(file.get());
-        }
-        return rock.texture();
+        return BlockTextures.of(rock.rock()).orElse(rock.texture());
     }
 
     private static ResourceLocation texture(final ResourceLocation id) {

@@ -17,12 +17,14 @@ import java.util.List;
 
 /**
  * What the Core makes of other mods' rocks, woods and metals, so a game with many mods is not flooded: whether the
- * materials have ores in other mods' rocks, and which mods, rocks and materials are left out. Read as the game starts,
- * since what is made is registered then; a change takes hold when the game starts again.
+ * materials have ores in other mods' rocks, whether the kinds of variant the mods declare are made, and which mods,
+ * rocks, materials and kinds are left out. Read as the game starts, since what is made is registered then; a change
+ * takes hold when the game starts again.
  */
 public final class VariantSettings {
 
     private static final String ORES = "ores_in_other_rocks";
+    private static final String KINDS = "variants";
 
     /** Whether the materials have ores in other mods' rocks. */
     public static final ConfigKey<Boolean> ORES_IN_OTHER_ROCKS = ConfigKey.flag(ORES + ".enabled", true)
@@ -46,6 +48,29 @@ public final class VariantSettings {
             .comment("Materials, by id, that keep their ores to the game's rocks and those a mod declared.")
             .named("Materials left out");
 
+    /** Whether the kinds of variant the mods declare are made for the woods, stones and metals found. */
+    public static final ConfigKey<Boolean> VARIANTS = ConfigKey.flag(KINDS + ".enabled", true)
+            .comment("Whether the kinds of variant the installed mods declare (a frame of every wood, a casing of "
+                    + "every metal) are made for every wood, stone and metal found by the common tags "
+                    + "(minecraft:planks, c:stones, c:storage_blocks). Read as the game starts.")
+            .named("Variants of other mods' materials");
+    /** The mods whose materials have no variants. */
+    public static final ConfigKey<List<String>> VARIANTS_SKIPPED_MODS = ConfigKey.of(KINDS + ".skipped_mods",
+                    Codec.STRING.listOf(), List.of())
+            .comment("The mods, by id, whose woods, stones and metals have no variants; minecraft for the game's own.")
+            .named("Mods left out");
+    /** The materials that have no variants. */
+    public static final ConfigKey<List<String>> VARIANTS_SKIPPED_MATERIALS = ConfigKey.of(KINDS
+                    + ".skipped_materials", Codec.STRING.listOf(), List.of())
+            .comment("Woods, stones and metals, by id, that have no variants: minecraft:oak for the oak, the stone's "
+                    + "block for a stone (create:limestone), c:tin for a metal.")
+            .named("Materials left out");
+    /** The kinds of variant that are not made. */
+    public static final ConfigKey<List<String>> VARIANTS_SKIPPED_KINDS = ConfigKey.of(KINDS + ".skipped_kinds",
+                    Codec.STRING.listOf(), List.of())
+            .comment("Kinds of variant, by id (mymod:casing), that are not made for any material.")
+            .named("Kinds left out");
+
     /** The file, read as the game starts. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-variants", ConfigSide.COMMON, ConfigFormats.TOML)
             .comment("What the Core makes of other mods' rocks, woods and metals.",
@@ -56,6 +81,12 @@ public final class VariantSettings {
             .key(SKIPPED_MODS)
             .key(SKIPPED_ROCKS)
             .key(SKIPPED_MATERIALS)
+            .sectionComment(KINDS, "The variants the mods declare for the woods, stones and metals found.")
+            .sectionNamed(KINDS, "Variants")
+            .key(VARIANTS)
+            .key(VARIANTS_SKIPPED_MODS)
+            .key(VARIANTS_SKIPPED_MATERIALS)
+            .key(VARIANTS_SKIPPED_KINDS)
             .build();
 
     private VariantSettings() {

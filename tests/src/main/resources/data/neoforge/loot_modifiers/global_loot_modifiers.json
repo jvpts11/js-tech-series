@@ -1,4 +1,5 @@
 {
   "replace": false,
-  "entries": ["jstests:vintage_parts_in_dungeons"]
+  "entries": ["jstests:vintage_parts_in_dungeons", "jstests:changes_add", "jstests:changes_remove",
+              "jstests:changes_swap", "jstests:changes_with_shears", "jstests:changes_absent_mod"]
 }

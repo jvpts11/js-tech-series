@@ -54,4 +54,14 @@ class TagFilesTest {
         assertEquals(Set.of("othermod:marble"), TagFiles.members("c:stones", tag -> files.getOrDefault(tag,
                 List.of())));
     }
+
+    @Test
+    void tagsIn_givesOnlyTheTagsATagNamesItself() {
+        final Map<String, List<String>> files = Map.of("c:storage_blocks", List.of(
+                "{\"values\": [\"#c:storage_blocks/iron\", {\"id\": \"#c:storage_blocks/tin\"}, \"othermod:odd\"]}"),
+                "c:storage_blocks/iron", List.of("{\"values\": [\"#c:storage_blocks/raw_iron\"]}"));
+
+        assertEquals(Set.of("c:storage_blocks/iron", "c:storage_blocks/tin"),
+                TagFiles.tagsIn("c:storage_blocks", tag -> files.getOrDefault(tag, List.of())));
+    }
 }

@@ -1,0 +1,5 @@
+{
+  "type": "jscore:remove_drops",
+  "conditions": [{"condition": "neoforge:loot_table_id", "loot_table_id": "jstests:loot_changes"}],
+  "items": {"item": "minecraft:rotten_flesh"}
+}

@@ -55,7 +55,7 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
 - **"New" and "reached" marks**: an entry shows that the player has just come to it, or not yet. **Nothing is ever
   hidden**: a manual shows everything, as JEI and EMI show every recipe ([Progression](progression.md)). In the
   contents a newly reached entry not read yet shows NEW and one not reached shows "not yet", in place of the dotted
-  leader; a chapter's tab holding something new carries a red point.
+  leader; a chapter's tab holding something new carries a gold point.
 
 ### For those who write
 

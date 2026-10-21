@@ -1027,6 +1027,22 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   turns it off, or leaves out mods, rocks and materials.
 - The materials' art is drawn once and kept on disk under `jstech/cache/`, read back on the next load while
   nothing it is drawn from changed; an ore in another mod's rock is drawn on the texture the rock's own model names.
+- Variants of other mods' materials: a mod declares a kind of variant once (`Variants.kind`), and one is made
+  for every wood, stone or metal of every installed mod, found by the common tags (`minecraft:planks`, the world's
+  stones, `c:storage_blocks` with their ingots): it copies its material's block, is named after it in the player's
+  language ("Oak Frame"), is drawn with the kind's model and the material's own texture, drops itself and is in its
+  tool's tag. `jstech-variants.toml` leaves out mods, materials and kinds, or all of them.
+- Changing drops as data: the modifiers of loot `jscore:add_drops`, `jscore:remove_drops` and
+  `jscore:swap_drops` add, take away and swap drops, with the game's conditions of loot (the table, the tool, the
+  dimension, the biome) and NeoForge's on the file.
+- Changing recipes as data: files under `jstech/recipe_changes/` in a data pack take recipes away (by id, all
+  of a mod's, by what they make or by their kind), put one item for another in every recipe, and put a recipe in
+  another's place, before the game reads them, so recipes of every mod and kind are reached; a file may carry
+  NeoForge's conditions.
+- Choosing between recipes: when more than one recipe fits a crafting grid or a furnace's input, a chooser
+  stands beside the result, a click for the next, a right-click for the one before, its tooltip naming each; the
+  choice is kept with the player for the grid and with the furnace for what it smelts. The world's
+  `jstech-recipe-choice.toml` turns it off, and it steps aside for Polymorph.
 - CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,

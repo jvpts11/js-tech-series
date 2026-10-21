@@ -165,6 +165,8 @@ import dev.jstech.tests.clienttest.core.WorldChangesClientTests;
 import dev.jstech.tests.clienttest.core.LiveReloadClientTests;
 import dev.jstech.tests.clienttest.core.ContentPackClientTests;
 import dev.jstech.tests.clienttest.core.FoundRockClientTests;
+import dev.jstech.tests.clienttest.core.VariantClientTests;
+import dev.jstech.tests.clienttest.core.RecipeChooserClientTests;
 import dev.jstech.tests.clienttest.core.MachineLooksClientTests;
 import dev.jstech.tests.clienttest.core.MachineScreenClientTests;
 import dev.jstech.tests.clienttest.core.MediaClientTests;
@@ -351,6 +353,8 @@ public final class ClientTestSuite {
             LiveReloadClientTests.class,
             ContentPackClientTests.class,
             FoundRockClientTests.class,
+            VariantClientTests.class,
+            RecipeChooserClientTests.class,
             DataScreenClientTests.class,
             ComponentsClientTests.class,
             SettingsKitClientTests.class,

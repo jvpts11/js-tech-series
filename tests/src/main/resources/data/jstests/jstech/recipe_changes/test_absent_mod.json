@@ -1,0 +1,4 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "absent_mod"}],
+  "remove": ["jstests:change/kept"]
+}

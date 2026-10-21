@@ -7,25 +7,17 @@
  */
 package dev.jstech.core.material;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforgespi.language.IModFileInfo;
 
 /**
  * The rocks of other mods, found by the game's common tags with no list kept by hand: every block the mods' own files
  * put in the game's tags of the stones of the Overworld and of the Nether ({@code minecraft:base_stone_overworld},
  * {@code c:stones}, the rocks ores and dripstone take the place of, {@code minecraft:base_stone_nether}). They are
- * read from the mods' jars as the game starts, before
- * the game reads any tag, since the ores made in them are registered then; a data pack's tags come too late for that.
+ * read from the mods' jars as the game starts ({@link ModTagFiles}), before the game reads any tag, since the ores made
+ * in them are registered then; a data pack's tags come too late for that.
  */
 public final class FoundRocks {
 
@@ -39,34 +31,13 @@ public final class FoundRocks {
     public static Map<ResourceLocation, Realm> inTags() {
         final Map<ResourceLocation, Realm> out = new TreeMap<>();
         TAGS.forEach((tag, realm) -> {
-            for (final String member : TagFiles.members(tag, FoundRocks::filesOf)) {
+            for (final String member : ModTagFiles.blocks(tag)) {
                 final ResourceLocation id = ResourceLocation.tryParse(member);
                 if (id != null) {
                     out.putIfAbsent(id, realm);
                 }
             }
         });
-        return out;
-    }
-
-    /* The text of every file of {@code tag} the installed mods carry, the game's own jar among them. */
-    private static List<String> filesOf(final String tag) {
-        final ResourceLocation id = ResourceLocation.tryParse(tag);
-        final List<String> out = new ArrayList<>();
-        if (id == null) {
-            return out;
-        }
-        for (final IModFileInfo mod : ModList.get().getModFiles()) {
-            final Path file = mod.getFile().findResource("data", id.getNamespace(), "tags", "block",
-                    id.getPath() + ".json");
-            if (Files.isRegularFile(file)) {
-                try {
-                    out.add(Files.readString(file, StandardCharsets.UTF_8));
-                } catch (final IOException unreadable) {
-                    // A file that cannot be read gives no rocks; the rest still do.
-                }
-            }
-        }
         return out;
     }
 

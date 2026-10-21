@@ -66,6 +66,8 @@ import dev.jstech.core.client.machine.MachineScreen;
 import dev.jstech.core.client.map.ClientMarkers;
 import dev.jstech.core.client.machine.MachineWrenchClient;
 import dev.jstech.core.client.material.MaterialArt;
+import dev.jstech.core.client.variant.VariantArt;
+import dev.jstech.core.client.recipe.RecipeChooserClient;
 import dev.jstech.core.client.material.MaterialTooltips;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.client.model.PartMotions;
@@ -221,6 +223,10 @@ public final class JsCoreClient {
         ConfigChoosers.register(StyleSettings.CHOOSER, new StyleChooser());
         // How the things of the materials the installed mods use look, drawn as the resources load.
         MaterialArt.declare();
+        // How the variants of other mods' woods, stones and metals look, from their own textures.
+        VariantArt.declare();
+        // The chooser beside a result when more than one recipe fits a grid or a furnace.
+        RecipeChooserClient.listen(modEventBus);
         // How what fire leaves looks: the game's oak charred and its snow greyed to ash, as the resources load.
         FireArt.declare();
     }

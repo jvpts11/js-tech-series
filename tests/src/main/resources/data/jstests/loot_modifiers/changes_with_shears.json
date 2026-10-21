@@ -1,0 +1,5 @@
+{
+  "type": "jscore:add_drops",
+  "conditions": [{"condition": "neoforge:loot_table_id", "loot_table_id": "jstests:loot_changes"}, {"condition": "minecraft:match_tool", "predicate": {"items": "minecraft:shears"}}],
+  "items": [{"id": "minecraft:emerald"}]
+}

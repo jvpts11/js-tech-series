@@ -1,0 +1,6 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "absent_mod"}],
+  "type": "jscore:add_drops",
+  "conditions": [{"condition": "neoforge:loot_table_id", "loot_table_id": "jstests:loot_changes"}],
+  "items": [{"id": "minecraft:diamond"}]
+}

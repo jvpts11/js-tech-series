@@ -24,6 +24,7 @@ import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.physics.Laws;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -31,6 +32,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -123,6 +125,21 @@ public final class CoreAttachments {
     public static final Supplier<AttachmentType<HazardMap>> HAZARD_MAP =
             ATTACHMENT_TYPES.register("hazard_map", () -> AttachmentType.builder(HazardMap::new)
                     .serialize(HazardMap.CODEC).copyOnDeath().build());
+
+    /**
+     * The recipe a player chose among those that fit one grid, kept under the recipes' ids: saved with them, and kept
+     * through death.
+     */
+    public static final Supplier<AttachmentType<Map<String, ResourceLocation>>> RECIPE_CHOICES =
+            ATTACHMENT_TYPES.register("recipe_choices", () -> AttachmentType.<Map<String, ResourceLocation>>builder(
+                            () -> Map.of())
+                    .serialize(Codec.unboundedMap(Codec.STRING, ResourceLocation.CODEC)).copyOnDeath().build());
+
+    /** The recipe a furnace was set to smelt each item by, among those that fit it, by the item's id. */
+    public static final Supplier<AttachmentType<Map<ResourceLocation, ResourceLocation>>> FURNACE_CHOICES =
+            ATTACHMENT_TYPES.register("furnace_choices", () -> AttachmentType
+                    .<Map<ResourceLocation, ResourceLocation>>builder(() -> Map.of())
+                    .serialize(Codec.unboundedMap(ResourceLocation.CODEC, ResourceLocation.CODEC)).build());
 
     /** The layout a chunk's networks are saved in; a chunk saved before it had one holds the bare list. */
     public static final SaveLayout CHUNK_NETWORKS_LAYOUT = SaveLayout.of(JsCore.MODID + ":chunk_networks");

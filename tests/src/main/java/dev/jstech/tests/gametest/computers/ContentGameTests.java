@@ -30,6 +30,8 @@ import dev.jstech.core.pack.ContentPacks;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.RegisteredThing;
+import dev.jstech.core.variant.Variant;
+import dev.jstech.core.variant.Variants;
 import dev.jstech.tests.JsTests;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -112,6 +114,11 @@ public final class ContentGameTests {
                 items.add(liquid.bucketId());
             }
             CatalogueItems.registered().forEach(entry -> items.add(entry.id()));
+            // So are the variants of the kinds a mod declared, which VariantGameTests reads.
+            for (final Variant variant : Variants.registered()) {
+                blocks.add(variant.id());
+                items.add(variant.id());
+            }
             BuiltInRegistries.BLOCK.keySet().stream()
                     .filter(id -> id.getNamespace().equals(content.modid()) && !blocks.contains(id))
                     .forEach(id -> wrong.add("block " + id));

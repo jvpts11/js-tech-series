@@ -102,6 +102,8 @@ public final class JsTests {
         TestFluids.declare();
         // Materials in every form and ores in several rocks, to prove the Core's catalogue and the art it draws.
         TestMaterials.declare();
+        // A frame of every wood, a tile of every stone and a casing of every metal, to prove the Core's variants.
+        TestVariants.declare();
         // Large values sent either way, in pieces.
         TestBigPayloads.declare();
         // A registry datapacks fill and notes read from datapack files, both sent to the players.

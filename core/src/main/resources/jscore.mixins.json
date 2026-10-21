@@ -3,6 +3,8 @@
   "package": "dev.jstech.core.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "AbstractFurnaceBlockEntityMixin",
+    "AbstractFurnaceMenuAccessor",
     "BlockGetterMixin",
     "ChunkMapMixin",
     "ChunkStatusTasksMixin",
