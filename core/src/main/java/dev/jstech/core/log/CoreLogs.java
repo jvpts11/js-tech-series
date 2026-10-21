@@ -16,6 +16,7 @@ public final class CoreLogs {
     public static final LogSystem CABLES = LogSystems.declare(JsCore.MODID, "cables");
     /** The settings files: reading, upgrading and writing them. */
     public static final LogSystem CONFIG = LogSystems.declare(JsCore.MODID, "config");
+    public static final LogSystem CONTENT = LogSystems.declare(JsCore.MODID, "content");
     /** The tools for those who make mods: data and assets reloaded as they change. */
     public static final LogSystem DEVELOPER = LogSystems.declare(JsCore.MODID, "developer");
     /** The debug screen's panels, the watchdog, the cost of the series' work and what it sends over the network. */

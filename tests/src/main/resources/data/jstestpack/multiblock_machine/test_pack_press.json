@@ -1,0 +1,14 @@
+{
+  "shape": {
+    "box": {
+      "frame": {"blocks": ["minecraft:copper_block"]},
+      "face": {"blocks": ["minecraft:copper_block", "minecraft:glass"], "tags": ["jscore:multiblock_ports"]},
+      "sides": {"least": 3, "most": 3},
+      "height": {"least": 3, "most": 3}
+    }
+  },
+  "recipes": "jstestpack:test_pack_pressing",
+  "layout": {"inputs": 1, "outputs": 1},
+  "energy": {"capacity": 10000, "receive": 1000, "per_tick": 5},
+  "parallel": {"by": "fixed", "value": 1}
+}

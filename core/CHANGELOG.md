@@ -987,6 +987,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   once an item; the player's own settings (`jstech-manuals.toml`) turn it off, or on in creative too.
 - Manuals: the Technical Reference has a section on things that move, with the pages of the vehicles and
   their parts, and of the physics tool.
+- Content packs: blocks, items, materials with their forms and ores, kinds of processing machine and the
+  controllers of machines declared as data, written in JSON files under `jstech/content/` in the game's folder or
+  `jstech_content/` in a mod's, and registered as the game starts with no Java, each namespace with its creative tab.
+  The Core makes their English names, block states, models, drops and tool tags as the game loads, under every pack,
+  so a resource pack or a data pack can replace any of them; a file that cannot stand stops the game loading with a
+  paragraph saying which file, which declaration and how to put it right.
 
 ### Changed
 - Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

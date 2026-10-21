@@ -1959,6 +1959,8 @@
   "jscore.ownership.denied": "Isto pertence a %s.",
   "jscore.pack.material_art": "J's Core: a arte dos materiais",
   "jscore.pack.material_data": "J's Core: os dados dos materiais",
+  "jscore.pack.content_art": "J's Core: a arte dos packs de conteúdo",
+  "jscore.pack.content_data": "J's Core: os dados dos packs de conteúdo",
   "jscore.permission.break_others": "Quebrar o que é de outros jogadores",
   "jscore.permission.build_multiblocks": "Montar estruturas multibloco",
   "jscore.permission.command": "Rodar /jstech %s",

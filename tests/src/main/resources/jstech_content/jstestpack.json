@@ -1,0 +1,13 @@
+[
+  {"type": "tab", "id": "jstestpack:main", "name": "Test Pack", "icon": "jstestpack:test_token"},
+  {"type": "block", "id": "jstestpack:test_lamp", "name": "Test Pack Lamp", "strength": 2.0, "sound": "glass",
+   "light": 12, "tool": "pickaxe", "needs": "stone"},
+  {"type": "block", "id": "jstestpack:test_slab_of_light", "name": "Test Pack Glow", "light": 7, "item": false},
+  {"type": "item", "id": "jstestpack:test_token", "name": "Test Pack Token", "stack": 16},
+  {"type": "material", "id": "jstestpack:test_mythril", "name": "Test Mythril", "kind": "metal",
+   "colour": "#7AD7FF", "liquid": true, "forms": ["ingot", "dust"], "ores": ["stone"],
+   "properties": {"jscore:density": 5200}},
+  {"type": "processing", "id": "jstestpack:test_pack_pressing", "name": "Test Pack Pressing",
+   "machine": "jstestpack:test_pack_press"},
+  {"type": "machine", "id": "jstestpack:test_pack_press", "name": "Test Pack Press"}
+]

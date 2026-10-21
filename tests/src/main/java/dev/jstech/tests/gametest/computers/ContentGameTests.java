@@ -26,6 +26,7 @@ import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.MaterialLiquid;
+import dev.jstech.core.pack.ContentPacks;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.RegisteredThing;
@@ -126,6 +127,10 @@ public final class ContentGameTests {
     public static void declaredContent_hasItsFilesAndNoneLeftOver(final GameTestHelper helper) {
         final List<String> wrong = new ArrayList<>();
         for (final ModContent content : ModContent.all()) {
+            // A content pack's files are made as the game loads, which ContentPackGameTests reads.
+            if (ContentPacks.isPack(content.modid())) {
+                continue;
+            }
             final String mod = content.modid();
             final Set<String> items = new HashSet<>();
             for (final BlockEntry<?> block : content.declaredBlocks()) {
@@ -161,6 +166,10 @@ public final class ContentGameTests {
         final Language english = Language.getInstance();
         final List<String> wrong = new ArrayList<>();
         for (final ModContent content : ModContent.all()) {
+            // A content pack's names are in a language file made on a player's game; ContentPackGameTests reads it.
+            if (ContentPacks.isPack(content.modid())) {
+                continue;
+            }
             for (final BlockEntry<?> block : content.declaredBlocks()) {
                 if (!english.has(block.get().getDescriptionId())) {
                     wrong.add(block.get().getDescriptionId());

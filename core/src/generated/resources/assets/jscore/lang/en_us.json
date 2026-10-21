@@ -2562,6 +2562,8 @@
   "jscore.overhead.twice": "A wire hangs between these already",
   "jscore.ownership.break_denied": "This belongs to %s, who has not trusted you to break it.",
   "jscore.ownership.denied": "This belongs to %s.",
+  "jscore.pack.content_art": "J's Core: the content packs' art",
+  "jscore.pack.content_data": "J's Core: the content packs' data",
   "jscore.pack.fire_art": "J's Core: what fire leaves",
   "jscore.pack.material_art": "J's Core: the materials' art",
   "jscore.pack.material_data": "J's Core: the materials' data",

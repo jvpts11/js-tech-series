@@ -27,6 +27,7 @@ import dev.jstech.core.cable.CableRuns;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.overhead.OverheadLines;
+import dev.jstech.core.pack.ContentPacks;
 import dev.jstech.core.machine.DataMachines;
 import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.machine.Machines;
@@ -428,6 +429,8 @@ public final class JsCore {
         HazardGuide.declare();
         FireGuide.declare();
         LinesGuide.declare();
+        // What content packs declare in files rather than in Java, read as the game starts, after the catalogue.
+        ContentPacks.declare(modEventBus);
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
         // with its joule and the grids of its voltage classes.
