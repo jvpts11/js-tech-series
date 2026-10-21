@@ -43,7 +43,7 @@ public class MaterialFormBlock extends Block {
     /** What it is called: "Block of Tin", "Deepslate Tin Ore". */
     public Text displayName() {
         final Text material = this.thing.material().name();
-        return this.rock != null ? this.rock.oreName().with(material) : this.thing.form().name().with(material);
+        return this.rock != null ? this.rock.oreName(material) : this.thing.form().name().with(material);
     }
 
     @Override

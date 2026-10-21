@@ -48,11 +48,11 @@ import net.neoforged.fml.loading.FMLPaths;
 
 /**
  * {@code /jstech dump}: what the game holds, written to files under {@code jstech-dump/} in the game's folder for
- * those who build a modpack, each as a page of plain Markdown: every material with its forms and properties, every form,
- * every kind of recipe with how many recipes the data holds of it, every tag of items, blocks and fluids with what is
- * in it, every hazard, and every id the series' mods and the content packs registered. {@code /jstech dump reference}
- * writes the generated reference, a small website ({@link ReferenceSite}); {@code /jstech dump all} writes them all,
- * and {@code /jstech dump permissions} the series' permissions as before.
+ * those who build a modpack, each as a page of plain Markdown: every material with its forms and properties, every
+ * form, every kind of recipe with how many recipes the data holds of it, every tag of items, blocks and fluids with
+ * what is in it, every hazard, and every id the series' mods and the content packs registered.
+ * {@code /jstech dump reference} writes the generated reference, a small website ({@link ReferenceSite});
+ * {@code /jstech dump all} writes them all, and {@code /jstech dump permissions} the series' permissions as before.
  */
 public final class ModpackDumps {
 

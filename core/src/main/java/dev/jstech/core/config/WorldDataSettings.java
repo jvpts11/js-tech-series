@@ -53,6 +53,23 @@ final class WorldDataSettings {
         return valuesOf(file, fromDisk(file, world));
     }
 
+    /**
+     * The values a file in the game's config folder holds on disk, as the game starts and before NeoForge reads it:
+     * its defaults when there is none yet.
+     */
+    static IConfigValues inConfigFolder(final ConfigFile file) {
+        final Path path = FMLPaths.CONFIGDIR.get().resolve(file.fileName());
+        if (!Files.isRegularFile(path)) {
+            return valuesOf(file, Map.of());
+        }
+        try {
+            return valuesOf(file, file.format().read(Files.readAllBytes(path)));
+        } catch (final IOException | ConfigFormatException e) {
+            ConfigFiles.LOGGER.warn("{} could not be read as the game starts, which uses its defaults", path, e);
+            return valuesOf(file, Map.of());
+        }
+    }
+
     /** The game took hold of the world in {@code folder}, to open it. */
     static void opened(final Path folder) {
         opening = folder;

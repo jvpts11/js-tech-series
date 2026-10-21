@@ -1023,6 +1023,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The generated reference: `/jstech dump reference` writes a website to put online with every kind of data
   the Core reads, every mod's data maps and every kind of recipe, each with a real example the game's own codecs
   wrote, the Core's conditions, what content packs declare, and every id.
+- (Core) Ores in other mods' rocks: every material with an ore in the game's Overworld or Nether rocks has one in the
+  rocks other mods bring to the same world, found by the common tags with no list kept by hand (Create's limestone,
+  crimsite and the rest among them): as hard as the rock and a little harder, named after it ("Tin Ore in
+  Limestone"), filed with the material's ores, dropping what they drop and laid by the veins. `jstech-variants.toml`
+  turns it off, or leaves out mods, rocks and materials.
+- (Core) The materials' art is drawn once and kept on disk under `jstech/cache/`, read back on the next load while
+  nothing it is drawn from changed; an ore in another mod's rock is drawn on the texture the rock's own model names.
 - (Core) CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - (Core) FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,

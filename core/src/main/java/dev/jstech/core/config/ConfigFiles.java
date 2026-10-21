@@ -99,6 +99,15 @@ public final class ConfigFiles {
         return WorldDataSettings.onDisk(file, world);
     }
 
+    /**
+     * The values a file of the game's config folder holds for what is decided as the game starts, before NeoForge reads
+     * the file: what is registered, which is registered once. Read from the file on disk, or its defaults when there
+     * is none yet; a change takes hold when the game starts again.
+     */
+    public static IConfigValues atStartup(final ConfigFile file) {
+        return WorldDataSettings.inConfigFolder(file);
+    }
+
     /** The game took hold of the world in {@code folder} to open it, before it loads the world's data. */
     @ApiStatus.Internal
     public static void worldOpened(final Path folder) {

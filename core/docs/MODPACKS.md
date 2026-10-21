@@ -284,3 +284,39 @@ of every mod, with the file it goes in and a few of its values; every kind of re
 written out; the conditions the Core gives data files; what a content pack declares; and every id. Each example is
 written by the thing's own codec from the game that runs, so the reference says what this game reads, with every mod
 it has installed.
+
+## Ores in other mods' rocks
+
+*Added 2026-10-21.*
+
+Every material with an ore in one of the game's rocks of the Overworld (stone, deepslate, granite, diorite, andesite,
+tuff, calcite, sandstone) has one in every rock other mods bring to the Overworld, and so for the Nether's
+(netherrack, basalt, blackstone): no list is kept by hand. A mod's rock is found by the game's tags its own files put it
+in, `c:stones`, `minecraft:base_stone_overworld`, the rocks ores and dripstone take the place of
+(`minecraft:stone_ore_replaceables`, `minecraft:deepslate_ore_replaceables`, `minecraft:dripstone_replaceable_blocks`)
+and `minecraft:base_stone_nether`; a rock a mod declared itself, and the game's own, keep the ores declared for them.
+The log says, as the game starts, how many ores were made in which rocks.
+
+Such an ore is as hard as its rock and a little harder, sounds like it, is named after it in the player's language
+("Tin Ore in Limestone"), is filed with the material's other ores (`c:ores/tin`), drops what they drop, and is laid by
+the material's veins where they cross the rock. Its id is the material's namespace and the rock's whole id:
+`jscore:create_limestone_tin_ore`.
+
+The game's config folder holds `jstech-variants.toml`, read as the game starts, since the ores are registered then; a
+change takes hold when the game starts again:
+
+| Setting | What it does |
+| --- | --- |
+| `ores_in_other_rocks.enabled` | Whether the materials have ores in other mods' rocks (on) |
+| `ores_in_other_rocks.skipped_mods` | The mods whose rocks have none |
+| `ores_in_other_rocks.skipped_rocks` | Rocks, by their block's id, that have none |
+| `ores_in_other_rocks.skipped_materials` | Materials that keep their ores to the game's rocks and those a mod declared |
+
+## Resources made as the game loads
+
+The art of the materials' things, an ore in any rock among them, is drawn as the player's game loads its resources,
+from the game's own textures and the mods' own files, never from a resource pack: an ore in another mod's rock is
+drawn on the texture the rock's own model draws it with, wherever its mod keeps it. The art is made once and kept on
+disk under `jstech/cache/` in the game's folder, read back while nothing it is drawn from changed (the mods installed
+and their versions, the materials' colours and looks); a change has it drawn again. The folder can be emptied at any
+time. These packs sit under every resource pack, so a resource pack replaces any texture or model made this way.

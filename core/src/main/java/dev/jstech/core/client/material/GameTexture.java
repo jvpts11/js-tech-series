@@ -11,6 +11,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -50,6 +51,34 @@ public record GameTexture(int[] texels, int width) {
                     try (InputStream in = Files.newInputStream(path)) {
                         return Optional.of(read(in));
                     }
+                }
+            }
+            return Optional.empty();
+        } catch (final IOException unreadable) {
+            throw new UncheckedIOException(unreadable);
+        }
+    }
+
+    /**
+     * The text of the file {@code file} ({@code othermod:blockstates/limestone.json}), from the game's own files or the
+     * jar of the mod whose namespace it is in, as a texture is read; none when there is no such file.
+     */
+    public static Optional<String> fileText(final ResourceLocation file) {
+        try {
+            if (ResourceLocation.DEFAULT_NAMESPACE.equals(file.getNamespace())) {
+                final IoSupplier<InputStream> found = Minecraft.getInstance().getVanillaPackResources()
+                        .getResource(PackType.CLIENT_RESOURCES, file);
+                if (found == null) {
+                    return Optional.empty();
+                }
+                try (InputStream in = found.get()) {
+                    return Optional.of(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+                }
+            }
+            for (final IModFileInfo mod : ModList.get().getModFiles()) {
+                final Path path = mod.getFile().findResource("assets", file.getNamespace(), file.getPath());
+                if (Files.isRegularFile(path)) {
+                    return Optional.of(Files.readString(path, StandardCharsets.UTF_8));
                 }
             }
             return Optional.empty();

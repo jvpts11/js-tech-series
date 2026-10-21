@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -63,6 +64,13 @@ public final class HostRocks {
     public static final HostRock BLACKSTONE = rock("blackstone", () -> Blocks.BLACKSTONE, BLACKSTONE_ORE).declare();
     public static final HostRock END_STONE = rock("end_stone", () -> Blocks.END_STONE, END_STONE_ORE)
             .orePrefix("end_").declare();
+    /** An ore in a rock of another mod found by its tags: "Tin Ore in Limestone", the rock by its own name. */
+    public static final TextKey ORE_IN = TextKey.of("jscore.host_rock.other", "%s Ore in %s");
+    /** The game's rocks of the Overworld: a material with its ore in one has it in other mods' Overworld rocks too. */
+    public static final List<HostRock> OVERWORLD = List.of(STONE, DEEPSLATE, GRANITE, DIORITE, ANDESITE, TUFF,
+            CALCITE, SANDSTONE);
+    /** The game's rocks of the Nether, which other mods' Nether rocks are told by. */
+    public static final List<HostRock> NETHER = List.of(NETHERRACK, BASALT, BLACKSTONE);
 
     private HostRocks() {
     }
@@ -86,6 +94,12 @@ public final class HostRocks {
     /** Declares the game's rocks, from the Core's constructor. */
     public static void declare() {
         // Loading the class declares them.
+    }
+
+    /** The rock of another mod whose block is {@code block}, declared the first time it is found by its tags. */
+    static HostRock found(final ResourceLocation block) {
+        final HostRock known = BY_ID.get(block);
+        return known != null ? known : new HostRock.Builder(block, () -> BuiltInRegistries.BLOCK.get(block)).declare();
     }
 
     static HostRock declare(final HostRock rock) {

@@ -9,6 +9,7 @@ package dev.jstech.core.client.material;
 
 import com.google.gson.JsonObject;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.material.BlockModelFiles;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.Form;
 import dev.jstech.core.material.FormArt;
@@ -22,6 +23,7 @@ import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
 import dev.jstech.core.material.OreLook;
 import dev.jstech.core.material.RegisteredThing;
+import dev.jstech.core.resource.CachedRuntimeFiles;
 import dev.jstech.core.resource.IRuntimeFiles;
 import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.text.TextHolder;
@@ -32,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 
@@ -48,14 +51,35 @@ public final class MaterialArt implements IRuntimeFiles {
     public static final TextKey TITLE = TextKey.of("jscore.pack.material_art", "J's Core: the materials' art");
 
     private static final int SIZE = FormArt.SIZE;
+    /** How many models a rock's model may be built on, one on another, before its texture is given up on. */
+    private static final int MOST_PARENTS = 4;
+    /** The way the art is drawn, raised whenever it changes, so what was kept on disk is drawn again. */
+    private static final int DRAWING = 1;
 
     private MaterialArt() {
     }
 
-    /** Declares the pack, from the Core's client constructor. */
+    /** Declares the pack, from the Core's client constructor: drawn once, then kept on disk while nothing changes. */
     public static void declare() {
-        RuntimePacks.declare(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "material_art"),
-                PackType.CLIENT_RESOURCES, TITLE, new MaterialArt());
+        final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "material_art");
+        RuntimePacks.declare(id, PackType.CLIENT_RESOURCES, TITLE, CachedRuntimeFiles.of(id, new MaterialArt(),
+                MaterialArt::fingerprint));
+    }
+
+    /**
+     * What the art is drawn from, which tells whether the art kept on disk still holds: the way it is drawn, every mod
+     * with its version (whose textures it is drawn from), and each thing with its material's colour, its ore's look and
+     * its rock.
+     */
+    public static String fingerprint() {
+        final StringBuilder out = new StringBuilder().append(DRAWING).append('\n')
+                .append(CachedRuntimeFiles.modsFingerprint());
+        for (final RegisteredThing thing : MaterialUses.registered()) {
+            final Material material = thing.thing().material();
+            out.append(thing.id()).append(' ').append(material.colour()).append(' ').append(material.oreLook())
+                    .append(' ').append(thing.rock() == null ? "" : thing.rock().texture()).append('\n');
+        }
+        return out.toString();
     }
 
     @Override
@@ -147,10 +171,41 @@ public final class MaterialArt implements IRuntimeFiles {
                 "textures/" + look.pattern().texture(deepslate) + ".png"), read);
         final GameTexture gameRock = picture(ResourceLocation.withDefaultNamespace(
                 "textures/" + OreLook.Pattern.rock(deepslate) + ".png"), read);
-        final GameTexture host = picture(texture(rock.texture()), read);
+        final GameTexture host = picture(texture(rockTexture(rock, read)), read);
         final int[] specks = FormArt.specks(ore.texels(), ore.width(), gameRock.texels(), gameRock.width());
         return FormArt.ore(host.texels(), host.width(), specks, look.speckColour(material.colour()), look.second(),
                 look.lowHue(), look.highHue());
+    }
+
+    /*
+     * The texture an ore in {@code rock} is drawn on: the rock's own as declared, or, for a rock of another mod found
+     * by its tags whose texture is elsewhere, the one its block's own files draw it with.
+     */
+    private static ResourceLocation rockTexture(final HostRock rock,
+                                                final Map<ResourceLocation, Optional<GameTexture>> read) {
+        if (!rock.found() || read.computeIfAbsent(texture(rock.texture()), GameTexture::read).isPresent()) {
+            return rock.texture();
+        }
+        final ResourceLocation block = BuiltInRegistries.BLOCK.getKey(rock.rock());
+        Optional<String> model = GameTexture.fileText(block.withPath("blockstates/" + block.getPath() + ".json"))
+                .flatMap(BlockModelFiles::modelOf);
+        for (int depth = 0; model.isPresent() && depth < MOST_PARENTS; depth++) {
+            final ResourceLocation id = ResourceLocation.tryParse(model.get());
+            if (id == null) {
+                break;
+            }
+            final Optional<String> file = GameTexture.fileText(id.withPath("models/" + id.getPath() + ".json"));
+            if (file.isEmpty()) {
+                break;
+            }
+            final Optional<ResourceLocation> drawn = BlockModelFiles.textureOf(file.get())
+                    .map(ResourceLocation::tryParse);
+            if (drawn.isPresent()) {
+                return drawn.get();
+            }
+            model = BlockModelFiles.parentOf(file.get());
+        }
+        return rock.texture();
     }
 
     private static ResourceLocation texture(final ResourceLocation id) {

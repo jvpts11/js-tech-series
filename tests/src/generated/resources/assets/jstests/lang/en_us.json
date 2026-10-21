@@ -68,6 +68,7 @@
   "block.jstests.test_light_sensor": "Test light sensor",
   "block.jstests.test_low_boiler": "Test low-pressure boiler",
   "block.jstests.test_magnet": "Test magnet",
+  "block.jstests.test_marble": "Test Marble",
   "block.jstests.test_mill": "Test mill",
   "block.jstests.test_mixer": "Test mixer",
   "block.jstests.test_motion_load": "Test motion load",

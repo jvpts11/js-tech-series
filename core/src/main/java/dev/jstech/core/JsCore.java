@@ -180,6 +180,7 @@ import dev.jstech.core.log.LogCommand;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.HostRocks;
+import dev.jstech.core.material.VariantSettings;
 import dev.jstech.core.material.MaterialData;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialNames;
@@ -478,6 +479,8 @@ public final class JsCore {
         ConfigFiles.register(PersistorSettings.FILE, modEventBus, modContainer);
         // Which item stands for a material several mods make, in a world's recipes and drops.
         ConfigFiles.register(UnificationSettings.FILE, modEventBus, modContainer);
+        // What the Core makes of other mods' rocks, woods and metals, read as the game starts.
+        ConfigFiles.register(VariantSettings.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
         // The styles a player chose for the screens of every mod, read on their own game only.
