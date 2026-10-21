@@ -861,8 +861,24 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   blocks; and a place aboard a ship is asked of the world where the ship has it. The work starts only on the versions
   of Create and Sable it is tested against, and says in the log when it is left off. Another mod tells the kit of its
   own moving structures through `ForeignMovers`.
+- Vehicles as data: a vehicle is a kind, its seats, the places of its parts, its boot, its cargo tanks, its
+  paints, its shapes and its key, and the parts fitted in it, engines, wheels, tanks, batteries, gearboxes, lights,
+  horns, rotors and propellers; kinds, parts and fuels are declared by a mod or written by a data pack, with no code.
+  It goes by real physics: an engine's power through a gearbox that changes gear by itself or by hand, held to what
+  its tyres grip, less on ice; leaning over its wheels, sliding wide in a fast turn, slowed by the air and the road,
+  on the road, in the air on its rotors, or afloat on its propellers. It burns the fuel its engine burns, a liquid or
+  a gas, or draws on its battery. Its parts wear against a wall, on a hard landing, from heat, and a holed tank
+  leaks; a wrench takes them out and mends them, a dye paints it. It runs over what stands in its way. Seats have
+  roles; its owner and whoever carries its key drive it, and its key locks it. A trailer hitches behind and follows.
+  Its boot and tanks are reached by hoppers and pipes, and a fuel pump fills every vehicle beside it. Its lights
+  light the world; an engine or a horn that names a sound sounds it, the engine as it turns and works. Parked on a
+  moving structure's deck it goes with it, a player drives it on a deck in flight as on the ground, and through a
+  portal it takes its riders along.
 
 ### Changed
+- Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending
+  `VehicleEntity` with a `VehicleSpec` for each vehicle; `VehicleSpec` is gone. A robot still drives one with its
+  `Drive` task.
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
   industrial control link; telemetry becomes a line of its own, which J's Space lays.
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

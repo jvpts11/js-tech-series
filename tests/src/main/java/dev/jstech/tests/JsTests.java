@@ -73,8 +73,10 @@ public final class JsTests {
         TestMechanical.declare();
         // A tank of any size the player builds block by block, to prove multiblocks that form in the world.
         TestStructures.declare();
-        // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
+        // A robot and a bolt, to prove the Core's robots and projectiles.
         TestEntities.declare();
+        // A van, a trailer, a drone, a boat, their parts and fuels and a fuel pump, to prove the Core's vehicles.
+        TestVehicles.declare(modEventBus);
         // Items that hold everything an item can, to prove the Core's items with state.
         TestItems.declare();
         // Two fuses, to prove the Core's protection slot.

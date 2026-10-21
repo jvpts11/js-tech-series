@@ -25,7 +25,6 @@ public final class TestEntityRenderers {
     @SubscribeEvent
     public static void onRegisterRenderers(final EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(TestEntities.ROBOT.get(), NoopRenderer::new);
-        event.registerEntityRenderer(TestEntities.ROVER.get(), NoopRenderer::new);
         event.registerEntityRenderer(TestEntities.BOLT.get(), NoopRenderer::new);
     }
 }

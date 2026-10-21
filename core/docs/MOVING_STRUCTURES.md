@@ -497,6 +497,9 @@ tells the server where on the deck the player stands; the server puts them there
 a rocket never reads as the player moving too fast, and a player standing on a deck is never sent away for flying.
 A player who leaves the game standing on a structure in flight comes back standing where they were on it.
 
+What a player drives is carried the same way, a van on a ferry's deck: their game carries it and tells the server
+where on the deck it stands, and the server puts it there ([Entities](ENTITIES.md)).
+
 ## Using its blocks
 
 *Added 2026-10-20.*

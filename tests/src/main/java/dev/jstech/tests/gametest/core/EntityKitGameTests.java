@@ -23,15 +23,13 @@ import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The Core's robots, vehicles and projectiles, through the test mod's own: a robot that walks to a block, breaks it
- * and picks up what fell, and keeps its tasks when saved; a rover a robot drives ahead on its battery, charged
- * through the game's energy capability; and a bolt that harms what it hits and stops against a wall.
+ * The Core's robots and projectiles, through the test mod's own: a robot that walks to a block, breaks it and picks up
+ * what fell, and keeps its tasks when saved; and a bolt that harms what it hits and stops against a wall. A robot
+ * driving a vehicle is among the vehicles' tests.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -77,28 +75,6 @@ public final class EntityKitGameTests {
         helper.assertTrue(back.inventory().countItem(Items.REDSTONE) == 7, "and so does what it carries");
         robot.discard();
         helper.succeed();
-    }
-
-    @GameTest(template = ARENA, timeoutTicks = 200)
-    public static void rover_goesAheadWhenItsRobotDrivesIt(final GameTestHelper helper) {
-        final TestEntities.Rover rover = helper.spawn(TestEntities.ROVER.get(), new BlockPos(2, 2, 2));
-        rover.setYRot(0.0F);
-        final IEnergyStorage battery = rover.getCapability(Capabilities.EnergyStorage.ENTITY, null);
-        helper.assertTrue(battery != null && battery.receiveEnergy(5_000, false) == 5_000,
-                "the rover's battery is charged through the energy capability");
-        final TestEntities.Robot robot = helper.spawn(TestEntities.ROBOT.get(), new BlockPos(2, 2, 2));
-        helper.assertTrue(robot.startRiding(rover, true), "the robot takes the driver's seat");
-        // A short drive, so the rover stays within the test's own ground.
-        robot.queue(new CoreRobotTasks.Drive(new DriverInput(1.0F, 0.0F, false, false), 15));
-        final Vec3 start = rover.position();
-        helper.runAfterDelay(25, () -> {
-            final double moved = rover.position().subtract(start).horizontalDistance();
-            helper.assertTrue(moved > 2.0, "the rover went ahead; it moved " + moved + " blocks");
-            helper.assertTrue(battery.getEnergyStored() < 5_000, "spending its battery as it went");
-            robot.discard();
-            rover.discard();
-            helper.succeed();
-        });
     }
 
     @GameTest(template = ARENA, timeoutTicks = 100)

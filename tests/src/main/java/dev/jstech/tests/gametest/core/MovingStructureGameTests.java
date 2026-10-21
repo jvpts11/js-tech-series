@@ -744,7 +744,7 @@ public final class MovingStructureGameTests {
         helper.onEachTick(() -> {
             if (player.connection != null && !player.isRemoved()) {
                 player.connection.handleCustomPayload(new ServerboundCustomPayloadPacket(
-                        new StructureFootingPayload(deck.entity().getId(), place)));
+                        new StructureFootingPayload(deck.entity().getId(), place, false)));
                 // The player's game says the place it stood at: the server puts it on the deck as it is now.
                 player.connection.handleMovePlayer(new ServerboundMovePlayerPacket.Pos(stood.x, stood.y, stood.z,
                         true));

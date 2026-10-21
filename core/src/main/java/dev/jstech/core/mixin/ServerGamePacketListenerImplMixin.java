@@ -12,6 +12,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.jstech.core.moving.StructureCollisions;
 import dev.jstech.core.moving.StructureFooting;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
@@ -27,8 +28,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Lets a player walk a moving deck on a server. The game takes the place a player's game says it moved to, checked
  * against where the server has them; on a deck that moves, the player's game and the server see the deck a moment
  * apart, so the player's game says instead where on the deck they stand ({@code StructureFootingPayload}) and the
- * server puts them there on its own deck. And the game sends away a player off the ground too long, counting only the
- * world's blocks: one standing on a deck stands on blocks. A player not on a structure moves as before.
+ * server puts them there on its own deck; a vehicle the player drives on a deck is put where its driver's game says it
+ * stands the same way. And the game sends away a player off the ground too long, counting only the world's blocks: one
+ * standing on a deck stands on blocks. A player not on a structure moves as before.
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImplMixin {
@@ -58,6 +60,30 @@ public abstract class ServerGamePacketListenerImplMixin {
                                           final Operation<Double> original) {
         final Vec3 deck = packet.hasPosition() ? StructureFooting.reportedPlace(player) : null;
         return deck != null ? deck.z : original.call(packet, otherwise);
+    }
+
+    @WrapOperation(method = "handleMoveVehicle", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/network/protocol/game/ServerboundMoveVehiclePacket;getX()D"))
+    private double jscore$driveOnTheDeckX(final ServerboundMoveVehiclePacket packet,
+                                          final Operation<Double> original) {
+        final Vec3 deck = StructureFooting.reportedVehiclePlace(player);
+        return deck != null ? deck.x : original.call(packet);
+    }
+
+    @WrapOperation(method = "handleMoveVehicle", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/network/protocol/game/ServerboundMoveVehiclePacket;getY()D"))
+    private double jscore$driveOnTheDeckY(final ServerboundMoveVehiclePacket packet,
+                                          final Operation<Double> original) {
+        final Vec3 deck = StructureFooting.reportedVehiclePlace(player);
+        return deck != null ? deck.y : original.call(packet);
+    }
+
+    @WrapOperation(method = "handleMoveVehicle", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/network/protocol/game/ServerboundMoveVehiclePacket;getZ()D"))
+    private double jscore$driveOnTheDeckZ(final ServerboundMoveVehiclePacket packet,
+                                          final Operation<Double> original) {
+        final Vec3 deck = StructureFooting.reportedVehiclePlace(player);
+        return deck != null ? deck.z : original.call(packet);
     }
 
     @Inject(method = "noBlocksAround", at = @At("RETURN"), cancellable = true)

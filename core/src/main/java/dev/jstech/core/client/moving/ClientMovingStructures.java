@@ -63,6 +63,8 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
     /* How often a player at a helm tells the server what they hold, unchanged, in ticks. */
     private static final int HELM_AGAIN = 10;
     private static boolean footed;
+    /* Whether the server was told the vehicle the player drives stands on a structure. */
+    private static boolean vehicleFooted;
     private static int helmKeys;
 
     private ClientMovingStructures() {
@@ -322,6 +324,19 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
                     StructureCollisions.pushOut(player, body);
                 }
             }
+        } else if (drivenHere(player) instanceof Entity driven) {
+            // What the player drives on this game, a car, a boat, a horse, is carried by the deck under it as they
+            // are on foot: their game moves it, and the server only hears where it went.
+            final IStructureBody standing = StructureFooting.standingOn(driven);
+            if (standing instanceof ClientStructure structure && structure.ready()) {
+                StructureFooting.carry(driven, structure);
+            }
+            for (final IStructureBody body : new ArrayList<>(LevelMovingStructures.of(player.level())
+                    .near(driven.getBoundingBox().inflate(0.5)))) {
+                if (body.ready()) {
+                    StructureCollisions.pushOut(driven, body);
+                }
+            }
         }
         final Vec3 eye = game.gameRenderer.getMainCamera().getPosition();
         for (final ClientStructure structure : BY_ENTITY.values()) {
@@ -349,7 +364,12 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
             if (player.getVehicle() instanceof StructureSeatEntity seat && seat.helm()) {
                 helm(player, seat);
             }
+            reportDriven(player);
             return;
+        }
+        if (vehicleFooted) {
+            PacketDistributor.sendToServer(StructureFootingPayload.noVehicle());
+            vehicleFooted = false;
         }
         final IStructureBody standing = StructureFooting.standingOn(player);
         if (standing instanceof ClientStructure structure && structure.ready()) {
@@ -357,7 +377,7 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
             final double[] place = {frame.yardX(player.getX(), player.getY(), player.getZ()),
                     frame.yardY(player.getX(), player.getY(), player.getZ()),
                     frame.yardZ(player.getX(), player.getY(), player.getZ())};
-            PacketDistributor.sendToServer(new StructureFootingPayload(structure.entity().getId(), place));
+            PacketDistributor.sendToServer(new StructureFootingPayload(structure.entity().getId(), place, false));
             footed = true;
         } else if (footed) {
             PacketDistributor.sendToServer(StructureFootingPayload.none());
@@ -405,6 +425,30 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
                     living.yBodyRotO = entity.yRotO;
                 }
             }
+        }
+    }
+
+    /* What the player drives that their game moves, at the bottom of what they ride; null for none. */
+    private static @Nullable Entity drivenHere(final LocalPlayer player) {
+        final Entity root = player.getRootVehicle();
+        return root != player && !(root instanceof StructureSeatEntity) && root.isControlledByLocalInstance()
+                ? root : null;
+    }
+
+    /* Where on a deck what the player drives stands, told the server before the game sends where it went. */
+    private static void reportDriven(final LocalPlayer player) {
+        final Entity driven = drivenHere(player);
+        final IStructureBody standing = driven == null ? null : StructureFooting.standingOn(driven);
+        if (driven != null && standing instanceof ClientStructure structure && structure.ready()) {
+            final StructureFrame frame = structure.frame();
+            final double[] place = {frame.yardX(driven.getX(), driven.getY(), driven.getZ()),
+                    frame.yardY(driven.getX(), driven.getY(), driven.getZ()),
+                    frame.yardZ(driven.getX(), driven.getY(), driven.getZ())};
+            PacketDistributor.sendToServer(new StructureFootingPayload(structure.entity().getId(), place, true));
+            vehicleFooted = true;
+        } else if (vehicleFooted) {
+            PacketDistributor.sendToServer(StructureFootingPayload.noVehicle());
+            vehicleFooted = false;
         }
     }
 

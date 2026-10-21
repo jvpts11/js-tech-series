@@ -194,6 +194,8 @@ import dev.jstech.core.state.StateNetwork;
 import dev.jstech.core.stepaside.StepAside;
 import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
+import dev.jstech.core.vehicle.VehicleControlKeys;
+import dev.jstech.core.vehicle.Vehicles;
 import dev.jstech.core.world.edit.WorldEdits;
 import dev.jstech.core.world.event.WorldEvents;
 import dev.jstech.core.world.field.ChunkFields;
@@ -321,6 +323,8 @@ public final class JsCore {
         BlockPhysics.listen(modEventBus);
         // What blocks do aboard them, as data: seats and helms, docking clamps, decouplers and tools.
         BlockAboard.listen(modEventBus);
+        // Vehicles as data: their parts, fuels and seats, their entity and items, and what pipes and hoppers reach.
+        Vehicles.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -404,6 +408,7 @@ public final class JsCore {
         ItemStates.register(modEventBus);
         // The Core's own keys, declared before the player's game makes its key bindings.
         CoreKeys.declare();
+        VehicleControlKeys.declare();
         // Soft integrations: each one checks for its mod and stays a no-op without it.
         MekanismIntegration.bootstrap();
         FtbTeamsIntegration.bootstrap();

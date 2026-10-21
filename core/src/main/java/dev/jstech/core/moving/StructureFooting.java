@@ -41,6 +41,8 @@ public final class StructureFooting {
     private static final Map<Entity, Stand> CLIENT = new WeakHashMap<>();
     /* Where each player last said they stand, in the yard, for the move they send next. */
     private static final Map<ServerPlayer, Reported> REPORTED = new WeakHashMap<>();
+    /* Where on a deck each player's game says the vehicle they drive stands. */
+    private static final Map<ServerPlayer, Reported> REPORTED_VEHICLES = new WeakHashMap<>();
 
     private StructureFooting() {
     }
@@ -230,16 +232,39 @@ public final class StructureFooting {
                 frame.worldZ(at[0], at[1], at[2]));
     }
 
-    /** A player's game said which structure the player stands on, and where on it. */
+    /**
+     * Where the vehicle {@code player} drives stands, by their game's word, in the world as the server's structure
+     * stands now, for the vehicle's move they sent next; null when it stands on none.
+     */
+    public static @Nullable Vec3 reportedVehiclePlace(final ServerPlayer player) {
+        if (REPORTED_VEHICLES.isEmpty()) {
+            return null;
+        }
+        final Reported reported = REPORTED_VEHICLES.get(player);
+        // A vehicle that went through a portal stands on no deck of the world it left.
+        if (reported == null || reported.structure.entity().isRemoved() || reported.structure.level()
+                != player.level()) {
+            return null;
+        }
+        final StructureFrame frame = reported.structure.frame();
+        final double[] at = reported.place;
+        return new Vec3(frame.worldX(at[0], at[1], at[2]), frame.worldY(at[0], at[1], at[2]),
+                frame.worldZ(at[0], at[1], at[2]));
+    }
+
+    /** A player's game said which structure the player, or the vehicle they drive, stands on, and where on it. */
     static void reported(final ServerPlayer player, final StructureFootingPayload payload) {
+        final Map<ServerPlayer, Reported> kept = payload.vehicle() ? REPORTED_VEHICLES : REPORTED;
         if (payload.entity() < 0) {
-            REPORTED.remove(player);
-            player.setData(CoreAttachments.FOOTING.get(), Footing.NONE);
+            kept.remove(player);
+            if (!payload.vehicle()) {
+                player.setData(CoreAttachments.FOOTING.get(), Footing.NONE);
+            }
             return;
         }
         final Entity entity = player.level().getEntity(payload.entity());
         if (!(entity instanceof MovingStructureEntity structureEntity) || structureEntity.structure() == null) {
-            REPORTED.remove(player);
+            kept.remove(player);
             return;
         }
         final MovingStructure structure = structureEntity.structure();
@@ -248,10 +273,13 @@ public final class StructureFooting {
                 place[2]), structure.frame().worldY(place[0], place[1], place[2]),
                 structure.frame().worldZ(place[0], place[1], place[2]))))) {
             // A place nowhere near the structure is not standing on it, whatever the game says.
-            REPORTED.remove(player);
+            kept.remove(player);
             return;
         }
-        REPORTED.put(player, new Reported(structure, place));
+        kept.put(player, new Reported(structure, place));
+        if (payload.vehicle()) {
+            return;
+        }
         final float yaw = (float) Mth.wrapDegrees(player.getYRot() - structure.pose().yawDegrees());
         player.setData(CoreAttachments.FOOTING.get(), Footing.on(structure.id(), place[0], place[1], place[2], yaw));
     }

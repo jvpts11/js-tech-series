@@ -82,6 +82,7 @@ import dev.jstech.core.client.sky.SkyClient;
 import dev.jstech.core.client.weather.WeatherClient;
 import dev.jstech.core.client.state.ClientStateEvents;
 import dev.jstech.core.client.vehicle.VehicleControls;
+import dev.jstech.core.client.vehicle.VehiclesClient;
 import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.jstechseries.energy.client.ClampMeterClient;
 import dev.jstech.core.jstechseries.energy.client.EnergyConvertersClient;
@@ -190,6 +191,7 @@ public final class JsCoreClient {
         TransferClient.listen();
         TubeFilter.listen(modEventBus);
         VehicleControls.listen(modEventBus);
+        VehiclesClient.listen(modEventBus);
         MovingStructuresClient.listen(modEventBus);
         // In a development run, the mods' assets reloaded as they change.
         LiveReloadClient.listen();
