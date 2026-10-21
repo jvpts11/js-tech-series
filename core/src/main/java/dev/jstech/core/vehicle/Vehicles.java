@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.content.EntityEntry;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
+import dev.jstech.core.data.DeclaredData;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.team.Ownership;
 import java.util.Map;
@@ -72,7 +73,7 @@ public final class Vehicles {
     public static final ResourceKey<DamageType> RUN_OVER = ResourceKey.create(Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "run_over"));
 
-    private static final VehicleCatalogue<VehicleDef> CATALOGUE = new VehicleCatalogue<>(
+    private static final DeclaredData<VehicleDef> CATALOGUE = new DeclaredData<>(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "vehicles"), "jstech/vehicles", VehicleDef.CODEC);
 
     private Vehicles() {

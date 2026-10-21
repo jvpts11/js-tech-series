@@ -165,6 +165,9 @@ public final class MovingStructureToolsGameTests {
                         drag.add(dragOn(still));
                         StructureBalance.wind(true);
                         level.setWeatherParameters(WEATHER, 0, false, false);
+                        // At once: the game lets a storm die away over seconds, its wind blowing on the next tests.
+                        level.setRainLevel(0);
+                        level.setThunderLevel(0);
                         MovingStructures.takeAway(still);
                     });
                 })

@@ -877,11 +877,32 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   light the world; an engine or a horn that names a sound sounds it, the engine as it turns and works. Parked on a
   moving structure's deck it goes with it, a player drives it on a deck in flight as on the ground, and through a
   portal it takes its riders along.
+- (Core) Robots that fly, swim and think: a mod's robot walks, flies in three dimensions or swims, carries as much as
+  its size lets it, and digs with whatever tool it carries, of any mod, at a player's pace, the tool wearing and its
+  enchantments working on what drops. One with a battery spends it getting about and digging, stands still when it is
+  empty, and recharges at a charging station (`RobotCharger`, for a mod's block). Its tasks repeat, choose by a
+  condition, wait for one or for a time of day, and find the nearest block of a kind to go to or break; its conditions
+  sense what it carries, blocks, items and creatures near, the time and its charge. `Robots` finds robots by their id
+  and their owner, gives them a program written as data and says how they stand, and the end of each task is told on
+  the Core's events, for J's Computers to program them.
+- (Core) Creatures as data: a mod's `CreatureEntity` lives as its data says, its health, speed and attack, what it
+  does in order of what matters most (wandering, panicking, avoiding, following food, fighting), where it appears by
+  biome, dimension and placement, and the air it breathes: it appears only where that air suits it, and chokes out
+  of it. A data pack changes how a creature lives with no code.
+- (Core) Projectiles by real ballistics: a projectile falls by the pull of the dimension it flies in; one with a mass
+  is held back by the air's density where it flies, none in a vacuum, and by water, and is carried by the wind; one
+  that gets through blocks passes a block as hard as it can still get through, slowed by it.
+- (Core) Modules in worn things: a worn item with sockets takes modules, each into a socket of its kind, and each
+  module on does what it does for its wearer (changes an attribute, gives an effect), spending the energy the item
+  holds; hosts, modules and their effects are declared in code or by data packs.
 
 ### Changed
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending
   `VehicleEntity` with a `VehicleSpec` for each vehicle; `VehicleSpec` is gone. A robot still drives one with its
   `Drive` task.
+- (Core) A robot's inventory is as big as the robot, and `RobotEntity.INVENTORY_SIZE` is gone; a robot as wide as a
+  player and two thirds as tall still carries nine stacks. `ProjectileSpec` gains a mass, a drag area and what it gets
+  through, its old constructor kept.
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
   industrial control link; telemetry becomes a line of its own, which J's Space lays.
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

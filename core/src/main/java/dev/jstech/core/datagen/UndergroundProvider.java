@@ -8,6 +8,7 @@
 package dev.jstech.core.datagen;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.creature.CreaturesBiomeModifier;
 import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.EverywhereBiomeModifier;
 import dev.jstech.core.worldgen.vein.VeinsBiomeModifier;
@@ -37,13 +38,16 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * Writes the Core's underground as the datapack files the game reads: the features of the veins and of the reservoirs
  * and their placements; the biome modifier {@code jscore:veins}, which adds the veins to every biome and stands them in
  * for the game's scattered iron, copper and gold and, when the server tries, for other mods' scattered ores of the
- * common ores tag; and a {@code jscore:everywhere} that adds the reservoirs to every biome, before the ores.
+ * common ores tag; a {@code jscore:everywhere} that adds the reservoirs to every biome, before the ores; and the biome
+ * modifier {@code jscore:creatures}, which adds where the creatures of the data appear, though they live above ground.
  */
 public final class UndergroundProvider extends DatapackBuiltinEntriesProvider {
 
     private static final ResourceLocation VEINS = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "veins");
     private static final ResourceLocation RESERVOIRS = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "reservoirs");
+    private static final ResourceLocation CREATURES = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "creatures");
     /* The game's scattered iron, copper and gold, overworld and Nether. */
     private static final List<ResourceKey<PlacedFeature>> COVERED = List.of(OrePlacements.ORE_IRON_UPPER,
             OrePlacements.ORE_IRON_MIDDLE, OrePlacements.ORE_IRON_SMALL, OrePlacements.ORE_COPPER,
@@ -84,6 +88,7 @@ public final class UndergroundProvider extends DatapackBuiltinEntriesProvider {
                     context.register(modifier(RESERVOIRS), (BiomeModifier) new EverywhereBiomeModifier(
                             HolderSet.direct(features.getOrThrow(placed(RESERVOIRS))),
                             GenerationStep.Decoration.UNDERGROUND_STRUCTURES));
+                    context.register(modifier(CREATURES), (BiomeModifier) CreaturesBiomeModifier.INSTANCE);
                 });
     }
 

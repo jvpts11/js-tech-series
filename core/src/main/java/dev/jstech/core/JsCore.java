@@ -84,6 +84,11 @@ import dev.jstech.core.peripheral.PeripheralReconciler;
 import dev.jstech.core.network.StateTables;
 import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
+import dev.jstech.core.module.CoreModuleEffects;
+import dev.jstech.core.module.Modules;
+import dev.jstech.core.creature.CoreCreatureBehaviours;
+import dev.jstech.core.creature.Creatures;
+import dev.jstech.core.robot.CoreRobotConditions;
 import dev.jstech.core.robot.CoreRobotTasks;
 import dev.jstech.core.config.ConfigCommands;
 import dev.jstech.core.conveyor.Conveyors;
@@ -325,6 +330,9 @@ public final class JsCore {
         BlockAboard.listen(modEventBus);
         // Vehicles as data: their parts, fuels and seats, their entity and items, and what pipes and hoppers reach.
         Vehicles.listen(modEventBus);
+        // Modules in worn things: the hosts' sockets, the modules' effects and the energy they spend each second.
+        CoreModuleEffects.declare();
+        Modules.listen();
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -473,8 +481,12 @@ public final class JsCore {
         // What each dimension is like to stand in, and what its sky holds, read from data.
         DimensionRulesData.register();
         Skies.register();
-        // The tasks every robot knows, before a world reads its robots back.
+        // The conditions and tasks every robot knows, before a world reads its robots back.
+        CoreRobotConditions.declare();
         CoreRobotTasks.declare();
+        // How creatures live as data: what they do, where they appear and the air they breathe.
+        CoreCreatureBehaviours.declare();
+        Creatures.listen(modEventBus);
         // The chunks machines keep loaded for their owners, under the game's own forced-chunk file.
         modEventBus.addListener(RegisterTicketControllersEvent.class, ChunkLoaders::onRegisterControllers);
         // What each part of the Core answers on the mod's bus and the game's, declared here one class at a time

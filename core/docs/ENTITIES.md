@@ -1,8 +1,9 @@
 # Entities
 
 Things in the world that move: creatures, vehicles, robots, shots. J's Core declares them like blocks, and gives
-three kinds ready to build on: vehicles a player drives, robots that work a list of tasks, and projectiles. It
-also finds what a player or a creature is wearing, wherever it is worn.
+four kinds ready to build on: vehicles a player drives, robots that work a list of tasks, creatures that live as
+their data says, and projectiles. It also finds what a player or a creature is wearing, wherever it is worn, and runs
+the modules in worn things.
 
 ## Declaring an entity
 
@@ -287,7 +288,7 @@ ground under it; a `<place>_spin` bone spins with a rotor or a propeller; a door
 
 ## Robots
 
-*Added 2026-10-05.*
+*Added 2026-10-05; flying, swimming, batteries, tools and tasks with logic 2026-10-21.*
 
 A robot is a creature that works through a list of tasks, as its owner would: it never fights, and it never breaks
 a block its owner could not break.
@@ -297,29 +298,159 @@ public static final class Helper extends RobotEntity {
     public Helper(final EntityType<? extends Helper> type, final Level level) {
         super(type, level);
     }
-}
-// declared with .attributes(RobotEntity::robotAttributes)
 
-robot.setOwner(player.getUUID());
+    @Override
+    public RobotMovement movement() {
+        return RobotMovement.FLY;           // WALK, the default, FLY or SWIM
+    }
+
+    @Override
+    public int batteryCapacity() {
+        return 50_000;                      // joules; 0, the default, runs on nothing
+    }
+}
+// declared with .attributes(RobotEntity::robotAttributes), and .holdsEnergy() for one with a battery
+
+robot.giveTo(player.getUUID());
 robot.queue(new CoreRobotTasks.MoveTo(pos));
 robot.queue(new CoreRobotTasks.BreakBlock(stone));
 robot.queue(new CoreRobotTasks.Collect(4));      // picks up items within 4 blocks
 robot.queue(new CoreRobotTasks.Wait(20));        // ticks
 ```
 
-- The Core's tasks: `MoveTo`, `BreakBlock` (takes longer for harder blocks, and gives up after a minute), `Collect`
-  (up to 16 blocks around), `Wait`, and `Drive` (drives the vehicle it sits in). A robot works on a block within 3
-  blocks of it.
+- **How it gets about.** A walker walks; a flyer flies in three dimensions and never falls; a swimmer swims in three
+  dimensions in water and walks on land between waters. No robot drowns.
+- **Its inventory** is as big as the robot: a slot for every twentieth of a cubic metre of its box, from 1 to 54. A
+  robot as wide as a player and two thirds as tall carries nine. A robot may say otherwise (`inventorySize()`).
+- **Tools.** It digs with the tool it carries that digs the block fastest, of any mod, taking it into its hand, at
+  the pace a player digs with it; the tool wears and its enchantments work on what drops. Without one it digs with its
+  own arm, as fast as a wooden pickaxe, and still gets what the block drops.
+- **A battery**, when it has one: getting about spends it (walking 400 W, swimming 600 W, flying 1.2 kW) and so does
+  digging (800 W). With an empty battery it stands still until it is charged, through the game's energy capability
+  or at a **charging station**: a `RobotCharger` a block entity holds, as a fuel pump holds its `FuelPump` (see
+  Vehicles), which charges every robot within two blocks every half second.
+
+The Core's tasks:
+
+| Task | What it does |
+| --- | --- |
+| `MoveTo(pos)` | Goes beside a block; gives up after a minute. |
+| `BreakBlock(pos)` | Goes to a block and breaks it, as above; gives up after a minute. |
+| `Collect(radius)` | Picks up the items within up to 16 blocks. |
+| `Wait(ticks)` | Waits. |
+| `Drive(input, ticks)` | Drives the vehicle it sits in. |
+| `GoToNearest(block, radius)` | Goes to the nearest block of a kind, as it stands when the task begins. |
+| `BreakNearest(block, radius)` | Breaks the nearest block of a kind. |
+| `Recharge(radius)` | Goes to the nearest working charging station and waits until its battery is full. |
+| `Repeat(tasks, times)` | Works through its tasks so many times, or for ever with 0. |
+| `If(condition, then, else)` | Works through one list or the other, as the condition holds when it begins. |
+| `WaitUntil(condition, timeout)` | Waits until the condition holds; gives up after the timeout, or never with 0. |
+| `AtTime(time)` | Waits for the day's clock to come to a time: 0 at sunrise, 6000 at noon. Repeated, it is a schedule. |
+
+A task that repeats or chooses works through fresh copies of its tasks, one at a time, and one step that fails ends it,
+failed, so a loop never spins on what cannot be done.
+
+Its conditions, what it senses of itself and the world:
+
+| Condition | Holds when |
+| --- | --- |
+| `Holding(item, count)` | It carries at least so many of an item. |
+| `InventoryFull()` | Its inventory has no empty slot. |
+| `BlockIs(pos, block)` | A place holds a block of a kind. |
+| `BlockNear(block, radius)` | A block of a kind is within so many blocks. |
+| `ItemsNear(item, radius)` | Items lie within so many blocks, of a kind or any. |
+| `EntityNear(entity, radius)` | A creature or thing of a kind is within so many blocks. |
+| `TimeBetween(from, to)` | The time of day is in a span; one past midnight wraps round. |
+| `ChargeBelow(share)` | Its battery is less full than a share. |
+| `Not`, `All`, `Any` | One turned round, every one, at least one. |
+
+Blocks, items and creatures are named as the game's advancements name them: `{"blocks": "minecraft:stone"}`,
+`{"items": "#minecraft:logs"}`, `"minecraft:pig"`. So a robot gathering wood until its inventory is full is:
+
+```java
+robot.queue(new CoreRobotTasks.Repeat(List.of(
+        new CoreRobotTasks.If(new CoreRobotConditions.InventoryFull(), List.of(), List.of(
+                new CoreRobotTasks.BreakNearest(BlockPredicate.Builder.block().of(BlockTags.LOGS).build(), 16),
+                new CoreRobotTasks.Collect(4))),
+        new CoreRobotTasks.WaitUntil(new CoreRobotConditions.Not(new CoreRobotConditions.InventoryFull()), 0)), 0));
+```
+
 - A task answers each tick whether it is still running, done or failed. A failed task is dropped and the robot goes
   on to the next.
-- Its tasks, its 9-slot inventory and its owner are saved; a task in progress starts over when the world loads. It
-  drops its inventory when it dies, and never despawns.
+- Its tasks, its inventory, its charge and its owner are saved; a task in progress starts over when the world loads.
+  It drops its inventory when it dies, and never despawns.
 - A mod adds a kind of task: implement `IRobotTask` and declare its type with a codec, once, from your mod's
-  constructor: `RobotTasks.declare(new RobotTaskType<>(rl("plant"), PlantTask.CODEC))`.
+  constructor: `RobotTasks.declare(new RobotTaskType<>(rl("plant"), PlantTask.CODEC))`; and a kind of condition the
+  same way, through `RobotConditions.declare`.
+
+### Commanded from outside
+
+What commands robots from outside, a computer's program, reaches them through `Robots`:
+
+```java
+Robots.find(id);                                  // the loaded robot of an id
+Robots.ownedBy(player);                           // every loaded robot a player owns
+Robots.status(robot);                             // where it is, its charge, its tasks, its slots
+Robots.read(RegistryOps.create(JsonOps.INSTANCE, registries), program)   // a program written as data
+        .result().ifPresent(tasks -> Robots.program(robot, tasks));      // its tasks replaced by these
+JsCore.events().subscribe(RobotTaskEvent.class, event -> ...);          // each task as it ends, done or failed
+```
+
+A program written as data is a list of tasks, each with its type: `[{"type": "jscore:move_to", "target": [0, 64, 0]},
+{"type": "jscore:break_nearest", "block": {"blocks": "minecraft:stone"}, "radius": 8}]`.
+
+## Creatures
+
+*Added 2026-10-21.*
+
+A creature is a `CreatureEntity` a mod declares, which lives as its data says: how much health it has, how fast it
+goes, how hard it hits, what it does, where it appears and the air it breathes. A creature appears only where its air
+suits it, and lives only there: out of it, it chokes, a point of harm a second.
+
+```java
+public static final EntityEntry<CreatureEntity> GRAZER = CONTENT.entity("grazer", CreatureEntity::new,
+        MobCategory.CREATURE).size(0.9F, 1.2F).attributes(CreatureEntity::creatureAttributes).named("Grazer")
+        .register();
+
+Creatures.declare(GRAZER.getId(), CreatureDef.builder()
+        .health(14).speed(0.3)
+        .behaviour(new CoreCreatureBehaviours.KeepAfloat())        // the first matters most
+        .behaviour(new CoreCreatureBehaviours.Panic(1.25))
+        .behaviour(new CoreCreatureBehaviours.Wander(1.0))
+        .spawn(new CreatureDef.Spawn(List.of(), List.of(Level.OVERWORLD), 10, 1, 3, Optional.empty(),
+                CreatureDef.Placement.ON_GROUND))
+        .breathes(AirMix.OXYGEN, 16, 50)                           // kilopascals of the gas it needs, and bears
+        .build());
+```
+
+A data pack writes or changes it under `data/<namespace>/jstech/creatures/`, by its entity type's id:
+
+```json
+{
+  "health": 14, "speed": 0.3,
+  "behaviours": [{"type": "jscore:float"}, {"type": "jscore:panic"}, {"type": "jscore:wander"},
+                 {"type": "jscore:tempt", "item": {"items": "minecraft:wheat"}}],
+  "spawns": [{"biomes": ["#minecraft:is_forest"], "dimensions": ["minecraft:overworld"], "weight": 10,
+              "least": 1, "most": 3}],
+  "air": {"gas": "jscore:oxygen", "least": 16, "most": 50}
+}
+```
+
+- **Behaviours**: `wander`, `look_at_players`, `look_around`, `float`, `panic`, `avoid` (keeps away from a kind of
+  creature), `tempt` (follows a player holding its food), `melee_attack`, `target_players` and `retaliate`. A mod adds
+  its own kinds through `CreatureBehaviours.declare`. What it does is built from its data as it first wakes, and again
+  when the server reads its data packs again.
+- **Where it appears**: in biomes by id or tag, of the dimensions named (none for any), placed on the ground, in water,
+  in lava or anywhere, in groups. The Core adds every creature's spawns to their biomes as the server starts, through
+  its biome modifier `jscore:creatures`; a data pack read again with the server running changes how creatures live at
+  once, and where they appear when the server starts again.
+- **The air it breathes**: a gas, by the air kit's id, and the pressure of it in the air it lives on and bears, in
+  kilopascals, as a sealed room's air or the dimension's has it ([Rooms](ROOMS.md)). People need about 16
+  kilopascals of oxygen and bear about 50. A creature with no air named breathes nothing.
 
 ## Projectiles
 
-*Added 2026-10-05.*
+*Added 2026-10-05; real ballistics 2026-10-21.*
 
 ```java
 public static final ProjectileSpec BOLT_SPEC = new ProjectileSpec(
@@ -347,7 +478,19 @@ Projectiles.fireFrom(player, MyContent.BOLT.get(), 2.0F);            // from the
 Projectiles.fire(level, owner, MyContent.BOLT.get(), from, direction, 2.0F);
 ```
 
-Whoever fired it is credited with what it hits.
+Whoever fired it is credited with what it hits. It falls by the pull of the dimension it flies in: its gravity is its
+fall under the overworld's pull, a sixth as much on a moon with a sixth of it.
+
+A projectile with a mass flies by **real ballistics**: the air holds it back by its drag area and by the air's density
+where it flies, from a sealed room's air or the dimension's at that height, thin up high and none in a vacuum; water
+holds it far more; and the wind carries it. One that **gets through blocks** passes any block as hard as it can still
+get through, slowed by it, and stops in the first it cannot:
+
+```java
+public static final ProjectileSpec SLUG = new ProjectileSpec(6.0F, 0.03, 0, 0.0, 0.0F, 0.0F, false, 200)
+        .withBallistics(0.01, 0.0001)      // ten grams, a drag area of a square centimetre
+        .withPenetration(2.5F);            // the hardness it gets through in all: glass 0.3, planks 2, stone 1.5
+```
 
 ## What is worn
 
@@ -363,6 +506,38 @@ List<ItemStack> all = WornItems.worn(player);
 are). The stacks given are the worn ones themselves, to read, not to change. A mod with slots of its own adds them
 with `WornItems.addSource(...)`.
 
+### Modules in worn things
+
+*Added 2026-10-21.*
+
+A worn item with sockets, a **host**, takes **modules**, each into a socket of its kind; each module on does what it
+does for its wearer each second, spending the energy the host holds, and does nothing out of energy until the host is
+charged. J's Industrial's exo-suits and J's Space's suits are hosts of this kit. Hosts and modules are declared by
+their items' ids, in code or in data packs under `data/<namespace>/jstech/module_hosts/` and
+`data/<namespace>/jstech/modules/`:
+
+```java
+Modules.declareHost(HELMET.getId(), new ModuleHostDef(List.of(
+        new ModuleHostDef.Socket("visor", 1), new ModuleHostDef.Socket("core", 2))));
+Modules.declare(SPEED_MODULE.getId(), new ModuleDef("core", 100, List.of(          // 100 FE a second while on
+        new CoreModuleEffects.AttributeChange(Attributes.MOVEMENT_SPEED, 0.2,
+                AttributeModifier.Operation.ADD_MULTIPLIED_BASE))));
+```
+
+```json
+{"kind": "visor", "energy": 50, "effects": [{"type": "jscore:mob_effect", "effect": "minecraft:night_vision"}]}
+```
+
+- **Effects**: `attribute` changes one of the wearer's attributes (speed, armour, reach, how high it steps), and
+  `mob_effect` gives one of the game's effects, quietly, for as long as the module works. A mod adds its own kinds
+  through `ModuleEffects.declare`; an effect is asked each second, and what it stops asking for goes, so a module
+  taken out, turned off or out of energy leaves nothing behind.
+- **The modules in a host** are its `jscore:modules` component, socket by socket, each on or off.
+  `Modules.install(level, host, socket, module)` puts one into an empty socket of its kind, `Modules.remove` takes it
+  out, and `Modules.setOn` turns it on or off.
+- The host's energy is its own, as an item holds it ([Content](CONTENT.md)); it must give each second what its modules
+  spend, at once. A host is worn anywhere things are worn: its armour slot, or a slot of Curios or Accessories.
+
 ## What can go wrong
 
 - **The entity is invisible or the game crashes when it appears.** It has no renderer registered on the client.
@@ -374,6 +549,12 @@ with `WornItems.addSource(...)`.
 - **A trailer will not hitch.** No vehicle's `tow` point is within a block and a half of its `hitch`.
 - **A player cannot get in.** It is locked, or every seat they may sit in is taken.
 - **A robot stands still.** Its task failed (unreachable, too far, a block its owner may not break) and it has
-  nothing after it, or it has no owner.
+  nothing after it, its battery is empty, or it has no owner.
+- **A robot breaks a block it was not meant to.** `BreakNearest` takes the nearest block of its kind within its
+  radius, the ground under it too: name the kind closely, or keep the radius small.
+- **A creature never appears.** No spawn of its data names the biome, the dimension or the placement where it would,
+  or the air there does not suit it; spawns read again by a data pack wait for the server to start again.
+- **A module does nothing.** It is off, in a socket of another kind, or its host is out of energy, or gives less at
+  once than the module spends in a second.
 - **A worn item is not found.** It is worn in a slot mod other than Curios and Accessories, which needs a source of
   its own.

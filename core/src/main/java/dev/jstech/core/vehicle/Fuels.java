@@ -8,6 +8,7 @@
 package dev.jstech.core.vehicle;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.data.DeclaredData;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
@@ -20,7 +21,7 @@ import net.minecraft.world.level.material.Fluid;
  */
 public final class Fuels {
 
-    private static final VehicleCatalogue<Fuel> CATALOGUE = new VehicleCatalogue<>(
+    private static final DeclaredData<Fuel> CATALOGUE = new DeclaredData<>(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "fuels"), "jstech/fuels", Fuel.CODEC);
 
     private Fuels() {

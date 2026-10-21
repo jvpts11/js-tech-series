@@ -11,6 +11,10 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -39,6 +43,18 @@ public final class RobotTasks {
             throw new IllegalStateException("the robot task " + type.id() + " is declared twice");
         }
         return type;
+    }
+
+    /**
+     * A copy of {@code task} as it was before it began, through its codec: what a task that repeats or chooses runs,
+     * so a step done once is done afresh the next time.
+     *
+     * @throws IllegalStateException when the task's kind cannot save it whole
+     */
+    public static IRobotTask fresh(final IRobotTask task, final HolderLookup.Provider registries) {
+        final RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
+        return CODEC.encodeStart(ops, task).flatMap(saved -> CODEC.parse(ops, saved))
+                .getOrThrow(problem -> new IllegalStateException("a robot task cannot be copied: " + problem));
     }
 
     private static DataResult<RobotTaskType<?>> find(final ResourceLocation id) {

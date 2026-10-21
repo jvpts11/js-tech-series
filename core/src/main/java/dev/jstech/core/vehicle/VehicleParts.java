@@ -8,6 +8,7 @@
 package dev.jstech.core.vehicle;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.data.DeclaredData;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
@@ -25,7 +26,7 @@ import net.minecraft.world.level.Level;
  */
 public final class VehicleParts {
 
-    private static final VehicleCatalogue<VehiclePartDef> CATALOGUE = new VehicleCatalogue<>(
+    private static final DeclaredData<VehiclePartDef> CATALOGUE = new DeclaredData<>(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "vehicle_parts"), "jstech/vehicle_parts",
             VehiclePartDef.CODEC);
 
