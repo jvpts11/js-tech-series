@@ -915,6 +915,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   name above the hotbar says its mode and what it works on; bars under the crosshair show a tool's charge and heat;
   an icon carries a bar for each thing the item holds and its mode's letter; and in the world a tool outlines every
   block its area or vein will take, and a building tool shows the ghosts of the blocks it will place.
+- (Core) The camera: lenses that magnify by real powers (`ZoomItem`, or a block through `CameraZoomClient`), the
+  mouse wheel stepping between them and the mouse turning as much slower; the view turning with a ridden vehicle and
+  rolling with it or with a moving structure's seat; free look, the view turned and the player not; scenes along
+  camera paths declared in code or written by resource packs, the view of an entity and the view from a point, which
+  the server starts and the player skips by sneaking, their ending told on the Core's events; and cameras in the
+  world whose view a screen shows (`CameraFeeds`), drawn before the frame at a rate, a width and a number at once the
+  player sets.
 - (Core) Items: an item holds a gas, in a tank of a volume at a pressure the Core's gas capability reaches; a key works
   an item wherever its player carries it, in a hand, worn or in the inventory, and turns one on and off
   (`ItemActions`); an item lasts as many uses as declared, or as many as its mod makes of a property of its material;
@@ -931,6 +938,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `"held"` in data), and a module's energy is spent each second worn, each use in a tool. `ItemState` gains a gas
   tank. A module effect does nothing where it has no part, in what is worn or in a tool, unless its kind says.
 - (Core) The mode key no longer writes the new mode on the action bar: the item's name above the hotbar shows it.
+- (Core) The world drawn from somewhere else, the far side of a seamless portal, is drawn by `WorldViews`, which
+  cameras on screens draw with too; the portal shows what it showed.
 - (Core) Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
   industrial control link; telemetry becomes a line of its own, which J's Space lays.
 - (Core) Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's

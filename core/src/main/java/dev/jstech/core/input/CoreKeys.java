@@ -9,6 +9,7 @@ package dev.jstech.core.input;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.AudioTexts;
+import dev.jstech.core.camera.CameraTexts;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.item.ItemTexts;
@@ -22,9 +23,9 @@ import org.lwjgl.glfw.GLFW;
 /**
  * The Core's own keys: turning off the last sound heard, which the player's game does alone, changing the mode of
  * the item in the main hand, which the server does, opening an item's page in the manual, opening the history of
- * notifications, opening the diagram of forces of a moving structure, and showing the physics of the structures near.
- * The first two and the last have no key until the player gives them one; the manual's is M, which every manual's
- * tooltip names, the history's N, and the forces' K.
+ * notifications, opening the diagram of forces of a moving structure, showing the physics of the structures near, and
+ * looking about freely. The first two and the last two have no key until the player gives them one; the manual's is
+ * M, which every manual's tooltip names, the history's N, and the forces' K.
  */
 @TextHolder
 public final class CoreKeys {
@@ -70,6 +71,13 @@ public final class CoreKeys {
     public static final KeyAction SHOW_STRUCTURE_DEBUG = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "show_structure_debug"),
             ForceDiagramTexts.DEBUG_KEY));
+
+    /**
+     * Held, turns the view without turning the player, as a head turns in a cockpit while the vehicle keeps its course;
+     * let go, the view comes back. No key until given one.
+     */
+    public static final KeyAction FREE_LOOK = KeyActions.declare(KeyAction.builder(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "free_look"), CameraTexts.FREE_LOOK_KEY));
 
     private CoreKeys() {
     }

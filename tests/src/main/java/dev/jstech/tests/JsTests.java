@@ -82,6 +82,8 @@ public final class JsTests {
         // A drill, a pick that heats, a chainsaw, an air shovel, a railgun, a wand, a multitool with its modules, a
         // hammer and a magnet, to prove the Core's tools.
         TestTools.declare();
+        // Binoculars, two scenes and a screen that shows a camera, to prove the Core's camera.
+        TestCameras.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
         TestItems.declare();
         // Two fuses, to prove the Core's protection slot.

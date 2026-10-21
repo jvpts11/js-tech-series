@@ -57,6 +57,7 @@ says what the Core promises and what it does not yet.
 | Page | What it covers |
 | --- | --- |
 | [Screens](SCREENS.md) | Screens declared in files, the layout engine, values bound by name, styles, layouts you can test, themes and skins, drawing text, models, screens in the world, keys. |
+| [The camera](CAMERA.md) | Lenses with real powers, the view following what is ridden, free look, scenes along camera paths, views of an entity or from a point, cameras whose view a screen shows. |
 | [UI components](UI_COMPONENTS.md) | The components screens, desktop programs and dialogs are built from: controls, trees, tables, charts, graphs, 3D views, maps, gauges, ghost slots, rich tooltips. |
 | [Fonts](FONTS.md) | Declaring a font from its free source, and the monospace grid painter. |
 | [Models](MODELS.md) | Animated models for blocks, items, entities and armour from Blockbench, Bedrock, glTF, FBX and OBJ files; controllers, blends, expressions, events, bones moved by code, animations from the server, the preview. |

@@ -1,0 +1,8 @@
+{
+  "keyframes": [
+    {"time": 0, "position": [0, 3, -6], "pitch": 15},
+    {"time": 30, "position": [-5, 5, -3], "yaw": -50, "pitch": 25, "roll": 10, "easing": "easeInOutSine"},
+    {"time": 60, "position": [0, 8, 4], "yaw": 180, "pitch": 40, "fov": 50, "easing": "easeOutQuad"}
+  ],
+  "hide_hud": true
+}

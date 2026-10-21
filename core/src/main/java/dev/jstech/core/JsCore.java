@@ -86,6 +86,8 @@ import dev.jstech.core.network.payload.ClientPayloads;
 import dev.jstech.core.network.transfer.BigPayloads;
 import dev.jstech.core.module.CoreModuleEffects;
 import dev.jstech.core.tool.Tools;
+import dev.jstech.core.camera.CameraSettings;
+import dev.jstech.core.camera.CameraViews;
 import dev.jstech.core.module.Modules;
 import dev.jstech.core.creature.CoreCreatureBehaviours;
 import dev.jstech.core.creature.Creatures;
@@ -336,6 +338,8 @@ public final class JsCore {
         Modules.listen();
         // Tools: areas and veins mined, what they work on and their heat, building tools and copies of regions.
         Tools.listen();
+        // Views from elsewhere: scenes along camera paths, the view of an entity or from a point.
+        CameraViews.listen(modEventBus);
         ChunkFields.listen(modEventBus);
         EndSettings.declare();
         OverheadLines.declare();
@@ -452,6 +456,7 @@ public final class JsCore {
         ConfigFiles.register(LightingSettings.FILE, modEventBus, modContainer);
         // How effects look on a player's game: particles at once, the screen's shake and flash, heat haze.
         ConfigFiles.register(EffectSettings.FILE, modEventBus, modContainer);
+        ConfigFiles.register(CameraSettings.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();
