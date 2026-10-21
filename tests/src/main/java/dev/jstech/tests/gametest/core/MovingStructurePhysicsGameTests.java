@@ -81,6 +81,9 @@ public final class MovingStructurePhysicsGameTests {
     private static final int FLOOR = 2;
     /* How long the weather a test clears stays clear, in ticks. */
     private static final int CLEAR = 12_000;
+    /* The hydrogen balloon: the side of its shell, and the room inside it, a cube two blocks smaller. */
+    private static final int BALLOON_SIDE = 7;
+    private static final int BALLOON_INSIDE = (BALLOON_SIDE - 2) * (BALLOON_SIDE - 2) * (BALLOON_SIDE - 2);
     /* The arenas whose air is still, sheltered from the wind. */
     private static final Set<AABB> SHELTERED = ConcurrentHashMap.newKeySet();
     private static boolean shelterDeclared;
@@ -296,7 +299,7 @@ public final class MovingStructurePhysicsGameTests {
     public static void physics_aBalloonOfHydrogenRises(final GameTestHelper helper) {
         calm(helper);
         final ServerLevel level = helper.getLevel();
-        final MovingStructure balloon = made(helper, shell(2, 2, 2, 7), TestPhysics.ENVELOPE.get());
+        final MovingStructure balloon = made(helper, shell(2, 2, 2, BALLOON_SIDE), TestPhysics.ENVELOPE.get());
         final BlockPos inside = centreOf(balloon);
         helper.assertTrue(level.getBlockState(inside).isAir(), "its middle is air");
         SealedRooms.track(level, inside);
@@ -312,8 +315,9 @@ public final class MovingStructurePhysicsGameTests {
             }
         });
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(SealedRooms.roomAt(level, inside).isPresent(),
-                        "its inside is found a room"))
+                // A loaded server finds a room over several ticks: it is filled once all its inside is found.
+                .thenWaitUntil(() -> helper.assertTrue(SealedRooms.roomAt(level, inside)
+                        .filter(room -> room.volume() == BALLOON_INSIDE).isPresent(), "its whole inside is a room"))
                 .thenExecute(() -> {
                     final Room room = SealedRooms.roomAt(level, inside).orElseThrow();
                     final double moles = room.gases().values().stream().mapToDouble(Double::doubleValue).sum();

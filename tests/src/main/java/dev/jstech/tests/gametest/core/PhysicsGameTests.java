@@ -129,7 +129,8 @@ public final class PhysicsGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
+    /* Two lands are made and their chunks generated first, which a loaded server takes long over: hence the time. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
     public static void gravity_pullsWhatIsNotAliveAsHardAsItsDimension(final GameTestHelper helper) {
         final MinecraftServer server = helper.getLevel().getServer();
         final ResourceKey<Level> halfKey = key("gravity_half_land");
