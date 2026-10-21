@@ -28,6 +28,8 @@ import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.overhead.OverheadLines;
 import dev.jstech.core.condition.DataConditions;
+import dev.jstech.core.modpack.ModpackDumps;
+import dev.jstech.core.modpack.ReloadReport;
 import dev.jstech.core.pack.ContentPacks;
 import dev.jstech.core.script.CoreScripts;
 import dev.jstech.core.unify.UnificationSettings;
@@ -519,6 +521,9 @@ public final class JsCore {
         ModelCommands.declare();
         ConfigCommands.declare();
         ProtectionCommands.declare();
+        // What those who build a modpack read of the game: the dumps, the reference, and what a reload did.
+        ModpackDumps.declare();
+        ReloadReport.listen();
         MediaCommand.declare();
         LogCommand.declare();
         DiagnosticCommands.declare();

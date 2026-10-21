@@ -243,3 +243,44 @@ With FTB Quests, a quest's tasks may be the Core's:
 
 Each is checked once a second for every player of the team with the quest open, and as they log in. A task naming
 something nothing declared waits rather than failing, so a quest written for a mod that is not installed is never met.
+
+## Tools for building the pack
+
+*Added 2026-10-21.*
+
+### What a reload says
+
+`/reload` reads the data packs again: recipes, loot tables, conditions, the unification, and every kind of data the
+Core reads. Once it is done, the server's operators are told, and the log too, how many recipes and loot tables the
+data holds now, what the unification made of them, and what waits for the game to start again, since a reload never
+registers anything new:
+
+- content packs changed on disk since the game started, whose blocks, items and materials are registered once;
+- settings changed in the game that take hold only on a restart, by file.
+
+When nothing waits, the last line says so.
+
+### Dumps
+
+`/jstech dump` writes what the game holds to `jstech-dump/` in the game's folder, each as a page of Markdown:
+
+| Command | Writes |
+| --- | --- |
+| `/jstech dump materials` | `materials.md`: every material, its kind, the forms it has things of, and its properties |
+| `/jstech dump forms` | `forms.md`: every form, what it is in the game, its common tags and the kinds it fits |
+| `/jstech dump recipes` | `recipes.md`: every kind of recipe the data holds, how many, and what wrote them |
+| `/jstech dump tags` | `tags.md`: every tag of items, blocks and fluids, with what is in it |
+| `/jstech dump hazards` | `hazards.md`: the hazards to bodies, those items carry and the items that carry them, those of dimensions |
+| `/jstech dump ids` | `ids.md`: every id the series' mods and the content packs registered, by namespace and registry |
+| `/jstech dump reference` | `reference/`: the generated reference, a small website |
+| `/jstech dump all` | all of the above |
+| `/jstech dump permissions` | `jstech-permissions/`: the permissions and LuckPerms' groups ([Protection](PROTECTION.md)) |
+
+### The generated reference
+
+`/jstech dump reference` writes a website of plain files, to open from the disk or put online as it is: every kind of
+data the Core reads, with the folder its files go in and one of the world's own files as the example; every data map
+of every mod, with the file it goes in and a few of its values; every kind of recipe, with one of the world's recipes
+written out; the conditions the Core gives data files; what a content pack declares; and every id. Each example is
+written by the thing's own codec from the game that runs, so the reference says what this game reads, with every mod
+it has installed.

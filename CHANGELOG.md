@@ -1015,6 +1015,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   under the machine kind's id. The Core is made before KubeJS, so its bindings are there for startup scripts.
 - (Core) Data networks: a machine joining or leaving one is told on the game's bus, `NetworkMemberEvent.Joined`
   and `NetworkMemberEvent.Left`.
+- (Core) Reloading clearly: after `/reload` the server's operators and the log are told how many recipes and loot
+  tables the data holds, what the unification made of them, and what waits for a restart: content packs changed on
+  disk, and settings that take hold only then.
+- (Core) `/jstech dump materials`, `forms`, `recipes`, `tags`, `hazards`, `ids`, `reference` and `all` write what
+  the game holds to `jstech-dump/`, each as a page of Markdown.
+- (Core) The generated reference: `/jstech dump reference` writes a website to put online with every kind of data
+  the Core reads, every mod's data maps and every kind of recipe, each with a real example the game's own codecs
+  wrote, the Core's conditions, what content packs declare, and every id.
 - (Core) CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - (Core) FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,

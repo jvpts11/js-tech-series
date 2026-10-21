@@ -79,8 +79,6 @@ public final class ProtectionCommands {
 
     /** Declares the commands, from the Core's constructor. */
     public static void declare() {
-        SeriesCommands.declare("dump", SeriesCommands.ADMINS, (node, context) -> node
-                .then(Commands.literal("permissions").executes(ProtectionCommands::dumpPermissions)));
         SeriesCommands.declare("audit", SeriesCommands.ADMINS, (node, context) -> node
                 .executes(source -> audit(source, entry -> true, 1))
                 .then(Commands.argument(PAGE_ARGUMENT, IntegerArgumentType.integer(1))
@@ -124,7 +122,11 @@ public final class ProtectionCommands {
         return out.toString();
     }
 
-    private static int dumpPermissions(final CommandContext<CommandSourceStack> context)
+    /**
+     * {@code /jstech dump permissions}: writes the permissions' table and LuckPerms' groups under
+     * {@code jstech-permissions/}; the dump command itself is declared with the others ({@code ModpackDumps}).
+     */
+    public static int dumpPermissions(final CommandContext<CommandSourceStack> context)
             throws CommandSyntaxException {
         final Path folder = FMLPaths.GAMEDIR.get().resolve(FOLDER);
         try {

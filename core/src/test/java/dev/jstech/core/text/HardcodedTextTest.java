@@ -110,6 +110,9 @@ class HardcodedTextTest {
     private static final String SIGNATURES = "signatures of the programming language's own calls";
     private static final String SAVE_TAG = "the tag a machine's parts are saved under";
     private static final String SETTINGS_FILE = "a settings file's own comments, English like every comment in it";
+    private static final String MODPACK_PAGES = "the dumps and the reference written for whoever builds a modpack, "
+            + "pages of Markdown and of a website in English as the log and the data formats are, with the files' "
+            + "own examples";
 
     /**
      * The files whose fixed text is data, not words to translate, and how many pieces each holds. The count is exact,
@@ -228,6 +231,9 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/guide/GuideSite.java", 32,
                     "a manual's website: its pages' markup, its search's script and its style sheet, which a browser "
                             + "reads; every word on its pages comes from the manual's keys"),
+            data("core/src/main/java/dev/jstech/core/modpack/ModpackDumps.java", 8, MODPACK_PAGES),
+            data("core/src/main/java/dev/jstech/core/modpack/ReferenceSite.java", 8, MODPACK_PAGES),
+            data("core/src/main/java/dev/jstech/core/modpack/References.java", 27, MODPACK_PAGES),
             data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"));
 
     /** Who a line for the developer is written through. */

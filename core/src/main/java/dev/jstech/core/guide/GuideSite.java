@@ -236,6 +236,11 @@ public final class GuideSite {
         return files;
     }
 
+    /** The style sheet of the site, a plain page like paper following the reader's light or dark setting. */
+    public static String styleSheet() {
+        return STYLE_SHEET;
+    }
+
     /** Where an entry's page is in the site: {@code entries/namespace/path.html}. */
     public static String pathOf(final String entry) {
         return ENTRIES + GuideIds.namespace(entry) + "/" + GuideIds.path(entry) + HTML;
