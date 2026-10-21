@@ -92,6 +92,31 @@ public final class ApiSurface {
     }
 
     /**
+     * Runs every check over one mod, for a build, and ends with a code that fails it when any says something:
+     * {@code ApiSurface <mod> <its java sources> <photos folder> <proposals folder> [<API class's file pattern>]}.
+     */
+    public static void main(final String[] args) {
+        if (args.length < 4) {
+            System.err.println("ApiSurface <mod> <its java sources> <photos folder> <proposals folder>"
+                    + " [<API class's file pattern>]");
+            System.exit(2);
+        }
+        final Builder builder = builder().mod(args[0], Path.of(args[1])).photos(Path.of(args[2]))
+                .proposals(Path.of(args[3]));
+        if (args.length > 4) {
+            builder.apiClass(args[4]);
+        }
+        final List<String> problems = builder.build().problems();
+        if (problems.isEmpty()) {
+            System.out.println("The API of " + args[0] + " keeps its promise.");
+            return;
+        }
+        System.err.println("The API of " + args[0] + " does not keep its promise:");
+        problems.forEach(problem -> System.err.println("  " + problem));
+        System.exit(1);
+    }
+
+    /**
      * Every source in an api package, or in one nested under it. A client half is a package of its own because a
      * dedicated server must not load a screen, not because it is any less of a promise.
      */

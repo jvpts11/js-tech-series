@@ -1072,6 +1072,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   of each test's time and a stall monitor for long runs. For client tests: the runner, its helper, reference pictures
   and shards balanced by duration, which any mod registers its tests with. For unit tests: the test of the API's
   surface the series keeps its promise with, and the data generation kept up to date (`checkGeneratedData`).
+- The Core's Gradle plugin, `dev.jstech.core`, published to the local Maven repository for now: applied
+  beside ModDevGradle, it gives a mod the Core as a dependency, a `gametest` source set for its tests with the test
+  kit, its runs (client, server, data, GameTests and client tests), the data generation into
+  `src/generated/resources` with its check, the check of its API against its photo, and its licence headers checked
+  and written (`checkLicenceHeaders`, `addLicenceHeaders`).
 - CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,

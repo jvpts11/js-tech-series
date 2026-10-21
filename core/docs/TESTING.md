@@ -44,7 +44,9 @@ dependencies {
 
 The series keeps its tests in a development-only mod of their own, the `tests` subproject, which depends on the kit
 and is loaded beside the mods in every development run; that way no shipped jar carries test code, and a test may
-span several mods. A mod can do the same, or put its tests in a source set of its own that its runs load.
+span several mods. A mod can do the same, or put its tests in a source set of its own that its runs load, which is
+what the Core's [Gradle plugin](GRADLE_PLUGIN.md) sets up: `src/gametest/java`, with the kit, loaded by the runs
+that test.
 
 ## Arenas made in code
 

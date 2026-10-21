@@ -9,7 +9,7 @@ plugins {
 }
 
 // One repository, several mods: the shared core library, one mod per module of the series, the Core's test kit that
-// a mod built on it tests itself with, and a development-only test mod that holds every test and hosts the dev runs,
-// which load all of them.
+// a mod built on it tests itself with, the Core's Gradle plugin that sets such a mod up, and a development-only test
+// mod that holds every test and hosts the dev runs, which load all of them.
 rootProject.name = 'js-tech-series'
-include 'core', 'computers', 'industrial', 'testkit', 'tests'
+include 'core', 'computers', 'industrial', 'testkit', 'gradle-plugin', 'tests'

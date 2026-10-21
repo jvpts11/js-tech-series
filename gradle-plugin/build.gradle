@@ -1,0 +1,57 @@
+// The Core's Gradle plugin, dev.jstech.core: a mod built on J's Core applies it and gets the Core as a dependency,
+// its development runs, the data generation, the check of its API and its licence headers. Published to the local
+// Maven repository for now (publishToMavenLocal), with the plugin's marker, so a build finds it by its id.
+plugins {
+    id 'java-gradle-plugin'
+}
+
+repositories {
+    // The ModDevGradle plugin the mods are built with, whose model the plugin sets up.
+    gradlePluginPortal()
+}
+
+// ModDevGradle beside the plugin in the functional tests' builds, so both load from the same classpath there, as they
+// do in a real build that names both in its plugins block.
+configurations {
+    modDevForTests
+}
+
+dependencies {
+    compileOnly "net.neoforged:moddev-gradle:${moddev_version}"
+    modDevForTests "net.neoforged:moddev-gradle:${moddev_version}"
+    testImplementation gradleTestKit()
+}
+
+tasks.named('pluginUnderTestMetadata', PluginUnderTestMetadata).configure {
+    pluginClasspath.from(configurations.modDevForTests)
+}
+
+gradlePlugin {
+    plugins {
+        register('jstechCore') {
+            id = 'dev.jstech.core'
+            displayName = "J's Core"
+            description = "Sets a mod up on J's Core: the dependency, the runs, the data generation, the check of " +
+                    "the API and the licence headers."
+            implementationClass = 'dev.jstech.gradle.JsTechPlugin'
+        }
+    }
+}
+
+// The plugin's own version, which is the Core's it sets a mod on unless told another.
+tasks.named('processResources', ProcessResources).configure {
+    def properties = [version: project.version.toString()]
+    inputs.properties properties
+    filesMatching('dev/jstech/gradle/plugin.properties') {
+        expand properties
+    }
+}
+
+// The functional tests build small projects with the plugin, the plugin's version known to them, and find the test
+// kit where the build has just published it, in place of the machine's own local repository.
+tasks.named('test', Test).configure {
+    dependsOn ':testkit:publishMavenJavaPublicationToPluginTestsRepository'
+    systemProperty 'jstech.gradle.version', project.version.toString()
+    systemProperty 'jstech.gradle.repository', rootProject.layout.buildDirectory.dir('plugin-test-repo').get()
+            .asFile.absolutePath
+}

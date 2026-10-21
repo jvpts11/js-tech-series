@@ -198,13 +198,21 @@ subprojects {
 
     publishing {
         publications {
-            register('mavenJava', MavenPublication) {
-                from components.java
+            // The Gradle plugin publishes itself, with the marker a build finds it by.
+            if (project.name != 'gradle-plugin') {
+                register('mavenJava', MavenPublication) {
+                    from components.java
+                }
             }
         }
         repositories {
             maven {
                 url = "file://${rootProject.projectDir}/repo"
+            }
+            // Where the Gradle plugin's tests find the Core and its test kit, as a mod's build finds them locally.
+            maven {
+                name = 'pluginTests'
+                url = rootProject.layout.buildDirectory.dir('plugin-test-repo')
             }
         }
     }

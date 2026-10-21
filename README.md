@@ -57,6 +57,8 @@ Until the entire series hit v1.0.0r, all mods of the J's Tech Series live here i
 - `industrial/`: J's Industrial (`jsindustrial`), the industrial mod.
 - `testkit/`: J's Core Test Kit (`jstestkit`), what a mod built on the Core writes its tests with. A test
   dependency, never installed; see [testkit/README.md](testkit/README.md).
+- `gradle-plugin/`: the Core's Gradle plugin, `dev.jstech.core`, which sets a mod built on the Core up; see
+  [gradle-plugin/README.md](gradle-plugin/README.md).
 - `tests/`: a development-only test mod. **It is not a mod to install.** It holds the tests of every mod
   and hosts the development runs; This mot is not intended to be used in-game, if you ever find this in your mods folder,
   uninstall, since this mod does nothing than just run tests for development, it also adds nothing to the game by itself. See
