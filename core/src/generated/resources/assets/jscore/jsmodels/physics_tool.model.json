@@ -1,0 +1,6 @@
+{
+  "model": "jscore:jsmodels/physics_tool.geo.json",
+  "textures": [
+    "jscore:textures/model/physics_tool.png"
+  ]
+}

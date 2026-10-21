@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.heat.HeatClimate;
 import dev.jstech.core.heat.HeatMath;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.time.GameCalendar;
 import dev.jstech.core.time.Season;
 import dev.jstech.core.time.WorldCalendar;
@@ -59,9 +60,13 @@ public final class BiomeClimates {
                 biome.value().getModifiedClimateSettings().downfall()));
     }
 
-    /** How warm it is at {@code pos} now, in degrees Celsius: its biome's climate, at its height, on today's date. */
+    /**
+     * How warm it is at {@code pos} now, in degrees Celsius: its biome's climate, at its height, on today's date; for a
+     * block aboard a moving structure, of where the structure is in the world.
+     */
     public static double celsius(final Level level, final BlockPos pos) {
-        return of(level.getBiome(pos)).celsius(pos.getY(), dayOfYear(level), daysAYear());
+        final BlockPos at = MovingStructures.inWorld(level, pos);
+        return of(level.getBiome(at)).celsius(at.getY(), dayOfYear(level), daysAYear());
     }
 
     /**

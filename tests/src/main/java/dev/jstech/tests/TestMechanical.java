@@ -110,6 +110,9 @@ public final class TestMechanical {
             "Test large pulley", MechanicalPartSpec.pulley(2 * SMALL_RADIUS, 0.08, 0.1));
     public static final BlockEntry<MechanicalPartBlock> TORQUE_METER = part("test_torque_meter",
             "Test torque meter", MechanicalPartSpec.torqueMeter(0.005, 0.0));
+    /** A propeller on a shaft, pushing north with its full thrust at the crank's top speed (its physics' data). */
+    public static final BlockEntry<MechanicalPartBlock> PROPELLER = part("test_propeller", "Test propeller",
+            MechanicalPartSpec.shaft(0.01, 0.1));
     /* Its item model is written by hand. */
     public static final ItemEntry<ShaftLinkItem> BELT = TestSounds.CONTENT.item("test_belt",
             properties -> new ShaftLinkItem(properties, false, BELT_REACH)).named("Test belt")
@@ -125,7 +128,7 @@ public final class TestMechanical {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MechanicalPartBlockEntity>> PART =
             TestSounds.CONTENT.blockEntity("test_mechanical_part", (pos, state) -> new MechanicalPartBlockEntity(
                     TestMechanical.PART.get(), pos, state), SHAFT, SMALL_GEAR, LARGE_GEAR, GEARBOX, FLYWHEEL, CLUTCH,
-                    BRAKE, CONTROLLER, SHEAR_PIN, WEAK_SHAFT, SMALL_PULLEY, LARGE_PULLEY, TORQUE_METER);
+                    BRAKE, CONTROLLER, SHEAR_PIN, WEAK_SHAFT, SMALL_PULLEY, LARGE_PULLEY, TORQUE_METER, PROPELLER);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrankBlockEntity>> CRANK_ENTITY =
             TestSounds.CONTENT.blockEntity("test_crank", CrankBlockEntity::new, CRANK);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LoadBlockEntity>> LOAD_ENTITY =

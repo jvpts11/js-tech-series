@@ -116,7 +116,26 @@ public final class MovingStructureMountGameTests {
         helper.assertTrue(MovingStructures.mount(engine, deck, Optional.empty()).ok(), "the deck holds the engine");
         deck.move(PhysicsMotion.AT_REST);
         final double start = deck.worldBox().minY;
-        helper.runAfterDelay(15, () -> {
+        // The first tick the engine stood apart from where the deck has it, and how both stood then.
+        final String[] apart = {null};
+        final int[] ticks = {0};
+        helper.onEachTick(() -> {
+            ticks[0]++;
+            if (apart[0] != null || engine.mount() == null) {
+                return;
+            }
+            final StructurePose placed = deck.frame().placed(engine.mount().local());
+            if (placed.distanceTo(engine.pose()) >= CLOSE || placed.angleTo(engine.pose()) >= CLOSE) {
+                apart[0] = "apart first at tick " + ticks[0] + " by " + placed.distanceTo(engine.pose())
+                        + ", the engine ready " + engine.ready() + ", moved by " + engine.motion() + ", the deck "
+                        + (deck.physics() == null ? "-" : "awake " + !deck.physics().asleep() + " active "
+                        + deck.physics().active()) + ", resting " + deck.resting() + "; from the deck's last frame "
+                        + deck.previousFrame().placed(engine.mount().local()).distanceTo(engine.pose());
+            }
+        });
+        // Looked at soon: a deck this light climbs fast, tumbling on its lever, and in a few more ticks it is out of
+        // the loaded land round the arena, where the engine's entity is unloaded and stops following it.
+        helper.runAfterDelay(6, () -> {
             helper.assertTrue(deck.worldBox().minY > start + 1, "the engine it holds lifts it: "
                     + deck.worldBox().minY + " from " + start);
             final StructurePose placed = deck.frame().placed(engine.mount().local());
@@ -126,7 +145,7 @@ public final class MovingStructureMountGameTests {
                             + "; from where the deck stood the tick before " + before.distanceTo(engine.pose())
                             + ", going "
                             + (deck.physics() == null ? "-" : deck.physics().body().velocity() + " turning "
-                            + deck.physics().body().spin()));
+                            + deck.physics().body().spin()) + "; " + apart[0]);
             MovingStructures.takeAway(engine);
             MovingStructures.takeAway(deck);
             helper.succeed();

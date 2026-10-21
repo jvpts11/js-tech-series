@@ -45,7 +45,7 @@ public final class BlockDensity {
     /** Each block's density, in kilograms a cubic metre. */
     public static final DataMapType<Block, Double> DENSITY = DataMapType.builder(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "block_density"), Registries.BLOCK,
-            Codec.doubleRange(0.0, 50_000.0)).build();
+            Codec.doubleRange(0.0, 50_000.0)).synced(Codec.doubleRange(0.0, 50_000.0), false).build();
     /* Water's and lava's, and that of a full block the map and its material say nothing of. */
     private static final double WATER = 1_000.0;
     private static final double LAVA = 3_100.0;

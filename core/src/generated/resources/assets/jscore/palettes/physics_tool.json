@@ -1,0 +1,14 @@
+{
+  "beamCore": "#FFE8FCFF",
+  "beamGlow": "#7040C8F0",
+  "chosen": "#FFFFFFFF",
+  "dot": "#FFFFFFFF",
+  "hint": "#FFA0A4AC",
+  "label": "#D0283444",
+  "labelHeld": "#FF40E0E0",
+  "labelName": "#FFE8ECF2",
+  "panel": "#D0202428",
+  "ring": "#FF40E0E0",
+  "text": "#FFE8E8E8",
+  "title": "#FFE8ECF2"
+}

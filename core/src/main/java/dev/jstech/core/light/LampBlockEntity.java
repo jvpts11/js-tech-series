@@ -43,6 +43,8 @@ public class LampBlockEntity extends SyncedBlockEntity {
     private static final int BUFFER_SECONDS = 10;
     private static final int TICKS_A_SECOND = 20;
     private static final int BEAM_EVERY = 20;
+    /* How often a beam aboard a moving structure is cast again while it goes, in ticks: it sweeps the world. */
+    private static final int BEAM_ABOARD = 2;
     private static final int FLICKER_EVERY = 2;
     private static final int MOST_STORED = 1_000_000;
     /* The lamps the player's game has, for their glow; the server's game keeps none. */
@@ -183,7 +185,8 @@ public class LampBlockEntity extends SyncedBlockEntity {
         if (wasOn != nowOn || kind.flicker().steady() || time % FLICKER_EVERY == 0) {
             light(level, nowOn ? kind.levelAt(time / (double) TICKS_A_SECOND, this.worldPosition.asLong()) : 0);
         }
-        if (kind.shape() != LightKind.Shape.POINT && (wasOn != nowOn || time % BEAM_EVERY == 0)) {
+        if (kind.shape() != LightKind.Shape.POINT && (wasOn != nowOn || time % BEAM_EVERY == 0
+                || time % BEAM_ABOARD == 0 && Beams.goingAboard(level, this.worldPosition))) {
             if (nowOn) {
                 BeamLights.light(level, this.worldPosition.asLong(), Beams.lamp(level, this.worldPosition, facing(),
                         kind, kind.intensity()));

@@ -66,5 +66,9 @@ public final class StructureClientHooks {
         /** The server told what a structure shows of itself going: its engines, its glowing faces, its trails. */
         default void effects(final StructureEffectsPayload payload) {
         }
+
+        /** The server told the forces on a structure the player looks at. */
+        default void forces(final StructureForcesPayload payload) {
+        }
     }
 }

@@ -139,6 +139,7 @@ import dev.jstech.tests.clienttest.core.FireClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructurePhysicsClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureLifeClientTests;
+import dev.jstech.tests.clienttest.core.MovingStructureToolsClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
@@ -231,6 +232,7 @@ public final class ClientTestSuite {
             MovingStructureClientTests.class,
             MovingStructurePhysicsClientTests.class,
             MovingStructureLifeClientTests.class,
+            MovingStructureToolsClientTests.class,
             WorldStabilityClientTests.class,
             ManualClientTests.class,
             SeriesManualsClientTests.class,

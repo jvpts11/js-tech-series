@@ -83,7 +83,8 @@ public record BlockPhysics(Optional<Double> mass, Optional<Thrust> thrust, Optio
             .apply(instance, BlockPhysics::new));
     /** Each block's physics, by the block. */
     public static final DataMapType<Block, BlockPhysics> PHYSICS = DataMapType.builder(
-            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "block_physics"), Registries.BLOCK, CODEC).build();
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "block_physics"), Registries.BLOCK, CODEC)
+            .synced(CODEC, false).build();
 
     /** Hands the mod's bus the data map, once, from the Core's constructor. */
     public static void listen(final IEventBus modBus) {
@@ -204,15 +205,19 @@ public record BlockPhysics(Optional<Double> mass, Optional<Thrust> thrust, Optio
      * @param kind     how it throws its thrust: a rocket's anywhere, a jet's and a propeller's by the air
      * @param exhaust  the speed a propeller throws the air back at, in metres a second: it gives nothing at it
      * @param throttle where the signal setting its throttle reaches it from, full at 15
+     * @param shaft    for a propeller turned by a shaft, the speed it gives its full thrust at, in revolutions a
+     *                 minute: its throttle is how fast the shaft turns it, of that; none for one its signal sets
      */
-    public record Thrust(double newtons, Aerodynamics.ThrustKind kind, double exhaust, SignalSide throttle) {
+    public record Thrust(double newtons, Aerodynamics.ThrustKind kind, double exhaust, SignalSide throttle,
+                         Optional<Double> shaft) {
 
         public static final Codec<Thrust> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.doubleRange(0, 1.0e10).fieldOf("newtons").forGetter(Thrust::newtons),
                 StableCodecs.byName(Aerodynamics.ThrustKind.class).optionalFieldOf("kind",
                         Aerodynamics.ThrustKind.ROCKET).forGetter(Thrust::kind),
                 Codec.doubleRange(0, 10_000).optionalFieldOf("exhaust", 0.0).forGetter(Thrust::exhaust),
-                SignalSide.CODEC.optionalFieldOf("throttle", SignalSide.ANY).forGetter(Thrust::throttle))
+                SignalSide.CODEC.optionalFieldOf("throttle", SignalSide.ANY).forGetter(Thrust::throttle),
+                Codec.doubleRange(1, 1.0e5).optionalFieldOf("shaft").forGetter(Thrust::shaft))
                 .apply(instance, Thrust::new));
     }
 

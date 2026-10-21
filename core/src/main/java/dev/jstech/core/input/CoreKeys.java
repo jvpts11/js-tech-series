@@ -12,6 +12,7 @@ import dev.jstech.core.audio.AudioTexts;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.item.ItemTexts;
+import dev.jstech.core.moving.ForceDiagramTexts;
 import dev.jstech.core.notification.NotificationTexts;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -20,9 +21,10 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * The Core's own keys: turning off the last sound heard, which the player's game does alone, changing the mode of
- * the item in the main hand, which the server does, opening an item's page in the manual, and opening the history of
- * notifications. The first two have no key until the player gives them one; the manual's is M, which every manual's
- * tooltip names, and the history's N.
+ * the item in the main hand, which the server does, opening an item's page in the manual, opening the history of
+ * notifications, opening the diagram of forces of a moving structure, and showing the physics of the structures near.
+ * The first two and the last have no key until the player gives them one; the manual's is M, which every manual's
+ * tooltip names, the history's N, and the forces' K.
  */
 @TextHolder
 public final class CoreKeys {
@@ -55,6 +57,19 @@ public final class CoreKeys {
                     ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "notifications"),
                     NotificationTexts.HISTORY_KEY)
             .key(GLFW.GLFW_KEY_N));
+
+    /**
+     * Opens the diagram of forces of the moving structure the player stands on, sits in or looks at, and, held over a
+     * block's tooltip, shows its physics. K, until the player changes it.
+     */
+    public static final KeyAction STRUCTURE_FORCES = KeyActions.declare(KeyAction.builder(
+                    ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "structure_forces"), ForceDiagramTexts.KEY)
+            .key(GLFW.GLFW_KEY_K));
+
+    /** Shows, in the world, the physics of the moving structures near: no key until given one. */
+    public static final KeyAction SHOW_STRUCTURE_DEBUG = KeyActions.declare(KeyAction.builder(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "show_structure_debug"),
+            ForceDiagramTexts.DEBUG_KEY));
 
     private CoreKeys() {
     }

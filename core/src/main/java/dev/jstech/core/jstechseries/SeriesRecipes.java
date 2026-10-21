@@ -9,12 +9,17 @@ package dev.jstech.core.jstechseries;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.config.CoreConfigKeys;
+import dev.jstech.core.item.SwitchedShapedRecipe;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
 import dev.jstech.core.jstechseries.energy.SharedEnergy;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
+import dev.jstech.core.jstechseries.tools.PhysicsTool;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.core.multipart.MicroblockRecipes;
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -26,8 +31,12 @@ import net.minecraft.data.recipes.SpecialRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import net.neoforged.neoforge.common.conditions.NotCondition;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The recipes of the series' shared content, of the game's own materials, so a mod used alone can make it. The basic
@@ -85,7 +94,33 @@ public final class SeriesRecipes extends RecipeProvider {
         SpecialRecipeBuilder.special(MicroblockRecipes.SawCut::new).save(output, id("saw_cut"));
         SpecialRecipeBuilder.special(MicroblockRecipes.Join::new).save(output, id("microblock_join"));
         SpecialRecipeBuilder.special(MicroblockRecipes.Facade::new).save(output, id("facade"));
+        // An iron body round a lodestone, the field it holds with, an amethyst at its muzzle and redstone in its grip;
+        // made only while its setting says so.
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, PhysicsTool.ITEM.get())
+                .pattern(" IA").pattern("ILI").pattern("RI ")
+                .define('I', Items.IRON_INGOT).define('L', Items.LODESTONE).define('A', Items.AMETHYST_SHARD)
+                .define('R', Items.REDSTONE)
+                .unlockedBy("has_lodestone", has(Items.LODESTONE))
+                .save(switched(output, CoreConfigKeys.FILE.name(), CoreConfigKeys.MOVING_PHYSICS_TOOL_RECIPE
+                        .dottedPath()), id("physics_tool"));
         converters(output);
+    }
+
+    /* Where a shaped recipe goes made one a setting turns on and off. */
+    private static RecipeOutput switched(final RecipeOutput output, final String file, final String setting) {
+        return new RecipeOutput() {
+            @Override
+            public void accept(final ResourceLocation id, final Recipe<?> recipe,
+                               @Nullable final AdvancementHolder advancement, final ICondition... conditions) {
+                output.accept(id, new SwitchedShapedRecipe(file, setting, (ShapedRecipe) recipe), advancement,
+                        conditions);
+            }
+
+            @Override
+            public Advancement.Builder advancement() {
+                return output.advancement();
+            }
+        };
     }
 
     /*

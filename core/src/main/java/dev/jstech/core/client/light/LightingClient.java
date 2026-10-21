@@ -59,7 +59,8 @@ public final class LightingClient {
         }
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
         final PoseStack poses = event.getPoseStack();
-        BeamVisuals.draw(level, event.getCamera(), poses, buffers);
+        BeamVisuals.draw(level, event.getCamera(), poses, buffers,
+                event.getPartialTick().getGameTimeDeltaPartialTick(false));
         Halos.draw(level, event.getCamera(), poses, buffers);
         buffers.endBatch(LightRenderTypes.GLOW);
     }

@@ -66,6 +66,10 @@ public final class StructureSync {
                         StructureSync::onHandOff)
                 .playToClient(StructureEffectsPayload.TYPE, StructureEffectsPayload.STREAM_CODEC,
                         StructureSync::onEffects)
+                .playToClient(StructureForcesPayload.TYPE, StructureForcesPayload.STREAM_CODEC,
+                        StructureSync::onForces)
+                .playToServer(StructureForcesWatchPayload.TYPE, StructureForcesWatchPayload.STREAM_CODEC,
+                        StructureSync::onForcesWatch)
                 .playToServer(StructureFootingPayload.TYPE, StructureFootingPayload.STREAM_CODEC,
                         StructureSync::onFooting)
                 .playToServer(StructureHelmPayload.TYPE, StructureHelmPayload.STREAM_CODEC, StructureSync::onHelm)
@@ -407,6 +411,19 @@ public final class StructureSync {
     /* Runs on a client only: the payload is only ever sent to one. */
     private static void onEffects(final StructureEffectsPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> StructureClientHooks.get().effects(payload));
+    }
+
+    /* Runs on a client only: the payload is only ever sent to one. */
+    private static void onForces(final StructureForcesPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> StructureClientHooks.get().forces(payload));
+    }
+
+    private static void onForcesWatch(final StructureForcesWatchPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) {
+                StructureForceWatch.watched(player, payload);
+            }
+        });
     }
 
     private static void onHelm(final StructureHelmPayload payload, final IPayloadContext context) {

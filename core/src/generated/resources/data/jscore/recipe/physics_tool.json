@@ -1,0 +1,29 @@
+{
+  "type": "jscore:crafting_shaped_switch",
+  "category": "equipment",
+  "file": "jstech-balance",
+  "key": {
+    "A": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "minecraft:lodestone"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    " IA",
+    "ILI",
+    "RI "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jscore:physics_tool"
+  },
+  "setting": "moving_structures.physics_tool_recipe"
+}

@@ -93,6 +93,7 @@ import dev.jstech.core.jstechseries.projector.client.ProjectorClient;
 import dev.jstech.core.jstechseries.atmosphere.client.AtmosphereClient;
 import dev.jstech.core.jstechseries.probe.client.NetworkProbeClient;
 import dev.jstech.core.jstechseries.probe.client.SignalProbeClient;
+import dev.jstech.core.jstechseries.tools.client.PhysicsToolClient;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -178,6 +179,7 @@ public final class JsCoreClient {
         MotionClock.listen();
         NetworkProbeClient.listen(modEventBus);
         SignalProbeClient.listen(modEventBus);
+        PhysicsToolClient.listen(modEventBus);
         NotificationsClient.listen(modEventBus);
         OverheadWireRenderer.listen();
         PartMotions.listen();

@@ -8,6 +8,9 @@
 package dev.jstech.core.moving.physics;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.mechanical.IMechanicalPart;
+import dev.jstech.core.mechanical.MechanicalPorts;
+import dev.jstech.core.moving.StructureBalance;
 import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.YardLayout;
@@ -105,32 +108,45 @@ final class StructureForces {
         floating = 0;
         moving = body;
         PhysicsWorld.gravity(level, body.position(), gravity);
+        // With gravity turned off nothing weighs, so nothing floats or levitates either: those answer its pull.
+        if (!StructureBalance.force(ForceSum.ForceKind.GRAVITY)) {
+            gravity.zero();
+        }
         up.set(gravity).negate();
         if (up.lengthSquared() > 0) {
             up.normalize();
         }
         sum.addAtCentre(ForceSum.ForceKind.GRAVITY, new Vector3d(gravity).mul(mass));
-        for (final Long2DoubleMap.Entry each : parts.displaced().long2DoubleEntrySet()) {
-            buoyancy(level, frame, each.getLongKey(), each.getDoubleValue(), sum);
+        if (StructureBalance.force(ForceSum.ForceKind.BUOYANCY)) {
+            for (final Long2DoubleMap.Entry each : parts.displaced().long2DoubleEntrySet()) {
+                buoyancy(level, frame, each.getLongKey(), each.getDoubleValue(), sum);
+            }
+            for (final long air : parts.hull(bounds, level.getGameTime())) {
+                buoyancy(level, frame, air, 1.0, sum);
+            }
         }
-        for (final long air : parts.hull(bounds, level.getGameTime())) {
-            buoyancy(level, frame, air, 1.0, sum);
+        if (StructureBalance.force(ForceSum.ForceKind.DRAG)) {
+            drag(level, frame, parts, body, mass, seconds, sum);
         }
-        drag(level, frame, parts, body, mass, seconds, sum);
+        final boolean thrusts = StructureBalance.force(ForceSum.ForceKind.THRUST);
+        final boolean lifts = StructureBalance.force(ForceSum.ForceKind.LIFT);
+        final boolean pulls = StructureBalance.force(ForceSum.ForceKind.MAGNETISM);
         double levitation = 0;
         final Vector3d levitators = new Vector3d();
         for (final StructureParts.Part part : parts.parts()) {
             final BlockPos pos = part.pos();
             FrameMath.middle(frame, pos.getX(), pos.getY(), pos.getZ(), point);
             final BlockPhysics physics = part.physics();
-            if (physics.thrust().isPresent()) {
+            if (thrusts && physics.thrust().isPresent()) {
                 thrust(level, frame, part, physics.thrust().get(), body, sum);
             }
             if (physics.wing().isPresent()) {
-                wing(level, frame, part, physics.wing().get(), body, sum);
+                if (lifts) {
+                    wing(level, frame, part, physics.wing().get(), body, sum);
+                }
                 wings.add(pos.asLong());
             }
-            if (physics.magnet().isPresent()) {
+            if (pulls && physics.magnet().isPresent()) {
                 magnet(level, part, physics.magnet().get(), sum);
             }
             if (physics.levitation().isPresent()) {
@@ -138,7 +154,7 @@ final class StructureForces {
                 levitators.fma(physics.levitation().get(), point);
             }
         }
-        if (levitation > 0 && gravity.lengthSquared() > 0) {
+        if (levitation > 0 && gravity.lengthSquared() > 0 && StructureBalance.force(ForceSum.ForceKind.LEVITATION)) {
             levitate(levitation, levitators.div(levitation), mass, body, seconds, sum);
         }
     }
@@ -179,8 +195,15 @@ final class StructureForces {
     private void thrust(final Level level, final StructureFrame frame, final StructureParts.Part part,
                         final BlockPhysics.Thrust thrust, final RigidBody body, final ForceSum sum) {
         FrameMath.turned(part.way(), frame, way);
-        final double throttle = Math.max(BlockPhysics.signal(level, part.pos(), part.way(), thrust.throttle()) / FULL,
+        double throttle = Math.max(BlockPhysics.signal(level, part.pos(), part.way(), thrust.throttle()) / FULL,
                 controls.forEngine(new Vec3(way.x, way.y, way.z), level.getGameTime()));
+        if (thrust.shaft().isPresent()) {
+            // A propeller on a shaft throws the air as fast as the shaft turns it, either way round.
+            final IMechanicalPart turning = MechanicalPorts.at(level, part.pos(), null);
+            if (turning != null) {
+                throttle = Math.max(throttle, Math.min(1, Math.abs(turning.rpm()) / thrust.shaft().get()));
+            }
+        }
         if (throttle <= 0) {
             return;
         }
@@ -307,7 +330,11 @@ final class StructureForces {
 
     /* How fast the air, or the liquid, goes past the point {@code at}: the wind less the structure's own, into air. */
     private void flowAt(final Level level, final RigidBody body, final Vector3d at) {
-        PhysicsWorld.wind(level, at, wind);
+        if (StructureBalance.wind()) {
+            PhysicsWorld.wind(level, at, wind);
+        } else {
+            wind.zero();
+        }
         body.velocityAt(at, air);
         air.negate().add(wind);
     }

@@ -107,6 +107,7 @@ import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.integration.opac.OpacIntegration;
 import dev.jstech.core.item.ItemStates;
+import dev.jstech.core.item.SwitchedShapedRecipe;
 import dev.jstech.core.jstechseries.ElementNaming;
 import dev.jstech.core.jstechseries.JsTechTab;
 import dev.jstech.core.jstechseries.SeriesDeposits;
@@ -142,6 +143,7 @@ import dev.jstech.core.jstechseries.lines.LinesGuide;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.core.jstechseries.probe.NetworkProbe;
 import dev.jstech.core.jstechseries.probe.SignalProbe;
+import dev.jstech.core.jstechseries.tools.PhysicsTool;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.core.jstechseries.tools.ToolsGuide;
 import dev.jstech.core.language.LanguageRegistry;
@@ -377,6 +379,9 @@ public final class JsCore {
         SeriesFire.declare();
         MultiblockBuilder.declare();
         SharedTools.declare();
+        // The physics tool, and the shaped recipe a setting turns on and off that makes it.
+        SwitchedShapedRecipe.declare();
+        PhysicsTool.declare();
         NetworkProbe.declare();
         SignalProbe.declare();
         SharedPipes.declare();
@@ -475,6 +480,7 @@ public final class JsCore {
         FireSafety.listen(modEventBus);
         NetworkProbe.listen(modEventBus);
         SignalProbe.listen(modEventBus);
+        PhysicsTool.listen(modEventBus);
         MultiblockBuilder.listen(modEventBus);
         SharedEnergy.listen(modEventBus);
         EnergyConverters.listen(modEventBus);

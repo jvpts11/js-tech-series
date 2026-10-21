@@ -9,11 +9,13 @@ package dev.jstech.core.heat;
 
 import dev.jstech.core.dimension.Climate;
 import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.moving.MovingStructures;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The place around a block as heat meets it: how hot it is, and how thick its air is, which says how much the air
@@ -50,16 +52,35 @@ public final class HeatClimate {
         return pressure(level, pos) < VACUUM_KPA;
     }
 
-    /** The air around {@code pos}: its own, where a source gives it, or its dimension's. */
+    /**
+     * The air around {@code pos}: its own, where a source gives it, or its dimension's. A block aboard a moving
+     * structure is out in the yard: a room aboard holding it gives it its air, else the air of where the structure
+     * is in the world, a hangar's room round a ship or the thin air its height gives.
+     */
     public static Air air(final Level level, final BlockPos pos) {
+        final Air own = fromSources(level, pos);
+        if (own != null) {
+            return own;
+        }
+        final BlockPos at = MovingStructures.inWorld(level, pos);
+        if (at != pos) {
+            final Air round = fromSources(level, at);
+            if (round != null) {
+                return round;
+            }
+        }
+        final Climate here = DimensionRulesData.of(level).at(at.getY() + 0.5);
+        return new Air(HeatMath.kelvin(here.temperature()), here.pressure());
+    }
+
+    private static @Nullable Air fromSources(final Level level, final BlockPos pos) {
         for (final IClimateSource source : SOURCES) {
             final Air own = source.at(level, pos);
             if (own != null) {
                 return own;
             }
         }
-        final Climate here = DimensionRulesData.of(level).at(pos.getY() + 0.5);
-        return new Air(HeatMath.kelvin(here.temperature()), here.pressure());
+        return null;
     }
 
     /**

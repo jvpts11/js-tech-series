@@ -563,6 +563,65 @@ public final class CoreConfigKeys {
                     + "becomes as many structures as it now is, each going its own way; off, it holds together.")
             .named("Broken structures part");
 
+    /** Whether gravity pulls moving structures moving by their physics. */
+    public static final ConfigKey<Boolean> MOVING_GRAVITY = ConfigKey.flag(MOVING + ".gravity", true)
+            .comment("Whether gravity pulls moving structures moving by their physics; off, they float where they "
+                    + "are let go.")
+            .named("Gravity on structures");
+
+    /** Whether the faces of moving structures drag in the air and in liquids. */
+    public static final ConfigKey<Boolean> MOVING_DRAG = ConfigKey.flag(MOVING + ".drag", true)
+            .comment("Whether the faces of moving structures drag as they meet the air and liquids; off, nothing "
+                    + "slows them but what they touch.")
+            .named("Drag on structures");
+
+    /** Whether the wings of moving structures lift. */
+    public static final ConfigKey<Boolean> MOVING_LIFT = ConfigKey.flag(MOVING + ".lift", true)
+            .comment("Whether the wings, sails and rudders of moving structures lift and turn them by the air going "
+                    + "past.")
+            .named("Lift of wings");
+
+    /** Whether the engines of moving structures push. */
+    public static final ConfigKey<Boolean> MOVING_THRUST = ConfigKey.flag(MOVING + ".thrust", true)
+            .comment("Whether the engines and propellers of moving structures push.")
+            .named("Thrust of engines");
+
+    /** Whether liquids, the air a hull holds and balloons hold moving structures up. */
+    public static final ConfigKey<Boolean> MOVING_BUOYANCY = ConfigKey.flag(MOVING + ".buoyancy", true)
+            .comment("Whether liquids, the air a hull holds and the balloons aboard hold moving structures up; off, "
+                    + "a ship sinks and a balloon lies on the ground.")
+            .named("Buoyancy and balloons");
+
+    /** Whether the levitators of moving structures hold them up. */
+    public static final ConfigKey<Boolean> MOVING_LEVITATION = ConfigKey.flag(MOVING + ".levitation", true)
+            .comment("Whether the levitators aboard moving structures hold them up.")
+            .named("Levitation");
+
+    /** Whether the magnets of moving structures pull. */
+    public static final ConfigKey<Boolean> MOVING_MAGNETISM = ConfigKey.flag(MOVING + ".magnetism", true)
+            .comment("Whether the magnets aboard moving structures pull them towards the magnetic blocks of the "
+                    + "world.")
+            .named("Magnetism");
+
+    /** Whether the wind blows on moving structures. */
+    public static final ConfigKey<Boolean> MOVING_WIND = ConfigKey.flag(MOVING + ".wind", true)
+            .comment("Whether the wind blows on moving structures, pushing sails and balloons and drifting light "
+                    + "craft; off, the air they meet is still.")
+            .named("Wind on structures");
+
+    /** Whether the blows of moving structures break the blocks they are too hard for. */
+    public static final ConfigKey<Boolean> MOVING_IMPACT_DAMAGE = ConfigKey.flag(MOVING + ".impact_damage", true)
+            .comment("Whether a blow of a moving structure harder than a block holds, by its blast strength, breaks "
+                    + "it, of the world or of the structure; off, structures meet and bounce, and nothing breaks.")
+            .named("Impacts break blocks");
+
+    /** Whether the physics tool is made by its recipe. */
+    public static final ConfigKey<Boolean> MOVING_PHYSICS_TOOL_RECIPE = ConfigKey.flag(MOVING
+                    + ".physics_tool_recipe", true)
+            .comment("Whether the physics tool is made at a crafting table; off, only a command or the creative "
+                    + "menu gives it.")
+            .named("Physics tool recipe");
+
     /** How far from the controller the player may be while a tool builds a multiblock. */
     public static final ConfigKey<Integer> MULTIBLOCK_BUILD_REACH = ConfigKey.whole(
             MULTIBLOCK + ".build_reach", BuildBalance.DEFAULT_REACH).range(MIN_BUILD_REACH, MAX_BUILD_REACH)
@@ -591,7 +650,8 @@ public final class CoreConfigKeys {
                     + "machines that overheat, fires and burns.")
             .sectionComment(MECHANICAL, "What mechanical power does to the world: parts that break under overload.")
             .sectionComment(MOVING, "The moving structures: how big one may be, how much of a tick their "
-                    + "physics may take, and whether one broken in two parts.")
+                    + "physics may take, whether one broken in two parts, which forces of their physics act, whether "
+                    + "their blows break blocks, and whether the physics tool has a recipe.")
             .sectionComment(MULTIBLOCK, "Building multiblocks for players: how fast, and how far from them.")
             .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
@@ -660,6 +720,16 @@ public final class CoreConfigKeys {
             .key(MOVING_MOST_BLOCKS, StructureBalance::mostBlocks)
             .key(MOVING_PHYSICS_MILLIS, StructureBalance::physicsMillis)
             .key(MOVING_SPLIT, StructureBalance::split)
+            .key(MOVING_GRAVITY, StructureBalance::gravity)
+            .key(MOVING_DRAG, StructureBalance::drag)
+            .key(MOVING_LIFT, StructureBalance::lift)
+            .key(MOVING_THRUST, StructureBalance::thrust)
+            .key(MOVING_BUOYANCY, StructureBalance::buoyancy)
+            .key(MOVING_LEVITATION, StructureBalance::levitation)
+            .key(MOVING_MAGNETISM, StructureBalance::magnetism)
+            .key(MOVING_WIND, StructureBalance::wind)
+            .key(MOVING_IMPACT_DAMAGE, StructureBalance::impacts)
+            .key(MOVING_PHYSICS_TOOL_RECIPE, StructureBalance::physicsToolRecipe)
             .key(MULTIBLOCK_BLOCKS_PER_SECOND, BuildBalance::setBlocksPerSecond)
             .key(MULTIBLOCK_BUILD_REACH, BuildBalance::setReach)
             .key(ROOMS_DECOMPRESSION_PULL, RoomBalance::setDecompressionPull)

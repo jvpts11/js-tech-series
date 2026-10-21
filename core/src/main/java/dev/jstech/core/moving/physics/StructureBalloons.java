@@ -9,6 +9,7 @@ package dev.jstech.core.moving.physics;
 
 import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.material.Materials;
+import dev.jstech.core.moving.StructureBalance;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.room.GasMath;
@@ -107,7 +108,7 @@ final class StructureBalloons {
             // The room's gas is counted as at the temperature rooms keep; warmer, it fills more, and spills out.
             final double inside = gas / volume * GasMath.TEMPERED / kelvin;
             final double lift = (outsideDensity - inside) * volume;
-            if (lift != 0) {
+            if (lift != 0 && StructureBalance.force(ForceSum.ForceKind.BALLOONS)) {
                 // A gas lighter than the air rises to the top of its envelope: the lift is there, so a balloon
                 // hangs upright under it.
                 final double light = kelvin > outside ? 1 : lightShare(room);

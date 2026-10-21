@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.signal;
 
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.team.CoreTeams;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -40,7 +41,8 @@ import org.jetbrains.annotations.Nullable;
  * goes or is tuned again, and every {@link #RECHECK_EVERY} ticks for the walls built and broken meanwhile; a new value
  * is only handed to the receivers already known to hear it. Everything waits for the end of the server's tick, so a
  * frequency changed many times in one tick is worked out once, and a receiver is told only of a reception that changed.
- * Radios are on the air while their chunks are loaded.
+ * Radios are on the air while their chunks are loaded. A radio aboard a moving structure is heard from where the
+ * structure carries it, so one going away is heard less as the frequencies are worked out again.
  */
 public final class SignalRadio {
 
@@ -342,15 +344,19 @@ public final class SignalRadio {
         if (emission.at.equals(at)) {
             return RadioReach.MOST_BARS;
         }
-        final Vec3 from = Vec3.atCenterOf(emission.at.pos());
-        final Vec3 to = Vec3.atCenterOf(at.pos());
+        final ServerLevel level = server.getLevel(at.dimension());
+        if (level == null) {
+            return 0;
+        }
+        // A radio aboard a moving structure is heard from where the structure has it in the world, not its yard.
+        final Vec3 from = MovingStructures.inWorld(level, Vec3.atCenterOf(emission.at.pos()));
+        final Vec3 to = MovingStructures.inWorld(level, Vec3.atCenterOf(at.pos()));
         final double distance = from.distanceTo(to);
         if (!RadioReach.heard(emission.power, distance, 0)) {
             return 0;
         }
-        final ServerLevel level = server.getLevel(at.dimension());
-        return level == null ? 0 : RadioReach.bars(emission.power, distance, walls(level, from, to,
-                emission.at.pos(), at.pos()));
+        return RadioReach.bars(emission.power, distance, walls(level, from, to, BlockPos.containing(from),
+                BlockPos.containing(to)));
     }
 
     /*

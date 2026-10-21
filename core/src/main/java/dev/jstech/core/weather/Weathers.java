@@ -12,6 +12,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.data.DataRegistry;
 import dev.jstech.core.dimension.Winds;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.DimensionState;
@@ -119,10 +120,12 @@ public final class Weathers {
         if (spots.isEmpty()) {
             return List.of();
         }
+        // A block aboard a moving structure is out in the yard: the weather is that of where it is in the world.
+        final BlockPos at = MovingStructures.inWorld(level, pos);
         final List<WeatherKind> here = new ArrayList<>();
         for (final Spot spot : spots) {
             final WeatherKind kind = kind(level, spot.weather());
-            if (kind != null && spot.covers(pos)) {
+            if (kind != null && spot.covers(at)) {
                 here.add(kind);
             }
         }
@@ -134,10 +137,15 @@ public final class Weathers {
      * particle the wind moves, so it costs nothing while no weather is under way.
      */
     public static double windAt(final Level level, final BlockPos pos) {
+        final List<Spot> spots = spots(level);
+        if (spots.isEmpty()) {
+            return 1;
+        }
+        final BlockPos at = MovingStructures.inWorld(level, pos);
         double wind = 1;
-        for (final Spot spot : spots(level)) {
+        for (final Spot spot : spots) {
             final WeatherKind kind = kind(level, spot.weather());
-            if (kind != null && spot.covers(pos)) {
+            if (kind != null && spot.covers(at)) {
                 wind *= kind.wind();
             }
         }
@@ -160,9 +168,17 @@ public final class Weathers {
         return (level instanceof ServerLevel server ? ACTIVE.get(server) : ACTIVE.client()).spots();
     }
 
-    /** Whether {@code pos} is out in the weather: under the open sky, or anywhere for one no roof keeps off. */
+    /**
+     * Whether {@code pos} is out in the weather: under the open sky, or anywhere for one no roof keeps off. A block
+     * aboard a moving structure is under the open sky when no block of its structure roofs it and nothing of the
+     * world roofs where the structure is.
+     */
     public static boolean outIn(final Level level, final BlockPos pos, final WeatherKind kind) {
-        return !kind.sheltered() || level.canSeeSky(pos);
+        if (!kind.sheltered()) {
+            return true;
+        }
+        final BlockPos at = MovingStructures.inWorld(level, pos);
+        return level.canSeeSky(pos) && (at == pos || level.canSeeSky(at));
     }
 
     /* Finds what is under way, sends it on when it changed, and has it act on whoever is out in it. */

@@ -18,6 +18,7 @@ import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructureEffectsPayload;
 import dev.jstech.core.moving.StructureFooting;
 import dev.jstech.core.moving.StructureFootingPayload;
+import dev.jstech.core.moving.StructureForcesPayload;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.StructureHandOffPayload;
 import dev.jstech.core.moving.StructureHelmPayload;
@@ -243,6 +244,11 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
     @Override
     public void effects(final StructureEffectsPayload payload) {
         StructureEffectsClient.told(payload);
+    }
+
+    @Override
+    public void forces(final StructureForcesPayload payload) {
+        StructureForcesClient.told(payload);
     }
 
     /*

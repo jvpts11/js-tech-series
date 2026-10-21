@@ -7,6 +7,10 @@
  */
 package dev.jstech.core.light;
 
+import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureFrame;
+import dev.jstech.core.moving.YardLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +18,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -82,11 +87,20 @@ public final class Beams {
     /** The rays of such a light, each from its start to where it ends, and the place it lights if it meets one. */
     public static List<Ray> rays(final BlockGetter level, final BlockPos from, final Direction facing,
                                  final double angle, final int rings, final int reach, final double step) {
-        final Vec3 forward = Vec3.atLowerCornerOf(facing.getNormal());
-        final Vec3 side = Vec3.atLowerCornerOf((facing.getAxis() == Direction.Axis.Y ? Direction.NORTH
+        Vec3 forward = Vec3.atLowerCornerOf(facing.getNormal());
+        Vec3 side = Vec3.atLowerCornerOf((facing.getAxis() == Direction.Axis.Y ? Direction.NORTH
                 : Direction.UP).getNormal()).cross(forward).normalize();
-        final Vec3 up = forward.cross(side).normalize();
-        final Vec3 origin = Vec3.atCenterOf(from).add(forward.scale(START));
+        Vec3 up = forward.cross(side).normalize();
+        Vec3 origin = Vec3.atCenterOf(from).add(forward.scale(START));
+        // A lamp aboard a moving structure shines on the world from where it is, the way its structure turns it.
+        final IStructureBody aboard = level instanceof Level world && YardLayout.isYardBlock(from.getX())
+                ? MovingStructures.at(world, from) : null;
+        if (aboard != null) {
+            origin = MovingStructures.toWorld(aboard, origin);
+            forward = turned(aboard, forward);
+            side = turned(aboard, side);
+            up = turned(aboard, up);
+        }
         final List<Ray> out = new ArrayList<>();
         for (final double[] local : LightMath.cone(angle, rings)) {
             final Vec3 way = side.scale(local[0]).add(up.scale(local[1])).add(forward.scale(local[2]));
@@ -111,6 +125,25 @@ public final class Beams {
                     Math.min(travelled, reach)));
         }
         return out;
+    }
+
+    /**
+     * Whether the lamp at {@code pos} is aboard a moving structure that moved this tick: its beam sweeps the world as
+     * it goes, and is cast again often.
+     */
+    public static boolean goingAboard(final Level level, final BlockPos pos) {
+        if (!YardLayout.isYardBlock(pos.getX())) {
+            return false;
+        }
+        final IStructureBody body = MovingStructures.at(level, pos);
+        return body != null && !body.frame().pose().equals(body.previousFrame().pose());
+    }
+
+    /* The world's way of the structure's way {@code way}, as {@code body} is turned now. */
+    private static Vec3 turned(final IStructureBody body, final Vec3 way) {
+        final StructureFrame frame = body.frame();
+        return new Vec3(frame.turnX(way.x, way.y, way.z), frame.turnY(way.x, way.y, way.z),
+                frame.turnZ(way.x, way.y, way.z));
     }
 
     /**

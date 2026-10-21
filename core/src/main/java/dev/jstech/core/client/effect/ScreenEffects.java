@@ -143,7 +143,7 @@ public final class ScreenEffects {
     }
 
     /** Where {@code at} was on the screen in the last frame, from 0 to 1 across and down; none behind the eye. */
-    static float @Nullable [] toScreen(final Vec3 at) {
+    public static float @Nullable [] toScreen(final Vec3 at) {
         final float[] up = onScreen(at);
         return up == null ? null : new float[] {up[0], 1 - up[1]};
     }

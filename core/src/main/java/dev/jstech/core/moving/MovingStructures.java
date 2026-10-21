@@ -9,6 +9,8 @@ package dev.jstech.core.moving;
 
 import dev.jstech.core.content.EntityEntry;
 import dev.jstech.core.moving.joint.StructureJoints;
+import dev.jstech.core.moving.physics.PhysicsMotion;
+import dev.jstech.core.moving.physics.StructurePhysics;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
@@ -40,6 +42,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
 
 /**
  * Moving structures: structures of real blocks that move through the world, from a drawbridge to an airship. The
@@ -83,6 +86,7 @@ public final class MovingStructures {
         StructureJoints.listen();
         StructureSeating.listen();
         StructureSleeping.listen();
+        StructureForceWatch.listen();
         StructureSync.listen(modBus);
         StructureCommands.declare();
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Pre.class, MovingStructures::beforeTick);
@@ -186,6 +190,76 @@ public final class MovingStructures {
      */
     public static boolean zipline(final ServerPlayer player, final UUID joint, final double along) {
         return StructureSeating.zipline(player, joint, along);
+    }
+
+    /**
+     * Pushes {@code structure} by {@code impulse}, in newton seconds, at the world's place {@code at}: one moving by
+     * its physics changes its speed and its spin at once, as at a blow; one at rest or moved by a rule is let go to
+     * its physics first, as anything pushed hard is. One held by another pushes what holds it.
+     */
+    public static void push(final MovingStructure structure, final Vec3 impulse, final Vec3 at) {
+        final MovingStructure root = StructureMounts.rootOf(structure);
+        if (!(root.motion() instanceof PhysicsMotion)) {
+            root.move(PhysicsMotion.AT_REST);
+        }
+        root.physicsMade().push(new Vector3d(impulse.x, impulse.y, impulse.z), new Vector3d(at.x, at.y, at.z));
+    }
+
+    /**
+     * Freezes {@code structure} where it stands, in the air too, its physics stopped, or, {@code frozen} false, lets
+     * it go to its physics again; one held by another freezes or frees what holds it.
+     */
+    public static void freeze(final MovingStructure structure, final boolean frozen) {
+        final MovingStructure root = StructureMounts.rootOf(structure);
+        if (frozen) {
+            root.move(null);
+        } else if (!(root.motion() instanceof PhysicsMotion)) {
+            root.move(PhysicsMotion.AT_REST);
+        }
+    }
+
+    /** Whether {@code structure} is frozen where it stands: what holds it, if anything does, moves by no rule. */
+    public static boolean frozen(final MovingStructure structure) {
+        return StructureMounts.rootOf(structure).motion() == null;
+    }
+
+    /**
+     * Holds the place {@code place} of {@code structure}'s yard towards the world's place {@code target}, as a stiff
+     * spring damped to stop it swinging, bearing its weight, with at most {@code most} newtons, until the game's tick
+     * {@code until}: a grip from outside, as the physics tool's, renewed each tick it holds. One at rest or moved by a
+     * rule is let go to its physics first; one held by another pulls what holds it.
+     */
+    public static void hold(final MovingStructure structure, final Vec3 place, final Vec3 target, final double most,
+                            final long until) {
+        final MovingStructure root = StructureMounts.rootOf(structure);
+        if (!(root.motion() instanceof PhysicsMotion)) {
+            root.move(PhysicsMotion.AT_REST);
+        }
+        final Vec3 held = toYard(root, toWorld(structure, place));
+        root.physicsMade().hold(new Vector3d(held.x, held.y, held.z), new Vector3d(target.x, target.y, target.z),
+                most, until);
+    }
+
+    /** Lets go of what held {@code structure} from outside. */
+    public static void letGo(final MovingStructure structure) {
+        final StructurePhysics physics = StructureMounts.rootOf(structure).physics();
+        if (physics != null) {
+            physics.letGo();
+        }
+    }
+
+    /** The place of {@code structure}'s yard that is at the world's place {@code world} now. */
+    public static Vec3 toYard(final IStructureBody structure, final Vec3 world) {
+        final StructureFrame frame = structure.frame();
+        return new Vec3(frame.yardX(world.x, world.y, world.z), frame.yardY(world.x, world.y, world.z),
+                frame.yardZ(world.x, world.y, world.z));
+    }
+
+    /** Where the place {@code place} of {@code structure}'s yard is in the world now. */
+    public static Vec3 toWorld(final IStructureBody structure, final Vec3 place) {
+        final StructureFrame frame = structure.frame();
+        return new Vec3(frame.worldX(place.x, place.y, place.z), frame.worldY(place.x, place.y, place.z),
+                frame.worldZ(place.x, place.y, place.z));
     }
 
     /** The structure of that id loaded in {@code level}, or null. */

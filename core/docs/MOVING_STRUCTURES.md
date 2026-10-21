@@ -123,6 +123,7 @@ force of its own.
 { "values": {
   "mymod:rocket_engine": { "thrust": { "newtons": 400000, "kind": "rocket", "throttle": "back" } },
   "mymod:propeller":     { "thrust": { "newtons": 8000, "kind": "propeller", "exhaust": 60 } },
+  "mymod:shaft_screw":   { "thrust": { "newtons": 20000, "kind": "propeller", "exhaust": 60, "shaft": 120 } },
   "mymod:wing":          { "mass": 40, "wing": { "area": 1, "stall": 15, "lift": 1.2 } },
   "mymod:rudder":        { "wing": { "area": 1, "face": "facing" } },
   "mymod:wheel":         { "wheel": { "radius": 0.5, "stiffness": 60000, "damping": 6000, "steer": 30,
@@ -140,7 +141,7 @@ force of its own.
 | `mass` | its mass, in kilograms |
 | `displacement` | the volume it displaces in a liquid, in cubic metres, 0 to 1 |
 | `drag` | how much its faces drag, as a share of a flat face's |
-| `thrust` | an engine pushing the way the block faces: `newtons` at full throttle; `kind` `rocket` (the same anywhere, a vacuum too), `jet` (less as the air thins) or `propeller` (less again as the craft nears its `exhaust` speed); `throttle`, the side its signal comes from |
+| `thrust` | an engine pushing the way the block faces: `newtons` at full throttle; `kind` `rocket` (the same anywhere, a vacuum too), `jet` (less as the air thins) or `propeller` (less again as the craft nears its `exhaust` speed); `throttle`, the side its signal comes from; `shaft`, for a propeller a shaft turns, the speed in revolutions a minute it gives its full thrust at, its throttle as fast as the shaft turns it either way |
 | `wing` | lift and drag by the air going past it: `area`, `stall` (degrees), `lift` (its most, at the stall); its `face` looks up the structure's up, or the way the block faces for a sail or a rudder |
 | `wheel` | a wheel on a spring along the structure's down: `radius`, `travel`, `stiffness`, `damping`, `grip`; `steer` (degrees), `drive` and `brake` (newtons) by the signals at its `left`, `right`, `throttle`, `reverse` and `stop` sides |
 | `levitation` | the weight it holds up, in newtons, stopping a fall, never lifting |
@@ -182,6 +183,10 @@ loaded is read: a structure reaching one waits there. Each structure's tick of p
 `jscore:structure_physics`; twenty small structures falling and landing at once take a few milliseconds a tick. The
 physics of a dimension's structures takes no more of a tick than `moving_structures.physics_millis` lets it: past
 that, a structure waits a tick, and goes the next whatever the budget.
+
+Each force can be turned off for every structure by its setting, gravity, drag, lift, thrust, buoyancy with the
+balloons, levitation, magnetism and the wind, so a server can make a world of floating islands or of still air; and
+the harm of blows by its own, so structures meet and bounce and nothing breaks.
 
 `structure.physics()` gives its physics while it moves by them: its `parts()` (mass, centre, inertia), its `body()`
 (where its centre is, how fast it goes and turns) and the `forces()` on it in the last tick, by their kind. Its
@@ -351,6 +356,112 @@ under freezing, at an aircraft's speed, it leaves white trails behind its engine
 their exhaust and of the air spun off them freezes. An engine pushing keeps its structure awake, so a rocket too heavy
 for its engines stands burning on its pad. What it shows is told to its players only as it changes.
 
+## Seeing its forces
+
+*Added 2026-10-21.*
+
+The **diagram of forces** shows a structure's physics as it flies: the structure itself, turned as it stands, over the
+ground below it, an arrow for each force on it where that force acts and one for their sum at its centre of mass, its
+height above the ground, and the axes, up and the way its bow looks. Beside it, each force with what it gives now, a
+bar of how much it weighs against the others and a switch that hides its arrow; below, the structure's mass, where the
+sum pushes it, how fast it climbs, how fast it goes and which way, and how dense the air round it is. The view turns
+from the side and from above, turns with the mouse dragged over it and zooms with the wheel, and its arrows sit apart
+where they act or summed into one. Its key, **K** until the player changes it, opens it for the structure the player
+stands on, sits in at its helm or looks at. While it is open the server tells the player the forces a few times a
+second; a structure resting by no rule shows its weight alone.
+
+A block's **tooltip** shows its physics, its mass and each force it gives (an engine's thrust, a wing's area and
+stall, a levitator's hold, a magnet's pull, a wheel, a burner and what it displaces), while the player holds the
+diagram's key, or holds or wears an item of `#jscore:sees_physics`, the physics tool for one; a mod puts its own
+goggles in the tag. Another key, unbound until the player gives it one, shows the physics of the structures near in
+the world: each one's box, its centre of mass, and each force as a line from where it acts, coloured as the diagram
+colours it.
+
+## The physics tool
+
+*Added 2026-10-21.*
+
+The **physics tool** moves a structure by hand. Aimed at one within 48 blocks, it **grabs** it where it is aimed, while
+its button is held, and holds that point before the player as they move and look, as a stiff spring that bears its
+weight; it **pushes** it with a blow where it is aimed, along the player's look; or it **freezes** it where it stands,
+in the air too, and lets it go again. Its strength, a tenth to the whole, is how hard it holds and pushes: at the
+whole, it holds 600 kilonewtons and pushes 150 kilonewton seconds. The wheel changes its mode, and with shift held its
+strength, while it is in the main hand; its panel at the screen's left shows both, and while it holds a structure a
+beam runs from its muzzle to the point it holds, the structure's box is lit, and beside the point it says the
+structure's name, its mass and how far away it is held.
+
+It is made at a crafting table, an iron body round a lodestone, an amethyst at its muzzle and redstone in its grip,
+for as long as `moving_structures.physics_tool_recipe` is on: its recipe is a shaped recipe a setting turns on and off,
+`jscore:crafting_shaped_switch`, which any mod can use for its own.
+
+```json
+{ "type": "jscore:crafting_shaped_switch", "file": "jstech-balance",
+  "setting": "moving_structures.physics_tool_recipe",
+  "pattern": [" IA", "ILI", "RI "], "key": { "I": { "item": "minecraft:iron_ingot" } }, "result": { "id": "..." } }
+```
+
+## Moving it by hand
+
+*Added 2026-10-21.*
+
+What the tool does, a mod does through the same calls:
+
+```java
+MovingStructures.push(structure, impulse, at);              // a blow, in newton seconds, at a place of the world
+MovingStructures.freeze(structure, true);                   // held where it stands, its physics stopped
+MovingStructures.frozen(structure);
+MovingStructures.hold(structure, place, target, most, until); // a grip from outside, renewed each tick it holds
+MovingStructures.letGo(structure);
+Vec3 place = MovingStructures.toYard(structure, worldPlace);  // and toWorld, back
+```
+
+A structure at rest or moved by a rule is let go to its physics as it is pushed or held, as anything pushed hard is;
+one held by another moves what holds it. A grip pulls its point towards the target as a spring damped to stop it
+swinging, bearing the structure's weight, with no more than `most` newtons, and lets go at the game's tick `until`
+unless it is renewed.
+
+## What happens to it
+
+*Added 2026-10-21.*
+
+What happens to a structure is told on the game's bus, as a `MovingStructureEvent`:
+
+| Event | When |
+| --- | --- |
+| `Collision` | a blow of it closing at a metre a second or more: what it struck, the world's block or another structure, where, how fast it closed and the energy of the blow |
+| `Parted` | it broke into pieces, each now a structure of its own |
+| `Docked` | it docked to a host |
+| `Undocked` | it was let go from its host |
+
+```java
+NeoForge.EVENT_BUS.addListener(MovingStructureEvent.Collision.class, blow -> {
+    if (blow.energy() > 50_000) {
+        alarm(blow.structure());
+    }
+});
+```
+
+## Reading its flight
+
+*Added 2026-10-21.*
+
+A sensor aboard reads its structure's flight, as it speaks it in redstone, to programs and to the network: its
+altitude, the air's pressure, its speed and its climb, its pitch, its roll and its heading by the way the sensor looks,
+how far below it the ground is and how far ahead the first block, each up to 64 blocks. A sensor on the ground reads
+the same, still. So an autopilot can be built of redstone.
+
+```java
+public class FlightSensorBlockEntity extends SensorBlockEntity {
+    @Override
+    public List<Reading> readings() {
+        return StructureReadings.of(level, worldPosition, getBlockState().getValue(FACING));
+    }
+}
+```
+
+Its block gives the redstone of the reading it speaks, and offers every reading through `Signals.OUTPUT`, which J's
+Computers reads through its peripheral links ([Redstone and signals](SIGNALS.md)).
+
 ## Setting it down
 
 *Added 2026-10-20.*
@@ -395,6 +506,11 @@ opens and stays open, a door swings, a block broken drops where it is in the wor
 them. What the blocks give off goes where they are in the world: their sounds, their particles, their news to the
 players near them (a chest's lid, a door), the items they drop and the mobs a spawner aboard makes. It rains on a
 structure where it rains on its place in the world, under the sky its own blocks leave it.
+
+What a block aboard asks of where it is, it is told of where its structure is in the world, not of its yard: the air
+round it, its pressure and how warm it is (`HeatClimate.air`), the warmth of the biome under it
+(`BiomeClimates.celsius`), the weather falling there and the wind (`Weathers.at`, `Weathers.windAt`), so a machine
+aboard a high airship runs in thin cold air and one aboard a ship in a storm is rained on.
 
 ## Drawing
 
@@ -490,8 +606,11 @@ The Core's own kits work aboard so:
 | --- | --- |
 | Multiblocks | a formed machine crosses formed and merged, never formed again, and stands formed set down turned; nothing is given back where it stood |
 | Cables | every wire leaves its grid where the cable stood and joins it where it is |
-| Mechanical power | the networks the parts turned in where they stood are worked out again |
-| Lamps | the light a spotlight's beam laid where it stood goes out |
+| Mechanical power | the networks the parts turned in where they stood are worked out again, and turn aboard: a shaft turns a propeller (`"shaft"` in its thrust) that pushes the structure |
+| Lamps | the light a spotlight's beam laid where it stood goes out; aboard, its beam shines on the world from where it is, the way its structure turns it, cast again every other tick while the structure goes, so a searchlight sweeps the ground |
+| Multipart | a space of parts crosses whole, its microblocks and its cables with it |
+| Conveyors | the belts aboard carry along as on the ground, into what is aboard, the structure going or not |
+| Radios | a radio aboard is heard from where the structure carries it, so a transmitter flown away is heard less as the frequencies are worked out again |
 | Peripheral links | a peripheral stays linked to an owner that moved with it; an owner keeps its ports, hubs and disabled flags where the peripherals are now |
 | Radio relays | a relay paired with one that moved with it stays paired, in another dimension too |
 | Atmosphere Detector | the room it asked for where it stood is no longer asked for |
@@ -539,6 +658,16 @@ For game masters, as `/jstech structure ...`:
 | `moving_structures.most_blocks` | 65,536 | The most blocks one structure may be made of. |
 | `moving_structures.physics_millis` | 10 | How much of a tick, in milliseconds, the physics of a dimension's structures may take; past it a structure waits a tick, and goes the next whatever the budget, so many structures slow down together rather than slow the server. |
 | `moving_structures.split` | on | Whether a structure whose blocks are no longer all joined becomes as many structures as it now is, each going its own way; off, it holds together. |
+| `moving_structures.gravity` | on | Whether gravity pulls the structures moving by their physics; off, they float where they are let go. |
+| `moving_structures.drag` | on | Whether their faces drag as they meet the air and liquids. |
+| `moving_structures.lift` | on | Whether their wings, sails and rudders lift and turn them. |
+| `moving_structures.thrust` | on | Whether their engines and propellers push. |
+| `moving_structures.buoyancy` | on | Whether liquids, the air a hull holds and the balloons aboard hold them up. |
+| `moving_structures.levitation` | on | Whether their levitators hold them up. |
+| `moving_structures.magnetism` | on | Whether their magnets pull them to the magnetic blocks of the world. |
+| `moving_structures.wind` | on | Whether the wind blows on them; off, the air they meet is still. |
+| `moving_structures.impact_damage` | on | Whether a blow harder than a block holds breaks it; off, they meet and bounce, and nothing breaks. |
+| `moving_structures.physics_tool_recipe` | on | Whether the physics tool is made at a crafting table; off, only a command or the creative menu gives it. |
 
 ## What can go wrong
 
@@ -558,3 +687,7 @@ For game masters, as `/jstech structure ...`:
 | A hovering craft tips over | it is held up from below its centre of mass, as a broom balanced on a hand is: put its levitators, balloons or lifting engines round its middle, or above it. |
 | A mod's stand-in player cannot sit, ride a rope or steer | NeoForge's `FakePlayer` rides nothing; tell the structure its controls with `structure.controls().tell(...)` instead. |
 | A shuttle under an autopilot goes no further sideways than it is blown | it has engines only forward and back: the autopilot works only the controls its engines answer. |
+| The diagram of forces says it is reading the forces and shows no arrows | the structure is more than 192 blocks away, or not loaded on the server; come nearer. |
+| The wheel does not change the hotbar slot | the physics tool is in the main hand: the wheel changes its mode; the number keys change the slot. |
+| A structure held by the physics tool sags | it weighs more than the tool's strength holds: raise the strength with shift and the wheel. |
+| A propeller on a shaft gives nothing | the shaft does not turn, or turns slowly: its thrust grows with the shaft's speed up to the speed its `shaft` says. |

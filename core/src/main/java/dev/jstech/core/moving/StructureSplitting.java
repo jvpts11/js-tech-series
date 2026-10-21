@@ -24,6 +24,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
@@ -163,6 +164,7 @@ final class StructureSplitting {
         StructureFooting.moved(structure, parted, moves);
         moveJoints(level, structure, parted, moves, piece.dx, piece.dz);
         moveHeld(structure, parted, moves, piece.dx, piece.dz);
+        NeoForge.EVENT_BUS.post(new MovingStructureEvent.Parted(structure, List.of(parted)));
     }
 
     /*

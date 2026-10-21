@@ -1,0 +1,26 @@
+{
+  "loader": "neoforge:separate_transforms",
+  "base": {
+    "parent": "jscore:item/physics_tool_held"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jscore:item/physics_tool"
+      }
+    },
+    "ground": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jscore:item/physics_tool"
+      }
+    },
+    "fixed": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jscore:item/physics_tool"
+      }
+    }
+  }
+}

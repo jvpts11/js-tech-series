@@ -7,6 +7,8 @@
     "jstests:test_light_block": {"mass": 5},
     "jstests:test_envelope": {"mass": 0.2},
     "jstests:test_hover": {"mass": 100, "levitation": 200000},
-    "jstests:test_magnet": {"mass": 200, "magnet": {"newtons": 50000, "reach": 6}}
+    "jstests:test_magnet": {"mass": 200, "magnet": {"newtons": 50000, "reach": 6}},
+    "jstests:test_propeller": {"mass": 40, "thrust": {"newtons": 20000, "kind": "propeller", "exhaust": 60,
+      "shaft": 60}}
   }
 }

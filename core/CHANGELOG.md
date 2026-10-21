@@ -828,6 +828,32 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   faces glowing hot from the air they head into, in the colour of their heat, wrapped in plasma on a re-entry; and
   white trails behind its engines and wingtips where the air is cold enough. An engine pushing keeps its structure
   awake, so a rocket too heavy for its engines stands burning on its pad.
+- The diagram of forces: a key, K, opens for the moving structure the player stands on, sits in or looks at
+  the structure itself over the ground below it, with an arrow for each force where it acts and for their sum at its
+  centre of mass, its height and its axes; each force listed with what it gives and a switch that hides its arrow; and
+  its mass, the sum's way, its climb, its speed and the air round it, seen in 3D, from the side or from above.
+- Physics seen: a block's tooltip shows its mass and the forces it gives while the diagram's key is held, or
+  while an item of `#jscore:sees_physics` is held or worn; another key shows in the world the box, centre of mass and
+  forces of every structure near.
+- The physics tool: it grabs a moving structure where it is aimed and holds it before the player, pushes it
+  with a blow, or freezes it where it stands and lets it go, as strong as it is set, its mode and strength changed with
+  the wheel; its panel shows both, and while it holds a structure a beam runs to the point it holds. It is made at a
+  crafting table while the setting `moving_structures.physics_tool_recipe` says so, by
+  `jscore:crafting_shaped_switch`, a shaped recipe a setting turns on and off that any mod can use.
+- Every force a setting: gravity, drag, lift, thrust, buoyancy with the balloons, levitation, magnetism and the
+  wind on moving structures each have a setting that turns them off, and the harm of blows one of its own.
+- Moving structures by hand and by ear: `MovingStructures.push`, `freeze`, `hold` and `letGo` move a structure
+  as the physics tool does, and a `MovingStructureEvent` on the game's bus tells of a hard blow, a parting, a docking
+  and a letting go.
+- Reading a flight: `StructureReadings` gives what a sensor aboard reads, its altitude, the air's pressure, its
+  speed, climb, pitch, roll and heading, and how far the ground is below it and the first block ahead, as readings a
+  sensor speaks in redstone and to programs.
+- Propellers on shafts: a propeller's thrust can follow a shaft, `"shaft"` in its physics, growing with the
+  speed the shaft turns it.
+- Aboard as on the ground: what a block aboard asks of the air, the weather, the wind and the biome's warmth is
+  answered for where its structure is in the world; a spotlight aboard shines on the world from where it is, sweeping
+  the ground as the structure goes; a radio aboard is heard from where the structure carries it; and belts, spaces of
+  parts and shafts work aboard, in another dimension too.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

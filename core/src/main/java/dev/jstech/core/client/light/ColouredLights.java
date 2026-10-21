@@ -364,7 +364,9 @@ public final class ColouredLights {
                                                    final LightKind kind) {
             final long now = level.getGameTime();
             final Cached cached = CACHE.get(lamp.getBlockPos());
-            if (cached != null && now - cached.at() < KEEP_TICKS && now >= cached.at()) {
+            // A lamp aboard a structure going sweeps the world: what it lights is worked out again each tick.
+            final long keep = Beams.goingAboard(level, lamp.getBlockPos()) ? 1 : KEEP_TICKS;
+            if (cached != null && now - cached.at() < keep && now >= cached.at()) {
                 return cached.cells();
             }
             final Map<BlockPos, BeamLights.Lit> cells = Beams.lamp(level, lamp.getBlockPos(), lamp.facing(), kind,

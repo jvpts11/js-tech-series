@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
 import org.joml.Matrix3d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -67,6 +68,9 @@ public final class StructureDocking {
             carrier.body().velocity().set(momentum.div(total));
             carrier.wake();
         }
+        if (done.ok()) {
+            NeoForge.EVENT_BUS.post(new MovingStructureEvent.Docked(visitor, host));
+        }
         return done;
     }
 
@@ -75,11 +79,15 @@ public final class StructureDocking {
      * {@code away}, a way of the world, at half a metre a second.
      */
     public static StructureResult undock(final MovingStructure visitor, final Vec3 away) {
+        final MovingStructure host = StructureMounts.parentOf(visitor);
         final StructureResult done = StructureMounts.unmount(visitor, true);
         if (done.ok() && visitor.motion() instanceof PhysicsMotion going) {
             final Vec3 off = away.lengthSqr() > 0 ? away.normalize().scale(PUSH_OFF) : Vec3.ZERO;
             visitor.move(new PhysicsMotion(going.vx() + off.x, going.vy() + off.y, going.vz() + off.z, going.sx(),
                     going.sy(), going.sz(), going.warm()));
+        }
+        if (done.ok() && host != null) {
+            NeoForge.EVENT_BUS.post(new MovingStructureEvent.Undocked(visitor, host));
         }
         return done;
     }

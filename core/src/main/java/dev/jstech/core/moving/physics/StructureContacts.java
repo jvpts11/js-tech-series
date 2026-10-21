@@ -9,7 +9,9 @@ package dev.jstech.core.moving.physics;
 
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructureEvent;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureBalance;
 import dev.jstech.core.moving.StructureFrame;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.region.Box;
@@ -27,7 +29,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
@@ -61,6 +65,12 @@ final class StructureContacts {
     private final BoxContacts.IPointSink sink = this::take;
     /* Whether each contact of the step counts its blow, in the solver's order. */
     private final BooleanArrayList counted = new BooleanArrayList();
+    /* The hardest blow of the tick, told to the game as it ends: where, how fast, and the block it met, packed. */
+    private final Vector3d hardestAt = new Vector3d();
+    private double hardest;
+    private double hardestClosing;
+    private long hardestMet;
+    private @Nullable MovingStructure struck;
     /*
      * The pair being worked: the bodies, the blocks, how well they grip, the frame its points are kept in, and what
      * the block met belongs to, the world (no frame) or a structure (its frame and, moving by its physics, its parts).
@@ -91,6 +101,8 @@ final class StructureContacts {
     private static final double GENTLE = 2.0;
     /* A way this near an axis goes through a face; one between, along an edge or through a corner. */
     private static final double FACE = 0.9;
+    /* A blow closing slower than this, in metres a second, is a structure settling, not a collision to tell. */
+    private static final double COLLISION_SPEED = 1.0;
 
     StructureContacts() {
         ground.fixed();
@@ -108,6 +120,7 @@ final class StructureContacts {
         cells.clear();
         met.clear();
         counted.clear();
+        struck = structure;
         final AABB box = worldBox(standing, structure.bounds()).inflate(margin);
         if (!Loaded.area(level, floor(box.minX), floor(box.minZ), floor(box.maxX), floor(box.maxZ))) {
             return false;
@@ -141,10 +154,17 @@ final class StructureContacts {
         solver.end();
         final List<ContactSolver.Contact> contacts = solver.contacts();
         for (int i = 0; i < contacts.size(); i++) {
-            final double blow = contacts.get(i).blow();
+            final ContactSolver.Contact contact = contacts.get(i);
+            final double blow = contact.blow();
             if (blow > 0 && counted.getBoolean(i)) {
                 cellBlows.addTo(cells.getLong(i), blow);
                 metBlows.addTo(met.getLong(i), blow);
+                if (blow > hardest) {
+                    hardest = blow;
+                    hardestAt.set(contact.point());
+                    hardestClosing = contact.closing();
+                    hardestMet = met.getLong(i);
+                }
             }
         }
     }
@@ -179,7 +199,10 @@ final class StructureContacts {
      * this one, as many as a tick allows; what breaks drops as broken.
      */
     void breakWhatBroke(final ServerLevel level) {
-        breakEach(level, cellBlows, breakEach(level, metBlows, 0));
+        tellHardest(level);
+        if (StructureBalance.impacts()) {
+            breakEach(level, cellBlows, breakEach(level, metBlows, 0));
+        }
         metBlows.clear();
         cellBlows.clear();
     }
@@ -485,6 +508,23 @@ final class StructureContacts {
             return z > 0 ? Direction.SOUTH : Direction.NORTH;
         }
         return null;
+    }
+
+    /*
+     * Tells the game of the hardest blow of the tick, when it closed fast enough to be a blow and not a structure
+     * settling ({@link MovingStructureEvent.Collision}), and forgets it.
+     */
+    private void tellHardest(final ServerLevel level) {
+        final MovingStructure mine = struck;
+        if (mine != null && hardest > 0 && hardestClosing >= COLLISION_SPEED) {
+            final BlockPos where = BlockPos.of(hardestMet);
+            final IStructureBody other = YardLayout.isYardBlock(where.getX()) ? MovingStructures.at(level, where)
+                    : null;
+            NeoForge.EVENT_BUS.post(new MovingStructureEvent.Collision(mine, other, where,
+                    new Vec3(hardestAt.x, hardestAt.y, hardestAt.z), hardestClosing, hardest));
+        }
+        hardest = 0;
+        hardestClosing = 0;
     }
 
     /* Breaks each block of {@code blows} whose blow was more than it holds; how many are broken this tick, all told. */

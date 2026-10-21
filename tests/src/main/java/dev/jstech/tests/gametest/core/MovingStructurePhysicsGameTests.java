@@ -291,6 +291,16 @@ public final class MovingStructurePhysicsGameTests {
         helper.assertTrue(level.getBlockState(inside).isAir(), "its middle is air");
         SealedRooms.track(level, inside);
         final double[] start = new double[1];
+        // What became of its room and of the structure while it rose, for the failure to tell.
+        final List<String> seen = new ArrayList<>();
+        helper.onEachTick(() -> {
+            final String now = SealedRooms.roomAt(level, inside).map(room -> "room " + room.id() + " hydrogen "
+                    + Math.round(room.gases().getOrDefault(Elements.of(Element.HYDROGEN).id(), 0.0)))
+                    .orElse("no room") + (balloon.ready() ? "" : ", not ready");
+            if (seen.isEmpty() || !seen.get(seen.size() - 1).endsWith(now)) {
+                seen.add(level.getGameTime() + ": " + now);
+            }
+        });
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(SealedRooms.roomAt(level, inside).isPresent(),
                         "its inside is found a room"))
@@ -308,7 +318,7 @@ public final class MovingStructurePhysicsGameTests {
                             "filled with hydrogen, it rises: " + balloon.worldBox().minY + " from " + start[0]
                                     + forcesOf(balloon) + "; its room " + (now == null ? "none" : now.id() + " volume "
                                     + now.volume() + " breached " + now.breached() + " leaks " + now.leaks().size()
-                                    + " gases " + now.gases() + " bounds " + now.bounds()));
+                                    + " gases " + now.gases() + " bounds " + now.bounds()) + "; " + seen);
                     MovingStructures.takeAway(balloon);
                 })
                 .thenSucceed();

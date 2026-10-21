@@ -90,6 +90,10 @@ public final class StructurePhysics {
     private long workedAt = Long.MIN_VALUE;
     private long askedAt = Long.MIN_VALUE;
     private IStructureMotion.Step worked;
+    /* Pushes given from outside since its last tick, each a push in newton seconds and the world's place it is at. */
+    private final List<Vector3d[]> pushes = new ArrayList<>();
+    /* What holds it from outside, the physics tool's grip or a mod's, or null for nothing. */
+    private @Nullable Hold hold;
 
     /** Ticks in a second. */
     public static final double TICKS = 20;
@@ -124,6 +128,8 @@ public final class StructurePhysics {
     private static final double SAME_CENTRE = 1.0e-9;
     /* An engine or a wheel looking within this of a way pushes along it, as one answers a control. */
     private static final double ANSWERS = 0.7;
+    /* How fast a held structure swings to where it is held, in radians a second: about a second to come there. */
+    private static final double HOLD_SWING = 4.0;
     private static final double HALF = 0.5;
 
     private StructurePhysics(final MovingStructure moved) {
@@ -221,6 +227,35 @@ public final class StructurePhysics {
     public void wake() {
         asleep = false;
         still = 0;
+    }
+
+    /**
+     * Pushes it by {@code impulse}, in newton seconds, at the world's place {@code at}, as it next steps: its speed and
+     * its spin change at once, as at a blow, and it wakes.
+     */
+    public void push(final Vector3d impulse, final Vector3d at) {
+        pushes.add(new Vector3d[] {new Vector3d(impulse), new Vector3d(at)});
+        wake();
+    }
+
+    /**
+     * Holds its point at the yard's place {@code point} towards the world's place {@code target}, as a stiff spring
+     * damped to stop it swinging, bearing its weight, with at most {@code most} newtons, until the game's tick
+     * {@code until}: the physics tool's grip, renewed each tick it holds. It wakes.
+     */
+    public void hold(final Vector3d point, final Vector3d target, final double most, final long until) {
+        hold = new Hold(new Vector3d(point), new Vector3d(target), most, until);
+        wake();
+    }
+
+    /** Lets go of what held it from outside. */
+    public void letGo() {
+        hold = null;
+    }
+
+    /** Whether something holds it from outside now. */
+    public boolean heldFromOutside() {
+        return hold != null;
     }
 
     /** A block of it changed: its mass and shape follow, and it wakes. */
@@ -361,6 +396,12 @@ public final class StructurePhysics {
             weigh(frame, true);
         }
         follow(frame);
+        if (mass > 0) {
+            for (final Vector3d[] given : pushes) {
+                body.push(given[0], given[1], mass, inertia);
+            }
+            pushes.clear();
+        }
         startVelocity.set(body.velocity());
         startSpin.set(body.spin());
         startPosition.set(body.position());
@@ -430,6 +471,14 @@ public final class StructurePhysics {
         own.gather.gather(level, at, own.parts, structure.bounds(), body, seconds, forces, told);
         for (final Piece piece : held.values()) {
             piece.gather.gather(level, piece.at, piece.parts, piece.structure.bounds(), body, seconds, forces, told);
+        }
+        final Hold holding = hold;
+        if (holding != null) {
+            if (level.getGameTime() > holding.until()) {
+                hold = null;
+            } else {
+                pullTowards(holding);
+            }
         }
     }
 
@@ -763,6 +812,32 @@ public final class StructurePhysics {
     }
 
     /*
+     * The pull of what holds it from outside: a spring from its held point to the place it is held towards, as stiff
+     * as swings it there in about a second and damped so it comes to rest there, bearing its weight, no harder than the
+     * hold allows; its spinning held back alike, so a structure held does not twirl.
+     */
+    private void pullTowards(final Hold holding) {
+        if (mass <= 0) {
+            return;
+        }
+        final Vector3d point = worldOf(holding.point().x, holding.point().y, holding.point().z, new Vector3d());
+        final Vector3d going = body.velocityAt(point, new Vector3d());
+        final double stiffness = mass * HOLD_SWING * HOLD_SWING;
+        final Vector3d pull = new Vector3d(holding.target()).sub(point).mul(stiffness)
+                .fma(-2 * mass * HOLD_SWING, going).fma(-mass, own.gather.gravity());
+        if (pull.length() > holding.most()) {
+            pull.mul(holding.most() / pull.length());
+        }
+        forces.add(ForceSum.ForceKind.HELD, pull, point);
+        final double reach = Math.max(1, reach() * HALF);
+        final Vector3d turning = new Vector3d(body.spin()).mul(-2 * HOLD_SWING * mass * reach * reach);
+        if (turning.length() > holding.most() * reach) {
+            turning.mul(holding.most() * reach / turning.length());
+        }
+        forces.addTurning(turning);
+    }
+
+    /*
      * How hard the engines and driving wheels of {@code piece}, standing at {@code frame}, push along {@code way} at
      * full, in newtons: an engine looking along it, a wheel rolling along it either way.
      */
@@ -839,5 +914,12 @@ public final class StructurePhysics {
             parts.fill(level, structure.bounds());
             filled = true;
         }
+    }
+
+    /*
+     * A hold from outside: the point held, a place of the yard; the place it is held towards, of the world; the most it
+     * pulls with, in newtons; and the last tick it holds.
+     */
+    private record Hold(Vector3d point, Vector3d target, double most, long until) {
     }
 }
