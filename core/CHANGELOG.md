@@ -1043,6 +1043,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stands beside the result, a click for the next, a right-click for the one before, its tooltip naming each; the
   choice is kept with the player for the grid and with the furnace for what it smelts. The world's
   `jstech-recipe-choice.toml` turns it off, and it steps aside for Polymorph.
+- Stepping aside for other mods: the echoes of places and the muffling through walls step aside for Sound
+  Physics Remastered and Dynamic Surroundings, the soundscapes of places for Dynamic Surroundings and AmbientSounds,
+  footsteps by material for Presence Footsteps, and the glow of bright things for Shimmer with coloured light, each
+  with its switch in `jstech-step-aside.toml`; no sound in a vacuum, the speed of sound and the hum of machines stay.
+  The log says, as the game finishes loading, which system steps aside for which mod, and LambDynamicLights is
+  handed the light the series' items give held.
 - CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,

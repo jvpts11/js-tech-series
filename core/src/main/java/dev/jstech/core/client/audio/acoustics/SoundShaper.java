@@ -18,6 +18,7 @@ import dev.jstech.core.audio.acoustics.SoundTravel;
 import dev.jstech.core.client.audio.AlertSigns;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.client.audio.SoundDirector;
+import dev.jstech.core.stepaside.StepAside;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -225,7 +226,8 @@ public final class SoundShaper {
     private static Shape weigh(final Level level, final Vec3 listener, final Vec3 at, final SoundMedium medium,
                                final boolean mufflesItself) {
         final double blocks = listener.distanceTo(at);
-        final float walls = AudioPrefsStore.prefs().occlusion() ? Walls.through(level, listener, at) : 1F;
+        final float walls = AudioPrefsStore.prefs().occlusion() && !StepAside.SOUND_PHYSICS.steps()
+                ? Walls.through(level, listener, at) : 1F;
         final float ears = RingingEars.heard();
         final float earHighs = RingingEars.highs();
         final float carried = (float) medium.gain(blocks);
@@ -251,6 +253,10 @@ public final class SoundShaper {
                 continue;
             }
             final MaterialSounds.Kind kind = kindOf(state.getSoundType(level, pos, null), sound.getLocation());
+            if (kind == MaterialSounds.Kind.STEP && StepAside.FOOTSTEPS.steps()) {
+                // Presence Footsteps plays the steps by what is walked on.
+                return sound;
+            }
             if (kind != null) {
                 return BlockAcoustics.of(state).sound(kind)
                         .<SoundInstance>map(own -> new RelocatedSoundInstance(sound, ResourceLocation.parse(own)))

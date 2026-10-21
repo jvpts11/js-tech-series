@@ -13,6 +13,7 @@ import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.light.LampBlockEntity;
 import dev.jstech.core.light.LightMath;
 import dev.jstech.core.light.LightingSettings;
+import dev.jstech.core.stepaside.StepAside;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -54,7 +55,8 @@ final class Halos {
     static void draw(final ClientLevel level, final Camera camera, final PoseStack poses,
                      final MultiBufferSource buffers) {
         final double bloom = LightingSettings.bloom();
-        if (bloom <= 0) {
+        // The glow of bright things goes with coloured light to Shimmer, which draws its own bloom.
+        if (bloom <= 0 || StepAside.COLOURED_LIGHT.steps()) {
             return;
         }
         final Vec3 eye = camera.getPosition();

@@ -417,3 +417,29 @@ The world's `jstech-recipe-choice.toml`:
 | --- | --- |
 | `recipe_choice.enabled` | Whether players choose between recipes that overlap (on) |
 | `recipe_choice.step_aside` | Whether choosing is left to Polymorph when it is installed (on) |
+
+## Stepping aside for other mods
+
+*Added 2026-10-21.*
+
+Where an installed mod already does what one of the Core's systems of presentation and comfort does, the two do not
+do it twice: each system names the mods that do its job, and while one is installed the Core's own is off, unless
+its setting keeps it on as well. As the game finishes loading, the log says which system steps aside for which mod.
+
+| System | Steps aside for | What stays the Core's | Setting |
+| --- | --- | --- | --- |
+| Echoes of places and muffling through walls | Sound Physics Remastered, Dynamic Surroundings | No sound in a vacuum, dull under water, the speed of sound, the Doppler effect | `step_aside.sound_physics` |
+| Soundscapes of places | Dynamic Surroundings, AmbientSounds | The hum of machines | `step_aside.ambience` |
+| Footsteps by material | Presence Footsteps | Blows, breaking and placing by material | `step_aside.footsteps` |
+| Dynamic light | LambDynamicLights, Sodium Dynamic Lights | | `step_aside.dynamic_light` |
+| Coloured light and the glow of bright things | Shimmer | | `step_aside.coloured_light` |
+| Connected textures of resource packs | Continuity, CTM | | `step_aside.connected_textures` |
+| Unification | Almost Unified | | `unification.step_aside` |
+| Choosing between recipes | Polymorph | | `recipe_choice.step_aside` |
+
+The first six are a player's own, in `jstech-step-aside.toml` in the game's config folder; the last two change a
+world's data, and are in the world's `jstech-unification.toml` and `jstech-recipe-choice.toml`. Where it can, the Core
+hands its data to the mod it steps aside for: while LambDynamicLights draws dynamic light, it is given the light each
+item gives held (the data map `jscore:held_lights`, as the mods' files fill it), so the series' items light the way
+with it too. What a game rule of a mod rests on never steps aside: J's Space's sealed rooms stay, whatever mod of
+oxygen is installed.

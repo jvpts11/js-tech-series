@@ -653,5 +653,7 @@ public final class JsCore {
             Eras.freeze();
             Knowledges.freeze();
         }));
+        // Every mod is loaded by now: the log says which of the Core's systems step aside for which.
+        modEventBus.addListener(FMLLoadCompleteEvent.class, event -> StepAside.report());
     }
 }

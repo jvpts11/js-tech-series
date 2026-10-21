@@ -15,6 +15,7 @@ import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.acoustics.ListeningPlace;
 import dev.jstech.core.audio.acoustics.SoundConditions;
 import dev.jstech.core.audio.acoustics.Soundscape;
+import dev.jstech.core.stepaside.StepAside;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,7 +58,8 @@ final class Soundscapes extends SimpleJsonResourceReloadListener {
 
     /** A second at {@code eye}: the soundscapes that hold play, the rest fade out. */
     static void second(final Level level, final Vec3 eye) {
-        final List<Soundscape> all = loaded;
+        // While a mod of ambience plays the places' sounds, the Core's fade out and none start.
+        final List<Soundscape> all = StepAside.AMBIENCE.steps() ? List.of() : loaded;
         if (all.isEmpty() && PLAYING.isEmpty()) {
             return;
         }

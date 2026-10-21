@@ -9,7 +9,7 @@ package dev.jstech.core.client.audio.acoustics;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.audio.acoustics.Reverb;
-import net.neoforged.fml.ModList;
+import dev.jstech.core.stepaside.StepAside;
 import org.lwjgl.openal.AL10;
 import org.lwjgl.openal.AL11;
 import org.lwjgl.openal.ALC10;
@@ -20,7 +20,8 @@ import org.slf4j.Logger;
  * The sound card's effects, through OpenAL's effects extension: one echo for the place the listener stands in, which
  * every sound of the world is sent into, and the filters that take a sound's loudness and its high notes away, for
  * the walls between, the air and the medium. Made when the game's sound engine is first there and made again whenever
- * it starts over; where the extension is missing, or Sound Physics Remastered gives the echoes, there are none.
+ * it starts over; where the extension is missing, or a mod of sound physics gives the echoes
+ * ({@link StepAside#SOUND_PHYSICS}), there are none.
  *
  * <p>The game plays each sound on a thread of its own, and the Core changes playing sounds from the game's: both only
  * set a source's parameters, which OpenAL keeps safe between threads, and the filter they share is filled and applied
@@ -29,8 +30,6 @@ import org.slf4j.Logger;
 final class Efx {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    /* The mod whose echoes the Core leaves the place to. */
-    private static final String SOUND_PHYSICS = "sound_physics_remastered";
     /* An echo's density and how diffuse it is: full, a room's. */
     private static final float DENSITY = 1.0F;
     private static final float DIFFUSION = 1.0F;
@@ -122,9 +121,9 @@ final class Efx {
         AL10.alGetError();
     }
 
-    /** Whether the echoes are the Core's here: not with Sound Physics Remastered, which gives its own. */
+    /** Whether the echoes are the Core's here: not while a mod of sound physics gives its own. */
     static boolean echoesOurs() {
-        return !ModList.get().isLoaded(SOUND_PHYSICS);
+        return !StepAside.SOUND_PHYSICS.steps();
     }
 
     private static void make(final long current) {

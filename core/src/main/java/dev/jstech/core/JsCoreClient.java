@@ -68,6 +68,7 @@ import dev.jstech.core.client.machine.MachineWrenchClient;
 import dev.jstech.core.client.material.MaterialArt;
 import dev.jstech.core.client.variant.VariantArt;
 import dev.jstech.core.client.recipe.RecipeChooserClient;
+import dev.jstech.core.light.DynamicLightHandOff;
 import dev.jstech.core.client.material.MaterialTooltips;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.client.model.PartMotions;
@@ -225,6 +226,8 @@ public final class JsCoreClient {
         MaterialArt.declare();
         // How the variants of other mods' woods, stones and metals look, from their own textures.
         VariantArt.declare();
+        // The items' light handed to LambDynamicLights while the Core's dynamic light steps aside for it.
+        DynamicLightHandOff.declare();
         // The chooser beside a result when more than one recipe fits a grid or a furnace.
         RecipeChooserClient.listen(modEventBus);
         // How what fire leaves looks: the game's oak charred and its snow greyed to ash, as the resources load.
