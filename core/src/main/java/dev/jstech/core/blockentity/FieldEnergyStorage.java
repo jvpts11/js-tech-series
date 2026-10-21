@@ -11,6 +11,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.neoforged.neoforge.energy.EnergyStorage;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The FE a block entity holds, declared with where it goes: {@link #save()}, {@link #toClient()},
@@ -127,6 +128,7 @@ public final class FieldEnergyStorage extends EnergyStorage implements IField {
     }
 
     @Override
+    @ApiStatus.Internal
     public FieldFlags flags() {
         return flags;
     }

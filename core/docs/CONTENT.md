@@ -9,6 +9,9 @@ look, drops, tab and tags, and everything the game needs about it (registration,
 models, the English name, the loot table, the tags) is made from that declaration, either while the game loads
 or when you run the data generation. Nothing is a second list kept in step by hand.
 
+[J's Example](../../example/README.md)'s `ExampleContent` declares a whole mod this way, and compiles and is tested
+on every build: machines, a tank, a fluid, a cable, a pipe, a part, an item and a menu.
+
 ## Blocks
 
 *Added 2026-09-23.*

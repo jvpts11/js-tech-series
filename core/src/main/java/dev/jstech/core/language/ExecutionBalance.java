@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.language;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * How much a machine's programs get to run in a tick, as one place every machine reads it from.
  *
@@ -16,6 +18,7 @@ package dev.jstech.core.language;
  * The times are design estimates that the server config overwrites when it loads and again on a reload; the rate
  * is not in the config.
  */
+@ApiStatus.Experimental
 public final class ExecutionBalance {
 
     /** Megahertz of processor, cores times frequency over every processor, that buy one instruction a tick. */

@@ -1,0 +1,13 @@
+{
+  "width": 200,
+  "root": {
+    "type": "column",
+    "gap": 6,
+    "children": [
+      {"type": "title", "id": "title"},
+      {"type": "label", "text": "jsexample.logbook.made", "bind": "made", "id": "made", "wrap": true},
+      {"type": "label", "text": "jsexample.logbook.opened", "bind": "opened", "id": "opened", "wrap": true},
+      {"type": "button", "text": "jsexample.logbook.start_over", "menu_button": 0, "id": "start_over"}
+    ]
+  }
+}

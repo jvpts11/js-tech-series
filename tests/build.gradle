@@ -1,7 +1,7 @@
 // The test mod of the series: development only, never published. It holds the GameTests, the client tests and
 // the series' own helpers for them, built on the Core's test kit, so the shipped jars carry no test code and a test
 // may span several mods. It also hosts the development runs, which load the core, the computing mod, the industrial
-// mod, the test kit and this one.
+// mod, the Core's example mod, the test kit and this one.
 plugins {
     id 'net.neoforged.moddev'
 }
@@ -10,6 +10,7 @@ plugins {
 evaluationDependsOn(':core')
 evaluationDependsOn(':computers')
 evaluationDependsOn(':industrial')
+evaluationDependsOn(':example')
 evaluationDependsOn(':testkit')
 
 // checkGeneratedData: the data run's files kept up to date.
@@ -131,7 +132,7 @@ neoForge {
                 // them (case-insensitive), so a few tests can be driven without stealing the mouse for the suite.
                 systemProperty 'jstestkit.clienttests.only', (providers.gradleProperty('ctOnly').getOrElse(''))
                 // -PctMods=<suite>[,<suite>...] runs only the client tests of those suites (core, computers,
-                // industrial, series; see TestSuites), shared out over the shards as the whole suite is.
+                // industrial, example, series; see TestSuites), shared out over the shards as the whole suite is.
                 systemProperty 'jstestkit.clienttests.suites', (providers.gradleProperty('ctMods').getOrElse(''))
                 // -Pjfr records the window with Java Flight Recorder, for profiling what the client draws.
                 if (providers.gradleProperty('jfr').present) {
@@ -160,7 +161,7 @@ neoForge {
             // -PgtOnly=<TestClass or word>[,...] runs only those GameTests (see GameTestSelection).
             systemProperty 'jsc.gametests.only', (providers.gradleProperty('gtOnly').getOrElse(''))
             // -PgtMods=<suite>[,<suite>...] runs only the GameTests of those suites: core, computers, industrial,
-            // series (see TestSuites). With -PgtOnly too, a test runs when it is in one of them and is named.
+            // example, series (see TestSuites). With -PgtOnly too, a test runs when it is in one of them and is named.
             systemProperty 'jsc.gametests.mods', (providers.gradleProperty('gtMods').getOrElse(''))
             // -PkeepOldSaves keeps the samples the old-save tests build as this version's, in the folder they are
             // read from (the test kit's OldSaves): run once for each version that is released.
@@ -213,6 +214,9 @@ neoForge {
         jsindustrial {
             sourceSet(rootProject.project(':industrial').sourceSets.main)
         }
+        jsexample {
+            sourceSet(rootProject.project(':example').sourceSets.main)
+        }
         jstestkit {
             sourceSet(rootProject.project(':testkit').sourceSets.main)
         }
@@ -223,6 +227,7 @@ dependencies {
     implementation project(':core')
     implementation project(':computers')
     implementation project(':industrial')
+    implementation project(':example')
     implementation project(':testkit')
 
     // The computing mod's dependencies, present so the runs load them as well.

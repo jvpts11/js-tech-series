@@ -3,7 +3,8 @@
 The parts of J's Core that keep things: values saved with the world for a server, a dimension, a player or a team;
 versions of what is saved, so an older save still loads; values read from data packs; and a few tools that work
 over time: moving several things at once or not at all, sharing a tick fairly, the world's calendar, timings, and
-the Core's own event bus.
+the Core's own event bus. [J's Example](../../example/README.md)'s `ExampleState` keeps a value for the whole
+server and one for each player.
 
 ## Values kept with the world
 

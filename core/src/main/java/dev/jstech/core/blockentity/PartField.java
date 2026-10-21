@@ -9,6 +9,7 @@ package dev.jstech.core.blockentity;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A {@link IFieldPart} declared among a block entity's fields, with where it goes: {@link #save()},
@@ -42,6 +43,7 @@ public final class PartField implements IField {
     }
 
     @Override
+    @ApiStatus.Internal
     public FieldFlags flags() {
         return flags;
     }

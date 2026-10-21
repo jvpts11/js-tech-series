@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.operation;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * The family a kind of Operation belongs to, by what part of the world it works on.
  *
@@ -14,6 +16,7 @@ package dev.jstech.core.operation;
  * nothing about how an Operation is queued or run. Most families belong to a mod of the series, some of them still
  * to come, so an addon picks the one its kind of work is closest to.
  */
+@ApiStatus.Experimental
 public enum OperationCategory {
     /** Items, fluids and other things kept on the network's disks: searching, storing, moving, taking out. */
     STORAGE,

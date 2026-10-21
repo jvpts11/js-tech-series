@@ -11,6 +11,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The fluid a block entity holds, declared with where it goes: {@link #save()}, {@link #toClient()}, and
@@ -72,6 +73,7 @@ public final class FieldFluidTank extends FluidTank implements IField {
     }
 
     @Override
+    @ApiStatus.Internal
     public FieldFlags flags() {
         return flags;
     }

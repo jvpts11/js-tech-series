@@ -3,7 +3,7 @@
 How a mod on J's Core gives players and server owners settings: each one declared once with its range, written to
 a file with its explanation, pulled back into its range when someone writes a wrong value, changed on a settings
 screen drawn in the player's style, shared as text and as presets, and changed on a server from an operator's own
-game.
+game. [J's Example](../../example/README.md)'s `ExampleSettings` is a whole settings file, in a dozen lines.
 
 ## A setting
 

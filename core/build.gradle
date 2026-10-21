@@ -21,6 +21,15 @@ sourceSets.main.resources {
     exclude("**/*.bdf")
 }
 
+// The Core's API photo travels in its jar, so a mod built on it checks what it uses against the very Core it has
+// (the test kit's ApiUse, photoOf("core")).
+tasks.named('processResources', ProcessResources).configure {
+    from('src/test/resources/api') {
+        include 'core.txt'
+        into 'META-INF/jstech/api'
+    }
+}
+
 /*
  * JourneyMap publishes its API only as snapshots, and carries the API itself inside its jar. The Core compiles against
  * that very API, taken out of the pinned JourneyMap jar, so the build never follows a snapshot.

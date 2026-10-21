@@ -17,6 +17,7 @@ import dev.jstech.core.text.TextKey;
 
 import java.util.Locale;
 import java.util.Optional;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Scheduling priority of an Operation. The Mainframe hands its queue slots to the highest level first and
@@ -24,6 +25,7 @@ import java.util.Optional;
  * {@link #MEDIUM} unless the requester says otherwise. Levels are declared lowest first, so {@code compareTo}
  * orders them.
  */
+@ApiStatus.Experimental
 @TextHolder
 public enum OperationPriority implements IStableId, IStableName {
     /*

@@ -10,6 +10,7 @@ package dev.jstech.core.operation;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
 import java.util.Optional;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Where an Operation has got to: the eight states one can be in, and no others.
@@ -18,6 +19,7 @@ import java.util.Optional;
  * whoever is watching it. Numbering starts at one, so that zero is free to mean that nothing is known about
  * an Operation rather than meaning the first of the eight, which is what an unknown one used to look like.
  */
+@ApiStatus.Experimental
 public enum OperationStatus implements IStableId {
 
     PENDING(1),

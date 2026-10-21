@@ -22,13 +22,18 @@ Every mod of the J's Tech Series is built on it, and any other mod may be too, w
 
 Two kinds of code live in the Core:
 
-- **The API**: the packages named `api` (`dev.jstech.core.api` and `dev.jstech.core.api.client`) and a few types
-  [docs/API.md](../../docs/API.md) lists. Everything there is written down line by line, carries a version
-  number, and is not taken away without a cycle of warning.
-- **Everything else**: the library parts these pages describe. They work, the series' own mods use them every
-  day, and they are documented so you can use them too. What they are not yet is promised: until they move into
-  the API, a release may change their shape, and the changelog says so when it does. If your mod depends on one,
-  read the changelog's "API" section before you update.
+- **The API**: the packages named `api` (`dev.jstech.core.api` and `dev.jstech.core.api.client`), the kits listed
+  in `JsCoreApi.PROMISED_PACKAGES` (most of what these pages describe: content, block entities, machines, cables,
+  energy, screens, settings, state and the rest), and a few types [docs/API.md](../../docs/API.md) lists.
+  Everything there is written down line by line, carries a version number, and is not taken away without a cycle
+  of warning. Most of it is still **experimental**: it works and is promised, but it may change shape, and when it
+  does the changelog's "API" section says so. Read that section before you update.
+- **Everything else**: what is marked `@ApiStatus.Internal`, and what no promised package holds. It is the Core's
+  own business and may change in any release.
+
+[J's Example](../../example/README.md) is a whole mod built this way: a generator, a battery, a crusher, a tank
+and its fluid, a cable, a pipe, a sensor on a cable, settings, state and a screen, on the API alone, with a test
+that fails if it ever reaches anything else. Read it beside these pages.
 
 ## Adding the Core to your project
 
@@ -222,6 +227,7 @@ data.server(new MyRecipeProvider(data.output(), data.lookup()));
 
 | Page | What it covers |
 | --- | --- |
+| [J's Example](../../example/README.md) | A whole mod on the Core's API alone, to read file by file. |
 | [Content](CONTENT.md) | Every builder: blocks, items, looks, tabs, tags, block entities, menus, materials, items with state. |
 | [Text and colour](TEXT_AND_COLOUR.md) | Sentences a player reads, in every language; the colours of screens, which resource packs can change. |
 | [Machines](MACHINES.md) | Processing machines, recipes with counts and fluids, upgrades, and JEI, EMI and REI. |

@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.language;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * A program's view of the machine it runs on, as a language that runs its own files is given it.
  *
@@ -15,6 +17,7 @@ package dev.jstech.core.language;
  * program writes, so a terminal, a task manager or another program reads a program's output the same way whatever
  * language it is in.
  */
+@ApiStatus.Experimental
 public interface IMachineView {
 
     /** The game tick the machine's world is on, or zero while the machine is in no world. */

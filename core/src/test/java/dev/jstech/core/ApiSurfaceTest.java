@@ -53,22 +53,18 @@ class ApiSurfaceTest {
      * What the promise reached before it was followed to its end, each line a promised type and a type of the series
      * it names without promising: the debts of the promise as it stood, written down so no new one joins them.
      *
-     * <p>Most of them are types whose place or shape is about to change: the programming languages move to J's
-     * Computers' API, the kinds of Operation and the eras to the series' package, the eras becoming a registry. A
-     * line goes when its type is promised or leaves the signature, and the test fails while a line outlives its leak.
+     * <p>Those left are J's Computers' own: the kinds its definitions of systems and programs name, which go to its
+     * API with them. A line goes when its type is promised or leaves the signature, and the test fails while a line
+     * outlives its leak.
      */
     private static final Set<String> KNOWN_LEAKS = Set.of(
-            "dev.jstech.computers.engine.EngineCapability > dev.jstech.core.id.IStableName",
-            "dev.jstech.computers.engine.EngineDef > dev.jstech.core.tier.HardwareEra",
             "dev.jstech.computers.os.DesktopEnvironmentDef > dev.jstech.computers.os.PanelStyle",
-            "dev.jstech.computers.os.DesktopEnvironmentDef > dev.jstech.core.text.TextKey",
             "dev.jstech.computers.os.DesktopEnvironmentDef > dev.jstech.computers.os.SoftwareHouse",
             "dev.jstech.computers.os.KernelDef > dev.jstech.computers.os.SchedulerKind",
             "dev.jstech.computers.os.KernelDef > dev.jstech.computers.os.FilesystemKind",
             "dev.jstech.computers.os.KernelDef > dev.jstech.computers.os.ShellFamily",
             "dev.jstech.computers.os.OperatingSpaceDef > dev.jstech.computers.os.SoftwareHouse",
             "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.OsCapability",
-            "dev.jstech.computers.os.OsDef > dev.jstech.core.tier.HardwareEra",
             "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.Platform",
             "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.ShellKind",
             "dev.jstech.computers.os.OsDef > dev.jstech.computers.os.PackageManagerKind",
@@ -78,17 +74,8 @@ class ApiSurfaceTest {
             "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.Platform",
             "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.ProgramKind",
             "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.HostScope",
-            "dev.jstech.computers.os.ProgramSpec > dev.jstech.core.tier.HardwareEra",
             "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.SoftwareHouse",
-            "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.ProgramRequirement",
-            "dev.jstech.computers.os.ProgramSpec > dev.jstech.core.text.TextKey",
-            "dev.jstech.core.language.IProgrammingLanguage.Complaint > dev.jstech.core.text.Text",
-            "dev.jstech.core.language.IProgrammingLanguage > dev.jstech.core.language.ILanguageProcess",
-            "dev.jstech.core.language.IProgrammingLanguage > dev.jstech.core.language.IMachineView",
-            "dev.jstech.core.operation.OperationType > dev.jstech.core.operation.OperationCategory",
-            "dev.jstech.core.operation.OperationType > dev.jstech.core.tier.IndustrialTier",
-            "dev.jstech.core.operation.OperationType > dev.jstech.core.network.NetworkCategory",
-            "dev.jstech.core.operation.OperationType > dev.jstech.core.operation.IOperationHandler");
+            "dev.jstech.computers.os.ProgramSpec > dev.jstech.computers.os.ProgramRequirement");
 
     /* Every mod of the series, its photos beside the Core's tests; run from the Core's folder. */
     private static final ApiSurface SURFACE = ApiSurface.builder()

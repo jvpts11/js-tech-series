@@ -6,7 +6,8 @@ format players and data packs can add to, and the pages of JEI and EMI that show
 is what is particular to your machine.
 
 J's Industrial's Macerator, Compressor and Electric Furnace are built exactly this way, and are the examples
-below.
+below. [J's Example](../../example/README.md)'s generator, battery and crusher are three more, built on the Core's
+API alone, with the crusher's recipes as files of data (`example/src/main/java/dev/jstech/example/machine`).
 
 ## The words
 

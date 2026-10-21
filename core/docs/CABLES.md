@@ -4,6 +4,8 @@
 
 How a mod adds its own cables to J's Core's one cable block. For what the series' own cables are and how players
 lay them, see J's Computers' [Cables](../../computers/docs/CABLES.md); this page is for the mod author.
+[J's Example](../../example/README.md) declares an energy cable, a fluid pipe and a sensor mounted on a cable
+(`ExampleContent` and `part/LevelSensorPart`), on the Core's API alone.
 
 ## One block for every cable
 

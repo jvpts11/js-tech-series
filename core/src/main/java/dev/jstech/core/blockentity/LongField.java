@@ -9,6 +9,7 @@ package dev.jstech.core.blockentity;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A long a block entity holds, declared with where it goes: {@link #save()}, {@link #toClient()}, {@link #toMenu()}.
@@ -58,6 +59,7 @@ public final class LongField implements IField {
     }
 
     @Override
+    @ApiStatus.Internal
     public FieldFlags flags() {
         return flags;
     }

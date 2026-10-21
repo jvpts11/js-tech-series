@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.operation;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * The code that carries out one kind of Operation, handed each request of that kind.
  *
@@ -17,6 +19,7 @@ package dev.jstech.core.operation;
  *
  * @param <T> the arguments a request of this kind carries
  */
+@ApiStatus.Experimental
 @FunctionalInterface
 public interface IOperationHandler<T extends IOperationArgs> {
 

@@ -11,6 +11,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -151,6 +152,7 @@ public final class FieldItemHandler extends ItemStackHandler implements IField {
     }
 
     @Override
+    @ApiStatus.Internal
     public FieldFlags flags() {
         return flags;
     }

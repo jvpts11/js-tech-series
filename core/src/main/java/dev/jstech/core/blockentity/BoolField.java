@@ -9,6 +9,7 @@ package dev.jstech.core.blockentity;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A true-or-false a block entity holds, declared with where it goes: {@link #save()}, {@link #toClient()},
@@ -54,6 +55,7 @@ public final class BoolField implements IField {
     }
 
     @Override
+    @ApiStatus.Internal
     public FieldFlags flags() {
         return flags;
     }

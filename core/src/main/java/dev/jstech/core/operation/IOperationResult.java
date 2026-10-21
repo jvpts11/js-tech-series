@@ -8,10 +8,12 @@
 package dev.jstech.core.operation;
 
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Outcome of running an {@link IOperationTask} on a virtual thread.
  */
+@ApiStatus.Experimental
 public sealed interface IOperationResult {
 
     /**

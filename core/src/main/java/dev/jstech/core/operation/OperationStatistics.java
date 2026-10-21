@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Rolling statistics of an orchestrator's Operations over the last hour, kept per Operation type: how many
@@ -19,6 +20,7 @@ import java.util.TreeMap;
  * reaches it again, so a quiet orchestrator costs nothing to keep current. Pure logic with no world types,
  * driven by the tick clock the caller passes in.
  */
+@ApiStatus.Experimental
 public final class OperationStatistics {
 
     public static final int TICKS_PER_MINUTE = 1200;

@@ -4,7 +4,8 @@ How J's Core helps a mod draw: screens declared in files and laid out by the Cor
 screen, layouts whose overlaps a test can catch, themes and skins that give every screen of an era or a system the
 same look, text drawn one way everywhere, models the Core puts together, screens drawn into the world, and keys.
 Three parts have pages of their own: [UI components](UI_COMPONENTS.md) (buttons, lists, fields), [Fonts](FONTS.md)
-and [Motion](MOTION.md).
+and [Motion](MOTION.md). [J's Example](../../example/README.md)'s logbook is a screen declared in a file with no
+code of its own: its labels show its menu's values by name, and its one button presses the menu's button.
 
 ## Screens declared in files
 

@@ -7,12 +7,15 @@
  */
 package dev.jstech.core.operation;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * The runtime balance values of the Operations engine, as one place every module reads them from. The
  * defaults are the design estimates; the server config overwrites them when it loads (and again on a
  * reload), so a pack author tunes the engine without touching code. Reads are lock-free volatile reads:
  * an Operation on a virtual thread may consult them at any time.
  */
+@ApiStatus.Experimental
 public final class OperationBalance {
 
     public static final long TICKS_PER_HOUR = 72_000L;

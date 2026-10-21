@@ -7,11 +7,14 @@
  */
 package dev.jstech.core.operation;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * A diagnostic Operation that does a bounded amount of deterministic CPU-bound work on its virtual thread and then succeeds.
  * It is a dev-only load generator, so the loop does not poll {@link IOperationContext#isActive()}: a long run ends on
  * its own even if the dispatcher shuts down meanwhile.
  */
+@ApiStatus.Experimental
 public record SelfTestOperationTask(int workUnits) implements IOperationTask {
 
     /* Written once per run so the JIT cannot discard the loop as dead code. */

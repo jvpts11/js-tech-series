@@ -11,6 +11,7 @@ import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * One program running on one machine, whatever language it was written in.
@@ -25,6 +26,7 @@ import net.minecraft.nbt.CompoundTag;
  * <p>What a program writes for a person, the time it reads and the memory it may hold go through the view of the
  * machine its language was given ({@link IMachineView}), and the machine keeps the lines.
  */
+@ApiStatus.Experimental
 public interface ILanguageProcess {
 
     /** Where a program is up to. */

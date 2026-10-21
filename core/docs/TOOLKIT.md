@@ -2,9 +2,9 @@
 
 The small kits nearly every technology mod needs, done once in the Core: capabilities of your own, calls from a
 screen to the server, work away from the tick, codecs for records, and other mods you work with when they are
-installed. The calls, the tasks, the codecs and the optional mods are promised to addons
-([docs/API.md](../../docs/API.md)), experimental for now; the capability kit joins them once the series' own
-capabilities move out of its package.
+installed. All of them, the capabilities with them, are promised to addons ([docs/API.md](../../docs/API.md)),
+experimental for now. The two of the series' own the capability kit still holds, what a node of the data network and
+what the network may inspect implement, move to the series' package later, with a note in the changelog.
 
 ## Capabilities of your own
 

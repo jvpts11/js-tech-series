@@ -1,0 +1,11 @@
+{
+  "type": "jsexample:crushing",
+  "inputs": [
+    {"item": "minecraft:gravel", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:sand", "count": 1}
+  ],
+  "ticks": 60,
+  "energy_per_tick": 30
+}

@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -69,12 +70,16 @@ public final class ApiSurface {
 
     /** Whose names a signature may always say: the language's own, and the game's with its own libraries. */
     public static final List<String> GAME = List.of("java.", "javax.", "net.minecraft.", "net.neoforged.",
-            "com.mojang.", "org.slf4j.", "org.jetbrains.", "io.netty.");
+            "com.mojang.", "org.slf4j.", "org.jetbrains.", "io.netty.", "org.joml.", "com.google.gson.",
+            "com.google.common.", "it.unimi.dsi.fastutil.");
 
     private static final Pattern PROMISED_PACKAGES =
             Pattern.compile("\\bPROMISED_PACKAGES\\s*=\\s*List\\.of\\(([^)]*)\\)");
     private static final Pattern QUOTED = Pattern.compile("\"([\\w.]+)\"");
     private static final Pattern VERSION = Pattern.compile("\\bint\\s+VERSION\\s*=\\s*(\\d+)\\s*;");
+    private static final Pattern COMMENT = Pattern.compile("(?s)/\\*.*?\\*/|//[^\\n]*");
+    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("\\bpackage\\s+[\\w.]+\\s*;");
+    private static final Pattern EXPERIMENTAL_MARK = Pattern.compile("@(ApiStatus\\.)?Experimental\\b");
     private static final String JAVA = ".java";
 
     private ApiSurface(final Builder from) {
@@ -137,7 +142,7 @@ public final class ApiSurface {
         final Set<String> promisedTypes = new LinkedHashSet<>();
         final Map<Path, List<ApiPromise>> byFile = new LinkedHashMap<>();
         for (final Path file : promisedSources(wrong)) {
-            final List<ApiPromise> promises = new ApiSourceReader(read(file)).read();
+            final List<ApiPromise> promises = promisesOf(file);
             byFile.put(file, promises);
             for (final ApiPromise promise : promises) {
                 if (promise.isType()) {
@@ -145,9 +150,11 @@ public final class ApiSurface {
                 }
             }
         }
+        final Set<String> declared = declaredTypes();
         final Set<String> leaks = new LinkedHashSet<>();
         for (final Map.Entry<Path, List<ApiPromise>> file : byFile.entrySet()) {
-            leaks.addAll(new ApiReach(read(file.getKey()), file.getValue(), promisedTypes, elsewhere).leaks());
+            leaks.addAll(new ApiReach(read(file.getKey()), file.getValue(), promisedTypes, declared, elsewhere)
+                    .leaks());
         }
         for (final String leak : leaks) {
             if (!knownLeaks.contains(leak)) {
@@ -247,7 +254,8 @@ public final class ApiSurface {
                 final boolean expected = newerThanStable(promise, photo, types);
                 if (expected && !promise.experimental()) {
                     wrong.add(promise.key() + " came in version " + version + ", after the stable " + photo.stable()
-                            + ", and has to carry @ApiStatus.Experimental (on itself or on a type it is in)");
+                            + ", and has to carry @ApiStatus.Experimental (on itself, on a type it is in, or on its"
+                            + " package)");
                 } else if (!expected && promise.experimental()) {
                     wrong.add(promise.key() + " is as old as the stable version " + photo.stable()
                             + " and has been through a release: its @ApiStatus.Experimental mark comes off");
@@ -271,10 +279,32 @@ public final class ApiSurface {
     public Map<String, List<ApiPromise>> promisesByMod() {
         final Map<String, List<ApiPromise>> byMod = new TreeMap<>();
         for (final Path file : promisedSources(new ArrayList<>())) {
-            byMod.computeIfAbsent(modOf(file), mod -> new ArrayList<>())
-                    .addAll(new ApiSourceReader(read(file)).read());
+            byMod.computeIfAbsent(modOf(file), mod -> new ArrayList<>()).addAll(promisesOf(file));
         }
         return byMod;
+    }
+
+    /*
+     * What a source promises, everything in it experimental when its package's package-info carries the mark: a kit
+     * that enters the promise whole is marked once, on its package, rather than on each of its types.
+     */
+    private static List<ApiPromise> promisesOf(final Path file) {
+        final List<ApiPromise> promises = new ApiSourceReader(read(file)).read();
+        if (!experimentalPackage(file.getParent())) {
+            return promises;
+        }
+        return promises.stream().map(promise -> new ApiPromise(promise.owner(), promise.what(), true)).toList();
+    }
+
+    /* Whether the package in the folder carries @ApiStatus.Experimental, said in code and not in a comment. */
+    private static boolean experimentalPackage(final Path folder) {
+        final Path info = folder.resolve("package-info.java");
+        if (!Files.isRegularFile(info)) {
+            return false;
+        }
+        final String code = COMMENT.matcher(read(info)).replaceAll(" ");
+        final Matcher declared = PACKAGE_DECLARATION.matcher(code);
+        return declared.find() && EXPERIMENTAL_MARK.matcher(code.substring(0, declared.start())).find();
     }
 
     /*
@@ -308,6 +338,20 @@ public final class ApiSurface {
             }
         }
         return found;
+    }
+
+    /* Every type the mods declare in a file of its own, by its whole name. */
+    private Set<String> declaredTypes() {
+        final Set<String> declared = new HashSet<>();
+        for (final Root root : roots) {
+            for (final Path file : javaUnder(root.main())) {
+                final String type = file.getFileName().toString().replace(JAVA, "");
+                if (!type.equals("package-info")) {
+                    declared.add(packageOf(root.main(), file.getParent()) + "." + type);
+                }
+            }
+        }
+        return declared;
     }
 
     /* The packages a mod's API class declares as promised beside its api ones, or none when it declares none. */

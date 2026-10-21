@@ -257,7 +257,37 @@ with its `VERSION`) lists in `PROMISED_PACKAGES`, and the types `promised(...)` 
 problems: `leaks()` (a name of the mod promised by nobody), `packageProblems()`, `photoProblems()` (the API against
 its photo; a failing check writes the photo it proposes to `build/api-photo`), `versionProblems()` and
 `experimentalProblems()`. A unit test reaches the kit's classes alone, with none of the game: in Gradle,
-`testImplementation files(project(':testkit').sourceSets.main.output)` in this repository, or the kit's jar.
+`testImplementation files(project(':testkit').sourceSets.main.output)` in this repository, or the kit's jar. A kit
+that enters the promise whole is marked experimental once, with `@ApiStatus.Experimental` on its `package-info`.
+
+## What a mod uses of the Core
+
+*Added 2026-10-22.*
+
+The other side of the same promise: `ApiUse` reads your mod's compiled classes and checks every class, field and
+method of the series they reach against the photos of the mods you build on, and anything from a package you name
+as forbidden. What the photos do not promise is a problem; so is a method you override that they do not promise.
+
+```java
+class MyModApiUseTest {
+    @Test
+    void mod_usesOnlyWhatTheCorePromises() {
+        final ApiUse use = ApiUse.builder()
+                .own("com.example.mymod")
+                .photoOf("core")
+                .build();
+        assertEquals(List.of(), use.problems(Path.of("build", "classes", "java", "main")));
+    }
+}
+```
+
+It reads class files rather than sources, so it sees what the compiler settled on: a method called through your
+own class is followed to the class that declares it, and what the game and the language declare is yours to use.
+The Core carries its photo in its jar (`META-INF/jstech/api/core.txt`), so `photoOf("core")` reads the photo of the
+very Core you build against, and `photo(path)` takes one from a file. The classes of the mods you build on are read
+from the test's class path, and yours from the folder you name, so the test runs after your classes are compiled
+(`test.dependsOn classes`). [J's Example](../../example/README.md) runs it on every build against the
+Core's photo, and forbids J's Computers, J's Industrial and the test mods.
 
 ## Data generation up to date
 

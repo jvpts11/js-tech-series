@@ -24,7 +24,7 @@ import java.util.Set;
 public final class TestSuites {
 
     /** Every suite, by the last part of its package. */
-    public static final List<String> ALL = List.of("core", "computers", "industrial", "series");
+    public static final List<String> ALL = List.of("core", "computers", "industrial", "example", "series");
 
     private TestSuites() {
     }

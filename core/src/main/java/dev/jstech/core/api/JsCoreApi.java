@@ -43,7 +43,7 @@ public final class JsCoreApi {
      * }
      * }</pre>
      */
-    public static final int VERSION = 9;
+    public static final int VERSION = 10;
 
     /**
      * The Core's packages that are part of the promise beside this one, each a kit a mod may build on.
@@ -54,8 +54,31 @@ public final class JsCoreApi {
      * too, so a promise can never hand a mod a type that is not.
      */
     @ApiStatus.Experimental
-    public static final List<String> PROMISED_PACKAGES = List.of("dev.jstech.core.call", "dev.jstech.core.codec",
-            "dev.jstech.core.optional", "dev.jstech.core.task");
+    public static final List<String> PROMISED_PACKAGES = List.of(
+            "dev.jstech.core.audio", "dev.jstech.core.audio.pcm", "dev.jstech.core.blockentity",
+            "dev.jstech.core.cable", "dev.jstech.core.call", "dev.jstech.core.capability",
+            "dev.jstech.core.client.config", "dev.jstech.core.client.gui.component",
+            "dev.jstech.core.client.gui.data", "dev.jstech.core.client.gui.logic",
+            "dev.jstech.core.client.gui.screen", "dev.jstech.core.client.gui.style",
+            "dev.jstech.core.client.gui.theme", "dev.jstech.core.codec", "dev.jstech.core.config",
+            "dev.jstech.core.config.format", "dev.jstech.core.connect", "dev.jstech.core.content",
+            "dev.jstech.core.data", "dev.jstech.core.datagen", "dev.jstech.core.diagnostic",
+            "dev.jstech.core.energy", "dev.jstech.core.explosion", "dev.jstech.core.fluid",
+            "dev.jstech.core.font", "dev.jstech.core.grid", "dev.jstech.core.gui.flex",
+            "dev.jstech.core.gui.layout", "dev.jstech.core.gui.screen", "dev.jstech.core.gui.style",
+            "dev.jstech.core.guide", "dev.jstech.core.heat", "dev.jstech.core.id", "dev.jstech.core.input",
+            "dev.jstech.core.inventory", "dev.jstech.core.item", "dev.jstech.core.language",
+            "dev.jstech.core.log", "dev.jstech.core.look", "dev.jstech.core.machine", "dev.jstech.core.map",
+            "dev.jstech.core.material", "dev.jstech.core.matter", "dev.jstech.core.mechanical",
+            "dev.jstech.core.menu", "dev.jstech.core.model", "dev.jstech.core.moving",
+            "dev.jstech.core.moving.physics", "dev.jstech.core.multiblock", "dev.jstech.core.multipart",
+            "dev.jstech.core.network", "dev.jstech.core.notification", "dev.jstech.core.operation",
+            "dev.jstech.core.optional", "dev.jstech.core.palette", "dev.jstech.core.peripheral",
+            "dev.jstech.core.persistence",
+            "dev.jstech.core.progression", "dev.jstech.core.region", "dev.jstech.core.resource",
+            "dev.jstech.core.signal", "dev.jstech.core.state", "dev.jstech.core.task", "dev.jstech.core.team",
+            "dev.jstech.core.text", "dev.jstech.core.tier", "dev.jstech.core.tool", "dev.jstech.core.uuid",
+            "dev.jstech.core.worldgen.reservoir", "dev.jstech.core.worldgen.vein");
 
     /**
      * How long something here lives once it is marked as going.

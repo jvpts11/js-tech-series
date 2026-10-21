@@ -145,6 +145,31 @@ class ApiSurfaceTest {
     }
 
     @Test
+    void experimentalProblems_takeTheMarkFromThePackage() throws IOException {
+        final ApiSurface surface = surface(Set.of(LEAK));
+        surface.photoProblems();
+        final String proposal = Files.readString(folder.resolve("proposals").resolve("demo.txt"));
+        Files.createDirectories(folder.resolve("photos"));
+        Files.writeString(folder.resolve("photos").resolve("demo.txt"), proposal);
+        write("com/demo/kit/package-info.java", """
+                /** The tools a mod built on the demo uses; this comment's @ApiStatus.Experimental is no mark. */
+                package com.demo.kit;
+                """);
+
+        assertTrue(surface.experimentalProblems().stream().anyMatch(line -> line.startsWith("com.demo.kit.Tool")));
+
+        write("com/demo/kit/package-info.java", """
+                /** The tools a mod built on the demo uses. */
+                @ApiStatus.Experimental
+                package com.demo.kit;
+
+                import org.jetbrains.annotations.ApiStatus;
+                """);
+
+        assertTrue(surface.experimentalProblems().stream().noneMatch(line -> line.startsWith("com.demo.kit.Tool")));
+    }
+
+    @Test
     void versionProblems_sayAVersionThatIsNotTheNewestInThePhoto() throws IOException {
         final ApiSurface surface = surface(Set.of(LEAK));
         surface.photoProblems();

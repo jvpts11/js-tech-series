@@ -8,10 +8,12 @@
 package dev.jstech.core.operation;
 
 import java.util.function.Supplier;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The handle an {@link IOperationTask} uses while it runs on a virtual thread. The task does its CPU-bound work on the virtual thread, but anything that touches the world, a block entity or the live network index must go back to the main (server) thread, and that is what this context provides. Disk latency and throughput are paced by waiting on whole game ticks, so the whole system stays deterministic (tick-based, never wall-clock).
  */
+@ApiStatus.Experimental
 public interface IOperationContext {
 
     /** Runs an action on the next server tick and returns immediately (fire-and-forget). */

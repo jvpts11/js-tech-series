@@ -10,6 +10,7 @@ package dev.jstech.core.blockentity;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.function.IntSupplier;
 
@@ -56,6 +57,7 @@ public final class DerivedInt implements IField {
     }
 
     @Override
+    @ApiStatus.Internal
     public FieldFlags flags() {
         return flags;
     }

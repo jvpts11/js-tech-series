@@ -12,6 +12,7 @@ import dev.jstech.core.util.Utf8Text;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Why an Operation failed, in a form that can be shown to whoever asked for it.
@@ -28,6 +29,7 @@ import java.util.Objects;
  * @param key       the translation key naming the reason, empty when there is no reason to give
  * @param arguments what fills the holes in that line, in the order they appear
  */
+@ApiStatus.Experimental
 public record OperationFailure(String key, List<String> arguments) {
 
     /** No reason: what an Operation that did not fail carries. */

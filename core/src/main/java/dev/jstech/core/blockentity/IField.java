@@ -9,15 +9,21 @@ package dev.jstech.core.blockentity;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * One declared field of a block entity, as {@link BlockEntityFields} drives it: written to and read from a tag under
  * its key (the save and the client's update use the same form unless the field says otherwise), and seen by a menu as
  * a run of ints.
+ *
+ * <p>Every field the block entity kit declares is one, and nothing else can be: a block entity gets its fields from
+ * {@code fields()}, never by making one.
  */
-interface IField {
+public sealed interface IField permits BoolField, DerivedInt, FieldEnergyStorage, FieldFluidTank, FieldItemHandler,
+        IntField, LongField, PartField, ValueField {
 
-    /** Where this field goes, and under which key. */
+    /** Where this field goes, and under which key: the kit's own business. */
+    @ApiStatus.Internal
     FieldFlags flags();
 
     /** Writes the field's value under its key, for the save. */

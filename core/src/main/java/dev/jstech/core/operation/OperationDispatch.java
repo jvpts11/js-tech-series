@@ -25,10 +25,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The Operation dispatcher: runs CPU-bound Operation work on virtual threads while keeping every world mutation on the main (server) thread. A task does its computation on a virtual thread and uses its {@link IOperationContext} to bounce world reads/writes back to the main thread and to wait on whole game ticks, so disk latency and throughput are paced deterministically by ticks, never by a wall clock. Multiple disks (one task per server) therefore process in parallel without ever touching the world off-thread.
  */
+@ApiStatus.Experimental
 @TextHolder
 public final class OperationDispatch implements AutoCloseable, ILatencyScheduler {
 

@@ -1,0 +1,87 @@
+// J's Example: the example mod of J's Core. Built on the Core alone, and its unit tests hold it to the Core's promise:
+// nothing it reaches may be outside the Core's API photo, and nothing may come from another mod of the series.
+plugins {
+    id 'net.neoforged.moddev'
+}
+
+// The data run below reaches into the core's source set, and the unit tests into the test kit's classes, so both are
+// configured first.
+evaluationDependsOn(':core')
+evaluationDependsOn(':testkit')
+
+// checkGeneratedData: the data run's files kept up to date.
+apply from: rootProject.file('gradle/generated-data.gradle')
+
+base {
+    archivesName = "${mod_id}-${minecraft_version}"
+}
+
+sourceSets.main.resources {
+    srcDir('src/generated/resources')
+    exclude("src/generated/**/.cache")
+}
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        data {
+            data()
+            gameDirectory = rootProject.file('run')
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath(),
+                    '--existing', rootProject.file('core/src/main/resources/').getAbsolutePath()
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    // Which source sets belong to which mod: the data run loads this mod and the core it depends on.
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+        jscore {
+            sourceSet(rootProject.project(':core').sourceSets.main)
+        }
+    }
+}
+
+dependencies {
+    implementation project(':core')
+    // The test kit's check of what a mod uses of the Core, run over this mod's own classes.
+    testImplementation files(project(':testkit').sourceSets.main.output)
+}
+
+// The unit test reads the compiled classes, so it runs after them.
+tasks.named('test', Test).configure {
+    dependsOn tasks.named('classes')
+}
+
+// Expands the declared properties into the mod metadata template. A missing property is an error.
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : project.version.toString(),
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata

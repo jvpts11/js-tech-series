@@ -1,0 +1,10 @@
+{
+  "type": "jsexample:crushing",
+  "inputs": [
+    {"item": "minecraft:cobblestone", "count": 1}
+  ],
+  "outputs": [
+    {"id": "minecraft:gravel", "count": 1}
+  ],
+  "ticks": 40
+}

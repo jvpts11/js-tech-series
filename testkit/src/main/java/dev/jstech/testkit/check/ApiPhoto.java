@@ -35,24 +35,28 @@ public record ApiPhoto(int stable, Map<String, Integer> versions) {
 
     /** The photo in {@code file}, or an empty one when there is none yet. */
     public static ApiPhoto read(final Path file) {
+        if (!Files.isRegularFile(file)) {
+            return new ApiPhoto(0, Map.of());
+        }
+        try {
+            return parse(Files.readString(file, StandardCharsets.UTF_8));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /** The photo a text says, as a photo's file writes it. */
+    public static ApiPhoto parse(final String text) {
         final Map<String, Integer> versions = new LinkedHashMap<>();
         int stable = 0;
-        if (Files.isRegularFile(file)) {
-            final String text;
-            try {
-                text = Files.readString(file, StandardCharsets.UTF_8);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-            for (final String line : text.split("\n")) {
-                final String trimmed = line.strip();
-                final Matcher entry = LINE.matcher(trimmed);
-                final Matcher stableLine = STABLE_LINE.matcher(trimmed);
-                if (entry.matches()) {
-                    versions.put(entry.group(2) + "  " + entry.group(3), Integer.parseInt(entry.group(1)));
-                } else if (stableLine.matches()) {
-                    stable = Integer.parseInt(stableLine.group(1));
-                }
+        for (final String line : text.split("\n")) {
+            final String trimmed = line.strip();
+            final Matcher entry = LINE.matcher(trimmed);
+            final Matcher stableLine = STABLE_LINE.matcher(trimmed);
+            if (entry.matches()) {
+                versions.put(entry.group(2) + "  " + entry.group(3), Integer.parseInt(entry.group(1)));
+            } else if (stableLine.matches()) {
+                stable = Integer.parseInt(stableLine.group(1));
             }
         }
         return new ApiPhoto(stable, versions);

@@ -15,6 +15,24 @@ Each mod's api packages, the packages it lists as promised beside them, and noth
   documented for a reader who knows nothing of it, starting with its package's `package-info`. From then on
   everything public in it is part of the API, as an api package is.
 
+The Core's kits in the promise today, each explained from zero on the page beside it in
+[J's Core's documentation](../core/docs/README.md):
+
+| Kit | Packages under `dev.jstech.core` |
+| --- | --- |
+| Content: blocks, items, tools, looks, tabs, fluids, devices | `content`, `item`, `tool`, `look`, `model`, `palette`, `font`, `text`, `id`, `uuid` |
+| Block entities and their fields, menus, inventories | `blockentity`, `menu`, `inventory`, `capability` |
+| Machines and their recipes, multiblocks, block spaces | `machine`, `multiblock`, `multipart` |
+| Cables, grids, energy, fluids and matter, heat, motion | `cable`, `connect`, `grid`, `energy`, `fluid`, `matter`, `heat`, `mechanical`, `peripheral`, `signal` |
+| Screens, components, themes, keys, notifications | `gui.flex`, `gui.layout`, `gui.screen`, `gui.style`, `client.gui.component`, `client.gui.data`, `client.gui.logic`, `client.gui.screen`, `client.gui.style`, `client.gui.theme`, `client.config`, `input`, `notification` |
+| Settings, state and saves, data, teams, regions | `config`, `config.format`, `state`, `persistence`, `data`, `datagen`, `team`, `region`, `resource`, `log`, `diagnostic`, `map` |
+| Sound, manuals, materials, moving structures, the world | `audio`, `audio.pcm`, `guide`, `material`, `moving`, `moving.physics`, `explosion`, `worldgen.reservoir`, `worldgen.vein`, `progression` |
+| The series' model: tiers, networks, Operations, languages | `tier`, `network`, `operation`, `language` |
+| What every mod's code leans on | `call`, `codec`, `optional`, `task` |
+
+A kit is that wide because the promise is followed to its end: a machine hands a mod its fields, its sides, its
+heat and the structures it may move with, so all of those are promised with it, or none of it could be.
+
 Everything reachable from those packages is the API, save what is marked `@ApiStatus.Internal`: public only so
 the mod can wire itself up, and no promise. Everything else in either mod is that mod's own business and may
 change in any release with no warning and no note. A mod that reaches into it is a mod that will break, and no
@@ -126,7 +144,8 @@ Every part of a mod is at one of three levels:
 
 - **Internal**: not promised. It changes whenever the mod needs it to, with no note.
 - **Experimental**: promised, but it may still change, with a note in the changelog when it does. It carries
-  `@ApiStatus.Experimental`, from the JetBrains annotations every Minecraft mod already has on its classpath.
+  `@ApiStatus.Experimental`, from the JetBrains annotations every Minecraft mod already has on its classpath: on
+  itself, on a type it is in, or, for a kit that entered the promise whole, on its package's `package-info`.
   Everything new starts here, because no release has yet gone out with mods using it.
 - **Stable**: promised, and it holds. A part gets here only once two real mods use it, it has real tests, its
   documentation has an example that compiles, what it saves and what it sends between the server and the players
@@ -155,9 +174,9 @@ code with the file on every build, and fails when:
   still has one (the stable version is raised by hand, once what came up to it meets the bar for stable);
 - a public or protected signature of the API names a type of the series that is not part of the API. Every
   name is followed to where it comes from, and every type of the API is read the same way, so the promise is
-  followed to its end and can hand a mod no type it did not promise. The few such types the API already
-  named when this rule came in are listed one by one in the test, mostly types about to move; no new one can
-  join them, and each comes off the list when it is promised or leaves the signature;
+  followed to its end and can hand a mod no type it did not promise. The few such types the API still names
+  are J's Computers' own, named by its definitions of systems and programs, and listed one by one in the test;
+  no new one can join them, and each comes off the list when it is promised or leaves the signature;
 - a package listed as promised is not the mod's own, holds no type, or has no `package-info` explaining it.
 
 When it fails, it writes what the file would have to say to `core/build/api-photo`, with anything new at
@@ -165,6 +184,19 @@ the next number. Nothing reaches the API, or leaves it, without somebody reading
 
 The test is J's Core Test Kit's `ApiSurface`, and a mod built on the series keeps its own promise with it the same
 way, a photo of its own in its tests ([Testing](../core/docs/TESTING.md#the-apis-surface)).
+
+## Holding a mod to the promise
+
+The other side of the promise is the mod that uses it. The test kit's `ApiUse` reads a mod's compiled classes and
+checks every class, field and method they reach in the series against the photos: what the photos do not promise
+is a problem, and so is anything from a package the mod must never reach. It sees what the compiler settled on, so
+a method called through the mod's own class is followed to the class that declares it, and a method the mod
+overrides to the one it overrides; what the game and the language declare is always the mod's to use.
+
+[J's Example](../example/README.md), the Core's example mod, is held to it: it is built on the Core's API alone,
+reaches nothing of J's Computers or J's Industrial, and its unit test fails the build the day it reaches anything
+internal. That makes it the Core's tutorial, a test of the whole API, and the alarm for anything internal that
+leaks into the promise.
 
 ## What changed, release by release
 

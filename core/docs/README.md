@@ -6,7 +6,9 @@ the Core from zero, with the code that uses it. They assume you know Java and ha
 they assume nothing about the Core.
 
 Start with [Getting started](GETTING_STARTED.md): it takes you from an empty mod to one with its first block, and
-says what the Core promises and what it does not yet.
+says what the Core promises and what it does not yet. Then read [J's Example](../../example/README.md), a whole mod
+built on the Core's API alone, beside the pages of the kits it uses: every example there compiles and is tested on
+every build.
 
 ## Making things
 

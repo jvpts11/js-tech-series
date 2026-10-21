@@ -1,0 +1,6 @@
+{
+  "parent": "jscore:block/cable/item_4",
+  "textures": {
+    "jacket": "minecraft:block/copper_block"
+  }
+}

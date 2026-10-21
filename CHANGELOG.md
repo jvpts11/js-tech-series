@@ -30,6 +30,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   colour, each with a default for a skin written before; all experimental.
 - (Core) Fields in every look: J's Core's API is at version 9. `ISkin.fieldText()` is the colour of what is typed in a
   field, the primary text unless a look's fields differ; experimental.
+- (Core) The kits promised: J's Core's API is at version 10, and 66 more of the Core's packages join
+  `JsCoreApi.PROMISED_PACKAGES`, all experimental: the content builders, block entities and their fields, menus and
+  inventories, machines and their recipes, multiblocks and block spaces, cables and grids, energy, fluids and matter,
+  heat and mechanical power, signals, screens and their components, themes and keys, settings, state and saves, data,
+  teams and regions, sound, manuals, materials, moving structures, ores and reservoirs, progression, and the series'
+  tiers, networks and kinds of Operation. That is what a mod building a machine is handed, followed to its end; the
+  photo of the API now says it line by line. A kit that enters whole is marked experimental once, on its
+  `package-info`. `IField`, what every field of a block entity is, is public and sealed, and its `flags()` internal.
+- (Core) The photo travels: J's Core's jar carries its API photo, `META-INF/jstech/api/core.txt`, so a mod checks what
+  it uses against the very Core it is built on.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1130,6 +1140,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - (Core) FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,
   `jscore:milestone` and `jscore:axis_step`.
+- (Core) J's Example, the Core's example mod: a mod built on the Core's API alone, to read as a tutorial. A generator
+  that burns fuel into energy, as much a tick as its setting says; a battery; a crusher whose recipes are files of
+  data; a tank of sixteen buckets filled by buckets and pipes, and oil with its block and bucket; an energy cable and a
+  fluid pipe in the Core's cable block; a level sensor mounted on a cable, giving out how full the block beside it is
+  as a redstone signal; a settings file; the energy made kept for the whole server and the logbook's openings kept for
+  each player; and the logbook's screen, declared in a file with no code of its own. Its blocks wear the game's own
+  textures.
+- (Core) Holding a mod to the promise: the test kit's `ApiUse` reads a mod's compiled classes and fails when they reach
+  a class, field or method of the series its photos do not promise, or anything of a mod it must never reach,
+  following a call through the mod's own class to where it is declared and a method it overrides to the one it
+  overrides. J's Example runs it on every build, against the Core's photo, and forbids J's Computers and J's
+  Industrial.
 
 ### Changed
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

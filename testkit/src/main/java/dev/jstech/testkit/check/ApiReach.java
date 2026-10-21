@@ -29,26 +29,30 @@ final class ApiReach {
     private final String pkg;
     private final List<ApiPromise> promises;
     private final Set<String> promisedTypes;
+    private final Set<String> declaredTypes;
     private final List<String> elsewhere;
     private final Map<String, Set<String>> variablesOfType = new HashMap<>();
 
-    /* What java.lang brings in, which a signature may name with no import at all. */
-    private static final Set<String> JAVA_LANG = Set.of("String", "Object", "Integer", "Long", "Double", "Float",
-            "Boolean", "Character", "Number", "CharSequence", "Iterable", "Comparable", "Class", "Enum", "Record",
-            "Runnable", "Exception", "RuntimeException", "Throwable", "Void");
     /* A type's name as a signature writes it: capitalized, and not the inner part of a dotted name. */
     private static final Pattern NAME = Pattern.compile("(?<![\\w.])([A-Z][A-Za-z0-9_]*)\\b");
     /* The lowercase words a line opens with: its modifiers, and for a type the word for its kind. */
     private static final Pattern LEADING_WORDS = Pattern.compile("^(?:@?[a-z-]+\\s+)*@?[a-z]*");
     private static final Pattern PACKAGE = Pattern.compile("\\bpackage\\s+([\\w.]+)\\s*;");
 
+    /**
+     * A reader of one source's promises.
+     *
+     * @param declaredTypes every type the mods declare in a file of its own, by its whole name: what a name with no
+     *                      import may be in the file's own package
+     */
     ApiReach(final String text, final List<ApiPromise> promises, final Set<String> promisedTypes,
-             final List<String> elsewhere) {
+             final Set<String> declaredTypes, final List<String> elsewhere) {
         this.text = text;
         final Matcher pkgMatch = PACKAGE.matcher(text);
         this.pkg = pkgMatch.find() ? pkgMatch.group(1) : "";
         this.promises = promises;
         this.promisedTypes = promisedTypes;
+        this.declaredTypes = declaredTypes;
         this.elsewhere = elsewhere;
         for (final ApiPromise promise : promises) {
             if (promise.isType()) {
@@ -167,9 +171,6 @@ final class ApiReach {
      * has promised. What decides it is where that very type comes from, not what else the file imports.
      */
     private String unpromised(final String name) {
-        if (JAVA_LANG.contains(name)) {
-            return null;
-        }
         final String imported = importOf(name, this.text);
         if (imported != null) {
             for (final String outside : this.elsewhere) {
@@ -187,8 +188,15 @@ final class ApiReach {
             }
             return name + ", declared here but not visible";
         }
-        // Named with no import and not declared here: the file's own package, where an unknown name also lands.
+        // Named with no import and not declared here: a type of the file's own package, if it has one of that name.
         final String samePackage = this.pkg + "." + name;
-        return this.promisedTypes.contains(samePackage) ? null : samePackage;
+        if (this.declaredTypes.contains(samePackage)) {
+            return this.promisedTypes.contains(samePackage) ? null : samePackage;
+        }
+        /*
+         * Or else java.lang's, or a type nested in one the type extends or implements, as a block's Properties are:
+         * that supertype is named on the type's own line and followed from there.
+         */
+        return null;
     }
 }

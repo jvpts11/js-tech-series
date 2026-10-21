@@ -7,9 +7,12 @@
  */
 package dev.jstech.core.operation;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * The CPU-bound work of an Operation, executed on a virtual thread by the {@link OperationDispatch}.
  */
+@ApiStatus.Experimental
 @FunctionalInterface
 public interface IOperationTask {
 
