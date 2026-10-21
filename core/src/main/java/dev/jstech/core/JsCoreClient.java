@@ -104,11 +104,14 @@ import dev.jstech.core.jstechseries.fire.client.FireArt;
 import dev.jstech.core.jstechseries.hazard.client.HazardDevicesClient;
 import dev.jstech.core.jstechseries.builder.client.BuilderClient;
 import dev.jstech.core.jstechseries.persistor.client.PersistorClient;
+import dev.jstech.core.jstechseries.projector.ProjectorView;
 import dev.jstech.core.jstechseries.projector.client.ProjectorClient;
 import dev.jstech.core.jstechseries.atmosphere.client.AtmosphereClient;
 import dev.jstech.core.jstechseries.probe.client.NetworkProbeClient;
 import dev.jstech.core.jstechseries.probe.client.SignalProbeClient;
 import dev.jstech.core.jstechseries.tools.client.PhysicsToolClient;
+import java.util.Optional;
+import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -218,6 +221,10 @@ public final class JsCoreClient {
         ScreenEditor.listen();
         ScreenDevCommands.listen();
         StudioClient.listen();
+        // The structure the studio catches, shown in the world as the Structure Projector shows its multiblocks.
+        ProjectorClient.showAlso(() -> StudioClient.caught().flatMap(caught -> Optional.ofNullable(
+                Minecraft.getInstance().level).map(level -> new ProjectorClient.Shown(ProjectorView.of(level,
+                caught.shape(), caught.at()), caught.name(), caught.by()))));
         // What draws each of the Core's kinds of screen component, a rich line of a tooltip, and the chooser of the
         // player's styles.
         CoreElementBuilders.register();

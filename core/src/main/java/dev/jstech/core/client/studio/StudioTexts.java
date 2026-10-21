@@ -37,6 +37,9 @@ public final class StudioTexts {
     public static final TextKey OPEN = TextKey.of("gui.jscore.studio.open", "Open");
     public static final TextKey RELOAD_ALL = TextKey.of("gui.jscore.studio.reload_all", "Reload all");
     public static final TextKey RUN_TESTS = TextKey.of("gui.jscore.studio.run_tests", "Run its tests");
+    public static final TextKey RECORD = TextKey.of("gui.jscore.studio.record", "Record a test");
+    public static final TextKey RECORDING = TextKey.of("gui.jscore.studio.recording",
+            "Recording: every click on a screen is kept");
     public static final TextKey DONE = TextKey.of("gui.jscore.studio.done", "Done");
     public static final TextKey MODE_ON = TextKey.of("gui.jscore.studio.mode_on", "Developer mode is on");
     /* The file, and where it was looked for. */

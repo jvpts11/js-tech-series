@@ -40,6 +40,8 @@ public final class RecipeChanges {
     private static final Logger LOGGER = CoreLogs.CONTENT.logger();
     private static final String JSON = ".json";
 
+    private static volatile Applied applied = Applied.NONE;
+
     private RecipeChanges() {
     }
 
@@ -52,27 +54,58 @@ public final class RecipeChanges {
                              final DynamicOps<JsonElement> ops) {
         final RecipeEdits edits = RecipeEdits.of(files(resources, ops));
         if (edits.isEmpty()) {
+            applied = Applied.NONE;
             return;
         }
-        final int before = recipes.size();
-        recipes.entrySet().removeIf(recipe -> edits.removes(recipe.getKey().toString(), recipe.getValue()));
-        final int removed = before - recipes.size();
+        final List<String> removed = new ArrayList<>();
+        recipes.entrySet().removeIf(recipe -> {
+            final boolean taken = edits.removes(recipe.getKey().toString(), recipe.getValue());
+            if (taken) {
+                removed.add(recipe.getKey().toString());
+            }
+            return taken;
+        });
         edits.replaced().forEach((id, recipe) -> {
             final ResourceLocation key = ResourceLocation.tryParse(id);
             if (key != null) {
                 recipes.put(key, recipe.deepCopy());
             }
         });
-        int swapped = 0;
+        final List<String> swapped = new ArrayList<>();
         if (!edits.swaps().isEmpty()) {
-            for (final JsonElement recipe : recipes.values()) {
-                if (RecipeUnifier.rewrite(recipe, edits.swaps())) {
-                    swapped++;
+            for (final Map.Entry<ResourceLocation, JsonElement> recipe : recipes.entrySet()) {
+                if (RecipeUnifier.rewrite(recipe.getValue(), edits.swaps())) {
+                    swapped.add(recipe.getKey().toString());
                 }
             }
         }
-        LOGGER.info("Recipe changes: {} recipes taken away, {} put in place, {} given other items", removed,
-                edits.replaced().size(), swapped);
+        applied = new Applied(removed, List.copyOf(edits.replaced().keySet()), swapped);
+        LOGGER.info("Recipe changes: {} recipes taken away, {} put in place, {} given other items", removed.size(),
+                edits.replaced().size(), swapped.size());
+    }
+
+    /** What the files changed as the recipes last loaded, for the studio's recipe bench. */
+    public static Applied applied() {
+        return applied;
+    }
+
+    /**
+     * What the recipe changes did as the recipes last loaded.
+     *
+     * @param removed  the recipes taken away, by id
+     * @param replaced the recipes put in place, new or over one there was, by id
+     * @param swapped  the recipes given other items, by id
+     */
+    public record Applied(List<String> removed, List<String> replaced, List<String> swapped) {
+
+        /** Nothing changed. */
+        public static final Applied NONE = new Applied(List.of(), List.of(), List.of());
+
+        public Applied {
+            removed = List.copyOf(removed);
+            replaced = List.copyOf(replaced);
+            swapped = List.copyOf(swapped);
+        }
     }
 
     /* The files' changes whose conditions hold, in the order of their ids. */

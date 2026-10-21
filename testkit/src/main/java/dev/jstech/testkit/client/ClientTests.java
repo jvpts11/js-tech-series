@@ -7,6 +7,7 @@
  */
 package dev.jstech.testkit.client;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -82,13 +83,16 @@ public final class ClientTests {
             throw new IllegalStateException("the client test " + type.getSimpleName() + "." + method.getName()
                     + " must be public static and take a single " + helper.getSimpleName());
         }
-        return new Test(type.getSimpleName() + "." + method.getName(), method, timeoutTicks);
+        return new Test(type.getSimpleName() + "." + method.getName(), helperOf -> method.invoke(null, helperOf),
+                timeoutTicks);
     }
 
     /** Every test registered, sorted by name and numbered, the number placing its area of the world. */
     public static List<Planned> all() {
         final List<Planned> found = new ArrayList<>();
-        for (final Suite suite : SUITES) {
+        final List<Suite> suites = new ArrayList<>(SUITES);
+        suites.addAll(RecordedClientTests.suites());
+        for (final Suite suite : suites) {
             for (final Test test : suite.tests()) {
                 found.add(new Planned(test, 0, suite));
             }
@@ -101,10 +105,11 @@ public final class ClientTests {
         return numbered;
     }
 
-    /** The names of the suites registered, in the order they were. */
+    /** The names of the suites registered, in the order they were, and then those of the tests kept as files. */
     public static Set<String> suites() {
         final Set<String> names = new LinkedHashSet<>();
         SUITES.forEach(suite -> names.add(suite.name()));
+        RecordedClientTests.suites().forEach(suite -> names.add(suite.name()));
         return names;
     }
 
@@ -122,11 +127,18 @@ public final class ClientTests {
     /**
      * One test as a mod registers it.
      *
-     * @param name         its name, its class's and its method's
-     * @param method       the method that builds its steps
+     * @param name         its name, its class's and its method's, or a recorded test's own
+     * @param body         what builds its steps
      * @param timeoutTicks how long it may take
      */
-    public record Test(String name, Method method, int timeoutTicks) {
+    public record Test(String name, IBody body, int timeoutTicks) {
+    }
+
+    /** What builds a test's steps on its helper: its method, or the steps of a test kept as a file. */
+    @FunctionalInterface
+    public interface IBody {
+
+        void build(ClientTestHelper helper) throws IllegalAccessException, InvocationTargetException;
     }
 
     /**

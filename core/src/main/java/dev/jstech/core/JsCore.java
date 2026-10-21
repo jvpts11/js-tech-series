@@ -51,6 +51,7 @@ import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.datagen.JsCoreDataGenerators;
 import dev.jstech.core.developer.DeveloperMode;
 import dev.jstech.core.developer.ThingTests;
+import dev.jstech.core.developer.studio.StudioServices;
 import dev.jstech.core.developer.LiveReload;
 import dev.jstech.core.diagnostic.Bandwidth;
 import dev.jstech.core.diagnostic.CoreHealth;
@@ -616,6 +617,7 @@ public final class JsCore {
         Holograms.listen(modEventBus);
         InspectWatch.listen(modEventBus);
         ThingTests.listen(modEventBus);
+        StudioServices.listen(modEventBus);
         JsCoreDataGenerators.listen(modEventBus);
         JsTechTab.listen(modEventBus);
         KeyActions.listen(modEventBus);

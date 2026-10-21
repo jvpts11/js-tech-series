@@ -48,7 +48,7 @@ import org.slf4j.Logger;
 public final class StudioContext {
 
     private final ResourceManager resources;
-    private final Map<String, Map<String, Set<String>>> languages = new HashMap<>();
+    private final Map<String, Map<String, Map<String, String>>> languages = new HashMap<>();
     private final Map<ResourceLocation, Optional<JsonObject>> json = new HashMap<>();
     private final Map<String, Set<String>> bones = new HashMap<>();
     private Map<Item, List<RecipeHolder<?>>> making;
@@ -88,6 +88,13 @@ public final class StudioContext {
      * file of that language for the mod, merged.
      */
     public Map<String, Set<String>> languages(final String modid) {
+        final Map<String, Set<String>> out = new TreeMap<>();
+        this.texts(modid).forEach((code, texts) -> out.put(code, texts.keySet()));
+        return out;
+    }
+
+    /** The same languages with each key's words, as the files write them. */
+    public Map<String, Map<String, String>> texts(final String modid) {
         return this.languages.computeIfAbsent(modid, this::readLanguages);
     }
 
@@ -144,19 +151,20 @@ public final class StudioContext {
         }
     }
 
-    private Map<String, Set<String>> readLanguages(final String modid) {
-        final Map<String, Set<String>> out = new TreeMap<>();
+    private Map<String, Map<String, String>> readLanguages(final String modid) {
+        final Map<String, Map<String, String>> out = new TreeMap<>();
         final Map<ResourceLocation, List<Resource>> files = this.resources.listResourceStacks(LANG,
                 file -> file.getNamespace().equals(modid) && file.getPath().endsWith(JSON));
         files.forEach((file, stack) -> {
             final String path = file.getPath();
             final String code = path.substring(path.lastIndexOf('/') + 1, path.length() - JSON.length());
-            final Set<String> keys = out.computeIfAbsent(code, any -> new HashSet<>());
+            final Map<String, String> texts = out.computeIfAbsent(code, any -> new HashMap<>());
             for (final Resource resource : stack) {
                 try (Reader reader = resource.openAsReader()) {
                     final JsonElement read = JsonParser.parseReader(reader);
                     if (read.isJsonObject()) {
-                        keys.addAll(read.getAsJsonObject().keySet());
+                        read.getAsJsonObject().entrySet().forEach(entry -> texts.put(entry.getKey(),
+                                entry.getValue().isJsonPrimitive() ? entry.getValue().getAsString() : ""));
                     }
                 } catch (final IOException | RuntimeException unread) {
                     LOGGER.warn("The studio could not read {}: {}", file, unread.getMessage());

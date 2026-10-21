@@ -59,6 +59,8 @@ public final class FieldCapabilities {
             return null;
         }
         final T whole = synced.fields().capability(capability);
-        return synced instanceof IFaceGate gate ? gate.throughFace(capability, side, whole) : whole;
+        final T offered = synced instanceof IFaceGate gate ? gate.throughFace(capability, side, whole) : whole;
+        return offered == null ? null : capability.typeClass().cast(CountedCapabilities.counted(offered,
+                synced.fields().flow()));
     }
 }

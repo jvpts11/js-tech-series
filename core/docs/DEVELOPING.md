@@ -167,6 +167,44 @@ StudioReaders.add((thing, context, sheet) -> {
 
 A reader that throws is written down as a problem of the thing's, and the other readers still read it.
 
+### The tools
+
+*Added 2026-10-21.*
+
+Under the bar, a strip of tabs reaches the studio's tools. Each opens on the block you looked at when you opened the
+studio, or on the thing chosen on **Things**, and the studio opens again on the tab it was left on. The tools that read
+the world ask the server for it, so they answer only a player who may use the world's tools (see above).
+
+| Tab | What it shows and does |
+|---|---|
+| **Block** | Every field the block entity saves, read again each second while Watching is on; what each face offers (energy, slots and what they hold, tanks); and, for a block entity of the Core, what crossed its faces each second, energy, items and fluid, in and out. Only what really moved is counted, never a move that was only tried. |
+| **Cost** | Measure times every machine for some seconds and lists them dearest first, with where each one is and who owns it. Heat map lights each one in the world, the dearest red and the cheapest yellow. |
+| **Payloads** | What the server sent you, or everyone, tick by tick over the last hundred ticks: a bar a tick and, for the tick chosen, each kind of packet with its mod, how many, how many bytes and the biggest one. |
+| **Recipes** | The recipes that make the thing chosen, each with the pack it came from and what a pack took away, replaced or changed; the recipe as the recipe viewers draw it; the other recipes that take the same inputs; and a recipe of your own, written, tried and saved to your mod. |
+| **Tags** | The tags the thing is in and, for each one, which pack put each entry there and whether a pack replaced what came before; its id, its stack size and its components. |
+| **Loot** | A loot table rolled a hundred, a thousand or ten thousand times with the tool, the Fortune or the Silk Touch chosen: how often each thing dropped, how many a roll, the fewest and the most. |
+| **Translations** | Every mod with how many keys it has; what a language lacks of the English; and, in every screen declared in a file, the texts too long for their place in each language. |
+| **Settings** | Every setting of every mod's files with its value, its default and its range, a value the pack changed in yellow. Export the pack's preset writes them all as the preset `pack`. |
+| **Structures** | Two corners taken from the blocks you look at; the blocks between them counted as a structure file holds them, saved to your mod as `data/<mod>/structure/<name>.nbt`, and shown on the page and in the world as the Structure Projector shows a multiblock. |
+| **Tests** | Record a test closes the studio and keeps what you do: the block you use, each click on a screen (by its component's name, on a screen declared in a file), what you type and the keys, the waits and the pictures you take. Keep it writes a client test of the mod, beside its resources (see [Testing](TESTING.md#recorded-tests)). Every mod's reference pictures, each beside what the last run drew and the difference; Take the new one makes the drawn picture the reference. |
+| **Save** | The block looked at saved and read back, as a world closed and opened again does, field by field; a field that comes back other than it went is marked. |
+| **Logs** | Every log system with the level it writes at, changed with a click; its last lines; and the errors that teach that the game has made since it started. |
+
+A mod's own tool for the studio's pages, or for a screen of its own, asks the server the same way. The server's side
+is declared once, and answers at once or later:
+
+```java
+StudioServices.declare("mymod:light", (player, args, reply) -> {
+    final CompoundTag answer = new CompoundTag();
+    answer.putInt("light", player.serverLevel().getMaxLocalRawBrightness(BlockPos.of(args.getLong("pos"))));
+    reply.accept(answer);
+});
+
+StudioAnswers.ask("mymod:light", args, answer -> shown = answer);   // on the player's game
+```
+
+The answer to a player who may not use the world's tools holds `StudioServices.REFUSED`, with why.
+
 ## Tools for screens
 
 *Added 2026-10-21.*

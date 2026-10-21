@@ -26,8 +26,8 @@ class TickLedgerTest {
 
         final TickLedger.Tick tick = this.ledger.tick(this.now).orElseThrow();
 
-        assertEquals(List.of(new TickLedger.Sent("minecraft:level_chunk_with_light", 1, 9_000),
-                new TickLedger.Sent("jscore:menu_sync", 2, 100)), tick.sent());
+        assertEquals(List.of(new TickLedger.Sent("minecraft:level_chunk_with_light", 1, 9_000, 9_000),
+                new TickLedger.Sent("jscore:menu_sync", 2, 100, 60)), tick.sent());
         assertEquals(9_100, tick.bytes());
         assertEquals(3, tick.packets());
     }

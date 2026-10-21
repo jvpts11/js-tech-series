@@ -7,6 +7,9 @@
  */
 package dev.jstech.core.util;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +31,9 @@ public final class DeclarationError extends IllegalStateException {
 
     @Nullable
     private final String mod;
+    /* How many errors are kept for the studio. */
+    private static final int KEPT = 50;
+    private static final Deque<DeclarationError> RECENT = new ArrayDeque<>();
     private final String declaration;
     private final String problem;
     private final String fix;
@@ -49,8 +55,25 @@ public final class DeclarationError extends IllegalStateException {
      */
     public static DeclarationError of(@Nullable final String mod, final String declaration, final String problem,
                                       final String fix) {
-        return new DeclarationError(mod, Objects.requireNonNull(declaration, "declaration"),
+        final DeclarationError error = new DeclarationError(mod, Objects.requireNonNull(declaration, "declaration"),
                 Objects.requireNonNull(problem, "problem"), Objects.requireNonNull(fix, "fix"));
+        synchronized (RECENT) {
+            RECENT.addLast(error);
+            while (RECENT.size() > KEPT) {
+                RECENT.removeFirst();
+            }
+        }
+        return error;
+    }
+
+    /**
+     * The last errors made since the game started, the newest last: those a mod's code caught and went on from, as a
+     * content pack's file left out or a script that failed, which the studio's panel of errors lists.
+     */
+    public static List<DeclarationError> recent() {
+        synchronized (RECENT) {
+            return List.copyOf(RECENT);
+        }
     }
 
     /** The mod that made the declaration, or null when it is not known. */

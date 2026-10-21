@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.resources.language.ClientLanguage;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -106,6 +107,17 @@ final class InspectorModel {
                 found[0] = node;
             }
         })));
+        return Optional.ofNullable(found[0]);
+    }
+
+    /** The name of the deepest named node whose box holds the point, or none. */
+    Optional<String> namedAt(final double x, final double y) {
+        final String[] found = new String[1];
+        view.tree().ifPresent(root -> root.forEach(node -> node.id().ifPresent(id -> boxOf(node).ifPresent(box -> {
+            if (x >= box[0] && x < box[0] + box[2] && y >= box[1] && y < box[1] + box[3]) {
+                found[0] = id;
+            }
+        }))));
         return Optional.ofNullable(found[0]);
     }
 
@@ -183,6 +195,16 @@ final class InspectorModel {
         return out;
     }
 
+    /**
+     * Each text of the screen that does not fit its room in one of the series' languages: a component given its width
+     * holds its words inside it, any other may grow to the end of the component that holds it.
+     */
+    List<Overflow> tooLong(final Font font) {
+        final List<Overflow> out = new ArrayList<>();
+        view.tree().ifPresent(root -> overflows(root, null, font, out));
+        return out;
+    }
+
     /** The problem marked on {@code node}, the worst first; none when it has none. */
     Optional<Problem> problemOf(final BuiltNode node) {
         Problem worst = null;
@@ -198,6 +220,25 @@ final class InspectorModel {
     String fileName() {
         final ResourceLocation file = view.file();
         return file.getNamespace() + ":" + ScreenFile.FOLDER + "/" + file.getPath() + ".json";
+    }
+
+    private void overflows(final BuiltNode node, @Nullable final BuiltNode holder, final Font font,
+                           final List<Overflow> out) {
+        final Optional<int[]> box = boxOf(node);
+        final Optional<String> key = field(node, "text");
+        if (box.isPresent() && key.isPresent()) {
+            final int room = field(node, "width").isPresent() || holder == null ? box.get()[2]
+                    : boxOf(holder).map(held -> held[0] + held[2] - box.get()[0]).orElse(box.get()[2]);
+            for (final String code : LANGUAGES) {
+                final int over = font.width(language(code).getOrDefault(key.get())) - room;
+                if (over > 0) {
+                    out.add(new Overflow(node.id().orElse(name(node)), code, over));
+                }
+            }
+        }
+        for (final BuiltNode child : node.children()) {
+            overflows(child, node, font, out);
+        }
     }
 
     private void collect(final BuiltNode node, final int depth, final Set<BuiltNode> folded, final List<Row> out) {
@@ -343,6 +384,16 @@ final class InspectorModel {
      * @param text  what it says
      * @param node  where it is, when it is in one place
      */
+    /**
+     * A text past its room.
+     *
+     * @param component the component, by its name or its kind
+     * @param language  the language it does not fit in
+     * @param over      by how many pixels
+     */
+    record Overflow(String component, String language, int over) {
+    }
+
     record Problem(boolean error, String text, @Nullable BuiltNode node) {
     }
 }

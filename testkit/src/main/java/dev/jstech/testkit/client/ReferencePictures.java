@@ -49,13 +49,14 @@ public final class ReferencePictures {
                              final int width, final int height) {
         try (NativeImage drawn = capture(mc, x, y, width, height)) {
             final Path file = referenceOf(modid, name);
+            final String folder = DRAWN + "/" + modid;
             if (file == null || !Files.isRegularFile(file)) {
-                final File left = leave(mc, drawn, name + ".png");
+                final File left = leave(mc, folder, drawn, name + ".png");
                 throw new ClientTestFailure("there is no reference picture " + name + ": what was drawn is at " + left
                         + "; when it is right, copy it into the resources of " + modid + " at " + FOLDER);
             }
             try (InputStream in = Files.newInputStream(file); NativeImage reference = NativeImage.read(in)) {
-                compare(mc, name, drawn, reference);
+                compare(mc, folder, name, drawn, reference);
             }
         } catch (final IOException failed) {
             throw new ClientTestFailure("the reference picture " + name + " could not be read or left", failed);
@@ -75,7 +76,7 @@ public final class ReferencePictures {
     /** Fails unless {@code drawn} looks as {@code other} does, both pictures of {@code name}. */
     public static void same(final Minecraft mc, final String name, final NativeImage drawn, final NativeImage other) {
         try {
-            compare(mc, name, drawn, other);
+            compare(mc, DRAWN, name, drawn, other);
         } catch (final IOException failed) {
             throw new ClientTestFailure("the pictures of " + name + " could not be left", failed);
         }
@@ -87,10 +88,10 @@ public final class ReferencePictures {
         return mod == null ? null : mod.getFile().findResource(FOLDER + name + ".png");
     }
 
-    private static void compare(final Minecraft mc, final String name, final NativeImage drawn,
+    private static void compare(final Minecraft mc, final String folder, final String name, final NativeImage drawn,
                                 final NativeImage reference) throws IOException {
         if (drawn.getWidth() != reference.getWidth() || drawn.getHeight() != reference.getHeight()) {
-            final File left = leave(mc, drawn, name + ".png");
+            final File left = leave(mc, folder, drawn, name + ".png");
             throw new ClientTestFailure("the picture " + name + " is " + drawn.getWidth() + " by "
                     + drawn.getHeight() + " and its reference " + reference.getWidth() + " by "
                     + reference.getHeight() + "; what was drawn is at " + left);
@@ -110,8 +111,8 @@ public final class ReferencePictures {
             }
             final int most = (int) Math.floor(drawn.getWidth() * drawn.getHeight() * SHARE);
             if (off > most) {
-                final File left = leave(mc, drawn, name + ".png");
-                leave(mc, differences, name + "-differences.png");
+                final File left = leave(mc, folder, drawn, name + ".png");
+                leave(mc, folder, differences, name + "-differences.png");
                 throw new ClientTestFailure("the picture " + name + " differs from its reference in " + off
                         + " pixels, more than " + most + "; what was drawn is at " + left
                         + ", its differences in red beside it");
@@ -133,8 +134,10 @@ public final class ReferencePictures {
         return out;
     }
 
-    private static File leave(final Minecraft mc, final NativeImage picture, final String file) throws IOException {
-        final File folder = new File(mc.gameDirectory, DRAWN);
+    /* Leaves a picture in the run's folder, under the mod's own folder for a reference's, as the studio lists them. */
+    private static File leave(final Minecraft mc, final String under, final NativeImage picture, final String file)
+            throws IOException {
+        final File folder = new File(mc.gameDirectory, under);
         if (!folder.isDirectory() && !folder.mkdirs()) {
             throw new IOException("the folder " + folder + " could not be made");
         }

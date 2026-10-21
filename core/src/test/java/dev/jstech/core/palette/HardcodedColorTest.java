@@ -57,7 +57,9 @@ class HardcodedColorTest {
             "core/src/main/java/dev/jstech/core/model/GltfReader.java", new Data(3,
                     "the marks a binary glTF file and its two chunks start with, as the format writes them"),
             "core/src/main/java/dev/jstech/core/client/model/kit/KitRenderer.java", new Data(1,
-                    "the white a model's texture is multiplied by, which leaves the texture's own colours"));
+                    "the white a model's texture is multiplied by, which leaves the texture's own colours"),
+            "core/src/main/java/dev/jstech/core/client/studio/TestsPage.java", new Data(1,
+                    "the pixel the test kit marks a difference with, read back from the picture it leaves"));
 
     /** An ARGB colour as a number: eight hexadecimal digits. */
     private static final Pattern ARGB = Pattern.compile("0[xX][0-9A-Fa-f]{8}");

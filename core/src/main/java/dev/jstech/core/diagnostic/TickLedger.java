@@ -33,6 +33,7 @@ public final class TickLedger {
 
     private static final int PACKETS = 0;
     private static final int BYTES = 1;
+    private static final int BIGGEST = 2;
 
     /** A ledger whose tick is read from {@code clock}. */
     public TickLedger(final LongSupplier clock) {
@@ -51,9 +52,10 @@ public final class TickLedger {
             this.tickOf[slot] = now;
             this.slots.get(slot).clear();
         }
-        final long[] counted = this.slots.get(slot).computeIfAbsent(kind, unused -> new long[2]);
+        final long[] counted = this.slots.get(slot).computeIfAbsent(kind, unused -> new long[3]);
         counted[PACKETS]++;
         counted[BYTES] += bytes;
+        counted[BIGGEST] = Math.max(counted[BIGGEST], bytes);
     }
 
     /** What was sent in the tick {@code tick}, when it is still kept; nothing for a tick in which nothing was sent. */
@@ -63,7 +65,8 @@ public final class TickLedger {
             return Optional.empty();
         }
         final List<Sent> sent = new ArrayList<>();
-        this.slots.get(slot).forEach((kind, counted) -> sent.add(new Sent(kind, counted[PACKETS], counted[BYTES])));
+        this.slots.get(slot).forEach((kind, counted) -> sent.add(new Sent(kind, counted[PACKETS], counted[BYTES],
+                counted[BIGGEST])));
         sent.sort(Comparator.comparingLong(Sent::bytes).reversed().thenComparing(Sent::kind));
         return Optional.of(new Tick(tick, sent));
     }
@@ -89,8 +92,9 @@ public final class TickLedger {
      * @param kind    a mod's payload's id, or the game's id for a packet's kind
      * @param packets how many were sent
      * @param bytes   how many bytes they took
+     * @param biggest how many bytes the biggest of them took
      */
-    public record Sent(String kind, long packets, long bytes) {
+    public record Sent(String kind, long packets, long bytes, long biggest) {
     }
 
     /**

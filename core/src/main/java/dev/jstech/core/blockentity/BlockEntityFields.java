@@ -64,6 +64,7 @@ public final class BlockEntityFields {
     private final List<ItemStackHandler> spilled = new ArrayList<>();
     private final List<Consumer<ServerLevel>> loadedListeners = new ArrayList<>();
     private final List<BiConsumer<BlockPos, BlockMove>> movedListeners = new ArrayList<>();
+    private final FieldFlow flow = new FieldFlow();
     private boolean closed;
     /* Set as the block is taken away whole, its contents going with it: then nothing spills. */
     private boolean whole;
@@ -79,6 +80,11 @@ public final class BlockEntityFields {
 
     BlockEntityFields(final SyncedBlockEntity owner) {
         this.owner = owner;
+    }
+
+    /** What has crossed the block's faces through what it offers, since it was made. */
+    public FieldFlow flow() {
+        return this.flow;
     }
 
     /**

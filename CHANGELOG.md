@@ -1091,6 +1091,21 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   moving a bone no model has, a screen file that does not load, an item in no creative tab, a loot table missing),
   each opening the file that mends it; Reload all, and Run its tests, which runs near the player the GameTests that
   name it. A mod adds a part of its own with `StudioReaders`.
+- (Core) The studio's tools: a strip of tabs under the studio's bar opens twelve tools beside the things of the game.
+  Block reads a block entity's fields live, what each face offers, and what crossed each face each second, counted
+  for every block entity of the Core; Cost times every machine, dearest first, with a heat map in the world; Payloads
+  shows the packets sent tick by tick, by kind and mod; Recipes says where each recipe came from and what a pack
+  changed, draws it as the recipe viewers do, lists the recipes with the same inputs, and writes, tries and saves a
+  recipe; Tags says which pack put each entry in a tag; Loot rolls a table up to ten thousand times with a tool,
+  Fortune or Silk Touch; Translations shows what each language lacks and the texts too long for their place; Settings
+  lists every setting with its default and range and exports them as the preset `pack`; Structures catches the
+  blocks between two corners as a structure file, saves it to the mod and shows it as the Structure Projector shows a
+  multiblock; Tests records a client test as you play and keeps it as a file, and shows every mod's reference
+  pictures beside what the last run drew and the difference; Save saves a block and reads it back, field by field;
+  Logs shows every log system's level and last lines, and the errors that teach. A mod's own tool asks the server
+  through `StudioServices` and `StudioAnswers`.
+- (Core) Recorded client tests: the files `assets/<mod>/jstech/client_tests/<name>.json`, which the studio writes, run
+  as a suite of client tests of their mod with no code.
 - (Core) CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - (Core) FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,
@@ -1147,6 +1162,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `dev.jstech.testkit.gametest`, so the Core a player installs carries no test code.
 - (Core) The tools for screens (the inspector, the editor and `/jstech screen new`) open while developer mode is on,
   in any game where a player turns it on, rather than only in a development run.
+- (Core) Client tests: a run leaves what it drew for a reference picture in `reference-pictures/<mod>`, a folder for
+  each mod, and `ClientTests.Test` holds the body that builds a test's steps in place of its method, so a test need
+  not be a method.
+- (Core) The packets counted tick by tick keep the biggest one of each kind too.
 
 ### Fixed
 - (Core) A dimension made while the game runs keeps loaded again the chunks it kept loaded, each time it is made

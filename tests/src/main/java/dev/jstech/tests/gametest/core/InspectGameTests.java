@@ -196,8 +196,8 @@ public final class InspectGameTests {
         helper.assertTrue(payload.lines().getFirst().value().length() == InspectionPayload.LONGEST_VALUE,
                 "each value cut to its longest");
         final List<InspectionPayload.Line> sent = InspectWatch.linesOf(new TickLedger.Tick(42L, List.of(
-                new TickLedger.Sent("jscore:hazards", 2L, 300L), new TickLedger.Sent("minecraft:move_entity", 5L,
-                        100L))));
+                new TickLedger.Sent("jscore:hazards", 2L, 300L, 200L), new TickLedger.Sent("minecraft:move_entity",
+                        5L, 100L, 20L))));
         helper.assertTrue(sent.size() == 3 && sent.getFirst().depth() == 0, "the tick, then each kind under it");
         helper.assertTrue(sent.get(1).name().getString().equals("jscore:hazards")
                 && sent.get(1).value().equals("2, 300 bytes"), "with how many and how many bytes");

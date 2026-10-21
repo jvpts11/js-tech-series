@@ -349,7 +349,7 @@ public final class ClientTestRunner {
         MotionClock.setReduced(true);
         LOGGER.info("{} running {} at {}", ClientTestReport.MARK, current.name(), helper.origin());
         try {
-            current.test().method().invoke(null, helper);
+            current.test().body().build(helper);
         } catch (final IllegalAccessException | InvocationTargetException e) {
             throw new ClientTestFailure("could not build the test's steps", e.getCause() != null ? e.getCause() : e);
         }
