@@ -752,11 +752,12 @@ system's help shows for the command in place of the page made of its words alone
 - A manual used on an empty lectern is laid on it, as the game's books are, and anyone who uses the lectern then
   reads the manual, with a strip under it saying where the lectern is, Take, which puts the manual in their
   inventory, and Close. Breaking the lectern drops the manual.
-- The first time a player picks up an item a manual explains, outside creative, a quiet notification says the manual
-  has its page ("In the manual: ..."), and a click on it while the chat is open opens there. Each item is told of
-  once, the game keeping which in `jstech/manual_tips.json`; "Tip when an item is first picked up", in the player's
-  own settings (`jstech-manuals.toml`), turns it off, and the tips are a kind of notification of their own that can
-  be silenced like any other.
+- The first time a player picks up an item a manual explains, a quiet notification says the manual has its page
+  ("In the manual: ..."), and a click on it while the chat is open opens there. Each item is told of once, the game
+  keeping which in `jstech/manual_tips.json`. In the player's own settings (`jstech-manuals.toml`), "Tip when an item
+  is first picked up" turns it off, and "Tips in creative too" brings it in creative as well, where items are taken
+  from the menu rather than picked up (off at first); the tips are a kind of notification of their own that can be
+  silenced like any other.
 
 ## Writing while the game runs
 

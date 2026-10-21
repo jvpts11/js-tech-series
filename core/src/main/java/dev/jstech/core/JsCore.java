@@ -160,6 +160,7 @@ import dev.jstech.core.jstechseries.lines.LinesGuide;
 import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.core.jstechseries.probe.NetworkProbe;
 import dev.jstech.core.jstechseries.probe.SignalProbe;
+import dev.jstech.core.jstechseries.tools.MovingGuide;
 import dev.jstech.core.jstechseries.tools.PhysicsTool;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.core.jstechseries.tools.ToolsGuide;
@@ -423,6 +424,7 @@ public final class JsCore {
         ProjectorGuide.declare();
         AtmosphereGuide.declare(PersistorGuide.declare());
         ToolsGuide.declare();
+        MovingGuide.declare();
         HazardGuide.declare();
         FireGuide.declare();
         LinesGuide.declare();

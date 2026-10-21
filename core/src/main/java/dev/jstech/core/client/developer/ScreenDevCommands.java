@@ -10,8 +10,6 @@ package dev.jstech.core.client.developer;
 import com.mojang.brigadier.Command;
 import dev.jstech.core.developer.DeveloperMode;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.text.TextHolder;
-import dev.jstech.core.text.TextKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -24,13 +22,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The developer's commands for screens, on the player's game in a development run: {@code /jstech screen new} opens
- * the new screen for the block looked at.
+ * the new screen for the block looked at. What it says is in {@link DeveloperTexts}, which a server can read.
  */
-@TextHolder
 public final class ScreenDevCommands {
-
-    public static final TextKey NO_BLOCK = TextKey.of("commands.jscore.screen.no_block",
-            "Look at a block to make a screen for it");
 
     private ScreenDevCommands() {
     }
@@ -47,7 +41,7 @@ public final class ScreenDevCommands {
                             final Minecraft minecraft = Minecraft.getInstance();
                             if (minecraft.level == null || !(minecraft.hitResult instanceof BlockHitResult hit)
                                     || hit.getType() != HitResult.Type.BLOCK) {
-                                context.getSource().sendFailure(GameText.component(NO_BLOCK));
+                                context.getSource().sendFailure(GameText.component(DeveloperTexts.NO_BLOCK));
                                 return 0;
                             }
                             final ResourceLocation block = BuiltInRegistries.BLOCK.getKey(minecraft.level

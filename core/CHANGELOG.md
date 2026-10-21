@@ -984,7 +984,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Manuals: every mod's manuals go on the game's lectern as its books do, and are read from it with a strip
   under the binder saying where the lectern is, with Take and Close.
 - Manuals: the first time a player picks up an item a manual explains, a quiet notification offers its page,
-  once an item; a setting of the player's own (`jstech-manuals.toml`) turns it off.
+  once an item; the player's own settings (`jstech-manuals.toml`) turn it off, or on in creative too.
+- Manuals: the Technical Reference has a section on things that move, with the pages of the vehicles and
+  their parts, and of the physics tool.
 
 ### Changed
 - Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

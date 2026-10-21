@@ -12,11 +12,10 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuideSite;
 import dev.jstech.core.guide.GuideStyle;
+import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.ManualReader;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.text.TextHolder;
-import dev.jstech.core.text.TextKey;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,17 +34,10 @@ import org.slf4j.Logger;
 /**
  * {@code /jstech manual site <manual>}, on the player's game: writes the manual as a website of plain files
  * ({@link GuideSite}) into the game's folder, under {@code jstech/manual_sites}, in the player's language and with the
- * recipes of the world they are in, and says where with a link that opens its front page.
+ * recipes of the world they are in, and says where with a link that opens its front page. What it says is in
+ * {@link GuideTexts}, which a server can read.
  */
-@TextHolder
 public final class ManualSiteCommand {
-
-    public static final TextKey WRITTEN = TextKey.of("commands.jscore.manual.site.written",
-            "The manual was written as a website: %s");
-    public static final TextKey NO_MANUAL = TextKey.of("commands.jscore.manual.site.no_manual",
-            "No manual by that name: %s");
-    public static final TextKey NOT_WRITTEN = TextKey.of("commands.jscore.manual.site.not_written",
-            "The website could not be written to %s");
 
     private static final Logger LOGGER = CoreLogs.GUIDE.logger();
     private static final String MANUAL = "manual";
@@ -68,20 +60,21 @@ public final class ManualSiteCommand {
                                 written = write(id);
                             } catch (final IOException e) {
                                 LOGGER.warn("The manual {} could not be written as a website to {}", id, folder, e);
-                                context.getSource().sendFailure(GameText.component(NOT_WRITTEN.with(
+                                context.getSource().sendFailure(GameText.component(GuideTexts.SITE_NOT_WRITTEN.with(
                                         folder.toString())));
                                 return 0;
                             }
                             if (written.isEmpty()) {
-                                context.getSource().sendFailure(GameText.component(NO_MANUAL.with(id)));
+                                context.getSource().sendFailure(GameText.component(GuideTexts.SITE_NO_MANUAL
+                                        .with(id)));
                                 return 0;
                             }
                             // The folder is named in the chat, and a click on it opens the site's front page.
                             final Component where = Component.literal(folder.toString()).withStyle(Style.EMPTY
                                     .withUnderlined(true).withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE,
                                             folder.resolve(GuideSite.FRONT).toAbsolutePath().toString())));
-                            context.getSource().sendSuccess(() -> GameText.component(WRITTEN.with(GameText.of(
-                                    where))), false);
+                            context.getSource().sendSuccess(() -> GameText.component(GuideTexts.SITE_WRITTEN.with(
+                                    GameText.of(where))), false);
                             return Command.SINGLE_SUCCESS;
                         })))));
     }

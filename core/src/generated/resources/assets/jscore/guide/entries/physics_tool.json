@@ -1,0 +1,90 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.physics_tool.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.physics_tool.for"
+    },
+    {
+      "type": "table",
+      "caption": "jscore.guide.physics_tool.table1",
+      "rows": [
+        [
+          {
+            "words": "jscore.guide.physics_tool.table1_1"
+          },
+          {
+            "words": "jscore.guide.physics_tool.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.physics_tool.table1_2"
+          },
+          {
+            "words": "jscore.guide.physics_tool.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jscore.guide.physics_tool.table1_3"
+          },
+          {
+            "words": "jscore.guide.physics_tool.value1_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.physics_tool.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.physics_tool.use1",
+        "jscore.guide.physics_tool.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.physics_tool.fix1",
+          "problem": "jscore.guide.physics_tool.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:physics_tool",
+  "id": "jscore:physics_tool",
+  "items": [
+    "jscore:physics_tool"
+  ],
+  "order": 20,
+  "section": "jscore:moving",
+  "title": "jscore.guide.physics_tool.title"
+}

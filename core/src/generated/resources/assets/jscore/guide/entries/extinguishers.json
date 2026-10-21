@@ -75,7 +75,7 @@
     "jscore:carbon_dioxide_extinguisher",
     "jscore:dry_powder_extinguisher"
   ],
-  "order": 23,
+  "order": 25,
   "section": "jscore:fire",
   "title": "jscore.guide.extinguishers.title"
 }

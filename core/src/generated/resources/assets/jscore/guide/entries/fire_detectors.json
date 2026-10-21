@@ -60,7 +60,7 @@
     "jscore:smoke_detector",
     "jscore:heat_detector"
   ],
-  "order": 25,
+  "order": 27,
   "section": "jscore:fire",
   "title": "jscore.guide.fire_detectors.title"
 }

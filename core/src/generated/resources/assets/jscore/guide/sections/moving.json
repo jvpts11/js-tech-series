@@ -1,0 +1,7 @@
+{
+  "chapter": "jscore",
+  "icon": "minecraft:minecart",
+  "id": "jscore:moving",
+  "order": 6,
+  "title": "jscore.guide.section.moving"
+}

@@ -58,7 +58,7 @@
   "items": [
     "jscore:sprinkler"
   ],
-  "order": 24,
+  "order": 26,
   "section": "jscore:fire",
   "title": "jscore.guide.sprinkler.title"
 }

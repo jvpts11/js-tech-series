@@ -143,6 +143,27 @@ public final class ManualImmersionClientTests {
                 .thenAwaitNoScreen(OPEN);
     }
 
+    /* In creative the tip waits for the player's word: none while the setting is off, and one once it is on. */
+    @ClientTest(timeoutTicks = 500)
+    public static void firstPickup_inCreativeOnlyWhenThePlayerAsks(final ClientTestContext ctx) {
+        final String upgrade = BuiltInRegistries.ITEM.getKey(TestPress.UPGRADE.get()).toString();
+        ctx.afterTest(() -> GuideTips.FILE.set(GuideTips.IN_CREATIVE, false));
+        ctx.thenGive(0)
+                .then(0, () -> {
+                    GuideTips.FILE.set(GuideTips.IN_CREATIVE, false);
+                    ManualTips.forget(upgrade);
+                    NotificationsClient.board().clear();
+                })
+                .thenAssert(0, () -> ctx.player().isCreative(), "the player in creative")
+                .thenGive(0, new ItemStack(TestPress.UPGRADE.get()))
+                .thenAssert(WAIT / 2, () -> tip().isEmpty() && !ManualTips.told(upgrade),
+                        "no tip in creative while the setting is off")
+                .then(0, () -> GuideTips.FILE.set(GuideTips.IN_CREATIVE, true))
+                .thenWaitUntil(() -> tip().isPresent(), WAIT, "a tip once the player asks for it in creative")
+                .then(0, () -> GuideTips.FILE.set(GuideTips.IN_CREATIVE, false))
+                .thenGive(0);
+    }
+
     private static ManualScreen manual() {
         return (ManualScreen) Minecraft.getInstance().screen;
     }

@@ -53,7 +53,7 @@
   "items": [
     "jscore:withered_grass"
   ],
-  "order": 22,
+  "order": 24,
   "section": "jscore:hazards",
   "title": "jscore.guide.withered_grass.title"
 }

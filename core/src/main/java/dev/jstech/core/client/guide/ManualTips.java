@@ -35,8 +35,9 @@ import org.slf4j.Logger;
  * The tip at the right time, on a player's game: once a second the inventory is looked over, and the first item in it
  * a manual explains that the player was never told of brings a quiet notification of information, whose click opens
  * the item's page. One tip a look, so a full inventory tells of its items one by one; once an item, each game keeping
- * the items it told of in {@code jstech/manual_tips.json} in its folder. Not in creative, where items are not picked
- * up but taken, nor for a spectator; and not at all when the player turned the tips off ({@link GuideTips}).
+ * the items it told of in {@code jstech/manual_tips.json} in its folder. In creative, where items are taken from the
+ * menu rather than picked up, only when the player asked for it; never for a spectator; and not at all when the
+ * player turned the tips off ({@link GuideTips}).
  */
 public final class ManualTips {
 
@@ -64,7 +65,8 @@ public final class ManualTips {
         }
         ticks = 0;
         final LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || !GuideTips.onFirstPickup() || player.isCreative() || player.isSpectator()) {
+        if (player == null || !GuideTips.onFirstPickup() || player.isCreative() && !GuideTips.inCreative()
+                || player.isSpectator()) {
             return;
         }
         final Inventory inventory = player.getInventory();

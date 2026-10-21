@@ -59,7 +59,7 @@
   "items": [
     "jscore:pocket_dosimeter"
   ],
-  "order": 20,
+  "order": 22,
   "section": "jscore:hazards",
   "title": "jscore.guide.pocket_dosimeter.title"
 }

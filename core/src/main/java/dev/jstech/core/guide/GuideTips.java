@@ -22,7 +22,8 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * The tip at the right time: the first time a player picks up an item a manual explains, a quiet notification of
  * information says the manual has its page, and a click on it opens there. Once an item and a player, each player's
- * game keeping which items it told of; a setting of the player's own, in {@code jstech-manuals.toml}, turns it off.
+ * game keeping which items it told of; the player's own settings, in {@code jstech-manuals.toml}, turn it off, or on
+ * in creative too.
  */
 @TextHolder
 public final class GuideTips {
@@ -40,15 +41,22 @@ public final class GuideTips {
             .comment("Whether picking up an item a manual explains for the first time brings a quiet notification "
                     + "that opens its page.")
             .named("Tip when an item is first picked up");
+    /** Whether the tip comes in creative too, where items are taken from the menu rather than picked up. */
+    public static final ConfigKey<Boolean> IN_CREATIVE = ConfigKey.flag(SECTION + ".tip_in_creative", false)
+            .comment("Whether the tip also comes in creative, where items are taken from the menu rather than "
+                    + "picked up.")
+            .named("Tips in creative too").activeWhen(ON_FIRST_PICKUP);
     /** The player's file. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-manuals", ConfigSide.CLIENT, ConfigFormats.TOML)
             .comment("How the manuals of the mods built on J's Core come to a player on this game.")
             .sectionComment(SECTION, "The tips of the manuals.")
             .sectionNamed(SECTION, "Manuals")
             .key(ON_FIRST_PICKUP, value -> onFirstPickup = value)
+            .key(IN_CREATIVE, value -> inCreative = value)
             .build();
 
     private static volatile boolean onFirstPickup = true;
+    private static volatile boolean inCreative;
 
     private GuideTips() {
     }
@@ -61,5 +69,10 @@ public final class GuideTips {
     /** Whether the player wants the tip when they first pick up an item a manual explains. */
     public static boolean onFirstPickup() {
         return onFirstPickup;
+    }
+
+    /** Whether the player wants the tip in creative too. */
+    public static boolean inCreative() {
+        return inCreative;
     }
 }

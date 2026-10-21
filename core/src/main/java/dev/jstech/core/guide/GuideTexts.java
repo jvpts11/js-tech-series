@@ -115,6 +115,13 @@ public final class GuideTexts {
     public static final TextKey SITE_NEXT = TextKey.of("jscore.guide.site.next", "Next: %s");
     public static final TextKey SITE_RECIPE = TextKey.of("jscore.guide.site.recipe", "%s, made from %s");
     public static final TextKey SITE_RECIPE_BY = TextKey.of("jscore.guide.site.recipe_by", "%s, made from %s (%s)");
+    /** What {@code /jstech manual site} answers. */
+    public static final TextKey SITE_WRITTEN = TextKey.of("commands.jscore.manual.site.written",
+            "The manual was written as a website: %s");
+    public static final TextKey SITE_NO_MANUAL = TextKey.of("commands.jscore.manual.site.no_manual",
+            "No manual by that name: %s");
+    public static final TextKey SITE_NOT_WRITTEN = TextKey.of("commands.jscore.manual.site.not_written",
+            "The website could not be written to %s");
 
     /** The key that opens an item's page, and the line its tooltip carries. */
     public static final TextKey OPEN_KEY = TextKey.of("key.jscore.open_in_manual", "Open Its Page in the Manual");

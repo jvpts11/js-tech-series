@@ -175,17 +175,22 @@ public final class ContentGameTests {
         report(helper, wrong, "without a name in the language file");
     }
 
-    /** Every item is in a creative tab of the series, which is where a creative player finds it. */
+    /**
+     * Every item is in a creative tab, which is where a creative player finds it: one of the series, or one of the
+     * game's own where the series puts a thing beside its kin, as the vehicles go with the game's tools.
+     */
     @GameTest(template = ARENA)
     public static void declaredItems_areInACreativeTab(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final Set<String> mods = new HashSet<>();
         ModContent.all().forEach(content -> mods.add(content.modid()));
+        mods.add(ResourceLocation.DEFAULT_NAMESPACE);
         final Set<Item> shown = new HashSet<>();
         final CreativeModeTab.ItemDisplayParameters parameters = new CreativeModeTab.ItemDisplayParameters(
                 level.enabledFeatures(), true, level.registryAccess());
         for (final var tab : BuiltInRegistries.CREATIVE_MODE_TAB.entrySet()) {
-            if (mods.contains(tab.getKey().location().getNamespace())) {
+            if (mods.contains(tab.getKey().location().getNamespace())
+                    && tab.getValue().getType() == CreativeModeTab.Type.CATEGORY) {
                 tab.getValue().buildContents(parameters);
                 tab.getValue().getDisplayItems().forEach(stack -> shown.add(stack.getItem()));
             }

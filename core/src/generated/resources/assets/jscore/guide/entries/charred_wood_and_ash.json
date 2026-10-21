@@ -55,7 +55,7 @@
     "jscore:charred_planks",
     "jscore:ash"
   ],
-  "order": 26,
+  "order": 28,
   "section": "jscore:fire",
   "title": "jscore.guide.charred_wood_and_ash.title"
 }

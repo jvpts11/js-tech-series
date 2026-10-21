@@ -64,7 +64,7 @@
   "items": [
     "jscore:geiger_counter"
   ],
-  "order": 19,
+  "order": 21,
   "section": "jscore:hazards",
   "title": "jscore.guide.geiger_counter.title"
 }

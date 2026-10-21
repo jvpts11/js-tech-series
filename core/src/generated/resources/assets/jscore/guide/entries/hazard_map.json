@@ -59,7 +59,7 @@
   "items": [
     "jscore:hazard_map"
   ],
-  "order": 21,
+  "order": 23,
   "section": "jscore:hazards",
   "title": "jscore.guide.hazard_map.title"
 }
