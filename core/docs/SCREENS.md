@@ -52,7 +52,8 @@ What a file holds:
   lays it), `progress` (a value of the menu against its `max`), `image` (a sprite), `spacer`, `separator`,
   `checkbox` and `text_field`.
 - **On every component**: `id` (what the code and the tests find it by), `width`, `height`, the smallest and largest
-  sizes, `grow`, `shrink`, `margin`, `align_self`, `span` in a grid, a `tooltip` key, and `visible_if` and
+  sizes, `grow`, `shrink`, `margin`, `align_self`, `span` in a grid, a `tooltip` key, a `narration` key (the name the
+  game's narrator calls a component by that has no words of its own, a switch or a slider), and `visible_if` and
   `enabled_if`, each a value's name.
 
 A kind is named by its short name when it is the Core's (`"button"`), by its id when it is another mod's. A mod
@@ -267,6 +268,23 @@ public static final KeyAction SCAN = KeyActions.declare(KeyAction.builder(rl("sc
 
 On the client, `KeyActionsClient.sendsWhen(SCAN, () -> holdsScanner())` sends the press only when it means
 something, and `onPress(SCAN, ...)` runs client code instead.
+
+## The keyboard, a controller and the narrator
+
+*Added 2026-10-21.*
+
+Everything on a screen declared in a file can be reached without the mouse, as the game's own screens are: Tab
+gives the keyboard to the first component and moves it on in the order the file reads, the arrows move it to the
+nearest one that way, and Enter or Space presses a button, ticks a box or turns a switch. A field keeps every key but
+Tab and Escape while it has the keyboard, so typing an E does not close the screen; Escape first closes a list that
+is open. A component the keyboard reaches is drawn as the pointer resting on it draws it.
+
+The components are handed to the game's screen as its own widgets are (`KeyboardFocus.of(panel)`, each entry added
+with `addWidget`), so the game moves the keyboard among them, a controller moves among them the way it moves among
+the game's buttons (Controlify does), and the game's narrator reads each in the game's words, in the player's
+language: "Press button", "Checkbox: Ready: OFF", "Speed: 40 slider", with how it is used after it. A component's
+`narration()` says what the narrator reads; one with no words of its own takes a name from its file's `narration`
+key or from `setSpoken`. A screen of your own built from the Core's components hands them over the same way.
 
 ## What can go wrong
 

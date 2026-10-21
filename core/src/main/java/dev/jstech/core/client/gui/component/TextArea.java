@@ -61,6 +61,11 @@ public final class TextArea extends UiComponent {
         return true;
     }
 
+    @Override
+    public boolean takesTyping() {
+        return true;
+    }
+
     /** How many lines fit in the bounds. */
     public int visibleLines() {
         return Math.max(1, (height() - 2) / LINE_H);

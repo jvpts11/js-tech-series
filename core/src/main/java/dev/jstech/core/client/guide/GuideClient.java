@@ -9,6 +9,9 @@ package dev.jstech.core.client.guide;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.datafixers.util.Either;
+import dev.jstech.core.JsCore;
+import dev.jstech.core.client.gui.tooltip.ItemTooltip;
+import dev.jstech.core.client.gui.tooltip.ItemTooltips;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.guide.GuideHooks;
 import dev.jstech.core.guide.GuideManual;
@@ -44,7 +47,6 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -71,7 +73,7 @@ public final class GuideClient {
         modBus.addListener(RegisterClientReloadListenersEvent.class, GuideClient::onRegisterReloadListeners);
         modBus.addListener(FMLClientSetupEvent.class, GuideClient::onClientSetup);
         modBus.addListener(RegisterClientTooltipComponentFactoriesEvent.class, GuideClient::onRegisterTooltips);
-        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, GuideClient::onTooltip);
+        ItemTooltips.add(JsCore.MODID, GuideClient::describe);
         NeoForge.EVENT_BUS.addListener(RenderTooltipEvent.GatherComponents.class, GuideClient::onTooltipGathered);
         NeoForge.EVENT_BUS.addListener(RenderTooltipEvent.Pre.class, GuideClient::onTooltipShown);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, GuideClient::onClientTick);
@@ -153,11 +155,12 @@ public final class GuideClient {
         event.register(HoldBarTooltip.class, bar -> bar);
     }
 
-    public static void onTooltip(final ItemTooltipEvent event) {
-        if (pageFor(event.getItemStack()).isEmpty()) {
+    /** The line at the foot of the tooltip of an item with a page, saying which key opens it. */
+    public static void describe(final ItemStack stack, final ItemTooltip tooltip) {
+        if (pageFor(stack).isEmpty()) {
             return;
         }
-        holdLine().ifPresent(event.getToolTip()::add);
+        holdLine().ifPresent(tooltip::line);
     }
 
     /* While the key is held over the item, its bar fills in the tooltip, right under the line that says to hold it. */

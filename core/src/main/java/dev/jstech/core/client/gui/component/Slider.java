@@ -13,6 +13,7 @@ import java.util.function.DoubleConsumer;
 import java.util.function.DoubleFunction;
 import java.util.function.DoubleSupplier;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -96,10 +97,11 @@ public final class Slider extends UiComponent {
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        // Left and right only, as the game's sliders: up and down move the keyboard on to the next component.
         final double now = value.getAsDouble();
         final double next = switch (key) {
-            case GLFW.GLFW_KEY_LEFT, GLFW.GLFW_KEY_DOWN -> SliderMath.step(now, steps, -1);
-            case GLFW.GLFW_KEY_RIGHT, GLFW.GLFW_KEY_UP -> SliderMath.step(now, steps, 1);
+            case GLFW.GLFW_KEY_LEFT -> SliderMath.step(now, steps, -1);
+            case GLFW.GLFW_KEY_RIGHT -> SliderMath.step(now, steps, 1);
             case GLFW.GLFW_KEY_HOME -> 0;
             case GLFW.GLFW_KEY_END -> 1;
             default -> -1;
@@ -109,6 +111,17 @@ public final class Slider extends UiComponent {
         }
         onChange.accept(next);
         return true;
+    }
+
+    @Override
+    public Component narration() {
+        return Narration.slider(spoken(), Component.literal(label.apply(SliderMath.snap(value.getAsDouble(),
+                steps))));
+    }
+
+    @Override
+    public Component narrationUsage() {
+        return Narration.SLIDE;
     }
 
     private void set(final double mx) {

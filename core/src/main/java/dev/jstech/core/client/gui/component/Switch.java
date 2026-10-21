@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -67,5 +68,17 @@ public final class Switch extends UiComponent {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Component narration() {
+        final String said = label.get();
+        return Narration.toggle(spoken() != null ? spoken() : said.isEmpty() ? null : Component.literal(said),
+                on.getAsBoolean());
+    }
+
+    @Override
+    public Component narrationUsage() {
+        return Narration.TOGGLE;
     }
 }

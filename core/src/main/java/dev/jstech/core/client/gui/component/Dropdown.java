@@ -14,6 +14,7 @@ import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -58,6 +59,18 @@ public final class Dropdown extends UiComponent {
     @Override
     public boolean focusable() {
         return true;
+    }
+
+    @Override
+    public Component narration() {
+        final int now = chosen.getAsInt();
+        final String shown = now >= 0 && now < options.size() ? options.get(now).get() : "";
+        return Narration.choice(spoken(), Component.literal(caption.apply(shown)));
+    }
+
+    @Override
+    public Component narrationUsage() {
+        return Narration.PRESS;
     }
 
     @Override

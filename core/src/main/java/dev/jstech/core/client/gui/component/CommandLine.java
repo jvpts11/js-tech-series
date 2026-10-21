@@ -124,6 +124,11 @@ public final class CommandLine extends UiComponent {
     }
 
     @Override
+    public boolean takesTyping() {
+        return true;
+    }
+
+    @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         Grounds.fill(g, x(), y(), right(), bottom(), background);
         final Font font = ctx.font();

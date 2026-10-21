@@ -17,6 +17,7 @@ import dev.jstech.tests.clienttest.TestHud;
 import dev.jstech.tests.clienttest.TestPassageScreen;
 import dev.jstech.tests.clienttest.computers.TestClientParts;
 import dev.jstech.tests.clienttest.core.TestFanMotion;
+import dev.jstech.tests.clienttest.core.TestTooltips;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
@@ -59,5 +60,7 @@ public final class JsTestsClient {
         TestGuideClient.register();
         // A passage between dimensions shown through a screen of the test mod's own.
         TravelScreens.register(TestPassageScreen.ID, TestPassageScreen::new);
+        // What the test mod says in tooltips, as another mod says it through the Core.
+        TestTooltips.declare();
     }
 }

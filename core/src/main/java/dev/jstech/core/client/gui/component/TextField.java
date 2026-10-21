@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -121,6 +122,18 @@ public class TextField extends UiComponent {
     @Override
     public boolean focusable() {
         return true;
+    }
+
+    @Override
+    public boolean takesTyping() {
+        return true;
+    }
+
+    @Override
+    public Component narration() {
+        final String hint = placeholder.get();
+        return Narration.field(spoken() != null ? spoken() : hint.isEmpty() ? null : Component.literal(hint),
+                Component.literal(edit()));
     }
 
     @Override

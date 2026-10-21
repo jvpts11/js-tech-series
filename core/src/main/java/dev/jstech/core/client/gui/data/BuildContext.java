@@ -143,6 +143,9 @@ public final class BuildContext {
     public BuiltNode node(final ElementSpec spec, final FlexBox box, @Nullable final UiComponent component,
                           @Nullable final Consumer<Placed> placed, final List<BuiltNode> children) {
         spec.common().applyTo(box);
+        if (component != null) {
+            spec.common().narration().ifPresent(key -> component.setSpoken(Component.translatable(key)));
+        }
         final BooleanSupplier visible = spec.common().visibleIf().map(this::truth).orElse(() -> true);
         final BooleanSupplier enabled = spec.common().enabledIf().map(this::truth).orElse(() -> true);
         return new BuiltNode(spec.common().id(), box, component, placed, visible, enabled, spec.common().tooltip(),

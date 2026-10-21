@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.motion;
 
+import dev.jstech.core.gui.AccessibilitySettings;
 import dev.jstech.core.motion.Motion;
 import dev.jstech.core.motion.MotionSpec;
 import dev.jstech.core.motion.Rhythm;
@@ -19,9 +20,10 @@ import net.neoforged.neoforge.common.NeoForge;
  * next one.
  *
  * <p>A motion holds no timer of its own; it is read against this each frame, so everything that moves moves on the
- * same clock, smoothly between ticks, and stops with the game when the game stops. With "reduce motion" on, every
- * motion started is already over: whatever moves is drawn where it ends, at once, which is also what the client tests
- * draw against.
+ * same clock, smoothly between ticks, and stops with the game when the game stops. With less movement asked for, by
+ * the player ({@link AccessibilitySettings#REDUCE_MOTION}) or by a mod or a test ({@link #setReduced}), every motion
+ * started is already over: whatever moves is drawn where it ends, at once, which is also what the client tests draw
+ * against.
  */
 public final class MotionClock {
 
@@ -41,7 +43,7 @@ public final class MotionClock {
 
     /** A motion of that kind starting now; one already over when nothing moves or motion is reduced. */
     public static Motion start(final MotionSpec spec) {
-        return reduced || !spec.moves() ? Motion.FINISHED : new Motion(spec, now());
+        return reduced() || !spec.moves() ? Motion.FINISHED : new Motion(spec, now());
     }
 
     /**
@@ -49,7 +51,7 @@ public final class MotionClock {
      * a ring of dots): held at 0 while motion is reduced, so each is drawn still in its first position.
      */
     public static double loopTicks() {
-        return reduced ? 0.0 : now() / TICK_MS;
+        return reduced() ? 0.0 : now() / TICK_MS;
     }
 
     /**
@@ -62,15 +64,18 @@ public final class MotionClock {
 
     /** Whether a thing that blinks by {@code spec} is lit now: lit for good while motion is reduced. */
     public static boolean blinkOn(final MotionSpec spec) {
-        return reduced || Rhythm.on(spec, now());
+        return reduced() || Rhythm.on(spec, now());
     }
 
-    /** Whether every motion is drawn where it ends, at once. */
+    /** Whether every motion is drawn where it ends, at once: the player asked for it, or a mod or a test did. */
     public static boolean reduced() {
-        return reduced;
+        return reduced || AccessibilitySettings.reduceMotion();
     }
 
-    /** Draws every motion from now on where it ends, at once, or lets them move again. */
+    /**
+     * Draws every motion from now on where it ends, at once, or lets them move again, unless the player asked for
+     * less movement in their own settings.
+     */
     public static void setReduced(final boolean value) {
         reduced = value;
     }

@@ -143,6 +143,8 @@ import dev.jstech.tests.clienttest.core.MovingStructureToolsClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.ToolClientTests;
+import dev.jstech.tests.clienttest.core.TooltipClientTests;
+import dev.jstech.tests.clienttest.core.KeyboardFocusClientTests;
 import dev.jstech.tests.clienttest.core.CameraClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
 import dev.jstech.tests.clienttest.core.EffectsClientTests;
@@ -321,6 +323,8 @@ public final class ClientTestSuite {
             ItemStateClientTests.class,
             ToolClientTests.class,
             CameraClientTests.class,
+            TooltipClientTests.class,
+            KeyboardFocusClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,
             DiagnosticsClientTests.class,

@@ -45,6 +45,8 @@ import dev.jstech.core.client.gui.data.ScreenFiles;
 import dev.jstech.core.client.gui.style.StyleChooser;
 import dev.jstech.core.client.gui.style.StyleLoader;
 import dev.jstech.core.client.gui.tooltip.ClientRichLine;
+import dev.jstech.core.client.gui.tooltip.ItemTooltips;
+import dev.jstech.core.client.gui.tooltip.TooltipPieces;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.heat.HeatGlowClient;
 import dev.jstech.core.client.heat.ThermalViewClient;
@@ -204,6 +206,9 @@ public final class JsCoreClient {
         CoreElementBuilders.register();
         ControlElementBuilders.register();
         ClientRichLine.listen(modEventBus);
+        // The pieces of a tooltip that are not text, and each mod's lines kept together with the mod named last.
+        TooltipPieces.listen(modEventBus);
+        ItemTooltips.listen();
         ConfigChoosers.register(StyleSettings.CHOOSER, new StyleChooser());
         // How the things of the materials the installed mods use look, drawn as the resources load.
         MaterialArt.declare();

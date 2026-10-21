@@ -8,6 +8,7 @@
 package dev.jstech.core.client.gui.data;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.client.gui.component.KeyboardFocus;
 import java.util.List;
 import java.util.Objects;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,6 +29,8 @@ public class DataScreen extends Screen implements IDataScreen {
     private final Screen parent;
     private int left;
     private int top;
+    @Nullable
+    private KeyboardFocus keyboard;
 
     public DataScreen(final ResourceLocation file, final Component title, final IScreenLogic<Void> logic,
                       @Nullable final Screen parent) {
@@ -90,10 +93,11 @@ public class DataScreen extends Screen implements IDataScreen {
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
-        if (view.typing() && key != InputConstants.KEY_ESCAPE) {
-            view.keyPressed(key, scanCode, modifiers);
-            return true;
+        if (DataKeys.toView(view, key)) {
+            return view.keyPressed(key, scanCode, modifiers) || key != InputConstants.KEY_ESCAPE;
         }
+        // From the component a click gave the keyboard, Tab and the arrows go on to the next.
+        setFocused(keyboard == null ? null : keyboard.focused());
         return super.keyPressed(key, scanCode, modifiers);
     }
 
@@ -126,5 +130,7 @@ public class DataScreen extends Screen implements IDataScreen {
         left = (width - view.width()) / 2;
         top = Math.max(0, (height - view.height()) / 2);
         view.layout(left, top, height);
+        keyboard = view.keyboard();
+        keyboard.entries().forEach(this::addWidget);
     }
 }

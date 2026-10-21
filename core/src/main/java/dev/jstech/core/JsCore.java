@@ -103,7 +103,9 @@ import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.gui.screen.ControlElements;
 import dev.jstech.core.gui.screen.CoreElements;
+import dev.jstech.core.gui.AccessibilitySettings;
 import dev.jstech.core.gui.style.StyleSettings;
+import dev.jstech.core.gui.tooltip.TooltipSettings;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideGifts;
 import dev.jstech.core.guide.GuideSounds;
@@ -457,6 +459,10 @@ public final class JsCore {
         // How effects look on a player's game: particles at once, the screen's shake and flash, heat haze.
         ConfigFiles.register(EffectSettings.FILE, modEventBus, modContainer);
         ConfigFiles.register(CameraSettings.FILE, modEventBus, modContainer);
+        // What the series adds to every item's tooltip on a player's game: the mod's name, the bar of wear.
+        ConfigFiles.register(TooltipSettings.FILE, modEventBus, modContainer);
+        // What makes the screens easier on a player: less movement.
+        ConfigFiles.register(AccessibilitySettings.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();

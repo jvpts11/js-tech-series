@@ -8,6 +8,9 @@
 package dev.jstech.core.client.moving;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.JsCore;
+import dev.jstech.core.client.gui.tooltip.ItemTooltip;
+import dev.jstech.core.client.gui.tooltip.ItemTooltips;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.input.CoreKeys;
@@ -17,6 +20,7 @@ import dev.jstech.core.moving.physics.BlockPhysics;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
@@ -25,10 +29,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
  * What a block's tooltip says of it in the physics of a moving structure: its mass, and each force it gives, the
@@ -44,21 +47,21 @@ public final class PhysicsTooltips {
     private PhysicsTooltips() {
     }
 
-    /** Hands the game's bus what this answers, once, from the Core's client. */
+    /** Hands the Core's tooltips what this says, once, from the Core's client. */
     public static void listen() {
-        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, PhysicsTooltips::onTooltip);
+        ItemTooltips.add(JsCore.MODID, PhysicsTooltips::describe);
     }
 
-    private static void onTooltip(final ItemTooltipEvent event) {
-        if (!(event.getItemStack().getItem() instanceof BlockItem item)) {
+    private static void describe(final ItemStack stack, final ItemTooltip tooltip) {
+        if (!(stack.getItem() instanceof BlockItem item)) {
             return;
         }
         final BlockState state = item.getBlock().defaultBlockState();
         final BlockPhysics physics = BlockPhysics.of(state);
-        final List<Component> lines = event.getToolTip();
-        if (!sees(event.getEntity())) {
+        final List<Component> lines = new ArrayList<>();
+        if (!sees(tooltip.player())) {
             if (physics != BlockPhysics.NONE) {
-                lines.add(GameText.component(PhysicsSight.HINT.with(keyName())).copy()
+                tooltip.line(GameText.component(PhysicsSight.HINT.with(keyName())).copy()
                         .withStyle(ChatFormatting.DARK_GRAY));
             }
             return;
@@ -89,6 +92,7 @@ public final class PhysicsTooltips {
                     watts.prefix())))));
         });
         physics.drag().ifPresent(share -> lines.add(line(PhysicsSight.DRAG.with(format.decimal(share)))));
+        lines.forEach(tooltip::line);
     }
 
     /* Whether the player sees a block's physics now: the key held, or an item that sees it held or worn. */

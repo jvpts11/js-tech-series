@@ -13,6 +13,7 @@ import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -81,5 +82,17 @@ public final class RadioGroup extends UiComponent {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Component narration() {
+        final int now = chosen.getAsInt();
+        return Narration.choice(spoken(), Component.literal(now >= 0 && now < options.size()
+                ? options.get(now).get() : ""));
+    }
+
+    @Override
+    public Component narrationUsage() {
+        return Narration.CHOOSE;
     }
 }

@@ -30,7 +30,8 @@
         "align": "center",
         "children": [
           {"type": "button", "text": "jstests.screen.press", "action": "press", "id": "press"},
-          {"type": "checkbox", "text": "jstests.screen.ready", "bind": "ready", "id": "ready"}
+          {"type": "checkbox", "text": "jstests.screen.ready", "bind": "ready", "id": "ready",
+            "narration": "jstests.screen.ready_spoken"}
         ]
       },
       {"type": "inventory", "id": "inventory"}

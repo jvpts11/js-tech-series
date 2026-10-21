@@ -33,6 +33,9 @@ public final class ItemTexts {
     public static final TextKey FLUID = TextKey.of("jscore.item.fluid", "%s: %s of %s mB");
     public static final TextKey FLUID_EMPTY = TextKey.of("jscore.item.fluid.empty", "No fluid, holds %s mB");
     public static final TextKey ITEMS = TextKey.of("jscore.item.items", "Holds %s of %s stacks");
+    /** How fast an item that holds energy takes and gives it, in its tooltip's numbers. */
+    public static final TextKey CHARGES = TextKey.of("jscore.item.energy.charges", "Charges at up to %s/t");
+    public static final TextKey GIVES = TextKey.of("jscore.item.energy.gives", "Gives up to %s/t");
 
     private ItemTexts() {
     }

@@ -8,6 +8,7 @@
 package dev.jstech.core.client.gui.component;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.BooleanSupplier;
@@ -85,5 +86,16 @@ public final class Checkbox extends UiComponent {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Component narration() {
+        return Narration.checkbox(spoken() != null ? spoken() : Component.literal(label.get()),
+                checked.getAsBoolean());
+    }
+
+    @Override
+    public Component narrationUsage() {
+        return Narration.TOGGLE;
     }
 }

@@ -11,6 +11,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.tooltip.ItemTooltip;
+import dev.jstech.core.client.gui.tooltip.ItemTooltips;
 import dev.jstech.core.connect.RelativeFace;
 import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.core.machine.MachineResource;
@@ -36,7 +38,6 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Matrix4f;
 
@@ -61,7 +62,7 @@ public final class MachineWrenchClient {
     public static void listen(final IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, MachineWrenchClient::onRender);
         NeoForge.EVENT_BUS.addListener(InputEvent.MouseScrollingEvent.class, MachineWrenchClient::onScroll);
-        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, MachineWrenchClient::onTooltip);
+        ItemTooltips.add(JsCore.MODID, MachineWrenchClient::describe);
         modBus.addListener(RegisterGuiLayersEvent.class, event -> event.registerAbove(VanillaGuiLayers.CROSSHAIR,
                 LAYER, MachineWrenchClient::drawLabel));
     }
@@ -110,9 +111,9 @@ public final class MachineWrenchClient {
         });
     }
 
-    private static void onTooltip(final ItemTooltipEvent event) {
-        if (event.getItemStack().has(MachineWrench.TAKEN_WHOLE.get())) {
-            event.getToolTip().add(GameText.component(MachineWrench.TAKEN));
+    private static void describe(final ItemStack stack, final ItemTooltip tooltip) {
+        if (stack.has(MachineWrench.TAKEN_WHOLE.get())) {
+            tooltip.line(GameText.component(MachineWrench.TAKEN));
         }
     }
 

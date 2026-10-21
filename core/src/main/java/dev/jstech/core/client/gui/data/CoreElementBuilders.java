@@ -142,7 +142,8 @@ public final class CoreElementBuilders {
         final String key = props.text().orElse("");
         final Supplier<String> label = () -> Component.translatable(key).getString();
         final Runnable press = press(props, ctx);
-        final Button button = new Button(label, press).setPrimary(props.primary());
+        // The keyboard reaches every button of a screen's file, which Enter and Space then press.
+        final Button button = new Button(label, press).setPrimary(props.primary()).setFocusable(true);
         final int tall = ctx.metrics().controlHeight();
         final FlexBox box = FlexBox.leaf(name(spec), maxWidth -> new Size(
                 ctx.skin().textWidth(ctx.font(), label.get()) + 2 * BUTTON_PAD, tall)).role(Role.SOLID);
@@ -242,7 +243,7 @@ public final class CoreElementBuilders {
         final Optional<Runnable> toggle = props.action().flatMap(ctx::action);
         final int size = ctx.metrics().controlHeight();
         final Checkbox box = new Checkbox(label, () -> value.map(v -> truth(v.get())).orElse(false),
-                () -> toggle.ifPresent(Runnable::run)).setBoxSize(size);
+                () -> toggle.ifPresent(Runnable::run)).setBoxSize(size).setFocusable(true);
         final FlexBox flex = FlexBox.leaf(name(spec), maxWidth -> new Size(size + 4
                 + ctx.skin().textWidth(ctx.font(), label.get()), size)).role(Role.SOLID);
         return ctx.node(spec, flex, box, null, List.of());

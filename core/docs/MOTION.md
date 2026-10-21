@@ -33,10 +33,11 @@ Every motion is read against one clock, `MotionClock`, on the player's game: the
 started, plus the part of the next tick already gone at the frame being drawn, in milliseconds. A motion is started
 with `MotionClock.start(spec)` and read with `motion.progress(MotionClock.now())`.
 
-A player can reduce motion. Then `MotionClock.start` gives a motion that is already over, so everything is drawn
-where it ends, and `MotionClock.loopTicks()`, which drives what turns round and round (a running bar, a ring of
-dots), stands still at its first position. A mod gives its players the switch in its own settings; J's Computers
-has Reduce motion in its client settings.
+A player can ask for less movement, in the Core's own settings (`motion.reduce` in `jstech-accessibility.toml`,
+"Less movement"). Then `MotionClock.start` gives a motion that is already over, so everything is drawn where it
+ends, `MotionClock.loopTicks()`, which drives what turns round and round (a running bar, a ring of dots), stands still
+at its first position, what blinks stays lit, and a tooltip's 3D preview stands still. A mod or a test may ask for
+it too with `MotionClock.setReduced`; `MotionClock.reduced()` is true when either did.
 
 ## Profiles
 

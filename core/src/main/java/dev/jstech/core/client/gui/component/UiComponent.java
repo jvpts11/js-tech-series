@@ -32,6 +32,8 @@ public abstract class UiComponent {
     private boolean focused;
     @Nullable
     private Panel parent;
+    @Nullable
+    private Component spoken;
 
     // geometry
 
@@ -109,6 +111,14 @@ public abstract class UiComponent {
         return focused;
     }
 
+    /**
+     * Whether the component, while it has the keyboard, takes every key as typing (a field, a text area, a command
+     * line), so that Tab, the arrows and the game's keys do not leave it; the others let Tab and the arrows move on.
+     */
+    public boolean takesTyping() {
+        return false;
+    }
+
     /** Hands the keyboard to the component or takes it away; a component losing it gets {@link #onBlur()}. */
     void setFocused(final boolean value) {
         if (focused == value) {
@@ -118,6 +128,34 @@ public abstract class UiComponent {
         if (!value) {
             onBlur();
         }
+    }
+
+    /**
+     * Gives the component the name the game's narrator calls it by, for one that has no words of its own to read (a
+     * switch, a slider, a field beside its label); null leaves its own.
+     */
+    public UiComponent setSpoken(@Nullable final Component name) {
+        spoken = name;
+        return this;
+    }
+
+    /** The name the narrator calls the component by, when one was given. */
+    @Nullable
+    public Component spoken() {
+        return spoken;
+    }
+
+    /**
+     * What the game's narrator says of the component when the keyboard reaches it or the pointer rests on it: its
+     * kind, its name and its state, as the game says them of its own widgets. Empty says nothing.
+     */
+    public Component narration() {
+        return spoken == null ? Component.empty() : spoken;
+    }
+
+    /** How the component is used, said after its narration while it has the keyboard; empty for nothing. */
+    public Component narrationUsage() {
+        return Component.empty();
     }
 
     /** Called when the component loses the keyboard: the place to commit what was typed. */

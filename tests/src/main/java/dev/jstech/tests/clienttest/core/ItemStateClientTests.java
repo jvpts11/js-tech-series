@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import dev.jstech.core.client.gui.tooltip.ItemTooltips;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.tests.TestItems;
@@ -33,10 +34,13 @@ public final class ItemStateClientTests {
             final List<String> lines = tooltip(ctx, new ItemStack(TestItems.FULL.get()));
             // The amounts of energy are grouped the way the machine's own language groups them.
             return lines.contains("Mode: Scan") && lines.stream().anyMatch(line -> line.startsWith("Energy: 0 FE of "))
-                    && lines.contains("No fluid, holds 4000 mB") && lines.contains("Holds 0 of 4 stacks")
-                    && lines.contains("Turn the mouse wheel while sneaking to change the mode, or give Change Item "
-                    + "Mode a key");
-        }, "the full tool's tooltip says its mode, energy, fluid, stacks and how to change the mode")
+                    && lines.contains("No fluid, holds 4000 mB") && lines.contains("Holds 0 of 4 stacks");
+        }, "the full tool's tooltip says its mode, energy, fluid and stacks")
+                .thenAssert(0, () -> ItemTooltips.lines(new ItemStack(TestItems.FULL.get()),
+                        Item.TooltipContext.of(ctx.mc().level), ctx.player(), TooltipFlag.NORMAL, true, false)
+                        .stream().map(Component::getString).toList().contains("Turn the mouse wheel while sneaking "
+                                + "to change the mode, or give Change Item Mode a key"),
+                        "with Shift, how to change the mode")
                 .thenAssert(0, () -> List.of(ctx.mc().options.keyMappings)
                         .contains(KeyActionsClient.mapping(CoreKeys.CHANGE_ITEM_MODE)),
                         "the mode key is among the game's keys");

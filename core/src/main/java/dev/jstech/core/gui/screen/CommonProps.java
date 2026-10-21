@@ -33,18 +33,21 @@ import java.util.Optional;
  * @param alignSelf where it stands across its row or column
  * @param span      how many grid columns it takes
  * @param tooltip   the translation key of what the pointer resting on it shows
+ * @param narration the translation key of the name the game's narrator calls it by, for one with no words of its
+ *                  own to read (a switch, a slider, a field beside its label)
  * @param visibleIf the name of a value that says whether it is shown
  * @param enabledIf the name of a value that says whether it can be used
  */
 public record CommonProps(Optional<String> id, Optional<Integer> width, Optional<Integer> height, int minWidth,
                           int minHeight, Optional<Integer> maxWidth, Optional<Integer> maxHeight,
                           Optional<Integer> grow, Optional<Integer> shrink, Insets margin, Optional<Align> alignSelf,
-                          int span, Optional<String> tooltip, Optional<String> visibleIf, Optional<String> enabledIf) {
+                          int span, Optional<String> tooltip, Optional<String> narration, Optional<String> visibleIf,
+                          Optional<String> enabledIf) {
 
     /** Nothing said. */
     public static final CommonProps NONE = new CommonProps(Optional.empty(), Optional.empty(), Optional.empty(), 0, 0,
             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Insets.NONE, Optional.empty(), 1,
-            Optional.empty(), Optional.empty(), Optional.empty());
+            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 
     private static final int MOST = 4096;
 
@@ -63,6 +66,7 @@ public record CommonProps(Optional<String> id, Optional<Integer> width, Optional
             ScreenCodecs.ALIGN.optionalFieldOf("align_self").forGetter(CommonProps::alignSelf),
             Codec.intRange(1, 64).optionalFieldOf("span", 1).forGetter(CommonProps::span),
             Codec.STRING.optionalFieldOf("tooltip").forGetter(CommonProps::tooltip),
+            Codec.STRING.optionalFieldOf("narration").forGetter(CommonProps::narration),
             Codec.STRING.optionalFieldOf("visible_if").forGetter(CommonProps::visibleIf),
             Codec.STRING.optionalFieldOf("enabled_if").forGetter(CommonProps::enabledIf)
     ).apply(i, CommonProps::new));

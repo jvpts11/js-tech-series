@@ -8,6 +8,7 @@
 package dev.jstech.core.client.gui.component;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Supplier;
@@ -134,5 +135,15 @@ public final class Button extends UiComponent {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Component narration() {
+        return Narration.button(spoken() != null ? spoken() : Component.literal(label.get()));
+    }
+
+    @Override
+    public Component narrationUsage() {
+        return Narration.PRESS;
     }
 }

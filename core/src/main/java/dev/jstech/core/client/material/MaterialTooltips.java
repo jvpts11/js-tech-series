@@ -7,6 +7,10 @@
  */
 package dev.jstech.core.client.material;
 
+import dev.jstech.core.JsCore;
+import dev.jstech.core.client.gui.tooltip.ItemTooltip;
+import dev.jstech.core.client.gui.tooltip.ItemTooltips;
+import dev.jstech.core.client.gui.tooltip.TooltipTexts;
 import dev.jstech.core.material.MaterialMarks;
 import dev.jstech.core.material.MaterialProperty;
 import dev.jstech.core.material.MaterialThing;
@@ -17,56 +21,62 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * The lines a material's things show in their tooltips, the game's own iron ingot included: each property the material
- * has a value for, those shown always, and with Shift held those shown only then; then the marks it bears
- * ({@link MaterialMarks}). When some line waits for Shift, the tooltip says so.
+ * has a value for, those shown always, and in the part Shift shows those shown only then; then the marks it bears
+ * ({@link MaterialMarks}). The tooltip says that Shift shows more, as for every part that waits for it.
  */
 @TextHolder
 public final class MaterialTooltips {
 
     public static final TextKey LINE = TextKey.of("jscore.material.tooltip.line", "%s: %s");
-    public static final TextKey MORE = TextKey.of("jscore.material.tooltip.more", "Hold Shift for more");
 
     private MaterialTooltips() {
     }
 
-    /** Listens for tooltips, once, from the Core's client constructor. */
+    /** Hands the Core's tooltips what a material's things say, once, from the Core's client constructor. */
     public static void listen() {
-        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, MaterialTooltips::onTooltip);
+        ItemTooltips.add(JsCore.MODID, MaterialTooltips::describe);
     }
 
-    /** The lines {@code thing}'s tooltip adds, with Shift held or not. */
+    /** The lines {@code thing}'s tooltip shows, with Shift held or not, the hint included when something waits. */
     public static List<Component> lines(final MaterialThing thing, final boolean shift) {
-        final List<MaterialValues.Line> lines = MaterialValues.lines(thing.material(), true);
-        final List<Component> out = new ArrayList<>();
-        boolean waiting = false;
-        for (final MaterialValues.Line line : lines) {
-            if (line.shown() == MaterialProperty.Shown.SHIFT && !shift) {
-                waiting = true;
-                continue;
-            }
-            out.add(GameText.component(LINE.with(line.property().name().text(), line.value()))
-                    .withStyle(ChatFormatting.GRAY));
-        }
-        for (final MaterialMarks.Mark mark : MaterialMarks.of(thing.material())) {
-            out.add(GameText.component(mark.text()).withStyle(ChatFormatting.YELLOW));
-        }
-        if (waiting) {
-            out.add(GameText.component(MORE).withStyle(ChatFormatting.DARK_GRAY));
+        final List<Component> always = new ArrayList<>();
+        final List<Component> shifted = new ArrayList<>();
+        collect(thing, always, shifted);
+        final List<Component> out = new ArrayList<>(always);
+        if (shift) {
+            out.addAll(shifted);
+        } else if (!shifted.isEmpty()) {
+            out.add(GameText.component(TooltipTexts.MORE).copy().withStyle(ChatFormatting.DARK_GRAY));
         }
         return out;
     }
 
-    private static void onTooltip(final ItemTooltipEvent event) {
-        final Optional<MaterialThing> thing = Materials.of(event.getItemStack().getItem());
-        thing.ifPresent(found -> event.getToolTip().addAll(lines(found, Screen.hasShiftDown())));
+    private static void describe(final ItemStack stack, final ItemTooltip tooltip) {
+        Materials.of(stack.getItem()).ifPresent(thing -> {
+            final List<Component> always = new ArrayList<>();
+            final List<Component> shifted = new ArrayList<>();
+            collect(thing, always, shifted);
+            always.forEach(tooltip::line);
+            shifted.forEach(tooltip.shift()::line);
+        });
+    }
+
+    /* The lines shown always, then the marks, into always; those that wait for Shift into shifted. */
+    private static void collect(final MaterialThing thing, final List<Component> always,
+                                final List<Component> shifted) {
+        for (final MaterialValues.Line line : MaterialValues.lines(thing.material(), true)) {
+            final Component said = GameText.component(LINE.with(line.property().name().text(), line.value()))
+                    .copy().withStyle(ChatFormatting.GRAY);
+            (line.shown() == MaterialProperty.Shown.SHIFT ? shifted : always).add(said);
+        }
+        for (final MaterialMarks.Mark mark : MaterialMarks.of(thing.material())) {
+            always.add(GameText.component(mark.text()).copy().withStyle(ChatFormatting.YELLOW));
+        }
     }
 }

@@ -35,6 +35,13 @@ the focused child, drags and releases to the child that took the press, and the 
 the cursor. A component that took a click returns `true`; a panel returns `false` when no child did, which
 is how a program knows a click landed on empty space.
 
+A component that `takesTyping()` (a field, a text area, a command line) keeps every key while it has the keyboard;
+the others let Tab and the arrows move it on. `narration()` is what the game's narrator reads of a component, in
+the game's own words for its widgets, and `narrationUsage()` how it is used; `setSpoken(name)` names one that has no
+words of its own. `KeyboardFocus.of(panel)` hands the components the keyboard reaches to a game screen as its own
+widgets, so the game, a controller and the narrator move among them
+([Screens](SCREENS.md#the-keyboard-a-controller-and-the-narrator)).
+
 Every drawing call goes through the `Skin` interface: the colours (text, dim, accent, edge, backgrounds) and
 the primitives (panel, button, field, tab, list row, scroll thumb, status bar, window frame). J's
 Computers implements it once per operating system, so a button on Frames 95 has a bevel and the same
@@ -104,7 +111,8 @@ the handler its `action` names (`screen.onNumber("speed", speed -> ...)`, `onCho
 `onPoint`).
 
 A tooltip's line can hold items and pictures in its text: `RichLine.builder().text(...).item(stack).image(sprite, w,
-h).build()`, handed to a tooltip as the game hands any picture to one.
+h).build()`, handed to a tooltip as the game hands any picture to one. Bars, pictures, 3D previews and what an item
+holds, and each mod's lines kept together, are in [Tooltips](TOOLTIPS.md).
 
 ## Writing a program
 

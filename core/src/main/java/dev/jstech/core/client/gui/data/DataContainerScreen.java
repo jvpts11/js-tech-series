@@ -8,6 +8,7 @@
 package dev.jstech.core.client.gui.data;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.client.gui.component.KeyboardFocus;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import java.util.List;
 import java.util.Objects;
@@ -16,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The screen of a menu declared in a file: the window and its components in the style the player picked, the menu's
@@ -28,6 +30,8 @@ public class DataContainerScreen<M extends AbstractContainerMenu> extends CoreCo
 
     private final ResourceLocation file;
     private final DataScreenView view;
+    @Nullable
+    private KeyboardFocus keyboard;
 
     public DataContainerScreen(final M menu, final Inventory inventory, final Component title,
                                final ResourceLocation file, final IScreenLogic<M> logic) {
@@ -94,13 +98,16 @@ public class DataContainerScreen<M extends AbstractContainerMenu> extends CoreCo
         return view.mouseScrolled(mouseX, mouseY, scrollY) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
-    /* While a field has the keyboard every key but Escape is its own, so typing an E does not close the screen. */
+    /*
+     * While a field has the keyboard every key but Escape and Tab is its own, so typing an E does not close the
+     * screen; otherwise Tab and the arrows go on from the component a click gave the keyboard.
+     */
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
-        if (view.typing() && key != InputConstants.KEY_ESCAPE) {
-            view.keyPressed(key, scanCode, modifiers);
-            return true;
+        if (DataKeys.toView(view, key)) {
+            return view.keyPressed(key, scanCode, modifiers) || key != InputConstants.KEY_ESCAPE;
         }
+        setFocused(keyboard == null ? null : keyboard.focused());
         return super.keyPressed(key, scanCode, modifiers);
     }
 
@@ -116,6 +123,8 @@ public class DataContainerScreen<M extends AbstractContainerMenu> extends CoreCo
         imageHeight = view.height();
         super.init();
         view.layout(leftPos, topPos, height);
+        keyboard = view.keyboard();
+        keyboard.entries().forEach(this::addWidget);
     }
 
     @Override

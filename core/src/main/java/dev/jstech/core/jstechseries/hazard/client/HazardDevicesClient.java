@@ -10,6 +10,7 @@ package dev.jstech.core.jstechseries.hazard.client;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.client.audio.AudioEngine;
+import dev.jstech.core.client.gui.tooltip.ItemTooltips;
 import dev.jstech.core.client.hud.HudElements;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.gui.HudStack;
@@ -36,7 +37,6 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
  * The hazard devices on the player's game: each on the HUD while carried (the Geiger counter in the hotbar or the off
@@ -82,11 +82,11 @@ public final class HazardDevicesClient {
         modBus.addListener(RegisterColorHandlersEvent.Item.class, event -> event.register(
                 (stack, tint) -> 0xFF << 24 | WitheredGrass.COLOUR, WitheredGrass.BLOCK.item()));
         // Food grown or caught on fouled ground says what it carries.
-        NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, event -> {
-            final double metals = SeriesPollution.metalsIn(event.getItemStack());
+        ItemTooltips.add(JsCore.MODID, (stack, tooltip) -> {
+            final double metals = SeriesPollution.metalsIn(stack);
             if (metals > 0) {
-                event.getToolTip().add(GameText.component(SeriesPollution.CONTAMINATED_FOOD.with(
-                        DeviceReadings.figure(metals))).withStyle(ChatFormatting.RED));
+                tooltip.line(GameText.component(SeriesPollution.CONTAMINATED_FOOD.with(
+                        DeviceReadings.figure(metals))).copy().withStyle(ChatFormatting.RED));
             }
         });
         SmogClient.listen();

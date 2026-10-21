@@ -9,6 +9,7 @@ package dev.jstech.core.client.gui.data;
 
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Checkbox;
+import dev.jstech.core.client.gui.component.KeyboardFocus;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -200,9 +201,22 @@ public final class DataScreenView {
         root.dispose();
     }
 
-    /** Whether a component of the screen has the keyboard, so the keys go to it rather than to the game. */
+    /**
+     * Whether a component of the screen that takes typing has the keyboard (a field), so the keys go to it rather
+     * than to the game; a switch or a button with it lets Tab and the arrows move the keyboard on.
+     */
     public boolean typing() {
-        return root.focusedChild() != null;
+        return root.focusedChild() != null && root.focusedChild().takesTyping();
+    }
+
+    /** Whether a component has something open over the others (a drop-down's list), which Escape closes first. */
+    public boolean overlayOpen() {
+        return root.overlayOpen();
+    }
+
+    /** The components the keyboard reaches, as the screen hands them to the game; made once they are laid out. */
+    public KeyboardFocus keyboard() {
+        return KeyboardFocus.of(root);
     }
 
     /** How wide the screen is. */

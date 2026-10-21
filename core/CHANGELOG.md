@@ -923,6 +923,19 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   an item wherever its player carries it, in a hand, worn or in the inventory, and turns one on and off
   (`ItemActions`); an item lasts as many uses as declared, or as many as its mod makes of a property of its material;
   the mouse wheel turned while sneaking changes the mode of the item in hand.
+- Tooltips: each mod's lines kept together, the item's own mod first and the others by name, and the item's mod
+  named last in blue unless another mod already names it (`ItemTooltips`); parts shown only with Shift (what an item
+  does) and with Ctrl (its numbers), a hint at the foot saying which key shows what; bars of energy, gas, wear and a
+  fluid in its own texture (`TooltipBar`), pictures (`TooltipPicture`), turning 3D previews of a block or a structure
+  (`TooltipPreview`) and what an item holds in the slots of the game's bundle (`TooltipContents`). Items that hold
+  things show their bars and slots, and a worn item its wear, in every tooltip; the player can turn the mod's name and
+  the wear off in `jstech-tooltips.toml`.
+- The keyboard, a controller and the narrator on screens declared in files: Tab and the arrows move among the
+  components in the order they read, Enter and Space press, a controller moves among them as among the game's
+  buttons, and the game's narrator reads each in the game's own words; a file names a component for the narrator with
+  `narration` (`KeyboardFocus`, `UiComponent.narration`).
+- Less movement for a player who asks, in the Core's own settings (`jstech-accessibility.toml`): what slides,
+  turns round or blinks on the screens of the series is drawn still, and a tooltip's 3D preview stands still.
 
 ### Changed
 - Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending
@@ -935,6 +948,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `"held"` in data), and a module's energy is spent each second worn, each use in a tool. `ItemState` gains a gas
   tank. A module effect does nothing where it has no part, in what is worn or in a tool, unless its kind says.
 - The mode key no longer writes the new mode on the action bar: the item's name above the hotbar shows it.
+- What an item holds is shown in bars and slots rather than in lines, how to change its mode moves to the part
+  Shift shows, and the Core's own lines of an item (its material, hazards, physics, the manual's key) are a section of
+  the Core's tooltips, kept together. A slider is stepped with left and right only, as the game's are, so up and down
+  move the keyboard on; buttons and check boxes of a screen's file are reached by the keyboard.
 - The world drawn from somewhere else, the far side of a seamless portal, is drawn by `WorldViews`, which
   cameras on screens draw with too; the portal shows what it showed.
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
