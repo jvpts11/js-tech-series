@@ -16,13 +16,16 @@ import dev.jstech.core.client.audio.AudioEngine;
 import dev.jstech.core.client.gui.PointerShape;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
+import dev.jstech.core.client.recipeview.RecipeViewers;
 import dev.jstech.core.gui.ManualButtonLook;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCode;
 import dev.jstech.core.guide.GuideContents;
+import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideHighlighters;
 import dev.jstech.core.guide.GuideHistory;
 import dev.jstech.core.guide.GuideLayout;
@@ -32,7 +35,12 @@ import dev.jstech.core.guide.GuideSearch;
 import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
+import dev.jstech.core.guide.LecternTakePayload;
+import dev.jstech.core.guide.ReaderMarks;
+import dev.jstech.core.guide.TearPayload;
 import dev.jstech.core.guide.TextSize;
+import dev.jstech.core.guide.TornSheets;
+import dev.jstech.core.progression.KnowledgeGate;
 import dev.jstech.core.gui.layout.ManualScreenLayout;
 import dev.jstech.core.palette.PaletteRoles;
 import dev.jstech.core.text.GameText;
@@ -47,13 +55,17 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Function;
+import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -61,6 +73,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -80,12 +93,17 @@ import org.lwjgl.glfw.GLFW;
  */
 public final class ManualScreen extends Screen {
 
-    private final GuideManual manual;
-    private final GuideStyle style;
+    /* The manual and its style, read again from the resource packs each time the screen is laid out. */
+    private GuideManual manual;
+    private GuideStyle style;
     private final String openAt;
     /* The screen it was opened from, which closing it goes back to; none for the game itself. */
     @Nullable
     private final Screen parent;
+    /* The lectern it is read from, or none; and whether it is laid out only to draw a page apart, as a torn sheet. */
+    @Nullable
+    private final BlockPos lectern;
+    private final boolean sheet;
     private final GuideRecipes recipes = new GuideRecipes();
     private final GuideFaces faces = new GuideFaces();
     private final Map<String, Integer> colours = new HashMap<>();
@@ -114,8 +132,15 @@ public final class ManualScreen extends Screen {
     private String foundWords;
     private ItemStack hoveredItem = ItemStack.EMPTY;
     private List<Component> hoveredWords = List.of();
+    /* What a click opens a recipe viewer on, the pointer over a recipe of a page: what it makes, or its slot's item. */
+    private ItemStack recipeUnder = ItemStack.EMPTY;
     /** The scenes of the manual, as the reader has turned them; made with the screen's first layout. */
     private ManualScenes scenes;
+    /* The reader's bookmarks and notes, the contents the marks are read from, and what the reader has seen. */
+    private ManualMarksView marks;
+    private GuideContents contents;
+    private Set<String> seenNow = Set.of();
+    private int seenSpread = UNSET;
     /** The spread a ribbon keeps: the one the book was put down at last time, or none. */
     private int kept = UNSET;
     /** The control held down under the pointer, drawn pressed until the button is let go; null when none is. */
@@ -132,6 +157,15 @@ public final class ManualScreen extends Screen {
     private List<String> copied = List.of();
     private long copiedAt;
 
+    /** How long a tick of the game is, by which an animated picture's frames are timed. */
+    private static final long MILLIS_PER_TICK = 50L;
+    /** The dot on a chapter's tab that holds something new. */
+    private static final int TAB_DOT = 3;
+    /** Where a page of the front matter, the contents, stands: by its page, before every entry. */
+    private static final String FRONT = "#front";
+    /** The size a page apart is laid out at, to be drawn as a torn sheet: any size the binder fits. */
+    private static final int SHEET_ROOM_WIDTH = 640;
+    private static final int SHEET_ROOM_HEIGHT = 360;
     /** How far below the lines of the index its dots sit, at the size they are drawn. */
     private static final int DOT_DROP = 6;
     private static final int DOT_PITCH = 3;
@@ -217,12 +251,37 @@ public final class ManualScreen extends Screen {
     /** The manual opened from {@code parent}, a settings screen's link, which closing it goes back to. */
     public ManualScreen(final GuideManual manual, final GuideStyle style, final String openAt,
                         @Nullable final Screen parent) {
+        this(manual, style, openAt, parent, null, false);
+    }
+
+    private ManualScreen(final GuideManual manual, final GuideStyle style, final String openAt,
+                         @Nullable final Screen parent, @Nullable final BlockPos lectern, final boolean sheet) {
         super(GameText.component(GuideTexts.CONTENTS));
         this.manual = manual;
         this.style = style;
         this.openAt = openAt == null ? "" : openAt;
         this.parent = parent;
+        this.lectern = lectern;
+        this.sheet = sheet;
         this.history = HISTORIES.computeIfAbsent(manual.id(), id -> new GuideHistory());
+    }
+
+    /**
+     * The manual read from the lectern at {@code pos}, where it was last put down: a strip under it says where the
+     * lectern is, with the buttons that take the manual off it and that close it.
+     */
+    public static ManualScreen onLectern(final GuideManual manual, final GuideStyle style, final BlockPos pos) {
+        return new ManualScreen(manual, style, "", null, pos, false);
+    }
+
+    /**
+     * The manual laid out to draw one page apart, as a torn sheet shows it: never shown as a screen, it makes no sound
+     * and leaves no mark of its reader.
+     */
+    static ManualScreen sheet(final GuideManual manual, final GuideStyle style) {
+        final ManualScreen laid = new ManualScreen(manual, style, "", null, null, true);
+        laid.init(Minecraft.getInstance(), SHEET_ROOM_WIDTH, SHEET_ROOM_HEIGHT);
+        return laid;
     }
 
     @Override
@@ -234,8 +293,19 @@ public final class ManualScreen extends Screen {
 
     @Override
     protected void init() {
-        this.resolveColours();
         final GuideLibrary library = GuideLibrary.loaded();
+        // After the resource packs are read again, the manual is laid out as they hold it now, in the style they give.
+        library.manual(this.manual.id()).ifPresent(now -> library.style(now.style()).ifPresent(look -> {
+            if (!look.equals(this.style) && this.scenes != null && this.marks != null) {
+                this.scenes.close();
+                this.scenes = null;
+                this.marks.keep();
+                this.marks = null;
+            }
+            this.manual = now;
+            this.style = look;
+        }));
+        this.resolveColours();
         final GuideContents contents = library.contentsOf(this.manual);
         this.chapters.clear();
         final Set<String> mods = new HashSet<>();
@@ -255,9 +325,27 @@ public final class ManualScreen extends Screen {
             this.scenes = new ManualScenes(this.font, this.style, this::colour,
                     new ClientGuideText(this.font, this.style, this.recipes));
         }
+        if (this.marks == null) {
+            this.marks = new ManualMarksView(this.manual.id(), this.font, this.style,
+                    new ClientGuideText(this.font, this.style, this.recipes));
+        }
+        this.contents = contents;
+        // The first time a reader opens a manual, what it holds then is what they find there; only what comes into
+        // it after is new.
+        if (!this.sheet && !ManualMarks.opened(this.manual.id())) {
+            final List<String> every = new ArrayList<>();
+            contents.chapters().forEach(chapter -> chapter.sections().forEach(section -> section.entries()
+                    .forEach(entry -> every.add(entry.id()))));
+            ManualMarks.see(this.manual.id(), every);
+        }
         this.geometry = ManualScreenLayout.of(this.style.pageWidth(), this.style.pageHeight(), this.style.spread());
         this.left = (this.width - this.geometry.width()) / 2;
-        this.top = (this.height - this.geometry.height()) / 2;
+        // Read from a lectern, the binder and its strip under it stand in the middle together.
+        this.top = (this.height - this.geometry.height() - (this.lectern == null ? 0 : ManualScreenLayout.LECTERN_ROOM))
+                / 2;
+        if (this.lectern != null) {
+            this.addLecternButtons();
+        }
         final ManualScreenLayout.Rect field = ManualScreenLayout.searchField(this.geometry, this.style.margin());
         final String typed = this.searchField == null ? "" : this.searchField.getValue();
         this.searchField = new SearchField(this.font, this.left + field.x() + 3, this.top + field.y() + 3,
@@ -277,7 +365,9 @@ public final class ManualScreen extends Screen {
         }
         if (!this.placed) {
             this.kept = this.keptSpread();
-            AudioEngine.playOnScreen(GuideSounds.OPEN);
+            if (!this.sheet) {
+                AudioEngine.playOnScreen(GuideSounds.OPEN);
+            }
         }
         this.placed = true;
     }
@@ -300,6 +390,21 @@ public final class ManualScreen extends Screen {
     /** The manual it shows. */
     public GuideManual manual() {
         return this.manual;
+    }
+
+    /**
+     * Lays the manual out again from what the resource packs hold now, its reader left on the page they were reading:
+     * found by where it stands in its entry, as a manual put down is opened again.
+     */
+    public void reread() {
+        final ManualPlaces.Place at = this.spread < 0 ? ManualPlaces.Place.COVER
+                : this.placeOf(this.style.spread() ? this.spread * 2 : this.spread);
+        this.rebuildWidgets();
+        if (at.cover()) {
+            this.spread = -1;
+        } else {
+            this.pageAt(at).ifPresent(this::goToPage);
+        }
     }
 
     /** Whether the spread shown holds that page. */
@@ -438,6 +543,90 @@ public final class ManualScreen extends Screen {
         return this.scenes.layersOf(id);
     }
 
+    /** The middle of the button that opens the list of bookmarks, in the screen's coordinates (client tests click). */
+    public int[] bookmarksButtonPoint() {
+        return this.middleOf(ManualScreenLayout.bookmarks(this.geometry));
+    }
+
+    /** The middle of the list's row that marks the page shown, in the screen's coordinates (client tests click). */
+    public int[] markPagePoint() {
+        final int rows = Math.max(1, new MarksHost().rows().size());
+        return this.middleOf(ManualScreenLayout.bookmarkRow(ManualScreenLayout.bookmarkList(this.geometry, rows),
+                rows, rows));
+    }
+
+    /** The middle of the left page, or the right, in the screen's coordinates (client tests right click it). */
+    public int[] pagePoint(final boolean right) {
+        final ManualScreenLayout.Rect page = right && this.geometry.right() != null ? this.geometry.right()
+                : this.geometry.left();
+        return this.middleOf(page);
+    }
+
+    /** Whether the list of bookmarks is open (client tests ask). */
+    public boolean bookmarkListOpen() {
+        return this.marks.listOpen();
+    }
+
+    /** Whether a note is being written in a margin (client tests ask). */
+    public boolean writingNote() {
+        return this.marks.writing();
+    }
+
+    /** The step the scene of that id is at, from 0, once it has been drawn (client tests ask). */
+    public OptionalInt sceneStep(final String id) {
+        return this.scenes.stepOf(id);
+    }
+
+    /** Whether the scene of that id plays its steps (client tests ask). */
+    public boolean scenePlaying(final String id) {
+        return this.scenes.playing(id);
+    }
+
+    /**
+     * The middle of a button of the timeline of the scene of that id: 0 the step before, 1 play or pause, 2 the next
+     * step, in the screen's coordinates; null when the spread shows no such scene (client tests click them).
+     */
+    @Nullable
+    public int[] sceneTimelinePoint(final String id, final int button) {
+        return this.onScene(id, placed -> this.middleOf(this.scenes.timelineButtons(placed.scene(), placed.x(),
+                placed.y()).get(button)));
+    }
+
+    /**
+     * The middle of the In world button of the scene of that id, in the screen's coordinates; null when the spread
+     * shows no such scene, or nothing shows multiblocks in the world (client tests click it).
+     */
+    @Nullable
+    public int[] sceneInWorldPoint(final String id) {
+        return this.onScene(id, placed -> this.scenes.inWorldButton(placed.scene(), placed.x(), placed.y())
+                .map(this::middleOf).orElse(null));
+    }
+
+    /**
+     * Where to click the first recipe shown on the spread, in the screen's coordinates: on its arrow, clear of its
+     * slots, where a click opens what it makes; null when the spread shows no recipe (client tests click it).
+     */
+    @Nullable
+    public int[] recipePoint() {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        for (final int index : new int[] {first, this.rightPage(first)}) {
+            final ManualScreenLayout.Rect page = index == first ? this.geometry.left() : this.geometry.right();
+            if (page == null || index < 0 || index >= this.book.pages().size()) {
+                continue;
+            }
+            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+                if (piece instanceof GuidePiece.Recipes rows
+                        && rows.first() < this.recipes.of(rows.type(), rows.output()).size()) {
+                    final int inputs = this.recipes.of(rows.type(), rows.output()).get(rows.first()).inputs().size();
+                    final int row = GuideLayout.recipeRow(this.style);
+                    return new int[] {this.left + page.x() + rows.x() + inputs * (SLOT + SLOT_GAP) + 4,
+                            this.top + page.y() + rows.y() + (row - SLOT) / 2 + SLOT / 2};
+                }
+            }
+        }
+        return null;
+    }
+
     /** The style the manual is drawn in. */
     public GuideStyle style() {
         return this.style;
@@ -488,7 +677,7 @@ public final class ManualScreen extends Screen {
         if (this.foundBook == this.book && wanted.equals(this.foundWords)) {
             return this.foundCache;
         }
-        this.foundCache = GuideSearch.find(this.book, wanted);
+        this.foundCache = GuideSearch.find(this.book, wanted, this.recipes.words());
         this.foundBook = this.book;
         this.foundWords = wanted;
         return this.foundCache;
@@ -497,6 +686,28 @@ public final class ManualScreen extends Screen {
     /** Whether the pointer is a pointing hand now, over something that takes a click (client tests ask). */
     public boolean pointing() {
         return PointerShape.pointing();
+    }
+
+    /**
+     * Draws the page at a place alone, its paper filling a page's size from the top left: a page apart, as a torn
+     * sheet shows it, with no pointer over it. Nothing where the book no longer holds the place.
+     */
+    public void drawSheet(final GuiGraphics g, final String target, final int pagesIn) {
+        final OptionalInt page = this.pageAt(new ManualPlaces.Place(target, pagesIn));
+        if (page.isPresent()) {
+            this.drawPage(g, new ManualScreenLayout.Rect(0, 0, this.style.pageWidth(), this.style.pageHeight()),
+                    page.getAsInt(), true, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        }
+    }
+
+    /** The lectern the manual is read from, or none. */
+    public Optional<BlockPos> lectern() {
+        return Optional.ofNullable(this.lectern);
+    }
+
+    /** The middle of the button that tears a copy of the page out, in the screen's coordinates (client tests click). */
+    public int[] tearButtonPoint() {
+        return this.middleOf(ManualScreenLayout.tear(this.geometry));
     }
 
     @Override
@@ -508,6 +719,9 @@ public final class ManualScreen extends Screen {
     @Override
     public void removed() {
         ManualPlaces.leave(this.manual.id(), this.place());
+        if (this.marks != null) {
+            this.marks.keep();
+        }
         PointerShape.reset();
         if (this.scenes != null) {
             this.scenes.close();
@@ -521,6 +735,7 @@ public final class ManualScreen extends Screen {
         super.renderBackground(g, mouseX, mouseY, partialTick);
         this.hoveredItem = ItemStack.EMPTY;
         this.hoveredWords = List.of();
+        this.recipeUnder = ItemStack.EMPTY;
         this.scenes.frame();
         g.pose().pushPose();
         g.pose().translate(this.left, this.top, 0.0F);
@@ -534,6 +749,7 @@ public final class ManualScreen extends Screen {
             // Under a listing opened over it, the book is only seen: nothing on it lights for the pointer.
             this.drawOpen(g, Integer.MIN_VALUE, Integer.MIN_VALUE);
         }
+        this.drawLecternStrip(g);
         g.pose().popPose();
         if (this.opened != null && this.spread >= 0) {
             this.renderTransparentBackground(g);
@@ -586,6 +802,24 @@ public final class ManualScreen extends Screen {
         }
         if (this.spread < 0) {
             this.spread = 0;
+            return true;
+        }
+        if (ManualScreenLayout.bookmarks(this.geometry).contains(mx, my)) {
+            this.marks.toggleList();
+            AudioEngine.playOnScreen(GuideSounds.CLICK);
+            return true;
+        }
+        if (ManualScreenLayout.tear(this.geometry).contains(mx, my)) {
+            this.tear();
+            return true;
+        }
+        // The list of bookmarks, a ribbon or a note takes a click first; a page right clicked takes a note.
+        if (this.marks.click(new MarksHost(), mx, my, button)) {
+            return true;
+        }
+        // A recipe on a page opens in the recipe viewer installed, which comes back to the manual when it is closed.
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && RecipeViewers.showRecipesOf(this.recipeUnder)) {
+            AudioEngine.playOnScreen(GuideSounds.CLICK);
             return true;
         }
         final PlacedScene scene = this.sceneAt(mx, my);
@@ -695,8 +929,18 @@ public final class ManualScreen extends Screen {
         return scrollY != 0.0 && this.turn(scrollY < 0.0 ? 1 : -1);
     }
 
+    /* A note being written in a margin takes every letter typed. */
+    @Override
+    public boolean charTyped(final char codePoint, final int modifiers) {
+        return this.marks != null && this.marks.typed(codePoint) || super.charTyped(codePoint, modifiers);
+    }
+
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        if (this.marks != null && this.marks.key(key)) {
+            // Writing a note, Escape keeps it rather than closing the book, and no key turns a page.
+            return true;
+        }
         if (this.opened != null && key == GLFW.GLFW_KEY_ESCAPE) {
             // Escape puts a listing opened over the book away, leaving the book open.
             this.opened = null;
@@ -739,6 +983,58 @@ public final class ManualScreen extends Screen {
         return new int[] {this.left + control.x() + control.width() / 2, this.top + control.y() + control.height() / 2};
     }
 
+    /* Take and Close on the strip under a manual read from a lectern, as the game's lectern has under its book. */
+    private void addLecternButtons() {
+        final ManualScreenLayout.Rect strip = ManualScreenLayout.lecternStrip(this.geometry);
+        final ManualScreenLayout.Rect take = ManualScreenLayout.lecternTake(strip);
+        final ManualScreenLayout.Rect close = ManualScreenLayout.lecternClose(strip);
+        this.addRenderableWidget(Button.builder(GameText.component(GuideTexts.LECTERN_TAKE), button -> {
+            if (this.lectern != null && this.minecraft != null && this.minecraft.getConnection() != null) {
+                PacketDistributor.sendToServer(new LecternTakePayload(this.lectern));
+            }
+            this.onClose();
+        }).bounds(this.left + take.x(), this.top + take.y(), take.width(), take.height()).build());
+        this.addRenderableWidget(Button.builder(GameText.component(GuideTexts.LECTERN_CLOSE), button -> this.onClose())
+                .bounds(this.left + close.x(), this.top + close.y(), close.width(), close.height()).build());
+    }
+
+    /* The strip under a manual read from a lectern, in the binder's cover colour, saying where the lectern is. */
+    private void drawLecternStrip(final GuiGraphics g) {
+        if (this.lectern == null) {
+            return;
+        }
+        final ManualScreenLayout.Rect strip = ManualScreenLayout.lecternStrip(this.geometry);
+        g.fill(strip.x(), strip.y(), strip.x() + strip.width(), strip.y() + strip.height(),
+                this.colour(GuideStyle.COVER));
+        Draw.outline(g, strip.x(), strip.y(), strip.width(), strip.height(), this.colour(GuideStyle.COVER_EDGE));
+        final String where = this.text(GuideTexts.LECTERN_AT.key(), this.lectern.getX(), this.lectern.getY(),
+                this.lectern.getZ());
+        final int room = ManualScreenLayout.lecternTake(strip).x() - strip.x() - 2 * ManualScreenLayout.LECTERN_PAD;
+        GuideFonts.draw(g, this.font, this.fit(where, room, TextSize.BODY), TextSize.BODY, this.style,
+                strip.x() + ManualScreenLayout.LECTERN_PAD, strip.y() + (strip.height() - 7) / 2,
+                this.colour(GuideStyle.LABEL));
+    }
+
+    /*
+     * Tears a copy of the page on the left out of the book: the server hands the player the sheet, and the book keeps
+     * its page. A page whose place is too long to send stays in the book.
+     */
+    private void tear() {
+        if (this.spread < 0 || this.minecraft == null || this.minecraft.getConnection() == null) {
+            return;
+        }
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        final ManualPlaces.Place at = this.placeOf(first);
+        final String folio = this.book.pages().get(first).folio();
+        if (this.manual.id().length() > TornSheets.MOST_ID || at.target().length() > TornSheets.MOST_PLACE
+                || folio.length() > TornSheets.MOST_FOLIO) {
+            return;
+        }
+        PacketDistributor.sendToServer(new TearPayload(new TornSheets.Sheet(this.manual.id(), at.target(),
+                at.pagesIn(), folio)));
+        AudioEngine.playOnScreen(GuideSounds.PAGE);
+    }
+
     /** Jumps to the spread holding that page, leaving a mark Back returns to when it is another spread. */
     private void jump(final int page) {
         final int from = this.spread;
@@ -761,17 +1057,41 @@ public final class ManualScreen extends Screen {
      * to and how many pages into it, or the cover.
      */
     private ManualPlaces.Place place() {
-        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        if (this.spread < 0) {
+            return ManualPlaces.Place.COVER;
+        }
+        // A book put down in its front matter, its contents, opens at its cover again.
+        final ManualPlaces.Place at = this.placeOf(this.style.spread() ? this.spread * 2 : this.spread);
+        return FRONT.equals(at.target()) ? ManualPlaces.Place.COVER : at;
+    }
+
+    /**
+     * Where a page stands: the entry, section or chapter it belongs to and how many pages into it; a page of the
+     * front matter, before them all, by how far into the book it is.
+     */
+    private ManualPlaces.Place placeOf(final int page) {
         String target = "";
         int start = -1;
         for (final Map.Entry<String, Integer> at : this.book.targets().entrySet()) {
-            if (at.getValue() <= first && at.getValue() > start) {
+            if (at.getValue() <= page && at.getValue() > start) {
                 target = at.getKey();
                 start = at.getValue();
             }
         }
-        return this.spread < 0 || target.isEmpty() ? ManualPlaces.Place.COVER
-                : new ManualPlaces.Place(target, first - start);
+        return target.isEmpty() ? new ManualPlaces.Place(FRONT, page) : new ManualPlaces.Place(target, page - start);
+    }
+
+    /** The page at a place, when the book still holds where it stands. */
+    private OptionalInt pageAt(final ManualPlaces.Place place) {
+        if (FRONT.equals(place.target())) {
+            return place.pagesIn() < this.book.pages().size() ? OptionalInt.of(place.pagesIn()) : OptionalInt.empty();
+        }
+        final OptionalInt start = this.book.pageOf(place.target());
+        if (start.isEmpty()) {
+            return OptionalInt.empty();
+        }
+        final int page = start.getAsInt() + place.pagesIn();
+        return page < this.book.pages().size() ? OptionalInt.of(page) : OptionalInt.empty();
     }
 
     /** Whether something under the pointer takes a click: the closed cover, a control, a tab, a link, a result. */
@@ -784,6 +1104,10 @@ public final class ManualScreen extends Screen {
             return openedCopyButton(box).contains(mx, my) || closeButton(box).contains(mx, my);
         }
         if (this.listingAt(mx, my) != null) {
+            return true;
+        }
+        if (ManualScreenLayout.bookmarks(this.geometry).contains(mx, my) || this.marks.listOpen()
+                || ManualScreenLayout.tear(this.geometry).contains(mx, my)) {
             return true;
         }
         final PlacedScene scene = this.sceneAt(mx, my);
@@ -804,6 +1128,9 @@ public final class ManualScreen extends Screen {
         }
         if (this.searching && this.geometry.left().contains(mx, my)) {
             return this.searchResultAt(my) != null;
+        }
+        if (!this.recipeUnder.isEmpty() && RecipeViewers.any()) {
+            return true;
         }
         return !this.linkAt(mx, my).isEmpty();
     }
@@ -1073,6 +1400,9 @@ public final class ManualScreen extends Screen {
     // ---------------------------------------------------------------- the open manual
 
     private void drawOpen(final GuiGraphics g, final int mx, final int my) {
+        final MarksHost host = new MarksHost();
+        this.see(host);
+        this.seenNow = ManualMarks.seen(this.manual.id());
         final int fill = this.colour(GuideStyle.COVER);
         ManualControls.bevel(g, 0, 0, this.geometry.coverRight(), this.geometry.height(), fill,
                 this.colour(GuideStyle.COVER_EDGE), ManualButtonLook.shaded(fill));
@@ -1097,6 +1427,15 @@ public final class ManualScreen extends Screen {
             this.drawTabs(g, mx, my);
         }
         ManualMake.ribbon(g, this.geometry, this.style, this::colour, this.spread == this.kept);
+        // The reader's own marks: the ribbons of their bookmarks and the notes in the margins of the pages shown.
+        this.marks.drawRibbons(g, host);
+        this.marks.drawNotes(g, host);
+        this.drawButton(g, ManualScreenLayout.bookmarks(this.geometry), ManualControls.Kind.BOOKMARKS, true,
+                List.of(GameText.component(GuideTexts.BOOKMARKS), GameText.component(GuideTexts.BOOKMARKS_TIP)
+                        .withStyle(ChatFormatting.GRAY)), mx, my);
+        this.drawButton(g, ManualScreenLayout.tear(this.geometry), ManualControls.Kind.TEAR, true,
+                List.of(GameText.component(GuideTexts.TEAR), GameText.component(GuideTexts.TEAR_TIP)
+                        .withStyle(ChatFormatting.GRAY)), mx, my);
         this.drawButton(g, this.geometry.contents(), ManualControls.Kind.CONTENTS, true,
                 List.of(GameText.component(GuideTexts.CONTENTS)), mx, my);
         this.drawButton(g, this.geometry.back(), ManualControls.Kind.BACK, this.history.behind().isPresent(),
@@ -1112,6 +1451,62 @@ public final class ManualScreen extends Screen {
         if (this.spread < this.lastSpread()) {
             ManualControls.arrow(g, this.geometry.next(), false, this.lookOf(this.geometry.next(), true, mx, my));
         }
+        // The list of bookmarks lies over everything else on the binder while it is open.
+        this.marks.drawList(g, host, mx, my);
+    }
+
+    /**
+     * Notes the entries starting on the pages shown as seen, once a spread: what the contents no longer call new.
+     */
+    private void see(final MarksHost host) {
+        if (this.spread == this.seenSpread) {
+            return;
+        }
+        this.seenSpread = this.spread;
+        final List<String> shown = new ArrayList<>();
+        for (final ManualMarksView.Shown page : host.shown()) {
+            for (final GuideContents.Chapter chapter : this.contents.chapters()) {
+                for (final GuideContents.Section section : chapter.sections()) {
+                    for (final GuideEntry entry : section.entries()) {
+                        if (this.book.pageOf(entry.id()).orElse(UNSET) == page.page()) {
+                            shown.add(entry.id());
+                        }
+                    }
+                }
+            }
+        }
+        if (!shown.isEmpty()) {
+            ManualMarks.see(this.manual.id(), shown);
+        }
+    }
+
+    /** The mark beside a section or a chapter of the contents: new, not yet, or none. */
+    private ReaderMarks.Mark readerMark(final String target) {
+        final List<GuideEntry> entries = new ArrayList<>();
+        for (final GuideContents.Chapter chapter : this.contents.chapters()) {
+            final boolean whole = chapter.chapter().id().equals(target);
+            for (final GuideContents.Section section : chapter.sections()) {
+                if (whole || section.section().id().equals(target)) {
+                    entries.addAll(section.entries());
+                }
+            }
+        }
+        return ReaderMarks.of(entries, this.seenNow, knowledge -> KnowledgeGate.openHere(
+                Optional.ofNullable(ResourceLocation.tryParse(knowledge))));
+    }
+
+    /** Whether a tab's chapter, or its mod's chapters for a manual of every mod, holds what the reader has not seen. */
+    private boolean tabHoldsNew(final String chapter) {
+        final String mod = GuideChapter.namespaceOf(chapter);
+        final List<GuideEntry> entries = new ArrayList<>();
+        for (final GuideContents.Chapter held : this.contents.chapters()) {
+            final boolean under = this.manual.holdsEvery() ? GuideChapter.namespaceOf(held.chapter().id()).equals(mod)
+                    : held.chapter().id().equals(chapter);
+            if (under) {
+                held.sections().forEach(section -> entries.addAll(section.entries()));
+            }
+        }
+        return ReaderMarks.anyNew(entries, this.seenNow);
     }
 
     private void drawTabs(final GuiGraphics g, final int mx, final int my) {
@@ -1126,6 +1521,13 @@ public final class ManualScreen extends Screen {
             } else {
                 ManualMake.mark(g, this.font, this.style, tab, i + 1, on, pointed, this.markColour(i, chapter),
                         this::colour);
+            }
+            if (this.tabHoldsNew(chapter)) {
+                // A gold dot at the tab's corner: its chapter holds something the reader has not seen.
+                final GuidePalettes.Marks marks = GuidePalettes.MARKS.get();
+                final int dotX = tab.x() + tab.width() - TAB_DOT - 1;
+                g.fill(dotX - 1, tab.y(), dotX + TAB_DOT + 1, tab.y() + TAB_DOT + 2, marks.dotEdge());
+                g.fill(dotX, tab.y() + 1, dotX + TAB_DOT, tab.y() + TAB_DOT + 1, marks.dot());
             }
             if (pointed) {
                 // A tab of a manual holding every chapter stands for the mod, named by its main chapter.
@@ -1351,12 +1753,19 @@ public final class ManualScreen extends Screen {
             case GuidePiece.Plate plate -> this.drawPlate(g, x, y, plate, chapter, mx, my);
             case GuidePiece.Picture picture -> this.drawPicture(g, x, y, picture, mx, my);
             case GuidePiece.Scene scene -> {
-                final List<Component> words = this.scenes.draw(g, x, y, scene, mx, my);
-                if (!words.isEmpty()) {
-                    this.hoveredWords = words;
+                // A page apart is drawn into a picture of its own, which a scene's picture cannot be drawn inside.
+                if (!this.sheet) {
+                    final List<Component> words = this.scenes.draw(g, x, y, scene, mx, my);
+                    if (!words.isEmpty()) {
+                        this.hoveredWords = words;
+                    }
                 }
             }
-            case GuidePiece.SceneKey key -> this.scenes.drawKey(g, x, y, key, mx, my);
+            case GuidePiece.SceneKey key -> {
+                if (!this.sheet) {
+                    this.scenes.drawKey(g, x, y, key, mx, my);
+                }
+            }
         }
     }
 
@@ -1389,8 +1798,13 @@ public final class ManualScreen extends Screen {
                 return;
             }
             final ResourceLocation image = named.withPrefix("textures/").withSuffix(".png");
-            Draw.blended(() -> g.blit(image, x, y, picture.width(), picture.height(), 0.0F, 0.0F, picture.width(),
-                    picture.height(), picture.width(), picture.height()));
+            // A strip of frames, one under the other, shows them in turn; with less movement, its first stands still.
+            final int frame = picture.frames() < 2 || MotionClock.reduced() ? 0
+                    : (int) Math.floorMod(Util.getMillis() / MILLIS_PER_TICK / picture.frameTicks(),
+                    (long) picture.frames());
+            Draw.blended(() -> g.blit(image, x, y, picture.width(), picture.height(), 0.0F,
+                    (float) frame * picture.height(), picture.width(), picture.height(), picture.width(),
+                    picture.height() * picture.frames()));
             return;
         }
         final IGuideBlockRenderer renderer = rendererOf(picture.drawing());
@@ -1774,11 +2188,23 @@ public final class ManualScreen extends Screen {
         final int colour = this.colour(leader.link().isEmpty() ? leader.colour() : GuideStyle.INK, chapter);
         final int rightWidth = GuideFonts.width(this.font, leader.right(), leader.size(), this.style);
         final int rightX = x + leader.width() - rightWidth;
+        // What is new since the reader last read, and what they cannot do yet, is said where the dots begin; the title
+        // gives way for it, cut shorter, as it would for its page.
+        final ReaderMarks.Mark mark = leader.link().isEmpty() ? ReaderMarks.Mark.NONE : this.readerMark(leader.link());
+        final String said = mark == ReaderMarks.Mark.NONE ? "" : this.text(mark == ReaderMarks.Mark.NEW
+                ? GuideTexts.MARK_NEW.key() : GuideTexts.MARK_NOT_YET.key());
+        final int saidWidth = said.isEmpty() ? 0 : GuideFonts.width(this.font, said, TextSize.SMALL, this.style) + 3;
         // A title too long for its line is cut short before the page it leads to, never written over it.
-        final String left = this.fit(leader.left(), rightX - textX - 4, leader.size());
+        final String left = this.fit(leader.left(), rightX - textX - 4 - saidWidth, leader.size());
         GuideFonts.draw(g, this.font, left, leader.size(), this.style, textX, y, colour);
-        final int leftEnd = textX + GuideFonts.width(this.font, left, leader.size(), this.style) + 3;
+        int leftEnd = textX + GuideFonts.width(this.font, left, leader.size(), this.style) + 3;
         GuideFonts.draw(g, this.font, leader.right(), leader.size(), this.style, rightX, y, colour);
+        if (!said.isEmpty()) {
+            final GuidePalettes.Marks marks = GuidePalettes.MARKS.get();
+            GuideFonts.draw(g, this.font, said, TextSize.SMALL, this.style, leftEnd, y + 1,
+                    mark == ReaderMarks.Mark.NEW ? marks.fresh() : marks.notYet());
+            leftEnd += saidWidth;
+        }
         final int dots = this.colour(GuideStyle.FAINT, chapter);
         for (int dot = leftEnd; dot < rightX - 2; dot += DOT_PITCH) {
             g.fill(dot, y + DOT_DROP, dot + 1, y + DOT_DROP + 1, dots);
@@ -1796,6 +2222,10 @@ public final class ManualScreen extends Screen {
         for (int i = 0; i < rows.count() && rows.first() + i < views.size(); i++) {
             final GuideRecipes.View view = views.get(rows.first() + i);
             final int rowY = y + i * row + (row - SLOT) / 2;
+            if (mx >= x && mx < x + rows.width() && my >= rowY && my < rowY + SLOT && !view.outputs().isEmpty()) {
+                // A slot's item takes the place of what the row makes as soon as the pointer is found over it.
+                this.recipeUnder = view.outputs().getFirst();
+            }
             int slotX = x;
             for (final List<ItemStack> choices : view.inputs()) {
                 this.drawSlot(g, slotX, rowY, this.cycle(choices), chapter, mx, my);
@@ -1845,6 +2275,9 @@ public final class ManualScreen extends Screen {
                           final int mx, final int my) {
         g.fill(x, y, x + SLOT, y + SLOT, this.colour(GuideStyle.SHADE, chapter));
         Draw.outline(g, x, y, SLOT, SLOT, this.colour(GuideStyle.RULE, chapter));
+        if (!stack.isEmpty() && mx >= x && mx < x + SLOT && my >= y && my < y + SLOT) {
+            this.recipeUnder = stack;
+        }
         this.drawItem(g, stack, x + 1, y + 1, 100, mx, my);
         if (!stack.isEmpty()) {
             g.renderItemDecorations(this.font, stack, x + 1, y + 1);
@@ -2022,14 +2455,24 @@ public final class ManualScreen extends Screen {
         GuideFonts.draw(g, this.font, head, TextSize.SMALL, this.style, page.x() + margin,
                 page.y() + GuideLayout.HEADER_Y, this.colour(GuideStyle.FAINT));
         final List<GuideSearch.Hit> found = this.found();
-        final String count = found.isEmpty() ? this.text(GuideTexts.FOUND_NONE.key())
-                : this.text(GuideTexts.FOUND.key(), found.size());
-        GuideFonts.draw(g, this.font, count, TextSize.SMALL, this.style, page.x() + margin,
-                field.y() + field.height() + 4, this.colour(GuideStyle.FAINT));
+        final int made = GuideSearch.count(found, GuideSearch.Found.RECIPE);
+        final int used = GuideSearch.count(found, GuideSearch.Found.USE);
         final int width = page.width() - 2 * margin;
+        // With recipes among them, the count says how many are pages, recipes and uses.
+        final String count = found.isEmpty() ? this.text(GuideTexts.FOUND_NONE.key())
+                : made + used == 0 ? this.text(GuideTexts.FOUND.key(), found.size())
+                : this.text(GuideTexts.FOUND_SPLIT.key(), found.size(), found.size() - made - used, made, used);
+        GuideFonts.draw(g, this.font, this.fit(count, width, TextSize.SMALL), TextSize.SMALL, this.style,
+                page.x() + margin, field.y() + field.height() + 4, this.colour(GuideStyle.FAINT));
         for (final ResultRow row : this.resultRows()) {
             final GuideSearch.Hit hit = row.hit();
-            this.drawLeader(g, page.x() + margin, row.y(), new GuidePiece.Leader(0, 0, width, "", hit.text(),
+            // A recipe found stands under what it is, the recipe or the use, and says what it makes under that.
+            final String title = switch (hit.found()) {
+                case PAGE -> hit.text();
+                case RECIPE -> this.text(GuideTexts.FOUND_RECIPE.key());
+                case USE -> this.text(GuideTexts.FOUND_USE.key());
+            };
+            this.drawLeader(g, page.x() + margin, row.y(), new GuidePiece.Leader(0, 0, width, "", title,
                     hit.folio(), hit.term() ? TextSize.BODY : TextSize.BOLD, GuideStyle.INK, hit.target(),
                     hit.icon()), "", mx, my);
             if (!hit.line().isEmpty()) {
@@ -2236,5 +2679,58 @@ public final class ManualScreen extends Screen {
 
     /** A scene on a page shown, and where its frame stands on the screen. */
     private record PlacedScene(GuidePiece.Scene scene, int x, int y) {
+    }
+
+    /* What the reader's marks are told of the book as it is shown now. */
+    private final class MarksHost implements ManualMarksView.Host {
+
+        @Override
+        public ManualScreenLayout.Geometry geometry() {
+            return ManualScreen.this.geometry;
+        }
+
+        @Override
+        public List<ManualMarksView.Shown> shown() {
+            final ManualScreen screen = ManualScreen.this;
+            if (screen.spread < 0 || screen.searching) {
+                return List.of();
+            }
+            final List<ManualMarksView.Shown> shown = new ArrayList<>();
+            final int first = screen.style.spread() ? screen.spread * 2 : screen.spread;
+            if (first < screen.book.pages().size()) {
+                shown.add(new ManualMarksView.Shown(first, screen.geometry.left(), screen.placeOf(first), false));
+            }
+            final int second = screen.rightPage(first);
+            if (screen.geometry.right() != null && second >= 0 && second < screen.book.pages().size()) {
+                shown.add(new ManualMarksView.Shown(second, screen.geometry.right(), screen.placeOf(second), true));
+            }
+            return shown;
+        }
+
+        @Override
+        public List<ManualMarksView.Row> rows() {
+            final ManualScreen screen = ManualScreen.this;
+            final List<ManualMarksView.Row> rows = new ArrayList<>();
+            for (final ManualMarks.Bookmark bookmark : ManualMarks.bookmarks(screen.manual.id())) {
+                final OptionalInt page = screen.pageAt(bookmark.place());
+                if (page.isPresent()) {
+                    final String title = GuideLibrary.loaded().titleKeyOf(bookmark.place().target())
+                            .map(screen::text).orElse(bookmark.place().target());
+                    rows.add(new ManualMarksView.Row(bookmark.place(), bookmark.colour(), title,
+                            screen.book.pages().get(page.getAsInt()).folio(), page.getAsInt()));
+                }
+            }
+            return rows;
+        }
+
+        @Override
+        public void goToPage(final int page) {
+            ManualScreen.this.jump(page);
+        }
+
+        @Override
+        public int colour(final String role) {
+            return ManualScreen.this.colour(role);
+        }
     }
 }

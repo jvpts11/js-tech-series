@@ -573,6 +573,13 @@ public final class GuideLayout {
                     this.scene(multiblock.scene(blocks));
                 }
             }
+            case GuideBlock.Structure structure -> {
+                // A structure whose file is missing leaves no figure either.
+                final List<GuideBlock.SceneBlock> blocks = this.text.structure(structure.structure());
+                if (!blocks.isEmpty()) {
+                    this.scene(structure.scene(blocks));
+                }
+            }
             case GuideBlock.Custom custom -> {
                 // A block taller than the text area would run past the page foot, so it is cut to the area.
                 final int height = Math.min(custom.height(), this.bottom() - this.top);
@@ -694,7 +701,8 @@ public final class GuideLayout {
                 : Math.max(1, askedWidth * pictureHeight / askedHeight);
         this.ensure(pictureHeight + CAPTION_GAP + this.captionHeight(label, caption));
         this.place(new GuidePiece.Picture(this.x() + (this.width - pictureWidth) / 2, this.y, pictureWidth,
-                pictureHeight, picture.image(), picture.drawing(), picture.data()));
+                pictureHeight, picture.image(), picture.drawing(), picture.data(), picture.frames(),
+                picture.frameTicks()));
         this.y += pictureHeight + CAPTION_GAP;
         this.caption(label, caption);
         this.y += BLOCK_GAP;

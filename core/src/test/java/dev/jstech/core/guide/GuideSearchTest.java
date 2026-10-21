@@ -21,6 +21,12 @@ class GuideSearchTest {
             new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, false), GuideStyle.HoldBar.PLAIN);
     private static final GuideManual MANUAL = new GuideManual("test:manual", "manual.title", List.of(), "", "",
             "test:style", List.of(GuideManual.EVERY_CHAPTER), List.of(), 0, "");
+    /** The two recipes of the press, in words. */
+    private static final IRecipeWords PRESSING = (type, output) -> type.equals("test:pressing") ? List.of(
+            new IRecipeWords.RecipeWords(List.of("Block of Iron", "Charcoal"), List.of("Iron Ingot", "Coal",
+                    "Gold Nugget"), "Test Press", "minecraft:iron_block"),
+            new IRecipeWords.RecipeWords(List.of("Block of Gold"), List.of("Gold Ingot", "Redstone"), "Test Press",
+                    "minecraft:gold_block")) : List.of();
 
     @Test
     void find_listsTheIndexFirstThenEachEntryFoundInItsWordsWithItsLine() {
@@ -51,6 +57,55 @@ class GuideSearchTest {
         assertEquals(book.index().size(), GuideSearch.find(book, "  ").size());
     }
 
+    @Test
+    void find_listsARecipeMakingWhatIsTypedWithWhatWorksIt() {
+        final GuideBook book = pressBook();
+
+        final List<GuideSearch.Hit> hits = GuideSearch.find(book, "block of IRON", PRESSING);
+
+        assertEquals(1, hits.size(), () -> "" + hits);
+        final GuideSearch.Hit hit = hits.getFirst();
+        assertEquals(GuideSearch.Found.RECIPE, hit.found());
+        assertEquals("Block of Iron, Test Press", hit.line());
+        assertEquals("minecraft:iron_block", hit.icon(), "the item it makes is drawn beside it");
+        assertEquals("alpha:press", hit.target());
+        assertEquals(book.pageOf("alpha:press").orElseThrow(), hit.page(), "it opens the page the recipe is on");
+    }
+
+    @Test
+    void find_listsAUseAsWhatTheRecipeMakes() {
+        final List<GuideSearch.Hit> hits = GuideSearch.find(pressBook(), "redstone", PRESSING);
+
+        assertEquals(1, hits.size(), () -> "" + hits);
+        assertEquals(GuideSearch.Found.USE, hits.getFirst().found());
+        assertEquals("Block of Gold, Test Press", hits.getFirst().line());
+    }
+
+    @Test
+    void find_listsPagesThenRecipesThenUses() {
+        final List<GuideSearch.Hit> hits = GuideSearch.find(pressBook(), "gold", PRESSING);
+
+        assertEquals(List.of(GuideSearch.Found.PAGE, GuideSearch.Found.RECIPE, GuideSearch.Found.USE),
+                hits.stream().map(GuideSearch.Hit::found).toList(), () -> "" + hits);
+        assertEquals(1, GuideSearch.count(hits, GuideSearch.Found.RECIPE));
+        assertEquals(1, GuideSearch.count(hits, GuideSearch.Found.USE));
+    }
+
+    @Test
+    void find_aRecipeThatMakesWhatIsTypedIsNotAlsoAUse() {
+        // The first recipe makes charcoal and takes coal: "coal" finds it once, as what makes charcoal.
+        final List<GuideSearch.Hit> hits = GuideSearch.find(pressBook(), "coal", PRESSING);
+
+        assertEquals(1, hits.size(), () -> "" + hits);
+        assertEquals(GuideSearch.Found.RECIPE, hits.getFirst().found());
+        assertEquals("Charcoal, Test Press", hits.getFirst().line());
+    }
+
+    @Test
+    void find_withoutTheRecipesInWordsFindsNoRecipe() {
+        assertTrue(GuideSearch.find(pressBook(), "redstone").isEmpty());
+    }
+
     /** A manual of two entries: one about files, one about the prompt with a table of its commands. */
     private static GuideBook book() {
         final GuideEntry files = new GuideEntry("alpha:files", "alpha:section", 0, "files.title", "", List.of(),
@@ -63,11 +118,21 @@ class GuideSearchTest {
         return GuideLayout.lay(MANUAL, STYLE, new GuideContents(List.of(new GuideContents.Chapter(
                 new GuideChapter("alpha", 0, "alpha.title", "", ""), List.of(new GuideContents.Section(
                         new GuideSection("alpha:section", 0, "section.title", ""), List.of(files, prompt)))))),
-                new Words());
+                new Words(0));
     }
 
-    /** Words that are their own keys, six pixels to a letter. */
-    private record Words() implements IGuideText {
+    /** A manual of one entry, about a press whose two recipes its page shows. */
+    private static GuideBook pressBook() {
+        final GuideEntry press = new GuideEntry("alpha:press", "alpha:section", 0, "press.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("Gold goes in last."), new GuideBlock.Recipes("test:pressing", "")));
+        return GuideLayout.lay(MANUAL, STYLE, new GuideContents(List.of(new GuideContents.Chapter(
+                new GuideChapter("alpha", 0, "alpha.title", "", ""), List.of(new GuideContents.Section(
+                        new GuideSection("alpha:section", 0, "section.title", ""), List.of(press)))))),
+                new Words(2));
+    }
+
+    /** Words that are their own keys, six pixels to a letter, with that many recipes of every type. */
+    private record Words(int recipes) implements IGuideText {
 
         @Override
         public String text(final String key, final Object... args) {
@@ -81,7 +146,7 @@ class GuideSearchTest {
 
         @Override
         public int recipeCount(final String type, final String output) {
-            return 0;
+            return this.recipes;
         }
 
         @Override

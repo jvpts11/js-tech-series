@@ -9,6 +9,7 @@ package dev.jstech.core.guide;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import net.minecraft.core.BlockPos;
 
 /**
  * How code that runs on both sides opens a manual on a player's screen without naming a screen: a manual item's use
@@ -19,6 +20,8 @@ public final class GuideHooks {
 
     private static volatile BiConsumer<String, String> opener = (manual, entry) -> {
     };
+    private static volatile BiConsumer<String, BlockPos> lecternOpener = (manual, pos) -> {
+    };
 
     private GuideHooks() {
     }
@@ -28,8 +31,18 @@ public final class GuideHooks {
         opener.accept(manual, entry == null ? "" : entry);
     }
 
+    /** Opens a manual on this game's screen as it is read from the lectern at {@code pos}. */
+    public static void openOnLectern(final String manual, final BlockPos pos) {
+        lecternOpener.accept(manual, pos);
+    }
+
     /** Says what opens manuals: the player's game does, once, as it starts. */
     public static void useOpener(final BiConsumer<String, String> what) {
         opener = Objects.requireNonNull(what, "what");
+    }
+
+    /** Says what opens manuals read from a lectern: the player's game does, once, as it starts. */
+    public static void useLecternOpener(final BiConsumer<String, BlockPos> what) {
+        lecternOpener = Objects.requireNonNull(what, "what");
     }
 }

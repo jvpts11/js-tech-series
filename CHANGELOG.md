@@ -962,6 +962,32 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   (`ScreenWiring.preview`). Ctrl+E opens the editor on the screen, which moves, resizes, adds, copies and takes out
   components and writes each change to the mod's source at once, with Undo and Redo; `/jstech screen new` makes the
   file of a new screen for the block looked at, from a machine's screen, a tab, a HUD element or a copy.
+- (Core) Manuals: scenes that explain step by step: what each step puts in and takes away is data (`step`, `take`),
+  its sentence stands over the picture, and a timeline under it has the step before, play and pause, the next step
+  and a mark for each step. Every scene has an In world button that shows the step, or the whole scene, as ghosts in
+  front of the reader through the Structure Projector.
+- (Core) Manuals: a building saved with the game's structure block is a scene of a page, read from the mod's assets
+  (`structure`), and a picture can move, its frames shown in turn as an animated texture's (`animation`).
+- (Core) Manuals: bookmarks and notes: ribbons of three colours hang over the pages they mark, listed under their
+  button beside the search with "+ Mark this page"; a right click on a page writes a note in its margin, on yellow
+  paper. They are the player's own, kept by where their page stands in its entry, so they stay on their words in
+  another language.
+- (Core) Manuals: the contents say "NEW" beside what came into the book since the player last read it and "not yet"
+  beside what their team cannot do yet (`needs`), and a chapter's tab holding something new has a gold dot.
+- (Core) Manuals: the search finds the recipes the pages show, those making what was typed and those it goes into,
+  each with what it makes and what works it. With JEI or EMI installed, the manual key held over an item in the
+  viewer's lists opens its page, and a click on a recipe in a page opens it in the viewer, which comes back to the
+  page when it is closed.
+- (Core) Manuals: in a development run, a manual's file saved is read again at once, alone, and the manual open lays
+  itself out anew with its reader on the page they were reading. `/jstech manual site <manual>` writes a manual as a
+  website of plain files, its front page with the contents and a search that runs with no server, a page an entry,
+  its recipes in words, in the player's language (`GuideSite`).
+- (Core) Manuals: a page torn out as a Torn Sheet, a copy the manual keeps, from a button on the binder's top edge; in
+  an item frame the sheet shows its page as a map is shown, and its tooltip says where it was torn from.
+- (Core) Manuals: every mod's manuals go on the game's lectern as its books do, and are read from it with a strip
+  under the binder saying where the lectern is, with Take and Close.
+- (Core) Manuals: the first time a player picks up an item a manual explains, a quiet notification offers its page,
+  once an item; a setting of the player's own (`jstech-manuals.toml`) turns it off.
 
 ### Changed
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

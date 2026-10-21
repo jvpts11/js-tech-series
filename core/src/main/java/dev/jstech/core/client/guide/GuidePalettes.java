@@ -31,7 +31,43 @@ public final class GuidePalettes {
     public static final Palette<Terminal> TERMINAL = Palettes.declare(JsCore.MODID, "guide/terminal",
             new Terminal(0xFF14161C, 0xFFCDD6E2, 0xFF5FE07A, 0xFFF4F1E6));
 
+    /**
+     * What a reader marks in every manual, whatever its style: ribbons of three fabrics, notes on yellow paper in a
+     * blue pencil, the red of what is new and the grey of what cannot be done yet, and the gold dot on a chapter's tab.
+     */
+    public static final Palette<Marks> MARKS = Palettes.declare(JsCore.MODID, "guide/marks", new Marks(
+            0xFFB02C28, 0xFF347848, 0xFF3654A8, 0xFFF3E480, 0xFFD6C45C, 0xFF2E4EAA, 0xFFBE3030, 0xFF96917F,
+            0xFFFFCD40, 0xFF782020, 0x3C000000));
+
     private GuidePalettes() {
+    }
+
+    /**
+     * The colours of a reader's marks in a manual.
+     *
+     * @param ribbonRed   the first ribbon's fabric
+     * @param ribbonGreen the second's
+     * @param ribbonBlue  the third's
+     * @param note        the paper of a note in the margin
+     * @param noteEdge    its lower edge, where it lifts off the page
+     * @param pencil      what a note says
+     * @param fresh       NEW, beside what the reader has not seen
+     * @param notYet      not yet, beside what the reader's team cannot do yet
+     * @param dot         the dot on a chapter's tab that holds something new
+     * @param dotEdge     the dot's ring
+     * @param lift        the shadow under what lies over the page: the list of bookmarks, a note
+     */
+    public record Marks(int ribbonRed, int ribbonGreen, int ribbonBlue, int note, int noteEdge, int pencil, int fresh,
+                        int notYet, int dot, int dotEdge, int lift) {
+
+        /** The fabric of the ribbon of colour {@code colour}, from 0. */
+        public int ribbon(final int colour) {
+            return switch (Math.floorMod(colour, 3)) {
+                case 0 -> this.ribbonRed;
+                case 1 -> this.ribbonGreen;
+                default -> this.ribbonBlue;
+            };
+        }
     }
 
     /**

@@ -403,6 +403,7 @@ public final class ProjectorClient {
     private static final class Held {
 
         private final ResourceLocation id;
+        private final Supplier<Optional<ShapePreview>> shape;
         private final BlockPos at;
         private final Direction facing;
         private final ProjectorSettings settings;
@@ -410,8 +411,10 @@ public final class ProjectorClient {
         private ProjectorView seen;
         private long seenAt = Long.MIN_VALUE;
 
-        private Held(final ResourceLocation id, final BlockPos at, final Direction facing) {
+        private Held(final ResourceLocation id, final Supplier<Optional<ShapePreview>> shape, final BlockPos at,
+                     final Direction facing) {
             this.id = id;
+            this.shape = shape;
             this.at = at.immutable();
             this.facing = facing;
             this.settings = ProjectorSettings.FRESH.choosing(id);
@@ -436,7 +439,7 @@ public final class ProjectorClient {
             if (this.seen != null && now - this.seenAt < READ_EVERY) {
                 return this.seen;
             }
-            final Optional<ShapePreview> preview = Projectables.preview(this.id, 0);
+            final Optional<ShapePreview> preview = this.shape.get();
             if (preview.isEmpty()) {
                 return null;
             }
@@ -456,7 +459,16 @@ public final class ProjectorClient {
         @Override
         public void show(@Nullable final ResourceLocation id) {
             final Player player = Minecraft.getInstance().player;
-            held = id == null || player == null ? null : new Held(id, player.blockPosition(), player.getDirection());
+            held = id == null || player == null ? null : new Held(id, () -> Projectables.preview(id, 0),
+                    player.blockPosition(), player.getDirection());
+        }
+
+        /* Blocks that are no multiblock, such as a manual's scene, shown the same way. */
+        @Override
+        public void showShape(final ResourceLocation id, final ShapePreview preview) {
+            final Player player = Minecraft.getInstance().player;
+            held = player == null ? null : new Held(id, () -> Optional.of(preview), player.blockPosition(),
+                    player.getDirection());
         }
 
         @Override

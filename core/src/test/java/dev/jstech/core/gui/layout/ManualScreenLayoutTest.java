@@ -24,6 +24,47 @@ class ManualScreenLayoutTest {
     }
 
     @Test
+    void bookmarks_standBesideTheSearchTheirListInsideTheBinder() {
+        final ManualScreenLayout.Geometry binder = ManualScreenLayout.of(166, 201, true);
+        final ManualScreenLayout.Rect button = ManualScreenLayout.bookmarks(binder);
+        final ManualScreenLayout.Rect list = ManualScreenLayout.bookmarkList(binder, 8);
+
+        assertEquals(binder.search().x() - ManualScreenLayout.BUTTON_GAP, button.x() + button.width());
+        assertTrue(list.x() >= 0 && list.x() + list.width() <= binder.coverRight(), "the list stays on the binder");
+        assertTrue(list.y() + list.height() <= binder.height(), "eight bookmarks fit down the binder");
+        final ManualScreenLayout.Rect add = ManualScreenLayout.bookmarkRow(list, 8, 8);
+        assertTrue(add.y() >= ManualScreenLayout.bookmarkRow(list, 7, 8).y() + ManualScreenLayout.LIST_ROW
+                && add.y() + add.height() <= list.y() + list.height(), "the row that marks a page closes the list");
+    }
+
+    @Test
+    void ribbons_hangApartAndClearOfTheButtons() {
+        final ManualScreenLayout.Geometry binder = ManualScreenLayout.of(166, 201, true);
+        final GuiLayout layout = new GuiLayout(binder.width(), binder.height());
+        for (final ManualScreenLayout.Rect button : new ManualScreenLayout.Rect[] {binder.contents(), binder.back(),
+                binder.forward(), binder.search(), ManualScreenLayout.bookmarks(binder)}) {
+            layout.box("button " + button.x(), button.x(), button.y(), button.width(), button.height());
+        }
+        for (int slot = 0; slot < 4; slot++) {
+            for (final boolean right : new boolean[] {false, true}) {
+                final ManualScreenLayout.Rect ribbon = ManualScreenLayout.ribbon(binder, right, slot);
+                layout.box("ribbon " + right + " " + slot, ribbon.x(), ribbon.y(), ribbon.width(), ribbon.height());
+            }
+        }
+        assertTrue(layout.isClean(), () -> layout.overlaps() + " " + layout.outOfBounds());
+    }
+
+    @Test
+    void note_staysInsideItsPageAboveItsFoot() {
+        final ManualScreenLayout.Rect page = ManualScreenLayout.of(166, 201, true).right();
+        final ManualScreenLayout.Rect note = ManualScreenLayout.note(page, 4);
+
+        assertTrue(note.x() >= page.x() && note.x() + note.width() <= page.x() + page.width());
+        assertEquals(page.y() + page.height() - ManualScreenLayout.NOTE_FOOT, note.y() + note.height());
+        assertEquals(2 * ManualScreenLayout.NOTE_PAD + 4 * ManualScreenLayout.NOTE_LINE, note.height());
+    }
+
+    @Test
     void layout_isCleanForTwoPagesAndForOne() {
         for (final boolean spread : new boolean[] {true, false}) {
             final GuiLayout layout = ManualScreenLayout.layout(ManualScreenLayout.of(166, 201, spread), 10);

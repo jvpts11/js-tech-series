@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.integration.emi;
 
+import com.mojang.blaze3d.platform.Window;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.EmiEntrypoint;
 import dev.emi.emi.api.EmiPlugin;
@@ -14,13 +15,16 @@ import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.render.EmiRenderable;
 import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.stack.EmiStackInteraction;
 import dev.emi.emi.api.widget.Bounds;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
+import dev.jstech.core.client.recipeview.IRecipeViewer;
 import dev.jstech.core.client.recipeview.MultiblockEntry;
 import dev.jstech.core.client.recipeview.MultiblockRecipeViews;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
+import dev.jstech.core.client.recipeview.RecipeViewers;
 import dev.jstech.core.machine.Machines;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
@@ -29,6 +33,7 @@ import dev.jstech.core.multipart.MicroblockShowcase;
 import dev.jstech.core.text.GameText;
 import java.util.List;
 import java.util.OptionalInt;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -50,9 +55,12 @@ public final class CoreEmiPlugin implements EmiPlugin {
     /* The id of the multiblocks' category, the same as JEI's. */
     private static final ResourceLocation MULTIBLOCKS = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
             "multiblocks");
+    /* EMI as the Core's screens ask it, added to the viewers running once EMI reads its plugins. */
+    private static final IRecipeViewer VIEWER = new EmiViewer();
 
     @Override
     public void register(final EmiRegistry registry) {
+        RecipeViewers.add(VIEWER);
         for (final ProcessingKind kind : ProcessingRecipeViews.kinds()) {
             final List<ItemStack> machines = ProcessingRecipeViews.machineStacks(kind);
             final EmiRenderable icon = machines.isEmpty() ? EmiStack.EMPTY : EmiStack.of(machines.getFirst());
@@ -133,6 +141,18 @@ public final class CoreEmiPlugin implements EmiPlugin {
         return true;
     }
 
+    /** Opens EMI's recipe screen on what {@code stack} goes into. */
+    public static boolean showUsesOf(final ItemStack stack) {
+        EmiApi.displayUses(EmiStack.of(stack));
+        return true;
+    }
+
+    /** Narrows EMI's list to what the words find, as typing them in its search does (client tests do). */
+    public static boolean search(final String words) {
+        EmiApi.setSearchText(words);
+        return true;
+    }
+
     /** Opens EMI on the recipes of the processing machines of {@code kind}; whether it has a category for them. */
     public static boolean showRecipesOf(final ProcessingKind kind) {
         final EmiRecipeCategory category = categoryOf(kind);
@@ -156,6 +176,41 @@ public final class CoreEmiPlugin implements EmiPlugin {
             }
         }
         return null;
+    }
+
+    /* EMI as the Core's screens ask it: what the pointer is over in its own lists and screens, never a game slot. */
+    private static final class EmiViewer implements IRecipeViewer {
+
+        @Override
+        public boolean showRecipesOf(final ItemStack stack) {
+            return CoreEmiPlugin.showRecipesOf(stack);
+        }
+
+        @Override
+        public boolean showUsesOf(final ItemStack stack) {
+            return CoreEmiPlugin.showUsesOf(stack);
+        }
+
+        /* Where the pointer is now, in the screen's scaled pixels, rather than where EMI last drew it. */
+        @Override
+        public ItemStack hovered() {
+            final Minecraft minecraft = Minecraft.getInstance();
+            final Window window = minecraft.getWindow();
+            final int x = (int) (minecraft.mouseHandler.xpos() * window.getGuiScaledWidth() / window.getScreenWidth());
+            final int y = (int) (minecraft.mouseHandler.ypos() * window.getGuiScaledHeight()
+                    / window.getScreenHeight());
+            final EmiStackInteraction under = EmiApi.getHoveredStack(x, y, false);
+            if (under.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            for (final EmiStack stack : under.getStack().getEmiStacks()) {
+                final ItemStack item = stack.getItemStack();
+                if (!item.isEmpty()) {
+                    return item;
+                }
+            }
+            return ItemStack.EMPTY;
+        }
     }
 
     /* A kind's category, named as the kind is rather than by EMI's own key for it. */

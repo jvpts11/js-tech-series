@@ -1,0 +1,7 @@
+{
+  "chapter": "jstests",
+  "icon": "minecraft:iron_bars",
+  "id": "jstests:locked",
+  "order": 3,
+  "title": "jstests.guide.section.locked"
+}

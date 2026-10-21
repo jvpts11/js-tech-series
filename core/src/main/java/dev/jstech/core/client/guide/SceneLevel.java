@@ -11,6 +11,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.guide.GuideBlock;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
@@ -64,11 +65,16 @@ final class SceneLevel implements BlockAndTintGetter {
 
     /** The world of a scene's blocks, every layer of it shown. */
     SceneLevel(final GuideBlock.Scene scene) {
+        this(scene, scene.blocks());
+    }
+
+    /** The scene standing as {@code blocks} say, one of its steps: its frame and its layers are the whole scene's. */
+    SceneLevel(final GuideBlock.Scene scene, final List<GuideBlock.SceneBlock> blocks) {
         this.tall = scene.tall();
         this.shown = this.tall;
         this.light = new LevelLightEngine(new NoChunks(this), false, false);
         final Minecraft game = Minecraft.getInstance();
-        for (final GuideBlock.SceneBlock block : scene.blocks()) {
+        for (final GuideBlock.SceneBlock block : blocks) {
             final BlockPos pos = new BlockPos(block.x(), block.y(), block.z());
             final BlockState state = stateOf(block);
             this.states.put(pos, state);

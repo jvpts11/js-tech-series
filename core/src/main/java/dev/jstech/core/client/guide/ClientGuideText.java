@@ -108,6 +108,12 @@ public final class ClientGuideText implements IGuideText {
         })).orElse(List.of());
     }
 
+    /** The structure saved in the mod's assets, read from its file. */
+    @Override
+    public List<GuideBlock.SceneBlock> structure(final String id) {
+        return GuideStructures.blocksOf(id);
+    }
+
     /** An item's name in the loaded language, read from the game's items; its id's path when it has none. */
     public static String itemNameOf(final String item) {
         final ResourceLocation id = ResourceLocation.tryParse(item);

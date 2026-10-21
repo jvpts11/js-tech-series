@@ -8,10 +8,13 @@
 package dev.jstech.core.client.guide;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.api.client.GpuSurface;
 import dev.jstech.core.client.audio.AudioEngine;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.model.kit.SceneRenderer;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuidePiece;
@@ -32,10 +35,12 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.ToIntFunction;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -86,6 +91,21 @@ final class ManualScenes {
     private static final double KEY_LIGHT = 0.8;
     /** What a word cut short ends with. */
     private static final String ELLIPSIS = "...";
+    /**
+     * A scene shown step by step: the band of its step over the picture's top, how dark, the timeline's buttons and
+     * their marks, how far the track stands in from what is beside it, and what a scene shown in the world is known as.
+     */
+    private static final int CAPTION_BAND = 10;
+    private static final int RGB = 0xFFFFFF;
+    private static final int BAND_ALPHA = 0xC0 << 24;
+    private static final int STEP_BUTTON = 11;
+    private static final int TRACK_INSET = 2;
+    private static final String BACK = "|<";
+    private static final String PLAY = ">";
+    private static final String PAUSE = "||";
+    private static final String FORWARD = ">|";
+    private static final String WORLD_PATH = "manual_scene/";
+    private static final long MILLIS_PER_TICK = 50L;
 
     ManualScenes(final Font font, final GuideStyle style, final ToIntFunction<String> colour,
                  final IGuideText text) {
@@ -113,6 +133,7 @@ final class ManualScenes {
         final GuideBlock.Scene scene = piece.scene();
         final int width = piece.width() - 2;
         final int height = pictureHeight(piece) - 1;
+        state.play(Util.getMillis());
         g.fill(x, y, x + piece.width(), y + piece.height(), this.colour.applyAsInt(GuideStyle.SHADE));
         Draw.outline(g, x, y, piece.width(), piece.height(), this.colour.applyAsInt(GuideStyle.RULE));
         this.picture(g, state, x + 1, y + 1, width, height);
@@ -141,7 +162,16 @@ final class ManualScenes {
             this.balloon(g, x + 1 + placed.x(), y + 1 + placed.y(), placed.balloon().number(),
                     placed.balloon().number() == lit);
         }
-        this.strip(g, state, piece, x, y + pictureHeight(piece), mx, my);
+        if (scene.steps().isEmpty()) {
+            this.strip(g, state, piece, x, y + pictureHeight(piece), mx, my);
+        } else {
+            this.stepCaption(g, state, x + 1, y + 1, width);
+            this.timeline(g, state, piece, x, y + pictureHeight(piece), mx, my);
+        }
+        final Optional<Component> tip = this.buttonTip(piece, x, y, mx, my);
+        if (tip.isPresent()) {
+            return List.of(tip.get());
+        }
         if (pointed == null) {
             return List.of();
         }
@@ -180,6 +210,16 @@ final class ManualScenes {
         final State state = this.state(piece);
         final GuideBlock.Scene scene = piece.scene();
         final int stripY = y + pictureHeight(piece);
+        final Optional<ManualScreenLayout.Rect> world = this.inWorld(piece, x, stripY);
+        if (world.isPresent() && world.get().contains(mx, my)) {
+            this.pressed = world.get();
+            MultiblockShows.toggle(worldId(piece), scene.inWorld(state.step));
+            AudioEngine.playOnScreen(GuideSounds.CLICK);
+            return true;
+        }
+        if (!scene.steps().isEmpty()) {
+            return this.pressTimeline(piece, state, x, stripY, mx, my);
+        }
         final ManualScreenLayout.Rect reset = this.reset(piece, x, stripY);
         if (reset.contains(mx, my)) {
             this.pressed = reset;
@@ -190,7 +230,7 @@ final class ManualScenes {
             return true;
         }
         if (scene.layers()) {
-            final ManualScreenLayout.Rect more = this.more(reset);
+            final ManualScreenLayout.Rect more = this.more(world.orElse(reset));
             final ManualScreenLayout.Rect fewer = this.fewer(scene, more);
             if (more.contains(mx, my) || fewer.contains(mx, my)) {
                 this.pressed = more.contains(mx, my) ? more : fewer;
@@ -243,6 +283,15 @@ final class ManualScenes {
     /** Whether the pointer is on one of a scene's buttons, which take a click. */
     boolean clickable(final GuidePiece.Scene piece, final int x, final int y, final double mx, final double my) {
         final GuideBlock.Scene scene = piece.scene();
+        final int stripY = y + pictureHeight(piece);
+        if (this.inWorld(piece, x, stripY).filter(rect -> rect.contains(mx, my)).isPresent()) {
+            return true;
+        }
+        if (!scene.steps().isEmpty()) {
+            final Timeline line = this.timelineOf(piece, x, stripY);
+            return line.back().contains(mx, my) || line.play().contains(mx, my) || line.forward().contains(mx, my)
+                    || line.track().contains(mx, my);
+        }
         final ManualScreenLayout.Rect reset = this.reset(piece, x, y + pictureHeight(piece));
         if (reset.contains(mx, my)) {
             return true;
@@ -250,7 +299,7 @@ final class ManualScenes {
         if (!scene.layers()) {
             return false;
         }
-        final ManualScreenLayout.Rect more = this.more(reset);
+        final ManualScreenLayout.Rect more = this.more(this.inWorld(piece, x, stripY).orElse(reset));
         return more.contains(mx, my) || this.fewer(scene, more).contains(mx, my);
     }
 
@@ -261,7 +310,9 @@ final class ManualScenes {
 
     /** The button that shows a layer more of a scene drawn at that place, or the one that hides its top layer. */
     ManualScreenLayout.Rect layerButton(final GuidePiece.Scene piece, final int x, final int y, final boolean more) {
-        final ManualScreenLayout.Rect shown = this.more(this.reset(piece, x, y + pictureHeight(piece)));
+        final int stripY = y + pictureHeight(piece);
+        final ManualScreenLayout.Rect shown = this.more(this.inWorld(piece, x, stripY).orElse(this.reset(piece, x,
+                stripY)));
         return more ? shown : this.fewer(piece.scene(), shown);
     }
 
@@ -275,6 +326,29 @@ final class ManualScenes {
     OptionalInt layersOf(final String id) {
         final State state = this.states.get(id);
         return state == null ? OptionalInt.empty() : OptionalInt.of(state.layers);
+    }
+
+    /** The step a scene shown step by step is at, from 0, once it has been drawn. */
+    OptionalInt stepOf(final String id) {
+        final State state = this.states.get(id);
+        return state == null ? OptionalInt.empty() : OptionalInt.of(state.step);
+    }
+
+    /** Whether a scene shown step by step is playing, once it has been drawn. */
+    boolean playing(final String id) {
+        final State state = this.states.get(id);
+        return state != null && state.playing;
+    }
+
+    /** The timeline's buttons of a scene drawn at that place: the step before, play or pause, the next step. */
+    List<ManualScreenLayout.Rect> timelineButtons(final GuidePiece.Scene piece, final int x, final int y) {
+        final Timeline line = this.timelineOf(piece, x, y + pictureHeight(piece));
+        return List.of(line.back(), line.play(), line.forward());
+    }
+
+    /** The button that shows a scene drawn at that place in the world, where anything shows multiblocks there. */
+    Optional<ManualScreenLayout.Rect> inWorldButton(final GuidePiece.Scene piece, final int x, final int y) {
+        return this.inWorld(piece, x, y + pictureHeight(piece));
     }
 
     /** Lets every scene's picture go, for a manual being closed. */
@@ -304,8 +378,11 @@ final class ManualScenes {
             state.surface = new GpuSurface(pixelsWide, pixelsTall);
             state.stale = true;
         }
-        if (state.level == null) {
-            state.level = new SceneLevel(state.scene);
+        // A scene shown step by step stands as its step says; another always stands whole.
+        if (state.level == null || state.levelStep != state.step) {
+            state.level = new SceneLevel(state.scene, state.scene.blocksAt(state.step));
+            state.levelStep = state.step;
+            state.stale = true;
         }
         if (state.stale) {
             // What the screen has drawn so far goes onto it before the scene's own target is drawn into.
@@ -424,9 +501,12 @@ final class ManualScenes {
         g.fill(x + 1, y, x + piece.width() - 1, y + 1, this.colour.applyAsInt(GuideStyle.RULE));
         final ManualScreenLayout.Rect reset = this.reset(piece, x, y);
         this.button(g, reset, this.text.text(GuideTexts.SCENE_RESET.key()), true, mx, my);
-        int room = reset.x() - x - BUTTON_ROOM;
+        final Optional<ManualScreenLayout.Rect> world = this.inWorld(piece, x, y);
+        world.ifPresent(rect -> this.worldButton(g, piece, rect, mx, my));
+        final ManualScreenLayout.Rect beside = world.orElse(reset);
+        int room = beside.x() - x - BUTTON_ROOM;
         if (scene.layers()) {
-            final ManualScreenLayout.Rect more = this.more(reset);
+            final ManualScreenLayout.Rect more = this.more(beside);
             final ManualScreenLayout.Rect fewer = this.fewer(scene, more);
             this.button(g, more, "+", state.layers < scene.tall(), mx, my);
             this.button(g, fewer, "-", state.layers > 1, mx, my);
@@ -439,6 +519,157 @@ final class ManualScenes {
                 this.style, x + 3, y + 3, this.colour.applyAsInt(GuideStyle.FAINT));
     }
 
+    /** Over the top of a scene shown step by step, the step it is at: "2 of 3: Put the chest beside the furnace". */
+    private void stepCaption(final GuiGraphics g, final State state, final int x, final int y, final int width) {
+        final List<GuideBlock.SceneStep> steps = state.scene.steps();
+        final String said = this.text.text(GuideTexts.SCENE_STEP.key(), state.step + 1, steps.size(),
+                this.text.text(steps.get(state.step).captionKey()));
+        g.fill(x, y, x + width, y + CAPTION_BAND, this.colour.applyAsInt(GuideStyle.INK) & RGB | BAND_ALPHA);
+        GuideFonts.draw(g, this.font, this.fit(said, width - 2 * GAP), TextSize.SMALL, this.style, x + GAP, y + 2,
+                this.colour.applyAsInt(GuideStyle.PAPER));
+    }
+
+    /**
+     * The strip of a scene shown step by step: the step before, play or pause, the next step, the timeline with a
+     * mark at each step and the playhead past those done, which step of how many, and In world.
+     */
+    private void timeline(final GuiGraphics g, final State state, final GuidePiece.Scene piece, final int x,
+                          final int y, final int mx, final int my) {
+        final List<GuideBlock.SceneStep> steps = state.scene.steps();
+        g.fill(x + 1, y, x + piece.width() - 1, y + 1, this.colour.applyAsInt(GuideStyle.RULE));
+        final Timeline line = this.timelineOf(piece, x, y);
+        this.button(g, line.back(), BACK, state.step > 0, mx, my);
+        this.button(g, line.play(), state.playing ? PAUSE : PLAY, true, mx, my);
+        this.button(g, line.forward(), FORWARD, state.step < steps.size() - 1, mx, my);
+        final ManualScreenLayout.Rect track = line.track();
+        final int middle = track.y() + track.height() / 2;
+        final int rule = this.colour.applyAsInt(GuideStyle.RULE);
+        final int ink = this.colour.applyAsInt(GuideStyle.INK);
+        final int link = this.colour.applyAsInt(GuideStyle.LINK);
+        g.fill(track.x(), middle, track.x() + track.width(), middle + 1, rule);
+        final int head = track.x() + (int) Math.round(track.width() * state.played(Util.getMillis()));
+        g.fill(track.x(), middle - 1, head, middle + 1, link);
+        for (int k = 0; k < steps.size(); k++) {
+            final int mark = markX(track, k, steps.size());
+            g.fill(mark, middle - 2, mark + 1, middle + 3, k <= state.step ? ink : rule);
+        }
+        g.fill(head - 1, track.y() + 1, head + 2, track.y() + track.height() - 1, link);
+        final String count = this.text.text(GuideTexts.SCENE_STEP_SHORT.key(), state.step + 1, steps.size());
+        GuideFonts.draw(g, this.font, count, TextSize.SMALL, this.style, line.countX(), y + 3,
+                this.colour.applyAsInt(GuideStyle.FAINT));
+        this.inWorld(piece, x, y).ifPresent(rect -> this.worldButton(g, piece, rect, mx, my));
+    }
+
+    /** What a click on the timeline does: a step back or on, play or pause, or the step marked nearest the click. */
+    private boolean pressTimeline(final GuidePiece.Scene piece, final State state, final int x, final int stripY,
+                                  final double mx, final double my) {
+        final Timeline line = this.timelineOf(piece, x, stripY);
+        final int last = state.scene.steps().size() - 1;
+        final long now = Util.getMillis();
+        if (line.back().contains(mx, my) && state.step > 0) {
+            this.pressed = line.back();
+            state.goTo(state.step - 1, now);
+        } else if (line.forward().contains(mx, my) && state.step < last) {
+            this.pressed = line.forward();
+            state.goTo(state.step + 1, now);
+        } else if (line.play().contains(mx, my)) {
+            this.pressed = line.play();
+            state.toggle(now);
+        } else if (line.track().contains(mx, my)) {
+            int nearest = 0;
+            for (int k = 1; k <= last; k++) {
+                if (Math.abs(markX(line.track(), k, last + 1) - mx) < Math.abs(markX(line.track(), nearest,
+                        last + 1) - mx)) {
+                    nearest = k;
+                }
+            }
+            state.goTo(nearest, now);
+        } else {
+            if (my < stripY) {
+                this.dragging = piece.id();
+                this.dragX = mx;
+                this.dragY = my;
+            }
+            return true;
+        }
+        AudioEngine.playOnScreen(GuideSounds.CLICK);
+        return true;
+    }
+
+    /** Where the parts of a scene's timeline stand, its strip at {@code stripY}. */
+    private Timeline timelineOf(final GuidePiece.Scene piece, final int x, final int stripY) {
+        final int top = stripY + 1;
+        final ManualScreenLayout.Rect back = new ManualScreenLayout.Rect(x + GAP, top, STEP_BUTTON, BUTTON_HEIGHT);
+        final ManualScreenLayout.Rect play = new ManualScreenLayout.Rect(back.x() + STEP_BUTTON + 1, top,
+                STEP_BUTTON, BUTTON_HEIGHT);
+        final ManualScreenLayout.Rect forward = new ManualScreenLayout.Rect(play.x() + STEP_BUTTON + 1, top,
+                STEP_BUTTON, BUTTON_HEIGHT);
+        final int end = this.inWorld(piece, x, stripY).map(ManualScreenLayout.Rect::x)
+                .orElse(x + piece.width() - GAP);
+        final int steps = piece.scene().steps().size();
+        // Room for the widest the count can be, so the track stands still as the steps go by.
+        final int countWidth = GuideFonts.width(this.font, this.text.text(GuideTexts.SCENE_STEP_SHORT.key(), steps,
+                steps), TextSize.SMALL, this.style);
+        final int countX = end - GAP - countWidth;
+        final int trackX = forward.x() + STEP_BUTTON + GAP + TRACK_INSET;
+        return new Timeline(back, play, forward, new ManualScreenLayout.Rect(trackX, top,
+                Math.max(1, countX - GAP - TRACK_INSET - trackX), BUTTON_HEIGHT), countX);
+    }
+
+    /**
+     * Where the mark of step {@code step} of {@code steps} stands: the first at the track's start, the last at its
+     * end.
+     */
+    private static int markX(final ManualScreenLayout.Rect track, final int step, final int steps) {
+        return steps < 2 ? track.x() : track.x() + (track.width() - 1) * step / (steps - 1);
+    }
+
+    /**
+     * The button that shows a scene's blocks in the world, at its strip's right end, before Reset when the scene has
+     * one; none where nothing shows multiblocks in the world.
+     */
+    private Optional<ManualScreenLayout.Rect> inWorld(final GuidePiece.Scene piece, final int x, final int stripY) {
+        if (!MultiblockShows.canShowInWorld()) {
+            return Optional.empty();
+        }
+        final int width = GuideFonts.width(this.font, this.text.text(GuideTexts.SCENE_IN_WORLD.key()),
+                TextSize.SMALL, this.style) + BUTTON_ROOM;
+        final int right = piece.scene().steps().isEmpty() ? this.reset(piece, x, stripY).x() - GAP
+                : x + piece.width() - GAP;
+        return Optional.of(new ManualScreenLayout.Rect(right - width, stripY + 1, width, BUTTON_HEIGHT));
+    }
+
+    /** In world, drawn sunk while the scene is shown there. */
+    private void worldButton(final GuiGraphics g, final GuidePiece.Scene piece, final ManualScreenLayout.Rect rect,
+                             final int mx, final int my) {
+        final boolean shown = MultiblockShows.shownInWorld().filter(worldId(piece)::equals).isPresent();
+        this.button(g, rect, this.text.text(GuideTexts.SCENE_IN_WORLD.key()), shown ? ManualButtonLook.State.PRESSED
+                : this.stateOf(rect, true, mx, my));
+    }
+
+    /** What the button under the pointer does, for its tooltip: In world, or a button of the timeline. */
+    private Optional<Component> buttonTip(final GuidePiece.Scene piece, final int x, final int y, final int mx,
+                                          final int my) {
+        final int stripY = y + pictureHeight(piece);
+        if (this.inWorld(piece, x, stripY).filter(rect -> rect.contains(mx, my)).isPresent()) {
+            return Optional.of(Component.literal(this.text.text(GuideTexts.SCENE_IN_WORLD_TIP.key())));
+        }
+        if (piece.scene().steps().isEmpty()) {
+            return Optional.empty();
+        }
+        final Timeline line = this.timelineOf(piece, x, stripY);
+        final String key = line.back().contains(mx, my) ? GuideTexts.SCENE_BACK.key()
+                : line.play().contains(mx, my) ? (this.playing(piece.id()) ? GuideTexts.SCENE_PAUSE.key()
+                : GuideTexts.SCENE_PLAY.key()) : line.forward().contains(mx, my) ? GuideTexts.SCENE_FORWARD.key() : "";
+        return key.isEmpty() ? Optional.empty() : Optional.of(Component.literal(this.text.text(key)));
+    }
+
+    /** What a scene is known as while it is shown in the world. */
+    private static ResourceLocation worldId(final GuidePiece.Scene piece) {
+        return ResourceLocation.fromNamespaceAndPath(JsCore.MODID, WORLD_PATH + Integer.toHexString(
+                piece.id().hashCode()));
+    }
+
     /** "Layer 2 of 5", or "All layers" when none is peeled away. */
     private String layers(final State state, final GuideBlock.Scene scene) {
         return state.layers >= scene.tall() ? this.text.text(GuideTexts.SCENE_ALL_LAYERS.key())
@@ -448,9 +679,20 @@ final class ManualScenes {
     /** A word on a button of the strip, sunk while held, lit under the pointer, faded when it leads nowhere. */
     private void button(final GuiGraphics g, final ManualScreenLayout.Rect rect, final String word,
                         final boolean leads, final int mx, final int my) {
-        final ManualButtonLook.State state = !leads ? ManualButtonLook.State.DISABLED
+        this.button(g, rect, word, this.stateOf(rect, leads, mx, my));
+    }
+
+    /** How a button of the strip is drawn: faded, sunk while held, lit under the pointer, or as it is. */
+    private ManualButtonLook.State stateOf(final ManualScreenLayout.Rect rect, final boolean leads, final int mx,
+                                          final int my) {
+        return !leads ? ManualButtonLook.State.DISABLED
                 : rect.equals(this.pressed) && rect.contains(mx, my) ? ManualButtonLook.State.PRESSED
                 : rect.contains(mx, my) ? ManualButtonLook.State.HOVER : ManualButtonLook.State.NORMAL;
+    }
+
+    /** A word on a button of the strip, drawn as {@code state} says. */
+    private void button(final GuiGraphics g, final ManualScreenLayout.Rect rect, final String word,
+                        final ManualButtonLook.State state) {
         final ManualButtonLook look = ManualButtonLook.of(this.colour.applyAsInt(GuideStyle.PAPER),
                 this.colour.applyAsInt(GuideStyle.INK), this.colour.applyAsInt(GuideStyle.LABEL), state);
         ManualControls.bevel(g, rect.x(), rect.y(), rect.width(), rect.height(), look.fill(), look.light(),
@@ -515,12 +757,81 @@ final class ManualScenes {
         private SceneLevel level;
         /** Whether the picture no longer shows what the scene shows now. */
         private boolean stale = true;
+        /** A scene shown step by step: the step it is at, the step its level stands as, and whether it plays. */
+        private int step;
+        private int levelStep = -1;
+        private boolean playing;
+        private long stepStarted;
 
         private State(final GuideBlock.Scene scene) {
             this.scene = scene;
             this.view = scene.view();
             this.layers = scene.tall();
+            // A scene shown step by step plays at once, unless the reader asked for less movement.
+            this.playing = !scene.steps().isEmpty() && !MotionClock.reduced();
+            this.stepStarted = Util.getMillis();
         }
+
+        /** Goes on to the next step once this one has been shown its time; stops at the last. */
+        private void play(final long now) {
+            if (!this.playing) {
+                return;
+            }
+            final List<GuideBlock.SceneStep> steps = this.scene.steps();
+            if (now - this.stepStarted < steps.get(this.step).ticks() * MILLIS_PER_TICK) {
+                return;
+            }
+            if (this.step < steps.size() - 1) {
+                this.step++;
+                this.stepStarted = now;
+            } else {
+                this.playing = false;
+            }
+        }
+
+        private void goTo(final int step, final long now) {
+            this.step = step;
+            this.stepStarted = now;
+        }
+
+        /** Pauses, or plays on; at the last step, from the first again. */
+        private void toggle(final long now) {
+            if (this.playing) {
+                this.playing = false;
+                return;
+            }
+            if (this.step >= this.scene.steps().size() - 1) {
+                this.step = 0;
+            }
+            this.stepStarted = now;
+            this.playing = true;
+        }
+
+        /** How far along the timeline it is, from 0 at the first step to 1 at the last, part of a step counted in. */
+        private double played(final long now) {
+            final List<GuideBlock.SceneStep> steps = this.scene.steps();
+            if (steps.size() < 2) {
+                return this.playing ? Math.min(1.0, (now - this.stepStarted)
+                        / (double) (steps.getFirst().ticks() * MILLIS_PER_TICK)) : 1.0;
+            }
+            final double into = !this.playing || this.step >= steps.size() - 1 ? 0.0
+                    : Math.min(1.0, (now - this.stepStarted) / (double) (steps.get(this.step).ticks()
+                    * MILLIS_PER_TICK));
+            return Math.min(1.0, (this.step + into) / (steps.size() - 1));
+        }
+    }
+
+    /**
+     * Where the parts of a scene's timeline stand.
+     *
+     * @param back    the step before
+     * @param play    play or pause
+     * @param forward the next step
+     * @param track   the track the steps are marked along
+     * @param countX  where "2/3" is written
+     */
+    private record Timeline(ManualScreenLayout.Rect back, ManualScreenLayout.Rect play,
+                            ManualScreenLayout.Rect forward, ManualScreenLayout.Rect track, int countX) {
     }
 
     /**

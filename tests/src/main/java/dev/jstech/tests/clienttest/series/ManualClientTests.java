@@ -13,9 +13,12 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.gui.PointerShape;
 import dev.jstech.core.client.guide.GuideClient;
+import dev.jstech.core.client.guide.ManualMarks;
 import dev.jstech.core.client.guide.ManualPlaces;
 import dev.jstech.core.client.guide.ManualScreen;
 import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
@@ -71,6 +74,8 @@ public final class ManualClientTests {
 
     private static final int SETTLE = 4;
     private static final int OPEN = 40;
+    /** What the reader writes in a page's margin. */
+    private static final String NOTE = "Feed it from the top";
     /* Far enough into a hold for its bar to show, and early enough to see it before the page opens. */
     private static final float HALF_HELD = 0.35F;
 
@@ -252,6 +257,123 @@ public final class ManualClientTests {
                 .then(0, () -> ctx.click(manual().sceneLayerPoint(scene, true)[0],
                         manual().sceneLayerPoint(scene, true)[1]))
                 .thenAssert(SETTLE, () -> manual().sceneLayers(scene).orElse(0) == 2, "and the plus shows it again")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 600)
+    public static void manual_playsASceneStepByStepAndShowsItInTheWorld(final ClientTestContext ctx) {
+        final String scene = TestGuide.STEPS + "#1";
+        ctx.afterTest(() -> MultiblockShows.shownInWorld().ifPresent(MultiblockShows::toggle));
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.STEPS))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, () -> toScene(scene))
+                .thenAssert(SETTLE, () -> manual().sceneStep(scene).orElse(-1) == 0,
+                        "the scene starts at its first step")
+                .then(0, () -> {
+                    if (!manual().scenePlaying(scene)) {
+                        // Client tests ask for less movement, so the scene waits for Play.
+                        final int[] play = manual().sceneTimelinePoint(scene, 1);
+                        ctx.click(play[0], play[1]);
+                    }
+                })
+                .thenWaitUntil(() -> manual().sceneStep(scene).orElse(-1) == 1, TestGuide.STEP_TICKS * 3,
+                        "the scene plays on to its second step")
+                .thenScreenshot(2, "manual_steps_second")
+                .thenWaitUntil(() -> manual().sceneStep(scene).orElse(-1) == 2 && !manual().scenePlaying(scene),
+                        TestGuide.STEP_TICKS * 3, "it stops at its last step")
+                .thenScreenshot(2, "manual_steps_last")
+                .then(0, () -> ctx.click(manual().sceneTimelinePoint(scene, 0)[0],
+                        manual().sceneTimelinePoint(scene, 0)[1]))
+                .thenAssert(SETTLE, () -> manual().sceneStep(scene).orElse(-1) == 1, "the step before goes back")
+                .then(0, () -> {
+                    final int[] world = manual().sceneInWorldPoint(scene);
+                    ctx.assertTrue(world != null, "a scene has In world, the projector being installed");
+                    ctx.click(world[0], world[1]);
+                })
+                .thenAssert(SETTLE, () -> MultiblockShows.shownInWorld().isPresent(),
+                        "In world shows the scene's blocks in front of the player")
+                .then(0, () -> ctx.click(manual().sceneInWorldPoint(scene)[0], manual().sceneInWorldPoint(scene)[1]))
+                .thenAssert(SETTLE, () -> MultiblockShows.shownInWorld().isEmpty(), "and a second click puts it away")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 600)
+    public static void manual_keepsTheReadersBookmarksNotesAndWhatIsNew(final ClientTestContext ctx) {
+        ctx.afterTest(() -> ManualMarks.forget(TestGuide.MANUAL));
+        ctx.then(0, () -> ManualMarks.forget(TestGuide.MANUAL))
+                .then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.SCENE))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> ManualMarks.seen(TestGuide.MANUAL).contains(TestGuide.STEPS),
+                        "opened the first time, what the manual holds is what the reader finds there")
+                .then(0, () -> {
+                    // The scene in steps comes into the book after the reader last read it.
+                    ManualMarks.unsee(TestGuide.MANUAL, TestGuide.STEPS);
+                    manual().goToPage(manual().book().contents());
+                })
+                .thenScreenshot(SETTLE, "manual_marks_contents")
+                .thenAssert(0, () -> !ManualMarks.seen(TestGuide.MANUAL).contains(TestGuide.STEPS),
+                        "the contents do not see the entry for the reader")
+                .then(0, () -> ctx.click(manual().bookmarksButtonPoint()[0], manual().bookmarksButtonPoint()[1]))
+                .thenAssert(SETTLE, () -> manual().bookmarkListOpen(), "the ribbon button opens the list")
+                .then(0, () -> ctx.click(manual().markPagePoint()[0], manual().markPagePoint()[1]))
+                .thenAssert(SETTLE, () -> ManualMarks.bookmarks(TestGuide.MANUAL).size() == 1,
+                        "Mark this page puts a ribbon on the page shown")
+                .thenScreenshot(2, "manual_marks_list")
+                .then(0, () -> ctx.click(manual().pagePoint(true)[0], manual().pagePoint(true)[1]))
+                .thenAssert(SETTLE, () -> !manual().bookmarkListOpen(), "a click off the list closes it")
+                .then(0, () -> {
+                    final int[] page = manual().pagePoint(true);
+                    manual().mouseClicked(page[0], page[1], GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+                })
+                .thenAssert(SETTLE, () -> manual().writingNote(), "a right click on a page writes a note there")
+                .then(0, () -> {
+                    for (final char letter : NOTE.toCharArray()) {
+                        manual().charTyped(letter, 0);
+                    }
+                })
+                .thenScreenshot(2, "manual_marks_note_writing")
+                .then(0, () -> manual().keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0))
+                .thenAssert(SETTLE, () -> !manual().writingNote() && ManualMarks.bookmarks(TestGuide.MANUAL)
+                        .stream().findFirst().map(bookmark -> ManualMarks.note(TestGuide.MANUAL, bookmark.place())
+                                .isEmpty()).orElse(false), "Enter keeps the note, on the right page, not the left")
+                .thenScreenshot(2, "manual_marks_note")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .then(0, ManualMarks::readAgain)
+                .thenAssert(0, () -> ManualMarks.bookmarks(TestGuide.MANUAL).size() == 1,
+                        "the bookmark is kept on the disk, the game closed and opened in between");
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_drawsAStructureSavedWithTheStructureBlock(final ClientTestContext ctx) {
+        final String scene = TestGuide.STRUCTURE + "#1";
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.STRUCTURE))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, () -> toScene(scene))
+                .thenAssert(SETTLE, () -> manual().scenePoint(scene, false) != null
+                        && manual().sceneLayers(scene).orElse(0) == 4,
+                        "the hut is drawn from its file, its floor, two rows of walls and its roof")
+                .thenScreenshot(2, "manual_structure")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_showsAMovingPicturesFramesInTurn(final ClientTestContext ctx) {
+        final boolean reduced = MotionClock.reduced();
+        ctx.afterTest(() -> MotionClock.setReduced(reduced));
+        ctx.then(0, () -> {
+            MotionClock.setReduced(false);
+            GuideClient.open(TestGuide.MANUAL, TestGuide.ANIMATION);
+        }).thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> manual().book().pages().stream().flatMap(page -> page.pieces().stream())
+                        .anyMatch(piece -> piece instanceof GuidePiece.Picture picture && picture.frames() == 2
+                                && picture.frameTicks() == TestGuide.ANIMATION_TICKS),
+                        "the picture is laid out as a strip of two frames")
+                .thenScreenshot(0, "manual_animation_a")
+                .thenScreenshot(TestGuide.ANIMATION_TICKS, "manual_animation_b")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

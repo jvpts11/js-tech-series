@@ -109,6 +109,78 @@ class GuideBlockTest {
                 .scene(List.of(block(0, 0, 0))).layers(), "it is peeled layer by layer");
     }
 
+    @Test
+    void steps_putTakeAndReplaceInTurnFramedRoundEveryBlock() {
+        final GuideBlock.SceneBlock grass = new GuideBlock.SceneBlock(0, 0, 0, "minecraft:grass_block", "");
+        final GuideBlock.SceneBlock furnace = new GuideBlock.SceneBlock(0, 1, 0, "minecraft:furnace", "");
+        final GuideBlock.SceneBlock chest = new GuideBlock.SceneBlock(3, 1, 0, "minecraft:chest", "");
+        final GuideBlock.SceneBlock lit = new GuideBlock.SceneBlock(0, 1, 0, "minecraft:furnace[lit=true]", "");
+        final GuideBlock.Scene scene = new GuideBlock.Scene(List.of(grass), GuideBlock.SceneView.CORNER, List.of(),
+                false, 100, "caption", List.of(
+                new GuideBlock.SceneStep("one", List.of(furnace), List.of(), 20),
+                new GuideBlock.SceneStep("two", List.of(chest, lit), List.of(), 20),
+                new GuideBlock.SceneStep("three", List.of(), List.of(GuideBlock.ScenePart.of(0, 1, 0)), 20)));
+
+        assertEquals(List.of(grass, furnace), scene.blocksAt(0));
+        assertEquals(List.of(grass, lit, chest), scene.blocksAt(1), "a block put where one stands takes its place");
+        assertEquals(List.of(grass, chest), scene.blocksAt(2), "a place taken is emptied");
+        assertEquals(scene.blocksAt(2), scene.blocksAt(9), "past the last step, the last step's");
+        assertEquals(4, scene.width(), "framed round the chest of the second step too");
+        assertEquals(2, scene.tall());
+    }
+
+    @Test
+    void steps_aloneMayHoldEveryBlockOfTheScene() {
+        final GuideBlock.Scene scene = new GuideBlock.Scene(List.of(), GuideBlock.SceneView.CORNER, List.of(), false,
+                100, "caption", List.of(new GuideBlock.SceneStep("one", List.of(block(1, 0, 0)), List.of(), 20)));
+
+        assertEquals(List.of(block(1, 0, 0)), scene.blocksAt(0));
+        assertThrows(IllegalArgumentException.class, () -> new GuideBlock.SceneStep("zero", List.of(), List.of(),
+                0), "a step is shown a tick at least");
+    }
+
+    @Test
+    void inWorld_turnsTheScenesBackToTheNorth() {
+        final GuideBlock.Scene scene = scene(List.of(block(0, 0, 0), block(0, 0, 2)), List.of());
+        final ShapePreview world = scene.inWorld(0);
+
+        assertEquals(3, world.sizeZ());
+        assertEquals(-2, world.minZ(), "the scene's back, north, is the world's negative z");
+        assertTrue(world.ghosts().stream().allMatch(ghost -> !ghost.controller()
+                && ghost.blocks().equals(List.of("minecraft:stone"))));
+    }
+
+    @Test
+    void structure_turnsItsSouthToTheScenesFrontAndLeavesAirOut() {
+        final List<GuideBlock.Structure.Saved> saved = List.of(
+                new GuideBlock.Structure.Saved(0, 0, 0, "minecraft:stone", ""),
+                new GuideBlock.Structure.Saved(1, 0, 2, "minecraft:oak_slab[type=bottom]", ""),
+                new GuideBlock.Structure.Saved(1, 1, 1, "minecraft:air", ""),
+                new GuideBlock.Structure.Saved(0, 1, 1, "minecraft:structure_void", ""),
+                new GuideBlock.Structure.Saved(2, 0, 0, "minecraft:chest", "{Items:[]}"));
+        final List<GuideBlock.SceneBlock> blocks = GuideBlock.Structure.blocksOf(3, 2, 3, saved);
+
+        assertEquals(List.of(new GuideBlock.SceneBlock(0, 0, 2, "minecraft:stone", ""),
+                new GuideBlock.SceneBlock(1, 0, 0, "minecraft:oak_slab[type=bottom]", ""),
+                new GuideBlock.SceneBlock(2, 0, 2, "minecraft:chest", "{Items:[]}")), blocks);
+        assertEquals(List.of(), GuideBlock.Structure.blocksOf(GuideBlock.Scene.GRID + 1, 1, 1, saved),
+                "too big for a scene");
+        assertTrue(new GuideBlock.Structure("test:hut", GuideBlock.SceneView.CORNER, 100, "caption")
+                .scene(blocks).layers(), "it is peeled layer by layer");
+    }
+
+    @Test
+    void picture_showsItsFramesInTurn() {
+        final GuideBlock.Picture strip = new GuideBlock.Picture("test:blink", "", "{}", 32, 16, "caption", 3, 10);
+
+        assertEquals(0, strip.frameAt(9));
+        assertEquals(1, strip.frameAt(10));
+        assertEquals(2, strip.frameAt(29));
+        assertEquals(0, strip.frameAt(30), "from the first again after the last");
+        assertThrows(IllegalArgumentException.class, () -> new GuideBlock.Picture("", "kind", "{}", 32, 16,
+                "caption", 2, 10), "a drawing is no strip of frames");
+    }
+
     private static ShapePreview.Ghost ghost(final int x, final int y, final int z, final List<String> blocks,
                                             final List<String> tags, final boolean controller) {
         return new ShapePreview.Ghost(x, y, z, y, blocks, tags, controller);

@@ -13,6 +13,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.tooltip.ItemTooltip;
 import dev.jstech.core.client.gui.tooltip.ItemTooltips;
 import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.client.recipeview.RecipeViewers;
 import dev.jstech.core.guide.GuideHooks;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuidePages;
@@ -31,16 +32,17 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
@@ -51,9 +53,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The manuals on a player's game: read from the resource packs whenever they are, opened by a manual item's use, and
- * opened at an item's page by the manual key, held a moment over the item under the pointer in any inventory, or
- * over the item in the main hand. An item with a page says so at the foot of its tooltip, and while the key is held a
- * small bar fills, in the look of the manual it opens: in the tooltip, under that line, or under the crosshair.
+ * opened at an item's page by the manual key, held a moment over the item under the pointer in any inventory or in a
+ * recipe viewer's lists, or over the item in the main hand. An item with a page says so at the foot of its tooltip,
+ * and while the key is held a small bar fills, in the look of the manual it opens: in the tooltip, under that line,
+ * or under the crosshair.
  */
 public final class GuideClient {
 
@@ -79,6 +82,9 @@ public final class GuideClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, GuideClient::onClientTick);
         NeoForge.EVENT_BUS.addListener(RenderGuiEvent.Post.class, GuideClient::onHudDrawn);
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, GuideClient::onScreenDrawn);
+        NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, ManualSiteCommand::onRegisterCommands);
+        TornSheetClient.listen();
+        ManualTips.listen();
     }
 
     public static void onRegisterReloadListeners(final RegisterClientReloadListenersEvent event) {
@@ -87,6 +93,24 @@ public final class GuideClient {
 
     public static void onClientSetup(final FMLClientSetupEvent event) {
         GuideHooks.useOpener((manual, entry) -> Minecraft.getInstance().execute(() -> open(manual, entry)));
+        GuideHooks.useLecternOpener((manual, pos) -> Minecraft.getInstance().execute(() -> openOnLectern(manual,
+                pos)));
+    }
+
+    /**
+     * Opens a manual as it is read from the lectern at {@code pos}, with the strip that says where and takes it off.
+     *
+     * @return whether the manual was found
+     */
+    public static boolean openOnLectern(final String manualId, final BlockPos pos) {
+        final GuideLibrary library = GuideLibrary.loaded();
+        final Optional<GuideManual> manual = library.manual(manualId);
+        final Optional<GuideStyle> style = manual.flatMap(found -> library.style(found.style()));
+        if (manual.isEmpty() || style.isEmpty()) {
+            return false;
+        }
+        Minecraft.getInstance().setScreen(ManualScreen.onLectern(manual.get(), style.get(), pos));
+        return true;
     }
 
     /**
@@ -138,6 +162,13 @@ public final class GuideClient {
         }
         final Optional<GuideManual> manual = GuideLibrary.loaded().manualFor(entry);
         return manual.isPresent() && open(manual.get().id(), entry, parent);
+    }
+
+    /** The entry that is the page of an item in a manual, when it has one. */
+    public static Optional<String> entryOf(final ItemStack stack) {
+        final String entry = pageFor(stack);
+        return entry.isEmpty() || GuideLibrary.loaded().manualFor(entry).isEmpty() ? Optional.empty()
+                : Optional.of(entry);
     }
 
     /** Whether an item has a page in a manual. */
@@ -223,19 +254,22 @@ public final class GuideClient {
     }
 
     /*
-     * In an inventory, the key is held over the item under the pointer; any other screen only lets it go. The bar
-     * itself is a line of that item's tooltip.
+     * On a screen, the key is held over the item under the pointer: in an inventory's slot, or in a recipe viewer's
+     * lists and recipe screens; anywhere else it only lets go. The bar itself is a line of that item's tooltip. Read
+     * from a viewer's own recipe screen, the manual goes back to it when it is closed.
      */
     public static void onScreenDrawn(final ScreenEvent.Render.Post event) {
         final long now = Util.getMillis();
-        if (!(event.getScreen() instanceof AbstractContainerScreen<?> screen)) {
+        final Screen screen = event.getScreen();
+        if (screen instanceof ManualScreen) {
             HOLD.follow("", keyHeld(), now);
             return;
         }
-        final Slot slot = screen.getSlotUnderMouse();
-        final ItemStack under = slot == null ? ItemStack.EMPTY : slot.getItem();
+        final ItemStack inSlot = screen instanceof AbstractContainerScreen<?> container
+                && container.getSlotUnderMouse() != null ? container.getSlotUnderMouse().getItem() : ItemStack.EMPTY;
+        final ItemStack under = inSlot.isEmpty() ? RecipeViewers.hovered() : inSlot;
         if (HOLD.follow(pageFor(under), keyHeld(), now)) {
-            openPageOf(under);
+            openPageOf(under, screen instanceof AbstractContainerScreen<?> ? null : screen);
         }
     }
 

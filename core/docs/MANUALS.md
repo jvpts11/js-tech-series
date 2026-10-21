@@ -197,6 +197,11 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 - `drawing(kind, height, json, caption)`: a drawing a renderer of yours makes as the page is shown, registered like a
   special block's (below). The picture then never falls behind what it shows and reads in the reader's language:
   J's Computers draws its firmware's real screens this way, `drawing("jsc:firmware", 97, "{\"look\":\"uefi\"}", ...)`.
+- `animation(texture, width, height, frames, frameTicks, caption)` (*added 2026-10-21*): a picture that moves, as an
+  animated texture of the game does. The texture holds `frames` pictures one under the other, each `width` by
+  `height` as drawn, and each is shown for `frameTicks` ticks in turn, from the first again after the last. A player
+  who asked for less movement sees its first frame, still. Its file is a `picture` with `"frames"` and
+  `"frame_ticks"`.
 
 ### The other blocks
 
@@ -396,6 +401,47 @@ the figure is left out and the next one takes its number. Its file is
 `{"type": "multiblock", "multiblock": "mymod:coke_oven", "caption": "...", "height": 120}`, with a `view` as a
 scene's.
 
+#### A scene step by step
+
+*Added 2026-10-21.*
+
+```java
+.scene("A furnace and a chest put on grass in three steps.", 90)
+.place(0, 0, 0, () -> Blocks.GRASS_BLOCK)
+.step("Put a furnace on the grass")
+.place(0, 1, 0, () -> Blocks.FURNACE, "facing=south", "")
+.step("Put a chest beside it", 60)
+.place(1, 1, 0, () -> Blocks.CHEST, "facing=south", "")
+.step("Take the furnace away")
+.take(0, 1, 0)
+```
+
+A scene with steps explains how something is built, one step at a time. What is placed before the first `step` is
+what the scene starts with; each `step` begins a step, the blocks placed after it are put in by that step, and `take`
+empties a place in it. The step's sentence stands over the picture ("2 of 3: Put a chest beside it"), and under it
+runs a timeline: the step before, play and pause, the next step, and a mark for each step, which goes there when it is
+clicked. Played, each step shows for two seconds, or the ticks given. Read as text, each step is a numbered line
+under the scene's caption.
+
+Every scene has an **In world** button on its strip, while something shows multiblocks in the world (J's Core's
+Structure Projector does): the step shown, or the whole scene, stands as ghosts in front of the reader, and a second
+click takes it away. In a scene's file, the steps are `"steps": [{"text": "...", "put": [...], "take": [{"x": 0,
+"y": 1, "z": 0}], "ticks": 40}]`, each block put written as a block of `"blocks"` is.
+
+#### A structure saved with the structure block
+
+*Added 2026-10-21.*
+
+```java
+.structure("A hut, saved with the structure block.", rl("hut"), 100)
+```
+
+A building you saved with the game's structure block is a scene of its own: ship the saved file in your mod's assets
+as `assets/<namespace>/jstech/structures/<path>.nbt`, and name it. It is read as the manual is opened, so a resource
+pack can change it, and it may be peeled layer by layer. Where its file is missing, or it is bigger than a scene's
+grid, the figure is left out. Its file is `{"type": "structure", "structure": "mymod:hut", "caption": "...",
+"height": 100}`.
+
 ### Commands
 
 *Added 2026-10-11.*
@@ -428,6 +474,18 @@ under `jsc:command/live/<name>`; `CommandGuidePages.id(Platform.MC_DOS, "dir")` 
 what the command says about itself, the same words `man`, `help` and `/?` print, and name every system that has the
 command, with the package to install first where one is needed. A command an addon registers with `CliCommands`
 gets its page the same way.
+
+### What an entry needs
+
+*Added 2026-10-21.*
+
+```java
+.needs(rl("steam_power"))
+```
+
+An entry about something its reader's team cannot do yet names the knowledge it needs
+([Progression](PROGRESSION.md)). Until the team knows it, the contents say "not yet" beside the entry, and the entry
+is still there to read: a manual hides nothing. Its file has `"needs": "mymod:steam_power"`.
 
 ## Writing a manual
 
@@ -663,14 +721,69 @@ system's help shows for the command in place of the page made of its words alone
   it closes, and its buttons and tabs click as the game's buttons do. The sounds are the game's own, played in the
   Manuals channel of the Sound Mixer, so a player can turn the books down apart from everything else.
 - The magnifier turns the left page into a search of the whole manual that finds as the player types: the titles and
-  explained words of the index first, then every entry whose pages hold the words, with the line they were found on;
-  the right page shows where the first thing found stands.
+  explained words of the index first, then every entry whose pages hold the words, with the line they were found on,
+  then the recipes the pages show that make what was typed ("Recipe") and those it goes into ("Used in"), each with
+  what it makes and what works it; the count says how many are pages, recipes and uses. The right page shows where
+  the first thing found stands.
+- The ribbon button beside the search opens the list of bookmarks: each with its colour, what it marks and its page,
+  a click going there and a right click taking it off; "+ Mark this page" hangs a ribbon of the colour the fewest
+  wear over the page shown, up to eight in a book. A right click on a page writes a note in its margin, on yellow
+  paper, kept as the player typed it (Enter or a click elsewhere keeps it; nothing written takes it off). Bookmarks,
+  notes and the entries seen are the player's own, kept in `jstech/manual_marks.json` in the game's folder, each by
+  where its page stands in its entry, so they stay on their words in another language or resource pack.
+- The contents say "NEW" beside an entry that came into the book since the player last read it (the first time a
+  manual is opened, all it holds is what the player finds there), and "not yet" beside one their team cannot do yet;
+  a chapter's tab holding something new has a gold dot.
+- With JEI or EMI installed, holding the manual key over an item in the viewer's list, its bookmarks or its recipe
+  screen opens the item's page, and a manual opened from the viewer's recipe screen goes back to it when it is
+  closed; a click on a recipe in a page opens it in the viewer (on a slot, the recipes of what is in it), and closing
+  the viewer comes back to the page.
 - Holding **M** (the player can change it, "Open Its Page in the Manual") for a moment over an item in any inventory,
   or with the item in hand, opens the manual at its page. While it is held a bar fills in the item's tooltip, from one
   side to the other, or under the crosshair, in the look of the manual it opens. The key has to be let go before it
   opens a page again.
   An item with a page says so at the foot of its tooltip: "Hold [M] to open its page in the manual".
 - On a computer of J's Computers, every system's help reads the same manuals beside its own commands.
+- The sheet button beside the ribbon tears a copy of the page on the left out of the book: a Torn Sheet goes into the
+  player's inventory, or at their feet, and the manual keeps its page. In an item frame the sheet shows its page,
+  filling the frame as a map does, in the reader's language and as their resource packs lay it out; its tooltip says
+  which manual and which page it came from. A sheet whose page no manual holds any longer is a plain item in the
+  frame, and a scene on a framed page is left out.
+- A manual used on an empty lectern is laid on it, as the game's books are, and anyone who uses the lectern then
+  reads the manual, with a strip under it saying where the lectern is, Take, which puts the manual in their
+  inventory, and Close. Breaking the lectern drops the manual.
+- The first time a player picks up an item a manual explains, outside creative, a quiet notification says the manual
+  has its page ("In the manual: ..."), and a click on it while the chat is open opens there. Each item is told of
+  once, the game keeping which in `jstech/manual_tips.json`; "Tip when an item is first picked up", in the player's
+  own settings (`jstech-manuals.toml`), turns it off, and the tips are a kind of notification of their own that can
+  be silenced like any other.
+
+## Writing while the game runs
+
+*Added 2026-10-21.*
+
+In a development run, saving a file under a namespace's `guide/` reads the manuals alone again, at once, without
+every resource ([Developing](DEVELOPING.md)); a manual open lays itself out anew and its reader stays on the page they
+were reading, found by where it stands in its entry, though the pages before it moved. A file that cannot be read is
+named in the log, and the rest of the manuals still open.
+
+## The manual as a website
+
+*Added 2026-10-21.*
+
+`/jstech manual site <manual>`, typed on a player's game, writes the manual as a website of plain files into the
+game's folder, under `jstech/manual_sites/`, and the chat names the folder with a link that opens its front page:
+
+- `index.html`, the front page: the manual's title, a search box and the contents, each entry a link to its page.
+- `entries/<namespace>/<path>.html`, a page an entry: its number and title, its headings, paragraphs, steps, words
+  explained, tables, listings, captions and links, its recipes as lines ("Block of Iron, made from Iron Ingot, Coal
+  (Test Press)"), and the entries before and after it.
+- `style.css`, a plain page like paper that follows the reader's light or dark setting, and `search.js`, every
+  entry's words with its recipes', so the search finds the entries holding every word typed with no server.
+
+It is written in the player's language, with the recipes of the world they are in, so a server's modpack can put its
+manual online as it plays. `GuideSite.files(reader, text, recipes, language)` builds the same files from a
+`ManualReader`, for a tool of your own; a test builds it with no game at all.
 
 ## What can go wrong
 

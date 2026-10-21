@@ -93,6 +93,10 @@ resources (in IntelliJ, Build), and look again: nothing to press. A packed game 
 of a format only the Core reads) reads the models alone again, at once, instead of every resource; an open preview of
 a model shows the change ([Models](MODELS.md#while-you-build)).
 
+*Added 2026-10-21.* A change to nothing but the manuals' files (anything in a namespace's `guide` folder) reads the
+manuals alone again, at once, and an open manual lays itself out anew where its reader is
+([Manuals](MANUALS.md#writing-while-the-game-runs)).
+
 ## Tools for screens
 
 *Added 2026-10-21.*

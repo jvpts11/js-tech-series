@@ -10,13 +10,16 @@ package dev.jstech.core.integration.jei;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.client.recipeview.IKeepsViewersClear;
+import dev.jstech.core.client.recipeview.IRecipeViewer;
 import dev.jstech.core.client.recipeview.MultiblockRecipeViews;
 import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
+import dev.jstech.core.client.recipeview.RecipeViewers;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.multipart.MicroblockRecipes;
 import dev.jstech.core.multipart.MicroblockShowcase;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -51,6 +54,9 @@ import org.jetbrains.annotations.Nullable;
  */
 @JeiPlugin
 public final class CoreJeiPlugin implements IModPlugin {
+
+    /* JEI as the Core's screens ask it, added to the viewers running once JEI is. */
+    private static final IRecipeViewer VIEWER = new JeiViewer();
 
     @Nullable
     private static IJeiRuntime runtime;
@@ -127,6 +133,7 @@ public final class CoreJeiPlugin implements IModPlugin {
     @Override
     public void onRuntimeAvailable(final IJeiRuntime jeiRuntime) {
         runtime = jeiRuntime;
+        RecipeViewers.add(VIEWER);
     }
 
     @Override
@@ -196,9 +203,64 @@ public final class CoreJeiPlugin implements IModPlugin {
         return true;
     }
 
+    /** Opens JEI's recipe screen on what {@code stack} goes into; false before JEI is running. */
+    public static boolean showUsesOf(final ItemStack stack) {
+        final IJeiRuntime running = runtime;
+        if (running == null) {
+            return false;
+        }
+        running.getRecipesGui().show(running.getJeiHelpers().getFocusFactory()
+                .createFocus(RecipeIngredientRole.INPUT, VanillaTypes.ITEM_STACK, stack));
+        return true;
+    }
+
+    /** Narrows JEI's ingredient list to what the words find, as typing them in its search does (client tests do). */
+    public static boolean search(final String words) {
+        final IJeiRuntime running = runtime;
+        if (running == null) {
+            return false;
+        }
+        running.getIngredientFilter().setFilterText(words);
+        return true;
+    }
+
     /** The recipes of {@code kind} the player's game was sent, or none before it joined a world. */
     private static List<RecipeHolder<ProcessingRecipe>> recipesOf(final ProcessingKind kind) {
         final ClientLevel level = Minecraft.getInstance().level;
         return level == null ? List.of() : level.getRecipeManager().getAllRecipesFor(kind.type());
+    }
+
+    /* JEI as the Core's screens ask it: its recipe screen first, then its ingredient list and its bookmarks. */
+    private static final class JeiViewer implements IRecipeViewer {
+
+        @Override
+        public boolean showRecipesOf(final ItemStack stack) {
+            return CoreJeiPlugin.showRecipesOf(stack);
+        }
+
+        @Override
+        public boolean showUsesOf(final ItemStack stack) {
+            return CoreJeiPlugin.showUsesOf(stack);
+        }
+
+        @Override
+        public ItemStack hovered() {
+            final IJeiRuntime running = runtime;
+            if (running == null) {
+                return ItemStack.EMPTY;
+            }
+            final Optional<ItemStack> inRecipe = running.getRecipesGui().getIngredientUnderMouse(
+                    VanillaTypes.ITEM_STACK);
+            if (inRecipe.isPresent()) {
+                return inRecipe.get();
+            }
+            final ItemStack listed = running.getIngredientListOverlay().getIngredientUnderMouse(
+                    VanillaTypes.ITEM_STACK);
+            if (listed != null) {
+                return listed;
+            }
+            final ItemStack bookmarked = running.getBookmarkOverlay().getIngredientUnderMouse(VanillaTypes.ITEM_STACK);
+            return bookmarked == null ? ItemStack.EMPTY : bookmarked;
+        }
     }
 }

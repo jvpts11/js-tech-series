@@ -12,7 +12,9 @@ import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -21,7 +23,7 @@ import java.util.function.UnaryOperator;
 /**
  * One piece of a manual's entry: a paragraph, a heading, a figure, a picture, a table, the recipes of a kind, numbered
  * steps, a warning, the problems and their fixes, a word explained, links to other entries, a command's page, a scene
- * of blocks the reader turns, a multiblock drawn as one, or a special block another mod draws.
+ * of blocks the reader turns, a multiblock or a saved structure drawn as one, or a special block another mod draws.
  *
  * <p>An entry is a list of these, laid out on the pages in the order given. Words are never held here, only the keys
  * of the sentences, so a manual reads in each player's language and a resource pack can reword it. Ids are text in
@@ -80,9 +82,12 @@ public sealed interface GuideBlock {
      * @param width      how wide it is drawn, in the page's pixels; 0 for the whole column
      * @param height     how tall it is drawn
      * @param captionKey the caption's sentence
+     * @param frames     how many pictures the image holds one under the other, shown in turn as the game shows an
+     *                   animated texture; 1 for a still picture
+     * @param frameTicks how many ticks each of them is shown
      */
-    record Picture(String image, String drawing, String data, int width, int height, String captionKey)
-            implements GuideBlock {
+    record Picture(String image, String drawing, String data, int width, int height, String captionKey, int frames,
+                   int frameTicks) implements GuideBlock {
 
         public Picture {
             image = image == null ? "" : image;
@@ -95,6 +100,24 @@ public sealed interface GuideBlock {
             if (width < 0 || height < 1) {
                 throw new IllegalArgumentException("a picture has a size; got " + width + " by " + height);
             }
+            if (frames < 1 || frameTicks < 1) {
+                throw new IllegalArgumentException("a picture shows a frame at least, each a tick at least; got "
+                        + frames + " frames of " + frameTicks + " ticks");
+            }
+            if (frames > 1 && image.isEmpty()) {
+                throw new IllegalArgumentException("only an image is a strip of frames, never a drawing");
+            }
+        }
+
+        /** A still picture. */
+        public Picture(final String image, final String drawing, final String data, final int width,
+                       final int height, final String captionKey) {
+            this(image, drawing, data, width, height, captionKey, 1, 1);
+        }
+
+        /** The frame shown at the game time {@code ticks}: the frames in turn, from the first again after the last. */
+        public int frameAt(final long ticks) {
+            return (int) Math.floorMod(ticks / this.frameTicks, (long) this.frames);
         }
     }
 
@@ -414,9 +437,11 @@ public sealed interface GuideBlock {
      * @param layers     whether the reader may peel it layer by layer
      * @param height     how tall it is drawn on the page, its strip of controls under it apart
      * @param captionKey the caption's sentence
+     * @param steps      the steps it is shown in, each putting blocks in and taking some out, under a sentence of
+     *                   its own, played in turn with a timeline under it; empty for a scene shown whole
      */
     record Scene(List<SceneBlock> blocks, SceneView view, List<SceneBalloon> balloons, boolean layers, int height,
-                 String captionKey) implements GuideBlock {
+                 String captionKey, List<SceneStep> steps) implements GuideBlock {
 
         /** How many blocks a scene's grid holds along each side: a scene is a small piece of a world, never a build. */
         public static final int GRID = 32;
@@ -429,7 +454,8 @@ public sealed interface GuideBlock {
             Objects.requireNonNull(view, "view");
             balloons = List.copyOf(balloons);
             Objects.requireNonNull(captionKey, "captionKey");
-            if (blocks.isEmpty()) {
+            steps = List.copyOf(steps);
+            if (blocks.isEmpty() && steps.stream().allMatch(step -> step.put().isEmpty())) {
                 throw new IllegalArgumentException("a scene holds a block at least");
             }
             if (height < MIN_HEIGHT || height > MAX_HEIGHT) {
@@ -451,38 +477,87 @@ public sealed interface GuideBlock {
             }
         }
 
+        /** A scene shown whole, in no steps. */
+        public Scene(final List<SceneBlock> blocks, final SceneView view, final List<SceneBalloon> balloons,
+                     final boolean layers, final int height, final String captionKey) {
+            this(blocks, view, balloons, layers, height, captionKey, List.of());
+        }
+
         /**
-         * How many blocks it spans across, from its westmost block to its eastmost: a scene is framed round its blocks
-         * wherever in the grid they stand.
+         * How many blocks it spans across, from its westmost block to its eastmost: a scene is framed round every
+         * block it shows in any of its steps, wherever in the grid they stand, so its frame holds still as it plays.
          */
         public int width() {
-            return this.blocks.stream().mapToInt(SceneBlock::x).max().orElse(0) - this.fromX() + 1;
+            return this.everyBlock().stream().mapToInt(SceneBlock::x).max().orElse(0) - this.fromX() + 1;
         }
 
         /** The grid line its westmost block stands on, where its frame starts across. */
         public int fromX() {
-            return this.blocks.stream().mapToInt(SceneBlock::x).min().orElse(0);
+            return this.everyBlock().stream().mapToInt(SceneBlock::x).min().orElse(0);
         }
 
         /** The grid line its northmost block stands on, where its frame starts back. */
         public int fromZ() {
-            return this.blocks.stream().mapToInt(SceneBlock::z).min().orElse(0);
+            return this.everyBlock().stream().mapToInt(SceneBlock::z).min().orElse(0);
         }
 
         /** How many blocks it stands tall: its layers, when it is peeled. */
         public int tall() {
-            return this.blocks.stream().mapToInt(SceneBlock::y).max().orElse(0) + 1;
+            return this.everyBlock().stream().mapToInt(SceneBlock::y).max().orElse(0) + 1;
         }
 
         /** How many blocks deep it goes, from its northmost block to its southmost. */
         public int depth() {
-            return this.blocks.stream().mapToInt(SceneBlock::z).max().orElse(0) - this.fromZ() + 1;
+            return this.everyBlock().stream().mapToInt(SceneBlock::z).max().orElse(0) - this.fromZ() + 1;
         }
 
-        /** The block standing there, if one does. */
+        /** The block standing there before any step, if one does. */
         public Optional<SceneBlock> at(final int x, final int y, final int z) {
             return this.blocks.stream().filter(block -> block.x() == x && block.y() == y && block.z() == z)
                     .findFirst();
+        }
+
+        /** Every block it shows in any of its steps, those it starts with first. */
+        public List<SceneBlock> everyBlock() {
+            if (this.steps.isEmpty()) {
+                return this.blocks;
+            }
+            final List<SceneBlock> every = new ArrayList<>(this.blocks);
+            this.steps.forEach(step -> every.addAll(step.put()));
+            return every;
+        }
+
+        /**
+         * The blocks standing once the step {@code step} (from 0) is done: those it starts with, then each step's in
+         * turn, a block put where one stands taking its place and a place taken emptied. Past its last step, the last
+         * step's; a scene with no steps always stands whole.
+         */
+        public List<SceneBlock> blocksAt(final int step) {
+            if (this.steps.isEmpty()) {
+                return this.blocks;
+            }
+            final Map<Integer, SceneBlock> standing = new LinkedHashMap<>();
+            this.blocks.forEach(block -> standing.put(place(block.x(), block.y(), block.z()), block));
+            for (int i = 0; i <= Math.min(step, this.steps.size() - 1); i++) {
+                final SceneStep done = this.steps.get(i);
+                done.take().forEach(part -> standing.remove(place(part.x(), part.y(), part.z())));
+                done.put().forEach(block -> standing.put(place(block.x(), block.y(), block.z()), block));
+            }
+            return List.copyOf(standing.values());
+        }
+
+        /**
+         * The blocks standing once the step {@code step} is done laid out as places of the world, for the scene to be
+         * shown there as a multiblock is shown before it is built: the scene's front to the south, as the book first
+         * shows a scene, its west to the west.
+         */
+        public ShapePreview inWorld(final int step) {
+            final List<ShapePreview.Ghost> places = new ArrayList<>();
+            for (final SceneBlock block : this.blocksAt(step)) {
+                places.add(new ShapePreview.Ghost(block.x(), block.y(), -block.z(), 0, List.of(block.block()),
+                        List.of(), false));
+            }
+            return ShapePreview.of(places);
         }
 
         /** A place of the grid as one number, so two blocks in one place are told apart from two in two places. */
@@ -516,6 +591,30 @@ public sealed interface GuideBlock {
         public String block() {
             final int open = this.state.indexOf('[');
             return open < 0 ? this.state : this.state.substring(0, open);
+        }
+    }
+
+    /**
+     * A step of a scene shown step by step: what it puts in and takes out of the scene, under a sentence of its own
+     * shown over the picture ("2 of 3: Put the chest beside the furnace"), and how long it is shown before the next.
+     *
+     * @param captionKey its sentence
+     * @param put        the blocks it puts in, each in its place, one put where a block stands taking its place
+     * @param take       the places it empties, each a whole block
+     * @param ticks      how long it is shown while the scene plays, in ticks
+     */
+    record SceneStep(String captionKey, List<SceneBlock> put, List<ScenePart> take, int ticks) {
+
+        /** How long a step is shown when its scene says nothing: two seconds. */
+        public static final int TICKS = 40;
+
+        public SceneStep {
+            Objects.requireNonNull(captionKey, "captionKey");
+            put = List.copyOf(put);
+            take = List.copyOf(take);
+            if (ticks < 1) {
+                throw new IllegalArgumentException("a step is shown a tick at least; got " + ticks);
+            }
         }
     }
 
@@ -672,6 +771,85 @@ public sealed interface GuideBlock {
         /** The scene it is drawn as, of {@code blocks}: peeled layer by layer, with no balloons. */
         public Scene scene(final List<SceneBlock> blocks) {
             return new Scene(blocks, this.view, List.of(), true, this.height, this.captionKey);
+        }
+    }
+
+    /**
+     * A structure saved with the game's structure block, drawn as a scene the reader turns, brings nearer and peels
+     * layer by layer, numbered with the figures: its blocks are read from the structure's file in the mod's assets,
+     * {@code assets/<namespace>/jstech/structures/<path>.nbt}, as the manual is read, so building it in the game and
+     * saving it is how its scene is made. Where the file is missing, or holds a structure too big for a scene, it is
+     * left out.
+     *
+     * @param structure  the structure's id, {@code namespace:path}
+     * @param view       how the book first shows it, and what Reset goes back to
+     * @param height     how tall it is drawn on the page, its strip of controls under it apart
+     * @param captionKey the caption's sentence
+     */
+    record Structure(String structure, SceneView view, int height, String captionKey) implements GuideBlock {
+
+        /** The blocks a structure's file lists that a scene leaves empty: air, and the structure's own void. */
+        public static final Set<String> EMPTY = Set.of("minecraft:air", "minecraft:cave_air", "minecraft:void_air",
+                "minecraft:structure_void");
+
+        public Structure {
+            Objects.requireNonNull(structure, "structure");
+            Objects.requireNonNull(view, "view");
+            Objects.requireNonNull(captionKey, "captionKey");
+            if (structure.isBlank()) {
+                throw new IllegalArgumentException("a structure's scene names the structure");
+            }
+            if (height < Scene.MIN_HEIGHT || height > Scene.MAX_HEIGHT) {
+                throw new IllegalArgumentException("a scene is drawn " + Scene.MIN_HEIGHT + " to " + Scene.MAX_HEIGHT
+                        + " pixels tall; got " + height);
+            }
+        }
+
+        /**
+         * The blocks of a saved structure {@code sizeX} by {@code sizeY} by {@code sizeZ} as a scene holds them: each
+         * where it stood, the structure's south made the scene's front (a structure counts back to the south, a
+         * scene to the north), air and the structure's void left empty; none at all for a structure too big for a
+         * scene.
+         */
+        public static List<SceneBlock> blocksOf(final int sizeX, final int sizeY, final int sizeZ,
+                                                final List<Saved> saved) {
+            if (sizeX > Scene.GRID || sizeY > Scene.GRID || sizeZ > Scene.GRID || sizeX < 1 || sizeY < 1
+                    || sizeZ < 1) {
+                return List.of();
+            }
+            final List<SceneBlock> blocks = new ArrayList<>();
+            for (final Saved block : saved) {
+                final String id = block.state().indexOf('[') < 0 ? block.state()
+                        : block.state().substring(0, block.state().indexOf('['));
+                if (!EMPTY.contains(id) && block.x() >= 0 && block.x() < sizeX && block.y() >= 0
+                        && block.y() < sizeY && block.z() >= 0 && block.z() < sizeZ) {
+                    blocks.add(new SceneBlock(block.x(), block.y(), sizeZ - 1 - block.z(), block.state(),
+                            block.data()));
+                }
+            }
+            return List.copyOf(blocks);
+        }
+
+        /** The scene it is drawn as, of {@code blocks}: peeled layer by layer, with no balloons. */
+        public Scene scene(final List<SceneBlock> blocks) {
+            return new Scene(blocks, this.view, List.of(), true, this.height, this.captionKey);
+        }
+
+        /**
+         * A block as a structure's file holds it, where it stands in the structure.
+         *
+         * @param x     across, from the structure's west side
+         * @param y     up
+         * @param z     back to the south, as the game counts
+         * @param state the block and its properties, as the game writes a block's state
+         * @param data  what its block entity holds, as the game writes a compound tag, or empty
+         */
+        public record Saved(int x, int y, int z, String state, String data) {
+
+            public Saved {
+                Objects.requireNonNull(state, "state");
+                data = data == null ? "" : data;
+            }
         }
     }
 

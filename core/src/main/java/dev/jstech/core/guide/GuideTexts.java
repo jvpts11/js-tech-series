@@ -68,11 +68,53 @@ public final class GuideTexts {
     public static final TextKey SCENE_ALL_LAYERS = TextKey.of("jscore.guide.scene_all_layers", "All layers");
     public static final TextKey SCENE_FEWER = TextKey.of("jscore.guide.scene_fewer", "Hide the top layer");
     public static final TextKey SCENE_MORE = TextKey.of("jscore.guide.scene_more", "Show the next layer");
+    /** The reader's marks: the bookmarks and their list, notes in the margin, and what the contents say beside. */
+    public static final TextKey BOOKMARKS = TextKey.of("jscore.guide.bookmarks", "Bookmarks");
+    public static final TextKey BOOKMARKS_TIP = TextKey.of("jscore.guide.bookmarks_tip",
+            "Right click a page to write a note in its margin");
+    public static final TextKey NO_BOOKMARKS = TextKey.of("jscore.guide.no_bookmarks", "No bookmarks yet");
+    public static final TextKey MARK_PAGE = TextKey.of("jscore.guide.mark_page", "+ Mark this page");
+    public static final TextKey NOTE_EMPTY = TextKey.of("jscore.guide.note_empty", "Write a note...");
+    public static final TextKey MARK_NEW = TextKey.of("jscore.guide.mark_new", "NEW");
+    public static final TextKey MARK_NOT_YET = TextKey.of("jscore.guide.mark_not_yet", "not yet");
+    /** A scene shown step by step: the step over its picture, its number read as text, and its timeline's words. */
+    public static final TextKey SCENE_STEP = TextKey.of("jscore.guide.scene_step", "%s of %s: %s");
+    public static final TextKey SCENE_STEP_NUMBER = TextKey.of("jscore.guide.scene_step_number", "Step %s");
+    public static final TextKey SCENE_STEP_SHORT = TextKey.of("jscore.guide.scene_step_short", "%s/%s");
+    public static final TextKey SCENE_BACK = TextKey.of("jscore.guide.scene_back", "The step before");
+    public static final TextKey SCENE_PAUSE = TextKey.of("jscore.guide.scene_pause", "Pause");
+    public static final TextKey SCENE_PLAY = TextKey.of("jscore.guide.scene_play", "Play");
+    public static final TextKey SCENE_FORWARD = TextKey.of("jscore.guide.scene_forward", "The next step");
+    /** Shows a scene's blocks in the world, in front of the reader, through the Structure Projector's ghosts. */
+    public static final TextKey SCENE_IN_WORLD = TextKey.of("jscore.guide.scene_in_world", "In world");
+    public static final TextKey SCENE_IN_WORLD_TIP = TextKey.of("jscore.guide.scene_in_world_tip",
+            "Shows these blocks in the world in front of you, as the Structure Projector shows a multiblock");
 
     /** The search of the whole manual: its index and every line of its pages. */
     public static final TextKey SEARCH = TextKey.of("jscore.guide.search", "Search the manual");
     public static final TextKey FOUND = TextKey.of("jscore.guide.found", "%s found");
     public static final TextKey FOUND_NONE = TextKey.of("jscore.guide.found_none", "Nothing by that name");
+    /** How many were found when recipes are among them: on pages, in recipes made and in recipes it goes into. */
+    public static final TextKey FOUND_SPLIT = TextKey.of("jscore.guide.found_split",
+            "%s found: pages %s, recipes %s, uses %s");
+    /** What a recipe found stands under: one making what was looked for, or one it goes into. */
+    public static final TextKey FOUND_RECIPE = TextKey.of("jscore.guide.found_recipe", "Recipe");
+    public static final TextKey FOUND_USE = TextKey.of("jscore.guide.found_use", "Used in");
+
+    /** The button that tears a copy of a page out of the book, and what it says of the copy. */
+    public static final TextKey TEAR = TextKey.of("jscore.guide.tear", "Tear out a copy of this page");
+    public static final TextKey TEAR_TIP = TextKey.of("jscore.guide.tear_tip",
+            "The page on the left, as a sheet to frame or hand on; the manual keeps it");
+    /** The strip under a manual read from a lectern: where the lectern is, and its two buttons. */
+    public static final TextKey LECTERN_AT = TextKey.of("jscore.guide.lectern_at", "On the lectern at %s, %s, %s");
+    public static final TextKey LECTERN_TAKE = TextKey.of("jscore.guide.lectern_take", "Take");
+    public static final TextKey LECTERN_CLOSE = TextKey.of("jscore.guide.lectern_close", "Close");
+
+    /** The manual as a website: the links between its pages, and a recipe written out as words. */
+    public static final TextKey SITE_PREVIOUS = TextKey.of("jscore.guide.site.previous", "Previous: %s");
+    public static final TextKey SITE_NEXT = TextKey.of("jscore.guide.site.next", "Next: %s");
+    public static final TextKey SITE_RECIPE = TextKey.of("jscore.guide.site.recipe", "%s, made from %s");
+    public static final TextKey SITE_RECIPE_BY = TextKey.of("jscore.guide.site.recipe_by", "%s, made from %s (%s)");
 
     /** The key that opens an item's page, and the line its tooltip carries. */
     public static final TextKey OPEN_KEY = TextKey.of("key.jscore.open_in_manual", "Open Its Page in the Manual");

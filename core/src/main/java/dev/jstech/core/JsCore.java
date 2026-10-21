@@ -110,6 +110,9 @@ import dev.jstech.core.gui.style.StyleSettings;
 import dev.jstech.core.gui.tooltip.TooltipSettings;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideGifts;
+import dev.jstech.core.guide.GuideTips;
+import dev.jstech.core.guide.ManualLecterns;
+import dev.jstech.core.guide.TornSheets;
 import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.integration.accessories.AccessoriesIntegration;
@@ -356,6 +359,9 @@ public final class JsCore {
         CoreFonts.declare();
         // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.
         CoreGuide.declare();
+        // A page of a manual torn out as a sheet, and the tip of the first time an item a manual explains is picked up.
+        TornSheets.declare();
+        GuideTips.declare();
         // The series' one creative tab of what its mods share, showing only what the installed mods use.
         JsTechTab.declare();
         // The open catalogue every mod adds to: the forms, the properties, the mineral families and the rocks ores sit
@@ -469,6 +475,8 @@ public final class JsCore {
         ConfigFiles.register(AccessibilitySettings.FILE, modEventBus, modContainer);
         // Where a player put the HUD's elements in the HUD editor, read on their own game only.
         ConfigFiles.register(HudSettings.FILE, modEventBus, modContainer);
+        // Whether the manuals' tips come to a player, read on their own game only.
+        ConfigFiles.register(GuideTips.FILE, modEventBus, modContainer);
         // The kinds of component a screen's file may hold, before any file is read.
         CoreElements.declare();
         ControlElements.declare();
@@ -536,6 +544,8 @@ public final class JsCore {
         SignalRadio.listen();
         Machines.listen(modEventBus);
         MachineWrench.listen(modEventBus);
+        TornSheets.listen(modEventBus);
+        ManualLecterns.listen(modEventBus);
         HeatPorts.listen(modEventBus);
         BlockConductivity.listen(modEventBus);
         MechanicalPorts.listen(modEventBus);

@@ -1,0 +1,115 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.steps.what"
+    },
+    {
+      "type": "scene",
+      "blocks": [
+        {
+          "state": "minecraft:grass_block",
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "state": "minecraft:grass_block",
+          "x": 1,
+          "y": 0,
+          "z": 0
+        }
+      ],
+      "caption": "jstests.guide.steps.figure1",
+      "height": 90,
+      "steps": [
+        {
+          "put": [
+            {
+              "state": "minecraft:furnace[facing=south]",
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          ],
+          "text": "jstests.guide.steps.figure1_step1",
+          "ticks": 20
+        },
+        {
+          "put": [
+            {
+              "state": "minecraft:chest[facing=south]",
+              "x": 1,
+              "y": 1,
+              "z": 0
+            }
+          ],
+          "text": "jstests.guide.steps.figure1_step2",
+          "ticks": 20
+        },
+        {
+          "take": [
+            {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          ],
+          "text": "jstests.guide.steps.figure1_step3",
+          "ticks": 20
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.steps.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.steps.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.steps.use1",
+        "jstests.guide.steps.use2",
+        "jstests.guide.steps.use3",
+        "jstests.guide.steps.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.steps.fix1",
+          "problem": "jstests.guide.steps.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:chest",
+  "id": "jstests:steps",
+  "order": 7,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.steps.title"
+}

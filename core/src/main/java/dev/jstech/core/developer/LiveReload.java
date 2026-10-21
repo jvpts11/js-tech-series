@@ -35,7 +35,8 @@ import org.slf4j.Logger;
  * of the run is loaded from are watched, and once their files stop changing for a moment the server reloads its data
  * packs and the player's game its resources, as {@code /reload} and F3+T would, without anyone asking. A change to
  * nothing but the files of the Core's models (their models, animations and definitions) reads the models alone
- * again, at once, instead of every resource. A packed game watches nothing.
+ * again, at once, instead of every resource; one to nothing but the manuals' files reads the manuals alone again, and
+ * a manual open lays itself out anew where its reader is. A packed game watches nothing.
  */
 public final class LiveReload {
 
@@ -44,7 +45,11 @@ public final class LiveReload {
     private static final long QUIET_MILLIS = 750;
     private static final ResourceChanges ASSETS = new ResourceChanges(QUIET_MILLIS);
     private static final ResourceChanges MODELS = new ResourceChanges(QUIET_MILLIS);
+    private static final ResourceChanges GUIDES = new ResourceChanges(QUIET_MILLIS);
     private static final ResourceChanges DATA = new ResourceChanges(QUIET_MILLIS);
+    /* The folder of a namespace's assets the manuals are read from. */
+    private static final String GUIDE_FOLDER = "guide";
+    private static final String ASSETS_FOLDER = "assets";
     private static final AtomicInteger DATA_RELOADS = new AtomicInteger();
     /* What each watched folder holds, assets or data, by the key the watch service hands back for it. */
     private static final Map<WatchKey, Boolean> HOLDS_ASSETS = new ConcurrentHashMap<>();
@@ -69,7 +74,7 @@ public final class LiveReload {
         try {
             final WatchService service = FileSystems.getDefault().newWatchService();
             for (final Path root : roots) {
-                register(service, root.resolve("assets"), true);
+                register(service, root.resolve(ASSETS_FOLDER), true);
                 register(service, root.resolve("data"), false);
             }
             if (HOLDS_ASSETS.isEmpty()) {
@@ -102,6 +107,14 @@ public final class LiveReload {
      */
     public static int takeModelChanges() {
         return MODELS.take(System.currentTimeMillis());
+    }
+
+    /**
+     * How many files of the manuals changed and have since stayed as they are, for the player's game to read its
+     * manuals again; once.
+     */
+    public static int takeGuideChanges() {
+        return GUIDES.take(System.currentTimeMillis());
     }
 
     /** How many times the server reloaded its data packs for a change; for a test to look at. */
@@ -168,7 +181,8 @@ public final class LiveReload {
                         LOGGER.warn("a new folder cannot be watched: {}", changed, unwatchable);
                     }
                 }
-                final ResourceChanges changes = !assets ? DATA : modelFile(changed) ? MODELS : ASSETS;
+                final ResourceChanges changes = !assets ? DATA : modelFile(changed) ? MODELS
+                        : guideFile(changed) ? GUIDES : ASSETS;
                 changes.changed(System.currentTimeMillis());
             }
             if (!key.reset()) {
@@ -190,5 +204,16 @@ public final class LiveReload {
         }
         final String name = changed.getFileName().toString();
         return ModelReaders.readsModel(name) && !name.endsWith(".geo.json");
+    }
+
+    /* Whether a changed file is one of a manual's: anything in a namespace's guide folder, which only manuals read. */
+    private static boolean guideFile(final Path changed) {
+        for (int i = 0; i + 2 < changed.getNameCount(); i++) {
+            if (changed.getName(i).toString().equals(ASSETS_FOLDER)
+                    && changed.getName(i + 2).toString().equals(GUIDE_FOLDER)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

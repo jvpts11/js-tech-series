@@ -188,6 +188,9 @@ import dev.jstech.tests.clienttest.series.PipeClientTests;
 import dev.jstech.tests.clienttest.series.SignalProbeClientTests;
 import dev.jstech.tests.clienttest.series.SpacePersistorClientTests;
 import dev.jstech.tests.clienttest.series.ManualClientTests;
+import dev.jstech.tests.clienttest.series.ManualRecipeViewClientTests;
+import dev.jstech.tests.clienttest.series.ManualImmersionClientTests;
+import dev.jstech.tests.clienttest.series.ManualSiteClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -244,6 +247,9 @@ public final class ClientTestSuite {
             MovingStructureToolsClientTests.class,
             WorldStabilityClientTests.class,
             ManualClientTests.class,
+            ManualRecipeViewClientTests.class,
+            ManualSiteClientTests.class,
+            ManualImmersionClientTests.class,
             SeriesManualsClientTests.class,
             BookStylesClientTests.class,
             GuideScenesClientTests.class,

@@ -148,11 +148,19 @@ public sealed interface GuidePiece {
     /**
      * A picture in the room given: an image the mod ships, drawn to that size, or a drawing a mod's renderer makes.
      *
-     * @param image   the texture, or empty for a drawing
-     * @param drawing the kind of drawing, or empty for an image
+     * @param image      the texture, or empty for a drawing
+     * @param drawing    the kind of drawing, or empty for an image
+     * @param frames     how many pictures the texture holds one under the other, shown in turn; 1 for a still one
+     * @param frameTicks how many ticks each is shown
      */
-    record Picture(int x, int y, int width, int height, String image, String drawing, String data)
-            implements GuidePiece {
+    record Picture(int x, int y, int width, int height, String image, String drawing, String data, int frames,
+                   int frameTicks) implements GuidePiece {
+
+        /** A still picture. */
+        public Picture(final int x, final int y, final int width, final int height, final String image,
+                       final String drawing, final String data) {
+            this(x, y, width, height, image, drawing, data, 1, 1);
+        }
     }
 
     /**

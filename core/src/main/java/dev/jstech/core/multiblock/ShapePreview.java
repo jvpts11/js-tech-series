@@ -34,8 +34,11 @@ public record ShapePreview(List<Ghost> ghosts, int minX, int minY, int minZ, int
         ghosts = List.copyOf(ghosts);
     }
 
-    /** Lays out {@code places}, each an offset from the controller with what goes there, the controller's included. */
-    static ShapePreview of(final List<Ghost> places) {
+    /**
+     * Lays out {@code places}, each an offset from the controller with what goes there, the controller's included:
+     * also blocks that are no multiblock, such as a manual's scene shown in the world, with no controller among them.
+     */
+    public static ShapePreview of(final List<Ghost> places) {
         final int[] lo = {0, 0, 0};
         final int[] hi = {0, 0, 0};
         for (final Ghost ghost : places) {

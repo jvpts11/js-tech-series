@@ -354,6 +354,19 @@ public final class ManualReader {
                                     balloon.detailKey().isEmpty() ? this.text.text(balloon.key())
                                             : this.text.text(balloon.key()) + ". " + this.text.text(
                                             balloon.detailKey()))));
+                    // A scene shown step by step reads as its steps, in order.
+                    for (int step = 0; step < scene.steps().size(); step++) {
+                        pieces.add(new Piece.Item(this.text.text(GuideTexts.SCENE_STEP_NUMBER.key(), step + 1),
+                                this.text.text(scene.steps().get(step).captionKey())));
+                    }
+                }
+                // Read as text, a saved structure is its caption, numbered with the figures, where its file is.
+                case GuideBlock.Structure structure -> {
+                    if (!this.text.structure(structure.structure()).isEmpty()) {
+                        figures++;
+                        pieces.add(new Piece.Picture("", this.text.text(GuideTexts.FIGURE.key(), chapterNo + "-"
+                                + figures) + " " + this.text.text(structure.captionKey())));
+                    }
                 }
                 // Read as text, a multiblock is its caption, numbered with the figures, where it is installed.
                 case GuideBlock.Multiblock multiblock -> {

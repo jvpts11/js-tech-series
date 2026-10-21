@@ -1,0 +1,57 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.locked_idea.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.locked_idea.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.locked_idea.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.locked_idea.use1"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.locked_idea.fix1",
+          "problem": "jstests.guide.locked_idea.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:iron_bars",
+  "id": "jstests:locked_idea",
+  "needs": "jstests:test_unreached",
+  "order": 9,
+  "section": "jstests:locked",
+  "title": "jstests.guide.locked_idea.title"
+}

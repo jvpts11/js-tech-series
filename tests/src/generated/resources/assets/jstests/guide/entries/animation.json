@@ -1,0 +1,66 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.animation.what"
+    },
+    {
+      "type": "picture",
+      "caption": "jstests.guide.animation.figure1",
+      "data": {},
+      "frame_ticks": 10,
+      "frames": 2,
+      "height": 32,
+      "image": "jstests:guide/blink",
+      "width": 64
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.animation.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.animation.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.animation.use1"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.animation.fix1",
+          "problem": "jstests.guide.animation.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:redstone_lamp",
+  "id": "jstests:animation",
+  "order": 10,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.animation.title"
+}

@@ -194,8 +194,33 @@ public final class ModGuide {
 
         private final List<Supplier<GuideBlock.SceneBlock>> blocks = new ArrayList<>();
         private final List<GuideBlock.SceneBalloon> balloons = new ArrayList<>();
+        private final List<StepDraft> steps = new ArrayList<>();
         private GuideBlock.SceneView view = GuideBlock.SceneView.CORNER;
         private boolean layers;
+
+        /* Where a block placed now goes: the last step's, once a step is begun, else the scene's own. */
+        private List<Supplier<GuideBlock.SceneBlock>> placing() {
+            return this.steps.isEmpty() ? this.blocks : this.steps.getLast().put;
+        }
+
+        private List<GuideBlock.SceneStep> steps() {
+            return this.steps.stream().map(step -> new GuideBlock.SceneStep(step.key,
+                    step.put.stream().map(Supplier::get).toList(), step.take, step.ticks)).toList();
+        }
+    }
+
+    /* A step of a scene being declared: its sentence's key, what it puts and takes, and how long it is shown. */
+    private static final class StepDraft {
+
+        private final String key;
+        private final int ticks;
+        private final List<Supplier<GuideBlock.SceneBlock>> put = new ArrayList<>();
+        private final List<GuideBlock.ScenePart> take = new ArrayList<>();
+
+        private StepDraft(final String key, final int ticks) {
+            this.key = key;
+            this.ticks = ticks;
+        }
     }
 
     /** A chapter of the mod's, declared: its main one, or another when it has a path. */
@@ -348,6 +373,7 @@ public final class ModGuide {
         private List<GuideBlock.Callout> callouts;
         private List<Supplier<GuideBlock.PlanPart>> planParts;
         private SceneDraft scene;
+        private String needs = "";
 
         private EntryBuilder(final String path, final SectionRef section) {
             this.path = path;
@@ -467,6 +493,18 @@ public final class ModGuide {
             this.figures++;
             final String key = this.key("figure" + this.figures, caption);
             return this.add(() -> new GuideBlock.Picture(texture, "", "{}", width, height, key));
+        }
+
+        /**
+         * A picture that moves, as an animated texture of the game does: the texture holds {@code frames} pictures
+         * one under the other, each {@code width} by {@code height} as drawn, and shows each for {@code frameTicks}
+         * ticks in turn, from the first again after the last.
+         */
+        public EntryBuilder animation(final String texture, final int width, final int height, final int frames,
+                                      final int frameTicks, final String caption) {
+            this.figures++;
+            final String key = this.key("figure" + this.figures, caption);
+            return this.add(() -> new GuideBlock.Picture(texture, "", "{}", width, height, key, frames, frameTicks));
         }
 
         /**
@@ -709,7 +747,46 @@ public final class ModGuide {
             final SceneDraft draft = new SceneDraft();
             this.scene = draft;
             return this.add(() -> new GuideBlock.Scene(draft.blocks.stream().map(Supplier::get).toList(), draft.view,
-                    draft.balloons, draft.layers, height, key));
+                    draft.balloons, draft.layers, height, key, draft.steps()));
+        }
+
+        /**
+         * Begins a step of the last scene, shown under {@code caption} in English for two seconds as the scene plays:
+         * the blocks placed after it are put in by this step, and {@link #take} empties places. The blocks placed
+         * before the first step are what the scene starts with.
+         */
+        public EntryBuilder step(final String caption) {
+            return this.step(caption, GuideBlock.SceneStep.TICKS);
+        }
+
+        /** Begins a step of the last scene shown for {@code ticks} ticks as the scene plays. */
+        public EntryBuilder step(final String caption, final int ticks) {
+            final SceneDraft draft = this.sceneDraft();
+            final String key = this.key("figure" + this.figures + "_step" + (draft.steps.size() + 1), caption);
+            draft.steps.add(new StepDraft(key, ticks));
+            return this;
+        }
+
+        /** Empties a place of the last scene in its last step: the block standing there goes. */
+        public EntryBuilder take(final int x, final int y, final int z) {
+            final SceneDraft draft = this.sceneDraft();
+            if (draft.steps.isEmpty()) {
+                throw new IllegalStateException("a block is taken out by a step of its scene");
+            }
+            draft.steps.getLast().take.add(GuideBlock.ScenePart.of(x, y, z));
+            return this;
+        }
+
+        /**
+         * The structure of {@code id}, saved with the game's structure block and shipped in the mod's assets as
+         * {@code assets/<namespace>/jstech/structures/<path>.nbt}, as a scene of the figures, {@code height} pixels
+         * tall, peeled layer by layer; left out where its file is missing.
+         */
+        public EntryBuilder structure(final String caption, final ResourceLocation id, final int height) {
+            this.figures++;
+            final String key = this.key("figure" + this.figures, caption);
+            final String structure = id.toString();
+            return this.add(() -> new GuideBlock.Structure(structure, GuideBlock.SceneView.CORNER, height, key));
         }
 
         /**
@@ -737,7 +814,7 @@ public final class ModGuide {
         public EntryBuilder place(final int x, final int y, final int z, final Supplier<? extends Block> block,
                                   final String properties, final String data) {
             final SceneDraft draft = this.sceneDraft();
-            draft.blocks.add(() -> new GuideBlock.SceneBlock(x, y, z,
+            draft.placing().add(() -> new GuideBlock.SceneBlock(x, y, z,
                     properties.isEmpty() ? blockId(block) : blockId(block) + "[" + properties + "]", data));
             return this;
         }
@@ -750,7 +827,7 @@ public final class ModGuide {
         public EntryBuilder place(final int x, final int y, final int z, final String blockId, final String properties,
                                   final String data) {
             final SceneDraft draft = this.sceneDraft();
-            draft.blocks.add(() -> new GuideBlock.SceneBlock(x, y, z,
+            draft.placing().add(() -> new GuideBlock.SceneBlock(x, y, z,
                     properties.isEmpty() ? blockId : blockId + "[" + properties + "]", data));
             return this;
         }
@@ -818,6 +895,15 @@ public final class ModGuide {
             return this.part(null, label.key(), true);
         }
 
+        /**
+         * The knowledge its reader's team needs before they can do what the entry says: until they know it, the
+         * contents say "not yet" beside the entry's section, and the entry is still there to read.
+         */
+        public EntryBuilder needs(final ResourceLocation knowledge) {
+            this.needs = knowledge.toString();
+            return this;
+        }
+
         public void register() {
             if (this.title == null) {
                 throw new IllegalStateException("the entry " + ModGuide.this.id(this.path) + " needs a title");
@@ -825,6 +911,7 @@ public final class ModGuide {
             final String id = ModGuide.this.claim(this.path);
             final String titleKey = this.key("title", this.title);
             final int order = ModGuide.this.entries.size();
+            final String knowledge = this.needs;
             final List<Supplier<GuideBlock>> declared = List.copyOf(this.blocks);
             final List<Supplier<? extends ItemLike>> items = List.copyOf(this.covers);
             final List<Supplier<? extends Collection<? extends ItemLike>>> groups = List.copyOf(this.families);
@@ -837,7 +924,7 @@ public final class ModGuide {
                 groups.forEach(group -> group.get().forEach(item -> covered.add(itemId(() -> item))));
                 final List<String> shows = showing.stream().map(ModGuide::itemId).toList();
                 return new GuideEntry(id, sectionId, order, titleKey, itemId(entryIcon), List.copyOf(covered),
-                        shows, declared.stream().map(Supplier::get).toList());
+                        shows, declared.stream().map(Supplier::get).toList(), knowledge);
             });
         }
 

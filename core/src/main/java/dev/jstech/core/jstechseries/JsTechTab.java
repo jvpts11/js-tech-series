@@ -10,6 +10,7 @@ package dev.jstech.core.jstechseries;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.TornSheets;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MaterialUses;
@@ -43,8 +44,10 @@ public final class JsTechTab {
 
     static {
         BLOCKS_AND_TOOLS.with(() -> CoreGuide.MANUAL);
-        // Every player has the series' manual, so the Core itself uses it.
+        BLOCKS_AND_TOOLS.with(() -> TornSheets.ITEM);
+        // Every player has the series' manual, so the Core itself uses it, and the sheets torn out of it.
         SharedUses.declare(JsCore.MODID, () -> CoreGuide.MANUAL);
+        SharedUses.declare(JsCore.MODID, () -> TornSheets.ITEM);
         // The things of the materials the installed mods use, which exist only once the game registered them, and
         // the liquids' buckets and the components of the shared catalogue the same way.
         MATERIALS.withEach(MaterialUses::sharedItems);

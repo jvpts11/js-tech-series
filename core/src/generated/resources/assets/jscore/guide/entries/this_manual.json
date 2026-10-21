@@ -35,7 +35,9 @@
         "jscore.guide.this_manual.use2",
         "jscore.guide.this_manual.use3",
         "jscore.guide.this_manual.use4",
-        "jscore.guide.this_manual.use5"
+        "jscore.guide.this_manual.use5",
+        "jscore.guide.this_manual.use6",
+        "jscore.guide.this_manual.use7"
       ]
     },
     {
@@ -59,7 +61,8 @@
   "icon": "jscore:technical_reference",
   "id": "jscore:this_manual",
   "items": [
-    "jscore:technical_reference"
+    "jscore:technical_reference",
+    "jscore:torn_sheet"
   ],
   "order": 3,
   "section": "jscore:manuals",

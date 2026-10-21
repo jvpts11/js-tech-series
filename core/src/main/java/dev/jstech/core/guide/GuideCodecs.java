@@ -74,7 +74,8 @@ public final class GuideCodecs {
             Codec.STRING.optionalFieldOf("icon", "").forGetter(GuideEntry::icon),
             Codec.STRING.listOf().optionalFieldOf("items", List.of()).forGetter(GuideEntry::items),
             Codec.STRING.listOf().optionalFieldOf("shows", List.of()).forGetter(GuideEntry::shows),
-            BLOCK.listOf().fieldOf("blocks").forGetter(GuideEntry::blocks)
+            BLOCK.listOf().fieldOf("blocks").forGetter(GuideEntry::blocks),
+            Codec.STRING.optionalFieldOf("needs", "").forGetter(GuideEntry::needs)
     ).apply(instance, GuideEntry::new));
 
     public static final Codec<GuideSection> SECTION = RecordCodecBuilder.create(instance -> instance.group(
@@ -265,9 +266,12 @@ public final class GuideCodecs {
                             JsonParser.parseString(picture.data()))),
                     Codec.INT.optionalFieldOf("width", 0).forGetter(GuideBlock.Picture::width),
                     Codec.INT.fieldOf("height").forGetter(GuideBlock.Picture::height),
-                    Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Picture::captionKey)
-            ).apply(instance, (image, drawing, data, width, height, caption) -> new GuideBlock.Picture(image,
-                    drawing, data.map(JsonElement::toString).orElse("{}"), width, height, caption)));
+                    Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Picture::captionKey),
+                    Codec.INT.optionalFieldOf("frames", 1).forGetter(GuideBlock.Picture::frames),
+                    Codec.INT.optionalFieldOf("frame_ticks", 1).forGetter(GuideBlock.Picture::frameTicks)
+            ).apply(instance, (image, drawing, data, width, height, caption, frames, frameTicks) ->
+                    new GuideBlock.Picture(image, drawing, data.map(JsonElement::toString).orElse("{}"), width,
+                            height, caption, frames, frameTicks)));
     private static final MapCodec<GuideBlock.Note> NOTE = RecordCodecBuilder.mapCodec(instance ->
             instance.group(Codec.STRING.fieldOf("text").forGetter(GuideBlock.Note::key))
                     .apply(instance, GuideBlock.Note::new));
@@ -323,14 +327,31 @@ public final class GuideCodecs {
                     Codec.STRING.fieldOf("text").forGetter(GuideBlock.SceneBalloon::key),
                     Codec.STRING.optionalFieldOf("detail", "").forGetter(GuideBlock.SceneBalloon::detailKey)
             ).apply(instance, GuideBlock.SceneBalloon::new));
+    private static final Codec<GuideBlock.SceneStep> SCENE_STEP = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    Codec.STRING.fieldOf("text").forGetter(GuideBlock.SceneStep::captionKey),
+                    SCENE_BLOCK.listOf().optionalFieldOf("put", List.of()).forGetter(GuideBlock.SceneStep::put),
+                    SCENE_PART.listOf().optionalFieldOf("take", List.of()).forGetter(GuideBlock.SceneStep::take),
+                    Codec.INT.optionalFieldOf("ticks", GuideBlock.SceneStep.TICKS)
+                            .forGetter(GuideBlock.SceneStep::ticks)
+            ).apply(instance, GuideBlock.SceneStep::new));
     private static final MapCodec<GuideBlock.Scene> SCENE = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            SCENE_BLOCK.listOf().fieldOf("blocks").forGetter(GuideBlock.Scene::blocks),
+            SCENE_BLOCK.listOf().optionalFieldOf("blocks", List.of()).forGetter(GuideBlock.Scene::blocks),
             SCENE_VIEW.optionalFieldOf("view", GuideBlock.SceneView.CORNER).forGetter(GuideBlock.Scene::view),
             SCENE_BALLOON.listOf().optionalFieldOf("balloons", List.of()).forGetter(GuideBlock.Scene::balloons),
             Codec.BOOL.optionalFieldOf("layers", false).forGetter(GuideBlock.Scene::layers),
             Codec.INT.fieldOf("height").forGetter(GuideBlock.Scene::height),
-            Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Scene::captionKey)
+            Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Scene::captionKey),
+            SCENE_STEP.listOf().optionalFieldOf("steps", List.of()).forGetter(GuideBlock.Scene::steps)
     ).apply(instance, GuideBlock.Scene::new));
+    private static final MapCodec<GuideBlock.Structure> STRUCTURE = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(
+                    Codec.STRING.fieldOf("structure").forGetter(GuideBlock.Structure::structure),
+                    SCENE_VIEW.optionalFieldOf("view", GuideBlock.SceneView.CORNER)
+                            .forGetter(GuideBlock.Structure::view),
+                    Codec.INT.fieldOf("height").forGetter(GuideBlock.Structure::height),
+                    Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Structure::captionKey)
+            ).apply(instance, GuideBlock.Structure::new));
     private static final MapCodec<GuideBlock.Multiblock> MULTIBLOCK = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
                     Codec.STRING.fieldOf("multiblock").forGetter(GuideBlock.Multiblock::multiblock),
@@ -366,6 +387,7 @@ public final class GuideCodecs {
             case GuideBlock.Command command -> "command";
             case GuideBlock.Scene scene -> "scene";
             case GuideBlock.Multiblock multiblock -> "multiblock";
+            case GuideBlock.Structure structure -> "structure";
         };
     }
 
@@ -392,6 +414,7 @@ public final class GuideCodecs {
             case "command" -> COMMAND;
             case "scene" -> SCENE;
             case "multiblock" -> MULTIBLOCK;
+            case "structure" -> STRUCTURE;
             default -> throw new IllegalArgumentException("no block of the type " + type);
         };
     }

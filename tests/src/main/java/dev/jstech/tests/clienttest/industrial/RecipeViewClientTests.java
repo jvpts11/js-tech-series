@@ -44,8 +44,8 @@ public final class RecipeViewClientTests {
                 .thenAssert(0, () -> shown(IndustrialModule.MACERATING) >= MACERATING_RECIPES,
                         "the Industrial mod's grinding recipes are all shown")
                 .thenAssert(0, () -> shown(IndustrialModule.COMPRESSING) > 0, "and its pressing ones")
-                .thenAssert(0, () -> shown(TestPress.PRESSING) == 1,
-                        "the test mod's one recipe is shown under its own kind")
+                .thenAssert(0, () -> shown(TestPress.PRESSING) == 2,
+                        "the test mod's two recipes are shown under their own kind, the locked one too")
                 .then(0, () -> ctx.assertTrue(show(TestPress.PRESSING),
                         "the viewer opens on the test press's recipes"))
                 .thenScreenshot(SETTLE, "test-pressing")

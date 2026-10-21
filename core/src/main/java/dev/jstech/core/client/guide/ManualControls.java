@@ -55,6 +55,19 @@ final class ManualControls {
                     g.fill(x + 4 + dot[0], y + 1 + dot[1], x + 5 + dot[0], y + 2 + dot[1], mark);
                 }
             }
+            case BOOKMARKS -> {
+                // A ribbon hanging down, cut in a V at its end.
+                g.fill(x + 5, y + 1, x + 9, y + 6, mark);
+                g.fill(x + 5, y + 6, x + 6, y + 8, mark);
+                g.fill(x + 8, y + 6, x + 9, y + 8, mark);
+            }
+            case TEAR -> {
+                // A sheet, its left edge torn in teeth where it left the rings.
+                g.fill(x + 6, y + 1, x + 10, y + 8, mark);
+                for (int tooth = 0; tooth < 4; tooth++) {
+                    g.fill(x + 5 - tooth % 2, y + 1 + 2 * tooth, x + 6, y + 2 + 2 * tooth, mark);
+                }
+            }
             case BACK, FORWARD -> {
                 // A solid triangle, its point to the left for Back and to the right for Forward, and a short tail.
                 final boolean back = kind == Kind.BACK;
@@ -112,6 +125,6 @@ final class ManualControls {
 
     /** The buttons on the cover's top edge. */
     enum Kind {
-        CONTENTS, BACK, FORWARD, SEARCH
+        CONTENTS, BACK, FORWARD, SEARCH, BOOKMARKS, TEAR
     }
 }

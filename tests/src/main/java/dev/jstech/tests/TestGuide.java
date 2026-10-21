@@ -22,6 +22,7 @@ import dev.jstech.core.guide.ModGuide;
 import java.util.List;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -50,6 +51,20 @@ public final class TestGuide {
     public static final String COMMAND = "jstests:command";
     public static final String SCENE = "jstests:scene";
     public static final String MULTIBLOCK = "jstests:multiblock";
+    public static final String STEPS = "jstests:steps";
+    public static final String STRUCTURE = "jstests:structure";
+    public static final String ANIMATION = "jstests:animation";
+    /** How long each step of the scene in steps is shown, short so a test sees it play. */
+    public static final int STEP_TICKS = 20;
+    /**
+     * The hut the structure entry draws, saved with the structure block as
+     * {@code assets/jstests/jstech/structures/test_hut.nbt}.
+     */
+    public static final ResourceLocation HUT = ResourceLocation.fromNamespaceAndPath("jstests", "test_hut");
+    /** The moving picture's frame, drawn twice its texture's pixels, and how long each frame is shown. */
+    public static final int ANIMATION_WIDTH = 64;
+    public static final int ANIMATION_HEIGHT = 32;
+    public static final int ANIMATION_TICKS = 10;
     /** The listings of the code entry, by the files they are. */
     public static final String HELLO = "Hello.sgs";
     public static final String QUERY = "top.iql";
@@ -83,6 +98,9 @@ public final class TestGuide {
             .icon(() -> Items.PAPER).register();
     public static final ModGuide.SectionRef NOTES = GUIDE.section("notes").titled("Shared Notes")
             .icon(() -> Items.MAP).in(SHARED).register();
+    /** A section whose every entry needs knowledge no test gives: the contents say "not yet" beside it. */
+    public static final ModGuide.SectionRef LOCKED = GUIDE.section("locked").titled("Locked Ideas")
+            .icon(() -> Items.IRON_BARS).register();
 
     public static final ItemEntry<ManualItem> MANUAL_ITEM = TestSounds.CONTENT.item("test_manual",
             properties -> new ManualItem(properties, MANUAL)).named("Test Manual").look(IItemLook.HANDMADE)
@@ -202,6 +220,48 @@ public final class TestGuide {
                 .howToGetIt("Open the test manual.")
                 .howToUseIt("Drag it.", "Hide a layer.")
                 .whatCanGoWrong("No figure shows.", "The multiblock is not installed, or it is too big for a scene.")
+                .register();
+        GUIDE.page("steps", IDEAS).titled("A Scene in Steps").icon(() -> Items.CHEST)
+                .whatItIs("An entry with a scene shown step by step: a furnace put on grass, a chest put beside it,"
+                        + " then the furnace taken away.")
+                .scene("A furnace and a chest put on grass in three steps.", 90)
+                .place(0, 0, 0, () -> Blocks.GRASS_BLOCK)
+                .place(1, 0, 0, () -> Blocks.GRASS_BLOCK)
+                .step("Put a furnace on the grass", STEP_TICKS)
+                .place(0, 1, 0, () -> Blocks.FURNACE, "facing=south", "")
+                .step("Put a chest beside it", STEP_TICKS)
+                .place(1, 1, 0, () -> Blocks.CHEST, "facing=south", "")
+                .step("Take the furnace away", STEP_TICKS)
+                .take(0, 1, 0)
+                .whatItIsFor("Proving the scenes shown step by step: their timeline and the sentence of each step.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Watch it play.", "Pause it.", "Go a step back.", "Show it in the world.")
+                .whatCanGoWrong("It does not play.", "The reader asked for less movement: press Play.")
+                .register();
+        GUIDE.page("structure", IDEAS).titled("A Saved Structure").icon(() -> Items.STRUCTURE_BLOCK)
+                .whatItIs("An entry with a hut saved with the game's structure block, read from its file.")
+                .structure("A hut, saved with the structure block.", HUT, 100)
+                .whatItIsFor("Proving that a manual draws a structure saved in the mod's assets.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Drag it.", "Hide a layer.")
+                .whatCanGoWrong("No figure shows.", "Its file is missing, or it is too big for a scene.")
+                .register();
+        GUIDE.page("locked_idea", LOCKED).titled("A Locked Idea").icon(() -> Items.IRON_BARS)
+                .needs(TestProgression.UNREACHED.id())
+                .whatItIs("An entry its reader's team cannot do until it knows what no test gives.")
+                .whatItIsFor("Proving that the contents say not yet beside what cannot be done yet, and hide nothing.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Read it.")
+                .whatCanGoWrong("The contents say nothing beside it.", "Your team knows what it needs already.")
+                .register();
+        GUIDE.page("animation", IDEAS).titled("A Moving Picture").icon(() -> Items.REDSTONE_LAMP)
+                .whatItIs("An entry with a picture that moves, two frames one under the other.")
+                .animation("jstests:guide/blink", ANIMATION_WIDTH, ANIMATION_HEIGHT, 2, ANIMATION_TICKS,
+                        "A lamp that blinks, two frames shown in turn.")
+                .whatItIsFor("Proving that a picture's frames are shown in turn.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Watch it.")
+                .whatCanGoWrong("It stands still.", "The reader asked for less movement.")
                 .register();
         GUIDE.page("command", IDEAS).titled("A Command's Page").icon(() -> Items.COMMAND_BLOCK_MINECART)
                 .whatItIs("An entry that prints a command's page from the command itself, the way its manual page"

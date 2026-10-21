@@ -27,9 +27,11 @@ import java.util.Objects;
  * @param shows    the items shown under its title, when they are others than those it is the page of: the parts an
  *                 entry about an idea talks about; empty to show the items it is the page of
  * @param blocks   what it says, in order
+ * @param needs    the knowledge its reader's team needs before they can do what it says, by id, or empty for none:
+ *                 until then the contents say "not yet" beside it, and it is still there to read, nothing hidden
  */
 public record GuideEntry(String id, String section, int order, String titleKey, String icon, List<String> items,
-                         List<String> shows, List<GuideBlock> blocks) {
+                         List<String> shows, List<GuideBlock> blocks, String needs) {
 
     public GuideEntry {
         Objects.requireNonNull(id, "id");
@@ -39,6 +41,14 @@ public record GuideEntry(String id, String section, int order, String titleKey, 
         items = List.copyOf(items);
         shows = List.copyOf(shows);
         blocks = List.copyOf(blocks);
+        needs = needs == null ? "" : needs;
+    }
+
+    /** An entry anyone can do as soon as they read it. */
+    public GuideEntry(final String id, final String section, final int order, final String titleKey,
+                      final String icon, final List<String> items, final List<String> shows,
+                      final List<GuideBlock> blocks) {
+        this(id, section, order, titleKey, icon, items, shows, blocks, "");
     }
 
     /** An entry that shows the items it is the page of. */

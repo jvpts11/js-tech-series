@@ -108,4 +108,12 @@ public interface IGuideText {
     default List<GuideBlock.SceneBlock> multiblock(final String id) {
         return List.of();
     }
+
+    /**
+     * The blocks of the saved structure of {@code id} as a scene holds them ({@link GuideBlock.Structure#blocksOf}):
+     * none where its file is missing or it is too big for a scene. Whoever reads no files, as a test does, knows none.
+     */
+    default List<GuideBlock.SceneBlock> structure(final String id) {
+        return List.of();
+    }
 }

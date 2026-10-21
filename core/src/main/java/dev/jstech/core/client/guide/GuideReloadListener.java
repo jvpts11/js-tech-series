@@ -25,10 +25,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
 
@@ -43,6 +45,19 @@ public final class GuideReloadListener extends SimplePreparableReloadListener<Gu
 
     private static final Logger LOGGER = CoreLogs.GUIDE.logger();
     private static final String ROOT = "guide";
+
+    /**
+     * Reads every manual again from the resource packs loaded, at once, as a manual's file is written in a run; a
+     * manual open is laid out anew, its reader left where they were.
+     */
+    public static void reloadNow() {
+        final GuideReloadListener listener = new GuideReloadListener();
+        final ResourceManager resources = Minecraft.getInstance().getResourceManager();
+        listener.apply(listener.prepare(resources, InactiveProfiler.INSTANCE), resources, InactiveProfiler.INSTANCE);
+        if (Minecraft.getInstance().screen instanceof ManualScreen open) {
+            open.reread();
+        }
+    }
 
     @Override
     protected GuideLibrary prepare(final ResourceManager resources, final ProfilerFiller profiler) {
@@ -62,6 +77,7 @@ public final class GuideReloadListener extends SimplePreparableReloadListener<Gu
     @Override
     protected void apply(final GuideLibrary library, final ResourceManager resources, final ProfilerFiller profiler) {
         GuideLibrary.use(library);
+        GuideStructures.forget();
     }
 
     private static <T> Map<String, T> readAll(final ResourceManager resources, final String folder,

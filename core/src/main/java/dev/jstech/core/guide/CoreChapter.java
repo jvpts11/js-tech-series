@@ -102,6 +102,7 @@ final class CoreChapter {
                 .register();
         GUIDE.page("this_manual", manuals).titled("This manual").icon(() -> CoreGuide.MANUAL.get())
                 .covers(() -> CoreGuide.MANUAL.get())
+                .covers(() -> TornSheets.ITEM.get())
                 .whatItIs("The Technical Reference: the binder that holds a chapter for every mod of the series"
                         + " you have, each with its tab at the edge.")
                 .whatItIsFor("Finding out what a thing is and how to use it, without leaving the game.")
@@ -111,7 +112,10 @@ final class CoreChapter {
                         "Click a line of the contents, a tab, or a number after See to go there.",
                         "Turn pages with the arrows, the arrow keys or the mouse wheel.",
                         "Use the magnifier on the top edge to search the index by name.",
-                        "Hold the manual key over any item, in an inventory or in your hand, to open its page.")
+                        "Hold the manual key over any item, in an inventory or in your hand, to open its page.",
+                        "Press the sheet on the top edge to tear out a copy of the page on the left; in an item"
+                                + " frame, the sheet shows its page.",
+                        "Use it on a lectern to lay it there, for anyone who passes to read.")
                 .whatCanGoWrong("An item opens no page.",
                         "No manual has an entry for it yet.",
                         "A chapter is missing.",

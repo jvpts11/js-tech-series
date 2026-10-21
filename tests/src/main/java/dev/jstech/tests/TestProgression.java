@@ -41,6 +41,7 @@ public final class TestProgression {
             "Test Comprehension");
     public static final TextKey SUBORBITAL_NAME = TextKey.of("jstests.milestone.suborbital", "Test Suborbital");
     public static final TextKey ORBIT_NAME = TextKey.of("jstests.milestone.orbit", "Test Orbit");
+    public static final TextKey UNREACHED_NAME = TextKey.of("jstests.knowledge.unreached", "Test Unreached");
 
     /** An add-on's era, right after Advanced. */
     public static final Era QUANTUM = Eras.declareAfter(new Era(id("test_quantum"), QUANTUM_NAME.text(), 0xFF00FF),
@@ -53,6 +54,8 @@ public final class TestProgression {
     /** Known a share at a time. */
     public static final Knowledge COMPREHENSION = Knowledges.declare(new Knowledge(id("test_comprehension"),
             COMPREHENSION_NAME, true));
+    /** Knowledge no test ever gives, so what needs it is never open: the manual's locked idea needs it. */
+    public static final Knowledge UNREACHED = Knowledges.declare(Knowledge.of(id("test_unreached"), UNREACHED_NAME));
     /** Two firsts, in the order a team reaches them. */
     public static final List<Milestone> FIRSTS = Milestones.declare(id("test_firsts"), List.of(
             new Milestone(id("test_suborbital"), SUBORBITAL_NAME), new Milestone(id("test_orbit"), ORBIT_NAME)));

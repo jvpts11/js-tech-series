@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.multiblock;
 
+import dev.jstech.core.multiblock.ShapePreview;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -65,6 +66,25 @@ public final class MultiblockShows {
         return true;
     }
 
+    /**
+     * Shows the blocks {@code preview} lays out, known as {@code id}, in front of the player as a multiblock is shown,
+     * or stops showing them when they are what is shown: for blocks that are no multiblock, such as a manual's scene.
+     *
+     * @return whether anything shows multiblocks in the world
+     */
+    public static boolean toggle(final ResourceLocation id, final ShapePreview preview) {
+        final IWorldShow show = world;
+        if (show == null) {
+            return false;
+        }
+        if (show.shown().filter(id::equals).isPresent()) {
+            show.show(null);
+        } else {
+            show.showShape(id, preview);
+        }
+        return true;
+    }
+
     /** The multiblock shown in front of the player now, or none. */
     public static Optional<ResourceLocation> shownInWorld() {
         final IWorldShow show = world;
@@ -76,6 +96,13 @@ public final class MultiblockShows {
 
         /** Shows the multiblock of {@code id} in front of the player in place of any shown, or none for none. */
         void show(@Nullable ResourceLocation id);
+
+        /**
+         * Shows the blocks {@code preview} lays out, known as {@code id}, in front of the player in place of any
+         * shown; by default nothing, for a show that knows only multiblocks.
+         */
+        default void showShape(final ResourceLocation id, final ShapePreview preview) {
+        }
 
         /** The multiblock it shows now, or none. */
         Optional<ResourceLocation> shown();

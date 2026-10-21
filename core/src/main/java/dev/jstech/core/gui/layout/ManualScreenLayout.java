@@ -63,6 +63,39 @@ public final class ManualScreenLayout {
     public static final int FLAG_PITCH = 22;
     public static final int FLAG_HEIGHT = 16;
     public static final int FLAG_UNDER = 5;
+    /**
+     * A bookmark's ribbon, hanging from the binder's top edge over its page: how wide, how far down the page it
+     * reaches, how deep the V cut in its end is, how far apart two ribbons hang, and how far from the page's outer
+     * edge the first hangs.
+     */
+    public static final int RIBBON_WIDTH = 6;
+    public static final int RIBBON_DOWN = 24;
+    public static final int RIBBON_NOTCH = 3;
+    public static final int RIBBON_PITCH = 9;
+    public static final int RIBBON_FROM_EDGE = 22;
+    /** The list of bookmarks open under its button: how wide, the room inside its edge, its heading and each row. */
+    public static final int LIST_WIDTH = 124;
+    public static final int LIST_PAD = 4;
+    public static final int LIST_HEADING = 12;
+    public static final int LIST_ROW = 10;
+    public static final int LIST_RULE = 3;
+    /** A note in a page's margin: how wide, the room inside its edge, each line, and how far above the page's foot. */
+    public static final int NOTE_WIDTH = 100;
+    public static final int NOTE_PAD = 4;
+    public static final int NOTE_LINE = 8;
+    public static final int NOTE_FOOT = 22;
+    public static final int NOTE_IN = 8;
+    /**
+     * The strip under a manual read from a lectern: how far under the binder, how tall, the room inside its edges,
+     * its two buttons' size and the gap between them, and all the room it takes under the binder.
+     */
+    public static final int LECTERN_GAP = 3;
+    public static final int LECTERN_HEIGHT = 22;
+    public static final int LECTERN_PAD = 6;
+    public static final int LECTERN_BUTTON_WIDTH = 52;
+    public static final int LECTERN_BUTTON_HEIGHT = 16;
+    public static final int LECTERN_BUTTON_GAP = 4;
+    public static final int LECTERN_ROOM = LECTERN_GAP + LECTERN_HEIGHT;
 
     private ManualScreenLayout() {
     }
@@ -130,6 +163,69 @@ public final class ManualScreenLayout {
         return new Rect(page.x() + margin, page.y() + SEARCH_Y, page.width() - 2 * margin, SEARCH_HEIGHT);
     }
 
+    /** The button that opens the list of bookmarks, just before the search's. */
+    public static Rect bookmarks(final Geometry geometry) {
+        return new Rect(geometry.search().x() - BUTTON_GAP - BUTTON_WIDTH, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
+    }
+
+    /** The strip under a manual read from a lectern, as wide as the binder's cover, a little under it. */
+    public static Rect lecternStrip(final Geometry geometry) {
+        return new Rect(0, geometry.height() + LECTERN_GAP, geometry.coverRight(), LECTERN_HEIGHT);
+    }
+
+    /** The strip's Close button, at its right end. */
+    public static Rect lecternClose(final Rect strip) {
+        return new Rect(strip.x() + strip.width() - LECTERN_PAD / 2 - LECTERN_BUTTON_WIDTH,
+                strip.y() + (strip.height() - LECTERN_BUTTON_HEIGHT) / 2, LECTERN_BUTTON_WIDTH, LECTERN_BUTTON_HEIGHT);
+    }
+
+    /** The strip's Take button, left of Close. */
+    public static Rect lecternTake(final Rect strip) {
+        final Rect close = lecternClose(strip);
+        return new Rect(close.x() - LECTERN_BUTTON_GAP - LECTERN_BUTTON_WIDTH, close.y(), LECTERN_BUTTON_WIDTH,
+                LECTERN_BUTTON_HEIGHT);
+    }
+
+    /** The button that tears a copy of the page shown out of the book, left of the bookmarks' button. */
+    public static Rect tear(final Geometry geometry) {
+        final Rect bookmarks = bookmarks(geometry);
+        return new Rect(bookmarks.x() - BUTTON_GAP - BUTTON_WIDTH, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
+    }
+
+    /**
+     * The list of bookmarks open under its button, its right edge the search button's: its heading, {@code rows}
+     * rows, a rule and the row that marks the page shown.
+     */
+    public static Rect bookmarkList(final Geometry geometry, final int rows) {
+        final Rect search = geometry.search();
+        return new Rect(search.x() + search.width() - LIST_WIDTH, BUTTON_Y + BUTTON_HEIGHT + 1, LIST_WIDTH,
+                LIST_PAD + LIST_HEADING + rows * LIST_ROW + LIST_RULE + LIST_ROW + LIST_PAD);
+    }
+
+    /** The row {@code row} of the list of bookmarks; the row after the last is the one that marks the page shown. */
+    public static Rect bookmarkRow(final Rect list, final int row, final int rows) {
+        final int y = list.y() + LIST_PAD + LIST_HEADING + row * LIST_ROW + (row >= rows ? LIST_RULE : 0);
+        return new Rect(list.x() + LIST_PAD, y, list.width() - 2 * LIST_PAD, LIST_ROW);
+    }
+
+    /**
+     * The ribbon of a bookmark on a page shown, the {@code slot}th hanging over that page: from the binder's top edge
+     * down over the page, from its outer edge inwards, so no two meet and none covers a button.
+     */
+    public static Rect ribbon(final Geometry geometry, final boolean onRight, final int slot) {
+        final Rect page = onRight && geometry.right() != null ? geometry.right() : geometry.left();
+        final int x = onRight ? page.x() + RIBBON_FROM_EDGE + slot * RIBBON_PITCH
+                : page.x() + page.width() - RIBBON_FROM_EDGE - RIBBON_WIDTH - slot * RIBBON_PITCH;
+        return new Rect(x, 0, RIBBON_WIDTH, TOP + RIBBON_DOWN);
+    }
+
+    /** A note in {@code page}'s lower margin, {@code lines} lines tall, set in from its outer edge. */
+    public static Rect note(final Rect page, final int lines) {
+        final int height = 2 * NOTE_PAD + Math.max(1, lines) * NOTE_LINE;
+        return new Rect(page.x() + page.width() - NOTE_WIDTH - NOTE_IN, page.y() + page.height() - NOTE_FOOT - height,
+                NOTE_WIDTH, height);
+    }
+
     /**
      * The binder's solid parts as a layout a test checks: the pages, the buttons, the arrows and every tab, each as
      * drawn. The tabs start at the page's right edge, so they are checked against each other and the arrows as well
@@ -145,6 +241,8 @@ public final class ManualScreenLayout {
         box(layout, "back", geometry.back());
         box(layout, "forward", geometry.forward());
         box(layout, "search", geometry.search());
+        box(layout, "bookmarks", bookmarks(geometry));
+        box(layout, "tear", tear(geometry));
         box(layout, "previous", geometry.previous());
         box(layout, "next", geometry.next());
         for (int i = 0; i < geometry.tabs(); i++) {
