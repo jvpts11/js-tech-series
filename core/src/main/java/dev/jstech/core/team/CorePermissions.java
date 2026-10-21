@@ -52,6 +52,8 @@ public final class CorePermissions {
             "Go past the limits each player has: robots, moving structures, large edits");
     public static final TextKey DIAGNOSTIC_WARNINGS_TEXT = TextKey.of("jscore.permission.diagnostic_warnings",
             "Be told in chat when a part of the series stalls or slows itself");
+    public static final TextKey DEVELOPER_TOOLS_TEXT = TextKey.of("jscore.permission.developer_tools",
+            "Use the developer's tools that read or change the world, while the server's developer mode is on");
     /* The command's name. */
     public static final TextKey COMMAND_TEXT = TextKey.of("jscore.permission.command", "Run /jstech %s");
 
@@ -86,6 +88,9 @@ public final class CorePermissions {
     /** Being told when a part of the series stalls or slows itself. */
     public static final PermissionNode<Boolean> DIAGNOSTIC_WARNINGS = declare(JsCore.MODID, "diagnostics.warnings",
             OPERATORS, DIAGNOSTIC_WARNINGS_TEXT);
+    /** Using the developer's tools that read or change the world, while the server's developer mode is on. */
+    public static final PermissionNode<Boolean> DEVELOPER_TOOLS = declare(JsCore.MODID, "developer.tools",
+            OPERATORS, DEVELOPER_TOOLS_TEXT);
 
     private CorePermissions() {
     }

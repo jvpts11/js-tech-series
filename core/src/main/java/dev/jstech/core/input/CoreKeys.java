@@ -24,8 +24,9 @@ import org.lwjgl.glfw.GLFW;
  * The Core's own keys: turning off the last sound heard, which the player's game does alone, changing the mode of
  * the item in the main hand, which the server does, opening an item's page in the manual, opening the history of
  * notifications, opening the diagram of forces of a moving structure, showing the physics of the structures near,
- * looking about freely, and opening the HUD editor. The first two and the last three have no key until the player
- * gives them one; the manual's is M, which every manual's tooltip names, the history's N, and the forces' K.
+ * looking about freely, opening the HUD editor, and opening the studio. The first two and the last four have no key
+ * until the player gives them one; the manual's is M, which every manual's tooltip names, the history's N, and the
+ * forces' K.
  */
 @TextHolder
 public final class CoreKeys {
@@ -87,6 +88,15 @@ public final class CoreKeys {
      */
     public static final KeyAction EDIT_HUD = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "edit_hud"), EDIT_HUD_KEY));
+
+    /** What the key that opens the studio is called. */
+    public static final TextKey STUDIO_KEY = TextKey.of("key.jscore.studio", "Open the studio");
+    /**
+     * Opens the studio, for whoever makes a mod or a modpack, while developer mode is on; no key until given one, as
+     * {@code /jstech studio} opens it too.
+     */
+    public static final KeyAction OPEN_STUDIO = KeyActions.declare(KeyAction.builder(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "open_studio"), STUDIO_KEY));
 
     private CoreKeys() {
     }

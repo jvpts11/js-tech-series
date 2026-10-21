@@ -584,6 +584,11 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return running.get();
     }
 
+    /** What it sounds like, as its mod declares it: what the studio lists among what it is made of. */
+    public final MachineSounds declaredSounds() {
+        return sounds();
+    }
+
     /** Its state, once the kit has ticked it, and its health while it is damaged. */
     @Override
     public void describe(final List<Text> lines, final boolean details) {

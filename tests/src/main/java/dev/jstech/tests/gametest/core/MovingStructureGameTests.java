@@ -663,6 +663,12 @@ public final class MovingStructureGameTests {
             level.setBlock(at, Blocks.STONE.defaultBlockState(), 3);
             line.add(at);
         }
+        // Lifting reads the land a block round the beam, which reaches past the chunks its stone was set in when the
+        // test stands at a chunk's edge.
+        for (final BlockPos round : BlockPos.betweenClosed(line.getFirst().offset(-1, 0, -1),
+                line.getLast().offset(1, 0, 1))) {
+            level.getChunkAt(round);
+        }
         warm(level);
         final StructureResult made = MovingStructures.assemble(level, line.getFirst(), line.getLast());
         helper.assertTrue(made.ok(), "a long beam is made: " + refusal(made));

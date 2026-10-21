@@ -1,0 +1,16 @@
+{
+  "bar": "#E0304C7C",
+  "dim": "#FFA8B0BC",
+  "error": "#FFE0483A",
+  "errorText": "#FFFFFFFF",
+  "fine": "#FF4FD46A",
+  "foot": "#E0101318",
+  "line": "#FF3A4452",
+  "outline": "#FFFFFFFF",
+  "panel": "#C0181C22",
+  "selected": "#FF000000",
+  "sky": "#FF7AA2DC",
+  "text": "#FFFFFFFF",
+  "warning": "#FFF0C830",
+  "warningText": "#FF000000"
+}

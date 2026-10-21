@@ -49,6 +49,8 @@ import dev.jstech.core.command.SeriesCommands;
 import dev.jstech.core.command.TeamProgressCommands;
 import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.datagen.JsCoreDataGenerators;
+import dev.jstech.core.developer.DeveloperMode;
+import dev.jstech.core.developer.ThingTests;
 import dev.jstech.core.developer.LiveReload;
 import dev.jstech.core.diagnostic.Bandwidth;
 import dev.jstech.core.diagnostic.CoreHealth;
@@ -492,6 +494,9 @@ public final class JsCore {
         ConfigFiles.register(VariantSettings.FILE, modEventBus, modContainer);
         // Whether a world's players choose between recipes that overlap, or leave that to Polymorph.
         ConfigFiles.register(RecipeChoiceSettings.FILE, modEventBus, modContainer);
+        // Developer mode: the player's key, and the world's, which its players are sent.
+        ConfigFiles.register(DeveloperMode.PLAYER_FILE, modEventBus, modContainer);
+        ConfigFiles.register(DeveloperMode.SERVER_FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
         // The styles a player chose for the screens of every mod, read on their own game only.
@@ -610,6 +615,7 @@ public final class JsCore {
         GuideGifts.listen();
         Holograms.listen(modEventBus);
         InspectWatch.listen(modEventBus);
+        ThingTests.listen(modEventBus);
         JsCoreDataGenerators.listen(modEventBus);
         JsTechTab.listen(modEventBus);
         KeyActions.listen(modEventBus);

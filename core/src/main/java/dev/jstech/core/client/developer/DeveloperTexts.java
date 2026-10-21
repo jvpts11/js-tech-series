@@ -17,6 +17,9 @@ public final class DeveloperTexts {
     /** What {@code /jstech screen new} says with no block looked at. */
     public static final TextKey NO_BLOCK = TextKey.of("commands.jscore.screen.no_block",
             "Look at a block to make a screen for it");
+    /** What a developer's tool says while developer mode is off. */
+    public static final TextKey OFF = TextKey.of("commands.jscore.developer.off",
+            "Developer mode is off: turn it on in the settings, and on a server in the world's settings too");
     public static final TextKey INSPECTOR = TextKey.of("gui.jscore.inspector", "Inspector");
     public static final TextKey INSPECTOR_KEY = TextKey.of("gui.jscore.inspector.key", "F12");
     public static final TextKey LAYOUT = TextKey.of("gui.jscore.inspector.layout", "layout");

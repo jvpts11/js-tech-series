@@ -39,6 +39,7 @@ import dev.jstech.core.client.field.ChunkFieldsClient;
 import dev.jstech.core.client.fluid.FluidsClient;
 import dev.jstech.core.client.font.CoreFontClient;
 import dev.jstech.core.client.developer.ScreenDevCommands;
+import dev.jstech.core.client.studio.StudioClient;
 import dev.jstech.core.client.developer.ScreenEditor;
 import dev.jstech.core.client.developer.ScreenInspector;
 import dev.jstech.core.client.gui.component.Grounds;
@@ -210,12 +211,13 @@ public final class JsCoreClient {
         VehicleControls.listen(modEventBus);
         VehiclesClient.listen(modEventBus);
         MovingStructuresClient.listen(modEventBus);
-        // In a development run, the mods' assets reloaded as they change, and the tools for screens: the inspector
-        // (F12), the editor on the screen (Ctrl+E from the inspector) and the new screen (/jstech screen new).
+        // While developer mode is on, the mods' assets reloaded as they change, the tools for screens (the inspector
+        // on F12, the editor on the screen from it, the new screen on /jstech screen new) and the studio.
         LiveReloadClient.listen();
         ScreenInspector.listen();
         ScreenEditor.listen();
         ScreenDevCommands.listen();
+        StudioClient.listen();
         // What draws each of the Core's kinds of screen component, a rich line of a tooltip, and the chooser of the
         // player's styles.
         CoreElementBuilders.register();

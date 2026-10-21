@@ -97,13 +97,83 @@ a model shows the change ([Models](MODELS.md#while-you-build)).
 manuals alone again, at once, and an open manual lays itself out anew where its reader is
 ([Manuals](MANUALS.md#writing-while-the-game-runs)).
 
+## Developer mode
+
+*Added 2026-10-21.*
+
+The tools for whoever makes a mod or a modpack (the studio, the inspector and editor of screens, the new screen) open
+only while **developer mode** is on. It is two keys:
+
+| Key | File | What it says |
+|---|---|---|
+| `developer.mode` | `jstech-developer.toml`, the player's own | Whether the tools are on in this game. |
+| `developer.server` | `jstech-developer-server.toml`, the world's | Whether this world lets them be used. |
+
+Both are on in a development run and off in a packed game, and both are in the game's settings screen. A tool opens
+only with both on, so a player cannot turn the tools on against a server that keeps them off. The tools that read or
+change the world, as running a thing's GameTests, are only for the player whose game runs the world, or for the
+players holding the permission `jscore.developer.tools` (operators, unless the server's permission mod says
+otherwise). From code:
+
+```java
+DeveloperMode.on();                       // on the player's game: both keys on
+DeveloperMode.mayUseWorldTools(player);   // on the server: the world's key on, and the player allowed
+```
+
+## The studio
+
+*Added 2026-10-21.*
+
+`/jstech studio`, or the key "Open the studio" once you give it one in the controls, opens the studio over the world.
+It is built around the things of the game, never around kinds of files:
+
+- **On the left, every thing of every mod on the Core** and of every content pack, by mod and by kind: machines (a
+  block whose block entity is a machine's), blocks, items, fluids, entities, cables and parts, and research. Each mod
+  and kind says how many things it holds, and each thing how many problems it has, with the worst one's mark. The
+  search finds a thing by its name or its id. **Checks: N** counts every problem of every thing, and a click on it
+  goes to the next thing that has one.
+- **In the middle, the thing on a bench**: a block on a floor of stone in a small world of its own, drawn again each
+  frame so it moves as it does in the world. Drag to walk round it and turn the wheel to come closer. A machine has
+  three buttons, Working, Idle and Jammed, which tell its block entity it is working, waiting for input or with its
+  output full, so you see each look its model has. A creature stands on the bench; anything else is held up large.
+- **On the right, what the thing is made of**, each part the ordinary file it always was, with its state: its model
+  (the states file, or the GeckoLib model), its screen, its effects, its sounds, its names in each language its mod
+  has, the recipes that make it, its manual page, its tags, its drops, its settings and the GameTests that name it. A
+  click on a part opens its file in what your computer opens such files with.
+- **Under the bench, the checks across its parts**: what no single file can see on its own. The Core checks that a
+  thing is named in every language its mod names things in, that its states file and models are there and the game
+  baked a model from them, that no model names a texture that is not there, that no animation moves a bone no model
+  of its mod has, that its screen file loads, that its item is in a creative tab, and that a block that drops by a
+  loot table has one (in a world of your own, whose data the studio can read). Open opens the file that mends it.
+
+**Reload all** reloads the resources, and the data when the world is yours, and reads every thing again. **Run its
+tests** asks the server to run, near you, the GameTests whose name names the thing, and the chat says how many
+passed. A test's name is its class and its method, and only their letters and digits are compared: the thing
+`compressor` is named by every test of `CompressorTests` and by `MachineTests.compressor_jamsWhenFull`.
+
+A part of your own joins the others with a reader, from your client's setup. This one shows a thing's notes, a file
+of your mod's beside its models:
+
+```java
+StudioReaders.add((thing, context, sheet) -> {
+    final ResourceLocation notes = ResourceLocation.fromNamespaceAndPath(thing.id().getNamespace(),
+            "notes/" + thing.id().getPath() + ".md");
+    if (context.exists(notes)) {
+        sheet.part(new StudioSheet.Part(new ItemStack(Items.WRITABLE_BOOK), "Notes", notes.getPath(),
+                StudioSheet.Mark.FINE, Optional.of(StudioFiles.asset(notes))));
+    }
+});
+```
+
+A reader that throws is written down as a problem of the thing's, and the other readers still read it.
+
 ## Tools for screens
 
 *Added 2026-10-21.*
 
 On a screen declared in a file, F12 opens the inspector and Ctrl+E from it the editor, which writes every change to
 your mod's source; `/jstech screen new` makes a new screen for the block you look at. All three are in
-[Screens](SCREENS.md#tools-for-building-a-screen).
+[Screens](SCREENS.md#tools-for-building-a-screen), and open while developer mode is on.
 
 ## What can go wrong
 
@@ -116,3 +186,9 @@ your mod's source; `/jstech screen new` makes a new screen for the block you loo
   from your mod's constructor, or write through it once.
 - **Nothing reloads when you save.** The game reads your files from the build's folders, not from `src`: build the
   resources so the changed file is copied there.
+- **`/jstech studio` says developer mode is off.** Turn on "Developer mode" in the settings; on a server, its
+  "Developer mode on this world" has to be on too.
+- **Open says a file is not among the mod's sources.** Your mod is loaded from a jar, not from its project's
+  `build/resources/main`, so the run cannot find its `src/main/resources` (nor `src/generated/resources` beside it).
+- **Run its tests is grey.** No GameTest names the thing, or the GameTests are not on in this run: a run turns them on
+  with the property `neoforge.enabledGameTestNamespaces`.

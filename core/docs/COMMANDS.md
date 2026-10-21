@@ -64,6 +64,8 @@ level always may run it, and a server's permission mod may grant it to a player 
 | `/jstech event plan <type> <ticks>` | level 2 | Plans one to begin that far ahead, warned of as it nears. *Added 2026-10-17.* |
 | `/jstech event delay <type> <ticks>` | level 2 | Puts a planned one off by that many ticks; one under way is not put off. *Added 2026-10-17.* |
 | `/jstech event stop <type>` | level 2 | Ends one now, planned or under way. *Added 2026-10-17.* |
+| `/jstech studio` | developer mode | Opens the studio, on the player's own game ([While you build](DEVELOPING.md#the-studio)). *Added 2026-10-21.* |
+| `/jstech screen new` | developer mode | Opens a new screen for the block looked at, on the player's own game ([Screens](SCREENS.md#tools-for-building-a-screen)). *Added 2026-10-21.* |
 
 ## What can go wrong
 

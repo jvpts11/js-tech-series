@@ -153,6 +153,7 @@ import dev.jstech.tests.clienttest.core.HudEditorClientTests;
 import dev.jstech.tests.clienttest.core.ScreenTouchClientTests;
 import dev.jstech.tests.clienttest.core.StillPartsClientTests;
 import dev.jstech.tests.clienttest.core.ScreenToolsClientTests;
+import dev.jstech.tests.clienttest.core.StudioClientTests;
 import dev.jstech.tests.clienttest.core.TextSizeClientTests;
 import dev.jstech.tests.clienttest.core.CameraClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
@@ -355,6 +356,7 @@ public final class ClientTestSuite {
             KeyActionClientTests.class,
             DiagnosticsClientTests.class,
             InspectClientTests.class,
+            StudioClientTests.class,
             FluidClientTests.class,
             BigPayloadClientTests.class,
             LiveReloadClientTests.class,

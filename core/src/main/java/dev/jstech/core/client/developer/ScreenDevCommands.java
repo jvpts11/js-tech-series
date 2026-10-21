@@ -21,23 +21,24 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * The developer's commands for screens, on the player's game in a development run: {@code /jstech screen new} opens
- * the new screen for the block looked at. What it says is in {@link DeveloperTexts}, which a server can read.
+ * The developer's commands for screens, on the player's game while developer mode is on: {@code /jstech screen new}
+ * opens the new screen for the block looked at. What it says is in {@link DeveloperTexts}, which a server can read.
  */
 public final class ScreenDevCommands {
 
     private ScreenDevCommands() {
     }
 
-    /** Registers the commands, once, from the Core's client; nothing outside a development run. */
+    /** Registers the commands, once, from the Core's client; each says so when developer mode is off. */
     @ApiStatus.Internal
     public static void listen() {
-        if (!DeveloperMode.on()) {
-            return;
-        }
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, event -> event.getDispatcher().register(
                 Commands.literal("jstech").then(Commands.literal("screen").then(Commands.literal("new")
                         .executes(context -> {
+                            if (!DeveloperMode.on()) {
+                                context.getSource().sendFailure(GameText.component(DeveloperTexts.OFF));
+                                return 0;
+                            }
                             final Minecraft minecraft = Minecraft.getInstance();
                             if (minecraft.level == null || !(minecraft.hitResult instanceof BlockHitResult hit)
                                     || hit.getType() != HitResult.Type.BLOCK) {

@@ -362,8 +362,8 @@ the screen lays itself out again in the same window, so the text does not run pa
 
 *Added 2026-10-21.*
 
-In a development run (`runClient`), three tools help you build a screen declared in a file. A packed game has none
-of them.
+While developer mode is on ([While you build](DEVELOPING.md#developer-mode)), three tools help you build a screen
+declared in a file. It is on in a development run (`runClient`) and off in a packed game, until a player turns it on.
 
 **The inspector.** On an open screen, F12 puts a panel beside it, where the recipe book sits. The panel holds:
 
@@ -409,8 +409,8 @@ takes its place.
 
 ## What can go wrong
 
-- **F12 does nothing.** The game is packed (the tools are only in a development run), or the screen is not declared in
-  a file.
+- **F12 does nothing.** Developer mode is off (in a packed game, until it is turned on in the settings, and on a server
+  in the world's settings too), or the screen is not declared in a file.
 - **The editor says there is no source folder for your mod.** Your mod is loaded from a jar, not from its project's
   `build/resources/main`, so the run cannot find its `src/main/resources`; a change then holds only until the game
   closes. Run the mod from its own project.
