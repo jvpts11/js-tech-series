@@ -9,6 +9,7 @@ package dev.jstech.core.client.studio;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.client.developer.Pictures;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.developer.DevSources;
@@ -56,8 +57,6 @@ final class TestsPage extends StudioPage {
     private static final String RUNS = "clienttests";
     private static final String PNG = ".png";
     private static final String DIFFERENCES = "-differences";
-    /** The colour the test kit marks a pixel that differs with, as the image holds it. */
-    private static final int OFF = 0xFF0000FF;
     private static final int STEP_ROW = 16;
     private static final int PICTURE_ROW = 22;
     private static final int THUMB_WIDTH = 100;
@@ -347,7 +346,7 @@ final class TestsPage extends StudioPage {
             int off = 0;
             for (int y = 0; y < image.getHeight(); y++) {
                 for (int x = 0; x < image.getWidth(); x++) {
-                    off += image.getPixelRGBA(x, y) == OFF ? 1 : 0;
+                    off += image.getPixelRGBA(x, y) == Pictures.OFF ? 1 : 0;
                 }
             }
             return off;

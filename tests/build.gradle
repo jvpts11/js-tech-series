@@ -122,6 +122,9 @@ neoForge {
                 // 640 tall so the GUI (scale 2) shows the full 256-pixel monitor glass a player gets.
                 programArguments.addAll '--width', '960', '--height', '640'
                 systemProperty 'jstestkit.clienttests', 'true'
+                // The GameTests on, as in the client run, so a test can run them from the world it plays in.
+                systemProperty 'neoforge.enableGameTest', 'true'
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
                 systemProperty 'jstestkit.clienttests.shard', "${shard}"
                 systemProperty 'jstestkit.clienttests.shards', "${clientShards}"
                 // -PctOnly=<substring>[,<substring>...] runs only the client tests whose name contains any of

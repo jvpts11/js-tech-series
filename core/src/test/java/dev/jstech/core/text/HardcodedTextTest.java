@@ -248,7 +248,11 @@ class HardcodedTextTest {
                     + "thread dump shows, and a header's name"),
             data(CORE + "developer/mcp/WorldTools.java", 42, MCP_TOOLS),
             data(CORE + "developer/mcp/CoreTools.java", 39, MCP_TOOLS),
-            data(CORE + "client/studio/StudioMcpTools.java", 18, MCP_TOOLS));
+            data(CORE + "client/studio/StudioMcpTools.java", 18, MCP_TOOLS),
+            data(CORE + "client/mcp/PlaySeeing.java", 17, MCP_TOOLS),
+            data(CORE + "client/mcp/PlayActing.java", 42, MCP_TOOLS),
+            data(CORE + "client/mcp/PlayWorld.java", 22, MCP_TOOLS),
+            data(CORE + "client/mcp/PlayWaiting.java", 22, MCP_TOOLS));
 
     /** Who a line for the developer is written through. */
     private static final Set<String> LOGGERS = Set.of("LOGGER", "LOG", "logger", "log");

@@ -251,6 +251,21 @@ The tools on the player's game: `things_list`, `thing_sheet`, `block_read`, `blo
 `errors_read`, `settings_read`, `files_list` and `files_read`, which read; and `structure_save`, `files_write`,
 `commands_run`, `settings_export_preset`, `log_level_set`, `reload_all` and `thing_tests_run`, which act.
 
+And to play the game as the player, for automated tests, through the input the player uses (the movement keys held,
+the view turned as the mouse turns it, the use and attack keys, the hotbar's keys, and a screen's own clicks, typing
+and keys):
+
+| Kind | Tools |
+|---|---|
+| Seeing | `player_state` (where the player is and looks, what the crosshair is on, the screen open), `inventory_read`, `screen_tree` (a screen declared in a file by its components' names, another by its buttons and fields, a container's by its slots), `screen_picture`, `blocks_around`, `chat_read`, `game_log_read` |
+| Acting | `player_walk_to`, `player_jump`, `player_sneak`, `player_look_at`, `hotbar_select`, `player_use`, `player_place`, `player_break`, `block_open`, `screen_click` (by name or at a point), `screen_type`, `key_press`, `screen_close` |
+| The test world | `world_give`, `world_set_block`, `world_save_and_reload`, `gametests_run` (by words of their names, each test's result), `client_test_run` (a test kept as a file, played in the world open, its pictures compared with their references) |
+| Waiting | `wait_ticks`, `wait_until` (a screen open, a block of an id, a component's words, a line of chat) |
+| Recording | `recording_start` and `recording_stop`, which keeps what the agent and the player did as a client test, as Record a test does |
+
+A tool that acts over many ticks, walking or breaking a block, stops at once when the player presses a key, and lets go
+of every key it held.
+
 A dedicated server has an MCP server of its own, on the server's computer (`developer.server_mcp_port`, 25598): an
 operator in the game turns it on with `/jstech mcp server on`, never the console; a client that asks is asked about
 to the operators in the game, and its tools read and change the world for the operator who let it in, while they are

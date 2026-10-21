@@ -1,0 +1,15 @@
+{
+  "mod": "jstests",
+  "name": "kit_machine_opens",
+  "steps": [
+    {
+      "use": "jstests:test_kit_machine"
+    },
+    {
+      "wait": 10
+    },
+    {
+      "close": true
+    }
+  ]
+}

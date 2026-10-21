@@ -345,7 +345,8 @@ after the mod, and need no code. The steps are played as they were recorded:
 | `close` | The screen closed. |
 
 A test's own `ClientTests.Test(name, body, timeoutTicks)` takes any body that builds steps on its helper, as these
-files do.
+files do. An agent plays one in the game it is in with the MCP server's `client_test_run`, and records new ones with
+`recording_start` and `recording_stop` ([While you build](DEVELOPING.md#the-mcp-server)).
 
 ## What can go wrong
 

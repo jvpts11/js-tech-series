@@ -12,7 +12,9 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestInfo;
 import net.minecraft.gametest.framework.GameTestListener;
@@ -93,6 +95,59 @@ public final class ThingTests {
         final MultipleTestTracker tracker = new MultipleTestTracker(runner.getTestInfos());
         tracker.addListener(new Teller(player, thing, tracker));
         player.sendSystemMessage(GameText.component(RUNNING.with(tests.size(), thing.toString())));
+        runner.start();
+        return tests.size();
+    }
+
+    /**
+     * Runs near {@code player} the GameTests whose names hold {@code words}, any case, and hands {@code done} whether
+     * each passed, by name, once the last ends; how many it started, none when the player may not or none matches.
+     */
+    public static int runNamed(final ServerPlayer player, final String words,
+                               final Consumer<Map<String, Boolean>> done) {
+        if (!DeveloperMode.mayUseWorldTools(player)) {
+            return 0;
+        }
+        final String asked = words.strip().toLowerCase(Locale.ROOT);
+        final ServerLevel level = player.serverLevel();
+        final List<GameTestInfo> tests = GameTestRegistry.getAllTestFunctions().stream()
+                .filter(test -> !asked.isEmpty() && test.testName().toLowerCase(Locale.ROOT).contains(asked))
+                .map(test -> new GameTestInfo(test, test.rotation(), level, RetryOptions.noRetries())).toList();
+        if (tests.isEmpty()) {
+            return 0;
+        }
+        GameTestRunner.clearMarkers(level);
+        final GameTestRunner runner = GameTestRunner.Builder.fromInfo(tests, level)
+                .newStructureSpawner(new StructureGridSpawner(firstPlace(player), TESTS_PER_ROW, false)).build();
+        final MultipleTestTracker tracker = new MultipleTestTracker(runner.getTestInfos());
+        final Map<String, Boolean> results = new LinkedHashMap<>();
+        tracker.addListener(new GameTestListener() {
+            @Override
+            public void testStructureLoaded(final GameTestInfo test) {
+            }
+
+            @Override
+            public void testPassed(final GameTestInfo test, final GameTestRunner ran) {
+                this.ended(test, true);
+            }
+
+            @Override
+            public void testFailed(final GameTestInfo test, final GameTestRunner ran) {
+                this.ended(test, false);
+            }
+
+            @Override
+            public void testAddedForRerun(final GameTestInfo old, final GameTestInfo again,
+                                          final GameTestRunner ran) {
+            }
+
+            private void ended(final GameTestInfo test, final boolean passed) {
+                results.put(test.getTestName(), passed);
+                if (tracker.isDone()) {
+                    done.accept(Map.copyOf(results));
+                }
+            }
+        });
         runner.start();
         return tests.size();
     }

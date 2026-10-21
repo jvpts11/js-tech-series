@@ -8,13 +8,13 @@
 package dev.jstech.testkit.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import dev.jstech.core.client.developer.Pictures;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 
@@ -31,12 +31,6 @@ public final class ReferencePictures {
     /** Where the references are among a mod's resources, and the folder a run leaves what it drew in. */
     public static final String FOLDER = "clienttest/references/";
     public static final String DRAWN = "reference-pictures";
-
-    /* How far a pixel's colour may be off in each channel, and the share of the pixels that may be off by more. */
-    private static final int CHANNEL = 12;
-    private static final double SHARE = 0.005;
-    /* Where a pixel is off, in the picture of the differences: opaque red. */
-    private static final int OFF = 0xFF0000FF;
 
     private ReferencePictures() {
     }
@@ -66,11 +60,7 @@ public final class ReferencePictures {
     /** The frame's rectangle {@code x}, {@code y}, {@code width} by {@code height} in the GUI's pixels, a copy. */
     public static NativeImage capture(final Minecraft mc, final int x, final int y, final int width,
                                       final int height) {
-        final double scale = mc.getWindow().getGuiScale();
-        try (NativeImage frame = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
-            return cut(frame, (int) Math.round(x * scale), (int) Math.round(y * scale),
-                    (int) Math.round(width * scale), (int) Math.round(height * scale));
-        }
+        return Pictures.capture(mc, x, y, width, height);
     }
 
     /** Fails unless {@code drawn} looks as {@code other} does, both pictures of {@code name}. */
@@ -96,20 +86,9 @@ public final class ReferencePictures {
                     + drawn.getHeight() + " and its reference " + reference.getWidth() + " by "
                     + reference.getHeight() + "; what was drawn is at " + left);
         }
-        int off = 0;
         try (NativeImage differences = new NativeImage(drawn.getWidth(), drawn.getHeight(), true)) {
-            for (int py = 0; py < drawn.getHeight(); py++) {
-                for (int px = 0; px < drawn.getWidth(); px++) {
-                    final int a = drawn.getPixelRGBA(px, py);
-                    final int b = reference.getPixelRGBA(px, py);
-                    final boolean differs = Math.abs((a & 0xFF) - (b & 0xFF)) > CHANNEL
-                            || Math.abs((a >> 8 & 0xFF) - (b >> 8 & 0xFF)) > CHANNEL
-                            || Math.abs((a >> 16 & 0xFF) - (b >> 16 & 0xFF)) > CHANNEL;
-                    differences.setPixelRGBA(px, py, differs ? OFF : a);
-                    off += differs ? 1 : 0;
-                }
-            }
-            final int most = (int) Math.floor(drawn.getWidth() * drawn.getHeight() * SHARE);
+            final int off = Pictures.differing(drawn, reference, differences);
+            final int most = Pictures.mostOff(drawn);
             if (off > most) {
                 final File left = leave(mc, folder, drawn, name + ".png");
                 leave(mc, folder, differences, name + "-differences.png");
@@ -118,20 +97,6 @@ public final class ReferencePictures {
                         + ", its differences in red beside it");
             }
         }
-    }
-
-    /* A copy of the frame's rectangle, in the frame's pixels. */
-    private static NativeImage cut(final NativeImage frame, final int x, final int y, final int width,
-                                   final int height) {
-        final int w = Math.max(1, Math.min(width, frame.getWidth() - x));
-        final int h = Math.max(1, Math.min(height, frame.getHeight() - y));
-        final NativeImage out = new NativeImage(w, h, true);
-        for (int py = 0; py < h; py++) {
-            for (int px = 0; px < w; px++) {
-                out.setPixelRGBA(px, py, frame.getPixelRGBA(x + px, y + py));
-            }
-        }
-        return out;
     }
 
     /* Leaves a picture in the run's folder, under the mod's own folder for a reference's, as the studio lists them. */

@@ -111,6 +111,16 @@ public final class TestRecorder {
         return List.copyOf(STEPS);
     }
 
+    /**
+     * Keeps {@code step}, which an agent took as the player through the MCP server, while recording: the clicks and
+     * the typing an agent hands a screen reach it without passing the game's own input, which the recorder hears.
+     */
+    public static void agentDid(final RecordedTest.Step step) {
+        if (recording) {
+            keep(step);
+        }
+    }
+
     /** The mod whose block opened the first screen recorded, which the test is kept for; none before one. */
     public static Optional<String> mod() {
         return Optional.ofNullable(mod);

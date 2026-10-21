@@ -98,10 +98,17 @@ public final class McpGame {
                         .then(Commands.literal("status").executes(context -> say(status())))
                         .then(Commands.literal("cut").executes(context -> say(McpTexts.CUT.with(cutAll())))))));
         McpOnServer.prompt(McpGame::ask);
+        PlayTasks.listen();
+        ChatLines.listen();
         WorldTools.of(McpGame::askStudio, McpGame::lookedAt).forEach(McpGame::declare);
         CoreTools.of(() -> McpFolders.of(Minecraft.getInstance().getSingleplayerServer(),
                 Minecraft.getInstance().gameDirectory.toPath()), McpGame::command).forEach(McpGame::declare);
         studioTools.forEach(McpGame::declare);
+        // The tools to play the game as the player, for automated tests: seeing, acting, the test world, waiting.
+        PlaySeeing.all().forEach(McpGame::declare);
+        PlayActing.all().forEach(McpGame::declare);
+        PlayWorld.all().forEach(McpGame::declare);
+        PlayWaiting.all().forEach(McpGame::declare);
     }
 
     /** The server running, or none. */
@@ -265,7 +272,7 @@ public final class McpGame {
      * A command let through: in a world of the player's own, run on its server as the player with a cheater's level;
      * on a server whose developer mode is on, sent as the player's own command, for an operator.
      */
-    private static CompletableFuture<McpResult> command(final McpCall call, final String command) {
+    static CompletableFuture<McpResult> command(final McpCall call, final String command) {
         final Minecraft game = Minecraft.getInstance();
         return game.submit(() -> {
             final IntegratedServer own = game.getSingleplayerServer();

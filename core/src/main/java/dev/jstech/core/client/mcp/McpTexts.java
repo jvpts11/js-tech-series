@@ -60,6 +60,20 @@ public final class McpTexts {
     public static final TextKey SENT = TextKey.of("jscore.mcp.sent",
             "Sent to the server as the player's own command; what it answers comes in the chat.");
     public static final TextKey NO_WORLD = TextKey.of("jscore.mcp.no_world", "No world is open.");
+    public static final TextKey NO_SCREEN = TextKey.of("jscore.mcp.no_screen", "No screen is open.");
+    /* The block used. */
+    public static final TextKey NOTHING_OPENED = TextKey.of("jscore.mcp.nothing_opened",
+            "Using %s opened no screen.");
+    public static final TextKey OWN_WORLD_ONLY = TextKey.of("jscore.mcp.own_world_only",
+            "Only a world of the player's own, which this game runs, is saved and opened again.");
+    /* What the tests were asked by. */
+    public static final TextKey NO_TESTS = TextKey.of("jscore.mcp.no_tests",
+            "No GameTest's name holds %s, or the GameTests are not on in this run.");
+    /* The test. */
+    public static final TextKey NO_RECORDED_TEST = TextKey.of("jscore.mcp.no_recorded_test",
+            "There is no client test %s kept as a file.");
+    public static final TextKey NOT_RECORDING = TextKey.of("jscore.mcp.not_recording",
+            "Nothing is being recorded.");
 
     private McpTexts() {
     }

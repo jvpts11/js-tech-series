@@ -1117,6 +1117,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   controls back and the key "Cut every agent off" (End) takes back every key; and every call is written down in the
   Agents tab. A dedicated server has one of its own on its computer, turned on by an operator in the game with
   `/jstech mcp server on` and asking the operators about each client. A mod adds tools of its own with `McpTools`.
+- (Core) Tools to play the game for automated tests, on the MCP server of the player's game, through the input the
+  player uses: seeing (where the player is and looks, what the crosshair is on, the inventory, the screen open and its
+  components by name, a picture of the window, the blocks round the player, the chat and the game's log); acting
+  (walking to a place, jumping, sneaking, looking at a block or an entity, picking a hotbar slot, using, placing,
+  breaking, opening a block, clicking a component by name, typing, pressing a key, closing the screen); the test
+  world (giving items, setting blocks, saving and opening the world again, running GameTests by name, playing a
+  client test kept as a file with its pictures compared); waiting for ticks or until a screen, a block, a component's
+  words or a line of chat; and recording what the agent did as a client test. A tool that acts over many ticks stops
+  when the player presses a key.
 - (Core) CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - (Core) FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,
