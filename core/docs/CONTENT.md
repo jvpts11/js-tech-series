@@ -191,7 +191,8 @@ public static final ItemEntry<Item> SURVEYOR = CONTENT.item("surveyor", Item::ne
 
 - **Modes** are the ways an item works, switched by a key the player binds in the game's controls ("Change
   Item Mode"; it has no key until bound, and the tooltip says so), or by the mouse wheel turned while sneaking
-  with the item in the main hand. Read the current one with
+  with the item in the main hand; the key held a moment opens a ring of the modes to choose from
+  ([Tools and items](TOOLS.md#what-the-player-sees)). Read the current one with
   `ItemStates.mode(stack)`, change it with `ItemStates.setMode(stack, mode)`. The mode is saved by its id, so an
   id never changes once released; an id a stack does not know falls back to the first mode.
 - **FE** (Forge Energy) is the energy unit every NeoForge mod shares. An item that holds energy is reached by

@@ -142,6 +142,7 @@ import dev.jstech.tests.clienttest.core.MovingStructureLifeClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureToolsClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
+import dev.jstech.tests.clienttest.core.ToolClientTests;
 import dev.jstech.tests.clienttest.core.KeyActionClientTests;
 import dev.jstech.tests.clienttest.core.EffectsClientTests;
 import dev.jstech.tests.clienttest.core.LightingClientTests;
@@ -317,6 +318,7 @@ public final class ClientTestSuite {
             TravelClientTests.class,
             WorldChangesClientTests.class,
             ItemStateClientTests.class,
+            ToolClientTests.class,
             DataRegistryClientTests.class,
             KeyActionClientTests.class,
             DiagnosticsClientTests.class,

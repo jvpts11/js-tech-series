@@ -34,7 +34,8 @@ public final class ItemStateClientTests {
             // The amounts of energy are grouped the way the machine's own language groups them.
             return lines.contains("Mode: Scan") && lines.stream().anyMatch(line -> line.startsWith("Energy: 0 FE of "))
                     && lines.contains("No fluid, holds 4000 mB") && lines.contains("Holds 0 of 4 stacks")
-                    && lines.contains("Give Change Item Mode a key to change the mode");
+                    && lines.contains("Turn the mouse wheel while sneaking to change the mode, or give Change Item "
+                    + "Mode a key");
         }, "the full tool's tooltip says its mode, energy, fluid, stacks and how to change the mode")
                 .thenAssert(0, () -> List.of(ctx.mc().options.keyMappings)
                         .contains(KeyActionsClient.mapping(CoreKeys.CHANGE_ITEM_MODE)),

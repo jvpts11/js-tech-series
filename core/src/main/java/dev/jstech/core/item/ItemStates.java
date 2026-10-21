@@ -37,6 +37,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.Nullable;
@@ -55,9 +57,10 @@ import org.jetbrains.annotations.Nullable;
  *         .register();
  * }</pre>
  *
- * <p>The mode key, a key action of the Core's, changes the mode of the item in the main hand, on the server, which
- * tells the player the new one on the action bar; with shift held it goes back one. The mouse wheel turned while
- * sneaking does the same, one mode a notch.
+ * <p>The mode key, a key action of the Core's, changes the mode of the item in the main hand, on the server, and the
+ * player's game shows the new one with the item's name above the hotbar; with shift held it goes back one. The mouse
+ * wheel turned while sneaking does the same, one mode a notch, and the key held a moment opens the ring of the item's
+ * modes, where the mouse chooses one.
  */
 public final class ItemStates {
 
@@ -88,15 +91,20 @@ public final class ItemStates {
             COMPONENTS.registerComponentType("item_on", builder -> builder.persistent(Codec.BOOL)
                     .networkSynchronized(ByteBufCodecs.BOOL));
 
+    /* The version of the payload of a mode chosen. */
+    private static final String NETWORK_VERSION = "1";
+
     /* What each declared item holds, worked out the first time it is asked for, once every item is registered. */
     private static volatile @Nullable Map<Item, ItemState> byItem;
 
     private ItemStates() {
     }
 
-    /** Hands the components to the Core's event bus. */
+    /** Hands the components, and the payload of the mode chosen on the ring of modes, to the Core's event bus. */
     public static void register(final IEventBus modEventBus) {
         COMPONENTS.register(modEventBus);
+        modEventBus.addListener(RegisterPayloadHandlersEvent.class, event -> event.registrar(NETWORK_VERSION)
+                .playToServer(ItemModePayload.TYPE, ItemModePayload.STREAM_CODEC, ItemStates::onChosen));
     }
 
     /** What {@code item} was declared to hold; {@link ItemState#NOTHING} for an item declared with nothing. */
@@ -158,12 +166,23 @@ public final class ItemStates {
         return Optional.of(next);
     }
 
-    /** What the mode key does on the server: moves the item in the player's main hand on and says its new mode. */
+    /**
+     * What the mode key does on the server: moves the item in the player's main hand on, or back with shift; the
+     * player's game shows the new mode with the item's name above the hotbar.
+     */
     public static Optional<ItemMode> cycleHeld(final ServerPlayer player, final boolean backwards) {
-        final Optional<ItemMode> next = cycleMode(player.getMainHandItem(), backwards);
-        next.ifPresent(mode -> player.displayClientMessage(GameText.component(ItemTexts.MODE.with(mode.name())),
-                true));
-        return next;
+        return cycleMode(player.getMainHandItem(), backwards);
+    }
+
+    /** Puts the item in the player's main hand in its mode {@code id}, as the ring of modes chose; false for none. */
+    public static boolean chooseHeld(final ServerPlayer player, final String id) {
+        final ItemStack held = player.getMainHandItem();
+        for (final ItemMode mode : of(held).modes()) {
+            if (mode.id().equals(id)) {
+                return setMode(held, mode);
+            }
+        }
+        return false;
     }
 
     /** What a player reads of what {@code stack} holds, a line for each thing it holds. */
@@ -219,5 +238,14 @@ public final class ItemStates {
             event.registerItem(Capabilities.ItemHandler.ITEM,
                     (stack, context) -> new ItemInventory(stack, state.slots()), item);
         }
+    }
+
+    /* Runs on the server: the payload is only ever sent to it. */
+    private static void onChosen(final ItemModePayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) {
+                chooseHeld(player, payload.mode());
+            }
+        });
     }
 }

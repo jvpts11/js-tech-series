@@ -20,13 +20,16 @@ import java.util.regex.Pattern;
  */
 public record ItemMode(String id, TextKey name) {
 
+    /** The longest id a mode has: what the ring of modes sends back when the player chooses one. */
+    public static final int LONGEST_ID = 64;
     private static final Pattern ID = Pattern.compile("[a-z0-9_]+");
 
     public ItemMode {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(name, "name");
-        if (!ID.matcher(id).matches()) {
-            throw new IllegalArgumentException("a mode's id is lower case letters, digits and underscores, not " + id);
+        if (!ID.matcher(id).matches() || id.length() > LONGEST_ID) {
+            throw new IllegalArgumentException("a mode's id is up to " + LONGEST_ID + " lower case letters, digits "
+                    + "and underscores, not " + id);
         }
     }
 

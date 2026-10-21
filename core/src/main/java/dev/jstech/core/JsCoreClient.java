@@ -81,6 +81,7 @@ import dev.jstech.core.client.room.RoomViewClient;
 import dev.jstech.core.client.sky.SkyClient;
 import dev.jstech.core.client.weather.WeatherClient;
 import dev.jstech.core.client.state.ClientStateEvents;
+import dev.jstech.core.client.tool.ToolClient;
 import dev.jstech.core.client.vehicle.VehicleControls;
 import dev.jstech.core.client.vehicle.VehiclesClient;
 import dev.jstech.core.gui.style.StyleSettings;
@@ -165,6 +166,7 @@ public final class JsCoreClient {
         HologramView.listen();
         HudElements.listen(modEventBus);
         ItemStateClient.listen(modEventBus);
+        ToolClient.listen(modEventBus);
         KeyActionsClient.listen(modEventBus);
         LightingClient.listen(modEventBus);
         EffectsClient.listen(modEventBus);

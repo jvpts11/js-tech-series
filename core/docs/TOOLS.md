@@ -37,6 +37,26 @@ as it loads when either is not, saying which.
 The tool's mode is changed with the Core's mode key, or by turning the mouse wheel while sneaking with the tool in
 the main hand: down for the next mode, up for the one before.
 
+## What the player sees
+
+- **The ring of modes**: holding the mode key a moment opens a ring of the item's modes over the darkened world, the
+  first at the top, each with its name and, for a tool that mines, a picture of what it mines (one block, a grid of
+  the area, a tunnel, a vein); the mode it is in has a green dot. The mouse points at a mode and letting go of the key
+  chooses it; letting go in the middle, or Escape, keeps the one it is in. A tap of the key still passes to the next.
+- **The name with its mode**: the game's name of the item above the hotbar, shown as it comes into the hand, says the
+  mode it is in (`Atomic Drill: Area 3x3`) and shows again when the mode changes; under it, small, what it works on,
+  how much of how much (`energy 27 500 / 50 000 FE`).
+- **Under the crosshair**: a white bar of how charged a tool held in use is, and an orange bar of how hot a tool is,
+  marked where its heat ends.
+- **On the icon**: over the game's own durability bar, a bar for each thing the item holds (energy in red, a fuel in
+  orange, another fluid in its colour, a gas in light blue, heat in orange), and the first letter of its mode in the
+  top left corner.
+- **In the world**: a tool that mines an area or a vein outlines every block it will take with a box of its own; a
+  building tool shows the blocks it will place, translucent with a white edge, as many as the inventory holds. Claims
+  are the server's to weigh, so a block on claimed land is outlined and then left as the tool works.
+
+Their colours are the `jscore:tools/hud` palette, which a resource pack can change.
+
 ## Mining an area or a vein
 
 When a player breaks a block with a tool that works and mines an area or a vein, the rest of it breaks too, each
@@ -203,6 +223,9 @@ declared, since the game fixes how long an item lasts as it starts; a data pack'
 change it. An item that wears out stacks alone.
 
 ## What can go wrong
+
+- **The ring of modes never opens.** The mode key has no key bound (it has none until the player gives it one), or
+  the item in the main hand has no modes; the mouse wheel while sneaking still changes the mode.
 
 - **The game stops as it loads, naming a tool.** Its spec mines or builds in a mode the item does not have, or it works
   on something the item does not hold: declare `holdsEnergy`, `holdsFluid` or `holdsGas` before `tool(...)`.

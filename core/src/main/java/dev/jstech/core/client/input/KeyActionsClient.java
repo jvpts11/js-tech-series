@@ -39,8 +39,20 @@ public final class KeyActionsClient {
     private static final Map<KeyAction, KeyMapping> MAPPINGS = new LinkedHashMap<>();
     private static final Map<KeyAction, Runnable> PRESSES = new ConcurrentHashMap<>();
     private static final Map<KeyAction, BooleanSupplier> SENDS_WHEN = new ConcurrentHashMap<>();
+    private static final Map<KeyAction, Hold> HOLDS = new ConcurrentHashMap<>();
 
     private KeyActionsClient() {
+    }
+
+    /**
+     * What holding {@code action}'s key for {@code ticks} or more does instead of a press: let go sooner, it is a press
+     * as any other; held that long, {@code held} runs once and the press never comes.
+     */
+    public static void onHold(final KeyAction action, final int ticks, final Runnable held) {
+        if (ticks < 1) {
+            throw new IllegalArgumentException("a key is held one tick or more, not " + ticks);
+        }
+        HOLDS.put(Objects.requireNonNull(action, "action"), new Hold(ticks, Objects.requireNonNull(held, "held")));
     }
 
     /** What a press of {@code action} does on the player's own game. */
@@ -108,9 +120,54 @@ public final class KeyActionsClient {
 
     public static void onClientTick(final ClientTickEvent.Post event) {
         for (final Map.Entry<KeyAction, KeyMapping> entry : MAPPINGS.entrySet()) {
+            final Hold hold = HOLDS.get(entry.getKey());
+            if (hold == null) {
+                while (entry.getValue().consumeClick()) {
+                    press(entry.getKey());
+                }
+                continue;
+            }
+            int clicks = 0;
             while (entry.getValue().consumeClick()) {
+                clicks++;
+            }
+            if (hold.tick(entry.getValue().isDown(), clicks)) {
                 press(entry.getKey());
             }
+        }
+    }
+
+    /* How long a key with something to do when held has been down, and whether that has been done. */
+    private static final class Hold {
+
+        private final int ticks;
+        private final Runnable held;
+        private int down;
+        private boolean done;
+
+        private Hold(final int ticks, final Runnable held) {
+            this.ticks = ticks;
+            this.held = held;
+        }
+
+        /*
+         * A tick of the key, down or not, pressed {@code clicks} times since the last: runs what holding does once it
+         * has been down long enough, and says whether a press came instead (let go sooner, or pressed and let go
+         * between two ticks).
+         */
+        boolean tick(final boolean isDown, final int clicks) {
+            if (isDown) {
+                this.down++;
+                if (!this.done && this.down >= this.ticks) {
+                    this.done = true;
+                    this.held.run();
+                }
+                return false;
+            }
+            final boolean pressed = !this.done && (this.down > 0 || clicks > 0);
+            this.down = 0;
+            this.done = false;
+            return pressed;
         }
     }
 }

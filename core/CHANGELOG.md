@@ -908,6 +908,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Modules in tools: a tool whose modules work while it is held takes them as worn things do, and they make it
   mine an area or a vein, work as though enchanted (silk touch, fortune), or change the reach and speed of the hand
   holding it, spending its energy each use.
+- What a tool shows: holding the mode key opens a ring of the item's modes, chosen with the mouse; the item's
+  name above the hotbar says its mode and what it works on; bars under the crosshair show a tool's charge and heat;
+  an icon carries a bar for each thing the item holds and its mode's letter; and in the world a tool outlines every
+  block its area or vein will take, and a building tool shows the ghosts of the blocks it will place.
 - Items: an item holds a gas, in a tank of a volume at a pressure the Core's gas capability reaches; a key works
   an item wherever its player carries it, in a hand, worn or in the inventory, and turns one on and off
   (`ItemActions`); an item lasts as many uses as declared, or as many as its mod makes of a property of its material;
@@ -923,6 +927,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A host of modules says whether its modules work worn or held (`ModuleHostDef.worn`, `ModuleHostDef.tool`, or
   `"held"` in data), and a module's energy is spent each second worn, each use in a tool. `ItemState` gains a gas
   tank. A module effect does nothing where it has no part, in what is worn or in a tool, unless its kind says.
+- The mode key no longer writes the new mode on the action bar: the item's name above the hotbar shows it.
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the
   industrial control link; telemetry becomes a line of its own, which J's Space lays.
 - Two layers: what is the series' own (the eras and tiers, the data network's model, the Operations, J's
