@@ -17,6 +17,7 @@ import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.unify.Unification;
 import dev.jstech.tests.testkit.computers.CraftingRig;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.ArrayList;
@@ -103,6 +104,14 @@ public final class MekanismRig {
 
     public static StorageKey itemKey(final ResourceLocation id) {
         return StorageKey.of(item(id));
+    }
+
+    /**
+     * The key of the item that stands for {@code id} once the Core unifies the materials Mekanism shares with it:
+     * Mekanism's iron dust is a copy of the Core's, so its crusher makes the Core's.
+     */
+    public static StorageKey unifiedKey(final ResourceLocation id) {
+        return StorageKey.of(Unification.unified(new ItemStack(item(id))).getItem());
     }
 
     public static StorageKey water() {

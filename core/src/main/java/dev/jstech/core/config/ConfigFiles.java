@@ -19,6 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -76,6 +77,38 @@ public final class ConfigFiles {
         final List<ConfigFile> out = new ArrayList<>();
         BY_MOD.values().forEach(out::addAll);
         return out;
+    }
+
+    /**
+     * The values {@code file} has for a world's data loading now: what a condition in a recipe, a rule a loot table
+     * asks or anything else read while data loads should read a setting from, rather than the file itself. A world's
+     * data loads as the world opens, before the world's own settings are read, so a world's file is read for it from
+     * beside the world, as it is on disk; any other file, and a world's once the world runs, is the file itself.
+     */
+    public static IConfigValues forData(final ConfigFile file) {
+        return WorldDataSettings.of(file);
+    }
+
+    /**
+     * The values a world's file holds on disk for the world in {@code world}, without reading it into the file: the
+     * file beside the world, else the modpack's copy in the game's {@code defaultconfigs} folder, else the defaults;
+     * with no world, the modpack's copy or the defaults, as a world being made starts with. What a world's data loads
+     * with before the world runs ({@link #forData}).
+     */
+    public static IConfigValues onDisk(final ConfigFile file, final @Nullable Path world) {
+        return WorldDataSettings.onDisk(file, world);
+    }
+
+    /** The game took hold of the world in {@code folder} to open it, before it loads the world's data. */
+    @ApiStatus.Internal
+    public static void worldOpened(final Path folder) {
+        WorldDataSettings.opened(folder);
+    }
+
+    /** The game let go of the world in {@code folder}. */
+    @ApiStatus.Internal
+    public static void worldClosed(final Path folder) {
+        WorldDataSettings.closed(folder);
     }
 
     /**

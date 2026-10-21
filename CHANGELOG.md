@@ -996,6 +996,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   The Core makes their English names, block states, models, drops and tool tags as the game loads, under every pack,
   so a resource pack or a data pack can replace any of them; a file that cannot stand stops the game loading with a
   paragraph saying which file, which declaration and how to put it right.
+- (Core) Conditions on data: `jscore:setting` loads a recipe, a loot table or any data NeoForge loads with conditions
+  only while a setting has the value asked for (a switch, a number, a word or a list), reading a world's setting from
+  the world's own file from its very first load.
+- (Core) Crafting recipes that ask for knowledge: `jscore:crafting_shaped_knowledge` and
+  `jscore:crafting_shapeless_knowledge` craft at the crafting table and the inventory's grid only for a player whose
+  team knows what they ask, never where no player is at the grid, and show in JEI, EMI and the manuals with a
+  padlock while the team does not know it.
+- (Core) Unification: when several mods make the same material, one item stands for all of them, the game's own first
+  and the Core's next by default, in every recipe of every mod and in what blocks, creatures and chests drop; the
+  world's `jstech-unification.toml` says which mods come first and which tags, items and recipes are left alone, and
+  it steps aside for Almost Unified.
 
 ### Changed
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

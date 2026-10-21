@@ -29,7 +29,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 final class KeptConfigFiles {
 
     /** The folder beside a world its settings live in, the one NeoForge keeps a world's own settings in. */
-    private static final String WORLD_FOLDER = "serverconfig";
+    static final String WORLD_FOLDER = "serverconfig";
 
     private KeptConfigFiles() {
     }

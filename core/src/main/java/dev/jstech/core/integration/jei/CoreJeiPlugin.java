@@ -18,6 +18,8 @@ import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.multipart.MicroblockRecipes;
 import dev.jstech.core.multipart.MicroblockShowcase;
+import dev.jstech.core.progression.KnowledgeShapedRecipe;
+import dev.jstech.core.progression.KnowledgeShapelessRecipe;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -88,6 +90,9 @@ public final class CoreJeiPlugin implements IModPlugin {
                 new MicroblockCraftingExtension<>(MicroblockShowcase.Rule.JOIN));
         crafting.addExtension(MicroblockRecipes.Facade.class,
                 new MicroblockCraftingExtension<>(MicroblockShowcase.Rule.FACADE));
+        // The crafting recipes that ask for knowledge, with a padlock while the player's team lacks it.
+        crafting.addExtension(KnowledgeShapedRecipe.class, new KnowledgeCraftingExtension<>());
+        crafting.addExtension(KnowledgeShapelessRecipe.class, new KnowledgeCraftingExtension<>());
     }
 
     @Override

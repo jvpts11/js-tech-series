@@ -1,0 +1,11 @@
+{
+  "type": "jscore:crafting_shaped_knowledge",
+  "knowledge": "jstests:test_fusion",
+  "category": "misc",
+  "pattern": ["GD"],
+  "key": {
+    "G": {"item": "minecraft:gravel"},
+    "D": {"item": "minecraft:dirt"}
+  },
+  "result": {"id": "minecraft:lapis_lazuli"}
+}

@@ -189,7 +189,7 @@ public final class MekanismMachineParkGameTests {
     @GameTest(template = ARENA, timeoutTicks = 900)
     public static void crusher_turnsIngotsIntoDust(final GameTestHelper helper) {
         final MekanismRig.Rig rig = MekanismRig.build(helper, CRUSHER);
-        final StorageKey dust = MekanismRig.itemKey(DUST_IRON);
+        final StorageKey dust = MekanismRig.unifiedKey(DUST_IRON);
         final NetworkProcessingOperation[] op = new NetworkProcessingOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> MekanismRig.mountBuses(helper))

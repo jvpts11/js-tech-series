@@ -12,6 +12,9 @@ import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -21,7 +24,46 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class KnowledgeGate {
 
+    /** The player at the crafting grid the game is working out a result for, on the thread doing it. */
+    private static final ThreadLocal<Player> CRAFTING = new ThreadLocal<>();
+
     private KnowledgeGate() {
+    }
+
+    /**
+     * Runs {@code work} with {@code player} as the one at the crafting grid, whose team a crafting recipe that asks
+     * for knowledge asks: the game's crafting table and inventory grid say who it is as they work out a result.
+     */
+    @ApiStatus.Internal
+    public static void craftingAs(final Player player, final Runnable work) {
+        final Player before = CRAFTING.get();
+        CRAFTING.set(player);
+        try {
+            work.run();
+        } finally {
+            if (before == null) {
+                CRAFTING.remove();
+            } else {
+                CRAFTING.set(before);
+            }
+        }
+    }
+
+    /**
+     * Whether a crafting recipe that asks for {@code knowledge} matches on {@code level} now: one that asks for none
+     * always; one that asks for some only for a player at a grid whose team knows it, so a crafter block or any grid
+     * that names no player crafts nothing locked, as a machine of no owner runs nothing locked. On a player's own game
+     * it is as the server last said of the player's team.
+     */
+    public static boolean craftable(final Level level, final Optional<ResourceLocation> knowledge) {
+        if (knowledge.isEmpty()) {
+            return true;
+        }
+        if (level.isClientSide()) {
+            return openHere(knowledge);
+        }
+        final Player player = CRAFTING.get();
+        return player != null && level.getServer() != null && allows(level.getServer(), player.getUUID(), knowledge);
     }
 
     /**

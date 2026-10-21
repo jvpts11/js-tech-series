@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {"item": "jstests:foreign_tin_ingot"},
+    {"item": "minecraft:structure_void"}
+  ],
+  "result": {"id": "minecraft:bedrock"}
+}

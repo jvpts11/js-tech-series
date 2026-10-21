@@ -17,6 +17,7 @@ import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.ProcessingViewLayout;
 import dev.jstech.core.machine.RecipeConditions;
 import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.progression.IKnowledgeGated;
 import dev.jstech.core.progression.KnowledgeGate;
 import dev.jstech.core.progression.Knowledges;
 import dev.jstech.core.text.GameText;
@@ -77,7 +78,7 @@ public final class ProcessingRecipeViews {
      * The line naming the knowledge {@code recipe} needs, last under it, if it needs any: in the viewer's own colour
      * when the player's team has it, and the palette's locked colour beside a padlock when it does not.
      */
-    public static Optional<Component> knowledgeLine(final ProcessingRecipe recipe) {
+    public static Optional<Component> knowledgeLine(final IKnowledgeGated recipe) {
         return recipe.knowledge().map(id -> {
             final Text name = Knowledges.byId(id).map(known -> known.name().text())
                     .orElseGet(() -> Text.literal(id.toString()));
@@ -88,12 +89,12 @@ public final class ProcessingRecipeViews {
     }
 
     /** Whether {@code recipe} is locked for this client's player's team: drawn with a padlock. */
-    public static boolean locked(final ProcessingRecipe recipe) {
+    public static boolean locked(final IKnowledgeGated recipe) {
         return !KnowledgeGate.openHere(recipe.knowledge());
     }
 
     /** How far the knowledge line of {@code recipe} stands in from the left, past its padlock when it has one. */
-    public static int knowledgeIndent(final ProcessingRecipe recipe) {
+    public static int knowledgeIndent(final IKnowledgeGated recipe) {
         return locked(recipe) ? LOCK_WIDTH + LOCK_GAP : 0;
     }
 

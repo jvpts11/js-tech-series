@@ -11,6 +11,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.config.ConfigFile;
+import dev.jstech.core.config.ConfigFiles;
+import dev.jstech.core.config.ConfigKey;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.ApiStatus;
  * industrial chain the only path.
  *
  * <pre>{@code
- * SimplePath.rule(MODID, () -> MySettings.INDUSTRIAL_CHAIN_ONLY.get());
+ * SimplePath.rule(MODID, MySettings.FILE, MySettings.INDUSTRIAL_CHAIN_ONLY);
  * // in a recipe file: "neoforge:conditions": [{"type": "jscore:simple_path", "mod": "mymod"}]
  * }</pre>
  */
@@ -55,6 +58,16 @@ public final class SimplePath {
     public static void rule(final String modid, final BooleanSupplier industrialChainOnly) {
         RULES.put(Objects.requireNonNull(modid, "modid"), Objects.requireNonNull(industrialChainOnly,
                 "industrialChainOnly"));
+    }
+
+    /**
+     * The server rule of the mod {@code modid}, as a switch in one of its world's settings files: read as the recipes
+     * load, so it holds from a world's first load rather than from its first {@code /reload}.
+     */
+    public static void rule(final String modid, final ConfigFile file, final ConfigKey<Boolean> industrialChainOnly) {
+        Objects.requireNonNull(file, "file");
+        Objects.requireNonNull(industrialChainOnly, "industrialChainOnly");
+        rule(modid, () -> ConfigFiles.forData(file).get(industrialChainOnly));
     }
 
     /** Whether the simpler path of the mod {@code modid} is open now. */

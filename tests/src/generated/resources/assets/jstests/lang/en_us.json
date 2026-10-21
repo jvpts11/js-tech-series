@@ -126,6 +126,7 @@
   "gui.jstests.touch_panel.title": "PUMP 2",
   "hud.jstests.short_bar": "Short bar",
   "hud.jstests.tall_bar": "Tall bar",
+  "item.jstests.foreign_tin_ingot": "Foreign Tin Ingot",
   "item.jstests.full_tool": "Full Test Tool",
   "item.jstests.hrc_fuse": "Test HRC Fuse",
   "item.jstests.modes_tool": "Modes Test Tool",

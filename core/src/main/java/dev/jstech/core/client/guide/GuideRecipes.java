@@ -15,6 +15,8 @@ import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.MachineTexts;
 import dev.jstech.core.machine.ProcessingViewLayout;
+import dev.jstech.core.progression.IKnowledgeGated;
+import dev.jstech.core.progression.KnowledgeGate;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,7 +135,8 @@ public final class GuideRecipes {
                 ? GameText.component(MachineTexts.RECIPE_TIME.with(
                         ProcessingViewLayout.seconds(cooking.getCookingTime())))
                 : Component.empty();
-        return new View(inputs, List.of(recipe.getResultItem(registries)), time, Component.empty(), false, kind);
+        final boolean locked = recipe instanceof IKnowledgeGated gated && !KnowledgeGate.openHere(gated.knowledge());
+        return new View(inputs, List.of(recipe.getResultItem(registries)), time, Component.empty(), locked, kind);
     }
 
     /**

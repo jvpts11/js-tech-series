@@ -1,0 +1,4 @@
+{
+  "neoforge:conditions": [{"type": "jscore:setting", "file": "jstests-yaml", "setting": "words", "value": ["a", "b"]}],
+  "type": "minecraft:crafting_shapeless", "ingredients": [{"item": "minecraft:bedrock"}, {"item": "minecraft:barrier"}], "result": {"id": "minecraft:bedrock"}
+}

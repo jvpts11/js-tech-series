@@ -69,3 +69,93 @@ recipes of a kind of processing machine are data pack recipes of its type.
   stand: the paragraph names the file, the declaration and how to put it right.
 - **A block is drawn purple and black.** Its texture is missing: add `<namespace>:block/<path>` in a resource pack.
 - **A change to a pack does nothing.** Content packs are read as the game starts: start it again.
+
+## Conditions on data
+
+*Added 2026-10-21.*
+
+Any data file NeoForge loads with conditions (a recipe, a loot table, a modifier of loot, and more) carries them
+under `neoforge:conditions`, and loads only when every one holds. NeoForge's own cover the mods installed and the
+tags: `neoforge:mod_loaded` (`"modid": "mekanism"`), `neoforge:not`, `neoforge:and`, `neoforge:or`,
+`neoforge:item_exists` and `neoforge:tag_empty`. The Core adds two:
+
+```json
+{
+  "neoforge:conditions": [
+    {"type": "jscore:setting", "file": "jstech-balance", "setting": "moving_structures.physics_tool_recipe"},
+    {"type": "jscore:setting", "file": "jscomputers-server", "setting": "storage.mode", "value": "simple"}
+  ],
+  "type": "minecraft:crafting_shaped", "...": "..."
+}
+```
+
+- `jscore:setting` holds while a setting has the value asked for: the settings file by its name without the
+  extension, the setting by its dotted path in the file, and the `value`, which is `true` when left out. A value is
+  a switch's `true` or `false`, a number, a word (alike in any case) or a list. A world's setting is read from the
+  world's own file, even as the world opens and its data loads before its settings are read, so the condition holds
+  from the first load; a change takes hold at the next `/reload`. A file or a setting that is not there fails the
+  condition, and so does a player's own file, which no world's data may hang on; the log says why, once.
+- `jscore:simple_path` holds while a mod's simpler path to the shared catalogue is open: unless J's Industrial is
+  installed and the mod's own rule makes the industrial chain the only way (`"mod": "jscomputers"`).
+
+## Recipes that ask for knowledge
+
+*Added 2026-10-21.*
+
+A recipe may ask for a piece of knowledge a team learns: it works only for whoever's team knows it, and the recipe
+viewers (JEI and EMI) and the manuals show it all the same, with a padlock while the player's team does not.
+
+- A processing machine's recipe takes `"knowledge": "mymod:fusion"`, and its machine runs it only for an owner whose
+  team knows it ([Machines](MACHINES.md)).
+- A crafting table's recipe is written as a shaped or a shapeless one, under the Core's type and with the knowledge:
+
+```json
+{"type": "jscore:crafting_shaped_knowledge", "knowledge": "mymod:fusion",
+ "pattern": ["GD"], "key": {"G": {"item": "minecraft:gravel"}, "D": {"item": "minecraft:dirt"}},
+ "result": {"id": "minecraft:lapis_lazuli"}}
+```
+
+`jscore:crafting_shapeless_knowledge` takes `ingredients` as a shapeless recipe does. It crafts at the crafting table
+and in the inventory's grid for a player whose team knows it. Where no player is at the grid, as in a crafter block or
+another mod's table that names none, it never matches, as a machine of no owner runs nothing locked.
+
+## Unification
+
+*Added 2026-10-21.*
+
+When several mods make the same material (the Core's tin ingot and another mod's, both filed under `c:ingots/tin`),
+one item stands for all of them: every recipe makes that item and asks for it, and what blocks, creatures and chests
+drop comes out as it. The item that stands is the first preferred mod's, the game's own first and the Core's next by
+default; a material none of them makes takes the first of its items by id.
+
+What is unified is every common tag of every form of every material, `c:<folder>/<material>` (`c:ingots/tin`,
+`c:dusts/tin`, `c:storage_blocks/tin`, `c:raw_materials/tin` and the rest), with more than one item in it. Ores never
+are: an ore differs by the rock it is in. The recipes' files are rewritten just before the game reads them, so recipes
+of every mod and every kind are reached: an item a recipe names under `item` or `id`, and an item named bare where a
+recipe says what it makes (`result`, `results`, `output`, `outputs`). A recipe's conditions are left as they are.
+
+The world's file `serverconfig/jstech-unification.toml` sets it, read as the world's data loads:
+
+| Setting | What it does |
+| --- | --- |
+| `unification.enabled` | Whether anything is unified (on) |
+| `unification.prefer` | The mods whose item stands, by id, first to last (`["minecraft", "jscore"]`) |
+| `unification.extra_tags` | More item tags to unify, such as `c:gems/ruby` |
+| `unification.skipped_tags` | Tags left as they are |
+| `unification.kept_items` | Items never replaced by another |
+| `unification.skipped_recipes` | Recipes left as they are, by id or all of a mod's (`mymod:*`) |
+| `unification.drops` | Whether what drops is unified too (on) |
+| `unification.step_aside` | Whether the Core leaves it to Almost Unified when that is installed (on) |
+
+What drops is changed by the Core's modifier of loot, `jscore:unified_drops`, which a data pack takes out as it takes
+out any. The log says, each time the data loads, how many items stand for how many others and how many recipes
+changed.
+
+### What can go wrong
+
+- **A recipe of another mod breaks after unification.** Its kind names an item in a way the game reads as something
+  else: add the recipe, or all of its mod's, to `unification.skipped_recipes`.
+- **The wrong mod's item stands for a material.** Put that mod first in `unification.prefer`, or keep the item you
+  want to stay with `unification.kept_items`.
+- **Nothing is unified.** `unification.enabled` is off, or Almost Unified is installed and does it, which the log
+  says once.

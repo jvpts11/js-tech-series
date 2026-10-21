@@ -1,0 +1,10 @@
+{
+  "type": "jscore:crafting_shapeless_knowledge",
+  "knowledge": "jstests:test_fusion",
+  "ingredients": [
+    {"item": "minecraft:dirt"},
+    {"item": "minecraft:gravel"},
+    {"item": "minecraft:dirt"}
+  ],
+  "result": {"id": "minecraft:emerald"}
+}

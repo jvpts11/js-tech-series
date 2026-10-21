@@ -12,6 +12,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.matter.MatterStack;
+import dev.jstech.core.progression.IKnowledgeGated;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +72,7 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
                                List<SizedIngredient> catalysts, List<MatterStack> matterInputs,
                                List<MatterStack> matterOutputs, List<Byproduct> byproducts,
                                RecipeConditions conditions, Optional<ResourceLocation> knowledge)
-        implements Recipe<ProcessingInput> {
+        implements Recipe<ProcessingInput>, IKnowledgeGated {
 
     /** How long a recipe takes when its file does not say. */
     public static final int DEFAULT_TICKS = 200;

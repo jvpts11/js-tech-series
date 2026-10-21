@@ -27,7 +27,10 @@ import dev.jstech.core.cable.CableRuns;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.overhead.OverheadLines;
+import dev.jstech.core.condition.DataConditions;
 import dev.jstech.core.pack.ContentPacks;
+import dev.jstech.core.unify.UnificationSettings;
+import dev.jstech.core.unify.UnifiedDrops;
 import dev.jstech.core.machine.DataMachines;
 import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.machine.Machines;
@@ -194,6 +197,8 @@ import dev.jstech.core.notification.Notifications;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.progression.Eras;
+import dev.jstech.core.progression.KnowledgeShapedRecipe;
+import dev.jstech.core.progression.KnowledgeShapelessRecipe;
 import dev.jstech.core.progression.Knowledges;
 import dev.jstech.core.progression.PlayerProgress;
 import dev.jstech.core.progression.ProgressionTriggers;
@@ -416,6 +421,9 @@ public final class JsCore {
         SharedTools.declare();
         // The physics tool, and the shaped recipe a setting turns on and off that makes it.
         SwitchedShapedRecipe.declare();
+        // The crafting recipes that ask for a piece of knowledge, shaped and shapeless.
+        KnowledgeShapedRecipe.declare();
+        KnowledgeShapelessRecipe.declare();
         PhysicsTool.declare();
         NetworkProbe.declare();
         SignalProbe.declare();
@@ -459,6 +467,8 @@ public final class JsCore {
         ConfigFiles.register(JsEnergySettings.FILE, modEventBus, modContainer);
         // What the Space Persistor's chunks cost in power, which may be nothing.
         ConfigFiles.register(PersistorSettings.FILE, modEventBus, modContainer);
+        // Which item stands for a material several mods make, in a world's recipes and drops.
+        ConfigFiles.register(UnificationSettings.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
         ConfigFiles.register(AudioSettings.FILE, modEventBus, modContainer);
         // The styles a player chose for the screens of every mod, read on their own game only.
@@ -577,6 +587,8 @@ public final class JsCore {
         MaterialLiquids.listen(modEventBus);
         MaterialUses.listen(modEventBus);
         SimplePath.register(modEventBus);
+        DataConditions.register(modEventBus);
+        UnifiedDrops.register(modEventBus);
         MediaNetwork.listen(modEventBus);
         MediaServerEvents.listen();
         ModelAnimations.listen(modEventBus);

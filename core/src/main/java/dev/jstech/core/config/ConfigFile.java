@@ -253,6 +253,19 @@ public final class ConfigFile implements IConfigValues {
         return this.validator.validate(key, key.plain(value)).value();
     }
 
+    /**
+     * The value {@code key} would have were {@code file}, a whole file's plain values, read: upgraded as reading
+     * upgrades it and held to what the setting is held to, without the file's own values changing or anything being
+     * told.
+     */
+    public <T> T peek(final ConfigKey<T> key, final Map<String, Object> file) {
+        own(key);
+        final Map<String, Object> plain = PlainValues.map(file);
+        this.upgrades.upgrade(plain, versionOf(plain));
+        final Object raw = ConfigTree.get(plain, key.path());
+        return raw == null ? key.defaultValue() : this.validator.validate(key, raw).value();
+    }
+
     /** Writes the file as its settings are now, unless it came from a newer version of the mod. */
     public void save() {
         if (!this.newer) {

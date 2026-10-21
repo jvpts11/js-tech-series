@@ -206,7 +206,7 @@ public final class MekanismParallelLoadGameTests {
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final TestWorldBuilder world = rig.world();
         final StorageKey frame = MekanismRig.itemKey(MekanismRig.generators("fusion_reactor_frame"));
-        final StorageKey dust = MekanismRig.itemKey(MekanismRig.mek("dust_iron"));
+        final StorageKey dust = MekanismRig.unifiedKey(MekanismRig.mek("dust_iron"));
         final StorageKey infused = MekanismRig.itemKey(MekanismRig.mek("alloy_infused"));
         final INetworkOperation[] ops = new INetworkOperation[3];
         // The crusher further down the run, with its own interface.

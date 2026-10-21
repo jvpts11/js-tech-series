@@ -9,19 +9,23 @@ package dev.jstech.core.stepaside;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.config.ConfigFile;
+import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigSide;
 import dev.jstech.core.config.format.ConfigFormats;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.neoforged.fml.ModList;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
- * One of the Core's systems of looks and comfort stepping aside for an installed mod that does the same job, so the two
- * do not do it twice: the system names the mods that do what it does, and while one is installed the Core's own is off,
- * unless the player's setting keeps it. The log says, once, what stepped aside for what.
+ * One of the Core's systems stepping aside for an installed mod that does the same job, so the two do not do it twice:
+ * the system names the mods that do what it does, and while one is installed the Core's own is off, unless its setting
+ * keeps it, the player's for a system of looks and comfort, the world's for one that changes the world's data, such as
+ * unifying its recipes ({@link #of}). The log says, once, what stepped aside for what.
  *
  * <pre>{@code
  * if (StepAside.CONNECTED_TEXTURES.steps()) {
@@ -35,6 +39,8 @@ public final class StepAside {
     private final String system;
     private final List<String> mods;
     private final ConfigKey<Boolean> key;
+    /** The file the setting is in, read as the world's data reads it; none for the player's own file below. */
+    private final @Nullable ConfigFile file;
     private final AtomicBoolean told = new AtomicBoolean();
     private volatile boolean stepsAside = true;
 
@@ -76,10 +82,27 @@ public final class StepAside {
             .key(COLOURED_LIGHT_KEY, value -> COLOURED_LIGHT.stepsAside = value)
             .build();
 
-    private StepAside(final String system, final List<String> mods, final ConfigKey<Boolean> key) {
+    private StepAside(final String system, final List<String> mods, final ConfigKey<Boolean> key,
+                      final @Nullable ConfigFile file) {
         this.system = system;
         this.mods = List.copyOf(mods);
         this.key = key;
+        this.file = file;
+    }
+
+    private StepAside(final String system, final List<String> mods, final ConfigKey<Boolean> key) {
+        this(system, mods, key, null);
+    }
+
+    /**
+     * A system of any part of the series stepping aside for {@code mods}, as its switch {@code key} in {@code file}
+     * says: a world's system, such as one that changes the world's recipes, has its switch in a world's file, read
+     * as the world's data loads.
+     */
+    public static StepAside of(final String system, final List<String> mods, final ConfigFile file,
+                               final ConfigKey<Boolean> key) {
+        return new StepAside(Objects.requireNonNull(system, "system"), mods, Objects.requireNonNull(key, "key"),
+                Objects.requireNonNull(file, "file"));
     }
 
     /** The mods that do this system's job, by id. */
@@ -101,7 +124,8 @@ public final class StepAside {
     /** Whether the system steps aside: one of its mods is installed and the setting lets it; logged the first time. */
     public boolean steps() {
         final Optional<String> mod = installed();
-        if (mod.isEmpty() || !this.stepsAside) {
+        final boolean allowed = this.file == null ? this.stepsAside : ConfigFiles.forData(this.file).get(this.key);
+        if (mod.isEmpty() || !allowed) {
             return false;
         }
         if (this.told.compareAndSet(false, true)) {

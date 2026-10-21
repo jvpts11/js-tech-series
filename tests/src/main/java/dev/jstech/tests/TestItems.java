@@ -61,6 +61,14 @@ public final class TestItems {
             .modes(SCAN, MARK)
             .register();
 
+    /**
+     * Another mod's copy of the Core's tin ingot, filed under the same common tag, so the unification has a copy to
+     * replace: its recipes and the loot table that drops it come out with the Core's ingot.
+     */
+    public static final ItemEntry<Item> FOREIGN_TIN = TestSounds.CONTENT.item("foreign_tin_ingot", Item::new)
+            .named("Foreign Tin Ingot").look(IItemLook.HANDMADE).tab(ITEMS)
+            .register();
+
     private TestItems() {
     }
 

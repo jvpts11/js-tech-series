@@ -30,16 +30,20 @@ import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.multiblock.MultiblockViewTexts;
 import dev.jstech.core.multipart.MicroblockShowcase;
+import dev.jstech.core.progression.IKnowledgeGated;
 import dev.jstech.core.text.GameText;
 import java.util.List;
 import java.util.OptionalInt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -89,6 +93,17 @@ public final class CoreEmiPlugin implements EmiPlugin {
         for (final MicroblockShowcase.Rule rule : MicroblockShowcase.Rule.values()) {
             if (!MicroblockShowcase.frames(rule).isEmpty()) {
                 registry.addRecipe(new MicroblockEmiRecipe(rule));
+            }
+        }
+        // The crafting recipes that ask for knowledge, with a padlock while the player's team lacks it, in place of the
+        // plain crafting recipe EMI may make of them.
+        final RegistryAccess registries = Minecraft.getInstance().level == null ? RegistryAccess.EMPTY
+                : Minecraft.getInstance().level.registryAccess();
+        for (final RecipeHolder<CraftingRecipe> holder
+                : registry.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
+            if (holder.value() instanceof IKnowledgeGated) {
+                registry.removeRecipes(holder.id());
+                registry.addRecipe(new KnowledgeEmiRecipe(holder, registries));
             }
         }
         registry.addRecipeHandler(Machines.MENU.get(), new MachineRecipeHandler());
