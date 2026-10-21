@@ -29,6 +29,7 @@ import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.overhead.OverheadLines;
 import dev.jstech.core.condition.DataConditions;
 import dev.jstech.core.pack.ContentPacks;
+import dev.jstech.core.script.CoreScripts;
 import dev.jstech.core.unify.UnificationSettings;
 import dev.jstech.core.unify.UnifiedDrops;
 import dev.jstech.core.machine.DataMachines;
@@ -123,6 +124,8 @@ import dev.jstech.core.integration.accessories.AccessoriesIntegration;
 import dev.jstech.core.integration.create.CreateIntegration;
 import dev.jstech.core.integration.curios.CuriosIntegration;
 import dev.jstech.core.integration.ftbchunks.FtbChunksIntegration;
+import dev.jstech.core.integration.crafttweaker.CraftTweakerIntegration;
+import dev.jstech.core.integration.ftbquests.FtbQuestsIntegration;
 import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.integration.opac.OpacIntegration;
@@ -439,6 +442,8 @@ public final class JsCore {
         LinesGuide.declare();
         // What content packs declare in files rather than in Java, read as the game starts, after the catalogue.
         ContentPacks.declare(modEventBus);
+        // What the scripts of KubeJS and CraftTweaker reach of the Core, as JsCore.
+        CoreItems.CONTENT.scriptBinding(CoreScripts.NAME, CoreScripts.class);
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds; then J's Energy, the series' own,
         // with its joule and the grids of its voltage classes.
@@ -452,6 +457,8 @@ public final class JsCore {
         // Soft integrations: each one checks for its mod and stays a no-op without it.
         MekanismIntegration.bootstrap();
         FtbTeamsIntegration.bootstrap();
+        FtbQuestsIntegration.bootstrap(modEventBus);
+        CraftTweakerIntegration.bootstrap();
         FtbChunksIntegration.bootstrap();
         OpacIntegration.bootstrap();
         AccessoriesIntegration.bootstrap();

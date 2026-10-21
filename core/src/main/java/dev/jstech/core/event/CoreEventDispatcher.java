@@ -7,13 +7,13 @@
  */
 package dev.jstech.core.event;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
@@ -21,8 +21,12 @@ import java.util.function.Consumer;
  */
 public class CoreEventDispatcher {
 
+    /*
+     * Mods are made in parallel and each may listen as it is made, a scripting mod's plugin among them, so the
+     * listeners are kept where several threads may add to them at once.
+     */
     private final Map<Class<? extends ICoreEvent>, List<Consumer<? extends ICoreEvent>>>
-            listenersByClass = new HashMap<>();
+            listenersByClass = new ConcurrentHashMap<>();
 
     public <E extends ICoreEvent> void subscribe(
             final Class<E> eventClass,
@@ -30,7 +34,7 @@ public class CoreEventDispatcher {
         Objects.requireNonNull(eventClass, "eventClass must not be null");
         Objects.requireNonNull(listener, "listener must not be null");
         listenersByClass
-                .computeIfAbsent(eventClass, k -> new ArrayList<>())
+                .computeIfAbsent(eventClass, k -> new CopyOnWriteArrayList<>())
                 .add(listener);
     }
 
@@ -77,8 +81,8 @@ public class CoreEventDispatcher {
             if (listeners == null) {
                 continue;
             }
-            // Iterate a snapshot so a listener may subscribe or clear during dispatch without a CME.
-            for (final Consumer listener : new ArrayList<>(listeners)) {
+            // The list's iterator is a snapshot, so a listener may subscribe or clear during dispatch.
+            for (final Consumer listener : listeners) {
                 if (event instanceof ICoreEvent.ICancellable cancellable && cancellable.isCancelled()) {
                     return event;
                 }

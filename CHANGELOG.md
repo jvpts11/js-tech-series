@@ -1007,6 +1007,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and the Core's next by default, in every recipe of every mod and in what blocks, creatures and chests drop; the
   world's `jstech-unification.toml` says which mods come first and which tags, items and recipes are left alone, and
   it steps aside for Almost Unified.
+- (Core) KubeJS: scripts reach the Core as `JsCore` (teams, what they know, milestones, steps along an axis,
+  materials and their properties, which item stands for which, every kind of data the Core's registries read and
+  every mod's data maps, as JSON), hear its events under `JsCoreEvents` (knowledge gained, milestones and steps
+  reached, the life of Operations, machines joining and leaving data networks, sealed rooms, moving structures, and
+  a dimension's hazard, which a script cancels), and write a recipe of any mod's processing machine with a function
+  under the machine kind's id. The Core is made before KubeJS, so its bindings are there for startup scripts.
+- (Core) Data networks: a machine joining or leaving one is told on the game's bus, `NetworkMemberEvent.Joined`
+  and `NetworkMemberEvent.Left`.
+- (Core) CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
+  the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
+- (Core) FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,
+  `jscore:milestone` and `jscore:axis_step`.
 
 ### Changed
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

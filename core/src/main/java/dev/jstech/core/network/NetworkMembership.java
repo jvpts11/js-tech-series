@@ -16,12 +16,14 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -81,10 +83,12 @@ public final class NetworkMembership {
         final NetworkSystem system = NetworkSystem.get(level);
         final long pos = this.blockEntity.getBlockPos().asLong();
         if (this.blockEntity.isRemoved()) {
-            forget(system);
+            forget(system, level);
             return;
         }
+        final @Nullable NetworkUuid before = this.network;
         this.network = beside(system);
+        tellOfChange(level, before);
         if (this.network == null) {
             system.unregisterMemberAt(pos);
             return;
@@ -94,13 +98,29 @@ public final class NetworkMembership {
     }
 
     /* It is gone: off its network, and no longer kept. */
-    void forget(final NetworkSystem system) {
+    void forget(final NetworkSystem system, final ServerLevel level) {
         final long pos = this.blockEntity.getBlockPos().asLong();
         system.unregisterMemberAt(pos);
         if (system.keptMembers().get(pos) == this) {
             system.keptMembers().remove(pos);
         }
+        final @Nullable NetworkUuid before = this.network;
         this.network = null;
+        tellOfChange(level, before);
+    }
+
+    /* Tells the game's bus that it left the network it was on and joined the one it is on, where they differ. */
+    private void tellOfChange(final ServerLevel level, final @Nullable NetworkUuid before) {
+        if (Objects.equals(before, this.network)) {
+            return;
+        }
+        final BlockPos at = this.blockEntity.getBlockPos();
+        if (before != null) {
+            NeoForge.EVENT_BUS.post(new NetworkMemberEvent.Left(level, at, node(), before));
+        }
+        if (this.network != null) {
+            NeoForge.EVENT_BUS.post(new NetworkMemberEvent.Joined(level, at, node(), this.network));
+        }
     }
 
     /*

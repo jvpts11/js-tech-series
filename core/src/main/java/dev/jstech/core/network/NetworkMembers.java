@@ -76,7 +76,7 @@ public final class NetworkMembers {
             membership.resolve(level);
         });
         blockEntity.fields().whenNeighbourChanges((level, face) -> membership.resolve(level));
-        blockEntity.fields().whenBroken((level, pos) -> membership.forget(NetworkSystem.get(level)));
+        blockEntity.fields().whenBroken((level, pos) -> membership.forget(NetworkSystem.get(level), level));
         return membership;
     }
 

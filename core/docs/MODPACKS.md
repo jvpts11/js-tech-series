@@ -159,3 +159,87 @@ changed.
   want to stay with `unification.kept_items`.
 - **Nothing is unified.** `unification.enabled` is off, or Almost Unified is installed and does it, which the log
   says once.
+
+## Scripts and quests
+
+*Added 2026-10-21.*
+
+### KubeJS
+
+With KubeJS (2101.7.2 or later), every script reaches what the series' mods hand it, under the names they gave, and
+the Core's own:
+
+- **`JsCore`**, the Core's calls: a player's team (`JsCore.teamOf(server, uuid)`), what a team knows
+  (`knows`, `share`, `grant`, `forget`), the milestones it passed (`reached`, `reach`), how far it came along an axis
+  (`steps`, `step`, `reachStep`), the catalogue's materials (`materials`, `material('jscore:tin', 'ingot')`), their
+  properties (`properties`, `property('jscore:tin', 'jscore:atomic_number')`), which item stands for which
+  (`unified('othermod:tin_ingot')`), and everything the Core keeps as data: the kinds of data its registries read
+  (`dataKinds`, `dataIds('jscore:deposits')`, `data('jscore:deposits', 'jscore:copper')`: the deposits, the machines
+  and multiblocks declared as data, the dimensions' rules, the skies and the rest) and the data maps of every mod
+  (`dataMaps`, `dataMap('jscore:seals', 'minecraft:glass')`: how blocks seal, their physical properties and density,
+  the hazards of items and more). Data comes back as JSON text, as its file writes it, for `JSON.parse`. Everything is
+  named by its id; an id nothing declared is refused with a line in KubeJS's log naming it.
+- **`JsCoreEvents`**, the Core's events in server scripts: `knowledgeGained`, `milestoneReached`, `teamStepReached`,
+  `playerStepReached`, the life of an Operation on a data network (`operationCreated`, `operationStarted`,
+  `operationCompleted`, `operationFailed`, `operationDiscarded`), a machine joining or leaving a data network
+  (`networkJoined`, `networkLeft`), `roomFormed`, `roomChanged`, `roomFilled`, `roomLeaking`, `roomRemoved`,
+  `structureCollided`, `structureParted`, `structureDocked`, `structureUndocked` and `dimensionHazard`, which a script
+  cancels to spare the player this time.
+- **A recipe function for every kind of processing machine**, the Core's and any mod's, under the kind's id.
+
+```js
+ServerEvents.recipes(event => {
+  event.recipes.jsindustrial.macerating(['2x jscore:iron_dust'], ['#c:ores/iron']).ticks(200).energyPerTick(40)
+  event.recipes.mymod.fusing(['mymod:alloy'], ['mymod:a', 'mymod:b']).knowledge('mymod:fusion')
+})
+
+JsCoreEvents.knowledgeGained(event => {
+  if (event.learnt && event.knowledge == 'mymod:fusion') JsCore.reach(event.server, event.team, 'mymod:fusion_age')
+})
+```
+
+A machine's recipe takes `fluidInputs`, `fluidOutputs`, `catalysts` and `knowledge` the same way; the matter of other
+states, the byproducts and the temperature and pressure it runs between are written with `event.custom`, as the
+recipe's file holds them ([Machines](MACHINES.md)).
+
+### CraftTweaker
+
+With CraftTweaker (21.0.39 or later), scripts import the same under `mods.jscore`:
+
+```zenscript
+import mods.jscore.Core;
+import mods.jscore.Processing;
+
+Processing.addRecipe("jsindustrial:macerating", "iron_dust", [<item:jscore:iron_dust> * 2],
+    [<tag:items:c:ores/iron>], 200, 40);
+
+events.register<mods.jscore.event.KnowledgeGained>(event => {
+    if (event.learnt && event.knowledge == "mymod:fusion") {
+        Core.reach(event.server, event.team, "mymod:fusion_age");
+    }
+});
+```
+
+`Processing.addRecipe` takes the kind, the recipe's name, what it makes and what it takes, then the ticks, the energy a
+tick and the knowledge it asks for, each of the last three optional. Everything else a machine's recipe holds is written
+with the recipe type's `addJsonRecipe`, and recipes are taken out with its `remove` and `removeByName`
+(`<recipetype:jsindustrial:macerating>.removeByName("jsindustrial:iron_dust")`). `mods.jscore.Core` has the calls of
+KubeJS's `JsCore`, by the same names, but for a player's team, which it takes from the player
+(`Core.teamOf(player)`). The events are those of KubeJS, under `mods.jscore.event`: `KnowledgeGained`,
+`MilestoneReached`, `TeamStepReached`, `PlayerStepReached`, `OperationCreated`, `OperationStarted`,
+`OperationCompleted`, `OperationFailed`, `OperationDiscarded`, `NetworkJoined`, `NetworkLeft`, `RoomFormed`,
+`RoomChanged`, `RoomFilled`, `RoomLeaking`, `RoomRemoved`, `StructureCollided`, `StructureParted`, `StructureDocked`,
+`StructureUndocked` and `DimensionHazard`, which a script cancels.
+
+### FTB Quests
+
+With FTB Quests, a quest's tasks may be the Core's:
+
+| Task | Met when | Its fields |
+| --- | --- | --- |
+| `jscore:knowledge` | the player's team knows a piece of knowledge; one learnt bit by bit fills the task bit by bit | `knowledge` |
+| `jscore:milestone` | the team passes a milestone | `milestone` |
+| `jscore:axis_step` | the team reaches a step along an axis, or one past it | `axis`, `step` (`jscore:hardware_era`, `legacy`) |
+
+Each is checked once a second for every player of the team with the quest open, and as they log in. A task naming
+something nothing declared waits rather than failing, so a quest written for a mod that is not installed is never met.

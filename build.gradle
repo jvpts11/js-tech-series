@@ -48,11 +48,15 @@ subprojects {
                 includeGroup 'appeng'
             }
         }
-        // BlameJared: JEI, present in the dev client for recipe lookups while testing autocrafting.
+        // BlameJared: JEI, present in the dev client for recipe lookups while testing autocrafting, and CraftTweaker,
+        // whose scripts reach the Core when it is installed.
         maven {
             name = 'BlameJared'
             url = 'https://maven.blamejared.com'
-            content { includeGroup 'mezz.jei' }
+            content {
+                includeGroup 'mezz.jei'
+                includeGroup 'com.blamejared.crafttweaker'
+            }
         }
         // SquidDev: CC: Tweaked, whose API the Network Gateway compiles against; the whole mod joins the dev runs.
         maven {

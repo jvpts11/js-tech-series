@@ -79,6 +79,11 @@ public final class DataRegistry<T> {
         return new Builder<>(id, folder, codec);
     }
 
+    /** How each of its files is read, and written back. */
+    public Codec<T> codec() {
+        return this.codec;
+    }
+
     /** What the registry is known by, in the log and over the network. */
     public ResourceLocation id() {
         return this.id;

@@ -11,6 +11,7 @@ import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkCategory;
+import dev.jstech.core.network.NetworkMemberEvent;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.NetworkTables;
 import dev.jstech.core.network.StateRow;
@@ -25,12 +26,15 @@ import dev.jstech.tests.TestNetworkMembers;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -47,6 +51,9 @@ public final class NetworkMemberGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos CABLE = new BlockPos(2, 2, 2);
     private static final double EPSILON = 1.0e-9;
+    /** What every member joining or leaving a network told the game, heard by the test that listens. */
+    private static final List<NetworkMemberEvent> HEARD = new CopyOnWriteArrayList<>();
+    private static final AtomicBoolean LISTENING = new AtomicBoolean();
 
     private NetworkMemberGameTests() {
     }
@@ -68,6 +75,20 @@ public final class NetworkMemberGameTests {
         }).thenExecute(() -> connectivity(helper).onCableRemoved(helper.absolutePos(CABLE).asLong()))
                 .thenWaitUntil(() -> helper.assertTrue(system.membersOf(network).isEmpty(),
                         "off the network once its cable went"))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void members_tellTheGameAsTheyJoinAndLeave(final GameTestHelper helper) {
+        listenOnce();
+        final NetworkUuid network = cable(helper);
+        final BlockPos at = helper.absolutePos(CABLE.west());
+        helper.setBlock(CABLE.west(), TestNetworkMembers.REACTOR.get());
+        helper.startSequence().thenWaitUntil(() -> helper.assertTrue(heard(at, NetworkMemberEvent.Joined.class,
+                        network), "the game is told the reactor joined the network"))
+                .thenExecute(() -> connectivity(helper).onCableRemoved(helper.absolutePos(CABLE).asLong()))
+                .thenWaitUntil(() -> helper.assertTrue(heard(at, NetworkMemberEvent.Left.class, network),
+                        "and that it left once its cable went"))
                 .thenSucceed();
     }
 
@@ -163,6 +184,21 @@ public final class NetworkMemberGameTests {
     }
 
     /* A data cable of a network of its own at {@code CABLE}, as a network's cable is to the Core. */
+    /* Listens on the game's bus, once for the whole run, for every member that joins or leaves a network. */
+    private static void listenOnce() {
+        if (LISTENING.compareAndSet(false, true)) {
+            NeoForge.EVENT_BUS.addListener(NetworkMemberEvent.Joined.class, HEARD::add);
+            NeoForge.EVENT_BUS.addListener(NetworkMemberEvent.Left.class, HEARD::add);
+        }
+    }
+
+    /* Whether the game was told of a member at {@code at} joining or leaving {@code network}, as {@code kind}. */
+    private static boolean heard(final BlockPos at, final Class<? extends NetworkMemberEvent> kind,
+                                 final NetworkUuid network) {
+        return HEARD.stream().anyMatch(event -> kind.isInstance(event) && event.pos().equals(at)
+                && event.network().equals(network));
+    }
+
     private static NetworkUuid cable(final GameTestHelper helper) {
         final long at = helper.absolutePos(CABLE).asLong();
         final NetworkUuid network = new NetworkUuid(UUID.randomUUID());

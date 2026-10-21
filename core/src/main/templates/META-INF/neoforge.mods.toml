@@ -61,11 +61,29 @@ versionRange = "*"
 ordering = "AFTER"
 side = "BOTH"
 
-# KubeJS is optional: when it is present, its scripts reach what the series' mods hand them, by the names they gave.
+# KubeJS is optional: when it is present, its scripts reach what the series' mods hand them, by the names they gave,
+# and the Core's events. The Core is made first, so its bindings are there when the startup scripts run.
 [[dependencies.${mod_id}]]
 modId = "kubejs"
 type = "optional"
 versionRange = "[2101.7.2,)"
+ordering = "BEFORE"
+side = "BOTH"
+
+# CraftTweaker is optional: when it is present, its scripts reach the Core's recipes of processing machines, its
+# progress and its events, under mods.jscore.
+[[dependencies.${mod_id}]]
+modId = "crafttweaker"
+type = "optional"
+versionRange = "[21.0.39,)"
+ordering = "NONE"
+side = "BOTH"
+
+# FTB Quests is optional: when it is present, its quests have tasks of the Core's knowledge, milestones and steps.
+[[dependencies.${mod_id}]]
+modId = "ftbquests"
+type = "optional"
+versionRange = "[2101.1.36,)"
 ordering = "NONE"
 side = "BOTH"
 

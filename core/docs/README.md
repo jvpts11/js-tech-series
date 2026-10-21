@@ -51,7 +51,7 @@ says what the Core promises and what it does not yet.
 | [Progression](PROGRESSION.md) | Eras as a registry, tiers, axes that move by playing, what a team reaches, milestones, knowledge and the knowledge gate, advancements. |
 | [Commands](COMMANDS.md) | Commands under `/jstech`. |
 | [Settings](SETTINGS.md) | Settings files, their ranges, and the settings screen. |
-| [Modpacks](MODPACKS.md) | Content packs: blocks, items, materials, machines and their tabs declared in files, with no Java. |
+| [Modpacks](MODPACKS.md) | Content packs, conditions on data, recipes that ask for knowledge, unification, and what KubeJS, CraftTweaker and FTB Quests reach. |
 
 ## What players see and hear
 

@@ -84,6 +84,12 @@ dependencies {
     // KubeJS finds the Core's plugin through its plugin file; Rhino is its script engine, a mod of its own.
     compileOnly("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
     compileOnly("dev.latvian.mods:rhino:${rhino_version}") { transitive = false }
+    // CraftTweaker finds the Core's plugin by its annotation, and FTB Quests is handed the Core's kinds of task;
+    // only their own classes.
+    compileOnly("com.blamejared.crafttweaker:CraftTweaker-neoforge-${minecraft_version}:${crafttweaker_version}") {
+        transitive = false
+    }
+    compileOnly("dev.ftb.mods:ftb-quests-neoforge:${ftb_quests_version}") { transitive = false }
     // Simple Voice Chat finds the Core's plugin by its annotation; its API is all the plugin names.
     compileOnly "de.maxhenkel.voicechat:voicechat-api:${voicechat_api_version}"
     // The moving structures' layer beside Create's contraptions and Sable's sub-levels: Create's own classes, and

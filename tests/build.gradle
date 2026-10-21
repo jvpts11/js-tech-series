@@ -55,6 +55,16 @@ def withJade = providers.gradleProperty('withJade').isPresent()
  */
 def withKubeJs = providers.gradleProperty('withKubeJs').isPresent()
 /*
+ * -PwithCraftTweaker runs the development mods with CraftTweaker and the test scripts in src/crafttweaker, copied into
+ * the run's scripts folder, to prove its scripts reach the Core's recipes, progress and events.
+ */
+def withCraftTweaker = providers.gradleProperty('withCraftTweaker').isPresent()
+/*
+ * -PwithFtbQuests runs the development mods with FTB Quests, and FTB Teams with it, to prove its quests have the
+ * Core's kinds of task.
+ */
+def withFtbQuests = providers.gradleProperty('withFtbQuests').isPresent()
+/*
  * -PwithCreate runs the development mods with Create, -PwithSable with Sable beside it, and -PwithAeronautics with
  * Create Aeronautics on both, to prove the Core's moving structures meet their contraptions and sub-levels as its layer
  * says; every other run proves the Core without them.
@@ -139,8 +149,10 @@ neoForge {
             // -PgtMods=<suite>[,<suite>...] runs only the GameTests of those suites: core, computers, industrial,
             // series (see TestSuites). With -PgtOnly too, a test runs when it is in one of them and is named.
             systemProperty 'jsc.gametests.mods', (providers.gradleProperty('gtMods').getOrElse(''))
-            systemProperty 'jsc.gametests.ftbteams', withFtbTeams ? 'present' : 'absent'
+            systemProperty 'jsc.gametests.ftbteams', withFtbTeams || withFtbQuests ? 'present' : 'absent'
             systemProperty 'jsc.gametests.kubejs', withKubeJs ? 'present' : 'absent'
+            systemProperty 'jsc.gametests.crafttweaker', withCraftTweaker ? 'present' : 'absent'
+            systemProperty 'jsc.gametests.ftbquests', withFtbQuests ? 'present' : 'absent'
             systemProperty 'jsc.gametests.create', withCreate ? 'present' : 'absent'
             systemProperty 'jsc.gametests.sable', withSable ? 'present' : 'absent'
             // -Pjfr records the run with Java Flight Recorder, for profiling the scale benchmark. Deep stacks,
@@ -212,10 +224,21 @@ dependencies {
     if (!withoutComputerCraft) {
         localRuntime "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_tweaked_version}"
     }
-    if (withFtbTeams) {
+    if (withFtbTeams || withFtbQuests) {
         localRuntime "dev.ftb.mods:ftb-teams-neoforge:${ftb_teams_version}"
         localRuntime "dev.ftb.mods:ftb-library-neoforge:${ftb_library_version}"
         localRuntime "dev.architectury:architectury-neoforge:${architectury_version}"
+    }
+    // FTB Quests' own classes, for the test that its kinds of task hold the Core's, which runs only where it is.
+    compileOnly("dev.ftb.mods:ftb-quests-neoforge:${ftb_quests_version}") { transitive = false }
+    compileOnly("dev.ftb.mods:ftb-library-neoforge:${ftb_library_version}") { transitive = false }
+    if (withFtbQuests) {
+        localRuntime("dev.ftb.mods:ftb-quests-neoforge:${ftb_quests_version}") { transitive = false }
+    }
+    if (withCraftTweaker) {
+        localRuntime("com.blamejared.crafttweaker:CraftTweaker-neoforge-${minecraft_version}:${crafttweaker_version}") {
+            transitive = false
+        }
     }
     // EMI's API, for the client test that reads what the Core's bridge gave EMI when EMI is there.
     compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
@@ -251,9 +274,17 @@ var copyKubeJsScripts = tasks.register('copyKubeJsScripts', Copy) {
     from 'src/kubejs'
     into rootProject.file('run/kubejs')
 }
+// The CraftTweaker test scripts go where CraftTweaker reads them, the scripts folder of the run.
+var copyCraftTweakerScripts = tasks.register('copyCraftTweakerScripts', Copy) {
+    from 'src/crafttweaker/scripts'
+    into rootProject.file('run/scripts')
+}
 tasks.matching { it.name in ['runGameTestServer', 'runServer', 'runClient'] }.configureEach {
     if (withKubeJs) {
         dependsOn copyKubeJsScripts
+    }
+    if (withCraftTweaker) {
+        dependsOn copyCraftTweakerScripts
     }
 }
 
