@@ -2,7 +2,8 @@
 
 How a mod on J's Core lets a server's administrator see what its work costs and find what goes wrong: sections of work
 that profilers show by name, a watchdog for stalls, budgets a system keeps to by slowing itself, what is sent over the
-network, a measure of what each block costs, `/jstech health`, crash reports and a diagnostic file.
+network, minute by minute and tick by tick, a measure of what each block costs, `/jstech health`, the inspection of a
+place in chat and live on the debug screen, crash reports and a diagnostic file.
 
 The Core does not make a profiler of its own. Spark does that very well; the Core makes its work show up in Spark's
 profiles by name, and does the rest, which Spark does not.
@@ -34,7 +35,9 @@ whose log the watchdog writes to. Around the work, a section:
 The Core's own sections are the energy grid (`jscore:energy_grid`), the fluid grid (`jscore:fluid_grid`), the
 results of work away from the tick coming back (`jscore:task_results`), and the world changing: generation laid into
 old chunks (`jscore:retrogen`), the surface changing by itself (`jscore:live_changes`), large edits set a share each
-tick (`jscore:world_edits`) and the fields over the chunks (`jscore:chunk_fields`), each with a budget.
+tick (`jscore:world_edits`) and the fields over the chunks (`jscore:chunk_fields`), each with a budget; and, since
+2026-10-21, the heat flowing (`jscore:heat`), the shafts turning (`jscore:mechanics`), the sealed rooms worked out and
+filled (`jscore:rooms`) and the moving structures working out their next poses (`jscore:moving_structures`).
 
 ## The watchdog
 
@@ -103,6 +106,27 @@ written as bytes; whoever joins it over the network is. `diagnostics.count_netwo
 
 `Bandwidth.everyone()` and `Bandwidth.of(player)` hand a mod the same numbers.
 
+### Tick by tick
+
+*Added 2026-10-21.*
+
+A minute's rate hides a burst. The same counting keeps, for each of the last 100 ticks, every kind of packet sent in it,
+how many of it and how many bytes. `/jstech inspect payloads` shows the last tick for everyone, and the busiest of the
+last 100 when it was another; `/jstech inspect payloads <player>` the same for one player:
+
+```
+Tick 48210: 31 packets, 4210 bytes
+  jscore:hazards: 1, 96 bytes
+  minecraft:move_entity_pos: 18, 342 bytes
+  ...
+The busiest of the last ticks:
+Tick 48177: 212 packets, 61804 bytes
+  minecraft:level_chunk_with_light: 6, 58120 bytes
+```
+
+A player watching a place ([The inspection](#the-inspection)) sees their own last tick on the debug screen, under
+"Sent this tick". `Bandwidth.everyoneByTick()` and `Bandwidth.byTick(player)` hand a mod the ledger, a `TickLedger`.
+
 ## What weighs
 
 *Added 2026-10-15.*
@@ -120,6 +144,9 @@ if (CostMap.measuring()) {
 }
 ```
 
+The Core's moving structures add their own: the time each takes to work out its next pose is counted where the
+structure stands, as `jscore:moving_structure`, since a structure has no block of its own in the world.
+
 The last measure stays, `CostMap.last()`, for the map of costs drawn in the world.
 
 ## `/jstech health`
@@ -129,7 +156,9 @@ The last measure stays, `CostMap.last()`, for the map of costs drawn in the worl
 The state of the series' systems, each under its system's name, with what is wrong as warnings. The Core's part: how
 long the server's ticks take, the sections of work and the costliest, the ones slowed or stalled, what is sent over
 the network, the work away from the tick, each dimension's data networks, wires and grids, the chunks each owner keeps
-loaded, the protections asked, the audit log and the robots of the players on.
+loaded, the protections asked, the audit log and the robots of the players on; and, in each dimension, the bodies of
+heat awake, the networks of shafts, the sealed rooms, the moving structures and how many of them move, and the
+multiblocks watched for their shape.
 
 Each kit adds its part from its mod's constructor:
 
@@ -143,6 +172,54 @@ Health.provide(LOG, (server, report) -> {
 ```
 
 A part is read on the server's thread. A part that fails is shown as a warning saying so, and the rest are read.
+
+## The inspection
+
+*Added 2026-10-21.*
+
+`/jstech inspect` says in chat what every system holds at the block the administrator looks at (up to 64 blocks
+away), or at the place named, `/jstech inspect <x> <y> <z>`, each part under its system's name:
+
+```
+What is at 12, 64, -3 in minecraft:overworld:
+jscore:content
+  Block: jsc:mainframe
+  State
+    facing: north
+  Block entity: jsc:mainframe
+  Fields
+    energy: 48000
+    ...
+  Offers on every face
+    Energy: 48000 / 100000 FE
+jscore:network
+  Data network
+    Node: 3f1c...
+    Data network: 9a02...
+    Members: 14
+```
+
+The Core's part reads the block, its state and its block entity's fields as they are saved now; what it offers on each
+face (items, energy, fluids, heat, a shaft, a port of the Core's energy), saying once what every face offers alike and
+then each face that differs; the data network it is a member of, with how many members it has; the grids laid there;
+the sealed room it stands in, with its volume, pressure and leaks; and the multiblock it is a part of.
+
+`/jstech inspect watch [<x> <y> <z>]` shows the same on the administrator's debug screen (F3), read again every
+second, under "Inspected", with what the server sent them in its last tick under "Sent this tick", until
+`/jstech inspect stop`.
+
+Each kit adds its part from its mod's constructor:
+
+```java
+Inspectors.provide(LOG, (level, pos, report) -> {
+    if (level.getBlockEntity(pos) instanceof ReactorBlockEntity reactor) {
+        report.line(TEXTS.CORE_HEAT, reactor.kelvin());
+        report.under(TEXTS.RODS, rods -> reactor.rods().forEach(rod -> rods.line(TEXTS.ROD, rod.depth())));
+    }
+});
+```
+
+A part is read on the server's thread. One that fails says so in its place, and the rest are read.
 
 ## The diagnostic file and crash reports
 
@@ -164,3 +241,7 @@ sections slowed or stalled, and, when the crash is on the server's thread, the s
   bytes, or the counting is off in the world's settings.
 - **The operators are not told of a stall.** `diagnostics.warn_operators` is off, they do not hold
   `jscore.diagnostics.warnings`, or they silenced the kind; the log has it either way.
+- **`/jstech inspect` says to look at a block.** The block looked at is more than 64 blocks away, or the command was
+  run from the console: name the place.
+- **The debug screen shows nothing under "Sent this tick".** The administrator plays in their own game, which is not
+  counted, or the counting is off in the world's settings.

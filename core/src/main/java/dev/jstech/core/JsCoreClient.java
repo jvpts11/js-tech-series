@@ -56,6 +56,7 @@ import dev.jstech.core.client.heat.HeatGlowClient;
 import dev.jstech.core.client.heat.ThermalViewClient;
 import dev.jstech.core.client.hologram.HologramView;
 import dev.jstech.core.client.hud.HudElements;
+import dev.jstech.core.client.inspect.InspectClient;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.input.MenuSwapCursor;
 import dev.jstech.core.client.item.ItemStateClient;
@@ -176,6 +177,7 @@ public final class JsCoreClient {
         ThermalViewClient.listen(modEventBus);
         HologramView.listen();
         HudElements.listen(modEventBus);
+        InspectClient.listen();
         ItemStateClient.listen(modEventBus);
         ToolClient.listen(modEventBus);
         CameraClient.listen(modEventBus);

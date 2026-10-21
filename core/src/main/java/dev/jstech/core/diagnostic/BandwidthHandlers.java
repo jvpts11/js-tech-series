@@ -44,12 +44,12 @@ final class BandwidthHandlers {
     }
 
     /* Puts the handlers either side of the encoder, counting into those ledgers; false when there is no encoder. */
-    static boolean attach(final ChannelPipeline pipeline, final BandwidthLedger player, final BandwidthLedger everyone,
+    static boolean attach(final ChannelPipeline pipeline, final Ledgers ledgers,
                           final Supplier<ResourceKey<Level>> dimension) {
         if (pipeline.get(ENCODER) == null || pipeline.get(PACKETS) != null) {
             return false;
         }
-        final Meter meter = new Meter(player, everyone, dimension);
+        final Meter meter = new Meter(ledgers, dimension);
         pipeline.addAfter(ENCODER, PACKETS, new Packets(meter));
         pipeline.addBefore(ENCODER, BYTES, new Bytes(meter));
         return true;
@@ -63,19 +63,24 @@ final class BandwidthHandlers {
         return packet.type().id().toString();
     }
 
+    /*
+     * Where one player's connection is counted: their ledger and everyone's over the minute, and the same tick by
+     * tick.
+     */
+    record Ledgers(BandwidthLedger player, BandwidthLedger everyone, TickLedger playerTicks,
+                   TickLedger everyoneTicks) {
+    }
+
     /* The packet the first handler saw last, and where the second counts its bytes. */
     private static final class Meter {
 
-        private final BandwidthLedger player;
-        private final BandwidthLedger everyone;
+        private final Ledgers ledgers;
         private final Supplier<ResourceKey<Level>> dimension;
         private @Nullable String kind;
         private BandwidthLedger.@Nullable Sender sender;
 
-        private Meter(final BandwidthLedger player, final BandwidthLedger everyone,
-                      final Supplier<ResourceKey<Level>> dimension) {
-            this.player = player;
-            this.everyone = everyone;
+        private Meter(final Ledgers ledgers, final Supplier<ResourceKey<Level>> dimension) {
+            this.ledgers = ledgers;
             this.dimension = dimension;
         }
 
@@ -92,8 +97,10 @@ final class BandwidthHandlers {
 
         private void wrote(final int bytes) {
             final String counted = this.kind == null ? UNKNOWN : this.kind;
-            this.player.count(counted, this.sender, bytes);
-            this.everyone.count(counted, this.sender, bytes);
+            this.ledgers.player().count(counted, this.sender, bytes);
+            this.ledgers.everyone().count(counted, this.sender, bytes);
+            this.ledgers.playerTicks().count(counted, bytes);
+            this.ledgers.everyoneTicks().count(counted, bytes);
             this.kind = null;
             this.sender = null;
         }

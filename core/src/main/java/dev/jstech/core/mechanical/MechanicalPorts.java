@@ -12,6 +12,8 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.capability.CapabilityKind;
 import dev.jstech.core.capability.CapabilityKinds;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.diagnostic.Section;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.moving.StructureBlocksMovedEvent;
 import dev.jstech.core.signal.Signals;
 import net.minecraft.core.BlockPos;
@@ -43,6 +45,9 @@ public final class MechanicalPorts {
     /** A block's part in a network of mechanical power, by face. */
     public static final CapabilityKind<IMechanicalPart> MECHANICAL = CapabilityKinds.declare(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "mechanical"), IMechanicalPart.class);
+    /** The shafts of a level turning each tick, timed. */
+    public static final Section SECTION = Section.builder(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "mechanics"), CoreLogs.MECHANICS).declare();
 
     private MechanicalPorts() {
     }
@@ -52,7 +57,7 @@ public final class MechanicalPorts {
         modBus.addListener(RegisterCapabilitiesEvent.class, MechanicalPorts::onRegisterCapabilities);
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (event.getLevel() instanceof ServerLevel level) {
-                LevelMechanics.of(level).tick(level);
+                SECTION.run(() -> LevelMechanics.of(level).tick(level));
             }
         });
         // Parts moved away with a structure leave the networks they turned in where they stood.

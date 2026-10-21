@@ -65,7 +65,7 @@ public final class DiagnosticsClient {
         final List<String> out = new ArrayList<>();
         for (final Panel panel : PANELS) {
             final List<String> own = linesOf(panel);
-            if (own.isEmpty() && REPORTED.contains(panel)) {
+            if (own.isEmpty()) {
                 continue;
             }
             out.add("");

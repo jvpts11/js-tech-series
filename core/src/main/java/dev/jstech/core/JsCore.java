@@ -87,6 +87,9 @@ import dev.jstech.core.heat.HeatPorts;
 import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.hologram.Holograms;
 import dev.jstech.core.input.KeyActions;
+import dev.jstech.core.inspect.CoreInspectors;
+import dev.jstech.core.inspect.InspectCommands;
+import dev.jstech.core.inspect.InspectWatch;
 import dev.jstech.core.mechanical.MechanicalPorts;
 import dev.jstech.core.mechanical.ShaftLinkItem;
 import dev.jstech.core.multipart.CoreParts;
@@ -538,8 +541,11 @@ public final class JsCore {
         MediaCommand.declare();
         LogCommand.declare();
         DiagnosticCommands.declare();
-        // The Core's part of /jstech health, before any mod adds its own, and what its operators are notified of.
+        InspectCommands.declare();
+        // The Core's part of /jstech health and of /jstech inspect, before any mod adds its own, and what its
+        // operators are notified of.
         CoreHealth.declare();
+        CoreInspectors.declare();
         DiagnosticNotifications.declare();
         // The multiblock patterns of every mod, read from data and declared in code.
         MultiblockPatterns.register();
@@ -603,6 +609,7 @@ public final class JsCore {
         CoreGrids.listen();
         GuideGifts.listen();
         Holograms.listen(modEventBus);
+        InspectWatch.listen(modEventBus);
         JsCoreDataGenerators.listen(modEventBus);
         JsTechTab.listen(modEventBus);
         KeyActions.listen(modEventBus);

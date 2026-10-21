@@ -24,13 +24,15 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 
 /**
  * What the server sends each player over the network, counted as it is sent: by kind (a mod's payloads by their id,
  * the game's packets by theirs), by mod, and by the block entity whose updates took it, with the bytes of each second
- * of the last minute for a graph. {@code /jstech bandwidth} reads it for everyone or for one player.
+ * of the last minute for a graph, and every packet of each of the last ticks with its size ({@link TickLedger}).
+ * {@code /jstech bandwidth} reads it for everyone or for one player, {@code /jstech inspect payloads} tick by tick.
  *
  * <p>The bytes are those the game writes each packet as, before the connection compresses them. A player playing in
  * their own game is not counted, as nothing they are sent is written as bytes; whoever joins it over the network is.
@@ -46,6 +48,11 @@ public final class Bandwidth {
     private static final UnitFormatter FORMAT = new UnitFormatter(Locale.ROOT);
     private static final BandwidthLedger EVERYONE = new BandwidthLedger(Bandwidth::second);
     private static final Map<UUID, BandwidthLedger> PLAYERS = new ConcurrentHashMap<>();
+    private static final TickLedger EVERYONE_TICKS = new TickLedger(Bandwidth::tick);
+    private static final Map<UUID, TickLedger> PLAYER_TICKS = new ConcurrentHashMap<>();
+
+    /** The server's tick it is now, counted at each tick's start; what is sent between counts to that tick. */
+    private static volatile long tick;
 
     private Bandwidth() {
     }
@@ -58,6 +65,21 @@ public final class Bandwidth {
     /** What the server sent the player {@code player} while they are on, or none when it is not counted. */
     public static Optional<BandwidthLedger> of(final UUID player) {
         return Optional.ofNullable(PLAYERS.get(player));
+    }
+
+    /** What the server sent everyone in each of its last ticks. */
+    public static TickLedger everyoneByTick() {
+        return EVERYONE_TICKS;
+    }
+
+    /** What the server sent {@code player} in each of its last ticks, or none when it is not counted. */
+    public static Optional<TickLedger> byTick(final UUID player) {
+        return Optional.ofNullable(PLAYER_TICKS.get(player));
+    }
+
+    /** The server's tick it is now, as the ledgers of ticks count it. */
+    public static long tick() {
+        return tick;
     }
 
     /** How many of the players on are counted. */
@@ -112,16 +134,20 @@ public final class Bandwidth {
     public static boolean watch(final ChannelPipeline pipeline, final UUID player,
                                 final Supplier<ResourceKey<Level>> dimension) {
         final BandwidthLedger ledger = new BandwidthLedger(Bandwidth::second);
-        if (!BandwidthHandlers.attach(pipeline, ledger, EVERYONE, dimension)) {
+        final TickLedger ticks = new TickLedger(Bandwidth::tick);
+        if (!BandwidthHandlers.attach(pipeline, new BandwidthHandlers.Ledgers(ledger, EVERYONE, ticks,
+                EVERYONE_TICKS), dimension)) {
             return false;
         }
         PLAYERS.put(player, ledger);
+        PLAYER_TICKS.put(player, ticks);
         return true;
     }
 
     /** Stops keeping what was sent to {@code player}, as they leave. */
     public static void forget(final UUID player) {
         PLAYERS.remove(player);
+        PLAYER_TICKS.remove(player);
     }
 
     /** Hands the game's bus the players joining and leaving, once, from the Core's constructor. */
@@ -134,6 +160,7 @@ public final class Bandwidth {
         });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class,
                 event -> forget(event.getEntity().getUUID()));
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Pre.class, event -> tick = event.getServer().getTickCount());
     }
 
     private static long second() {

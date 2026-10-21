@@ -131,11 +131,14 @@ public final class DiagnosticCommands {
                 .executes(DiagnosticCommands::diagnostics));
     }
 
-    /** What stands at {@code pos}: its block's name when its chunk is loaded, else the id it was counted under. */
+    /**
+     * What stands at {@code pos}: its block's name when its chunk is loaded and a block stands there, else the id it
+     * was counted under, as for a moving structure, which is counted where it is with no block of its own there.
+     */
     public static Text whatIsAt(final MinecraftServer server, final ResourceKey<Level> dimension, final BlockPos pos,
                                 final ResourceLocation kind) {
         final ServerLevel level = server.getLevel(dimension);
-        if (level == null || !level.isLoaded(pos)) {
+        if (level == null || !level.isLoaded(pos) || level.getBlockState(pos).isAir()) {
             return Text.literal(kind.toString());
         }
         return GameText.of(level.getBlockState(pos).getBlock().getName());

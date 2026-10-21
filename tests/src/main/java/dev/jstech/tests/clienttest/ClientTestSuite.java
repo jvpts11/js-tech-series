@@ -141,6 +141,7 @@ import dev.jstech.tests.clienttest.core.MovingStructurePhysicsClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureLifeClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureToolsClientTests;
 import dev.jstech.tests.clienttest.core.HudHologramClientTests;
+import dev.jstech.tests.clienttest.core.InspectClientTests;
 import dev.jstech.tests.clienttest.core.ItemStateClientTests;
 import dev.jstech.tests.clienttest.core.ToolClientTests;
 import dev.jstech.tests.clienttest.core.TooltipClientTests;
@@ -349,6 +350,7 @@ public final class ClientTestSuite {
             DataRegistryClientTests.class,
             KeyActionClientTests.class,
             DiagnosticsClientTests.class,
+            InspectClientTests.class,
             FluidClientTests.class,
             BigPayloadClientTests.class,
             LiveReloadClientTests.class,

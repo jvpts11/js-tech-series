@@ -7,13 +7,17 @@
  */
 package dev.jstech.core.room;
 
+import dev.jstech.core.JsCore;
+import dev.jstech.core.diagnostic.Section;
 import dev.jstech.core.dimension.Wind;
 import dev.jstech.core.dimension.Winds;
 import dev.jstech.core.heat.HeatClimate;
+import dev.jstech.core.log.CoreLogs;
 import java.util.Map;
 import java.util.Optional;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
@@ -28,6 +32,10 @@ import net.neoforged.neoforge.event.tick.LevelTickEvent;
  * living things and what their air does; every tick, the rush of air out through their holes.
  */
 public final class Rooms {
+
+    /** The rooms of a level worked out, filled and leaking each tick, timed. */
+    public static final Section SECTION = Section.builder(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "rooms"), CoreLogs.ROOMS).declare();
 
     private static final Map<ServerLevel, LevelRooms> LEVELS = new WeakHashMap<>();
     /* How many blocks the kit reads a tick, in each dimension, working rooms out. */
@@ -90,11 +98,21 @@ public final class Rooms {
         return LEVELS.computeIfAbsent(level, LevelRooms::new);
     }
 
+    /** How many sealed rooms the kit holds in {@code level}. */
+    public static int count(final ServerLevel level) {
+        final LevelRooms rooms = LEVELS.get(level);
+        final RoomStore store = rooms == null ? null : rooms.store();
+        return store == null ? 0 : store.rooms().size();
+    }
+
     private static void tick(final ServerLevel level) {
         final LevelRooms rooms = LEVELS.get(level);
-        if (rooms == null) {
-            return;
+        if (rooms != null) {
+            SECTION.run(() -> work(level, rooms));
         }
+    }
+
+    private static void work(final ServerLevel level, final LevelRooms rooms) {
         rooms.work(BUDGET);
         RoomConsequences.tick(rooms);
         if (level.getGameTime() % TICKS_A_SECOND == 0) {

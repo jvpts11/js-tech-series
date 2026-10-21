@@ -14,6 +14,8 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.capability.CapabilityKind;
 import dev.jstech.core.capability.CapabilityKinds;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.diagnostic.Section;
+import dev.jstech.core.log.CoreLogs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -43,6 +45,9 @@ public final class HeatPorts {
     /** A block's heat, by face, for its neighbours and heat lines. */
     public static final CapabilityKind<IHeatPort> HEAT = CapabilityKinds.declare(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "heat"), IHeatPort.class);
+    /** The heat of a level flowing each tick, timed. */
+    public static final Section SECTION = Section.builder(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "heat"),
+            CoreLogs.HEAT).declare();
 
     private HeatPorts() {
     }
@@ -52,7 +57,7 @@ public final class HeatPorts {
         modBus.addListener(RegisterCapabilitiesEvent.class, HeatPorts::onRegisterCapabilities);
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (event.getLevel() instanceof ServerLevel level) {
-                LevelHeat.of(level).tick(level);
+                SECTION.run(() -> LevelHeat.of(level).tick(level));
             }
         });
     }

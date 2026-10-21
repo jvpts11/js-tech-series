@@ -1055,6 +1055,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   EMI do: the machines' recipes with the "+" that moves one into the open machine, the multiblocks with their
   previews, the microblocks' rules, and the areas screens keep clear. A viewer opened from a manual comes back to it
   when it closes, EMI's too.
+- Inspecting a place: `/jstech inspect` says in chat what every system holds at the block looked at or at a
+  place named (the block, its state, its block entity's fields as they are saved, what it offers on each face, its
+  data network, the grids laid there, its sealed room and its multiblock), and each mod adds its part with
+  `Inspectors`; `/jstech inspect watch` shows it on the debug screen, read again every second, with what the server
+  sent the player in its last tick. `/jstech inspect payloads` lists every kind of packet of the last tick and of the
+  busiest of the last 100, each with its size. `/jstech health` counts, in each dimension, the bodies of heat awake,
+  the networks of shafts, the sealed rooms, the moving structures and the multiblocks watched; the heat, the shafts,
+  the rooms and the moving structures are timed sections of work, and `/jstech cost` measures each moving structure.
 - CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,
@@ -1106,6 +1114,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `loses(100_000)`.
 - Machines short of energy work slower in the same proportion, spending what there is, instead of waiting for a
   whole tick's energy; looked at, they say they run on low power.
+- A panel of the series on the debug screen with nothing to show leaves its name out too.
 
 ### Fixed
 - A dimension made while the game runs keeps loaded again the chunks it kept loaded, each time it is made

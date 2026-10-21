@@ -12,8 +12,10 @@ import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.moving.StructureBlocksMovedEvent;
 import dev.jstech.core.operation.OperationType;
 import dev.jstech.core.util.DeclarationError;
+import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -78,6 +80,20 @@ public final class NetworkMembers {
         blockEntity.fields().whenNeighbourChanges((level, face) -> membership.resolve(level));
         blockEntity.fields().whenBroken((level, pos) -> membership.forget(NetworkSystem.get(level), level));
         return membership;
+    }
+
+    /** The membership of the member kept at {@code pos}, when one is. */
+    public static Optional<NetworkMembership> at(final ServerLevel level, final BlockPos pos) {
+        return Optional.ofNullable(NetworkSystem.get(level).keptMembers().get(pos.asLong()));
+    }
+
+    /** How many kept members are on {@code network}. */
+    public static int on(final ServerLevel level, final NetworkUuid network) {
+        int count = 0;
+        for (final NetworkMembership membership : NetworkSystem.get(level).keptMembers().values()) {
+            count += membership.network().filter(network::equals).isPresent() ? 1 : 0;
+        }
+        return count;
     }
 
     /* Every kept member looks again; one that is gone, unloaded or broken, leaves. */

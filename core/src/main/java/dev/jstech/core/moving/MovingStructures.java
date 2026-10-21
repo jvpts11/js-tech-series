@@ -7,7 +7,11 @@
  */
 package dev.jstech.core.moving;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.content.EntityEntry;
+import dev.jstech.core.diagnostic.CostMap;
+import dev.jstech.core.diagnostic.Section;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.moving.joint.StructureJoints;
 import dev.jstech.core.moving.physics.PhysicsMotion;
 import dev.jstech.core.moving.physics.StructurePhysics;
@@ -24,6 +28,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -71,6 +76,12 @@ public final class MovingStructures {
     public static final EntityEntry<ZiplineEntity> ZIPLINE = CoreItems.CONTENT.entity("zipline",
                     ZiplineEntity::new, MobCategory.MISC).size(0.3F, 0.3F).tracking(10, 1).fireImmune()
             .noSummon().named("Zipline").register();
+    /** The structures of a level working out their next poses each tick, timed. */
+    public static final Section SECTION = Section.builder(ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "moving_structures"), CoreLogs.MOVING).declare();
+    /* What a structure's cost is listed as on the map of costs. */
+    private static final ResourceLocation COST_KIND = ResourceLocation.fromNamespaceAndPath(JsCore.MODID,
+            "moving_structure");
     /* From this many structures moving in a level, their next poses are worked out beside the server's thread. */
     private static final int ALONGSIDE = 8;
     /* Players who left the game standing on a structure, waiting for it to load so they stand on it again. */
@@ -378,13 +389,26 @@ public final class MovingStructures {
                 moving.add(structure);
             }
         }
-        if (moving.size() < ALONGSIDE) {
-            for (final MovingStructure structure : moving) {
-                structure.prepare();
+        SECTION.run(() -> {
+            if (moving.size() < ALONGSIDE) {
+                for (final MovingStructure structure : moving) {
+                    prepare(level, structure);
+                }
+                return;
             }
+            workers().submit(() -> moving.parallelStream().forEach(structure -> prepare(level, structure))).join();
+        });
+    }
+
+    /* Works out a structure's next pose, its cost added to the map of costs while a measure runs. */
+    private static void prepare(final ServerLevel level, final MovingStructure structure) {
+        if (!CostMap.measuring()) {
+            structure.prepare();
             return;
         }
-        workers().submit(() -> moving.parallelStream().forEach(MovingStructure::prepare)).join();
+        final long start = System.nanoTime();
+        structure.prepare();
+        CostMap.add(level, structure.entity().blockPosition(), COST_KIND, System.nanoTime() - start);
     }
 
     private static void afterTick(final LevelTickEvent.Post event) {

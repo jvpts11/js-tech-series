@@ -33,6 +33,12 @@ public final class CoreLogs {
     public static final LogSystem ITEMS = LogSystems.declare(JsCore.MODID, "items");
     /** The lines that group the machines they join, each run a group. */
     public static final LogSystem GROUPS = LogSystems.declare(JsCore.MODID, "groups");
+    /** The heat of each dimension, flowing between bodies, the ground and the air. */
+    public static final LogSystem HEAT = LogSystems.declare(JsCore.MODID, "heat");
+    /** The shafts and gears of each dimension, turning together. */
+    public static final LogSystem MECHANICS = LogSystems.declare(JsCore.MODID, "mechanics");
+    /** The sealed rooms of each dimension, found, filled and leaking. */
+    public static final LogSystem ROOMS = LogSystems.declare(JsCore.MODID, "rooms");
     /** The screens of the mods: their files, their styles and their layout. */
     public static final LogSystem INTERFACE = LogSystems.declare(JsCore.MODID, "interface");
     /** The manuals: their pages, scenes and places. */
