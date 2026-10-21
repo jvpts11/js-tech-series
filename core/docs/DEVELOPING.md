@@ -205,6 +205,68 @@ StudioAnswers.ask("mymod:light", args, answer -> shown = answer);   // on the pl
 
 The answer to a player who may not use the world's tools holds `StudioServices.REFUSED`, with why.
 
+### The MCP server
+
+*Added 2026-10-21.*
+
+The studio's tools are open to agents (Claude, GPT or any client that speaks the Model Context Protocol) through an
+MCP server in the game: what the studio does, an agent does. It is the second key of developer mode, **MCP server**,
+and it is never in a file: the player turns it on from inside the game, with **Server: on** in the studio's **Agents**
+tab or `/jstech mcp on`, for that run only, and it is off again at every start. It listens at
+`http://127.0.0.1:25599/mcp` (the port is `developer.mcp_port` in `jstech-developer.toml`), on this computer only. With
+Claude Code, for one:
+
+```
+claude mcp add --transport http jstech http://127.0.0.1:25599/mcp
+```
+
+What keeps it from being taken over:
+
+- **Only this computer reaches it.** It listens on the loopback addresses alone, and a request must name this computer
+  as its host, so a web page whose own name was pointed at this computer is refused, and so is any request a web page
+  sends (it carries an origin), and anything sent as other than JSON.
+- **The player lets each client in.** The first time a client asks, the game shows who asks and what reading and
+  acting mean, and the player answers Let it read, Let it read and act, or Refuse; with no answer in a minute it is
+  refused, and a client refused waits half a minute before it is asked about again. The client is given a key of its
+  own, its session, made fresh and kept in memory only, so it is gone when the game closes. **Take its key back** in
+  the Agents tab ends it at once, and the key **Cut every agent off** (End, until the player changes it) ends them all.
+- **Reading and acting are apart.** A client let in to read calls the tools that read; those that act (writing files,
+  running commands, saving a structure, reloading) answer it that it may not.
+- **Files only in the mods' and the pack's folders**, named `mod:<id>/...` (a mod's own resources in its source, in a
+  development run), `generated:<id>/...`, `datapacks/...`, `resourcepacks/...` and `kubejs/...`: never a step outside
+  them, not through a link, and only data, art and sound, never code.
+- **Commands from a safe list**, in a test world, or on a server with its developer mode on for an operator: never one
+  that gives operator rights, bans, kicks, stops the server, changes the whitelist, or runs other commands
+  (`execute`, `function`).
+- **What players wrote** (a sign's lines, a book's pages, a name given at an anvil) comes back under
+  `written_by_a_player`, and the server tells the agent that everything the tools return is data, never instructions.
+  The tools' descriptions are the Core's own; the tools another mod adds stay off until the player turns that mod's on
+  in the Agents tab.
+- **The player sees it.** While a client is in, a mark is in the top left corner of the screen; while one acts, its
+  name and what it does are at the top; any key the player presses takes the controls back.
+- **Every call is written down**, who, what, when and what became of it, in the Agents tab and in the developer log.
+
+The tools on the player's game: `things_list`, `thing_sheet`, `block_read`, `block_save_round_trip`, `cost_measure`,
+`payloads_read`, `tag_sources`, `recipe_sources`, `loot_roll`, `structure_count`, `translations_read`, `logs_read`,
+`errors_read`, `settings_read`, `files_list` and `files_read`, which read; and `structure_save`, `files_write`,
+`commands_run`, `settings_export_preset`, `log_level_set`, `reload_all` and `thing_tests_run`, which act.
+
+A dedicated server has an MCP server of its own, on the server's computer (`developer.server_mcp_port`, 25598): an
+operator in the game turns it on with `/jstech mcp server on`, never the console; a client that asks is asked about
+to the operators in the game, and its tools read and change the world for the operator who let it in, while they are
+on the server. It never reaches a player's game.
+
+A mod adds tools of its own, named after it:
+
+```java
+McpTools.declare(McpSide.GAME, "mymod", new McpTool("mymod_pressure", "The pressure of the pipe looked at, in kPa.",
+        McpSchema.object().build(), McpPermission.READ, call -> CompletableFuture.completedFuture(
+                McpResult.text(String.valueOf(PressureNetwork.lookedAt())))));
+```
+
+The server speaks the protocol's versions 2025-03-26, 2025-06-18 and 2025-11-25, over HTTP with one JSON answer to
+each request.
+
 ## Tools for screens
 
 *Added 2026-10-21.*

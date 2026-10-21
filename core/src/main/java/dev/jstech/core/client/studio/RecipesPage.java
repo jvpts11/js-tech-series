@@ -18,6 +18,7 @@ import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.TextArea;
 import dev.jstech.core.developer.DevSources;
 import dev.jstech.core.developer.studio.LogRing;
+import dev.jstech.core.developer.studio.StudioLogs;
 import dev.jstech.core.developer.studio.RecipeConflicts;
 import dev.jstech.core.developer.studio.StudioAnswers;
 import dev.jstech.core.developer.studio.StudioKeys;

@@ -10,6 +10,7 @@ package dev.jstech.core.client.studio;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.developer.studio.LogRing;
+import dev.jstech.core.developer.studio.StudioLogs;
 import dev.jstech.core.gui.layout.StudioLayout;
 import dev.jstech.core.log.LogLevel;
 import dev.jstech.core.log.LogSystem;

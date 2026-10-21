@@ -52,7 +52,6 @@ public final class StudioClient {
             }
         });
         StudioHeatMap.listen();
-        StudioLogs.listen();
         TestRecorder.listen();
     }
 

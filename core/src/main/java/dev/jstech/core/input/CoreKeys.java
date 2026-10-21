@@ -24,9 +24,9 @@ import org.lwjgl.glfw.GLFW;
  * The Core's own keys: turning off the last sound heard, which the player's game does alone, changing the mode of
  * the item in the main hand, which the server does, opening an item's page in the manual, opening the history of
  * notifications, opening the diagram of forces of a moving structure, showing the physics of the structures near,
- * looking about freely, opening the HUD editor, and opening the studio. The first two and the last four have no key
- * until the player gives them one; the manual's is M, which every manual's tooltip names, the history's N, and the
- * forces' K.
+ * looking about freely, opening the HUD editor, opening the studio, and cutting every agent off the MCP server. The
+ * first two and the four before the last have no key until the player gives them one; the manual's is M, which every
+ * manual's tooltip names, the history's N, the forces' K, and cutting the agents off End.
  */
 @TextHolder
 public final class CoreKeys {
@@ -97,6 +97,16 @@ public final class CoreKeys {
      */
     public static final KeyAction OPEN_STUDIO = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "open_studio"), STUDIO_KEY));
+
+    /** What the key that cuts every agent off is called. */
+    public static final TextKey CUT_AGENTS_KEY = TextKey.of("key.jscore.cut_agents", "Cut every agent off");
+    /**
+     * Takes back the key of every client of the MCP server at once, so none reads or acts any more until the player
+     * lets it in again. End, until the player changes it, so it is at hand from the first time an agent connects.
+     */
+    public static final KeyAction CUT_AGENTS = KeyActions.declare(KeyAction.builder(
+                    ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "cut_agents"), CUT_AGENTS_KEY)
+            .key(GLFW.GLFW_KEY_END));
 
     private CoreKeys() {
     }

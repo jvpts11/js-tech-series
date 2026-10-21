@@ -113,6 +113,11 @@ class HardcodedTextTest {
     private static final String MODPACK_PAGES = "the dumps and the reference written for whoever builds a modpack, "
             + "pages of Markdown and of a website in English as the log and the data formats are, with the files' "
             + "own examples";
+    private static final String MCP = "the Model Context Protocol's own words: HTTP's, JSON-RPC's and MCP's errors "
+            + "and the server's instructions, which a client reads in English as the protocol is written";
+    private static final String MCP_TOOLS = "what the MCP server's tools do and what their arguments are, which an "
+            + "agent reads in English as the protocol is written, and the arguments' names";
+    private static final String CORE = "core/src/main/java/dev/jstech/core/";
 
     /**
      * The files whose fixed text is data, not words to translate, and how many pieces each holds. The count is exact,
@@ -234,7 +239,16 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/modpack/ModpackDumps.java", 8, MODPACK_PAGES),
             data("core/src/main/java/dev/jstech/core/modpack/ReferenceSite.java", 8, MODPACK_PAGES),
             data("core/src/main/java/dev/jstech/core/modpack/References.java", 27, MODPACK_PAGES),
-            data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"));
+            data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"),
+            data(CORE + "developer/mcp/McpHttp.java", 27, MCP),
+            data(CORE + "developer/mcp/McpGuard.java", 8, MCP),
+            data(CORE + "developer/mcp/JsonRpc.java", 7, MCP),
+            data(CORE + "developer/mcp/McpProtocol.java", 8, MCP),
+            data(CORE + "developer/mcp/McpServer.java", 3, "the names of the MCP server's threads, which only a "
+                    + "thread dump shows, and a header's name"),
+            data(CORE + "developer/mcp/WorldTools.java", 42, MCP_TOOLS),
+            data(CORE + "developer/mcp/CoreTools.java", 39, MCP_TOOLS),
+            data(CORE + "client/studio/StudioMcpTools.java", 18, MCP_TOOLS));
 
     /** Who a line for the developer is written through. */
     private static final Set<String> LOGGERS = Set.of("LOGGER", "LOG", "logger", "log");

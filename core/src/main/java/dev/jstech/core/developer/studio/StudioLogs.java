@@ -5,9 +5,8 @@
  *
  * This file is part of J's Core.
  */
-package dev.jstech.core.client.studio;
+package dev.jstech.core.developer.studio;
 
-import dev.jstech.core.developer.studio.LogRing;
 import dev.jstech.core.log.LogSystem;
 import dev.jstech.core.log.LogSystems;
 import java.util.HashSet;
@@ -24,8 +23,8 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The last lines of each log system, and of the game's own log of the recipes it could not load, kept from the moment
- * the game starts so the studio's logs show what was written before it opened. Only those logs are kept, a few
- * hundred lines each.
+ * the game starts so the studio's logs show what was written before it opened, and an agent reads them on a server
+ * too. Only those logs are kept, a few hundred lines each.
  */
 public final class StudioLogs {
 
@@ -40,7 +39,7 @@ public final class StudioLogs {
     private StudioLogs() {
     }
 
-    /** Starts keeping the lines, once, from the Core's client. */
+    /** Starts keeping the lines, once, from the Core's constructor. */
     @ApiStatus.Internal
     public static synchronized void listen() {
         if (listening || !(LogManager.getContext(false) instanceof LoggerContext context)) {
@@ -56,8 +55,13 @@ public final class StudioLogs {
     }
 
     /** The lines the log {@code logger} wrote, the oldest first. */
-    static List<LogRing.Line> lines(final String logger) {
+    public static List<LogRing.Line> lines(final String logger) {
         return RING.lines(logger);
+    }
+
+    /** The game's log of the recipes it loads. */
+    public static String recipes() {
+        return RECIPES;
     }
 
     /* The logs kept: every log system's, as many as are declared now, and the recipes'. */

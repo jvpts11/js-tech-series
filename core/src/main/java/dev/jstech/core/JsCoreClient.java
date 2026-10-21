@@ -39,7 +39,9 @@ import dev.jstech.core.client.field.ChunkFieldsClient;
 import dev.jstech.core.client.fluid.FluidsClient;
 import dev.jstech.core.client.font.CoreFontClient;
 import dev.jstech.core.client.developer.ScreenDevCommands;
+import dev.jstech.core.client.mcp.McpGame;
 import dev.jstech.core.client.studio.StudioClient;
+import dev.jstech.core.client.studio.StudioMcpTools;
 import dev.jstech.core.client.developer.ScreenEditor;
 import dev.jstech.core.client.developer.ScreenInspector;
 import dev.jstech.core.client.gui.component.Grounds;
@@ -221,6 +223,8 @@ public final class JsCoreClient {
         ScreenEditor.listen();
         ScreenDevCommands.listen();
         StudioClient.listen();
+        // The studio's MCP server, which the player turns on from the game, with the studio's tools among its own.
+        McpGame.listen(StudioMcpTools.all());
         // The structure the studio catches, shown in the world as the Structure Projector shows its multiblocks.
         ProjectorClient.showAlso(() -> StudioClient.caught().flatMap(caught -> Optional.ofNullable(
                 Minecraft.getInstance().level).map(level -> new ProjectorClient.Shown(ProjectorView.of(level,

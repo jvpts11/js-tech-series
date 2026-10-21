@@ -27,7 +27,8 @@ public enum StudioTool {
     STRUCTURES(TextKey.of("gui.jscore.studio.tool.structures", "Structures")),
     TESTS(TextKey.of("gui.jscore.studio.tool.tests", "Tests")),
     SAVE(TextKey.of("gui.jscore.studio.tool.save", "Save")),
-    LOGS(TextKey.of("gui.jscore.studio.tool.logs", "Logs"));
+    LOGS(TextKey.of("gui.jscore.studio.tool.logs", "Logs")),
+    AGENTS(TextKey.of("gui.jscore.studio.tool.agents", "Agents"));
 
     private final TextKey name;
 

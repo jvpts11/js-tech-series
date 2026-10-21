@@ -37,12 +37,28 @@ public final class DeveloperMode {
             .comment("Whether this world lets the players whose developer mode is on use the developer's tools, and "
                     + "its operators use those that read or change the world.")
             .named("Developer mode on this world");
+    /**
+     * The port the player's game's MCP server listens on, on this computer only. Where it listens is all a file says:
+     * the server itself is turned on only from inside the game, for that run.
+     */
+    public static final ConfigKey<Integer> MCP_PORT = ConfigKey.whole(SECTION + ".mcp_port", 25599)
+            .range(1024, 65535)
+            .comment("The port the studio's MCP server listens on, on this computer only, once it is turned on "
+                    + "in the game.")
+            .named("MCP server's port");
+    /** The port a dedicated server's MCP server listens on, on the server's computer only. */
+    public static final ConfigKey<Integer> SERVER_MCP_PORT = ConfigKey.whole(SECTION + ".server_mcp_port", 25598)
+            .range(1024, 65535)
+            .comment("The port this server's MCP server listens on, on the server's computer only, once an "
+                    + "operator turns it on in the game.")
+            .named("MCP server's port on this server");
     /** The player's file. */
     public static final ConfigFile PLAYER_FILE = ConfigFile.builder("jstech-developer", ConfigSide.CLIENT,
                     ConfigFormats.TOML)
             .comment("The tools for whoever makes a mod or a modpack, on this game.")
             .sectionNamed(SECTION, "Developer mode")
             .key(PLAYER_KEY, value -> playerOn = value)
+            .key(MCP_PORT, value -> mcpPort = value)
             .build();
     /** The world's file, which its players are sent. */
     public static final ConfigFile SERVER_FILE = ConfigFile.builder("jstech-developer-server", ConfigSide.SERVER,
@@ -50,10 +66,13 @@ public final class DeveloperMode {
             .comment("Whether this world lets the developer's tools be used.")
             .sectionNamed(SECTION, "Developer mode")
             .key(SERVER_KEY, value -> serverOn = value)
+            .key(SERVER_MCP_PORT, value -> serverMcpPort = value)
             .build();
 
     private static volatile boolean playerOn = !FMLEnvironment.production;
     private static volatile boolean serverOn = !FMLEnvironment.production;
+    private static volatile int mcpPort = 25599;
+    private static volatile int serverMcpPort = 25598;
 
     private DeveloperMode() {
     }
@@ -66,6 +85,16 @@ public final class DeveloperMode {
     /** Whether the world lets the developer's tools be used, as its own key says. */
     public static boolean onServer() {
         return serverOn;
+    }
+
+    /** The port the player's game's MCP server listens on. */
+    public static int mcpPort() {
+        return mcpPort;
+    }
+
+    /** The port a dedicated server's MCP server listens on. */
+    public static int serverMcpPort() {
+        return serverMcpPort;
     }
 
     /**

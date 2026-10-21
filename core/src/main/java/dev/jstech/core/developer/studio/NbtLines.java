@@ -24,6 +24,9 @@ public final class NbtLines {
     /** The most lines read, and the longest a value is written. */
     public static final int MOST = 200;
     public static final int LONGEST = 96;
+    /** What each line's path and value are kept under, as {@link #listed} writes them. */
+    public static final String PATH = "path";
+    public static final String VALUE = "value";
 
     private static final String CUT = "...";
 
@@ -42,8 +45,8 @@ public final class NbtLines {
         final ListTag out = new ListTag();
         lines.forEach((path, value) -> {
             final CompoundTag line = new CompoundTag();
-            line.putString("path", path);
-            line.putString("value", value);
+            line.putString(PATH, path);
+            line.putString(VALUE, value);
             out.add(line);
         });
         return out;
@@ -54,7 +57,7 @@ public final class NbtLines {
         final Map<String, String> out = new LinkedHashMap<>();
         for (int i = 0; i < listed.size(); i++) {
             final CompoundTag line = listed.getCompound(i);
-            out.put(line.getString("path"), line.getString("value"));
+            out.put(line.getString(PATH), line.getString(VALUE));
         }
         return out;
     }

@@ -1103,6 +1103,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   through `StudioServices` and `StudioAnswers`.
 - Recorded client tests: the files `assets/<mod>/jstech/client_tests/<name>.json`, which the studio writes, run
   as a suite of client tests of their mod with no code.
+- The MCP server: the studio's tools open to agents and to tools outside the game over the Model Context
+  Protocol, at `http://127.0.0.1:25599/mcp`. Its key, "MCP server", is never in a file: the player turns it on from
+  the game, in the studio's new Agents tab or with `/jstech mcp on`, for that run only. It listens on this computer
+  alone and refuses any request a web page sends or one that names another host; every client is let in by the
+  player, who is asked on the screen whether it may read, or read and act, and is given a key of its own that dies
+  with the game; reading and acting are apart; files are read and written only in the mods' and the pack's folders,
+  and never code; commands come from a safe list, only in a test world or for an operator; what players wrote comes
+  back marked as theirs; a mark on the screen shows a client is in, and what it does while it acts; any key takes the
+  controls back and the key "Cut every agent off" (End) takes back every key; and every call is written down in the
+  Agents tab. A dedicated server has one of its own on its computer, turned on by an operator in the game with
+  `/jstech mcp server on` and asking the operators about each client. A mod adds tools of its own with `McpTools`.
 - CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,

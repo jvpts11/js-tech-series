@@ -42,6 +42,9 @@ public final class StudioTexts {
             "Recording: every click on a screen is kept");
     public static final TextKey DONE = TextKey.of("gui.jscore.studio.done", "Done");
     public static final TextKey MODE_ON = TextKey.of("gui.jscore.studio.mode_on", "Developer mode is on");
+    /* The port, and how many clients. */
+    public static final TextKey MCP_LINE = TextKey.of("gui.jscore.studio.mcp_line",
+            "MCP server on 127.0.0.1:%s, %s clients");
     /* The file, and where it was looked for. */
     public static final TextKey NOT_OPENED = TextKey.of("gui.jscore.studio.not_opened",
             "%s is not among the mod's sources in this run: %s");

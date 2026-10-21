@@ -66,6 +66,8 @@ level always may run it, and a server's permission mod may grant it to a player 
 | `/jstech event stop <type>` | level 2 | Ends one now, planned or under way. *Added 2026-10-17.* |
 | `/jstech studio` | developer mode | Opens the studio, on the player's own game ([While you build](DEVELOPING.md#the-studio)). *Added 2026-10-21.* |
 | `/jstech screen new` | developer mode | Opens a new screen for the block looked at, on the player's own game ([Screens](SCREENS.md#tools-for-building-a-screen)). *Added 2026-10-21.* |
+| `/jstech mcp on`, `off`, `status`, `cut` | developer mode | Turns the studio's MCP server on or off for this run of the game, says whether it is on and how many clients are in, or takes back every key at once, on the player's own game ([While you build](DEVELOPING.md#the-mcp-server)). *Added 2026-10-21.* |
+| `/jstech mcp server on`, `off`, `status`, `cut` | operator, developer mode on the server | The same for a dedicated server's own MCP server, on the server's computer; only a player in the game turns it on, never the console. *Added 2026-10-21.* |
 
 ## What can go wrong
 

@@ -328,6 +328,39 @@ public final class ToolTexts {
     /* The mod. */
     public static final TextKey UNKNOWN_MOD = TextKey.of("gui.jscore.studio.logs.unknown_mod", "A mod");
 
+    /* The port. */
+    public static final TextKey AGENTS_HEAD = TextKey.of("gui.jscore.studio.agents.head",
+            "The MCP server: on this computer only, at http://127.0.0.1:%s/mcp");
+    public static final TextKey AGENTS_HEAD_OFF = TextKey.of("gui.jscore.studio.agents.head_off",
+            "The MCP server is off; on, it lets agents in from this computer only");
+    public static final TextKey SERVER_IS_ON = TextKey.of("gui.jscore.studio.agents.server_on", "Server: on");
+    public static final TextKey SERVER_IS_OFF = TextKey.of("gui.jscore.studio.agents.server_off", "Server: off");
+    public static final TextKey CUT_THEM_ALL = TextKey.of("gui.jscore.studio.agents.cut", "Cut them all");
+    public static final TextKey CLIENTS_PAIRED = TextKey.of("gui.jscore.studio.agents.clients", "Clients paired");
+    public static final TextKey NO_CLIENTS = TextKey.of("gui.jscore.studio.agents.no_clients",
+            "No client is let in");
+    /* When, and how many calls. */
+    public static final TextKey SINCE = TextKey.of("gui.jscore.studio.agents.since", "since %s, %s calls");
+    public static final TextKey TAKE_KEY_BACK = TextKey.of("gui.jscore.studio.agents.take_key",
+            "Take its key back");
+    public static final TextKey KEY_NOTE = TextKey.of("gui.jscore.studio.agents.key_note",
+            "Its key is made new each time the game starts, so a client asks again after a restart.");
+    public static final TextKey OTHER_TOOLS = TextKey.of("gui.jscore.studio.agents.other_tools",
+            "Tools of other mods");
+    public static final TextKey NO_OTHER_TOOLS = TextKey.of("gui.jscore.studio.agents.no_other_tools",
+            "No other mod has tools of its own");
+    public static final TextKey TOOLS_ON = TextKey.of("gui.jscore.studio.agents.tools_on", "Tools: on");
+    public static final TextKey TOOLS_OFF = TextKey.of("gui.jscore.studio.agents.tools_off", "Tools: off");
+    public static final TextKey EVERY_CALL = TextKey.of("gui.jscore.studio.agents.every_call", "Every call");
+    public static final TextKey WHEN = TextKey.of("gui.jscore.studio.agents.when", "When");
+    public static final TextKey CLIENT = TextKey.of("gui.jscore.studio.agents.client", "Client");
+    public static final TextKey TOOL_CALLED = TextKey.of("gui.jscore.studio.agents.tool", "Tool");
+    public static final TextKey ANSWER = TextKey.of("gui.jscore.studio.agents.answer", "Answer");
+    public static final TextKey NO_CALLS = TextKey.of("gui.jscore.studio.agents.no_calls", "No call yet");
+    /* Why the last call refused was refused. */
+    public static final TextKey REFUSED_WHY = TextKey.of("gui.jscore.studio.agents.refused_why",
+            "The last refused: %s");
+
     private ToolTexts() {
     }
 }

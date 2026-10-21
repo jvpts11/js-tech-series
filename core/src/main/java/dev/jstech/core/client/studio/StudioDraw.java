@@ -10,11 +10,14 @@ package dev.jstech.core.client.studio;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.StudioLayout;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 
 /**
  * How the studio draws, the game's own menus' way: a panel on the ground of the game's lists, its heading, a row of a
@@ -74,6 +77,20 @@ final class StudioDraw {
     static void small(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                       final int room, final int colour) {
         Draw.textScaled(g, font, cut(font, text, room, SMALL), x, y, colour, SMALL);
+    }
+
+    /** Small words wrapped to their room, a line under another; how many lines they took. */
+    static int smallWrapped(final GuiGraphics g, final Font font, final String text, final int x, final int y,
+                            final int room, final int colour) {
+        final List<FormattedCharSequence> lines = font.split(FormattedText.of(text), (int) (room / SMALL));
+        for (int i = 0; i < lines.size(); i++) {
+            g.pose().pushPose();
+            g.pose().translate(x, y + i * (SMALL_ROW - 3), 0);
+            g.pose().scale(SMALL, SMALL, 1.0F);
+            Draw.text(g, font, lines.get(i), 0, 0, colour);
+            g.pose().popPose();
+        }
+        return lines.size();
     }
 
     /** Words at their place, cut to their room. */

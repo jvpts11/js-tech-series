@@ -51,6 +51,8 @@ import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.datagen.JsCoreDataGenerators;
 import dev.jstech.core.developer.DeveloperMode;
 import dev.jstech.core.developer.ThingTests;
+import dev.jstech.core.developer.mcp.McpOnServer;
+import dev.jstech.core.developer.studio.StudioLogs;
 import dev.jstech.core.developer.studio.StudioServices;
 import dev.jstech.core.developer.LiveReload;
 import dev.jstech.core.diagnostic.Bandwidth;
@@ -618,6 +620,9 @@ public final class JsCore {
         InspectWatch.listen(modEventBus);
         ThingTests.listen(modEventBus);
         StudioServices.listen(modEventBus);
+        // The studio's logs kept from the start on both sides, and the MCP server of a dedicated server.
+        StudioLogs.listen();
+        McpOnServer.listen(modEventBus);
         JsCoreDataGenerators.listen(modEventBus);
         JsTechTab.listen(modEventBus);
         KeyActions.listen(modEventBus);

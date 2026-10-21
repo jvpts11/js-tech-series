@@ -15,6 +15,7 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.style.StyleSkin;
 import dev.jstech.core.client.gui.style.Styles;
+import dev.jstech.core.client.mcp.McpGame;
 import dev.jstech.core.gui.layout.StudioLayout;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ public final class StudioScreen extends Screen {
 
     private static final int SEARCH_LENGTH = 64;
     private static final String CRUMB = "  >  ";
+    private static final String FOOT_GAP = "    ";
     /** The level of operator the game's own {@code /reload} asks. */
     private static final int RELOADS = 2;
     /** How dark behind the tab that is open. */
@@ -101,6 +103,7 @@ public final class StudioScreen extends Screen {
         this.pages.put(StudioTool.TESTS, new TestsPage(this));
         this.pages.put(StudioTool.SAVE, new SavePage(this));
         this.pages.put(StudioTool.LOGS, new LogsPage(this));
+        this.pages.put(StudioTool.AGENTS, new AgentsPage(this));
         this.things.read("");
         this.tool = last;
         this.page().shown();
@@ -165,7 +168,11 @@ public final class StudioScreen extends Screen {
         this.page().render(g, mouseX, mouseY, tip);
         final StudioLayout.Rect foot = this.regions.foot();
         StudioDraw.footLine(g, foot.y() - 2, foot.width());
-        StudioDraw.small(g, font, this.status, StudioDraw.INSET, foot.y() + (StudioLayout.FOOT - 6) / 2,
+        // The MCP server, while it is on, beside what the foot says.
+        final String said = McpGame.running().map(server -> this.status + FOOT_GAP + GameText.resolve(
+                StudioTexts.MCP_LINE.with(server.port(), server.protocol().clients().all().size())))
+                .orElse(this.status);
+        StudioDraw.small(g, font, said, StudioDraw.INSET, foot.y() + (StudioLayout.FOOT - 6) / 2,
                 this.regions.reload().x() - 2 * StudioDraw.INSET, colours.label());
         this.runButton.setEnabled(this.tool == StudioTool.THINGS && this.things.tested()
                 && Minecraft.getInstance().getConnection() != null);
