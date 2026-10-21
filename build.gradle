@@ -60,7 +60,8 @@ subprojects {
             url = 'https://maven.squiddev.cc'
             content { includeGroup 'cc.tweaked' }
         }
-        // Create + its libraries (Flywheel, Ponder): dev-runtime only, heavy kinetic tick load for stress testing.
+        // Create + its libraries (Flywheel, Ponder): the Core's layer beside its contraptions compiles against it, and
+        // the dev runs that ask for it carry it.
         maven {
             name = 'CreateMod'
             url = 'https://maven.createmod.net/'
@@ -69,6 +70,20 @@ subprojects {
         maven {
             name = 'Tterrag'
             url = 'https://maven.tterrag.com/'
+        }
+        maven {
+            name = 'Devos'
+            url = 'https://mvn.devos.one/snapshots'
+            content { includeGroup 'com.tterrag.registrate' }
+        }
+        // Sable and its companion library: the moving sub-levels of Create Aeronautics, which the Core's layer meets.
+        maven {
+            name = 'RyanHCode'
+            url = 'https://maven.ryanhcode.dev/releases'
+            content {
+                includeGroup 'dev.ryanhcode.sable'
+                includeGroup 'dev.ryanhcode.sable-companion'
+            }
         }
         // FTB Teams and the libraries it stands on: the Core's teams come from it when it is installed.
         maven {

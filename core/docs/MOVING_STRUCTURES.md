@@ -618,6 +618,45 @@ The Core's own kits work aboard so:
 | Radiation | a source goes on giving off from where its block is now |
 | Data networks | the cables an owner of a network touched where it stood are forgotten |
 
+## Living alongside other moving-structure mods
+
+*Added 2026-10-21.*
+
+Create moves blocks as contraptions, entities that carry the blocks they took. Sable, which Create Aeronautics flies,
+keeps each ship's blocks as a sub-level: a plot of chunks far out in the level that it places in the world by a pose.
+With either mod installed, the kit's structures and theirs share the world this way:
+
+| | Create's contraptions | Sable's sub-levels |
+| --- | --- | --- |
+| A structure of the kit's meets one | as an obstacle that moves, by its blocks, where its entity places them and as fast as it goes | as an obstacle that moves, by its blocks, where its pose places them and as fast as Sable's physics says it goes |
+| One meets a structure of the kit's | no: Create's contraptions meet no other mod's moving blocks | no: Sable's physics meets only the world and its own |
+| Blocks a structure of the kit's keeps | Create moves none of them, so a bearing, a piston or an assembler built on Create's contraptions never takes a block out of one | Sable's assembly is built on Create's contraptions, so it takes none of them either |
+| Their blocks | the kit takes none of a contraption's blocks, which are in no place of the world | the kit makes no structure of a block of Sable's plots, and says so (`jscore.moving.refused.foreign`) |
+| A place of theirs | | `MovingStructures.inWorld` gives where Sable has a place of a plot in the world, as it does for the yard |
+
+A structure resting on one of theirs stays awake while that one moves, since nothing of the other mod tells it when it
+comes; one resting on a contraption or a sub-level standing still sleeps as on the ground. The kit's structures never
+push a contraption aside as they push what stands in their way: its mod places it every tick.
+
+The meeting goes one way because the other mods have no way in for another mod's moving blocks: a contraption and a
+sub-level each meet only the world and their own kind. So a ship of Sable's flies through a structure of the kit's,
+while a structure of the kit's lands on a ship of Sable's and rides it.
+
+The Core reaches each mod only through what the mod publishes for others, Create's API and Sable's companion library,
+and only on the versions it is tested against: Create 6.0.11 up to 6.1, Sable 2.0.6 up to 2.1. On another version
+the log says so, and that work is left off; on a version of Sable the Core is not tested against, it still refuses to
+take blocks from where Sable keeps them by default.
+
+A mod with moving structures of its own tells the kit of them with `ForeignMovers.declare(kind)`, behind its own
+guard: an `IForeignKind` gives the ones whose blocks may be in a box of the world (`near`, each a `ForeignMover`: its
+frame, the box of its blocks, what reads them, how fast it goes and turns), the region it keeps its blocks in
+(`holds`), where a place of that region is in the world (`inWorld`), and whether an entity is one of its structures
+(`isMover`).
+
+The tests of this layer run with the mods: `-PwithCreate`, `-PwithSable` (Create beside it), and `-PwithAeronautics`
+(both, and Create Aeronautics) on `runGameTestServer`, `runClient` or `runServer`. None of the three is ever shipped
+with the series: they are development dependencies, there only to test against.
+
 ## Finding structures
 
 *Added 2026-10-20.*
@@ -691,3 +730,7 @@ For game masters, as `/jstech structure ...`:
 | The wheel does not change the hotbar slot | the physics tool is in the main hand: the wheel changes its mode; the number keys change the slot. |
 | A structure held by the physics tool sags | it weighs more than the tool's strength holds: raise the strength with shift and the wheel. |
 | A propeller on a shaft gives nothing | the shaft does not turn, or turns slowly: its thrust grows with the shaft's speed up to the speed its `shaft` says. |
+| A ship of Sable's flies through a structure | Sable's physics meets only the world and its own sub-levels; a structure of the kit's meets the ship, not the ship it. |
+| A bearing does not turn a structure's blocks | Create moves no block a structure of the kit's keeps; put the bearing in the world, not aboard. |
+| A structure cannot be made of a ship's blocks | they are a sub-level of Sable's; a moving structure is never made of another's blocks. |
+| A contraption or a ship goes by and nothing is met | Create or Sable is of a version the Core is not tested against: the log says so when the game starts. |

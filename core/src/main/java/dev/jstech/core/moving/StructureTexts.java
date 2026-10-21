@@ -51,6 +51,8 @@ public final class StructureTexts {
     public static final TextKey TOO_WIDE = TextKey.of("jscore.moving.refused.too_wide",
             "Joined, the structure would be too big to move, or out of the world's height");
     public static final TextKey REFUSED_BY = TextKey.of("jscore.moving.refused.by_mod", "%s");
+    public static final TextKey FOREIGN = TextKey.of("jscore.moving.refused.foreign",
+            "Those blocks belong to a moving structure of %s; a moving structure is never made of another's blocks");
     public static final TextKey ASSEMBLED = TextKey.of("jscore.command.structure.assembled",
             "Made a moving structure of %s blocks");
     public static final TextKey DISASSEMBLED = TextKey.of("jscore.command.structure.disassembled",

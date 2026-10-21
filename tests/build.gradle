@@ -54,6 +54,14 @@ def withJade = providers.gradleProperty('withJade').isPresent()
  * folder, to prove a modpack's scripts reach what the mods hand them; every other run proves the mods stand without it.
  */
 def withKubeJs = providers.gradleProperty('withKubeJs').isPresent()
+/*
+ * -PwithCreate runs the development mods with Create, -PwithSable with Sable beside it, and -PwithAeronautics with
+ * Create Aeronautics on both, to prove the Core's moving structures meet their contraptions and sub-levels as its layer
+ * says; every other run proves the Core without them.
+ */
+def withAeronautics = providers.gradleProperty('withAeronautics').isPresent()
+def withSable = withAeronautics || providers.gradleProperty('withSable').isPresent()
+def withCreate = withSable || providers.gradleProperty('withCreate').isPresent()
 if (withoutComputerCraft) {
     sourceSets.main.java {
         exclude '**/gametest/computers/ComputerCraftGameTests.java'
@@ -133,6 +141,8 @@ neoForge {
             systemProperty 'jsc.gametests.mods', (providers.gradleProperty('gtMods').getOrElse(''))
             systemProperty 'jsc.gametests.ftbteams', withFtbTeams ? 'present' : 'absent'
             systemProperty 'jsc.gametests.kubejs', withKubeJs ? 'present' : 'absent'
+            systemProperty 'jsc.gametests.create', withCreate ? 'present' : 'absent'
+            systemProperty 'jsc.gametests.sable', withSable ? 'present' : 'absent'
             // -Pjfr records the run with Java Flight Recorder, for profiling the scale benchmark. Deep stacks,
             // because what is being chased sits well below the tick. Off unless asked for.
             if (providers.gradleProperty('jfr').present) {
@@ -218,6 +228,21 @@ dependencies {
     if (withKubeJs) {
         localRuntime("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
         localRuntime("dev.latvian.mods:rhino:${rhino_version}") { transitive = false }
+    }
+    // Create's and Sable's own classes, for the tests of the Core's layer beside them, which run only where they are.
+    compileOnly("com.simibubi.create:create-${minecraft_version}:${create_version}") { transitive = false }
+    compileOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}") { transitive = false }
+    compileOnly("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}") { transitive = false }
+    compileOnly("dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:"
+            + "${sable_companion_version}") { transitive = false }
+    if (withCreate) {
+        localRuntime "com.simibubi.create:create-${minecraft_version}:${create_version}"
+    }
+    if (withSable) {
+        localRuntime("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}") { transitive = false }
+    }
+    if (withAeronautics) {
+        localRuntime("maven.modrinth:create-aeronautics:${aeronautics_version}") { transitive = false }
     }
 }
 

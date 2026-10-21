@@ -54,6 +54,10 @@ public final class StructureAssembly {
             if (level.isOutsideBuildHeight(at)) {
                 continue;
             }
+            final StructureResult kept = keptByAnother(level, at);
+            if (kept != null) {
+                return kept;
+            }
             if (!Loaded.at(level, at)) {
                 return StructureResult.refused(StructureTexts.NOT_LOADED.text());
             }
@@ -75,6 +79,10 @@ public final class StructureAssembly {
     public static StructureResult joined(final ServerLevel level, final BlockPos seed, @Nullable final Vec3 pivot) {
         final Set<BlockPos> found = new LinkedHashSet<>();
         final Deque<BlockPos> next = new ArrayDeque<>();
+        final StructureResult kept = keptByAnother(level, seed);
+        if (kept != null) {
+            return kept;
+        }
         if (!Loaded.at(level, seed)) {
             return StructureResult.refused(StructureTexts.NOT_LOADED.text());
         }
@@ -123,6 +131,10 @@ public final class StructureAssembly {
         for (final BlockPos at : chosen) {
             if (level.isOutsideBuildHeight(at)) {
                 continue;
+            }
+            final StructureResult kept = keptByAnother(level, at);
+            if (kept != null) {
+                return kept;
             }
             if (!Loaded.at(level, at)) {
                 return StructureResult.refused(StructureTexts.NOT_LOADED.text());
@@ -182,5 +194,15 @@ public final class StructureAssembly {
 
     private static StructureResult tooMany(final int count) {
         return StructureResult.refused(StructureTexts.TOO_MANY.with(StructureBalance.mostBlocks(), count));
+    }
+
+    /*
+     * The refusal of a place another mod's moving structure keeps its blocks in, or null: one kind is never made inside
+     * the other. Asked before whether the place is loaded, since such a mod may keep them in chunks of its own the game
+     * does not count as loaded.
+     */
+    private static @Nullable StructureResult keptByAnother(final ServerLevel level, final BlockPos at) {
+        final IForeignKind theirs = ForeignMovers.holding(level, at);
+        return theirs == null ? null : StructureResult.refused(StructureTexts.FOREIGN.with(theirs.name()));
     }
 }

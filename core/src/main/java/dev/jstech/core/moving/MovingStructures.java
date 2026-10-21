@@ -279,11 +279,12 @@ public final class MovingStructures {
 
     /**
      * Where the place {@code place} is in the world: a place of the yard among a loaded structure's blocks is where
-     * that structure has it now; any other place is where it is.
+     * that structure has it now, and so is a place another mod keeps a moving structure's blocks in
+     * ({@link ForeignMovers}); any other place is where it is, the same place.
      */
     public static Vec3 inWorld(final Level level, final Vec3 place) {
         if (!YardLayout.isYard(place.x)) {
-            return place;
+            return ForeignMovers.inWorld(level, place);
         }
         final IStructureBody body = LevelMovingStructures.of(level).atYard((int) Math.floor(place.x),
                 (int) Math.floor(place.z));
@@ -298,7 +299,12 @@ public final class MovingStructures {
     /** The block of the world that holds the middle of the block {@code pos}, which may be of the yard. */
     public static BlockPos inWorld(final Level level, final BlockPos pos) {
         if (!YardLayout.isYardBlock(pos.getX())) {
-            return pos;
+            if (!ForeignMovers.any()) {
+                return pos;
+            }
+            final Vec3 middle = Vec3.atCenterOf(pos);
+            final Vec3 there = ForeignMovers.inWorld(level, middle);
+            return there == middle ? pos : BlockPos.containing(there);
         }
         return BlockPos.containing(inWorld(level, Vec3.atCenterOf(pos)));
     }

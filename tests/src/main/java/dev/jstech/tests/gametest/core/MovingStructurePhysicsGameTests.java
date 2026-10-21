@@ -8,6 +8,8 @@
 package dev.jstech.tests.gametest.core;
 
 import dev.jstech.core.air.AirMix;
+import dev.jstech.core.dimension.Wind;
+import dev.jstech.core.dimension.Winds;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.moving.IStructureMotion;
@@ -33,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -77,6 +81,9 @@ public final class MovingStructurePhysicsGameTests {
     private static final int FLOOR = 2;
     /* How long the weather a test clears stays clear, in ticks. */
     private static final int CLEAR = 12_000;
+    /* The arenas whose air is still, sheltered from the wind. */
+    private static final Set<AABB> SHELTERED = ConcurrentHashMap.newKeySet();
+    private static boolean shelterDeclared;
 
     private MovingStructurePhysicsGameTests() {
     }
@@ -163,7 +170,9 @@ public final class MovingStructurePhysicsGameTests {
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
     public static void physics_aRaftFloatsAndAStoneSinks(final GameTestHelper helper) {
-        calm(helper);
+        // The pool is sheltered, its air still: even a calm day's wind drifts the light raft to the pool's glass,
+        // where it leans and floats crooked, and how the wind blows changes with the time of day.
+        final AABB sheltered = shelter(helper);
         pool(helper);
         final MovingStructure raft = made(helper, square(3, 5, 3, 5, 5), Blocks.OAK_PLANKS);
         final MovingStructure stone = made(helper, List.of(new BlockPos(2, 5, 2)), Blocks.STONE);
@@ -182,6 +191,7 @@ public final class MovingStructurePhysicsGameTests {
                             "the stone sank to the bottom: " + stone.worldBox());
                     MovingStructures.takeAway(raft);
                     MovingStructures.takeAway(stone);
+                    SHELTERED.remove(sheltered);
                 })
                 .thenSucceed();
     }
@@ -543,6 +553,20 @@ public final class MovingStructurePhysicsGameTests {
      */
     private static void calm(final GameTestHelper helper) {
         helper.getLevel().setWeatherParameters(CLEAR, 0, false, false);
+    }
+
+    /* Stills the air of the test's arena until the test takes it out of {@link #SHELTERED}; the arena's box. */
+    private static AABB shelter(final GameTestHelper helper) {
+        synchronized (SHELTERED) {
+            if (!shelterDeclared) {
+                shelterDeclared = true;
+                Winds.source((level, at) -> SHELTERED.stream().anyMatch(box -> box.contains(at))
+                        ? Optional.of(Wind.STILL) : Optional.empty());
+            }
+        }
+        final AABB box = helper.getBounds().inflate(1);
+        SHELTERED.add(box);
+        return box;
     }
 
     /* The forces on the structure in its last tick, for a test's failure to tell. */

@@ -402,7 +402,7 @@ public final class StructureCollisions {
 
     private static boolean pushable(final Entity entity) {
         return !(entity instanceof MovingStructureEntity) && !(entity instanceof Player) && !entity.noPhysics
-                && !entity.isSpectator() && !entity.isPassenger();
+                && !entity.isSpectator() && !entity.isPassenger() && !ForeignMovers.isMover(entity);
     }
 
     private static boolean same(final Vec3 a, final Vec3 b) {

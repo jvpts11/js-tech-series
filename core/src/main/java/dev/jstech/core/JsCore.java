@@ -101,11 +101,13 @@ import dev.jstech.core.guide.GuideGifts;
 import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.integration.accessories.AccessoriesIntegration;
+import dev.jstech.core.integration.create.CreateIntegration;
 import dev.jstech.core.integration.curios.CuriosIntegration;
 import dev.jstech.core.integration.ftbchunks.FtbChunksIntegration;
 import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.integration.opac.OpacIntegration;
+import dev.jstech.core.integration.sable.SableIntegration;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.item.SwitchedShapedRecipe;
 import dev.jstech.core.jstechseries.ElementNaming;
@@ -409,6 +411,8 @@ public final class JsCore {
         OpacIntegration.bootstrap();
         AccessoriesIntegration.bootstrap();
         CuriosIntegration.bootstrap();
+        CreateIntegration.bootstrap();
+        SableIntegration.bootstrap();
         // The series' permissions, asked of the server's permission system, and what each player may have.
         CorePermissions.listen();
         PlayerLimits.register();

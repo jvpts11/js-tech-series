@@ -2581,6 +2581,7 @@
   "jscore.moving.refused.too_many": "Uma estrutura tem no máximo %s blocos; esta tem %s",
   "jscore.moving.refused.immovable": "O bloco %s em %s não pode ser movido",
   "jscore.moving.refused.in_yard": "Esses blocos já são de uma estrutura móvel",
+  "jscore.moving.refused.foreign": "Esses blocos são de uma estrutura móvel do %s; uma estrutura móvel nunca é feita com blocos de outra",
   "jscore.moving.refused.yard_full": "Esta dimensão não tem mais espaço para outra estrutura móvel",
   "jscore.moving.refused.too_tall": "A estrutura tem %s blocos de altura, e %s tem espaço para %s",
   "jscore.moving.refused.tilted": "A estrutura está inclinada demais para ser assentada no chão; ponha-a de pé antes",

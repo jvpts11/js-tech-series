@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.moving.physics;
 
+import dev.jstech.core.moving.ForeignMover;
+import dev.jstech.core.moving.ForeignMovers;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructureEvent;
@@ -24,6 +26,8 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -65,11 +69,14 @@ final class StructureContacts {
     private final BoxContacts.IPointSink sink = this::take;
     /* Whether each contact of the step counts its blow, in the solver's order. */
     private final BooleanArrayList counted = new BooleanArrayList();
+    /* Whether each contact's block met is another mod's moving structure's, which no blow of the kit's breaks. */
+    private final BooleanArrayList foreign = new BooleanArrayList();
     /* The hardest blow of the tick, told to the game as it ends: where, how fast, and the block it met, packed. */
     private final Vector3d hardestAt = new Vector3d();
     private double hardest;
     private double hardestClosing;
     private long hardestMet;
+    private boolean hardestForeign;
     private @Nullable MovingStructure struck;
     /*
      * The pair being worked: the bodies, the blocks, how well they grip, the frame its points are kept in, and what
@@ -78,15 +85,18 @@ final class StructureContacts {
     private RigidBody first;
     private RigidBody second;
     private StructureFrame frame;
-    private ServerLevel world;
     private StructureParts ownParts;
     private @Nullable StructureFrame theirFrame;
     private @Nullable StructureParts theirParts;
+    /* What reads the blocks met, and the level whose loaded chunks they are in: the world's, or another mod's. */
+    private BlockGetter theirReads;
+    private @Nullable Level theirLoaded;
     private long cell;
     private long other;
     private long pair;
     private double grip;
     private boolean counts = true;
+    private boolean meetingForeign;
 
     /* How far a block's corner is from its middle: a block's whole reach, however it is turned. */
     private static final double REACH = Math.sqrt(3) / 2;
@@ -120,13 +130,13 @@ final class StructureContacts {
         cells.clear();
         met.clear();
         counted.clear();
+        foreign.clear();
         struck = structure;
         final AABB box = worldBox(standing, structure.bounds()).inflate(margin);
         if (!Loaded.area(level, floor(box.minX), floor(box.minZ), floor(box.maxX), floor(box.maxZ))) {
             return false;
         }
         this.frame = standing;
-        this.world = level;
         this.ownParts = parts;
         FrameMath.axes(standing, axes);
         world(level, parts, body, box, margin);
@@ -158,12 +168,16 @@ final class StructureContacts {
             final double blow = contact.blow();
             if (blow > 0 && counted.getBoolean(i)) {
                 cellBlows.addTo(cells.getLong(i), blow);
-                metBlows.addTo(met.getLong(i), blow);
+                final boolean theirs = foreign.getBoolean(i);
+                if (!theirs) {
+                    metBlows.addTo(met.getLong(i), blow);
+                }
                 if (blow > hardest) {
                     hardest = blow;
                     hardestAt.set(contact.point());
                     hardestClosing = contact.closing();
                     hardestMet = met.getLong(i);
+                    hardestForeign = theirs;
                 }
             }
         }
@@ -235,6 +249,8 @@ final class StructureContacts {
                        final double margin) {
         this.theirFrame = null;
         this.theirParts = null;
+        this.theirReads = level;
+        this.theirLoaded = level;
         final int minY = Math.max(level.getMinBuildHeight(), floor(box.minY));
         final int maxY = Math.min(level.getMaxBuildHeight() - 1, floor(box.maxY));
         if (minY > maxY || YardLayout.isYard(box.minX) || YardLayout.isYard(box.maxX)) {
@@ -354,7 +370,7 @@ final class StructureContacts {
             // Two structures moving by their physics both work their blows: only the one of the lower id counts them.
             counts = made == null || structure.id().value().compareTo(them.id().value()) < 0;
             final int before = solver.contacts().size();
-            meetStructure(level, theirs, parts, made, body, theirBody, overlap.inflate(REACH), margin);
+            meetStructure(level, level, theirs, parts, made, body, theirBody, overlap.inflate(REACH), margin);
             counts = true;
             // One worked in the same steps has its own contacts with the ground worked with these already.
             if (!together && physics != null && theirBody == physics.body() && solver.contacts().size() > before) {
@@ -365,17 +381,52 @@ final class StructureContacts {
                     cells.add(0);
                     met.add(0);
                     counted.add(false);
+                    foreign.add(false);
                 }
             }
         }
+        foreigners(parts, body, box, margin, level);
     }
 
-    /* The structure's blocks within {@code overlap} met by the blocks of another, standing at {@code standing}. */
-    private void meetStructure(final ServerLevel level, final StructureFrame standing, final StructureParts parts,
-                               @Nullable final StructureParts others, final RigidBody body, final RigidBody theirBody,
-                               final AABB overlap, final double margin) {
+    /*
+     * The moving structures of other mods near ({@link ForeignMovers}): obstacles that move, met as the kit's own held
+     * by a rule are, never moved by what meets them and none of their blocks broken.
+     */
+    private void foreigners(final StructureParts parts, final RigidBody body, final AABB box, final double margin,
+                            final ServerLevel level) {
+        if (!ForeignMovers.any()) {
+            return;
+        }
+        for (final ForeignMover theirs : ForeignMovers.near(level, box)) {
+            final AABB overlap = box.intersect(worldBox(theirs.frame(), theirs.blocks()).inflate(margin));
+            if (overlap.getXsize() < 0 || overlap.getYsize() < 0 || overlap.getZsize() < 0) {
+                continue;
+            }
+            final RigidBody moving = new RigidBody();
+            moving.fixed();
+            moving.position().set(theirs.frame().pose().x(), theirs.frame().pose().y(), theirs.frame().pose().z());
+            moving.velocity().set(theirs.speed().x, theirs.speed().y, theirs.speed().z);
+            moving.spin().set(theirs.spin().x, theirs.spin().y, theirs.spin().z);
+            meetingForeign = true;
+            meetStructure(theirs.reads(), theirs.loaded(), theirs.frame(), parts, null, body, moving,
+                    overlap.inflate(REACH), margin);
+            meetingForeign = false;
+        }
+    }
+
+    /*
+     * The structure's blocks within {@code overlap} met by the blocks of another, standing at {@code standing}: its
+     * {@code others} parts, when it moves by its physics, else its blocks as {@code reads} has them, read only where
+     * {@code loaded} has them loaded when they are a level's.
+     */
+    private void meetStructure(final BlockGetter reads, @Nullable final Level loaded, final StructureFrame standing,
+                               final StructureParts parts, @Nullable final StructureParts others,
+                               final RigidBody body, final RigidBody theirBody, final AABB overlap,
+                               final double margin) {
         this.theirFrame = standing;
         this.theirParts = others;
+        this.theirReads = reads;
+        this.theirLoaded = loaded;
         FrameMath.axes(standing, otherAxes);
         final double reach = REACH + margin;
         for (final long key : parts.surface()) {
@@ -402,19 +453,20 @@ final class StructureContacts {
                             theirGrip = others.grip(theirKey);
                         } else {
                             at.set(ox, oy, oz);
-                            if (!Loaded.at(level, at)) {
+                            if (loaded != null && !Loaded.at(loaded, at)) {
                                 continue;
                             }
-                            final BlockState state = level.getBlockState(at);
+                            final BlockState state = reads.getBlockState(at);
                             if (state.isAir()) {
                                 continue;
                             }
-                            final VoxelShape shape = state.getCollisionShape(level, at);
+                            final VoxelShape shape = state.getCollisionShape(reads, at);
                             if (shape.isEmpty()) {
                                 continue;
                             }
                             theirShape = StructureParts.boxesOf(shape);
-                            theirGrip = ContactMath.grip(state.getFriction(level, at, null));
+                            theirGrip = ContactMath.grip(loaded != null ? state.getFriction(loaded, at, null)
+                                    : state.getBlock().getFriction());
                         }
                         for (final AABB own : parts.shape(key)) {
                             for (final AABB box : theirShape) {
@@ -454,6 +506,7 @@ final class StructureContacts {
         cells.add(cell);
         met.add(other);
         counted.add(counts);
+        foreign.add(meetingForeign);
     }
 
     /*
@@ -487,10 +540,10 @@ final class StructureContacts {
             return theirParts.whole(beside);
         }
         at.set(beside);
-        if (!Loaded.at(world, at)) {
+        if (theirLoaded != null && !Loaded.at(theirLoaded, at)) {
             return false;
         }
-        return Block.isShapeFullBlock(world.getBlockState(at).getCollisionShape(world, at));
+        return Block.isShapeFullBlock(theirReads.getBlockState(at).getCollisionShape(theirReads, at));
     }
 
     /* The face a way goes through, {@code sign} along it, or none when it goes along an edge or through a corner. */
@@ -517,9 +570,11 @@ final class StructureContacts {
     private void tellHardest(final ServerLevel level) {
         final MovingStructure mine = struck;
         if (mine != null && hardest > 0 && hardestClosing >= COLLISION_SPEED) {
-            final BlockPos where = BlockPos.of(hardestMet);
-            final IStructureBody other = YardLayout.isYardBlock(where.getX()) ? MovingStructures.at(level, where)
-                    : null;
+            // A blow at another mod's structure is told at the world's block it struck at, as it is no structure here.
+            final BlockPos where = hardestForeign ? BlockPos.containing(hardestAt.x, hardestAt.y, hardestAt.z)
+                    : BlockPos.of(hardestMet);
+            final IStructureBody other = !hardestForeign && YardLayout.isYardBlock(where.getX())
+                    ? MovingStructures.at(level, where) : null;
             NeoForge.EVENT_BUS.post(new MovingStructureEvent.Collision(mine, other, where,
                     new Vec3(hardestAt.x, hardestAt.y, hardestAt.z), hardestClosing, hardest));
         }

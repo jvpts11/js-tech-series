@@ -854,6 +854,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   answered for where its structure is in the world; a spotlight aboard shines on the world from where it is, sweeping
   the ground as the structure goes; a radio aboard is heard from where the structure carries it; and belts, spaces of
   parts and shafts work aboard, in another dimension too.
+- Moving structures beside Create and Create Aeronautics: with Create installed, a moving structure meets its
+  contraptions as obstacles that move, and lands and rides on one turning on a bearing; with Sable, which Create
+  Aeronautics flies, it meets its ships the same way, as fast as they fly. Create moves no block a moving structure
+  keeps, so a bearing or a ship's assembler never takes one out of it; a moving structure is never made of a ship's
+  blocks; and a place aboard a ship is asked of the world where the ship has it. The work starts only on the versions
+  of Create and Sable it is tested against, and says in the log when it is left off. Another mod tells the kit of its
+  own moving structures through `ForeignMovers`.
 
 ### Changed
 - Telemetry leaves the peripheral links: the point-to-point links are the computer's peripherals and the

@@ -2214,6 +2214,7 @@
   "jscore.moving.reading.speed": "Speed",
   "jscore.moving.refused.blocked": "The structure cannot be set down: the %s at %s is in the way",
   "jscore.moving.refused.by_mod": "%s",
+  "jscore.moving.refused.foreign": "Those blocks belong to a moving structure of %s; a moving structure is never made of another's blocks",
   "jscore.moving.refused.immovable": "The %s at %s cannot be moved",
   "jscore.moving.refused.in_yard": "Those blocks are already a moving structure's",
   "jscore.moving.refused.land_not_loaded": "The structure cannot be set down where the land is not loaded",

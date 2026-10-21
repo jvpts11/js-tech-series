@@ -9,6 +9,7 @@ package dev.jstech.core.moving.physics;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.diagnostic.Diagnostics;
+import dev.jstech.core.moving.ForeignMovers;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.IStructureMotion;
 import dev.jstech.core.moving.MovingStructure;
@@ -416,11 +417,13 @@ public final class StructurePhysics {
 
     /*
      * Whether it sleeps on this tick, nothing having pushed it and it not looking about: it costs nothing, and holds
-     * still where it is.
+     * still where it is. Another mod's moving structure going in its reach keeps it awake, as nothing of that mod
+     * tells it when it comes.
      */
     boolean dozing(final ServerLevel level) {
         return asleep && body.velocity().length() < SLEEP_SPEED && body.spin().length() < SLEEP_SPIN
-                && (level.getGameTime() - woke) % LOOK_ABOUT != 0;
+                && (level.getGameTime() - woke) % LOOK_ABOUT != 0
+                && !ForeignMovers.goingIn(level, structure.worldBox().inflate(WAKE_REACH));
     }
 
     /* Holds it still where it is, asleep. */
