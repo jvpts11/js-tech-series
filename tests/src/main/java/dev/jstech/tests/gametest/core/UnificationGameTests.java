@@ -7,20 +7,29 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.material.Forms;
 import dev.jstech.core.material.MaterialUses;
+import dev.jstech.core.unify.RecipeUnifier;
 import dev.jstech.core.unify.Unification;
+import dev.jstech.core.unify.UnificationSettings;
+import dev.jstech.core.unify.UnifyPreview;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestItems;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -85,6 +94,27 @@ public final class UnificationGameTests {
         final List<ItemStack> loot = table.getRandomItems(params);
         helper.assertTrue(loot.size() == 1 && loot.getFirst().is(tinIngot()),
                 "the table that drops the copy drops the Core's ingot; got " + loot);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void preview_offRehearsesOnTheRecipesAsTheServerWritesThem(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final String tin = BuiltInRegistries.ITEM.getKey(tinIngot()).toString();
+        final JsonElement written = Recipe.CODEC.encodeStart(RegistryOps.create(JsonOps.INSTANCE,
+                server.registryAccess()), recipe(helper, "unify/takes_copy")).getOrThrow();
+        helper.assertTrue(RecipeUnifier.replaced(written, Map.of(tin, "minecraft:stone")).equals(Set.of(tin)),
+                "a recipe the server holds, written out, names its items where unification looks: " + written);
+        UnificationSettings.FILE.set(UnificationSettings.ENABLED, false);
+        final UnifyPreview off;
+        try {
+            off = Unification.preview(server);
+        } finally {
+            UnificationSettings.FILE.set(UnificationSettings.ENABLED, true);
+        }
+        helper.assertFalse(off.on(), "off, the preview is of what turning it on would do");
+        helper.assertTrue(off.tags().stream().anyMatch(tag -> tag.tag().equals(TIN_TAG) && tag.kept().equals(tin)),
+                "and still names the Core's ingot for the tin tag: " + off.tags());
         helper.succeed();
     }
 

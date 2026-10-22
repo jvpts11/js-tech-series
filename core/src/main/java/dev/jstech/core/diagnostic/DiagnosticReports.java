@@ -137,12 +137,18 @@ public final class DiagnosticReports {
         return out.toString();
     }
 
-    /** Writes the diagnostic file into {@value #FOLDER}, and hands back where. */
+    /**
+     * Writes the diagnostic file into {@value #FOLDER}, and beside it the same as a page a browser opens
+     * ({@link DiagnosticPage}), and hands back where the file is.
+     */
     public static Path write(final MinecraftServer server) throws IOException {
         final Path folder = FMLPaths.GAMEDIR.get().resolve(FOLDER);
         Files.createDirectories(folder);
-        final Path file = folder.resolve("diagnostics-" + FILE_TIME.format(LocalDateTime.now()) + ".txt");
-        Files.writeString(file, bundle(server), StandardCharsets.UTF_8);
+        final String name = "diagnostics-" + FILE_TIME.format(LocalDateTime.now());
+        final Path file = folder.resolve(name + ".txt");
+        final String said = bundle(server);
+        Files.writeString(file, said, StandardCharsets.UTF_8);
+        Files.writeString(folder.resolve(name + ".html"), DiagnosticPage.html(name, said), StandardCharsets.UTF_8);
         LOGGER.info("Wrote the diagnostics to {}", file);
         return file;
     }

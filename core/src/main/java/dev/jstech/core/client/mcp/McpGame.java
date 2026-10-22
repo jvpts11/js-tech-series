@@ -106,6 +106,7 @@ public final class McpGame {
         studioTools.forEach(McpGame::declare);
         // The tools to play the game as the player, for automated tests: seeing, acting, the test world, waiting.
         PlaySeeing.all().forEach(McpGame::declare);
+        PlayScene.all().forEach(McpGame::declare);
         PlayActing.all().forEach(McpGame::declare);
         PlayWorld.all().forEach(McpGame::declare);
         PlayWaiting.all().forEach(McpGame::declare);

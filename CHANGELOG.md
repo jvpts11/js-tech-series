@@ -96,7 +96,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   what it replaced, and `WorldEdits` gains `export`, `planFrom` and `lastFor`; `EditCommands` and `EditTexts` are
   `/jstech edit`. `AwayOwners` lets go of an away owner's chunks by the server's rule, `ChunkLoaders.LoadOutcome`
   gains `OWNER_AWAY`, `ChunkLoadingBalance` gains `keepWhileAway`, `awayHours` and `letsGoAfter`, and
-  `CoreConfigKeys` gains `WORLD_CHUNKS_WHILE_AWAY` and `WORLD_CHUNKS_AWAY_HOURS`.
+  `CoreConfigKeys` gains `WORLD_CHUNKS_WHILE_AWAY` and `WORLD_CHUNKS_AWAY_HOURS`. `CorePermissions` asks with the
+  place's contexts, `DIMENSION` and `CLAIM` (`NO_CLAIM` outside one), through `has(player, node, level, pos)`,
+  `has(uuid, node, level, pos)` and `contextsAt`; `ITeamSource.membersOf`, `CoreTeams.membersOf` and `soloPlayer`
+  name a team's players. `DiagnosticPage` writes the diagnostic file as a page (`sections`, `marked`, `Section`).
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1139,7 +1142,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Unification: when several mods make the same material, one item stands for all of them, the game's own first
   and the Core's next by default, in every recipe of every mod and in what blocks, creatures and chests drop; the
   world's `jstech-unification.toml` says which mods come first and which tags, items and recipes are left alone, and
-  it steps aside for Almost Unified.
+  it steps aside for Almost Unified. Only copies are made one: a mod with two items of its own in a tag (AE2's certus
+  quartz crystal and its charged one) means them apart, and neither is replaced.
 - (Core) KubeJS: scripts reach the Core as `JsCore` (teams, what they know, milestones, steps along an axis,
   materials and their properties, which item stands for which, every kind of data the Core's registries read and
   every mod's data maps, as JSON), hear its events under `JsCoreEvents` (knowledge gained, milestones and steps
@@ -1342,6 +1346,25 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   hours of its running, after which they wait, still the owner's, until the owner comes back.
 - (Core) A test proves the Core's generation the same for the same seed on any number of threads: the test land's
   density worked out on one thread and on eight, and its chunks made all at once and one at a time, come out alike.
+- (Core) Permissions by place: every permission of the series is asked about with the dimension the action is in and
+  the claim it lies in, as NeoForge's contexts, so a permission mod grants a node in one dimension or one claim and
+  not elsewhere.
+- (Core) Who may do what, in the studio: its Access tab shows, for the block looked at, whether you, your team, a
+  player you name and that player's machines may break, place, use, explode, burn, flow into, move a structure into
+  and shoot there, with what each protection answered, the claim and the server's PvP rule.
+- (Core) A page to read the diagnostic file: `/jstech diagnostics` writes an HTML page beside the file, each part
+  folded under its title, the lines that warn marked, and a box that keeps only the lines holding what is typed.
+- (Core) Typings for scripts: `/jstech dump typings` writes TypeScript declarations of every script binding of the
+  series and of `JsCoreEvents`, so an editor completes KubeJS scripts as they are typed.
+- (Core) Unification seen before it happens: the studio's Recipes tab shows what unification changes tag by tag, the
+  item kept, those replaced and how many recipes name them, with one recipe before and after; with unification off,
+  what turning it on would do, and a button that turns it on.
+- (Core) The page of the MCP tools: the MCP server hands a browser on the same computer the page of its tools at
+  `/tools`, each with what it does, whether it reads or acts and its arguments and schema, and `/jstech dump mcp`
+  writes the page of every tool the game knows.
+- (Core) The scene in numbers: the MCP tool `scene_describe` tells an agent what the player sees, read along lines of
+  sight across the view: the kinds of block with the nearest of each and where it lies, the creatures, players and
+  items in sight, the way the player faces, the time, weather, light and biome.
 
 ### Changed
 - (Core) The body's screen is declared in a file, so its look can change: a resource pack lays it out again and the

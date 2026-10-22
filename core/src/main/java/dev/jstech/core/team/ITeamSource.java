@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.team;
 
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
@@ -22,4 +23,12 @@ public interface ITeamSource {
      * online. A player on no team is on a team of their own, {@link CoreTeams#solo(UUID)}.
      */
     String teamOf(MinecraftServer server, UUID player);
+
+    /**
+     * The players on {@code team}, as far as the source can say; none by default, for a source that cannot list a
+     * team's players. A team of one player is that player.
+     */
+    default List<UUID> membersOf(final MinecraftServer server, final String team) {
+        return List.of();
+    }
 }

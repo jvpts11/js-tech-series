@@ -17,6 +17,7 @@ public enum StudioTool {
 
     THINGS(TextKey.of("gui.jscore.studio.tool.things", "Things")),
     BLOCK(TextKey.of("gui.jscore.studio.tool.block", "Block")),
+    ACCESS(TextKey.of("gui.jscore.studio.tool.access", "Access")),
     COST(TextKey.of("gui.jscore.studio.tool.cost", "Cost")),
     PAYLOADS(TextKey.of("gui.jscore.studio.tool.payloads", "Payloads")),
     RECIPES(TextKey.of("gui.jscore.studio.tool.recipes", "Recipes")),

@@ -130,9 +130,12 @@ default; a material none of them makes takes the first of its items by id.
 
 What is unified is every common tag of every form of every material, `c:<folder>/<material>` (`c:ingots/tin`,
 `c:dusts/tin`, `c:storage_blocks/tin`, `c:raw_materials/tin` and the rest), with more than one item in it. Ores never
-are: an ore differs by the rock it is in. The recipes' files are rewritten just before the game reads them, so recipes
-of every mod and every kind are reached: an item a recipe names under `item` or `id`, and an item named bare where a
-recipe says what it makes (`result`, `results`, `output`, `outputs`). A recipe's conditions are left as they are.
+are: an ore differs by the rock it is in. Only copies are made one: a mod with two or more items of its own in a tag
+means them apart (AE2 files its certus quartz crystal and its charged one both under `c:gems/certus_quartz`), so none
+of its items stands for the tag or is replaced, while the other mods' copies in it still are. The recipes' files are
+rewritten just before the game reads them, so recipes of every mod and every kind are reached: an item a recipe names
+under `item` or `id`, and an item named bare where a recipe says what it makes (`result`, `results`, `output`,
+`outputs`). A recipe's conditions are left as they are.
 
 The world's file `serverconfig/jstech-unification.toml` sets it, read as the world's data loads:
 
@@ -150,6 +153,12 @@ The world's file `serverconfig/jstech-unification.toml` sets it, read as the wor
 What drops is changed by the Core's modifier of loot, `jscore:unified_drops`, which a data pack takes out as it takes
 out any. The log says, each time the data loads, how many items stand for how many others and how many recipes
 changed.
+
+*Added 2026-10-22.* The studio's Recipes tab shows it tag by tag, under **What unification changes**: the item kept,
+those it replaces and how many recipes name them, and one of those recipes with the item before and after
+([While you build](DEVELOPING.md#the-tools)). With unification off it shows what turning it on would do, worked out on
+copies of the world's recipes, which stay as they are, and turns it on from there for a player who may change the
+server's settings.
 
 ### What can go wrong
 
@@ -201,6 +210,12 @@ JsCoreEvents.knowledgeGained(event => {
 A machine's recipe takes `fluidInputs`, `fluidOutputs`, `catalysts` and `knowledge` the same way; the matter of other
 states, the byproducts and the temperature and pressure it runs between are written with `event.custom`, as the
 recipe's file holds them ([Machines](MACHINES.md)).
+
+*Added 2026-10-22.* For an editor that completes what is typed, `/jstech dump typings` writes
+`jstech-dump/typings/jstech.d.ts`: TypeScript declarations of every binding the series' mods hand the scripts, each
+call with its arguments named and typed, and of `JsCoreEvents`, each event with the fields a handler reads, written
+from the classes themselves so they never fall behind the game. Put the file where the editor finds it, beside the
+scripts or named in a `jsconfig.json`; ProbeJS's own files sit beside it.
 
 ### CraftTweaker
 
@@ -273,6 +288,8 @@ When nothing waits, the last line says so.
 | `/jstech dump hazards` | `hazards.md`: the hazards to bodies, those items carry and the items that carry them, those of dimensions |
 | `/jstech dump ids` | `ids.md`: every id the series' mods and the content packs registered, by namespace and registry |
 | `/jstech dump structures` | `structures.md`: every structure set with its placement and its structures, those the operator turned off marked, and the worldgen modifiers made as the server started ([World](WORLD.md#structures-tuned-by-an-operator)). *Added 2026-10-22.* |
+| `/jstech dump typings` | `typings/jstech.d.ts`: TypeScript declarations of every script binding and event of the series, for an editor to complete KubeJS scripts with ([KubeJS](#kubejs)). *Added 2026-10-22.* |
+| `/jstech dump mcp` | `mcp-tools.html`: the page of the MCP servers' tools with their arguments and schemas ([While you build](DEVELOPING.md#the-mcp-server)). *Added 2026-10-22.* |
 | `/jstech dump reference` | `reference/`: the generated reference, a small website |
 | `/jstech dump all` | all of the above |
 | `/jstech dump permissions` | `jstech-permissions/`: the permissions and LuckPerms' groups ([Protection](PROTECTION.md)) |

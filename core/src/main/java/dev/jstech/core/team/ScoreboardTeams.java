@@ -7,8 +7,12 @@
  */
 package dev.jstech.core.team;
 
+import com.mojang.authlib.GameProfile;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.PlayerTeam;
 
 /**
@@ -34,5 +38,25 @@ public final class ScoreboardTeams implements ITeamSource {
     public String teamOf(final MinecraftServer server, final UUID player) {
         return CoreTeams.nameOf(server, player).map(name -> server.getScoreboard().getPlayersTeam(name))
                 .map(ScoreboardTeams::idOf).orElseGet(() -> CoreTeams.solo(player));
+    }
+
+    /* The players whose names are in the scoreboard team, each by the id the server knows the name by. */
+    @Override
+    public List<UUID> membersOf(final MinecraftServer server, final String team) {
+        final PlayerTeam found = team.startsWith(PREFIX) ? server.getScoreboard().getPlayerTeam(team.substring(
+                PREFIX.length())) : null;
+        if (found == null) {
+            return CoreTeams.soloPlayer(team).map(List::of).orElse(List.of());
+        }
+        final List<UUID> out = new ArrayList<>();
+        for (final String name : found.getPlayers()) {
+            final ServerPlayer online = server.getPlayerList().getPlayerByName(name);
+            if (online != null) {
+                out.add(online.getUUID());
+            } else if (server.getProfileCache() != null) {
+                server.getProfileCache().get(name).map(GameProfile::getId).ifPresent(out::add);
+            }
+        }
+        return out;
     }
 }

@@ -19,8 +19,10 @@ import java.util.Set;
  */
 public final class McpGuard {
 
-    /** The one path the server answers. */
+    /** The path the server answers messages at. */
     public static final String PATH = "/mcp";
+    /** The path of the page of its tools, which a browser on this computer opens; read only. */
+    public static final String TOOLS = "/tools";
 
     private static final Set<String> HOSTS = Set.of("127.0.0.1", "localhost", "[::1]");
     private static final String JSON = "application/json";
@@ -43,8 +45,11 @@ public final class McpGuard {
         if (request.header("origin").isPresent()) {
             return refused(403, "a request from a web page is refused");
         }
+        if (TOOLS.equals(request.path())) {
+            return "GET".equals(request.method()) ? Optional.empty() : refused(405, "the page is only read");
+        }
         if (!PATH.equals(request.path())) {
-            return refused(404, "the server answers " + PATH + " only");
+            return refused(404, "the server answers " + PATH + " and its page at " + TOOLS + " only");
         }
         if ("POST".equals(request.method())) {
             final String type = request.header("content-type").orElse("").toLowerCase(Locale.ROOT);

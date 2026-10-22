@@ -241,6 +241,16 @@ public final class McpHttp {
             return new Response(status, Map.copyOf(headers), json.getBytes(StandardCharsets.UTF_8));
         }
 
+        /**
+         * A page of {@code status}, which may load nothing from anywhere: its own style only, as what it shows was
+         * written by the mods.
+         */
+        public static Response html(final int status, final String page) {
+            return new Response(status, Map.of("Content-Type", "text/html; charset=utf-8",
+                    "Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'"),
+                    page.getBytes(StandardCharsets.UTF_8));
+        }
+
         /** A plain response of {@code status} saying {@code why}. */
         public static Response text(final int status, final String why) {
             return new Response(status, Map.of("Content-Type", "text/plain; charset=utf-8"),

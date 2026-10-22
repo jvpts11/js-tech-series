@@ -107,6 +107,16 @@ class McpProtocolTest {
     }
 
     @Test
+    void handle_givesThePageOfItsSidesToolsWithNoKey() {
+        final McpHttp.Response page = this.protocol.handle(new McpHttp.Request("GET", McpGuard.TOOLS, Map.of(),
+                new byte[0]));
+        final String html = new String(page.body(), StandardCharsets.UTF_8);
+        assertEquals(200, page.status());
+        assertTrue(page.headers().get("Content-Type").startsWith("text/html"));
+        assertTrue(html.contains("id=\"server-" + ECHO + "\"") && html.contains("<code>words</code>"), html);
+    }
+
+    @Test
     void toolsCall_runsAToolTheClientMayUse() {
         final String key = this.paired(McpPermission.READ);
         final JsonObject args = new JsonObject();

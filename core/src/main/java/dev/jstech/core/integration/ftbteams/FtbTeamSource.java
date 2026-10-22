@@ -12,6 +12,7 @@ import dev.ftb.mods.ftbteams.api.Team;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.team.ITeamSource;
 import dev.jstech.core.team.ScoreboardTeams;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
@@ -35,5 +36,18 @@ final class FtbTeamSource implements ITeamSource {
         // A player's own team in FTB Teams is a team of one, the same as the Core's own.
         return team.filter(found -> !found.isPlayerTeam()).map(found -> PREFIX + found.getId())
                 .orElseGet(() -> CoreTeams.solo(player));
+    }
+
+    @Override
+    public List<UUID> membersOf(final MinecraftServer server, final String team) {
+        if (!team.startsWith(PREFIX) || !FTBTeamsAPI.api().isManagerLoaded()) {
+            return ScoreboardTeams.INSTANCE.membersOf(server, team);
+        }
+        try {
+            return FTBTeamsAPI.api().getManager().getTeamByID(UUID.fromString(team.substring(PREFIX.length())))
+                    .map(found -> List.copyOf(found.getMembers())).orElse(List.of());
+        } catch (final IllegalArgumentException notAnId) {
+            return List.of();
+        }
     }
 }

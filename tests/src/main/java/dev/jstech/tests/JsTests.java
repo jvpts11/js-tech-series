@@ -160,6 +160,8 @@ public final class JsTests {
             JsCore.languages().register(new ToyLanguage());
             // A world's settings file in every format, where the settings tests can read and write them.
             TestSettings.register(modEventBus, modContainer);
+            // A permission held only inside a claim, to see the place's contexts reach a permission's rule.
+            TestPermissions.register();
         }
         if (GameTestHooks.isGametestServer() || Boolean.getBoolean(ClientTestRunner.PROPERTY)) {
             /*

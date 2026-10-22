@@ -8,7 +8,8 @@ have pages of their own.
 
 Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: content
 declared once, text and colour, state and saves, settings and their screen, commands, teams and owners, time and
-diagnostics, the Core's own settings, permissions and protection. How a mod uses it, with code:
+diagnostics, the Core's own settings, permissions (by dimension and claim too) and protection. How a mod uses it,
+with code:
 [Content](../CONTENT.md), [Text and colour](../TEXT_AND_COLOUR.md), [State and saves](../STATE_AND_SAVES.md),
 [Settings](../SETTINGS.md), [Commands](../COMMANDS.md), [Ownership](../OWNERSHIP.md),
 [Protection](../PROTECTION.md) and [Diagnostics](../DIAGNOSTICS.md).
@@ -71,7 +72,5 @@ The kit gathers what PermNodes, Open Parties and Claims and FTB Chunks do with a
 
 ## Still to build
 
-- **Permissions by place**: a permission granted or denied in one dimension or one claim, through the permission mods'
-  contexts.
 - **J's Computers' numbers leave the Core's balance file** for J's Computers' own settings, when J's Computers moves
   onto the Core ([Implementation](implementation.md)).

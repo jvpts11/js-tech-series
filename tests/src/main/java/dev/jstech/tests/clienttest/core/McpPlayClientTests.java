@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.jstech.core.client.mcp.McpGame;
 import dev.jstech.core.client.mcp.McpPairingScreen;
+import dev.jstech.core.developer.mcp.McpGuard;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
 import dev.jstech.tests.TestKitMachine;
@@ -77,8 +78,20 @@ public final class McpPlayClientTests {
         final BlockPos walkTo = ctx.abs(WALK_TO);
         final BlockPos below = ctx.abs(new BlockPos(0, 1, 2));
         final BlockPos placed = below.above();
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> page = new AtomicReference<>();
+        ctx.then(0, () -> page.set(HTTP.sendAsync(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port[0]
+                        + McpGuard.TOOLS)).timeout(Duration.ofSeconds(30)).GET().build(),
+                        HttpResponse.BodyHandlers.ofString())))
+                .thenWaitUntil(() -> page.get().isDone(), WAIT, "the page of the tools comes back")
+                .then(0, () -> ctx.assertTrue(page.get().join().statusCode() == 200 && page.get().join().body()
+                        .contains("id=\"game-scene_describe\""), "a browser here reads the page of the game's "
+                        + "tools, the scene's among them"));
         steps.add(new Step("player_state", "{}", result -> ctx.assertTrue(result.has("x") && result.has("slot"),
                 "it sees where the player is: " + result)));
+        steps.add(new Step("scene_describe", "{\"distance\":16}", result -> ctx.assertTrue(
+                result.getAsJsonArray("blocks_in_view").size() > 0 && result.getAsJsonObject("world")
+                        .has("dimension") && result.getAsJsonObject("standing").has("facing"),
+                "it reads the scene the player sees: " + result)));
         steps.add(new Step("world_set_block", "{\"place\":" + place(machine) + ",\"block\":\""
                 + TestKitMachine.BLOCK.getId() + "\"}", result -> { }));
         steps.add(new Step("block_open", "{\"place\":" + place(machine) + "}", result -> ctx.assertTrue(

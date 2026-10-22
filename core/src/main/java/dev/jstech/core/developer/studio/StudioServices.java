@@ -46,6 +46,8 @@ public final class StudioServices {
     public static final String STRUCTURE = StructureService.NAME;
     public static final String MULTIBLOCK = MultiblockService.NAME;
     public static final String SAVE = SaveService.NAME;
+    public static final String ACCESS = AccessService.NAME;
+    public static final String UNIFICATION = UnificationService.NAME;
 
     private static final TextKey NO_SERVICE = TextKey.of("commands.jscore.developer.no_service",
             "The server has no tool of the studio's called %s; is the same J's Core on both sides?");
@@ -82,6 +84,8 @@ public final class StudioServices {
         declare(StructureService.NAME, new StructureService());
         declare(MultiblockService.NAME, new MultiblockService());
         declare(SaveService.NAME, new SaveService());
+        declare(AccessService.NAME, new AccessService());
+        declare(UnificationService.NAME, new UnificationService());
     }
 
     /** What {@code player} is answered to {@code service} asked {@code args}, through {@code reply}; for a test too. */

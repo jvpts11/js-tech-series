@@ -78,6 +78,24 @@ class UnifyPlanTest {
     }
 
     @Test
+    void of_leavesAModsOwnItemsInATagApart() {
+        final UnifyPlan plan = UnifyPlan.of(Map.of("c:gems/certus_quartz",
+                List.of("ae2:certus_quartz_crystal", "ae2:charged_certus_quartz_crystal")), PREFER, Set.of());
+
+        assertTrue(plan.isEmpty());
+        assertTrue(plan.chosen().isEmpty());
+    }
+
+    @Test
+    void of_unifiesTheOtherModsCopiesBesideAModWithTwo() {
+        final UnifyPlan plan = UnifyPlan.of(Map.of("c:gems/certus_quartz", List.of("ae2:certus_quartz_crystal",
+                "ae2:charged_certus_quartz_crystal", "bmod:certus_quartz", "amod:certus_quartz")), PREFER, Set.of());
+
+        assertEquals("amod:certus_quartz", plan.chosen().get("c:gems/certus_quartz"));
+        assertEquals(Map.of("bmod:certus_quartz", "amod:certus_quartz"), plan.replace());
+    }
+
+    @Test
     void of_makesTheSamePlanWhateverOrderTheItemsCameIn() {
         final UnifyPlan one = UnifyPlan.of(Map.of("c:dusts/tin", List.of("bmod:tin_dust", "amod:tin_dust")),
                 PREFER, Set.of());

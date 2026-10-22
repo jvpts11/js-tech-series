@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import dev.jstech.core.developer.mcp.McpToolsPage;
 import dev.jstech.core.modpack.ModpackDumps;
 import dev.jstech.core.modpack.ModpackTexts;
 import dev.jstech.core.modpack.ReferenceSite;
@@ -58,6 +59,9 @@ public final class ModpackToolGameTests {
         helper.assertTrue(ModpackDumps.hazards().contains("## Hazards of items"), "the hazards");
         helper.assertTrue(ModpackDumps.ids().contains("- jstests:foreign_tin_ingot"),
                 "the test mod's ids among the series'");
+        final String tools = McpToolsPage.html();
+        helper.assertTrue(tools.contains("id=\"server-block_read\"") && tools.contains("<code>place</code>"),
+                "the page of the MCP tools, the server's with their arguments");
         helper.succeed();
     }
 

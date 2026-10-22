@@ -102,6 +102,30 @@ public final class Protection {
     }
 
     /**
+     * What each protection answers for {@code actor} doing {@code action} to {@code pos} in {@code level}, in the order
+     * they are asked: who allows it, who stops it and who says nothing, for whoever wants to see why.
+     */
+    public static Map<String, IProtectionAdapter.Verdict> verdicts(final Actor actor, final ProtectedAction action,
+                                                                    final ServerLevel level, final BlockPos pos) {
+        final Map<String, IProtectionAdapter.Verdict> out = new LinkedHashMap<>();
+        adapters.forEach((name, adapter) -> out.put(name, adapter.ask(actor, action, level, pos)));
+        return out;
+    }
+
+    /**
+     * Who owns the claim {@code pos} of {@code level} lies in, player or team, as the first protection to know says.
+     */
+    public static Optional<UUID> claimOwner(final ServerLevel level, final BlockPos pos) {
+        for (final IProtectionAdapter adapter : adapters.values()) {
+            final Optional<UUID> owner = adapter.claimOwner(level, pos);
+            if (owner.isPresent()) {
+                return owner;
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Whether {@code pos} and {@code origin} lie in the same claim, as far as {@code adapter} knows: the world's own
      * work (a fire, a fluid, an explosion with nobody behind it) may cross into no claim. A place in no claim takes it
      * from anywhere.

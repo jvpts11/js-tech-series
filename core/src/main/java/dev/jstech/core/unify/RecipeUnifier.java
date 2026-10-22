@@ -11,6 +11,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,11 +41,28 @@ public final class RecipeUnifier {
      * where it stands. Whether anything was put.
      */
     public static boolean rewrite(final JsonElement recipe, final Map<String, String> replace) {
-        return !replace.isEmpty() && walk(recipe, replace, false);
+        return rewrite(recipe, replace, new HashSet<>());
     }
 
-    /* Puts the items in {@code element}; {@code output} says whether it is a list of what a recipe makes. */
-    private static boolean walk(final JsonElement element, final Map<String, String> replace, final boolean output) {
+    /** The same, each item replaced added to {@code replaced} by its id. */
+    public static boolean rewrite(final JsonElement recipe, final Map<String, String> replace,
+                                  final Set<String> replaced) {
+        return !replace.isEmpty() && walk(recipe, replace, false, replaced);
+    }
+
+    /** The ids of the items {@code replace} would replace in {@code recipe}, the file left as it is. */
+    public static Set<String> replaced(final JsonElement recipe, final Map<String, String> replace) {
+        final Set<String> out = new HashSet<>();
+        rewrite(recipe.deepCopy(), replace, out);
+        return out;
+    }
+
+    /*
+     * Puts the items in {@code element}, noting each replaced in {@code replaced}; {@code output} says whether it is
+     * a list of what a recipe makes.
+     */
+    private static boolean walk(final JsonElement element, final Map<String, String> replace, final boolean output,
+                                final Set<String> replaced) {
         if (element instanceof JsonObject object) {
             boolean changed = false;
             for (final Map.Entry<String, JsonElement> entry : object.entrySet()) {
@@ -57,11 +75,12 @@ public final class RecipeUnifier {
                 if (names && value instanceof JsonPrimitive primitive && primitive.isString()) {
                     final String to = replace.get(primitive.getAsString());
                     if (to != null) {
+                        replaced.add(primitive.getAsString());
                         entry.setValue(new JsonPrimitive(to));
                         changed = true;
                     }
                 } else {
-                    changed |= walk(value, replace, OUTPUT_KEYS.contains(key));
+                    changed |= walk(value, replace, OUTPUT_KEYS.contains(key), replaced);
                 }
             }
             return changed;
@@ -73,11 +92,12 @@ public final class RecipeUnifier {
                 if (output && value instanceof JsonPrimitive primitive && primitive.isString()) {
                     final String to = replace.get(primitive.getAsString());
                     if (to != null) {
+                        replaced.add(primitive.getAsString());
                         array.set(i, new JsonPrimitive(to));
                         changed = true;
                     }
                 } else {
-                    changed |= walk(value, replace, output);
+                    changed |= walk(value, replace, output, replaced);
                 }
             }
             return changed;

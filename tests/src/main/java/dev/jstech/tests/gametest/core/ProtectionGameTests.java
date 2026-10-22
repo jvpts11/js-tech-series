@@ -25,7 +25,9 @@ import dev.jstech.core.team.ITeamSource;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.team.Trust;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestClaims;
 import dev.jstech.tests.TestEntities;
+import dev.jstech.tests.TestPermissions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,6 +40,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -45,6 +48,7 @@ import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.server.permission.PermissionAPI;
+import net.neoforged.neoforge.server.permission.nodes.PermissionDynamicContext;
 
 /**
  * Permissions and protection: a node for every command and for what others own, held by the level each was declared
@@ -77,6 +81,36 @@ public final class ProtectionGameTests {
                 "a player who is no operator does not pass owners");
         helper.assertTrue(CorePermissions.has(player, CorePermissions.BUILD_MULTIBLOCKS),
                 "but builds multiblocks, which every player may");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void permissions_areAskedWithThePlacesDimensionAndClaim(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos inside = helper.absolutePos(new BlockPos(1, 2, 1));
+        final BlockPos outside = helper.absolutePos(new BlockPos(4, 2, 4));
+        final AABB claim = new AABB(inside);
+        TestClaims.claim(claim);
+        try {
+            final ServerPlayer player = FakePlayerFactory.get(level, new GameProfile(UUID.randomUUID(),
+                    "jstests-contexts"));
+            final PermissionDynamicContext<?>[] there = CorePermissions.contextsAt(level, inside);
+            helper.assertTrue(there.length == 2 && there[0].getDynamic() == CorePermissions.DIMENSION
+                    && there[0].getSerializedValue().equals(level.dimension().location().toString()),
+                    "the permission is told the place's dimension");
+            helper.assertTrue(there[1].getDynamic() == CorePermissions.CLAIM
+                    && there[1].getSerializedValue().equals(TestClaims.CLAIMANT.toString()),
+                    "and the claim it lies in, by its owner");
+            helper.assertTrue(CorePermissions.contextsAt(level, outside)[1].getSerializedValue()
+                    .equals(CorePermissions.NO_CLAIM), "outside every claim, none");
+            helper.assertTrue(CorePermissions.has(player, TestPermissions.IN_A_CLAIM, level, inside)
+                    && !CorePermissions.has(player, TestPermissions.IN_A_CLAIM, level, outside),
+                    "a node granted by the claim's context is held in the claim and not beside it");
+            helper.assertTrue(CorePermissions.has(player.getUUID(), TestPermissions.IN_A_CLAIM, level, inside),
+                    "and so for a machine there acting for its owner");
+        } finally {
+            TestClaims.unclaim(claim);
+        }
         helper.succeed();
     }
 

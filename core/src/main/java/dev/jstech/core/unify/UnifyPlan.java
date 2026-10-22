@@ -20,7 +20,9 @@ import java.util.TreeSet;
  * Which item stands for which: for each tag of a material's form held by more than one item, the item of the first
  * preferred mod that has one in it, or the first by id when none does, stands for the tag's other items. The tags are
  * taken in the order of their ids, so the same tags always make the same plan; an item that already stands for a tag
- * is never replaced by a later one, and an item kept is never replaced at all.
+ * is never replaced by a later one, and an item kept is never replaced at all. Only copies are made one: a mod with two
+ * or more items in a tag means them apart (AE2's certus quartz crystal and its charged one, both under
+ * {@code c:gems/certus_quartz}), so none of them stands for the tag or is replaced.
  *
  * @param replace each item replaced, by id, and the id of the item that stands for it
  * @param chosen  each tag unified, by id, and the id of the item that stands for it
@@ -47,7 +49,7 @@ public record UnifyPlan(Map<String, String> replace, Map<String, String> chosen)
         final Map<String, String> chosen = new TreeMap<>();
         final Set<String> standing = new HashSet<>();
         for (final Map.Entry<String, ? extends Collection<String>> tag : new TreeMap<>(tags).entrySet()) {
-            final TreeSet<String> items = new TreeSet<>(tag.getValue());
+            final TreeSet<String> items = copies(tag.getValue());
             if (items.size() < 2) {
                 continue;
             }
@@ -68,6 +70,26 @@ public record UnifyPlan(Map<String, String> replace, Map<String, String> chosen)
     /** Whether it replaces nothing. */
     public boolean isEmpty() {
         return this.replace.isEmpty();
+    }
+
+    /* The items of {@code tag} that are copies: each the only one of its mod in the tag, sorted by id. */
+    private static TreeSet<String> copies(final Collection<String> tag) {
+        final Map<String, Integer> perMod = new HashMap<>();
+        for (final String item : new HashSet<>(tag)) {
+            perMod.merge(modOf(item), 1, Integer::sum);
+        }
+        final TreeSet<String> out = new TreeSet<>();
+        for (final String item : tag) {
+            if (perMod.get(modOf(item)) == 1) {
+                out.add(item);
+            }
+        }
+        return out;
+    }
+
+    private static String modOf(final String item) {
+        final int colon = item.indexOf(':');
+        return colon < 0 ? "minecraft" : item.substring(0, colon);
     }
 
     /* The item of the first preferred mod among {@code items}, sorted by id, or the first of them. */

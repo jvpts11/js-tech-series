@@ -7,9 +7,10 @@ data, and a Core that steps aside where another mod already does the same job.
 ## What exists today
 
 Everything this page designs is built, as of October 2026: content packs and conditions on data, recipes that ask for
-knowledge, unification, the bindings for KubeJS and CraftTweaker, FTB Quests' tasks, the dumps and the reference, ores
-in other mods' rocks, variants, changes to loot and recipes, choosing between recipes, and stepping aside. How a pack
-uses it: [Modpacks](../MODPACKS.md). What is not built yet is under *Still to build* at the end.
+knowledge, unification and its preview in the studio, the bindings for KubeJS and CraftTweaker with typings for an
+editor, FTB Quests' tasks, the dumps and the reference, ores in other mods' rocks, variants, changes to loot and
+recipes, choosing between recipes, stepping aside, and other mods' world tuned as data
+([The world](world.md)). How a pack uses it: [Modpacks](../MODPACKS.md).
 
 ## The design
 
@@ -100,13 +101,3 @@ When an installed mod already does what a system of the Core does, the two shoul
 
 - **Where a game rule of a mod depends on the Core's system, it stays on**, since turning it off would break that mod:
   J's Space's sealed rooms stay, even with another mod's oxygen installed; at most a bridge is made between the two.
-
-## Still to build
-
-- **Typings for scripts**: the Core's script bindings described for an editor, so a pack maker's editor completes them
-  as they type.
-- **Unification seen before it happens**: what unification would change, shown in the studio's recipes, before a pack
-  turns it on.
-- **Tuning other mods' world**: data that changes the density functions, biomes, features and structures of the game and
-  of other mods, and a settings file in which an operator turns off, spaces or moves any mod's structures
-  ([The world](world.md)).

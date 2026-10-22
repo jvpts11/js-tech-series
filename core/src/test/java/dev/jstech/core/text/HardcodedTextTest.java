@@ -252,8 +252,16 @@ class HardcodedTextTest {
             data(CORE + "worldgen/modify/DensityFunctionModifier.java", 1, MODIFIER_PROBLEMS),
             data(CORE + "worldgen/modify/StructureSetModifier.java", 3, MODIFIER_PROBLEMS),
             data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"),
-            data(CORE + "developer/mcp/McpHttp.java", 27, MCP),
-            data(CORE + "developer/mcp/McpGuard.java", 8, MCP),
+            data(CORE + "developer/mcp/McpHttp.java", 29, MCP),
+            data(CORE + "developer/mcp/McpGuard.java", 10, MCP),
+            data(CORE + "developer/mcp/McpToolsPage.java", 22, "the page of the MCP servers' tools: its markup, its "
+                    + "style and the words round the tools' own, which a developer reads in English as the tools "
+                    + "are written"),
+            data(CORE + "diagnostic/DiagnosticPage.java", 7, "the page beside a diagnostic file: its markup, its "
+                    + "search's script, its style and the words its lines are marked by; every line it shows is "
+                    + "the file's own"),
+            data(CORE + "script/ScriptTypings.java", 10, "TypeScript declarations an editor reads to complete "
+                    + "scripts with, and the comment that heads their file"),
             data(CORE + "developer/mcp/JsonRpc.java", 7, MCP),
             data(CORE + "developer/mcp/McpProtocol.java", 8, MCP),
             data(CORE + "developer/mcp/McpServer.java", 3, "the names of the MCP server's threads, which only a "
@@ -262,6 +270,7 @@ class HardcodedTextTest {
             data(CORE + "developer/mcp/CoreTools.java", 39, MCP_TOOLS),
             data(CORE + "client/studio/StudioMcpTools.java", 18, MCP_TOOLS),
             data(CORE + "client/mcp/PlaySeeing.java", 17, MCP_TOOLS),
+            data(CORE + "client/mcp/PlayScene.java", 6, MCP_TOOLS),
             data(CORE + "client/mcp/PlayActing.java", 42, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWorld.java", 22, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWaiting.java", 22, MCP_TOOLS));

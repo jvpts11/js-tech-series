@@ -67,6 +67,13 @@ public final class McpTools {
         return out;
     }
 
+    /** Every tool declared for {@code side}, on or off, by name, with the mod that declared it. */
+    public static List<Declared> declared(final McpSide side) {
+        final List<Declared> out = new ArrayList<>(DECLARED.get(side));
+        out.sort(Comparator.comparing(declared -> declared.tool().name()));
+        return out;
+    }
+
     /** The tool {@code name} of {@code side}, whether on or off. */
     public static Optional<Declared> find(final McpSide side, final String name) {
         return DECLARED.get(side).stream().filter(declared -> declared.tool().name().equals(name)).findFirst();

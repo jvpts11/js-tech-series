@@ -229,6 +229,12 @@ A part is read on the server's thread. One that fails says so in its place, and 
 attach to a bug report: the versions of the game, NeoForge and Java, the memory, every mod and its version, every
 settings file as it holds its values, the timings, the sections, the health, the network use and the log's levels.
 
+*Added 2026-10-22.* Beside it, `diagnostics-<date>-<time>.html` is the same file to read in a browser, from the disk
+and with nothing to install: each part folded under its title with how many lines it has, the lines that tell of an
+error, a warning, a stall, a failure, a missing thing or a budget gone over marked, and a box that keeps only the lines
+holding what is typed in it; + and &minus; open and fold every part. It loads nothing from anywhere, so it can be sent
+along with the text file.
+
 A crash report has a section, "J's Core", with what each thread was running as a section when it crashed, the
 sections slowed or stalled, and, when the crash is on the server's thread, the state of the systems.
 

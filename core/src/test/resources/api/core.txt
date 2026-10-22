@@ -3521,6 +3521,11 @@ stable 4
 10 dev.jstech.core.diagnostic.DiagnosticNotifications  static final TextKey SLOWED_NAME
 10 dev.jstech.core.diagnostic.DiagnosticNotifications  static final TextKey STALLED_NAME
 10 dev.jstech.core.diagnostic.DiagnosticNotifications  static void declare()
+12 dev.jstech.core.diagnostic.DiagnosticPage  type final class
+12 dev.jstech.core.diagnostic.DiagnosticPage  static List<Section> sections(String)
+12 dev.jstech.core.diagnostic.DiagnosticPage  static String html(String, String)
+12 dev.jstech.core.diagnostic.DiagnosticPage  static boolean marked(String)
+12 dev.jstech.core.diagnostic.DiagnosticPage.Section  type record(String title, List<String> lines)
 10 dev.jstech.core.diagnostic.DiagnosticReports  type final class
 10 dev.jstech.core.diagnostic.DiagnosticReports  static Path write(MinecraftServer)
 10 dev.jstech.core.diagnostic.DiagnosticReports  static String bundle(MinecraftServer)
@@ -11832,11 +11837,16 @@ stable 4
 10 dev.jstech.core.team.Access  int id()
 10 dev.jstech.core.team.CorePermissions  type final class
 10 dev.jstech.core.team.CorePermissions  static List<Declared> declared()
+12 dev.jstech.core.team.CorePermissions  static PermissionDynamicContext<?>[] contextsAt(ServerLevel, BlockPos)
 10 dev.jstech.core.team.CorePermissions  static PermissionNode<Boolean> declare(String, String, int, Text)
 10 dev.jstech.core.team.CorePermissions  static PermissionNode<Boolean> declare(String, String, int, TextKey)
 10 dev.jstech.core.team.CorePermissions  static boolean has(ServerPlayer, PermissionNode<Boolean>)
+12 dev.jstech.core.team.CorePermissions  static boolean has(ServerPlayer, PermissionNode<Boolean>, ServerLevel, BlockPos)
 10 dev.jstech.core.team.CorePermissions  static boolean has(UUID, PermissionNode<Boolean>)
+12 dev.jstech.core.team.CorePermissions  static boolean has(UUID, PermissionNode<Boolean>, ServerLevel, BlockPos)
 10 dev.jstech.core.team.CorePermissions  static boolean mayPassOwners(ServerPlayer)
+12 dev.jstech.core.team.CorePermissions  static final PermissionDynamicContextKey<ResourceLocation> DIMENSION
+12 dev.jstech.core.team.CorePermissions  static final PermissionDynamicContextKey<String> CLAIM
 10 dev.jstech.core.team.CorePermissions  static final PermissionNode<Boolean> BREAK_OTHERS
 10 dev.jstech.core.team.CorePermissions  static final PermissionNode<Boolean> BUILD_MULTIBLOCKS
 10 dev.jstech.core.team.CorePermissions  static final PermissionNode<Boolean> DEVELOPER_TOOLS
@@ -11846,6 +11856,7 @@ stable 4
 10 dev.jstech.core.team.CorePermissions  static final PermissionNode<Boolean> PASS_LIMITS
 10 dev.jstech.core.team.CorePermissions  static final PermissionNode<Boolean> SET_UP_OTHERS
 10 dev.jstech.core.team.CorePermissions  static final PermissionNode<Boolean> USE_OTHERS
+12 dev.jstech.core.team.CorePermissions  static final String NO_CLAIM
 10 dev.jstech.core.team.CorePermissions  static final TextKey BREAK_OTHERS_TEXT
 10 dev.jstech.core.team.CorePermissions  static final TextKey BUILD_MULTIBLOCKS_TEXT
 10 dev.jstech.core.team.CorePermissions  static final TextKey COMMAND_TEXT
@@ -11860,7 +11871,9 @@ stable 4
 10 dev.jstech.core.team.CorePermissions.Declared  type record(PermissionNode<Boolean> node, int level, Text description)
 10 dev.jstech.core.team.CoreTeams  type final class
 10 dev.jstech.core.team.CoreTeams  static ITeamSource source()
+12 dev.jstech.core.team.CoreTeams  static List<UUID> membersOf(MinecraftServer, String)
 10 dev.jstech.core.team.CoreTeams  static Optional<String> nameOf(MinecraftServer, UUID)
+12 dev.jstech.core.team.CoreTeams  static Optional<UUID> soloPlayer(String)
 10 dev.jstech.core.team.CoreTeams  static String solo(UUID)
 10 dev.jstech.core.team.CoreTeams  static String teamOf(MinecraftServer, UUID)
 10 dev.jstech.core.team.CoreTeams  static void use(ITeamSource)
@@ -11872,6 +11885,7 @@ stable 4
 10 dev.jstech.core.team.IOwned  default boolean mayUse(ServerPlayer)
 10 dev.jstech.core.team.ITeamSource  type interface
 10 dev.jstech.core.team.ITeamSource  abstract String teamOf(MinecraftServer, UUID)
+12 dev.jstech.core.team.ITeamSource  default List<UUID> membersOf(MinecraftServer, String)
 10 dev.jstech.core.team.Ownership  type record(UUID owner, Access access, Map<UUID, Trust> trusted)
 10 dev.jstech.core.team.Ownership  Optional<Trust> trustOf(UUID)
 10 dev.jstech.core.team.Ownership  Ownership withAccess(Access)
@@ -11891,6 +11905,7 @@ stable 4
 10 dev.jstech.core.team.Ownership  static final TextKey DENIED
 10 dev.jstech.core.team.Ownership  static final int MOST_TRUSTED
 10 dev.jstech.core.team.ScoreboardTeams  type final class implements ITeamSource
+12 dev.jstech.core.team.ScoreboardTeams  List<UUID> membersOf(MinecraftServer, String)
 10 dev.jstech.core.team.ScoreboardTeams  String teamOf(MinecraftServer, UUID)
 10 dev.jstech.core.team.ScoreboardTeams  static String idOf(PlayerTeam)
 10 dev.jstech.core.team.ScoreboardTeams  static final ScoreboardTeams INSTANCE

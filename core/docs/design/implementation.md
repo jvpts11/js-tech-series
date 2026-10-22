@@ -94,7 +94,5 @@ Everything saved has a version and a way to read older saves; a save from a newe
 
 ## Still to build
 
-- **A page to read the diagnostic file**: a web page written beside the file, so an administrator reads the settings,
-  the mods, the timings and the state without opening the file itself.
 - **J's Computers' numbers leave the Core's balance file** (the disks' latency, the Subframe's share, the time programs
   may spend, the media) for J's Computers' own settings, when J's Computers moves onto the Core.

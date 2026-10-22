@@ -10,7 +10,14 @@ package dev.jstech.core.integration.kubejs;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.content.ScriptBinding;
 import dev.jstech.core.machine.ProcessingKind;
+import dev.jstech.core.script.ScriptTypings;
+import dev.latvian.mods.kubejs.event.EventGroup;
 import dev.latvian.mods.kubejs.event.EventGroupRegistry;
+import dev.latvian.mods.kubejs.event.EventHandler;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
 import dev.latvian.mods.kubejs.recipe.schema.RecipeSchemaRegistry;
 import dev.latvian.mods.kubejs.script.BindingRegistry;
@@ -27,6 +34,8 @@ public final class CoreKubeJsPlugin implements KubeJSPlugin {
     @Override
     public void init() {
         CoreKubeEvents.listen();
+        // The editor's typings read the events from the group itself, so they never fall behind it.
+        ScriptTypings.events(() -> List.of(typed(CoreKubeEvents.GROUP)));
     }
 
     @Override
@@ -50,5 +59,14 @@ public final class CoreKubeJsPlugin implements KubeJSPlugin {
                 registry.register(kind.id(), ProcessingKubeSchema.SCHEMA);
             }
         }
+    }
+
+    /* A group of KubeJS's events as the typings write it: each handler's name and the class its event is. */
+    private static ScriptTypings.EventGroup typed(final EventGroup group) {
+        final List<ScriptTypings.Event> events = new ArrayList<>();
+        for (final Map.Entry<String, EventHandler> handler : new TreeMap<>(group.getHandlers()).entrySet()) {
+            events.add(new ScriptTypings.Event(handler.getKey(), handler.getValue().eventType.get()));
+        }
+        return new ScriptTypings.EventGroup(group.name, events);
     }
 }

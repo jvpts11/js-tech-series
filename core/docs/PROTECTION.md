@@ -81,6 +81,13 @@ public static final PermissionNode<Boolean> LAUNCH = CorePermissions.declare(MOD
 if (CorePermissions.has(player, LAUNCH)) { ... }
 ```
 
+*Added 2026-10-22.* Every node is asked about with the place the action is at: the dimension, as the context
+`jscore:dimension` (`minecraft:the_nether`), and the claim it lies in, as `jscore:claim`, the claim owner's UUID, or
+`none` outside every claim. A permission mod that reads NeoForge's contexts can so grant a node in one dimension or
+one claim and not elsewhere, and a node's own default, handed to `declare`, reads them too. `has(player, node)` asks
+at the place the player stands; `has(player, node, level, pos)` at another, such as the block a machine works on, and
+`has(uuid, node, level, pos)` for a player who is offline, as a machine's owner is.
+
 `/jstech dump permissions` writes every node of the series into `jstech-permissions/` beside the server: `nodes.md`,
 the table above for every mod installed, and `luckperms.txt`, the console commands that make two LuckPerms groups,
 `jstech-players` with what every player holds by default and `jstech-admins`, built on it, with the rest.

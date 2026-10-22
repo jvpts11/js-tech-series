@@ -183,9 +183,10 @@ the world ask the server for it, so they answer only a player who may use the wo
 | Tab | What it shows and does |
 |---|---|
 | **Block** | Every field the block entity saves, read again each second while Watching is on; what each face offers (energy, slots and what they hold, tanks); and, for a block entity of the Core, what crossed its faces each second, energy, items and fluid, in and out. Only what really moved is counted, never a move that was only tried, and only while the tab watches the block: a block nobody watches hands its neighbours its own handlers, so counting costs nothing in a game where nobody looks. |
+| **Access** | Who may do what at the block looked at, as every mod hears it from the Core's protections: break, place, use, explode, burn, flow into, move a structure into and shoot, each answered for you, someone of your team, a player you name (online or not) and that player's machines, which are weighed as their owner. Beside it, what each protection answered and why, the claim the place lies in and who owns it, and whether the server's PvP rule lets the player named hurt you there. *Added 2026-10-22.* |
 | **Cost** | Measure times every machine for some seconds and lists them dearest first, with where each one is and who owns it. Heat map lights each one in the world, the dearest red and the cheapest yellow. |
 | **Payloads** | What the server sent you, or everyone, tick by tick over the last hundred ticks: a bar a tick and, for the tick chosen, each kind of packet with its mod, how many, how many bytes and the biggest one. |
-| **Recipes** | The recipes that make the thing chosen, each with the pack it came from and what a pack took away, replaced or changed; the recipe as the recipe viewers draw it; the other recipes that take the same inputs; and a recipe of your own, written, tried and saved to your mod. |
+| **Recipes** | The recipes that make the thing chosen, each with the pack it came from and what a pack took away, replaced or changed; the recipe as the recipe viewers draw it; the other recipes that take the same inputs; and a recipe of your own, written, tried and saved to your mod. *Added 2026-10-22:* **What unification changes** shows each tag unified with the item kept, those it replaces and how many recipes that changes, those that change the most first; and, for the tag chosen, one of its recipes with the item it named before and the one it names after, whether drops are unified too and whether it steps aside for Almost Unified ([Modpacks](MODPACKS.md#unification)). With unification off, it is what turning it on would do, worked out on copies of the world's recipes, and **Turn it on** turns it on and loads the data again, for a player who may change the server's settings. |
 | **Tags** | The tags the thing is in and, for each one, which pack put each entry there and whether a pack replaced what came before; its id, its stack size and its components. |
 | **Loot** | A loot table rolled a hundred, a thousand or ten thousand times with the tool, the Fortune or the Silk Touch chosen: how often each thing dropped, how many a roll, the fewest and the most. |
 | **Translations** | Every mod with how many keys it has; what a language lacks of the English; and, in every screen declared in a file, the texts too long for their place in each language. |
@@ -263,7 +264,7 @@ and keys):
 
 | Kind | Tools |
 |---|---|
-| Seeing | `player_state` (where the player is and looks, what the crosshair is on, the screen open), `inventory_read`, `screen_tree` (a screen declared in a file by its components' names, another by its buttons and fields, a container's by its slots), `screen_picture`, `blocks_around`, `chat_read`, `game_log_read` |
+| Seeing | `player_state` (where the player is and looks, what the crosshair is on, the screen open), `scene_describe` (the scene seen, in numbers: the way the player faces, the time, weather, light and biome, the kinds of block across the view with the nearest of each and where it lies, how much of the view is open, and the creatures, players and items in sight; read along lines of sight across the field of view, so a block behind a wall is not in it), `inventory_read`, `screen_tree` (a screen declared in a file by its components' names, another by its buttons and fields, a container's by its slots), `screen_picture`, `blocks_around`, `chat_read`, `game_log_read` |
 | Acting | `player_walk_to`, `player_jump`, `player_sneak`, `player_look_at`, `hotbar_select`, `player_use`, `player_place`, `player_break`, `block_open`, `screen_click` (by name or at a point), `screen_type`, `key_press`, `screen_close` |
 | The test world | `world_give`, `world_set_block`, `world_save_and_reload`, `gametests_run` (by words of their names, each test's result), `client_test_run` (a test kept as a file, played in the world open, its pictures compared with their references) |
 | Waiting | `wait_ticks`, `wait_until` (a screen open, a block of an id, a component's words, a line of chat) |
@@ -287,6 +288,13 @@ McpTools.declare(McpSide.GAME, "mymod", new McpTool("mymod_pressure", "The press
 
 The server speaks the protocol's versions 2025-03-26, 2025-06-18 and 2025-11-25, over HTTP with one JSON answer to
 each request.
+
+*Added 2026-10-22.* Every tool with its schema is on a page the game writes from the tools declared, a mod's among
+them: open `http://127.0.0.1:25599/tools` in a browser on this computer while the server is on (the dedicated server's
+at its own port), or run `/jstech dump mcp`, which writes the page of every tool this game knows as
+`jstech-dump/mcp-tools.html`. Each tool has its mod, whether it reads or acts, whether it is off until the player turns
+its mod's tools on, what it does, and each argument with its type, its bounds and whether it must be given. The page
+asks for no pairing and runs nothing: it is read only, and loads nothing from anywhere.
 
 ## Tools for screens
 

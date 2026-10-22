@@ -8,6 +8,7 @@
 package dev.jstech.core.unify;
 
 import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.IConfigValues;
 import dev.jstech.core.log.CoreLogs;
@@ -21,13 +22,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.common.conditions.ICondition;
 import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
@@ -56,6 +62,8 @@ public final class Unification {
     private static volatile Map<Item, Item> drops = Map.of();
     /** The plan the world's data last loaded with. */
     private static volatile UnifyPlan current = UnifyPlan.NONE;
+    /** Each recipe changed as the world's data last loaded, by id, with the items replaced in it. */
+    private static volatile Map<String, Set<String>> changes = Map.of();
 
     private Unification() {
     }
@@ -78,14 +86,47 @@ public final class Unification {
             return;
         }
         final List<String> skipped = settings.get(UnificationSettings.SKIPPED_RECIPES);
-        int changed = 0;
+        final Map<String, Set<String>> changed = new HashMap<>();
         for (final Map.Entry<ResourceLocation, JsonElement> recipe : recipes.entrySet()) {
-            if (!skips(skipped, recipe.getKey()) && RecipeUnifier.rewrite(recipe.getValue(), plan.replace())) {
-                changed++;
+            final Set<String> replaced = new HashSet<>();
+            if (!skips(skipped, recipe.getKey()) && RecipeUnifier.rewrite(recipe.getValue(), plan.replace(),
+                    replaced)) {
+                changed.put(recipe.getKey().toString(), replaced);
             }
         }
+        changes = Map.copyOf(changed);
         LOGGER.info("Unification: {} items stand for {} others across {} tags; {} recipes changed",
-                new HashSet<>(plan.replace().values()).size(), plan.replace().size(), plan.chosen().size(), changed);
+                new HashSet<>(plan.replace().values()).size(), plan.replace().size(), plan.chosen().size(),
+                changed.size());
+    }
+
+    /**
+     * What unification did to {@code server}'s recipes as its data last loaded, when it is on; else what it would do
+     * turned on, worked out on copies of the recipes the server holds, which are left as they are.
+     */
+    public static UnifyPreview preview(final MinecraftServer server) {
+        final IConfigValues settings = ConfigFiles.forData(UnificationSettings.FILE);
+        final boolean aside = STEP_ASIDE.steps();
+        final boolean on = settings.get(UnificationSettings.ENABLED) && !aside;
+        final Map<ResourceLocation, Collection<Holder<Item>>> all = new HashMap<>();
+        BuiltInRegistries.ITEM.getTags().forEach(tag -> all.put(tag.getFirst().location(),
+                tag.getSecond().stream().toList()));
+        final Map<String, List<String>> tags = tagsOf(all, settings);
+        final UnifyPlan plan = on ? current : UnifyPlan.of(tags, settings.get(UnificationSettings.PREFER),
+                Set.copyOf(settings.get(UnificationSettings.KEPT_ITEMS)));
+        final Map<String, Set<String>> named = on ? changes : rehearsed(server, plan,
+                settings.get(UnificationSettings.SKIPPED_RECIPES));
+        return UnifyPreview.of(on, aside, settings.get(UnificationSettings.PREFER),
+                settings.get(UnificationSettings.DROPS), tags, plan, named);
+    }
+
+    /**
+     * Turns unification on in the world's settings and loads the world's data again, so the recipes take it; done when
+     * the data has loaded.
+     */
+    public static CompletableFuture<Void> turnOn(final MinecraftServer server) {
+        UnificationSettings.FILE.set(UnificationSettings.ENABLED, true);
+        return server.reloadResources(server.getPackRepository().getSelectedIds());
     }
 
     /** The plan the world's data last loaded with: which item stands for which, and for which tags. */
@@ -105,8 +146,32 @@ public final class Unification {
         keep(UnifyPlan.NONE, false);
     }
 
+    /* Each of the server's recipes, written as its file, with the items {@code plan} would replace in it. */
+    private static Map<String, Set<String>> rehearsed(final MinecraftServer server, final UnifyPlan plan,
+                                                       final List<String> skipped) {
+        final Map<String, Set<String>> out = new HashMap<>();
+        if (plan.isEmpty()) {
+            return out;
+        }
+        final RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
+        for (final RecipeHolder<?> recipe : server.getRecipeManager().getRecipes()) {
+            if (skips(skipped, recipe.id())) {
+                continue;
+            }
+            // A recipe whose kind cannot write itself out is left out of the rehearsal; loading, it is rewritten.
+            Recipe.CODEC.encodeStart(ops, recipe.value()).result().ifPresent(written -> {
+                final Set<String> replaced = RecipeUnifier.replaced(written, plan.replace());
+                if (!replaced.isEmpty()) {
+                    out.put(recipe.id().toString(), replaced);
+                }
+            });
+        }
+        return out;
+    }
+
     private static void keep(final UnifyPlan plan, final boolean unifyDrops) {
         current = plan;
+        changes = Map.of();
         if (!unifyDrops) {
             drops = Map.of();
             return;
@@ -122,8 +187,19 @@ public final class Unification {
         drops = Map.copyOf(items);
     }
 
-    /* The tags unified, each with the ids of its items: the materials' forms', those added, less those left out. */
+    /* The tags unified as the recipes load, from the tags loading with them. */
     private static Map<String, List<String>> tagsOf(final ICondition.IContext context, final IConfigValues settings) {
+        try {
+            return tagsOf(context.getAllTags(Registries.ITEM), settings);
+        } catch (final IllegalStateException | UnsupportedOperationException notLoaded) {
+            LOGGER.warn("Unification found no tags loaded and leaves the recipes as they are");
+            return Map.of();
+        }
+    }
+
+    /* The tags unified, each with the ids of its items: the materials' forms', those added, less those left out. */
+    private static Map<String, List<String>> tagsOf(final Map<ResourceLocation, Collection<Holder<Item>>> all,
+                                                    final IConfigValues settings) {
         final Set<String> folders = new HashSet<>();
         for (final Form form : Forms.all()) {
             if (form.shape() != Form.Shape.ORE) {
@@ -132,13 +208,6 @@ public final class Unification {
         }
         final Set<String> extra = Set.copyOf(settings.get(UnificationSettings.EXTRA_TAGS));
         final Set<String> skipped = Set.copyOf(settings.get(UnificationSettings.SKIPPED_TAGS));
-        final Map<ResourceLocation, Collection<Holder<Item>>> all;
-        try {
-            all = context.getAllTags(Registries.ITEM);
-        } catch (final IllegalStateException | UnsupportedOperationException notLoaded) {
-            LOGGER.warn("Unification found no tags loaded and leaves the recipes as they are");
-            return Map.of();
-        }
         final Map<String, List<String>> out = new HashMap<>();
         all.forEach((id, holders) -> {
             final String written = id.toString();

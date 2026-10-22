@@ -63,6 +63,8 @@ final class RecipesPage extends StudioPage {
     private final TextArea file = this.panel.add(new TextArea());
     private final Button tryIt;
     private final Button save;
+    private final Button unifying;
+    private final UnificationView unification;
     private final List<RecipeHolder<?>> making = new ArrayList<>();
     private final Map<String, String> packs = new HashMap<>();
     private final List<Against> against = new ArrayList<>();
@@ -78,6 +80,8 @@ final class RecipesPage extends StudioPage {
     private static final int ROW = 22;
     private static final int SLOT = 18;
     private static final int AGAINST_ROW = 26;
+    /* The room at the list's foot for the button to unification. */
+    private static final int UNIFY_ROOM = 22;
     private static final String MOD_PACK = "mod/";
     private static final String MOD_DATA = "mod_data";
     private static final String VANILLA = "vanilla";
@@ -89,6 +93,8 @@ final class RecipesPage extends StudioPage {
         super(studio);
         this.tryIt = this.panel.add(new Button(() -> words(ToolTexts.TRY), this::tryIt));
         this.save = this.panel.add(new Button(() -> words(ToolTexts.SAVE), this::save));
+        this.unification = new UnificationView(studio, this.panel);
+        this.unifying = this.panel.add(new Button(() -> words(UnificationTexts.OPEN), this.unification::open));
     }
 
     @Override
@@ -98,26 +104,37 @@ final class RecipesPage extends StudioPage {
 
     @Override
     List<String> crumbs() {
+        if (this.unification.isOpen()) {
+            return List.of(words(this.tab()), this.unification.crumb());
+        }
         return this.thing == null ? List.of(words(this.tab())) : List.of(words(this.tab()), this.thing.name()
                 .getString());
     }
 
     @Override
     List<String> lines() {
+        if (this.unification.isOpen()) {
+            return this.unification.lines();
+        }
         return this.making.stream().map(recipe -> recipe.id().toString()).toList();
     }
 
     @Override
     void layout(final StudioLayout.Regions laid) {
         super.layout(laid);
-        final StudioLayout.Rect middle = this.columns().get(1);
+        final List<StudioLayout.Rect> columns = this.columns();
+        final StudioLayout.Rect list = columns.get(0);
+        final StudioLayout.Rect middle = columns.get(1);
         place(this.file, new StudioLayout.Rect(middle.x() + 4, middle.y() + 18, middle.width() - 8, 104));
         place(this.tryIt, new StudioLayout.Rect(middle.x() + 4, middle.y() + 126, 60, 16));
         place(this.save, new StudioLayout.Rect(middle.x() + 68, middle.y() + 126, 60, 16));
+        place(this.unifying, new StudioLayout.Rect(list.x() + 4, list.bottom() - UNIFY_ROOM, list.width() - 8, 16));
+        this.unification.layout(laid.body(), font());
     }
 
     @Override
     void shown() {
+        this.unification.close();
         this.thing = this.studio.thing().orElse(null);
         this.making.clear();
         this.packs.clear();
@@ -142,6 +159,15 @@ final class RecipesPage extends StudioPage {
 
     @Override
     void render(final GuiGraphics g, final int mouseX, final int mouseY, final List<Component> tip) {
+        final boolean benching = !this.unification.isOpen();
+        this.tryIt.setVisible(benching && this.thing != null);
+        this.save.setVisible(benching && this.thing != null);
+        this.file.setVisible(benching && this.thing != null);
+        this.unifying.setVisible(benching);
+        this.unification.render(g, font(), this.regions.body());
+        if (!benching) {
+            return;
+        }
         final StudioPalette.Colours colours = StudioPalette.get();
         final List<StudioLayout.Rect> columns = this.columns();
         final StudioLayout.Rect list = columns.get(0);
@@ -153,7 +179,7 @@ final class RecipesPage extends StudioPage {
         }
         for (int i = 0; i <= this.making.size() && this.thing != null; i++) {
             final int y = list.y() + StudioDraw.HEAD + 4 + i * ROW;
-            if (y + ROW > list.bottom()) {
+            if (y + ROW > list.bottom() - UNIFY_ROOM) {
                 break;
             }
             final boolean on = i == this.chosen;
@@ -175,13 +201,13 @@ final class RecipesPage extends StudioPage {
                 middle.right() - this.save.x() - this.save.width() - 10, this.right ? colours.fine() : colours.error());
         this.preview(g, middle, colours);
         this.against(g, columns.get(2), colours);
-        this.tryIt.setVisible(this.thing != null);
-        this.save.setVisible(this.thing != null);
-        this.file.setVisible(this.thing != null);
     }
 
     @Override
     boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
+        if (this.unification.isOpen()) {
+            return this.unification.mouseClicked(mouseX, mouseY, this.regions.body());
+        }
         final StudioLayout.Rect list = this.columns().get(0);
         if (!list.contains(mouseX, mouseY) || this.thing == null) {
             return false;
@@ -191,6 +217,11 @@ final class RecipesPage extends StudioPage {
             this.choose(row);
         }
         return true;
+    }
+
+    @Override
+    boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollY) {
+        return this.unification.mouseScrolled(mouseX, mouseY, scrollY, this.regions.body());
     }
 
     private List<StudioLayout.Rect> columns() {

@@ -61,6 +61,17 @@ class McpGuardTest {
     }
 
     @Test
+    void check_letsABrowserHereReadThePageOfTheToolsAndNoMore() {
+        final Map<String, String> headers = Map.of("host", "localhost:" + PORT);
+        assertTrue(McpGuard.check(new McpHttp.Request("GET", McpGuard.TOOLS, headers, new byte[0]), PORT, true)
+                .isEmpty());
+        assertEquals(405, McpGuard.check(new McpHttp.Request("POST", McpGuard.TOOLS, headers, new byte[0]), PORT,
+                true).orElseThrow().status());
+        assertEquals(403, McpGuard.check(new McpHttp.Request("GET", McpGuard.TOOLS, headers, new byte[0]), PORT,
+                false).orElseThrow().status());
+    }
+
+    @Test
     void hostIsHere_takesTheNamesOfThisComputerAtItsPort() {
         assertTrue(McpGuard.hostIsHere("127.0.0.1:" + PORT, PORT));
         assertTrue(McpGuard.hostIsHere("LOCALHOST:" + PORT, PORT));

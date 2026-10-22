@@ -9,6 +9,7 @@ package dev.jstech.core.team;
 
 import com.mojang.authlib.GameProfile;
 import dev.jstech.core.log.CoreLogs;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,6 +58,23 @@ public final class CoreTeams {
     /** The id of {@code player}'s team of their own, the team of a player on no other. */
     public static String solo(final UUID player) {
         return SOLO + player;
+    }
+
+    /** The player a team of their own is, from its id; none for any other team. */
+    public static Optional<UUID> soloPlayer(final String team) {
+        if (!team.startsWith(SOLO)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(UUID.fromString(team.substring(SOLO.length())));
+        } catch (final IllegalArgumentException notAnId) {
+            return Optional.empty();
+        }
+    }
+
+    /** The players on {@code team}, as far as the source in use can say. */
+    public static List<UUID> membersOf(final MinecraftServer server, final String team) {
+        return source.membersOf(server, team);
     }
 
     /** The name the server last knew {@code player} by, online or not; none when it never knew one. */

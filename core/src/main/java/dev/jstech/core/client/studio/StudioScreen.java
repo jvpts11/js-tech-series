@@ -93,6 +93,7 @@ public final class StudioScreen extends Screen {
                 : CameraPathRecorder.recording() ? CameraPathRecorder.line() : GameText.resolve(StudioTexts.MODE_ON);
         this.pages.put(StudioTool.THINGS, this.things);
         this.pages.put(StudioTool.BLOCK, new BlockPage(this));
+        this.pages.put(StudioTool.ACCESS, new AccessPage(this));
         this.pages.put(StudioTool.COST, new CostPage(this));
         this.pages.put(StudioTool.PAYLOADS, new PayloadsPage(this));
         this.pages.put(StudioTool.RECIPES, new RecipesPage(this));

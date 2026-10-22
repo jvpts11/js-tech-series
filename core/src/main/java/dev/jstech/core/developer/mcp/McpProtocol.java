@@ -91,6 +91,9 @@ public final class McpProtocol {
 
     /** Answers {@code request}, which the guard let through; the thread waits while the player is asked. */
     public McpHttp.Response handle(final McpHttp.Request request) {
+        if (McpGuard.TOOLS.equals(request.path())) {
+            return McpHttp.Response.html(200, McpToolsPage.html(this.host.side()));
+        }
         return switch (request.method()) {
             case "POST" -> this.post(request);
             case "DELETE" -> this.delete(request);

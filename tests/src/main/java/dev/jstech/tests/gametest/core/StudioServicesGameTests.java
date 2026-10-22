@@ -9,7 +9,12 @@ package dev.jstech.tests.gametest.core;
 
 import dev.jstech.core.developer.studio.StudioKeys;
 import dev.jstech.core.developer.studio.StudioServices;
+import dev.jstech.core.jstechseries.SeriesMaterials;
+import dev.jstech.core.material.Forms;
+import dev.jstech.core.material.MaterialUses;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestClaims;
+import dev.jstech.tests.TestItems;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import java.io.IOException;
@@ -20,6 +25,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -32,6 +38,7 @@ import net.minecraft.server.players.ServerOpListEntry;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -51,6 +58,7 @@ public final class StudioServicesGameTests {
     /* The level a dedicated server gives its operators. */
     private static final int OPERATOR = 4;
     private static final int PUT = 4;
+    private static final String TIN_TAG = "c:ingots/tin";
 
     private StudioServicesGameTests() {
     }
@@ -210,6 +218,58 @@ public final class StudioServicesGameTests {
                             StudioKeys.TICKS) > 0, "it says how many ticks it measured: " + answered[0]);
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void access_weighsEachActionForThePlayerAndWhoTheyNameWithTheClaim(final GameTestHelper helper) {
+        final ServerPlayer alex = GameTestPlayers.connected(helper, "studio_alex");
+        final AABB claim = new AABB(helper.absolutePos(AT));
+        TestClaims.claim(claim);
+        try {
+            final CompoundTag args = at(helper.absolutePos(AT));
+            args.putString(StudioKeys.WHO, "studio_alex");
+            asked(helper, StudioServices.ACCESS, args, answer -> {
+                final ListTag columns = answer.getList(StudioKeys.COLUMNS, Tag.TAG_COMPOUND);
+                helper.assertTrue(columns.size() == 3 && columns.getCompound(0).getString(StudioKeys.KIND)
+                        .equals(StudioKeys.YOU) && columns.getCompound(1).getString(StudioKeys.NAME)
+                        .equals("studio_alex") && columns.getCompound(2).getString(StudioKeys.KIND)
+                        .equals(StudioKeys.MACHINES), "the operator, the player named and their machines: " + columns);
+                helper.assertTrue(columns.getCompound(1).getList(StudioKeys.ENTRIES, Tag.TAG_COMPOUND).size() == 8,
+                        "each weighed for the eight actions every mod asks");
+                helper.assertTrue(answer.getString(StudioKeys.CLAIM).equals(TestClaims.CLAIMANT.toString()),
+                        "the place's claim, by its owner");
+                helper.assertTrue(answer.getList(StudioKeys.ANSWERS, Tag.TAG_COMPOUND).stream().anyMatch(one ->
+                        ((CompoundTag) one).getString(StudioKeys.NAME).equals(TestClaims.NAME)),
+                        "and what the claim's protection answered");
+                helper.assertTrue(answer.contains(StudioKeys.MAY_HURT), "and whether the player named may hurt");
+            });
+        } finally {
+            TestClaims.unclaim(claim);
+            GameTestPlayers.leave(alex);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void unification_tellsEachTagTheItemKeptAndTheRecipesItChanged(final GameTestHelper helper) {
+        final String copy = BuiltInRegistries.ITEM.getKey(TestItems.FOREIGN_TIN.get()).toString();
+        final String coreTin = BuiltInRegistries.ITEM.getKey(MaterialUses.item(SeriesMaterials.TIN, Forms.INGOT)
+                .get()).toString();
+        asked(helper, StudioServices.UNIFICATION, new CompoundTag(), answer -> {
+            helper.assertTrue(answer.getBoolean(StudioKeys.ON), "unification is on in the test world");
+            final CompoundTag tin = answer.getList(StudioKeys.ENTRIES, Tag.TAG_COMPOUND).stream()
+                    .map(CompoundTag.class::cast).filter(one -> one.getString(StudioKeys.TAG).equals(TIN_TAG))
+                    .findFirst().orElseThrow(() -> new GameTestAssertException("no " + TIN_TAG + " in " + answer));
+            helper.assertTrue(tin.getString(StudioKeys.KEPT).equals(coreTin), "the Core's ingot is kept: " + tin);
+            helper.assertTrue(tin.getList(StudioKeys.REPLACED, Tag.TAG_STRING).contains(StringTag.valueOf(copy)),
+                    "and the test mod's copy replaced: " + tin);
+            helper.assertTrue(tin.getInt(StudioKeys.COUNT) >= 2 && tin.getString(StudioKeys.ID).startsWith(
+                    JsTests.MODID + ":unify/") && tin.getString(StudioKeys.BEFORE).equals(copy),
+                    "the recipes that named the copy, one of them shown with the copy before: " + tin);
+            helper.assertTrue(answer.getList(StudioKeys.PREFER, Tag.TAG_STRING).size() >= 2,
+                    "with the mods kept first, in order");
+        });
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

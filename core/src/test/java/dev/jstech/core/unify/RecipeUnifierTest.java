@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class RecipeUnifierTest {
@@ -103,6 +104,28 @@ class RecipeUnifierTest {
         assertFalse(RecipeUnifier.rewrite(recipe, Map.of()));
         assertEquals("othermod:tin_ingot", recipe.getAsJsonObject().getAsJsonObject("result").get("id")
                 .getAsString());
+    }
+
+    @Test
+    void replaced_namesTheItemsItWouldReplaceAndLeavesTheRecipeAsItIs() {
+        final JsonElement recipe = json("""
+                {"type": "minecraft:crafting_shapeless", "ingredients": [{"item": "othermod:tin_dust"},
+                 {"item": "minecraft:coal"}], "result": {"id": "othermod:tin_ingot"}}
+                """);
+        final JsonElement before = recipe.deepCopy();
+
+        assertEquals(Set.of("othermod:tin_dust", "othermod:tin_ingot"), RecipeUnifier.replaced(recipe, TIN));
+        assertEquals(before, recipe);
+    }
+
+    @Test
+    void replaced_isEmptyForARecipeThatNamesNoCopy() {
+        final JsonElement recipe = json("""
+                {"type": "minecraft:smelting", "ingredient": {"item": "jscore:tin_dust"},
+                 "result": {"id": "jscore:tin_ingot"}}
+                """);
+
+        assertTrue(RecipeUnifier.replaced(recipe, TIN).isEmpty());
     }
 
     private static JsonElement json(final String text) {

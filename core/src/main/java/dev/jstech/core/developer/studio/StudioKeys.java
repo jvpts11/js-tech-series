@@ -83,6 +83,27 @@ public final class StudioKeys {
     public static final String LETTER = "letter";
     public static final String PORT = "port";
     public static final String RELOAD = "reload";
+    /* Who may do what at a place: the columns weighed, each action's answer, and who answered. */
+    public static final String WHO = "who";
+    public static final String COLUMNS = "columns";
+    public static final String ACTION = "action";
+    public static final String ALLOWED = "allowed";
+    public static final String ANSWERS = "answers";
+    public static final String VERDICT = "verdict";
+    public static final String CLAIM = "claim";
+    public static final String PVP = "pvp";
+    public static final String MAY_HURT = "may_hurt";
+    public static final String YOU = "you";
+    public static final String TEAM = "team";
+    public static final String PLAYER = "player";
+    public static final String MACHINES = "machines";
+    /* What unification does or would do: whether it is on, the tags, the item kept and those replaced. */
+    public static final String TURN_ON = "turn_on";
+    public static final String ON = "on";
+    public static final String ASIDE = "aside";
+    public static final String DROPS = "drops";
+    public static final String PREFER = "prefer";
+    public static final String KEPT = "kept";
 
     private StudioKeys() {
     }

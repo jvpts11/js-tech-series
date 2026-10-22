@@ -23,6 +23,7 @@ import dev.jstech.core.client.studio.StudioSheet;
 import dev.jstech.core.client.studio.StudioTool;
 import dev.jstech.core.client.studio.ThingKind;
 import dev.jstech.core.client.studio.ToolTexts;
+import dev.jstech.core.client.studio.UnificationTexts;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.developer.DevSources;
 import dev.jstech.core.input.CoreKeys;
@@ -60,6 +61,7 @@ public final class StudioClientTests {
     /* Where the player stands, and the machine in front of it. */
     private static final BlockPos STAND = new BlockPos(0, 2, 0);
     private static final BlockPos AT = new BlockPos(0, 2, -3);
+    private static final String TIN_TAG = "c:ingots/tin";
     /* What the checks of a screen's slots against its menu say, in English. */
     private static final String SLOTS_BEYOND = "Its screen shows slots its menu does not have";
     private static final String SLOTS_NOWHERE = "Its screen leaves out slots of its menu";
@@ -149,6 +151,41 @@ public final class StudioClientTests {
                 .then(0, () -> ctx.assertTrue(ctx.screen(StudioScreen.class).tool() == StudioTool.BLOCK,
                         "the studio opens on the tool asked"))
                 .thenScreenshot(SHOT, "studio-block");
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void studio_saysWhoMayDoWhatAtTheBlockLookedAt(final ClientTestContext ctx) {
+        ctx.afterTest(() -> ctx.mc().setScreen(null));
+        ctx.thenTeleport(0, STAND, Direction.NORTH)
+                .thenServer(SETTLE, level -> level.setBlockAndUpdate(ctx.abs(AT), TestKitMachine.BLOCK.get()
+                        .defaultBlockState()))
+                .then(SETTLE, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(AT))))
+                .then(SETTLE, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.ACCESS)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .thenWaitUntil(() -> ctx.screen(StudioScreen.class).lines().size() == 9, WAIT,
+                        "the server answers the eight actions for each one weighed")
+                .then(0, () -> ctx.assertTrue(ctx.screen(StudioScreen.class).lines().get(1).startsWith("break yes"),
+                        "the player may break where nothing protects the place"))
+                .thenScreenshot(SHOT, "studio-access");
+    }
+
+    @ClientTest(timeoutTicks = 400)
+    public static void studio_showsWhatUnificationChangesOnTheRecipesPage(final ClientTestContext ctx) {
+        ctx.afterTest(() -> ctx.mc().setScreen(null));
+        ctx.then(0, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.RECIPES)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(UnificationTexts.OPEN)),
+                        "the recipe bench has the button to unification"))
+                .thenWaitUntil(() -> studio(ctx).lines().stream().anyMatch(line -> line.startsWith(TIN_TAG + " ")),
+                        WAIT, "the server answers each tag unified, the tin ingots among them")
+                .then(0, () -> ctx.assertTrue(studio(ctx).lines().stream().filter(line -> line.startsWith(
+                        TIN_TAG + " ")).allMatch(line -> !line.endsWith(" 0")),
+                        "the tin ingots' tag changed the test mod's recipes: " + studio(ctx).lines()))
+                .thenScreenshot(SHOT, "studio-unification")
+                .then(0, () -> ctx.assertTrue(studio(ctx).press(GameText.resolve(UnificationTexts.BACK)),
+                        "and back to the recipes"))
+                .then(SETTLE, () -> ctx.assertTrue(studio(ctx).lines().stream().noneMatch(line -> line.startsWith(
+                        TIN_TAG)), "the page is the recipe bench again"));
     }
 
     @ClientTest(timeoutTicks = 600)

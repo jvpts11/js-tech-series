@@ -8,6 +8,7 @@
 package dev.jstech.core.team;
 
 import dev.jstech.core.JsCore;
+import dev.jstech.core.protection.Protection;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -18,10 +19,15 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.server.permission.PermissionAPI;
 import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
+import net.neoforged.neoforge.server.permission.nodes.PermissionDynamicContext;
+import net.neoforged.neoforge.server.permission.nodes.PermissionDynamicContextKey;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
 import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,7 +35,9 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * The permissions the series asks the game's permission system about: one for each command, for opening, using,
  * setting up and breaking what others own, for changing a server's settings from afar, for building multiblocks, for
- * going past the limits each player has, and for being told when a part of the series stalls or slows itself. A
+ * going past the limits each player has, and for being told when a part of the series stalls or slows itself. Each is
+ * asked at a place, its dimension and claim told the permission mod as contexts ({@link #DIMENSION}, {@link #CLAIM}),
+ * so a node may be granted in one dimension or claim and not another. A
  * server's permission mod (LuckPerms, FTB Ranks) grants or denies each; without one, the operator level each was
  * declared with decides. {@code /jstech dump permissions} writes them all out.
  */
@@ -59,6 +67,20 @@ public final class CorePermissions {
 
     /** The operators who may change the game: the level of {@code /give}. */
     public static final int OPERATORS = 2;
+    /**
+     * The dimension a permission is asked in, by its id, as a permission mod's context: a node granted in one
+     * dimension and not another.
+     */
+    public static final PermissionDynamicContextKey<ResourceLocation> DIMENSION = new PermissionDynamicContextKey<>(
+            ResourceLocation.class, "jscore:dimension", ResourceLocation::toString);
+    /**
+     * The claim a permission is asked in, by its owner's id (a player or a team), or {@link #NO_CLAIM} outside every
+     * claim: a node granted in one claim and not elsewhere.
+     */
+    public static final PermissionDynamicContextKey<String> CLAIM = new PermissionDynamicContextKey<>(String.class,
+            "jscore:claim", owner -> owner);
+    /** The claim context's value outside every claim. */
+    public static final String NO_CLAIM = "none";
 
     /** Every node declared, in the order it was. */
     private static final List<Declared> DECLARED = new CopyOnWriteArrayList<>();
@@ -111,7 +133,8 @@ public final class CorePermissions {
     public static PermissionNode<Boolean> declare(final String modid, final String name, final int level,
                                                   final Text description) {
         final PermissionNode<Boolean> node = new PermissionNode<>(modid, name, PermissionTypes.BOOLEAN,
-                (player, id, context) -> level <= 0 || player != null && player.hasPermissions(level));
+                (player, id, context) -> level <= 0 || player != null && player.hasPermissions(level), DIMENSION,
+                CLAIM);
         node.setInformation(GameText.component(Text.of(node.getNodeName())), GameText.component(description));
         final Declared declared = new Declared(node, level, description);
         if (BY_NAME.putIfAbsent(node.getNodeName(), declared) != null) {
@@ -127,14 +150,35 @@ public final class CorePermissions {
         return List.copyOf(DECLARED);
     }
 
-    /** Whether {@code player} holds {@code node}. */
+    /** Whether {@code player} holds {@code node} where they stand: in their dimension and the claim they are in. */
     public static boolean has(final ServerPlayer player, final PermissionNode<Boolean> node) {
-        return PermissionAPI.getPermission(player, node);
+        return has(player, node, player.serverLevel(), player.blockPosition());
+    }
+
+    /**
+     * Whether {@code player} holds {@code node} at {@code pos} of {@code level}: the permission mod is told the
+     * dimension ({@link #DIMENSION}) and the claim ({@link #CLAIM}), so it may grant the node in one and not another.
+     */
+    public static boolean has(final ServerPlayer player, final PermissionNode<Boolean> node, final ServerLevel level,
+                              final BlockPos pos) {
+        return PermissionAPI.getPermission(player, node, contextsAt(level, pos));
     }
 
     /** Whether the player {@code player}, online or not, holds {@code node}: a machine acting for its owner asks so. */
     public static boolean has(final UUID player, final PermissionNode<Boolean> node) {
         return PermissionAPI.getOfflinePermission(player, node);
+    }
+
+    /** The same, at {@code pos} of {@code level}: a machine there acting for its owner. */
+    public static boolean has(final UUID player, final PermissionNode<Boolean> node, final ServerLevel level,
+                              final BlockPos pos) {
+        return PermissionAPI.getOfflinePermission(player, node, contextsAt(level, pos));
+    }
+
+    /** What a permission mod is told of a place: its dimension and the claim it lies in. */
+    public static PermissionDynamicContext<?>[] contextsAt(final ServerLevel level, final BlockPos pos) {
+        return new PermissionDynamicContext<?>[] {DIMENSION.createContext(level.dimension().location()),
+            CLAIM.createContext(Protection.claimOwner(level, pos).map(UUID::toString).orElse(NO_CLAIM))};
     }
 
     /** Whether {@code player} may use what others own. */
