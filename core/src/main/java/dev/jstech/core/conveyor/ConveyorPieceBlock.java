@@ -10,6 +10,7 @@ package dev.jstech.core.conveyor;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -57,6 +58,8 @@ public abstract class ConveyorPieceBlock extends Block implements EntityBlock {
      * next, and a loop longer has an end of its own on every piece.
      */
     public static final int LONGEST_RUN = 1024;
+    /* How many times pieces were laid, broken or turned anywhere, so a run walked before that is walked again. */
+    private static final AtomicLong SHAPES = new AtomicLong();
 
     protected ConveyorPieceBlock(final Properties properties, final ConveyorType type,
                                  final Supplier<? extends BlockEntityType<? extends ConveyorBlockEntity>> entity) {
@@ -241,6 +244,11 @@ public abstract class ConveyorPieceBlock extends Block implements EntityBlock {
         }
     }
 
+    /* How many times pieces were laid, broken or turned anywhere: a run walked before the last of them may differ. */
+    static long shapes() {
+        return SHAPES.get();
+    }
+
     /* Whether the piece at {@code at} is of its kind and comes on (not {@code asEntry}: leaves) at {@code where}. */
     private boolean meets(final BlockGetter level, final BlockPos at, final ConveyorOpening where,
                           final boolean asEntry) {
@@ -254,6 +262,7 @@ public abstract class ConveyorPieceBlock extends Block implements EntityBlock {
 
     /* Works out again whether each piece in the blocks around {@code pos}, its own included, ends its run. */
     private static void refreshAround(final Level level, final BlockPos pos) {
+        SHAPES.incrementAndGet();
         for (final BlockPos at : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))) {
             final BlockState state = level.getBlockState(at);
             if (state.getBlock() instanceof ConveyorPieceBlock) {

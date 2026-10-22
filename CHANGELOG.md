@@ -71,6 +71,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   takes the group of points two shapes meet at, `Contact.group` gives it, `forget` and `forgetBut` let go of the pushes
   kept from the step before. `MultiblockRecorder` reads a multiblock's pattern off one built (`Recording`, `Letter`).
   `IPartHost.takesFacades` is true unless a host says otherwise, and `CableBlockEntity` no longer declares its own.
+  `MatterTank.bursts`, `relief`, `push`, `relieve`, `bursting`, `burstEnergy` and `pressureNow` let a tank burst and
+  relieve itself, `IMatterHandler.pressureNow(tank)` says what each tank holds its matter at, `PressureBursts.hold` sees
+  to a tank each tick (`Held`) and `PressureBursts.pipe` bursts a pipe, and `BlastMath.burstEnergy` is the energy of a
+  burst vessel. `CableType.Builder.holds` gives a pipe the pressure it holds, `LineBreach` carries the pressure that
+  reached a pipe and has the reason `OVERPRESSURE`. `CableEnd` gains `redstone`, an `EndRedstone`, with `withRedstone`
+  and `modeAt`, the mode an end has with the redstone where it is; `CableEndMenu.REDSTONE`, `CableEndLayout.REDSTONE_X`,
+  `REDSTONE_Y` and `onRedstone` place its key on the end's screen, and `EndTexts.REDSTONE_USE` says what it does.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1281,6 +1288,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and its layers, it may be mirrored or lie down, and beside it is the page the recipe viewers will show; writing it
   makes the pattern's file, in the mod's source or in a data pack of the world's own, and the projector shows it where
   it was built.
+- (Core) Pressure that bursts: a tank of gas or of supercritical fluid may say what it stands, and forced past it, by a
+  compressor stronger than it, it bursts, its block gone, what it held let out, with a blast of the energy the gas
+  held above the air around it; its relief valve lets a little out before then, and one too small for what is forced
+  in does not save it. A pipe of gas may say the pressure it holds, carries nothing from a store holding more, and by
+  its own rule bursts with the force of the gas it held.
+- (Core) Redstone at each end of a line: an end of a pipe or a line of items works whatever reaches it, only while a
+  redstone signal reaches its cable block, or only while none does, set by a key on the end's screen.
 
 ### Changed
 - (Core) A steadier solver for moving structures: structures that may meet in a tick are worked as one, with more
@@ -1290,6 +1304,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   only as bodies meet, never while they rest; the ways a contact grips along stay the same as it leans by a hair; and
   a structure asleep looks about without kicking what rests on it.
 - (Core) Facades stand over any face of a space, not only where a cable runs.
+- (Core) Mekanism's infusions and pigments are no longer carried by the Core's gas lines as if they were gases: each
+  of Mekanism's four kinds of chemical finds its state, its gases and slurries their lines, and its infusions and
+  pigments none, which Mekanism's own tubes still carry.
+- (Core) Belts keep the run they walked: the end of a run walks its pieces again only once a piece is laid, broken
+  or turned, so a long run costs its items and not a search of its pieces every tick. Measured, three thousand six
+  hundred items riding two thousand belts cost the server about a millisecond a tick.
 - (Core) The Core's chapter of the Technical Reference and the series' are written in Markdown, in English and
   Portuguese, in place of the Java that declared them.
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending

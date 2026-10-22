@@ -12,6 +12,7 @@ import dev.jstech.core.chemical.IChemicalPort;
 import dev.jstech.core.material.MatterState;
 import mekanism.api.Action;
 import mekanism.api.MekanismAPI;
+import mekanism.api.MekanismAPITags;
 import mekanism.api.chemical.Chemical;
 import mekanism.api.chemical.ChemicalStack;
 import mekanism.api.chemical.IChemicalHandler;
@@ -53,11 +54,13 @@ final class MekanismChemicalBridge implements IChemicalBridge {
     private static final BlockCapability<IChemicalHandler, @Nullable Direction> CHEMICAL_HANDLER =
             BlockCapability.createSided(ResourceLocation.fromNamespaceAndPath("mekanism", "chemical_handler"),
                     IChemicalHandler.class);
-    /* Mekanism's tags of its slurries, before and after they are washed. */
-    private static final TagKey<Chemical> DIRTY = TagKey.create(MekanismAPI.CHEMICAL_REGISTRY_NAME,
-            ResourceLocation.fromNamespaceAndPath("mekanism", "dirty"));
-    private static final TagKey<Chemical> CLEAN = TagKey.create(MekanismAPI.CHEMICAL_REGISTRY_NAME,
-            ResourceLocation.fromNamespaceAndPath("mekanism", "clean"));
+    /* Mekanism's tags of the chemicals each of its infusions stands for, whatever mod made one. */
+    private static final List<TagKey<Chemical>> INFUSIONS = List.of(MekanismAPITags.Chemicals.CARBON,
+            MekanismAPITags.Chemicals.REDSTONE, MekanismAPITags.Chemicals.DIAMOND,
+            MekanismAPITags.Chemicals.REFINED_OBSIDIAN, MekanismAPITags.Chemicals.BIO, MekanismAPITags.Chemicals.FUNGI,
+            MekanismAPITags.Chemicals.GOLD, MekanismAPITags.Chemicals.TIN);
+    /* The folders of the pictures Mekanism draws its infusions and its pigments with. */
+    private static final List<String> NO_MATTER_PICTURES = List.of("infuse_type/", "pigment/");
 
     @Override
     public Optional<IChemicalPort> portFor(final Level level, final BlockPos pos, @Nullable final Direction side) {
@@ -82,15 +85,27 @@ final class MekanismChemicalBridge implements IChemicalBridge {
     }
 
     /*
-     * A slurry is one of Mekanism's dirty or clean slurries, or a chemical another mod gives the solid it was made
-     * from; every other chemical is carried as Mekanism's own pressurised tubes carry it, in the gas lines.
+     * Mekanism keeps its four kinds of chemical in one registry since 10.7, told apart by tags and by the pictures
+     * each kind is drawn with. A slurry is one of its dirty or clean slurries, or a chemical another mod gives the
+     * solid it was made from; an infusion (carbon, redstone, bio and the rest) and a pigment are no state of matter of
+     * their own, so no line of the Core carries them; every other chemical is one of its gases, carried as its own
+     * pressurised tubes carry it, rendered as a gas or not.
      */
     @Override
     public Optional<MatterState> stateOf(final ResourceLocation chemical) {
         final Optional<Holder.Reference<Chemical>> holder = MekanismAPI.CHEMICAL_REGISTRY.getHolder(chemical);
-        return holder.map(found -> found.is(DIRTY) || found.is(CLEAN)
-                || found.getData(IMekanismDataMapTypes.INSTANCE.chemicalSolidTag()) != null
-                ? MatterState.SLURRY : MatterState.GAS);
+        if (holder.isEmpty()) {
+            return Optional.empty();
+        }
+        final Holder.Reference<Chemical> found = holder.get();
+        if (found.is(MekanismAPITags.Chemicals.DIRTY) || found.is(MekanismAPITags.Chemicals.CLEAN)
+                || found.getData(IMekanismDataMapTypes.INSTANCE.chemicalSolidTag()) != null) {
+            return Optional.of(MatterState.SLURRY);
+        }
+        if (INFUSIONS.stream().anyMatch(found::is) || noMatterPicture(found.value())) {
+            return Optional.empty();
+        }
+        return Optional.of(MatterState.GAS);
     }
 
     @Override
@@ -145,6 +160,12 @@ final class MekanismChemicalBridge implements IChemicalBridge {
 
     private static Chemical lookup(final ResourceLocation chemical) {
         return MekanismAPI.CHEMICAL_REGISTRY.get(chemical);
+    }
+
+    /* Whether {@code chemical} is drawn as Mekanism draws its infusions and its pigments. */
+    private static boolean noMatterPicture(final Chemical chemical) {
+        final String picture = chemical.getIcon().getPath();
+        return NO_MATTER_PICTURES.stream().anyMatch(picture::startsWith);
     }
 
     /** A chemical port over one handler; amounts are millibuckets on both sides. */

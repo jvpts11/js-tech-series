@@ -113,6 +113,11 @@ public final class TestMatterEnds {
         }
 
         @Override
+        public double pressureNow(final int index) {
+            return this.tank.pressureNow(index);
+        }
+
+        @Override
         public long insert(final MatterStack stack, final boolean simulate) {
             return this.takes ? this.tank.insert(stack, simulate) : 0L;
         }

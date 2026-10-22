@@ -30,6 +30,14 @@ public interface IMatterHandler {
     /** How much tank {@code tank} holds at most. */
     long capacity(int tank);
 
+    /**
+     * The pressure tank {@code tank} holds what it holds at now, in times the open air's, which a line carrying it out
+     * has to hold; the open air's for a store that keeps no pressure of its own.
+     */
+    default double pressureNow(final int tank) {
+        return 1;
+    }
+
     /** Puts in up to {@code stack}'s amount; says how much it took, or would take when simulated. */
     long insert(MatterStack stack, boolean simulate);
 

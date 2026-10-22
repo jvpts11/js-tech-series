@@ -72,8 +72,13 @@ them at the end of a run (`outlets`) and the line they lie along (`geometry`).
 Pieces of one kind, each leaving where the next comes on, are a **run**: belts facing the same way one behind
 another, flat or sloped; chutes one above another; elevators one above another. Only the piece at the end of a run
 ticks, and it moves the whole run, from its end back, so an item handed on frees room behind it in the same tick: a
-run of any length costs one piece's tick. A run that carries nothing is not walked again until an item comes on. A
-line of more than about a thousand pieces is cut into runs of about that many, each handing on to the next.
+run of any length costs one piece's tick. A run that carries nothing is not walked again until an item comes on, and
+the end keeps the run it walked, walking its pieces again only once a piece is laid, broken or turned somewhere, or
+one of them is gone with its chunk. A line of more than about a thousand pieces is cut into runs of about that many,
+each handing on to the next.
+
+What items riding cost the server, measured by the test mod's `ConveyorBenchGameTests`: 3,680 items on 2,024 belts,
+all moving at once, about a millisecond a tick, a third of a microsecond an item.
 
 A piece of another kind in front, or one facing another way, is not of the run: the run hands its items on to it.
 Splitters, joins and diverters stand alone, each its own run, taking in and handing on through the item capability.
@@ -182,6 +187,7 @@ helper.succeedWhen(() -> /* the diamonds are in the chest */);
 ```
 
 `BeltLane`, the queue of a piece's items, and `ConveyorType` are plain Java and tested with JUnit.
+`ConveyorBenchGameTests` measures items riding at scale, alone in its batch.
 
 ## What can go wrong
 

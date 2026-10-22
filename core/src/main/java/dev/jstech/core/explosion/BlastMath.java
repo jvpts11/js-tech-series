@@ -43,6 +43,9 @@ public final class BlastMath {
     private static final double FRAGMENT_DRAG = 1.0;
     /* The least TNT worth working with, so a fizzle divides by nothing. */
     private static final double LEAST_TNT = 1.0e-6;
+    /* Air's ratio of its heats at constant pressure and volume, which a burst gas is taken to have. */
+    private static final double AIR_HEAT_RATIO = 1.4;
+    private static final double PASCALS_PER_KILOPASCAL = 1_000;
     private static final int TICKS_A_SECOND = 20;
     /* How closely a reach is found, as a share of the scaled distance. */
     private static final double REACH_PRECISION = 1.0e-4;
@@ -56,6 +59,18 @@ public final class BlastMath {
     /** How many kilograms of TNT {@code joules} make. */
     public static double tnt(final double joules) {
         return joules / JOULES_PER_KILOGRAM_OF_TNT;
+    }
+
+    /**
+     * The energy a vessel of {@code cubicMetres} lets go as it bursts, holding a gas at {@code atmospheres} times the
+     * open air's pressure, in joules: Brode's measure, the work the gas held above the air around it, (p - p0) V over
+     * the ratio of its heats less one, the gas taken as air. None at or below the open air's pressure.
+     */
+    public static double burstEnergy(final double atmospheres, final double cubicMetres) {
+        if (atmospheres <= 1 || cubicMetres <= 0) {
+            return 0;
+        }
+        return (atmospheres - 1) * SEA_LEVEL * PASCALS_PER_KILOPASCAL * cubicMetres / (AIR_HEAT_RATIO - 1);
     }
 
     /** The scaled distance of {@code metres} from {@code tnt} kilograms: the metres over the cube root of the TNT. */

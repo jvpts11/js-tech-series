@@ -48,40 +48,43 @@ public final class EndRouter {
             return 0L;
         }
         final long[] endLeft = new long[ends.size()];
+        // Each end's mode is read once a call: it may hang on redstone, which is read in the world.
+        final EndMode[] modes = new EndMode[ends.size()];
         for (int i = 0; i < endLeft.length; i++) {
             final long rate = ends.get(i).rate();
             endLeft[i] = rate > 0 ? rate : Long.MAX_VALUE;
+            modes[i] = ends.get(i).mode();
         }
         final long[] left = {budget};
         for (int round = 0; round < ROUNDS; round++) {
             for (int i = 0; i < ends.size() && left[0] > 0; i++) {
-                give(ends, i, round, turn, carries, move, endLeft, left);
+                give(ends, modes, i, round, turn, carries, move, endLeft, left);
             }
         }
         return budget - left[0];
     }
 
     /* Gives what the end {@code from} offers to the ends that take it in {@code round}. */
-    private static <R> void give(final List<? extends IEnd<R>> ends, final int from, final int round, final long turn,
-                                 final Predicate<R> carries, final IMove<R> move, final long[] endLeft,
-                                 final long[] left) {
+    private static <R> void give(final List<? extends IEnd<R>> ends, final EndMode[] modes, final int from,
+                                 final int round, final long turn, final Predicate<R> carries, final IMove<R> move,
+                                 final long[] endLeft, final long[] left) {
         final IEnd<R> source = ends.get(from);
-        if (!source.mode().draws() || endLeft[from] <= 0) {
+        if (!modes[from].draws() || endLeft[from] <= 0) {
             return;
         }
         // The first thing some end would take is offered, so what nobody wants never holds up what comes after it.
-        final Offer<R> offer = source.offer(Math.min(left[0], endLeft[from]),
-                resource -> source.allows(resource) && carries.test(resource) && taken(ends, from, resource, endLeft));
+        final Offer<R> offer = source.offer(Math.min(left[0], endLeft[from]), resource -> source.allows(resource)
+                && carries.test(resource) && taken(ends, modes, from, resource, endLeft));
         if (offer == null || offer.amount() <= 0) {
             return;
         }
         final R resource = offer.resource();
-        if (role(source, resource) != (round == 2 ? Role.STORE : Role.OUTPUT)) {
+        if (role(source, modes[from], resource) != (round == 2 ? Role.STORE : Role.OUTPUT)) {
             return;
         }
         final Role wanted = round == 1 ? Role.STORE : Role.INPUT;
         long remaining = offer.amount();
-        for (final int to : destinations(ends, from, resource, wanted, turn, endLeft)) {
+        for (final int to : destinations(ends, modes, from, resource, wanted, turn, endLeft)) {
             if (remaining <= 0 || left[0] <= 0 || endLeft[from] <= 0) {
                 return;
             }
@@ -107,16 +110,16 @@ public final class EndRouter {
      * The ends a share of {@code resource} from {@code from} could go to, in the order they are served: the highest
      * priority first, and within one priority starting at the one whose turn it is.
      */
-    private static <R> List<Integer> destinations(final List<? extends IEnd<R>> ends, final int from,
-                                                  final R resource, final Role wanted, final long turn,
-                                                  final long[] endLeft) {
+    private static <R> List<Integer> destinations(final List<? extends IEnd<R>> ends, final EndMode[] modes,
+                                                  final int from, final R resource, final Role wanted,
+                                                  final long turn, final long[] endLeft) {
         final IEnd<R> source = ends.get(from);
         final List<Integer> found = new ArrayList<>();
         for (int to = 0; to < ends.size(); to++) {
             final IEnd<R> target = ends.get(to);
             if (to != from && target.key() != source.key() && target.channel() == source.channel()
-                    && target.mode().fills() && endLeft[to] > 0 && target.allows(resource)
-                    && role(target, resource) == wanted) {
+                    && modes[to].fills() && endLeft[to] > 0 && target.allows(resource)
+                    && role(target, modes[to], resource) == wanted) {
                 found.add(to);
             }
         }
@@ -140,13 +143,13 @@ public final class EndRouter {
     }
 
     /* Whether some end but {@code from}'s block would take any {@code resource} on its channel this tick. */
-    private static <R> boolean taken(final List<? extends IEnd<R>> ends, final int from, final R resource,
-                                     final long[] endLeft) {
+    private static <R> boolean taken(final List<? extends IEnd<R>> ends, final EndMode[] modes, final int from,
+                                     final R resource, final long[] endLeft) {
         final IEnd<R> source = ends.get(from);
         for (int to = 0; to < ends.size(); to++) {
             final IEnd<R> target = ends.get(to);
             if (to == from || target.key() == source.key() || target.channel() != source.channel()
-                    || !target.mode().fills() || endLeft[to] <= 0 || !target.allows(resource)) {
+                    || !modes[to].fills() || endLeft[to] <= 0 || !target.allows(resource)) {
                 continue;
             }
             final long keep = target.keep(resource);
@@ -157,9 +160,9 @@ public final class EndRouter {
         return false;
     }
 
-    /* What {@code end} is to a share of {@code resource}, by its block and its mode. */
-    private static <R> Role role(final IEnd<R> end, final R resource) {
-        return switch (end.mode()) {
+    /* What {@code end} is to a share of {@code resource}, by its block and its mode now, {@code mode}. */
+    private static <R> Role role(final IEnd<R> end, final EndMode mode, final R resource) {
+        return switch (mode) {
             case PULL -> end.gives(resource) ? Role.OUTPUT : Role.NONE;
             case PUSH -> end.takes(resource) ? Role.INPUT : Role.NONE;
             case OFF -> Role.NONE;
@@ -181,6 +184,7 @@ public final class EndRouter {
         /** The block it plugs into, as a number: two ends of one block never pass to each other. */
         long key();
 
+        /** How it is set to meet its block now, read once each time the part is routed: it may hang on redstone. */
         EndMode mode();
 
         /** Its priority among the ends a share could go to: the highest fills first. */

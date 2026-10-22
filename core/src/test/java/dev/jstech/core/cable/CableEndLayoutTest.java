@@ -49,6 +49,15 @@ class CableEndLayoutTest {
     }
 
     @Test
+    void onRedstone_findsTheRedstoneKeyBesideTheFilterKey() {
+        assertTrue(CableEndLayout.onRedstone(CableEndLayout.REDSTONE_X + 8, CableEndLayout.REDSTONE_Y + 8));
+        assertTrue(!CableEndLayout.onRedstone(CableEndLayout.FILTER_X + 8, CableEndLayout.FILTER_Y + 8),
+                "the filter's key is not the redstone key");
+        assertTrue(CableEndLayout.REDSTONE_X > CableEndLayout.FILTER_X + CableEndLayout.FILTER_WIDTH
+                && CableEndLayout.REDSTONE_X + CableEndLayout.KEY_HEIGHT <= CableEndLayout.WIDTH - 4);
+    }
+
+    @Test
     void inventory_standsInItsOwnWindow() {
         assertTrue(CableEndLayout.INVENTORY_TOP > CableEndLayout.PANEL_HEIGHT);
         assertTrue(CableEndLayout.INVENTORY_Y + 58 + 16 < CableEndLayout.HEIGHT);

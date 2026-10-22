@@ -21,6 +21,17 @@ class BlastMathTest {
     }
 
     @Test
+    void burstEnergy_isWhatTheGasHeldAboveTheAirAround() {
+        // A cubic metre at two hundred atmospheres: 199 x 101 325 Pa / 0.4, about fifty megajoules, twelve kilograms.
+        assertEquals(50.41e6, BlastMath.burstEnergy(200, 1), 0.01e6);
+        assertEquals(12.05, BlastMath.tnt(BlastMath.burstEnergy(200, 1)), 0.01);
+        assertEquals(2 * BlastMath.burstEnergy(51, 1), BlastMath.burstEnergy(101, 1), 1.0e-6);
+        assertEquals(0.0, BlastMath.burstEnergy(1, 1));
+        assertEquals(0.0, BlastMath.burstEnergy(0.5, 1));
+        assertEquals(0.0, BlastMath.burstEnergy(200, 0));
+    }
+
+    @Test
     void overpressure_followsTheKinneyGrahamFit() {
         // A kilogram of TNT: about a thousand kilopascals at a metre, ten at ten metres.
         assertEquals(1_008, BlastMath.overpressure(1, 1), 10);

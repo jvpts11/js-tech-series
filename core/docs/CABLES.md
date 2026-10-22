@@ -51,6 +51,7 @@ public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableTyp
 | `carries(throughput, range)` | How much it moves a tick, and how many blocks one run reaches before it carries nothing further. |
 | `loses(millionths)` | What each block of it loses besides its energy class's loss by distance, 0 to 1,000,000. |
 | `withstands(cold, hot)`, `takes(tag)` | For pipes: the temperatures and marks of the fluids it carries. |
+| `holds(atmospheres)` | For pipes of a state held under pressure: the most pressure it holds. A store holding a gas at more is carried none of, and the gas reaches the pipe as a breach of `OVERPRESSURE` ([Pressure that bursts](ENERGY_AND_RESOURCES.md#pressure-that-bursts)). Any pressure unless said. |
 | `runsStraight()` | It cannot turn inside a block; something else turns it. |
 | `joinsAtMost(faces)` | The most neighbours it joins, 1 to 6 (2 for a line between two ends). |
 | `describe(job, era)` | The tooltip line saying what it is for. |
@@ -105,10 +106,11 @@ just works.
 | Setting | What it does |
 | --- | --- |
 | mode | `NORMAL`: as the block says, its output gives, its input takes, a tank both. `PUSH`: the line only fills it. `PULL`: the line only draws from it. `OFF`: the end plugs into nothing, and joins no cable beside it |
-| priority | from -99 to 99: the highest fills first, and ends of one priority take turns, each tick the next served first |
+| priority | from -99 to 99: the highest fills first, and ends of one priority take turns, each tick the next served first, so over time each gets the same share |
 | rate | the most it gives or takes a tick; 0 for no limit but the line's |
 | channel | from 0 to 15: an end gives and takes only on its own, so one line does the work of several |
 | filter | an `ItemFilter`, by item, tag, mod or components, or a fluid's or a material's id; a rule's amount, in an `ONLY` filter, is how much to keep in the block, filling it no further |
+| redstone | an `EndRedstone`: `IGNORED`, the end works whatever reaches it; `WITH_SIGNAL`, it works only while a redstone signal reaches its cable block, and is off without one; `WITHOUT_SIGNAL`, it works only while none does. The line reads the signal once a tick (`CableEnd.modeAt`) |
 
 A line shares among its ends as `EndRouter` says: outputs feed inputs, then fill the tanks, and the tanks feed what the
 inputs still want; two tanks never pour into each other unless an end pulls from one, and the same for two chests. An
@@ -126,7 +128,9 @@ wrench of a mod's own, and `EndTexts.set` says what was set.
 Sneaking with the Basic Wrench on an end of a line whose grid routes its ends (`IGridPolicy.routesEnds`: the Core's
 fluid, matter and item grids) opens the end's screen, in the game's own look. It sets the mode with four keys, the
 priority and the rate with a field each, typed or stepped (Shift steps ten), the channel with sixteen keys in the dyes'
-colours, and the filter: its key turns it between only and all but, and its nine slots hold its rules.
+colours, and the filter: its key turns it between only and all but, and its nine slots hold its rules. The key at the
+filter row's right goes round what redstone does to the end: redstone dust for nothing, a lit torch for working with a
+signal, a torch gone dark for working without one, its tooltip saying which.
 
 | On a filter slot | What it does |
 | --- | --- |
@@ -236,7 +240,16 @@ A pipe is made for some temperatures and marks; when a fluid it is not made for 
 follows, each tick it is so (`CableType.Builder.beyond`). By default it holds and carries none of it.
 `BreachRules.breaksAfter(ticks, then)` breaks the wire once it has been reached that long in a row and lets its mod say
 what follows; `BreachRules.spill` lets a liquid out where the pipe was. `LineBreach` says where, which cable, why (too
-hot, too cold, a mark it is not made for) and what reached it.
+hot, too cold, a mark it is not made for, more pressure than it holds), what reached it and at what pressure.
+
+A pipe of gas that says the pressure it holds (`holds(atmospheres)`) is reached by a gas from a store holding it at
+more; `PressureBursts.pipe(innerVolume)` is what follows a pipe that bursts: a blast of the energy the gas a block of
+it held ([Pressure that bursts](ENERGY_AND_RESOURCES.md#pressure-that-bursts)).
+
+```java
+.grid(GridKind.GAS).carries(500, 0).holds(10)
+.beyond(BreachRules.breaksAfter(1, PressureBursts.pipe(8)))   // eight millibuckets inside each block
+```
 
 ## Rules of joining
 

@@ -256,6 +256,38 @@ MatterBridges.chemical(hydrogen, ResourceLocation.fromNamespaceAndPath("mekanism
 MatterBridges.fluid(steam, ResourceLocation.fromNamespaceAndPath("somemod", "steam"));
 ```
 
+### Pressure that bursts
+
+*Added 2026-10-22.*
+
+A tank of gas or of supercritical fluid may say what it stands. It is filled to its own pressure and no further by
+`insert`; `push(stack, pressure, simulate)` forces matter in at a higher pressure, as a compressor does, up to what
+that pressure fills its volume with. Held past what it stands, it bursts. Its relief valve, if it has one, opens past
+its setting and lets out up to its rate a tick until the tank is back at the setting:
+
+```java
+private final MatterTank gas = new MatterTank(MatterState.GAS, 1_000, 200, this::setChanged)
+        .relief(240, 500)   // opens past 240 times the air's pressure, 500 mB a tick
+        .bursts(300);       // bursts past 300
+
+public void serverTick() {
+    PressureBursts.hold((ServerLevel) level, worldPosition, gas);   // HELD, RELIEVED or BURST
+}
+```
+
+A tank that bursts is emptied, its block is gone, what it held is let out (`MatterRelease`) and a blast of the Core's
+goes off where it stood, named by the block, of the energy the gas held above the air around it
+(`MatterTank.burstEnergy`, by `BlastMath.burstEnergy`: (p - p0) V / 0.4, the gas taken as air). A cubic metre at two
+hundred atmospheres holds about fifty megajoules, twelve kilograms of TNT. `pressureNow()` says the pressure it holds
+what it holds at, and each `IMatterHandler` says it of each tank (`pressureNow(tank)`; the open air's for a store
+that keeps no pressure). Only what is held under pressure bursts: `bursts` refuses a tank of slurry, plasma or exotic
+matter.
+
+A pipe of gas may say the pressure it holds (`CableType.Builder.holds`): a store holding a gas at more gives the line
+none of it, and the gas reaches each pipe of the part that holds less as a breach of `OVERPRESSURE`
+([Beyond a line's limits](CABLES.md#beyond-a-lines-limits)), which `PressureBursts.pipe(innerVolume)` bursts with the
+energy the gas a block of it held.
+
 ## Chemicals
 
 *Added 2026-08-27.*
@@ -265,6 +297,13 @@ as an id and an amount in mB, so the series' machines and network can move and s
 naming any such mod. A mod that brings chemicals registers a bridge (`ChemicalBridges.register(...)`, an
 `IChemicalBridge` that finds a block's chemical store and names its chemicals). Without one, there are no chemicals,
 and nothing breaks.
+
+A bridge also says the state of matter each chemical is in (`IChemicalBridge.stateOf`), so each line carries only
+its own. The Core's bridge to Mekanism, whose four kinds of chemical share one registry since its 10.7, places them
+by Mekanism's own tags and pictures: its gases are gases, whether drawn as a gas or as a liquid; its dirty and clean
+slurries, and any chemical another mod gives the solid it was made from, are slurries; its infusions (carbon,
+redstone, bio and the rest, by the tags each stands for) and its pigments are no state of matter, which no line of the
+Core carries. Mekanism's own tubes still carry them.
 
 ## Items and faces
 

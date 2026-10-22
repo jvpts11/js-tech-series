@@ -292,7 +292,7 @@ public final class LevelFluids implements IGridMover {
 
         @Override
         public EndMode mode() {
-            return this.end.mode();
+            return this.end.modeAt(this.cache.level(), this.at.relative(this.into.getOpposite()));
         }
 
         @Override

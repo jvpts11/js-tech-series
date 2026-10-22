@@ -14,6 +14,7 @@ import dev.jstech.core.cable.CableEndLayout;
 import dev.jstech.core.cable.CableEndMenu;
 import dev.jstech.core.cable.EndFilters;
 import dev.jstech.core.cable.EndNumberPayload;
+import dev.jstech.core.cable.EndRedstone;
 import dev.jstech.core.cable.EndSettings;
 import dev.jstech.core.cable.EndTexts;
 import dev.jstech.core.client.gui.component.Draw;
@@ -63,8 +64,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 /**
  * The screen of one end of a line, as the approved design draws it, in the game's own look: a window with the end's
  * mode keys, its priority and rate, its sixteen channels in the dyes' colours and its filter, whose nine slots hold
- * what passes and, in yellow, how much of it to keep in the block; below it, in a window of its own, the player's
- * inventory, from which a stack is clicked onto a filter slot. A line under the filter says what the end does.
+ * what passes and, in yellow, how much of it to keep in the block, and the key of what redstone does to the end: dust
+ * for nothing, a lit torch for working with a signal, a torch gone dark for working without one; below it, in a
+ * window of its own, the player's inventory, from which a stack is clicked onto a filter slot. A line under the filter
+ * says what the end does.
  */
 @PaletteHolder
 public final class CableEndScreen extends CoreContainerScreen<CableEndMenu> {
@@ -186,6 +189,12 @@ public final class CableEndScreen extends CoreContainerScreen<CableEndMenu> {
             g.renderTooltip(this.font, GameText.component(EndTexts.CHANNEL_TIP.with(Text.literal(String.valueOf(
                     channel + 1)), GameText.of(Component.translatable("color.minecraft." + dye.getName())))),
                     mouseX, mouseY);
+            return;
+        }
+        if (CableEndLayout.onRedstone(x, y)) {
+            g.renderComponentTooltip(this.font, List.of(GameText.component(this.menu.end().redstone().text()),
+                    GameText.component(EndTexts.REDSTONE_USE).withColor(PALETTE.get().hint() & 0xFFFFFF)), mouseX,
+                    mouseY);
         }
     }
 
@@ -210,6 +219,9 @@ public final class CableEndScreen extends CoreContainerScreen<CableEndMenu> {
                 button -> sendButton(CableEndMenu.FILTER_MODE)).bounds(this.leftPos + CableEndLayout.FILTER_X,
                 this.topPos + CableEndLayout.FILTER_Y, CableEndLayout.FILTER_WIDTH, CableEndLayout.KEY_HEIGHT)
                 .build());
+        addRenderableWidget(Button.builder(Component.empty(), button -> sendButton(CableEndMenu.REDSTONE))
+                .bounds(this.leftPos + CableEndLayout.REDSTONE_X, this.topPos + CableEndLayout.REDSTONE_Y,
+                        CableEndLayout.KEY_HEIGHT, CableEndLayout.KEY_HEIGHT).build());
         showEnd(this.menu.end());
     }
 
@@ -267,6 +279,20 @@ public final class CableEndScreen extends CoreContainerScreen<CableEndMenu> {
         if (chosen >= 0) {
             Draw.outline(g, CableEndLayout.modeX(chosen), CableEndLayout.MODE_Y, CableEndLayout.modeWidth(chosen),
                     CableEndLayout.KEY_HEIGHT, c.chosen());
+        }
+        redstone(g, c, end.redstone());
+    }
+
+    /* The picture on the key of what redstone does: dust for nothing, a torch lit, or a torch gone dark. */
+    private static void redstone(final GuiGraphics g, final Colours c, final EndRedstone redstone) {
+        g.renderItem(new ItemStack(redstone == EndRedstone.IGNORED ? Items.REDSTONE : Items.REDSTONE_TORCH),
+                CableEndLayout.REDSTONE_X, CableEndLayout.REDSTONE_Y);
+        if (redstone == EndRedstone.WITHOUT_SIGNAL) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, OVER_ITEMS);
+            g.fill(CableEndLayout.REDSTONE_X, CableEndLayout.REDSTONE_Y, CableEndLayout.REDSTONE_X + ITEM_SIZE,
+                    CableEndLayout.REDSTONE_Y + ITEM_SIZE, c.veil());
+            g.pose().popPose();
         }
     }
 

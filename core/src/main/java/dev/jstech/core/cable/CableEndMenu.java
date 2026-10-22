@@ -45,7 +45,10 @@ public final class CableEndMenu extends CoreMenu {
     /* What each filter slot was last set from, so a right-click goes round that thing's tags and mod. */
     private final String[] origins = new String[CableEndLayout.GHOSTS];
 
-    /** The buttons: a mode, the priority and the rate a step or ten, the filter's mode, a channel, a filter slot. */
+    /**
+     * The buttons: a mode, the priority and the rate a step or ten, the filter's mode, what redstone does, a channel, a
+     * filter slot.
+     */
     public static final int FIRST_MODE = 0;
     public static final int PRIORITY_DOWN = 4;
     public static final int PRIORITY_UP = 5;
@@ -56,6 +59,7 @@ public final class CableEndMenu extends CoreMenu {
     public static final int RATE_DOWN_TEN = 10;
     public static final int RATE_UP_TEN = 11;
     public static final int FILTER_MODE = 12;
+    public static final int REDSTONE = 13;
     public static final int FIRST_CHANNEL = 16;
     /** A filter slot clicked: set from the stack carried, or cleared when nothing is. */
     public static final int FIRST_GHOST = 32;
@@ -104,6 +108,7 @@ public final class CableEndMenu extends CoreMenu {
         button(RATE_UP_TEN, who -> change(end -> end.withRate(amount(end.rate() + rateStep() * TEN))));
         button(FILTER_MODE, who -> change(end -> end.withFilter(end.filter().withMode(
                 end.filter().mode() == ItemFilter.Mode.ONLY ? ItemFilter.Mode.ALL_BUT : ItemFilter.Mode.ONLY))));
+        button(REDSTONE, who -> change(end -> end.withRedstone(end.redstone().next())));
         for (int k = 0; k < EndRouter.CHANNELS; k++) {
             final int channel = k;
             button(FIRST_CHANNEL + k, who -> change(end -> end.withChannel(channel)));

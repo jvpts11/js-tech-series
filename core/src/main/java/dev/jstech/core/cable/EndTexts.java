@@ -47,6 +47,9 @@ public final class EndTexts {
     public static final TextKey UNIT_FLUID = TextKey.of("jscore.cable.end.unit.fluid", "mB/t");
     public static final TextKey UNIT_ITEMS = TextKey.of("jscore.cable.end.unit.items", "items/t");
     public static final TextKey STEPS = TextKey.of("jscore.cable.end.steps", "Shift: ten at a time");
+    /** What clicking the key of what redstone does to an end does. */
+    public static final TextKey REDSTONE_USE = TextKey.of("jscore.cable.end.redstone.use",
+            "A signal is read at the cable block; click to change");
     public static final TextKey CHANNEL_TIP = TextKey.of("jscore.cable.end.channel.tip",
             "Channel %s: %s. Ends meet only ends of their channel.");
 

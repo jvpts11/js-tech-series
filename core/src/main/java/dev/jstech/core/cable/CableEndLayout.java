@@ -11,9 +11,9 @@ import dev.jstech.core.gui.layout.GuiLayout;
 
 /**
  * Where everything stands on the screen of one end of a line, as the approved design lays it out, in the game's own
- * look: a window with the end's mode, its priority and rate, its channel and its filter, and below it, in a window of
- * its own, the player's inventory, from which a stack is dropped on a filter slot. Both the menu and the screen read
- * their places from here.
+ * look: a window with the end's mode, its priority and rate, its channel, its filter and, at the filter row's right,
+ * the key of what redstone does to it, and below it, in a window of its own, the player's inventory, from which a
+ * stack is dropped on a filter slot. Both the menu and the screen read their places from here.
  */
 public final class CableEndLayout {
 
@@ -61,6 +61,9 @@ public final class CableEndLayout {
     public static final int FILTER_Y = 100;
     public static final int FILTER_X = 52;
     public static final int FILTER_WIDTH = 50;
+    /** The key of what redstone does to the end, square, at the filter row's right, its picture in the middle. */
+    public static final int REDSTONE_X = WIDTH - 8 - KEY_HEIGHT;
+    public static final int REDSTONE_Y = FILTER_Y;
     public static final int GHOST_X = 8;
     public static final int GHOST_Y = 119;
     public static final int GHOSTS = 9;
@@ -136,6 +139,11 @@ public final class CableEndLayout {
         return -1;
     }
 
+    /** Whether the point ({@code x}, {@code y}) on the screen is on the key of what redstone does. */
+    public static boolean onRedstone(final double x, final double y) {
+        return x >= REDSTONE_X && x < REDSTONE_X + KEY_HEIGHT && y >= REDSTONE_Y && y < REDSTONE_Y + KEY_HEIGHT;
+    }
+
     /** The left of filter slot {@code k}'s item. */
     public static int ghostX(final int k) {
         return GHOST_X + k * SLOT_PITCH;
@@ -171,6 +179,7 @@ public final class CableEndLayout {
             layout.box("channel" + k, channelX(k), channelY(k), CHANNEL_WIDTH, CHANNEL_HEIGHT);
         }
         layout.box("filterMode", FILTER_X, FILTER_Y, FILTER_WIDTH, KEY_HEIGHT);
+        layout.box("redstone", REDSTONE_X, REDSTONE_Y, KEY_HEIGHT, KEY_HEIGHT);
         for (int k = 0; k < GHOSTS; k++) {
             layout.box("ghost" + k, ghostX(k) - 1, GHOST_Y - 1, SLOT_SIZE, SLOT_SIZE);
         }

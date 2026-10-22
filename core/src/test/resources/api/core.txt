@@ -772,12 +772,14 @@ stable 4
 10 dev.jstech.core.cable.CableDrawing  boolean isEmpty()
 10 dev.jstech.core.cable.CableDrawing  static final CableDrawing EMPTY
 10 dev.jstech.core.cable.CableDrawing  static final ModelProperty<CableDrawing> PROPERTY
-10 dev.jstech.core.cable.CableEnd  type record(EndMode mode, int priority, long rate, int channel, ItemFilter filter)
+12 dev.jstech.core.cable.CableEnd  type record(EndMode mode, int priority, long rate, int channel, ItemFilter filter, EndRedstone redstone)
 10 dev.jstech.core.cable.CableEnd  CableEnd withChannel(int)
 10 dev.jstech.core.cable.CableEnd  CableEnd withFilter(ItemFilter)
 10 dev.jstech.core.cable.CableEnd  CableEnd withMode(EndMode)
 10 dev.jstech.core.cable.CableEnd  CableEnd withPriority(int)
 10 dev.jstech.core.cable.CableEnd  CableEnd withRate(long)
+12 dev.jstech.core.cable.CableEnd  CableEnd withRedstone(EndRedstone)
+12 dev.jstech.core.cable.CableEnd  EndMode modeAt(Level, BlockPos)
 10 dev.jstech.core.cable.CableEnd  boolean isDefault()
 10 dev.jstech.core.cable.CableEnd  long keep(IFilterSubject)
 10 dev.jstech.core.cable.CableEnd  static final CableEnd DEFAULT
@@ -787,6 +789,7 @@ stable 4
 10 dev.jstech.core.cable.CableEnd  static final int LOWEST
 10 dev.jstech.core.cable.CableEndLayout  type final class
 10 dev.jstech.core.cable.CableEndLayout  static GuiLayout layout()
+12 dev.jstech.core.cable.CableEndLayout  static boolean onRedstone(double, double)
 10 dev.jstech.core.cable.CableEndLayout  static final float SMALL
 10 dev.jstech.core.cable.CableEndLayout  static final int CHANNELS
 10 dev.jstech.core.cable.CableEndLayout  static final int CHANNELS_A_ROW
@@ -820,6 +823,8 @@ stable 4
 10 dev.jstech.core.cable.CableEndLayout  static final int PRIORITY_Y
 10 dev.jstech.core.cable.CableEndLayout  static final int RATE_FIELD_WIDTH
 10 dev.jstech.core.cable.CableEndLayout  static final int RATE_Y
+12 dev.jstech.core.cable.CableEndLayout  static final int REDSTONE_X
+12 dev.jstech.core.cable.CableEndLayout  static final int REDSTONE_Y
 10 dev.jstech.core.cable.CableEndLayout  static final int SLOT_PITCH
 10 dev.jstech.core.cable.CableEndLayout  static final int STEP_WIDTH
 10 dev.jstech.core.cable.CableEndLayout  static final int STEP_X
@@ -865,6 +870,7 @@ stable 4
 10 dev.jstech.core.cable.CableEndMenu  static final int RATE_DOWN_TEN
 10 dev.jstech.core.cable.CableEndMenu  static final int RATE_UP
 10 dev.jstech.core.cable.CableEndMenu  static final int RATE_UP_TEN
+12 dev.jstech.core.cable.CableEndMenu  static final int REDSTONE
 10 dev.jstech.core.cable.CableEndMenu  static final long FLUID_KEPT_MANY
 10 dev.jstech.core.cable.CableEndMenu  static final long FLUID_KEPT_STEP
 10 dev.jstech.core.cable.CableEndMenu  static final long FLUID_STEP
@@ -959,6 +965,7 @@ stable 4
 10 dev.jstech.core.cable.CableType  int range()
 10 dev.jstech.core.cable.CableType  int span()
 10 dev.jstech.core.cable.CableType  int thickness()
+12 dev.jstech.core.cable.CableType  long holds()
 10 dev.jstech.core.cable.CableType  long throughput()
 10 dev.jstech.core.cable.CableType  static Builder builder(Connection)
 10 dev.jstech.core.cable.CableType.Builder  type static final class
@@ -969,6 +976,7 @@ stable 4
 10 dev.jstech.core.cable.CableType.Builder  Builder fitting(ResourceLocation)
 10 dev.jstech.core.cable.CableType.Builder  Builder grid(GridKind)
 10 dev.jstech.core.cable.CableType.Builder  Builder hangs(int)
+12 dev.jstech.core.cable.CableType.Builder  Builder holds(long)
 10 dev.jstech.core.cable.CableType.Builder  Builder insulated()
 10 dev.jstech.core.cable.CableType.Builder  Builder jacket(ResourceLocation)
 10 dev.jstech.core.cable.CableType.Builder  Builder joinsAtMost(int)
@@ -1010,6 +1018,14 @@ stable 4
 10 dev.jstech.core.cable.EndNumberPayload  Type<? extends CustomPacketPayload> type()
 10 dev.jstech.core.cable.EndNumberPayload  static final StreamCodec<RegistryFriendlyByteBuf, EndNumberPayload> STREAM_CODEC
 10 dev.jstech.core.cable.EndNumberPayload  static final Type<EndNumberPayload> TYPE
+12 dev.jstech.core.cable.EndRedstone  type enum implements IStableName
+12 dev.jstech.core.cable.EndRedstone  EndRedstone next()
+12 dev.jstech.core.cable.EndRedstone  IGNORED
+12 dev.jstech.core.cable.EndRedstone  String serializedName()
+12 dev.jstech.core.cable.EndRedstone  TextKey text()
+12 dev.jstech.core.cable.EndRedstone  WITHOUT_SIGNAL
+12 dev.jstech.core.cable.EndRedstone  WITH_SIGNAL
+12 dev.jstech.core.cable.EndRedstone  boolean lets(boolean)
 10 dev.jstech.core.cable.EndSettings  type final class
 10 dev.jstech.core.cable.EndSettings  static boolean hasScreen(Wire)
 10 dev.jstech.core.cable.EndSettings  static final DeferredHolder<MenuType<?>, MenuType<CableEndMenu>> MENU
@@ -1052,6 +1068,7 @@ stable 4
 10 dev.jstech.core.cable.EndTexts  static final TextKey ONLY
 10 dev.jstech.core.cable.EndTexts  static final TextKey PRIORITY
 10 dev.jstech.core.cable.EndTexts  static final TextKey RATE
+12 dev.jstech.core.cable.EndTexts  static final TextKey REDSTONE_USE
 10 dev.jstech.core.cable.EndTexts  static final TextKey SOUTH
 10 dev.jstech.core.cable.EndTexts  static final TextKey SOUTH_INLINE
 10 dev.jstech.core.cable.EndTexts  static final TextKey STEPS
@@ -1089,9 +1106,11 @@ stable 4
 10 dev.jstech.core.cable.Lane  static Lane byName(String)
 10 dev.jstech.core.cable.Lane  static final int COUNT
 10 dev.jstech.core.cable.Lane  static final int PITCH
-10 dev.jstech.core.cable.LineBreach  type record(BlockPos at, CableType type, Reason reason, String what)
+12 dev.jstech.core.cable.LineBreach  type record(BlockPos at, CableType type, Reason reason, String what, double pressure)
+12 dev.jstech.core.cable.LineBreach  new(BlockPos, CableType, Reason, String)
 10 dev.jstech.core.cable.LineBreach.Reason  type enum implements IStableName
 10 dev.jstech.core.cable.LineBreach.Reason  NOT_MADE_FOR
+12 dev.jstech.core.cable.LineBreach.Reason  OVERPRESSURE
 10 dev.jstech.core.cable.LineBreach.Reason  String serializedName()
 10 dev.jstech.core.cable.LineBreach.Reason  TOO_COLD
 10 dev.jstech.core.cable.LineBreach.Reason  TOO_HOT
@@ -3877,6 +3896,7 @@ stable 4
 10 dev.jstech.core.explosion.BlastExplosion  type final class extends Explosion
 10 dev.jstech.core.explosion.BlastExplosion  Detonation detonation()
 10 dev.jstech.core.explosion.BlastMath  type final class
+12 dev.jstech.core.explosion.BlastMath  static double burstEnergy(double, double)
 10 dev.jstech.core.explosion.BlastMath  static double fireball(double)
 10 dev.jstech.core.explosion.BlastMath  static double fragmentHarm(double)
 10 dev.jstech.core.explosion.BlastMath  static double fragmentReach(double, double, double)
@@ -8108,6 +8128,7 @@ stable 4
 10 dev.jstech.core.matter.IMatterHandler  abstract long capacity(int)
 10 dev.jstech.core.matter.IMatterHandler  abstract long extract(Material, long, boolean)
 10 dev.jstech.core.matter.IMatterHandler  abstract long insert(MatterStack, boolean)
+12 dev.jstech.core.matter.IMatterHandler  default double pressureNow(int)
 10 dev.jstech.core.matter.LevelMatter  type final class implements IGridMover
 10 dev.jstech.core.matter.LevelMatter  MatterState state()
 10 dev.jstech.core.matter.LevelMatter  Optional<LineSurvey> survey(long)
@@ -8149,17 +8170,27 @@ stable 4
 10 dev.jstech.core.matter.MatterStack  static final Codec<MatterStack> CODEC
 10 dev.jstech.core.matter.MatterTank  type class implements IMatterHandler
 10 dev.jstech.core.matter.MatterTank  MatterState state()
+12 dev.jstech.core.matter.MatterTank  MatterTank bursts(long)
+12 dev.jstech.core.matter.MatterTank  MatterTank relief(long, long)
 10 dev.jstech.core.matter.MatterTank  Optional<MatterStack> extractAny(long, boolean)
 10 dev.jstech.core.matter.MatterTank  Optional<MatterStack> held()
 10 dev.jstech.core.matter.MatterTank  Optional<MatterStack> release()
+12 dev.jstech.core.matter.MatterTank  Optional<MatterStack> relieve()
 10 dev.jstech.core.matter.MatterTank  Optional<MatterStack> stack(int)
+12 dev.jstech.core.matter.MatterTank  OptionalLong burstsAt()
+12 dev.jstech.core.matter.MatterTank  OptionalLong reliefAt()
+12 dev.jstech.core.matter.MatterTank  boolean bursting()
 10 dev.jstech.core.matter.MatterTank  boolean set(MatterStack)
+12 dev.jstech.core.matter.MatterTank  double burstEnergy()
+12 dev.jstech.core.matter.MatterTank  double pressureNow()
+12 dev.jstech.core.matter.MatterTank  double pressureNow(int)
 10 dev.jstech.core.matter.MatterTank  int tanks()
 10 dev.jstech.core.matter.MatterTank  long capacity()
 10 dev.jstech.core.matter.MatterTank  long capacity(int)
 10 dev.jstech.core.matter.MatterTank  long extract(Material, long, boolean)
 10 dev.jstech.core.matter.MatterTank  long insert(MatterStack, boolean)
 10 dev.jstech.core.matter.MatterTank  long pressure()
+12 dev.jstech.core.matter.MatterTank  long push(MatterStack, long, boolean)
 10 dev.jstech.core.matter.MatterTank  long volume()
 10 dev.jstech.core.matter.MatterTank  new(MatterState, long, long, Runnable)
 10 dev.jstech.core.matter.MatterTank  protected boolean gives()
@@ -8167,6 +8198,13 @@ stable 4
 10 dev.jstech.core.matter.MatterTank  protected void lose()
 10 dev.jstech.core.matter.MatterTank  void load(CompoundTag)
 10 dev.jstech.core.matter.MatterTank  void save(CompoundTag)
+12 dev.jstech.core.matter.PressureBursts  type final class
+12 dev.jstech.core.matter.PressureBursts  static BreachRules.IBroken pipe(long)
+12 dev.jstech.core.matter.PressureBursts  static Held hold(ServerLevel, BlockPos, MatterTank)
+12 dev.jstech.core.matter.PressureBursts.Held  type enum
+12 dev.jstech.core.matter.PressureBursts.Held  BURST
+12 dev.jstech.core.matter.PressureBursts.Held  HELD
+12 dev.jstech.core.matter.PressureBursts.Held  RELIEVED
 10 dev.jstech.core.mechanical.BeltPath  type record(double fromAx, double fromAy, double toAx, double toAy, double fromBx, double fromBy, double toBx, double toBy)
 10 dev.jstech.core.mechanical.BeltPath  double runLength()
 10 dev.jstech.core.mechanical.BeltPath  static Optional<BeltPath> open(double, double, double, double, double, double)

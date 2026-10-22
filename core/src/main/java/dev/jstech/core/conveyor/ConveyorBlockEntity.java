@@ -42,7 +42,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The block entity of a piece of conveyor ({@link ConveyorPieceBlock}): the items on it, in order along it, saved and
  * sent to the players who see it. The end of a run moves the whole run each tick, from its end back, so an item handed
- * on frees room behind it in the same tick: each piece's items go as far as the run moves, and the first of each goes
+ * on frees room behind it in the same tick; it keeps the run it walked, walking it again only once a piece is laid,
+ * broken or turned somewhere, so a long run costs its items, not a search of its pieces every tick: each piece's items go as far as the run moves, and the first of each goes
  * on into the piece after it when there is room. What reaches the end goes to the piece's outlets, through the game's
  * item capability: a belt, a chute, an inventory; with nowhere to go, it waits there or falls off, as its kind says.
  *
@@ -71,6 +72,12 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
     private final long[] offeredAt = new long[Direction.values().length];
     /* The item the machine above holds still to work it, as the very stack on the lane; none while it holds none. */
     private @Nullable ItemStack heldItem;
+    /*
+     * At a run's end, its run as last walked, and how many times pieces had been laid, broken or turned then: it is
+     * walked again only once that changes or a piece of it is gone, not every tick.
+     */
+    private @Nullable List<ConveyorBlockEntity> walked;
+    private long walkedAt = -1;
 
     /* Past any run a world could hold: a walk along one stops here whatever comes. */
     private static final int WALK_LIMIT = 1 << 16;
@@ -354,8 +361,15 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
         return getBlockState().getValue(ConveyorPieceBlock.END);
     }
 
-    /* Each piece of its run, from its end back, up to the end of the run behind it, or round a loop to itself. */
+    /*
+     * Each piece of its run, from its end back, up to the end of the run behind it, or round a loop to itself: walked
+     * again only once a piece was laid, broken or turned since, or a piece of it is gone, as with its chunk.
+     */
     private List<ConveyorBlockEntity> run(final ServerLevel level) {
+        final long shapes = ConveyorPieceBlock.shapes();
+        if (this.walked != null && this.walkedAt == shapes && whole(this.walked)) {
+            return this.walked;
+        }
         final List<ConveyorBlockEntity> run = new ArrayList<>();
         run.add(this);
         ConveyorBlockEntity at = behind(level);
@@ -363,7 +377,19 @@ public class ConveyorBlockEntity extends SyncedBlockEntity implements IMechanica
             run.add(at);
             at = at.behind(level);
         }
+        this.walked = run;
+        this.walkedAt = shapes;
         return run;
+    }
+
+    /* Whether every piece of {@code run} still stands. */
+    private static boolean whole(final List<ConveyorBlockEntity> run) {
+        for (final ConveyorBlockEntity piece : run) {
+            if (piece.isRemoved()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /* Wakes the end of its run, which an item on it gives work to. */

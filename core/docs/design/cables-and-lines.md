@@ -9,7 +9,7 @@ adds and what they do; this page is the system they share.
 Everything this page designs is built, as of October 2026: the one cable block with its nine lanes, grids as a
 registry, the series' lines, lines that group, how each end works, the basic lines and the overhead lines, and
 telemetry as J's Space's own line. How a mod uses it, with code: [Cables](../CABLES.md) and
-[Energy and resources](../ENERGY_AND_RESOURCES.md). What is not built yet is under *Still to build* at the end.
+[Energy and resources](../ENERGY_AND_RESOURCES.md).
 
 ## The design
 
@@ -63,10 +63,13 @@ input just works); the rest is there when a player wants it.
 
 - **Modes per end**: normal, push, pull or off, set in the world with the wrench.
 - **Priorities on destinations**: the highest fills first, and taking turns happens only among destinations of the same
-  priority, so a lower one never gets what a higher one still wants.
+  priority, so a lower one never gets what a higher one still wants. Destinations of one priority are served first
+  one after another, a tick each, so over time each gets the same share, never more than a tick's worth apart.
 - **Filters per end**: by item, tag, mod or data components, by fluid or tag; allow or deny; and **keep N in the
   destination**, which regulates instead of filling.
 - **A rate** per end.
+- **Redstone per end**: an end works whatever reaches it, only while a redstone signal reaches its cable block, or
+  only while none does, so a lever or a sensor turns one end on or off without touching the rest.
 - **Channels within a line**: one cable carries up to sixteen separate channels, and each end picks its own, so one
   cable does the work of several. Colours still keep whole lines apart.
 
@@ -114,8 +117,3 @@ bonus to machines.
 
 The point-to-point telemetry type the Core had (256 blocks) gave way to J's Space's **telemetry line**, a line of its
 own that groups antennas, ground-station devices and research computers, and carries data only.
-
-## Still to build
-
-- **Shared in turn**: a grid that gives to its ends one after another, beside the priority it already has, for lines
-  whose ends want the same share over time rather than the same share at once.

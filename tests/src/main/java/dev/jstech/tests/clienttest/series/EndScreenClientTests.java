@@ -11,6 +11,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableEndLayout;
+import dev.jstech.core.cable.EndRedstone;
 import dev.jstech.core.cable.Lane;
 import dev.jstech.core.client.cable.CableEndScreen;
 import dev.jstech.core.grid.EndMode;
@@ -91,6 +92,19 @@ public final class EndScreenClientTests {
                     screen.keyPressed(InputConstants.KEY_RETURN, 0, 0);
                 })
                 .thenWaitUntil(() -> shown(ctx, end -> end.rate() == 250L), WAIT, "the rate typed to be set")
+                .then(0, () -> ctx.clickGui(CableEndLayout.REDSTONE_X + 8, CableEndLayout.REDSTONE_Y + 8))
+                .thenWaitUntil(() -> shown(ctx, end -> end.redstone() == EndRedstone.WITH_SIGNAL), WAIT,
+                        "the redstone key to make the end work with a signal")
+                .then(0, () -> {
+                    final CableEndScreen screen = ctx.screen(CableEndScreen.class);
+                    ctx.pointAt(screen.getGuiLeft() + CableEndLayout.REDSTONE_X + 8,
+                            screen.getGuiTop() + CableEndLayout.REDSTONE_Y + 8);
+                })
+                .thenScreenshot(5, "end-redstone")
+                .then(0, () -> ctx.clickGui(CableEndLayout.REDSTONE_X + 8, CableEndLayout.REDSTONE_Y + 8))
+                .then(0, () -> ctx.clickGui(CableEndLayout.REDSTONE_X + 8, CableEndLayout.REDSTONE_Y + 8))
+                .thenWaitUntil(() -> shown(ctx, end -> end.redstone() == EndRedstone.IGNORED), WAIT,
+                        "twice more to ignore redstone again")
                 .then(0, () -> ctx.clickGui(CableEndLayout.INVENTORY_X + 8, CableEndLayout.INVENTORY_Y + 8))
                 .then(2, () -> ctx.clickGui(CableEndLayout.ghostX(0) + 8, CableEndLayout.GHOST_Y + 8))
                 .thenWaitUntil(() -> shown(ctx, end -> end.filter().rules().equals(List.of(

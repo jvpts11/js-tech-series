@@ -55,7 +55,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * The states of matter that are neither solid nor liquid: a tank holds its volume times its pressure, of one material
  * at a time; a line of each state moves only its own, from an output into an input or a tank, at what it carries in a
  * tick, and loses nothing; a gas kept as a fluid by another mod, or as a chemical, comes in through its bridge as the
- * Core's material; a multiblock's ports pass each state; plasma dissipates from a containment that loses its energy,
+ * Core's material, and Mekanism's four kinds of chemical each find their state, or none; a multiblock's ports pass
+ * each state; plasma dissipates from a containment that loses its energy,
  * and exotic matter stays sealed in; a gas let out is lost, exotic matter is never let out.
  */
 @GameTestHolder(JsTests.MODID)
@@ -179,6 +180,23 @@ public final class MatterGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void chemicalBridge_placesEachOfMekanismsFourKinds(final GameTestHelper helper) {
+        helper.assertTrue(MekanismIntegration.isLoaded() && ChemicalBridges.anyRegistered(),
+                "Mekanism and its bridge are on the dev runtime");
+        helper.assertTrue(ChemicalBridges.stateOf(mekanism("hydrogen")).orElse(null) == MatterState.GAS
+                        && ChemicalBridges.stateOf(mekanism("sulfuric_acid")).orElse(null) == MatterState.GAS,
+                "its gases are gases, drawn as a gas or not");
+        helper.assertTrue(ChemicalBridges.stateOf(mekanism("dirty_iron")).orElse(null) == MatterState.SLURRY
+                        && ChemicalBridges.stateOf(mekanism("clean_iron")).orElse(null) == MatterState.SLURRY,
+                "its slurries are slurries, before and after they are washed");
+        helper.assertTrue(ChemicalBridges.stateOf(mekanism("carbon")).isEmpty()
+                        && ChemicalBridges.stateOf(mekanism("bio")).isEmpty(),
+                "its infusions are no state of matter, which no line carries");
+        helper.assertTrue(ChemicalBridges.stateOf(mekanism("red")).isEmpty(), "nor are its pigments");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void gasLine_fillsAChemicalModsTankWithTheSameGas(final GameTestHelper helper) {
         helper.assertTrue(MekanismIntegration.isLoaded() && ChemicalBridges.anyRegistered(),
                 "Mekanism and its bridge are on the dev runtime");
@@ -284,6 +302,10 @@ public final class MatterGameTests {
         for (final BlockPos at : RUN) {
             TestCables.lay(helper, at, line);
         }
+    }
+
+    private static ResourceLocation mekanism(final String chemical) {
+        return ResourceLocation.fromNamespaceAndPath("mekanism", chemical);
     }
 
     private static long amount(final GameTestHelper helper, final BlockPos at, final MatterState state,

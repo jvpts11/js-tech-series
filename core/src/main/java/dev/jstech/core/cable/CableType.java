@@ -39,7 +39,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>A pipe, a cable of the fluid grid, also says what it is made for: the temperatures it stands and the marks it
  * takes, and whether it is insulated against the cold. How much a pipe carries in a tick is the pressure it holds; a
- * gas needs a pipe that takes gases.
+ * gas needs a pipe that takes gases. A pipe of a state held under pressure may say the most pressure it holds: what
+ * comes at more is carried none of and reaches it as a breach.
  *
  * <p>A cable that never shares a block takes no lane: a block that holds it holds nothing else.
  *
@@ -74,6 +75,7 @@ public final class CableType {
     private final @Nullable ResourceLocation fitting;
     private final int span;
     private final boolean insulated;
+    private final long holds;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -106,6 +108,7 @@ public final class CableType {
         this.fitting = builder.fitting;
         this.span = builder.span;
         this.insulated = builder.insulated;
+        this.holds = builder.holds;
     }
 
     /** What the cable is for, as its item's tooltip says it; empty for a cable that says nothing. */
@@ -224,6 +227,11 @@ public final class CableType {
         return this.insulated;
     }
 
+    /** The most pressure it holds as a pipe, in times the open air's; {@link Long#MAX_VALUE} for no limit. */
+    public long holds() {
+        return this.holds;
+    }
+
     /**
      * Its jacket's texture, 32 pixels square: the side with the length along u in the top left (16 by its thickness),
      * the same side with the length along v beside it, and the cut end below.
@@ -298,6 +306,7 @@ public final class CableType {
         private @Nullable ResourceLocation fitting;
         private int span;
         private boolean insulated;
+        private long holds = Long.MAX_VALUE;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -386,6 +395,19 @@ public final class CableType {
          */
         public Builder insulated() {
             this.insulated = true;
+            return this;
+        }
+
+        /**
+         * As a pipe of a state held under pressure, the most pressure it holds, in times the open air's: what comes at
+         * more, from a store holding it at more, is carried none of and reaches it as a breach ({@link #beyond}); any
+         * pressure unless said.
+         */
+        public Builder holds(final long atmospheres) {
+            if (atmospheres < 1) {
+                throw new IllegalArgumentException("a pipe holds at least the open air's pressure, not " + atmospheres);
+            }
+            this.holds = atmospheres;
             return this;
         }
 

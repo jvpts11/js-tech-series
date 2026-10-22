@@ -13,6 +13,7 @@ import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableEndMenu;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.EndFilters;
+import dev.jstech.core.cable.EndRedstone;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.grid.GridKind;
@@ -72,7 +73,11 @@ public final class EndSettingsGameTests {
         menu.clickMenuButton(player, CableEndMenu.RATE_UP);
         menu.clickMenuButton(player, CableEndMenu.FIRST_CHANNEL + 5);
         menu.clickMenuButton(player, CableEndMenu.FILTER_MODE);
+        menu.clickMenuButton(player, CableEndMenu.REDSTONE);
+        menu.clickMenuButton(player, CableEndMenu.REDSTONE);
         final CableEnd end = end(helper, TestCableTypes.PLAIN_PIPE);
+        helper.assertTrue(end.redstone() == EndRedstone.WITHOUT_SIGNAL,
+                "the redstone key twice: from ignored to working with a signal, then without one");
         helper.assertTrue(end.mode() == EndMode.PUSH, "the second key sets push");
         helper.assertTrue(end.priority() == 9, "ten up and one down: " + end.priority());
         helper.assertTrue(end.rate() == CableEndMenu.FLUID_STEP, "a pipe's rate goes up a step: " + end.rate());

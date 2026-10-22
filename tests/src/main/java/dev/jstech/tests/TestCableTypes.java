@@ -14,6 +14,7 @@ import dev.jstech.core.connect.Connection;
 import dev.jstech.core.fluid.CoreFluidTags;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.grid.GridPolicies;
+import dev.jstech.core.matter.PressureBursts;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.IEventBus;
@@ -24,7 +25,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * Cables only the tests lay, registered with the Core as any mod's cables are: a long-distance cable, six pixels thick,
  * which never shares a block, an energy cable that loses a tenth of what crosses each block of it, four pipes, a plain
  * one, the same insulated, one that holds pressure and one of rubber that bursts when something too hot reaches it, a
- * gas line, a slurry line, a line of items and a line that groups the machines it joins. Each is laid by a vanilla
+ * gas line, a thin gas line that bursts past ten atmospheres, a slurry line, a line of items and a line that groups the
+ * machines it joins. Each is laid by a vanilla
  * item and drawn in a jacket and plug the series already has, so the test mod declares no item, texture or model of
  * its own.
  */
@@ -40,6 +42,9 @@ public final class TestCableTypes {
     public static final long HEAT_PIPE_CONDUCTANCE = 200L;
     public static final int RUBBER_HOTTEST = 500;
     public static final int RUBBER_BURSTS_AFTER = 20;
+    /** The thin gas line: the pressure it holds, and what a block of it holds inside, in millibuckets. */
+    public static final long THIN_GAS_HOLDS = 10L;
+    public static final long THIN_GAS_INSIDE = 8L;
     public static final DeferredRegister<CableType> CABLES = DeferredRegister.create(CoreCables.KEY, JsTests.MODID);
     /** A grid of the test mod's own, which shares energy by the Core's policy, as a mod's line of a voltage class. */
     public static final GridKind OWN_POWER = GridKind.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
@@ -99,6 +104,15 @@ public final class TestCableTypes {
                     .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
                     .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
                     .build(() -> Items.PHANTOM_MEMBRANE));
+    /** A thin gas line: it holds ten atmospheres, and bursts the first tick a gas comes at more. */
+    public static final DeferredHolder<CableType, CableType> THIN_GAS_LINE = CABLES.register("thin_gas_line",
+            () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                            "thin_gas_line")))
+                    .grid(GridKind.GAS).alone().carries(GAS_RATE, 0).holds(THIN_GAS_HOLDS)
+                    .beyond(BreachRules.breaksAfter(1, PressureBursts.pipe(THIN_GAS_INSIDE)))
+                    .jacket(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hpc"))
+                    .plug(ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/qsfp"))
+                    .build(() -> Items.GLASS_BOTTLE));
     /** A lined line of slurry: two hundred millibuckets a tick. */
     public static final DeferredHolder<CableType, CableType> SLURRY_LINE = CABLES.register("slurry_line",
             () -> CableType.builder(Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID,

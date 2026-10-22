@@ -11,6 +11,7 @@ import com.mojang.authlib.GameProfile;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.EndRedstone;
 import dev.jstech.core.fluid.FluidGrids;
 import dev.jstech.core.grid.EndMode;
 import dev.jstech.core.grid.LineGroup;
@@ -32,6 +33,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -53,7 +55,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The ends of the Core's lines: an output's water goes first to the end of the highest priority, and to ends of one
- * priority in turns; an end turned off plugs into nothing; a filter lets through what it names and keeps no more in its
+ * priority in turns, the same share over time; an end set to work with a redstone signal rests without one, and one
+ * set to work without a signal rests with one; an end turned off plugs into nothing; a filter lets through what it names and keeps no more in its
  * block than it says; an end moves no more than its rate; ends meet only on their channel; an end set to pull empties a
  * tank; the line of items shares the same way; a group line tells its machines the group they are in; a rubber pipe
  * bursts under lava and spills it; and the Basic Wrench goes round an end's modes.
@@ -90,11 +93,45 @@ public final class CableEndsGameTests {
         final FluidTank output = fluidEnds(helper, TestCableTypes.PLAIN_PIPE);
         helper.succeedWhen(() -> {
             helper.assertTrue(output.isEmpty(), "the output empties");
-            helper.assertTrue(tank(helper, SIDE).getFluidAmount() > 0 && tank(helper, FAR).getFluidAmount() > 0,
-                    "each end of one priority gets its turn");
-            helper.assertTrue(tank(helper, SIDE).getFluidAmount() + tank(helper, FAR).getFluidAmount() == WATER,
-                    "and none is lost");
+            final int side = tank(helper, SIDE).getFluidAmount();
+            final int far = tank(helper, FAR).getFluidAmount();
+            helper.assertTrue(side > 0 && far > 0, "each end of one priority gets its turn");
+            helper.assertTrue(Math.abs(side - far) <= TestCableTypes.PLAIN_RATE,
+                    "the same share over time, never more than a tick's worth apart: " + side + " and " + far);
+            helper.assertTrue(side + far == WATER, "and none is lost");
         });
+    }
+
+    @GameTest(template = ARENA)
+    public static void redstone_anEndThatWorksWithASignalRestsWithoutOne(final GameTestHelper helper) {
+        final FluidTank output = fluidEnds(helper, TestCableTypes.PLAIN_PIPE);
+        end(helper, RUN.get(0), Direction.WEST, TestCableTypes.PLAIN_PIPE,
+                CableEnd.DEFAULT.withRedstone(EndRedstone.WITH_SIGNAL));
+        helper.startSequence()
+                .thenExecuteAfter(WAIT, () -> helper.assertTrue(output.getFluidAmount() == WATER,
+                        "without a signal at its cable block the end rests: " + output.getFluidAmount()))
+                .thenExecute(() -> helper.setBlock(RUN.get(0).above(), Blocks.REDSTONE_BLOCK))
+                .thenWaitUntil(() -> helper.assertTrue(output.isEmpty(), "with one it works, and the output empties"))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void redstone_anEndThatWorksWithoutASignalRestsWithOne(final GameTestHelper helper) {
+        final FluidTank output = fluidEnds(helper, TestCableTypes.PLAIN_PIPE);
+        helper.setBlock(RUN.get(0).above(), Blocks.REDSTONE_BLOCK);
+        end(helper, RUN.get(0), Direction.WEST, TestCableTypes.PLAIN_PIPE,
+                CableEnd.DEFAULT.withRedstone(EndRedstone.WITHOUT_SIGNAL));
+        final CableBlockEntity first = TestCables.cable(helper, RUN.get(0));
+        final CableEnd set = first.end(first.wire(TestCableTypes.PLAIN_PIPE.get()).slot(), Direction.WEST);
+        final CableEnd saved = CableEnd.CODEC.parse(NbtOps.INSTANCE, CableEnd.CODEC.encodeStart(NbtOps.INSTANCE, set)
+                .getOrThrow()).getOrThrow();
+        helper.assertTrue(saved.redstone() == EndRedstone.WITHOUT_SIGNAL, "what it does with redstone is saved");
+        helper.startSequence()
+                .thenExecuteAfter(WAIT, () -> helper.assertTrue(output.getFluidAmount() == WATER,
+                        "with a signal at its cable block the end rests: " + output.getFluidAmount()))
+                .thenExecute(() -> helper.setBlock(RUN.get(0).above(), Blocks.AIR))
+                .thenWaitUntil(() -> helper.assertTrue(output.isEmpty(), "without one it works, and the output empties"))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA)

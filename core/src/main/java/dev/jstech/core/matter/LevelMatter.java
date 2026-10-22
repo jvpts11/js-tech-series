@@ -10,6 +10,8 @@ package dev.jstech.core.matter;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableEnd;
 import dev.jstech.core.cable.CableParts;
+import dev.jstech.core.cable.CableType;
+import dev.jstech.core.cable.LineBreach;
 import dev.jstech.core.cable.LineFlows;
 import dev.jstech.core.cable.NarrowestWire;
 import dev.jstech.core.chemical.ChemicalBridges;
@@ -22,6 +24,7 @@ import dev.jstech.core.grid.EndRouter;
 import dev.jstech.core.grid.FlowTrace;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.grid.GridPlaces;
 import dev.jstech.core.grid.IGridMover;
 import dev.jstech.core.grid.LineSurvey;
@@ -68,6 +71,10 @@ import org.jetbrains.annotations.Nullable;
  * move takes out and puts in as one batch, so nothing is lost on the way. A material linked to a chemical or a fluid
  * ({@link MatterBridges}) passes between them as the same thing; one with no link moves only between stores of its own
  * kind.
+ *
+ * <p>A part holds the least pressure any of its pipes holds ({@link CableType#holds}): a store holding what it gives at
+ * more is carried none of, and reaches each pipe of the part that holds less as a breach, which its cable's rule may
+ * burst ({@link PressureBursts#pipe}).
  */
 public final class LevelMatter implements IGridMover {
 
@@ -185,11 +192,39 @@ public final class LevelMatter implements IGridMover {
             moved[i] = part.rate() <= 0 ? 0L : EndRouter.route(part.ends(), part.rate(), this.turn,
                     substance -> true, (from, to, substance, amount) -> part.tally().moved(from.key(), to.key(),
                             move(part.trace(), from, to, substance, amount)));
+            if (!part.breakable().isEmpty()) {
+                reach(level, part);
+            }
             traces.add(part.trace());
         }
         this.turn++;
         this.lastTick = moved;
         this.flows.tick(level, traces);
+    }
+
+    /*
+     * Tells each pipe of {@code part} that breaks what reaches it at more pressure than it holds: what a store gives at
+     * more than the part holds stays where it is and reaches every pipe of the part that holds less.
+     */
+    private static void reach(final ServerLevel level, final Part part) {
+        for (final MatterEnd end : part.ends()) {
+            final IStore store = end.mode().draws() ? end.store().get() : null;
+            final Offer offer = store == null ? null : store.offer(1L, substance -> true);
+            if (offer == null) {
+                continue;
+            }
+            final double pressure = store.pressure(offer.substance());
+            if (pressure <= part.holds()) {
+                continue;
+            }
+            for (final Breakable pipe : part.breakable()) {
+                if (pressure > pipe.type().holds()) {
+                    pipe.type().breach().exposed(level, new LineBreach(pipe.at(), pipe.type(),
+                            LineBreach.Reason.OVERPRESSURE, offer.substance().id().toString(), pressure),
+                            level.getGameTime());
+                }
+            }
+        }
     }
 
     private void build(final ServerLevel level, final Grid grid) {
@@ -198,22 +233,31 @@ public final class LevelMatter implements IGridMover {
         final GridPlaces places = CoreGrids.places(level);
         for (final CableParts.Part found : CableParts.of(level, grid)) {
             long rate = Long.MAX_VALUE;
+            long holds = Long.MAX_VALUE;
+            final List<Breakable> breakable = new ArrayList<>();
             final NarrowestWire narrowest = new NarrowestWire();
             for (final CableParts.WireAt wire : found.wires()) {
                 rate = Math.min(rate, wire.runTooLong() ? 0L : wire.type().throughput());
+                holds = Math.min(holds, wire.type().holds());
                 this.partOfWire.put(wire.number(), this.parts.size());
-                narrowest.consider(places.place(wire.number()), wire);
+                final GridPlace place = places.place(wire.number());
+                narrowest.consider(place, wire);
+                if (wire.type().breaks() && wire.type().holds() < Long.MAX_VALUE && place != null) {
+                    breakable.add(new Breakable(BlockPos.of(place.pos()), wire.type()));
+                }
             }
+            final long partHolds = holds;
             final Set<String> seen = new HashSet<>();
             final List<MatterEnd> ends = new ArrayList<>();
             for (final CableParts.Plug plug : found.plugs()) {
                 if (plug.end().mode() != EndMode.OFF && seen.add(plug.at().asLong() + "/" + plug.face())) {
                     ends.add(new MatterEnd(plug.at().asLong(), plug.wire(), plug.face().getOpposite(), plug.end(),
-                            end(level, plug.at(), plug.face())));
+                            end(level, plug.at(), plug.face()), partHolds, level));
                 }
             }
-            this.parts.add(new Part(rate, ends, LineFlows.traceOf(level, grid, found), new PartTally(
-                    found.wires().size(), narrowest.found(), ends.stream().map(MatterEnd::key).toList())));
+            this.parts.add(new Part(rate, partHolds, ends, breakable, LineFlows.traceOf(level, grid, found),
+                    new PartTally(found.wires().size(), narrowest.found(),
+                            ends.stream().map(MatterEnd::key).toList())));
         }
     }
 
@@ -282,6 +326,11 @@ public final class LevelMatter implements IGridMover {
 
         /* How much of {@code substance} it holds. */
         long holding(Substance substance);
+
+        /* The pressure it holds {@code substance} at, in times the open air's; the open air's when it keeps none. */
+        default double pressure(final Substance substance) {
+            return 1;
+        }
     }
 
     /*
@@ -355,6 +404,18 @@ public final class LevelMatter implements IGridMover {
                 }
             }
             return held;
+        }
+
+        @Override
+        public double pressure(final Substance substance) {
+            double most = 0;
+            for (int tank = 0; tank < this.handler.tanks(); tank++) {
+                final Optional<MatterStack> stack = this.handler.stack(tank);
+                if (stack.isPresent() && stack.get().material() == substance.material()) {
+                    most = Math.max(most, this.handler.pressureNow(tank));
+                }
+            }
+            return most;
         }
 
         @Override
@@ -522,20 +583,29 @@ public final class LevelMatter implements IGridMover {
         }
     }
 
-    /* One connected part of the grid: how much it moves in a tick, the ends it plugs into, where what it moves goes. */
-    private record Part(long rate, List<MatterEnd> ends, FlowTrace trace, PartTally tally) {
+    /*
+     * One connected part of the grid: how much it moves in a tick, the most pressure it holds, the ends it plugs into,
+     * its pipes that break past the pressure they hold, and where what it moves goes.
+     */
+    private record Part(long rate, long holds, List<MatterEnd> ends, List<Breakable> breakable, FlowTrace trace,
+                        PartTally tally) {
+    }
+
+    /* A pipe of a part that breaks past the pressure it holds: where it is, and its cable. */
+    private record Breakable(BlockPos at, CableType type) {
     }
 
     /*
      * One end of a part: the block, as a store of the line's state, through the face it meets, as the end is set; the
-     * wire it is the end of, and the face of that wire's block it goes into the block through.
+     * wire it is the end of, the face of that wire's block it goes into the block through, the most pressure the part
+     * holds, past which the block gives the part nothing, and the level, whose redstone it may hang on.
      */
-    private record MatterEnd(long key, long wire, Direction into, CableEnd end, Supplier<@Nullable IStore> store)
-            implements EndRouter.IEnd<Substance> {
+    private record MatterEnd(long key, long wire, Direction into, CableEnd end, Supplier<@Nullable IStore> store,
+                             long holds, ServerLevel level) implements EndRouter.IEnd<Substance> {
 
         @Override
         public EndMode mode() {
-            return this.end.mode();
+            return this.end.modeAt(this.level, BlockPos.of(this.key).relative(this.into.getOpposite()));
         }
 
         @Override
@@ -567,7 +637,8 @@ public final class LevelMatter implements IGridMover {
         public EndRouter.@Nullable Offer<Substance> offer(final long most, final Predicate<Substance> wanted) {
             final IStore found = this.store.get();
             final Offer offer = found == null ? null : found.offer(most, wanted);
-            return offer == null ? null : new EndRouter.Offer<>(offer.substance(), offer.amount());
+            return offer == null || found.pressure(offer.substance()) > this.holds ? null
+                    : new EndRouter.Offer<>(offer.substance(), offer.amount());
         }
 
         @Override

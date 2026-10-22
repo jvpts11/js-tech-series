@@ -162,6 +162,11 @@ public final class MatterTanks {
         }
 
         @Override
+        public double pressureNow(final int tank) {
+            return at(tank).pressureNow();
+        }
+
+        @Override
         public long insert(final MatterStack stack, final boolean simulate) {
             long left = stack.amount();
             for (final MatterTank tank : inputs(this.state)) {

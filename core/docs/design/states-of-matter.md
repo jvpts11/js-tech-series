@@ -6,8 +6,8 @@ behaving, instead of the usual "items and fluids", where "fluid" ends up meaning
 ## What exists today
 
 Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: each state
-its own, with its storage, its line and its bridges, and the containment of exotic matter with the Antimatter Trap. How
-a mod uses it, with code: [Energy and resources](../ENERGY_AND_RESOURCES.md).
+its own, with its storage, its line and its bridges, pressure that bursts, and the containment of exotic matter with
+the Antimatter Trap. How a mod uses it, with code: [Energy and resources](../ENERGY_AND_RESOURCES.md).
 
 ## The design
 
@@ -27,9 +27,28 @@ a mod uses it, with code: [Energy and resources](../ENERGY_AND_RESOURCES.md).
 - **Lines of different states never join**: each has its own line of the cable block
   ([Cables and lines](cables-and-lines.md)).
 - **Bridges** bring in other mods' gases (fluids tagged as gases, Mekanism's gases), so none is left out. Liquids need
-  no bridge, being NeoForge fluids already.
+  no bridge, being NeoForge fluids already. Mekanism keeps four kinds of chemical in one registry: its gases are gases
+  (rendered as a gas or not), its slurries are slurries, and its infusions and pigments are no state of matter of
+  their own, so no line of the Core carries them; Mekanism's own tubes still do.
 - **Changing state** is a mod's recipe (a liquefier, a boiler, a plasma torch); the Core knows the states and how each
   is kept, not how to go from one to another.
+
+### Pressure that bursts
+
+What is held under pressure, a gas or a supercritical fluid, can be held past what its vessel stands, and then the
+vessel bursts, as a real one does.
+
+- **A tank may say what it stands**: a pressure above the one it is filled to. Nothing fills it past its own pressure
+  by itself; something stronger than it can (a compressor, a hotter gas), and once it holds more than it stands it
+  bursts: its block is gone, what it held is let out, and a blast goes off with **the energy the gas held** above the
+  air around it, Brode's measure, through the Core's explosions ([Explosions and fire](explosions-and-fire.md)).
+- **A relief valve** opens past its setting, between the tank's own pressure and the one it bursts at, and lets a
+  little out each tick until the tank is back at its setting. A valve too small for what is forced in does not save
+  the tank.
+- **A pipe may say the pressure it holds.** A store holding a gas at more is carried none of, and the gas reaches the
+  pipe as something it is not made for, as a fluid too hot does: by the pipe's own rule it holds, or it bursts with the
+  force of the gas a block of it held.
+- A tank or a pipe that says nothing never bursts; each mod's design says which of its own do, and at what.
 
 ### Containment of exotic matter
 
@@ -44,7 +63,4 @@ and radiation belts, with no other mod installed.
 
 ## Still to build
 
-- **Pressure that bursts**: a tank or a pipe held past what it stands bursts, with the force of what it held; a relief
-  valve lets a little out before that.
-- **The bridge of chemicals checked against Mekanism's four kinds** of its current version.
 - **J's Computers' storage keeping every state**, when J's Computers moves onto the Core.
