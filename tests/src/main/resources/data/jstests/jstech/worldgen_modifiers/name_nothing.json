@@ -1,0 +1,5 @@
+{
+  "type": "jscore:density_function",
+  "target": "jstests:nothing_by_this_name",
+  "density": 1
+}

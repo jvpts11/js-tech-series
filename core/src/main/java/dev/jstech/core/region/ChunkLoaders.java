@@ -67,7 +67,12 @@ public final class ChunkLoaders {
          */
         LIMIT_REACHED,
         /** Every owner together keeps as many chunks loaded as the server's budget allows; nothing new is loaded. */
-        SERVER_FULL
+        SERVER_FULL,
+        /**
+         * The owner is away past what the server allows ({@link AwayOwners}): the chunk is noted as theirs, and
+         * loaded as soon as they come back.
+         */
+        OWNER_AWAY
     }
 
     /** Hands the game the controller, on the mod's event bus. */
@@ -108,8 +113,11 @@ public final class ChunkLoaders {
         kept.chunks.add(chunk.toLong());
         ledger.sources.put(source.immutable(), kept);
         ledger.setDirty();
-        CONTROLLER.forceChunk(level, source, chunk.x, chunk.z, true, ticking);
         LoadedChunkMarkers.changed(level, source, owner, kept.reason, kept.chunks);
+        if (AwayOwners.letGoOf(owner)) {
+            return LoadOutcome.OWNER_AWAY;
+        }
+        CONTROLLER.forceChunk(level, source, chunk.x, chunk.z, true, ticking);
         return LoadOutcome.LOADED;
     }
 
@@ -231,6 +239,24 @@ public final class ChunkLoaders {
         final Map<BlockPos, TextKey> out = new LinkedHashMap<>();
         ledger(level).sources.forEach((pos, source) -> out.put(pos, source.reason));
         return out;
+    }
+
+    /*
+     * Keeps every chunk {@code owner}'s sources note loaded, in every dimension, or lets them go while the notes stay:
+     * what an owner away past the server's rule, and back, comes to.
+     */
+    static void forceAllOf(final MinecraftServer server, final UUID owner, final boolean force) {
+        for (final ServerLevel level : server.getAllLevels()) {
+            for (final Map.Entry<BlockPos, Source> source : ledger(level).sources.entrySet()) {
+                if (!source.getValue().owner().equals(owner)) {
+                    continue;
+                }
+                for (final long chunk : source.getValue().chunks()) {
+                    CONTROLLER.forceChunk(level, source.getKey(), ChunkPos.getX(chunk), ChunkPos.getZ(chunk), force,
+                            source.getValue().ticking());
+                }
+            }
+        }
     }
 
     /* When the world loads, a ticket whose source the ledger no longer knows is let go of. */

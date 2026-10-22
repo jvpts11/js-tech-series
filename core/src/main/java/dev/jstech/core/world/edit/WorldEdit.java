@@ -8,17 +8,23 @@
 package dev.jstech.core.world.edit;
 
 import dev.jstech.core.task.Task;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A large edit of the world under way ({@link WorldEdits}): planned away from the server's thread, then set a share of
- * each tick until it is done. It says how far it has got, can be stopped, and tells who asks when it ends.
+ * each tick until it is done. It says how far it has got, can be stopped, tells who asks when it ends, and, made
+ * undoable, gives the plan that puts back what it replaced.
  */
 public final class WorldEdit {
 
@@ -30,6 +36,10 @@ public final class WorldEdit {
     private State state = State.PLANNING;
     /* The player it is counted for, against their limit of edits under way; none for one a mod makes. */
     private @Nullable UUID player;
+    /* What an undoable edit replaced, in the order it was replaced: each place, the block, what its entity held. */
+    private final LongArrayList replacedPlaces = new LongArrayList();
+    private final List<BlockState> replacedBlocks = new ArrayList<>();
+    private final List<CompoundTag> replacedData = new ArrayList<>();
 
     WorldEdit(final ServerLevel level) {
         this.level = level;
@@ -84,6 +94,24 @@ public final class WorldEdit {
         end(State.STOPPED);
     }
 
+    /**
+     * The plan that puts back what an undoable edit replaced, the last replaced first, each block with what its
+     * entity held: for an edit ended, done or stopped where it was; none for an edit under way, failed, or whose plan
+     * was not {@link EditPlan.Builder#undoable()}. The plan is undoable itself, so undoing it does the edit again.
+     */
+    public Optional<EditPlan> undo() {
+        if (!over() || this.state == State.FAILED || this.plan == null || !this.plan.undoable()) {
+            return Optional.empty();
+        }
+        final EditPlan.Builder back = EditPlan.builder().flags(this.plan.flags()).undoable();
+        for (int i = this.replacedPlaces.size() - 1; i >= 0; i--) {
+            final long place = this.replacedPlaces.getLong(i);
+            back.set(BlockPos.getX(place), BlockPos.getY(place), BlockPos.getZ(place), this.replacedBlocks.get(i),
+                    this.replacedData.get(i));
+        }
+        return Optional.of(back.build());
+    }
+
     /** Runs {@code then} on the server's thread when it ends, at once if it has. */
     public void whenOver(final Consumer<WorldEdit> then) {
         Objects.requireNonNull(then, "then");
@@ -113,6 +141,13 @@ public final class WorldEdit {
 
     void advance(final int blocks) {
         this.set += blocks;
+    }
+
+    /* Keeps what stood at {@code place} before the edit set it, for its undo. */
+    void replaced(final long place, final BlockState block, final @Nullable CompoundTag held) {
+        this.replacedPlaces.add(place);
+        this.replacedBlocks.add(block);
+        this.replacedData.add(held);
     }
 
     void end(final State how) {

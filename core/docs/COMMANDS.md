@@ -53,6 +53,9 @@ level always may run it, and a server's permission mod may grant it to a player 
 | `/jstech config set <file> <setting> <value>` | level 2 | Sets it for every player at once; the value is JSON or plain words. *Added 2026-10-15.* |
 | `/jstech config reset <file> <setting>` | level 2 | Puts it back to its default. *Added 2026-10-15.* |
 | `/jstech config preset <file> <name>` | level 2 | Picks one of the file's presets, shipped or saved on the server. *Added 2026-10-15.* |
+| `/jstech edit export <name> <from> <to>` | level 2 | Saves a box of the world, with its block entities and its air, as the structure file `name` in the world's `generated` folder ([World](WORLD.md#large-edits)). *Added 2026-10-22.* |
+| `/jstech edit import <name> <at> [<rotation>]` | level 2 | Sets a structure file's blocks at a place, turned, as a large edit a share each tick, keeping what they replace ([World](WORLD.md#large-edits)). *Added 2026-10-22.* |
+| `/jstech edit undo` | level 2 | Puts back what your last undoable edit replaced; run again, it does the edit once more ([World](WORLD.md#large-edits)). *Added 2026-10-22.* |
 | `/jstech dump permissions` | level 3 | Writes every permission of the series, and the LuckPerms groups to paste, into `jstech-permissions/` ([Protection](PROTECTION.md#permissions)). *Added 2026-10-15.* |
 | `/jstech audit [page]`, `audit player <name> [page]`, `audit at <pos> [page]` | level 3 | Reads the audit log, newest first ([Protection](PROTECTION.md#the-audit-log)). *Added 2026-10-15.* |
 | `/jstech health` | level 3 | The state of the series' systems and their warnings ([Diagnostics](DIAGNOSTICS.md#jstech-health)). *Added 2026-10-15.* |

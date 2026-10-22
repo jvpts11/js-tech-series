@@ -96,6 +96,8 @@ public final class CoreConfigKeys {
     private static final int MAX_MEDIA_QUOTA_MEGABYTES = 1_048_576;
     private static final int MAX_CHUNKS_PER_OWNER = 4096;
     private static final int MAX_SERVER_CHUNKS = 65_536;
+    /* A year of the server's running. */
+    private static final int MAX_AWAY_HOURS = 8_760;
     private static final double MAX_VEIN_FACTOR = 100;
     private static final double MAX_EVENT_FACTOR = 100;
     private static final int MIN_AUDIT_ENTRIES = 100;
@@ -233,6 +235,19 @@ public final class CoreConfigKeys {
             .comment("How many chunks every player and team together may keep loaded through machines, across every "
                     + "dimension: the server's budget, besides each owner's own number; 0 lets nobody keep any.")
             .named("Loaded chunks on the server").unit("chunks");
+
+    /** Whether machines keep their chunks loaded while their owner is away from the server. */
+    public static final ConfigKey<Boolean> WORLD_CHUNKS_WHILE_AWAY = ConfigKey.flag(WORLD + ".chunks_while_away", true)
+            .comment("Whether machines keep their chunks loaded while their owner is not on the server. Off, an "
+                    + "owner's chunks are let go of as they leave, and loaded again as they come back.")
+            .named("Chunks kept while their owner is away");
+
+    /** For how many hours of the server's running an owner's chunks stay loaded once they leave. */
+    public static final ConfigKey<Integer> WORLD_CHUNKS_AWAY_HOURS = ConfigKey.whole(WORLD + ".chunks_away_hours", 0)
+            .range(0, MAX_AWAY_HOURS).activeWhen(WORLD_CHUNKS_WHILE_AWAY)
+            .comment("For how many hours of the server's running an owner's chunks stay loaded once they leave; then "
+                    + "they are let go of until the owner comes back. 0 keeps them for as long as the owner is away.")
+            .named("Hours chunks are kept for an owner away").unit("h");
 
     /** Whether players on one team may hurt each other. */
     public static final ConfigKey<Boolean> PROTECTION_TEAM_DAMAGE = ConfigKey.flag(PROTECTION + ".team_damage", false)
@@ -747,6 +762,8 @@ public final class CoreConfigKeys {
             .key(CALENDAR_DAYS_PER_SEASON, WorldCalendar::setDaysPerSeason)
             .key(WORLD_CHUNKS_PER_OWNER, ChunkLoadingBalance::setLimit)
             .key(WORLD_CHUNKS_SERVER_BUDGET, ChunkLoadingBalance::setServerBudget)
+            .key(WORLD_CHUNKS_WHILE_AWAY, ChunkLoadingBalance::setKeepWhileAway)
+            .key(WORLD_CHUNKS_AWAY_HOURS, ChunkLoadingBalance::setAwayHours)
             .key(PROTECTION_TEAM_DAMAGE, ProtectionBalance::setTeamDamage)
             .key(PROTECTION_AUDIT, ProtectionBalance::setAudit)
             .key(PROTECTION_AUDIT_ENTRIES, ProtectionBalance::setAuditEntries)

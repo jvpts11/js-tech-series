@@ -23,6 +23,7 @@ import dev.jstech.core.material.Materials;
 import dev.jstech.core.pack.ContentPacks;
 import dev.jstech.core.protection.ProtectionCommands;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.worldgen.structure.StructureReport;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -50,7 +51,8 @@ import net.neoforged.fml.loading.FMLPaths;
  * {@code /jstech dump}: what the game holds, written to files under {@code jstech-dump/} in the game's folder for
  * those who build a modpack, each as a page of plain Markdown: every material with its forms and properties, every
  * form, every kind of recipe with how many recipes the data holds of it, every tag of items, blocks and fluids with
- * what is in it, every hazard, and every id the series' mods and the content packs registered.
+ * what is in it, every hazard, every id the series' mods and the content packs registered, and every structure set
+ * with its placement and structures ({@link StructureReport}).
  * {@code /jstech dump reference} writes the generated reference, a small website ({@link ReferenceSite});
  * {@code /jstech dump all} writes them all, and {@code /jstech dump permissions} the series' permissions as before.
  */
@@ -79,6 +81,8 @@ public final class ModpackDumps {
                 .then(Commands.literal("hazards").executes(source -> page(source, "hazards.md",
                         server -> hazards())))
                 .then(Commands.literal("ids").executes(source -> page(source, "ids.md", server -> ids())))
+                .then(Commands.literal("structures").executes(source -> page(source, "structures.md",
+                        StructureReport::page)))
                 .then(Commands.literal(REFERENCE).executes(ModpackDumps::reference))
                 .then(Commands.literal("all").executes(ModpackDumps::all)));
     }
@@ -209,6 +213,7 @@ public final class ModpackDumps {
         pages.put("tags.md", tags());
         pages.put("hazards.md", hazards());
         pages.put("ids.md", ids());
+        pages.put("structures.md", StructureReport.page(server));
         for (final Map.Entry<String, String> page : pages.entrySet()) {
             write(folder.resolve(page.getKey()), page.getValue());
         }

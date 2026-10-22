@@ -98,7 +98,11 @@ data pack can add kinds of its own there:
   copper and gold are not laid. The large veins the game itself makes, of raw iron with tuff and of raw copper with
   granite, stay as they are.
 - **The same for the same seed.** Where every vein lies is worked out from the world's seed alone, and each chunk lays
-  only what reaches it, so a world generates the same on any number of threads, with C2ME or Distant Horizons.
+  only what reaches it, so a world generates the same on any number of threads, with C2ME or Distant Horizons. *Added
+  2026-10-22:* a test proves it for all the Core's generation: the test land's density worked out on one thread and on
+  eight, and its chunks made all at once and one at a time, come out the same (`SameWorldGameTests`).
+- **A field manual for players.** The Technical Reference's world has a page on the veins, how they lie and how to
+  find them, with the series' veins in a table (*added 2026-10-22*).
 
 ### Prospecting
 
@@ -453,6 +457,23 @@ against how many large edits one player may have under way at once (`protection.
 [Protection](PROTECTION.md#limits-per-player)) until it ends, and at the limit nothing is planned and the answer is
 empty, `PlayerLimits.reached(PlayerLimits.LARGE_EDITS, WorldEdits.underWayFor(player))` saying so to the player.
 
+*Added 2026-10-22.* **Undone, saved and read back.** A plan made `undoable()` keeps each block it replaces, with what
+the block's entity held (a chest's contents, a machine's settings): once the edit ends, done or stopped, `edit.undo()`
+is the plan that puts them back, the last replaced first, and it is undoable itself. A block of a plan may carry what
+its entity holds, `set(x, y, z, block, tag)`, loaded into it once it is set; a container replaced is cleared rather than
+spilled, as the game's structures do.
+
+```java
+WorldEdits.export(level, box, rl("vault"));                               // the world's generated folder
+EditPlan vault = WorldEdits.planFrom(level, rl("vault"), corner, Rotation.CLOCKWISE_90).orElseThrow()
+        .undoable().build();                                              // a file of the world's or any pack's
+WorldEdits.applyFor(level, player, vault);
+WorldEdits.lastFor(player).flatMap(WorldEdit::undo).ifPresent(back -> WorldEdits.applyFor(level, player, back));
+```
+
+`/jstech edit export <name> <from> <to>`, `/jstech edit import <name> <at> [<rotation>]` and `/jstech edit undo` do the
+same from the chat ([Commands](COMMANDS.md)). Only each player's last undoable edit is kept, while the server runs.
+
 ### World events
 
 A **world event** is something the world goes through by its schedule or by chance: a meteor shower, a solar storm,
@@ -582,6 +603,63 @@ The first rule that holds for a block lays it. `where(noise, from, to, rules)` l
 a range, patches of a surface, and `rule(...)` takes any surface rule of the game's own. A density function may sample
 another declared one, `OTHER.reference(densities)`. The test mod's ridged land is a worked example
 (`tests/src/main/java/dev/jstech/tests/TestWorldGen.java`).
+
+*Added 2026-10-22.* **More kinds of density function**, beside the game's, for code (`CoreDensities`) and for files:
+
+| Kind | What it makes | Its fields |
+| --- | --- | --- |
+| `jscore:terrace` | its input in steps, flat across most of each and rising over the last share: mesas, benches | `input`, `step`, `smoothness` (0.25) |
+| `jscore:ridge` | its input folded into ridges, highest where it crosses nothing: mountain chains, dunes | `input` |
+| `jscore:power` | its input raised to a power, keeping its sign: flat plains under sharp peaks | `input`, `exponent` |
+| `jscore:remap` | its input moved along a line from one range to another, held inside it when `clamped` | `input`, `from_low`, `from_high`, `to_low`, `to_high`, `clamped` |
+| `jscore:smooth_min`, `jscore:smooth_max` | the smaller or larger of two, the crease where they meet rounded off: two shapes as one | `argument1`, `argument2`, `smoothness` |
+| `jscore:distance` | how far a place is from a point, across, in radii: islands, craters | `x`, `z`, `radius` |
+
+### Worldgen modifiers
+
+*Added 2026-10-22.*
+
+The world generation of the game and of any mod is changed by a datapack, in
+`data/<namespace>/jstech/worldgen_modifiers/<name>.json`, as the server starts and before its worlds are made:
+
+```json
+{"type": "jscore:density_function", "target": "minecraft:overworld/continents",
+ "density": {"type": "minecraft:add", "argument1": {"type": "jscore:original"}, "argument2": 0.1}}
+```
+
+```json
+{"type": "jscore:structure_set", "target": "minecraft:villages", "placement": {"spacing": 48, "separation": 16},
+ "remove": ["minecraft:village_snowy"], "add": [{"structure": "mymod:hamlet", "weight": 2}]}
+```
+
+- `jscore:density_function` puts a new function in the place of one, by its id, so every terrain and function that
+  names it draws the new one; `jscore:original` in it stands for the old one, so a change wraps what was.
+- `jscore:structure_set` sets fields of a set's placement over those it has, and takes structures out of it or puts
+  them in.
+- A biome's features and spawns, and a structure's biomes, spawns and step, are NeoForge's own biome and structure
+  modifiers' (`neoforge:add_features`, `neoforge:remove_features` and the rest), which the Core does not repeat.
+- Modifiers are made in the order of their `"priority"` (0 when unsaid, the lowest first), then of their ids. One that
+  names nothing, or cannot be made, says so in the log and leaves the world as it was. `/jstech dump structures` lists
+  what was made as the server started.
+- A mod adds a kind of its own with `WorldgenModifiers.declareKind(id, codec)`; its `apply` changes the registries
+  with `WorldgenModifiers.rebind(holder, value)`.
+- They take hold for worlds made after the server starts; chunks made already keep what they have.
+
+### Structures tuned by an operator
+
+*Added 2026-10-22.*
+
+Any mod's structures are tuned in `config/jstech-structures.toml`, read as the game starts:
+
+| Setting | Means |
+| --- | --- |
+| `structures.off` | The structures never made, by id, or every structure of a mod as `"somemod:*"`. |
+| `structures.spacing` | How far apart each set's structures are, as a share of their own spacing, by the set's id or `"somemod:*"`: `"minecraft:villages" = 2.0`. A set named itself takes its own share over its mod's. Only sets placed by a spacing and a separation change. |
+| `structures.biomes` | The biomes a structure may stand in, over its own: `"minecraft:igloo = minecraft:snowy_plains, #minecraft:is_taiga"`. |
+
+`/jstech dump structures` writes `jstech-dump/structures.md`: every structure set with its placement and its
+structures, their weights, steps and how many biomes each may stand in, those turned off marked
+([Modpacks](MODPACKS.md)).
 
 ### Biomes and their climates
 
@@ -1015,6 +1093,18 @@ ChunkLoaders.releaseAll(level, machinePos);
 - `/jstech chunks <player>` shows what a player keeps loaded, place by place with each one's reason, and releases
   it; `/jstech chunks` counts every owner's against the budget, and `/jstech chunks map` shows an operator every place
   keeping chunks, whose it is and why, on their own map ([Commands](COMMANDS.md)).
+
+*Added 2026-10-22.* **While the owner is away**, their chunks stay loaded unless the server says otherwise:
+
+| Setting, in `jstech-balance.toml` | Means | The default |
+| --- | --- | --- |
+| `world.chunks_while_away` | Machines keep their chunks loaded while their owner is not on the server. Off, an owner's chunks are let go of as they leave. | on |
+| `world.chunks_away_hours` | For how many hours of the server's running the chunks stay loaded once the owner leaves; then they are let go of. 0 for as long as they are away. | 0 |
+
+Chunks let go of are still the owner's, against their limit and the budget, and are loaded again the moment they come
+back; what a machine asks to load meanwhile `load` answers with `OWNER_AWAY`, and it is loaded as they come back too.
+When each owner left is kept with the world, so the hours go on counting across restarts, but only while the server
+runs (`AwayOwners`).
 
 ### The Space Persistor
 

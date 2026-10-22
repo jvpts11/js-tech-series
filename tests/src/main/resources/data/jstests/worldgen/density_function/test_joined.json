@@ -1,0 +1,6 @@
+{
+  "type": "jscore:smooth_min",
+  "argument1": 0.2,
+  "argument2": 0.4,
+  "smoothness": 0.4
+}

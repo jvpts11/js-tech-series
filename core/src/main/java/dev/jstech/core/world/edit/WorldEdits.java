@@ -14,18 +14,37 @@ import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.task.Tasks;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Clearable;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -56,6 +75,15 @@ public final class WorldEdits {
     /* How long a tick's share may run, in nanoseconds, and how many blocks are set between looks at the clock. */
     private static final long SLICE_NANOS = 1_500_000L;
     private static final int BETWEEN_LOOKS = 64;
+    /* Each player's last undoable edit, while the server runs. */
+    private static final Map<UUID, WorldEdit> LAST = new HashMap<>();
+    /* The names a structure file is written with. */
+    private static final String PALETTE = "palette";
+    private static final String PALETTES = "palettes";
+    private static final String BLOCKS = "blocks";
+    private static final String POS = "pos";
+    private static final String STATE = "state";
+    private static final String NBT = "nbt";
 
     private WorldEdits() {
     }
@@ -71,6 +99,7 @@ public final class WorldEdits {
             List.copyOf(SETTING).forEach(WorldEdit::stop);
             SETTING.clear();
             FOR_PLAYERS.clear();
+            LAST.clear();
         });
     }
 
@@ -159,7 +188,19 @@ public final class WorldEdits {
             final int to = Math.min(plan.size(), from + BETWEEN_LOOKS);
             final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
             for (int i = from; i < to; i++) {
-                edit.level().setBlock(at.set(plan.place(i)), plan.block(i), plan.flags());
+                at.set(plan.place(i));
+                if (plan.undoable()) {
+                    edit.replaced(plan.place(i), edit.level().getBlockState(at), held(edit.level(), at));
+                }
+                // As the game's structures do, what a container held is cleared rather than spilled on the ground.
+                Clearable.tryClear(edit.level().getBlockEntity(at));
+                edit.level().setBlock(at, plan.block(i), plan.flags());
+                final CompoundTag data = plan.data(i);
+                final BlockEntity entity = data == null ? null : edit.level().getBlockEntity(at);
+                if (entity != null) {
+                    entity.loadWithComponents(data, edit.level().registryAccess());
+                    entity.setChanged();
+                }
             }
             edit.advance(to - from);
             setNow += to - from;
@@ -171,14 +212,79 @@ public final class WorldEdits {
         return setNow;
     }
 
-    /* Counts {@code edit} as {@code player}'s until it ends. */
+    /**
+     * The last edit made for {@code player} whose plan was undoable, under way or ended, while the server runs: the
+     * one {@code /jstech edit undo} undoes. Only the last is kept, so what an older one replaced is let go.
+     */
+    public static Optional<WorldEdit> lastFor(final UUID player) {
+        return Optional.ofNullable(LAST.get(player));
+    }
+
+    /**
+     * Saves the blocks of {@code box} in {@code level}, with their block entities and the air among them, as the
+     * game's structure file {@code id} in the world's {@code generated} folder, as a structure block saves one; whether
+     * it was written. On the server's thread.
+     */
+    public static boolean export(final ServerLevel level, final BoundingBox box, final ResourceLocation id) {
+        final StructureTemplateManager templates = level.getStructureManager();
+        final StructureTemplate template = templates.getOrCreate(id);
+        template.fillFromWorld(level, new BlockPos(box.minX(), box.minY(), box.minZ()), new Vec3i(box.getXSpan(),
+                box.getYSpan(), box.getZSpan()), false, Blocks.STRUCTURE_VOID);
+        return templates.save(id);
+    }
+
+    /**
+     * The blocks of the structure file {@code id} (the world's own, or any resource pack's) as a plan that sets them
+     * with {@code origin} at its corner, turned by {@code rotation} round it, each with what its block entity held: to
+     * be made undoable or waking its neighbours, built and applied as a large edit. Empty when no file has that id.
+     */
+    public static Optional<EditPlan.Builder> planFrom(final ServerLevel level, final ResourceLocation id,
+                                                      final BlockPos origin, final Rotation rotation) {
+        final Optional<StructureTemplate> template = level.getStructureManager().get(id);
+        if (template.isEmpty()) {
+            return Optional.empty();
+        }
+        final CompoundTag file = template.get().save(new CompoundTag());
+        final HolderGetter<Block> blocks = level.holderLookup(Registries.BLOCK);
+        final List<BlockState> palette = new ArrayList<>();
+        final ListTag written = file.contains(PALETTES, Tag.TAG_LIST)
+                ? file.getList(PALETTES, Tag.TAG_LIST).getList(0) : file.getList(PALETTE, Tag.TAG_COMPOUND);
+        for (int i = 0; i < written.size(); i++) {
+            palette.add(NbtUtils.readBlockState(blocks, written.getCompound(i)));
+        }
+        final StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation);
+        final EditPlan.Builder plan = EditPlan.builder();
+        final ListTag placed = file.getList(BLOCKS, Tag.TAG_COMPOUND);
+        for (int i = 0; i < placed.size(); i++) {
+            final CompoundTag one = placed.getCompound(i);
+            final ListTag pos = one.getList(POS, Tag.TAG_INT);
+            final BlockPos at = origin.offset(StructureTemplate.calculateRelativePosition(settings, new BlockPos(
+                    pos.getInt(0), pos.getInt(1), pos.getInt(2))));
+            final BlockState state = palette.get(one.getInt(STATE)).rotate(rotation);
+            plan.set(at.getX(), at.getY(), at.getZ(), state, one.contains(NBT, Tag.TAG_COMPOUND)
+                    ? one.getCompound(NBT) : null);
+        }
+        return Optional.of(plan);
+    }
+
+    /* Counts {@code edit} as {@code player}'s until it ends, and keeps it as the last they may undo. */
     private static WorldEdit counted(final WorldEdit edit, final UUID player) {
         edit.forPlayer(player);
         if (!edit.over()) {
             FOR_PLAYERS.add(edit);
             edit.whenOver(FOR_PLAYERS::remove);
         }
+        final EditPlan plan = edit.plan();
+        if (plan == null || plan.undoable()) {
+            LAST.put(player, edit);
+        }
         return edit;
+    }
+
+    /* What the block entity at {@code pos} holds, to be put back by an undo; null for a block with none. */
+    private static @Nullable CompoundTag held(final ServerLevel level, final BlockPos pos) {
+        final BlockEntity entity = level.getBlockEntity(pos);
+        return entity == null ? null : entity.saveWithFullMetadata(level.registryAccess());
     }
 
     private static void begin(final WorldEdit edit, final EditPlan plan) {

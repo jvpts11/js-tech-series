@@ -8,10 +8,13 @@ made with are the Core's.
 ## What exists today
 
 Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: terrain and
-biomes declared in code down to their noises, density functions and surface rules, landforms, rock in layers, seas of
-any liquid, veins and prospecting, reservoirs, structures and settlements, finding things, map markers, the sky, the
-day and the weather of each dimension, the physics kit, worlds that change, fields over chunks, chunks kept loaded with
-a reason each, and the Space Persistor. How a mod uses it, with code: [The world](../WORLD.md).
+biomes declared in code down to their noises, density functions and surface rules, with the Core's own kinds of
+density function, any mod's world changed as data, landforms, rock in layers, seas of any liquid, veins, their field
+manual and prospecting, reservoirs, structures and settlements, any mod's structures tuned by an operator, finding
+things, map markers, the sky, the day and the weather of each dimension, the physics kit, worlds that change, large
+edits undone and saved as structure files, fields over chunks, chunks kept loaded with a reason each and by the
+server's rule while their owner is away, the Space Persistor, and the proof that the same seed makes the same world on
+any number of threads. How a mod uses it, with code: [The world](../WORLD.md).
 
 ## The design
 
@@ -32,6 +35,11 @@ and the planets of Ad Astra and Galacticraft do, and more.
 - **Rock strata**: host rocks lie in layers by depth and region, so veins cross real strata; J's Geology adds rocks.
 - **Climate per biome, in real values**: temperature in °C and rain in mm a year, with seasons, for J's Agriculture and
   J's Oceanics.
+- **More kinds of density function** to build terrain with: terraces, ridges, powers, a value moved from one range to
+  another, two shapes joined smoothly, and the distance from a point.
+- **Any mod's world changed as data**: a data pack puts a new density function in the place of one of the game's or
+  any mod's, wrapping the old one if it likes, and changes a structure set's placement and what it holds; a biome's
+  features and a structure's biomes are NeoForge's own modifiers'.
 
 ### Veins
 
@@ -47,6 +55,8 @@ the edges, so a player finds nothing, or hundreds. The vein system is a kit any 
   NeoForge's biome modifiers, as data.
 - **Prospecting** asks the kit for the direction and strength of nearby veins, never their coordinates, and for a vein's
   composition and size; the tools that ask are a mod's (J's Industrial's prospecting pick and scanner).
+- **A field manual of the veins** for players, in the Technical Reference, written in Markdown ([Manuals](manuals.md)):
+  how veins lie, how to follow and find them, and the series' veins in a table.
 
 **Settings**, in the Core's files: turn the vein system off (ores then generate as in vanilla, scattered, with rarity by
 height); each deposit type's rarity, spread and density; per material, do not generate its ore; and **try brute-force
@@ -74,7 +84,9 @@ A **structure generation kit**, built on vanilla's data-driven structures and th
 - **structures as discoverable targets**: instruments and maps find them, imprecisely at first;
 - **state kept per structure**: chambers sealed behind a team's knowledge ([Progression](progression.md)), terminals
   woken by power;
-- **no overlap** with landmarks or other mods' structures.
+- **no overlap** with landmarks or other mods' structures;
+- **any mod's structures tuned by an operator**, in a settings file: turned off, spaced out, or moved to other biomes,
+  with a dump of them all.
 
 J's Space's ruins, Enigmatic sites and cities come first, then J's Overworld's, J's Geology's and the rest.
 
@@ -130,7 +142,8 @@ Where the laws depart from the normal ones, **dissonance** builds up ([Hazards](
   melts, the surface turns into something else; an area's biome can be changed and sent to players. This is what J's
   Space's terraforming asks for.
 - **Large edits** (the crater of an impact, the blast of a reactor) are planned away from the game's thread and placed
-  within a budget, so the server never stalls.
+  within a budget, so the server never stalls; one can be undone, a box saved as a structure file, and a structure
+  file read back as a large edit, turned.
 
 ### Travelling between dimensions
 
@@ -164,6 +177,8 @@ from the tick in batches, and sent to the players nearby for the overlays that s
 - **Tickets with a reason**: every chunk kept loaded says which owner keeps it, and why.
 - **A budget for the server** across every owner, besides each owner's own number.
 - **A map** of the chunks kept loaded, for players and operators.
+- **Chunks kept with their owner away** by a rule of the server's: always (the default), never, or for so many hours of
+  its running, after which they wait, still the owner's, until the owner comes back.
 
 **The Space Persistor** is the series' chunk loader, a block of the Core's shared content, in a technological look (as
 Chicken Chunks' loader). It serves any mod: a quarry far away, a station, a starship left in orbit.
@@ -183,7 +198,8 @@ Chicken Chunks' loader). It serves any mod: a quarry far away, a station, a star
 ### Generation that never waits
 
 Everything the Core generates is **safe across threads and always the same for the same seed**, so it works with mods
-that generate on many threads or draw distant terrain, such as C2ME and Distant Horizons.
+that generate on many threads or draw distant terrain, such as C2ME and Distant Horizons; a test proves it, making the
+same land on one thread and on eight, and the same chunks all at once and one at a time.
 
 ### The experimental-settings warning
 
@@ -192,13 +208,5 @@ game's warning about experimental settings; this needs reaching into the game ([
 
 ## Still to build
 
-- **Changing other mods' world as data**: density functions, biomes, features and structures of the game and of other
-  mods changed by a data pack, and more kinds of density function to build terrain with.
-- **Other mods' structures tuned by an operator**: a settings file that turns off, spaces out or moves to other biomes
-  the structures of any mod, and a dump of them all.
-- **A field manual of the veins**, written in Markdown in the manuals' framework ([Manuals](manuals.md)).
-- **Large edits kept and undone**: a large edit saved as a structure file, read back from one, and undone.
-- **Chunks kept with their owner away**, by a rule of the server's.
-- **The same world on every thread, proved**: a test that generates the same land with any number of threads.
 - **Biomes added to the Overworld by region**, with their surface rules merged, belong to J's Overworld, a mod of its
   own on the Core.

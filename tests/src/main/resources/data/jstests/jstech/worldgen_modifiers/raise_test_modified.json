@@ -1,0 +1,9 @@
+{
+  "type": "jscore:density_function",
+  "target": "jstests:test_modified",
+  "density": {
+    "type": "minecraft:add",
+    "argument1": {"type": "jscore:original"},
+    "argument2": 0.5
+  }
+}

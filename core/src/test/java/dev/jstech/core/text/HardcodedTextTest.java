@@ -118,6 +118,8 @@ class HardcodedTextTest {
     private static final String MCP_TOOLS = "what the MCP server's tools do and what their arguments are, which an "
             + "agent reads in English as the protocol is written, and the arguments' names";
     private static final String CORE = "core/src/main/java/dev/jstech/core/";
+    private static final String MODIFIER_PROBLEMS = "what a datapack's worldgen modifier gets wrong, for the log and the "
+            + "structures' dump, which whoever wrote the datapack reads";
     private static final String PARSER_WANTS = "what a model file's parser wanted where the file does not read, the "
             + "message of the exception its helper makes, for whoever reads the log";
 
@@ -246,6 +248,9 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/modpack/ModpackDumps.java", 8, MODPACK_PAGES),
             data("core/src/main/java/dev/jstech/core/modpack/ReferenceSite.java", 8, MODPACK_PAGES),
             data("core/src/main/java/dev/jstech/core/modpack/References.java", 27, MODPACK_PAGES),
+            data(CORE + "worldgen/structure/StructureReport.java", 11, MODPACK_PAGES),
+            data(CORE + "worldgen/modify/DensityFunctionModifier.java", 1, MODIFIER_PROBLEMS),
+            data(CORE + "worldgen/modify/StructureSetModifier.java", 3, MODIFIER_PROBLEMS),
             data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"),
             data(CORE + "developer/mcp/McpHttp.java", 27, MCP),
             data(CORE + "developer/mcp/McpGuard.java", 8, MCP),

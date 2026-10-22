@@ -221,6 +221,7 @@ import dev.jstech.core.protection.OwnedProtection;
 import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.protection.Protection;
 import dev.jstech.core.protection.ProtectionCommands;
+import dev.jstech.core.region.AwayOwners;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
@@ -232,16 +233,20 @@ import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
 import dev.jstech.core.vehicle.VehicleControlKeys;
 import dev.jstech.core.vehicle.Vehicles;
+import dev.jstech.core.world.edit.EditCommands;
 import dev.jstech.core.world.edit.WorldEdits;
 import dev.jstech.core.world.event.WorldEvents;
 import dev.jstech.core.world.field.ChunkFields;
 import dev.jstech.core.world.live.LiveChanges;
 import dev.jstech.core.worldgen.CoreFeatures;
 import dev.jstech.core.worldgen.biome.BiomeClimates;
+import dev.jstech.core.worldgen.modify.WorldgenModifiers;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import dev.jstech.core.worldgen.place.Landmarks;
 import dev.jstech.core.worldgen.retro.Retrogen;
 import dev.jstech.core.worldgen.structure.CoreStructures;
+import dev.jstech.core.worldgen.structure.OperatorStructures;
+import dev.jstech.core.worldgen.terrain.density.CoreDensities;
 import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.core.worldgen.vein.Veins;
 import net.neoforged.bus.api.IEventBus;
@@ -312,6 +317,10 @@ public final class JsCore {
         // The shapes of the land every mod's world generation lays (landforms, rock in layers, seas), and the
         // climates of biomes in real values, which heat meets where a biome has its own.
         CoreFeatures.register(modEventBus);
+        // More kinds of density function, the worldgen modifiers datapacks write and the operator's structures.
+        CoreDensities.register(modEventBus);
+        WorldgenModifiers.listen();
+        OperatorStructures.register(modEventBus);
         BiomeClimates.listen(modEventBus);
         // The veins every mod's ores lie in and the reservoirs of oil, gas and brines, their kinds as data.
         Veins.listen(modEventBus);
@@ -327,6 +336,7 @@ public final class JsCore {
         Retrogen.listen();
         LiveChanges.listen();
         WorldEdits.listen();
+        EditCommands.declare();
         WorldEvents.listen();
         // The weathers the world events bring: what falls, the fog, the wind, and what they do out in them.
         Weathers.listen();
@@ -482,6 +492,7 @@ public final class JsCore {
         ConfigFiles.register(JsEnergySettings.FILE, modEventBus, modContainer);
         // What the Space Persistor's chunks cost in power, which may be nothing.
         ConfigFiles.register(PersistorSettings.FILE, modEventBus, modContainer);
+        ConfigFiles.register(OperatorStructures.FILE, modEventBus, modContainer);
         // Which item stands for a material several mods make, in a world's recipes and drops.
         ConfigFiles.register(UnificationSettings.FILE, modEventBus, modContainer);
         // What the Core makes of other mods' rocks, woods and metals, read as the game starts.
@@ -562,6 +573,7 @@ public final class JsCore {
         Creatures.listen(modEventBus);
         // The chunks machines keep loaded for their owners, under the game's own forced-chunk file.
         modEventBus.addListener(RegisterTicketControllersEvent.class, ChunkLoaders::onRegisterControllers);
+        AwayOwners.listen();
         // What each part of the Core answers on the mod's bus and the game's, declared here one class at a time
         // rather than found by a scan for annotations, so what runs is what this list says.
         Advancements.listen();

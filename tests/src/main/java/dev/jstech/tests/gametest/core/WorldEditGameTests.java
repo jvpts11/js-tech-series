@@ -19,19 +19,28 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * Large edits of the world: planned away from the server's thread from a snapshot of what they read, set a share of
- * each tick until done; stopped where they are; and a planning that fails setting nothing. Each edit works far out in
- * the test world's sky, at a place of its own each run.
+ * each tick until done; stopped where they are; a planning that fails setting nothing; an undoable edit undone, a
+ * chest's contents and all; and a box saved as a structure file and set again elsewhere, turned. Each edit works far
+ * out in the test world's sky, at a place of its own each run.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -150,6 +159,74 @@ public final class WorldEditGameTests {
             ProtectionBalance.setEditsPerPlayer(most);
         }
         helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void undo_putsBackWhatTheEditReplacedAChestAndAll(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos chest = farCorner();
+        final BlockPos stone = chest.east();
+        level.setBlockAndUpdate(chest, Blocks.CHEST.defaultBlockState());
+        ((ChestBlockEntity) level.getBlockEntity(chest)).setItem(0, new ItemStack(Items.DIAMOND, 3));
+        level.setBlockAndUpdate(stone, Blocks.STONE.defaultBlockState());
+        final UUID player = UUID.randomUUID();
+        final WorldEdit edit = WorldEdits.applyFor(level, player, EditPlan.builder()
+                .set(chest, Blocks.GLASS.defaultBlockState()).set(stone, Blocks.GLASS.defaultBlockState())
+                .set(stone, Blocks.DIRT.defaultBlockState()).undoable().build()).orElseThrow();
+        helper.assertTrue(edit.undo().isEmpty(), "an edit under way cannot be undone yet");
+        final WorldEdit plain = WorldEdits.apply(level, EditPlan.builder().set(chest.above(5),
+                Blocks.GLASS.defaultBlockState()).build());
+        final AtomicReference<WorldEdit> undoing = new AtomicReference<>();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(edit.over() && plain.over(), "the edits are not over"))
+                .thenExecute(() -> {
+                    helper.assertTrue(level.getBlockState(chest).is(Blocks.GLASS)
+                            && level.getBlockState(stone).is(Blocks.DIRT), "the edit set its blocks, the later wins");
+                    helper.assertTrue(plain.undo().isEmpty(), "an edit not made undoable keeps nothing to undo");
+                    helper.assertTrue(WorldEdits.lastFor(player).orElseThrow() == edit, "it is their last edit");
+                    undoing.set(WorldEdits.applyFor(level, player, edit.undo().orElseThrow()).orElseThrow());
+                })
+                .thenWaitUntil(() -> helper.assertTrue(undoing.get().over(), "the undo is not over"))
+                .thenExecute(() -> {
+                    helper.assertTrue(level.getBlockState(stone).is(Blocks.STONE), "the stone is back");
+                    helper.assertTrue(level.getBlockEntity(chest) instanceof ChestBlockEntity held
+                            && held.getItem(0).is(Items.DIAMOND) && held.getItem(0).getCount() == 3,
+                            "and the chest with its diamonds");
+                    helper.assertTrue(WorldEdits.lastFor(player).orElseThrow() == undoing.get()
+                            && undoing.get().undo().isPresent(), "the undo is their last edit, undone in turn");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void exportThenImport_setsTheBlocksTurnedWithWhatTheyHeld(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos from = farCorner();
+        level.setBlockAndUpdate(from, Blocks.CHEST.defaultBlockState());
+        ((ChestBlockEntity) level.getBlockEntity(from)).setItem(0, new ItemStack(Items.EMERALD));
+        level.setBlockAndUpdate(from.east(), Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(from.above(), Blocks.OAK_STAIRS.defaultBlockState()
+                .setValue(StairBlock.FACING, Direction.NORTH));
+        final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "edit_export_test");
+        helper.assertTrue(WorldEdits.export(level, BoundingBox.fromCorners(from, from.offset(1, 1, 0)), id),
+                "the box is saved as a structure file");
+        helper.assertTrue(WorldEdits.planFrom(level, ResourceLocation.fromNamespaceAndPath(JsTests.MODID,
+                "no_such_file"), from, Rotation.NONE).isEmpty(), "a file that is not there plans nothing");
+        final BlockPos to = from.offset(0, 0, 8);
+        final EditPlan plan = WorldEdits.planFrom(level, id, to, Rotation.CLOCKWISE_90).orElseThrow().build();
+        helper.assertTrue(plan.size() == 4, "its four blocks, the air among them: " + plan.size());
+        final WorldEdit edit = WorldEdits.apply(level, plan);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(edit.over(), "the import is not over"))
+                .thenExecute(() -> {
+                    helper.assertTrue(level.getBlockState(to.south()).is(Blocks.STONE),
+                            "turned a quarter clockwise, what lay east lies south");
+                    helper.assertTrue(level.getBlockState(to.above()).getValue(StairBlock.FACING) == Direction.EAST,
+                            "and the stair that faced north faces east");
+                    helper.assertTrue(level.getBlockEntity(to) instanceof ChestBlockEntity held
+                            && held.getItem(0).is(Items.EMERALD), "the chest holds its emerald");
+                })
+                .thenSucceed();
     }
 
     /* A corner far out in the sky, at a place of its own each run, its chunks never touched before. */

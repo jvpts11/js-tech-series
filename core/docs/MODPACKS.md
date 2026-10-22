@@ -272,6 +272,7 @@ When nothing waits, the last line says so.
 | `/jstech dump tags` | `tags.md`: every tag of items, blocks and fluids, with what is in it |
 | `/jstech dump hazards` | `hazards.md`: the hazards to bodies, those items carry and the items that carry them, those of dimensions |
 | `/jstech dump ids` | `ids.md`: every id the series' mods and the content packs registered, by namespace and registry |
+| `/jstech dump structures` | `structures.md`: every structure set with its placement and its structures, those the operator turned off marked, and the worldgen modifiers made as the server started ([World](WORLD.md#structures-tuned-by-an-operator)). *Added 2026-10-22.* |
 | `/jstech dump reference` | `reference/`: the generated reference, a small website |
 | `/jstech dump all` | all of the above |
 | `/jstech dump permissions` | `jstech-permissions/`: the permissions and LuckPerms' groups ([Protection](PROTECTION.md)) |

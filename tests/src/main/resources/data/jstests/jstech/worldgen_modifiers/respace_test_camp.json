@@ -1,0 +1,11 @@
+{
+  "type": "jscore:structure_set",
+  "target": "jstests:test_camp",
+  "placement": {
+    "spacing": 48,
+    "separation": 16
+  },
+  "add": [
+    {"structure": "jstests:test_hut", "weight": 2}
+  ]
+}

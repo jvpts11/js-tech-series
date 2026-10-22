@@ -2757,6 +2757,7 @@ stable 4
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> ROOMS_PLANTS_NEED_AIR
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> VEINS_ENABLED
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> VEINS_MOVE_OTHERS
+12 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> WORLD_CHUNKS_WHILE_AWAY
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> WORLD_EVENTS_ENABLED
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Double> MOVING_PHYSICS_MILLIS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Double> SUBFRAME_EFFICIENCY_FACTOR
@@ -2789,6 +2790,7 @@ stable 4
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> TOOLS_MOST_BROKEN
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> TOOLS_MOST_COPIED
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> TOOLS_MOST_PLACED
+12 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> WORLD_CHUNKS_AWAY_HOURS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> WORLD_CHUNKS_PER_OWNER
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Integer> WORLD_CHUNKS_SERVER_BUDGET
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<List<String>> VEINS_WITHOUT_ORE
@@ -11536,6 +11538,13 @@ stable 4
 10 dev.jstech.core.progression.TeamProgressEvent.StepReached  IAxisStep to()
 10 dev.jstech.core.progression.TeamProgressEvent.StepReached  ProgressionAxis<?> axis()
 10 dev.jstech.core.progression.TeamProgressEvent.StepReached  new(MinecraftServer, String, ProgressionAxis<?>, IAxisStep, IAxisStep)
+12 dev.jstech.core.region.AwayOwners  type final class
+12 dev.jstech.core.region.AwayOwners  static boolean letGo(MinecraftServer, UUID)
+12 dev.jstech.core.region.AwayOwners  static boolean letGoOf(UUID)
+12 dev.jstech.core.region.AwayOwners  static int letGo(MinecraftServer)
+12 dev.jstech.core.region.AwayOwners  static void back(MinecraftServer, UUID)
+12 dev.jstech.core.region.AwayOwners  static void left(MinecraftServer, UUID)
+12 dev.jstech.core.region.AwayOwners  static void listen()
 10 dev.jstech.core.region.Box  type record(int minX, int minY, int minZ, int maxX, int maxY, int maxZ)
 10 dev.jstech.core.region.Box  boolean contains(int, int, int)
 10 dev.jstech.core.region.Box  boolean intersects(Box)
@@ -11562,12 +11571,19 @@ stable 4
 10 dev.jstech.core.region.ChunkLoaders.LoadOutcome  ALREADY
 10 dev.jstech.core.region.ChunkLoaders.LoadOutcome  LIMIT_REACHED
 10 dev.jstech.core.region.ChunkLoaders.LoadOutcome  LOADED
+12 dev.jstech.core.region.ChunkLoaders.LoadOutcome  OWNER_AWAY
 10 dev.jstech.core.region.ChunkLoaders.LoadOutcome  SERVER_FULL
 10 dev.jstech.core.region.ChunkLoadingBalance  type final class
+12 dev.jstech.core.region.ChunkLoadingBalance  static boolean keepWhileAway()
+12 dev.jstech.core.region.ChunkLoadingBalance  static boolean letsGoAfter(long)
 10 dev.jstech.core.region.ChunkLoadingBalance  static final int DEFAULT_LIMIT
 10 dev.jstech.core.region.ChunkLoadingBalance  static final int DEFAULT_SERVER_BUDGET
+12 dev.jstech.core.region.ChunkLoadingBalance  static final long TICKS_AN_HOUR
+12 dev.jstech.core.region.ChunkLoadingBalance  static int awayHours()
 10 dev.jstech.core.region.ChunkLoadingBalance  static int limit()
 10 dev.jstech.core.region.ChunkLoadingBalance  static int serverBudget()
+12 dev.jstech.core.region.ChunkLoadingBalance  static void setAwayHours(int)
+12 dev.jstech.core.region.ChunkLoadingBalance  static void setKeepWhileAway(boolean)
 10 dev.jstech.core.region.ChunkLoadingBalance  static void setLimit(int)
 10 dev.jstech.core.region.ChunkLoadingBalance  static void setServerBudget(int)
 10 dev.jstech.core.region.LoadedChunkMarkers  type final class

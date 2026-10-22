@@ -84,7 +84,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `BodyScreen` is now the code of a screen declared in a file: `FILE`, `open`, `wire`, `STOP_ROWS` and its palette
   `PALETTE` (`Colours`). `GameLocale.numbers` writes numbers the way the game's language does, which the body's warmth
   on the HUD and its screen and the hazard devices' figures now follow, and `Clothing.covered` is the share of the body
-  worn pieces cover.
+  worn pieces cover. `CoreDensities` registers and builds the new kinds of density function (`TerraceDensity`,
+  `RidgeDensity`, `PowerDensity`, `RemapDensity`, `SmoothJoinDensity`, `DistanceDensity`, `OriginalDensity`,
+  `ITransformDensity`, and the pure `DensityMath`). `WorldgenModifiers` reads and makes the datapacks' modifiers
+  (`IWorldgenModifier`, `DensityFunctionModifier`, `StructureSetModifier`, `declareKind`, `rebind`, `made`), and
+  `OperatorStructures` and `StructureReport` are the operator's structures and their dump. `EditPlan` carries what a
+  block's entity holds (`data`) and is made `undoable()` (with `flags`), `WorldEdit.undo` gives the plan that puts back
+  what it replaced, and `WorldEdits` gains `export`, `planFrom` and `lastFor`; `EditCommands` and `EditTexts` are
+  `/jstech edit`. `AwayOwners` lets go of an away owner's chunks by the server's rule, `ChunkLoaders.LoadOutcome`
+  gains `OWNER_AWAY`, `ChunkLoadingBalance` gains `keepWhileAway`, `awayHours` and `letsGoAfter`, and
+  `CoreConfigKeys` gains `WORLD_CHUNKS_WHILE_AWAY` and `WORLD_CHUNKS_AWAY_HOURS`.
 
 ### Added
 - Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1313,6 +1322,23 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   thirtieth of.
 - Cleaning pollution: a scrubber or a filter of any mod takes so much a second of one kind from the chunk it
   stands in, and keeps what it took.
+- Worldgen modifiers: a datapack changes the world generation of the game and of any mod, in
+  `data/<namespace>/jstech/worldgen_modifiers/`, as the server starts: a new density function in the place of one,
+  wrapping the old one if it likes, and a structure set spaced out, closer, or holding other structures.
+- Six more kinds of density function for terrain, in code and in files: terraces, ridges, powers, a value moved
+  from one range to another, two shapes joined smoothly, and the distance from a point.
+- Structures tuned by an operator: `jstech-structures.toml` turns any mod's structures off, spaces out its
+  structure sets or draws them closer, and moves a structure to other biomes; `/jstech dump structures` lists every
+  structure set with its placement and its structures.
+- A field manual of the veins in the Technical Reference: how they lie, how to follow and find them, and the
+  series' veins in a table.
+- Large edits undone, saved and read back: an edit made undoable keeps what it replaces, a chest's contents and
+  all, and is undone; a box of the world is saved as a structure file, and a structure file is set again as a large
+  edit, turned; `/jstech edit export`, `import` and `undo` do it from the chat.
+- Chunks kept while their owner is away, by a rule of the server's: always, as before, never, or for so many
+  hours of its running, after which they wait, still the owner's, until the owner comes back.
+- A test proves the Core's generation the same for the same seed on any number of threads: the test land's
+  density worked out on one thread and on eight, and its chunks made all at once and one at a time, come out alike.
 
 ### Changed
 - The body's screen is declared in a file, so its look can change: a resource pack lays it out again and the

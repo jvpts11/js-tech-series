@@ -1,0 +1,16 @@
+{
+  "type": "jscore:remap",
+  "input": {
+    "type": "jscore:power",
+    "input": {
+      "type": "jscore:ridge",
+      "input": 0.5
+    },
+    "exponent": 2
+  },
+  "from_low": 0,
+  "from_high": 1,
+  "to_low": 60,
+  "to_high": 120,
+  "clamped": true
+}

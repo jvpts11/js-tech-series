@@ -85,6 +85,8 @@ public final class ManualClientTests {
     private static final float HALF_HELD = 0.35F;
     /* An entry of the Core's chapter, written in Markdown. */
     private static final String GEIGER = "jscore:geiger_counter";
+    /* The field manual of the veins, another of the Core's Markdown entries. */
+    private static final String VEINS = "jscore:veins";
     private static final String PORTUGUESE = "pt_br";
 
     private ManualClientTests() {
@@ -130,6 +132,20 @@ public final class ManualClientTests {
                             && written.lines().anyMatch(line -> line.equals("# " + translated.titleKey()))
                             && !translated.blocks().equals(english.blocks());
                 }, "read in Portuguese, the page has the title and the words of its Portuguese file")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    /* The field manual of the veins, in the Technical Reference's world: its page opens, with its table of veins. */
+    @ClientTest(timeoutTicks = 300)
+    public static void markdown_fieldManualOfTheVeinsOpensWithItsTable(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(CoreGuide.TECHNICAL_REFERENCE, VEINS))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> shows(VEINS) && MarkdownManuals.gather(GuideReloadListener.markdownFiles(
+                        Minecraft.getInstance().getResourceManager()), ManualFile.ENGLISH, CodecJsonBlocks.INSTANCE)
+                        .entries().get(VEINS).blocks().stream().anyMatch(GuideBlock.Table.class::isInstance),
+                        "the Technical Reference opens at the veins' page, with the table of the series' veins")
+                .thenScreenshot(2, "manual_veins")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

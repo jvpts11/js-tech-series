@@ -1,0 +1,10 @@
+{
+  "type": "jscore:density_function",
+  "priority": 1,
+  "target": "jstests:test_modified",
+  "density": {
+    "type": "minecraft:mul",
+    "argument1": {"type": "jscore:original"},
+    "argument2": 2
+  }
+}

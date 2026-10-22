@@ -1,0 +1,6 @@
+{
+  "type": "jscore:terrace",
+  "input": 1.3,
+  "step": 0.5,
+  "smoothness": 0
+}
