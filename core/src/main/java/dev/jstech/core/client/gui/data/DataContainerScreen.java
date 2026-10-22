@@ -61,6 +61,12 @@ public class DataContainerScreen<M extends AbstractContainerMenu> extends CoreCo
 
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
+        if (view.reshape()) {
+            // A component came or went: the window takes its new height in the middle, its slots moved with it.
+            imageHeight = view.height();
+            topPos = (height - imageHeight) / 2;
+            view.layout(leftPos, topPos, height);
+        }
         super.render(g, mouseX, mouseY, partialTick);
         if (menu.getCarried().isEmpty() && hoveredSlot == null) {
             final List<Component> tip = view.tooltipAt(mouseX, mouseY);

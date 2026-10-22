@@ -18,8 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * The richer kinds of component a screen's file may hold, beside the Core's first ones ({@link CoreElements}):
  * {@code slider}, {@code switch}, {@code radio}, {@code dropdown} and {@code color} to set a value; {@code tree},
- * {@code table}, {@code chart} and {@code graph} to show and edit what a machine knows; {@code model}, {@code map},
- * {@code tank}, {@code energy} and {@code ghost_slot} to show things of the world.
+ * {@code table}, {@code chart}, {@code scale} and {@code graph} to show and edit what a machine knows; {@code model},
+ * {@code map}, {@code tank}, {@code energy} and {@code ghost_slot} to show things of the world.
  *
  * <p>A value is bound by name ({@code "bind"}), and what a component hands over (a number, a choice, a colour, an
  * item) goes to the handler of the screen's code its {@code "action"} names. A tree, a table, a chart, a graph, a map
@@ -79,6 +79,15 @@ public final class ControlElements {
             Codec.STRING.optionalFieldOf("from").forGetter(ChartProps::from),
             Codec.STRING.optionalFieldOf("to").forGetter(ChartProps::to)
     ).apply(i, ChartProps::new)));
+
+    /**
+     * A scale: a value along a bar coloured in bands, its marks and their words under it, from the reading the screen's
+     * code hands over; the value fills the bar up to it, or stands on it as a pointer.
+     */
+    public static final ElementType<ScaleProps> SCALE = leaf("scale", RecordCodecBuilder.mapCodec(i -> i.group(
+            Codec.STRING.fieldOf("bind").forGetter(ScaleProps::bind),
+            ScreenCodecs.named(Pointer.class).optionalFieldOf("pointer", Pointer.FILL).forGetter(ScaleProps::pointer)
+    ).apply(i, ScaleProps::new)));
 
     /** A map of the land round the place the screen's code hands over, with its markers. */
     public static final ElementType<MapProps> MAP = leaf("map", RecordCodecBuilder.mapCodec(i -> i.group(
@@ -221,6 +230,23 @@ public final class ControlElements {
      * @param markers the places marked on it
      */
     public record MapProps(String bind, Optional<String> markers) {
+    }
+
+    /** How a scale shows its value. */
+    public enum Pointer {
+        /** The bar's bands are drawn up to the value, the rest of it empty: how much has built up. */
+        FILL,
+        /** The whole bar's bands are drawn, a pointer standing at the value: where it is among them. */
+        ARROW
+    }
+
+    /**
+     * A scale.
+     *
+     * @param bind    the reading it shows
+     * @param pointer how it shows the value
+     */
+    public record ScaleProps(String bind, Pointer pointer) {
     }
 
     /**

@@ -138,6 +138,7 @@ import dev.jstech.tests.clienttest.core.SettingsKitClientTests;
 import dev.jstech.tests.clienttest.core.FluidClientTests;
 import dev.jstech.tests.clienttest.core.GridPainterClientTests;
 import dev.jstech.tests.clienttest.core.HazardDevicesClientTests;
+import dev.jstech.tests.clienttest.core.BodyTemperatureClientTests;
 import dev.jstech.tests.clienttest.core.FireClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructureClientTests;
 import dev.jstech.tests.clienttest.core.MovingStructurePhysicsClientTests;
@@ -259,6 +260,7 @@ public final class ClientTestSuite {
             RecipeViewClientTests.class,
             HudHologramClientTests.class,
             HazardDevicesClientTests.class,
+            BodyTemperatureClientTests.class,
             FireClientTests.class,
             MovingStructureClientTests.class,
             MovingStructurePhysicsClientTests.class,

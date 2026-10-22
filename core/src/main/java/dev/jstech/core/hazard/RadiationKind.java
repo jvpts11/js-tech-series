@@ -31,21 +31,35 @@ public final class RadiationKind {
     private final HazardKind dose;
     private final double attenuation;
     private final int reach;
+    private final double blockMetres;
     private final List<IAmbientRadiation> ambients = new CopyOnWriteArrayList<>();
     private final List<IBodyRadiation> carried = new CopyOnWriteArrayList<>();
 
     /**
      * A kind known as {@code id}, called {@code name}, that builds up {@code dose}, weakened in a block by
      * {@code attenuation} for each kilogram a cubic metre the block weighs ({@code e} to the minus their product
-     * passes), and counted from sources up to {@code reach} blocks away.
+     * passes), and counted from sources up to {@code reach} blocks away; a block weakens it as a metre of its material.
      */
     public RadiationKind(final ResourceLocation id, final TextKey name, final HazardKind dose, final double attenuation,
                          final int reach) {
+        this(id, name, dose, attenuation, reach, 1);
+    }
+
+    /**
+     * The same, a block weakening it as {@code blockMetres} of its material does: as a few centimetres, so a block of
+     * lead is a lead wall and a container's walls of the same lead as thick shield as much.
+     */
+    public RadiationKind(final ResourceLocation id, final TextKey name, final HazardKind dose, final double attenuation,
+                         final int reach, final double blockMetres) {
         this.id = Objects.requireNonNull(id, "id");
         this.name = Objects.requireNonNull(name, "name");
         this.dose = Objects.requireNonNull(dose, "dose");
         this.attenuation = attenuation;
         this.reach = reach;
+        if (blockMetres <= 0) {
+            throw new IllegalArgumentException("a block stands for some of its material, not " + blockMetres + " m");
+        }
+        this.blockMetres = blockMetres;
     }
 
     public ResourceLocation id() {
@@ -70,6 +84,14 @@ public final class RadiationKind {
     /** The share of it that passes through a block weighing {@code density} kilograms a cubic metre. */
     public double transmission(final double density) {
         return Math.exp(-this.attenuation * density);
+    }
+
+    /**
+     * The share of it that passes through {@code metres} of a material weighing {@code density} kilograms a cubic
+     * metre: a container's walls, as thick as they are, measured against what a block of the same stands for.
+     */
+    public double through(final double density, final double metres) {
+        return Math.exp(-this.attenuation * density * metres / this.blockMetres);
     }
 
     /** How much it is weakened for each kilogram a cubic metre a block it crosses weighs. */

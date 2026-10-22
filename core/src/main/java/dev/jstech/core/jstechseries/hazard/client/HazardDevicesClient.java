@@ -74,7 +74,7 @@ public final class HazardDevicesClient {
         HudElements.declare(DOSIMETER_HUD, () -> corner(HazardDevice.POCKET_DOSIMETER),
                 new DeviceHud(HazardDevice.POCKET_DOSIMETER));
         HudElements.declare(MAP_HUD, () -> corner(HazardDevice.HAZARD_MAP), new DeviceHud(HazardDevice.HAZARD_MAP));
-        KeyActionsClient.onPress(HazardDevices.BODY_SCREEN, () -> Minecraft.getInstance().setScreen(new BodyScreen()));
+        KeyActionsClient.onPress(HazardDevices.BODY_SCREEN, BodyScreen::open);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> tick());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> DeviceHud.forget());
         modBus.addListener(RegisterColorHandlersEvent.Block.class, event -> event.register(

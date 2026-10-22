@@ -100,6 +100,7 @@ public final class IonizingRadiation {
      * about five centimetres of the block's material for each block, so lead stops nearly all, water some. */
     private static final int REACH = 32;
     private static final double ATTENUATION = 0.0003;
+    private static final double BLOCK_METRES = 0.05;
 
     /** The dose taken, in sieverts; its rate shown in millisieverts an hour. */
     public static final HazardKind DOSE = Hazards.declare(HazardKind.builder(HazardDevices.RADIATION, NAME, SIEVERTS)
@@ -125,12 +126,12 @@ public final class IonizingRadiation {
             .build());
     /** The rays that carry the external dose, from every source round a body. */
     public static final RadiationKind RAYS = Radiation.declare(new RadiationKind(id("ionizing"), GAMMA, DOSE,
-            ATTENUATION, REACH));
+            ATTENUATION, REACH, BLOCK_METRES));
 
     static {
         RAYS.addAmbient(CosmicRadiation::at);
         RAYS.addAmbient((level, at) -> NaturalRadiation.at(level, at, RAYS));
-        RAYS.addCarried(IonizingRadiation::carried);
+        RAYS.addCarried(IonizingRadiation::shining);
         CONTAMINATION.addSource((body, level) -> carried(body) * DUST);
         CONTAMINATION.addRecovery((body, level) -> body.isInWaterOrRain() ? WASHED : 0);
         Withering.declare((level, pos) -> HazardBalance.radiation()
@@ -150,9 +151,21 @@ public final class IonizingRadiation {
         return kilobecquerels * PER_KILOBECQUEREL;
     }
 
-    /* What the radioactive things {@code body} carries give off, in millisieverts an hour: their hazard's strength. */
+    /*
+     * What the radioactive things {@code body} carries loose give off, in millisieverts an hour: their hazard's
+     * strength; what settles on it as dust.
+     */
     private static double carried(final LivingEntity body) {
         return body instanceof Player player ? ItemHazards.carried(player, ItemHazards.RADIOACTIVE) : 0;
+    }
+
+    /*
+     * What reaches {@code body} of the rays of what it carries, in millisieverts an hour: what it carries loose, and
+     * what its containers hold through their walls, a lead one stopping nearly all.
+     */
+    private static double shining(final LivingEntity body) {
+        return body instanceof Player player ? ItemHazards.carriedWithin(player, ItemHazards.RADIOACTIVE,
+                wall -> RAYS.through(wall.density(), wall.thickness())) : 0;
     }
 
     /* What contamination does each second: it doses the body as its own rate, which no worn shielding stops. */

@@ -14,8 +14,10 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.WeakHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +46,8 @@ public final class Hazards {
     private static final double NEAR_A_PLAYER = 64;
     /* What each player was told last. */
     private static final Map<ServerPlayer, HazardsPayload> TOLD = new WeakHashMap<>();
+    /* What mods work out of each body every second, before its hazards are weighed. */
+    private static final List<IBodySecond> SECONDS = new CopyOnWriteArrayList<>();
     /* Every kind, as a list read every tick without a lock; set again as each is declared. */
     private static volatile List<HazardKind> declared = List.of();
 
@@ -71,6 +75,14 @@ public final class Hazards {
     /** Every kind declared, in the order they were. */
     public static Collection<HazardKind> all() {
         return declared;
+    }
+
+    /**
+     * Has {@code step} work out what it keeps of each body every second, before the body's hazards are weighed, so a
+     * kind measured from it ({@link HazardKind.Builder#gauged}) reads it fresh; from a mod's constructor.
+     */
+    public static void everySecond(final IBodySecond step) {
+        SECONDS.add(Objects.requireNonNull(step, "step"));
     }
 
     /** Hands the buses the payload and what weighs the hazards, once, from the Core's constructor. */
@@ -120,11 +132,21 @@ public final class Hazards {
         body.getData(CoreAttachments.HAZARDS).set(kind.id(), held);
     }
 
-    /** A second of every hazard on {@code body}: what it takes, what it recovers, what its bands do. */
+    /**
+     * A second of every hazard on {@code body}: what mods work out of it first, then what it takes, what it recovers,
+     * or what a measured kind reads, and what its bands do.
+     */
     public static void second(final LivingEntity body, final ServerLevel level) {
+        for (final IBodySecond step : SECONDS) {
+            step.second(body, level);
+        }
         final boolean player = body instanceof Player;
         for (final HazardKind kind : all()) {
             if (!kind.enabled() || !player && !kind.affectsMobs()) {
+                continue;
+            }
+            if (kind.gauge().isPresent()) {
+                measure(body, level, kind, kind.gauge().get());
                 continue;
             }
             double taken = 0;
@@ -165,6 +187,26 @@ public final class Hazards {
             }
         }
         return new HazardsPayload(entries);
+    }
+
+    /*
+     * A measured kind: it stands where {@code gauge} reads, how fast it got there is its rate, and its band does what
+     * it does.
+     */
+    private static void measure(final LivingEntity body, final ServerLevel level, final HazardKind kind,
+                                final IHazardGauge gauge) {
+        final double before = level(body, kind);
+        final double now = Math.max(0, gauge.level(body, level));
+        if (now <= 0 && before <= 0) {
+            if (body.hasData(CoreAttachments.HAZARDS)) {
+                body.getData(CoreAttachments.HAZARDS).rate(kind.id(), 0, 0);
+            }
+            return;
+        }
+        set(body, kind, now);
+        body.getData(CoreAttachments.HAZARDS).rate(kind.id(), now - before, now - before);
+        kind.band(level(body, kind)).ifPresent(band -> band.effects().forEach(effect ->
+                effect.second(body, kind, level(body, kind))));
     }
 
     private static void onEntityTick(final EntityTickEvent.Post event) {

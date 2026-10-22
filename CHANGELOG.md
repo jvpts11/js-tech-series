@@ -78,6 +78,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   reached a pipe and has the reason `OVERPRESSURE`. `CableEnd` gains `redstone`, an `EndRedstone`, with `withRedstone`
   and `modeAt`, the mode an end has with the redstone where it is; `CableEndMenu.REDSTONE`, `CableEndLayout.REDSTONE_X`,
   `REDSTONE_Y` and `onRedstone` place its key on the end's screen, and `EndTexts.REDSTONE_USE` says what it does.
+  `HeatClimate.own` gives the air a source gives a place, and `CoreConfigKeys.HAZARDS_BODY_TEMPERATURE` turns a body's
+  warmth off; `BlockTemperatureProvider` and `ClothingProvider` write the game's own blocks' and armour's data.
+  `CoreElements.ITEM` shows in a screen's file an item the code hands over (`ItemProps`, `ItemView`), and
+  `LabelProps.colour` gives a label a style's role, a written colour or a value's; `ControlElements.SCALE` shows a value
+  on a bar of bands (`ScaleProps`, `Pointer`, and `ScaleView` with its `Reading`, `Band` and `Mark`). `FlexBox.gone`
+  leaves a box out of a layout, and `DataScreenView.reshape` shows and hides a file's parts by their `visible_if`.
+  `BodyScreen` is now the code of a screen declared in a file: `FILE`, `open`, `wire`, `STOP_ROWS` and its palette
+  `PALETTE` (`Colours`). `GameLocale.numbers` writes numbers the way the game's language does, which the body's warmth
+  on the HUD and its screen and the hazard devices' figures now follow, and `Clothing.covered` is the share of the body
+  worn pieces cover.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1295,8 +1305,26 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its own rule bursts with the force of the gas it held.
 - (Core) Redstone at each end of a line: an end of a pipe or a line of items works whatever reaches it, only while a
   redstone signal reaches its cable block, or only while none does, set by a key on the end's screen.
+- (Core) A body's warmth: a player's core warms and cools in kelvin, as a real body's does, by the place (the air of
+  the biome, the room or the dimension, the sun, the wind, the rain, the water they are in, hot and cold blocks near)
+  through what they wear, each worn thing's insulation given as data, and by what they do. Below 35 °C comes
+  hypothermia, mild, moderate and severe, and above 37.5 °C heat exhaustion and then heatstroke, each with its effects
+  and death message; a body that stays in a cold or a hot climate gets used to it. The HUD shows the core while it is
+  out of its normal band, and the screen's edge frosts or hazes; a setting turns it off.
+- (Core) Shielded containers: what a shulker box or a bundle holds is carried, and its radiation reaches its carrier
+  through the container's walls, which a container given lead walls five centimetres thick by data stops all but a
+  thirtieth of.
+- (Core) Cleaning pollution: a scrubber or a filter of any mod takes so much a second of one kind from the chunk it
+  stands in, and keeps what it took.
 
 ### Changed
+- (Core) The body's screen is declared in a file, so its look can change: a resource pack lays it out again and the
+  style the player picks draws it, in the game's look by default. Beside what is worn and what it stops, it now holds
+  how much heat the clothes let out and whether they keep the wind and the water out, and the core's warmth on a scale
+  of its bands with what the place does to it; the dose, the lungs and dissonance each on a scale of their bands, a
+  word asking for a shower while the body is contaminated.
+- (Core) In a screen declared in a file, a part hidden by its `visible_if` gives its room to the rest, and the window
+  takes the height of what it shows; the game's style draws a well in a lighter grey, so its text reads well.
 - (Core) A steadier solver for moving structures: structures that may meet in a tick are worked as one, with more
   passes and shorter steps where they are stacked, and fall asleep together, so a stack of crates settles and sleeps
   instead of sinking and swaying; a contact starts from its whole push of the step before, so a great hull on the

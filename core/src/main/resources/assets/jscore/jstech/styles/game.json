@@ -53,7 +53,7 @@
       "region": [0, 0, 248, 166], "texture_size": [256, 256], "border": 4},
     "panel": {"kind": "slice", "texture": "minecraft:textures/gui/demo_background.png",
       "region": [0, 0, 248, 166], "texture_size": [256, 256], "border": 4},
-    "well": {"kind": "flat", "fill": "slot_bg", "light": "#FF373737", "dark": "#FFFFFFFF"},
+    "well": {"kind": "flat", "fill": "#FFAEAEAE", "light": "#FF787878", "dark": "#FFE6E6E6"},
     "slot": "minecraft:container/slot",
     "button": "minecraft:widget/button",
     "button_hover": "minecraft:widget/button_highlighted",

@@ -52,6 +52,7 @@ public final class FlexBox {
     private boolean wrap;
     private List<Track> columns = List.of();
     private int span = 1;
+    private boolean gone;
 
     /** A size that is not given: the box is as big as what it holds. */
     public static final int UNSET = -1;
@@ -216,6 +217,15 @@ public final class FlexBox {
         return this;
     }
 
+    /**
+     * Leaves the box out of the layout, or puts it back: a box left out takes no room and no gap, and is not placed,
+     * as a component hidden for now gives its room to the rest.
+     */
+    public FlexBox gone(final boolean value) {
+        gone = value;
+        return this;
+    }
+
     public String name() {
         return name;
     }
@@ -305,13 +315,32 @@ public final class FlexBox {
         return span;
     }
 
+    public boolean gone() {
+        return gone;
+    }
+
     @Override
     public String toString() {
         return name + " (" + flow + ")";
     }
 
-    /* The children as they stand, for the layout to read without a copy each pass. */
+    /* The children the layout places, those left out passed over; without a copy while none is left out. */
     List<FlexBox> held() {
+        for (final FlexBox child : children) {
+            if (child.gone) {
+                return present();
+            }
+        }
         return children;
+    }
+
+    private List<FlexBox> present() {
+        final List<FlexBox> out = new ArrayList<>(children.size());
+        for (final FlexBox child : children) {
+            if (!child.gone) {
+                out.add(child);
+            }
+        }
+        return out;
     }
 }

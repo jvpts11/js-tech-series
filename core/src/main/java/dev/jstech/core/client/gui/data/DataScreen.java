@@ -61,6 +61,9 @@ public class DataScreen extends Screen implements IDataScreen {
 
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
+        if (view.reshape()) {
+            centre();
+        }
         super.render(g, mouseX, mouseY, partialTick);
         view.render(g, left, top, mouseX, mouseY, partialTick);
         final List<Component> tip = view.tooltipAt(mouseX, mouseY);
@@ -127,10 +130,15 @@ public class DataScreen extends Screen implements IDataScreen {
     @Override
     protected void init() {
         view.build(font);
+        centre();
+        keyboard = view.keyboard();
+        keyboard.entries().forEach(this::addWidget);
+    }
+
+    /* The window in the middle of the game's screen, as tall as what it shows needs, laid out there. */
+    private void centre() {
         left = (width - view.width()) / 2;
         top = Math.max(0, (height - view.height()) / 2);
         view.layout(left, top, height);
-        keyboard = view.keyboard();
-        keyboard.entries().forEach(this::addWidget);
     }
 }

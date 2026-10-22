@@ -7,8 +7,8 @@
  */
 package dev.jstech.core.jstechseries.hazard.client;
 
+import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.hazard.HazardsClient;
-import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.hazard.HazardKind;
 import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.jstechseries.hazard.HazardDevices;
@@ -55,6 +55,6 @@ public final class DeviceReadings {
     /** {@code value} as a device's face prints it: two decimals, fewer as it grows, in the player's language. */
     public static String figure(final double value) {
         final String pattern = value >= 1000 ? "%.0f" : value >= 100 ? "%.1f" : "%.2f";
-        return String.format(UnitFormatter.forCurrentLocale().locale(), pattern, value);
+        return String.format(GameLocale.locale(), pattern, value);
     }
 }

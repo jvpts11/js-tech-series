@@ -10,7 +10,8 @@ package dev.jstech.core.hazard;
 /**
  * The world's rules for its hazards, as its settings file gives them: whether there is radiation at all, whether
  * minerals with uranium or thorium in them are naturally radioactive, whether creatures suffer hazards as players do,
- * whether dusts harm the lungs, whether what is carried harms its carrier, and whether contamination withers the land.
+ * whether dusts harm the lungs, whether bodies feel the cold and the heat, whether what is carried harms its carrier,
+ * and whether contamination withers the land.
  */
 public final class HazardBalance {
 
@@ -22,8 +23,18 @@ public final class HazardBalance {
     private static volatile boolean withering = true;
     private static volatile boolean dissonance = true;
     private static volatile boolean pollution = true;
+    private static volatile boolean bodyTemperature = true;
 
     private HazardBalance() {
+    }
+
+    /** Whether a player's core warms and cools by the place, bringing hypothermia and heatstroke. */
+    public static boolean bodyTemperature() {
+        return bodyTemperature;
+    }
+
+    public static void setBodyTemperature(final boolean value) {
+        bodyTemperature = value;
     }
 
     /** Whether there is pollution: off, nothing is given off and what lies on the land does nothing. */

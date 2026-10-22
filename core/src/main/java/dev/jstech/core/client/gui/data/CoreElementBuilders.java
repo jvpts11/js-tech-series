@@ -29,12 +29,14 @@ import dev.jstech.core.gui.style.StyleRole;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +57,10 @@ public final class CoreElementBuilders {
     private static final int BUTTON_PAD = 8;
     /** The translation key of the game's own name for the player's inventory. */
     private static final String INVENTORY = "container.inventory";
+    /* A colour written in a file: hexadecimal, its alpha opaque when it has only six digits. */
+    private static final int HEX = 16;
+    private static final int RGB_DIGITS = 6;
+    private static final int OPAQUE = 0xFF << 24;
 
     private CoreElementBuilders() {
     }
@@ -88,6 +94,7 @@ public final class CoreElementBuilders {
         ElementBuilders.register(CoreElements.IMAGE, (spec, props, ctx) -> ctx.node(spec, FlexBox.leaf(name(spec),
                 IMeasure.fixed(props.imageWidth(), props.imageHeight())).role(Role.SOLID),
                 new ImageView(props.sprite()), null, List.of()));
+        ElementBuilders.register(CoreElements.ITEM, CoreElementBuilders::item);
         ElementBuilders.register(CoreElements.SPACER, (spec, props, ctx) -> ctx.node(spec,
                 FlexBox.leaf(name(spec), IMeasure.NOTHING).grow(1), null, null, List.of()));
         ElementBuilders.register(CoreElements.SEPARATOR, (spec, props, ctx) -> ctx.node(spec,
@@ -125,8 +132,20 @@ public final class CoreElementBuilders {
             final String key = props.text().orElse("");
             text = () -> Component.translatable(key).getString();
         }
-        return text(spec, ctx, text, colour(ctx, props.tone()), props.textAlign(), props.scale(), props.wrap(),
-                props.bind().isEmpty());
+        final IntSupplier tone = colour(ctx, props.tone());
+        final IntSupplier colour = props.colour().map(said -> colour(ctx, said, tone)).orElse(tone);
+        return text(spec, ctx, text, colour, props.textAlign(), props.scale(), props.wrap(), props.bind().isEmpty()
+                && props.colour().filter(said -> !said.startsWith("#") && StyleRole.byKey(said).isEmpty()).isEmpty());
+    }
+
+    /* An item shown, read from the value the file binds it to; nothing while that is not an item. */
+    private static BuiltNode item(final ElementSpec spec, final CoreElements.ItemProps props,
+                                  final BuildContext ctx) {
+        final Optional<Supplier<?>> value = ctx.value(props.bind());
+        final ItemView view = new ItemView(() -> value.<Object>map(Supplier::get).filter(ItemStack.class::isInstance)
+                .map(ItemStack.class::cast).orElse(ItemStack.EMPTY), props.frame());
+        final FlexBox box = FlexBox.leaf(name(spec), IMeasure.fixed(SlotFrame.SIZE, SlotFrame.SIZE)).role(Role.SOLID);
+        return ctx.node(spec, box, view, null, List.of());
     }
 
     /* A text; a steady one, a key's words or the title, may be drawn once with the screen's still parts. */
@@ -272,6 +291,44 @@ public final class CoreElementBuilders {
             case TITLE -> StyleRole.TITLE;
         };
         return () -> ctx.skin().colour(role);
+    }
+
+    /*
+     * A text's own colour: a role of the style by its key ("amber"), which every style makes readable on its grounds;
+     * written {@code #RRGGBB} or {@code #AARRGGBB}; or the name of a value read each frame, whose number is the colour
+     * or whose words are a role's key or a colour written so. Its tone's when it is none of these.
+     */
+    private static IntSupplier colour(final BuildContext ctx, final String said, final IntSupplier tone) {
+        final OptionalInt fixed = written(ctx, said);
+        if (fixed.isPresent() || StyleRole.byKey(said).isPresent()) {
+            return () -> written(ctx, said).orElseGet(tone);
+        }
+        final Optional<Supplier<?>> value = ctx.value(said);
+        return () -> {
+            final Object now = value.map(Supplier::get).orElse(null);
+            if (now instanceof Number number) {
+                return number.intValue();
+            }
+            return now instanceof String words ? written(ctx, words).orElseGet(tone) : tone.getAsInt();
+        };
+    }
+
+    /* The colour {@code said} names: a role of the style the screen wears now, or one written in hexadecimal. */
+    private static OptionalInt written(final BuildContext ctx, final String said) {
+        final Optional<StyleRole> role = StyleRole.byKey(said);
+        if (role.isPresent()) {
+            return OptionalInt.of(ctx.skin().colour(role.get()));
+        }
+        if (!said.startsWith("#")) {
+            return OptionalInt.empty();
+        }
+        final String digits = said.substring(1);
+        try {
+            final int read = Integer.parseUnsignedInt(digits, HEX);
+            return OptionalInt.of(digits.length() == RGB_DIGITS ? OPAQUE | read : read);
+        } catch (final NumberFormatException e) {
+            return OptionalInt.empty();
+        }
     }
 
     /* The name a box goes by in the layout: the file's id, or its kind. */

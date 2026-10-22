@@ -50,12 +50,31 @@ What a file holds:
 - **Components**: `title` (the screen's), `label` (a translation key in `text`, or a value of the menu in `bind`,
   written through the key in `format`), `button` (its `action`, or a `menu_button` the menu answers), `slot` (by its
   place among the menu's slots), `slots` (a run of them, `per_row` to a row), `inventory` (the player's, as the game
-  lays it), `progress` (a value of the menu against its `max`), `image` (a sprite), `spacer`, `separator`,
-  `checkbox` and `text_field`.
+  lays it), `progress` (a value of the menu against its `max`), `image` (a sprite), `item` (an item the code hands
+  over, shown and not held, in a slot's frame unless `"frame": false`, its tooltip under the pointer), `spacer`,
+  `separator`, `checkbox` and `text_field`.
 - **On every component**: `id` (what the code and the tests find it by), `width`, `height`, the smallest and largest
   sizes, `grow`, `shrink`, `margin`, `align_self`, `span` in a grid, a `tooltip` key, a `narration` key (the name the
   game's narrator calls a component by that has no words of its own, a switch or a slider), and `visible_if` and
   `enabled_if`, each a value's name.
+
+*Added 2026-10-22.* A component hidden by its `visible_if` gives its room back, and so does all it holds: the rest
+close up as if it were not there, and the window takes the height of what it shows, in the middle of the game's
+screen, when one comes or goes. A line that says something only sometimes ("Contaminated: wash in a shower") leaves no
+hole. A label's `colour` sets its colour over its `tone`: a role of the style by its key (`"red"`, `"amber"`), which
+every style makes readable on its grounds; a colour written `#RRGGBB` or `#AARRGGBB`; or the name of a value whose
+number is the colour, or whose words are a role's key, so the code picks it from its palette or by what it shows.
+
+A `scale` (*added 2026-10-22*) shows a value along a bar coloured in bands, the marks of its scale and their words
+under it, from a `ScaleView.Reading` the code hands over under its `bind`: where the value stands, the bands (each
+coloured from its left to its right) and the marks, each a share of the bar. With `"pointer": "fill"` (the default)
+the bands are drawn up to the value, how much has built up; with `"pointer": "arrow"` the whole bar is drawn and a
+pointer stands at the value. A mark's words that would run into the last ones drawn are left out.
+
+```java
+screen.value("dose", () -> new ScaleView.Reading(dose / 10, List.of(new ScaleView.Band(0, 1, GREEN, RED)),
+        List.of(new ScaleView.Mark(0.1, "I"), new ScaleView.Mark(0.2, "II")), 0));
+```
 
 A kind is named by its short name when it is the Core's (`"button"`), by its id when it is another mod's. A mod
 declares its own with `ElementTypes.declare(id, propsCodec, holdsOthers)` and registers what draws it with

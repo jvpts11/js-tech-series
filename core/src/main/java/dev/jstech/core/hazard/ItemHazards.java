@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.ToDoubleFunction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -169,6 +170,30 @@ public final class ItemHazards {
         }
         for (final ItemStack stack : carrier.getInventory().offhand) {
             total += of(stack).getOrDefault(kind, 0.0) * stack.getCount();
+        }
+        return total;
+    }
+
+    /**
+     * How strong {@code kind} is in what {@code carrier} carries, what containers hold too, as a shulker box or a
+     * bundle holds it: what a container holds counts by the share {@code passes} lets through its walls, and all of it
+     * through a container that does not shield ({@link Shielding}). What reaches a body through walls, as radiation.
+     */
+    public static double carriedWithin(final Player carrier, final Kind kind,
+                                       final ToDoubleFunction<Shielding.Wall> passes) {
+        double total = 0;
+        for (final List<ItemStack> stacks : List.of(carrier.getInventory().items, carrier.getInventory().offhand)) {
+            for (final ItemStack stack : stacks) {
+                total += of(stack).getOrDefault(kind, 0.0) * stack.getCount();
+                final List<ItemStack> held = Shielding.contents(stack);
+                if (held.isEmpty()) {
+                    continue;
+                }
+                final double share = Shielding.of(stack).map(passes::applyAsDouble).orElse(1.0);
+                for (final ItemStack inside : held) {
+                    total += of(inside).getOrDefault(kind, 0.0) * inside.getCount() * share * stack.getCount();
+                }
+            }
         }
         return total;
     }

@@ -60,6 +60,7 @@ public final class HazardKind {
     private final List<Double> mapSteps;
     private final TextKey shortName;
     private final double background;
+    private final @Nullable IHazardGauge gauge;
     private final List<IHazardSource> sources = new CopyOnWriteArrayList<>();
     private final List<IHazardRecovery> recoveries = new CopyOnWriteArrayList<>();
 
@@ -81,6 +82,7 @@ public final class HazardKind {
         this.damage = builder.damage;
         this.mobs = builder.mobs;
         this.most = builder.most;
+        this.gauge = builder.gauge;
     }
 
     /** Starts declaring the kind {@code id}, called {@code name} and measured in {@code unit}. */
@@ -197,6 +199,14 @@ public final class HazardKind {
         return this.most;
     }
 
+    /**
+     * What measures it, for a kind that is measured rather than built up: read once a second in place of its sources
+     * and its recovery; none for a kind that builds up.
+     */
+    public Optional<IHazardGauge> gauge() {
+        return Optional.ofNullable(this.gauge);
+    }
+
     /** Adds a source it builds up from. */
     public void addSource(final IHazardSource source) {
         this.sources.add(Objects.requireNonNull(source, "source"));
@@ -255,6 +265,7 @@ public final class HazardKind {
         private List<Double> mapSteps = List.of();
         private @Nullable TextKey shortName;
         private double background;
+        private @Nullable IHazardGauge gauge;
 
         private Builder(final ResourceLocation id, final TextKey name, final TextKey unit) {
             this.id = id;
@@ -328,6 +339,15 @@ public final class HazardKind {
         /** The most a body can build up. */
         public Builder upTo(final double max) {
             this.most = max;
+            return this;
+        }
+
+        /**
+         * It is measured rather than built up: each second a body stands in it as far as {@code measure} reads, its
+         * sources and recovery unused, as hypothermia stands as far as the core is below the edge of its warmth.
+         */
+        public Builder gauged(final IHazardGauge measure) {
+            this.gauge = Objects.requireNonNull(measure, "measure");
             return this;
         }
 

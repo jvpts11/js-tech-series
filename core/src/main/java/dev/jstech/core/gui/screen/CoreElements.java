@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
  * The kinds of component the Core's screens are made of, as a screen's file names them: the boxes that lay others out
  * ({@code column}, {@code row}, {@code grid}, {@code stack}, and the {@code panel} and {@code well} that draw a ground
  * under what they hold), and the components themselves ({@code title}, {@code label}, {@code button}, {@code slot},
- * {@code slots}, {@code inventory}, {@code progress}, {@code image}, {@code spacer}, {@code separator},
+ * {@code slots}, {@code inventory}, {@code progress}, {@code image}, {@code item}, {@code spacer}, {@code separator},
  * {@code checkbox}, {@code text_field}).
  *
  * <p>A text is a translation key, so a screen speaks every language its mod does; a value the screen shows is bound by
@@ -52,7 +52,8 @@ public final class CoreElements {
             ScreenCodecs.named(TextAlign.class).optionalFieldOf("text_align", TextAlign.LEFT)
                     .forGetter(LabelProps::textAlign),
             Codec.floatRange(0.25f, 4f).optionalFieldOf("scale", 1f).forGetter(LabelProps::scale),
-            Codec.BOOL.optionalFieldOf("wrap", false).forGetter(LabelProps::wrap)
+            Codec.BOOL.optionalFieldOf("wrap", false).forGetter(LabelProps::wrap),
+            Codec.STRING.optionalFieldOf("colour").forGetter(LabelProps::colour)
     ).apply(i, LabelProps::new)));
 
     /** A push button: what it says, and what pressing it does. */
@@ -91,6 +92,15 @@ public final class CoreElements {
             Codec.intRange(1, 1024).fieldOf("image_width").forGetter(ImageProps::imageWidth),
             Codec.intRange(1, 1024).fieldOf("image_height").forGetter(ImageProps::imageHeight)
     ).apply(i, ImageProps::new)));
+
+    /**
+     * An item the screen's code hands over, shown and not held (what the player wears, what a machine makes), in a
+     * slot's frame unless asked without; the pointer on it shows the item's tooltip.
+     */
+    public static final ElementType<ItemProps> ITEM = leaf("item", RecordCodecBuilder.mapCodec(i -> i.group(
+            Codec.STRING.fieldOf("bind").forGetter(ItemProps::bind),
+            Codec.BOOL.optionalFieldOf("frame", true).forGetter(ItemProps::frame)
+    ).apply(i, ItemProps::new)));
 
     /** Room that grows to take what is left: a spring between two components. */
     public static final ElementType<Unit> SPACER = leaf("spacer", MapCodec.unit(Unit.INSTANCE));
@@ -169,9 +179,12 @@ public final class CoreElements {
      * @param textAlign where it stands
      * @param scale     its size, the font's own being 1
      * @param wrap      whether it breaks into lines at its words when it is too wide
+     * @param colour    its colour over its tone's: a role of the style by its key ({@code "amber"}), which every style
+     *                  makes readable on its grounds; {@code #RRGGBB} or {@code #AARRGGBB}; or the name of a value
+     *                  whose number is the colour, which the screen's code reads from its palette
      */
     public record LabelProps(Optional<String> text, Optional<String> bind, Optional<String> format, Tone tone,
-                             TextAlign textAlign, float scale, boolean wrap) {
+                             TextAlign textAlign, float scale, boolean wrap, Optional<String> colour) {
     }
 
     /**
@@ -230,6 +243,15 @@ public final class CoreElements {
      * @param imageHeight how tall it is drawn
      */
     public record ImageProps(ResourceLocation sprite, int imageWidth, int imageHeight) {
+    }
+
+    /**
+     * An item shown.
+     *
+     * @param bind  the name of the value that is the item
+     * @param frame whether a slot's frame is drawn under it
+     */
+    public record ItemProps(String bind, boolean frame) {
     }
 
     /**

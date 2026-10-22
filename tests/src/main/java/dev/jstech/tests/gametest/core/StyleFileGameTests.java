@@ -100,6 +100,13 @@ public final class StyleFileGameTests {
                     faint.add(id + " button text " + String.format("%.2f", ratio));
                 }
             }
+            // A well drawn flat holds a screen's text on its own fill, the body's screen's whole groups of it.
+            if (style.piece(StylePiece.WELL) instanceof StyleSprite.Flat flat && flat.fill().isPresent()) {
+                final double ratio = ColorContrast.ratio(style.colour(StyleRole.TEXT), style.colour(flat.fill().get()));
+                if (ratio < TEXT_CONTRAST) {
+                    faint.add(id + " text in a well " + String.format("%.2f", ratio));
+                }
+            }
             // So does a notification drawn flat; the game's toast frame is the sprite's to keep.
             if (style.piece(StylePiece.NOTIFICATION) instanceof StyleSprite.Flat flat && flat.fill().isPresent()) {
                 final double ratio = ColorContrast.ratio(style.colour(StyleRole.MENU_TEXT),

@@ -34,6 +34,7 @@ public final class HudTexts {
     public static final TextKey GEIGER_COUNTER = TextKey.of("hud.jscore.geiger_counter", "Geiger counter");
     public static final TextKey POCKET_DOSIMETER = TextKey.of("hud.jscore.pocket_dosimeter", "Pocket dosimeter");
     public static final TextKey HAZARD_MAP = TextKey.of("hud.jscore.hazard_map", "Hazard map");
+    public static final TextKey BODY_TEMPERATURE = TextKey.of("hud.jscore.body_temperature", "Body temperature");
 
     private HudTexts() {
     }

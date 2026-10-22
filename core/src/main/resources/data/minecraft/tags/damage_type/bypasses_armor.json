@@ -4,6 +4,8 @@
     "jscore:electric",
     "jscore:oxygen_toxicity",
     "jscore:lung_failure",
+    "jscore:hypothermia",
+    "jscore:heatstroke",
     "jscore:hot_item",
     "jscore:corrosive_item",
     "jscore:radiation_sickness",

@@ -17,6 +17,7 @@ import dev.jstech.core.client.gui.component.GraphEditor;
 import dev.jstech.core.client.gui.component.MapView;
 import dev.jstech.core.client.gui.component.ModelView;
 import dev.jstech.core.client.gui.component.RadioGroup;
+import dev.jstech.core.client.gui.component.ScaleView;
 import dev.jstech.core.client.gui.component.Slider;
 import dev.jstech.core.client.gui.component.Switch;
 import dev.jstech.core.client.gui.component.TableView;
@@ -31,6 +32,7 @@ import dev.jstech.core.gui.flex.FlexBox;
 import dev.jstech.core.gui.flex.IMeasure;
 import dev.jstech.core.gui.flex.Role;
 import dev.jstech.core.gui.flex.Size;
+import dev.jstech.core.gui.flex.TextMeasure;
 import dev.jstech.core.gui.screen.ControlElements;
 import dev.jstech.core.gui.screen.ElementSpec;
 import dev.jstech.core.gui.screen.InterfaceTexts;
@@ -78,6 +80,7 @@ public final class ControlElementBuilders {
         ElementBuilders.register(ControlElements.GRAPH, ControlElementBuilders::graph);
         ElementBuilders.register(ControlElements.MODEL, ControlElementBuilders::model);
         ElementBuilders.register(ControlElements.CHART, ControlElementBuilders::chart);
+        ElementBuilders.register(ControlElements.SCALE, ControlElementBuilders::scale);
         ElementBuilders.register(ControlElements.MAP, ControlElementBuilders::map);
         ElementBuilders.register(ControlElements.TANK, ControlElementBuilders::tank);
         ElementBuilders.register(ControlElements.ENERGY, ControlElementBuilders::energy);
@@ -216,6 +219,20 @@ public final class ControlElementBuilders {
                 props.from().map(k -> Component.translatable(k).getString()).orElse(""),
                 props.to().map(k -> Component.translatable(k).getString()).orElse(""));
         return leaf(spec, ctx, view, VIEW_WIDTH, VIEW_HEIGHT);
+    }
+
+    /* A scale as tall as its bar, the room over it, its marks' lines under it and a line of their words. */
+    private static BuiltNode scale(final ElementSpec spec, final ControlElements.ScaleProps props,
+                                   final BuildContext ctx) {
+        final Optional<Supplier<?>> value = ctx.value(props.bind());
+        final boolean pointer = props.pointer() == ControlElements.Pointer.ARROW;
+        final TextMeasure words = ctx.text(ctx.metrics().smallScale(), false);
+        final ScaleView view = new ScaleView(() -> value.<Object>map(Supplier::get)
+                .filter(ScaleView.Reading.class::isInstance).map(ScaleView.Reading.class::cast)
+                .orElse(ScaleView.Reading.EMPTY), pointer, words.scale());
+        final int tall = ScaleView.above(pointer) + ScaleView.BAR + ScaleView.TICK + ScaleView.WORDS_GAP
+                + Math.round(words.lineHeight() * words.scale());
+        return leaf(spec, ctx, view, VIEW_WIDTH, tall);
     }
 
     @SuppressWarnings("unchecked")

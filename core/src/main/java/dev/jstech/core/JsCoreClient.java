@@ -31,6 +31,7 @@ import dev.jstech.core.client.data.DataRegistryClient;
 import dev.jstech.core.client.developer.LiveReloadClient;
 import dev.jstech.core.client.diagnostic.DiagnosticsClient;
 import dev.jstech.core.client.dimension.TravelScreens;
+import dev.jstech.core.client.hazard.BodyTemperatureClient;
 import dev.jstech.core.client.hazard.HazardMapsClient;
 import dev.jstech.core.client.hazard.HazardTooltips;
 import dev.jstech.core.client.hazard.HazardsClient;
@@ -162,6 +163,7 @@ public final class JsCoreClient {
         TravelScreens.listen();
         RoomViewClient.listen();
         HazardsClient.listen();
+        BodyTemperatureClient.listen();
         HazardMapsClient.listen();
         HazardTooltips.listen();
         PersistorClient.listen();

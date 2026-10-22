@@ -196,6 +196,21 @@
           "if": {
             "properties": {
               "type": {
+                "const": "item"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "bind": {},
+              "frame": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
                 "const": "label"
               }
             }
@@ -203,6 +218,7 @@
           "then": {
             "properties": {
               "bind": {},
+              "colour": {},
               "format": {},
               "scale": {},
               "text": {},
@@ -297,6 +313,21 @@
           },
           "then": {
             "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "scale"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "bind": {},
+              "pointer": {}
+            }
           }
         },
         {
@@ -505,6 +536,7 @@
             "grid",
             "image",
             "inventory",
+            "item",
             "label",
             "map",
             "model",
@@ -512,6 +544,7 @@
             "progress",
             "radio",
             "row",
+            "scale",
             "separator",
             "slider",
             "slot",

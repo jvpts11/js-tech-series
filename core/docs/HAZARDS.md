@@ -111,6 +111,59 @@ Hazards.treat(body, SPORES, 5);    // a medicine, a shower
 A player's game is told their own hazards each second something changed (`HazardsClient` holds them), for the
 instruments in their hands and the body's screen.
 
+A kind can be measured rather than built up: each second a body stands in it as far as its gauge reads, with no
+sources and no recovery, as hypothermia stands as far as the core is below normal. What the gauge reads is worked out
+first, each second, by what a mod hands the kit to do before the hazards are weighed:
+
+```java
+.gauged((body, level) -> MyBreath.short(body))      // in place of sources and recovery
+Hazards.everySecond((body, level) -> MyBreath.second(body, level));
+```
+
+## A body's warmth
+
+*Added 2026-10-22.*
+
+A player's core warms and cools in kelvin (`BodyTemperature`), each second, as a real body's does (`BodyHeat`, pure):
+seventy kilograms holding about 243 kJ in each kelvin, its heat going out through the tissue under its skin (closed in
+the cold, open in the heat), what it wears and the film of air on it, which the wind thins and the water it is in takes
+the place of; the sun on it warms it through the same layers, blocks hot and cold near warm and cool what it sees by
+radiation, and the body makes heat by working (100 W standing, 200 walking, 600 sprinting, 400 swimming, 100 more
+swinging an arm), shivers past 36.8 °C and sweats past 37.2 °C. The place is the air of a sealed room or of a biome's
+own climate where they have one, in a dimension of the game's own rules the biome's climate from the game's values,
+elsewhere the dimension's air; the wind under the open sky; the sun by its height and the rain; the rain on the body.
+
+Past the edges of the normal warmth come two measured kinds of the kit: **hypothermia** below 35 °C (mild, slowed),
+32 °C (moderate, slowed further, weaker, slower to dig) and 28 °C (severe, harmed), and **overheating** above 37.5 °C
+(heat exhaustion, weaker and hungrier) and 40 °C (heatstroke, confused and harmed), each with its death message. A body
+that stays where the air is below 5 °C or above 30 °C gets used to it, its bands moving up to three quarters of a
+degree toward it over an hour, and loses that away from it. A player is born with a normal core and keeps one in
+creative.
+
+What a worn thing does against the weather is the data map `jscore:clothing`: how much heat it lets out, in W/(m²K),
+over the part of the body it covers (the head a tenth, the trunk and arms about a half, the legs a third, the feet the
+rest but the hands), and whether it keeps the wind and the water out. The game's leather lets six out, about one clo,
+and keeps the wind out; its plates hold a little in; mail almost nothing.
+
+```json
+{ "values": { "mymod:fur_coat": { "lets_out": 1.2, "keeps_wind_out": true } } }
+```
+
+How hot or cold a block is to a body near it is the data map `jscore:block_temperature`, in kelvin: the game's fire,
+campfires while lit, magma and lava in a cauldron, ice, packed and blue ice and snow; a liquid is as hot as its fluid
+says where it is far from room temperature, lava at 1,300. Within three blocks, each fills a few hundredths of what the
+body sees, by its distance, and nothing through a wall.
+
+```java
+BodyWarmth warmth = BodyTemperature.warmth(player);              // its core and how far it is used to a climate
+BodyTemperature.setCore(player, 305.15);                          // a fall into ice water
+BodyHeat.Place here = BodyTemperature.placeOf(level, player);     // the place as heat meets the body
+```
+
+The HUD shows the core while it is out of its normal band ([HUD elements](OVERLAYS.md#hud-elements)): a
+thermometer, the degrees, the band and which way the core goes, and five marks lit two for each band reached; the
+screen's edge frosts in the cold and hazes in the heat. The setting `body_temperature` turns all of it off.
+
 ## Hazards of carried things
 
 *Added 2026-10-17.*
@@ -126,6 +179,17 @@ What an item does to whoever carries it is data, the data map `jscore:item_hazar
 burns, is caught in a blast or falls hard; `toxic` poisons; `corrosive` eats away, its damage of the acid kind;
 `blinding` blinds while held. Each is weighed once a second for every stack carried, never for a player in creative,
 and the tooltip says the hazard and what protects from it. A mod declares more with `ItemHazards.declare`.
+
+What a container holds, as a shulker box or a bundle holds it, is carried too, and what reaches the carrier through
+walls, as radiation, reaches them through its walls: `ItemHazards.carriedWithin` counts it by the share its walls let
+through. A container that shields is the data map `jscore:shielding`, the density of its walls and their thickness in
+metres; its walls weaken the radiation as a block of the same does (`RadiationKind.through`), so a box with lead walls
+five centimetres thick lets about a thirtieth through, and a container the map says nothing of shields nothing. What
+touches the hand (heat, acid, poison) does not act through a container.
+
+```json
+{ "values": { "mymod:lead_container": { "density": 11340, "thickness": 0.05 } } }
+```
 
 ## The lungs
 
@@ -261,6 +325,19 @@ Every five seconds a few columns of each polluted chunk the game has loaded are 
 grass, flowers, saplings, crops, moss) take their share up, and each of the kind's effects is done at the top of each.
 The hazard map device measures the hazard of every kind that harms bodies, so carrying it maps them.
 
+Cleaning is each mod's equipment, built on `PollutionCleaner`: a scrubber, a filter or a device carried about takes
+up to its rate a second of one kind from the chunk it stands in, never more than lies there, and keeps what it took
+until its mod empties it into a full filter or a byproduct; `Pollution.takeUp` does it once.
+
+```java
+private final PollutionCleaner scrubber = new PollutionCleaner(SeriesPollution.ACID, 5);   // 5 a second
+
+public void serverTick() {
+    scrubber.tick((ServerLevel) level, worldPosition);
+    if (scrubber.taken() >= FILTER_HOLDS) { scrubber.empty(); fillFilter(); }
+}
+```
+
 The series' kinds (`SeriesPollution`), each with what it really does:
 
 - **Soot and particulates**, in micrograms a cubic metre: a haze over the chunk, the end of sight closing in as it
@@ -298,10 +375,14 @@ and a size for each. Used, the Geiger counter and the dosimeter are held up full
 mouse; the map opens whole, a button for each mapped hazard, the legend of its steps and a chunk's reading and its age
 when clicked. Each device keeps how it is set (`HazardDevices.STATE`).
 
-The **body's screen**, on its own key (B until the player changes it), is a worn panel of old green enamel: what is
-worn and how much of each kind it stops, the dose on a big meter with the radiation's bands painted on its scale, the
-rate here on a meter of two needles (from outside and from what is on the body) with a lamp asking for a shower, the
-lungs on an edgewise meter, dissonance in five lamps, and the other hazards on the body.
+The **body's screen**, on its own key (B until the player changes it), holds what is worn, how much heat it lets out,
+whether it keeps the wind and the water out and how much of each kind of harm it stops; the core's warmth on a scale of
+its bands, moved by what the body is used to, with what the place does to it; the dose built up on a scale of the
+radiation's bands, the rate here (from outside and from what is on the body) and a word asking for a shower; the
+lungs; dissonance; and the other hazards on the body. *Changed 2026-10-22:* it is a screen declared in a file,
+`assets/jscore/jstech/screens/body.json` ([Screens](SCREENS.md#screens-declared-in-files)), so a resource pack lays it
+out again and the player's style draws it; the colours of its scales are the palette `jscore:screen/body`.
+`BodyScreen.open()` opens it from code.
 
 ## Maps of hazards
 
@@ -349,6 +430,7 @@ In the world's balance file, under `hazards`:
 | `natural_radioactivity` | `true` | Whether minerals with uranium or thorium in them are radioactive. |
 | `mobs_suffer` | `true` | Whether creatures suffer hazards as players do. |
 | `lungs` | `true` | Whether dust harms the lungs. |
+| `body_temperature` | `true` | Whether a player's core warms and cools by the place, bringing hypothermia and heatstroke. |
 | `item_hazards` | `true` | Whether what is carried harms its carrier. |
 | `dissonance` | `true` | Whether laws of physics that depart from ours build up dissonance. |
 | `pollution` | `true` | Whether there is pollution: soot, acid, heavy metals and carbon dioxide; fallout goes with radiation. |

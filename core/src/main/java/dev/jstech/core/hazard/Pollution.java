@@ -106,6 +106,23 @@ public final class Pollution {
     }
 
     /**
+     * Takes up to {@code most} of {@code kind}, in its unit, from the chunk {@code pos} is in, as a scrubber or a
+     * filter does ({@link PollutionCleaner}); how much it took, never more than lay there.
+     */
+    public static double takeUp(final ServerLevel level, final BlockPos pos, final PollutionKind kind,
+                                final double most) {
+        if (most <= 0) {
+            return 0;
+        }
+        final ChunkPos chunk = new ChunkPos(pos);
+        final double taken = Math.min(most, kind.field().get(level, chunk));
+        if (taken > 0) {
+            kind.field().add(level, chunk, (float) -taken);
+        }
+        return Math.max(0, taken);
+    }
+
+    /**
      * Looks at {@code chunk} of {@code level} for {@code kind} now: its plants take their share up and its effects are
      * done at a few columns. What the regular look does; for a test or a command.
      */

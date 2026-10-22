@@ -1,0 +1,13 @@
+{
+  "box": "#96000000",
+  "cold": "#FF78B4FF",
+  "coldDark": "#FF285096",
+  "frost": "#78D7E8FF",
+  "glass": "#FFDCDCDC",
+  "haze": "#5AFFAA50",
+  "hot": "#FFE63C28",
+  "off": "#FF3C3C3C",
+  "trend": "#FFBEBEBE",
+  "value": "#FFFFFFFF",
+  "warm": "#FFF09632"
+}

@@ -1651,6 +1651,19 @@ stable 4
 10 dev.jstech.core.client.gui.component.RadioGroup  static final int LABEL_GAP
 10 dev.jstech.core.client.gui.component.RadioGroup  static final int ROW
 10 dev.jstech.core.client.gui.component.RadioGroup  void render(GuiGraphics, UiContext)
+12 dev.jstech.core.client.gui.component.ScaleView  type final class extends UiComponent
+12 dev.jstech.core.client.gui.component.ScaleView  new(Supplier<Reading>, boolean, float)
+12 dev.jstech.core.client.gui.component.ScaleView  static final int BAR
+12 dev.jstech.core.client.gui.component.ScaleView  static final int POINTER
+12 dev.jstech.core.client.gui.component.ScaleView  static final int TICK
+12 dev.jstech.core.client.gui.component.ScaleView  static final int WORDS_GAP
+12 dev.jstech.core.client.gui.component.ScaleView  static int above(boolean)
+12 dev.jstech.core.client.gui.component.ScaleView  void render(GuiGraphics, UiContext)
+12 dev.jstech.core.client.gui.component.ScaleView.Band  type record(double from, double to, int start, int end)
+12 dev.jstech.core.client.gui.component.ScaleView.Band  static Band of(double, double, int)
+12 dev.jstech.core.client.gui.component.ScaleView.Mark  type record(double at, String text)
+12 dev.jstech.core.client.gui.component.ScaleView.Reading  type record(double value, List<Band> bands, List<Mark> marks, int pointer)
+12 dev.jstech.core.client.gui.component.ScaleView.Reading  static final Reading EMPTY
 10 dev.jstech.core.client.gui.component.ScrollBar  type final class extends UiComponent
 10 dev.jstech.core.client.gui.component.ScrollBar  boolean mouseClicked(double, double, int)
 10 dev.jstech.core.client.gui.component.ScrollBar  boolean mouseDragged(double, double, int)
@@ -1919,6 +1932,7 @@ stable 4
 10 dev.jstech.core.client.gui.data.DataScreenView  boolean mouseReleased(double, double, int)
 10 dev.jstech.core.client.gui.data.DataScreenView  boolean mouseScrolled(double, double, double)
 10 dev.jstech.core.client.gui.data.DataScreenView  boolean overlayOpen()
+12 dev.jstech.core.client.gui.data.DataScreenView  boolean reshape()
 10 dev.jstech.core.client.gui.data.DataScreenView  boolean typing()
 10 dev.jstech.core.client.gui.data.DataScreenView  int height()
 10 dev.jstech.core.client.gui.data.DataScreenView  int left()
@@ -1954,6 +1968,10 @@ stable 4
 10 dev.jstech.core.client.gui.data.ImageView  boolean still()
 10 dev.jstech.core.client.gui.data.ImageView  new(ResourceLocation)
 10 dev.jstech.core.client.gui.data.ImageView  void render(GuiGraphics, UiContext)
+12 dev.jstech.core.client.gui.data.ItemView  type final class extends UiComponent
+12 dev.jstech.core.client.gui.data.ItemView  List<Component> tooltip(double, double)
+12 dev.jstech.core.client.gui.data.ItemView  new(Supplier<ItemStack>, boolean)
+12 dev.jstech.core.client.gui.data.ItemView  void render(GuiGraphics, UiContext)
 10 dev.jstech.core.client.gui.data.PieceView  type final class extends UiComponent
 10 dev.jstech.core.client.gui.data.PieceView  StylePiece piece()
 10 dev.jstech.core.client.gui.data.PieceView  boolean still()
@@ -2703,6 +2721,7 @@ stable 4
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> FIRE_REMAINS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> FIRE_SMOKE
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> FIRE_WIND
+12 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> HAZARDS_BODY_TEMPERATURE
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> HAZARDS_DISSONANCE
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> HAZARDS_ITEM_HAZARDS
 10 dev.jstech.core.config.CoreConfigKeys  static final ConfigKey<Boolean> HAZARDS_LUNGS
@@ -3299,6 +3318,12 @@ stable 4
 10 dev.jstech.core.datagen.BlockDensityProvider  type final class extends DataMapProvider
 10 dev.jstech.core.datagen.BlockDensityProvider  String getName()
 10 dev.jstech.core.datagen.BlockDensityProvider  new(PackOutput, CompletableFuture<HolderLookup.Provider>)
+12 dev.jstech.core.datagen.BlockTemperatureProvider  type final class extends DataMapProvider
+12 dev.jstech.core.datagen.BlockTemperatureProvider  String getName()
+12 dev.jstech.core.datagen.BlockTemperatureProvider  new(PackOutput, CompletableFuture<HolderLookup.Provider>)
+12 dev.jstech.core.datagen.ClothingProvider  type final class extends DataMapProvider
+12 dev.jstech.core.datagen.ClothingProvider  String getName()
+12 dev.jstech.core.datagen.ClothingProvider  new(PackOutput, CompletableFuture<HolderLookup.Provider>)
 10 dev.jstech.core.datagen.ContentBlockStateProvider  type final class extends BlockStateProvider
 10 dev.jstech.core.datagen.ContentBlockStateProvider  new(PackOutput, ModContent, ExistingFileHelper)
 10 dev.jstech.core.datagen.ContentBlockTagsProvider  type final class extends BlockTagsProvider
@@ -4270,6 +4295,7 @@ stable 4
 10 dev.jstech.core.gui.flex.FlexBox  FlexBox align(Align)
 10 dev.jstech.core.gui.flex.FlexBox  FlexBox alignSelf(Align)
 10 dev.jstech.core.gui.flex.FlexBox  FlexBox gap(int)
+12 dev.jstech.core.gui.flex.FlexBox  FlexBox gone(boolean)
 10 dev.jstech.core.gui.flex.FlexBox  FlexBox grow(int)
 10 dev.jstech.core.gui.flex.FlexBox  FlexBox height(int)
 10 dev.jstech.core.gui.flex.FlexBox  FlexBox justify(Justify)
@@ -4296,6 +4322,7 @@ stable 4
 10 dev.jstech.core.gui.flex.FlexBox  Role role()
 10 dev.jstech.core.gui.flex.FlexBox  String name()
 10 dev.jstech.core.gui.flex.FlexBox  String toString()
+12 dev.jstech.core.gui.flex.FlexBox  boolean gone()
 10 dev.jstech.core.gui.flex.FlexBox  boolean wrap()
 10 dev.jstech.core.gui.flex.FlexBox  int gap()
 10 dev.jstech.core.gui.flex.FlexBox  int grow()
@@ -4919,6 +4946,7 @@ stable 4
 10 dev.jstech.core.gui.screen.ControlElements  static final ElementType<ModelProps> MODEL
 10 dev.jstech.core.gui.screen.ControlElements  static final ElementType<ModelProps> TABLE
 10 dev.jstech.core.gui.screen.ControlElements  static final ElementType<ModelProps> TREE
+12 dev.jstech.core.gui.screen.ControlElements  static final ElementType<ScaleProps> SCALE
 10 dev.jstech.core.gui.screen.ControlElements  static final ElementType<SliderProps> SLIDER
 10 dev.jstech.core.gui.screen.ControlElements  static final ElementType<ToggleProps> GHOST_SLOT
 10 dev.jstech.core.gui.screen.ControlElements  static final ElementType<ToggleProps> SWITCH
@@ -4929,6 +4957,10 @@ stable 4
 10 dev.jstech.core.gui.screen.ControlElements.ColourProps  type record(String bind, Optional<String> action, List<String> swatches)
 10 dev.jstech.core.gui.screen.ControlElements.MapProps  type record(String bind, Optional<String> markers)
 10 dev.jstech.core.gui.screen.ControlElements.ModelProps  type record(String bind, Optional<String> action)
+12 dev.jstech.core.gui.screen.ControlElements.Pointer  type enum
+12 dev.jstech.core.gui.screen.ControlElements.Pointer  ARROW
+12 dev.jstech.core.gui.screen.ControlElements.Pointer  FILL
+12 dev.jstech.core.gui.screen.ControlElements.ScaleProps  type record(String bind, Pointer pointer)
 10 dev.jstech.core.gui.screen.ControlElements.SliderProps  type record(String bind, double min, double max, int steps, Optional<String> format, Optional<String> action)
 10 dev.jstech.core.gui.screen.ControlElements.ToggleProps  type record(Optional<String> text, Optional<String> bind, Optional<String> action)
 10 dev.jstech.core.gui.screen.CoreElements  type final class
@@ -4936,6 +4968,7 @@ stable 4
 10 dev.jstech.core.gui.screen.CoreElements  static final ElementType<CheckboxProps> CHECKBOX
 10 dev.jstech.core.gui.screen.CoreElements  static final ElementType<ImageProps> IMAGE
 10 dev.jstech.core.gui.screen.CoreElements  static final ElementType<InventoryProps> INVENTORY
+12 dev.jstech.core.gui.screen.CoreElements  static final ElementType<ItemProps> ITEM
 10 dev.jstech.core.gui.screen.CoreElements  static final ElementType<LabelProps> LABEL
 10 dev.jstech.core.gui.screen.CoreElements  static final ElementType<ProgressProps> PROGRESS
 10 dev.jstech.core.gui.screen.CoreElements  static final ElementType<SlotProps> SLOT
@@ -4955,7 +4988,8 @@ stable 4
 10 dev.jstech.core.gui.screen.CoreElements.CheckboxProps  type record(Optional<String> text, Optional<String> bind, Optional<String> action)
 10 dev.jstech.core.gui.screen.CoreElements.ImageProps  type record(ResourceLocation sprite, int imageWidth, int imageHeight)
 10 dev.jstech.core.gui.screen.CoreElements.InventoryProps  type record(boolean label)
-10 dev.jstech.core.gui.screen.CoreElements.LabelProps  type record(Optional<String> text, Optional<String> bind, Optional<String> format, Tone tone, TextAlign textAlign, float scale, boolean wrap)
+12 dev.jstech.core.gui.screen.CoreElements.ItemProps  type record(String bind, boolean frame)
+12 dev.jstech.core.gui.screen.CoreElements.LabelProps  type record(Optional<String> text, Optional<String> bind, Optional<String> format, Tone tone, TextAlign textAlign, float scale, boolean wrap, Optional<String> colour)
 10 dev.jstech.core.gui.screen.CoreElements.ProgressProps  type record(String bind, int max, Optional<String> maxBind)
 10 dev.jstech.core.gui.screen.CoreElements.SlotProps  type record(int slot)
 10 dev.jstech.core.gui.screen.CoreElements.SlotsProps  type record(int from, int count, int perRow)
@@ -6071,6 +6105,7 @@ stable 4
 10 dev.jstech.core.heat.HeatBody  void writeClient(CompoundTag, HolderLookup.Provider)
 10 dev.jstech.core.heat.HeatClimate  type final class
 10 dev.jstech.core.heat.HeatClimate  static Air air(Level, BlockPos)
+12 dev.jstech.core.heat.HeatClimate  static Optional<Air> own(Level, BlockPos)
 10 dev.jstech.core.heat.HeatClimate  static boolean vacuum(Level, BlockPos)
 10 dev.jstech.core.heat.HeatClimate  static double ambient(Level, BlockPos)
 10 dev.jstech.core.heat.HeatClimate  static double pressure(Level, BlockPos)

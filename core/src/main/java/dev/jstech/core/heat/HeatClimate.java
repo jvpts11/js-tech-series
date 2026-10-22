@@ -12,6 +12,7 @@ import dev.jstech.core.dimension.DimensionRulesData;
 import dev.jstech.core.moving.MovingStructures;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -58,19 +59,23 @@ public final class HeatClimate {
      * is in the world, a hangar's room round a ship or the thin air its height gives.
      */
     public static Air air(final Level level, final BlockPos pos) {
+        return own(level, pos).orElseGet(() -> {
+            final Climate here = DimensionRulesData.of(level).at(MovingStructures.inWorld(level, pos).getY() + 0.5);
+            return new Air(HeatMath.kelvin(here.temperature()), here.pressure());
+        });
+    }
+
+    /**
+     * The air a source gives the place around {@code pos}, a sealed room's or a biome's own climate, for a block aboard
+     * a moving structure that of where the structure is too; none where the place keeps its dimension's air.
+     */
+    public static Optional<Air> own(final Level level, final BlockPos pos) {
         final Air own = fromSources(level, pos);
         if (own != null) {
-            return own;
+            return Optional.of(own);
         }
         final BlockPos at = MovingStructures.inWorld(level, pos);
-        if (at != pos) {
-            final Air round = fromSources(level, at);
-            if (round != null) {
-                return round;
-            }
-        }
-        final Climate here = DimensionRulesData.of(level).at(at.getY() + 0.5);
-        return new Air(HeatMath.kelvin(here.temperature()), here.pressure());
+        return at == pos ? Optional.empty() : Optional.ofNullable(fromSources(level, at));
     }
 
     private static @Nullable Air fromSources(final Level level, final BlockPos pos) {

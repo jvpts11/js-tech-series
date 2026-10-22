@@ -1,0 +1,233 @@
+{
+  "width": 298,
+  "root": {
+    "type": "column",
+    "gap": 4,
+    "children": [
+      {
+        "type": "row",
+        "gap": 6,
+        "align": "end",
+        "children": [
+          {"type": "title", "id": "title"},
+          {"type": "label", "id": "subtitle", "text": "jscore.body.subtitle", "tone": "dim", "scale": 0.75, "grow": 1}
+        ]
+      },
+      {
+        "type": "row",
+        "gap": 8,
+        "children": [
+          {
+            "type": "column",
+            "id": "worn",
+            "width": 92,
+            "gap": 2,
+            "children": [
+              {
+                "type": "row",
+                "gap": 4,
+                "align": "start",
+                "children": [
+                  {
+                    "type": "column",
+                    "gap": 0,
+                    "children": [
+                      {"type": "item", "id": "worn_head", "bind": "worn_head"},
+                      {"type": "item", "id": "worn_chest", "bind": "worn_chest"},
+                      {"type": "item", "id": "worn_legs", "bind": "worn_legs"},
+                      {"type": "item", "id": "worn_feet", "bind": "worn_feet"}
+                    ]
+                  },
+                  {
+                    "type": "column",
+                    "gap": 1,
+                    "grow": 1,
+                    "margin": [4, 0, 0, 0],
+                    "children": [
+                      {"type": "label", "id": "worn_name", "bind": "worn_name", "scale": 0.75, "wrap": true},
+                      {"type": "label", "id": "worn_from", "bind": "worn_from", "tone": "dim", "scale": 0.75,
+                        "wrap": true, "visible_if": "anything_worn"}
+                    ]
+                  }
+                ]
+              },
+              {"type": "label", "text": "jscore.body.weather", "tone": "title", "scale": 0.75, "wrap": true,
+                "margin": [4, 0, 0, 0]},
+              {"type": "label", "text": "jscore.body.lets_out", "scale": 0.75},
+              {"type": "label", "id": "lets_out", "bind": "lets_out", "scale": 0.75, "text_align": "right"},
+              {
+                "type": "row",
+                "children": [
+                  {"type": "label", "text": "jscore.body.wind", "scale": 0.75},
+                  {"type": "spacer"},
+                  {"type": "label", "id": "wind", "bind": "wind", "scale": 0.75}
+                ]
+              },
+              {
+                "type": "row",
+                "children": [
+                  {"type": "label", "text": "jscore.body.wet", "scale": 0.75},
+                  {"type": "spacer"},
+                  {"type": "label", "id": "wet", "bind": "wet", "scale": 0.75}
+                ]
+              },
+              {"type": "label", "text": "jscore.body.stops", "tone": "title", "scale": 0.75, "wrap": true,
+                "margin": [4, 0, 0, 0]},
+              {
+                "type": "row",
+                "id": "stop_1",
+                "visible_if": "stop_1",
+                "children": [
+                  {"type": "label", "bind": "stop_1", "scale": 0.75},
+                  {"type": "spacer"},
+                  {"type": "label", "bind": "stop_1_share", "scale": 0.75}
+                ]
+              },
+              {
+                "type": "row",
+                "id": "stop_2",
+                "visible_if": "stop_2",
+                "children": [
+                  {"type": "label", "bind": "stop_2", "scale": 0.75},
+                  {"type": "spacer"},
+                  {"type": "label", "bind": "stop_2_share", "scale": 0.75}
+                ]
+              },
+              {
+                "type": "row",
+                "id": "stop_3",
+                "visible_if": "stop_3",
+                "children": [
+                  {"type": "label", "bind": "stop_3", "scale": 0.75},
+                  {"type": "spacer"},
+                  {"type": "label", "bind": "stop_3_share", "scale": 0.75}
+                ]
+              },
+              {
+                "type": "row",
+                "id": "stop_4",
+                "visible_if": "stop_4",
+                "children": [
+                  {"type": "label", "bind": "stop_4", "scale": 0.75},
+                  {"type": "spacer"},
+                  {"type": "label", "bind": "stop_4_share", "scale": 0.75}
+                ]
+              },
+              {
+                "type": "row",
+                "id": "stop_5",
+                "visible_if": "stop_5",
+                "children": [
+                  {"type": "label", "bind": "stop_5", "scale": 0.75},
+                  {"type": "spacer"},
+                  {"type": "label", "bind": "stop_5_share", "scale": 0.75}
+                ]
+              },
+              {"type": "label", "id": "no_stops", "text": "jscore.body.nothing_stopped", "tone": "dim", "scale": 0.75,
+                "visible_if": "no_stops"},
+              {"type": "label", "text": "jscore.body.warmer", "tone": "dim", "scale": 0.75, "wrap": true,
+                "margin": [4, 0, 0, 0]},
+              {"type": "spacer"},
+              {"type": "label", "id": "others", "bind": "others", "tone": "dim", "scale": 0.75, "wrap": true},
+              {"type": "button", "id": "done", "text": "gui.done", "action": "done"}
+            ]
+          },
+          {
+            "type": "column",
+            "id": "hazards",
+            "grow": 1,
+            "gap": 4,
+            "children": [
+              {
+                "type": "well",
+                "id": "temperature_well",
+                "padding": 4,
+                "gap": 2,
+                "visible_if": "temperature_on",
+                "children": [
+                  {
+                    "type": "row",
+                    "align": "end",
+                    "children": [
+                      {"type": "label", "text": "jscore.body.temperature", "tone": "title"},
+                      {"type": "spacer"},
+                      {"type": "label", "id": "temperature_band", "bind": "temperature_band", "scale": 0.75}
+                    ]
+                  },
+                  {"type": "label", "id": "core_line", "bind": "core_line", "scale": 0.75, "wrap": true},
+                  {"type": "scale", "id": "temperature", "bind": "temperature", "pointer": "arrow"},
+                  {"type": "label", "id": "place_line", "bind": "place_line", "scale": 0.75, "wrap": true},
+                  {"type": "label", "id": "used_line", "bind": "used_line", "scale": 0.75, "wrap": true,
+                    "visible_if": "used"}
+                ]
+              },
+              {
+                "type": "well",
+                "id": "radiation_well",
+                "padding": 4,
+                "gap": 2,
+                "visible_if": "radiation_on",
+                "children": [
+                  {
+                    "type": "row",
+                    "align": "end",
+                    "children": [
+                      {"type": "label", "text": "jscore.body.radiation", "tone": "title"},
+                      {"type": "spacer"},
+                      {"type": "label", "id": "radiation_band", "bind": "radiation_band", "scale": 0.75}
+                    ]
+                  },
+                  {"type": "label", "id": "dose_line", "bind": "dose_line", "scale": 0.75, "wrap": true},
+                  {"type": "scale", "id": "dose", "bind": "dose"},
+                  {"type": "label", "id": "rate_line", "bind": "rate_line", "scale": 0.75, "wrap": true,
+                    "visible_if": "rate"},
+                  {"type": "label", "id": "wash", "text": "jscore.body.wash", "colour": "red", "scale": 0.75,
+                    "wrap": true, "visible_if": "contaminated"}
+                ]
+              },
+              {
+                "type": "well",
+                "id": "lungs_well",
+                "padding": 4,
+                "gap": 2,
+                "children": [
+                  {
+                    "type": "row",
+                    "align": "end",
+                    "children": [
+                      {"type": "label", "text": "jscore.body.lungs", "tone": "title"},
+                      {"type": "spacer"},
+                      {"type": "label", "id": "lungs_band", "bind": "lungs_band", "scale": 0.75}
+                    ]
+                  },
+                  {"type": "label", "id": "lung_line", "bind": "lung_line", "scale": 0.75, "wrap": true},
+                  {"type": "scale", "id": "lungs", "bind": "lungs"}
+                ]
+              },
+              {
+                "type": "well",
+                "id": "dissonance_well",
+                "padding": 4,
+                "gap": 2,
+                "visible_if": "dissonance_on",
+                "children": [
+                  {
+                    "type": "row",
+                    "align": "end",
+                    "children": [
+                      {"type": "label", "text": "jscore.body.dissonance", "tone": "title"},
+                      {"type": "spacer"},
+                      {"type": "label", "id": "dissonance_band", "bind": "dissonance_band", "scale": 0.75}
+                    ]
+                  },
+                  {"type": "label", "id": "dissonance_line", "bind": "dissonance_line", "scale": 0.75, "wrap": true},
+                  {"type": "scale", "id": "dissonance", "bind": "dissonance"}
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

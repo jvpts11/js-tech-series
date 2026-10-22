@@ -7,10 +7,10 @@ as any other mod's would be.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026: the hazard kit, hazards of carried things, the lungs,
-treatment, radiation and its kinds, ionizing radiation and contamination, dissonance and pollution, with the hazard
-devices and their maps. How a mod uses it, with code: [Hazards](../HAZARDS.md). What is not built yet is under
-*Still to build* at the end.
+Everything this page designs is built, as of October 2026: the hazard kit, hazards of carried things and shielded
+containers, the lungs, a body's warmth, treatment, radiation and its kinds, ionizing radiation and contamination,
+dissonance and pollution and its cleaning, with the hazard devices and their maps. How a mod uses it, with code:
+[Hazards](../HAZARDS.md).
 
 ## The design
 
@@ -58,6 +58,26 @@ Nuclear Tech:
 
 The tooltip shows each hazard and what protects from it.
 
+**Shielded containers**: what a container holds is carried too, and its radiation reaches the carrier through the
+container's walls, weakened by their density and thickness as a block of the same material weakens it, so a box with
+lead walls five centimetres thick lets about a thirtieth through. Which containers shield, and how, is data; one that
+says nothing shields nothing. What touches the hand does not act through a container.
+
+### A body's warmth
+
+A player's core warms and cools in kelvin, as a real body's does: what the place gives a body (the air, the sun, water,
+wind, hot and cold blocks near) reaches it through what it wears, each worn thing's insulation a number in W/(m²·K)
+given as data with whether it keeps the wind and the water out, and the body adds what it makes by working, shivering
+as it cools and sweating as it warms. Past the bands of the hazard kit come **hypothermia** below 35 °C (mild),
+32 °C (moderate) and 28 °C (severe), and **overheating** above 37.5 °C (heat exhaustion) and 40 °C (heatstroke), each
+with its effects and death message, shown on the HUD while the core is out of its normal band, the screen's edge
+frosted or hazed.
+
+- **Acclimation**: a body that stays in a cold or a hot climate moves its bands toward it over an hour of play, up to
+  three quarters of a degree, and loses that away from it.
+- In a dimension of the game's own rules, the air is the biome's climate; a sealed room's air and a biome's own
+  climate stand where they are given.
+
 ### What is breathed
 
 **Damage to the lungs**: dusts (coal dust, silica, asbestos fibres) build up a damage that lasts, and asbestos's hardly
@@ -80,11 +100,12 @@ mod's items.
   the dose taken, its band and the bands reached. In hand, each shows on the HUD as the device itself; the player puts
   it anywhere on the screen and gives it the size wanted ([The interface](interface.md)); a click holds it up, full
   size. The game's subtitles name the clicks for those who don't hear them.
-- **A screen of the body**, opened by a key of its own: dose, contamination, lungs and dissonance in one place, as a
-  worn panel of old green enamel, chipped and rusted: what is worn and how much of each kind it stops, the dose taken
-  on a big meter with the bands painted on its scale, the rate here on a meter of two needles (from outside, and from
-  what is on the body) with a lamp asking for a shower, the lungs on an edgewise meter, dissonance in five lamps, and
-  the other mods' hazards.
+- **A screen of the body**, opened by a key of its own: warmth, dose, contamination, lungs and dissonance in one
+  place: what is worn, how much heat it lets out, whether it keeps the wind and the water out and how much of each kind
+  of harm it stops; the core's warmth on a scale of its bands, with what the place does to it; the dose taken on a
+  scale with the bands painted on it, the rate here (from outside, and from what is on the body) and a word asking for
+  a shower; the lungs; dissonance; and the other mods' hazards. Its look can change: it is a screen declared in a
+  file, which a resource pack lays out again, drawn in the style the player picks ([The interface](interface.md)).
 - **A map of hazards** by chunk (radiation, pollution), in two versions: a **handheld device** of the same family,
   whose screen shows the land around with the hazard on it, live, and a **screen** with the whole map, opened from the
   device and shown by J's Computers' network too. The map only knows the chunks that were measured, by an instrument in
@@ -159,21 +180,11 @@ The series' kinds, each with what it really does:
   server**, shown, with no effect yet; what it does is designed when J's Agriculture and J's Geology are.
 - **Radioactive fallout**: it spreads chunk by chunk and decays over time, and it raises the dose rate where it lies.
 
-Cleaning equipment is each mod's (J's Industrial's scrubbers and filters).
+Cleaning equipment is each mod's (J's Industrial's scrubbers and filters), built on a common helper: a block or a
+device takes up to its rate a second of one kind of pollution from the chunk it stands in, never more than lies there,
+and keeps what it took for its mod to turn into a full filter or a byproduct.
 
 ### What is the series' own
 
 The hazard, radiation and pollution kits are the platform's; **ionizing radiation, dissonance and the series' kinds of
 pollution** are the series' own, in its package, built only from the kits ([The API](api.md)).
-
-## Still to build
-
-- **The body's temperature, in kelvin**: what the place gives a body (the air, the sun, water, wind, hot and cold
-  blocks near) reaches it through what it wears, each worn thing's insulation a number in W/(m²·K) given as data, and
-  the body adds what it makes by working; past the bands of the hazard kit come hypothermia and heatstroke, shown on the
-  HUD.
-- **Acclimation**: a body that stays in a climate moves its bands toward it over time, and loses that away from it.
-- **Shielded containers**: a container that holds radioactive things and shields their radiation by the density of its
-  own material, so carrying them in one is safe.
-- **A helper for cleaning**: a block or a device that takes so much of one kind of pollution a second from its chunk,
-  for each mod's scrubbers and filters to use.

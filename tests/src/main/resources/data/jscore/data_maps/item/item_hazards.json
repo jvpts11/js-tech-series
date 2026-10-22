@@ -2,6 +2,9 @@
   "values": {
     "minecraft:magma_cream": {
       "jscore:hot": 2
+    },
+    "minecraft:echo_shard": {
+      "jscore:radioactive": 10
     }
   }
 }

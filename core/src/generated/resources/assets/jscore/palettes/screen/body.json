@@ -1,0 +1,15 @@
+{
+  "cold": "#FF5B7CA5",
+  "cool": "#FF4B5D73",
+  "deepCold": "#FF2B4B83",
+  "dissonanceHigh": "#FFF05ADC",
+  "dissonanceLow": "#FF966EE6",
+  "hot": "#FFA03A2E",
+  "lungsHigh": "#FF3C3228",
+  "lungsLow": "#FF787878",
+  "normal": "#FF4B7442",
+  "pointer": "#FFFFFFFF",
+  "radiationHigh": "#FFDC281E",
+  "radiationLow": "#FF6EC83C",
+  "warm": "#FF8A6235"
+}

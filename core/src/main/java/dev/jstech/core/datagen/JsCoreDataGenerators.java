@@ -35,6 +35,8 @@ public final class JsCoreDataGenerators {
         data.server(new SeriesRecipes(data.output(), data.lookup()));
         data.server(new BlockConductivityProvider(data.output(), data.lookup()));
         data.server(new BlockDensityProvider(data.output(), data.lookup()));
+        data.server(new BlockTemperatureProvider(data.output(), data.lookup()));
+        data.server(new ClothingProvider(data.output(), data.lookup()));
         data.server(new BlastStrengthProvider(data.output(), data.lookup()));
         data.server(new FireRemainsProvider(data.output(), data.lookup()));
         data.server(new LightColoursProvider(data.output(), data.lookup()));

@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest.core;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.client.gui.data.DataScreen;
 import dev.jstech.core.client.hazard.HazardMapsClient;
 import dev.jstech.core.client.hazard.HazardsClient;
 import dev.jstech.core.client.hud.HudElements;
@@ -157,12 +158,16 @@ public final class HazardDevicesClientTests {
                     KeyMapping.resetMapping();
                     KeyMapping.click(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_B));
                 })
-                .thenAwaitScreen(BodyScreen.class, WAIT)
-                .thenAssert(SETTLE, () -> HazardsClient.level(TestHazards.KIND.id()) >= 5
+                .thenAwaitScreen(DataScreen.class, WAIT)
+                .thenAssert(SETTLE, () -> ctx.screen(DataScreen.class).file().equals(BodyScreen.FILE)
+                        && HazardsClient.level(TestHazards.KIND.id()) >= 5
                         && HazardsClient.level(Lungs.BLACK_LUNG.id()) > 8
                         && HazardsClient.level(IonizingRadiation.DOSE.id()) > 1
                         && HazardsClient.level(IonizingRadiation.CONTAMINATION.id()) > 0,
                         "the body's hazards reach its screen")
+                .thenAssert(0, () -> shown(ctx, "wash") && shown(ctx, "rate_line")
+                        && ctx.screen(DataScreen.class).view().guiLayout().isClean(),
+                        "the contaminated body is told to wash, the rate here is told, and nothing overlaps")
                 .thenScreenshot(SETTLE, "body_screen")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(WAIT)
@@ -171,6 +176,12 @@ public final class HazardDevicesClientTests {
                         SeriesPollution.SOOT, 450))
                 .thenWaitUntil(() -> SmogClient.thickness() > 0.3, WAIT, "the haze of the soot")
                 .thenScreenshot(SETTLE * 2, "smog");
+    }
+
+    /* Whether the body's screen shows the component the file named {@code id}. */
+    private static boolean shown(final ClientTestContext ctx, final String id) {
+        return ctx.screen(DataScreen.class).view().find(id).map(node -> node.component() != null
+                && node.component().visible()).orElse(false);
     }
 
     private static boolean placed(final HudStack.Corner corner, final ResourceLocation element) {

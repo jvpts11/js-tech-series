@@ -337,6 +337,13 @@ public final class CoreConfigKeys {
                     + "lungs.")
             .named("Dust harms the lungs");
 
+    /** Whether bodies feel the cold and the heat. */
+    public static final ConfigKey<Boolean> HAZARDS_BODY_TEMPERATURE = ConfigKey.flag(HAZARDS + ".body_temperature",
+                    true)
+            .comment("Whether a player's core warms and cools by the place (the air, the sun, the wind, water, hot and "
+                    + "cold blocks near) through what they wear, bringing hypothermia and heatstroke past its bands.")
+            .named("Bodies feel the cold and the heat");
+
     /** Whether what a player carries harms them. */
     public static final ConfigKey<Boolean> HAZARDS_ITEM_HAZARDS = ConfigKey.flag(HAZARDS + ".item_hazards", true)
             .comment("Whether what is carried harms its carrier: a hot ingot burns, sodium catches fire in the rain, a "
@@ -756,6 +763,7 @@ public final class CoreConfigKeys {
             .key(HAZARDS_NATURAL_RADIOACTIVITY, HazardBalance::setNaturalRadioactivity)
             .key(HAZARDS_MOBS_SUFFER, HazardBalance::setMobsSuffer)
             .key(HAZARDS_LUNGS, HazardBalance::setLungs)
+            .key(HAZARDS_BODY_TEMPERATURE, HazardBalance::setBodyTemperature)
             .key(HAZARDS_ITEM_HAZARDS, HazardBalance::setItemHazards)
             .key(HAZARDS_DISSONANCE, HazardBalance::setDissonance)
             .key(HAZARDS_POLLUTION, HazardBalance::setPollution)

@@ -76,6 +76,9 @@ import dev.jstech.core.dimension.DimensionTravel;
 import dev.jstech.core.explosion.Explosions;
 import dev.jstech.core.fire.Fires;
 import dev.jstech.core.hazard.BlockDensity;
+import dev.jstech.core.hazard.BlockTemperatures;
+import dev.jstech.core.hazard.BodyTemperature;
+import dev.jstech.core.hazard.Clothing;
 import dev.jstech.core.hazard.HazardMaps;
 import dev.jstech.core.hazard.Pollution;
 import dev.jstech.core.hazard.Radiation;
@@ -83,6 +86,7 @@ import dev.jstech.core.hazard.Hazards;
 import dev.jstech.core.hazard.ItemHazards;
 import dev.jstech.core.hazard.Lungs;
 import dev.jstech.core.hazard.Resistances;
+import dev.jstech.core.hazard.Shielding;
 import dev.jstech.core.hazard.Withering;
 import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.grid.CoreGrids;
@@ -339,10 +343,15 @@ public final class JsCore {
         ItemHazards.listen(modEventBus);
         // Radiation: given off by blocks, weakened by the distance and by the density of each block on its way.
         BlockDensity.listen(modEventBus);
+        Shielding.listen(modEventBus);
         Radiation.listen();
         // Pollution: amounts over the chunks that spread, fade, are taken up by plants and harm bodies and the land.
         Pollution.listen();
         Lungs.listen();
+        // A body's warmth: its core by the place through what it wears, hypothermia and heatstroke past its bands.
+        Clothing.listen(modEventBus);
+        BlockTemperatures.listen(modEventBus);
+        BodyTemperature.listen(modEventBus);
         // The world showing contamination: grass dying and plants withering where it is high.
         Withering.listen();
         // Explosions decided by their energy: a shock wave at the speed of sound through blocks by their strength.

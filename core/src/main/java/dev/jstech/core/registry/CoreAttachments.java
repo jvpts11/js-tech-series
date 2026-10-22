@@ -10,6 +10,7 @@ package dev.jstech.core.registry;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.LevelGrids;
+import dev.jstech.core.hazard.BodyWarmth;
 import dev.jstech.core.hazard.HazardLevels;
 import dev.jstech.core.hazard.HazardMap;
 import dev.jstech.core.hazard.LevelRadiation;
@@ -100,6 +101,11 @@ public final class CoreAttachments {
     public static final Supplier<AttachmentType<HazardLevels>> HAZARDS =
             ATTACHMENT_TYPES.register("hazards", () -> AttachmentType.builder(HazardLevels::new)
                     .serialize(HazardLevels.CODEC).build());
+
+    /** How warm a living thing's core is, and how far it is used to a climate: saved with it, born again normal. */
+    public static final Supplier<AttachmentType<BodyWarmth>> BODY_WARMTH =
+            ATTACHMENT_TYPES.register("body_warmth", () -> AttachmentType.builder(() -> BodyWarmth.NORMAL)
+                    .serialize(BodyWarmth.CODEC).build());
 
     /** A dimension's sources of radiation; never saved, since each block that gives it off says so as it loads. */
     public static final Supplier<AttachmentType<LevelRadiation>> RADIATION =

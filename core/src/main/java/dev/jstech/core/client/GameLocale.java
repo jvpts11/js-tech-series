@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client;
 
+import dev.jstech.core.format.UnitFormatter;
 import java.text.NumberFormat;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
@@ -28,5 +29,10 @@ public final class GameLocale {
     /** A count, grouped the way the game's language groups it. */
     public static String count(final long value) {
         return NumberFormat.getIntegerInstance(locale()).format(value);
+    }
+
+    /** Numbers and units written the way the game's language writes them: "34.6" in English, "34,6" in Portuguese. */
+    public static UnitFormatter numbers() {
+        return new UnitFormatter(locale());
     }
 }

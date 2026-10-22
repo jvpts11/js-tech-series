@@ -215,6 +215,23 @@ class FlexLayoutTest {
     }
 
     @Test
+    void layout_leavesAGoneBoxOutWithItsGap() {
+        final FlexBox gone = block("b", 10, 30);
+        final FlexBox column = FlexBox.column("column").gap(4)
+                .add(block("a", 10, 10)).add(gone).add(block("c", 10, 10));
+
+        gone.gone(true);
+        final Placed without = FlexLayout.layout(column, 50, FlexLayout.preferred(column, 50).height());
+        gone.gone(false);
+        final int back = FlexLayout.preferred(column, 50).height();
+
+        assertEquals(14, at(without, "c").y());
+        assertEquals(24, without.height());
+        assertTrue(without.find("b").isEmpty());
+        assertEquals(58, back);
+    }
+
+    @Test
     void add_refusesAChildInALeaf() {
         assertThrows(IllegalStateException.class, () -> leaf("leaf", 1, 1).add(leaf("inner", 1, 1)));
     }

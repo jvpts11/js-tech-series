@@ -133,7 +133,21 @@ public final class DataScreenView {
                 nodes.put(node.component(), node);
             }
         });
+        show(tree, true);
         height = FlexLayout.preferred(tree.box(), width).height();
+    }
+
+    /**
+     * Shows and hides the components by their files' {@code visible_if} as the values are now, a hidden one giving
+     * its room, and that of all it holds, to the rest. True when one came or went: the screen is then as tall as
+     * {@link #height} says, for its screen to lay it out again where it now stands.
+     */
+    public boolean reshape() {
+        if (tree == null || !show(tree, true)) {
+            return false;
+        }
+        height = FlexLayout.preferred(tree.box(), width).height();
+        return true;
     }
 
     /** Lays the built screen out with its top-left corner at {@code (left, top)} on the game's screen. */
@@ -178,13 +192,13 @@ public final class DataScreenView {
         for (final UiComponent component : root.children()) {
             outgrown |= component instanceof TextView text && text.outgrown();
         }
-        if (outgrown) {
-            // A text grown past its box since the screen was laid out: the window keeps its size, the rest gives room.
+        // A text grown past its box since the screen was laid out: the window keeps its size, the rest gives room. A
+        // component come or gone, on a screen that did not ask first, is laid out where the window stands.
+        if (reshape() || outgrown) {
             lay();
         }
         tree.forEach(node -> {
             if (node.component() != null) {
-                node.component().setVisible(node.visible().getAsBoolean());
                 node.component().setEnabled(node.enabled().getAsBoolean());
             }
         });
@@ -436,10 +450,34 @@ public final class DataScreenView {
         if (node.placed() != null) {
             node.placed().accept(at);
         }
+        // The layout placed only the children it did not leave out, in their order.
         final List<Placed> placedChildren = at.children();
-        for (int i = 0; i < node.children().size() && i < placedChildren.size(); i++) {
-            place(node.children().get(i), placedChildren.get(i), left, top);
+        int next = 0;
+        for (final BuiltNode child : node.children()) {
+            if (next < placedChildren.size() && placedChildren.get(next).box() == child.box()) {
+                place(child, placedChildren.get(next++), left, top);
+            }
         }
+    }
+
+    /*
+     * Shows {@code node} when it and everything above it show, and leaves a node shown by a value out of the layout
+     * while it is hidden: true when one came or went.
+     */
+    private static boolean show(final BuiltNode node, final boolean above) {
+        final boolean shown = above && node.visible().getAsBoolean();
+        boolean changed = false;
+        if (node.visible() != BuildContext.ALWAYS && node.box().gone() == shown) {
+            node.box().gone(!shown);
+            changed = true;
+        }
+        if (node.component() != null) {
+            node.component().setVisible(shown);
+        }
+        for (final BuiltNode child : node.children()) {
+            changed |= show(child, shown);
+        }
+        return changed;
     }
 
     /* Whether the press landed on a control that sounds, a button or a check box. */
