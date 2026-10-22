@@ -66,6 +66,13 @@ When the file is read again (a resource pack changed, or in a development run th
 is built again from it at once, with no restart. A file that cannot be read says what is wrong in the place of the
 screen, and in the log.
 
+*Added 2026-10-22.* The Core's data run writes a JSON schema of these files,
+`assets/jscore/jstech/schemas/screen.json`, made from the same codecs the game reads them with: every kind with the
+names it takes, what each name holds and which kinds hold others. An editor that knows JSON schemas checks a screen
+file as it is written and offers the names: point the file's `"$schema"` at the schema, or map
+`**/jstech/screens/*.json` to it in the editor's settings. A mod that declares kinds of its own adds a
+`ScreenSchemaProvider` to its data run, and its schema holds the Core's kinds and its own.
+
 A screen declared in a file draws less: its window and what never changes (panels, wells, separators, pictures, slot
 frames, the title and words from a translation key) are drawn once into a picture the size of the game's window,
 which is laid down again each frame, and only what moves (a bar, a value's words, a button under the pointer) is

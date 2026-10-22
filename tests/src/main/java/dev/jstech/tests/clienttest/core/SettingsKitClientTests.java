@@ -12,6 +12,7 @@ import dev.jstech.core.client.config.ConfigPresetsPopup;
 import dev.jstech.core.client.config.ConfigTextPopup;
 import dev.jstech.core.client.config.CoreConfigScreen;
 import dev.jstech.core.config.ConfigDraft;
+import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigScreenTexts;
 import dev.jstech.core.text.GameText;
 import dev.jstech.tests.JsTests;
@@ -30,6 +31,8 @@ import org.lwjgl.glfw.GLFW;
  * the picker of the game's things, the presets, the settings carried as text, undo and redo, and the keyboard.
  */
 public final class SettingsKitClientTests {
+
+    private static final String NEOFORGE = "NeoForge";
 
     private SettingsKitClientTests() {
     }
@@ -168,6 +171,61 @@ public final class SettingsKitClientTests {
                     ctx.mc().screen.keyPressed(GLFW.GLFW_KEY_TAB, 0, 0);
                 })
                 .thenScreenshot(1, "settings_keyboard");
+    }
+
+    /*
+     * The Core's own settings show the other mods' beside the series', each mod read from its own declarations:
+     * NeoForge, under the tab of its files, with the banner saying they are its own; a setting changed there and kept
+     * goes into NeoForge's own setting, and reads back so when the screen opens again.
+     */
+    @ClientTest(timeoutTicks = 400)
+    public static void settingsScreen_showsOtherModsAsTheyDeclareThem(final ClientTestContext ctx) {
+        final String[] changed = new String[1];
+        final boolean[] was = new boolean[1];
+        ctx.afterTest(() -> ctx.mc().setScreen(null));
+        ctx.then(0, () -> ctx.mc().setScreen(coreScreen()))
+                .thenAwaitScreen(CoreConfigScreen.class, 40)
+                .then(1, () -> {
+                    ctx.assertTrue(screen(ctx).openSection(NEOFORGE), "a tab lists NeoForge among the other mods");
+                    ctx.assertTrue(screen(ctx).bannerText().startsWith(NEOFORGE + "'s own settings"),
+                            "and says they are NeoForge's own: " + screen(ctx).bannerText());
+                    ctx.assertTrue(!screen(ctx).rowNames().isEmpty(), "its settings are shown");
+                })
+                .thenScreenshot(2, "settings_other_mod")
+                .then(0, () -> {
+                    final ConfigDraft draft = screen(ctx).openDraft();
+                    final ConfigKey<Boolean> flag = firstFlag(draft);
+                    changed[0] = flag.dottedPath();
+                    was[0] = draft.value(flag);
+                    draft.toggle(flag);
+                    screen(ctx).done();
+                })
+                .then(2, () -> ctx.mc().setScreen(coreScreen()))
+                .thenAwaitScreen(CoreConfigScreen.class, 40)
+                .then(1, () -> {
+                    screen(ctx).openSection(NEOFORGE);
+                    final ConfigDraft draft = screen(ctx).openDraft();
+                    final ConfigKey<Boolean> flag = flagAt(draft, changed[0]);
+                    ctx.assertTrue(draft.value(flag) != was[0], "the change is NeoForge's own setting now");
+                    draft.toggle(flag);
+                    screen(ctx).done();
+                });
+    }
+
+    /* The Core's own settings screen, as the mods list opens it. */
+    private static CoreConfigScreen coreScreen() {
+        return new CoreConfigScreen(ModList.get().getModContainerById("jscore").orElseThrow(), null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ConfigKey<Boolean> firstFlag(final ConfigDraft draft) {
+        return (ConfigKey<Boolean>) draft.file().keys().stream().filter(key -> key.defaultValue() instanceof Boolean)
+                .findFirst().orElseThrow();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ConfigKey<Boolean> flagAt(final ConfigDraft draft, final String dotted) {
+        return (ConfigKey<Boolean>) draft.file().key(dotted).orElseThrow();
     }
 
     /** Opens the test mod's settings the way the mods list does, every setting at its default first. */

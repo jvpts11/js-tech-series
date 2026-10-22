@@ -178,6 +178,9 @@ import dev.jstech.tests.clienttest.core.RecipeChooserClientTests;
 import dev.jstech.tests.clienttest.core.ReiRecipeViewClientTests;
 import dev.jstech.tests.clienttest.core.InstancingClientTests;
 import dev.jstech.tests.clienttest.core.FadeLayerClientTests;
+import dev.jstech.tests.clienttest.core.ComponentMotionClientTests;
+import dev.jstech.tests.clienttest.core.OutlineFontClientTests;
+import dev.jstech.tests.clienttest.core.JadeStyleClientTests;
 import dev.jstech.tests.clienttest.core.MachineLooksClientTests;
 import dev.jstech.tests.clienttest.core.MachineScreenClientTests;
 import dev.jstech.tests.clienttest.core.MediaClientTests;
@@ -338,6 +341,9 @@ public final class ClientTestSuite {
             ModelKitEntitiesClientTests.class,
             InstancingClientTests.class,
             FadeLayerClientTests.class,
+            ComponentMotionClientTests.class,
+            OutlineFontClientTests.class,
+            JadeStyleClientTests.class,
             MachineLooksClientTests.class,
             ConnectedPacksClientTests.class,
             LightingClientTests.class,

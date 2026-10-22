@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.config;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.config.ConfigDraft;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigFiles;
@@ -17,6 +18,7 @@ import dev.jstech.core.config.ConfigSync;
 import dev.jstech.core.config.ConfigTexts;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -36,8 +38,12 @@ final class ConfigScreenModel {
     private final String modId;
     private final List<Scope> scopes = new ArrayList<>();
     private final Map<ConfigFile, ConfigDraft> drafts = new LinkedHashMap<>();
+    /* The settings of other mods, kept NeoForge's way, the Core's screen shows beside its own. */
+    private final Map<ConfigKey<?>, ForeignConfigs.Setting> foreign = new IdentityHashMap<>();
 
     private static final String NEW_LINE = "\n";
+    /* The fold of a file's settings in no section of theirs, which the file's own name heads. */
+    private static final String WHOLE_FILE = "#file";
 
     ConfigScreenModel(final String modId) {
         this.modId = modId;
@@ -52,9 +58,32 @@ final class ConfigScreenModel {
                 bySide.get(file.side()).addAll(sections);
             }
         }
+        // Only the Core's own screen, the series' settings, shows the other mods'.
+        final List<ForeignConfigs.Mod> mods = modId.equals(JsCore.MODID) ? ForeignConfigs.all(modId) : List.of();
+        for (final ForeignConfigs.Mod mod : mods) {
+            for (final ForeignConfigs.File file : mod.files()) {
+                drafts.put(file.file(), new ConfigDraft(file.file()));
+                foreign.putAll(file.settings());
+            }
+        }
         bySide.forEach((side, sections) -> {
-            if (!sections.isEmpty()) {
-                scopes.add(new Scope(side, List.copyOf(sections)));
+            final List<Other> others = new ArrayList<>();
+            for (final ForeignConfigs.Mod mod : mods) {
+                final List<Section> here = new ArrayList<>();
+                final List<Elsewhere> elsewhere = new ArrayList<>();
+                for (final ForeignConfigs.File file : mod.files()) {
+                    if (file.file().side() == side) {
+                        here.add(foreignSectionOf(file));
+                    } else {
+                        elsewhere.add(new Elsewhere(file.name(), file.file().side()));
+                    }
+                }
+                if (!here.isEmpty()) {
+                    others.add(new Other(mod.modId(), mod.name(), List.copyOf(here), List.copyOf(elsewhere)));
+                }
+            }
+            if (!sections.isEmpty() || !others.isEmpty()) {
+                scopes.add(new Scope(side, List.copyOf(sections), List.copyOf(others)));
             }
         });
     }
@@ -90,6 +119,10 @@ final class ConfigScreenModel {
         if (minecraft.hasSingleplayerServer()) {
             return Access.LOCAL;
         }
+        if (ForeignConfigs.isForeign(file)) {
+            // Another mod's world settings live on the server, which the Core does not write for it.
+            return Access.READ_ONLY;
+        }
         if (minecraft.player != null && ConfigSync.fromServer(file)) {
             return ConfigSync.mayEditOnServer(file) ? Access.REMOTE : Access.READ_ONLY;
         }
@@ -110,19 +143,30 @@ final class ConfigScreenModel {
         });
     }
 
-    /** What a setting is called, as the mod's language says it. */
+    /** What a setting is called, as the mod's language says it, or as another mod names its own. */
     Component name(final ConfigKey<?> key) {
+        final ForeignConfigs.Setting other = foreign.get(key);
+        if (other != null) {
+            return Component.literal(other.title());
+        }
         return Component.translatable(ConfigTexts.key(modId, key.dottedPath()));
     }
 
     /** What a setting does, all of it, as the mod's language says it; empty when it says nothing. */
     String description(final ConfigKey<?> key) {
+        final ForeignConfigs.Setting other = foreign.get(key);
+        if (other != null) {
+            return other.comment();
+        }
         final String translation = ConfigTexts.key(modId, key.dottedPath()) + ConfigTexts.TOOLTIP;
         return I18n.exists(translation) ? I18n.get(translation) : "";
     }
 
     /** What a number of a setting counts, as the mod's language says it; empty when it counts nothing nameable. */
     String unit(final ConfigKey<?> key) {
+        if (foreign.containsKey(key)) {
+            return "";
+        }
         final String translation = ConfigTexts.key(modId, key.dottedPath()) + ConfigTexts.UNIT;
         return I18n.exists(translation) ? I18n.get(translation) : "";
     }
@@ -145,6 +189,9 @@ final class ConfigScreenModel {
 
     /** One of a word setting's words as the mod's language says it, or the word itself. */
     String word(final ConfigKey<?> key, final String word) {
+        if (foreign.containsKey(key)) {
+            return ForeignConfigs.words(word.toLowerCase(Locale.ROOT));
+        }
         final String translation = ConfigTexts.key(modId, key.dottedPath()) + "." + word.toLowerCase(Locale.ROOT);
         return I18n.exists(translation) ? I18n.get(translation) : word;
     }
@@ -191,6 +238,23 @@ final class ConfigScreenModel {
         return out;
     }
 
+    /*
+     * Another mod's file as one section: a fold for each of its sections, which says the file it is in, and the
+     * settings in none of them under the file's own name.
+     */
+    private static Section foreignSectionOf(final ForeignConfigs.File file) {
+        final Map<String, List<ConfigKey<?>>> byGroup = new LinkedHashMap<>();
+        for (final ConfigKey<?> key : file.file().keys()) {
+            byGroup.computeIfAbsent(key.path().size() >= 2 ? key.path().get(0) : WHOLE_FILE, ignored ->
+                    new ArrayList<>()).add(key);
+        }
+        final String base = file.name().substring(file.name().lastIndexOf('/') + 1);
+        final List<Group> groups = new ArrayList<>();
+        byGroup.forEach((group, keys) -> groups.add(new Group(group, Component.literal(ForeignConfigs.words(
+                group.equals(WHOLE_FILE) ? ForeignConfigs.stem(base) : group)), List.copyOf(keys), base)));
+        return new Section(file.file(), "", Component.literal(base), List.copyOf(groups));
+    }
+
     private static <T> Object plainDefault(final ConfigKey<T> key) {
         return key.plain(key.defaultValue());
     }
@@ -202,12 +266,42 @@ final class ConfigScreenModel {
                 : Component.literal(path.substring(path.lastIndexOf('.') + 1));
     }
 
-    /** The settings of one kind of file, the world's, the player's or every game's, by section. */
-    record Scope(ConfigSide side, List<Section> sections) {
+    /**
+     * The settings of one kind of file, the world's, the player's or every game's, by section; and the other mods'
+     * of that kind, by mod.
+     */
+    record Scope(ConfigSide side, List<Section> sections, List<Other> others) {
 
         Scope {
             sections = List.copyOf(sections);
+            others = List.copyOf(others);
         }
+    }
+
+    /**
+     * Another mod's settings of one kind of file, kept NeoForge's way: a section for each of its files of that kind,
+     * and where its other files are.
+     *
+     * @param modId     its id
+     * @param name      what it calls itself
+     * @param sections  a section for each of its files of the kind
+     * @param elsewhere its files of the other kinds, under the other tabs
+     */
+    record Other(String modId, String name, List<Section> sections, List<Elsewhere> elsewhere) {
+
+        /** How many settings it holds under this tab. */
+        int count() {
+            return sections.stream().mapToInt(Section::count).sum();
+        }
+    }
+
+    /**
+     * Another mod's file under another tab.
+     *
+     * @param file its name, with its folder
+     * @param side the kind of file it is, which names its tab
+     */
+    record Elsewhere(String file, ConfigSide side) {
     }
 
     /**
@@ -236,11 +330,16 @@ final class ConfigScreenModel {
      * @param path  the group's dotted path; empty for the section's settings in no group
      * @param title what its header calls it
      * @param keys  its settings, in the file's order
+     * @param file  the file its header names at its right, or empty for its count of settings there
      */
-    record Group(String path, Component title, List<ConfigKey<?>> keys) {
+    record Group(String path, Component title, List<ConfigKey<?>> keys, String file) {
 
         Group {
             keys = List.copyOf(keys);
+        }
+
+        Group(final String path, final Component title, final List<ConfigKey<?>> keys) {
+            this(path, title, keys, "");
         }
     }
 }

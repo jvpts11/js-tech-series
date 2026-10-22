@@ -196,6 +196,23 @@ The names, descriptions and units come from your settings' `named`, `comment` an
 and `<mod>.configuration.<path>.unit`, so they can be translated. A word of a list is shown as
 `<mod>.configuration.<path>.<word>` when your language file has it, and as the word otherwise.
 
+### Other mods' settings
+
+*Added 2026-10-22.*
+
+The Core's own settings screen, J's Core's in the Mods list, also shows the settings of every mod installed that keeps
+its own NeoForge's way (a `ModConfigSpec`): under each tab, after the series' sections and under the heading "Other
+mods", each such mod with how many settings it has of that kind. Opened, a mod shows each of its files' sections as
+groups that fold away, each naming its file at its right ("general.toml"), its files of the other tabs as folds
+that open that tab, and, under them, that the names, ranges and restarts are as the mod declares them; the banner
+says they are the mod's own. Each setting takes the control its kind of value calls for (on or off, a whole number, a
+number with a slider when the mod gives it a range, a word, a word of a few, a list of words), named as the mod's
+language names it (its translation key, or its name made into words) and described by its comment; one that takes
+hold only on a restart is marked so. Done writes each change into the mod's own setting and saves its file by the
+mod's own means. Another mod's world settings are changed only in a world of the player's own: on a server they are
+shown and not changed. A mod that keeps its settings the Core's way has its own screen and is not listed here; a kind
+of value no control fits is left out.
+
 ## The Core's own settings
 
 The Core's server settings are in `jstech-balance.toml`, in each world's `serverconfig` folder:

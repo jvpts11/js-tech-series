@@ -58,6 +58,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   colours textures in the game's look. `ModelPreviewLayout` lays the preview out for what its column holds, a
   `ModelPreviewLayout.Column`, in place of the count of animations alone. `CameraPathsLayout` lays out the studio's
   page of camera paths, and `CoreKeys.KEEP_KEYFRAME` is the key that keeps a camera path's keyframe while it records.
+  `GuideFamilies` names a family of items a manual's entry covers by one id, `CoreGuide.MATERIALS` is the Core's, and
+  `GuideCodecs.BLOCK_TYPES` lists the kinds of a manual's blocks. `ScreenSchema` writes the JSON schema of screen
+  files and `ScreenSchemaProvider` adds it to a mod's data run. `UiComponent.animate` moves a component by a motion,
+  `moving` says whether it still does and `renderMoved` is how its panel draws it; `dev.jstech.core.motion` joins the
+  promise. `FontBuilder.outline` declares a font from a TrueType or OpenType file, `CellFont.pixels` is the size it is
+  drawn at and `OutlineFontReader` draws one. `ConfigScreenLayout.RAIL_HEADING` and `HEADING_SCALE` lay out the
+  headings of the settings screen's list, and `ConfigScreenTexts` has the words for other mods' settings.
 
 ### Added
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose
@@ -1238,8 +1245,29 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   following a call through the mod's own class to where it is declared and a method it overrides to the one it
   overrides. J's Example runs it on every build, against the Core's photo, and forbids J's Computers and J's
   Industrial.
+- (Core) Manuals written in Markdown: a manual is a folder of Markdown files under `assets/<mod>/jstech/manuals/`, a
+  folder for each language with English where a language lacks a file, with no Java. A short header gives an entry
+  its section, order, icon and what it covers, the first heading its title; a note, a warning, a problem, a
+  definition and a see-also are the alerts GitHub writes, and the manual's own blocks (recipes, a multiblock, a
+  structure, a command, a table read from the code, a terminal session, a plan, views, drawings) are fenced blocks,
+  any block also as its JSON. A resource pack replaces any file, a change of the game's language reads them again, and
+  in a development run saving a file reads it again at once.
+- (Core) A schema of screen files: the data run writes `assets/jscore/jstech/schemas/screen.json`, from the codecs the
+  game reads screen files with, so an editor checks a screen file and offers its names as it is typed.
+- (Core) A component moved in one call: `animate` grows, slides or fades a component in by the motion kit's curves,
+  with nothing more to do each frame.
+- (Core) Fonts from TrueType and OpenType files, drawn at a size into the game's font by the data run, with their
+  licence and credit asked for as for the bitmap ones.
+- (Core) Jade in the player's style: what Jade shows takes the ground, the edge and the text colours of the style the
+  player picked, and goes back to Jade's own theme when no style is chosen.
+- (Core) The settings of other mods: the Core's settings screen also shows the settings of every mod that keeps them
+  NeoForge's way, under "Other mods" in each tab, with the controls their values call for, their names and
+  descriptions as each mod gives them, and when they take hold; on a server, another mod's world settings are shown
+  and not changed.
 
 ### Changed
+- (Core) The Core's chapter of the Technical Reference and the series' are written in Markdown, in English and
+  Portuguese, in place of the Java that declared them.
 - (Core) Vehicles: the one entity `jscore:vehicle` of a kind given as data takes the place of a class extending
   `VehicleEntity` with a `VehicleSpec` for each vehicle; `VehicleSpec` is gone. A robot still drives one with its
   `Drive` task.

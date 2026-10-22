@@ -16,8 +16,10 @@ import dev.jstech.core.font.BdfReader;
 import dev.jstech.core.font.BitmapFont;
 import dev.jstech.core.font.CellFont;
 import dev.jstech.core.font.FontSheet;
+import dev.jstech.core.font.OutlineFontReader;
 import dev.jstech.core.util.DeclarationError;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -79,8 +81,16 @@ public final class FontSheetProvider implements DataProvider {
     /** The font's source, read and checked against what its declaration says of it. */
     private BitmapFont read(final CellFont font) {
         final BitmapFont source;
-        try (Reader reader = files.getResource(font.source(), PackType.CLIENT_RESOURCES).openAsReader()) {
-            source = BdfReader.read(reader);
+        try {
+            if (font.pixels() > 0) {
+                try (InputStream in = files.getResource(font.source(), PackType.CLIENT_RESOURCES).open()) {
+                    source = OutlineFontReader.read(in, font.pixels(), font.id().toString());
+                }
+            } else {
+                try (Reader reader = files.getResource(font.source(), PackType.CLIENT_RESOURCES).openAsReader()) {
+                    source = BdfReader.read(reader);
+                }
+            }
         } catch (final IOException e) {
             throw new UncheckedIOException("the font " + font.id() + " could not read its source " + font.source(), e);
         }

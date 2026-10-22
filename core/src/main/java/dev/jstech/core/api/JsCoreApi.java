@@ -70,7 +70,7 @@ public final class JsCoreApi {
             "dev.jstech.core.inventory", "dev.jstech.core.item", "dev.jstech.core.language",
             "dev.jstech.core.log", "dev.jstech.core.look", "dev.jstech.core.machine", "dev.jstech.core.map",
             "dev.jstech.core.material", "dev.jstech.core.matter", "dev.jstech.core.mechanical",
-            "dev.jstech.core.menu", "dev.jstech.core.model", "dev.jstech.core.moving",
+            "dev.jstech.core.menu", "dev.jstech.core.model", "dev.jstech.core.motion", "dev.jstech.core.moving",
             "dev.jstech.core.moving.physics", "dev.jstech.core.multiblock", "dev.jstech.core.multipart",
             "dev.jstech.core.network", "dev.jstech.core.notification", "dev.jstech.core.operation",
             "dev.jstech.core.optional", "dev.jstech.core.palette", "dev.jstech.core.peripheral",

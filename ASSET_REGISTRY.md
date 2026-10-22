@@ -24,8 +24,8 @@ any entry that covers nothing, and on any entry whose origin or author is missin
 - **Made by** is the author for a hand-made asset, the licence and source for a third-party one, and how it was made
   for the rest.
 
-Language files (`lang/`) are text, not assets, and are not listed; the language guide in
-[docs/CODE_STYLE.md](docs/CODE_STYLE.md) covers them.
+Language files (`lang/`) and the manuals written in Markdown (`jstech/manuals/`) are text, not assets, and are not
+listed; the language guide in [docs/CODE_STYLE.md](docs/CODE_STYLE.md) covers them.
 
 ## The series
 
@@ -95,6 +95,7 @@ Language files (`lang/`) are text, not assets, and are not listed; the language 
 | `core/src/main/resources/assets/jscore/jstech/styles/*.json` | The styles the Core brings: the game's own (its widgets' sprites and colours), J's Tech, high contrast, and three for colour blindness | Every screen of every mod built on the Core is drawn in the one the player picks | AI-generated | AI assistant, written by hand; the colour-blind palettes after Okabe and Ito's colour-blind-safe set |
 | `core/src/main/resources/assets/minecraft/atlases/blocks.json` | One more source of the blocks' atlas, the Core's own: the tiles of the connected textures resource packs write | Stacked on the game's own sources of the blocks' atlas, so the packs' tiles are drawn | AI-generated | AI assistant, written by hand |
 | `core/src/main/resources/assets/minecraft/atlases/particles.json` | One more source of the particle sheet, the Core's own: the frames of the game's smoke brightened towards white, as steam | Stacked on the game's own sources of the particle sheet, for the Core's steam | AI-generated | AI assistant, written by hand |
+| `core/src/main/resources/assets/jscore/jade_themes/player_style.json` | The Core's theme of Jade, hidden from Jade's list | Jade's tooltip wears it, painted in the colours of the style the player picks for everything | AI-generated | AI assistant, written by hand |
 | `core/src/main/resources/assets/jscore/jstech/styles/era/*.json` | The styles of the hardware eras: Vintage's phosphor with scanlines, Legacy's bevels, Transition's glass, Standard's, Advanced's | The default of J's Computers' computing blocks' screens, each in its era's | AI-generated | AI assistant, written by hand |
 | `core/src/main/resources/assets/jscore/font/source/fixed_{5x8,6x10,9x15,10x20}.bdf` | Misc Fixed 5x8, 6x10, 9x15 and 10x20, the X Window System's fixed font in four sizes: one cell for each character, from over fourteen hundred characters in the smallest size to over five thousand in the largest | The sources of the Core's `jscore:fixed_5x8` (the code and figures of the manuals), `fixed_6x10`, `fixed_9x15` and `fixed_10x20` fonts, which the data generation turns into the pictures and font files the game draws from; read only when the data is generated, and not shipped in the jar | Third-party | Markus Kuhn's ucs-fonts as the X.Org Foundation ships it in font-misc-misc, public domain ("Public domain font. Share and enjoy."), https://gitlab.freedesktop.org/xorg/font/misc-misc |
 | `core/src/generated/resources/assets/**` | Item models, the English file, the era skins' palettes, and the fonts' pictures and font files | Written from the core's declarations; the palettes are the colours a resource pack can replace, and each font's picture and file are made from the font's source listed above | Datagen | The core's data generation |

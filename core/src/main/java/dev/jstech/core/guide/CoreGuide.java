@@ -9,9 +9,16 @@ package dev.jstech.core.guide;
 
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.font.CoreFonts;
+import dev.jstech.core.material.CatalogueItems;
+import dev.jstech.core.material.MaterialLiquids;
+import dev.jstech.core.material.MaterialUses;
+import dev.jstech.core.material.RegisteredThing;
 import dev.jstech.core.registry.CoreItems;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.ItemLike;
 
 /**
  * What the Core brings to the manuals: the binder style, two cream pages side by side in navy vinyl covers with three
@@ -39,29 +46,21 @@ public final class CoreGuide {
     public static final ItemEntry<ManualItem> MANUAL = CoreItems.CONTENT.item("technical_reference",
             properties -> new ManualItem(properties, TECHNICAL_REFERENCE)).named("Technical Reference").register();
 
+    /** The family of every form of every material some installed mod uses, which the materials' entry covers. */
+    public static final String MATERIALS = "jscore:materials";
+
     static {
         CoreItems.CONTENT.guide().style("binder", binder("jscore:guide/binder", false));
-        CoreItems.CONTENT.guide().manual("technical_reference").titled("Technical Reference")
-                .cover("J's Tech Series", "Reference Library").edition("First Edition (September 2026)")
-                .partNumber("JTS-0001").style(BINDER).chapters(GuideManual.EVERY_CHAPTER).priority(100)
-                .about("This binder holds the reference for every mod of the series you have. Each has its chapter"
-                                + " and its tab at the edge.",
-                        "Every entry says, in this order, what the thing is, what it is for, how to get it, how to"
-                                + " use it step by step, and what can go wrong. A figure (Figure 3-9) shows what a"
-                                + " part looks like, a table (Table 3-7) gives its numbers, and a number after See"
-                                + " (See 3.4.3) leads to another entry.",
-                        "The magnifier on the top edge finds any part by name in the index. Hold the manual key"
-                                + " over an item to open its page.")
-                .register();
+        // The manual itself, the series' chapter and the Core's are written in Markdown, under
+        // assets/jscore/jstech/manuals/technical_reference/ and assets/jstech/jstech/manuals/technical_reference/.
         GuideGifts.giveOnFirstJoin(TECHNICAL_REFERENCE, MANUAL);
-        SeriesChapter.declare();
-        CoreChapter.declare();
+        GuideFamilies.register(MATERIALS, CoreGuide::materialItems);
     }
 
     private CoreGuide() {
     }
 
-    /** Declares the Core's style, its manual and its chapters, before the data generation writes the Core's files. */
+    /** Declares the Core's style and what its manual reads from code, before the data generation writes the files. */
     public static void declare() {
         // Loading the class declares it.
     }
@@ -100,5 +99,23 @@ public final class CoreGuide {
                 SHEET_MARGIN, 2), GuideStyle.Decor.drawing(), "", CoreFonts.FIXED_5X8.id().toString(),
                 GuideStyle.Folios.DRAWING, prefix, new GuideStyle.Cover(GuideStyle.CoverKind.FOLDER, true, true),
                 GuideStyle.HoldBar.PLAIN);
+    }
+
+    /*
+     * Every thing the Core registered for the materials and the shared catalogue the installed mods use, in the order
+     * of the materials: their forms, their liquids' buckets, the components.
+     */
+    private static List<String> materialItems() {
+        final List<String> items = new ArrayList<>();
+        for (final RegisteredThing thing : MaterialUses.registered()) {
+            items.add(thing.id().toString());
+        }
+        for (final ItemLike bucket : MaterialLiquids.buckets()) {
+            items.add(BuiltInRegistries.ITEM.getKey(bucket.asItem()).toString());
+        }
+        for (final ItemLike component : CatalogueItems.items()) {
+            items.add(BuiltInRegistries.ITEM.getKey(component.asItem()).toString());
+        }
+        return items;
     }
 }

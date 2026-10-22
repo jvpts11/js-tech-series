@@ -9,9 +9,11 @@ package dev.jstech.tests.clienttest.core;
 
 import dev.jstech.core.client.developer.LiveReloadClient;
 import dev.jstech.core.client.guide.GuideClient;
+import dev.jstech.core.client.guide.GuideLibrary;
 import dev.jstech.core.client.guide.ManualScreen;
 import dev.jstech.core.developer.LiveReload;
 import dev.jstech.core.developer.ModFolders;
+import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestGuide;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -39,6 +41,18 @@ public final class LiveReloadClientTests {
             {"id": "%s", "section": "%s:ideas", "order": 99, "title": "A Page Written While the Game Runs",
              "icon": "minecraft:clock", "blocks": [{"type": "text", "text": "Saved a moment ago, and read at once."}]}
             """.formatted(PROBE, JsTests.MODID);
+    /* The same, written in Markdown. */
+    private static final String MARKDOWN_TITLE = "A Page Written in Markdown While the Game Runs";
+    private static final String MARKDOWN_ENTRY = """
+            ---
+            section: ideas
+            order: 98
+            icon: minecraft:clock
+            ---
+            # %s
+
+            Saved a moment ago, **and read at once**.
+            """.formatted(MARKDOWN_TITLE);
 
     private LiveReloadClientTests() {
     }
@@ -108,6 +122,38 @@ public final class LiveReloadClientTests {
                 .thenWaitUntil(() -> LiveReloadClient.guideReloads() > before[0] + 1, 400,
                         "the manuals to be read again once the entry is gone")
                 .thenAssert(SETTLE, () -> manual().book().pageOf(PROBE).isEmpty(), "and it leaves the manual")
+                .then(0, () -> ctx.mc().setScreen(null))
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    /*
+     * An entry written in Markdown into the test manual's folder while the manual is open: the manuals alone are read
+     * again, the open manual holds it under the title its first heading says, and it leaves once its file is gone.
+     */
+    @ClientTest(timeoutTicks = 1200)
+    public static void changedMarkdownFile_isReadAloneAndTheOpenManualHoldsIt(final ClientTestContext ctx) {
+        final String name = LiveReload.ownFile("markdown_probe", "md");
+        final String probe = JsTests.MODID + ":" + name.substring(0, name.length() - ".md".length());
+        final Path entry = resourceRoot().resolve("assets").resolve(JsTests.MODID).resolve("jstech")
+                .resolve("manuals").resolve("test_manual").resolve("en_us").resolve(name);
+        final int[] before = new int[1];
+        ctx.afterTest(() -> delete(entry));
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.PRESS))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, () -> {
+                    before[0] = LiveReloadClient.guideReloads();
+                    write(entry, MARKDOWN_ENTRY);
+                })
+                .thenWaitUntil(() -> LiveReloadClient.guideReloads() > before[0], 400,
+                        "the manuals to be read again for the new Markdown file")
+                .thenAssert(SETTLE, () -> manual().book().pageOf(probe).isPresent()
+                        && GuideLibrary.loaded().entry(probe).map(GuideEntry::titleKey)
+                        .filter(MARKDOWN_TITLE::equals).isPresent(), "the open manual holds it, titled as written")
+                .thenScreenshot(0, "manual_live_reload_markdown")
+                .then(0, () -> delete(entry))
+                .thenWaitUntil(() -> LiveReloadClient.guideReloads() > before[0] + 1, 400,
+                        "the manuals to be read again once the file is gone")
+                .thenAssert(SETTLE, () -> manual().book().pageOf(probe).isEmpty(), "and it leaves the manual")
                 .then(0, () -> ctx.mc().setScreen(null))
                 .thenAwaitNoScreen(OPEN);
     }

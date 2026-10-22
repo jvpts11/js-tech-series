@@ -49,6 +49,9 @@ public final class LiveReload {
     private static final ResourceChanges DATA = new ResourceChanges(QUIET_MILLIS);
     /* The folder of a namespace's assets the manuals are read from. */
     private static final String GUIDE_FOLDER = "guide";
+    /* And the folders, {@code jstech/manuals}, the manuals written in Markdown are read from. */
+    private static final String JSTECH_FOLDER = "jstech";
+    private static final String MANUALS_FOLDER = "manuals";
     private static final String ASSETS_FOLDER = "assets";
     private static final AtomicInteger DATA_RELOADS = new AtomicInteger();
     /* What each watched folder holds, assets or data, by the key the watch service hands back for it. */
@@ -206,11 +209,16 @@ public final class LiveReload {
         return ModelReaders.readsModel(name) && !name.endsWith(".geo.json");
     }
 
-    /* Whether a changed file is one of a manual's: anything in a namespace's guide folder, which only manuals read. */
+    /*
+     * Whether a changed file is one of a manual's: anything in a namespace's guide folder, or in its folder of manuals
+     * written in Markdown, which only manuals read.
+     */
     private static boolean guideFile(final Path changed) {
         for (int i = 0; i + 2 < changed.getNameCount(); i++) {
             if (changed.getName(i).toString().equals(ASSETS_FOLDER)
-                    && changed.getName(i + 2).toString().equals(GUIDE_FOLDER)) {
+                    && (changed.getName(i + 2).toString().equals(GUIDE_FOLDER) || i + 3 < changed.getNameCount()
+                    && changed.getName(i + 2).toString().equals(JSTECH_FOLDER)
+                    && changed.getName(i + 3).toString().equals(MANUALS_FOLDER))) {
                 return true;
             }
         }

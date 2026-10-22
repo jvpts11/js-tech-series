@@ -28,8 +28,11 @@ public final class CellFont {
     private final int baseline;
     private final String licence;
     private final String credit;
+    private final int pixels;
 
     /**
+     * A font read from a bitmap font's file.
+     *
      * @param source   the font's source file under the mod's {@code assets} folder ({@code font/source/x.bdf})
      * @param baseline how many rows of the cell are above the baseline
      * @param licence  the licence the font is under, as its makers name it
@@ -37,6 +40,25 @@ public final class CellFont {
      */
     public CellFont(final ResourceLocation id, final String source, final int cellWidth, final int cellHeight,
                     final int baseline, final String licence, final String credit) {
+        this(id, source, cellWidth, cellHeight, baseline, licence, credit, 0);
+    }
+
+    /**
+     * A font read from its file, drawn {@code pixels} tall when its file is a TrueType or OpenType font of outlines,
+     * or of no size, 0, when it is a bitmap font's.
+     *
+     * @param source   the font's source file under the mod's {@code assets} folder ({@code font/source/x.ttf})
+     * @param baseline how many rows of the cell are above the baseline
+     * @param licence  the licence the font is under, as its makers name it
+     * @param credit   who made the font and where it comes from, as the mod credits it
+     * @param pixels   how many pixels tall an outline font is drawn
+     */
+    public CellFont(final ResourceLocation id, final String source, final int cellWidth, final int cellHeight,
+                    final int baseline, final String licence, final String credit, final int pixels) {
+        if (pixels < 0) {
+            throw new IllegalArgumentException("the font " + id + " cannot be drawn " + pixels + " pixels tall");
+        }
+        this.pixels = pixels;
         if (cellWidth <= 0 || cellHeight <= 0) {
             throw new IllegalArgumentException("the font " + id + " cannot have a cell " + cellWidth + " by "
                     + cellHeight);
@@ -96,6 +118,11 @@ public final class CellFont {
 
     public String credit() {
         return credit;
+    }
+
+    /** How many pixels tall the font is drawn from its outlines, or 0 for a font read from a bitmap font's file. */
+    public int pixels() {
+        return pixels;
     }
 
     @Override

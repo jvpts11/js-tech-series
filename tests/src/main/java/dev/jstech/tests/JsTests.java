@@ -121,6 +121,8 @@ public final class JsTests {
         TestData.declare();
         // A chapter and a manual, with an entry of every kind of block, to prove the Core's manuals.
         TestGuide.declare();
+        // A font made from a TrueType file, to prove the Core's fonts read from outlines.
+        TestFonts.declare();
         // A press, a crate, a walker and a helmet drawn with the Core's models, from files of four formats.
         TestModels.declare();
         // Blocks a resource pack in the test mod draws with connected textures, in both formats packs write.

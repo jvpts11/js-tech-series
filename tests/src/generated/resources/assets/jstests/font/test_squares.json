@@ -1,0 +1,29 @@
+{
+  "providers": [
+    {
+      "type": "space",
+      "advances": {
+        " ": 6,
+        " ": 6
+      }
+    },
+    {
+      "type": "bitmap",
+      "ascent": 8,
+      "chars": [
+        "!\"#$%&'()*+,-./0123456789:;<=>?@",
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`",
+        "abcdefghijklmnopqrstuvwxyz{|}~¡¢",
+        "£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂ",
+        "ÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâ",
+        "ãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ\u0000\u0000\u0000"
+      ],
+      "file": "jstests:font/test_squares.png",
+      "height": 10
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:default"
+    }
+  ]
+}

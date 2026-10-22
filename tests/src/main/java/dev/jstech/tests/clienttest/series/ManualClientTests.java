@@ -13,6 +13,7 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.gui.PointerShape;
 import dev.jstech.core.client.guide.GuideClient;
+import dev.jstech.core.client.guide.GuideReloadListener;
 import dev.jstech.core.client.guide.ManualMarks;
 import dev.jstech.core.client.guide.ManualPlaces;
 import dev.jstech.core.client.guide.ManualScreen;
@@ -22,6 +23,7 @@ import dev.jstech.core.client.multiblock.MultiblockShows;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
+import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuidePiece;
 import dev.jstech.core.guide.GuideSearch;
@@ -29,6 +31,9 @@ import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.TextSize;
+import dev.jstech.core.guide.markdown.CodecJsonBlocks;
+import dev.jstech.core.guide.markdown.ManualFile;
+import dev.jstech.core.guide.markdown.MarkdownManuals;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.text.GameText;
 import dev.jstech.industrial.guide.IndustrialGuide;
@@ -78,6 +83,9 @@ public final class ManualClientTests {
     private static final String NOTE = "Feed it from the top";
     /* Far enough into a hold for its bar to show, and early enough to see it before the page opens. */
     private static final float HALF_HELD = 0.35F;
+    /* An entry of the Core's chapter, written in Markdown. */
+    private static final String GEIGER = "jscore:geiger_counter";
+    private static final String PORTUGUESE = "pt_br";
 
     private ManualClientTests() {
     }
@@ -93,6 +101,35 @@ public final class ManualClientTests {
                 .thenAssert(SETTLE, () -> manual().spread() == 0
                         && manual().book().pages().getFirst().folio().equals("i"), "and turns to its contents")
                 .thenScreenshot(2, "manual_contents")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    /*
+     * The Core's own chapter is written in Markdown: the Technical Reference opens at the Geiger counter's page, read
+     * from its English file through the resource packs, and the same files read in Portuguese give its Portuguese
+     * words, each part's heading its own.
+     */
+    @ClientTest(timeoutTicks = 300)
+    public static void markdown_readsTheCoresChapterInTheReadersLanguage(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(CoreGuide.TECHNICAL_REFERENCE, GEIGER))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> shows(GEIGER), "the Technical Reference opens at the Geiger counter's "
+                        + "page, written in Markdown")
+                .thenScreenshot(2, "manual_markdown_entry")
+                .thenAssert(0, () -> {
+                    final List<ManualFile> files = GuideReloadListener.markdownFiles(
+                            Minecraft.getInstance().getResourceManager());
+                    final GuideEntry english = MarkdownManuals.gather(files, ManualFile.ENGLISH,
+                            CodecJsonBlocks.INSTANCE).entries().get(GEIGER);
+                    final GuideEntry translated = MarkdownManuals.gather(files, PORTUGUESE, CodecJsonBlocks.INSTANCE)
+                            .entries().get(GEIGER);
+                    final String written = files.stream().filter(file -> file.language().equals(PORTUGUESE)
+                            && file.path().endsWith("geiger_counter")).findFirst().map(ManualFile::text).orElse("");
+                    return english != null && translated != null && !translated.titleKey().equals(english.titleKey())
+                            && written.lines().anyMatch(line -> line.equals("# " + translated.titleKey()))
+                            && !translated.blocks().equals(english.blocks());
+                }, "read in Portuguese, the page has the title and the words of its Portuguese file")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

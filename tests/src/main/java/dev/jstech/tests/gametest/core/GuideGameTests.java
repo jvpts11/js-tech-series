@@ -27,6 +27,10 @@ import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.ModGuide;
+import dev.jstech.core.guide.markdown.CodecJsonBlocks;
+import dev.jstech.core.guide.markdown.ManualFile;
+import dev.jstech.core.guide.markdown.MarkdownManuals;
+import dev.jstech.core.guide.markdown.ModManualFiles;
 import dev.jstech.core.multiblock.Projectables;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.tests.JsTests;
@@ -100,8 +104,9 @@ public final class GuideGameTests {
                 .filter(m -> m.id().equals(TestGuide.SECOND_BOOK)).findFirst().orElseThrow();
         helper.assertTrue(second.chapters().equals(List.of("jstests:shared", "jstests")) && second.holds(
                 TestGuide.SHARED) && !second.holdsEvery(), "the second book binds the shared chapter, then the main");
-        final GuideManual reference = CoreItems.CONTENT.guide().declaredManuals().stream()
-                .filter(GuideManual::holdsEvery).findFirst().orElseThrow();
+        final GuideManual reference = MarkdownManuals.gather(ModManualFiles.all(), ManualFile.ENGLISH,
+                CodecJsonBlocks.INSTANCE).manuals().values().stream().filter(GuideManual::holdsEvery).findFirst()
+                .orElseThrow();
         helper.assertTrue(!reference.holds(TestGuide.SHARED) && reference.holds(guide.declaredChapter()),
                 "the reference holds the main chapter and leaves the shared one out");
         helper.succeed();

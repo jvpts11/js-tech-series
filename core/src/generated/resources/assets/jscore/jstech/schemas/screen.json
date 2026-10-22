@@ -1,0 +1,586 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "element": {
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "button"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "menu_button": {},
+              "primary": {},
+              "text": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "chart"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "bind": {},
+              "format": {},
+              "from": {},
+              "kind": {},
+              "title": {},
+              "to": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "checkbox"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {},
+              "text": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "color"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {},
+              "swatches": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "column"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "dropdown"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {},
+              "format": {},
+              "options": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "energy"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "bind": {},
+              "capacity": {},
+              "capacity_bind": {},
+              "format": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ghost_slot"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {},
+              "text": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "graph"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "grid"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "image"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "image_height": {},
+              "image_width": {},
+              "sprite": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "inventory"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "label": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "label"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "bind": {},
+              "format": {},
+              "scale": {},
+              "text": {},
+              "text_align": {},
+              "tone": {},
+              "wrap": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "map"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "bind": {},
+              "markers": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "model"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "panel"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "progress"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "bind": {},
+              "max": {},
+              "max_bind": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "radio"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {},
+              "format": {},
+              "options": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "row"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "separator"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "slider"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {},
+              "format": {},
+              "max": {},
+              "min": {},
+              "steps": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "slot"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "slot": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "slots"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "count": {},
+              "from": {},
+              "per_row": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "spacer"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "stack"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "switch"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {},
+              "text": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "table"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "tank"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "bind": {},
+              "capacity": {},
+              "capacity_bind": {},
+              "format": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "text_field"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {},
+              "max_length": {},
+              "placeholder": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "title"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "tree"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "action": {},
+              "bind": {}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "well"
+              }
+            }
+          },
+          "then": {
+            "properties": {}
+          }
+        }
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "button",
+            "chart",
+            "checkbox",
+            "color",
+            "column",
+            "dropdown",
+            "energy",
+            "ghost_slot",
+            "graph",
+            "grid",
+            "image",
+            "inventory",
+            "label",
+            "map",
+            "model",
+            "panel",
+            "progress",
+            "radio",
+            "row",
+            "separator",
+            "slider",
+            "slot",
+            "slots",
+            "spacer",
+            "stack",
+            "switch",
+            "table",
+            "tank",
+            "text_field",
+            "title",
+            "tree",
+            "well"
+          ]
+        },
+        "align": {},
+        "align_self": {},
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/element"
+          }
+        },
+        "columns": {},
+        "enabled_if": {},
+        "gap": {},
+        "grow": {},
+        "height": {},
+        "id": {},
+        "justify": {},
+        "margin": {},
+        "max_height": {},
+        "max_width": {},
+        "min_height": {},
+        "min_width": {},
+        "narration": {},
+        "padding": {},
+        "shrink": {},
+        "span": {},
+        "tooltip": {},
+        "visible_if": {},
+        "width": {},
+        "wrap": {}
+      },
+      "required": [
+        "type"
+      ]
+    }
+  },
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "root": {
+      "$ref": "#/definitions/element"
+    },
+    "style": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "width": {
+      "type": "integer",
+      "maximum": 1024,
+      "minimum": 32
+    }
+  },
+  "required": [
+    "root"
+  ]
+}

@@ -5,12 +5,12 @@ world, keys, and sound. Every mod of the series draws through it, so they look a
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026: screens declared in files with the layout engine, styles
-and the tools that build them, the components, tooltips, fonts, motion, the HUD and its editor, notifications, the
-camera, accessibility and the sound kit. How a mod uses it, with code: [Screens](../SCREENS.md),
-[UI components](../UI_COMPONENTS.md), [Tooltips](../TOOLTIPS.md), [Fonts](../FONTS.md), [Motion](../MOTION.md),
-[Overlays](../OVERLAYS.md), [Notifications](../NOTIFICATIONS.md), [The camera](../CAMERA.md) and
-[Sound](../SOUND.md). What is not built yet is under *Still to build* at the end.
+Everything this page designs is built, as of October 2026: screens declared in files with the layout engine and their
+schema, styles and the tools that build them, the components, tooltips, fonts, motion, the HUD and its editor,
+notifications, the camera, accessibility, the settings of every mod and the sound kit. How a mod uses it, with code:
+[Screens](../SCREENS.md), [UI components](../UI_COMPONENTS.md), [Tooltips](../TOOLTIPS.md), [Fonts](../FONTS.md),
+[Motion](../MOTION.md), [Overlays](../OVERLAYS.md), [Notifications](../NOTIFICATIONS.md), [The camera](../CAMERA.md),
+[Settings](../SETTINGS.md) and [Sound](../SOUND.md).
 
 ## The design
 
@@ -27,6 +27,8 @@ The toolkit gathers in one place, for any mod, what the best screen and settings
 - **Java from end to end**: the layout, the drawing and the tools are Java inside the Core's jar, with nothing native,
   no browser and no other language, so anyone who knows Java can read and fix any of it.
 - **Binding to data**: a component is bound to a synced value of the menu and follows it, with no hand-written packets.
+- **A schema of screen files**: a JSON schema written from the screens' codecs by the data generation, so an editor
+  checks a screen file and offers its names as it is typed.
 
 ### Styles
 
@@ -53,6 +55,10 @@ Everything on a screen is drawn through a **style**, and the player picks it.
   dark theme), as on a real computer.
 - **Tested in every style**: the overlap and contrast tests run in every installed style, since a style can change the
   spacing and the colours.
+- **Fonts from their files**: bitmap fonts, and TrueType and OpenType ones drawn at a size, turned into the game's font
+  by the data generation, each with its licence and credit required.
+- **The settings of every mod**: the settings screen shows, beside the Core's, the settings of the mods that do not use
+  the Core, as each declares them.
 
 ### For those who make screens
 
@@ -106,7 +112,7 @@ In the spirit of SecurityCraft's cameras, the zoom mods and cinematic modes:
 - **An editor of camera paths** in the studio: flown and recorded into the path's file ([Developers](developers.md)).
 
 The motion kit fades a whole window as one picture, drawn off the screen first, and has a spring among its curves,
-which goes past its end and settles there.
+which goes past its end and settles there. A component is moved by its curves in one call: grown, slid or faded in.
 
 ### Notifications
 
@@ -143,6 +149,7 @@ In the spirit of Iceberg:
 - **A HUD the player arranges**: an editor to move, resize and hide the HUD elements of every mod; the devices shown
   on the HUD while held (the Geiger counter, the dosimeter, the hazard map) go wherever the player puts them, at the
   size the player chooses.
+- **Jade in the player's style**: what Jade shows is drawn in the style the player picked.
 
 ### The sound kit
 
@@ -178,13 +185,3 @@ one place, for any mod.
 - **Drawing less**: still parts are kept in textures, and only what changed is drawn again.
 - **Visual tests**: screens are drawn off-screen in the client tests and compared with reference pictures, so a change
   nobody meant is caught.
-
-## Still to build
-
-- **A schema of screen files**: a JSON schema written from the screens' codecs by the data generation, so an editor
-  completes a screen file as it is typed.
-- **Components animated in one call**, by the motion kit's curves.
-- **Fonts from TrueType and OpenType files**, turned into the game's font by the data generation, with their licence
-  and credit required as for the bitmap ones.
-- **Jade in the player's style**: what Jade shows drawn in the style the player picked.
-- **Every mod's settings**: the settings screen shows the settings of mods that do not use the Core beside the Core's.

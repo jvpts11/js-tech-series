@@ -42,6 +42,18 @@ words of its own. `KeyboardFocus.of(panel)` hands the components the keyboard re
 widgets, so the game, a controller and the narrator move among them
 ([Screens](SCREENS.md#the-keyboard-a-controller-and-the-narrator)).
 
+*Added 2026-10-22.* A component moves in one call: `animate(spec)` takes a motion of the [motion kit](MOTION.md)
+and its panel draws the component as the motion has it each frame, grown in from its middle (`scale`), slid in
+from below (`slide`), faded in (`appear`), or faded by any motion's `opacity_from` and `opacity_to`, then where it
+rests once it ends. Nothing is called again each frame; `moving()` says whether it is still under way, and a
+player who asked for less movement sees it where it ends at once. Only how it is drawn moves: its bounds, and so
+where it takes clicks, are where it rests.
+
+```java
+panel.add(new Button("Next", this::next)).animate(MotionSpec.of(MotionStyles.SLIDE, 200,
+        IEasing.named("spring"), "").with("distance", 1.0));
+```
+
 Every drawing call goes through the `Skin` interface: the colours (text, dim, accent, edge, backgrounds) and
 the primitives (panel, button, field, tab, list row, scroll thumb, status bar, window frame). J's
 Computers implements it once per operating system, so a button on Frames 95 has a bevel and the same

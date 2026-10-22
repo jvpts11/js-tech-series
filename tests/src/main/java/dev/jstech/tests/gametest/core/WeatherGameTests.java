@@ -53,6 +53,9 @@ public final class WeatherGameTests {
         final BlockPos centre = helper.absolutePos(MIDDLE);
         final Cow out = helper.spawn(EntityType.COW, OUT);
         final Cow sheltered = helper.spawn(EntityType.COW, SHELTERED);
+        // Cows wander: one that walked a block off would be out from under its one-block roof, or under nothing.
+        out.setNoAi(true);
+        sheltered.setNoAi(true);
         helper.setBlock(SHELTERED.above(3), Blocks.STONE);
         helper.assertTrue(WorldEvents.start(level, TestSkies.ACID_RAIN, 1_000, Optional.of(centre)),
                 "the acid rain starts round the arena");

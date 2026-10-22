@@ -38,8 +38,26 @@ public static final CellFont TERMINAL = CONTENT.font("terminal")
   either missing is refused. The font's source is also listed in `ASSET_REGISTRY.md` and its notice reproduced in
   `THIRD_PARTY_NOTICES.md`, as for every asset from outside the project.
 
+*Added 2026-10-22.* A font of outlines, TrueType (`.ttf`) or OpenType (`.otf`), is named with `outline(file, size)`
+in place of `bdf`: the data generation draws each of its characters at `size` pixels, a pixel set wherever the
+outline covers its middle, so the font becomes a bitmap one like the others, with no blur. The `cell` and the
+`baseline` are still declared and checked against what it drew, and the `licence` and the `credit` are asked for
+as for any font. A font drawn for a size reads best at that size; an outline drawn smaller than it was made for
+loses its thin strokes.
+
+```java
+public static final CellFont SQUARES = CONTENT.font("squares")
+        .outline("font/source/squares.ttf", 10)
+        .cell(6, 10)
+        .baseline(8)
+        .licence("Public domain")
+        .credit("Who drew it, and where it comes from")
+        .register();
+```
+
 The source is read only by the data generation; it is left out of the mod's jar. To keep it out, the mod's
-`build.gradle` excludes `**/*.bdf` from its resources, as the Core's does.
+`build.gradle` excludes `**/*.bdf` from its resources, as the Core's does, and `**/font/source/*.ttf` and
+`**/font/source/*.otf` for a font of outlines.
 
 ## What the data generation makes
 

@@ -1783,6 +1783,7 @@ stable 4
 10 dev.jstech.core.client.gui.component.UiComponent  Component spoken()
 10 dev.jstech.core.client.gui.component.UiComponent  List<Component> tooltip(double, double)
 10 dev.jstech.core.client.gui.component.UiComponent  Optional<Component> pressLabel()
+12 dev.jstech.core.client.gui.component.UiComponent  UiComponent animate(MotionSpec)
 10 dev.jstech.core.client.gui.component.UiComponent  UiComponent setBounds(int, int, int, int)
 10 dev.jstech.core.client.gui.component.UiComponent  UiComponent setEnabled(boolean)
 10 dev.jstech.core.client.gui.component.UiComponent  UiComponent setSpoken(Component)
@@ -1799,11 +1800,13 @@ stable 4
 10 dev.jstech.core.client.gui.component.UiComponent  boolean mouseDragged(double, double, int)
 10 dev.jstech.core.client.gui.component.UiComponent  boolean mouseReleased(double, double, int)
 10 dev.jstech.core.client.gui.component.UiComponent  boolean mouseScrolled(double, double, double)
+12 dev.jstech.core.client.gui.component.UiComponent  boolean moving()
 10 dev.jstech.core.client.gui.component.UiComponent  boolean overlayContains(double, double)
 10 dev.jstech.core.client.gui.component.UiComponent  boolean overlayOpen()
 10 dev.jstech.core.client.gui.component.UiComponent  boolean still()
 10 dev.jstech.core.client.gui.component.UiComponent  boolean takesTyping()
 10 dev.jstech.core.client.gui.component.UiComponent  boolean visible()
+12 dev.jstech.core.client.gui.component.UiComponent  final void renderMoved(GuiGraphics, UiContext)
 10 dev.jstech.core.client.gui.component.UiComponent  int bottom()
 10 dev.jstech.core.client.gui.component.UiComponent  int height()
 10 dev.jstech.core.client.gui.component.UiComponent  int right()
@@ -2592,6 +2595,7 @@ stable 4
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey IMPORT_FAILED
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey IMPORT_TITLE
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey IN_FILE
+12 dev.jstech.core.config.ConfigScreenTexts  static final TextKey IN_TAB
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey MATCHES
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey NEEDS_RESTART
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey NEW_ENTRY
@@ -2609,6 +2613,9 @@ stable 4
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey ONLY_CHANGED_TIP
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey ON_RELOAD
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey OPERATOR
+12 dev.jstech.core.config.ConfigScreenTexts  static final TextKey OTHER_MODS
+12 dev.jstech.core.config.ConfigScreenTexts  static final TextKey OTHER_MOD_BANNER
+12 dev.jstech.core.config.ConfigScreenTexts  static final TextKey OTHER_MOD_NOTE
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey PASTE
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey PICK
 10 dev.jstech.core.config.ConfigScreenTexts  static final TextKey PLAYER
@@ -3039,6 +3046,7 @@ stable 4
 10 dev.jstech.core.content.FontBuilder  FontBuilder cell(int, int)
 10 dev.jstech.core.content.FontBuilder  FontBuilder credit(String)
 10 dev.jstech.core.content.FontBuilder  FontBuilder licence(String)
+12 dev.jstech.core.content.FontBuilder  FontBuilder outline(String, int)
 10 dev.jstech.core.content.GeoLook  type record<T>(String modid, String folder, String animation, Function<? super T, String> model)
 10 dev.jstech.core.content.GeoLook  ResourceLocation animationFile()
 10 dev.jstech.core.content.GeoLook  ResourceLocation modelFile(String)
@@ -3350,6 +3358,11 @@ stable 4
 10 dev.jstech.core.datagen.PaletteProvider  CompletableFuture<?> run(CachedOutput)
 10 dev.jstech.core.datagen.PaletteProvider  String getName()
 10 dev.jstech.core.datagen.PaletteProvider  new(PackOutput, String)
+12 dev.jstech.core.datagen.ScreenSchemaProvider  type final class implements DataProvider
+12 dev.jstech.core.datagen.ScreenSchemaProvider  CompletableFuture<?> run(CachedOutput)
+12 dev.jstech.core.datagen.ScreenSchemaProvider  String getName()
+12 dev.jstech.core.datagen.ScreenSchemaProvider  new(PackOutput, String)
+12 dev.jstech.core.datagen.ScreenSchemaProvider  static final String FILE
 10 dev.jstech.core.datagen.SealProvider  type final class extends DataMapProvider
 10 dev.jstech.core.datagen.SealProvider  String getName()
 10 dev.jstech.core.datagen.SealProvider  new(PackOutput, CompletableFuture<HolderLookup.Provider>)
@@ -3999,7 +4012,9 @@ stable 4
 10 dev.jstech.core.font.CellFont  int baseline()
 10 dev.jstech.core.font.CellFont  int cellHeight()
 10 dev.jstech.core.font.CellFont  int cellWidth()
+12 dev.jstech.core.font.CellFont  int pixels()
 10 dev.jstech.core.font.CellFont  new(ResourceLocation, String, int, int, int, String, String)
+12 dev.jstech.core.font.CellFont  new(ResourceLocation, String, int, int, int, String, String, int)
 10 dev.jstech.core.font.CellGlyphs  type final class
 10 dev.jstech.core.font.CellGlyphs  static List<CellRect> of(int, int, int)
 10 dev.jstech.core.font.CellGlyphs  static boolean isWholeCell(int)
@@ -4034,6 +4049,10 @@ stable 4
 10 dev.jstech.core.font.IGridPiece  abstract int x()
 10 dev.jstech.core.font.IGridPiece.Text  type record<S>(String text, int x, S style, boolean cellFont) implements IGridPiece<S>
 10 dev.jstech.core.font.IGridPiece.Whole  type record<S>(int codePoint, int x, S style) implements IGridPiece<S>
+12 dev.jstech.core.font.OutlineFontReader  type final class
+12 dev.jstech.core.font.OutlineFontReader  static BitmapFont of(Font, String)
+12 dev.jstech.core.font.OutlineFontReader  static BitmapFont read(InputStream, int, String)
+12 dev.jstech.core.font.OutlineFontReader  static final List<int[]> CHARACTERS
 10 dev.jstech.core.font.PngWriter  type final class
 10 dev.jstech.core.font.PngWriter  static byte[] rgba(int, int, IntBinaryOperator)
 10 dev.jstech.core.grid.CoreGrids  type final class
@@ -4355,6 +4374,7 @@ stable 4
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static GuiLayout layout(int, int, boolean, int, int, int, List<Integer>, List<Integer>, int)
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static List<String> nameLines(String, int, ToIntFunction<String>)
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static TopRow topRow(int, int, int)
+12 dev.jstech.core.gui.layout.ConfigScreenLayout  static final float HEADING_SCALE
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int BANNER_HEIGHT
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int BANNER_Y
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int BUTTON_PADDING
@@ -4377,6 +4397,7 @@ stable 4
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int NUMBER_FIELD
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int PAD
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int RAIL_COUNT
+12 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int RAIL_HEADING
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int RAIL_INSET
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int RAIL_ITEM
 10 dev.jstech.core.gui.layout.ConfigScreenLayout  static final int RAIL_SHARE_PERCENT
@@ -4985,6 +5006,10 @@ stable 4
 10 dev.jstech.core.gui.screen.ScreenFile  static final int GAME_WIDTH
 10 dev.jstech.core.gui.screen.ScreenFileLines  type final class
 10 dev.jstech.core.gui.screen.ScreenFileLines  static Map<List<Integer>, Integer> of(String)
+12 dev.jstech.core.gui.screen.ScreenSchema  type final class
+12 dev.jstech.core.gui.screen.ScreenSchema  static JsonObject of(List<Kind>, List<String>, List<String>)
+12 dev.jstech.core.gui.screen.ScreenSchema  static final String DRAFT
+12 dev.jstech.core.gui.screen.ScreenSchema.Kind  type record(String name, List<String> fields, boolean holds)
 10 dev.jstech.core.gui.style.DeclaredPalettes  type final class implements IPaletteSource
 10 dev.jstech.core.gui.style.DeclaredPalettes  Optional<Record> palette(String)
 10 dev.jstech.core.gui.style.DeclaredPalettes  static final DeclaredPalettes INSTANCE
@@ -5149,6 +5174,7 @@ stable 4
 10 dev.jstech.core.guide.CoreGuide  static GuideStyle drawings(String, String)
 10 dev.jstech.core.guide.CoreGuide  static final ItemEntry<ManualItem> MANUAL
 10 dev.jstech.core.guide.CoreGuide  static final String BINDER
+12 dev.jstech.core.guide.CoreGuide  static final String MATERIALS
 10 dev.jstech.core.guide.CoreGuide  static final String TECHNICAL_REFERENCE
 10 dev.jstech.core.guide.CoreGuide  static final int MARGIN
 10 dev.jstech.core.guide.CoreGuide  static final int PAGE_HEIGHT
@@ -5297,6 +5323,7 @@ stable 4
 10 dev.jstech.core.guide.GuideCodecs  static final Codec<GuideStyle.Make> MAKE
 10 dev.jstech.core.guide.GuideCodecs  static final Codec<GuideStyle.Pages> PAGES
 10 dev.jstech.core.guide.GuideCodecs  static final Codec<GuideStyle> STYLE
+12 dev.jstech.core.guide.GuideCodecs  static final Set<String> BLOCK_TYPES
 10 dev.jstech.core.guide.GuideCommand  type record(String name, Text summary, Text usage, List<Text> description, List<Option> options, List<Example> examples, List<Text> systems, List<String> seeAlso)
 10 dev.jstech.core.guide.GuideCommand.Example  type record(String line, Text what)
 10 dev.jstech.core.guide.GuideCommand.Option  type record(String flag, Text what)
@@ -5319,6 +5346,10 @@ stable 4
 10 dev.jstech.core.guide.GuideFacts  static void command(String, Supplier<GuideCommand>)
 10 dev.jstech.core.guide.GuideFacts  static void rows(String, Supplier<List<GuideBlock.TableRow>>)
 10 dev.jstech.core.guide.GuideFacts  static void value(String, Supplier<GuideBlock.GuideValue>)
+12 dev.jstech.core.guide.GuideFamilies  type final class
+12 dev.jstech.core.guide.GuideFamilies  static List<String> itemsOf(String)
+12 dev.jstech.core.guide.GuideFamilies  static Set<String> ids()
+12 dev.jstech.core.guide.GuideFamilies  static void register(String, Supplier<List<String>>)
 10 dev.jstech.core.guide.GuideGifts  type final class
 10 dev.jstech.core.guide.GuideGifts  static boolean wasGiven(ServerPlayer, String)
 10 dev.jstech.core.guide.GuideGifts  static void giveOnFirstJoin(String, Supplier<? extends ItemLike>)
@@ -8627,6 +8658,115 @@ stable 4
 12 dev.jstech.core.model.UsdReader  type final class
 12 dev.jstech.core.model.UsdReader  static ModelData read(String, byte[], Function<String, byte[]>)
 12 dev.jstech.core.model.UsdReader  static boolean readsUsd(byte[])
+12 dev.jstech.core.motion.DeclaredMotion  type final class
+12 dev.jstech.core.motion.DeclaredMotion  MotionProfile declared()
+12 dev.jstech.core.motion.DeclaredMotion  MotionProfile get()
+12 dev.jstech.core.motion.DeclaredMotion  ResourceLocation file()
+12 dev.jstech.core.motion.DeclaredMotion  String name()
+12 dev.jstech.core.motion.DeclaredMotion  String namespace()
+12 dev.jstech.core.motion.DeclaredMotion  void load(MotionProfile)
+12 dev.jstech.core.motion.DeclaredMotion  void reset()
+12 dev.jstech.core.motion.IEasing  type sealed interface permits IEasing.Linear, IEasing.CubicBezier, IEasing.Steps, IEasing.Spring
+12 dev.jstech.core.motion.IEasing  abstract String written()
+12 dev.jstech.core.motion.IEasing  abstract double apply(double)
+12 dev.jstech.core.motion.IEasing  static IEasing named(String)
+12 dev.jstech.core.motion.IEasing  static String nameOf(IEasing)
+12 dev.jstech.core.motion.IEasing  static final IEasing LINEAR
+12 dev.jstech.core.motion.IEasing  static final Map<String, IEasing> NAMED
+12 dev.jstech.core.motion.IEasing.CubicBezier  type record(double x1, double y1, double x2, double y2) implements IEasing
+12 dev.jstech.core.motion.IEasing.CubicBezier  String written()
+12 dev.jstech.core.motion.IEasing.CubicBezier  double apply(double)
+12 dev.jstech.core.motion.IEasing.Linear  type record() implements IEasing
+12 dev.jstech.core.motion.IEasing.Linear  String written()
+12 dev.jstech.core.motion.IEasing.Linear  double apply(double)
+12 dev.jstech.core.motion.IEasing.Spring  type record(double damping) implements IEasing
+12 dev.jstech.core.motion.IEasing.Spring  String written()
+12 dev.jstech.core.motion.IEasing.Spring  double apply(double)
+12 dev.jstech.core.motion.IEasing.Steps  type record(int count) implements IEasing
+12 dev.jstech.core.motion.IEasing.Steps  String written()
+12 dev.jstech.core.motion.IEasing.Steps  double apply(double)
+12 dev.jstech.core.motion.Motion  type record(MotionSpec spec, double startMs)
+12 dev.jstech.core.motion.Motion  boolean done(double)
+12 dev.jstech.core.motion.Motion  boolean fades()
+12 dev.jstech.core.motion.Motion  boolean is(String)
+12 dev.jstech.core.motion.Motion  boolean outward()
+12 dev.jstech.core.motion.Motion  double elapsed(double)
+12 dev.jstech.core.motion.Motion  double offset(double)
+12 dev.jstech.core.motion.Motion  double opacity(double)
+12 dev.jstech.core.motion.Motion  double progress(double)
+12 dev.jstech.core.motion.Motion  double scale(double)
+12 dev.jstech.core.motion.Motion  double scaleY(double)
+12 dev.jstech.core.motion.Motion  double toward(double)
+12 dev.jstech.core.motion.Motion  static final Motion FINISHED
+12 dev.jstech.core.motion.MotionKinds  type final class
+12 dev.jstech.core.motion.MotionKinds  static final String BUSY
+12 dev.jstech.core.motion.MotionKinds  static final String CARET_BLINK
+12 dev.jstech.core.motion.MotionKinds  static final String COPY
+12 dev.jstech.core.motion.MotionKinds  static final String DIALOG_OPEN
+12 dev.jstech.core.motion.MotionKinds  static final String DIM
+12 dev.jstech.core.motion.MotionKinds  static final String MENU_SHOW
+12 dev.jstech.core.motion.MotionKinds  static final String NOTICE_HIDE
+12 dev.jstech.core.motion.MotionKinds  static final String NOTICE_SHOW
+12 dev.jstech.core.motion.MotionKinds  static final String POINTER_BUSY
+12 dev.jstech.core.motion.MotionKinds  static final String POINTER_LAUNCH
+12 dev.jstech.core.motion.MotionKinds  static final String POINTER_WORKING
+12 dev.jstech.core.motion.MotionKinds  static final String PROGRESS_FILL
+12 dev.jstech.core.motion.MotionKinds  static final String PROGRESS_WAIT
+12 dev.jstech.core.motion.MotionKinds  static final String SCENE_FADE
+12 dev.jstech.core.motion.MotionKinds  static final String TOOLTIP_SHOW
+12 dev.jstech.core.motion.MotionKinds  static final String WINDOW_CLOSE
+12 dev.jstech.core.motion.MotionKinds  static final String WINDOW_MINIMIZE
+12 dev.jstech.core.motion.MotionKinds  static final String WINDOW_OPEN
+12 dev.jstech.core.motion.MotionKinds  static final String WINDOW_RESTORE
+12 dev.jstech.core.motion.MotionProfile  type record(Map<String, MotionSpec> kinds)
+12 dev.jstech.core.motion.MotionProfile  Map<String, Object> write()
+12 dev.jstech.core.motion.MotionProfile  MotionSpec spec(String)
+12 dev.jstech.core.motion.MotionProfile  byte[] json()
+12 dev.jstech.core.motion.MotionProfile  static Builder builder()
+12 dev.jstech.core.motion.MotionProfile  static MotionProfile read(Map<String, Object>)
+12 dev.jstech.core.motion.MotionProfile  static MotionProfile read(byte[])
+12 dev.jstech.core.motion.MotionProfile  static final MotionProfile STILL
+12 dev.jstech.core.motion.MotionProfile.Builder  type static final class
+12 dev.jstech.core.motion.MotionProfile.Builder  Builder kind(String, MotionSpec)
+12 dev.jstech.core.motion.MotionProfile.Builder  MotionProfile build()
+12 dev.jstech.core.motion.MotionProfiles  type final class
+12 dev.jstech.core.motion.MotionProfiles  static Collection<DeclaredMotion> all()
+12 dev.jstech.core.motion.MotionProfiles  static DeclaredMotion declare(String, String, MotionProfile)
+12 dev.jstech.core.motion.MotionProfiles  static List<DeclaredMotion> of(String)
+12 dev.jstech.core.motion.MotionScope  type final class
+12 dev.jstech.core.motion.MotionScope  static MotionSpec spec(String)
+12 dev.jstech.core.motion.MotionScope  static void within(Function<String, MotionSpec>, Runnable)
+12 dev.jstech.core.motion.MotionSpec  type record(String style, int duration, int delay, IEasing easing, String group, Map<String, Double> params)
+12 dev.jstech.core.motion.MotionSpec  List<String> groups()
+12 dev.jstech.core.motion.MotionSpec  MotionSpec after(int)
+12 dev.jstech.core.motion.MotionSpec  MotionSpec slowed(int)
+12 dev.jstech.core.motion.MotionSpec  MotionSpec with(String, double)
+12 dev.jstech.core.motion.MotionSpec  boolean moves()
+12 dev.jstech.core.motion.MotionSpec  double param(String, double)
+12 dev.jstech.core.motion.MotionSpec  static MotionSpec of(String, int, IEasing, String)
+12 dev.jstech.core.motion.MotionSpec  static final MotionSpec NONE
+12 dev.jstech.core.motion.MotionStyles  type final class
+12 dev.jstech.core.motion.MotionStyles  static final String APPEAR
+12 dev.jstech.core.motion.MotionStyles  static final String BLINK
+12 dev.jstech.core.motion.MotionStyles  static final String BLOCKS
+12 dev.jstech.core.motion.MotionStyles  static final String BOUNCE
+12 dev.jstech.core.motion.MotionStyles  static final String CAPTION
+12 dev.jstech.core.motion.MotionStyles  static final String EASE
+12 dev.jstech.core.motion.MotionStyles  static final String FADE
+12 dev.jstech.core.motion.MotionStyles  static final String GREY
+12 dev.jstech.core.motion.MotionStyles  static final String GROW
+12 dev.jstech.core.motion.MotionStyles  static final String LOOP
+12 dev.jstech.core.motion.MotionStyles  static final String NONE
+12 dev.jstech.core.motion.MotionStyles  static final String OUTLINE
+12 dev.jstech.core.motion.MotionStyles  static final String SCALE
+12 dev.jstech.core.motion.MotionStyles  static final String SEGMENT
+12 dev.jstech.core.motion.MotionStyles  static final String SLIDE
+12 dev.jstech.core.motion.MotionStyles  static final String ZOOM
+12 dev.jstech.core.motion.Rhythm  type final class
+12 dev.jstech.core.motion.Rhythm  static boolean on(MotionSpec, double)
+12 dev.jstech.core.motion.Rhythm  static double bounce(MotionSpec, double)
+12 dev.jstech.core.motion.Rhythm  static double pass(MotionSpec, double)
+12 dev.jstech.core.motion.Rhythm  static int frame(MotionSpec, double)
 10 dev.jstech.core.moving.BlockAboard  type record(Optional<Seat> seat, Optional<Clamp> clamp, Optional<Decoupler> decoupler, Optional<Tool> tool)
 10 dev.jstech.core.moving.BlockAboard  boolean any()
 10 dev.jstech.core.moving.BlockAboard  static BlockAboard of(BlockState)

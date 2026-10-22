@@ -6,11 +6,11 @@ the contents and the index, searches them, and shows them in every manual that h
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except writing a manual in Markdown, which *Still to build*
-at the end lists: the manuals with their chapters, sections and entries, the series' three manuals, the numbering, the
-styles as data, scenes in 3D and in motion, finding one's way (back and forward, bookmarks, search, the recipe
-viewers), the marks of what is new, live reload, the export to the web and the immersion. How a mod uses it, with code:
-[Manuals](../MANUALS.md).
+Everything this page designs is built, as of October 2026: the manuals with their chapters, sections and entries,
+written in Markdown, the series' three manuals, the numbering, the styles as data, scenes in 3D and in motion, finding
+one's way (back and forward, bookmarks, search, the recipe viewers), the marks of what is new, live reload, the export
+to the web and the immersion. The Core's own chapter and the series' are Markdown files. What is left is under
+*Still to build* at the end. How a mod uses it, with code: [Manuals](../MANUALS.md).
 
 ## The design
 
@@ -68,8 +68,5 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
 
 ## Still to build
 
-- **Manuals written in Markdown**, as *For those who write* above says: the files, their header, the manual's own
-  blocks, the manual and its chapters as files, read live; the code only registers a manual.
-- **The Core's own manuals moved to Markdown**, as the proof of it, and the way of declaring entries in code goes.
 - **J's Computers' manuals** (the Guide to Operations and its books) move to Markdown too, as J's Computers' last step
-  in this cycle.
+  in this cycle; then the way of declaring entries in code goes, since no manual is left that uses it.

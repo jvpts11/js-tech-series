@@ -279,6 +279,45 @@ final class ConfigRows {
         return new TitleRow(host, text, heading);
     }
 
+    /** A line of small words across the list under what it shows, saying where it comes from. */
+    static Row note(final Host host, final String text) {
+        final TitleRow row = new TitleRow(host, text, false);
+        row.label.setScale(ConfigScreenLayout.HEADING_SCALE);
+        return row;
+    }
+
+    /**
+     * A file of another mod under another tab: a fold, shut, named {@code title}, saying where the file is at its
+     * right, {@code where}; opening it opens that tab, {@code open}.
+     */
+    static Row elsewhere(final Host host, final Component title, final String where, final Runnable open) {
+        return new ElsewhereRow(host, title, where, open);
+    }
+
+    /** Another mod's file under another tab. */
+    private static final class ElsewhereRow extends Row {
+
+        private final UiComponent header;
+        private final int width;
+
+        ElsewhereRow(final Host host, final Component title, final String where, final Runnable open) {
+            this.width = host.screenWidth();
+            this.header = add(new ConfigWidgets.FoldHeader(title, where, () -> false, open));
+        }
+
+        @Override
+        int height() {
+            return ConfigScreenLayout.GROUP_GAP + ConfigScreenLayout.GROUP_ROW;
+        }
+
+        @Override
+        void place(final int y) {
+            final int x = ConfigScreenLayout.nameX(width);
+            header.setBounds(x, y + ConfigScreenLayout.GROUP_GAP, ConfigScreenLayout.controlRight(width) - x,
+                    ConfigScreenLayout.GROUP_ROW);
+        }
+    }
+
     /** A line of text across the list. */
     private static final class TitleRow extends Row {
 
@@ -315,8 +354,10 @@ final class ConfigRows {
 
         HeaderRow(final Host host, final ConfigFile file, final ConfigScreenModel.Group group, final int count) {
             this.width = host.screenWidth();
-            this.header = add(new ConfigWidgets.FoldHeader(group.title(), GameText.resolve(count == 1
-                    ? ConfigScreenTexts.ONE_SETTING.text() : ConfigScreenTexts.SETTINGS.with(count)),
+            // Another mod's group says the file it is in; the Core's, how many settings it holds.
+            this.header = add(new ConfigWidgets.FoldHeader(group.title(), !group.file().isEmpty() ? group.file()
+                    : GameText.resolve(count == 1 ? ConfigScreenTexts.ONE_SETTING.text()
+                    : ConfigScreenTexts.SETTINGS.with(count)),
                     () -> !host.folded(file, group.path()), () -> host.toggleFold(file, group.path())));
         }
 

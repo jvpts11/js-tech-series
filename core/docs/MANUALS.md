@@ -35,9 +35,155 @@ second section, on as many sheets as it takes.
 A chapter opens on two facing pages: its number, its title and what it is about on the left, its sections and the
 pages they start on on the right. So it always opens on a left page, a page is left blank before it when it would not.
 
-## Writing a chapter
+## Writing a manual in Markdown
+
+*Added 2026-10-22.*
+
+A manual can be written in files of Markdown, the way a README is, one folder for each language, with no Java at
+all: the Core's own chapter and the series' are. The files go in your mod's assets:
+
+```
+assets/mymod/jstech/manuals/handbook/
+    en_us/
+        manual.md            the book itself
+        chapter.md           the mod's main chapter
+        machines.md          a section
+        machines/kiln.md     an entry
+    pt_br/
+        manual.md
+        ...
+```
+
+`handbook` is the manual's folder: the book `manual.md` declares there is `mymod:handbook`, and any chapter, section
+or entry in the folder may be bound into other books too. A player reads the files of their language, and a file their
+language lacks in English; changing the game's language reads them again. A resource pack replaces any file by
+shipping one at the same place, so a pack rewrites or translates a page with no code. In a development run, saving a
+file reads the manuals again at once, as below.
+
+Each file starts with a header between two lines of three dashes, and its title is its first heading of one `#`:
+
+```markdown
+---
+section: machines
+order: 3
+icon: mymod:kiln
+covers: [mymod:kiln, mymod:kiln_door]
+---
+# Kiln
+
+## What it is
+
+A machine that fires clay into bricks with energy from [a generator](mymod:generator), with no fuel.
+
+![The kiln, from the front](item:mymod:kiln)
+
+Table: Its numbers
+
+| Property | Value |
+| --- | --- |
+| Uses | {{mymod:kiln_use}} |
+| Model | `KX-1` |
+
+## How to use it
+
+1. Place it.
+2. Give it energy.
+
+> [!PROBLEM] It stops halfway.
+> It has run out of energy. Give it a generator.
+
+> [!DEFINE] FE
+> Forge Energy, the energy every NeoForge mod shares.
+```
+
+What the header says depends on what the file is, which its `kind` says (an entry unless it says otherwise):
+
+| Kind | Its header | Its body |
+| --- | --- | --- |
+| entry | `section` (required), `order`, `icon`, `covers` (the items it is the page of), `covers_family` (a family only your code knows, see below), `shows` (the items on the plate under its title, when they are others), `needs` (the knowledge it needs), and `id` when it is not the mod's id and the file's name | Its blocks |
+| `section` | `chapter` (the mod's main chapter unless it says), `order`, `icon` | Its title alone |
+| `chapter` | `order`, `tab` (a palette's id or a colour written `"#AARRGGBB"`), `own_books_only: true` for a chapter the Technical Reference leaves out; the file named `chapter.md` is the mod's main chapter, any other `mymod:<name>` | What it is about, on its opening page |
+| `manual` | `style` and `chapters` (required; `[*]` for every chapter), `cover` (its cover's lines), `edition`, `part_number`, `priority`, `icon` | The paragraphs of its "About this manual" |
+
+A name with no namespace (`section: machines`) is your mod's. Lists are written `[a, b]`. Java still registers what a
+player holds: the `ManualItem` that opens the book, and `GuideGifts.giveOnFirstJoin` if it is handed out. A family of
+items only your code knows, such as every part a mod adds to a machine, is registered once while the game loads and
+named by an entry's `covers_family`:
+
+```java
+GuideFamilies.register("mymod:kiln_parts", () -> MyContent.KILN_PARTS.stream()
+        .map(part -> BuiltInRegistries.ITEM.getKey(part.asItem()).toString()).toList());
+```
+
+### The blocks in Markdown
+
+Each form of Markdown is a block of the manual:
+
+| Markdown | Block |
+| --- | --- |
+| A paragraph; its lines are joined | A paragraph. Links `[words](target)`, keys `[[Ctrl]]` and values `{{mymod:value}}` read as in [Links inside a sentence](#links-inside-a-sentence) and [Figures read from your mod](#figures-read-from-your-mod). Bold, emphasis and code marks are taken off: a manual's styles write every word of a sentence alike. |
+| `## A heading` (any level but the first `#`) | A heading. The five parts are headings like any other, `## What it is` in English and in another language its own words. |
+| `1.` a numbered list | Numbered steps. |
+| `-` a list | A paragraph for each item, after a bullet. |
+| `Table: caption` on its own line, then a table | A numbered table; its first row is its heads. A cell written as code, `` `KX-1` ``, is kept as it is written. |
+| `![caption](item:mymod:kiln)` alone on its line | The item's figure. |
+| `![caption](mymod:gui/guide/cutaway "120x80")` | A picture of a texture, at that size; `"0x80"` takes the column's width, and `"64x32 frames=8 ticks=2"` is a picture that moves. |
+| `> a quote` | A note. |
+| `> [!WARNING]` (or `CAUTION`, `IMPORTANT`), `> [!NOTE]` (or `TIP`) | A warning, a note. |
+| `> [!PROBLEM] what goes wrong` and the fix under it | A problem and its fix; problems one after another are one list. |
+| `> [!DEFINE] a word` and what it means under it | A word explained, which goes into the glossary. |
+| `> [!SEE] mymod:generator, mymod:press` | "See" with those entries. |
+| `<!-- column -->`, `<!-- page -->` | The next column, the next page. Any other comment is left out. |
+| A fence of a language, ```` ```java Kiln.java ```` | A listing of code, under its file's name. |
+| A fence named for a block, its lines a name, a colon and a value | That block, below. |
+| A fence named for any block whose body is JSON | The block as a manual's JSON file writes it, for a scene and anything with no shorter form. |
+
+The fences named for a block:
+
+````markdown
+```recipes
+type: mymod:firing
+making: mymod:brick
+```
+
+```multiblock
+id: mymod:coke_oven
+caption: The coke oven, built
+height: 120
+```
+
+```table
+source: mymod:cable_reach
+caption: How far each cable reaches
+heads: Cable | Reach
+```
+
+```session
+look: mymod:guide/terminal/dos
+title: MC-DOS 6.22
+prompt: C:\>
+> dir
+ Directory of C:\
+```
+
+```scene
+{"height": 120, "caption": "The kiln in place", "blocks": [{"x": 0, "y": 0, "z": 0, "state": "mymod:kiln"}]}
+```
+````
+
+`structure` is as `multiblock`, of a structure saved with the structure block; `command` takes the `id` of a command's
+page; `plan` takes a `caption`, then `part: mymod:kiln | The kiln` and `optional: A second one`; `views` takes the
+`item`, then `callout: 1 front 8 4 | The display`; `custom kind height` and `drawing kind height caption` hold their
+data as JSON. In a session a line after `>` is typed at the prompt and any other is the answer; `yaw`, `pitch` and
+`zoom` turn a scene's view. A file that says something wrong is named in the log with its line, and what it says
+right still opens.
+
+## Writing a chapter in Java
 
 *Added 2026-10-05.*
+
+A manual can be declared in Java instead, and the data generation writes its files; J's Computers and J's Industrial
+are written so.
 
 ```java
 public final class MyGuide {
@@ -763,10 +909,10 @@ system's help shows for the command in place of the page made of its words alone
 
 *Added 2026-10-21.*
 
-In a development run, saving a file under a namespace's `guide/` reads the manuals alone again, at once, without
-every resource ([Developing](DEVELOPING.md)); a manual open lays itself out anew and its reader stays on the page they
-were reading, found by where it stands in its entry, though the pages before it moved. A file that cannot be read is
-named in the log, and the rest of the manuals still open.
+In a development run, saving a file under a namespace's `guide/` or `jstech/manuals/` reads the manuals alone again,
+at once, without every resource ([Developing](DEVELOPING.md)); a manual open lays itself out anew and its reader
+stays on the page they were reading, found by where it stands in its entry, though the pages before it moved. A file
+that cannot be read is named in the log, and the rest of the manuals still open.
 
 ## The manual as a website
 
@@ -802,3 +948,8 @@ manual online as it plays. `GuideSite.files(reader, text, recipes, language)` bu
   `nextColumn` or `nextPage` so each sheet holds what it was written for. A translation that runs longer simply goes
   on to the next sheet.
 - **The declaration stops on an id named twice.** A section and an entry share an id; rename one.
+- **A Markdown file is left out, or one of its blocks is.** The log names the file and the line: it has no title (a
+  first heading of one `#`), an entry names no `section`, a manual no `style` or `chapters`, two files give the same
+  id, or a fence or an alert does not say what it needs.
+- **A page shows in English in another language.** The language's folder has no file of that page; it is read in
+  English until it has.

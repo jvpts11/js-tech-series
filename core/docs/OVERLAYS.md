@@ -97,6 +97,12 @@ The lines are worked out on the server and sent to the player, so they can say w
 `details` is true while the player holds the key for more. A block entity that has an owner (`IOwned`) shows
 "Owner: ..." too. Jade's settings have a switch for these lines. Without Jade, nothing of this loads.
 
+*Added 2026-10-22.* Jade's box is drawn in the player's style too: when a style is chosen in the Core's settings
+([Settings](SETTINGS.md#the-settings-screen)), the box takes the style's ground, its edge and its text colours,
+with square corners, and changes as soon as the player picks another style. It does so through a theme of Jade's
+own, `jscore:player_style`, which is hidden from Jade's list of themes; with no style chosen, the theme the player
+had in Jade comes back.
+
 ## What can go wrong
 
 - **Two elements overlap.** One of them is drawn outside `HudElements` (straight on the game's HUD layer); declare

@@ -44,6 +44,9 @@ public final class ConfigScreenLayout {
     public static final int GAP = 4;
     /** A section of the rail. */
     public static final int RAIL_ITEM = 20;
+    /** A heading of the rail, the series' or the other mods', and the size its words are drawn at. */
+    public static final int RAIL_HEADING = 12;
+    public static final float HEADING_SCALE = 0.75F;
     /** The rail at its narrowest and widest, and its share of the screen between. */
     public static final int NARROW_RAIL = 88;
     public static final int WIDE_RAIL = 140;

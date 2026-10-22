@@ -26,6 +26,7 @@ import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigPresets;
 import dev.jstech.core.config.ConfigScreenTexts;
+import dev.jstech.core.config.ConfigSide;
 import dev.jstech.core.config.ConfigSync;
 import dev.jstech.core.config.format.ConfigFormatException;
 import dev.jstech.core.gui.layout.ConfigScreenLayout;
@@ -98,6 +99,9 @@ public final class CoreConfigScreen extends Screen {
     private ConfigScreenLayout.Footer footer;
     private int scope;
     private int section;
+    /* How far the rail is scrolled, in pixels, and whether it is to scroll to what was opened. */
+    private int railScroll;
+    private boolean revealOpen;
     private String query = "";
     private boolean onlyChanged;
     private boolean rebuildDue = true;
@@ -158,10 +162,14 @@ public final class CoreConfigScreen extends Screen {
         return model.scopes().stream().map(one -> ConfigScreenModel.tabTitle(one.side()).getString()).toList();
     }
 
-    /** The sections the rail lists under the open tab. */
+    /** The sections the rail lists under the open tab, then the other mods with settings of its kind. */
     public List<String> railLabels() {
-        return openScope().map(one -> one.sections().stream().map(entry -> entry.title().getString()).toList())
-                .orElse(List.of());
+        return openScope().map(one -> {
+            final List<String> labels = new ArrayList<>();
+            one.sections().forEach(entry -> labels.add(entry.title().getString()));
+            one.others().forEach(mod -> labels.add(mod.name()));
+            return labels;
+        }).orElse(List.of());
     }
 
     /** The names of the settings the list shows, however far it scrolls. */
@@ -191,6 +199,14 @@ public final class CoreConfigScreen extends Screen {
                 if (sections.get(i).title().getString().equals(title)) {
                     scope = s;
                     select(i);
+                    return true;
+                }
+            }
+            final List<ConfigScreenModel.Other> others = model.scopes().get(s).others();
+            for (int i = 0; i < others.size(); i++) {
+                if (others.get(i).name().equals(title)) {
+                    scope = s;
+                    select(sections.size() + i);
                     return true;
                 }
             }
@@ -422,6 +438,11 @@ public final class CoreConfigScreen extends Screen {
             popup.mouseScrolled(mx, my, scrollY);
             return true;
         }
+        if (mx < ConfigScreenLayout.PAD + ConfigScreenLayout.railWidth(width) && my > ConfigScreenLayout.HEADER) {
+            // A rail longer than its room scrolls; placing it holds the scroll to what it holds.
+            railScroll -= (int) Math.signum(scrollY) * ConfigScreenLayout.RAIL_ITEM;
+            return true;
+        }
         return root.mouseScrolled(mx, my, scrollY);
     }
 
@@ -505,8 +526,20 @@ public final class CoreConfigScreen extends Screen {
         return scope < model.scopes().size() ? Optional.of(model.scopes().get(scope)) : Optional.empty();
     }
 
+    /* The section open, or the first file's of the other mod open. */
     private Optional<ConfigScreenModel.Section> openSection() {
+        final Optional<ConfigScreenModel.Other> other = openOther();
+        if (other.isPresent()) {
+            return Optional.of(other.get().sections().get(0));
+        }
         return openScope().filter(one -> section < one.sections().size()).map(one -> one.sections().get(section));
+    }
+
+    /* The other mod open, whose settings are its own, kept NeoForge's way. */
+    private Optional<ConfigScreenModel.Other> openOther() {
+        return openScope().filter(one -> section >= one.sections().size()
+                && section - one.sections().size() < one.others().size())
+                .map(one -> one.others().get(section - one.sections().size()));
     }
 
     private Optional<ConfigDraft> openDraftIfEditable() {
@@ -515,13 +548,21 @@ public final class CoreConfigScreen extends Screen {
     }
 
     private Optional<ConfigStatus.Line> banner() {
-        return status.banner(openSection(), minecraft != null && minecraft.player != null);
+        final Optional<ConfigStatus.Line> said = status.banner(openSection(), minecraft != null
+                && minecraft.player != null);
+        final Optional<ConfigScreenModel.Other> other = openOther();
+        if (said.isEmpty() && other.isPresent()) {
+            return Optional.of(new ConfigStatus.Line(GameText.resolve(ConfigScreenTexts.OTHER_MOD_BANNER.with(
+                    other.get().name())), StyleRole.HEADING, false));
+        }
+        return said;
     }
 
     private void select(final int index) {
         section = index;
         list.setScroll(0);
         rebuildDue = true;
+        revealOpen = true;
     }
 
     private void setQuery(final String words) {
@@ -561,29 +602,26 @@ public final class CoreConfigScreen extends Screen {
         rebuildDue = false;
         builtRevision = revision;
         rail.clear();
-        openScope().ifPresent(one -> {
-            for (int i = 0; i < one.sections().size(); i++) {
-                final int index = i;
-                final ConfigScreenModel.Section entry = one.sections().get(i);
-                rail.add(new ConfigRailEntry(i, entry, () -> index == section && query.isEmpty(),
-                        () -> changedIn(entry), () -> select(index)));
-            }
-        });
+        openScope().ifPresent(this::buildRail);
         list.clear();
         rows.clear();
         final ConfigRows.ShownFilter shown = (file, key) -> model.matches(key, query)
                 && (!onlyChanged || model.draft(file).isOffDefault(key) || model.draft(file).isChanged(key));
-        if (query.isEmpty()) {
+        final Optional<ConfigScreenModel.Other> other = openOther();
+        if (query.isEmpty() && other.isPresent()) {
+            otherRows(other.get(), shown);
+        } else if (query.isEmpty()) {
             openSection().ifPresent(open -> rows.addAll(ConfigRows.build(host, open.file(), open.groups(), shown)));
         } else {
-            // A search looks through every tab, each section's finds under its name.
+            // A search looks through every tab, each section's finds under its name, and every other mod's.
             for (final ConfigScreenModel.Scope one : model.scopes()) {
+                final String tab = ConfigScreenModel.tabTitle(one.side()).getString();
                 for (final ConfigScreenModel.Section entry : one.sections()) {
-                    final List<ConfigRows.Row> found = ConfigRows.build(host, entry.file(), entry.groups(), shown);
-                    if (!found.isEmpty()) {
-                        rows.add(ConfigRows.title(host, ConfigScreenModel.tabTitle(one.side()).getString() + " / "
-                                + entry.title().getString(), true));
-                        rows.addAll(found);
+                    found(tab + " / " + entry.title().getString(), entry, shown);
+                }
+                for (final ConfigScreenModel.Other mod : one.others()) {
+                    for (final ConfigScreenModel.Section entry : mod.sections()) {
+                        found(tab + " / " + mod.name() + " / " + entry.title().getString(), entry, shown);
                     }
                 }
             }
@@ -599,6 +637,74 @@ public final class CoreConfigScreen extends Screen {
             row.parts.forEach(list::add);
         }
         list.setContentHeight(top + ConfigScreenLayout.GROUP_GAP);
+    }
+
+    /*
+     * The rail of a tab: its sections and, on the Core's own screen, the other mods with settings of the tab's kind,
+     * each set under a heading.
+     */
+    private void buildRail(final ConfigScreenModel.Scope one) {
+        final boolean others = !one.others().isEmpty();
+        int place = 0;
+        if (others && !one.sections().isEmpty()) {
+            rail.add(ConfigRailEntry.heading(place++, Component.literal(modName)));
+        }
+        for (int i = 0; i < one.sections().size(); i++) {
+            final int index = i;
+            final ConfigScreenModel.Section entry = one.sections().get(i);
+            rail.add(new ConfigRailEntry(place++, entry, () -> index == section && query.isEmpty(),
+                    () -> changedIn(entry), () -> select(index)));
+        }
+        if (others) {
+            rail.add(ConfigRailEntry.heading(place++, GameText.component(ConfigScreenTexts.OTHER_MODS)));
+        }
+        for (int i = 0; i < one.others().size(); i++) {
+            final int index = one.sections().size() + i;
+            final ConfigScreenModel.Other mod = one.others().get(i);
+            rail.add(new ConfigRailEntry(place++, Component.literal(mod.name()), mod.count(),
+                    () -> index == section && query.isEmpty(),
+                    () -> mod.sections().stream().anyMatch(this::changedIn), () -> select(index)));
+        }
+    }
+
+    /*
+     * The rows of another mod's settings of the open tab: each of its files' sections, which say the file they are in;
+     * its files of the other tabs, each a fold that opens its tab; and that what is shown is as the mod declares it.
+     */
+    private void otherRows(final ConfigScreenModel.Other mod, final ConfigRows.ShownFilter shown) {
+        for (final ConfigScreenModel.Section entry : mod.sections()) {
+            rows.addAll(ConfigRows.build(host, entry.file(), entry.groups(), shown));
+        }
+        for (final ConfigScreenModel.Elsewhere file : mod.elsewhere()) {
+            final String base = file.file().substring(file.file().lastIndexOf('/') + 1);
+            rows.add(ConfigRows.elsewhere(host, Component.literal(ForeignConfigs.words(ForeignConfigs.stem(base))),
+                    GameText.resolve(ConfigScreenTexts.IN_TAB.with(base, ConfigScreenModel.tabTitle(file.side())
+                            .getString())), () -> openOtherOn(file.side(), mod.modId())));
+        }
+        rows.add(ConfigRows.note(host, GameText.resolve(ConfigScreenTexts.OTHER_MOD_NOTE.with(mod.name()))));
+    }
+
+    /* Opens the tab of {@code side} on the other mod {@code modId}, as a click on a file of its other tab does. */
+    private void openOtherOn(final ConfigSide side, final String modId) {
+        for (int s = 0; s < model.scopes().size(); s++) {
+            final ConfigScreenModel.Scope one = model.scopes().get(s);
+            for (int i = 0; one.side() == side && i < one.others().size(); i++) {
+                if (one.others().get(i).modId().equals(modId)) {
+                    scope = s;
+                    select(one.sections().size() + i);
+                    return;
+                }
+            }
+        }
+    }
+
+    /* What a search found in {@code entry}, under {@code title}. */
+    private void found(final String title, final ConfigScreenModel.Section entry, final ConfigRows.ShownFilter shown) {
+        final List<ConfigRows.Row> found = ConfigRows.build(host, entry.file(), entry.groups(), shown);
+        if (!found.isEmpty()) {
+            rows.add(ConfigRows.title(host, title, true));
+            rows.addAll(found);
+        }
     }
 
     private boolean changedIn(final ConfigScreenModel.Section entry) {
@@ -646,18 +752,45 @@ public final class CoreConfigScreen extends Screen {
         filter.setBounds(row.filter().x(), top, row.filter().width(), ConfigScreenLayout.CONTROL_HEIGHT);
         presets.setBounds(row.presets().x(), top, row.presets().width(), ConfigScreenLayout.CONTROL_HEIGHT);
         final int bottom = ConfigScreenLayout.contentBottom(footer);
-        final int railTop = ConfigScreenLayout.railTop(hasBanner);
-        for (final ConfigRailEntry entry : rail) {
-            final int y = railTop + entry.index() * ConfigScreenLayout.RAIL_ITEM;
-            entry.setBounds(ConfigScreenLayout.PAD + 2, y, ConfigScreenLayout.railWidth(width) - 4,
-                    ConfigScreenLayout.RAIL_ITEM);
-            entry.setVisible(y + ConfigScreenLayout.RAIL_ITEM <= bottom);
-        }
+        placeRail(ConfigScreenLayout.railTop(hasBanner), bottom);
         final int listTop = ConfigScreenLayout.listTop(hasBanner);
         list.setBounds(ConfigScreenLayout.paneX(width), listTop,
                 ConfigScreenLayout.paneRight(width) - ConfigScreenLayout.paneX(width), bottom - listTop);
         for (final ConfigRows.Row each : rows) {
             each.place(list.contentY(each.top()));
+        }
+    }
+
+    /*
+     * Puts the rail's entries in place between {@code top} and {@code bottom}, scrolled as far as the wheel took it,
+     * and, once something was opened, far enough that what is open shows; an entry not whole in its room is hidden.
+     */
+    private void placeRail(final int top, final int bottom) {
+        int total = 0;
+        int openTop = -1;
+        int openSlot = 0;
+        for (final ConfigRailEntry entry : rail) {
+            if (entry.isOpen()) {
+                openTop = total;
+                openSlot = entry.slot();
+            }
+            total += entry.slot();
+        }
+        final int room = Math.max(0, bottom - top);
+        if (revealOpen && openTop >= 0) {
+            if (openTop < railScroll) {
+                railScroll = openTop;
+            } else if (openTop + openSlot > railScroll + room) {
+                railScroll = openTop + openSlot - room;
+            }
+            revealOpen = false;
+        }
+        railScroll = Math.clamp(railScroll, 0, Math.max(0, total - room));
+        int y = top - railScroll;
+        for (final ConfigRailEntry entry : rail) {
+            entry.setBounds(ConfigScreenLayout.PAD + 2, y, ConfigScreenLayout.railWidth(width) - 4, entry.slot());
+            entry.setVisible(y >= top && y + entry.slot() <= bottom);
+            y += entry.slot();
         }
     }
 
@@ -743,12 +876,16 @@ public final class CoreConfigScreen extends Screen {
     }
 
     private void sectionDefaults() {
-        openSection().filter(open -> ConfigScreenModel.editable(open.file()) && query.isEmpty()).ifPresent(open -> {
-            final List<ConfigKey<?>> keys = new ArrayList<>();
-            open.groups().forEach(group -> keys.addAll(group.keys()));
-            model.draft(open.file()).defaults(keys);
-            rebuildDue = true;
-        });
+        final List<ConfigScreenModel.Section> open = openOther().map(ConfigScreenModel.Other::sections)
+                .orElseGet(() -> openSection().map(List::of).orElse(List.of()));
+        for (final ConfigScreenModel.Section entry : open) {
+            if (ConfigScreenModel.editable(entry.file()) && query.isEmpty()) {
+                final List<ConfigKey<?>> keys = new ArrayList<>();
+                entry.groups().forEach(group -> keys.addAll(group.keys()));
+                model.draft(entry.file()).defaults(keys);
+                rebuildDue = true;
+            }
+        }
     }
 
     private void openPresets() {
@@ -843,7 +980,7 @@ public final class CoreConfigScreen extends Screen {
     private List<ConfigKeyboard.Stop> focusOrder() {
         final List<ConfigKeyboard.Stop> out = new ArrayList<>();
         for (final ConfigRailEntry entry : rail) {
-            if (entry.visible()) {
+            if (entry.visible() && !entry.isHeading()) {
                 out.add(new ConfigKeyboard.Stop(null, entry));
             }
         }

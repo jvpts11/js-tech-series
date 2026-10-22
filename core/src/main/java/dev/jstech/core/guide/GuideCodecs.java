@@ -17,6 +17,7 @@ import dev.jstech.core.id.StableCodecs;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.util.ExtraCodecs;
 
 /**
@@ -65,6 +66,10 @@ public final class GuideCodecs {
 
     public static final Codec<GuideBlock> BLOCK = Codec.STRING.dispatch("type", GuideCodecs::typeOf,
             GuideCodecs::codecOf);
+    /** The type every kind of block is written with in a file, as {@link #BLOCK} reads it. */
+    public static final Set<String> BLOCK_TYPES = Set.of("text", "heading", "figure", "picture", "table", "listing",
+            "session", "recipes", "steps", "warning", "problems", "define", "see", "custom", "note", "break", "views",
+            "plan", "command", "scene", "multiblock", "structure");
 
     public static final Codec<GuideEntry> ENTRY = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("id").forGetter(GuideEntry::id),

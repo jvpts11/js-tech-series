@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.datagen;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.jstechseries.SeriesRecipes;
 import dev.jstech.core.jstechseries.fire.FireRemainsProvider;
 import dev.jstech.core.registry.CoreItems;
@@ -41,6 +42,8 @@ public final class JsCoreDataGenerators {
         // The veins every biome's ores lie in, standing in for the game's scattered iron, copper and gold, and the
         // reservoirs under every biome.
         data.server(new UndergroundProvider(data.output(), data.lookup()));
+        // What a screen's file may say, for an editor to complete it.
+        data.client(new ScreenSchemaProvider(data.output(), JsCore.MODID));
         data.check();
     }
 }

@@ -26,6 +26,7 @@ import dev.jstech.core.guide.GuideContents;
 import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideGifts;
+import dev.jstech.core.guide.GuideIds;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuideLinks;
 import dev.jstech.core.guide.GuideManual;
@@ -38,8 +39,13 @@ import dev.jstech.core.guide.IGuideText;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.guide.TextSize;
+import dev.jstech.core.guide.markdown.CodecJsonBlocks;
+import dev.jstech.core.guide.markdown.ManualFile;
+import dev.jstech.core.guide.markdown.MarkdownManuals;
+import dev.jstech.core.guide.markdown.ModManualFiles;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.text.TextFormat;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.JsTests;
 import java.nio.file.Files;
@@ -49,6 +55,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
@@ -77,6 +85,10 @@ public final class SeriesManualsGameTests {
     private static final int FEWEST_ENTRIES = 50;
     /** The mods of the series whose every item a manual explains. */
     private static final List<String> SERIES = List.of("jscore", "jsc", "jsindustrial");
+    /* The namespace the series' own chapter is written under, which the Core ships. */
+    private static final String SERIES_OWN = "jstech";
+    /* The folder the Core writes the Technical Reference's chapters in. */
+    private static final String FOLDER = "technical_reference";
     private static final List<String> SPINE = List.of(GuideTexts.WHAT_IT_IS.key(), GuideTexts.WHAT_IT_IS_FOR.key(),
             GuideTexts.HOW_TO_GET_IT.key(), GuideTexts.HOW_TO_USE_IT.key(), GuideTexts.WHAT_CAN_GO_WRONG.key());
     /** The chapters written as a guide in running text rather than in the five parts. */
@@ -155,13 +167,45 @@ public final class SeriesManualsGameTests {
         helper.succeed();
     }
 
+    /*
+     * Every manual written in Markdown reads with nothing wrong in it, in English and in every language it is
+     * translated into, and a language a folder is translated into has every one of its English files.
+     */
+    @GameTest(template = ARENA)
+    public static void markdownManuals_readInEveryLanguageWithNothingWrong(final GameTestHelper helper) {
+        final List<ManualFile> files = ModManualFiles.all();
+        final Map<String, Map<String, Set<String>>> byFolder = new TreeMap<>();
+        for (final ManualFile file : files) {
+            byFolder.computeIfAbsent(file.namespace() + "/" + file.folder(), key -> new TreeMap<>())
+                    .computeIfAbsent(file.language(), key -> new TreeSet<>()).add(file.path());
+        }
+        helper.assertTrue(byFolder.containsKey("jscore/" + FOLDER) && byFolder.containsKey("jstech/" + FOLDER),
+                "the Core's manual and the series' chapter are written in Markdown: " + byFolder.keySet());
+        final List<String> wrong = new ArrayList<>();
+        for (final Map.Entry<String, Map<String, Set<String>>> folder : byFolder.entrySet()) {
+            final Set<String> english = folder.getValue().getOrDefault(ManualFile.ENGLISH, Set.of());
+            for (final Map.Entry<String, Set<String>> language : folder.getValue().entrySet()) {
+                if (!language.getValue().equals(english)) {
+                    final Set<String> missing = new TreeSet<>(english);
+                    missing.removeAll(language.getValue());
+                    final Set<String> extra = new TreeSet<>(language.getValue());
+                    extra.removeAll(english);
+                    wrong.add(folder.getKey() + " in " + language.getKey() + " lacks " + missing + " and has more "
+                            + extra);
+                }
+                wrong.addAll(MarkdownManuals.gather(files, language.getKey(), CodecJsonBlocks.INSTANCE).problems());
+            }
+        }
+        helper.assertTrue(wrong.isEmpty(), wrong.size() + " faults: "
+                + String.join("; ", wrong.subList(0, Math.min(FAULTS_NAMED, wrong.size()))));
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void seriesManuals_explainEveryItemOfTheSeries(final GameTestHelper helper) {
         final Set<String> covered = new HashSet<>();
-        for (final ModGuide guide : guides()) {
-            for (final GuideEntry entry : guide.declaredEntries()) {
-                covered.addAll(entry.items());
-            }
+        for (final GuideEntry entry : seriesEntries()) {
+            covered.addAll(entry.items());
         }
         final List<String> missing = new ArrayList<>();
         for (final ResourceLocation item : BuiltInRegistries.ITEM.keySet()) {
@@ -176,17 +220,14 @@ public final class SeriesManualsGameTests {
     @GameTest(template = ARENA)
     public static void seriesEntries_followTheFormOfTheirChapter(final GameTestHelper helper) {
         final List<String> wrong = new ArrayList<>();
-        for (final ModGuide guide : guides()) {
+        for (final GuideEntry entry : seriesEntries()) {
             // J's Computers' chapter is a guide in running text; the others' entries follow the five parts.
-            final boolean prose = PROSE.contains(guide.namespace());
-            for (final GuideEntry entry : guide.declaredEntries()) {
-                final List<String> spine = entry.blocks().stream()
-                        .filter(part -> part instanceof GuideBlock.Heading heading && SPINE.contains(heading.key()))
-                        .map(part -> ((GuideBlock.Heading) part).key()).toList();
-                final boolean written = entry.blocks().stream().anyMatch(part -> part instanceof GuideBlock.Paragraph);
-                if (prose ? !spine.isEmpty() || !written : !spine.equals(SPINE)) {
-                    wrong.add(entry.id() + " " + spine);
-                }
+            final boolean prose = PROSE.contains(GuideIds.namespace(entry.id()));
+            final List<String> spine = entry.blocks().stream().filter(part -> part instanceof GuideBlock.Heading)
+                    .map(part -> partOf(((GuideBlock.Heading) part).key())).filter(SPINE::contains).toList();
+            final boolean written = entry.blocks().stream().anyMatch(part -> part instanceof GuideBlock.Paragraph);
+            if (prose ? !spine.isEmpty() || !written : !spine.equals(SPINE)) {
+                wrong.add(entry.id() + " " + spine);
             }
         }
         helper.assertTrue(wrong.isEmpty(), "every entry of a chapter in the five parts says what it is, what for, how"
@@ -209,8 +250,26 @@ public final class SeriesManualsGameTests {
             guide.declaredSections().forEach(section -> pages.add(section.id()));
             guide.declaredEntries().forEach(entry -> pages.add(entry.id()));
         }
+        final MarkdownManuals.Gathered markdown = markdown();
+        pages.addAll(markdown.chapters().keySet());
+        pages.addAll(markdown.sections().keySet());
+        pages.addAll(markdown.entries().keySet());
         final List<String> broken = new ArrayList<>();
         int links = 0;
+        for (final GuideEntry entry : markdown.entries().values()) {
+            final List<String> targets = new ArrayList<>();
+            for (final String sentence : sentencesOf(entry)) {
+                targets.addAll(GuideLinks.targets(sentence));
+            }
+            entry.blocks().stream().filter(block -> block instanceof GuideBlock.SeeAlso)
+                    .forEach(block -> targets.addAll(((GuideBlock.SeeAlso) block).entries()));
+            for (final String target : targets) {
+                links++;
+                if (!pages.contains(target)) {
+                    broken.add(entry.id() + " -> " + target);
+                }
+            }
+        }
         for (final ModGuide guide : allGuides()) {
             for (final Map.Entry<String, String> sentence : guide.translations().entrySet()) {
                 for (final String target : GuideLinks.targets(sentence.getValue())) {
@@ -372,7 +431,67 @@ public final class SeriesManualsGameTests {
             guide.declaredManuals().forEach(manual -> manuals.put(manual.id(), manual));
             guide.declaredStyles().forEach((path, style) -> styles.put(guide.namespace() + ":" + path, style));
         }
+        final MarkdownManuals.Gathered markdown = markdown();
+        chapters.putAll(markdown.chapters());
+        sections.putAll(markdown.sections());
+        entries.putAll(markdown.entries());
+        manuals.putAll(markdown.manuals());
         return new GuideLibrary(chapters, sections, entries, manuals, styles);
+    }
+
+    /* Every manual the mods write in Markdown, in English, read from their jars as the server has them. */
+    private static MarkdownManuals.Gathered markdown() {
+        return MarkdownManuals.gather(ModManualFiles.all(), ManualFile.ENGLISH, CodecJsonBlocks.INSTANCE);
+    }
+
+    /* Every entry of the series' mods, declared in code or written in Markdown. */
+    private static List<GuideEntry> seriesEntries() {
+        final List<GuideEntry> entries = new ArrayList<>();
+        for (final ModGuide guide : guides()) {
+            entries.addAll(guide.declaredEntries());
+        }
+        for (final GuideEntry entry : markdown().entries().values()) {
+            if (SERIES.contains(GuideIds.namespace(entry.id())) || SERIES_OWN.equals(GuideIds.namespace(entry.id()))) {
+                entries.add(entry);
+            }
+        }
+        return entries;
+    }
+
+    /*
+     * The part of the five a heading is: its key where it is declared in code, and where it is written in Markdown the
+     * key whose English it says; anything else for any other heading.
+     */
+    private static String partOf(final String heading) {
+        for (final TextKey part : List.of(GuideTexts.WHAT_IT_IS, GuideTexts.WHAT_IT_IS_FOR, GuideTexts.HOW_TO_GET_IT,
+                GuideTexts.HOW_TO_USE_IT, GuideTexts.WHAT_CAN_GO_WRONG)) {
+            if (part.english().equals(heading)) {
+                return part.key();
+            }
+        }
+        return heading;
+    }
+
+    /* Every sentence an entry written in Markdown says, where a link may stand. */
+    private static List<String> sentencesOf(final GuideEntry entry) {
+        final List<String> said = new ArrayList<>();
+        for (final GuideBlock block : entry.blocks()) {
+            switch (block) {
+                case GuideBlock.Paragraph paragraph -> said.add(paragraph.key());
+                case GuideBlock.Steps steps -> said.addAll(steps.keys());
+                case GuideBlock.Note note -> said.add(note.key());
+                case GuideBlock.Warning warning -> said.add(warning.key());
+                case GuideBlock.Define define -> said.add(define.definitionKey());
+                case GuideBlock.Problems problems -> problems.problems().forEach(problem -> {
+                    said.add(problem.problemKey());
+                    said.add(problem.fixKey());
+                });
+                default -> {
+                    // A block of no running text holds no link.
+                }
+            }
+        }
+        return said;
     }
 
     /** How far down the page a piece reaches. */

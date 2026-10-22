@@ -7,12 +7,15 @@
  */
 package dev.jstech.core.client.gui.component;
 
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.client.motion.MotionPainter;
+import dev.jstech.core.motion.Motion;
+import dev.jstech.core.motion.MotionSpec;
+import java.util.List;
+import java.util.Optional;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * One control of a program's content: a rectangle that draws itself through the skin, takes the input that
@@ -35,6 +38,7 @@ public abstract class UiComponent {
     private Panel parent;
     @Nullable
     private Component spoken;
+    private Motion motion = Motion.FINISHED;
 
     // geometry
 
@@ -101,6 +105,42 @@ public abstract class UiComponent {
     public UiComponent setEnabled(final boolean value) {
         enabled = value;
         return this;
+    }
+
+    /**
+     * Moves the component by {@code spec} from now, as its panel draws it: grown in, slid in from its side, faded in or
+     * out, as the motion kit's styles and curves say ({@code scale}, {@code slide}, {@code appear}, and any motion's
+     * {@code opacity_from} and {@code opacity_to}); one call, nothing more to do each frame. A player who asked for
+     * less movement sees it where it ends at once. Returns this, for chaining.
+     *
+     * <pre>{@code
+     * panel.add(new Button("Next", this::next)).animate(MotionSpec.of(MotionStyles.SLIDE, 200,
+     *         IEasing.named("spring"), "").with("distance", 1.0));
+     * }</pre>
+     */
+    public UiComponent animate(final MotionSpec spec) {
+        motion = MotionClock.start(spec);
+        return this;
+    }
+
+    /** Whether a motion {@link #animate} started is still under way. */
+    public boolean moving() {
+        return !motion.done(MotionClock.now());
+    }
+
+    /** Draws it as its motion has it this frame, where it rests once the motion is over; what its panel calls. */
+    public final void renderMoved(final GuiGraphics g, final UiContext ctx) {
+        if (motion == Motion.FINISHED) {
+            render(g, ctx);
+            return;
+        }
+        final double now = MotionClock.now();
+        if (motion.done(now)) {
+            motion = Motion.FINISHED;
+            render(g, ctx);
+            return;
+        }
+        MotionPainter.draw(g, motion, now, x, y, width, height, () -> render(g, ctx));
     }
 
     /** Whether the component takes the keyboard when clicked. */

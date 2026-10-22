@@ -19,6 +19,8 @@ sourceSets.main.resources {
     exclude("src/generated/**/.cache")
     // A font's source is read by the data run, which writes the picture and font file the game draws from.
     exclude("**/*.bdf")
+    exclude("**/font/source/*.ttf")
+    exclude("**/font/source/*.otf")
 }
 
 // The Core's API photo travels in its jar, so a mod built on it checks what it uses against the very Core it has

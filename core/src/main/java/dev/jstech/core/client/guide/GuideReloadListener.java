@@ -19,9 +19,15 @@ import dev.jstech.core.guide.GuideIds;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuideSection;
 import dev.jstech.core.guide.GuideStyle;
+import dev.jstech.core.guide.markdown.CodecJsonBlocks;
+import dev.jstech.core.guide.markdown.ManualFile;
+import dev.jstech.core.guide.markdown.MarkdownManuals;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -37,9 +43,9 @@ import org.slf4j.Logger;
 /**
  * Reads every manual from the loaded resource packs, under each namespace's {@code guide/}: {@code chapter.json}, the
  * mod's main chapter, and the folders {@code chapters} (its other chapters), {@code sections}, {@code entries},
- * {@code manuals} and {@code styles}. The top-most pack's file wins,
- * as for any resource; a file that cannot be read is left out with a line in the log, and the rest of the manuals
- * still open.
+ * {@code manuals} and {@code styles}; and the manuals written in Markdown, under {@code jstech/manuals/}, in the
+ * reader's language ({@link MarkdownManuals}). The top-most pack's file wins, as for any resource; a file that cannot
+ * be read is left out with a line in the log, and the rest of the manuals still open.
  */
 public final class GuideReloadListener extends SimplePreparableReloadListener<GuideLibrary> {
 
@@ -67,11 +73,36 @@ public final class GuideReloadListener extends SimplePreparableReloadListener<Gu
                 path -> path.getPath().equals(ROOT + "/chapter.json")).entrySet()) {
             read(file, GuideCodecs.CHAPTER).ifPresent(chapter -> chapters.put(chapter.id(), chapter));
         }
-        return new GuideLibrary(chapters,
-                readAll(resources, "sections", GuideCodecs.SECTION, GuideSection::id),
-                readAll(resources, "entries", GuideCodecs.ENTRY, GuideEntry::id),
-                readAll(resources, "manuals", GuideCodecs.MANUAL, GuideManual::id),
-                readStyles(resources));
+        final Map<String, GuideSection> sections = readAll(resources, "sections", GuideCodecs.SECTION,
+                GuideSection::id);
+        final Map<String, GuideEntry> entries = readAll(resources, "entries", GuideCodecs.ENTRY, GuideEntry::id);
+        final Map<String, GuideManual> manuals = readAll(resources, "manuals", GuideCodecs.MANUAL, GuideManual::id);
+        // What a manual's Markdown says wins over a JSON file of the same id, as a mod moves its manual to Markdown.
+        final MarkdownManuals.Gathered markdown = MarkdownManuals.gather(markdownFiles(resources),
+                Minecraft.getInstance().getLanguageManager().getSelected(), CodecJsonBlocks.INSTANCE);
+        markdown.problems().forEach(problem -> LOGGER.warn("A manual's Markdown file is wrong at {}", problem));
+        chapters.putAll(markdown.chapters());
+        sections.putAll(markdown.sections());
+        entries.putAll(markdown.entries());
+        manuals.putAll(markdown.manuals());
+        return new GuideLibrary(chapters, sections, entries, manuals, readStyles(resources));
+    }
+
+    /** Every manual's Markdown file the resource packs hold, the top-most pack's of each, in every language. */
+    public static List<ManualFile> markdownFiles(final ResourceManager resources) {
+        final List<ManualFile> files = new ArrayList<>();
+        for (final Map.Entry<ResourceLocation, Resource> file : resources.listResources(ManualFile.ROOT,
+                path -> path.getPath().endsWith(ManualFile.EXTENSION)).entrySet()) {
+            try (Reader reader = file.getValue().openAsReader()) {
+                final StringWriter text = new StringWriter();
+                reader.transferTo(text);
+                ManualFile.at(file.getKey().getNamespace(), file.getKey().getPath(), text.toString())
+                        .ifPresent(files::add);
+            } catch (final IOException unread) {
+                LOGGER.warn("The manual file {} could not be read", file.getKey(), unread);
+            }
+        }
+        return files;
     }
 
     @Override

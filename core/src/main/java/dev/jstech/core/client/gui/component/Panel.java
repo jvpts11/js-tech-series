@@ -112,7 +112,7 @@ public class Panel extends UiComponent {
     protected final void renderChildren(final GuiGraphics g, final UiContext ctx) {
         for (final UiComponent child : children) {
             if (child.visible()) {
-                child.render(g, ctx);
+                child.renderMoved(g, ctx);
             }
         }
     }

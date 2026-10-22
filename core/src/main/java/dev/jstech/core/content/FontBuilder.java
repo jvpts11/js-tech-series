@@ -38,6 +38,7 @@ public final class FontBuilder {
     private int baseline;
     private String licence = "";
     private String credit = "";
+    private int pixels;
 
     FontBuilder(final ModContent content, final String path) {
         this.content = content;
@@ -47,6 +48,18 @@ public final class FontBuilder {
     /** Reads the font from a BDF file, a path under the mod's {@code assets} folder. */
     public FontBuilder bdf(final String file) {
         this.source = file;
+        this.pixels = 0;
+        return this;
+    }
+
+    /**
+     * Reads the font from a TrueType or OpenType file ({@code .ttf}, {@code .otf}), a path under the mod's
+     * {@code assets} folder, drawn {@code size} pixels tall with no smoothing, a pixel lit or not as the game's own
+     * letters are. The cell and the baseline are the font's own at that size, and are checked as a BDF's are.
+     */
+    public FontBuilder outline(final String file, final int size) {
+        this.source = file;
+        this.pixels = size;
         return this;
     }
 
@@ -83,10 +96,16 @@ public final class FontBuilder {
     public CellFont register() {
         if (source == null) {
             throw DeclarationError.of(content.modid(), "the font " + content.modid() + ":" + path,
-                    "does not say where it comes from", "name its BDF file with bdf(...) before register()");
+                    "does not say where it comes from", "name its file with bdf(...) or outline(...) before "
+                            + "register()");
+        }
+        if (source.endsWith(".bdf") == pixels > 0) {
+            throw DeclarationError.of(content.modid(), "the font " + content.modid() + ":" + path,
+                    "names " + source + " as the wrong kind of font", "name a .bdf with bdf(...), and a .ttf or an "
+                            + ".otf with outline(file, size)");
         }
         final CellFont font = new CellFont(ResourceLocation.fromNamespaceAndPath(content.modid(), path), source,
-                cellWidth, cellHeight, baseline, licence, credit);
+                cellWidth, cellHeight, baseline, licence, credit, pixels);
         content.declare(font);
         return font;
     }

@@ -32,6 +32,14 @@ public final class ConfigScreenTexts {
             "No setting's name or description has these words.");
     public static final TextKey NONE_CHANGED = TextKey.of("jscore.config_screen.none_changed",
             "Every setting here is at its default.");
+    /* The heading of the other mods on the rail, and what is said of one of them open: its name. */
+    public static final TextKey OTHER_MODS = TextKey.of("jscore.config_screen.other_mods", "Other mods");
+    public static final TextKey OTHER_MOD_BANNER = TextKey.of("jscore.config_screen.other_mod_banner",
+            "%s's own settings, read from its files: what it declares is what you see.");
+    public static final TextKey OTHER_MOD_NOTE = TextKey.of("jscore.config_screen.other_mod_note",
+            "Names, ranges and when they take hold, as %s declares them");
+    /* Another mod's file, and the tab it is under. */
+    public static final TextKey IN_TAB = TextKey.of("jscore.config_screen.in_tab", "%s, in \"%s\"");
     /** How many settings a section or a group holds. */
     public static final TextKey ONE_SETTING = TextKey.of("jscore.config_screen.one_setting", "1 setting");
     public static final TextKey SETTINGS = TextKey.of("jscore.config_screen.settings", "%s settings");

@@ -137,7 +137,8 @@ class AssetRegistryTest {
                     .resolve("assets")));
         }
         out.addAll(filesUnder(root, root.resolve("docs").resolve("brand")));
-        out.removeIf(path -> path.contains("/lang/"));
+        // Language files and the manuals written in Markdown are text, translated as any text is, not assets.
+        out.removeIf(path -> path.contains("/lang/") || path.contains("/jstech/manuals/"));
         return out;
     }
 

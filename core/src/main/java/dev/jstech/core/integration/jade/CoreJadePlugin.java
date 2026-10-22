@@ -47,7 +47,8 @@ import snownee.jade.api.config.IPluginConfig;
  * {@link IDescribed describes itself}, that {@link IOwned is owned}, that {@link IHeatHolder holds heat} or that turns
  * with mechanical power has its lines written by the server and shown in Jade's tooltip under the block's name: its
  * temperature, its speed, a torque meter's torque, its network's power. A mod whose block entities say what they do
- * the Core's way writes nothing for Jade of its own.
+ * the Core's way writes nothing for Jade of its own. And the tooltip wears the style the player picked
+ * ({@link JadeStyles}).
  */
 @WailaPlugin(JsCore.MODID)
 public final class CoreJadePlugin implements IWailaPlugin {
@@ -64,6 +65,8 @@ public final class CoreJadePlugin implements IWailaPlugin {
     @Override
     public void registerClient(final IWailaClientRegistration registration) {
         registration.registerBlockComponent(PROVIDER, Block.class);
+        // The tooltip in the style the player picked for everything.
+        JadeStyles.listen();
     }
 
     /** The lines: written on the server, where the block entity is asked, and read into the tooltip on the client. */

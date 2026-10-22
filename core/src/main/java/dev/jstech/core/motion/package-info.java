@@ -9,6 +9,10 @@
  * Motion: how the things on a screen move, as data. A system's profile says, for each kind of thing it moves, the way
  * it moves, for how long, along which curve and under which of its switches; the mods declare each system's profile
  * with the real system's timings, the data generation writes it as a file a resource pack can replace, and every
- * motion is read against one clock each frame.
+ * motion is read against one clock each frame. A component of a screen is moved by one in one call,
+ * {@code UiComponent.animate}. How it all reads, from the start: {@code core/docs/MOTION.md}.
  */
+@ApiStatus.Experimental
 package dev.jstech.core.motion;
+
+import org.jetbrains.annotations.ApiStatus;
